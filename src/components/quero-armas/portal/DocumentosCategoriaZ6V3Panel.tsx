@@ -261,7 +261,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
           .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:8px;row-gap:6px}
+          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
           .qa-docsz6 .row .acts{justify-content:flex-start;margin-top:4px}
