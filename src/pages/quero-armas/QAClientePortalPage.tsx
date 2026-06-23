@@ -1115,7 +1115,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-slate-50 text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-[230px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1126,36 +1126,21 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
-      <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-slate-200 bg-white/95 shadow-[12px_0_40px_rgba(15,23,42,0.04)] transition-[width] duration-200 overflow-hidden ${sidebarCollapsed ? "w-16" : "w-72"}`}>
-        {/* ── Header: logo + botão de colapso ── */}
-        <div className={`flex items-center border-b border-slate-100 ${sidebarCollapsed ? "h-[76px] justify-center px-2" : "h-[76px] justify-between px-5"}`}>
-          {sidebarCollapsed ? (
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(false)}
-              aria-label="Expandir menu"
-              className="flex items-center justify-center"
-            >
-              <img src={logoIcon} alt="Quero Armas" className="h-10 w-10 object-contain rounded-lg" draggable={false} />
-            </button>
-          ) : (
-            <Fragment>
-              <img src={logoColor} alt="Quero Armas" className="h-9 w-auto object-contain" draggable={false} />
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(true)}
-                aria-label="Recolher menu"
-                className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition shrink-0"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            </Fragment>
-          )}
+      {/* ═══ SIDEBAR Z6 DARK ═══ */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col w-[230px] bg-[#0A0A0A] text-[#E8E8E8]">
+        {/* Brand: QA mark + Quero Armas / ÁREA DO CLIENTE */}
+        <div className="flex items-center gap-2.5 px-4 py-4">
+          <div className="w-9 h-9 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[13px] tracking-[0.04em] shrink-0" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold text-white leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>Quero Armas</div>
+            <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>ÁREA DO CLIENTE</div>
+          </div>
         </div>
 
-        {/* ── Navegação ── */}
-        <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${sidebarCollapsed ? "px-2 space-y-1" : "px-3 space-y-1"}`}>
-          {navItems.map((item) => {
+        {/* Nav com grupos Principal / Secundário */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+          {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
             return (
@@ -1163,37 +1148,52 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[13px] font-semibold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!sidebarCollapsed && item.label}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+              </button>
+            );
+          })}
+          <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+          {navItems.filter(i => i.group === "secondary").map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* ── Rodapé: ajuda ── */}
-        {!sidebarCollapsed ? (
-          <div className="px-3 pb-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
-              <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
-              <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
-            </div>
-          </div>
-        ) : (
-          <div className="pb-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => goSection("mensagens")}
-              title="Precisa de ajuda?"
-              className="flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </div>
-        )}
+        {/* Rodapé: Precisa de ajuda? + WhatsApp + Sair */}
+        <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-[#1a1a1a]">
+          <div className="text-[12px] font-semibold text-[#E8E8E8] mb-0.5">Precisa de ajuda?</div>
+          <div className="text-[10.5px] text-[#7A7A7A] mb-2.5">Atendimento direto pelo WhatsApp</div>
+          <a
+            href="https://wa.me/5511978481919"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            +55 11 97848-1919
+          </a>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
+          >
+            <LogOut className="h-3 w-3" /> Sair
+          </button>
+        </div>
       </aside>
 
       {mobileNavOpen && (
