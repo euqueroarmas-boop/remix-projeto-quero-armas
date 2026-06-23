@@ -1810,6 +1810,9 @@ export default function QAClientePortalPage() {
         {(activeSection === "contratacoes" || activeSection === "processos") && (
           <div className="space-y-4">
             <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* COLUNA PRINCIPAL — Contrato + Processos (Dossiê) */}
+              <div className="lg:col-span-8 space-y-4">
             <SectionCard
               icon={BriefcaseBusiness}
               title="Meus processos"
@@ -1849,7 +1852,10 @@ export default function QAClientePortalPage() {
                 />
               ) : null}
             </SectionCard>
+              </div>
 
+              {/* COLUNA LATERAL — Linha do Tempo + Histórico (sticky) */}
+              <aside className="lg:col-span-4 space-y-4 lg:sticky lg:top-4 self-start">
             {(() => {
               const tlFiltered = currentScope.type === "processo"
                 ? timeline // timeline events não têm processo_id direto; ver nota abaixo
@@ -1879,7 +1885,7 @@ export default function QAClientePortalPage() {
                 containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
                 headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
               >
-                <div className="relative pl-6">
+                <div className="relative pl-6 max-h-[420px] overflow-y-auto pr-1">
                   <div className="absolute left-2.5 top-1 bottom-1 w-px bg-[#E4E4E4]" />
                   <div className="space-y-3">
                     {tlForScope.map((ev, i) => {
@@ -1919,6 +1925,8 @@ export default function QAClientePortalPage() {
                 <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
               </SectionCard>
             )}
+              </aside>
+            </div>
           </div>
         )}
 
