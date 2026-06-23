@@ -248,10 +248,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .kpi .v{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;margin-top:6px;color:#0A0A0A;line-height:1}
         .qa-docsz6 .kpi .s{font-size:10px;color:#7A7A7A;margin-top:3px}
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
-        .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:10px 14px;border-bottom:0}
+        .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0}
         .qa-docsz6 .listhead .ttl{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.18em;color:#0A0A0A;font-weight:600;display:flex;align-items:center;gap:8px}
         .qa-docsz6 .listhead .ttl .cnt{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald',sans-serif;letter-spacing:.14em}
-        .qa-docsz6 .listhead .add{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #7A1F2B;color:#7A1F2B;padding:5px 10px;font-family:'Oswald',sans-serif;letter-spacing:.16em;font-size:9.5px;font-weight:600;border-radius:2px;cursor:pointer;text-transform:uppercase}
+        .qa-docsz6 .listhead .add{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #7A1F2B;color:#7A1F2B;padding:3px 7px;font-family:'Oswald',sans-serif;letter-spacing:.16em;font-size:8.5px;font-weight:600;border-radius:2px;cursor:pointer;text-transform:uppercase}
         .qa-docsz6 .listhead .add:hover{background:#7A1F2B;color:#fff}
         .qa-docsz6 .grp{background:#fff;border:1px solid #E5E5E5;border-top:0}
         .qa-docsz6 .grp:last-child{border-radius:0 0 4px 4px}
@@ -346,7 +346,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       </div>
 
       {filter && (
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:10,fontFamily:"'Oswald',sans-serif",fontSize:10.5,letterSpacing:".16em",color:"#7A1F2B",fontWeight:600}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:14,fontFamily:"'Oswald',sans-serif",fontSize:10.5,letterSpacing:".16em",color:"#7A1F2B",fontWeight:600}}>
           <span>FILTRO ATIVO · {docsFiltrados.length} DOCUMENTO{docsFiltrados.length === 1 ? "" : "S"}</span>
           <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald',sans-serif",letterSpacing:".16em",fontSize:10}}>LIMPAR ✕</button>
         </div>
