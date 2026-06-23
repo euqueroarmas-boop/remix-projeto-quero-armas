@@ -22,14 +22,14 @@ const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","N
 
 function fmtDateShort(d: string | Date | null | undefined): string | undefined {
   if (!d) return undefined;
-  const dt = typeof d === "string" ? new Date(d) : d;
-  if (isNaN(dt.getTime())) return undefined;
+  const dt = d instanceof Date ? d : typeof d === "string" ? new Date(d) : null;
+  if (!dt || isNaN(dt.getTime())) return undefined;
   return `${String(dt.getDate()).padStart(2, "0")}/${MESES_PT[dt.getMonth()]}/${dt.getFullYear()}`;
 }
 function fmtDayMonth(d: string | Date | null | undefined): string | undefined {
   if (!d) return undefined;
-  const dt = typeof d === "string" ? new Date(d) : d;
-  if (isNaN(dt.getTime())) return undefined;
+  const dt = d instanceof Date ? d : typeof d === "string" ? new Date(d) : null;
+  if (!dt || isNaN(dt.getTime())) return undefined;
   return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
 }
 function daysBetween(from: string | Date, to: Date = new Date()): number {
