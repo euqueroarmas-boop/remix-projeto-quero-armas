@@ -1820,9 +1820,9 @@ export default function QAClientePortalPage() {
             .filter((p: any) => !!p.prazo_critico_data)
             .sort((a: any, b: any) => (daysUntil(a.prazo_critico_data) ?? 9999) - (daysUntil(b.prazo_critico_data) ?? 9999))[0] || null;
           const diasPrazo = daysUntil(prazoBase?.prazo_critico_data ?? null);
-          const selectedProtocol = currentScope.type === "processo"
-            ? ((scopedProcessos[0] as any)?.respostas_questionario_json?.protocolo?.numero_protocolo || (scopedProcessos[0] as any)?.respostas_questionario_json?.protocolo?.numero || null)
-            : null;
+          const selectedProtocol = scopedProcessos
+            .map((p: any) => p?.respostas_questionario_json?.protocolo?.numero_protocolo || p?.respostas_questionario_json?.protocolo?.numero || null)
+            .find(Boolean) || null;
           const dossierLabel = currentScope.type === "processo" ? String(currentScope.label).toUpperCase() : "TODOS OS PROCESSOS";
           const tlForScope = currentScope.type === "processo"
             ? processoEventos
