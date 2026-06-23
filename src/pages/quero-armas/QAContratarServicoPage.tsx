@@ -5,11 +5,9 @@ import { ArrowLeft, ShoppingBag, Sparkles, FileText, ChevronRight, Shield, Loade
 
 /* =============================================================================
  * QAContratarServicoPage — catálogo de serviços/produtos para o cliente.
- *
- * Lê de `qa_servicos_catalogo` (tabela criada na migration 2026-04-28).
- * Ao clicar em "Contratar", redireciona para o wizard /cadastro?servico=slug,
- * que irá pré-preencher a Etapa 0 e — se o cliente já estiver logado — usar o
- * mesmo cadastro existente (evitando duplicidade pelo CPF/e-mail).
+ * Estilo: Catálogo Light (Ficha Catalográfica Light)
+ * Paleta: Page #FAFAFA | Paper #FFFFFF | Ink #0A0A0A | Border #E4E4E4
+ *         Secondary #6A6A6A | Micro-dots RGB apenas para status (8px)
  * ============================================================================= */
 
 interface CatalogoItem {
@@ -144,124 +142,138 @@ export default function QAContratarServicoPage() {
   };
 
   return (
-    <div data-tactical-portal className="min-h-screen">
-      <div className="qa-resumo-light">
-        {/* Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-slate-200/70 bg-white sticky top-0 z-10">
-          <div className="max-w-3xl mx-auto flex items-center gap-3">
-            <button
-              onClick={() => navigate(logado ? "/area-do-cliente" : "/")}
-              className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base md:text-lg font-bold text-slate-900 uppercase tracking-tight">
-                Contratar serviço ou produto
-              </h1>
-              <p className="text-[11px] md:text-xs text-slate-500 mt-0.5">
-                Escolha o serviço — o sistema cria automaticamente o processo e o checklist correto.
-              </p>
-            </div>
-            <ShoppingBag className="h-5 w-5 text-amber-600 hidden sm:block" />
-          </div>
-        </div>
-
-        {/* Conteúdo */}
-        <div className="max-w-3xl mx-auto px-4 py-5 space-y-6">
-          {labelTrilha && (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#7A1F2B]/30 bg-[#FBF3F4] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
-                Trilha: {labelTrilha}
-                <button
-                  type="button"
-                  onClick={limparFiltros}
-                  className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-[#7A1F2B]/10"
-                  aria-label="Remover filtro de trilha"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-              <span className="text-[11px] text-slate-500">Mostrando apenas serviços compatíveis</span>
-            </div>
-          )}
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
-            </div>
-          ) : grupos.length === 0 ? (
-            <div className="text-center py-16 text-slate-500 text-sm">
-              Nenhum serviço disponível no momento.
-            </div>
-          ) : (
-            grupos.map(([categoria, itens]) => (
-              <section key={categoria}>
-                <div className="flex items-center gap-2 mb-2.5">
-                  <Shield className="h-3.5 w-3.5 text-slate-500" />
-                  <h2 className="text-[11px] md:text-xs font-bold uppercase tracking-widest text-slate-700">
-                    {categoria}
-                  </h2>
-                  <div className="flex-1 h-px bg-slate-200/70" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {itens.map((it) => {
-                    const preco = formatBRL(it.preco);
-                    return (
-                      <div
-                        key={it.id}
-                        className="rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition p-4 flex flex-col"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <h3 className="text-sm font-bold text-slate-900 uppercase leading-tight">
-                            {it.nome}
-                          </h3>
-                          {it.gera_processo && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 shrink-0">
-                              Gera processo
-                            </span>
-                          )}
-                        </div>
-                        {it.descricao_curta && (
-                          <p className="text-[12px] text-slate-600 mt-1.5 leading-snug">
-                            {it.descricao_curta}
-                          </p>
-                        )}
-                        <div className="mt-3 flex items-center justify-between gap-2">
-                          <div className="text-[11px] text-slate-500">
-                            {preco ? (
-                              <span className="font-semibold text-slate-700">
-                                {preco}
-                                {it.recorrente ? <span className="font-normal">/mês</span> : null}
-                              </span>
-                            ) : (
-                              <span className="italic">Sob consulta</span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => handleContratar(it.slug)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold uppercase tracking-wider transition"
-                          >
-                            <Sparkles className="h-3.5 w-3.5" />
-                            Contratar
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            ))
-          )}
-
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-[#FBF3F4] border border-[#E5C2C6] text-[11px] text-[#7A1F2B]">
-            <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <p>
-              Ao contratar, você será levado(a) ao cadastro guiado em 5 etapas. Se já é cliente,
-              seus dados serão reaproveitados automaticamente.
+    <div data-tactical-portal className="min-h-screen bg-[#FAFAFA]">
+      {/* Header — discreto, sem sticky colorido */}
+      <div className="px-4 pt-6 pb-4 border-b border-[#E4E4E4]">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => navigate(logado ? "/area-do-cliente" : "/")}
+            className="w-9 h-9 rounded-sm flex items-center justify-center border border-[#E4E4E4] bg-[#FFFFFF] hover:bg-[#FAFAFA] text-[#0A0A0A] transition"
+            aria-label="Voltar"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-base md:text-lg font-bold text-[#0A0A0A] uppercase tracking-tight">
+              Contratar serviço ou produto
+            </h1>
+            <p className="text-[11px] md:text-xs text-[#6A6A6A] mt-0.5">
+              Escolha o serviço — o sistema cria automaticamente o processo e o checklist correto.
             </p>
           </div>
+          <ShoppingBag className="h-5 w-5 text-[#6A6A6A] hidden sm:block" />
+        </div>
+      </div>
+
+      {/* Conteúdo */}
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
+        {labelTrilha && (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#0A0A0A]">
+              Trilha: {labelTrilha}
+              <button
+                type="button"
+                onClick={limparFiltros}
+                className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-[#E4E4E4]"
+                aria-label="Remover filtro de trilha"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+            <span className="text-[11px] text-[#6A6A6A]">Mostrando apenas serviços compatíveis</span>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 text-[#0A0A0A] animate-spin" />
+          </div>
+        ) : grupos.length === 0 ? (
+          <div className="text-center py-16 text-[#6A6A6A] text-sm">
+            Nenhum serviço disponível no momento.
+          </div>
+        ) : (
+          grupos.map(([categoria, itens]) => (
+            <section key={categoria} className="border-l-2 border-[#E4E4E4] pl-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Shield className="h-3.5 w-3.5 text-[#6A6A6A]" />
+                <h2 className="text-[11px] md:text-xs font-bold uppercase tracking-widest text-[#6A6A6A]">
+                  {categoria}
+                </h2>
+                <div className="flex-1 h-px bg-[#E4E4E4]" />
+                <span className="text-[10px] text-[#6A6A6A] font-mono">
+                  QTY: {String(itens.length).padStart(2, "0")}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {itens.map((it) => {
+                  const preco = formatBRL(it.preco);
+                  return (
+                    <div
+                      key={it.id}
+                      className="rounded-sm bg-[#FFFFFF] border border-[#E4E4E4] hover:border-[#0A0A0A] transition p-4 flex flex-col shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-bold text-[#0A0A0A] uppercase leading-tight">
+                          {it.nome}
+                        </h3>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {it.gera_processo && (
+                            <>
+                              <span className="w-2 h-2 rounded-full bg-[#28C840]" aria-hidden="true" />
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-[#6A6A6A]">
+                                Gera processo
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {/* Anotação técnica em canto */}
+                      <div className="flex justify-end mt-0.5">
+                        <span className="text-[10px] text-[#6A6A6A] font-mono uppercase">
+                          {it.tipo === "servico" ? "SRV" : "PRD"} · ID:{it.id.slice(0, 6)}
+                        </span>
+                      </div>
+                      {it.descricao_curta && (
+                        <p className="text-[12px] text-[#6A6A6A] mt-1.5 leading-snug">
+                          {it.descricao_curta}
+                        </p>
+                      )}
+                      <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+                        <div className="text-[11px]">
+                          {preco ? (
+                            <span className="font-semibold text-[#0A0A0A]">
+                              {preco}
+                              {it.recorrente ? <span className="font-normal text-[#6A6A6A]">/mês</span> : null}
+                            </span>
+                          ) : (
+                            <span className="italic text-[#6A6A6A]">Sob consulta</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleContratar(it.slug)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#0A0A0A] hover:bg-[#1A1A1A] text-[#FFFFFF] text-[11px] font-bold uppercase tracking-wider transition"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Contratar
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))
+        )}
+
+        {/* Footer informativo — estilo Catálogo Light */}
+        <div className="flex items-start gap-2 p-3 rounded-sm bg-[#FFFFFF] border border-[#E4E4E4] text-[11px] text-[#6A6A6A]">
+          <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <p>
+            Ao contratar, você será levado(a) ao cadastro guiado em 5 etapas. Se já é cliente,
+            seus dados serão reaproveitados automaticamente.
+          </p>
         </div>
       </div>
     </div>
