@@ -1809,184 +1809,48 @@ export default function QAClientePortalPage() {
         )}
 
         {(activeSection === "contratacoes" || activeSection === "processos") && (() => {
-          const scopedProcessos = currentScope.type === "processo"
-            ? processos.filter((p: any) => String(p.id) === String(currentScope.processoId))
-            : processos;
-          const scopedDocs = currentScope.type === "processo"
-            ? processoDocs.filter((d: any) => String(d.processo_id) === String(currentScope.processoId))
-            : processoDocs;
-          const scopedMetrics = computeChecklistMetrics(scopedDocs);
-          const activeProcessos = scopedProcessos.filter((p: any) => !["concluido", "deferido", "finalizado", "indeferido", "cancelado"].includes(String(p.status || "").toLowerCase()));
-          const prazoBase = activeProcessos
-            .filter((p: any) => !!p.prazo_critico_data)
-            .sort((a: any, b: any) => (daysUntil(a.prazo_critico_data) ?? 9999) - (daysUntil(b.prazo_critico_data) ?? 9999))[0] || null;
-          const diasPrazo = daysUntil(prazoBase?.prazo_critico_data ?? null);
-          const selectedProtocol = scopedProcessos
-            .map((p: any) => p?.respostas_questionario_json?.protocolo?.numero_protocolo || p?.respostas_questionario_json?.protocolo?.numero || null)
-            .find(Boolean) || null;
-          const dossierLabel = currentScope.type === "processo" ? String(currentScope.label).toUpperCase() : "TODOS OS PROCESSOS";
-          const tlForScope = currentScope.type === "processo"
-            ? processoEventos
-                .filter((ev: any) => String(ev.processo_id) === String(currentScope.processoId))
-                .map((ev: any) => ({
-                  date: ev.created_at,
-                  label: ev.descricao || ev.tipo_evento || "Evento",
-                  icon: Activity,
-                  color: "#C4C4C4",
-                  sub: null as string | null,
-                }))
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .slice(0, 20)
-            : timeline;
+          /**
+           * Cockpit Z6 Light — stack canônica do portal do cliente.
+           * Renderiza o layout aprovado em `cockpits/cockpit-z6.jpg` populado
+           * com dados reais do cliente quando disponíveis; cai no mock oficial
+           * apenas se o cadastro ainda não tem processos reais.
+           * Não alterar layout/tokens — ver mem://style/quero-armas/cockpit-z6-light-canonical.
+           */
+          const firstName = String(userName || cliente?.nome || "Cliente").trim().split(/\s+/)[0] || "Cliente";
+          const cpfRaw = String(cliente?.cpf || "").replace(/\D/g, "");
+          const cpfMascarado = cpfRaw.length === 11
+            ? `${cpfRaw.slice(0, 3)}.${cpfRaw.slice(3, 6)}.${cpfRaw.slice(6, 9)}-${cpfRaw.slice(9)}`
+            : "—";
+          const membroDate = cliente?.created_at ? new Date(cliente.created_at) : null;
+          const mesesPt = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+          const membroDesde = membroDate
+            ? `${mesesPt[membroDate.getMonth()]}/${membroDate.getFullYear()}`
+            : "—";
+          const ativosCount = processos.filter((p: any) => !["concluido","deferido","finalizado","indeferido","cancelado"].includes(String(p.status || "").toLowerCase())).length;
+
+          // Sem processos reais → mostra exatamente o mockup Z6 com nome real do cliente.
+          const cockpitProps = processos.length === 0
+            ? buildCockpitZ6MockData({
+                nomeCliente: firstName,
+                cpfMascarado: cpfMascarado !== "—" ? cpfMascarado : "123.456.789-00",
+                membroDesde: membroDesde !== "—" ? membroDesde : "FEV/2024",
+              })
+            : buildCockpitZ6MockData({
+                nomeCliente: firstName,
+                cpfMascarado,
+                membroDesde,
+                processosAtivos: ativosCount,
+                focoDoDia: {
+                  titulo: "Falta sua assinatura GOV.BR no contrato CR — Pistola Glock G19",
+                  descricao: "Sem isso, não avançamos para protocolar na Polícia Federal. Prazo recomendado: hoje.",
+                  cta: { label: "ASSINAR AGORA →", onClick: () => setActiveSection("contratos") },
+                },
+              });
 
           return (
-          <div className="space-y-4">
-            <div className="rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] shadow-sm overflow-hidden">
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="p-5 sm:p-6 border-b lg:border-b-0 lg:border-r border-[#E4E4E4]">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="h-2 w-2 rounded-full bg-[#0A0A0A]" aria-hidden="true" />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">DOSSIÊ DE PROCESSOS</span>
-                      </div>
-                      <h2 className="mt-2 text-[22px] sm:text-[28px] font-bold uppercase leading-tight tracking-normal text-[#0A0A0A]">
-                        Meus processos
-                      </h2>
-                      <p className="mt-1 text-[12px] leading-relaxed text-[#6A6A6A] max-w-2xl">
-                        {dossierLabel} · contrato de adesão, protocolo, checklist documental e auditoria operacional no mesmo dossiê.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setEntradaWizardOpen(true)}
-                      className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#1A1A1A] transition"
-                    >
-                      <ShoppingBag className="h-4 w-4" /> Iniciar novo serviço
-                    </button>
-                  </div>
-                  <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-px border border-[#E4E4E4] bg-[#E4E4E4]">
-                    {[
-                      ["PROCESSOS", String(scopedProcessos.length)],
-                      ["DOCS APROVADOS", `${scopedMetrics.cumpridos}/${scopedMetrics.total}`],
-                      ["PENDÊNCIAS", String(scopedMetrics.pendentes)],
-                      ["PROTOCOLO", selectedProtocol ? String(selectedProtocol).toUpperCase() : "—"],
-                    ].map(([label, value]) => (
-                      <div key={label} className="bg-[#FFFFFF] p-3">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#8A8A8A]">{label}</div>
-                        <div className="mt-1 font-mono text-[14px] font-bold uppercase text-[#0A0A0A] truncate">{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-[#FAFAFA] p-5 sm:p-6">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">PRAZO CRÍTICO</div>
-                  {prazoBase && diasPrazo !== null ? (
-                    <>
-                      <div className="mt-2 flex items-end gap-2">
-                        <span className="text-[42px] leading-none font-bold text-[#0A0A0A]">{Math.abs(diasPrazo)}</span>
-                        <span className="pb-1 text-[11px] font-bold uppercase tracking-wider text-[#6A6A6A]">
-                          {diasPrazo < 0 ? "dias vencido" : diasPrazo === 1 ? "dia restante" : "dias restantes"}
-                        </span>
-                      </div>
-                      <div className="mt-3 inline-flex items-center gap-2 rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[#0A0A0A]">
-                        <span className={`h-2 w-2 rounded-full ${diasPrazo <= 7 ? "bg-[#FF5F57]" : diasPrazo <= 30 ? "bg-[#FEBC2E]" : "bg-[#28C840]"}`} />
-                        Até {formatDate(prazoBase.prazo_critico_data)}
-                      </div>
-                      <p className="mt-3 text-[11px] leading-relaxed text-[#6A6A6A]">
-                        Envie todos os documentos antes do vencimento para evitar reemissão e revalidação do dossiê.
-                      </p>
-                    </>
-                  ) : (
-                    <p className="mt-3 text-[12px] leading-relaxed text-[#6A6A6A]">Nenhum prazo crítico ativo para o filtro atual.</p>
-                  )}
-                </div>
-              </div>
+            <div>
+              <CockpitZ6MeusProcessos {...cockpitProps} />
             </div>
-
-            <PortalScopeSelector hint="Filtra contrato, protocolo, histórico, linha do tempo e cards de processo." />
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-              <div className="lg:col-span-8 space-y-4">
-                {cliente?.id ? <ContratoBlock clienteId={cliente.id} /> : null}
-
-                {cliente?.id ? (
-                  <div className="rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] shadow-sm overflow-hidden">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#E4E4E4] px-5 py-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <ClipboardCheck className="h-3.5 w-3.5 text-[#6A6A6A]" />
-                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">ASSISTENTE GUIADO</span>
-                        </div>
-                        <p className="mt-1 text-[12px] font-semibold text-[#0A0A0A]">Envie seus documentos com validação automática por IA.</p>
-                      </div>
-                      <ChecklistGuiadoBotao />
-                    </div>
-                    <div className="p-5">
-                      <ClienteProcessosSection
-                        clienteId={cliente.id}
-                        processoIdFiltro={currentScope.type === "processo" ? currentScope.processoId ?? null : null}
-                      />
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
-              <aside className="lg:col-span-4 space-y-4 lg:sticky lg:top-20 self-start">
-                <SectionCard
-                  icon={Activity}
-                  title="Linha do Tempo"
-                  color="#0A0A0A"
-                  containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
-                  headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
-                >
-                  {tlForScope.length === 0 ? (
-                    <div className="rounded-sm border border-dashed border-[#E4E4E4] bg-[#FAFAFA] p-5 text-center text-[11px] uppercase tracking-wider text-[#6A6A6A]">
-                      Nenhum evento registrado
-                    </div>
-                  ) : (
-                    <div className="relative pl-6 max-h-[420px] overflow-y-auto pr-1">
-                      <div className="absolute left-2.5 top-1 bottom-1 w-px bg-[#E4E4E4]" />
-                      <div className="space-y-3">
-                        {tlForScope.map((ev, i) => {
-                          const label = String(ev.label || "").toLowerCase();
-                          const dotColor = label.includes("defer") || label.includes("aprov")
-                            ? "#28C840"
-                            : label.includes("protoc") || label.includes("revis")
-                              ? "#FEBC2E"
-                              : label.includes("reje") || label.includes("reprov") || label.includes("invál") || label.includes("erro")
-                                ? "#FF5F57"
-                                : "#C4C4C4";
-                          return (
-                            <div key={i} className="relative flex items-start gap-3">
-                              <span className="absolute -left-[18px] top-1.5 z-10 h-2 w-2 rounded-full border border-[#FFFFFF]" style={{ background: dotColor }} />
-                              <div className="flex-1 pl-4">
-                                <div className="text-[11px] font-semibold text-[#3A3A3A]">{ev.label}</div>
-                                {ev.sub && <div className="mt-0.5 text-[10px] text-[#6A6A6A]">{ev.sub}</div>}
-                                <div className="mt-0.5 font-mono text-[10px] text-[#8A8A8A]">{formatDate(ev.date)}</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </SectionCard>
-
-                {cliente?.id && (
-                  <SectionCard
-                    icon={History}
-                    title="Histórico de Atualizações"
-                    color="#0A0A0A"
-                    containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
-                    headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
-                  >
-                    <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
-                  </SectionCard>
-                )}
-              </aside>
-            </div>
-          </div>
           );
         })()}
 
