@@ -21,6 +21,7 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
+import ProcessosLayoutExamples from "@/components/quero-armas/processos/ProcessosLayoutExamples";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
