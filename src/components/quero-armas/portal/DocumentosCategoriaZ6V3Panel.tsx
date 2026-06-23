@@ -256,7 +256,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .act:hover{color:#7A1F2B;border-color:#E5E5E5;background:#fff}
         .qa-docsz6 .act:disabled{opacity:.35;cursor:not-allowed}
         .qa-docsz6 .act:disabled:hover{color:#9A9A9A;border-color:transparent;background:transparent}
-        .qa-docsz6 .rm{font-size:10px;color:#C8C8C8;background:transparent;border:0;cursor:pointer;font-family:'Oswald',sans-serif;letter-spacing:.14em;text-transform:lowercase;padding:0 6px}
+        .qa-docsz6 .rm{font-size:10px;color:#C8C8C8;background:transparent;border:0;cursor:pointer;font-family:'Oswald',sans-serif;letter-spacing:.14em;text-transform:lowercase;padding:0 6px;margin-left:6px}
         .qa-docsz6 .rm:hover{color:#D9342B}
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
