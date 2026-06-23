@@ -2247,49 +2247,90 @@ export default function QAClientePortalPage() {
           onClick={() => setShowContratoPopup(false)}
         >
           <div
-            className="w-full max-w-md bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
+            className="w-full max-w-2xl bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-5 md:px-6 pt-5 md:pt-6 pb-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
-              <div className="flex items-center gap-2">
-                <span className="inline-block h-2 w-2 rounded-full bg-[#FEBC2E]" aria-hidden />
-                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6A6A6A]">
-                  Contrato aguardando sua assinatura
+            {/* Window Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
+              <div className="flex gap-1.5">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#28C840]" />
+              </div>
+              <div className="text-[10px] font-bold text-[#6A6A6A] tracking-[0.1em] uppercase">
+                Protocolo {new Date().toISOString().slice(0,10).replace(/-/g,'.')}
+              </div>
+              <div className="w-8" />
+            </div>
+
+            {/* Split Body */}
+            <div className="flex flex-col md:flex-row">
+              {/* Sidebar: Status Column */}
+              <div className="hidden md:flex w-48 bg-[#FAFAFA] border-r border-[#E4E4E4] p-8 flex-col items-center justify-center text-center shrink-0">
+                <div className="text-6xl font-light text-[#0A0A0A] leading-none tracking-tighter">
+                  {String(pendingContracts).padStart(2, '0')}
+                </div>
+                <div className="text-[10px] font-bold tracking-[0.2em] text-[#6A6A6A] uppercase mt-1 mb-8">
+                  Pendentes
+                </div>
+                <div className="relative flex flex-col items-center">
+                  <div className="w-px h-10 bg-[#E4E4E4]" />
+                  <div className="w-9 h-9 rounded-full border border-[#E4E4E4] flex items-center justify-center bg-white my-2">
+                    <FileText className="h-4 w-4 text-[#0A0A0A]" />
+                  </div>
+                  <div className="w-px h-10 bg-[#E4E4E4]" />
                 </div>
               </div>
-              <div className="mt-2 text-[15px] font-semibold text-[#0A0A0A] leading-tight">
-                {pendingContracts === 1
-                  ? "Você tem 1 contrato pendente de assinatura"
-                  : `Você tem ${pendingContracts} contratos pendentes de assinatura`}
+
+              {/* Main Content Area */}
+              <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
+                <header className="mb-6">
+                  <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase mb-2">
+                    Contrato aguardando sua assinatura
+                  </span>
+                  <h2 className="text-xl md:text-2xl font-medium text-[#0A0A0A] leading-tight tracking-tight">
+                    {pendingContracts === 1
+                      ? "Você tem 1 contrato pendente"
+                      : `Você tem ${pendingContracts} contratos pendentes`}
+                  </h2>
+                </header>
+
+                <div className="space-y-5">
+                  <p className="text-[#6A6A6A] text-sm leading-relaxed">
+                    Utilize sua conta{" "}
+                    <span className="text-[#0A0A0A] font-semibold border-b border-[#E4E4E4]">GOV.BR</span>{" "}
+                    ou certificado{" "}
+                    <span className="text-[#0A0A0A] font-semibold border-b border-[#E4E4E4]">ICP-Brasil</span>{" "}
+                    para assinar os documentos de forma segura e com validade jurídica.
+                  </p>
+
+                  <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowContratoPopup(false)}
+                      className="h-10 px-5 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-[#FAFAFA] transition-colors"
+                    >
+                      Agora não
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goContractsSection}
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
+                    >
+                      Assinar agora <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="p-5 md:p-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] flex items-center justify-center shrink-0">
-                  <FileText className="h-4 w-4 text-[#0A0A0A]" />
-                </div>
-                <p className="text-[12.5px] text-[#6A6A6A] leading-relaxed">
-                  Pagamento confirmado. Para liberarmos a execução do serviço,
-                  baixe o contrato, assine digitalmente pelo{" "}
-                  <strong className="text-[#0A0A0A]">GOV.BR</strong> ou certificado{" "}
-                  <strong className="text-[#0A0A0A]">ICP-Brasil</strong> e reenvie pelo portal.
-                </p>
-              </div>
-              <div className="flex flex-col-reverse md:flex-row gap-2 md:justify-end pt-1">
-                <button
-                  type="button"
-                  onClick={() => setShowContratoPopup(false)}
-                  className="h-10 px-4 rounded-sm border border-[#E4E4E4] text-[#6A6A6A] text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-[#FAFAFA]"
-                >
-                  Agora não
-                </button>
-                <button
-                  type="button"
-                  onClick={goContractsSection}
-                  className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em]"
-                >
-                  Assinar agora <ChevronRight className="h-3.5 w-3.5" />
-                </button>
+
+            {/* Footer info */}
+            <div className="px-6 md:px-10 py-3 bg-white border-t border-[#FAFAFA] flex justify-end items-center">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#28C840]" />
+                <span className="text-[10px] font-medium text-[#6A6A6A] uppercase tracking-wider">
+                  Ambiente seguro
+                </span>
               </div>
             </div>
           </div>
