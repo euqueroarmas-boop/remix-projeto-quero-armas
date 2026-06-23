@@ -360,7 +360,7 @@ export default function QAContratarConfirmarPage() {
   if (loading) {
     return (
       <div style={{ background: D.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Loader2 size={26} color={D.red} style={{ animation: "qa-spin 1s linear infinite" }} />
+        <Loader2 size={26} color={D.inkStrong} style={{ animation: "qa-spin 1s linear infinite" }} />
         <style>{`@keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -375,16 +375,16 @@ export default function QAContratarConfirmarPage() {
     return (
       <div style={{ background: D.bg, minHeight: "100vh", padding: "40px 16px" }}>
         <div style={{ maxWidth: 520, margin: "0 auto" }}>
-          <div style={{ background: D.paper, border: `1px solid ${D.dangerBorder}`, borderRadius: 16, padding: 24 }}>
+          <div style={{ background: D.paper, border: `1px solid ${D.border}`, padding: 24 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: D.dangerAlpha, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <AlertCircle size={20} color={D.danger} />
+              <div style={{ width: 38, height: 38, background: "#F5F5F5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <AlertCircle size={20} color={D.dotError} />
               </div>
               <div>
                 <h1 style={{ fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: D.ink, marginBottom: 8 }}>
                   Recadastramento obrigatório
                 </h1>
-                <p style={{ fontSize: 13, color: D.inkSoft, lineHeight: 1.7, margin: 0 }}>
+                <p style={{ fontSize: 13, color: D.inkBody, lineHeight: 1.7, margin: 0 }}>
                   Seu cadastro veio do sistema antigo da Quero Armas. Para comprar um novo serviço, precisamos atualizar seus documentos no sistema novo.
                 </p>
                 <p style={{ fontSize: 10, color: D.inkFaint, marginTop: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
@@ -394,15 +394,15 @@ export default function QAContratarConfirmarPage() {
             </div>
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
               <button type="button" onClick={() => navigate("/area-do-cliente?secao=arsenal")}
-                style={{ padding: "12px 16px", borderRadius: 10, background: D.red, color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", width: "100%", boxShadow: `0 0 16px ${D.redGlow}` }}>
+                style={{ padding: "12px 16px", background: D.inkStrong, color: "#FAFAFA", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", width: "100%" }}>
                 Enviar documentos agora
               </button>
               <a href={waLink} target="_blank" rel="noopener noreferrer"
-                style={{ display: "block", textAlign: "center", padding: "12px 16px", borderRadius: 10, background: "#22a559", color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>
+                style={{ display: "block", textAlign: "center", padding: "12px 16px", background: "#F5F5F5", color: D.inkStrong, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none", border: `1px solid ${D.border}` }}>
                 Falar com a Equipe Quero Armas
               </a>
               <button type="button" onClick={() => navigate("/area-do-cliente")}
-                style={{ padding: "12px 16px", borderRadius: 10, background: D.paper2, color: D.inkSoft, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${D.border}`, cursor: "pointer", width: "100%" }}>
+                style={{ padding: "12px 16px", background: "transparent", color: D.inkMuted, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${D.border}`, cursor: "pointer", width: "100%" }}>
                 Voltar ao portal
               </button>
             </div>
@@ -412,279 +412,287 @@ export default function QAContratarConfirmarPage() {
     );
   }
 
-  /* ── Render principal ──────────────────────────────────────────────────── */
+  /* ── Render principal — Ficha Catalográfica LIGHT ──────────────────────── */
+  const userEmailDisplay = userEmail || cliente.email || "";
+  const userInitials = (userEmailDisplay || "?").slice(0, 2).toUpperCase();
+  const podeConfirmarBool = Boolean(podeConfirmar);
+
   return (
-    <>
+    <div style={{ background: D.bg, minHeight: "100vh", color: D.inkStrong, WebkitFontSmoothing: "antialiased", fontFamily: "Inter, sans-serif" }}>
       <style>{`
         @keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* Grid de endereço: timeline editorial — inputs underline, indent 76px */
         .qa-addr-grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
           gap: 18px 28px;
-          margin-top: 22px;
-          padding-left: 76px;
+          margin-top: 18px;
         }
         .qa-input-wide { grid-column: span 3 !important; }
-
         @media (max-width: 768px) {
           .qa-addr-grid { grid-template-columns: 1fr 1fr !important; }
           .qa-input-wide { grid-column: span 2 !important; }
         }
         @media (max-width: 480px) {
-          .qa-addr-grid { grid-template-columns: 1fr !important; padding-left: 0 !important; }
+          .qa-addr-grid { grid-template-columns: 1fr !important; }
           .qa-input-wide { grid-column: span 1 !important; }
         }
       `}</style>
 
-      <CheckoutShell
-        step={3}
-        slug={slug}
-        backTo="/area-do-cliente/contratar"
-        hideSidebar
-        summary={{ nome: catalogo.nome, descricao_curta: catalogo.descricao_curta, preco: catalogo.preco, recorrente: catalogo.recorrente }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", padding: "32px 16px" }}>
+        <article style={{
+          width: "100%", maxWidth: 720,
+          background: D.paper, border: `1px solid ${D.border}`,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)", overflow: "hidden",
+        }}>
 
-        {/* ── Titular (cabeçalho editorial) ──────────────────────────── */}
-        <div style={{ padding: "8px 0 36px", borderBottom: `1px solid ${D.border}` }}>
-          <div style={{
+          {/* ── Header ───────────────────────────────────────────────── */}
+          <header style={{
+            borderBottom: `1px solid ${D.border}`,
+            padding: "14px 24px",
+            display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 12,
             fontFamily: "Oswald, sans-serif",
-            fontSize: 10, fontWeight: 500, textTransform: "uppercase",
-            letterSpacing: "0.4em", color: D.inkFaint, marginBottom: 14,
+            fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em",
+            color: D.inkMuted,
           }}>
-            Confirmação · Titular
-          </div>
-          <div style={{
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <button onClick={() => navigate("/area-do-cliente/contratar")} style={{ background: "none", border: "none", padding: 0, color: D.inkMuted, cursor: "pointer", letterSpacing: "0.2em" }}>
+                VOLTAR
+              </button>
+              <span style={{ color: D.inkGhost, fontWeight: 300 }}>/</span>
+              <span style={{ color: D.ink, fontWeight: 700 }}>CHECKOUT QUERO ARMAS</span>
+            </div>
+            <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+              <span style={{ opacity: 0.5 }}>{userInitials}</span>
+              <span style={{ textTransform: "lowercase", letterSpacing: "0.04em" }}>{userEmailDisplay}</span>
+            </div>
+          </header>
+
+          {/* ── Stepper ──────────────────────────────────────────────── */}
+          <nav style={{
+            borderBottom: `1px solid ${D.borderHairline}`,
+            background: D.bg, padding: "12px 24px",
+            display: "flex", justifyContent: "space-between", gap: 8,
             fontFamily: "Oswald, sans-serif",
-            fontSize: 32, fontWeight: 400, letterSpacing: "0.04em",
-            textTransform: "uppercase", color: D.ink, lineHeight: 1.1,
+            fontSize: 11, textTransform: "uppercase", letterSpacing: "0.04em",
           }}>
-            {cliente.nome_completo}
-          </div>
-          <div style={{
-            fontSize: 12, color: D.inkFaint, marginTop: 12,
-            letterSpacing: "0.06em",
-          }}>
-            CPF {cliente.cpf || "—"} &nbsp;·&nbsp; {cliente.email || "sem e-mail"}
-          </div>
-        </div>
+            {[
+              { n: 1, label: "01 IDENTIFICAÇÃO" },
+              { n: 2, label: "02 DADOS" },
+              { n: 3, label: "03 CONFIRMAÇÃO" },
+              { n: 4, label: "04 PAGAMENTO" },
+            ].map((s) => {
+              const active = s.n === 3;
+              return (
+                <span key={s.n} style={{
+                  color: active ? D.ink : D.inkFaint, position: "relative", paddingBottom: 4,
+                  borderBottom: active ? `2px solid ${D.ink}` : "2px solid transparent",
+                }}>
+                  {s.label}
+                </span>
+              );
+            })}
+          </nav>
 
-        {/* ── 1. Endereço ─────────────────────────────────────────────── */}
-        <DarkCard>
-          <SectionLabel
-            n={1} done={enderecoOk !== null} icon={MapPin} label="Endereço"
-            statusLabel={enderecoOk === "sim" ? "Confirmado" : enderecoOk === "nao" ? "Atualizar" : undefined}
-            statusType={enderecoOk === "sim" ? "ok" : "edit"}
-          />
-          <DataRow>
-            {enderecoAtualLinha || <span style={{ fontStyle: "italic", color: D.inkFaint }}>Sem endereço cadastrado.</span>}
-          </DataRow>
-          <DarkConfirmButtons value={enderecoOk} onChange={setEnderecoOk} labelSim="É o mesmo" labelNao="Mudou" />
-          {enderecoOk === "nao" && (
-            <div className="qa-addr-grid">
-              <DarkInput placeholder="CEP" value={novoCep} onChange={setNovoCep} />
-              <DarkInput placeholder="Estado (UF)" value={novoEstado} onChange={(v) => setNovoEstado(v.toUpperCase())} maxLength={2} />
-              <DarkInput placeholder="Rua / Avenida" value={novoEndereco} onChange={(v) => setNovoEndereco(v.toUpperCase())} wide />
-              <DarkInput placeholder="Número" value={novoNumero} onChange={setNovoNumero} />
-              <DarkInput placeholder="Complemento" value={novoComplemento} onChange={(v) => setNovoComplemento(v.toUpperCase())} />
-              <DarkInput placeholder="Bairro" value={novoBairro} onChange={(v) => setNovoBairro(v.toUpperCase())} />
-              <DarkInput placeholder="Cidade" value={novaCidade} onChange={(v) => setNovaCidade(v.toUpperCase())} />
-            </div>
-          )}
-        </DarkCard>
-
-        {/* ── 2. Estado civil e profissão ─────────────────────────────── */}
-        <DarkCard>
-          <SectionLabel
-            n={2} done={dadosOk !== null} icon={User} label="Estado civil e profissão"
-            statusLabel={dadosOk === "sim" ? "Confirmado" : dadosOk === "nao" ? "Atualizar" : undefined}
-            statusType={dadosOk === "sim" ? "ok" : "edit"}
-          />
-          <DataRow>
-            <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 2 }}>Estado civil</div>
-                <span style={{ color: D.ink }}>{cliente.estado_civil || "—"}</span>
+          {/* ── Conteúdo ─────────────────────────────────────────────── */}
+          <div style={{ padding: "48px 48px 56px" }}>
+            {/* Heading editorial */}
+            <header style={{ marginBottom: 48 }}>
+              <h1 style={{
+                fontFamily: "Oswald, sans-serif",
+                fontSize: 48, fontWeight: 700, letterSpacing: "-0.025em",
+                lineHeight: 0.9, textTransform: "uppercase", color: D.ink, margin: 0,
+              }}>
+                CONFIRMAÇÃO<br />
+                <span style={{ color: D.inkGhost, fontSize: 36 }}>·</span> TITULAR
+              </h1>
+              <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ height: 1, width: 32, background: D.ink }} />
+                <p style={{
+                  margin: 0, fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.08em", color: D.inkBody,
+                }}>
+                  {cliente.nome_completo} — CPF {cliente.cpf || "—"}
+                </p>
               </div>
-              <div>
-                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 2 }}>Profissão</div>
-                <span style={{ color: D.ink }}>{cliente.profissao || "—"}</span>
-              </div>
-            </div>
-          </DataRow>
-          <DarkConfirmButtons value={dadosOk} onChange={setDadosOk} labelSim="Não mudou" labelNao="Mudou algo" />
-          {dadosOk === "nao" && (
-            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-              <select value={novoEstadoCivil} onChange={(e) => setNovoEstadoCivil(e.target.value)}
-                style={{ height: 40, padding: "0 14px", fontSize: 12, textTransform: "uppercase", background: D.paper2, border: `1.5px solid ${D.border}`, borderRadius: 8, color: D.inkSoft, outline: "none", width: "100%" }}>
-                <option value="">Estado civil (manter o atual se vazio)</option>
-                {ESTADOS_CIVIS.map((ec) => <option key={ec} value={ec}>{ec}</option>)}
-              </select>
-              <DarkInput placeholder="Profissão (manter atual se vazio)" value={novaProfissao} onChange={(v) => setNovaProfissao(v.toUpperCase())} wide />
-            </div>
-          )}
-        </DarkCard>
+            </header>
 
-        {/* ── 3. Documentos reaproveitados ────────────────────────────── */}
-        <DarkCard>
-          <SectionLabel
-            n={3} done icon={FileCheck2} label="Documentos reaproveitados"
-            statusLabel={docsReaproveitados.length > 0 ? `${docsReaproveitados.length} doc${docsReaproveitados.length > 1 ? "s" : ""}` : undefined}
-            statusType="ok"
-          />
-          {docsReaproveitados.length === 0 ? (
-            <DataRow>
-              <span style={{ fontStyle: "italic", color: D.inkFaint }}>
-                Nenhum documento prévio validado — você enviará todos no processo novo.
-              </span>
-            </DataRow>
-          ) : (
-            <div style={{ paddingLeft: 76, display: "flex", flexDirection: "column", gap: 10 }}>
-              {docsReaproveitados.slice(0, 8).map((d) => (
-                <div key={d} style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <span style={{ width: 18, height: 1, background: D.ink, flexShrink: 0 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+
+              {/* 01 Endereço */}
+              <Section
+                n={1}
+                label="ENDEREÇO"
+                statusDot={enderecoOk === "nao" ? "warn" : "ok"}
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: D.ink, fontWeight: 500, maxWidth: 480 }}>
+                    {enderecoAtualLinha || <span style={{ fontStyle: "italic", color: D.inkFaint }}>SEM ENDEREÇO CADASTRADO</span>}
+                  </p>
+                  <ToggleConfirm
+                    value={enderecoOk} onChange={setEnderecoOk}
+                    labelSim="É O MESMO" labelNao="MUDOU"
+                  />
+                </div>
+                {enderecoOk === "nao" && (
+                  <div className="qa-addr-grid">
+                    <LightInput placeholder="CEP" value={novoCep} onChange={setNovoCep} />
+                    <LightInput placeholder="ESTADO (UF)" value={novoEstado} onChange={(v) => setNovoEstado(v.toUpperCase())} maxLength={2} />
+                    <LightInput placeholder="RUA / AVENIDA" value={novoEndereco} onChange={(v) => setNovoEndereco(v.toUpperCase())} wide />
+                    <LightInput placeholder="NÚMERO" value={novoNumero} onChange={setNovoNumero} />
+                    <LightInput placeholder="COMPLEMENTO" value={novoComplemento} onChange={(v) => setNovoComplemento(v.toUpperCase())} />
+                    <LightInput placeholder="BAIRRO" value={novoBairro} onChange={(v) => setNovoBairro(v.toUpperCase())} />
+                    <LightInput placeholder="CIDADE" value={novaCidade} onChange={(v) => setNovaCidade(v.toUpperCase())} />
+                  </div>
+                )}
+              </Section>
+
+              {/* 02 Estado civil e profissão */}
+              <Section
+                n={2}
+                label="ESTADO CIVIL E PROFISSÃO"
+                statusDot={dadosOk === "nao" ? "warn" : "ok"}
+              >
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: D.ink }}>
+                    {(cliente.estado_civil || "—")} <span style={{ color: D.inkGhost, margin: "0 6px" }}>·</span> {(cliente.profissao || "—")}
+                  </p>
+                  <ToggleConfirm
+                    value={dadosOk} onChange={setDadosOk}
+                    labelSim="NÃO MUDOU" labelNao="MUDOU ALGO"
+                  />
+                </div>
+                {dadosOk === "nao" && (
+                  <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                    <select value={novoEstadoCivil} onChange={(e) => setNovoEstadoCivil(e.target.value)}
+                      style={{
+                        height: 40, padding: "0 12px",
+                        fontSize: 13, textTransform: "uppercase",
+                        background: "#FFFFFF", border: `1px solid ${D.border}`,
+                        color: D.ink, outline: "none", width: "100%", fontFamily: "Inter, sans-serif",
+                      }}>
+                      <option value="">ESTADO CIVIL (MANTER O ATUAL SE VAZIO)</option>
+                      {ESTADOS_CIVIS.map((ec) => <option key={ec} value={ec}>{ec}</option>)}
+                    </select>
+                    <LightInput placeholder="PROFISSÃO (MANTER ATUAL SE VAZIO)" value={novaProfissao} onChange={(v) => setNovaProfissao(v.toUpperCase())} wide />
+                  </div>
+                )}
+              </Section>
+
+              {/* 03 Documentos reaproveitados */}
+              <Section n={3} label="DOCUMENTOS REAPROVEITADOS" statusDot="ok">
+                {docsReaproveitados.length === 0 ? (
+                  <p style={{ margin: 0, fontStyle: "italic", color: D.inkFaint, fontSize: 13 }}>
+                    Nenhum documento prévio validado — você enviará todos no processo novo.
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: D.ink }}>
+                    {docsReaproveitados.length} DOC{docsReaproveitados.length > 1 ? "S" : ""}{" "}
+                    <span style={{ color: D.inkMuted, fontWeight: 400, marginLeft: 6, fontSize: 12, letterSpacing: "0.04em" }}>
+                      — {docsReaproveitados.slice(0, 8).join(", ")}
+                      {docsReaproveitados.length > 8 && ` +${docsReaproveitados.length - 8}`}
+                    </span>
+                  </p>
+                )}
+              </Section>
+
+              {/* 04 Valor do serviço */}
+              <Section n={4} label="VALOR DO SERVIÇO" statusDot="ok">
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                   <span style={{
                     fontFamily: "Oswald, sans-serif",
-                    fontSize: 12, fontWeight: 500, textTransform: "uppercase",
-                    letterSpacing: "0.18em", color: D.ink,
-                  }}>{d}</span>
+                    fontSize: 32, fontWeight: 700, letterSpacing: "-0.025em",
+                    color: D.ink,
+                  }}>
+                    {valorNumerico > 0
+                      ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
+                      : "—"}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+                    letterSpacing: "0.1em", color: D.inkFaint,
+                  }}>
+                    PREÇO OFICIAL
+                  </span>
                 </div>
-              ))}
-              {docsReaproveitados.length > 8 && (
-                <span style={{ fontSize: 11, color: D.inkFaint, letterSpacing: "0.06em" }}>
-                  +{docsReaproveitados.length - 8} outros documentos disponíveis.
-                </span>
-              )}
-            </div>
-          )}
-        </DarkCard>
+              </Section>
 
-        {/* ── 4. Valor do serviço ──────────────────────────────────────── */}
-        <DarkCard>
-          <SectionLabel n={4} done={valorNumerico > 0} icon={BadgeDollarSign} label="Valor do serviço" />
-          <div style={{ paddingLeft: 76 }}>
-            <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
-              <div style={{
-                fontFamily: "Oswald, sans-serif",
-                fontSize: 48, fontWeight: 300, color: D.ink, lineHeight: 1,
-                letterSpacing: "0.01em",
-              }}>
-                {valorNumerico > 0
-                  ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
-                  : "—"}
-              </div>
-              <span style={{
-                fontSize: 9, fontWeight: 600, textTransform: "uppercase",
-                letterSpacing: "0.32em", color: D.inkFaint,
-              }}>
-                Preço oficial
-              </span>
+              {/* 05 Contrato e aceite */}
+              <Section
+                n={5}
+                label="CONTRATO E ACEITE OBRIGATÓRIO"
+                statusDot={aceiteContrato ? "ok" : "error"}
+              >
+                <p style={{ margin: "0 0 14px", fontSize: 12, lineHeight: 1.7, color: D.inkBody, maxWidth: 560 }}>
+                  Você vai revisar e aceitar o contrato de adesão completo na etapa de pagamento. Ao confirmar aqui, você concorda com os{" "}
+                  <a href="/termos" target="_blank" rel="noopener noreferrer" style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.divider}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    TERMOS DE SERVIÇO <ExternalLink size={10} />
+                  </a>{" "}e a{" "}
+                  <a href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.divider}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    POLÍTICA DE PRIVACIDADE <ExternalLink size={10} />
+                  </a>{" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
+                </p>
+                <label
+                  onClick={() => setAceiteContrato((v) => !v)}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: "pointer" }}
+                >
+                  <span style={{
+                    marginTop: 2, width: 18, height: 18, flexShrink: 0,
+                    border: `2px solid ${aceiteContrato ? D.ink : D.border}`,
+                    background: aceiteContrato ? D.ink : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all .15s",
+                  }}>
+                    {aceiteContrato && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="square">
+                        <path d="M2 6l3 3 5-6" />
+                      </svg>
+                    )}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.02em", color: D.inkBody, lineHeight: 1.4, flex: 1 }}>
+                    LI E ACEITO INTEGRALMENTE OS TERMOS DO CONTRATO DE PRESTAÇÃO DE SERVIÇOS E POLÍTICA DE PRIVACIDADE.
+                  </span>
+                </label>
+              </Section>
             </div>
-            <p style={{ fontSize: 12, color: D.inkFaint, marginTop: 14, lineHeight: 1.7, fontWeight: 300, maxWidth: 520 }}>
-              Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
-            </p>
+
+            {/* ── CTA ────────────────────────────────────────────────── */}
+            <div style={{ marginTop: 64 }}>
+              <button
+                type="button"
+                disabled={!podeConfirmarBool}
+                onClick={handleConfirmar}
+                style={{
+                  width: "100%",
+                  background: podeConfirmarBool ? D.inkStrong : "#A3A3A3",
+                  color: "#FFFFFF",
+                  padding: "24px",
+                  fontFamily: "Oswald, sans-serif",
+                  fontSize: 20, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em",
+                  border: "none",
+                  cursor: podeConfirmarBool ? "pointer" : "not-allowed",
+                  transition: "background .15s, letter-spacing .2s",
+                }}
+              >
+                {submitting ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 12, justifyContent: "center" }}>
+                    <Loader2 size={16} style={{ animation: "qa-spin 1s linear infinite" }} />
+                    PROCESSANDO
+                  </span>
+                ) : (
+                  "IR PARA PAGAMENTO"
+                )}
+              </button>
+              <p style={{
+                textAlign: "center", marginTop: 24,
+                fontSize: 9, fontWeight: 500, textTransform: "uppercase",
+                letterSpacing: "0.2em", color: D.inkGhost,
+              }}>
+                AMBIENTE SEGURO · PROTOCOLO CANÔNICO · NEUTRAL SCALE AAA
+              </p>
+            </div>
           </div>
-        </DarkCard>
-
-        {/* ── 5. Contrato e aceite ─────────────────────────────────────── */}
-        <DarkCard last>
-          <SectionLabel
-            n={5} done={aceiteContrato} icon={FileSignature} label="Contrato e aceite"
-            statusLabel={aceiteContrato ? "Aceito ✓" : "Obrigatório"}
-            statusType={aceiteContrato ? "ok" : "edit"}
-            tone="neutral"
-          />
-
-          {/* Aviso e links legais — a leitura e o aceite do contrato completo
-              (acordeão por cláusula + resumo) acontecem na etapa de
-              Contrato e Pagamento, em /checkout/finalizar, igual ao fluxo
-              de quem não está logado. Não duplicamos a exibição aqui. */}
-          <p style={{ paddingLeft: 76, fontSize: 13, color: D.inkSoft, lineHeight: 1.75, marginBottom: 20, fontWeight: 300, maxWidth: 620 }}>
-            Você vai revisar e aceitar o contrato de adesão de serviços completo na etapa de pagamento. Ao confirmar aqui, você concorda com os{" "}
-            <a href="/termos" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.border}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
-              Termos de Serviço <ExternalLink size={10} />
-            </a>
-            {" "}e a{" "}
-            <a href="/privacidade" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.border}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
-              Política de Privacidade <ExternalLink size={10} />
-            </a>
-            {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
-          </p>
-
-          {/* Checkbox de aceite */}
-          <button
-            type="button"
-            onClick={() => setAceiteContrato((v) => !v)}
-            style={{
-              marginLeft: 76, width: "calc(100% - 76px)",
-              display: "flex", alignItems: "flex-start", gap: 16,
-              cursor: "pointer", textAlign: "left",
-              background: "transparent",
-              border: "none",
-              padding: "4px 0",
-              transition: "all .2s",
-            }}
-          >
-            {/* Checkbox visual */}
-            <div style={{
-              width: 18, height: 18, flexShrink: 0, marginTop: 3,
-              background: aceiteContrato ? D.ink : "transparent",
-              border: `1px solid ${D.ink}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "all .2s",
-            }}>
-              {aceiteContrato && <Check size={12} color="#000" strokeWidth={3} />}
-            </div>
-            <span style={{ fontSize: 13, color: D.inkSoft, lineHeight: 1.7, flex: 1, fontWeight: 300 }}>
-              <strong style={{ color: D.ink, fontWeight: 600 }}>Li e aceito</strong>{" "}
-              os Termos de Serviço e a Política de Privacidade da Quero Armas.
-              Estou ciente de que o processo será iniciado após a confirmação do pagamento.
-            </span>
-          </button>
-        </DarkCard>
-
-        {/* ── CTA ─────────────────────────────────────────────────────── */}
-        <div style={{ marginTop: 40, borderTop: `1px solid ${D.border}`, paddingTop: 28 }}>
-          <button
-            type="button"
-            disabled={!podeConfirmar}
-            onClick={handleConfirmar}
-            style={{
-              width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 4px", border: "none",
-              background: "transparent",
-              cursor: podeConfirmar ? "pointer" : "not-allowed",
-              fontFamily: "Oswald, sans-serif",
-              fontSize: 16, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.32em",
-              color: podeConfirmar ? D.ink : D.inkFaint,
-              transition: "color .2s, opacity .2s",
-              opacity: podeConfirmar ? 1 : 0.5,
-            }}
-          >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
-              {submitting
-                ? <Loader2 size={16} style={{ animation: "qa-spin 1s linear infinite" }} />
-                : <Sparkles size={14} />}
-              {submitting ? "Processando" : "Ir para pagamento"}
-            </span>
-            {!submitting && <ChevronRight size={20} />}
-          </button>
-
-          {!aceiteContrato && (enderecoOk !== null || dadosOk !== null) && (
-            <p style={{
-              textAlign: "center", fontSize: 10, color: D.inkFaint,
-              marginTop: 14, letterSpacing: "0.24em", textTransform: "uppercase",
-              fontFamily: "Oswald, sans-serif",
-            }}>
-              Aceite o contrato acima para liberar o pagamento
-            </p>
-          )}
-        </div>
-
-      </CheckoutShell>
-    </>
+        </article>
+      </div>
+    </div>
   );
 }
