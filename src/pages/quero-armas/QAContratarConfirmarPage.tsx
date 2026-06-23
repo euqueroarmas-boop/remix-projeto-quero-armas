@@ -3,57 +3,34 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2,
-  Sparkles,
-  CheckCircle2,
-  MapPin,
-  User,
-  FileCheck2,
   AlertCircle,
-  ChevronRight,
-  BadgeDollarSign,
-  Check,
-  Pencil,
-  FileSignature,
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
-import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
 
 /* =============================================================================
- * Design tokens — dark premium, vermelho bordô da empresa.
+ * Design tokens — Escala neutra canônica LIGHT (AAA Pass).
+ * Ver mem://style/quero-armas/canonical-neutral-scale
  * ============================================================================= */
 const D = {
-  /* Paleta monocromática (preto + cinza chumbo) — Timeline editorial */
-  bg: "#000000",
-  paper: "#0A0A0A",
-  paper2: "#141414",
-  border: "#2A2A2A",
-  borderSoft: "rgba(255,255,255,0.05)",
-  ink: "#C7C7C7",
-  inkSoft: "#C7C7C7",
-  inkFaint: "#5C5C5C",
-  /* "red" mantém o nome mas agora é o acento monocromático claro */
-  red: "#C7C7C7",
-  redDeep: "#8a8a8a",
-  redAlpha: "rgba(199,199,199,0.08)",
-  redAlphaStrong: "rgba(199,199,199,0.25)",
-  redGlow: "rgba(199,199,199,0.20)",
-  success: "#C7C7C7",
-  successAlpha: "rgba(199,199,199,0.08)",
-  successBorder: "rgba(199,199,199,0.30)",
-  warning: "#8a8a8a",
-  warningAlpha: "rgba(138,138,138,0.10)",
-  warningBorder: "rgba(138,138,138,0.35)",
-  danger: "#C7C7C7",
-  dangerAlpha: "rgba(199,199,199,0.08)",
-  dangerBorder: "rgba(199,199,199,0.30)",
-  /* neutro = mesma família */
-  neutral: "#C7C7C7",
-  neutralAlpha: "rgba(199,199,199,0.08)",
-  neutralAlphaStrong: "rgba(199,199,199,0.30)",
-  neutralGlow: "rgba(199,199,199,0.15)",
+  /* Light AAA scale */
+  bg:        "#FAFAFA", // page background
+  paper:     "#FFFFFF", // card background
+  border:    "#E5E5E5",
+  borderHairline: "#F5F5F5",
+  divider:   "#D4D4D4",
+  ink:       "#0A0A0A",
+  inkStrong: "#171717",
+  inkBody:   "#404040",
+  inkMuted:  "#737373",
+  inkFaint:  "#A3A3A3",
+  inkGhost:  "#D4D4D4",
+  /* Microdots de status (apenas dots ≤ 8px) */
+  dotOk:     "#28C840",
+  dotWarn:   "#FEBC2E",
+  dotError:  "#FF5F57",
 };
 
 interface Catalogo {
@@ -87,100 +64,63 @@ const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)",
 
 type Confirmacao = "sim" | "nao" | null;
 
-/* ── Primitivos de UI ───────────────────────────────────────────────────────── */
+/* ── Primitivos LIGHT (Ficha catalográfica) ────────────────────────────────── */
 
-/* Timeline editorial: cada seção é apenas um bloco vertical com um filete
-   inferior, sem caixa, sem borda arredondada. */
-function DarkCard({ children, last = false }: {
+function Section({
+  n, label, statusDot = "ok", children,
+}: {
+  n: number;
+  label: string;
+  statusDot?: "ok" | "warn" | "error";
   children: React.ReactNode;
-  accentLine?: boolean;
-  glowBorder?: boolean;
-  tone?: "red" | "neutral";
-  last?: boolean;
 }) {
+  const dotColor =
+    statusDot === "error" ? D.dotError :
+    statusDot === "warn"  ? D.dotWarn  : D.dotOk;
   return (
-    <div style={{
-      padding: "28px 0",
-      borderBottom: last ? "none" : `1px solid ${D.border}`,
-    }}>
+    <div style={{ position: "relative", paddingLeft: 32, borderLeft: `1px solid ${D.border}` }}>
+      <span style={{
+        position: "absolute", left: -4.5, top: 0,
+        width: 8, height: 8, borderRadius: "50%", background: dotColor,
+      }} />
+      <h2 style={{
+        fontFamily: "Oswald, sans-serif",
+        fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+        letterSpacing: "0.2em", color: D.inkFaint, margin: "0 0 8px",
+      }}>
+        {String(n).padStart(2, "0")} {label}
+      </h2>
       {children}
     </div>
   );
 }
 
-function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType, tone = "red" }: {
-  n: number; done: boolean; icon: any; label: string;
-  statusLabel?: string; statusType?: "ok" | "edit";
-  tone?: "red" | "neutral";
-}) {
-  const numStr = String(n).padStart(2, "0");
-  return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 20, marginBottom: 18 }}>
-      <span style={{
-        fontFamily: "Oswald, sans-serif",
-        fontSize: 36, fontWeight: 300, lineHeight: 1,
-        letterSpacing: "0.02em",
-        color: done ? D.ink : D.inkFaint,
-        flexShrink: 0, width: 56,
-        transition: "color .2s",
-      }}>
-        {numStr}
-      </span>
-      <span style={{
-        flex: 1, minWidth: 0,
-        fontFamily: "Oswald, sans-serif",
-        fontSize: 11, fontWeight: 500, textTransform: "uppercase",
-        letterSpacing: "0.32em", color: D.ink,
-      }}>
-        {label}
-      </span>
-      {statusLabel && (
-        <span style={{
-          fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em",
-          flexShrink: 0,
-          color: statusType === "ok" ? D.ink : D.inkFaint,
-        }}>
-          {statusLabel}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function DataRow({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{
-      paddingLeft: 76,
-      fontSize: 14, color: D.inkSoft, lineHeight: 1.7,
-      fontWeight: 300,
-    }}>
-      {children}
-    </div>
-  );
-}
-
-function DarkConfirmButtons({ value, onChange, labelSim, labelNao }: {
-  value: Confirmacao; onChange: (v: "sim" | "nao") => void;
-  labelSim: string; labelNao: string;
+function ToggleConfirm({ value, onChange, labelSim, labelNao }: {
+  value: Confirmacao;
+  onChange: (v: "sim" | "nao") => void;
+  labelSim: string;
+  labelNao: string;
 }) {
   return (
-    <div style={{
-      marginTop: 18, paddingLeft: 76,
-      display: "flex", alignItems: "center", gap: 28,
-    }}>
+    <div style={{ display: "inline-flex", background: "#F5F5F5", padding: 4 }}>
       {(["sim", "nao"] as const).map((opt) => {
-        const isSelected = value === opt;
+        const sel = value === opt;
         return (
-          <button key={opt} type="button" onClick={() => onChange(opt)} style={{
-            background: "transparent", border: "none", padding: "4px 0",
-            cursor: "pointer",
-            fontFamily: "Oswald, sans-serif",
-            fontSize: 11, fontWeight: 600, textTransform: "uppercase",
-            letterSpacing: "0.24em",
-            color: isSelected ? D.ink : D.inkFaint,
-            borderBottom: `1px solid ${isSelected ? D.ink : "transparent"}`,
-            transition: "color .15s, border-color .15s",
-          }}>
+          <button
+            key={opt} type="button" onClick={() => onChange(opt)}
+            style={{
+              padding: "6px 12px",
+              fontFamily: "Inter, sans-serif",
+              fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              background: sel ? "#FFFFFF" : "transparent",
+              border: sel ? `1px solid ${D.border}` : "1px solid transparent",
+              boxShadow: sel ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+              color: sel ? D.inkStrong : D.inkFaint,
+              cursor: "pointer",
+              transition: "all .15s",
+            }}
+          >
             {opt === "sim" ? labelSim : labelNao}
           </button>
         );
@@ -189,7 +129,7 @@ function DarkConfirmButtons({ value, onChange, labelSim, labelNao }: {
   );
 }
 
-function DarkInput({ placeholder, value, onChange, wide, maxLength }: {
+function LightInput({ placeholder, value, onChange, wide, maxLength }: {
   placeholder: string; value: string; onChange: (v: string) => void;
   wide?: boolean; maxLength?: number;
 }) {
@@ -205,11 +145,11 @@ function DarkInput({ placeholder, value, onChange, wide, maxLength }: {
       className={wide ? "qa-input-wide" : ""}
       style={{
         height: 38, padding: "0 2px",
-        fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em",
+        fontSize: 13, textTransform: "uppercase", letterSpacing: "0.04em",
         background: "transparent",
         border: "none",
         borderBottom: `1px solid ${focused ? D.ink : D.border}`,
-        color: D.ink, outline: "none", width: "100%", boxSizing: "border-box",
+        color: D.inkStrong, outline: "none", width: "100%", boxSizing: "border-box",
         transition: "border-color .15s",
       }}
     />
@@ -222,6 +162,7 @@ export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
   const { slug = "" } = useParams();
   const { addItem } = useCart();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -257,6 +198,7 @@ export default function QAContratarConfirmarPage() {
         return;
       }
       const uid = sess.session.user.id;
+      setUserEmail(sess.session.user.email ?? null);
 
       const { data: cat } = await supabase
         .from("qa_servicos_catalogo" as any)
