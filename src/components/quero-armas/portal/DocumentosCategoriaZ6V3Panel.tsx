@@ -237,11 +237,11 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .listhead .add:hover{background:#7A1F2B;color:#fff}
         .qa-docsz6 .grp{background:#fff;border:1px solid #E5E5E5;border-top:0}
         .qa-docsz6 .grp:last-child{border-radius:0 0 4px 4px}
-        .qa-docsz6 .grp-h{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #EFEFEF;background:#FAFAFA;cursor:pointer;user-select:none}
+        .qa-docsz6 .grp-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #EFEFEF;background:#FAFAFA;cursor:pointer;user-select:none}
         .qa-docsz6 .grp-h .gt{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.18em;color:#0A0A0A;font-weight:600;display:flex;align-items:center;gap:8px}
         .qa-docsz6 .grp-h .gt .gc{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald',sans-serif;letter-spacing:.14em}
         .qa-docsz6 .grp-h .chev{color:#7A7A7A}
-        .qa-docsz6 .row{display:grid;grid-template-columns:14px 1fr auto auto auto auto;gap:14px;align-items:center;padding:11px 14px;border-bottom:1px solid #F2F2F2}
+        .qa-docsz6 .row{display:grid;grid-template-columns:14px 1fr auto auto auto auto;gap:18px;align-items:center;padding:16px 18px;border-bottom:1px solid #F2F2F2}
         .qa-docsz6 .row:last-child{border-bottom:0}
         .qa-docsz6 .row .nm{font-size:12px;font-weight:600;color:#0A0A0A;line-height:1.3}
         .qa-docsz6 .row .mt{font-size:10px;color:#7A7A7A;margin-top:2px;font-family:'Oswald',sans-serif;letter-spacing:.06em}
@@ -251,17 +251,17 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .pill-repr{background:#FCE3E1;color:#8A1410}
         .qa-docsz6 .dt{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.08em;color:#0A0A0A;font-weight:600;text-align:right;min-width:78px}
         .qa-docsz6 .rem{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.14em;font-weight:600;text-align:right;min-width:110px}
-        .qa-docsz6 .acts{display:flex;align-items:center;gap:2px;justify-content:flex-end}
+        .qa-docsz6 .acts{display:flex;align-items:center;gap:6px;justify-content:flex-end}
         .qa-docsz6 .act{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid transparent;background:transparent;color:#9A9A9A;border-radius:2px;cursor:pointer;transition:all .12s ease}
         .qa-docsz6 .act:hover{color:#7A1F2B;border-color:#E5E5E5;background:#fff}
         .qa-docsz6 .act:disabled{opacity:.35;cursor:not-allowed}
         .qa-docsz6 .act:disabled:hover{color:#9A9A9A;border-color:transparent;background:transparent}
-        .qa-docsz6 .rm{font-size:10px;color:#C8C8C8;background:transparent;border:0;cursor:pointer;font-family:'Oswald',sans-serif;letter-spacing:.14em;text-transform:lowercase;padding:0 6px}
+        .qa-docsz6 .rm{font-size:10px;color:#C8C8C8;background:transparent;border:0;cursor:pointer;font-family:'Oswald',sans-serif;letter-spacing:.14em;text-transform:lowercase;padding:0 6px;margin-left:6px}
         .qa-docsz6 .rm:hover{color:#D9342B}
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
           .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:8px;row-gap:6px}
+          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
           .qa-docsz6 .row .acts{justify-content:flex-start;margin-top:4px}
