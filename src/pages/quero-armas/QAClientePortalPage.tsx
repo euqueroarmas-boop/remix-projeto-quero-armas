@@ -858,7 +858,7 @@ export default function QAClientePortalPage() {
     { key: "processos" as const, label: "Meus processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "arsenal" as const, label: "Meu Arsenal", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
+    { key: "arsenal" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "secondary" as const },
     { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
   ], []);
@@ -1118,7 +1118,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-[230px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-[68px]" : "lg:pl-[230px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1130,19 +1130,33 @@ export default function QAClientePortalPage() {
         onConcluido={handleEntradaConcluido}
       />
       {/* ═══ SIDEBAR Z6 DARK ═══ */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col w-[230px] bg-[#0A0A0A] text-[#E8E8E8]">
-        {/* Brand: QA mark + Quero Armas / ÁREA DO CLIENTE */}
-        <div className="flex items-center gap-2.5 px-4 py-4">
+      <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${sidebarCollapsed ? "w-[68px]" : "w-[230px]"}`}>
+        {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
+        <div className={`flex items-center px-4 py-4 ${sidebarCollapsed ? "justify-center" : "gap-2.5"}`}>
           <div className="w-9 h-9 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[13px] tracking-[0.04em] shrink-0" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
-          <div className="min-w-0">
-            <div className="text-[13px] font-semibold text-white leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>Quero Armas</div>
-            <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>ÁREA DO CLIENTE</div>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
+              <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Área do Cliente</div>
+            </div>
+          )}
         </div>
+
+        {/* Botão moderno: regredir/expandir menu */}
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(v => !v)}
+          aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+          className="absolute -right-3 top-7 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+        >
+          {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+        </button>
 
         {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+          {!sidebarCollapsed && (
+            <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+          )}
           {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
@@ -1151,14 +1165,18 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left">{item.label}</span>
+                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
           })}
-          <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+          {!sidebarCollapsed && (
+            <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+          )}
+          {sidebarCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
@@ -1167,36 +1185,59 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="flex-1 text-left">{item.label}</span>
+                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
           })}
         </nav>
 
-        {/* Rodapé: Precisa de ajuda? + WhatsApp + Sair */}
-        <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-[#1a1a1a]">
-          <div className="text-[12px] font-semibold text-[#E8E8E8] mb-0.5">Precisa de ajuda?</div>
-          <div className="text-[10.5px] text-[#7A7A7A] mb-2.5">Atendimento direto pelo WhatsApp</div>
-          <a
-            href="https://wa.me/5511978481919"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            +55 11 97848-1919
-          </a>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
-          >
-            <LogOut className="h-3 w-3" /> Sair
-          </button>
-        </div>
+        {/* Rodapé: WhatsApp + Sair */}
+        {sidebarCollapsed ? (
+          <div className="mb-3.5 pt-3.5 mx-2 border-t border-[#1a1a1a] flex flex-col items-center gap-2">
+            <a
+              href="https://wa.me/5511978481919"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="WhatsApp +55 11 97848-1919"
+              className="w-10 h-10 rounded-md flex items-center justify-center bg-[#1CC355] hover:bg-[#19B14C] text-white transition"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </a>
+            <button
+              type="button"
+              onClick={handleLogout}
+              title="Sair"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-[#7A7A7A] hover:text-white hover:bg-[#141414] transition"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-[#1a1a1a]">
+            <div className="text-[12px] font-semibold text-[#E8E8E8] mb-0.5">Precisa de ajuda?</div>
+            <div className="text-[10.5px] text-[#7A7A7A] mb-2.5">Atendimento direto pelo WhatsApp</div>
+            <a
+              href="https://wa.me/5511978481919"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              +55 11 97848-1919
+            </a>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
+            >
+              <LogOut className="h-3 w-3" /> Sair
+            </button>
+          </div>
+        )}
       </aside>
 
       {mobileNavOpen && (
