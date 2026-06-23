@@ -18,6 +18,7 @@ interface Processo {
   status: string;
   pagamento_status: string;
   data_criacao: string;
+  respostas_questionario_json?: any;
   total_docs?: number;
   pendentes?: number;
   aprovados?: number;
@@ -79,7 +80,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
     try {
       const { data: procs, error } = await supabase
         .from("qa_processos")
-        .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em")
+        .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
         .eq("cliente_id", clienteId)
         .order("data_criacao", { ascending: false });
       if (error) throw error;
@@ -205,6 +206,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
         const prTone = prazoDot(dias);
         const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
         const sDot = statusDotColor(p.status);
+        const protocolo = p.respostas_questionario_json?.protocolo?.numero_protocolo || p.respostas_questionario_json?.protocolo?.numero || null;
 
         return (
           <button
@@ -217,6 +219,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
                 <div className="flex items-center gap-2 flex-wrap">
                   <FileText className="h-3.5 w-3.5 text-[#6A6A6A]" />
                   <span className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">PROCESSO · {formatDate(p.data_criacao)}</span>
+                  <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">PROTOCOLO: {protocolo ? String(protocolo).toUpperCase() : "—"}</span>
                 </div>
                 <h4 className="font-bold text-sm text-[#0A0A0A] uppercase mt-1 line-clamp-2">{p.servico_nome}</h4>
 
