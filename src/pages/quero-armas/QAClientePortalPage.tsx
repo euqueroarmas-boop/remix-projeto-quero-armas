@@ -2056,26 +2056,11 @@ export default function QAClientePortalPage() {
 
         {activeSection === "contratos" && (
           <div id="qa-portal-contratos" tabIndex={-1} className="space-y-4 outline-none">
-            <PortalScopeSelector hint="Contratos são compartilhados entre processos do mesmo cliente." />
-            <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
-              {currentScope.type === "processo" && (
-                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                  Os contratos abaixo são do cliente como um todo. Quando não houver
-                  vínculo direto entre contrato e processo, o documento permanece
-                  visível para evitar omissão indevida.
-                </div>
-              )}
-              {cliente?.id ? (
-                <>
-                  <ContratoBlock clienteId={cliente.id} />
-                  {(cliente as any)?.id_legado != null && (
-                    <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
-                  )}
-                </>
-              ) : (
-                <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
-              )}
-            </SectionCard>
+            {cliente?.id ? (
+              <QAContratosCockpitV1 cliente={cliente} />
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+            )}
           </div>
         )}
       </main>
