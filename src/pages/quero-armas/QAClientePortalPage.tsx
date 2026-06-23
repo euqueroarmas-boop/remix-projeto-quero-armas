@@ -858,7 +858,7 @@ export default function QAClientePortalPage() {
     { key: "processos" as const, label: "Meus processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "arsenal" as const, label: "Meu Arsenal", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
+    { key: "arsenal" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "secondary" as const },
     { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
   ], []);
