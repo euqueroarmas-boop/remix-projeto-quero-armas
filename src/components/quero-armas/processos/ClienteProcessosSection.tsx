@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer, Activity } from "lucide-react";
+import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, RefreshCw, CreditCard, CalendarClock } from "lucide-react";
 import { getStatusProcesso, formatDate } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 
 /* =============================================================================
- * ClienteProcessosSection — Estilo Catálogo Light
- * Paleta: Page #FAFAFA | Paper #FFFFFF | Ink #0A0A0A | Border #E4E4E4
- *         Secondary #6A6A6A | Micro-dots RGB apenas para status (8px)
+ * ClienteProcessosSection — Estilo Catálogo Light (v2 Dossiê 8/4)
+ * Page #FAFAFA · Paper #FFFFFF · Ink #0A0A0A · Hairline #E4E4E4 · Muted #6A6A6A
+ * Micro-dots: #28C840 (ok) · #FEBC2E (em curso) · #FF5F57 (atenção)
  * ============================================================================= */
 
 interface Processo {
@@ -49,16 +49,13 @@ const diasRestantes = (d?: string | null): number | null => {
   return Math.ceil((t - Date.now()) / 86400000);
 };
 
-/** Catálogo Light: apenas micro-dot + cor de texto neutra. Sem fundos coloridos. */
 const prazoDot = (dias: number | null) => {
-  if (dias === null) return { dot: "#6A6A6A", text: "text-[#6A6A6A]" };
-  if (dias < 0) return { dot: "#FF5F57", text: "text-[#0A0A0A]" };
-  if (dias <= 7) return { dot: "#FF5F57", text: "text-[#0A0A0A]" };
-  if (dias <= 30) return { dot: "#FEBC2E", text: "text-[#0A0A0A]" };
-  return { dot: "#28C840", text: "text-[#0A0A0A]" };
+  if (dias === null) return { dot: "#6A6A6A" };
+  if (dias <= 7) return { dot: "#FF5F57" };
+  if (dias <= 30) return { dot: "#FEBC2E" };
+  return { dot: "#28C840" };
 };
 
-/** Mapeia status para micro-dot RGB discreto (8px). */
 const statusDotColor = (status: string) => {
   const green = new Set(["concluido", "aprovado", "pronto_para_protocolar", "deferido", "protocolado", "em_analise_orgao", "em_validacao_ia"]);
   const yellow = new Set(["em_revisao_humana", "em_andamento", "aguardando_documentos"]);
@@ -149,7 +146,6 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
     );
   }
 
-  // Banner global: menor prazo entre todos os processos ativos — estilo Catálogo Light
   const ativos = processos.filter((p) => p.status !== "concluido" && p.pagamento_status !== "aguardando");
   const comPrazo = ativos.filter((p) => !!p.prazo_critico_data);
   const menor = comPrazo.length
@@ -162,170 +158,241 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
   const menorDias = diasRestantes(menor?.prazo_critico_data);
   const menorTone = prazoDot(menorDias);
 
+  const totalProc = processos.length;
+  const emAnalise = processos.filter((p) => ["em_analise_orgao", "em_validacao_ia", "em_revisao_humana", "protocolado"].includes(p.status)).length;
+  const pendencias = processos.filter((p) => (p.pendentes ?? 0) > 0 || p.status === "aguardando_documentos" || p.pagamento_status === "aguardando").length;
+  const concluidos = processos.filter((p) => p.status === "concluido").length;
+
   return (
-    <div className="space-y-2.5">
-      {menor && menorDias !== null && (
-        <div className="rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] p-4">
-          <div className="flex items-start gap-3">
-            <div className="shrink-0 w-9 h-9 rounded-sm flex items-center justify-center border border-[#E4E4E4]">
-              <Timer className="h-4 w-4 text-[#6A6A6A]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="w-2 h-2 rounded-full" style={{ background: menorTone.dot }} aria-hidden="true" />
-                <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A]">PRAZO CRÍTICO DA SUA DOCUMENTAÇÃO</span>
-                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] text-[#0A0A0A]">
-                  {menorDias < 0 ? `VENCIDO HÁ ${Math.abs(menorDias)}D` : menorDias === 0 ? "VENCE HOJE" : `${menorDias} DIAS RESTANTES`}
-                </span>
-              </div>
-              <p className="text-[12px] leading-relaxed mt-1.5 text-[#0A0A0A]">
-                Você precisa enviar todos os documentos antes de <strong>{formatDate(menor.prazo_critico_data!)}</strong>.
-                {menor.prazo_critico_doc_label ? (
-                  <> Documento mais próximo do vencimento: <strong>{menor.prazo_critico_doc_label}</strong>.</>
-                ) : null}
-              </p>
-              <p className="text-[11px] leading-relaxed mt-1 normal-case text-[#6A6A6A]">
-                Se algum documento vencer antes do protocolo, será necessário emitir uma versão atualizada e reenviar.
-              </p>
-            </div>
+    <div className="space-y-8">
+      {/* §00 — Banda de KPIs */}
+      <section className="grid grid-cols-2 md:grid-cols-4 border border-[#E4E4E4] bg-white rounded-sm divide-x divide-[#E4E4E4]">
+        <KpiCell label="TOTAL DE PROCESSOS" value={String(totalProc).padStart(2, "0")} />
+        <KpiCell label="EM ANÁLISE" value={String(emAnalise).padStart(2, "0")} dot={emAnalise > 0 ? "#FEBC2E" : undefined} />
+        <KpiCell label="PENDÊNCIAS" value={String(pendencias).padStart(2, "0")} dot={pendencias > 0 ? "#FF5F57" : undefined} />
+        <KpiCell
+          label="PRÓXIMO PRAZO"
+          value={menor?.prazo_critico_data ? formatDate(menor.prazo_critico_data) : "—"}
+          mono
+          accent={menorDias !== null && menorDias <= 7}
+        />
+      </section>
+
+      <div className="grid grid-cols-12 gap-6">
+        {/* Coluna esquerda — processos */}
+        <div className="col-span-12 lg:col-span-8 space-y-5">
+          <div className="flex items-end justify-between border-b border-[#E4E4E4] pb-2">
+            <h2 className="font-serif italic text-2xl text-[#0A0A0A] leading-none">
+              <span className="text-[#6A6A6A]">§01</span> Meus processos
+            </h2>
+            <button onClick={carregar} className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A] hover:text-[#0A0A0A] inline-flex items-center gap-1 transition">
+              <RefreshCw className="h-3 w-3" /> ATUALIZAR
+            </button>
           </div>
-        </div>
-      )}
 
-      <div className="flex items-center justify-end">
-        <button onClick={carregar} className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A] hover:text-[#0A0A0A] inline-flex items-center gap-1 transition">
-          <RefreshCw className="h-3 w-3" /> ATUALIZAR
-        </button>
-      </div>
+          {processos.map((p, idx) => {
+            const st = getStatusProcesso(p.status);
+            const precisaAcao = (p.pendentes ?? 0) > 0 || p.status === "aguardando_documentos";
+            const aguardandoPagto = p.pagamento_status === "aguardando";
+            const dias = diasRestantes(p.prazo_critico_data);
+            const prTone = prazoDot(dias);
+            const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
+            const sDot = statusDotColor(p.status);
+            const protocolo = p.respostas_questionario_json?.protocolo?.numero_protocolo || p.respostas_questionario_json?.protocolo?.numero || null;
 
-      {processos.map((p) => {
-        const st = getStatusProcesso(p.status);
-        const precisaAcao = (p.pendentes ?? 0) > 0 || p.status === "aguardando_documentos";
-        const aguardandoPagto = p.pagamento_status === "aguardando";
-        const dias = diasRestantes(p.prazo_critico_data);
-        const prTone = prazoDot(dias);
-        const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-        const sDot = statusDotColor(p.status);
-        const protocolo = p.respostas_questionario_json?.protocolo?.numero_protocolo || p.respostas_questionario_json?.protocolo?.numero || null;
-
-        return (
-          <button
-            key={p.id}
-            onClick={() => setOpenId(p.id)}
-            className="w-full text-left bg-[#FFFFFF] border border-[#E4E4E4] rounded-sm p-4 hover:border-[#0A0A0A] transition shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <FileText className="h-3.5 w-3.5 text-[#6A6A6A]" />
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">PROCESSO · {formatDate(p.data_criacao)}</span>
-                  <span className="font-mono text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">PROTOCOLO: {protocolo ? String(protocolo).toUpperCase() : "—"}</span>
-                </div>
-                <h4 className="font-bold text-sm text-[#0A0A0A] uppercase mt-1 line-clamp-2">{p.servico_nome}</h4>
-
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#0A0A0A]">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: sDot }} aria-hidden="true" />
-                    {st.label}
-                  </span>
-                  {(p.total_docs ?? 0) > 0 && !aguardandoPagto && (
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">
-                      {p.aprovados}/{p.total_docs} DOCS APROVADOS
-                    </span>
-                  )}
-                  {!aguardandoPagto && (
-                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm bg-[#FAFAFA] text-[#6A6A6A] border border-[#E4E4E4]">
-                      ETAPA {etapa}/5 · {ETAPA_LABELS[etapa]}
-                    </span>
-                  )}
+            return (
+              <button
+                key={p.id}
+                onClick={() => setOpenId(p.id)}
+                className="group w-full text-left bg-white border border-[#E4E4E4] rounded-sm p-6 hover:border-[#0A0A0A] transition"
+              >
+                {/* Cabeçalho da ficha */}
+                <div className="flex items-start justify-between gap-4 mb-5">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-serif italic text-sm text-[#6A6A6A]">{String(idx + 1).padStart(3, "0")}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-[#6A6A6A]">
+                        {protocolo ? String(protocolo).toUpperCase() : "PROTOCOLO PENDENTE"}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-wider text-[#6A6A6A]">· {formatDate(p.data_criacao)}</span>
+                    </div>
+                    <h3 className="font-serif text-xl text-[#0A0A0A] leading-tight">{p.servico_nome}</h3>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: sDot }} aria-hidden="true" />
+                      <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#0A0A0A]">{st.label}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-[#6A6A6A] shrink-0 mt-1 transition group-hover:translate-x-0.5 group-hover:text-[#0A0A0A]" />
                 </div>
 
-                {!aguardandoPagto && dias !== null && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: prTone.dot }} aria-hidden="true" />
-                    <CalendarClock className="h-3 w-3 text-[#6A6A6A]" />
-                    PRAZO: {dias < 0 ? `VENCIDO HÁ ${Math.abs(dias)}D` : dias === 0 ? "VENCE HOJE" : `${dias}D`} · ATÉ {formatDate(p.prazo_critico_data!)}
+                {!aguardandoPagto && (
+                  <div className="border-t border-[#E4E4E4] pt-4 grid grid-cols-12 gap-6">
+                    <div className="col-span-12 sm:col-span-7">
+                      <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A] mb-3">CRONOGRAMA DE ETAPAS</div>
+                      <ol className="space-y-2">
+                        {[1, 2, 3, 4, 5].map((n) => {
+                          const done = n < etapa;
+                          const current = n === etapa;
+                          return (
+                            <li key={n} className="flex items-baseline gap-3">
+                              <span className="font-mono text-[10px] text-[#6A6A6A] w-6 shrink-0">{String(n).padStart(2, "0")}</span>
+                              <span
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ background: done ? "#28C840" : current ? "#FEBC2E" : "#E4E4E4" }}
+                                aria-hidden="true"
+                              />
+                              <span className={`text-[11px] uppercase tracking-wider ${done ? "text-[#0A0A0A]" : current ? "text-[#0A0A0A] font-bold" : "text-[#6A6A6A]"}`}>
+                                {ETAPA_LABELS[n]}
+                              </span>
+                              {done && <CheckCircle className="h-3 w-3 text-[#28C840]" />}
+                              {current && <span className="text-[9px] uppercase tracking-widest text-[#0A0A0A] font-bold ml-1">EM CURSO</span>}
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                    <div className="col-span-12 sm:col-span-5 space-y-3 sm:border-l sm:border-[#E4E4E4] sm:pl-6">
+                      {(p.total_docs ?? 0) > 0 && (
+                        <Field label="DOCUMENTAÇÃO">
+                          <span className="text-sm font-mono text-[#0A0A0A]">{p.aprovados}/{p.total_docs}</span>
+                          <span className="text-[10px] uppercase tracking-wider text-[#6A6A6A] ml-2">APROVADOS</span>
+                        </Field>
+                      )}
+                      {dias !== null && (
+                        <Field label="PRAZO">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: prTone.dot }} aria-hidden="true" />
+                            <CalendarClock className="h-3 w-3 text-[#6A6A6A]" />
+                            {dias < 0 ? `VENCIDO HÁ ${Math.abs(dias)}D` : dias === 0 ? "VENCE HOJE" : `${dias}D`}
+                          </span>
+                          <div className="text-[10px] text-[#6A6A6A] mt-0.5 font-mono">ATÉ {formatDate(p.prazo_critico_data!)}</div>
+                        </Field>
+                      )}
+                      {precisaAcao && (
+                        <Field label="PRÓXIMA AÇÃO">
+                          <span className="text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A] inline-flex items-center gap-1.5">
+                            <AlertTriangle className="h-3 w-3 text-[#FEBC2E]" /> {p.acao}
+                          </span>
+                        </Field>
+                      )}
+                    </div>
                   </div>
                 )}
 
-                {aguardandoPagto ? (
-                  <div className="mt-3 rounded-sm bg-[#FFFFFF] border border-[#E4E4E4] p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
-                      <span className="w-2 h-2 rounded-full shrink-0 bg-[#FF5F57]" aria-hidden="true" />
+                {aguardandoPagto && (
+                  <div className="border-t border-[#E4E4E4] pt-4">
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF5F57]" aria-hidden="true" />
                       <CreditCard className="h-3 w-3 text-[#6A6A6A]" /> AGUARDANDO PAGAMENTO
                     </div>
-                    <p className="text-[11px] text-[#6A6A6A] mt-1 leading-relaxed normal-case">
-                      Cadastro recebido. Nossa Equipe Quero Armas validará os dados e confirmará o pagamento manualmente. Após a confirmação, o checklist documental será liberado.
+                    <p className="text-[11px] text-[#6A6A6A] mt-1.5 leading-relaxed normal-case">
+                      Cadastro recebido. Nossa equipe Quero Armas validará os dados e confirmará o pagamento manualmente. Após a confirmação, o checklist documental será liberado.
                     </p>
                     <a
                       href="https://wa.me/5511978481919?text=Ol%C3%A1!%20Acabei%20de%20contratar%20um%20servi%C3%A7o%20pelo%20portal%20e%20gostaria%20de%20combinar%20o%20pagamento."
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-sm bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white text-[11px] uppercase tracking-wider font-bold transition"
+                      className="mt-3 inline-flex items-center gap-1.5 h-8 px-3 rounded-sm bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white text-[11px] uppercase tracking-wider font-bold transition"
                     >
-                      Falar no WhatsApp
+                      FALAR NO WHATSAPP
                     </a>
                   </div>
-                ) : precisaAcao && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
-                    <span className="w-2 h-2 rounded-full shrink-0 bg-[#FEBC2E]" aria-hidden="true" />
-                    <AlertTriangle className="h-3 w-3 text-[#6A6A6A]" /> {p.acao}
-                  </div>
                 )}
+              </button>
+            );
+          })}
+        </div>
 
-                {(() => {
-                  const evs = (eventosByProc[p.id] ?? []).slice(0, 5);
-                  if (evs.length === 0) return null;
-                  return (
-                    <div className="mt-4 border-t border-[#E4E4E4] pt-3">
-                      <div className="flex items-center gap-1.5 mb-2.5">
-                        <Activity className="h-3 w-3 text-[#6A6A6A]" />
-                        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A]">LINHA DO TEMPO DESTE PROCESSO</span>
-                      </div>
-                      <div className="relative pl-4">
-                        <div className="absolute left-[5px] top-1 bottom-1 w-px bg-[#E4E4E4]" />
-                        <div className="space-y-2">
-                          {evs.map((ev: any) => {
-                            const t = String(ev.tipo_evento || "").toLowerCase();
-                            const dot = t.includes("aprov") || t.includes("defer") || t.includes("concl")
-                              ? "#28C840"
-                              : t.includes("reprov") || t.includes("indef") || t.includes("rejei")
-                                ? "#FF5F57"
-                                : t.includes("protoc") || t.includes("revis") || t.includes("alter")
-                                  ? "#FEBC2E"
-                                  : "#C4C4C4";
-                            return (
-                              <div key={ev.id} className="relative flex items-start gap-2.5">
-                                <span
-                                  className="absolute -left-[14px] top-1.5 z-10 h-2 w-2 rounded-full border border-white shrink-0"
-                                  style={{ background: dot }}
-                                  aria-hidden="true"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-[11px] leading-snug text-[#0A0A0A] normal-case">
-                                    {ev.descricao || ev.tipo_evento}
-                                  </div>
-                                  <div className="text-[10px] text-[#8A8A8A] mt-0.5 font-mono uppercase tracking-wider">
-                                    {formatDate(ev.created_at)}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
+        {/* Coluna direita — sticky ficha do prazo */}
+        <aside className="col-span-12 lg:col-span-4">
+          <div className="lg:sticky lg:top-6 space-y-5">
+            {menor && menorDias !== null ? (
+              <div className="bg-white border border-[#0A0A0A] rounded-sm p-6">
+                <div className="flex items-baseline gap-3 mb-4">
+                  <span className="font-serif italic text-xl text-[#0A0A0A]">§02</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#0A0A0A]">PRAZO CRÍTICO</span>
+                </div>
+                <div className="font-serif text-4xl text-[#0A0A0A] leading-none tracking-tight">
+                  {formatDate(menor.prazo_critico_data!)}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: menorTone.dot }} aria-hidden="true" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                    {menorDias < 0 ? `VENCIDO HÁ ${Math.abs(menorDias)}D` : menorDias === 0 ? "VENCE HOJE" : `${menorDias} DIAS RESTANTES`}
+                  </span>
+                </div>
+                <p className="text-[11px] leading-relaxed mt-3 text-[#6A6A6A] normal-case">
+                  Envie todos os documentos antes desta data.
+                  {menor.prazo_critico_doc_label ? <> Documento mais próximo: <strong className="text-[#0A0A0A]">{menor.prazo_critico_doc_label}</strong>.</> : null}
+                </p>
+                <button
+                  onClick={() => setOpenId(menor.id)}
+                  className="mt-5 w-full h-9 rounded-sm bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white text-[10px] uppercase tracking-[0.14em] font-bold transition"
+                >
+                  ABRIR DOSSIÊ
+                </button>
               </div>
-              <ChevronRight className="h-4 w-4 text-[#6A6A6A] shrink-0 mt-1" />
+            ) : (
+              <div className="bg-white border border-[#E4E4E4] rounded-sm p-6 text-center">
+                <Clock className="h-5 w-5 text-[#6A6A6A] mx-auto mb-2" />
+                <div className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">SEM PRAZOS CRÍTICOS NO MOMENTO</div>
+              </div>
+            )}
+
+            <div className="bg-white border border-[#E4E4E4] rounded-sm p-6">
+              <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#0A0A0A] mb-3">RESUMO</div>
+              <ul className="space-y-2 text-[11px] uppercase tracking-wider">
+                <li className="flex items-center justify-between"><span className="text-[#6A6A6A]">ATIVOS</span><span className="font-mono text-[#0A0A0A]">{String(Math.max(0, totalProc - concluidos)).padStart(2, "0")}</span></li>
+                <li className="flex items-center justify-between"><span className="text-[#6A6A6A]">EM ANÁLISE</span><span className="font-mono text-[#0A0A0A]">{String(emAnalise).padStart(2, "0")}</span></li>
+                <li className="flex items-center justify-between"><span className="text-[#6A6A6A]">PENDÊNCIAS</span><span className="font-mono text-[#0A0A0A]">{String(pendencias).padStart(2, "0")}</span></li>
+                <li className="flex items-center justify-between"><span className="text-[#6A6A6A]">CONCLUÍDOS</span><span className="font-mono text-[#0A0A0A]">{String(concluidos).padStart(2, "0")}</span></li>
+              </ul>
             </div>
-          </button>
-        );
-      })}
+
+            <div className="bg-white border border-[#E4E4E4] rounded-sm p-6">
+              <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#0A0A0A] mb-3">PRECISA DE AJUDA?</div>
+              <p className="text-[11px] leading-relaxed text-[#6A6A6A] normal-case mb-3">
+                Fale com a Equipe Quero Armas para tirar dúvidas sobre seus processos.
+              </p>
+              <a
+                href="https://wa.me/5511978481919"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-sm border border-[#0A0A0A] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white text-[10px] uppercase tracking-[0.14em] font-bold transition"
+              >
+                FALAR NO WHATSAPP
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {openId && <ProcessoDetalheDrawer processoId={openId} onClose={() => setOpenId(null)} onUpdated={carregar} />}
+    </div>
+  );
+}
+
+/* ─── Subcomponentes do Catálogo Light ─────────────────────────────────── */
+function KpiCell({ label, value, dot, mono, accent }: { label: string; value: string; dot?: string; mono?: boolean; accent?: boolean }) {
+  return (
+    <div className="p-5">
+      <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A]">{label}</div>
+      <div className="mt-2 flex items-center gap-2">
+        {dot && <span className="w-1.5 h-1.5 rounded-full" style={{ background: dot }} aria-hidden="true" />}
+        <span className={`${mono ? "font-mono text-base" : "font-serif text-2xl"} ${accent ? "text-[#FF5F57]" : "text-[#0A0A0A]"} leading-none`}>
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-[9px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A] mb-1">{label}</div>
+      <div>{children}</div>
     </div>
   );
 }
