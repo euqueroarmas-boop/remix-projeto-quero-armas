@@ -2247,44 +2247,46 @@ export default function QAClientePortalPage() {
           onClick={() => setShowContratoPopup(false)}
         >
           <div
-            className="w-full max-w-md bg-white rounded-2xl border border-[#7A1F2B]/40 shadow-xl overflow-hidden"
+            className="w-full max-w-md bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="h-1.5 w-full bg-[#7A1F2B]" />
+            <div className="px-5 md:px-6 pt-5 md:pt-6 pb-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-[#FEBC2E]" aria-hidden />
+                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6A6A6A]">
+                  Contrato aguardando sua assinatura
+                </div>
+              </div>
+              <div className="mt-2 text-[15px] font-semibold text-[#0A0A0A] leading-tight">
+                {pendingContracts === 1
+                  ? "Você tem 1 contrato pendente de assinatura"
+                  : `Você tem ${pendingContracts} contratos pendentes de assinatura`}
+              </div>
+            </div>
             <div className="p-5 md:p-6 space-y-4">
               <div className="flex items-start gap-3">
-                <div className="w-11 h-11 rounded-xl bg-[#FBF3F4] flex items-center justify-center shrink-0">
-                  <FileText className="h-5 w-5 text-[#7A1F2B]" />
+                <div className="w-9 h-9 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] flex items-center justify-center shrink-0">
+                  <FileText className="h-4 w-4 text-[#0A0A0A]" />
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-                    Contrato aguardando sua assinatura
-                  </div>
-                  <div className="text-[16px] font-bold text-slate-900 mt-1 leading-tight">
-                    {pendingContracts === 1
-                      ? "Você tem 1 contrato pendente de assinatura"
-                      : `Você tem ${pendingContracts} contratos pendentes de assinatura`}
-                  </div>
-                  <p className="text-[12.5px] text-slate-600 mt-2 leading-relaxed">
-                    Pagamento confirmado. Para liberarmos a execução do serviço,
-                    baixe o contrato, assine digitalmente pelo{" "}
-                    <strong>GOV.BR</strong> ou certificado{" "}
-                    <strong>ICP-Brasil</strong> e reenvie pelo portal.
-                  </p>
-                </div>
+                <p className="text-[12.5px] text-[#6A6A6A] leading-relaxed">
+                  Pagamento confirmado. Para liberarmos a execução do serviço,
+                  baixe o contrato, assine digitalmente pelo{" "}
+                  <strong className="text-[#0A0A0A]">GOV.BR</strong> ou certificado{" "}
+                  <strong className="text-[#0A0A0A]">ICP-Brasil</strong> e reenvie pelo portal.
+                </p>
               </div>
               <div className="flex flex-col-reverse md:flex-row gap-2 md:justify-end pt-1">
                 <button
                   type="button"
                   onClick={() => setShowContratoPopup(false)}
-                  className="h-10 px-4 rounded-xl border border-slate-200 text-slate-700 text-[12px] font-bold uppercase tracking-wider hover:bg-slate-50"
+                  className="h-10 px-4 rounded-sm border border-[#E4E4E4] text-[#6A6A6A] text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-[#FAFAFA]"
                 >
                   Agora não
                 </button>
                 <button
                   type="button"
                   onClick={goContractsSection}
-                  className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em]"
                 >
                   Assinar agora <ChevronRight className="h-3.5 w-3.5" />
                 </button>
