@@ -33,8 +33,9 @@ function fmtDayMonth(d: string | Date | null | undefined): string | undefined {
   return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`;
 }
 function daysBetween(from: string | Date, to: Date = new Date()): number {
+  if (from == null) return 0;
   const dt = typeof from === "string" ? new Date(from) : from;
-  if (isNaN(dt.getTime())) return 0;
+  if (!(dt instanceof Date) || isNaN(dt.getTime())) return 0;
   return Math.max(0, Math.floor((to.getTime() - dt.getTime()) / 86_400_000));
 }
 function daysUntil(d: string | null | undefined): number | null {
