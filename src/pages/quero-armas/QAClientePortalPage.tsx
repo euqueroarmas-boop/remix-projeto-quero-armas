@@ -23,6 +23,7 @@ import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
+import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
@@ -849,11 +850,11 @@ export default function QAClientePortalPage() {
   // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
     { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
     { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
     { key: "processos" as const, label: "Meus processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
     { key: "arsenal" as const, label: "Meu Arsenal", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "secondary" as const },
     { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
@@ -1114,7 +1115,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-slate-50 text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-[230px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1125,36 +1126,21 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
-      <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-slate-200 bg-white/95 shadow-[12px_0_40px_rgba(15,23,42,0.04)] transition-[width] duration-200 overflow-hidden ${sidebarCollapsed ? "w-16" : "w-72"}`}>
-        {/* ── Header: logo + botão de colapso ── */}
-        <div className={`flex items-center border-b border-slate-100 ${sidebarCollapsed ? "h-[76px] justify-center px-2" : "h-[76px] justify-between px-5"}`}>
-          {sidebarCollapsed ? (
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(false)}
-              aria-label="Expandir menu"
-              className="flex items-center justify-center"
-            >
-              <img src={logoIcon} alt="Quero Armas" className="h-10 w-10 object-contain rounded-lg" draggable={false} />
-            </button>
-          ) : (
-            <Fragment>
-              <img src={logoColor} alt="Quero Armas" className="h-9 w-auto object-contain" draggable={false} />
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(true)}
-                aria-label="Recolher menu"
-                className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition shrink-0"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-            </Fragment>
-          )}
+      {/* ═══ SIDEBAR Z6 DARK ═══ */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col w-[230px] bg-[#0A0A0A] text-[#E8E8E8]">
+        {/* Brand: QA mark + Quero Armas / ÁREA DO CLIENTE */}
+        <div className="flex items-center gap-2.5 px-4 py-4">
+          <div className="w-9 h-9 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[13px] tracking-[0.04em] shrink-0" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+          <div className="min-w-0">
+            <div className="text-[13px] font-semibold text-white leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>Quero Armas</div>
+            <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>ÁREA DO CLIENTE</div>
+          </div>
         </div>
 
-        {/* ── Navegação ── */}
-        <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${sidebarCollapsed ? "px-2 space-y-1" : "px-3 space-y-1"}`}>
-          {navItems.map((item) => {
+        {/* Nav com grupos Principal / Secundário */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+          {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
             return (
@@ -1162,37 +1148,52 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[13px] font-semibold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!sidebarCollapsed && item.label}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+              </button>
+            );
+          })}
+          <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+          {navItems.filter(i => i.group === "secondary").map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* ── Rodapé: ajuda ── */}
-        {!sidebarCollapsed ? (
-          <div className="px-3 pb-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
-              <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
-              <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
-            </div>
-          </div>
-        ) : (
-          <div className="pb-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => goSection("mensagens")}
-              title="Precisa de ajuda?"
-              className="flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition"
-            >
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </div>
-        )}
+        {/* Rodapé: Precisa de ajuda? + WhatsApp + Sair */}
+        <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-[#1a1a1a]">
+          <div className="text-[12px] font-semibold text-[#E8E8E8] mb-0.5">Precisa de ajuda?</div>
+          <div className="text-[10.5px] text-[#7A7A7A] mb-2.5">Atendimento direto pelo WhatsApp</div>
+          <a
+            href="https://wa.me/5511978481919"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            +55 11 97848-1919
+          </a>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
+          >
+            <LogOut className="h-3 w-3" /> Sair
+          </button>
+        </div>
       </aside>
 
       {mobileNavOpen && (
@@ -1204,89 +1205,21 @@ export default function QAClientePortalPage() {
         </div>
       )}
 
-      {/* ═══ TOP BAR — Premium Light ═══ */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      {/* ═══ TOP BAR — apenas mobile (header removido no desktop, conforme spec V1) ═══ */}
+      <header className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
-            {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
+          <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
             <button
               type="button"
-              onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
-              title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
-              className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
+              onClick={handleLogout}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50"
             >
-              {avatarUrl ? (
-                <div className="h-12 w-12 sm:h-[52px] sm:w-[52px] overflow-hidden rounded-full ring-1 ring-slate-200 shadow-sm bg-white">
-                  <img
-                    src={avatarUrl}
-                    alt={userName || "Foto do cliente"}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : avatarResolving ? (
-                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-100 ring-1 ring-slate-200 shadow-sm">
-                  <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-[#7A1F2B] animate-spin" />
-                </div>
-              ) : (
-                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
-                  <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
-                    {(userName || "C")
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join("")
-                      .toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#7A1F2B] ring-2 ring-white shadow-sm opacity-90 group-hover:opacity-100 transition"
-                title={hasAnyPhoto ? "Alterar foto" : "Enviar foto"}
-              >
-                <Camera className="h-2.5 w-2.5 text-white" />
-              </span>
+              <LogOut className="h-3 w-3 text-slate-500" />
+              <span>Sair</span>
             </button>
-
-            <div className="hidden sm:block h-11 w-px bg-slate-200" />
-
-            <div className="flex flex-col min-w-0 leading-none">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  Área do Cliente
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-[0.16em] text-slate-700">
-                  {cliente?.tipo_cliente === "cliente_app" ? "Arsenal Gratuito" : "Premium"}
-                </span>
-              </div>
-
-              <h1 className="mt-1 truncate text-[15px] sm:text-[17px] font-bold uppercase text-slate-900 tracking-wide">
-                {(() => {
-                  const parts = (userName || "Cliente").trim().split(/\s+/).filter(Boolean);
-                  if (parts.length <= 1) return parts[0] || "Cliente";
-                  return `${parts[0]} ${parts[parts.length - 1]}`;
-                })()}
-              </h1>
-
-              <div className="mt-1 flex items-center gap-1.5">
-                <span className="h-px w-3 bg-slate-300" />
-                <span className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-                  Arsenal Inteligente
-                </span>
-                <span className="h-px w-3 bg-slate-300" />
-              </div>
-            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex h-10 sm:h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 sm:px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition"
-          >
-            <LogOut className="h-3.5 w-3.5 text-slate-500" />
-            <span>Sair</span>
-          </button>
         </div>
       </header>
 
@@ -2123,26 +2056,11 @@ export default function QAClientePortalPage() {
 
         {activeSection === "contratos" && (
           <div id="qa-portal-contratos" tabIndex={-1} className="space-y-4 outline-none">
-            <PortalScopeSelector hint="Contratos são compartilhados entre processos do mesmo cliente." />
-            <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
-              {currentScope.type === "processo" && (
-                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                  Os contratos abaixo são do cliente como um todo. Quando não houver
-                  vínculo direto entre contrato e processo, o documento permanece
-                  visível para evitar omissão indevida.
-                </div>
-              )}
-              {cliente?.id ? (
-                <>
-                  <ContratoBlock clienteId={cliente.id} />
-                  {(cliente as any)?.id_legado != null && (
-                    <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
-                  )}
-                </>
-              ) : (
-                <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
-              )}
-            </SectionCard>
+            {cliente?.id ? (
+              <QAContratosCockpitV1 cliente={cliente} />
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+            )}
           </div>
         )}
       </main>
