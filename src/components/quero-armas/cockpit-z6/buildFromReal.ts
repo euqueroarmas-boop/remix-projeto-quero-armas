@@ -212,7 +212,7 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   });
 
   // 2) KPIs humanos derivados do estado real
-  const comVoce = processos.filter((p) => ["aguardando_pagamento", "aguardando_documentos"].includes(String(p.status || "").toLowerCase())).length;
+  const comVoce = processos.filter((p) => ["aguardando_pagamento", "aguardando_assinatura", "aguardando_documentos"].includes(String(p.status || "").toLowerCase())).length;
   const comEquipe = processos.filter((p) => ["pronto_para_protocolar"].includes(String(p.status || "").toLowerCase())).length;
   const naPF = processos.filter((p) => String(p.status || "").toLowerCase() === "protocolado").length;
   const concluidos = processos.filter((p) => ["concluido","deferido","finalizado"].includes(String(p.status || "").toLowerCase())).length;
