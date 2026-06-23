@@ -372,15 +372,17 @@ Deno.serve(async (req) => {
             }
 
             // GATE DE CONTRATO ASSINADO (Fase Hardening):
-            // A RPC qa_confirmar_pagamento_processo agora bloqueia a promoção
-            // se não houver contrato 'validated' para a venda. Quando isso
-            // acontecer, ela retorna skipped='contract_not_validated' e o
-            // processo permanece em aguardando_pagamento — sem checklist.
-            // Aqui apenas registramos auditoria explícita e seguimos.
+            // A RPC qa_confirmar_pagamento_processo bloqueia a explosão do
+            // checklist quando não há contrato 'validated' para a venda.
+            // Nesse caso ela confirma o pagamento e move o processo para
+            // 'aguardando_assinatura' (Arsenal gratuito segue liberado pelo
+            // frontend; checklist só após assinatura). Retorna
+            // skipped='contract_not_validated'. Aqui só registramos auditoria
+            // explícita e seguimos — sem notificar pagamento_confirmado.
             if ((confRes as any)?.skipped === "contract_not_validated") {
               await logSistemaBackend({
                 tipo: "pagamento", status: "warning",
-                mensagem: `qa-asaas-webhook: promoção bloqueada — contrato não assinado (venda ${venda_id})`,
+                mensagem: `qa-asaas-webhook: processo ${p.id} movido para aguardando_assinatura — pagamento OK, contrato pendente (venda ${venda_id})`,
                 payload: { venda_id, processo_id: p.id, origem: "asaas_webhook" },
               });
               continue;
