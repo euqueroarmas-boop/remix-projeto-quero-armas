@@ -28,7 +28,7 @@ import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiad
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
-import { CockpitZ6MeusProcessos, buildCockpitZ6MockData } from "@/components/quero-armas/cockpit-z6";
+import { CockpitZ6MeusProcessos, buildCockpitZ6MockData, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
