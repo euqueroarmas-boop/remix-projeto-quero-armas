@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer } from "lucide-react";
+import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer, Activity } from "lucide-react";
 import { getStatusProcesso, formatDate } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
@@ -72,6 +72,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
   const [loading, setLoading] = useState(true);
   const [processosRaw, setProcessosRaw] = useState<Processo[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [eventosByProc, setEventosByProc] = useState<Record<string, any[]>>({});
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -87,6 +88,22 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
       const { data: docs } = procIds.length
         ? await supabase.from("qa_processo_documentos").select("id, processo_id, status, obrigatorio, tipo_documento").in("processo_id", procIds)
         : { data: [] as any[] };
+
+      const { data: evts } = procIds.length
+        ? await supabase
+            .from("qa_processo_eventos")
+            .select("id, processo_id, tipo_evento, descricao, ator, created_at")
+            .in("processo_id", procIds)
+            .order("created_at", { ascending: false })
+            .limit(200)
+        : { data: [] as any[] };
+      const byProc: Record<string, any[]> = {};
+      (evts ?? []).forEach((ev: any) => {
+        const k = String(ev.processo_id);
+        if (!byProc[k]) byProc[k] = [];
+        byProc[k].push(ev);
+      });
+      setEventosByProc(byProc);
 
       const enriched: Processo[] = (procs ?? []).map((p: any) => {
         const myDocs = (docs ?? []).filter((d: any) => d.processo_id === p.id);
@@ -253,6 +270,51 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
                     <AlertTriangle className="h-3 w-3 text-[#6A6A6A]" /> {p.acao}
                   </div>
                 )}
+
+                {(() => {
+                  const evs = (eventosByProc[p.id] ?? []).slice(0, 5);
+                  if (evs.length === 0) return null;
+                  return (
+                    <div className="mt-4 border-t border-[#E4E4E4] pt-3">
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Activity className="h-3 w-3 text-[#6A6A6A]" />
+                        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A]">LINHA DO TEMPO DESTE PROCESSO</span>
+                      </div>
+                      <div className="relative pl-4">
+                        <div className="absolute left-[5px] top-1 bottom-1 w-px bg-[#E4E4E4]" />
+                        <div className="space-y-2">
+                          {evs.map((ev: any) => {
+                            const t = String(ev.tipo_evento || "").toLowerCase();
+                            const dot = t.includes("aprov") || t.includes("defer") || t.includes("concl")
+                              ? "#28C840"
+                              : t.includes("reprov") || t.includes("indef") || t.includes("rejei")
+                                ? "#FF5F57"
+                                : t.includes("protoc") || t.includes("revis") || t.includes("alter")
+                                  ? "#FEBC2E"
+                                  : "#C4C4C4";
+                            return (
+                              <div key={ev.id} className="relative flex items-start gap-2.5">
+                                <span
+                                  className="absolute -left-[14px] top-1.5 z-10 h-2 w-2 rounded-full border border-white shrink-0"
+                                  style={{ background: dot }}
+                                  aria-hidden="true"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[11px] leading-snug text-[#0A0A0A] normal-case">
+                                    {ev.descricao || ev.tipo_evento}
+                                  </div>
+                                  <div className="text-[10px] text-[#8A8A8A] mt-0.5 font-mono uppercase tracking-wider">
+                                    {formatDate(ev.created_at)}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <ChevronRight className="h-4 w-4 text-[#6A6A6A] shrink-0 mt-1" />
             </div>
