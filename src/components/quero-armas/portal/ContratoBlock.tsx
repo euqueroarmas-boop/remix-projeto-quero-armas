@@ -37,11 +37,19 @@ const STATUS_MAP: Record<string, { label: string; tone: "muted" | "info" | "warn
 };
 
 const TONE_CLS: Record<string, string> = {
-  muted: "bg-neutral-100 text-neutral-700 border-neutral-200",
-  info: "bg-sky-50 text-sky-800 border-sky-200",
-  warn: "bg-amber-50 text-amber-800 border-amber-200",
-  ok: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  err: "bg-rose-50 text-rose-800 border-rose-200",
+  muted: "bg-[#FAFAFA] text-[#6A6A6A] border-[#E4E4E4]",
+  info: "bg-white text-[#0A0A0A] border-[#E4E4E4]",
+  warn: "bg-white text-[#0A0A0A] border-[#E4E4E4]",
+  ok: "bg-white text-[#0A0A0A] border-[#E4E4E4]",
+  err: "bg-white text-[#0A0A0A] border-[#E4E4E4]",
+};
+
+const DOT_CLS: Record<string, string> = {
+  muted: "bg-[#C4C4C4]",
+  info: "bg-[#FEBC2E]",
+  warn: "bg-[#FEBC2E]",
+  ok: "bg-[#28C840]",
+  err: "bg-[#FF5F57]",
 };
 
 /**
@@ -61,7 +69,7 @@ class ContratoBlockErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 text-[12px] text-neutral-500">
+        <div className="rounded-sm border border-[#E4E4E4] bg-white p-5 text-[12px] text-[#6A6A6A]">
           Não foi possível carregar o contrato agora. Tente novamente em instantes.
         </div>
       );
@@ -177,7 +185,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 flex items-center gap-2 text-sm text-neutral-500">
+      <div className="rounded-sm border border-[#E4E4E4] bg-white p-5 flex items-center gap-2 text-sm text-[#6A6A6A]">
         <Loader2 className="h-4 w-4 animate-spin" /> Carregando contrato…
       </div>
     );
@@ -185,11 +193,11 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
 
   if (!contract) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white p-5">
-        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-neutral-900">
-          <FileSignature className="h-4 w-4 text-[#7A1F2B]" /> CONTRATO DO SERVIÇO
+      <div className="rounded-sm border border-[#E4E4E4] bg-white p-5">
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[#0A0A0A]">
+          <FileSignature className="h-4 w-4 text-[#0A0A0A]" /> CONTRATO DO SERVIÇO
         </div>
-        <p className="text-sm text-neutral-600 mt-2">
+        <p className="text-sm text-[#6A6A6A] mt-2">
           Nenhum contrato disponível ainda. Após a confirmação do pagamento, seu contrato aparecerá aqui.
         </p>
       </div>
@@ -209,34 +217,39 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
   const motivoFalha = contract.validation_details?.motivo_falha as string | undefined;
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-5">
+    <div className="rounded-sm border border-[#E4E4E4] bg-white p-5">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-neutral-900">
-          <FileSignature className="h-4 w-4 text-[#7A1F2B]" /> CONTRATO {contract.contract_number}
+        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[#0A0A0A]">
+          <FileSignature className="h-4 w-4 text-[#0A0A0A]" /> CONTRATO {contract.contract_number}
+          <span className="ml-2 text-[10px] font-mono text-[#6A6A6A]">· CTR · ID:{contract.id.slice(0, 6).toUpperCase()}</span>
         </div>
-        <span className={`inline-flex items-center px-2 py-1 rounded-md border text-[10px] font-bold uppercase tracking-widest ${TONE_CLS[meta.tone]}`}>
+        <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-sm border text-[10px] font-bold uppercase tracking-widest ${TONE_CLS[meta.tone]}`}>
+          <span className={`h-2 w-2 rounded-full ${DOT_CLS[meta.tone]}`} />
           {meta.label}
         </span>
       </div>
 
-      <ul className="mt-4 space-y-2 text-[12px] text-neutral-700">
+      <ul className="mt-4 space-y-2 text-[12px] text-[#0A0A0A]">
         <li className="flex items-center gap-2">
-          <CheckCircle2 className={`h-3.5 w-3.5 ${contract.issued_at ? "text-emerald-600" : "text-neutral-300"}`} />
-          Contrato emitido {contract.issued_at && <span className="text-neutral-400">· {new Date(contract.issued_at).toLocaleString("pt-BR")}</span>}
+          <span className={`h-2 w-2 rounded-full ${contract.issued_at ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
+          Contrato emitido {contract.issued_at && <span className="text-[#6A6A6A]">· {new Date(contract.issued_at).toLocaleString("pt-BR")}</span>}
         </li>
         <li className="flex items-center gap-2">
-          <Clock className={`h-3.5 w-3.5 ${contract.customer_uploaded_at ? "text-emerald-600" : "text-neutral-300"}`} />
-          PDF assinado pelo cliente {contract.customer_uploaded_at && <span className="text-neutral-400">· {new Date(contract.customer_uploaded_at).toLocaleString("pt-BR")}</span>}
+          <span className={`h-2 w-2 rounded-full ${contract.customer_uploaded_at ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
+          PDF assinado pelo cliente {contract.customer_uploaded_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_uploaded_at).toLocaleString("pt-BR")}</span>}
         </li>
         <li className="flex items-center gap-2">
-          <AlertCircle className={`h-3.5 w-3.5 ${contract.validation_status === "valid" ? "text-emerald-600" : "text-neutral-300"}`} />
-          Validação criptográfica {contract.customer_signature_validated_at && <span className="text-neutral-400">· {new Date(contract.customer_signature_validated_at).toLocaleString("pt-BR")}</span>}
+          <span className={`h-2 w-2 rounded-full ${contract.validation_status === "valid" ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
+          Validação criptográfica {contract.customer_signature_validated_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_signature_validated_at).toLocaleString("pt-BR")}</span>}
         </li>
       </ul>
 
       {motivoFalha && contract.status === "rejected" && (
-        <div className="mt-4 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-800">
+        <div className="mt-4 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[11px] text-[#0A0A0A] flex items-start gap-2">
+          <span className="h-2 w-2 rounded-full bg-[#FF5F57] mt-1 shrink-0" />
+          <span>
           <strong>Motivo da rejeição:</strong> {motivoFalha} — reenvie o PDF assinado.
+          </span>
         </div>
       )}
 
@@ -245,7 +258,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
           type="button"
           disabled={!canDownloadCompany || downloading}
           onClick={() => handleDownload()}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] px-3 py-2 text-[12px] font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-3 py-2 text-[12px] font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a]"
         >
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
           Baixar contrato
@@ -267,7 +280,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
               type="button"
               disabled={uploading || !canDownloadCompany}
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-[#7A1F2B] bg-white px-3 py-2 text-[12px] font-bold text-[#7A1F2B] disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-sm border border-[#0A0A0A] bg-white px-3 py-2 text-[12px] font-bold text-[#0A0A0A] disabled:opacity-50 hover:bg-[#FAFAFA]"
             >
               {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
               Enviar contrato assinado
@@ -278,14 +291,14 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
         <button
           type="button"
           onClick={() => setRefreshKey((k) => k + 1)}
-          className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 text-[12px] font-bold text-neutral-600"
+          className="inline-flex items-center justify-center gap-2 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[12px] font-bold text-[#6A6A6A] hover:bg-[#FAFAFA]"
           aria-label="Atualizar status"
         >
           <RefreshCw className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <p className="mt-3 text-[11px] text-neutral-500">
+      <p className="mt-3 text-[11px] text-[#6A6A6A]">
         Contrato de adesão: baixe, assine com Gov.br ou certificado ICP-Brasil e reenvie. A validação é criptográfica — não usamos OCR.
       </p>
     </div>

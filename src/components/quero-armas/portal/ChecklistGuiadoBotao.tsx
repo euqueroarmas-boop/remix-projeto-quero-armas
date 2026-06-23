@@ -37,7 +37,7 @@ export default function ChecklistGuiadoBotao({
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline ${className ?? ""}`}
+        className={`inline-flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-[#0A0A0A] hover:underline ${className ?? ""}`}
       >
         <Wand2 className="h-3.5 w-3.5" /> {rotulo ?? "Enviar documentos com o assistente"}
       </button>
@@ -48,8 +48,8 @@ export default function ChecklistGuiadoBotao({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:brightness-110 ${className ?? ""}`}
-      style={{ background: "#7A1F2B" }}
+      className={`inline-flex items-center gap-2 rounded-sm px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-[#1a1a1a] ${className ?? ""}`}
+      style={{ background: "#0A0A0A" }}
     >
       <Wand2 className="h-4 w-4" /> {rotulo ?? "Enviar documentos (assistente guiado)"}
     </button>
