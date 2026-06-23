@@ -488,6 +488,9 @@ export default function QAClientePortalPage() {
           .from("qa_processos" as any)
           .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
           .eq("cliente_id", clienteIdReal)
+          // Processos órfãos (cancelados/arquivados pela reconciliação porque
+          // o admin removeu a venda/contrato) NUNCA devem aparecer ao cliente.
+          .not("status", "in", "(cancelado,arquivado)")
           .order("data_criacao", { ascending: false });
         const procsList = (procsData as any[]) ?? [];
         setProcessos(procsList);
