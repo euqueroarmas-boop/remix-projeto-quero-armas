@@ -43,6 +43,7 @@ import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/Cli
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 
@@ -1839,142 +1840,13 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <div className="space-y-3">
-            <PortalScopeSelector hint="Documentos sem vínculo direto só aparecem em 'Todos os processos'." />
-
-            {(customerId || cliente?.id) && (
-              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                {/* Cabeçalho */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <FolderArchive className="h-3 w-3" /> Hub de Documentos
-                    {meusDocs.length > 0 && (
-                      <span className="ml-1 text-[9px] bg-slate-200 text-slate-600 rounded px-1.5 py-0.5">{meusDocs.length}</span>
-                    )}
-                  </span>
-                  <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[10px] font-bold text-white" style={{ background: "hsl(280 60% 50%)" }}>
-                    <Plus className="h-3 w-3" /> Adicionar
-                  </button>
-                </div>
-
-                {currentScope.type === "processo" ? (
-                  <p className="px-3 py-2 text-[10px] text-amber-700 bg-amber-50 border-b border-amber-100">
-                    Hub compartilhado entre processos — visível apenas em "Todos os processos".
-                  </p>
-                ) : meusDocs.length === 0 ? (
-                  <div className="flex flex-col items-center gap-1 py-6 text-slate-400">
-                    <FolderArchive className="h-6 w-6 text-slate-300" />
-                    <p className="text-[11px]">Nenhum documento cadastrado.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-slate-100">
-                    {[...meusDocs]
-                      .sort((a: any, b: any) => {
-                        // Ordenação: reprovado → vencido → mais urgente → aprovado
-                        const prioA = a.status === "reprovado" ? 0 : a.status === "pendente_aprovacao" ? 1 : 2;
-                        const prioB = b.status === "reprovado" ? 0 : b.status === "pendente_aprovacao" ? 1 : 2;
-                        if (prioA !== prioB) return prioA - prioB;
-                        const dA = daysUntil(a.data_validade) ?? 99999;
-                        const dB = daysUntil(b.data_validade) ?? 99999;
-                        return dA - dB;
-                      })
-                      .map((d: any) => {
-                        const dias = daysUntil(d.data_validade);
-                        const tipoMeta = getTipoDocumentoMeta(d.tipo_documento);
-                        const catMeta = getHubCategoriaMeta(tipoMeta?.categoria || "outros");
-                        const nomeDoc = tipoMeta?.label || String(d.tipo_documento || "Documento").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
-                        const resultCertidao = d.resultado_certidao
-                          || d.ia_dados_extraidos?.camposExtraidos?.resultado_certidao
-                          || d.ia_dados_extraidos?.resultado_certidao;
-                        const temApontamento = resultCertidao === "consta_apontamento";
-                        const temDivergencia = d.ia_dados_extraidos?.tem_divergencia === true;
-                        const vencido = dias !== null && dias < 0;
-                        return (
-                          <div key={d.id} className={`flex items-start gap-2.5 px-3 py-2.5 ${urgencyBg(dias)}`}>
-                            {/* Status dot */}
-                            <div className={`mt-1 shrink-0 h-2 w-2 rounded-full ${d.status === "aprovado" ? "bg-emerald-500" : d.status === "reprovado" ? "bg-red-500" : "bg-amber-400"}`} />
-
-                            {/* Info principal */}
-                            <div className="flex-1 min-w-0">
-                              {/* Linha 1: categoria + nome */}
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-slate-100 text-slate-500">
-                                  {catMeta.label}
-                                </span>
-                                <span className="text-[11px] font-semibold text-slate-800 truncate">{nomeDoc}</span>
-                                {d.arquivo_storage_path && <Paperclip className="h-2.5 w-2.5 text-slate-400 shrink-0" />}
-                              </div>
-
-                              {/* Linha 2: número · órgão · emissão */}
-                              <div className="text-[10px] text-slate-500 truncate mt-0.5">
-                                {[d.numero_documento, d.orgao_emissor, d.data_emissao ? `emitido ${formatDate(d.data_emissao)}` : null].filter(Boolean).join(" · ") || "Sem número"}
-                              </div>
-
-                              {/* Linha 3: badges de status/alertas */}
-                              <div className="flex items-center gap-1 flex-wrap mt-1">
-                                {d.status === "aprovado" && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
-                                    <BadgeCheck className="h-2 w-2" /> aprovado
-                                  </span>
-                                )}
-                                {d.status === "pendente_aprovacao" && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-700">em análise</span>
-                                )}
-                                {d.status === "reprovado" && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-700">reprovado</span>
-                                )}
-                                {resultCertidao === "nada_consta" && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-emerald-50 text-emerald-600">nada consta</span>
-                                )}
-                                {temApontamento && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-700">⚠ consta apontamento</span>
-                                )}
-                                {temDivergencia && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-orange-100 text-orange-700">⚠ divergência de dados</span>
-                                )}
-                                {vencido && (
-                                  <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-700">vencido</span>
-                                )}
-                              </div>
-
-                              {/* Motivo reprovação */}
-                              {d.status === "reprovado" && d.motivo_reprovacao && (
-                                <div className="text-[9px] text-red-600 mt-0.5 truncate">→ {d.motivo_reprovacao}</div>
-                              )}
-                            </div>
-
-                            {/* Validade + remover */}
-                            <div className="shrink-0 text-right flex flex-col items-end gap-1 min-w-[72px]">
-                              {d.data_validade ? (
-                                <div>
-                                  <div className="text-[9px] font-mono text-slate-400">{formatDate(d.data_validade)}</div>
-                                  <div className={`text-[9px] font-bold ${urgencyColor(dias)}`}>{urgencyLabel(dias)}</div>
-                                </div>
-                              ) : (
-                                <span className="text-[8px] text-slate-300">sem validade</span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  if (!confirm("Remover este documento?")) return;
-                                  const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", d.id);
-                                  if (error) { toast.error("Erro ao remover."); return; }
-                                  toast.success("Documento removido.");
-                                  setDocsReloadKey((k) => k + 1);
-                                }}
-                                className="text-[9px] text-slate-300 hover:text-red-400 inline-flex items-center gap-0.5"
-                              >
-                                <Trash2 className="h-2.5 w-2.5" /> remover
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <DocumentosCategoriaZ6V3Panel
+            cliente={cliente}
+            meusDocs={meusDocs}
+            customerId={customerId}
+            onReload={() => setDocsReloadKey((k) => k + 1)}
+            onOpenAdd={() => setShowAddDoc(true)}
+          />
         )}
 
         {activeSection === "mensagens" && (

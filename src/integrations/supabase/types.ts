@@ -5182,6 +5182,59 @@ export type Database = {
           },
         ]
       }
+      qa_documentos_cliente_eventos: {
+        Row: {
+          acao: string
+          ator_email: string | null
+          ator_tipo: string
+          ator_user_id: string | null
+          created_at: string
+          customer_id: string | null
+          detalhes: Json | null
+          documento_id: string
+          id: string
+          ip_origem: string | null
+          qa_cliente_id: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          acao: string
+          ator_email?: string | null
+          ator_tipo?: string
+          ator_user_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          detalhes?: Json | null
+          documento_id: string
+          id?: string
+          ip_origem?: string | null
+          qa_cliente_id?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          acao?: string
+          ator_email?: string | null
+          ator_tipo?: string
+          ator_user_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          detalhes?: Json | null
+          documento_id?: string
+          id?: string
+          ip_origem?: string | null
+          qa_cliente_id?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_documentos_cliente_eventos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_documentos_conhecimento: {
         Row: {
           ativo: boolean
