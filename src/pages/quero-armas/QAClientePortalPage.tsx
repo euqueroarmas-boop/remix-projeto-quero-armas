@@ -1864,7 +1864,7 @@ export default function QAClientePortalPage() {
                       date: ev.created_at,
                       label: ev.descricao || ev.tipo_evento || "Evento",
                       icon: Activity,
-                      color: "hsl(220 60% 48%)",
+                      color: "#C4C4C4",
                       sub: null as string | null,
                     }))
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -1872,21 +1872,32 @@ export default function QAClientePortalPage() {
                 : tlFiltered;
               if (tlForScope.length === 0) return null;
               return (
-              <SectionCard icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)">
+              <SectionCard
+                icon={Activity}
+                title="Linha do Tempo"
+                color="#0A0A0A"
+                containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
+                headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
+              >
                 <div className="relative pl-6">
-                  <div className="absolute left-2.5 top-1 bottom-1 w-px bg-slate-200" />
+                  <div className="absolute left-2.5 top-1 bottom-1 w-px bg-[#E4E4E4]" />
                   <div className="space-y-3">
                     {tlForScope.map((ev, i) => {
-                      const Icon = ev.icon;
+                      const label = String(ev.label || "").toLowerCase();
+                      const dotColor = label.includes("defer") || label.includes("aprov")
+                        ? "#28C840"
+                        : label.includes("protoc") || label.includes("revis")
+                          ? "#FEBC2E"
+                          : label.includes("reje") || label.includes("reprov") || label.includes("invál") || label.includes("erro")
+                            ? "#FF5F57"
+                            : "#C4C4C4";
                       return (
                         <div key={i} className="relative flex items-start gap-3">
-                          <div className="absolute -left-3.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-10" style={{ background: `${ev.color}18` }}>
-                            <Icon className="h-2.5 w-2.5" style={{ color: ev.color }} />
-                          </div>
+                          <span className="absolute -left-[18px] top-1.5 z-10 h-2 w-2 rounded-full border border-[#FFFFFF]" style={{ background: dotColor }} />
                           <div className="flex-1 pl-4">
-                            <div className="text-[11px] font-medium text-slate-700">{ev.label}</div>
-                            {ev.sub && <div className="mt-0.5 text-[10px] text-slate-500">{ev.sub}</div>}
-                            <div className="text-[10px] text-slate-400 mt-0.5">{formatDate(ev.date)}</div>
+                            <div className="text-[11px] font-semibold text-[#3A3A3A]">{ev.label}</div>
+                            {ev.sub && <div className="mt-0.5 text-[10px] text-[#6A6A6A]">{ev.sub}</div>}
+                            <div className="mt-0.5 text-[10px] text-[#8A8A8A]">{formatDate(ev.date)}</div>
                           </div>
                         </div>
                       );
@@ -1898,7 +1909,13 @@ export default function QAClientePortalPage() {
             })()}
 
             {cliente?.id && (
-              <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
+              <SectionCard
+                icon={History}
+                title="Histórico de Atualizações"
+                color="#0A0A0A"
+                containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
+                headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
+              >
                 <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
               </SectionCard>
             )}
