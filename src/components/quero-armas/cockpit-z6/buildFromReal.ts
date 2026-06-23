@@ -51,6 +51,7 @@ function badgeForStatus(status: string | null | undefined): { badge: string; ton
   if (s === "protocolado") return { badge: "NA POLÍCIA FEDERAL", tone: "green" };
   if (s === "pronto_para_protocolar") return { badge: "COM A EQUIPE", tone: "bordo" };
   if (s === "aguardando_pagamento") return { badge: "AGUARDA VOCÊ", tone: "amber" };
+  if (s === "aguardando_assinatura") return { badge: "AGUARDA ASSINATURA", tone: "amber" };
   if (s === "aguardando_documentos") return { badge: "AGUARDA VOCÊ", tone: "amber" };
   if (["concluido", "deferido", "finalizado"].includes(s)) return { badge: "CONCLUÍDO", tone: "green" };
   if (["indeferido", "cancelado"].includes(s)) return { badge: "ENCERRADO", tone: "red" };
@@ -69,7 +70,7 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
   // Sequência: CONTRATAÇÃO → ASSINATURA → DOCUMENTAÇÃO → PROTOCOLO → DEFERIMENTO
   const order: Array<{ label: string; matches: string[] }> = [
     { label: "CONTRATAÇÃO",  matches: ["aguardando_pagamento"] },
-    { label: "ASSINATURA",   matches: [] },
+    { label: "ASSINATURA",   matches: ["aguardando_assinatura"] },
     { label: "DOCUMENTAÇÃO", matches: ["aguardando_documentos"] },
     { label: "PROTOCOLO",    matches: ["pronto_para_protocolar"] },
     { label: "DEFERIMENTO",  matches: ["protocolado"] },
@@ -257,12 +258,19 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   // 3) Foco do dia: prioriza pagamento → assinatura → documento pendente
   let focoDoDia: CockpitZ6FocoDoDia | null = null;
   const procPagamento = processos.find((p) => String(p.status).toLowerCase() === "aguardando_pagamento");
+  const procAssinatura = processos.find((p) => String(p.status).toLowerCase() === "aguardando_assinatura");
   const procDocs = processos.find((p) => String(p.status).toLowerCase() === "aguardando_documentos");
   if (procPagamento) {
     focoDoDia = {
       titulo: `Pagamento pendente — ${String(procPagamento.servico_nome || "Processo")}`,
       descricao: "Liberamos a próxima etapa assim que o pagamento for confirmado.",
       cta: { label: "PAGAR AGORA →", onClick: onFocoCta },
+    };
+  } else if (procAssinatura) {
+    focoDoDia = {
+      titulo: `Assinatura pendente — ${String(procAssinatura.servico_nome || "Processo")}`,
+      descricao: "Pagamento confirmado. Assine o contrato para liberarmos o checklist e iniciarmos o seu processo. O Arsenal Inteligente segue liberado.",
+      cta: { label: "ASSINAR CONTRATO →", onClick: onFocoCta },
     };
   } else if (procDocs) {
     const docsAbertos = processoDocs.filter((d) => d.processo_id === procDocs.id && !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
