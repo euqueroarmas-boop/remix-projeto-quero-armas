@@ -37,17 +37,17 @@ export default function PortalScopeSelector({ hint, className }: Props) {
 
   return (
     <div
-      className={`rounded-2xl border border-slate-200 bg-white p-3 shadow-sm ${className ?? ""}`}
+      className={`rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] p-3 shadow-sm ${className ?? ""}`}
       role="region"
       aria-label="Filtro de processos"
     >
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <Layers className="h-3.5 w-3.5 text-[#7A1F2B]" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600">
-          Filtrar por processo
+        <Layers className="h-3.5 w-3.5 text-[#6A6A6A]" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+          FILTRAR POR PROCESSO
         </span>
         {hint ? (
-          <span className="sm:ml-auto text-[10px] text-slate-400 sm:truncate sm:max-w-[60%]">{hint}</span>
+          <span className="sm:ml-auto text-[10px] text-[#8A8A8A] sm:truncate sm:max-w-[60%] normal-case">{hint}</span>
         ) : null}
       </div>
       <div
@@ -67,10 +67,10 @@ export default function PortalScopeSelector({ hint, className }: Props) {
               aria-selected={active}
               aria-label={`Filtrar por ${s.label}`}
               onClick={() => setSelectedScopeId(s.id)}
-              className={`shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full border px-3 min-h-9 h-9 text-[11px] font-bold uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-1 ${
+              className={`shrink-0 snap-start inline-flex items-center gap-1.5 rounded-sm border px-3 min-h-9 h-9 text-[11px] font-bold uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A0A0A] focus-visible:ring-offset-1 ${
                 active
-                  ? "bg-[#7A1F2B] text-white border-[#7A1F2B] shadow-sm"
-                  : "bg-white text-slate-700 border-slate-200 hover:border-[#7A1F2B]/40 hover:text-[#7A1F2B]"
+                  ? "bg-[#0A0A0A] text-white border-[#0A0A0A]"
+                  : "bg-[#FAFAFA] text-[#0A0A0A] border-[#E4E4E4] hover:border-[#0A0A0A]"
               }`}
               title={s.label}
             >
