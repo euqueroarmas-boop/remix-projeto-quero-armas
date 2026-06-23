@@ -64,6 +64,7 @@ export default function QAClienteContratacoesPage() {
         .from("qa_processos")
         .select("id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
         .eq("cliente_id", cid)
+        .not("status", "in", "(cancelado,arquivado)")
         .order("data_criacao", { ascending: false });
       if (error) throw error;
 
