@@ -28,15 +28,18 @@ Deno.serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: "Sessão inválida" }, 401);
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error("[qa-cliente-avatar] getClaims falhou", claimsErr);
+      return json({ error: "Sessão inválida" }, 401);
+    }
 
     const body = await req.json().catch(() => ({}));
     const clienteId = Number(body?.cliente_id);
     if (!Number.isFinite(clienteId)) return json({ error: "cliente_id obrigatório" }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const uid = userData.user.id;
+    const uid = claimsData.claims.sub as string;
 
     const [{ data: link }, { data: perfil }] = await Promise.all([
       admin
