@@ -1906,6 +1906,16 @@ export default function QAClientePortalPage() {
 
             <PortalScopeSelector hint="Filtra contrato, protocolo, histórico, linha do tempo e cards de processo." />
 
+            <ProcessosLayoutExamples
+              processos={scopedProcessos}
+              docs={scopedDocs}
+              timeline={tlForScope}
+              metrics={scopedMetrics}
+              dossierLabel={dossierLabel}
+              prazoBase={prazoBase}
+              diasPrazo={diasPrazo}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               <div className="lg:col-span-8 space-y-4">
                 {cliente?.id ? <ContratoBlock clienteId={cliente.id} /> : null}
