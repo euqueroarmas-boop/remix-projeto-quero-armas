@@ -29,7 +29,7 @@ import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiad
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
-import { CockpitZ6MeusProcessos, buildCockpitZ6MockData, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
+import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -1764,29 +1764,31 @@ export default function QAClientePortalPage() {
             : "—";
           const ativosCount = processos.filter((p: any) => !["concluido","deferido","finalizado","indeferido","cancelado"].includes(String(p.status || "").toLowerCase())).length;
 
-          // Sem processos reais → mantém o mockup Z6 oficial só com o nome real do cliente.
+          // Sem processos reais → não mostra mock/serviço de exemplo no portal do cliente.
           // Com processos reais → monta TODA a tela a partir das fontes reais (qa_processos,
           // qa_processo_documentos, qa_processo_eventos, qa_vendas, qa_crafs, qa_gtes,
           // qa_exames_cliente) preservando 100% o layout/tokens do Cockpit Z6 Light.
-          const cockpitProps = processos.length === 0
-            ? buildCockpitZ6MockData({
-                nomeCliente: firstName,
-                cpfMascarado: cpfMascarado !== "—" ? cpfMascarado : "123.456.789-00",
-                membroDesde: membroDesde !== "—" ? membroDesde : "FEV/2024",
-              })
-            : buildCockpitZ6FromReal({
-                nomeCliente: firstName,
-                cpfMascarado,
-                membroDesde,
-                processos,
-                processoDocs,
-                processoEventos,
-                vendas,
-                crafs,
-                gtes,
-                examesCliente,
-                onFocoCta: () => setActiveSection("contratos"),
-              });
+          if (processos.length === 0) {
+            return (
+              <div className="rounded-sm border border-[#E5E5E5] bg-white p-10 text-center text-[13px] text-[#6A6A6A]">
+                Você ainda não possui processos ativos.
+              </div>
+            );
+          }
+
+          const cockpitProps = buildCockpitZ6FromReal({
+            nomeCliente: firstName,
+            cpfMascarado,
+            membroDesde,
+            processos,
+            processoDocs,
+            processoEventos,
+            vendas,
+            crafs,
+            gtes,
+            examesCliente,
+            onFocoCta: () => setActiveSection("contratos"),
+          });
 
           return (
             <div>
