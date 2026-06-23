@@ -157,17 +157,46 @@ export function HistoricoAtualizacoes({ clienteId, showSnapshot = false }: Props
   });
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-2">
-          <Clock className="h-3.5 w-3.5 text-slate-500" />
-          <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-600">
+          <Clock className="h-3.5 w-3.5 text-[#6A6A6A]" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
             {rows.length} {rows.length === 1 ? "evento" : "eventos"}
           </span>
         </div>
-        <QAStatusChip label="Auditoria" tone="info" />
+        <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+          <span className="h-2 w-2 rounded-full bg-[#C4C4C4]" /> Auditoria
+        </span>
       </div>
-      <QATimeline events={events} />
+      <div className="relative pl-6">
+        <div className="absolute left-2.5 top-1 bottom-1 w-px bg-[#E4E4E4]" />
+        <div className="space-y-4">
+          {events.map((event) => {
+            const Icon = event.icon;
+            return (
+              <div key={event.id} className="relative flex items-start gap-3">
+                <span className="absolute -left-[18px] top-1.5 z-10 h-2 w-2 rounded-full border border-[#FFFFFF] bg-[#C4C4C4]" />
+                <div className="min-w-0 flex-1 pl-4">
+                  <div className="flex items-start gap-2">
+                    <Icon className="mt-0.5 h-3 w-3 shrink-0 text-[#8A8A8A]" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#0A0A0A]">{event.title}</div>
+                      <div className="mt-0.5 text-[10px] text-[#8A8A8A]">{fmtDateTime(event.date)}</div>
+                      {(event.origem || event.ator) && (
+                        <div className="mt-1 text-[10px] text-[#6A6A6A]">
+                          {[event.origem, event.ator].filter(Boolean).join(" · ")}
+                        </div>
+                      )}
+                      <div className="mt-2">{event.detail}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
