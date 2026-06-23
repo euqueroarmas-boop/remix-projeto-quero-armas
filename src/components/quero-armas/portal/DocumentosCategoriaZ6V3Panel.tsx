@@ -132,6 +132,7 @@ interface Props {
 
 export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, customerId, onReload, onOpenAdd }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [filter, setFilter] = useState<null | "total" | "aprov" | "venc7" | "venc30" | "vencidos" | "hoje">(null);
 
   const nomePrimeiro = useMemo(() => {
     const nome = String(cliente?.nome_completo || cliente?.nome || "").trim();
@@ -159,6 +160,21 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     return { total, aprov, venc7, venc30, vencidos, hoje };
   }, [meusDocs]);
 
+  /* Filtragem por KPI -------------------------------------- */
+  const docsFiltrados = useMemo(() => {
+    if (!filter || filter === "total") return meusDocs;
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    return meusDocs.filter((d) => {
+      const dias = daysUntil(d.data_validade);
+      if (filter === "aprov") return d.status === "aprovado";
+      if (filter === "venc7") return dias !== null && dias >= 0 && dias <= 7;
+      if (filter === "venc30") return dias !== null && dias > 7 && dias <= 30;
+      if (filter === "vencidos") return dias !== null && dias < 0;
+      if (filter === "hoje") return String(d.updated_at || "").slice(0, 10) === hojeISO;
+      return true;
+    });
+  }, [meusDocs, filter]);
+
   /* Foco do dia — doc mais urgente -------------------------- */
   const focoDoc = useMemo(() => {
     return [...meusDocs]
@@ -169,7 +185,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   /* Agrupamento por categoria ------------------------------- */
   const grupos = useMemo(() => {
     const map = new Map<string, { label: string; docs: any[] }>();
-    meusDocs.forEach((d) => {
+    docsFiltrados.forEach((d) => {
       const tipoMeta = getTipoDocumentoMeta(d.tipo_documento);
       const catKey = tipoMeta?.categoria || d.categoria_hub || "outros";
       const catMeta = getHubCategoriaMeta(catKey);
@@ -183,7 +199,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         docs: v.docs.sort((a, b) => (daysUntil(a.data_validade) ?? 99999) - (daysUntil(b.data_validade) ?? 99999)),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
-  }, [meusDocs]);
+  }, [docsFiltrados]);
 
   const handleRemover = async (doc: any) => {
     if (!confirm("Remover este documento?")) return;
@@ -225,7 +241,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .focus button{background:#7A1F2B;color:#fff;border:0;padding:9px 16px;font-family:'Oswald',sans-serif;letter-spacing:.16em;font-size:10.5px;font-weight:600;cursor:pointer;border-radius:2px}
         .qa-docsz6 .focus button:hover{background:#5e1721}
         .qa-docsz6 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
-        .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px}
+        .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px;cursor:pointer;transition:all .12s ease;text-align:left;font:inherit;color:inherit}
+        .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
+        .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
         .qa-docsz6 .kpi .l{font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;color:#7A7A7A;display:flex;align-items:center;gap:6px}
         .qa-docsz6 .kpi .v{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;margin-top:6px;color:#0A0A0A;line-height:1}
         .qa-docsz6 .kpi .s{font-size:10px;color:#7A7A7A;margin-top:3px}
@@ -241,7 +259,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .grp-h .gt{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.18em;color:#0A0A0A;font-weight:600;display:flex;align-items:center;gap:8px}
         .qa-docsz6 .grp-h .gt .gc{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald',sans-serif;letter-spacing:.14em}
         .qa-docsz6 .grp-h .chev{color:#7A7A7A}
-        .qa-docsz6 .row{display:grid;grid-template-columns:14px 1fr auto auto auto auto;gap:18px;align-items:center;padding:16px 18px;border-bottom:1px solid #F2F2F2}
+        .qa-docsz6 .row{display:grid;grid-template-columns:14px 1fr auto auto auto auto;gap:18px;align-items:center;padding:16px 18px;border-bottom:3px solid #F2F2F2}
         .qa-docsz6 .row:last-child{border-bottom:0}
         .qa-docsz6 .row .nm{font-size:12px;font-weight:600;color:#0A0A0A;line-height:1.3}
         .qa-docsz6 .row .mt{font-size:10px;color:#7A7A7A;margin-top:2px;font-family:'Oswald',sans-serif;letter-spacing:.06em}
@@ -261,7 +279,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
           .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px}
+          .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px;border-bottom:3px solid #F2F2F2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
           .qa-docsz6 .row .acts{justify-content:flex-start;margin-top:4px}
@@ -305,13 +323,34 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
 
       {/* KPIs */}
       <div className="kpis">
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#8A8A8A" }} />TOTAL</div><div className="v">{kpis.total}</div><div className="s">documentos</div></div>
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#2F8F4A" }} />APROVADOS</div><div className="v">{kpis.aprov}</div><div className="s">validados</div></div>
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#D9342B" }} />A VENCER 7D</div><div className="v" style={{ color: kpis.venc7 > 0 ? "#D9342B" : "#0A0A0A" }}>{kpis.venc7}</div><div className="s">ação imediata</div></div>
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#D6A64B" }} />A VENCER 30D</div><div className="v" style={{ color: kpis.venc30 > 0 ? "#7A5A14" : "#0A0A0A" }}>{kpis.venc30}</div><div className="s">atenção</div></div>
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#7A1F2B" }} />VENCIDOS</div><div className="v" style={{ color: kpis.vencidos > 0 ? "#7A1F2B" : "#0A0A0A" }}>{kpis.vencidos}</div><div className="s">regularizar</div></div>
-        <div className="kpi"><div className="l"><span className="dot" style={{ background: "#2F8F4A" }} />ATUALIZADOS HOJE</div><div className="v">{kpis.hoje}</div><div className="s">últimas 24h</div></div>
+        {([
+          { k: "total",    dot: "#8A8A8A", l: "TOTAL",            v: kpis.total,    s: "documentos",     vc: "#0A0A0A" },
+          { k: "aprov",    dot: "#2F8F4A", l: "APROVADOS",        v: kpis.aprov,    s: "validados",      vc: "#0A0A0A" },
+          { k: "venc7",    dot: "#D9342B", l: "A VENCER 7D",      v: kpis.venc7,    s: "ação imediata",  vc: kpis.venc7 > 0 ? "#D9342B" : "#0A0A0A" },
+          { k: "venc30",   dot: "#D6A64B", l: "A VENCER 30D",     v: kpis.venc30,   s: "atenção",        vc: kpis.venc30 > 0 ? "#7A5A14" : "#0A0A0A" },
+          { k: "vencidos", dot: "#7A1F2B", l: "VENCIDOS",         v: kpis.vencidos, s: "regularizar",    vc: kpis.vencidos > 0 ? "#7A1F2B" : "#0A0A0A" },
+          { k: "hoje",     dot: "#2F8F4A", l: "ATUALIZADOS HOJE", v: kpis.hoje,     s: "últimas 24h",    vc: "#0A0A0A" },
+        ] as const).map((it) => (
+          <button
+            key={it.k}
+            type="button"
+            className={`kpi${filter === it.k ? " active" : ""}`}
+            onClick={() => setFilter((f) => (f === it.k ? null : it.k))}
+            aria-pressed={filter === it.k}
+          >
+            <div className="l"><span className="dot" style={{ background: it.dot }} />{it.l}</div>
+            <div className="v" style={{ color: it.vc }}>{it.v}</div>
+            <div className="s">{it.s}</div>
+          </button>
+        ))}
       </div>
+
+      {filter && (
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:10,fontFamily:"'Oswald',sans-serif",fontSize:10.5,letterSpacing:".16em",color:"#7A1F2B",fontWeight:600}}>
+          <span>FILTRO ATIVO · {docsFiltrados.length} DOCUMENTO{docsFiltrados.length === 1 ? "" : "S"}</span>
+          <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald',sans-serif",letterSpacing:".16em",fontSize:10}}>LIMPAR ✕</button>
+        </div>
+      )}
 
       {/* LISTA AGRUPADA POR CATEGORIA */}
       <div className="listhead">
