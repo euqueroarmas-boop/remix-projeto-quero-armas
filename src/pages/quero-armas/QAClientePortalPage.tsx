@@ -21,7 +21,6 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
-import ProcessosLayoutExamples from "@/components/quero-armas/processos/ProcessosLayoutExamples";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
@@ -1905,16 +1904,6 @@ export default function QAClientePortalPage() {
             </div>
 
             <PortalScopeSelector hint="Filtra contrato, protocolo, histórico, linha do tempo e cards de processo." />
-
-            <ProcessosLayoutExamples
-              processos={scopedProcessos}
-              docs={scopedDocs}
-              timeline={tlForScope}
-              metrics={scopedMetrics}
-              dossierLabel={dossierLabel}
-              prazoBase={prazoBase}
-              diasPrazo={diasPrazo}
-            />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               <div className="lg:col-span-8 space-y-4">
