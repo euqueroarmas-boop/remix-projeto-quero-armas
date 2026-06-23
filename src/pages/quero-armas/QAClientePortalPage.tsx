@@ -1205,89 +1205,21 @@ export default function QAClientePortalPage() {
         </div>
       )}
 
-      {/* ═══ TOP BAR — Premium Light ═══ */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      {/* ═══ TOP BAR — apenas mobile (header removido no desktop, conforme spec V1) ═══ */}
+      <header className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
-            {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
+          <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
             <button
               type="button"
-              onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
-              title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
-              className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
+              onClick={handleLogout}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50"
             >
-              {avatarUrl ? (
-                <div className="h-12 w-12 sm:h-[52px] sm:w-[52px] overflow-hidden rounded-full ring-1 ring-slate-200 shadow-sm bg-white">
-                  <img
-                    src={avatarUrl}
-                    alt={userName || "Foto do cliente"}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : avatarResolving ? (
-                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-100 ring-1 ring-slate-200 shadow-sm">
-                  <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-[#7A1F2B] animate-spin" />
-                </div>
-              ) : (
-                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
-                  <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
-                    {(userName || "C")
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join("")
-                      .toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#7A1F2B] ring-2 ring-white shadow-sm opacity-90 group-hover:opacity-100 transition"
-                title={hasAnyPhoto ? "Alterar foto" : "Enviar foto"}
-              >
-                <Camera className="h-2.5 w-2.5 text-white" />
-              </span>
+              <LogOut className="h-3 w-3 text-slate-500" />
+              <span>Sair</span>
             </button>
-
-            <div className="hidden sm:block h-11 w-px bg-slate-200" />
-
-            <div className="flex flex-col min-w-0 leading-none">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                  Área do Cliente
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-[0.16em] text-slate-700">
-                  {cliente?.tipo_cliente === "cliente_app" ? "Arsenal Gratuito" : "Premium"}
-                </span>
-              </div>
-
-              <h1 className="mt-1 truncate text-[15px] sm:text-[17px] font-bold uppercase text-slate-900 tracking-wide">
-                {(() => {
-                  const parts = (userName || "Cliente").trim().split(/\s+/).filter(Boolean);
-                  if (parts.length <= 1) return parts[0] || "Cliente";
-                  return `${parts[0]} ${parts[parts.length - 1]}`;
-                })()}
-              </h1>
-
-              <div className="mt-1 flex items-center gap-1.5">
-                <span className="h-px w-3 bg-slate-300" />
-                <span className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-                  Arsenal Inteligente
-                </span>
-                <span className="h-px w-3 bg-slate-300" />
-              </div>
-            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex h-10 sm:h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 sm:px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition"
-          >
-            <LogOut className="h-3.5 w-3.5 text-slate-500" />
-            <span>Sair</span>
-          </button>
         </div>
       </header>
 
