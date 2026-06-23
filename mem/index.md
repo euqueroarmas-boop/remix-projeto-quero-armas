@@ -15,6 +15,8 @@ TODAS as telas internas/operacionais/administrativas do Quero Armas seguem padr�
 
 Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + base + procedimento real testado. Sem imagem IA/genérica; só evidência real aprovada.
 
+**🟥 COCKPIT Z6 LIGHT (CANÔNICO PORTAL):** Toda página NOVA da área do cliente DEVE seguir o layout `Cockpit Z6 Light` — header `RAFAEL, ESSES SÃO SEUS PROCESSOS` (Oswald), banner FOCO DO DIA com borda `#D9342B`, 6 KPIs humanos, cards de processo com `proc-grid` (PROGRESSO % + stepper 5 etapas + linha do tempo + checklist). Tokens HEX explícitos: `#7A1F2B` bordô, `#D6A64B` âmbar, `#2F8F4A` verde, `#0A0A0A` tinta, sidebar dark. Oswald para labels/números, Inter para corpo. Implementação base em `src/components/quero-armas/cockpit-z6/`. Nunca regredir. Ver mem://style/quero-armas/cockpit-z6-light-canonical.
+
 ## Memories
 - [🚨 REGRA-MÃE QA — BLOCO 0](mem://architecture/quero-armas/regra-mae-fluxo-operacional) — Pagamento=gatilho, 5 dimensões status (Financeiro/Doc/Protocolo/Decisão/Validade), KPIs reais, padrão de cores, escopo Arsenal, proibição do termo "admin"
 - [Diretriz Global QA](mem://constraints/quero-armas-diretriz-global) — Regra permanente: zero regressão, extensão sobre substituição, arquitetura canônica preservada, infra de e-mail reutilizada, IA não perde dados
@@ -31,3 +33,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [QA KB Audit Screenshots Pipeline](mem://features/quero-armas/kb-audit-screenshots-pipeline) — Workflow GitHub Actions + Playwright real loga como equipe, captura screenshot real e grava em qa_kb_artigo_imagens com image_type='auditoria_real'; nunca gera imagem
 - [QA Status Color Immutability](mem://style/quero-armas/status-color-immutability) — Cores semânticas de status (verde=ativo/pago, vermelho=erro, âmbar=alerta) NUNCA podem ser alteradas em restyling de UI
 - [QA Neutral Scale](mem://style/quero-armas/canonical-neutral-scale) — Escala neutra canônica Light + Dark AAA Pass; RYG só como microdots discretos
+- [Cockpit Z6 Light Canônico](mem://style/quero-armas/cockpit-z6-light-canonical) — Layout canônico do portal do cliente (Meus Processos): header cliente-centric, FOCO DO DIA, 6 KPIs humanos, cards de processo com PROGRESSO + stepper + timeline + checklist. Obrigatório em toda página nova.
