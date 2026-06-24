@@ -469,6 +469,122 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           );
         })
       )}
+
+      {preview && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setPreview(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(10,10,10,0.78)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#f6f5f1",
+              border: "1px solid #e5e5e5",
+              borderRadius: 4,
+              width: "min(1100px, 96vw)",
+              height: "min(92vh, 900px)",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 20px 50px rgba(0,0,0,.35)",
+              overflow: "hidden",
+              fontFamily: "'Arial Narrow', Arial, sans-serif",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderBottom: "1px solid #e5e5e5",
+                background: "#fff",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                  fontWeight: 900,
+                  letterSpacing: ".18em",
+                  fontSize: 12,
+                  color: "#0A0A0A",
+                  textTransform: "uppercase",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+                title={preview.nome}
+              >
+                {preview.nome}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <a
+                  href={preview.url}
+                  download={preview.nome}
+                  style={{
+                    background: "#7A1F2B",
+                    color: "#fff",
+                    border: 0,
+                    padding: "7px 12px",
+                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                    letterSpacing: ".22em",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    borderRadius: 2,
+                    textTransform: "uppercase",
+                    textDecoration: "none",
+                  }}
+                >
+                  Baixar
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  aria-label="Fechar"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid #c8c8c8",
+                    width: 32,
+                    height: 32,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#0A0A0A",
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div style={{ flex: 1, background: "#1c1c1c", overflow: "auto" }}>
+              {preview.mime.startsWith("image/") ? (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
+                  <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                </div>
+              ) : (
+                <iframe
+                  src={preview.url}
+                  title={preview.nome}
+                  style={{ width: "100%", height: "100%", border: 0, background: "#fff" }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
