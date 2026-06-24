@@ -1305,6 +1305,51 @@ export function ClienteDocsHubModal({
       const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
       if (insertError) throw insertError;
 
+      // Auto-sincroniza com qa_exames_cliente quando o documento for um
+      // laudo psicológico ou atestado de capacidade técnica (exame de tiro).
+      // O card EXAMES do Resumo lê dessa tabela — sem este upsert ele fica em 0.
+      // Regra Lei 10.826/03: vencimento = data_avaliacao + 1 ano.
+      try {
+        if (qaClienteId && isLaudoExameTipo) {
+          const t = form.tipo_documento.toLowerCase();
+          const tipoExame: "psicologico" | "tiro" | null = /psico|laudo_psi|psicotec/.test(t)
+            ? "psicologico"
+            : /capacidade_tecnica|exame_tiro|tiro/.test(t)
+              ? "tiro"
+              : null;
+          const dataRealizacao =
+            (classificacao?.camposExtraidos as any)?.data_avaliacao ||
+            form.data_emissao ||
+            null;
+          const dataIso = (() => {
+            if (!dataRealizacao) return null;
+            // aceita 'YYYY-MM-DD' direto ou 'DD/MM/AAAA'
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dataRealizacao)) return dataRealizacao;
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dataRealizacao);
+            return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+          })();
+          if (tipoExame && dataIso) {
+            const [y, mo, d] = dataIso.split("-").map(Number);
+            const venc = new Date(Date.UTC(y + 1, mo - 1, d)).toISOString().slice(0, 10);
+            // Substitui o exame vigente do mesmo tipo (mantém um por tipo).
+            await supabase
+              .from("qa_exames_cliente" as any)
+              .delete()
+              .eq("cliente_id", qaClienteId)
+              .eq("tipo", tipoExame);
+            await supabase.from("qa_exames_cliente" as any).insert({
+              cliente_id: qaClienteId,
+              tipo: tipoExame,
+              data_realizacao: dataIso,
+              data_vencimento: venc,
+              observacoes: `Sincronizado automaticamente do Hub Documental (${form.tipo_documento}).`,
+            });
+          }
+        }
+      } catch (syncErr) {
+        console.warn("[exames sync] falha não-crítica:", syncErr);
+      }
+
       // Recálculo, eventos (documento_recebido / todos_documentos_recebidos),
       // cópia de campos para qa_clientes (titulo_eleitor, etc.) e e-mail são
       // disparados por triggers SECURITY DEFINER no banco.
