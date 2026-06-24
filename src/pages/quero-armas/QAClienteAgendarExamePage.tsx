@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredenciadosPsico, type CredenciadoPsico } from "@/components/quero-armas/clientes/AgendarExam./useCredenciadosPsico";
+import { useCredenciadosPsico, type CredenciadoPsico } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosPsico";
 import { useCredenciadosIAT, type CredenciadoIAT } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosIAT";
 import { AgendarExameList } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameList";
 import { INSTRUTOR_PDF_PF } from "@/components/quero-armas/clientes/AgendarExame/instrutorPdfLinks";
