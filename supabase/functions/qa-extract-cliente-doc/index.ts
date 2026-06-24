@@ -41,8 +41,8 @@ function buildTool(tipo: TipoDoc) {
       description:
         "TÍTULO OFICIAL LITERAL DO DOCUMENTO, exatamente como impresso no cabeçalho/topo do PDF " +
         "(ex.: 'CERTIDÃO DE DISTRIBUIÇÃO CRIMINAL — JUSTIÇA FEDERAL DE 1ª INSTÂNCIA — SP', " +
-        "'CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS — EXECUÇÕES CRIMINAIS', " +
-        "'CERTIDÃO DE QUITAÇÃO ELEITORAL', 'LAUDO PSICOLÓGICO PARA REGISTRO DE ARMA DE FOGO'). " +
+        "'CERTIDÃO ESTADUAL DE EXECUÇÕES CRIMINAIS', " +
+        "'CERTIDÃO DE CRIMES ELEITORAIS', 'LAUDO PSICOLÓGICO PARA REGISTRO DE ARMA DE FOGO'). " +
         "Sempre em UPPERCASE, sem acrescentar texto que não esteja no documento. " +
         "NUNCA invente o nome — se não estiver legível, deixe vazio.",
     },
