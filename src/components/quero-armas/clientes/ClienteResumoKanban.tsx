@@ -264,7 +264,21 @@ export default function ClienteResumoKanban({
     const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
     return `${meses[p.getMonth()]}/${p.getFullYear()}`;
   })();
-  const statusLine = `${cadastro?.categoria_titular || cliente?.status_cliente || "CAÇADOR"}${cadastro?.numero_cr ? ` · CR ${cadastro.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
+  // Categoria do titular: usa categoria_titular do cadastro/cliente.
+  // Se ainda não houver CR enviado, exibe "SEM CATEGORIA" (sem inventar valor padrão).
+  const CATEGORIA_LABELS: Record<string, string> = {
+    pessoa_fisica: "PESSOA FÍSICA",
+    pessoa_juridica: "PESSOA JURÍDICA",
+    seguranca_publica: "SEGURANÇA PÚBLICA",
+    magistrado_mp: "MAGISTRADO/MP",
+    militar: "MILITAR",
+  };
+  const rawCategoria = (cadastro?.categoria_titular || (cliente as any)?.categoria_titular || "") as string;
+  const temCR = Boolean(cadastro?.numero_cr);
+  const categoriaLabel = rawCategoria
+    ? (CATEGORIA_LABELS[rawCategoria] || rawCategoria.replace(/_/g, " ").toUpperCase())
+    : (temCR ? "TITULAR" : "SEM CATEGORIA");
+  const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
   const filters = [
     `TODOS ${snapshot.totalFronts}`,
     `ARSENAL ${snapshot.fronts[0].count}`,
