@@ -30,7 +30,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos" };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
@@ -207,24 +207,60 @@ export default function ClienteResumoKanban({
     ];
 
     const urgents: Urgent[] = [];
-    const pushUrgent = (label: string, sub: string, date: string | null | undefined, navTo: string, ctaLabel = "AGENDAR AGORA →") => {
+    const pushUrgent = (
+      label: string,
+      sub: string,
+      date: string | null | undefined,
+      navTo: string,
+      ctaLabel: string,
+      frontKey: Urgent["frontKey"],
+    ) => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, sub, days, navTo, ctaLabel });
+      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey });
     };
-    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →");
-    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →"));
-    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →"));
-    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos"));
+    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
+    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
+    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
     // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.
     // Mantemos os cards da frente "EXAMES" intactos — só removemos o push
     // duplicado para a fila de urgentes.
-    meusDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
-    processoDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
+    meusDocs.forEach((doc: any) => {
+      const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
+      const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
+      const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
+      pushUrgent(
+        shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"),
+        isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
+        doc?.data_validade_efetiva || doc?.data_validade,
+        "documentos",
+        cta,
+        fk,
+      );
+    });
+    processoDocs.forEach((doc: any) => pushUrgent(
+      shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
+      URG_SUB.documento,
+      doc?.data_validade_efetiva || doc?.data_validade,
+      "processos",
+      "ATUALIZAR AGORA →",
+      "processos",
+    ));
     prazosProc.forEach((p: any) => {
-      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos", ctaLabel: "AGENDAR AGORA →" });
+      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) {
+        urgents.push({
+          label: `${p.evento} — ${p.servicoNome || "Processo"}`,
+          sub: URG_SUB.processo,
+          days: p.diasRestantes,
+          navTo: "processos",
+          ctaLabel: "AGENDAR AGORA →",
+          frontKey: "processos",
+        });
+      }
     });
 
     const sortedUrgents = urgents.sort((a, b) => a.days - b.days);
