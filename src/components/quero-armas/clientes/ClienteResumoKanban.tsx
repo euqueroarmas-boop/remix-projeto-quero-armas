@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 
-import iconeArmaSquircle from "@/assets/icone-arma-cadastro-squircle.png.asset.json";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
