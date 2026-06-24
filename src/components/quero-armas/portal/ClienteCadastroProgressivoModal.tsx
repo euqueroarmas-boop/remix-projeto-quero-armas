@@ -534,11 +534,11 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </div>
               )}
               {gruposVisiveis.map(({ grupo, campos }) => (
-                <section key={grupo}>
-                  <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: MARROM }}>
+                <section key={grupo} className="rounded-[4px] border border-[#E5E5E5] bg-white p-4 shadow-sm">
+                  <h3 className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: MARROM }}>
                     {GRUPO_LABELS[grupo]}
                   </h3>
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {campos.map((c) => <div key={c.key}>{renderInput(c)}</div>)}
                   </div>
                 </section>
@@ -548,18 +548,23 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
           {modo === "ia_upload" && (
             <div className="space-y-4">
-              <p className="text-sm text-slate-600">
-                Envie um documento legível (RG, CNH, comprovante de residência, CR). A IA vai extrair os campos e você confirma antes de salvar.
-              </p>
+              <div className="rounded-[4px] border-l-[3px] border-[#7A1F2B] bg-white p-4 shadow-sm">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                  UM DOCUMENTO. DEZENAS DE CAMPOS.
+                </div>
+                <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
+                  Envie RG, CNH, comprovante de residência ou CR. A IA extrai tudo, você só <strong>confirma e segue</strong>.
+                </p>
+              </div>
               <button onClick={handleEscolherArquivo} disabled={iaProcessando}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#E5C2C6] bg-[#FBF3F4]/50 px-4 py-10 text-center transition hover:bg-[#FBF3F4] disabled:opacity-60">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full text-white" style={{ background: MARROM }}>
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-[#E5E5E5] bg-white px-4 py-10 text-center transition hover:border-[#7A1F2B] disabled:opacity-60">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
                   {iaProcessando ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                 </div>
-                <span className="text-sm font-bold text-slate-800">
+                <span className="font-heading text-[13px] font-semibold uppercase tracking-[0.08em] text-[#0A0A0A]">
                   {iaProcessando ? "Analisando documento…" : "Selecionar documento (JPG, PNG ou PDF)"}
                 </span>
-                <span className="text-[11px] text-slate-500">Máximo 20 MB. Seus dados não são compartilhados.</span>
+                <span className="text-[11px] text-[#6A6A6A]">Máximo 20 MB · Tratamento sigiloso e LGPD-compliant</span>
               </button>
               <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUploadIA} />
             </div>
@@ -652,8 +657,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-slate-200 bg-slate-50/60 px-5 py-2.5 text-center">
-          <p className="text-[10px] uppercase tracking-wider text-slate-400">Salvamento automático · Equipe Quero Armas</p>
+        <div className="shrink-0 border-t border-[#E5E5E5] bg-white px-6 py-2.5 text-center">
+          <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+            SALVAMENTO AUTOMÁTICO · ARSENAL INTELIGENTE QUERO ARMAS
+          </p>
         </div>
       </DialogContent>
     </Dialog>
