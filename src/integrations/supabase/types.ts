@@ -3797,6 +3797,7 @@ export type Database = {
           bairro2: string | null
           cadastro_publico_aplicado_em: string | null
           cadastro_publico_id: string | null
+          campo_origens: Json
           categoria_titular: string | null
           celular: string | null
           cep: string | null
@@ -3922,6 +3923,7 @@ export type Database = {
           bairro2?: string | null
           cadastro_publico_aplicado_em?: string | null
           cadastro_publico_id?: string | null
+          campo_origens?: Json
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -4047,6 +4049,7 @@ export type Database = {
           bairro2?: string | null
           cadastro_publico_aplicado_em?: string | null
           cadastro_publico_id?: string | null
+          campo_origens?: Json
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -5009,6 +5012,7 @@ export type Database = {
           observacoes: string | null
           orgao_emissor: string | null
           origem: string
+          prefill_consumed_at: string | null
           qa_cliente_id: number | null
           reaproveitavel_global: boolean
           reprovado_em: string | null
@@ -5065,6 +5069,7 @@ export type Database = {
           observacoes?: string | null
           orgao_emissor?: string | null
           origem?: string
+          prefill_consumed_at?: string | null
           qa_cliente_id?: number | null
           reaproveitavel_global?: boolean
           reprovado_em?: string | null
@@ -5121,6 +5126,7 @@ export type Database = {
           observacoes?: string | null
           orgao_emissor?: string | null
           origem?: string
+          prefill_consumed_at?: string | null
           qa_cliente_id?: number | null
           reaproveitavel_global?: boolean
           reprovado_em?: string | null

@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ArrowLeft, CheckCircle2, Loader2, Pencil, Sparkles, Upload, X,
+  ArrowLeft, CheckCircle2, Loader2, Pencil, Sparkles, Upload, X, Zap,
 } from "lucide-react";
 import {
   CAMPOS_CADASTRO, CampoCadastro, CadastroGrupo, GRUPO_LABELS,
@@ -66,6 +66,31 @@ interface Props {
 
 const DEBOUNCE_MS = 800;
 
+// Origem do valor de um campo. Espelha o que o backend grava em campo_origens.
+type CampoOrigem = "manual" | "ai" | "manual_override_ai";
+
+async function chamarAutoPrefill(): Promise<{ applied: Record<string, string>; docs: number } | null> {
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) return null;
+    const base = import.meta.env.VITE_SUPABASE_URL as string;
+    const resp = await fetch(`${base}/functions/v1/qa-cliente-auto-prefill`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return {
+      applied: (data?.applied || {}) as Record<string, string>,
+      docs: Number(data?.docs_processed || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function maskCep(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 8);
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
@@ -98,7 +123,10 @@ function formatBr(value: any, tipo?: string): string {
   return s;
 }
 
-async function chamarAtualizarCadastro(fields: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+async function chamarAtualizarCadastro(
+  fields: Record<string, string>,
+  fieldOrigins?: Record<string, CampoOrigem>,
+): Promise<{ ok: boolean; error?: string }> {
   try {
     const { data: sess } = await supabase.auth.getSession();
     const token = sess?.session?.access_token;
@@ -107,7 +135,7 @@ async function chamarAtualizarCadastro(fields: Record<string, string>): Promise<
     const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ fields, field_origins: fieldOrigins || {} }),
     });
     if (!resp.ok) {
       const txt = await resp.text();
@@ -159,6 +187,8 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   const [iaFile, setIaFile] = useState<File | null>(null);
   const [checklistMatches, setChecklistMatches] = useState<ChecklistMatch[]>([]);
   const [checklistSelecionados, setChecklistSelecionados] = useState<Record<string, boolean>>({});
+  const [autoPrefillBanner, setAutoPrefillBanner] = useState<{ campos: number; docs: number } | null>(null);
+  const [autoPrefillLoading, setAutoPrefillLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<Record<string, number>>({});
 
@@ -200,17 +230,28 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       setIaFile(null);
       setChecklistMatches([]);
       setChecklistSelecionados({});
+      setAutoPrefillBanner(null);
       // Se CEP já está salvo mas endereço está vazio, busca via ViaCEP automaticamente.
       const cepSalvo = cliente?.cep;
       if (cepSalvo && !cliente?.endereco) {
         fetchViaCep(String(cepSalvo));
       }
+      // Dispara auto-prefill dos documentos já enviados (uma vez por abertura).
+      (async () => {
+        setAutoPrefillLoading(true);
+        const r = await chamarAutoPrefill();
+        setAutoPrefillLoading(false);
+        if (r && Object.keys(r.applied).length > 0) {
+          setAutoPrefillBanner({ campos: Object.keys(r.applied).length, docs: r.docs });
+          onUpdated?.();
+        }
+      })();
     }
     return () => {
       Object.values(timersRef.current).forEach((t) => window.clearTimeout(t));
       timersRef.current = {};
     };
-  }, [open, fetchViaCep]);
+  }, [open, fetchViaCep, onUpdated]);
 
   const progresso = useMemo(() => calcularProgressoCadastro(cliente), [cliente]);
   const faltantes = useMemo(() => getCamposFaltantesCadastro(cliente), [cliente]);
@@ -249,7 +290,11 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
     timersRef.current[campo.key] = window.setTimeout(async () => {
       setSavingState((prev) => ({ ...prev, [campo.key]: "saving" }));
-      const r = await chamarAtualizarCadastro({ [campo.key]: v });
+      // Detecta override: se o valor atual veio da IA (campo_origens.source === 'ai'),
+      // marca como manual_override_ai — IA deixa de poder sobrescrever esse campo.
+      const origemAtual = (cliente?.campo_origens as Record<string, { source?: CampoOrigem }> | undefined)?.[campo.key]?.source;
+      const novaOrigem: CampoOrigem = origemAtual === "ai" ? "manual_override_ai" : "manual";
+      const r = await chamarAtualizarCadastro({ [campo.key]: v }, { [campo.key]: novaOrigem });
       if (r.ok) {
         setSavingState((prev) => ({ ...prev, [campo.key]: "saved" }));
         onUpdated?.();
@@ -257,7 +302,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         setSavingState((prev) => ({ ...prev, [campo.key]: "error" }));
       }
     }, DEBOUNCE_MS);
-  }, [onUpdated, fetchViaCep]);
+  }, [onUpdated, fetchViaCep, cliente]);
 
   const handleEscolherArquivo = () => fileRef.current?.click();
 
@@ -470,6 +515,29 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
         {/* Body */}
         <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F3F1EF] px-8 py-6">
+          {(autoPrefillLoading || autoPrefillBanner) && (
+            <div className="mb-4 flex items-start gap-3 rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
+                {autoPrefillLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                  IA · LEITURA DOS SEUS DOCUMENTOS
+                </div>
+                {autoPrefillLoading ? (
+                  <p className="mt-0.5 text-[12px] text-[#3A3A3A]">
+                    Lendo os documentos que você já enviou para preencher o que falta…
+                  </p>
+                ) : autoPrefillBanner ? (
+                  <p className="mt-0.5 text-[12.5px] text-[#0A0A0A]">
+                    <strong>{autoPrefillBanner.campos} campo(s)</strong> preenchidos automaticamente a partir de{" "}
+                    <strong>{autoPrefillBanner.docs} documento(s)</strong> seus. Revise abaixo — se você editar algum valor, sua correção fica salva e a IA não sobrescreve mais.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {modo === "escolher" && (
             <div className="space-y-3">
               <div className="rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-5 shadow-sm">
