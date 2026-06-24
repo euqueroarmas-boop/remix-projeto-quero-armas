@@ -833,7 +833,14 @@ export function ClienteDocsHubModal({
 
   /** Marca um campo sensível como confirmado pelo humano (botão Confirmar). */
   function confirmField(key: SensitiveKey) {
-    setConfirmados((prev) => ({ ...prev, [key]: true }));
+    setConfirmados((prev) => ({
+      ...prev,
+      [key]: true,
+      // No CR, o número operacional do documento é o próprio registro SIGMA.
+      // A tela exibe apenas “Nº de Registro SIGMA”, então confirmar esse campo
+      // também deve satisfazer a trava histórica de `numero_documento`.
+      ...(form.tipo_documento === "cr" && key === "numero_registro_sigma" ? { numero_documento: true } : {}),
+    }));
   }
 
   /** Quais campos sensíveis são exigidos para o tipo atual. */
@@ -846,7 +853,7 @@ export function ClienteDocsHubModal({
       return base;
     }
     if (t === "cr" || t === "autorizacao_compra") {
-      return ["numero_documento", "data_validade"];
+      return t === "cr" ? ["numero_registro_sigma", "data_validade"] : ["numero_documento", "data_validade"];
     }
     if (t === "craf") {
       const base: SensitiveKey[] = [
