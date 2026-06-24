@@ -788,6 +788,9 @@ export function ClienteDocsHubModal({
   const tipoAtual = getTipoDocumentoMeta(form.tipo_documento) ?? tiposDisponiveis[0] ?? null;
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
+  // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
+  const isDocPreArma = form.tipo_documento === "cr" || form.tipo_documento === "autorizacao_compra";
+  const showArmaVinculada = showArmaFields && !isDocPreArma;
   const escopoAtual: EscopoDocumental = inferEscopoDocumental({
     tipo_documento: form.tipo_documento,
     categoria_hub: categoriaHub,
