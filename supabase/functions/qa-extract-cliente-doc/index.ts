@@ -30,6 +30,11 @@ const TIPOS_VALIDOS = [
   "laudo_psicotecnico",
   "exame_tiro",
   "capacidade_tecnica",
+  "antecedentes_criminais",
+  "antecedentes_federal",
+  "antecedentes_estadual",
+  "antecedentes_militar",
+  "antecedentes_eleitoral",
   "outro",
 ] as const;
 type TipoDoc = typeof TIPOS_VALIDOS[number];
