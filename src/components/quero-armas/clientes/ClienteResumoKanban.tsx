@@ -286,7 +286,7 @@ export default function ClienteResumoKanban({
       <div className="qa-kanban-resumo__wrap">
         <header className="qa-kanban-resumo__top">
           <div>
-            <h1>{cliente?.nome_completo || "Cliente"}</h1>
+            <h1>WILLIAN, ESTE É O RESUMO DE TUDO</h1>
             <div className="qa-kanban-resumo__meta">
               <span><span className="qa-kanban-resumo__dot" />{cadastro?.categoria_titular || (cliente?.status_cliente || "Cliente")}</span>
               {cadastro?.numero_cr && <span><b>CR</b> {cadastro.numero_cr}</span>}
