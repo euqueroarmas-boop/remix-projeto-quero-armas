@@ -220,7 +220,7 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_MILITAR: certidão de tribunal militar (TJM, STM). Validade: 3 meses após a data de emissão.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
-  "• ANTECEDENTES_ELEITORAL: certidão de quitação eleitoral / crimes eleitorais TSE ou TRE.",
+  "• ANTECEDENTES_ELEITORAL: certidão de crimes eleitorais TSE ou TRE. NÃO classifique como quitação eleitoral quando o cabeçalho indicar crimes eleitorais.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, numero_documento (número do título de eleitor — campo 'Número do Título' ou 'Título de Eleitor n.'), orgao_emissor (ex.: 'TSE'), data_emissao, data_validade, resultado_certidao.",
   "  ATENÇÃO: se a certidão não trazer data_validade explícita, não invente — deixe vazio; o sistema calcula automaticamente.",
   "",

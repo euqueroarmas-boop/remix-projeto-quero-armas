@@ -144,7 +144,7 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
   certidao_militar: "Justiça Militar. Extraia: nome_titular, cpf, resultado, data_emissao.",
-  certidao_eleitoral: "Quitação Eleitoral. Extraia: nome_titular, titulo_eleitor, resultado, data_emissao.",
+  certidao_eleitoral: "Certidão de Crimes Eleitorais. Extraia: nome_titular, titulo_eleitor, resultado, data_emissao.",
   laudo_psicologico: "Laudo Psicológico. Extraia: nome_titular, cpf, psicologo_nome, psicologo_crp, resultado (APTO/INAPTO), data_emissao.",
   laudo_capacidade_tecnica: "Capacidade Técnica de tiro. Extraia: nome_titular, cpf, instrutor_nome, instrutor_credencial, resultado (APTO/INAPTO), data_emissao.",
   cr_cac: "Certificado de Registro CAC. Extraia: nome_titular, cpf, numero_cr, categoria, validade (YYYY-MM-DD).",
