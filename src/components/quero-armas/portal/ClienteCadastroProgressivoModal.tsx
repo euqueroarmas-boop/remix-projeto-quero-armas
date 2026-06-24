@@ -722,16 +722,39 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   <p className="text-sm text-slate-500 max-w-sm">Não há campos pendentes no momento.</p>
                 </div>
               )}
-              {gruposVisiveis.map(({ grupo, campos }) => (
-                <section key={grupo} className="rounded-[4px] border border-[#E5E5E5] bg-white p-4 shadow-sm">
-                  <h3 className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: MARROM }}>
-                    {GRUPO_LABELS[grupo]}
-                  </h3>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {campos.map((c) => <div key={c.key}>{renderInput(c)}</div>)}
-                  </div>
-                </section>
-              ))}
+              {gruposVisiveis.map(({ grupo, campos }) => {
+                const { feitos, total } = totaisPorGrupo[grupo];
+                const muted = feitos === 0;
+                return (
+                  <section
+                    key={grupo}
+                    className="grid grid-cols-[40px_1fr] overflow-hidden rounded-[3px] border border-[#E5E5E5] bg-white shadow-sm"
+                  >
+                    <div
+                      className={`flex items-center justify-center ${muted ? "bg-[#ededeb] text-[#6A6A6A]" : "bg-[#7A1F2B] text-white"}`}
+                    >
+                      <span
+                        className="font-heading text-[10px] font-black uppercase tracking-[0.32em] whitespace-nowrap"
+                        style={{ transform: "rotate(-90deg)" }}
+                      >
+                        {GRUPO_LABELS[grupo]}
+                      </span>
+                    </div>
+                    <div className="px-5 py-4">
+                      <div className="mb-2 flex items-baseline justify-between">
+                        <div className="font-heading text-[12px] font-black uppercase tracking-[0.14em] text-[#0A0A0A]">
+                          {GRUPO_LABELS[grupo]}
+                        </div>
+                        <div className="font-heading text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                          {feitos} / {total} CAMPOS
+                          {muted ? " · NÃO INICIADO" : ""}
+                        </div>
+                      </div>
+                      <div>{campos.map((c) => renderRow(c))}</div>
+                    </div>
+                  </section>
+                );
+              })}
             </div>
           )}
 
