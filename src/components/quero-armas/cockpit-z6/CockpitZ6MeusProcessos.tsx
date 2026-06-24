@@ -365,10 +365,10 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
 
       {/* HEADER cliente-centric */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 600, letterSpacing: ".04em", color: "#0A0A0A" }}>
+        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
-        <div style={{ marginTop: 6, fontSize: 11.5, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Oswald', sans-serif", letterSpacing: ".1em" }}>
+        <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
           <span>CPF · <b style={{ color: "#0A0A0A", fontWeight: 600 }}>{cpfMascarado}</b></span>
           <span>MEMBRO DESDE · <b style={{ color: "#0A0A0A", fontWeight: 600 }}>{membroDesde}</b></span>
           <span>{processosAtivos} PROCESSOS ATIVOS</span>
