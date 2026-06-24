@@ -1453,6 +1453,8 @@ export default function QAClientePortalPage() {
           filiacoes={filiacoes}
           cadastro={cadastro}
           examesAtuais={examesCliente}
+          meusDocs={meusDocs}
+          processoDocs={processoDocs}
           onNavigate={(tab) => setActiveSection(tab as any)}
         />
         {false && (() => {

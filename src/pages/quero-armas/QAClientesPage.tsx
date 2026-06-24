@@ -2749,6 +2749,7 @@ export default function QAClientesPage() {
                     cadastro={cadastro}
                     examesAtuais={examesAtuais}
                     armasManual={armasManual}
+                    meusDocs={docsCliente}
                     onNavigate={setTab}
                 />
               </TabsContent>
