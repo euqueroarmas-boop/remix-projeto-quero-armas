@@ -1624,19 +1624,43 @@ export function ClienteDocsHubModal({
 
             {/* ── Alerta de documento expirado ── */}
             {docExpirado && (
-              <div className="rounded-2xl border border-red-400 bg-red-50 p-3 text-xs text-red-900">
-                <div className="flex items-center gap-1.5">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
-                  <span className="font-bold uppercase tracking-wide text-[10px]">Documento vencido</span>
-                  <span className="ml-auto text-[9px] font-mono bg-red-100 px-1.5 py-0.5 rounded">
-                    {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-                <p className="mt-1 text-[10px]">
-                  A validade deste documento expirou. Documentos vencidos são encaminhados para revisão
-                  humana e não serão aceitos no processo sem renovação.
-                </p>
-              </div>
+              (() => {
+                const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
+                return (
+                  <div className={cn(
+                    "rounded-2xl border p-3 text-xs",
+                    isLaudoExame
+                      ? "border-amber-300 bg-amber-50 text-amber-900"
+                      : "border-red-400 bg-red-50 text-red-900"
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className={cn("h-4 w-4 shrink-0", isLaudoExame ? "text-amber-600" : "text-red-600")} />
+                      <span className="font-bold uppercase tracking-wide text-[10px]">
+                        {isLaudoExame ? "Documento vencido — mantido como histórico" : "Documento vencido"}
+                      </span>
+                      <span className={cn(
+                        "ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded",
+                        isLaudoExame ? "bg-amber-100" : "bg-red-100"
+                      )}>
+                        {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    {isLaudoExame ? (
+                      <p className="mt-1 text-[10px]">
+                        Laudos e exames vencidos <b>são aceitos e arquivados no histórico</b>. Eles podem ser
+                        exigidos pela PF para comprovar a validade cruzada com outros exames realizados na
+                        época (ex.: exame de tiro feito enquanto o psicológico estava vigente). O sistema
+                        seleciona automaticamente os exames antigos necessários no momento do protocolo.
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[10px]">
+                        A validade deste documento expirou. Documentos vencidos são encaminhados para revisão
+                        humana e não serão aceitos no processo sem renovação.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()
             )}
 
             {/* ── Painel de conformidade cruzada (todos os documentos) ── */}
