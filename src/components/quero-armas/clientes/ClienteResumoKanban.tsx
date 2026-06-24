@@ -20,7 +20,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; days: number; navTo: string };
+type Urgent = { label: string; sub: string; days: number; navTo: string };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
@@ -82,6 +82,17 @@ export default function ClienteResumoKanban({
   onNavigate,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
+
+  const URG_SUB: Record<string, string> = {
+    cr: "Certificado de Registro · sem ele toda atividade na PF trava",
+    craf: "Sem CRAF vigente o transporte da arma é ilegal",
+    gte: "Guia de Tráfego expirada bloqueia movimentações",
+    psicologico: "Exame obrigatório · sem ele, processos travam na PF",
+    tiro: "Capacidade técnica obrigatória · renove para manter o CR",
+    filiacao: "Filiação vigente é exigida para CAC ativo",
+    documento: "Certidão ou regularidade próxima do vencimento",
+    processo: "Prazo processual crítico · ação imediata na PF",
+  };
 
   const snapshot = useMemo(() => {
     const activeItems = itens.filter((i: any) => !ACTIVE_FINAL_STATUSES.includes(String(i.status || "").toUpperCase()));
@@ -145,31 +156,41 @@ export default function ClienteResumoKanban({
       return { label: shortName(nome, "PROCESSO"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
+    const docItems: FrontItem[] = meusDocs
+      .map((doc: any) => {
+        const nome = shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "DOCUMENTO");
+        const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
+        return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
+      })
+      .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
+
     const fronts: Front[] = [
       { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", items: arsenalItems.slice(0, 3), navTo: "arsenal" },
       { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", items: examesItems.slice(0, 3), navTo: "documentos" },
       { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", items: filiacaoItems.slice(0, 3), navTo: "documentos" },
+      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", items: docItems.slice(0, 3), navTo: "documentos" },
       { key: "processos", title: "PROCESSOS", count: activeItems.length, tone: "bordo", items: processoItems.slice(0, 3), navTo: "processos" },
     ];
 
     const urgents: Urgent[] = [];
-    const pushUrgent = (label: string, date: string | null | undefined, navTo: string) => {
+    const pushUrgent = (label: string, sub: string, date: string | null | undefined, navTo: string) => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, days, navTo });
+      urgents.push({ label, sub, days, navTo });
     };
-    if (cadastro?.validade_cr) pushUrgent("CR — CERTIFICADO", cadastro.validade_cr, "arsenal");
-    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "ARMA")}`, cr.data_validade, "arsenal"));
-    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "ARMA")}`, g.data_validade, "arsenal"));
-    filiacoes.forEach((f: any) => pushUrgent(`FILIAÇÃO — ${shortName(f.nome_filiacao || f.nome_clube, "CLUBE")}`, f.validade_filiacao, "documentos"));
+    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal");
+    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal"));
+    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal"));
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos"));
     examesItems.forEach((e) => {
-      const source = e.label.includes("PSICOLÓGICO") ? exameByTipo.get("psicologico") : exameByTipo.get("tiro");
-      pushUrgent(e.label, source?.data_vencimento, "documentos");
+      const isPsi = e.label.includes("PSICOLÓGICO");
+      const source = isPsi ? exameByTipo.get("psicologico") : exameByTipo.get("tiro");
+      pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos");
     });
-    meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "DOCUMENTO"), doc?.data_validade_efetiva || doc?.data_validade, "documentos"));
-    processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "DOCUMENTO DO PROCESSO"), doc?.data_validade_efetiva || doc?.data_validade, "processos"));
+    meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos"));
+    processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos"));
     prazosProc.forEach((p: any) => {
-      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "PROCESSO"}`, days: p.diasRestantes, navTo: "processos" });
+      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos" });
     });
 
     const sortedUrgents = urgents.sort((a, b) => a.days - b.days);
