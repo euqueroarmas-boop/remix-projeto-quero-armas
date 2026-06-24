@@ -7188,117 +7188,6 @@ export type Database = {
         }
         Relationships: []
       }
-      qa_pf_credenciados: {
-        Row: {
-          ativo: boolean
-          bairro: string | null
-          cidade: string | null
-          created_at: string
-          emails: string[]
-          endereco: string | null
-          fetched_at: string
-          hash_conteudo: string
-          id: string
-          latitude: number | null
-          longitude: number | null
-          nome: string
-          raw_block: string | null
-          registro: string | null
-          source_url: string
-          telefones: string[]
-          tipo: Database["public"]["Enums"]["qa_pf_credenciado_tipo"]
-          uf: string
-          updated_at: string
-          validade: string | null
-          validade_label: string | null
-        }
-        Insert: {
-          ativo?: boolean
-          bairro?: string | null
-          cidade?: string | null
-          created_at?: string
-          emails?: string[]
-          endereco?: string | null
-          fetched_at?: string
-          hash_conteudo: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          nome: string
-          raw_block?: string | null
-          registro?: string | null
-          source_url: string
-          telefones?: string[]
-          tipo: Database["public"]["Enums"]["qa_pf_credenciado_tipo"]
-          uf: string
-          updated_at?: string
-          validade?: string | null
-          validade_label?: string | null
-        }
-        Update: {
-          ativo?: boolean
-          bairro?: string | null
-          cidade?: string | null
-          created_at?: string
-          emails?: string[]
-          endereco?: string | null
-          fetched_at?: string
-          hash_conteudo?: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          nome?: string
-          raw_block?: string | null
-          registro?: string | null
-          source_url?: string
-          telefones?: string[]
-          tipo?: Database["public"]["Enums"]["qa_pf_credenciado_tipo"]
-          uf?: string
-          updated_at?: string
-          validade?: string | null
-          validade_label?: string | null
-        }
-        Relationships: []
-      }
-      qa_pf_credenciados_sync_log: {
-        Row: {
-          detalhes: Json | null
-          erros: Json | null
-          finished_at: string | null
-          id: string
-          started_at: string
-          status: string
-          total_atualizados: number | null
-          total_desativados: number | null
-          total_inseridos: number | null
-          total_paginas: number | null
-        }
-        Insert: {
-          detalhes?: Json | null
-          erros?: Json | null
-          finished_at?: string | null
-          id?: string
-          started_at?: string
-          status?: string
-          total_atualizados?: number | null
-          total_desativados?: number | null
-          total_inseridos?: number | null
-          total_paginas?: number | null
-        }
-        Update: {
-          detalhes?: Json | null
-          erros?: Json | null
-          finished_at?: string | null
-          id?: string
-          started_at?: string
-          status?: string
-          total_atualizados?: number | null
-          total_desativados?: number | null
-          total_inseridos?: number | null
-          total_paginas?: number | null
-        }
-        Relationships: []
-      }
       qa_prazos_procedimentos: {
         Row: {
           ativo: boolean
@@ -7806,6 +7695,117 @@ export type Database = {
           status?: string
           updated_at?: string
           venda_id?: number
+        }
+        Relationships: []
+      }
+      qa_psico_credenciados: {
+        Row: {
+          ativo: boolean
+          bairro: string | null
+          cidade: string | null
+          created_at: string
+          emails: string[]
+          endereco: string | null
+          fetched_at: string
+          hash_conteudo: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          nome: string
+          raw_block: string | null
+          registro: string | null
+          source_url: string
+          telefones: string[]
+          tipo: Database["public"]["Enums"]["qa_psico_credenciado_tipo"]
+          uf: string
+          updated_at: string
+          validade: string | null
+          validade_label: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          bairro?: string | null
+          cidade?: string | null
+          created_at?: string
+          emails?: string[]
+          endereco?: string | null
+          fetched_at?: string
+          hash_conteudo: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome: string
+          raw_block?: string | null
+          registro?: string | null
+          source_url: string
+          telefones?: string[]
+          tipo: Database["public"]["Enums"]["qa_psico_credenciado_tipo"]
+          uf: string
+          updated_at?: string
+          validade?: string | null
+          validade_label?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          bairro?: string | null
+          cidade?: string | null
+          created_at?: string
+          emails?: string[]
+          endereco?: string | null
+          fetched_at?: string
+          hash_conteudo?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+          raw_block?: string | null
+          registro?: string | null
+          source_url?: string
+          telefones?: string[]
+          tipo?: Database["public"]["Enums"]["qa_psico_credenciado_tipo"]
+          uf?: string
+          updated_at?: string
+          validade?: string | null
+          validade_label?: string | null
+        }
+        Relationships: []
+      }
+      qa_psico_credenciados_sync_log: {
+        Row: {
+          detalhes: Json | null
+          erros: Json | null
+          finished_at: string | null
+          id: string
+          started_at: string
+          status: string
+          total_atualizados: number | null
+          total_desativados: number | null
+          total_inseridos: number | null
+          total_paginas: number | null
+        }
+        Insert: {
+          detalhes?: Json | null
+          erros?: Json | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_atualizados?: number | null
+          total_desativados?: number | null
+          total_inseridos?: number | null
+          total_paginas?: number | null
+        }
+        Update: {
+          detalhes?: Json | null
+          erros?: Json | null
+          finished_at?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+          total_atualizados?: number | null
+          total_desativados?: number | null
+          total_inseridos?: number | null
+          total_paginas?: number | null
         }
         Relationships: []
       }
@@ -10222,35 +10222,6 @@ export type Database = {
       qa_norm_email: { Args: { p_email: string }; Returns: string }
       qa_norm_nome: { Args: { p_nome: string }; Returns: string }
       qa_parse_date_safe: { Args: { v: string }; Returns: string }
-      qa_pf_credenciados_proximos: {
-        Args: {
-          p_incluir_vencidos?: boolean
-          p_lat: number
-          p_limit?: number
-          p_lng: number
-          p_raio_km?: number
-          p_tipo: Database["public"]["Enums"]["qa_pf_credenciado_tipo"]
-          p_uf?: string
-        }
-        Returns: {
-          bairro: string
-          cidade: string
-          distancia_km: number
-          emails: string[]
-          endereco: string
-          id: string
-          latitude: number
-          longitude: number
-          nome: string
-          registro: string
-          source_url: string
-          telefones: string[]
-          tipo: Database["public"]["Enums"]["qa_pf_credenciado_tipo"]
-          uf: string
-          validade: string
-          validade_label: string
-        }[]
-      }
       qa_pos_pagamento_protocolar: {
         Args: { p_processo_id: string }
         Returns: Json
@@ -10271,6 +10242,35 @@ export type Database = {
       qa_proximo_protocolo: {
         Args: { p_ano: number; p_sigla: string }
         Returns: number
+      }
+      qa_psico_credenciados_proximos: {
+        Args: {
+          p_incluir_vencidos?: boolean
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_raio_km?: number
+          p_tipo: Database["public"]["Enums"]["qa_psico_credenciado_tipo"]
+          p_uf?: string
+        }
+        Returns: {
+          bairro: string
+          cidade: string
+          distancia_km: number
+          emails: string[]
+          endereco: string
+          id: string
+          latitude: number
+          longitude: number
+          nome: string
+          registro: string
+          source_url: string
+          telefones: string[]
+          tipo: Database["public"]["Enums"]["qa_psico_credenciado_tipo"]
+          uf: string
+          validade: string
+          validade_label: string
+        }[]
       }
       qa_recalcular_prazos_processo: {
         Args: { p_processo_id: string }
@@ -10408,7 +10408,7 @@ export type Database = {
         | "outro"
       qa_ia_prioridade: "baixa" | "media" | "alta" | "critica"
       qa_ia_tipo_registro: "correcao_erro" | "treinamento_direto"
-      qa_pf_credenciado_tipo: "psicologo" | "instrutor_tiro"
+      qa_psico_credenciado_tipo: "psicologo" | "instrutor_tiro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -10585,7 +10585,7 @@ export const Constants = {
       ],
       qa_ia_prioridade: ["baixa", "media", "alta", "critica"],
       qa_ia_tipo_registro: ["correcao_erro", "treinamento_direto"],
-      qa_pf_credenciado_tipo: ["psicologo", "instrutor_tiro"],
+      qa_psico_credenciado_tipo: ["psicologo", "instrutor_tiro"],
     },
   },
 } as const

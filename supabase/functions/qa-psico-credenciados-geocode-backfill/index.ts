@@ -15,7 +15,7 @@ const corsHeaders = {
 
 async function processarLote(supabase: any, batchSize: number, uf?: string, tipo?: string) {
   let q = supabase
-    .from("qa_pf_credenciados")
+    .from("qa_psico_credenciados")
     .select("id, uf, endereco")
     .eq("ativo", true)
     .is("latitude", null)
@@ -34,21 +34,21 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
     try {
       const g = await geocodeEndereco(supabase, r.endereco, r.uf);
       if (g) {
-        await supabase.from("qa_pf_credenciados")
+        await supabase.from("qa_psico_credenciados")
           .update({ latitude: g.lat, longitude: g.lng })
           .eq("id", r.id);
         ok++;
       } else {
         // Marca com sentinel (-91, -91) — fora do range válido — para não bloquear
-        // a paginação do backfill. A RPC qa_pf_credenciados_proximos só considera
+        // a paginação do backfill. A RPC qa_psico_credenciados_proximos só considera
         // pontos dentro do raio, então o sentinel é sempre descartado.
-        await supabase.from("qa_pf_credenciados")
+        await supabase.from("qa_psico_credenciados")
           .update({ latitude: -91, longitude: -91 })
           .eq("id", r.id);
         fail++;
       }
     } catch (_e) {
-      await supabase.from("qa_pf_credenciados")
+      await supabase.from("qa_psico_credenciados")
         .update({ latitude: -91, longitude: -91 })
         .eq("id", r.id);
       fail++;
@@ -56,7 +56,7 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
     await nominatimDelay();
   }
   let q2 = supabase
-    .from("qa_pf_credenciados")
+    .from("qa_psico_credenciados")
     .select("id", { count: "exact", head: true })
     .eq("ativo", true)
     .is("latitude", null)
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
     const res = await processarLote(supabase, batchSize, uf, tipo);
 
     if (loop && res.restantes > 0) {
-      const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-pf-credenciados-geocode-backfill`;
+      const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-psico-credenciados-geocode-backfill`;
       const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
       fetch(fnUrl, {
         method: "POST",

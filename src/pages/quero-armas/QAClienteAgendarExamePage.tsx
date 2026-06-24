@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredenciadosPF, type CredenciadoPF } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosPF";
+import { useCredenciadosPsico, type CredenciadoPsico } from "@/components/quero-armas/clientes/AgendarExam./useCredenciadosPsico";
 import { useCredenciadosIAT, type CredenciadoIAT } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosIAT";
 import { AgendarExameList } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameList";
 import { INSTRUTOR_PDF_PF } from "@/components/quero-armas/clientes/AgendarExame/instrutorPdfLinks";
@@ -44,7 +44,7 @@ export default function QAClienteAgendarExamePage() {
     cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 100,
   }) : null, [isInstrutor, cepValido, cepLimpo, uf, raio]);
 
-  const psico = useCredenciadosPF(psicoParams as any);
+  const psico = useCredenciadosPsico(psicoParams as any);
   const iat = useCredenciadosIAT(iatParams);
 
   const loading = isInstrutor ? iat.loading : psico.loading;
@@ -59,7 +59,7 @@ export default function QAClienteAgendarExamePage() {
     ? iat.data?.distancia_mais_proximo ?? null
     : psico.distanciaMaisProximo;
 
-  const results: CredenciadoPF[] = isInstrutor
+  const results: CredenciadoPsico[] = isInstrutor
     ? (iat.data?.results || []).map((r: CredenciadoIAT) => ({
         id: r.id,
         tipo: "instrutor_tiro",
