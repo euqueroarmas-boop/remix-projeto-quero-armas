@@ -8,6 +8,11 @@
 const UA = "WMTi-QueroArmas/1.0 (contato@queroarmas.com.br)";
 
 export type GeocodeResult = { lat: number; lng: number };
+export type GeocodeMeta = {
+  result: GeocodeResult | null;
+  hitNetwork: boolean; // true se chamou Nominatim/IA; false se respondeu do cache
+  provider?: string;
+};
 
 function stripDiacritics(s: string) {
   return s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
@@ -165,22 +170,55 @@ export async function geocodeEndereco(
   endereco: string,
   ufFallback?: string,
 ): Promise<GeocodeResult | null> {
+  const meta = await geocodeEnderecoMeta(supabase, endereco, ufFallback);
+  return meta.result;
+}
+
+/** Igual a geocodeEndereco mas informa se a chamada bateu na rede (para o
+ * consumidor decidir se aplica o delay de 1 req/s da Nominatim). */
+export async function geocodeEnderecoMeta(
+  supabase: any,
+  endereco: string,
+  ufFallback?: string,
+): Promise<GeocodeMeta> {
   const parsed = parseAddress(endereco, ufFallback);
   if (!parsed) {
     await cacheNegative(supabase, endereco, ufFallback, { reason: "unparseable" });
-    return null;
+    return { result: null, hitNetwork: false, provider: "unparseable" };
   }
   const cacheKey = norm(`${parsed.street} | ${parsed.city} | ${parsed.uf}`);
   const { data: cached } = await supabase
     .from("qa_endereco_geocache")
-    .select("latitude,longitude")
+    .select("latitude,longitude,provider")
     .eq("endereco_normalizado", cacheKey)
     .maybeSingle();
   if (cached) {
     if (cached.latitude && cached.longitude) {
-      return { lat: Number(cached.latitude), lng: Number(cached.longitude) };
+      return {
+        result: { lat: Number(cached.latitude), lng: Number(cached.longitude) },
+        hitNetwork: false,
+        provider: cached.provider,
+      };
     }
-    return null;
+    // Negativo já gravado pela IA — desiste de vez (evita reconsumir crédito).
+    if (cached.provider === "lovable_ai_failed" || cached.provider === "unparseable") {
+      return { result: null, hitNetwork: false, provider: cached.provider };
+    }
+    // Cache antigo (nominatim_cascade_failed/structured nulo) — tenta IA como
+    // fallback antes de declarar falha definitiva.
+    const ai = await geocodeViaAi(parsed);
+    if (ai) {
+      await supabase.from("qa_endereco_geocache").upsert({
+        endereco_normalizado: cacheKey, latitude: ai.lat, longitude: ai.lng,
+        provider: "lovable_ai", raw: { fonte: "lovable_ai", parsed },
+      }, { onConflict: "endereco_normalizado" });
+      return { result: ai, hitNetwork: true, provider: "lovable_ai" };
+    }
+    await supabase.from("qa_endereco_geocache").upsert({
+      endereco_normalizado: cacheKey, latitude: null, longitude: null,
+      provider: "lovable_ai_failed", raw: { fonte: "lovable_ai", parsed },
+    }, { onConflict: "endereco_normalizado" });
+    return { result: null, hitNetwork: true, provider: "lovable_ai_failed" };
   }
 
   // Cascata: estruturado -> texto livre -> centroide cidade
@@ -195,7 +233,7 @@ export async function geocodeEndereco(
         endereco_normalizado: cacheKey, latitude: a.lat, longitude: a.lng,
         provider: "nominatim_structured", raw: a.raw,
       }, { onConflict: "endereco_normalizado" });
-      return { lat: a.lat, lng: a.lng };
+      return { result: { lat: a.lat, lng: a.lng }, hitNetwork: true, provider: "nominatim_structured" };
     }
     await nominatimDelay();
 
@@ -208,7 +246,7 @@ export async function geocodeEndereco(
         endereco_normalizado: cacheKey, latitude: b.lat, longitude: b.lng,
         provider: "nominatim_freetext", raw: b.raw,
       }, { onConflict: "endereco_normalizado" });
-      return { lat: b.lat, lng: b.lng };
+      return { result: { lat: b.lat, lng: b.lng }, hitNetwork: true, provider: "nominatim_freetext" };
     }
     await nominatimDelay();
 
@@ -220,17 +258,26 @@ export async function geocodeEndereco(
         endereco_normalizado: cacheKey, latitude: c.lat, longitude: c.lng,
         provider: "nominatim_city_centroid", raw: c.raw,
       }, { onConflict: "endereco_normalizado" });
-      return { lat: c.lat, lng: c.lng };
+      return { result: { lat: c.lat, lng: c.lng }, hitNetwork: true, provider: "nominatim_city_centroid" };
     }
   } catch {
     // segue e cacheia negativo
   }
 
+  // Cascata Nominatim falhou — tenta Lovable AI antes de declarar falha.
+  const ai = await geocodeViaAi(parsed);
+  if (ai) {
+    await supabase.from("qa_endereco_geocache").upsert({
+      endereco_normalizado: cacheKey, latitude: ai.lat, longitude: ai.lng,
+      provider: "lovable_ai", raw: { fonte: "lovable_ai", parsed, attempts },
+    }, { onConflict: "endereco_normalizado" });
+    return { result: ai, hitNetwork: true, provider: "lovable_ai" };
+  }
   await supabase.from("qa_endereco_geocache").upsert({
     endereco_normalizado: cacheKey, latitude: null, longitude: null,
-    provider: "nominatim_cascade_failed", raw: { attempts },
+    provider: "lovable_ai_failed", raw: { fonte: "lovable_ai", attempts },
   }, { onConflict: "endereco_normalizado" });
-  return null;
+  return { result: null, hitNetwork: true, provider: "lovable_ai_failed" };
 }
 
 async function cacheNegative(
@@ -251,3 +298,54 @@ async function cacheNegative(
 
 /** Espera 1.1s para respeitar a política de 1 req/s da Nominatim. */
 export const nominatimDelay = () => new Promise((r) => setTimeout(r, 1100));
+
+/** Bounding box do Brasil — descarta qualquer coordenada fora. */
+function dentroDoBrasil(lat: number, lng: number): boolean {
+  return lat >= -34 && lat <= 5.5 && lng >= -74 && lng <= -34;
+}
+
+/**
+ * Fallback de geocode via Lovable AI Gateway. Usa modelo barato (gemini-flash)
+ * pedindo coordenadas em JSON estruturado. Valida bounding box do Brasil.
+ * Retorna null se a IA não souber (lat/lng=null) ou se vier fora do Brasil.
+ */
+async function geocodeViaAi(parsed: {
+  street: string; city: string; uf: string; bairro?: string;
+}): Promise<GeocodeResult | null> {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) return null;
+  const enderecoTxt = [parsed.street, parsed.bairro, parsed.city, parsed.uf, "Brasil"]
+    .filter(Boolean).join(", ");
+  const system = "Você é um geocodificador. Responda APENAS com JSON {\"lat\":number,\"lng\":number,\"confianca\":\"alta\"|\"media\"|\"baixa\"|\"nenhuma\"}. Se não souber, use lat=null e lng=null e confianca=\"nenhuma\". Coordenadas devem estar no Brasil (lat entre -34 e 5, lng entre -74 e -34).";
+  const user = `Endereço: ${enderecoTxt}\nCidade esperada: ${parsed.city}/${parsed.uf}.\nRetorne as coordenadas exatas em decimal (WGS84).`;
+  try {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Lovable-API-Key": apiKey,
+        "X-Lovable-AIG-SDK": "wmti-geocode",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) return null;
+    const parsedJson = typeof content === "string" ? JSON.parse(content) : content;
+    const lat = Number(parsedJson?.lat);
+    const lng = Number(parsedJson?.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (!dentroDoBrasil(lat, lng)) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
