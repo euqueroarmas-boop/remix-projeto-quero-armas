@@ -13,12 +13,30 @@ interface Props {
   cadastro: any;
   examesAtuais?: any[];
   armasManual?: any[];
+  meusDocs?: any[];
+  processoDocs?: any[];
   onNavigate: (tab: string) => void;
 }
 
 function daysUntil(dateStr: string | null): number | null {
   if (!dateStr) return null;
-  try { return computeExameStatus(dateStr).dias_restantes; } catch { return null; }
+  try {
+    const raw = String(dateStr).trim();
+    if (!raw) return null;
+    let parsed: Date | null = null;
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (iso) parsed = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    else if (br) parsed = new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]));
+    if (parsed && !Number.isNaN(parsed.getTime())) {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      parsed.setHours(0, 0, 0, 0);
+      return Math.floor((parsed.getTime() - hoje.getTime()) / 86400000);
+    }
+    const fallback = computeExameStatus(raw).dias_restantes;
+    return Number.isFinite(fallback) ? fallback : null;
+  } catch { return null; }
 }
 
 type Card = {
@@ -53,7 +71,7 @@ function tagFromCategory(cat: string): { tag: string; tone?: Card["tagTone"] } {
 
 export default function ClienteResumoKanban({
   cliente, vendas, itens, crafs, gtes, filiacoes, cadastro,
-  examesAtuais = [], armasManual = [], onNavigate,
+  examesAtuais = [], armasManual = [], meusDocs = [], processoDocs = [], onNavigate,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
@@ -207,13 +225,13 @@ export default function ClienteResumoKanban({
     return { todo, doing, review, done, summary, prazosCount: prazosProc.length };
   }, [cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual, SERVICO_MAP]);
 
-  // ── Carrossel de urgências (vencidos ou ≤ 7 dias) ──────────────────
+  // ── Carrossel de urgências (status vermelho: vencidos ou ≤ 7 dias) ──
   type Urg = { label: string; days: number | null; category: string; navTo: string; sub: string };
   const urgentes = useMemo<Urg[]>(() => {
     const navOf = (cat: string) => {
-      if (cat === "EXAME") return "exames";
-      if (cat === "FILIAÇÃO") return "filiacoes";
-      if (cat === "PRAZO ADM" || cat === "SERVIÇO") return "servicos";
+      if (cat === "EXAME" || cat === "DOCUMENTO" || cat === "DOC. PROCESSO") return "documentos";
+      if (cat === "FILIAÇÃO") return "arsenal";
+      if (cat === "PRAZO ADM" || cat === "SERVIÇO") return "processos";
       return "arsenal";
     };
     const subOf = (cat: string) => {
@@ -222,6 +240,8 @@ export default function ClienteResumoKanban({
       if (cat === "PRAZO ADM") return "Prazo administrativo · perda implica em reprotocolo";
       if (cat === "CR") return "Sem CR válido, todo o arsenal fica irregular";
       if (cat === "CRAF" || cat === "GTE") return "Documento de arma vencido bloqueia trânsito e uso";
+      if (cat === "DOC. PROCESSO") return "Documento do processo em status vermelho · regularize para destravar a etapa";
+      if (cat === "DOCUMENTO") return "Documento pessoal em status vermelho · regularize para evitar bloqueios";
       return "Documento crítico · ação imediata recomendada";
     };
     const list: Urg[] = [];
@@ -230,6 +250,10 @@ export default function ClienteResumoKanban({
       if (d === null) return;
       if (d > 7) return; // status vermelho: vencido ou ≤ 7 dias
       list.push({ label, days: d, category, navTo: navOf(category), sub: subOf(category) });
+    };
+    const docLabel = (doc: any) => {
+      const raw = doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome || "Documento";
+      return String(raw).replace(/_/g, " ").replace(/\s+/g, " ").trim();
     };
     if (cadastro?.validade_cr) push("Certificado de Registro (CR)", cadastro.validade_cr, "CR");
     const exameByTipo = new Map<string, any>();
@@ -241,8 +265,10 @@ export default function ClienteResumoKanban({
     crafs.forEach((cr: any) => cr.data_validade && push(`CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, cr.data_validade, "CRAF"));
     gtes.forEach((g: any) => g.data_validade && push(`GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, g.data_validade, "GTE"));
     filiacoes.forEach((f: any) => f.validade_filiacao && push(`Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, f.validade_filiacao, "FILIAÇÃO"));
+    meusDocs.forEach((doc: any) => push(docLabel(doc), doc?.data_validade_efetiva || doc?.data_validade || null, "DOCUMENTO"));
+    processoDocs.forEach((doc: any) => push(docLabel(doc), doc?.data_validade_efetiva || doc?.data_validade || null, "DOC. PROCESSO"));
     return list.sort((a, b) => (a.days ?? 0) - (b.days ?? 0));
-  }, [cadastro, examesAtuais, crafs, gtes, filiacoes]);
+  }, [cadastro, examesAtuais, crafs, gtes, filiacoes, meusDocs, processoDocs]);
 
   const [urgIndex, setUrgIndex] = useState(0);
   useEffect(() => { setUrgIndex(0); }, [urgentes.length]);
