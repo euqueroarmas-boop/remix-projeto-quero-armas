@@ -847,6 +847,19 @@ export function ClienteDocsHubModal({
           return dataIsoFromBr(campos.data_emissao) || prev.data_emissao;
         })(),
         data_validade: (() => {
+          const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
+          // Regra legal (Lei 10.826/03): para laudos/exames a validade é SEMPRE
+          // data_avaliacao + 1 ano, ignorando a data de validade impressa no documento
+          // (que costuma ser inconsistente ou inexistente).
+          if (isLaudoExame) {
+            const avaliacao = dataIsoFromBr((campos as any).data_avaliacao) || dataIsoFromBr(campos.data_emissao);
+            if (avaliacao) {
+              const [y, m, d] = avaliacao.split("-").map(Number);
+              const venc = new Date(Date.UTC(y + 1, m - 1, d));
+              return venc.toISOString().slice(0, 10);
+            }
+            return prev.data_validade;
+          }
           const valExplicita = dataIsoFromBr(campos.data_validade);
           if (valExplicita) return valExplicita;
           const emissao = dataIsoFromBr(campos.data_emissao);
