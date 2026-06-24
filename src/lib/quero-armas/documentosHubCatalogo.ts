@@ -243,12 +243,67 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     return "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)";
   }
 
+  // ===== Identificação civil =====
+  if (tipo === "rg_com_cpf" || tipo === "rg") {
+    return "Cédula de Identidade (RG) com CPF";
+  }
+  if (tipo === "cin") {
+    return "Carteira de Identidade Nacional (CIN)";
+  }
+  if (tipo === "cnh") {
+    return "Carteira Nacional de Habilitação (CNH)";
+  }
+  if (tipo === "cpf") {
+    return "Cadastro de Pessoas Físicas (CPF)";
+  }
+
+  // ===== Comprovante de residência =====
+  if (tipo === "comprovante_residencia") {
+    if (haystack.includes("ENERGIA") || haystack.includes("ELETROPAULO") || haystack.includes("ENEL") || haystack.includes("CPFL") || haystack.includes("LIGHT") || haystack.includes("ELETRICA")) {
+      return "Comprovante de Residência — Conta de Energia Elétrica";
+    }
+    if (haystack.includes("SABESP") || haystack.includes("AGUA") || haystack.includes("SANEAMENTO")) {
+      return "Comprovante de Residência — Conta de Água";
+    }
+    if (haystack.includes("COMGAS") || haystack.includes("GAS NATURAL") || haystack.includes(" GAS ")) {
+      return "Comprovante de Residência — Conta de Gás";
+    }
+    if (haystack.includes("VIVO") || haystack.includes("CLARO") || haystack.includes("TIM") || haystack.includes("OI ") || haystack.includes("TELEFONE") || haystack.includes("INTERNET") || haystack.includes("BANDA LARGA")) {
+      return "Comprovante de Residência — Conta de Telefone/Internet";
+    }
+    if (haystack.includes("IPTU")) {
+      return "Comprovante de Residência — IPTU";
+    }
+    if (haystack.includes("CONDOMINIO")) {
+      return "Comprovante de Residência — Boleto de Condomínio";
+    }
+    return "Comprovante de Residência";
+  }
+
+  // ===== Laudos e exames =====
+  if (tipo === "laudo_psicologico") {
+    return "Laudo de Avaliação Psicológica para Aquisição/Porte de Arma de Fogo";
+  }
+  if (tipo === "laudo_capacidade_tecnica") {
+    return "Atestado de Capacidade Técnica para Manuseio de Arma de Fogo";
+  }
+
   return null;
 }
 
 function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | undefined): boolean {
   const tipo = String(tipoDocumento || "").trim().toLowerCase();
-  if (!tipo.startsWith("antecedentes_")) return false;
+  const elegivelInferencia =
+    tipo.startsWith("antecedentes_") ||
+    tipo === "rg_com_cpf" ||
+    tipo === "rg" ||
+    tipo === "cin" ||
+    tipo === "cnh" ||
+    tipo === "cpf" ||
+    tipo === "comprovante_residencia" ||
+    tipo === "laudo_psicologico" ||
+    tipo === "laudo_capacidade_tecnica";
+  if (!elegivelInferencia) return false;
   const normalized = normalizeDocumentoName(nome);
   const meta = getTipoDocumentoMeta(tipo);
   return (
@@ -256,6 +311,15 @@ function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | 
     normalized.includes("QUITACAO ELEITORAL") ||
     normalized.startsWith("ANT ") ||
     normalized.startsWith("ANT.") ||
+    normalized === "RG" ||
+    normalized === "CIN" ||
+    normalized === "CNH" ||
+    normalized === "CPF" ||
+    normalized === "END" ||
+    normalized === "LAUDO PSI" ||
+    normalized === "LAUDO TEC" ||
+    normalized === "LAUDO PSICOLOGICO" ||
+    normalized === "COMPROVANTE DE RESIDENCIA" ||
     normalized === normalizeDocumentoName(meta?.label) ||
     normalized === normalizeDocumentoName(meta?.short)
   );
