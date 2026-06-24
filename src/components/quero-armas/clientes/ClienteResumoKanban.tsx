@@ -126,9 +126,19 @@ export default function ClienteResumoKanban({
       const days = daysUntil(date);
       arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days) });
     };
-    if (cadastro?.validade_cr) addArsenal("CR — CERTIFICADO", cadastro.validade_cr);
-    crafs.forEach((cr: any) => addArsenal(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "ARMA")}`, cr.data_validade));
-    gtes.forEach((g: any) => addArsenal(`GTE — ${shortName(g.nome_arma || g.nome_gte, "ARMA")}`, g.data_validade));
+    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — CERTIFICADO DE REGISTRO"), cadastro.validade_cr);
+    crafs.forEach((cr: any) =>
+      addArsenal(
+        `${hubLabel("craf", "CRAF — CERTIFICADO DE REGISTRO DE ARMA DE FOGO")} — ${shortName(cr.nome_arma || cr.nome_craf, "ARMA").toUpperCase()}`,
+        cr.data_validade,
+      ),
+    );
+    gtes.forEach((g: any) =>
+      addArsenal(
+        `${hubLabel("gte", "GTE — GUIA DE TRÁFEGO EVENTUAL")} — ${shortName(g.nome_arma || g.nome_gte, "ARMA").toUpperCase()}`,
+        g.data_validade,
+      ),
+    );
     armasManual.forEach((arma: any) => {
       const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "ARMA MANUAL", "ARMA MANUAL");
       arsenalItems.push({ label: nome, status: "—", tone: "muted" });
@@ -138,12 +148,12 @@ export default function ClienteResumoKanban({
     for (const e of examesAtuais) if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
     const examesItems: FrontItem[] = [
       exameByTipo.get("psicologico") && {
-        label: "LAUDO PSICOLÓGICO",
+        label: hubLabel("laudo_psicologico", "LAUDO PSICOLÓGICO"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
       },
       exameByTipo.get("tiro") && {
-        label: "EXAME DE TIRO",
+        label: hubLabel("laudo_capacidade_tecnica", "EXAME DE TIRO"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
       },
