@@ -476,23 +476,24 @@ type FieldAudit = {
 };
 
 const modalTheme = {
+  // Stack Cockpit Z6 Light — papel #F2F2F2, tinta #0A0A0A, bordô #7A1F2B, brass #D6A64B
   "--background": "0 0% 100%",
-  "--foreground": "222 47% 11%",
+  "--foreground": "0 0% 4%",
   "--card": "0 0% 100%",
-  "--card-foreground": "222 47% 11%",
+  "--card-foreground": "0 0% 4%",
   "--popover": "0 0% 100%",
-  "--popover-foreground": "222 47% 11%",
-  "--primary": "222 47% 11%",
+  "--popover-foreground": "0 0% 4%",
+  "--primary": "352 60% 30%",
   "--primary-foreground": "0 0% 100%",
-  "--secondary": "210 40% 96%",
-  "--secondary-foreground": "222 47% 11%",
-  "--muted": "210 40% 96%",
-  "--muted-foreground": "215 16% 47%",
-  "--accent": "42 96% 56%",
-  "--accent-foreground": "222 47% 11%",
-  "--border": "214 32% 91%",
-  "--input": "214 32% 91%",
-  "--ring": "42 96% 56%",
+  "--secondary": "0 0% 95%",
+  "--secondary-foreground": "0 0% 4%",
+  "--muted": "0 0% 95%",
+  "--muted-foreground": "0 0% 35%",
+  "--accent": "42 60% 50%",
+  "--accent-foreground": "0 0% 4%",
+  "--border": "0 0% 90%",
+  "--input": "0 0% 90%",
+  "--ring": "352 60% 30%",
 } as React.CSSProperties;
 
 function fileToDataUrl(file: File): Promise<string> {
