@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import armaIcon from "@/assets/icone-arma-cadastro.png.asset.json";
+
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 
