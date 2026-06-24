@@ -288,10 +288,10 @@ export default function ClienteResumoKanban({
   ];
 
   const columns: Array<{ kind: "todo" | "doing" | "review" | "done"; title: string; cards: Card[]; addLabel?: string; navTo?: string }> = [
-    { kind: "todo", title: "A Fazer", cards: data.todo, addLabel: "+ Ver arsenal", navTo: "arsenal" },
-    { kind: "doing", title: "Em Andamento", cards: data.doing, navTo: "servicos" },
-    { kind: "review", title: "Em Revisão", cards: data.review, navTo: "exames" },
-    { kind: "done", title: "Concluído", cards: data.done, navTo: "historico" },
+    { kind: "todo", title: "Arsenal", cards: data.todo, addLabel: "+ Ver arsenal", navTo: "arsenal" },
+    { kind: "doing", title: "Serviços", cards: data.doing, navTo: "servicos" },
+    { kind: "review", title: "Exames", cards: data.review, navTo: "exames" },
+    { kind: "done", title: "Histórico", cards: data.done, navTo: "historico" },
   ];
 
   return (
