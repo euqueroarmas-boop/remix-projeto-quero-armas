@@ -350,9 +350,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       </div>
 
       {filter && (
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:14,fontFamily:"'Oswald',sans-serif",fontSize:10.5,letterSpacing:".16em",color:"#7A1F2B",fontWeight:600}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:14,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",fontSize:11,letterSpacing:".22em",color:"#7A1F2B",fontWeight:900,textTransform:"uppercase"}}>
           <span>FILTRO ATIVO · {docsFiltrados.length} DOCUMENTO{docsFiltrados.length === 1 ? "" : "S"}</span>
-          <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald',sans-serif",letterSpacing:".16em",fontSize:10}}>LIMPAR ✕</button>
+          <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".22em",fontSize:10,fontWeight:900}}>LIMPAR ✕</button>
         </div>
       )}
 
