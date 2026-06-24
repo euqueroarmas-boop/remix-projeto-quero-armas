@@ -17,7 +17,7 @@ interface Props {
 }
 
 const TIPO_LABEL: Record<string, string> = {
-  cr: "CR — Certificado de Registro de CAC (Exército)",
+  cr: "CR — Certificado de Registro de Colecionador, Atirador Desportivo e Caçador (Exército)",
   craf: "CRAF — Certificado de Registro de Arma de Fogo",
   sinarm: "SINARM — Certificado de Registro de Arma de Fogo (Polícia Federal)",
   gt: "GT — Guia de Tráfego",
