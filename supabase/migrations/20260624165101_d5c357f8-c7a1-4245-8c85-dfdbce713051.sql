@@ -1,0 +1,2 @@
+ALTER TABLE public.qa_documentos_cliente ADD COLUMN IF NOT EXISTS nome_documento text;
+COMMENT ON COLUMN public.qa_documentos_cliente.nome_documento IS 'Título oficial literal do documento, extraído da IA a partir do conteúdo do PDF (ex.: "Certidão de Distribuição Criminal — Justiça Federal de 1ª Instância — SP").';
