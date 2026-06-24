@@ -17,6 +17,11 @@ function norm(s: string) {
   return stripDiacritics((s || "").toLowerCase()).replace(/\s+/g, " ").trim();
 }
 
+/** Remove o "NR.", "Nº", "N°", "N." antes do número (quebra a busca do Nominatim). */
+function limparNum(s: string) {
+  return (s || "").replace(/\bn[º°r]?\.?\s*(\d)/gi, "$1");
+}
+
 /**
  * Tenta extrair { street, city, uf } de um endereço bruto.
  * Suporta o formato dominante das listas PF/IAT:
@@ -28,7 +33,7 @@ function norm(s: string) {
 export function parseAddress(
   endereco: string,
   ufFallback?: string,
-): { street: string; city: string; uf: string } | null {
+): { street: string; city: string; uf: string; bairro?: string } | null {
   if (!endereco) return null;
   let s = endereco.replace(/\s+/g, " ").trim();
 
@@ -75,17 +80,23 @@ export function parseAddress(
 
   // Rua = primeira parte (usualmente "RUA X, NUM"). Junta tokens[0..1] se o 2º for número/complemento curto.
   const streetParts: string[] = [tokens[0]];
+  let nextIdx = 1;
   if (tokens.length > 2 && /^(n[º°.]?\s*)?\d{1,5}[A-Za-z]?$/i.test(tokens[1])) {
-    streetParts.push(tokens[1]);
+    streetParts.push(tokens[1]); nextIdx = 2;
   } else if (tokens.length > 2 && /\d/.test(tokens[1]) && tokens[1].length < 40) {
-    streetParts.push(tokens[1]);
+    streetParts.push(tokens[1]); nextIdx = 2;
   }
-  const street = streetParts.join(", ").replace(/\s+/g, " ").trim();
+  const street = limparNum(streetParts.join(", ")).replace(/\s+/g, " ").trim();
+  // Bairro = token entre rua e cidade, se existir
+  let bairro: string | undefined;
+  if (cityTailIndex > nextIdx) {
+    const cand = tokens[nextIdx];
+    if (cand && cand.length < 60 && !/^\d+$/.test(cand)) bairro = cand;
+  }
   if (!street || !city || !uf) return null;
   // Descarta strings que não parecem ter um logradouro real
   if (street.length < 5) return null;
-  void cityTailIndex;
-  return { street, city, uf };
+  return { street, city, uf, bairro };
 }
 
 async function nominatimStructured(
@@ -98,6 +109,21 @@ async function nominatimStructured(
   url.searchParams.set("city", city);
   url.searchParams.set("state", uf);
   url.searchParams.set("country", "Brasil");
+  url.searchParams.set("countrycodes", "br");
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("addressdetails", "1");
+  url.searchParams.set("limit", "1");
+  const r = await fetch(url.toString(), { headers: { "User-Agent": UA } });
+  if (!r.ok) return { raw: null, lat: null, lng: null };
+  const arr = await r.json();
+  const first = Array.isArray(arr) ? arr[0] : null;
+  if (!first) return { raw: null, lat: null, lng: null };
+  return { raw: first, lat: Number(first.lat), lng: Number(first.lon) };
+}
+
+async function nominatimFreeText(q: string): Promise<{ raw: any; lat: number | null; lng: number | null }> {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", q);
   url.searchParams.set("countrycodes", "br");
   url.searchParams.set("format", "jsonv2");
   url.searchParams.set("addressdetails", "1");
@@ -126,9 +152,13 @@ function cityMatches(returned: any, expectedCity: string): boolean {
 }
 
 /**
- * Geocodifica um endereço bruto. Idempotente via qa_endereco_geocache.
- * Retorna null quando o endereço não é geocodificável ou a cidade não bate
- * com o que o Nominatim devolveu (evita "cair na capital").
+ * Geocodifica um endereço bruto em cascata:
+ *   1) estruturado (street/city/state)
+ *   2) texto livre (street, bairro, city, uf, Brasil)
+ *   3) centroide da cidade (city, uf, Brasil) — provider "nominatim_city_centroid"
+ * Em todas, valida cityMatches para evitar "cair na capital".
+ * Idempotente via qa_endereco_geocache. NULL só é cacheado quando até o
+ * centroide falha.
  */
 export async function geocodeEndereco(
   supabase: any,
@@ -153,24 +183,54 @@ export async function geocodeEndereco(
     return null;
   }
 
-  let raw: any = null, lat: number | null = null, lng: number | null = null;
+  // Cascata: estruturado -> texto livre -> centroide cidade
+  type Attempt = { provider: string; lat: number | null; lng: number | null; raw: any };
+  const attempts: Attempt[] = [];
+
   try {
-    const r = await nominatimStructured(parsed.street, parsed.city, parsed.uf);
-    raw = r.raw; lat = r.lat; lng = r.lng;
+    const a = await nominatimStructured(parsed.street, parsed.city, parsed.uf);
+    attempts.push({ provider: "nominatim_structured", ...a });
+    if (a.lat !== null && a.lng !== null && cityMatches(a.raw, parsed.city)) {
+      await supabase.from("qa_endereco_geocache").upsert({
+        endereco_normalizado: cacheKey, latitude: a.lat, longitude: a.lng,
+        provider: "nominatim_structured", raw: a.raw,
+      }, { onConflict: "endereco_normalizado" });
+      return { lat: a.lat, lng: a.lng };
+    }
+    await nominatimDelay();
+
+    const qFree = [parsed.street, parsed.bairro, parsed.city, parsed.uf, "Brasil"]
+      .filter(Boolean).join(", ");
+    const b = await nominatimFreeText(qFree);
+    attempts.push({ provider: "nominatim_freetext", ...b });
+    if (b.lat !== null && b.lng !== null && cityMatches(b.raw, parsed.city)) {
+      await supabase.from("qa_endereco_geocache").upsert({
+        endereco_normalizado: cacheKey, latitude: b.lat, longitude: b.lng,
+        provider: "nominatim_freetext", raw: b.raw,
+      }, { onConflict: "endereco_normalizado" });
+      return { lat: b.lat, lng: b.lng };
+    }
+    await nominatimDelay();
+
+    const qCity = `${parsed.city}, ${parsed.uf}, Brasil`;
+    const c = await nominatimFreeText(qCity);
+    attempts.push({ provider: "nominatim_city_centroid", ...c });
+    if (c.lat !== null && c.lng !== null && cityMatches(c.raw, parsed.city)) {
+      await supabase.from("qa_endereco_geocache").upsert({
+        endereco_normalizado: cacheKey, latitude: c.lat, longitude: c.lng,
+        provider: "nominatim_city_centroid", raw: c.raw,
+      }, { onConflict: "endereco_normalizado" });
+      return { lat: c.lat, lng: c.lng };
+    }
   } catch {
-    return null;
+    // segue e cacheia negativo
   }
 
-  const ok = lat !== null && lng !== null && cityMatches(raw, parsed.city);
   await supabase.from("qa_endereco_geocache").upsert({
-    endereco_normalizado: cacheKey,
-    latitude: ok ? lat : null,
-    longitude: ok ? lng : null,
-    provider: "nominatim_structured",
-    raw,
+    endereco_normalizado: cacheKey, latitude: null, longitude: null,
+    provider: "nominatim_cascade_failed", raw: { attempts },
   }, { onConflict: "endereco_normalizado" });
-
-  return ok ? { lat: lat!, lng: lng! } : null;
+  return null;
 }
 
 async function cacheNegative(
