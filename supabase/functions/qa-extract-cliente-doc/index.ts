@@ -36,6 +36,16 @@ type TipoDoc = typeof TIPOS_VALIDOS[number];
 
 function buildTool(tipo: TipoDoc) {
   const baseProps: Record<string, unknown> = {
+    titulo_oficial: {
+      type: "string",
+      description:
+        "TÍTULO OFICIAL LITERAL DO DOCUMENTO, exatamente como impresso no cabeçalho/topo do PDF " +
+        "(ex.: 'CERTIDÃO DE DISTRIBUIÇÃO CRIMINAL — JUSTIÇA FEDERAL DE 1ª INSTÂNCIA — SP', " +
+        "'CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS — EXECUÇÕES CRIMINAIS', " +
+        "'CERTIDÃO DE QUITAÇÃO ELEITORAL', 'LAUDO PSICOLÓGICO PARA REGISTRO DE ARMA DE FOGO'). " +
+        "Sempre em UPPERCASE, sem acrescentar texto que não esteja no documento. " +
+        "NUNCA invente o nome — se não estiver legível, deixe vazio.",
+    },
     numero_documento: { type: "string", description: "Número, código ou identificador do documento (ex: número do CR, CRAF, GT, AC)." },
     orgao_emissor: { type: "string", description: "Órgão emissor (ex: Exército Brasileiro, Polícia Federal, SR/PF/UF, R-MIL/CMA)." },
     data_emissao: { type: "string", description: "Data de emissão no formato DD/MM/AAAA." },
@@ -130,6 +140,8 @@ function systemPromptFor(tipo: TipoDoc): string {
   };
   return (
     `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. ` +
+    `OBRIGATÓRIO: SEMPRE preencha 'titulo_oficial' com o título literal impresso no topo do documento ` +
+    `(em UPPERCASE, sem inventar nada). Esse é o nome oficial que será exibido para o cliente. ` +
     `Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA. ` +
     `REGRA CRÍTICA SOBRE arma_modelo: o campo arma_modelo deve conter SOMENTE o modelo comercial da arma ` +
     `(ex: G25, TS9, TX22, PT838, PUMP MILITARY 3.0). É TERMINANTEMENTE PROIBIDO colocar em arma_modelo: ` +
@@ -240,6 +252,7 @@ Deno.serve(async (req) => {
     }
 
     const sugestao = {
+      titulo_oficial: raw.titulo_oficial ? String(raw.titulo_oficial).trim().toUpperCase() : null,
       numero_documento: raw.numero_documento || null,
       orgao_emissor: raw.orgao_emissor || null,
       data_emissao: ddmmaaaaToISO(raw.data_emissao),

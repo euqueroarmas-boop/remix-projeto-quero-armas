@@ -5006,6 +5006,7 @@ export type Database = {
           id: string
           metadados_documento_json: Json | null
           motivo_reprovacao: string | null
+          nome_documento: string | null
           numero_cad_sinarm: string | null
           numero_documento: string | null
           numero_registro_sigma: string | null
@@ -5063,6 +5064,7 @@ export type Database = {
           id?: string
           metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
+          nome_documento?: string | null
           numero_cad_sinarm?: string | null
           numero_documento?: string | null
           numero_registro_sigma?: string | null
@@ -5120,6 +5122,7 @@ export type Database = {
           id?: string
           metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
+          nome_documento?: string | null
           numero_cad_sinarm?: string | null
           numero_documento?: string | null
           numero_registro_sigma?: string | null

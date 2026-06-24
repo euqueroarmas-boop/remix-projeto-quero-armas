@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
+import { getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 
 interface Props {
   cliente: any;
@@ -166,7 +167,16 @@ export default function ClienteResumoKanban({
         return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
       })
       .map((doc: any) => {
-        const nome = shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "DOCUMENTO");
+        // Prioridade: nome_documento (título oficial lido pela IA do PDF) →
+        // label oficial do catálogo (curto) → arquivo → fallback.
+        const meta = getTipoDocumentoMeta(doc?.tipo_documento);
+        const nomeBruto =
+          doc?.nome_documento ||
+          meta?.short ||
+          meta?.label ||
+          doc?.arquivo_nome ||
+          "DOCUMENTO";
+        const nome = shortName(nomeBruto, "DOCUMENTO").toUpperCase();
         const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
         return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
       })

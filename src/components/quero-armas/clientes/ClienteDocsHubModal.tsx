@@ -419,6 +419,8 @@ function applyDateMask(raw: string): string {
 
 type FormState = {
   tipo_documento: string;
+  /** Título oficial literal lido pela IA do PDF (ex.: "CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS"). */
+  nome_documento: string;
   numero_documento: string;
   orgao_emissor: string;
   data_emissao: string;
@@ -439,6 +441,7 @@ type FormState = {
 
 const EMPTY: FormState = {
   tipo_documento: "cr",
+  nome_documento: "",
   numero_documento: "",
   orgao_emissor: "",
   data_emissao: "",
@@ -1111,6 +1114,7 @@ export function ClienteDocsHubModal({
           const dataAvaliacaoExtractor = isLaudoExame ? (sugestao.data_avaliacao || "") : "";
           return ({
             ...prev,
+            nome_documento: prev.nome_documento || sugestao.titulo_oficial || "",
             numero_documento: prev.numero_documento || sugestao.numero_documento || "",
             orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
             data_emissao:
@@ -1340,6 +1344,7 @@ export function ClienteDocsHubModal({
         revisao_humana_obrigatoria: !!tipoAtual?.revisaoHumanaObrigatoria,
         fonte_normativa: tipoAtual ? ["Lei 10.826/2003", ...(tipoAtual.categoria === "arma_acervo" || tipoAtual.categoria === "cac_atividade" ? ["Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 311"] : ["IN DG/PF 201"])] : ["Lei 10.826/2003"],
         tipo_documento: form.tipo_documento,
+        nome_documento: form.nome_documento || null,
         numero_documento: form.tipo_documento === "cr"
           ? (form.numero_documento || form.numero_registro_sigma || null)
           : (form.numero_documento || null),
