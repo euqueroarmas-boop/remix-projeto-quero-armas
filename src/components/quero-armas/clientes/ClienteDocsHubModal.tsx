@@ -2007,7 +2007,14 @@ export function ClienteDocsHubModal({
                   />
                 </Field>
 
-                <Field label="Emissão" icon={Calendar}>
+                <Field
+                  label={
+                    /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento)
+                      ? "Avaliação"
+                      : "Emissão"
+                  }
+                  icon={Calendar}
+                >
                   <Input
                     type="date"
                     value={form.data_emissao}
