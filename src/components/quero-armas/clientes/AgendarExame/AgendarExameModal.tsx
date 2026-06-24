@@ -25,7 +25,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
   const psicoParams = useMemo(() => open && !isInstrutor
     ? ({ tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 })
     : null, [open, isInstrutor, cepLimpo, uf, raio]);
-  const iatParams = useMemo(() => open && isInstrutor
+  const iatParams = useMemo(() => (open && isInstrutor && (cepLimpo || uf))
     ? ({ cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 20 })
     : null, [open, isInstrutor, cepLimpo, uf, raio]);
 
