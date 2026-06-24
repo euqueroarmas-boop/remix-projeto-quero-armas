@@ -6141,6 +6141,87 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_iat_credenciados: {
+        Row: {
+          atualizado_em: string
+          clube: string | null
+          created_at: string
+          email: string | null
+          endereco: string | null
+          fonte_url: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          nome: string
+          portaria: string | null
+          telefone: string | null
+          uf: string
+          validade: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          clube?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          fonte_url?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          nome: string
+          portaria?: string | null
+          telefone?: string | null
+          uf: string
+          validade?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          clube?: string | null
+          created_at?: string
+          email?: string | null
+          endereco?: string | null
+          fonte_url?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          nome?: string
+          portaria?: string | null
+          telefone?: string | null
+          uf?: string
+          validade?: string | null
+        }
+        Relationships: []
+      }
+      qa_iat_credenciados_sync_log: {
+        Row: {
+          com_endereco: boolean | null
+          criado_em: string
+          id: string
+          mensagem: string | null
+          status: string
+          total: number | null
+          uf: string
+        }
+        Insert: {
+          com_endereco?: boolean | null
+          criado_em?: string
+          id?: string
+          mensagem?: string | null
+          status: string
+          total?: number | null
+          uf: string
+        }
+        Update: {
+          com_endereco?: boolean | null
+          criado_em?: string
+          id?: string
+          mensagem?: string | null
+          status?: string
+          total?: number | null
+          uf?: string
+        }
+        Relationships: []
+      }
       qa_itens_venda: {
         Row: {
           calibre: string | null
@@ -10027,6 +10108,29 @@ export type Database = {
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
+      }
+      qa_iat_credenciados_proximos: {
+        Args: {
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_raio_km?: number
+          p_uf?: string
+        }
+        Returns: {
+          clube: string
+          distancia_km: number
+          email: string
+          endereco: string
+          id: string
+          lat: number
+          lng: number
+          nome: string
+          portaria: string
+          telefone: string
+          uf: string
+          validade: string
+        }[]
       }
       qa_increment_page_engagement: {
         Args: {
