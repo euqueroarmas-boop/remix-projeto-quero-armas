@@ -86,15 +86,37 @@ Deno.serve(async (req) => {
         p_uf: uf, p_raio_km: raio_km, p_limit: limit,
       });
       if (error) throw error;
-      let results = data || [];
-      if (results.length === 0) {
+      const dedup = (arr: any[]) => {
+        // Mesmo instrutor pode aparecer 1x por clube; mantém o mais próximo.
+        const seen = new Map<string, any>();
+        for (const r of arr) {
+          const k = (r?.nome || "").trim().toUpperCase();
+          const prev = seen.get(k);
+          if (!prev || (r.distancia_km ?? 1e9) < (prev.distancia_km ?? 1e9)) seen.set(k, r);
+        }
+        return Array.from(seen.values()).sort(
+          (a, b) => (a.distancia_km ?? 1e9) - (b.distancia_km ?? 1e9),
+        );
+      };
+      const dentro = dedup(data || []);
+      if (dentro.length === 0) {
         const { data: d2 } = await supabase.rpc("qa_iat_credenciados_proximos", {
           p_lat: origin.lat, p_lng: origin.lng,
           p_uf: uf, p_raio_km: 99999, p_limit: limit,
         });
-        results = d2 || [];
+        const proximos = dedup(d2 || []);
+        return json({
+          ok: true, mode: "proximity", uf, tem_enderecos: true, origin,
+          fora_do_raio: true, raio_km,
+          distancia_mais_proximo: proximos[0]?.distancia_km ?? null,
+          results: proximos, count: proximos.length,
+        });
       }
-      return json({ ok: true, mode: "proximity", uf, tem_enderecos: true, origin, results, count: results.length });
+      return json({
+        ok: true, mode: "proximity", uf, tem_enderecos: true, origin,
+        fora_do_raio: false, raio_km,
+        results: dentro, count: dentro.length,
+      });
     }
 
     // Lista alfabética da UF (sem coordenadas)
