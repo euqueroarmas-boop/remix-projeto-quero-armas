@@ -392,6 +392,19 @@ function dataIsoFromBr(v?: string | null): string {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
+function isoToBr(v?: string | null): string {
+  if (!v) return "";
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+function applyDateMask(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
 type FormState = {
   tipo_documento: string;
   numero_documento: string;
