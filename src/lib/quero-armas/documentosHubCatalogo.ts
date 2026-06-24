@@ -126,11 +126,11 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "antecedentes_criminais", label: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)", short: "ANT. CIV", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal", label: "Certidão de Distribuição Criminal — Justiça Federal", short: "ANT. FED", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual", label: "Certidão Estadual de Distribuições Criminais — Execuções Criminais", short: "ANT. EST", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar", label: "Certidão de Antecedentes Criminais — Justiça Militar/SP", short: "ANT. MIL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_eleitoral", label: "Certidão de Quitação Eleitoral — TSE", short: "ANT. ELET", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_criminais", label: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)", short: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal", label: "Certidão de Distribuição Criminal — Justiça Federal", short: "Certidão de Distribuição Criminal — Justiça Federal", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual", label: "Certidão Estadual Criminal — TJSP", short: "Certidão Estadual Criminal — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: "Certidão Criminal Militar", short: "Certidão Criminal Militar", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_eleitoral", label: "Certidão de Crimes Eleitorais — TSE", short: "Certidão de Crimes Eleitorais — TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_correlata", label: "Declaração correlata", short: "DECLARAÇÃO", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
@@ -180,6 +180,96 @@ export function getHubCategoriaMeta(categoria: HubCategoria): HubCategoriaMeta {
 export function getTipoDocumentoMeta(tipoDocumento: string | null | undefined): HubTipoDocumentoMeta | null {
   if (!tipoDocumento) return null;
   return META_BY_TIPO.get(String(tipoDocumento).trim().toLowerCase()) ?? null;
+}
+
+function normalizeDocumentoName(value: unknown): string {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[–—\-/_.|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function cleanDocumentoName(value: unknown): string {
+  return String(value || "").replace(/_/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
+  const tipo = String(doc?.tipo_documento || "").trim().toLowerCase();
+  const haystack = normalizeDocumentoName([
+    doc?.nome_documento,
+    doc?.arquivo_nome,
+    doc?.orgao_emissor,
+    doc?.numero_documento,
+  ].filter(Boolean).join(" "));
+
+  if (tipo === "antecedentes_eleitoral" || haystack.includes("CRIMES ELEITORAIS")) {
+    return "Certidão de Crimes Eleitorais — TSE";
+  }
+
+  if (tipo === "antecedentes_estadual") {
+    if (haystack.includes("EXECUCOES") || haystack.includes("EXECUCAO") || haystack.includes("1448406")) {
+      return "Certidão Estadual de Execuções Criminais — TJSP";
+    }
+    if (haystack.includes("DISTRIBUICOES") || haystack.includes("DISTRIBUICAO") || haystack.includes("1448405")) {
+      return "Certidão Estadual de Distribuições Criminais — TJSP";
+    }
+    return "Certidão Estadual Criminal — TJSP";
+  }
+
+  if (tipo === "antecedentes_federal") {
+    if (haystack.includes("JUDICIARIA SP") || haystack.includes("SECAO JUDICIARIA") || haystack.includes("JEF") || haystack.includes("871659")) {
+      return "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP";
+    }
+    if (haystack.includes("TRIBUNAL REGIONAL FEDERAL") || haystack.includes("TRF DA 3") || haystack.includes("3A REGIAO") || haystack.includes("3 REGIAO")) {
+      return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+    }
+    return "Certidão de Distribuição Criminal — Justiça Federal";
+  }
+
+  if (tipo === "antecedentes_militar") {
+    if (haystack.includes("MILITAR DA UNIAO") || haystack.includes("STM") || haystack.includes("29983659")) {
+      return "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)";
+    }
+    if (haystack.includes("TJM") || haystack.includes("JUSTICA MILITAR DO ESTADO DE SAO PAULO") || haystack.includes("22E982")) {
+      return "Certidão de Antecedentes Criminais — Justiça Militar/SP (TJM-SP)";
+    }
+    return "Certidão Criminal Militar";
+  }
+
+  if (tipo === "antecedentes_criminais") {
+    return "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)";
+  }
+
+  return null;
+}
+
+function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | undefined): boolean {
+  const tipo = String(tipoDocumento || "").trim().toLowerCase();
+  if (!tipo.startsWith("antecedentes_")) return false;
+  const normalized = normalizeDocumentoName(nome);
+  const meta = getTipoDocumentoMeta(tipo);
+  return (
+    !normalized ||
+    normalized.includes("QUITACAO ELEITORAL") ||
+    normalized.startsWith("ANT ") ||
+    normalized.startsWith("ANT.") ||
+    normalized === normalizeDocumentoName(meta?.label) ||
+    normalized === normalizeDocumentoName(meta?.short)
+  );
+}
+
+export function getNomeDocumentoDisplay(doc: Record<string, unknown> | null | undefined, fallback = "Documento"): string {
+  if (!doc) return fallback;
+  const tipo = String(doc?.tipo_documento || "").trim().toLowerCase();
+  const meta = getTipoDocumentoMeta(tipo);
+  const explicit = cleanDocumentoName(doc?.nome_documento);
+  const inferred = inferNomeCertidaoOficial(doc);
+
+  if (explicit && !shouldReplaceNomeCertidao(explicit, tipo)) return explicit;
+  return inferred || explicit || meta?.short || meta?.label || cleanDocumentoName(doc?.arquivo_nome) || fallback;
 }
 
 export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefined): HubCategoria {
