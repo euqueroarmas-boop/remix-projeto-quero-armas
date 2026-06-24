@@ -182,8 +182,9 @@ export default function ClienteResumoKanban({
       .sort((a, b) => a - b)[0];
     const totalFronts = fronts.reduce((sum, front) => sum + front.count, 0);
     const redCount = sortedUrgents.length;
+    const totalTasks = Math.max(totalFronts + activeItems.length, redCount + activeItems.length);
     const summary: Array<[string, string, string]> = [
-      ["TAREFAS ABERTAS", String(redCount + activeItems.length), `de ${totalFronts + activeItems.length}`],
+      ["TAREFAS ABERTAS", String(redCount + activeItems.length), `de ${totalTasks}`],
       ["PRÓXIMO VENCIMENTO", nextDue !== undefined ? String(nextDue) : "—", nextDue !== undefined ? "dias" : ""],
       ["DOCUMENTOS A RENOVAR", String(redCount), redCount > 0 ? "urgente" : ""],
       ["PROCESSOS ATIVOS", String(activeItems.length), ""],
