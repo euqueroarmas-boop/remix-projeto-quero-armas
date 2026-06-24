@@ -200,10 +200,10 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     <div className="text-[#0A0A0A]" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
-        <h1 className="font-['Oswald'] text-[24px] font-semibold tracking-[0.04em] uppercase">
+        <h1 className="font-['Oswald'] text-[24px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0">
           {primeiroNome}, ESSES SÃO SEUS CONTRATOS
         </h1>
-        <div className="mt-2 font-['Oswald'] text-[10px] tracking-[0.16em] text-[#7A7A7A] uppercase">
+        <div className="mt-[11px] font-['Arial_Narrow'] font-black text-[10px] tracking-[0.22em] text-[#6A6A6A] uppercase">
           CPF · <b className="text-[#0A0A0A] font-semibold">{cpf}</b> · MEMBRO DESDE <b className="text-[#0A0A0A] font-semibold">{membro}</b>
           {kpis.aguarda > 0 && <> · <b className="text-[#0A0A0A] font-semibold">{kpis.aguarda} CONTRATO{kpis.aguarda > 1 ? "S" : ""}</b> AGUARDANDO ASSINATURA</>}
         </div>

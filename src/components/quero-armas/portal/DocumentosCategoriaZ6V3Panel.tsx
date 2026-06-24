@@ -227,15 +227,14 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         fontFamily: "'Arial Narrow', Arial, sans-serif",
         letterSpacing: ".02em",
         textTransform: "uppercase",
-        background: "#F2F2F2",
         color: "#0A0A0A",
-        padding: "20px 24px 24px",
-        borderRadius: 4,
+        padding: 0,
+        borderRadius: 0,
       }}
     >
       <style>{`
         .qa-docsz6 .os{font-family:'Oswald','Arial Narrow',Arial,sans-serif}
-        .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:24px;font-weight:900;letter-spacing:.04em;color:#0A0A0A;text-transform:uppercase}
+        .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:24px;font-weight:700;letter-spacing:.04em;color:#0A0A0A;text-transform:uppercase;line-height:1.05;margin:0}
         .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;color:#6A6A6A;display:flex;gap:18px;flex-wrap:wrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
         .qa-docsz6 .focus{background:#fff;border:1px solid #E5E5E5;border-left:4px solid #D9342B;border-radius:3px;padding:16px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
@@ -292,7 +291,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       `}</style>
 
       {/* HEADER cliente-cêntrico */}
-      <div className="hdr" style={{ marginBottom: 16 }}>
+      <div className="hdr" style={{ marginBottom: 20 }}>
         <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
         <div className="meta">
           <span>CPF · <b>{cpfFmt}</b></span>
