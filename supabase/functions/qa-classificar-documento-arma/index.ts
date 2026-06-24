@@ -75,7 +75,7 @@ const tool = {
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
             "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal. CONTRATO_SOCIAL=contrato ou estatuto social de empresa. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
-            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão antecedentes PF/STF/STJ/TRF. ANTECEDENTES_ESTADUAL=certidão criminal de tribunal estadual (TJ). ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de quitação eleitoral / crimes eleitorais. " +
+            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão antecedentes PF/STF/STJ/TRF. ANTECEDENTES_ESTADUAL=certidão criminal de tribunal estadual (TJ). ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
             "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
@@ -220,7 +220,7 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_MILITAR: certidão de tribunal militar (TJM, STM). Validade: 3 meses após a data de emissão.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
-  "• ANTECEDENTES_ELEITORAL: certidão de quitação eleitoral / crimes eleitorais TSE ou TRE.",
+  "• ANTECEDENTES_ELEITORAL: certidão de crimes eleitorais TSE ou TRE. NÃO classifique como quitação eleitoral quando o cabeçalho indicar crimes eleitorais.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, numero_documento (número do título de eleitor — campo 'Número do Título' ou 'Título de Eleitor n.'), orgao_emissor (ex.: 'TSE'), data_emissao, data_validade, resultado_certidao.",
   "  ATENÇÃO: se a certidão não trazer data_validade explícita, não invente — deixe vazio; o sistema calcula automaticamente.",
   "",

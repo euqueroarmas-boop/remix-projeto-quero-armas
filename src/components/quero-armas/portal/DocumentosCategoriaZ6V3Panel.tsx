@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getHubCategoriaMeta, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 
 /* ============================================================
    DOCUMENTOS · CATEGORIA Z6 V3 (canônico papel + bordô)
@@ -332,8 +332,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       {focoDoc && (() => {
         const dias = daysUntil(focoDoc.data_validade);
         if (dias === null || dias > 30) return null;
-        const tipoMeta = getTipoDocumentoMeta(focoDoc.tipo_documento);
-        const nome = tipoMeta?.label || String(focoDoc.tipo_documento || "Documento").replace(/_/g, " ");
+        const nome = getNomeDocumentoDisplay(focoDoc, "Documento");
         const msg = dias < 0
           ? `${nome} venceu há ${Math.abs(dias)} dias — atualize agora`
           : dias === 0
@@ -407,8 +406,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
               </div>
 
               {!isCollapsed && g.docs.map((d) => {
-                const tipoMeta = getTipoDocumentoMeta(d.tipo_documento);
-                const nome = tipoMeta?.label || String(d.tipo_documento || "Documento").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
+                const nome = getNomeDocumentoDisplay(d, "Documento");
                 const dias = daysUntil(d.data_validade);
                 const cor = dotColor(dias);
                 const metaLine = [d.numero_documento, d.orgao_emissor, d.data_emissao ? `emitido ${formatDate(d.data_emissao)}` : null]
