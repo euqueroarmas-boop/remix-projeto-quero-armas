@@ -222,16 +222,36 @@ export default function ClienteResumoKanban({
     return () => window.clearInterval(id);
   }, [snapshot.urgents.length]);
 
-  // Trava o scroll da página enquanto o Resumo estiver visível
+  // Trava o scroll da página apenas no desktop (>=1024px).
+  // No mobile/tablet o conteúdo precisa rolar para acessar os cards e o rodapé.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
     const { body, documentElement: html } = document;
     const prevBody = body.style.overflow;
     const prevHtml = html.style.overflow;
-    body.style.overflow = "hidden";
-    html.style.overflow = "hidden";
+    const prevOverscroll = body.style.overscrollBehavior;
+
+    const apply = () => {
+      if (mq.matches) {
+        body.style.overflow = "hidden";
+        html.style.overflow = "hidden";
+        body.style.overscrollBehavior = "";
+      } else {
+        body.style.overflow = prevBody;
+        html.style.overflow = prevHtml;
+        // Evita "bounce" elástico no mobile, mantendo a tela contida e estética.
+        body.style.overscrollBehavior = "contain";
+      }
+    };
+
+    apply();
+    mq.addEventListener("change", apply);
     return () => {
+      mq.removeEventListener("change", apply);
       body.style.overflow = prevBody;
       html.style.overflow = prevHtml;
+      body.style.overscrollBehavior = prevOverscroll;
     };
   }, []);
 
