@@ -6,7 +6,7 @@
 //   POST {"loop": true}                -> continua se auto-invocando até esgotar
 //   POST {"batchSize": 20, "uf":"SP"}  -> restringe por UF
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { geocodeEndereco, nominatimDelay } from "../_shared/geocode.ts";
+import { geocodeEnderecoMeta, nominatimDelay } from "../_shared/geocode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +18,7 @@ async function processarLote(supabase: any, batchSize: number, uf?: string) {
     .from("qa_iat_credenciados")
     .select("id, uf, endereco")
     .is("lat", null)
+    .or("geocode_falhou.is.null,geocode_falhou.eq.false")
     .not("endereco", "is", null)
     .neq("endereco", "")
     .order("id")
@@ -29,27 +30,37 @@ async function processarLote(supabase: any, batchSize: number, uf?: string) {
   let ok = 0, fail = 0;
   for (const r of rows) {
     try {
-      const g = await geocodeEndereco(supabase, r.endereco, r.uf);
-      if (g) {
+      const meta = await geocodeEnderecoMeta(supabase, r.endereco, r.uf);
+      if (meta.result) {
         await supabase.from("qa_iat_credenciados")
-          .update({ lat: g.lat, lng: g.lng })
+          .update({ lat: meta.result.lat, lng: meta.result.lng, geocode_falhou: false })
           .eq("id", r.id);
         ok++;
       } else {
-        // Marca lat=0 ainda não — preferimos deixar null e confiar no cache para
-        // não reconsultar; o cache impede o loop infinito da próxima chamada.
+        // Marca como falha permanente para sair do pool do backfill — Nominatim
+        // E o fallback Lovable AI já recusaram. O cache de qa_endereco_geocache
+        // ainda guarda o negativo, então uma reimportação futura tentará de novo.
+        await supabase.from("qa_iat_credenciados")
+          .update({ geocode_falhou: true })
+          .eq("id", r.id);
         fail++;
       }
+      // Só respeita o rate limit da Nominatim quando realmente bateu na rede.
+      if (meta.hitNetwork) await nominatimDelay();
     } catch (_e) {
+      await supabase.from("qa_iat_credenciados")
+        .update({ geocode_falhou: true })
+        .eq("id", r.id);
       fail++;
+      await nominatimDelay();
     }
-    await nominatimDelay();
   }
   // Quantos ainda restam (mesmo filtro) — usado para o loop e para o log.
   let q2 = supabase
     .from("qa_iat_credenciados")
     .select("id", { count: "exact", head: true })
     .is("lat", null)
+    .or("geocode_falhou.is.null,geocode_falhou.eq.false")
     .not("endereco", "is", null)
     .neq("endereco", "")
     .order("id");
