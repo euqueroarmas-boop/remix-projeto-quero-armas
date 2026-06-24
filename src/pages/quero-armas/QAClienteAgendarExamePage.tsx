@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredenciadosPF } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosPF";
 import { AgendarExameList } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameList";
+import { INSTRUTOR_PDF_PF } from "@/components/quero-armas/clientes/AgendarExame/instrutorPdfLinks";
 
 const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -37,6 +38,9 @@ export default function QAClienteAgendarExamePage() {
   }), [tipo, cepLimpo, uf, raio, incluirVencidos]);
 
   const { results, loading, error, origin } = useCredenciadosPF(buscarParams);
+  const ufResolved = (origin?.uf || uf || "").toUpperCase();
+  const isInstrutor = tipo === "instrutor_tiro";
+  const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return results;
@@ -91,6 +95,21 @@ export default function QAClienteAgendarExamePage() {
         {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
 
         <AgendarExameList loading={loading} results={filtered} empty="Nenhum profissional encontrado. Tente ampliar o raio, escolher uma UF, ou consulte diretamente o gov.br/PF." />
+        {isInstrutor && (
+          <div style={{ marginTop: 14, background: "#fff", border: "1px solid #e3e3e1", padding: 14, borderRadius: 4, fontSize: 12, color: "#303030" }}>
+            <strong style={{ display: "block", fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginBottom: 6 }}>LISTA OFICIAL PF (PDF)</strong>
+            A Polícia Federal publica os instrutores de tiro credenciados em PDFs por UF.
+            {pdfHref ? (
+              <div style={{ marginTop: 6 }}>
+                <a href={pdfHref} target="_blank" rel="noreferrer noopener" style={{ color: "#7A1F2B", fontWeight: 700 }}>
+                  Baixar lista atualizada — {ufResolved}
+                </a>
+              </div>
+            ) : (
+              <div style={{ marginTop: 6 }}>Informe o CEP ou UF para abrir o PDF do seu estado.</div>
+            )}
+          </div>
+        )}
 
         <p style={{ fontSize: 11, color: "#6A6A6A", marginTop: 18, textAlign: "center" }}>
           Dados oficiais da Polícia Federal — atualização diária automática.
