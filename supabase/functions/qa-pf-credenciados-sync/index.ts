@@ -125,9 +125,11 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
   let text = plainText(content);
   // Insere quebras de linha onde bairros aparecem para que não vazem para o nome da próxima entrada.
   // Faz isto preservando o título do bairro como marcador (será limpo abaixo).
+  // Substitui apenas a primeira ocorrência de cada bairro (a segunda+ tipicamente
+  // está dentro de um endereço de outra entrada, não é heading)
   for (const b of bairros) {
     const safe = b.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    text = text.replace(new RegExp(`\\s*${safe}\\s*`, "g"), `\n${b.nome}\n`);
+    text = text.replace(new RegExp(`\\s*${safe}\\s*`), `\n${b.nome}\n`);
   }
   const bairrosSet = new Set(bairros.map((b) => b.nome));
   // Recalcula posições dos bairros no texto modificado
