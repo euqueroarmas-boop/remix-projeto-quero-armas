@@ -1024,7 +1024,8 @@ export function ClienteDocsHubModal({
       setIaExtraido({
         numero_documento: campos.numero_documento || "",
         numero_cad_sinarm: cadSinarmRaw,
-        numero_registro_sigma: sigmaExplicitoRaw,
+        numero_registro_sigma:
+          sigmaExplicitoRaw || (tipoIA === "cr" ? (campos.numero_documento || "") : ""),
         arma_numero_serie: campos.arma_numero_serie || "",
         arma_marca: campos.arma_marca || "",
         arma_modelo: modeloExtraidoSeguro,
