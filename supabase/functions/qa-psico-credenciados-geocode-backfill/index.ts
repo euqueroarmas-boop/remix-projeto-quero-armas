@@ -6,7 +6,7 @@
 // POST {"loop": true}                -> auto-invoca até esgotar
 // POST {"batchSize": 20, "uf":"SP"}  -> restringe por UF
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { geocodeEndereco, nominatimDelay } from "../_shared/geocode.ts";
+import { geocodeEnderecoMeta, nominatimDelay } from "../_shared/geocode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,10 +32,10 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
   let ok = 0, fail = 0;
   for (const r of rows) {
     try {
-      const g = await geocodeEndereco(supabase, r.endereco, r.uf);
-      if (g) {
+      const meta = await geocodeEnderecoMeta(supabase, r.endereco, r.uf);
+      if (meta.result) {
         await supabase.from("qa_psico_credenciados")
-          .update({ latitude: g.lat, longitude: g.lng })
+          .update({ latitude: meta.result.lat, longitude: meta.result.lng })
           .eq("id", r.id);
         ok++;
       } else {
@@ -47,13 +47,14 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
           .eq("id", r.id);
         fail++;
       }
+      if (meta.hitNetwork) await nominatimDelay();
     } catch (_e) {
       await supabase.from("qa_psico_credenciados")
         .update({ latitude: -91, longitude: -91 })
         .eq("id", r.id);
       fail++;
+      await nominatimDelay();
     }
-    await nominatimDelay();
   }
   let q2 = supabase
     .from("qa_psico_credenciados")
