@@ -436,10 +436,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 ARSENAL INTELIGENTE · CONTROLE DE DOCUMENTOS
               </div>
               <h2 className="font-heading text-[26px] font-semibold uppercase tracking-[0.03em] leading-[0.95] text-[#0A0A0A] mt-2">
-                COMPLETE SEU DOSSIÊ
+                SEU ARSENAL MERECE ESTAR 100% MAPEADO
               </h2>
               <p className="mt-2 text-[13px] leading-snug text-[#6A6A6A] max-w-[670px]">
-                Quanto mais a IA conhece você, mais ela <strong className="text-[#0A0A0A]">antecipa vencimentos, monta peças e protege seus processos</strong>. Salvamos cada campo automaticamente.
+                RG, CIN, CNH, comprovante de residência, CR, CRAFs, GTEs e exames psicológico e de tiro — cada dado que você informa entra no <strong className="text-[#0A0A0A]">radar inteligente que cruza, valida e avisa por você</strong>.
               </p>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar"
@@ -477,8 +477,25 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   POR QUE COMPLETAR AGORA
                 </div>
                 <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
-                  Com seu cadastro completo, a IA <strong>monta peças jurídicas em segundos</strong>, <strong>avisa antes de qualquer documento vencer</strong> e mantém seu acervo blindado contra erros operacionais.
+                  Quando o cadastro está fechado, o sistema deixa de ser uma lista parada e passa a trabalhar pelo seu acervo todos os dias:
                 </p>
+                <ul className="mt-3 space-y-2 text-[12.5px] leading-snug text-[#3A3A3A]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                    <strong className="text-[#0A0A0A]">Documentos pessoais sob controle.</strong> RG, CIN, CNH e comprovante de residência ficam organizados em um só lugar, com data de emissão, órgão expedidor e validade — sem precisar caçar foto no celular.
+                  </li>
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                    <strong className="text-[#0A0A0A]">Vencimentos vigiados peça a peça.</strong> CR, cada CRAF, cada GTE, exame psicológico e exame de tiro têm prazos diferentes. O radar avisa com antecedência real antes de qualquer um expirar.
+                  </li>
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                    <strong className="text-[#0A0A0A]">Cruzamento inteligente.</strong> O sistema compara seus documentos oficiais com os laudos emitidos pelos profissionais credenciados (psicólogo e instrutor de tiro) e aponta na hora qualquer divergência de nome, CPF, data ou número de registro.
+                  </li>
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                    <strong className="text-[#0A0A0A]">Análise de consistência.</strong> Cada campo digitado é checado contra os documentos enviados: número de série fora do padrão, calibre incompatível, CRAF com dígito trocado, CPF com erro de digitação — tudo sinalizado antes de virar problema no processo.
+                  </li>
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                    <strong className="text-[#0A0A0A]">Acervo em prontidão.</strong> Com os campos finais preenchidos, cada arma aparece com ficha completa, status atualizado e histórico próprio — pronta para qualquer protocolo, renovação ou transferência.
+                  </li>
+                </ul>
               </div>
               <button onClick={() => setModo("ia_upload")}
                 className="group flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#7A1F2B]">
@@ -491,7 +508,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                     DEIXE A IA LER SEU DOCUMENTO
                   </div>
                   <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
-                    Envie RG, CNH ou comprovante de residência. Em segundos a IA extrai os campos, e você só confirma.
+                    Envie RG, CIN, CNH ou comprovante. Em segundos a IA extrai os campos, cruza com o que já existe e você só confirma.
                   </div>
                 </div>
               </button>
@@ -506,7 +523,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                     EU DIGITO OS CAMPOS
                   </div>
                   <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
-                    Aparecem só os campos faltantes. Salvamento automático a cada toque — sem botão de enviar.
+                    Aparecem só os campos faltantes. Validação em tempo real e salvamento automático a cada toque.
                   </div>
                 </div>
               </button>
@@ -659,7 +676,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         {/* Footer */}
         <div className="shrink-0 border-t border-[#E5E5E5] bg-white px-8 py-3 text-center">
           <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
-            SALVAMENTO AUTOMÁTICO · ARSENAL INTELIGENTE QUERO ARMAS
+            SALVAMENTO AUTOMÁTICO · VALIDAÇÃO INTELIGENTE · ARSENAL INTELIGENTE QUERO ARMAS
           </p>
         </div>
       </DialogContent>
