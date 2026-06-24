@@ -52,38 +52,31 @@ function extractContent(html: string): string {
   return m ? m[1] : html;
 }
 
-// Identifica linhas que são apenas cabeçalho de bairro/cidade (uma linha em negrito sozinha)
-// Estratégia: dentro do bloco, percorremos <p> e <strong>. Linhas curtas em CAIXA ALTA sem ":" e sem dígitos longos viram heading.
-function isHeadingLine(line: string, isBoldOnly: boolean): boolean {
-  const t = line.trim();
-  if (!t) return false;
-  if (!isBoldOnly) return false;
-  if (t.length > 80) return false;
-  if (/CRP|CR\s*\d|Validade|End\.|Tel\.|E-?mail|@/i.test(t)) return false;
-  // tipicamente em CAIXA ALTA
-  const letters = t.replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "");
-  return letters.length >= Math.max(3, Math.floor(t.replace(/\s/g, "").length * 0.6));
+// Coleta cabeçalhos de bairro (strong sozinho em CAIXA ALTA) e suas posições no texto plano,
+// para podermos associar cada entrada ao bairro mais próximo acima dela.
+function collectBairros(html: string): Array<{ pos: number; nome: string }> {
+  // Texto plano sem qualquer tag (para alinhar com o que parseEntries usará)
+  const plain = stripTags(html.replace(/<(strong|b)[^>]*>/gi, "\u0001").replace(/<\/(strong|b)>/gi, "\u0002"));
+  const result: Array<{ pos: number; nome: string }> = [];
+  const re = /\u0001([^\u0002]{1,80})\u0002/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(plain)) !== null) {
+    const raw = m[1].replace(/\s+/g, " ").trim();
+    if (!raw) continue;
+    if (raw.length > 80) continue;
+    if (/CRP|CR\s*\d|Validade|End\.|Tel\.|E-?mail|@/i.test(raw)) continue;
+    const letters = raw.replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "");
+    const total = raw.replace(/\s/g, "").length;
+    if (letters.length < Math.max(3, Math.floor(total * 0.6))) continue;
+    // Posição no texto SEM os marcadores
+    const beforeMarkers = plain.slice(0, m.index).replace(/[\u0001\u0002]/g, "").length;
+    result.push({ pos: beforeMarkers, nome: raw });
+  }
+  return result;
 }
 
-// Quebra o HTML em "linhas" preservando marcação de bold via prefixo \u0001
-function htmlToMarkedLines(html: string): Array<{ text: string; bold: boolean }> {
-  // Substitui <strong>...</strong> e <b>...</b> por marcadores
-  const marked = html
-    .replace(/<\/(strong|b)>/gi, "\u0002")
-    .replace(/<(strong|b)[^>]*>/gi, "\u0001");
-  const text = stripTags(marked);
-  const lines: Array<{ text: string; bold: boolean }> = [];
-  text.split(/\n+/).forEach((raw) => {
-    const trimmed = raw.replace(/\s+/g, " ").trim();
-    if (!trimmed) return;
-    // Bold se todo o conteúdo está dentro de \u0001...\u0002
-    const stripped = trimmed.replace(/[\u0001\u0002]/g, "").trim();
-    const boldRanges = trimmed.match(/\u0001([^\u0002]*)\u0002/g) || [];
-    const boldChars = boldRanges.join("").replace(/[\u0001\u0002]/g, "").trim();
-    const isBold = boldChars.length > 0 && boldChars.length >= stripped.length * 0.8;
-    if (stripped) lines.push({ text: stripped, bold: isBold });
-  });
-  return lines;
+function plainText(html: string): string {
+  return stripTags(html).replace(/\u0001|\u0002/g, "").replace(/[ \t]+/g, " ").replace(/\n{2,}/g, "\n");
 }
 
 type Entry = {
@@ -128,58 +121,67 @@ function parseValidade(s: string): { date: string | null; label: string | null }
 
 async function parseEntries(html: string, uf: string, sourceUrl: string): Promise<Entry[]> {
   const content = extractContent(html);
-  const lines = htmlToMarkedLines(content);
+  const bairros = collectBairros(content);
+  const text = plainText(content);
   const entries: Entry[] = [];
-  let cidade: string | null = null;
-  let bairro: string | null = null;
-  let currentBlock: string[] = [];
 
-  const flush = async () => {
-    if (currentBlock.length === 0) return;
-    const block = currentBlock.join("\n");
-    currentBlock = [];
-    const first = block.split("\n")[0].trim();
-    // Espera "NOME - CRP XX/XXXX" ou "NOME - CR XXX"
-    const nameMatch = first.match(/^(.+?)\s*[-–—]\s*(CRP|CR)\s*([\w./-]+)$/i);
-    let nome = first;
-    let registro: string | null = null;
-    if (nameMatch) {
-      nome = nameMatch[1].trim();
-      registro = `${nameMatch[2].toUpperCase()} ${nameMatch[3]}`;
-    }
-    if (!nome || nome.length < 3) return;
-    if (/^psic[óo]logos/i.test(nome) || /credenciados/i.test(nome)) return;
+  // Cidade = nome da UF (heading principal da página) — para SP/RJ o "bairro" será o bairro real,
+  // para interior o "bairro" tende a ser o município. O frontend mostra ambos.
+  const cidade: string | null = null;
 
-    const endMatch = block.match(/End\.?\s*:\s*(.+?)(?:\n|$)/i);
-    const endereco = endMatch ? endMatch[1].trim() : null;
+  // Cada entrada termina em "Validade do (Credenciamento|Certificado): DD/MM/AAAA".
+  // Usamos isso como delimitador para isolar cada registro.
+  const reEntry = /([\s\S]*?Validade d[oa]\s+(?:Credenciamento|Certificado)[^:]*:\s*(\d{2})\/(\d{2})\/(\d{4}))/gi;
+  let m: RegExpExecArray | null;
+  let cursor = 0;
+  while ((m = reEntry.exec(text)) !== null) {
+    const startPos = cursor;
+    const endPos = m.index + m[0].length;
+    cursor = endPos;
+    let block = m[0];
+
+    // Localiza nome+registro DENTRO do bloco — pegamos a ÚLTIMA ocorrência de "<nome> - CRP XX/XXXX"
+    // (a última, porque restos do registro anterior podem aparecer no início)
+    const reName = /([A-ZÁÉÍÓÚÂÊÔÃÕÇa-záéíóúâêôãõç][A-ZÁÉÍÓÚÂÊÔÃÕÇa-záéíóúâêôãõç'.\s-]{2,80}?)\s*[-–—]\s*(CRP|CR)\s*([\w./-]+)/g;
+    let nameMatch: RegExpExecArray | null = null;
+    let last: RegExpExecArray | null = null;
+    while ((nameMatch = reName.exec(block)) !== null) last = nameMatch;
+    if (!last) continue;
+    const nome = last[1].replace(/\s+/g, " ").trim();
+    const registro = `${last[2].toUpperCase()} ${last[3]}`.trim();
+    if (!nome || nome.length < 3) continue;
+    if (/^psic[óo]logos|credenciados$/i.test(nome)) continue;
+    // Pega só do nome em diante (descarta restos do registro anterior)
+    block = block.slice(last.index);
+
+    // Endereço: após "End." até próximo separador Tel./Tels./E-mail/Validade
+    let endereco: string | null = null;
+    const endMatch = block.match(/End\.?\s*:\s*([\s\S]+?)(?=\s*Tel\.?s?\s*:|\s*E-?mail\s*:|\s*Validade|$)/i);
+    if (endMatch) endereco = endMatch[1].replace(/\s+/g, " ").trim();
+
     const telefones = normalizePhone(block);
-    const emails = extractEmails(block);
-    const { date, label } = parseValidade(block);
+    // Email: para no primeiro espaço, "Validade", ou caractere maiúsculo após .com
+    const emails = Array.from(new Set(
+      (block.match(/[\w.+-]+@[\w-]+\.[a-z]{2,}(?:\.[a-z]{2,4})?/g) || []).map((e) => e.toLowerCase())
+    ));
+    const validade_label = m[0].match(/Validade d[oa][^:]*:\s*(\d{2}\/\d{2}\/\d{4})/i)?.[0]?.trim() || null;
+    const validade = `${m[4]}-${m[3]}-${m[2]}`;
 
-    const hash = await sha256(`${uf}|${nome}|${registro || ""}|${endereco || ""}`);
+    // Bairro: a heading mais recente antes do início do bloco
+    let bairro: string | null = null;
+    for (let i = bairros.length - 1; i >= 0; i--) {
+      if (bairros[i].pos <= m.index) { bairro = bairros[i].nome; break; }
+    }
+
+    const hash = await sha256(`${uf}|${nome.toLowerCase()}|${registro}|${endereco || ""}`);
     entries.push({
       uf, cidade, bairro,
       nome, registro, endereco, telefones, emails,
-      validade: date, validade_label: label,
-      source_url: sourceUrl, raw_block: block, hash_conteudo: hash,
+      validade, validade_label,
+      source_url: sourceUrl, raw_block: block.slice(0, 1000), hash_conteudo: hash,
     });
-  };
-
-  for (const line of lines) {
-    if (isHeadingLine(line.text, line.bold)) {
-      await flush();
-      // Cidade = primeira heading; bairros subsequentes substituem bairro
-      if (!cidade) cidade = line.text;
-      else bairro = line.text;
-      continue;
-    }
-    // Início de nova entrada: linha com "- CRP" ou "- CR"
-    if (/[-–—]\s*(CRP|CR)\b/i.test(line.text) && currentBlock.length > 0) {
-      await flush();
-    }
-    currentBlock.push(line.text);
+    void startPos;
   }
-  await flush();
   return entries;
 }
 
