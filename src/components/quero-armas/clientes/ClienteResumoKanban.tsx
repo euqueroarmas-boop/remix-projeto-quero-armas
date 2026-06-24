@@ -397,7 +397,17 @@ export default function ClienteResumoKanban({
         </header>
 
         <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">
-          {filters.map((filter) => <span className="qa-client-summary-print__chip" key={filter}>{filter}</span>)}
+          {filters.map((filter) => (
+            <button
+              type="button"
+              key={filter.key}
+              className={`qa-client-summary-print__chip ${chipFilter === filter.key ? "is-active" : ""}`}
+              onClick={() => { setChipFilter(filter.key); setAutoPaused(true); }}
+              aria-pressed={chipFilter === filter.key}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
 
         <section className="qa-urgbanner" aria-label="Próximo vencimento" aria-live="polite">
@@ -406,22 +416,20 @@ export default function ClienteResumoKanban({
             <h2 className="qa-urgbanner__title">{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
             <p className="qa-urgbanner__sub">{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
             <div className="qa-urgbanner__actions">
-              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>{(() => {
-                const txt = `${activeUrgent?.label || ""} ${activeUrgent?.sub || ""}`.toLowerCase();
-                if (/residênc|residenc|comprovante/.test(txt)) return "ATUALIZAR AGORA →";
-                return activeUrgent?.ctaLabel || "AGENDAR AGORA →";
-              })()}</button>
-              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>VER DETALHES</button>
+              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>
+                {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
+              </button>
+              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate("documentos")}>ANEXAR</button>
             </div>
-            {snapshot.urgents.length > 1 && (
+            {filteredUrgents.length > 1 && (
               <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
-                {snapshot.urgents.map((urgent, index) => (
+                {filteredUrgents.map((urgent, index) => (
                   <button
                     className={`qa-urgbanner__page ${index === focusIndex ? "is-active" : ""}`}
                     key={`${urgent.label}-${index}`}
                     type="button"
                     aria-label={`Ir para ${urgent.label}`}
-                    onClick={() => setFocusIndex(index)}
+                    onClick={() => { setFocusIndex(index); setAutoPaused(true); }}
                   >
                     {String(index + 1).padStart(2, "0")}
                   </button>
