@@ -250,6 +250,7 @@ Deno.serve(async (req) => {
     }
 
     const sugestao = {
+      titulo_oficial: raw.titulo_oficial ? String(raw.titulo_oficial).trim().toUpperCase() : null,
       numero_documento: raw.numero_documento || null,
       orgao_emissor: raw.orgao_emissor || null,
       data_emissao: ddmmaaaaToISO(raw.data_emissao),
