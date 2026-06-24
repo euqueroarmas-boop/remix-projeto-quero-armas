@@ -154,7 +154,13 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     let last: RegExpExecArray | null = null;
     while ((nameMatch = reName.exec(block)) !== null) last = nameMatch;
     if (!last) continue;
-    const nome = last[1].replace(/\s+/g, " ").trim();
+    let nome = last[1].replace(/\s+/g, " ").trim();
+    // Remove bairro prefixado (heading que ficou colado ao nome)
+    for (const bairroNome of bairrosSet) {
+      if (nome.toUpperCase().startsWith(bairroNome.toUpperCase() + " ")) {
+        nome = nome.slice(bairroNome.length + 1).trim();
+      }
+    }
     const registro = `${last[2].toUpperCase()} ${last[3]}`.trim();
     if (!nome || nome.length < 3) continue;
     if (/^psic[óo]logos|credenciados$/i.test(nome)) continue;
