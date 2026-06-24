@@ -154,12 +154,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const tipo = String(body?.tipo_documento || "outro").toLowerCase() as TipoDoc;
+    const tipoRaw = String(body?.tipo_documento || "outro").toLowerCase();
+    // Tipos desconhecidos (ex: laudo_psicologico, exame_tiro, comprovante_residencia,
+    // certidões) caem em "outro" para extração genérica em vez de quebrar o fluxo.
+    const tipo = (TIPOS_VALIDOS as readonly string[]).includes(tipoRaw)
+      ? (tipoRaw as TipoDoc)
+      : ("outro" as TipoDoc);
     const imageDataUrl = String(body?.imageDataUrl || "");
 
-    if (!TIPOS_VALIDOS.includes(tipo)) {
-      return json({ error: "tipo_documento inválido" }, 400);
-    }
     if (!imageDataUrl.startsWith("data:")) {
       return json({ error: "imageDataUrl deve ser uma data URL (data:image/... ou data:application/pdf)" }, 400);
     }
