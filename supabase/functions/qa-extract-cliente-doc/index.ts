@@ -36,6 +36,16 @@ type TipoDoc = typeof TIPOS_VALIDOS[number];
 
 function buildTool(tipo: TipoDoc) {
   const baseProps: Record<string, unknown> = {
+    titulo_oficial: {
+      type: "string",
+      description:
+        "TÍTULO OFICIAL LITERAL DO DOCUMENTO, exatamente como impresso no cabeçalho/topo do PDF " +
+        "(ex.: 'CERTIDÃO DE DISTRIBUIÇÃO CRIMINAL — JUSTIÇA FEDERAL DE 1ª INSTÂNCIA — SP', " +
+        "'CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS — EXECUÇÕES CRIMINAIS', " +
+        "'CERTIDÃO DE QUITAÇÃO ELEITORAL', 'LAUDO PSICOLÓGICO PARA REGISTRO DE ARMA DE FOGO'). " +
+        "Sempre em UPPERCASE, sem acrescentar texto que não esteja no documento. " +
+        "NUNCA invente o nome — se não estiver legível, deixe vazio.",
+    },
     numero_documento: { type: "string", description: "Número, código ou identificador do documento (ex: número do CR, CRAF, GT, AC)." },
     orgao_emissor: { type: "string", description: "Órgão emissor (ex: Exército Brasileiro, Polícia Federal, SR/PF/UF, R-MIL/CMA)." },
     data_emissao: { type: "string", description: "Data de emissão no formato DD/MM/AAAA." },
