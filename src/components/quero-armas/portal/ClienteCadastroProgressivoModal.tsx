@@ -737,7 +737,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                         className="font-heading text-[10px] font-black uppercase tracking-[0.32em] whitespace-nowrap"
                         style={{ transform: "rotate(-90deg)" }}
                       >
-                        {GRUPO_LABELS[grupo]}
+                        {grupo === "identidade" ? "Identidade" : grupo === "profissional" ? "Profissional" : grupo === "pessoais" ? "Pessoais" : GRUPO_LABELS[grupo]}
                       </span>
                     </div>
                     <div className="px-5 py-4">
