@@ -229,6 +229,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><QAContratarSucessoPage /></QAScope>} />
+        <Route path="area-do-cliente/agendar-exame" element={<QAScope><QAClienteAgendarExamePage /></QAScope>} />
         <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}
