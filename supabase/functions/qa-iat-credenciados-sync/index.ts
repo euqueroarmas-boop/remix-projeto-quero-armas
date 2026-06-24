@@ -176,10 +176,9 @@ function bytesParaBase64(bytes: Uint8Array): string {
 }
 
 async function extrairComGemini(bytes: Uint8Array, uf: string): Promise<Registro[]> {
-  const key = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
-  if (!key) throw new Error("GEMINI_API_KEY ausente — fallback indisponível");
-  const model = "gemini-2.0-flash";
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+  const key = Deno.env.get("LOVABLE_API_KEY");
+  if (!key) throw new Error("LOVABLE_API_KEY ausente — fallback indisponível");
+  const endpoint = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
   const prompt =
     `Este PDF é a lista oficial da Polícia Federal de instrutores de armamento e tiro (IAT) ` +
@@ -187,46 +186,37 @@ async function extrairComGemini(bytes: Uint8Array, uf: string): Promise<Registro
     `nome, telefone (só dígitos, com DDD), email, endereco (endereço/clube completo se houver, ` +
     `senão string vazia), portaria (formato nnn/aaaa) e validade (texto como aparece). ` +
     `Quando o mesmo instrutor aparecer em vários clubes, gere uma linha por clube. ` +
-    `Ignore cabeçalhos de seção. Não invente dados.`;
+    `Ignore cabeçalhos de seção. Não invente dados. ` +
+    `Retorne JSON estrito no formato: ` +
+    `{"instrutores":[{"nome":"","telefone":"","email":"","endereco":"","portaria":"","validade":""}]}`;
 
-  const schema = {
-    type: "OBJECT",
-    properties: {
-      instrutores: {
-        type: "ARRAY",
-        items: {
-          type: "OBJECT",
-          properties: {
-            nome: { type: "STRING" }, telefone: { type: "STRING" }, email: { type: "STRING" },
-            endereco: { type: "STRING" }, portaria: { type: "STRING" }, validade: { type: "STRING" },
-          },
-          required: ["nome"],
-        },
-      },
-    },
-    required: ["instrutores"],
-  };
-
+  const dataUrl = `data:application/pdf;base64,${bytesParaBase64(bytes)}`;
   const body = {
-    contents: [{
+    model: "google/gemini-2.5-flash",
+    temperature: 0,
+    response_format: { type: "json_object" },
+    messages: [{
       role: "user",
-      parts: [
-        { text: prompt },
-        { inline_data: { mime_type: "application/pdf", data: bytesParaBase64(bytes) } },
+      content: [
+        { type: "text", text: prompt },
+        { type: "file", file: { filename: `iat-${uf}.pdf`, file_data: dataUrl } },
       ],
     }],
-    generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0 },
   };
 
   const resp = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Lovable-API-Key": key,
+      "X-Lovable-AIG-SDK": "edge-function",
+    },
     body: JSON.stringify(body),
   });
-  if (!resp.ok) throw new Error(`Gemini HTTP ${resp.status}: ${await resp.text()}`);
+  if (!resp.ok) throw new Error(`Lovable AI HTTP ${resp.status}: ${await resp.text()}`);
   const data = await resp.json();
-  const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-  const parsed = JSON.parse(txt);
+  const txt = data?.choices?.[0]?.message?.content ?? "{}";
+  const parsed = typeof txt === "string" ? JSON.parse(txt) : txt;
   return (parsed.instrutores ?? []).map((r: any) => ({
     uf,
     nome: String(r.nome ?? "").trim(),
