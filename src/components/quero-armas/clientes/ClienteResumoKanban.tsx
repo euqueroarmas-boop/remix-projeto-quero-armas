@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Crosshair } from "lucide-react";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 
@@ -15,11 +16,12 @@ interface Props {
   meusDocs?: any[];
   processoDocs?: any[];
   onNavigate: (tab: string) => void;
+  onOpenCadastro?: () => void;
 }
 
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
-type Front = { key: string; title: string; count: number; tone: FrontTone; items: FrontItem[]; navTo: string };
+type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
@@ -80,6 +82,7 @@ export default function ClienteResumoKanban({
   meusDocs = [],
   processoDocs = [],
   onNavigate,
+  onOpenCadastro,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
@@ -164,12 +167,19 @@ export default function ClienteResumoKanban({
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
 
+    // Agrega o pior status entre os itens da frente: bad > warn > ok > muted.
+    const aggregateStatus = (items: FrontItem[]): "bad" | "warn" | "ok" | "muted" => {
+      if (items.some((i) => i.tone === "bad")) return "bad";
+      if (items.some((i) => i.tone === "warn")) return "warn";
+      if (items.some((i) => i.tone === "ok")) return "ok";
+      return "muted";
+    };
     const fronts: Front[] = [
-      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", items: arsenalItems.slice(0, 3), navTo: "arsenal" },
-      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", items: examesItems.slice(0, 3), navTo: "documentos" },
-      { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", items: filiacaoItems.slice(0, 3), navTo: "documentos" },
-      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", items: docItems.slice(0, 3), navTo: "documentos" },
-      { key: "processos", title: "PROCESSOS", count: activeItems.length, tone: "bordo", items: processoItems.slice(0, 3), navTo: "processos" },
+      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", status: aggregateStatus(arsenalItems), items: arsenalItems.slice(0, 3), navTo: "arsenal" },
+      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: examesItems.slice(0, 3), navTo: "documentos" },
+      { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", status: aggregateStatus(filiacaoItems), items: filiacaoItems.slice(0, 3), navTo: "documentos" },
+      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: docItems.slice(0, 3), navTo: "documentos" },
+      { key: "processos", title: "PROCESSOS", count: activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems.slice(0, 3), navTo: "processos" },
     ];
 
     const urgents: Urgent[] = [];
