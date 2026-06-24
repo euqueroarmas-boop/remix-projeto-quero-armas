@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCredenciadosPF } from "./useCredenciadosPF";
 import { AgendarExameList } from "./AgendarExameList";
+import { INSTRUTOR_PDF_PF } from "./instrutorPdfLinks";
 
 type Props = {
   open: boolean;
@@ -21,6 +22,9 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const params = useMemo(() => open ? ({ tipo, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 }) : null, [open, tipo, cepLimpo, uf, raio]);
   const { loading, results, origin, error } = useCredenciadosPF(params);
+  const ufResolved = (origin?.uf || uf || "").toUpperCase();
+  const isInstrutor = tipo === "instrutor_tiro";
+  const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
 
   if (!open) return null;
   return (
@@ -63,6 +67,21 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
             </div>
           )}
           <AgendarExameList loading={loading} results={results} empty="Nenhum profissional encontrado neste raio. Tente aumentar o raio ou ver a lista do estado." />
+          {isInstrutor && (
+            <div style={{ marginTop: 14, background: "#fff", border: "1px solid #e3e3e1", padding: 14, borderRadius: 4, fontSize: 12, color: "#303030" }}>
+              <strong style={{ display: "block", fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginBottom: 6 }}>LISTA OFICIAL PF (PDF)</strong>
+              A Polícia Federal publica os instrutores de tiro credenciados como PDFs por UF.
+              {pdfHref ? (
+                <div style={{ marginTop: 6 }}>
+                  <a href={pdfHref} target="_blank" rel="noreferrer noopener" style={{ color: "#7A1F2B", fontWeight: 700 }}>
+                    Baixar lista atualizada — {ufResolved}
+                  </a>
+                </div>
+              ) : (
+                <div style={{ marginTop: 6 }}>Informe o CEP ou UF para abrir o PDF do seu estado.</div>
+              )}
+            </div>
+          )}
         </div>
         <footer style={{ padding: "12px 20px", borderTop: "1px solid #e3e3e1", display: "flex", justifyContent: "space-between", gap: 10 }}>
           {onVerListaCompleta && (
