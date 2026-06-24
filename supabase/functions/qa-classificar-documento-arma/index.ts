@@ -426,7 +426,7 @@ Deno.serve(async (req) => {
 
     const payload = decodeJwtPayload(token);
     const hasUserSession = typeof payload?.sub === "string" && payload.sub.length > 0;
-    const isAnonFlow = payload?.role === "anon" && token === SUPABASE_ANON_KEY && apiKeyHeader === SUPABASE_ANON_KEY;
+    const isAnonFlow = payload?.role === "anon" && !!apiKeyHeader && apiKeyHeader === token;
     if (!hasUserSession && !isAnonFlow) {
       console.error("[qa-classificar] auth failed: invalid caller");
       return json({ error: "Unauthorized" }, 401);
