@@ -18,7 +18,18 @@ function json(body: Record<string, unknown>, status = 200) {
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
 
-const TIPOS_VALIDOS = ["cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "outro"] as const;
+const TIPOS_VALIDOS = [
+  "cr",
+  "craf",
+  "sinarm",
+  "gt",
+  "gte",
+  "autorizacao_compra",
+  "laudo_psicologico",
+  "exame_psicologico",
+  "laudo_psicotecnico",
+  "outro",
+] as const;
 type TipoDoc = typeof TIPOS_VALIDOS[number];
 
 function buildTool(tipo: TipoDoc) {
@@ -28,6 +39,16 @@ function buildTool(tipo: TipoDoc) {
     data_emissao: { type: "string", description: "Data de emissão no formato DD/MM/AAAA." },
     data_validade: { type: "string", description: "Data de validade/vencimento no formato DD/MM/AAAA." },
     observacoes: { type: "string", description: "Notas relevantes (categoria, restrições, finalidade)." },
+  };
+
+  const laudoProps: Record<string, unknown> = {
+    data_avaliacao: {
+      type: "string",
+      description:
+        "Data em que a AVALIAÇÃO/EXAME foi REALIZADA pelo profissional (não confundir com data de emissão do laudo). Formato DD/MM/AAAA. " +
+        "Procure por termos como 'data da avaliação', 'data do exame', 'avaliado em', 'realizado em', 'data de aplicação', 'sessão em'. " +
+        "Este é o campo MAIS IMPORTANTE em laudos psicológicos — a validade é sempre 1 ano após esta data.",
+    },
   };
 
   const armaProps: Record<string, unknown> = {
@@ -45,8 +66,11 @@ function buildTool(tipo: TipoDoc) {
     arma_especie: { type: "string", description: "Espécie/tipo (Pistola, Revólver, Carabina, Espingarda, Fuzil)." },
   };
 
-  const includeArma = tipo !== "cr";
-  const properties = includeArma ? { ...baseProps, ...armaProps } : baseProps;
+  const isLaudo = tipo === "laudo_psicologico" || tipo === "exame_psicologico" || tipo === "laudo_psicotecnico";
+  const includeArma = !isLaudo && tipo !== "cr";
+  let properties: Record<string, unknown> = { ...baseProps };
+  if (includeArma) properties = { ...properties, ...armaProps };
+  if (isLaudo) properties = { ...properties, ...laudoProps };
 
   return {
     type: "function",
@@ -71,6 +95,19 @@ function systemPromptFor(tipo: TipoDoc): string {
     gt: "Você é especialista em documentos do Exército. Extraia os dados da GUIA DE TRÁFEGO (GT) permanente, incluindo dados da arma.",
     gte: "Você é especialista em documentos do Exército. Extraia os dados da GUIA DE TRÁFEGO EVENTUAL (GTE), incluindo dados da arma e validade.",
     autorizacao_compra: "Você é especialista em documentos do Exército/PF. Extraia os dados da AUTORIZAÇÃO DE COMPRA (AC) de arma de fogo.",
+    laudo_psicologico:
+      "Você é especialista em LAUDOS PSICOLÓGICOS para concessão/renovação de registro de arma de fogo (Lei 10.826/03). " +
+      "REGRA CRÍTICA DE VALIDADE: laudos psicológicos têm validade de EXATAMENTE 1 ANO contado a partir da DATA DA AVALIAÇÃO " +
+        "(quando o psicólogo aplicou os testes/entrevistou o avaliado), NUNCA a partir da data de emissão/assinatura do laudo. " +
+        "Sempre extraia 'data_avaliacao' do corpo do laudo (geralmente referenciada como 'data da avaliação', 'avaliado em', " +
+        "'realizado em', 'data de aplicação dos testes'). " +
+      "EXEMPLO DE TREINAMENTO: avaliação realizada em 03/03/2025 → data_avaliacao=03/03/2025 e data_validade=03/03/2026. " +
+      "Em 'orgao_emissor' coloque o nome do(a) psicólogo(a) com registro CRP. " +
+      "Em 'numero_documento' coloque o número do CRP do profissional.",
+    exame_psicologico:
+      "Você é especialista em EXAMES PSICOLÓGICOS para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
+    laudo_psicotecnico:
+      "Você é especialista em LAUDOS PSICOTÉCNICOS para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
   };
   return (
@@ -168,11 +205,23 @@ Deno.serve(async (req) => {
 
     const raw = await callVision(imageDataUrl, tipo);
 
+    // Laudo psicológico: validade = data_avaliacao + 1 ano (regra legal Lei 10.826/03).
+    // Sobrescreve qualquer data_validade que a IA tenha tentado inferir errado.
+    const isLaudo = tipo === "laudo_psicologico" || tipo === "exame_psicologico" || tipo === "laudo_psicotecnico";
+    let dataValidadeISO = ddmmaaaaToISO(raw.data_validade);
+    const dataAvaliacaoISO = ddmmaaaaToISO(raw.data_avaliacao);
+    if (isLaudo && dataAvaliacaoISO) {
+      const [y, m, d] = dataAvaliacaoISO.split("-").map(Number);
+      const venc = new Date(Date.UTC(y + 1, m - 1, d));
+      dataValidadeISO = venc.toISOString().slice(0, 10);
+    }
+
     const sugestao = {
       numero_documento: raw.numero_documento || null,
       orgao_emissor: raw.orgao_emissor || null,
       data_emissao: ddmmaaaaToISO(raw.data_emissao),
-      data_validade: ddmmaaaaToISO(raw.data_validade),
+      data_avaliacao: dataAvaliacaoISO,
+      data_validade: dataValidadeISO,
       observacoes: raw.observacoes || null,
       arma_marca: raw.arma_marca || null,
       arma_modelo: sanitizeArmaModelo(raw.arma_modelo),
