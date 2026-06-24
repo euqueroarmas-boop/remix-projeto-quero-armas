@@ -977,10 +977,12 @@ export default function QAClientePortalPage() {
     if (loading || !cliente || !pendingContractsLoaded) return null;
 
     if (pendingContracts > 0) return { type: "contrato" as const };
+    // Cadastro incompleto tem prioridade sobre pendências documentais:
+    // sem dados básicos, o cliente não consegue resolver o resto.
+    if (resumoState.cadastroIncompleto) return { type: "cadastro" as const };
     if (resumoState.checklistReproc) return { type: "checklist_reprovado" as const };
     if (resumoState.docsHubReprovados > 0) return { type: "doc_hub_reprovado" as const };
     if (resumoState.checklistPend) return { type: "checklist_pendente" as const };
-    if (resumoState.cadastroIncompleto) return { type: "cadastro" as const };
     if (resumoState.prazoCritico) return { type: "prazo" as const };
 
     const respondida = (cliente as any)?.entrada_respondida_em ?? null;
@@ -998,11 +1000,14 @@ export default function QAClientePortalPage() {
 
     const idLegado = (cliente as any)?.id_legado ?? (cliente as any)?.id ?? "anon";
     const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
-    if (sessionStorage.getItem(key)) {
+    // Cadastro incompleto reabre em todo refresh até ser preenchido —
+    // é bloqueante para o restante do fluxo.
+    const ignorarTrava = portalStartupAction.type === "cadastro";
+    if (!ignorarTrava && sessionStorage.getItem(key)) {
       setEntradaAutoChecked(true);
       return;
     }
-    sessionStorage.setItem(key, "1");
+    if (!ignorarTrava) sessionStorage.setItem(key, "1");
     setEntradaAutoChecked(true);
 
     if (portalStartupAction.type === "contrato") {
