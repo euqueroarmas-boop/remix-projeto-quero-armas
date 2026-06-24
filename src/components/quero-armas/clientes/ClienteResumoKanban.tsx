@@ -178,16 +178,16 @@ export default function ClienteResumoKanban({
       if (days === null || days > 7) return;
       urgents.push({ label, sub, days, navTo, ctaLabel });
     };
-    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal");
-    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal"));
-    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal"));
+    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →");
+    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →"));
+    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →"));
     filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos"));
     examesItems.forEach((e) => {
       const isPsi = e.label.includes("PSICOLÓGICO");
       const source = isPsi ? exameByTipo.get("psicologico") : exameByTipo.get("tiro");
-      pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos");
+      pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos", "AGENDAR EXAMES →");
     });
-    meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos"));
+    meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
     processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
     prazosProc.forEach((p: any) => {
       if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos", ctaLabel: "AGENDAR AGORA →" });
