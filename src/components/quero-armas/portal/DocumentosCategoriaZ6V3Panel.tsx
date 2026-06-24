@@ -432,7 +432,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                         type="button"
                         title="Visualizar"
                         disabled={!temArquivo}
-                        onClick={() => abrirArquivo(d, "visualizado")}
+                        onClick={() => openPreview(d)}
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </button>
