@@ -50,9 +50,9 @@ interface Props {
 }
 
 const TIPO_LABEL: Record<DocTipoArsenal, string> = {
-  CRAF: "CRAF · Certificado de Registro",
-  GT: "GT · Guia de Tráfego",
-  GTE: "GTE · Guia de Tráfego Especial",
+  CRAF: "CRAF — Certificado de Registro de Arma de Fogo",
+  GT: "GT — Guia de Tráfego",
+  GTE: "GTE — Guia de Tráfego Eventual",
   GUIA_TRANSITO: "Guia de Trânsito SINARM/PF",
   NOTA_FISCAL: "Nota Fiscal (NF-e/DANFE)",
   EXAME_LAUDO: "Exame / Laudo",
