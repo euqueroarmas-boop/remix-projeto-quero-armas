@@ -1368,7 +1368,7 @@ export function ClienteDocsHubModal({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
+        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1140px] rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
       >
         <div className="shrink-0 border-b border-border bg-gradient-to-b from-background to-muted/70 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-start gap-3">
@@ -1400,7 +1400,7 @@ export function ClienteDocsHubModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]">
-          <div className="space-y-5 pb-6">
+          <div className="space-y-5 pb-6 lg:space-y-0 lg:columns-2 lg:gap-5 lg:[&>*]:mb-5 lg:[&>*]:break-inside-avoid">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
