@@ -21,13 +21,14 @@ const TITULO = {
 export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaCompleta }: Props) {
   const [raio, setRaio] = useState(50);
   const cepLimpo = (cep || "").replace(/\D/g, "");
+  const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
   const psicoParams = useMemo(() => open && !isInstrutor
     ? ({ tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 })
     : null, [open, isInstrutor, cepLimpo, uf, raio]);
-  const iatParams = useMemo(() => (open && isInstrutor && (cepLimpo || uf))
-    ? ({ cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 20 })
-    : null, [open, isInstrutor, cepLimpo, uf, raio]);
+  const iatParams = useMemo(() => (open && isInstrutor && (cepValido || uf))
+    ? ({ cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 20 })
+    : null, [open, isInstrutor, cepValido, cepLimpo, uf, raio]);
 
   const psico = useCredenciadosPF(psicoParams);
   const iat = useCredenciadosIAT(iatParams);

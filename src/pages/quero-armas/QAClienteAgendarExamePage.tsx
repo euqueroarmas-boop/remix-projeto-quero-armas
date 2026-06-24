@@ -33,15 +33,16 @@ export default function QAClienteAgendarExamePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cepLimpo = cep.replace(/\D/g, "");
+  const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
 
   const psicoParams = useMemo(() => isInstrutor ? null : ({
     tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined,
     raio_km: raio, limit: 50, incluir_vencidos: incluirVencidos,
   }), [isInstrutor, cepLimpo, uf, raio, incluirVencidos]);
-  const iatParams = useMemo(() => (isInstrutor && (cepLimpo || uf)) ? ({
-    cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 100,
-  }) : null, [isInstrutor, cepLimpo, uf, raio]);
+  const iatParams = useMemo(() => (isInstrutor && (cepValido || uf)) ? ({
+    cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 100,
+  }) : null, [isInstrutor, cepValido, cepLimpo, uf, raio]);
 
   const psico = useCredenciadosPF(psicoParams as any);
   const iat = useCredenciadosIAT(iatParams);

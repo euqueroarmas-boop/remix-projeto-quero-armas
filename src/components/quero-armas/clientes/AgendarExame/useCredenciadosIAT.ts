@@ -38,9 +38,18 @@ export function useCredenciadosIAT(params: BuscarIATParams | null) {
   const [data, setData] = useState<BuscarIATResponse | null>(null);
 
   const run = useCallback(async (p: BuscarIATParams) => {
+    const cep = (p.cep || "").replace(/\D/g, "");
+    const uf = (p.uf || "").trim().toUpperCase();
+    if (cep.length !== 8 && !uf) {
+      setLoading(false);
+      setError(null);
+      setData(null);
+      return;
+    }
+    const body = { ...p, cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf || undefined };
     setLoading(true); setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-iat-credenciados-buscar", { body: p });
+      const { data, error } = await supabase.functions.invoke("qa-iat-credenciados-buscar", { body });
       if (error) throw error;
       setData(data as BuscarIATResponse);
     } catch (e: any) {
@@ -49,7 +58,10 @@ export function useCredenciadosIAT(params: BuscarIATParams | null) {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { if (params) run(params); }, [params?.cep, params?.uf, params?.raio_km, params?.limit]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (params) run(params);
+    else { setLoading(false); setError(null); setData(null); }
+  }, [params?.cep, params?.uf, params?.raio_km, params?.limit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { loading, error, data, refetch: run };
 }
