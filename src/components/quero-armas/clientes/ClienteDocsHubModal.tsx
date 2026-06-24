@@ -808,7 +808,13 @@ export function ClienteDocsHubModal({
       (form.tipo_documento === "craf" && !form.numero_cad_sinarm));
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(prev.tipo_documento === "cr" && key === "numero_registro_sigma"
+        ? { numero_documento: String(value || "") }
+        : {}),
+    }));
     // Edição manual implica confirmação (corrigido pelo usuário).
     if ((SENSITIVE_KEYS as readonly string[]).includes(key as string)) {
       setConfirmados((prev) => ({ ...prev, [key as SensitiveKey]: true }));
@@ -833,7 +839,14 @@ export function ClienteDocsHubModal({
 
   /** Marca um campo sensível como confirmado pelo humano (botão Confirmar). */
   function confirmField(key: SensitiveKey) {
-    setConfirmados((prev) => ({ ...prev, [key]: true }));
+    setConfirmados((prev) => ({
+      ...prev,
+      [key]: true,
+      // No CR, o número operacional do documento é o próprio registro SIGMA.
+      // A tela exibe apenas “Nº de Registro SIGMA”, então confirmar esse campo
+      // também deve satisfazer a trava histórica de `numero_documento`.
+      ...(form.tipo_documento === "cr" && key === "numero_registro_sigma" ? { numero_documento: true } : {}),
+    }));
   }
 
   /** Quais campos sensíveis são exigidos para o tipo atual. */
@@ -846,7 +859,7 @@ export function ClienteDocsHubModal({
       return base;
     }
     if (t === "cr" || t === "autorizacao_compra") {
-      return ["numero_documento", "data_validade"];
+      return t === "cr" ? ["numero_registro_sigma", "data_validade"] : ["numero_documento", "data_validade"];
     }
     if (t === "craf") {
       const base: SensitiveKey[] = [
@@ -1327,7 +1340,9 @@ export function ClienteDocsHubModal({
         revisao_humana_obrigatoria: !!tipoAtual?.revisaoHumanaObrigatoria,
         fonte_normativa: tipoAtual ? ["Lei 10.826/2003", ...(tipoAtual.categoria === "arma_acervo" || tipoAtual.categoria === "cac_atividade" ? ["Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 311"] : ["IN DG/PF 201"])] : ["Lei 10.826/2003"],
         tipo_documento: form.tipo_documento,
-        numero_documento: form.numero_documento || null,
+        numero_documento: form.tipo_documento === "cr"
+          ? (form.numero_documento || form.numero_registro_sigma || null)
+          : (form.numero_documento || null),
         orgao_emissor: form.orgao_emissor || null,
         data_emissao: form.data_emissao || null,
         data_validade: form.data_validade || null,
