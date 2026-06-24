@@ -245,7 +245,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
         .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
         .qa-docsz6 .kpi .l{font-family:'Oswald',sans-serif;font-size:9px;letter-spacing:.18em;color:#7A7A7A;display:flex;align-items:center;gap:6px}
-        .qa-docsz6 .kpi .v{font-family:'Oswald',sans-serif;font-size:24px;font-weight:600;margin-top:6px;color:#0A0A0A;line-height:1}
+        .qa-docsz6 .kpi .v{font-family:'Rajdhani','Oswald',sans-serif;font-size:26px;font-weight:600;margin-top:6px;color:#0A0A0A;line-height:1;letter-spacing:.02em}
         .qa-docsz6 .kpi .s{font-size:10px;color:#7A7A7A;margin-top:3px}
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
         .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0;gap:12px}
@@ -268,8 +268,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .pill-aprov{background:#E3F2E8;color:#1F6638}
         .qa-docsz6 .pill-pend{background:#FCEFCE;color:#7A5A14}
         .qa-docsz6 .pill-repr{background:#FCE3E1;color:#8A1410}
-        .qa-docsz6 .dt{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:.08em;color:#0A0A0A;font-weight:600;text-align:right;min-width:78px}
-        .qa-docsz6 .rem{font-family:'Oswald',sans-serif;font-size:10px;letter-spacing:.14em;font-weight:600;text-align:right;min-width:110px}
+        .qa-docsz6 .dt{font-family:'Rajdhani','Oswald',sans-serif;font-size:13px;letter-spacing:.04em;color:#0A0A0A;font-weight:600;text-align:right;min-width:78px}
+        .qa-docsz6 .rem{font-family:'Rajdhani','Oswald',sans-serif;font-size:12px;letter-spacing:.06em;font-weight:700;text-align:right;min-width:110px}
         .qa-docsz6 .acts{display:flex;align-items:center;gap:6px;justify-content:flex-end}
         .qa-docsz6 .act{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid transparent;background:transparent;color:#9A9A9A;border-radius:2px;cursor:pointer;transition:all .12s ease}
         .qa-docsz6 .act:hover{color:#7A1F2B;border-color:#E5E5E5;background:#fff}
