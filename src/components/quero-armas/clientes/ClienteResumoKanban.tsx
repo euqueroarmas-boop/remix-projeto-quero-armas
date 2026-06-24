@@ -173,10 +173,10 @@ export default function ClienteResumoKanban({
     ];
 
     const urgents: Urgent[] = [];
-    const pushUrgent = (label: string, sub: string, date: string | null | undefined, navTo: string) => {
+    const pushUrgent = (label: string, sub: string, date: string | null | undefined, navTo: string, ctaLabel = "AGENDAR AGORA →") => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, sub, days, navTo });
+      urgents.push({ label, sub, days, navTo, ctaLabel });
     };
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal");
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal"));
