@@ -285,12 +285,20 @@ export default function ClienteResumoKanban({
   }, [SERVICO_MAP, armasManual, cadastro, crafs, examesAtuais, filiacoes, gtes, itens, meusDocs, processoDocs]);
 
   const [focusIndex, setFocusIndex] = useState(0);
-  useEffect(() => setFocusIndex(0), [snapshot.urgents.length]);
+  const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
+  const [autoPaused, setAutoPaused] = useState(false);
+
+  const filteredUrgents = useMemo(
+    () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
+    [chipFilter, snapshot.urgents],
+  );
+
+  useEffect(() => setFocusIndex(0), [filteredUrgents.length, chipFilter]);
   useEffect(() => {
-    if (snapshot.urgents.length <= 1) return;
-    const id = window.setInterval(() => setFocusIndex((current) => (current + 1) % snapshot.urgents.length), 6000);
+    if (filteredUrgents.length <= 1 || autoPaused) return;
+    const id = window.setInterval(() => setFocusIndex((current) => (current + 1) % filteredUrgents.length), 6000);
     return () => window.clearInterval(id);
-  }, [snapshot.urgents.length]);
+  }, [filteredUrgents.length, autoPaused]);
 
   // Trava o scroll da página apenas no desktop (>=1024px).
   // No mobile/tablet o conteúdo precisa rolar para acessar os cards e o rodapé.
@@ -325,7 +333,7 @@ export default function ClienteResumoKanban({
     };
   }, []);
 
-  const activeUrgent = snapshot.urgents[focusIndex] || null;
+  const activeUrgent = filteredUrgents[focusIndex] || null;
   const memberSince = (() => {
     const d = (cliente as any)?.created_at || (cliente as any)?.data_cadastro;
     if (!d) return null;
@@ -349,12 +357,12 @@ export default function ClienteResumoKanban({
     ? (CATEGORIA_LABELS[rawCategoria] || rawCategoria.replace(/_/g, " ").toUpperCase())
     : (temCR ? "TITULAR" : "SEM CATEGORIA");
   const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
-  const filters = [
-    `TODOS ${snapshot.totalFronts}`,
-    `ARSENAL ${snapshot.fronts[0].count}`,
-    `EXAMES ${snapshot.fronts[1].count}`,
-    `DOCUMENTOS ${snapshot.fronts[3].count}`,
-    `PROCESSOS ${snapshot.fronts[4].count}`,
+  const filters: Array<{ key: "todos" | Urgent["frontKey"]; label: string }> = [
+    { key: "todos", label: `TODOS ${snapshot.urgents.length}` },
+    { key: "arsenal", label: `ARSENAL ${snapshot.urgents.filter((u) => u.frontKey === "arsenal").length}` },
+    { key: "exames", label: `EXAMES ${snapshot.urgents.filter((u) => u.frontKey === "exames").length}` },
+    { key: "documentos", label: `DOCUMENTOS ${snapshot.urgents.filter((u) => u.frontKey === "documentos").length}` },
+    { key: "processos", label: `PROCESSOS ${snapshot.urgents.filter((u) => u.frontKey === "processos").length}` },
   ];
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
