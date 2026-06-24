@@ -415,6 +415,93 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   };
 
   // ---------- render helpers ----------
+  const getOrigem = (key: string): { source?: CampoOrigem; source_doc?: string } => {
+    const map = cliente?.campo_origens as Record<string, { source?: CampoOrigem; source_doc?: string }> | undefined;
+    return map?.[key] ?? {};
+  };
+
+  const renderRow = (campo: CampoCadastro) => {
+    const v = valorAtual(campo);
+    const state = savingState[campo.key] ?? "idle";
+    const origem = getOrigem(campo.key);
+    const isEmpty = !v || !String(v).trim();
+    const isAi = origem.source === "ai";
+    const isOverride = origem.source === "manual_override_ai";
+    const docLabel = (origem.source_doc || "").toUpperCase();
+
+    const inputBase =
+      "w-full rounded-[2px] border bg-white px-2.5 py-2 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15";
+    const inputBorder = isAi
+      ? "border-[#7A1F2B]/40"
+      : isOverride
+        ? "border-[#0A0A0A]/40"
+        : "border-[#E5E5E5]";
+
+    return (
+      <div
+        key={campo.key}
+        className="grid grid-cols-[180px_1fr_140px] gap-4 items-center border-t border-dashed border-[#ededeb] py-2.5 first:border-t-0"
+      >
+        <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+          {campo.label}
+        </div>
+        <div className="relative">
+          {campo.tipo === "select" ? (
+            <select
+              className={`${inputBase} ${inputBorder}`}
+              value={v}
+              onChange={(e) => onChangeCampo(campo, e.target.value)}
+            >
+              <option value="">Selecione…</option>
+              {(campo.opcoes ?? []).map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              className={`${inputBase} ${inputBorder}`}
+              value={v}
+              placeholder={campo.placeholder}
+              inputMode={
+                campo.tipo === "cep" || campo.tipo === "tel" || campo.tipo === "date"
+                  ? "numeric"
+                  : undefined
+              }
+              onChange={(e) => onChangeCampo(campo, e.target.value)}
+            />
+          )}
+        </div>
+        <div className="text-right font-heading text-[9.5px] font-bold uppercase tracking-[0.16em]">
+          {state === "saving" && (
+            <span className="inline-flex items-center gap-1 text-slate-400">
+              <Loader2 className="h-3 w-3 animate-spin" /> Salvando
+            </span>
+          )}
+          {state === "saved" && (
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <CheckCircle2 className="h-3 w-3" /> Salvo
+            </span>
+          )}
+          {state === "error" && <span className="text-red-600">Erro</span>}
+          {state === "idle" && isEmpty && (
+            <span className="inline-block rounded-[1px] bg-[#7A1F2B] px-1.5 py-[3px] text-white">FALTA</span>
+          )}
+          {state === "idle" && !isEmpty && isAi && (
+            <span className="text-[#7A1F2B]">{docLabel ? `IA · ${docLabel}` : "IA"}</span>
+          )}
+          {state === "idle" && !isEmpty && isOverride && (
+            <span className="text-[#0A0A0A]">EDITADO</span>
+          )}
+          {state === "idle" && !isEmpty && !isAi && !isOverride && (
+            <span className="text-[#6A6A6A]">DIGITADO</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderInput = (campo: CampoCadastro) => {
     const v = valorAtual(campo);
     const state = savingState[campo.key] ?? "idle";
@@ -453,6 +540,23 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     for (const c of camposVisiveis) map[c.grupo].push(c);
     return (Object.keys(map) as CadastroGrupo[]).filter((g) => map[g].length > 0).map((g) => ({ grupo: g, campos: map[g] }));
   }, [camposVisiveis]);
+
+  // Totais por grupo considerando TODOS os campos (não só visíveis) para mostrar X / Y preenchidos.
+  const totaisPorGrupo = useMemo(() => {
+    const tot: Record<CadastroGrupo, { feitos: number; total: number }> = {
+      pessoais: { feitos: 0, total: 0 },
+      identidade: { feitos: 0, total: 0 },
+      contato: { feitos: 0, total: 0 },
+      endereco: { feitos: 0, total: 0 },
+      profissional: { feitos: 0, total: 0 },
+    };
+    for (const c of CAMPOS_CADASTRO) {
+      tot[c.grupo].total += 1;
+      const raw = cliente?.[c.key];
+      if (raw && String(raw).trim()) tot[c.grupo].feitos += 1;
+    }
+    return tot;
+  }, [cliente]);
 
   // Microcopy motivacional por etapa do progresso.
   const motivacao =
@@ -618,16 +722,39 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   <p className="text-sm text-slate-500 max-w-sm">Não há campos pendentes no momento.</p>
                 </div>
               )}
-              {gruposVisiveis.map(({ grupo, campos }) => (
-                <section key={grupo} className="rounded-[4px] border border-[#E5E5E5] bg-white p-4 shadow-sm">
-                  <h3 className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: MARROM }}>
-                    {GRUPO_LABELS[grupo]}
-                  </h3>
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {campos.map((c) => <div key={c.key}>{renderInput(c)}</div>)}
-                  </div>
-                </section>
-              ))}
+              {gruposVisiveis.map(({ grupo, campos }) => {
+                const { feitos, total } = totaisPorGrupo[grupo];
+                const muted = feitos === 0;
+                return (
+                  <section
+                    key={grupo}
+                    className="grid grid-cols-[40px_1fr] overflow-hidden rounded-[3px] border border-[#E5E5E5] bg-white shadow-sm"
+                  >
+                    <div
+                      className={`flex items-center justify-center ${muted ? "bg-[#ededeb] text-[#6A6A6A]" : "bg-[#7A1F2B] text-white"}`}
+                    >
+                      <span
+                        className="font-heading text-[10px] font-black uppercase tracking-[0.32em] whitespace-nowrap"
+                        style={{ transform: "rotate(-90deg)" }}
+                      >
+                        {GRUPO_LABELS[grupo]}
+                      </span>
+                    </div>
+                    <div className="px-5 py-4">
+                      <div className="mb-2 flex items-baseline justify-between">
+                        <div className="font-heading text-[12px] font-black uppercase tracking-[0.14em] text-[#0A0A0A]">
+                          {GRUPO_LABELS[grupo]}
+                        </div>
+                        <div className="font-heading text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                          {feitos} / {total} CAMPOS
+                          {muted ? " · NÃO INICIADO" : ""}
+                        </div>
+                      </div>
+                      <div>{campos.map((c) => renderRow(c))}</div>
+                    </div>
+                  </section>
+                );
+              })}
             </div>
           )}
 
