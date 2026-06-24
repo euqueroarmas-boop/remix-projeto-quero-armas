@@ -40,6 +40,10 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
   const iatMode = iat.data?.mode || null;
   const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
+  const foraDoRaio = isInstrutor ? Boolean(iat.data?.fora_do_raio) : psico.foraDoRaio;
+  const distanciaMaisProximo = isInstrutor
+    ? iat.data?.distancia_mais_proximo ?? null
+    : psico.distanciaMaisProximo;
 
   // Adapta IAT -> shape da lista compartilhada
   const results: CredenciadoPF[] = isInstrutor
@@ -106,6 +110,16 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
           {!cepLimpo && !uf && (
             <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
               Cadastre seu CEP para vermos os profissionais mais próximos de você.
+            </div>
+          )}
+          {foraDoRaio && (
+            <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
+              Nenhum credenciado dentro de {raio} km{origin?.cidade ? ` de ${origin.cidade}` : ""}.
+              Mostrando os mais próximos
+              {typeof distanciaMaisProximo === "number"
+                ? ` — o mais perto está a ${Math.round(distanciaMaisProximo)} km`
+                : ""}.
+              {" "}Amplie o raio se quiser.
             </div>
           )}
           <AgendarExameList loading={loading} results={results} empty={
