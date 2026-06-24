@@ -39,7 +39,7 @@ export default function QAClienteAgendarExamePage() {
     tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined,
     raio_km: raio, limit: 50, incluir_vencidos: incluirVencidos,
   }), [isInstrutor, cepLimpo, uf, raio, incluirVencidos]);
-  const iatParams = useMemo(() => isInstrutor ? ({
+  const iatParams = useMemo(() => (isInstrutor && (cepLimpo || uf)) ? ({
     cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 100,
   }) : null, [isInstrutor, cepLimpo, uf, raio]);
 
