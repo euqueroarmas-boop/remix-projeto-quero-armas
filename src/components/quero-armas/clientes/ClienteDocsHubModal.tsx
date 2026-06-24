@@ -730,7 +730,7 @@ export function ClienteDocsHubModal({
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
-        const row = data as Record<string, string | null>;
+        const row = data as unknown as Record<string, string | null>;
         setClienteAutoFetch({
           nome: row.nome_completo || null,
           cpf: row.cpf || null,
