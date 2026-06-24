@@ -2200,10 +2200,9 @@ export function ClienteDocsHubModal({
                   }
                   icon={Calendar}
                 >
-                  <Input
-                    type="date"
+                  <DateInputBR
                     value={form.data_emissao}
-                    onChange={(event) => update("data_emissao", event.target.value)}
+                    onChange={(iso) => update("data_emissao", iso)}
                     className={inputClassName}
                   />
                 </Field>
@@ -2220,10 +2219,9 @@ export function ClienteDocsHubModal({
                   />
                 }
               >
-                <Input
-                  type="date"
+                <DateInputBR
                   value={form.data_validade}
-                  onChange={(event) => update("data_validade", event.target.value)}
+                  onChange={(iso) => update("data_validade", iso)}
                   className={inputClassName}
                 />
               </Field>
