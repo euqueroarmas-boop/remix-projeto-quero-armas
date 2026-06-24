@@ -329,7 +329,7 @@ export default function ClienteResumoKanban({
                 aria-label="Completar cadastro"
                 title="Completar cadastro"
               >
-                <img src={iconeArmaSquircle.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                <img src="/icone-arma-cadastro-squircle.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
               </button>
             )}
           </div>
