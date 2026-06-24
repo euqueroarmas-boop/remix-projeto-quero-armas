@@ -1011,9 +1011,12 @@ export function ClienteDocsHubModal({
         numero_cad_sinarm: cadSinarmRaw || prev.numero_cad_sinarm,
         numero_registro_sigma:
           sistemaFinal === "SIGMA"
-            ? sigmaExplicitoRaw || prev.numero_registro_sigma
+            ? (sigmaExplicitoRaw
+                // CR é registrado no SIGMA: o nº do CR (numero_documento) É o nº de registro SIGMA.
+                || (tipoIA === "cr" ? (campos.numero_documento || "") : "")
+                || prev.numero_registro_sigma)
             : "", // SINARM/REVISAR nunca preenche SIGMA
-        sistema_registro: sistemaFinal,
+        sistema_registro: tipoIA === "cr" ? "SIGMA" : sistemaFinal,
       }));
 
       // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
@@ -1021,7 +1024,8 @@ export function ClienteDocsHubModal({
       setIaExtraido({
         numero_documento: campos.numero_documento || "",
         numero_cad_sinarm: cadSinarmRaw,
-        numero_registro_sigma: sigmaExplicitoRaw,
+        numero_registro_sigma:
+          sigmaExplicitoRaw || (tipoIA === "cr" ? (campos.numero_documento || "") : ""),
         arma_numero_serie: campos.arma_numero_serie || "",
         arma_marca: campos.arma_marca || "",
         arma_modelo: modeloExtraidoSeguro,
