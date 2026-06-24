@@ -231,25 +231,7 @@ export default function ClienteResumoKanban({
           {filters.map((filter) => <span className="qa-client-summary-print__chip" key={filter}>{filter}</span>)}
         </div>
 
-        <div className="qa-client-summary-print__label">SUAS QUATRO FRENTES</div>
-        <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
-          {snapshot.fronts.map((front) => (
-            <article className={`qa-front-card ${front.tone === "amber" ? "amber" : ""}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
-              <div className="qa-front-card__head">
-                <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
-                <div className="qa-front-card__num">{front.count}</div>
-              </div>
-              {front.items.length === 0 && <div className="qa-front-card__item"><span>Nenhum item monitorado</span><strong>—</strong></div>}
-              {front.items.map((item, index) => (
-                <div className="qa-front-card__item" key={`${front.key}-${index}-${item.label}`}>
-                  <span>{item.label}</span><strong className={item.tone}>{item.status}</strong>
-                </div>
-              ))}
-            </article>
-          ))}
-        </section>
-
-        <section className="qa-client-summary-print__focus" aria-label="Foco do dia" aria-live="polite">
+        <section className="qa-client-summary-print__focus qa-client-summary-print__focus--top" aria-label="Foco do dia" aria-live="polite">
           <div>
             <div className="qa-focus__k">FOCO DO DIA</div>
             <div className="qa-focus__text">
@@ -278,6 +260,24 @@ export default function ClienteResumoKanban({
             )}
             <button className="qa-focus__btn" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>RESOLVER AGORA →</button>
           </div>
+        </section>
+
+        <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS QUATRO FRENTES</div>
+        <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
+          {snapshot.fronts.map((front) => (
+            <article className={`qa-front-card ${front.tone === "amber" ? "amber" : ""}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
+              <div className="qa-front-card__head">
+                <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
+                <div className="qa-front-card__num">{front.count}</div>
+              </div>
+              {front.items.length === 0 && <div className="qa-front-card__item"><span>Nenhum item monitorado</span><strong>—</strong></div>}
+              {front.items.map((item, index) => (
+                <div className="qa-front-card__item" key={`${front.key}-${index}-${item.label}`}>
+                  <span>{item.label}</span><strong className={item.tone}>{item.status}</strong>
+                </div>
+              ))}
+            </article>
+          ))}
         </section>
 
         <section className="qa-client-summary-print__summary" aria-label="Indicadores do resumo">
