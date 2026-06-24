@@ -311,7 +311,20 @@ export default function ClienteResumoKanban({
             <h1>{firstName(cliente)}, ESTE É O RESUMO DE TUDO</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="qa-client-summary-print__updated"><small>ATUALIZADO</small>{updated} · {updatedTime}</div>
+          <div className="qa-client-summary-print__updated">
+            <span className="qa-client-summary-print__updated-text"><small>ATUALIZADO</small>{updated} · {updatedTime}</span>
+            {onOpenCadastro && (
+              <button
+                type="button"
+                className="qa-client-summary-print__cadastro-btn"
+                onClick={onOpenCadastro}
+                aria-label="Completar cadastro"
+                title="Completar cadastro"
+              >
+                <Crosshair size={16} strokeWidth={2.2} />
+              </button>
+            )}
+          </div>
         </header>
 
         <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">
@@ -356,7 +369,7 @@ export default function ClienteResumoKanban({
         <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS CINCO FRENTES</div>
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
           {snapshot.fronts.map((front) => (
-            <article className={`qa-front-card ${front.tone === "amber" ? "amber" : ""}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
+            <article className={`qa-front-card s-${front.status}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
               <div className="qa-front-card__head">
                 <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
                 <div className="qa-front-card__num">{front.count}</div>
