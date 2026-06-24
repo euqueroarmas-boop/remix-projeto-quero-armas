@@ -487,6 +487,23 @@ export default function ClienteResumoKanban({
         </section>
         <div className="qa-client-summary-print__footer">QUERO ARMAS · COCKPIT Z6 · RESUMO · DECK V29</div>
       </div>
+      {exameModal && (
+        <AgendarExameModal
+          open
+          tipo={exameModal.tipo}
+          cep={clienteCep}
+          uf={clienteUf}
+          onClose={() => setExameModal(null)}
+          onVerListaCompleta={() => {
+            const qs = new URLSearchParams();
+            qs.set("tipo", exameModal.tipo);
+            if (clienteCep) qs.set("cep", String(clienteCep));
+            if (clienteUf) qs.set("uf", String(clienteUf));
+            navigate(`/area-do-cliente/agendar-exame?${qs.toString()}`);
+            setExameModal(null);
+          }}
+        />
+      )}
     </main>
   );
 }
