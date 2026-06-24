@@ -187,6 +187,8 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   const [iaFile, setIaFile] = useState<File | null>(null);
   const [checklistMatches, setChecklistMatches] = useState<ChecklistMatch[]>([]);
   const [checklistSelecionados, setChecklistSelecionados] = useState<Record<string, boolean>>({});
+  const [autoPrefillBanner, setAutoPrefillBanner] = useState<{ campos: number; docs: number } | null>(null);
+  const [autoPrefillLoading, setAutoPrefillLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<Record<string, number>>({});
 
@@ -228,17 +230,28 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       setIaFile(null);
       setChecklistMatches([]);
       setChecklistSelecionados({});
+      setAutoPrefillBanner(null);
       // Se CEP já está salvo mas endereço está vazio, busca via ViaCEP automaticamente.
       const cepSalvo = cliente?.cep;
       if (cepSalvo && !cliente?.endereco) {
         fetchViaCep(String(cepSalvo));
       }
+      // Dispara auto-prefill dos documentos já enviados (uma vez por abertura).
+      (async () => {
+        setAutoPrefillLoading(true);
+        const r = await chamarAutoPrefill();
+        setAutoPrefillLoading(false);
+        if (r && Object.keys(r.applied).length > 0) {
+          setAutoPrefillBanner({ campos: Object.keys(r.applied).length, docs: r.docs });
+          onUpdated?.();
+        }
+      })();
     }
     return () => {
       Object.values(timersRef.current).forEach((t) => window.clearTimeout(t));
       timersRef.current = {};
     };
-  }, [open, fetchViaCep]);
+  }, [open, fetchViaCep, onUpdated]);
 
   const progresso = useMemo(() => calcularProgressoCadastro(cliente), [cliente]);
   const faltantes = useMemo(() => getCamposFaltantesCadastro(cliente), [cliente]);
@@ -277,7 +290,11 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
     timersRef.current[campo.key] = window.setTimeout(async () => {
       setSavingState((prev) => ({ ...prev, [campo.key]: "saving" }));
-      const r = await chamarAtualizarCadastro({ [campo.key]: v });
+      // Detecta override: se o valor atual veio da IA (campo_origens.source === 'ai'),
+      // marca como manual_override_ai — IA deixa de poder sobrescrever esse campo.
+      const origemAtual = (cliente?.campo_origens as Record<string, { source?: CampoOrigem }> | undefined)?.[campo.key]?.source;
+      const novaOrigem: CampoOrigem = origemAtual === "ai" ? "manual_override_ai" : "manual";
+      const r = await chamarAtualizarCadastro({ [campo.key]: v }, { [campo.key]: novaOrigem });
       if (r.ok) {
         setSavingState((prev) => ({ ...prev, [campo.key]: "saved" }));
         onUpdated?.();
@@ -285,7 +302,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         setSavingState((prev) => ({ ...prev, [campo.key]: "error" }));
       }
     }, DEBOUNCE_MS);
-  }, [onUpdated, fetchViaCep]);
+  }, [onUpdated, fetchViaCep, cliente]);
 
   const handleEscolherArquivo = () => fileRef.current?.click();
 
