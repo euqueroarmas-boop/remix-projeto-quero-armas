@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   );
   try {
     const body = await req.json().catch(() => ({}));
-    const batchSize = Math.min(Math.max(Number(body?.batchSize) || 15, 1), 30);
+    const batchSize = Math.min(Math.max(Number(body?.batchSize) || 30, 1), 30);
     const loop = Boolean(body?.loop);
     const uf: string | undefined = body?.uf?.toUpperCase?.() || undefined;
 
