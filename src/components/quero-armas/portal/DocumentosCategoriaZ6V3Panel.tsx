@@ -256,7 +256,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         
         .qa-docsz6 .grp{background:#fff;border:1px solid #E5E5E5;border-top:0}
         .qa-docsz6 .grp:last-child{border-radius:0 0 4px 4px}
-        .qa-docsz6 .grp-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #EFEFEF;background:#FAFAFA;cursor:pointer;user-select:none}
+        .qa-docsz6 .grp-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:3px solid #F2F2F2;background:#FAFAFA;cursor:pointer;user-select:none}
         .qa-docsz6 .grp-h .gt{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.18em;color:#0A0A0A;font-weight:600;display:flex;align-items:center;gap:8px}
         .qa-docsz6 .grp-h .gt .gc{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald',sans-serif;letter-spacing:.14em}
         .qa-docsz6 .grp-h .chev{color:#7A7A7A}
