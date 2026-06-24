@@ -141,6 +141,16 @@ function systemPromptFor(tipo: TipoDoc): string {
       "Em 'numero_documento' coloque o número do credenciamento do instrutor (CR/PF) quando disponível.",
     capacidade_tecnica:
       "Você é especialista em LAUDOS DE CAPACIDADE TÉCNICA para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
+    antecedentes_criminais:
+      "Você é especialista em certidões criminais estaduais. Extraia o título literal da CERTIDÃO DE ANTECEDENTES CRIMINAIS da Polícia Civil/IIRGD, sem trocar por quitação eleitoral ou outro documento.",
+    antecedentes_federal:
+      "Você é especialista em certidões criminais da Justiça Federal/TRF. Extraia o título literal da CERTIDÃO DE DISTRIBUIÇÃO CRIMINAL, preservando se é TRF da 3ª Região, Seção Judiciária, JEF ou outra unidade.",
+    antecedentes_estadual:
+      "Você é especialista em certidões criminais do Tribunal de Justiça estadual. Extraia o título literal e diferencie DISTRIBUIÇÕES CRIMINAIS de EXECUÇÕES CRIMINAIS quando o cabeçalho indicar.",
+    antecedentes_militar:
+      "Você é especialista em certidões criminais militares. Extraia o título literal e diferencie Justiça Militar da União/STM de Justiça Militar Estadual/TJM.",
+    antecedentes_eleitoral:
+      "Você é especialista em certidões eleitorais criminais. Este tipo é CERTIDÃO DE CRIMES ELEITORAIS; NÃO chame de quitação eleitoral salvo se o PDF disser literalmente quitação, o que não é o documento esperado aqui.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
   };
   return (
