@@ -651,7 +651,8 @@ export function ClienteDocsHubModal({
   useEffect(() => {
     if (open) {
       const tipoInicial = getDefaultTipo(mode, defaultTipo);
-      setForm((prev) => ({ ...EMPTY, ...prev, tipo_documento: tipoInicial }));
+      // Reset COMPLETO ao reabrir: não vazar dados do documento anterior.
+      setForm({ ...EMPTY, tipo_documento: tipoInicial });
       setCategoriaHub(inferHubCategoriaFromTipo(tipoInicial));
       setClassificacao(null);
       setShowTipoOverride(false);
