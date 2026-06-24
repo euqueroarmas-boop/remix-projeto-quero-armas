@@ -1,0 +1,32 @@
+// Lista oficial de IATs (instrutores de armamento e tiro) credenciados pela PF.
+// A PF publica como PDFs por UF — mapeamento extraído de
+// https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados
+export const INSTRUTOR_PDF_PF: Record<string, string> = {
+  AC: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ac-lista-atualizada-de-iat-credenciados-org.pdf",
+  AL: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/al-lista-atualizada-de-iat-credenciado.pdf",
+  AP: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ap-lista-atualizada-de-iat-credenciado.pdf",
+  AM: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/am-lista-atualizada-de-iat-credenciado.pdf",
+  BA: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/BAlistaatualizadadeIATcredenciadoJANEIRO2021.pdf",
+  CE: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ce-lista-atualizada-de-iat-credenciado.pdf",
+  DF: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/df-lista-atualizada-de-iat-credenciado.pdf",
+  ES: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/es-lista-atualizada-de-iat-credenciado.pdf",
+  GO: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/go-lista-atualizada-de-iat-credenciado.pdf",
+  MA: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ma-lista-atualizada-de-iat-credenciado.pdf",
+  MT: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/mt-lista-atualizada-de-iat-credenciado.pdf",
+  MS: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ms-lista-atualizada-de-iat-credenciado.pdf",
+  MG: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/mg-lista-atualizada-de-iat-credenciado.pdf",
+  PA: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/pa-lista-atualizada-de-iat-credenciado.pdf",
+  PB: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/pb-lista-atualizada-de-iat-credenciado.pdf",
+  PR: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/pr-lista-atualizada-de-iat-credenciado.pdf",
+  PE: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/pe-lista-atualizada-de-iat-credenciado.pdf",
+  PI: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/PI%20-%20listaatualizadadeIATcredenciado.pdf",
+  RJ: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/rj-lista-atualizada-de-iat-credenciado.pdf",
+  RN: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/rn-lista-atualizada-de-iat-credenciado.pdf",
+  RS: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/rs-lista-atualizada-de-iat-credenciado.pdf",
+  RO: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/ro-lista-atualizada-de-iat-credenciado.pdf",
+  RR: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/rr-lista-atualizada-de-iat-credenciado.pdf",
+  SC: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/sc-lista-atualizada-de-iat-credenciado.pdf",
+  SP: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/SP%20-%20lista%20atualizada%20de%20IAT%20credenciado.pdf",
+  SE: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/se-lista-atualizada-de-iat-credenciado.pdf",
+  TO: "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/to-lista-atualizada-de-iat-credenciado.pdf",
+};
