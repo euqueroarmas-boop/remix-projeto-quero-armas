@@ -18,9 +18,11 @@ const UFS: Array<[string, string]> = [
   ["SP", "sao-paulo"], ["SE", "sergipe"], ["TO", "tocantins"],
 ];
 
-const BASE: Record<string, (slug: string) => string> = {
+const BASE: Record<string, ((slug: string, ufLower: string) => string) | null> = {
   psicologo: (slug) => `https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados/${slug}`,
-  instrutor_tiro: (slug) => `https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/${slug}`,
+  // Instrutores de Tiro: a PF publica em PDFs por UF (não HTML). Parser separado pendente.
+  // O frontend já exibe o link direto do PDF como fallback.
+  instrutor_tiro: null,
 };
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
@@ -241,12 +243,15 @@ Deno.serve(async (req) => {
   const errors: Array<{ uf: string; tipo: string; error: string }> = [];
   let totalPages = 0, totalInserted = 0, totalUpdated = 0, totalDeactivated = 0;
 
-  const tipos = onlyTipo ? [onlyTipo] : ["psicologo", "instrutor_tiro"];
+  const tiposBase: string[] = onlyTipo ? [onlyTipo] : ["psicologo"]; // instrutor_tiro = PDFs, ignora por ora
+  const tipos = tiposBase.filter((t) => BASE[t] !== null);
   const ufs = onlyUf ? UFS.filter(([u]) => u === onlyUf) : UFS;
 
   for (const tipo of tipos) {
     for (const [uf, slug] of ufs) {
-      const url = BASE[tipo](slug);
+      const builder = BASE[tipo];
+      if (!builder) continue;
+      const url = builder(slug, uf.toLowerCase());
       totalPages++;
       try {
         const html = await fetchPage(url);
