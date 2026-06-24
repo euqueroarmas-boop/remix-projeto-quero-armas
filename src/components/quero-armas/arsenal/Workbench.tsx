@@ -424,7 +424,7 @@ function WeaponCard({
             }
             return (
               <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
-                title="GTE — Guia de Tráfego Especial (SIGMA/CAC). Aplicável conforme regime do acervo.">
+                title="GTE — Guia de Tráfego Eventual (SIGMA/CAC). Aplicável conforme regime do acervo.">
                 GTE · {label}
               </span>
             );
@@ -765,7 +765,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                 <div className="rounded-md border border-slate-200 bg-white p-2.5">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">GTE</div>
                   <p className="mt-1 text-[10px] leading-snug text-slate-600">
-                    Guia de Tráfego Especial. Pode ser exigida em acervos vinculados ao
+                    Guia de Tráfego Eventual. Pode ser exigida em acervos vinculados ao
                     SIGMA/CAC, conforme o regime do acervo.
                   </p>
                 </div>
