@@ -61,7 +61,7 @@ function collectBairros(html: string): Array<{ pos: number; nome: string }> {
   const re = /\u0001([^\u0002]{1,80})\u0002/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(plain)) !== null) {
-    const raw = m[1].replace(/\s+/g, " ").trim();
+    const raw = m[1].replace(/[\u0001\u0002]/g, "").replace(/\s+/g, " ").trim();
     if (!raw) continue;
     if (raw.length > 80) continue;
     if (/CRP|CR\s*\d|Validade|End\.|Tel\.|E-?mail|@/i.test(raw)) continue;
@@ -122,7 +122,14 @@ function parseValidade(s: string): { date: string | null; label: string | null }
 async function parseEntries(html: string, uf: string, sourceUrl: string): Promise<Entry[]> {
   const content = extractContent(html);
   const bairros = collectBairros(content);
-  const text = plainText(content);
+  let text = plainText(content);
+  // Insere quebras de linha onde bairros aparecem para que não vazem para o nome da próxima entrada.
+  // Faz isto preservando o título do bairro como marcador (será limpo abaixo).
+  for (const b of bairros) {
+    const safe = b.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(`\\s*${safe}\\s*`, "g"), `\n${b.nome}\n`);
+  }
+  const bairrosSet = new Set(bairros.map((b) => b.nome));
   const entries: Entry[] = [];
 
   // Cidade = nome da UF (heading principal da página) — para SP/RJ o "bairro" será o bairro real,
