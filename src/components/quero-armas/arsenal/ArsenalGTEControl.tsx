@@ -273,7 +273,7 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700">
             Controle de GTE
           </h3>
-          <span className="text-[10px] text-slate-500">Guia de Tráfego Especial</span>
+          <span className="text-[10px] text-slate-500">Guia de Tráfego Eventual</span>
         </div>
         <div className="flex items-center gap-2">
           <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
@@ -512,7 +512,7 @@ function DetailDrawer({
         <header className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Guia de Tráfego Especial
+              Guia de Tráfego Eventual
             </div>
             <div className="text-[14px] font-bold text-slate-800">
               {doc.numero_gte ? `GTE Nº ${doc.numero_gte}` : (doc.nome_original || "GTE")}
