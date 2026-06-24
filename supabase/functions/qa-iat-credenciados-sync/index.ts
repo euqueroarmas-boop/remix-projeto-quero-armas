@@ -3,7 +3,7 @@
 // Parse-first com pdfjs-dist; fallback Gemini Flash em UFs irregulares.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // pdfjs-serverless: build do pdfjs preparado para Deno/Edge (sem canvas).
-import { getDocument } from "https://esm.sh/pdfjs-serverless@0.5.0";
+import { resolvePDFJS } from "https://esm.sh/pdfjs-serverless@0.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -150,6 +150,7 @@ function parseIat(paginas: Item[][], uf: string) {
 }
 
 async function extrairPaginas(bytes: Uint8Array): Promise<Item[][]> {
+  const { getDocument } = await resolvePDFJS();
   const doc = await getDocument({ data: bytes, useSystemFonts: true, isEvalSupported: false }).promise;
   const paginas: Item[][] = [];
   for (let p = 1; p <= doc.numPages; p++) {
