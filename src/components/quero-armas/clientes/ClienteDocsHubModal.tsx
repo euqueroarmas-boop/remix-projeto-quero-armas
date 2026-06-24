@@ -328,6 +328,18 @@ function calcularConformidade(
   // Comparador fuzzy para nomes: exato → conforme; alta sim → conforme; zona cinzenta → IA; baixa → divergente
   const fuzzyName = (a: string, b: string): boolean | "gray" => {
     if (normalizeStr(a) === normalizeStr(b)) return true;
+    // Subconjunto de tokens: documento pode trazer nome abreviado (ex.: sem sobrenome paterno final).
+    // Se TODOS os tokens significativos (>=3 chars, excluindo partículas) do nome menor estiverem
+    // presentes na mesma ordem no nome maior, considera-se conforme.
+    const STOP = new Set(["DE","DA","DO","DAS","DOS","E"]);
+    const ta = normalizeStr(a).split(" ").filter(t => t.length >= 3 && !STOP.has(t));
+    const tb = normalizeStr(b).split(" ").filter(t => t.length >= 3 && !STOP.has(t));
+    if (ta.length && tb.length) {
+      const [shorter, longer] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+      let i = 0;
+      for (const tok of longer) { if (tok === shorter[i]) i++; if (i === shorter.length) break; }
+      if (i === shorter.length) return true;
+    }
     const sim = nameSim(a, b);
     if (sim >= SIM_HIGH) return true;
     if (sim >= SIM_LOW) return "gray";
@@ -776,6 +788,9 @@ export function ClienteDocsHubModal({
   const tipoAtual = getTipoDocumentoMeta(form.tipo_documento) ?? tiposDisponiveis[0] ?? null;
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
+  // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
+  const isDocPreArma = form.tipo_documento === "cr" || form.tipo_documento === "autorizacao_compra";
+  const showArmaVinculada = showArmaFields && !isDocPreArma;
   const escopoAtual: EscopoDocumental = inferEscopoDocumental({
     tipo_documento: form.tipo_documento,
     categoria_hub: categoriaHub,
@@ -2272,7 +2287,7 @@ export function ClienteDocsHubModal({
               </Field>
             </div>
 
-            {showArmaFields ? (
+            {showArmaVinculada ? (
               <div className="rounded-2xl border border-accent/30 bg-accent/8 p-4 shadow-sm sm:p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-accent-foreground shadow-sm">
