@@ -296,6 +296,10 @@ export default function ClienteResumoKanban({
   const [focusIndex, setFocusIndex] = useState(0);
   const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
   const [autoPaused, setAutoPaused] = useState(false);
+  const [exameModal, setExameModal] = useState<{ tipo: "psicologo" | "instrutor_tiro" } | null>(null);
+  const navigate = useNavigate();
+  const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
+  const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
 
   const filteredUrgents = useMemo(
     () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
