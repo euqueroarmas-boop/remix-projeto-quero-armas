@@ -513,7 +513,7 @@ function SectionTitle({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3">
       <div className="h-px flex-1 bg-border" />
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</span>
+      <span className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</span>
       <div className="h-px flex-1 bg-border" />
     </div>
   );
@@ -534,7 +534,7 @@ function Field({
 }) {
   return (
     <label className={cn("block space-y-1.5", className)}>
-      <span className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+      <span className="font-heading flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         <span className="flex items-center gap-1.5">
           {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
           {label}
@@ -562,7 +562,7 @@ function ConfirmBadge({
   if (!extraido) return null;
   if (confirmado) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+      <span className="font-heading inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
         <CheckCircle2 className="h-3 w-3" /> Confirmado
       </span>
     );
@@ -571,7 +571,7 @@ function ConfirmBadge({
     <button
       type="button"
       onClick={onConfirm}
-      className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 hover:bg-amber-300"
+      className="font-heading inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 hover:bg-amber-300"
       title={`Valor extraído pela IA: ${extraido}`}
     >
       <AlertTriangle className="h-3 w-3" /> Confirmar
