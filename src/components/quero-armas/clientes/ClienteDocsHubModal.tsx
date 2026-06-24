@@ -2220,6 +2220,7 @@ export function ClienteDocsHubModal({
               </Field>
             </div>
           </div>
+          </div>
         </div>
 
         <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
