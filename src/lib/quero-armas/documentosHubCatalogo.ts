@@ -141,11 +141,11 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "documento_complementar_caso", label: "Documento complementar do caso", short: "COMPLEMENTAR", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
-  { value: "craf", label: "CRAF — Registro da arma", short: "CRAF", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
-  { value: "sinarm", label: "SINARM — Posse / porte (PF)", short: "SINARM", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
-  { value: "gt", label: "GT — Guia de Tráfego", short: "GT", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
-  { value: "gte", label: "GTE — Guia de Tráfego Especial", short: "GTE", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "cr", label: "CR — Certificado de Registro de CAC (Exército)", short: "CR · Cert. Registro CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
+  { value: "craf", label: "CRAF — Certificado de Registro de Arma de Fogo", short: "CRAF · Cert. Reg. de Arma de Fogo", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "sinarm", label: "SINARM — Certificado de Registro de Arma de Fogo (Polícia Federal)", short: "SINARM · Reg. PF", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "gt", label: "GT — Guia de Tráfego", short: "GT · Guia de Tráfego", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "gte", label: "GTE — Guia de Tráfego Eventual", short: "GTE · Guia de Tráfego Eventual", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "autorizacao_compra", label: "Autorização de compra", short: "AC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "nota_fiscal_arma", label: "Nota fiscal da arma", short: "NF ARMA", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true },
   { value: "comprovante_habitualidade", label: "Comprovante de habitualidade", short: "HABITUALIDADE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
@@ -288,6 +288,23 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     return "Atestado de Capacidade Técnica para Manuseio de Arma de Fogo";
   }
 
+  // ===== Documentos de arma / acervo =====
+  if (tipo === "cr") {
+    return "CR — Certificado de Registro de CAC (Exército)";
+  }
+  if (tipo === "craf") {
+    return "CRAF — Certificado de Registro de Arma de Fogo";
+  }
+  if (tipo === "sinarm") {
+    return "SINARM — Certificado de Registro de Arma de Fogo (Polícia Federal)";
+  }
+  if (tipo === "gt") {
+    return "GT — Guia de Tráfego";
+  }
+  if (tipo === "gte") {
+    return "GTE — Guia de Tráfego Eventual";
+  }
+
   return null;
 }
 
@@ -302,7 +319,12 @@ function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | 
     tipo === "cpf" ||
     tipo === "comprovante_residencia" ||
     tipo === "laudo_psicologico" ||
-    tipo === "laudo_capacidade_tecnica";
+    tipo === "laudo_capacidade_tecnica" ||
+    tipo === "cr" ||
+    tipo === "craf" ||
+    tipo === "sinarm" ||
+    tipo === "gt" ||
+    tipo === "gte";
   if (!elegivelInferencia) return false;
   const normalized = normalizeDocumentoName(nome);
   const meta = getTipoDocumentoMeta(tipo);
@@ -320,6 +342,12 @@ function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | 
     normalized === "LAUDO TEC" ||
     normalized === "LAUDO PSICOLOGICO" ||
     normalized === "COMPROVANTE DE RESIDENCIA" ||
+    normalized === "CR" ||
+    normalized === "CR CAC" ||
+    normalized === "CRAF" ||
+    normalized === "SINARM" ||
+    normalized === "GT" ||
+    normalized === "GTE" ||
     normalized === normalizeDocumentoName(meta?.label) ||
     normalized === normalizeDocumentoName(meta?.short)
   );
