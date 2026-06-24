@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useCredenciadosPF } from "./useCredenciadosPF";
+import { useCredenciadosPF, type CredenciadoPF } from "./useCredenciadosPF";
+import { useCredenciadosIAT, type CredenciadoIAT } from "./useCredenciadosIAT";
 import { AgendarExameList } from "./AgendarExameList";
 import { INSTRUTOR_PDF_PF } from "./instrutorPdfLinks";
 
@@ -20,11 +21,46 @@ const TITULO = {
 export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaCompleta }: Props) {
   const [raio, setRaio] = useState(50);
   const cepLimpo = (cep || "").replace(/\D/g, "");
-  const params = useMemo(() => open ? ({ tipo, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 }) : null, [open, tipo, cepLimpo, uf, raio]);
-  const { loading, results, origin, error } = useCredenciadosPF(params);
-  const ufResolved = (origin?.uf || uf || "").toUpperCase();
   const isInstrutor = tipo === "instrutor_tiro";
+  const psicoParams = useMemo(() => open && !isInstrutor
+    ? ({ tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 })
+    : null, [open, isInstrutor, cepLimpo, uf, raio]);
+  const iatParams = useMemo(() => open && isInstrutor
+    ? ({ cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 20 })
+    : null, [open, isInstrutor, cepLimpo, uf, raio]);
+
+  const psico = useCredenciadosPF(psicoParams);
+  const iat = useCredenciadosIAT(iatParams);
+
+  const loading = isInstrutor ? iat.loading : psico.loading;
+  const error = isInstrutor ? iat.error : psico.error;
+  const origin = isInstrutor ? iat.data?.origin || null : psico.origin;
+  const ufResolved = (origin?.uf || uf || iat.data?.uf || "").toUpperCase();
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
+  const iatMode = iat.data?.mode || null;
+  const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
+
+  // Adapta IAT -> shape da lista compartilhada
+  const results: CredenciadoPF[] = isInstrutor
+    ? (iat.data?.results || []).map((r: CredenciadoIAT) => ({
+        id: r.id,
+        tipo: "instrutor_tiro",
+        uf: r.uf,
+        cidade: null,
+        bairro: r.clube || null,
+        nome: r.nome,
+        registro: r.portaria ? `Portaria ${r.portaria}` : null,
+        endereco: r.endereco,
+        telefones: r.telefone ? [r.telefone] : [],
+        emails: r.email ? [r.email] : [],
+        validade: null,
+        validade_label: r.validade || null,
+        latitude: r.lat,
+        longitude: r.lng,
+        source_url: r.fonte_url || pdfHref || "",
+        distancia_km: iatMode === "proximity" ? r.distancia_km ?? null : null,
+      }))
+    : psico.results;
 
   if (!open) return null;
   return (
@@ -49,7 +85,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
         </header>
         <div style={{ padding: "12px 20px", display: "flex", gap: 8, borderBottom: "1px solid #e3e3e1", flexWrap: "wrap" }}>
           <span style={{ fontSize: 11, color: "#6A6A6A", alignSelf: "center", letterSpacing: ".12em" }}>RAIO:</span>
-          {[10, 25, 50, 100].map((r) => (
+          {(isInstrutor && !iatTemEnderecos ? [] : [10, 25, 50, 100]).map((r) => (
             <button key={r} type="button" onClick={() => setRaio(r)} style={{
               border: "1px solid " + (raio === r ? "#7A1F2B" : "#d6d6d4"),
               background: raio === r ? "#7A1F2B" : "#fff",
@@ -58,6 +94,11 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
               padding: "5px 10px", borderRadius: 999, cursor: "pointer",
             }}>{r} km</button>
           ))}
+          {isInstrutor && !iatTemEnderecos && ufResolved && (
+            <span style={{ fontSize: 11, color: "#5a4500", background: "#fff8e1", border: "1px solid #f0d893", padding: "5px 10px", borderRadius: 4 }}>
+              A PF não publica endereço para {ufResolved} — exibindo lista alfabética da UF.
+            </span>
+          )}
         </div>
         <div style={{ overflowY: "auto", padding: 18, flex: 1 }}>
           {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
@@ -66,11 +107,15 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
               Cadastre seu CEP para vermos os profissionais mais próximos de você.
             </div>
           )}
-          <AgendarExameList loading={loading} results={results} empty="Nenhum profissional encontrado neste raio. Tente aumentar o raio ou ver a lista do estado." />
+          <AgendarExameList loading={loading} results={results} empty={
+            isInstrutor
+              ? "Nenhum instrutor encontrado para esta UF."
+              : "Nenhum profissional encontrado neste raio. Tente aumentar o raio ou ver a lista do estado."
+          } />
           {isInstrutor && (
             <div style={{ marginTop: 14, background: "#fff", border: "1px solid #e3e3e1", padding: 14, borderRadius: 4, fontSize: 12, color: "#303030" }}>
               <strong style={{ display: "block", fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginBottom: 6 }}>LISTA OFICIAL PF (PDF)</strong>
-              A Polícia Federal publica os instrutores de tiro credenciados como PDFs por UF.
+              Fonte oficial da Polícia Federal — sempre consulte o PDF para conferir.
               {pdfHref ? (
                 <div style={{ marginTop: 6 }}>
                   <a href={pdfHref} target="_blank" rel="noreferrer noopener" style={{ color: "#7A1F2B", fontWeight: 700 }}>
