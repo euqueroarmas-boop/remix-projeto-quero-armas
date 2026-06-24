@@ -44,6 +44,9 @@ const App = () => (
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />
                   <Route path="/quero-armas/*" element={<LegacyRedirect />} />
 
+                  {/* Preview de mockups */}
+                  <Route path="/mockups-preview" element={<MockupsPreview />} />
+
                   {/* Quero Armas (todas as rotas) */}
                   <Route path="/*" element={<QARoutes />} />
                 </Routes>
