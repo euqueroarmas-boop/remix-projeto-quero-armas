@@ -407,12 +407,15 @@ Deno.serve(async (req) => {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const token = authHeader.slice(7);
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
-    if (claimsErr || !claimsData?.claims?.sub) {
-      console.error("[qa-classificar] auth failed", claimsErr?.message);
+    let sub: string | undefined;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      sub = payload?.sub;
+    } catch (_) {
+      // ignore
+    }
+    if (!sub) {
+      console.error("[qa-classificar] auth failed: missing sub");
       return json({ error: "Unauthorized" }, 401);
     }
 
