@@ -63,14 +63,14 @@ Deno.serve(async (req) => {
   const supabase: any = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   try {
     const body = await req.json();
-    const cep: string = body?.cep || "";
+    const cep: string = String(body?.cep || "").replace(/\D/g, "");
     const ufBody: string | null = body?.uf ? String(body.uf).toUpperCase() : null;
     const raio_km: number = Number(body?.raio_km) || 50;
     const limit: number = Math.min(Number(body?.limit) || 20, 100);
 
-    const origin = cep ? await geocodeCEP(supabase, cep) : null;
+    const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
     const uf = origin?.uf || ufBody || null;
-    if (!uf) return json({ error: "informe cep ou uf" }, 400);
+    if (!uf) return json({ ok: true, mode: "alphabetical", uf: "", tem_enderecos: false, origin: null, results: [], count: 0 });
 
     // A UF tem endereços geocodificáveis?
     const { count: comGeo } = await supabase
