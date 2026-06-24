@@ -6,9 +6,10 @@ import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
+// Rótulo can\u00f4nico do Hub, mantendo a caixa original (mixed case)
 function hubLabel(tipo: string, fallback: string) {
   const meta = getTipoDocumentoMeta(tipo);
-  return (meta?.label || fallback).toUpperCase();
+  return meta?.label || fallback;
 }
 
 interface Props {
@@ -126,21 +127,21 @@ export default function ClienteResumoKanban({
       const days = daysUntil(date);
       arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days) });
     };
-    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — CERTIFICADO DE REGISTRO"), cadastro.validade_cr);
+    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr);
     crafs.forEach((cr: any) =>
       addArsenal(
-        `${hubLabel("craf", "CRAF — CERTIFICADO DE REGISTRO DE ARMA DE FOGO")} — ${shortName(cr.nome_arma || cr.nome_craf, "ARMA").toUpperCase()}`,
+        `${hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo")} — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`,
         cr.data_validade,
       ),
     );
     gtes.forEach((g: any) =>
       addArsenal(
-        `${hubLabel("gte", "GTE — GUIA DE TRÁFEGO EVENTUAL")} — ${shortName(g.nome_arma || g.nome_gte, "ARMA").toUpperCase()}`,
+        `${hubLabel("gte", "GTE — Guia de Tráfego Eventual")} — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`,
         g.data_validade,
       ),
     );
     armasManual.forEach((arma: any) => {
-      const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "ARMA MANUAL", "ARMA MANUAL");
+      const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "Arma manual", "Arma manual");
       arsenalItems.push({ label: nome, status: "—", tone: "muted" });
     });
 
@@ -148,12 +149,12 @@ export default function ClienteResumoKanban({
     for (const e of examesAtuais) if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
     const examesItems: FrontItem[] = [
       exameByTipo.get("psicologico") && {
-        label: hubLabel("laudo_psicologico", "LAUDO PSICOLÓGICO"),
+        label: hubLabel("laudo_psicologico", "Laudo Psicológico"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
       },
       exameByTipo.get("tiro") && {
-        label: hubLabel("laudo_capacidade_tecnica", "EXAME DE TIRO"),
+        label: hubLabel("laudo_capacidade_tecnica", "Exame de Tiro"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
       },
@@ -162,19 +163,19 @@ export default function ClienteResumoKanban({
     const filiacaoItems = filiacoes.map((f: any) => {
       const days = daysUntil(f.validade_filiacao);
       return {
-        label: shortName(f.nome_filiacao || f.nome_clube || `CLUBE #${f.clube_id || ""}`, "CLUBE"),
+        label: shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"),
         status: compactStatus(days),
         tone: frontStatus(days),
       };
     });
 
     const processoItems = activeItems.map((item: any) => {
-      const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `SERVIÇO #${item.servico_id || ""}`;
+      const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
       const prazo = prazosProc.find((p: any) => p.id === item.id || p.servicoId === item.servico_id);
       if (prazo?.diasRestantes !== undefined) {
-        return { label: shortName(nome, "PROCESSO"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
+        return { label: shortName(nome, "Processo"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
-      return { label: shortName(nome, "PROCESSO"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
+      return { label: shortName(nome, "Processo"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
     const docItems: FrontItem[] = meusDocs
@@ -184,8 +185,8 @@ export default function ClienteResumoKanban({
         return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
       })
       .map((doc: any) => {
-        const nomeBruto = getNomeDocumentoDisplay(doc, "DOCUMENTO");
-        const nome = shortName(nomeBruto, "DOCUMENTO").toUpperCase();
+        const nomeBruto = getNomeDocumentoDisplay(doc, "Documento");
+        const nome = shortName(nomeBruto, "Documento");
         const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
         return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
       })
