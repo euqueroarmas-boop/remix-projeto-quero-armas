@@ -328,6 +328,18 @@ function calcularConformidade(
   // Comparador fuzzy para nomes: exato → conforme; alta sim → conforme; zona cinzenta → IA; baixa → divergente
   const fuzzyName = (a: string, b: string): boolean | "gray" => {
     if (normalizeStr(a) === normalizeStr(b)) return true;
+    // Subconjunto de tokens: documento pode trazer nome abreviado (ex.: sem sobrenome paterno final).
+    // Se TODOS os tokens significativos (>=3 chars, excluindo partículas) do nome menor estiverem
+    // presentes na mesma ordem no nome maior, considera-se conforme.
+    const STOP = new Set(["DE","DA","DO","DAS","DOS","E"]);
+    const ta = normalizeStr(a).split(" ").filter(t => t.length >= 3 && !STOP.has(t));
+    const tb = normalizeStr(b).split(" ").filter(t => t.length >= 3 && !STOP.has(t));
+    if (ta.length && tb.length) {
+      const [shorter, longer] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+      let i = 0;
+      for (const tok of longer) { if (tok === shorter[i]) i++; if (i === shorter.length) break; }
+      if (i === shorter.length) return true;
+    }
     const sim = nameSim(a, b);
     if (sim >= SIM_HIGH) return true;
     if (sim >= SIM_LOW) return "gray";
