@@ -1020,10 +1020,10 @@ export function ClienteDocsHubModal({
       // Motor de conformidade: todos os documentos que extraem dados pessoais.
       const items = calcularConformidade(
         campos as Record<string, string | undefined>,
-        clienteNome,
-        clienteCpf,
-        clienteDataNascimento,
-        clienteNomeMae,
+        refClienteNome,
+        refClienteCpf,
+        refClienteDataNascimento,
+        refClienteNomeMae,
         docsAprovados,
       );
       setConformidade(items);
