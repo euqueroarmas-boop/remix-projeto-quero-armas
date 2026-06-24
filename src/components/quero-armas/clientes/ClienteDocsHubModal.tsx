@@ -2287,7 +2287,7 @@ export function ClienteDocsHubModal({
               </Field>
             </div>
 
-            {showArmaFields ? (
+            {showArmaVinculada ? (
               <div className="rounded-2xl border border-accent/30 bg-accent/8 p-4 shadow-sm sm:p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-background text-accent-foreground shadow-sm">
