@@ -1452,6 +1452,7 @@ export default function QAClientePortalPage() {
 
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
+        <ScanCadastroPendenciasButton onUpdated={() => setDocsReloadKey((k) => k + 1)} />
         <ClienteResumoKanban
           cliente={cliente}
           vendas={vendas}
