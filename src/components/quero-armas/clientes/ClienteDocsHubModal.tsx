@@ -1681,7 +1681,7 @@ export function ClienteDocsHubModal({
                         {isLaudoExame ? "Documento vencido — mantido como histórico" : "Documento vencido"}
                       </span>
                       <span className={cn(
-                        "ml-auto text-[9px] font-mono px-1.5 py-0.5 rounded",
+                        "ml-auto text-[9px] font-tactical px-1.5 py-0.5 rounded",
                         isLaudoExame ? "bg-amber-100" : "bg-red-100"
                       )}>
                         {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
@@ -1735,7 +1735,7 @@ export function ClienteDocsHubModal({
                     {conformidade.map((item) => (
                       <tr key={item.campo} className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
-                        <td className="py-1 pr-2 font-mono">{item.valorCertidao}</td>
+                        <td className="py-1 pr-2 font-tactical">{item.valorCertidao}</td>
                         <td className="py-1 pr-2 opacity-70">
                           {item.valorReferencia
                             ? <span>{item.valorReferencia}<br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span></span>
