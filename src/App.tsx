@@ -12,6 +12,7 @@ import { CartProvider } from "@/shared/cart/CartProvider";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
 const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
+const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "MockupsPreview");
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,9 @@ const App = () => (
                   {/* Legacy: redireciona /quero-armas/* → /* */}
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />
                   <Route path="/quero-armas/*" element={<LegacyRedirect />} />
+
+                  {/* Preview de mockups */}
+                  <Route path="/mockups-preview" element={<MockupsPreview />} />
 
                   {/* Quero Armas (todas as rotas) */}
                   <Route path="/*" element={<QARoutes />} />
