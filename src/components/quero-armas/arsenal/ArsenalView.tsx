@@ -1823,7 +1823,21 @@ export function ArsenalView({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="qa-arsenal-z6 space-y-5">
+      {/* Máscara visual Cockpit Z6 Light · Deck V29 — aplicada APENAS como skin
+          cosmético sobre o layout existente do Arsenal Inteligente. Não altera
+          estrutura, ordem, dados ou comportamento. Reflete os mesmos tokens
+          usados no Resumo (ClienteResumoKanban). */}
+      <style>{`
+        .qa-arsenal-z6{--paper:#f3f3f2;--card:#ffffff;--ink:#111111;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;--amber:#d5a33d;--green:#278652;--red:#df2727;background:var(--paper);color:var(--ink);font-family:'Arial Narrow',Arial,sans-serif;padding:14px;border-radius:6px}
+        .qa-arsenal-z6 :where(h1,h2,h3,h4){font-family:'Oswald','Arial Narrow',Arial,sans-serif !important;text-transform:uppercase;letter-spacing:.04em;color:var(--ink) !important}
+        .qa-arsenal-z6 div.rounded-2xl.bg-white,
+        .qa-arsenal-z6 div.rounded-xl.bg-white{position:relative;border-radius:3px !important;border:1px solid var(--line) !important;box-shadow:0 6px 14px rgba(17,17,17,.04) !important}
+        .qa-arsenal-z6 div.rounded-2xl.bg-white::before,
+        .qa-arsenal-z6 div.rounded-xl.bg-white::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:4px;background:var(--bordo);border-radius:3px 3px 0 0;pointer-events:none;z-index:1}
+        .qa-arsenal-z6 .font-mono{font-family:'Oswald','Arial Narrow',Arial,sans-serif !important;font-weight:900;letter-spacing:0}
+        .qa-arsenal-z6 [class*="uppercase"][class*="tracking-"]{font-family:'Arial Narrow',Arial,sans-serif;letter-spacing:.22em !important;color:var(--muted)}
+      `}</style>
       {/* KPIs */}
       <ArsenalSummary
         totalArmas={weapons.length}
