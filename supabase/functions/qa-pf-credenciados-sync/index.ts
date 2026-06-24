@@ -130,6 +130,13 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     text = text.replace(new RegExp(`\\s*${safe}\\s*`, "g"), `\n${b.nome}\n`);
   }
   const bairrosSet = new Set(bairros.map((b) => b.nome));
+  // Recalcula posições dos bairros no texto modificado
+  const bairrosPos: Array<{ pos: number; nome: string }> = [];
+  for (const b of bairros) {
+    const idx = text.indexOf(`\n${b.nome}\n`);
+    if (idx >= 0) bairrosPos.push({ pos: idx, nome: b.nome });
+  }
+  bairrosPos.sort((a, b) => a.pos - b.pos);
   const entries: Entry[] = [];
 
   // Cidade = nome da UF (heading principal da página) — para SP/RJ o "bairro" será o bairro real,
@@ -182,8 +189,8 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
 
     // Bairro: a heading mais recente antes do início do bloco
     let bairro: string | null = null;
-    for (let i = bairros.length - 1; i >= 0; i--) {
-      if (bairros[i].pos <= m.index) { bairro = bairros[i].nome; break; }
+    for (let i = bairrosPos.length - 1; i >= 0; i--) {
+      if (bairrosPos[i].pos <= m.index) { bairro = bairrosPos[i].nome; break; }
     }
 
     const hash = await sha256(`${uf}|${nome.toLowerCase()}|${registro}|${endereco || ""}`);
