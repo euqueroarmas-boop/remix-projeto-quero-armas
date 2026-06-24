@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { useNavigate } from "react-router-dom";
+import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -31,7 +33,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos" };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
