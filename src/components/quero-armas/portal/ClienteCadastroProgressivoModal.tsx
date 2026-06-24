@@ -409,67 +409,104 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     return (Object.keys(map) as CadastroGrupo[]).filter((g) => map[g].length > 0).map((g) => ({ grupo: g, campos: map[g] }));
   }, [camposVisiveis]);
 
+  // Microcopy motivacional por etapa do progresso.
+  const motivacao =
+    progresso >= 100
+      ? "MISSÃO CUMPRIDA — SEU DOSSIÊ ESTÁ COMPLETO."
+      : progresso >= 70
+        ? "VOCÊ ESTÁ NA RETA FINAL. CADA CAMPO PREENCHIDO É UM PROCESSO MAIS RÁPIDO."
+        : progresso >= 40
+          ? "BOM RITMO. CONTINUE — A IA JÁ ESTÁ TRABALHANDO PARA VOCÊ."
+          : "COMECE AGORA. EM POUCOS MINUTOS, A IA ASSUME O CONTROLE DOS SEUS DOCUMENTOS.";
+
   return (
     <Dialog open={open} onOpenChange={(n) => !n && onClose()}>
-      <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-2xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
-        {/* Header */}
-        <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+      <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-2xl rounded-[4px] border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-sm max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+        {/* Header — Cockpit Z6 Light */}
+        <div className="shrink-0 border-b border-[#E5E5E5] bg-white px-6 py-5">
           <div className="flex items-start gap-3">
             {modo !== "escolher" ? (
               <button type="button" onClick={() => setModo("escolher")} aria-label="Voltar"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#E5E5E5] bg-white text-[#6A6A6A] hover:bg-[#F2F2F2]">
                 <ArrowLeft className="h-4 w-4" />
               </button>
-            ) : (
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
-                <Pencil className="h-5 w-5" strokeWidth={2.3} />
-              </div>
-            )}
+            ) : null}
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Portal do cliente</div>
-              <h2 className="text-[19px] font-extrabold leading-tight text-slate-900">Completar cadastro</h2>
-              <p className="mt-0.5 text-[12px] text-slate-600">
-                Cadastro <strong>{progresso}% completo</strong>. Salvamos seu progresso automaticamente.
+              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7A1F2B]">
+                ARSENAL INTELIGENTE · CONTROLE DE DOCUMENTOS
+              </div>
+              <h2 className="font-heading text-[24px] font-semibold uppercase tracking-[0.04em] leading-tight text-[#0A0A0A] mt-1">
+                COMPLETE SEU DOSSIÊ
+              </h2>
+              <p className="mt-1.5 text-[13px] leading-snug text-[#6A6A6A]">
+                Quanto mais a IA conhece você, mais ela <strong className="text-[#0A0A0A]">antecipa vencimentos, monta peças e protege seus processos</strong>. Salvamos cada campo automaticamente.
               </p>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50">
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#E5E5E5] bg-white text-[#6A6A6A] hover:bg-[#F2F2F2]">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progresso}%`, background: MARROM }} />
+
+          {/* PROGRESSO — bloco Z6 */}
+          <div className="mt-4 grid grid-cols-[1fr_auto] items-end gap-4">
+            <div>
+              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
+                PROGRESSO DO CADASTRO
+              </div>
+              <div className="mt-2 h-[6px] w-full overflow-hidden rounded-[2px] bg-[#EFEFEF]">
+                <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: MARROM }} />
+              </div>
+              <div className="mt-2 font-heading text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
+                {motivacao}
+              </div>
+            </div>
+            <div className="text-right leading-none">
+              <span className="font-heading text-[44px] font-semibold text-[#0A0A0A]">{progresso}</span>
+              <span className="font-heading text-[18px] font-semibold text-[#6A6A6A]">%</span>
+            </div>
           </div>
         </div>
 
         {/* Body */}
-        <div className="min-h-[280px] flex-1 overflow-y-auto px-5 py-5">
+        <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F2F2F2] px-6 py-5">
           {modo === "escolher" && (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600">
-                Você pode preencher manualmente ou enviar um documento para a IA completar os dados com você.
-              </p>
-              <button onClick={() => setModo("manual")}
-                className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-[#E5C2C6] hover:shadow-sm transition">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: MARROM }}>
-                  <Pencil className="h-4 w-4" />
+              <div className="rounded-[4px] border-l-[3px] border-[#7A1F2B] bg-white p-4 shadow-sm">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                  POR QUE COMPLETAR AGORA
                 </div>
-                <div>
-                  <div className="text-[14px] font-bold text-slate-900">Preencher manualmente</div>
-                  <div className="mt-0.5 text-[12px] text-slate-600">
-                    Informe apenas os campos que estão faltando. Salvamos seu progresso automaticamente.
+                <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
+                  Com seu cadastro completo, a IA <strong>monta peças jurídicas em segundos</strong>, <strong>avisa antes de qualquer documento vencer</strong> e mantém seu acervo blindado contra erros operacionais.
+                </p>
+              </div>
+              <button onClick={() => setModo("ia_upload")}
+                className="group flex w-full items-start gap-3 rounded-[4px] border border-[#E5E5E5] bg-white p-4 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">CAMINHO RÁPIDO · RECOMENDADO</div>
+                  <div className="font-heading text-[15px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
+                    DEIXE A IA LER SEU DOCUMENTO
+                  </div>
+                  <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
+                    Envie RG, CNH ou comprovante de residência. Em segundos a IA extrai os campos, e você só confirma.
                   </div>
                 </div>
               </button>
-              <button onClick={() => setModo("ia_upload")}
-                className="flex w-full items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left hover:border-[#E5C2C6] hover:shadow-sm transition">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: MARROM }}>
-                  <Sparkles className="h-4 w-4" />
+              <button onClick={() => setModo("manual")}
+                className="flex w-full items-start gap-3 rounded-[4px] border border-[#E5E5E5] bg-white p-4 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-[#E5E5E5] bg-white text-[#0A0A0A]">
+                  <Pencil className="h-4 w-4" />
                 </div>
-                <div>
-                  <div className="text-[14px] font-bold text-slate-900">Enviar documento e usar IA</div>
-                  <div className="mt-0.5 text-[12px] text-slate-600">
-                    Envie um documento (RG, CNH, comprovante de residência) e a IA extrai as informações para você confirmar.
+                <div className="min-w-0 flex-1">
+                  <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">PREENCHIMENTO MANUAL</div>
+                  <div className="font-heading text-[15px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
+                    EU DIGITO OS CAMPOS
+                  </div>
+                  <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
+                    Aparecem só os campos faltantes. Salvamento automático a cada toque — sem botão de enviar.
                   </div>
                 </div>
               </button>
@@ -479,11 +516,11 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
           {modo === "manual" && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
-                <p className="text-[12px] text-slate-500">
+                <p className="font-heading text-[11px] font-semibold uppercase tracking-[0.14em] text-[#6A6A6A]">
                   {mostrarTodos ? `${CAMPOS_CADASTRO.length} campos no total` : `${faltantes.length} campo(s) faltando`}
                 </p>
                 <button type="button" onClick={() => setMostrarTodos((v) => !v)}
-                  className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
+                  className="font-heading text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B] hover:underline">
                   {mostrarTodos ? "Ver apenas faltantes" : "Ver todos os dados"}
                 </button>
               </div>
