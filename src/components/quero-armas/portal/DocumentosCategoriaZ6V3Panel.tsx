@@ -424,12 +424,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                         <RefreshCw className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        className="rm"
+                        className="act rm"
                         type="button"
                         title="Remover"
                         onClick={() => handleRemover(d)}
                       >
-                        remover
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
