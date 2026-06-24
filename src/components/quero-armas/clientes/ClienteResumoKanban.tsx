@@ -160,6 +160,11 @@ export default function ClienteResumoKanban({
     });
 
     const docItems: FrontItem[] = meusDocs
+      .filter((doc: any) => {
+        // Laudos psicológicos e exames de tiro já aparecem na frente EXAMES.
+        const tipo = String(doc?.tipo_documento || "").toLowerCase();
+        return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
+      })
       .map((doc: any) => {
         const nome = shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "DOCUMENTO");
         const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
