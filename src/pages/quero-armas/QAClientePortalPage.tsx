@@ -40,6 +40,7 @@ import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumo
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import ScanCadastroPendenciasButton from "@/components/quero-armas/portal/ScanCadastroPendenciasButton";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
@@ -1451,6 +1452,7 @@ export default function QAClientePortalPage() {
 
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
+        <ScanCadastroPendenciasButton onUpdated={() => setDocsReloadKey((k) => k + 1)} />
         <ClienteResumoKanban
           cliente={cliente}
           vendas={vendas}
