@@ -248,7 +248,13 @@ Deno.serve(async (req) => {
       totalPages++;
       try {
         const html = await fetchPage(url);
-        const entries = await parseEntries(html, uf, url);
+        const rawEntries = await parseEntries(html, uf, url);
+        // Dedupe por hash dentro do mesmo lote
+        const seen = new Set<string>();
+        const entries = rawEntries.filter((e) => {
+          if (seen.has(e.hash_conteudo)) return false;
+          seen.add(e.hash_conteudo); return true;
+        });
         const hashes = entries.map((e) => e.hash_conteudo);
 
         // Upsert por (tipo, uf, hash_conteudo)
