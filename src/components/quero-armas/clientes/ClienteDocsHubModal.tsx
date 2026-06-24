@@ -1238,7 +1238,11 @@ export function ClienteDocsHubModal({
       //   no servidor quando ia_dados_extraidos.recomendacao = 'aceitar'
       const isStaff = await isCurrentUserStaff();
       // Documento expirado, com apontamento ou com divergência nunca é auto-aprovado.
-      const bloqueioRevisao = docExpirado || temApontamento || conformidade.some(i => i.status === "divergente");
+      // Laudos/exames vencidos NÃO bloqueiam: ficam como histórico (podem ser exigidos
+      // pela PF para comprovar validade cruzada na época do exame de tiro).
+      const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
+      const bloqueioPorVencimento = docExpirado && !isLaudoExameTipo;
+      const bloqueioRevisao = bloqueioPorVencimento || temApontamento || conformidade.some(i => i.status === "divergente");
       const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
       if (isStaff) {
         payload.status = "aprovado";
