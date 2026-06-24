@@ -1383,22 +1383,22 @@ export function ClienteDocsHubModal({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1140px] rounded-[28px] border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
+        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
-        <div className="shrink-0 border-b border-border bg-gradient-to-b from-background to-muted/70 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="shrink-0 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary shadow-sm">
               <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-1 font-tactical text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">
                 Hub documental
               </div>
-              <h2 className="font-tactical text-[26px] font-bold uppercase leading-none tracking-[0.04em] text-foreground">
+              <h2 className="font-heading text-[22px] font-semibold uppercase leading-none tracking-[0.06em] text-foreground">
                 Adicionar Documento
               </h2>
-              <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-muted-foreground">
                 Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
               </p>
             </div>
@@ -1406,7 +1406,7 @@ export function ClienteDocsHubModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
@@ -1414,8 +1414,10 @@ export function ClienteDocsHubModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]">
-          <div className="space-y-5 pb-6 lg:space-y-0 lg:columns-2 lg:gap-5 lg:[&>*]:mb-5 lg:[&>*]:break-inside-avoid">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-4 [-webkit-overflow-scrolling:touch]">
+          {/* Ficha catalográfica horizontal — 3 colunas no desktop: Arquivo · Análise · Dados */}
+          <div className="space-y-4 pb-4 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:items-start">
+          <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
