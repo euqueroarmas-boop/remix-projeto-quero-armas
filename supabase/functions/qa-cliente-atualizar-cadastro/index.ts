@@ -120,6 +120,12 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const rawFields = body?.fields;
     const requestedClienteId = Number(body?.cliente_id || 0) || null;
+    // Mapa opcional { campo: 'manual' | 'ai' | 'manual_override_ai' } enviado
+    // pelo front para registrar a ORIGEM de cada campo atualizado. Sem ele,
+    // assumimos 'manual' (cliente digitou).
+    const rawOrigins = (body?.field_origins && typeof body.field_origins === "object")
+      ? (body.field_origins as Record<string, string>)
+      : {};
     if (!rawFields || typeof rawFields !== "object" || Array.isArray(rawFields)) {
       return json({ error: "fields_required" }, 400);
     }
@@ -227,9 +233,24 @@ Deno.serve(async (req) => {
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
+    // Carrega campo_origens atual para mesclar.
+    const { data: clienteFull } = await admin
+      .from("qa_clientes")
+      .select("campo_origens")
+      .eq("id", cliente.id)
+      .maybeSingle();
+    const origens = ((clienteFull as any)?.campo_origens || {}) as Record<string, { source: string; at?: string }>;
+    const agora = new Date().toISOString();
+    for (const col of Object.keys(updates)) {
+      const requested = String(rawOrigins[col] || "manual").toLowerCase();
+      const allowed = new Set(["manual", "ai", "manual_override_ai"]);
+      const source = allowed.has(requested) ? requested : "manual";
+      origens[col] = { source, at: agora };
+    }
+
     const { data: updated, error: upErr } = await admin
       .from("qa_clientes")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...updates, campo_origens: origens, updated_at: agora })
       .eq("id", cliente.id)
       .select("id")
       .maybeSingle();
