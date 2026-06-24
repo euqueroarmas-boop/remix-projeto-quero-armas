@@ -374,10 +374,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     const v = valorAtual(campo);
     const state = savingState[campo.key] ?? "idle";
     const baseClass =
-      "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15";
+      "w-full rounded-[4px] border border-[#E5E5E5] bg-white px-3 py-2.5 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15";
     return (
       <div className={campo.colSpan === 2 ? "sm:col-span-2" : ""}>
-        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{campo.label}</label>
+        <label className="font-heading text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A]">{campo.label}</label>
         <div className="relative mt-1">
           {campo.tipo === "select" ? (
             <select className={baseClass} value={v} onChange={(e) => onChangeCampo(campo, e.target.value)}>
