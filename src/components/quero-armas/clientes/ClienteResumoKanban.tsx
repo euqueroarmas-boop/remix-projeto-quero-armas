@@ -228,7 +228,8 @@ export default function ClienteResumoKanban({
     `TODOS ${snapshot.totalFronts}`,
     `ARSENAL ${snapshot.fronts[0].count}`,
     `EXAMES ${snapshot.fronts[1].count}`,
-    `PROCESSOS ${snapshot.fronts[3].count}`,
+    `DOCUMENTOS ${snapshot.fronts[3].count}`,
+    `PROCESSOS ${snapshot.fronts[4].count}`,
   ];
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
@@ -252,38 +253,38 @@ export default function ClienteResumoKanban({
           {filters.map((filter) => <span className="qa-client-summary-print__chip" key={filter}>{filter}</span>)}
         </div>
 
-        <section className="qa-client-summary-print__focus qa-client-summary-print__focus--top" aria-label="Foco do dia" aria-live="polite">
-          <div>
-            <div className="qa-focus__k">FOCO DO DIA</div>
-            <div className="qa-focus__text">
-              {activeUrgent
-                ? snapshot.urgents.length > 1
-                  ? `${snapshot.urgents.length} documentos vencem nesta semana`
-                  : `${activeUrgent.label} ${activeUrgent.days < 0 ? `venceu há ${Math.abs(activeUrgent.days)} dias` : activeUrgent.days === 0 ? "vence hoje" : `vence em ${activeUrgent.days} dias`}`
-                : "Nenhum documento em status vermelho nesta semana"}
+        <section className="qa-urgbanner" aria-label="Próximo vencimento" aria-live="polite">
+          <div className="qa-urgbanner__body">
+            <div className="qa-urgbanner__kicker">PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA</div>
+            <h2 className="qa-urgbanner__title">{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
+            <p className="qa-urgbanner__sub">{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
+            <div className="qa-urgbanner__actions">
+              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>AGENDAR AGORA →</button>
+              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>VER DETALHES</button>
             </div>
-          </div>
-          <div className="qa-focus__actions">
             {snapshot.urgents.length > 1 && (
-              <div className="qa-focus__pages" role="tablist" aria-label="Documentos críticos">
+              <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
                 {snapshot.urgents.map((urgent, index) => (
                   <button
-                    className={`qa-focus__page ${index === focusIndex ? "is-active" : ""}`}
+                    className={`qa-urgbanner__page ${index === focusIndex ? "is-active" : ""}`}
                     key={`${urgent.label}-${index}`}
                     type="button"
                     aria-label={`Ir para ${urgent.label}`}
-                    onClick={() => { setFocusIndex(index); onNavigate(urgent.navTo); }}
+                    onClick={() => setFocusIndex(index)}
                   >
-                    {index + 1}
+                    {String(index + 1).padStart(2, "0")}
                   </button>
                 ))}
               </div>
             )}
-            <button className="qa-focus__btn" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>RESOLVER AGORA →</button>
+          </div>
+          <div className="qa-urgbanner__count" aria-hidden={!activeUrgent}>
+            <div className="qa-urgbanner__num">{activeUrgent ? String(Math.max(0, activeUrgent.days)).padStart(2, "0") : "--"}</div>
+            <div className="qa-urgbanner__numk">DIAS RESTANTES</div>
           </div>
         </section>
 
-        <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS QUATRO FRENTES</div>
+        <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS CINCO FRENTES</div>
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
           {snapshot.fronts.map((front) => (
             <article className={`qa-front-card ${front.tone === "amber" ? "amber" : ""}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
