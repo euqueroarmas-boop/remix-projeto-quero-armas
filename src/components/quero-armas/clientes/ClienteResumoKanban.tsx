@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
-import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+
+// Rótulo canônico do Hub de Documentos para um tipo conhecido.
+// Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
+function hubLabel(tipo: string, fallback: string) {
+  const meta = getTipoDocumentoMeta(tipo);
+  return (meta?.label || fallback).toUpperCase();
+}
 
 interface Props {
   cliente: any;
