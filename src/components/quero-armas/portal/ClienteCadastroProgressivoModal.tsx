@@ -6,7 +6,7 @@
 //      atualizar-cadastro), persistindo o progresso para o cliente.
 //   2) Enviar documento e usar IA — faz upload e chama qa-cliente-prefill;
 //      o cliente revisa os campos extraídos antes de salvar.
-// Mantém Arsenal UI (papel + bordô #7A1F2B). Sem fundo preto.
+// Mantém Cockpit Z6 Light / Arsenal UI (papel + bordô #7A1F2B). Sem fundo preto.
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -414,16 +414,16 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     progresso >= 100
       ? "MISSÃO CUMPRIDA — SEU DOSSIÊ ESTÁ COMPLETO."
       : progresso >= 70
-        ? "VOCÊ ESTÁ NA RETA FINAL. CADA CAMPO PREENCHIDO É UM PROCESSO MAIS RÁPIDO."
+        ? "RETA FINAL. MAIS ALGUNS CAMPOS E A IA OPERA COM CARGA TOTAL."
         : progresso >= 40
           ? "BOM RITMO. CONTINUE — A IA JÁ ESTÁ TRABALHANDO PARA VOCÊ."
-          : "COMECE AGORA. EM POUCOS MINUTOS, A IA ASSUME O CONTROLE DOS SEUS DOCUMENTOS.";
+          : "COMECE AGORA. QUANTO MAIS DADOS, MAIS PRECISA FICA A SUA IA.";
 
   return (
     <Dialog open={open} onOpenChange={(n) => !n && onClose()}>
-      <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-2xl rounded-[4px] border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-sm max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+      <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-[825px] rounded-[4px] border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-sm max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
         {/* Header — Cockpit Z6 Light */}
-        <div className="shrink-0 border-b border-[#E5E5E5] bg-white px-6 py-5">
+        <div className="shrink-0 border-b border-[#E5E5E5] bg-white px-8 py-7">
           <div className="flex items-start gap-3">
             {modo !== "escolher" ? (
               <button type="button" onClick={() => setModo("escolher")} aria-label="Voltar"
@@ -432,13 +432,13 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
               </button>
             ) : null}
             <div className="min-w-0 flex-1">
-              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7A1F2B]">
+              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.24em] text-[#7A1F2B]">
                 ARSENAL INTELIGENTE · CONTROLE DE DOCUMENTOS
               </div>
-              <h2 className="font-heading text-[24px] font-semibold uppercase tracking-[0.04em] leading-tight text-[#0A0A0A] mt-1">
+              <h2 className="font-heading text-[26px] font-semibold uppercase tracking-[0.03em] leading-[0.95] text-[#0A0A0A] mt-2">
                 COMPLETE SEU DOSSIÊ
               </h2>
-              <p className="mt-1.5 text-[13px] leading-snug text-[#6A6A6A]">
+              <p className="mt-2 text-[13px] leading-snug text-[#6A6A6A] max-w-[670px]">
                 Quanto mais a IA conhece você, mais ela <strong className="text-[#0A0A0A]">antecipa vencimentos, monta peças e protege seus processos</strong>. Salvamos cada campo automaticamente.
               </p>
             </div>
@@ -449,12 +449,12 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
           </div>
 
           {/* PROGRESSO — bloco Z6 */}
-          <div className="mt-4 grid grid-cols-[1fr_auto] items-end gap-4">
+          <div className="mt-5 grid grid-cols-[1fr_auto] items-end gap-4">
             <div>
               <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
                 PROGRESSO DO CADASTRO
               </div>
-              <div className="mt-2 h-[6px] w-full overflow-hidden rounded-[2px] bg-[#EFEFEF]">
+              <div className="mt-2 h-[7px] w-full overflow-hidden rounded-[2px] bg-[#ECECEC]">
                 <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: MARROM }} />
               </div>
               <div className="mt-2 font-heading text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
@@ -462,17 +462,17 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
               </div>
             </div>
             <div className="text-right leading-none">
-              <span className="font-heading text-[44px] font-semibold text-[#0A0A0A]">{progresso}</span>
+              <span className="font-heading text-[46px] font-semibold text-[#0A0A0A]">{progresso}</span>
               <span className="font-heading text-[18px] font-semibold text-[#6A6A6A]">%</span>
             </div>
           </div>
         </div>
 
         {/* Body */}
-        <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F2F2F2] px-6 py-5">
+        <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F3F1EF] px-8 py-6">
           {modo === "escolher" && (
             <div className="space-y-3">
-              <div className="rounded-[4px] border-l-[3px] border-[#7A1F2B] bg-white p-4 shadow-sm">
+              <div className="rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-5 shadow-sm">
                 <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
                   POR QUE COMPLETAR AGORA
                 </div>
@@ -481,7 +481,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </p>
               </div>
               <button onClick={() => setModo("ia_upload")}
-                className="group flex w-full items-start gap-3 rounded-[4px] border border-[#E5E5E5] bg-white p-4 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                className="group flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#7A1F2B]">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
                   <Sparkles className="h-4 w-4" />
                 </div>
@@ -496,7 +496,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </div>
               </button>
               <button onClick={() => setModo("manual")}
-                className="flex w-full items-start gap-3 rounded-[4px] border border-[#E5E5E5] bg-white p-4 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                className="flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#7A1F2B]">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-[#E5E5E5] bg-white text-[#0A0A0A]">
                   <Pencil className="h-4 w-4" />
                 </div>
@@ -657,7 +657,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-[#E5E5E5] bg-white px-6 py-2.5 text-center">
+        <div className="shrink-0 border-t border-[#E5E5E5] bg-white px-8 py-3 text-center">
           <p className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">
             SALVAMENTO AUTOMÁTICO · ARSENAL INTELIGENTE QUERO ARMAS
           </p>
