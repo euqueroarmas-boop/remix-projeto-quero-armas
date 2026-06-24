@@ -185,7 +185,9 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
       (block.match(/[\w.+-]+@[\w-]+\.[a-z]{2,}(?:\.[a-z]{2,4})?/g) || []).map((e) => e.toLowerCase())
     ));
     const validade_label = m[0].match(/Validade d[oa][^:]*:\s*(\d{2}\/\d{2}\/\d{4})/i)?.[0]?.trim() || null;
-    const validade = `${m[4]}-${m[3]}-${m[2]}`;
+    const dd = Number(m[2]), mm = Number(m[3]), yyyy = Number(m[4]);
+    const validade = (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy >= 2000 && yyyy <= 2100)
+      ? `${m[4]}-${m[3]}-${m[2]}` : null;
 
     // Bairro: a heading mais recente antes do início do bloco
     let bairro: string | null = null;
