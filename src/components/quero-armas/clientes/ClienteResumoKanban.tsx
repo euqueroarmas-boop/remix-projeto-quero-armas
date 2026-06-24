@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
@@ -207,6 +207,53 @@ export default function ClienteResumoKanban({
     return { todo, doing, review, done, summary, prazosCount: prazosProc.length };
   }, [cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual, SERVICO_MAP]);
 
+  // ── Carrossel de urgências (vencidos ou ≤ 7 dias) ──────────────────
+  type Urg = { label: string; days: number | null; category: string; navTo: string; sub: string };
+  const urgentes = useMemo<Urg[]>(() => {
+    const navOf = (cat: string) => {
+      if (cat === "EXAME") return "exames";
+      if (cat === "FILIAÇÃO") return "filiacoes";
+      if (cat === "PRAZO ADM" || cat === "SERVIÇO") return "servicos";
+      return "arsenal";
+    };
+    const subOf = (cat: string) => {
+      if (cat === "EXAME") return "Exame obrigatório · sem ele, processos travam na PF";
+      if (cat === "FILIAÇÃO") return "Filiação ativa é exigência da PF para manter o CR";
+      if (cat === "PRAZO ADM") return "Prazo administrativo · perda implica em reprotocolo";
+      if (cat === "CR") return "Sem CR válido, todo o arsenal fica irregular";
+      if (cat === "CRAF" || cat === "GTE") return "Documento de arma vencido bloqueia trânsito e uso";
+      return "Documento crítico · ação imediata recomendada";
+    };
+    const list: Urg[] = [];
+    const push = (label: string, date: string | null, category: string) => {
+      const d = daysUntil(date);
+      if (d === null) return;
+      if (d > 7) return; // status vermelho: vencido ou ≤ 7 dias
+      list.push({ label, days: d, category, navTo: navOf(category), sub: subOf(category) });
+    };
+    if (cadastro?.validade_cr) push("Certificado de Registro (CR)", cadastro.validade_cr, "CR");
+    const exameByTipo = new Map<string, any>();
+    for (const e of examesAtuais) if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
+    const psi = exameByTipo.get("psicologico");
+    const tiro = exameByTipo.get("tiro");
+    if (psi?.data_vencimento) push("Laudo Psicológico", psi.data_vencimento, "EXAME");
+    if (tiro?.data_vencimento) push("Exame de Tiro", tiro.data_vencimento, "EXAME");
+    crafs.forEach((cr: any) => cr.data_validade && push(`CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, cr.data_validade, "CRAF"));
+    gtes.forEach((g: any) => g.data_validade && push(`GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, g.data_validade, "GTE"));
+    filiacoes.forEach((f: any) => f.validade_filiacao && push(`Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, f.validade_filiacao, "FILIAÇÃO"));
+    return list.sort((a, b) => (a.days ?? 0) - (b.days ?? 0));
+  }, [cadastro, examesAtuais, crafs, gtes, filiacoes]);
+
+  const [urgIndex, setUrgIndex] = useState(0);
+  useEffect(() => { setUrgIndex(0); }, [urgentes.length]);
+  useEffect(() => {
+    if (urgentes.length <= 1) return;
+    const id = window.setInterval(() => {
+      setUrgIndex((i) => (i + 1) % urgentes.length);
+    }, 6000);
+    return () => window.clearInterval(id);
+  }, [urgentes.length]);
+
   const filters = [
     `Todos ${data.todo.length + data.doing.length + data.review.length + data.done.length}`,
     `Arsenal ${crafs.length + gtes.length}`,
@@ -281,6 +328,26 @@ export default function ClienteResumoKanban({
         .qa-kanban-resumo__v small{font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:var(--muted);margin-left:6px}
         @media (max-width:1100px){.qa-kanban-resumo__board{grid-template-columns:repeat(2,1fr)}.qa-kanban-resumo__summary{grid-template-columns:repeat(2,1fr)}}
         @media (max-width:640px){.qa-kanban-resumo{padding:14px 10px}.qa-kanban-resumo__top{align-items:flex-start;flex-direction:column;gap:6px}.qa-kanban-resumo h1{font-size:18px}.qa-kanban-resumo__board{grid-template-columns:1fr}.qa-kanban-resumo__summary{grid-template-columns:1fr 1fr}.qa-kanban-resumo__foot{align-items:flex-start;flex-direction:column}}
+        .qa-kanban-resumo__section-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin:18px 2px 10px}
+        .qa-urg{position:relative;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 22px 18px 26px;margin:6px 0 4px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+        .qa-urg__bar{position:absolute;left:0;top:10px;bottom:10px;width:3px;background:var(--danger);border-radius:3px}
+        .qa-urg__body{min-width:0}
+        .qa-urg__kicker{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--danger);font-weight:700;margin-bottom:8px}
+        .qa-urg__title{font-family:Georgia,serif;font-weight:700;font-size:28px;line-height:1.1;margin:0 0 6px;color:var(--ink)}
+        .qa-urg__sub{font-size:12px;color:var(--ink-2);margin:0 0 12px}
+        .qa-urg__cta{display:flex;gap:8px;flex-wrap:wrap}
+        .qa-urg__btn{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:9px 14px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-family:inherit}
+        .qa-urg__btn:hover{border-color:var(--ink-2)}
+        .qa-urg__btn--primary{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+        .qa-urg__btn--primary:hover{background:#5e1620;border-color:#5e1620}
+        .qa-urg__count{text-align:center;padding-left:18px;border-left:1px solid var(--line);min-width:140px}
+        .qa-urg__num{font-family:Georgia,serif;font-weight:700;font-size:72px;line-height:1;color:var(--danger);letter-spacing:-.02em}
+        .qa-urg__numlbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin-top:6px}
+        .qa-urg__nav{position:absolute;right:18px;bottom:10px;display:flex;gap:4px}
+        .qa-urg__dot{font-family:Georgia,serif;font-weight:700;font-size:11px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;letter-spacing:0;transition:all .15s}
+        .qa-urg__dot:hover{border-color:var(--bordo);color:var(--bordo)}
+        .qa-urg__dot.is-active{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+        @media (max-width:640px){.qa-urg{grid-template-columns:1fr;padding:16px 18px}.qa-urg__count{padding-left:0;border-left:0;border-top:1px solid var(--line);padding-top:14px;min-width:0}.qa-urg__num{font-size:56px}.qa-urg__nav{position:static;justify-content:center;margin-top:12px}}
       `}</style>
 
       <div className="qa-kanban-resumo__wrap">
@@ -298,6 +365,49 @@ export default function ClienteResumoKanban({
         <div className="qa-kanban-resumo__toolbar" aria-label="Filtros do kanban">
           {filters.map((f) => <span className="qa-kanban-resumo__chip" key={f}>{f}</span>)}
         </div>
+
+        {urgentes.length > 0 && (() => {
+          const cur = urgentes[urgIndex] ?? urgentes[0];
+          const daysStr = cur.days! < 0 ? String(Math.abs(cur.days!)).padStart(2, "0") : String(cur.days!).padStart(2, "0");
+          const daysLabel = cur.days! < 0 ? "DIAS VENCIDO" : "DIAS RESTANTES";
+          return (
+            <section className="qa-urg" aria-label="Próximo vencimento crítico" aria-live="polite">
+              <div className="qa-urg__bar" />
+              <div className="qa-urg__body">
+                <div className="qa-urg__kicker">PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA</div>
+                <h2 className="qa-urg__title">{cur.label}</h2>
+                <p className="qa-urg__sub">{cur.sub}</p>
+                <div className="qa-urg__cta">
+                  <button type="button" className="qa-urg__btn qa-urg__btn--primary" onClick={() => onNavigate(cur.navTo)}>AGENDAR AGORA →</button>
+                  <button type="button" className="qa-urg__btn" onClick={() => onNavigate(cur.navTo)}>VER DETALHES</button>
+                </div>
+              </div>
+              <div className="qa-urg__count">
+                <div className="qa-urg__num">{daysStr}</div>
+                <div className="qa-urg__numlbl">{daysLabel}</div>
+              </div>
+              {urgentes.length > 1 && (
+                <div className="qa-urg__nav" role="tablist" aria-label="Selecionar documento urgente">
+                  {urgentes.map((u, i) => (
+                    <button
+                      key={`${u.label}-${i}`}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === urgIndex}
+                      aria-label={`Ir para ${u.label}`}
+                      className={`qa-urg__dot ${i === urgIndex ? "is-active" : ""}`}
+                      onClick={() => { setUrgIndex(i); onNavigate(urgentes[i].navTo); }}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
+        <div className="qa-kanban-resumo__section-label">SUAS QUATRO FRENTES</div>
 
         <div className="qa-kanban-resumo__board">
           {columns.map((col) => (
