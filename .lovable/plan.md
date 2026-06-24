@@ -1,65 +1,75 @@
-# Auto-preenchimento inteligente do cadastro a partir de documentos já enviados
-
 ## Objetivo
-Quando o cliente abrir o modal de cadastro progressivo, a plataforma varre os documentos que ele já enviou (RG, CIN, CNH, comprovante de residência, etc.) em `qa_documentos_cliente`, extrai os campos via IA e **preenche o cadastro automaticamente**, com a regra:
 
-- **IA sobrescreve dados digitados manualmente** — documento oficial é a fonte da verdade.
-- **IA NÃO sobrescreve campos que o cliente corrigiu DEPOIS de uma sugestão da IA** — se o cliente alterou o que a IA propôs, é sinal de que algo está errado no documento ou na extração, e a correção humana prevalece.
+Sistema consulta diariamente as listas oficiais da PF (psicólogos e instrutores de tiro credenciados) e mostra ao cliente os profissionais mais próximos do CEP cadastrado, com dados sempre atualizados.
 
-## Como vai funcionar
+## Fontes oficiais
 
-### 1. Marcação de origem por campo
-Cada campo do cliente passa a ter um "selo" de origem, guardado num único JSON em `qa_clientes.campo_origens`:
+- Psicólogos: `https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados/{uf-slug}`
+- Instrutores: `https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/{uf-slug}`
 
-```text
-{
-  "rg_numero":          { "source": "ai",     "doc_id": "...", "at": "..." },
-  "rg_orgao_emissor":   { "source": "ai",     "doc_id": "...", "at": "..." },
-  "endereco_logradouro":{ "source": "manual_override_ai", "at": "..." },
-  "telefone":           { "source": "manual", "at": "..." }
-}
-```
+Cada página agrupa por bairro/cidade em **negrito** e lista entradas: NOME — CRP/CR, End., Tel., E-mail, Validade.
 
-Valores de `source`:
-- `manual` → digitado pelo cliente, **nunca veio da IA**. Pode ser sobrescrito pela IA (doc é fonte da verdade).
-- `ai` → veio de extração de documento. Pode ser re-sobrescrito por uma extração mais nova.
-- `manual_override_ai` → cliente editou um valor que a IA havia sugerido. **Trancado para a IA**.
+## Entregáveis
 
-### 2. Detector de override no front
-No `ClienteCadastroProgressivoModal`, quando um input muda:
-- Se o campo estava marcado como `ai` e o novo valor difere, marcar como `manual_override_ai`.
-- Se estava `manual` ou vazio, manter `manual` ao salvar.
-- Se IA preencheu agora, marcar `ai`.
+### 1. Banco de dados — `qa_pf_credenciados`
 
-### 3. Pipeline de auto-prefill ao abrir o modal
-Novo hook `useAutoPrefillFromDocs(clienteId)`:
-1. Busca em `qa_documentos_cliente` os documentos do cliente classificados como `rg`, `cin`, `cnh`, `comprovante_residencia`, `cr`, `craf` que ainda não foram usados para prefill (`prefill_consumed_at IS NULL`).
-2. Para cada um, chama a edge function existente `qa-cliente-prefill` (já extrai os campos).
-3. Consolida o resultado: para cada campo extraído,
-   - se `campo_origens[campo].source === 'manual_override_ai'` → **ignora** (cliente já corrigiu, IA não toca).
-   - caso contrário → aplica o valor da IA e marca `source: 'ai'`.
-4. Mostra um banner discreto no topo do modal: *"Preenchemos N campos automaticamente a partir de M documentos seus. Revise abaixo."* com botão "Desfazer este preenchimento" (reverte para os valores anteriores, guardados num snapshot local).
-5. Marca cada documento processado com `prefill_consumed_at = now()` para não reprocessar (a menos que um novo upload aconteça).
+Tabela única com:
+- `tipo` enum (`psicologo` | `instrutor_tiro`)
+- `uf`, `cidade`, `bairro`
+- `nome`, `registro` (CRP/CR), `endereco`, `telefones[]`, `emails[]`, `validade`
+- `latitude`, `longitude` (geocoding Nominatim, com cache em `cep_cache`-style)
+- `source_url`, `raw_block`, `fetched_at`, `hash_conteudo` (dedup)
+- Índice GIST para busca por distância (earthdistance/`ll_to_earth`) + índice por (tipo, uf)
 
-### 4. Re-execução em novo upload
-Quando o cliente faz upload de um novo documento dentro ou fora do modal, dispara `qa-cliente-prefill` para esse doc específico aplicando a mesma regra de sobrescrita.
+RLS: `SELECT` aberto a `authenticated` (cliente logado lê via portal). Mutations apenas `service_role`.
 
-### 5. UI
-- Banner azul claro (paper canônico, sem dark) no topo do modal: ícone de raio + texto + ação "Desfazer".
-- Cada input que veio da IA ganha um micro-selo `IA` no canto (cinza, 9px) para o cliente identificar.
-- Quando o cliente edita um campo IA, o selo muda para `EDITADO` (vermelho bordô `#7A1F2B`) — sinal visual da regra `manual_override_ai`.
+### 2. Edge function `qa-pf-credenciados-sync` (cron diário 03:00)
 
-## Mudanças técnicas
+- Itera 27 UFs × 2 tipos = 54 páginas.
+- HTML scraping (fetch direto, User-Agent Chrome — padrão usado em outras integrações do projeto).
+- Parser extrai: cabeçalho em negrito = bairro/cidade; bloco até próximo `<strong>` = entrada.
+- Regex para nome+registro, endereço, telefones (vários), e-mails, validade.
+- Geocoding incremental: endereços novos vão a Nominatim (com `cep_cache` reaproveitado / nova tabela `qa_endereco_geocache`) — respeitando 1 req/s.
+- Upsert por hash; remove entradas que sumiram da fonte (flag `ativo=false`).
+- Log em `qa_pf_credenciados_sync_log` (totais, erros por UF).
+- Agendada via `pg_cron` + `pg_net`.
 
-| Camada | Arquivo | Mudança |
-|---|---|---|
-| DB | migração | adiciona `campo_origens jsonb default '{}'` em `qa_clientes`; adiciona `prefill_consumed_at timestamptz` em `qa_documentos_cliente` |
-| Edge | `qa-cliente-prefill` (já existe) | nenhuma mudança na extração; o consumidor passa o conjunto de campos travados |
-| Lib | novo `src/lib/quero-armas/campoOrigem.ts` | helpers `markFieldOrigin`, `canAiOverwrite`, `applyAiExtraction` |
-| Hook | novo `src/hooks/useAutoPrefillFromDocs.ts` | orquestra busca + extração + consolidação + persistência |
-| UI | `src/components/quero-armas/portal/ClienteCadastroProgressivoModal.tsx` | banner, badges por campo, detector de override no `onChange`, integração com o hook |
+### 3. Edge function `qa-pf-credenciados-buscar` (consulta)
+
+`POST { tipo, cep, raio_km?, limit? }` →
+- Geocoda CEP (BrasilAPI → Nominatim, com cache).
+- Retorna top N (default 20) por distância Haversine via `earth_distance`.
+- Fallback: se nenhum em raio_km, expande para estado inteiro ordenado por distância.
+
+### 4. UI Cliente
+
+**(a) Modal `AgendarExameModal`** — abre a partir do botão "AGENDAR AGORA" no carrossel de pendências (`ClienteResumoKanban`):
+- Tipo (psicólogo/instrutor) inferido do item urgente.
+- Lista top 10 mais próximos do CEP do cliente: nome, registro, endereço, distância em km, telefones clicáveis (`tel:`), e-mail (`mailto:`), validade do credenciamento, link Google Maps.
+- Badge "Fonte: PF — atualizado em DD/MM".
+- Botão "Ver lista completa" → página dedicada.
+
+**(b) Página `/area-do-cliente/agendar-exame`**:
+- Aba Psicólogo / Aba Instrutor.
+- Filtros: UF (default cliente), busca por nome/bairro, raio (5/10/25/50 km / Estado todo).
+- Cards com mesmas infos do modal + ordenação distância/validade/nome.
+- Estado vazio com link para o gov.br.
+
+### 5. Integração no fluxo
+
+- `ClienteResumoKanban.tsx`: botão "AGENDAR AGORA" dos itens `exame_psicologico` e `exame_tiro` abre modal em vez de navegar para Documentos.
+- Card no Hub de Exames também ganha CTA "Buscar profissional credenciado".
+
+## Detalhes técnicos
+
+- Reaproveita padrão `mem://tech/quero-armas/api-lookup-resilience` (timeout 6s + fallback direto).
+- Extensões Postgres: `cube`, `earthdistance` (habilitar na migration).
+- Sanitização: telefones normalizados `(DD) NNNNN-NNNN`; emails lowercased; validade parseada DD/MM/AAAA → DATE.
+- Quando validade expirada, esconder por padrão (toggle "incluir vencidos").
+- Sem alteração no Hub de Documentos atual; apenas adiciona a rota de agendamento.
 
 ## Fora de escopo
-- Não mexe em outros fluxos de upload (checklist, processos) — apenas lê o que já existe.
-- Não muda a UI/estilo visual do modal já aplicada (v12 arsenal mapeado).
-- Não altera o pipeline de ingestão / KB.
+
+- Agendamento online direto (PF não oferece API).
+- Notificações push de novos credenciados.
+- Mapa interativo (Leaflet) — fica como melhoria futura; v1 usa link Google Maps por item.
