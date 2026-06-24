@@ -236,7 +236,15 @@ export default function ClienteResumoKanban({
   }, []);
 
   const activeUrgent = snapshot.urgents[focusIndex] || null;
-  const statusLine = `${cadastro?.categoria_titular || cliente?.status_cliente || "CAÇADOR"}${cadastro?.numero_cr ? ` · CR ${cadastro.numero_cr}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
+  const memberSince = (() => {
+    const d = (cliente as any)?.created_at || (cliente as any)?.data_cadastro;
+    if (!d) return null;
+    const p = new Date(d);
+    if (isNaN(p.getTime())) return null;
+    const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+    return `${meses[p.getMonth()]}/${p.getFullYear()}`;
+  })();
+  const statusLine = `${cadastro?.categoria_titular || cliente?.status_cliente || "CAÇADOR"}${cadastro?.numero_cr ? ` · CR ${cadastro.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
   const filters = [
     `TODOS ${snapshot.totalFronts}`,
     `ARSENAL ${snapshot.fronts[0].count}`,
