@@ -67,27 +67,27 @@ Deno.serve(async (req) => {
     // Lazy geocode: pega até MAX_GEOCODE entradas sem coordenadas, da mesma UF do cliente
     if (ufFiltro) {
       const { data: pendentes } = await supabase
-        .from("qa_pf_credenciados")
+        .from("qa_psico_credenciados")
         .select("id,endereco,uf")
         .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
         .is("latitude", null).not("endereco", "is", null)
         .limit(MAX_GEOCODE_PER_CALL);
       for (const e of pendentes || []) {
         const g = await geocodeEndereco(supabase, e.endereco, e.uf);
-        if (g) await supabase.from("qa_pf_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
+        if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
         await nominatimDelay();
       }
     }
 
     if (origin && origin.lat && origin.lng) {
-      const { data, error } = await supabase.rpc("qa_pf_credenciados_proximos", {
+      const { data, error } = await supabase.rpc("qa_psico_credenciados_proximos", {
         p_tipo: tipo, p_lat: origin.lat, p_lng: origin.lng,
         p_raio_km: raio_km, p_limit: limit, p_uf: ufFiltro, p_incluir_vencidos: incluirVencidos,
       });
       if (error) throw error;
       const results = data || [];
       if (results.length === 0 && ufFiltro) {
-        const { data: d2 } = await supabase.rpc("qa_pf_credenciados_proximos", {
+        const { data: d2 } = await supabase.rpc("qa_psico_credenciados_proximos", {
           p_tipo: tipo, p_lat: origin.lat, p_lng: origin.lng,
           p_raio_km: 99999, p_limit: limit, p_uf: ufFiltro, p_incluir_vencidos: incluirVencidos,
         });
@@ -102,14 +102,14 @@ Deno.serve(async (req) => {
     }
 
     // Sem CEP: lista por UF se fornecida, ordenada por cidade/nome
-    let q = supabase.from("qa_pf_credenciados").select("*").eq("tipo", tipo).eq("ativo", true).order("cidade").order("nome").limit(limit);
+    let q = supabase.from("qa_psico_credenciados").select("*").eq("tipo", tipo).eq("ativo", true).order("cidade").order("nome").limit(limit);
     if (ufFiltro) q = q.eq("uf", ufFiltro);
     if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
     const { data, error } = await q;
     if (error) throw error;
     return json({ ok: true, origin: null, results: data || [], count: (data || []).length });
   } catch (err: any) {
-    console.error("[qa-pf-credenciados-buscar]", err);
+    console.error("[qa-psico-credenciados-buscar]", err);
     return json({ error: err.message || "erro interno" }, 500);
   }
 });

@@ -1,6 +1,6 @@
 // Sincroniza listas oficiais da PF: psicólogos e instrutores de tiro credenciados.
-// Faz scrape das 54 páginas (27 UFs × 2 tipos), parseia e upserta em qa_pf_credenciados.
-// Geocodificação é feita sob demanda no qa-pf-credenciados-buscar (lazy).
+// Faz scrape das 54 páginas (27 UFs × 2 tipos), parseia e upserta em qa_psico_credenciados.
+// Geocodificação é feita sob demanda no qa-psico-credenciados-buscar (lazy).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
   const onlyUf: string | null = body?.uf?.toUpperCase?.() || null;
 
   const { data: logRow } = await supabase
-    .from("qa_pf_credenciados_sync_log")
+    .from("qa_psico_credenciados_sync_log")
     .insert({ status: "running", detalhes: { onlyTipo, onlyUf } })
     .select("id").single();
   const logId = logRow?.id;
@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
         if (entries.length > 0) {
           const rows = entries.map((e) => ({ ...e, tipo, ativo: true, fetched_at: new Date().toISOString() }));
           const { error } = await supabase
-            .from("qa_pf_credenciados")
+            .from("qa_psico_credenciados")
             .upsert(rows, { onConflict: "tipo,uf,hash_conteudo" });
           if (error) throw error;
           totalInserted += rows.length;
@@ -276,12 +276,12 @@ Deno.serve(async (req) => {
 
         // Desativa hashes ausentes
         const { data: existentes } = await supabase
-          .from("qa_pf_credenciados")
+          .from("qa_psico_credenciados")
           .select("id, hash_conteudo")
           .eq("tipo", tipo).eq("uf", uf).eq("ativo", true);
         const toDeactivate = (existentes || []).filter((r: any) => !hashes.includes(r.hash_conteudo));
         if (toDeactivate.length > 0) {
-          await supabase.from("qa_pf_credenciados")
+          await supabase.from("qa_psico_credenciados")
             .update({ ativo: false })
             .in("id", toDeactivate.map((r: any) => r.id));
           totalDeactivated += toDeactivate.length;
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
   }
 
   if (logId) {
-    await supabase.from("qa_pf_credenciados_sync_log").update({
+    await supabase.from("qa_psico_credenciados_sync_log").update({
       finished_at: new Date().toISOString(),
       status: errors.length === 0 ? "success" : (totalInserted > 0 ? "partial" : "failed"),
       total_paginas: totalPages,
@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
 
   // Encadeia o backfill de geocode (fire-and-forget), igual ao IAT.
   try {
-    const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-pf-credenciados-geocode-backfill`;
+    const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-psico-credenciados-geocode-backfill`;
     const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
     fetch(fnUrl, {
       method: "POST",
