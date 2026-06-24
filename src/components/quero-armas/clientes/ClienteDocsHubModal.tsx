@@ -830,7 +830,20 @@ export function ClienteDocsHubModal({
           ? (campos.cpf || campos.numero_documento || prev.numero_documento)
           : (campos.numero_documento || prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
-        data_emissao: dataIsoFromBr(campos.data_emissao) || prev.data_emissao,
+        // Para laudos/exames, o campo "Avaliação" usa data_avaliacao.
+        // A regra legal (Lei 10.826/03) vincula validade à DATA DA AVALIAÇÃO,
+        // não à data de emissão impressa.
+        data_emissao: (() => {
+          const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
+          if (isLaudoExame) {
+            return (
+              dataIsoFromBr((campos as any).data_avaliacao) ||
+              dataIsoFromBr(campos.data_emissao) ||
+              prev.data_emissao
+            );
+          }
+          return dataIsoFromBr(campos.data_emissao) || prev.data_emissao;
+        })(),
         data_validade: (() => {
           const valExplicita = dataIsoFromBr(campos.data_validade);
           if (valExplicita) return valExplicita;
@@ -942,7 +955,12 @@ export function ClienteDocsHubModal({
           ...prev,
           numero_documento: prev.numero_documento || sugestao.numero_documento || "",
           orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
-          data_emissao: prev.data_emissao || sugestao.data_emissao || "",
+          data_emissao:
+            prev.data_emissao ||
+            (/laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA)
+              ? sugestao.data_avaliacao || sugestao.data_emissao
+              : sugestao.data_emissao) ||
+            "",
           // Para comprovante de residência, nunca usar data_validade da sugestão:
           // a IA extrai o vencimento da conta (≈1 mês), não a validade do documento (90 dias).
           data_validade: prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || "",
