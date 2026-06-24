@@ -286,7 +286,6 @@ export default function ClienteResumoKanban({
       <div className="qa-kanban-resumo__wrap">
         <header className="qa-kanban-resumo__top">
           <div>
-            <div className="qa-kanban-resumo__crumb">Quero Armas · Resumo do Cliente</div>
             <h1>{cliente?.nome_completo || "Cliente"}</h1>
             <div className="qa-kanban-resumo__meta">
               <span><span className="qa-kanban-resumo__dot" />{cadastro?.categoria_titular || (cliente?.status_cliente || "Cliente")}</span>
@@ -294,7 +293,6 @@ export default function ClienteResumoKanban({
               <span><b>{itens.filter((i: any) => !["CONCLUÍDO","DEFERIDO","INDEFERIDO","DESISTIU","RESTITUÍDO"].includes((i.status||"").toUpperCase())).length}</b> processos em andamento</span>
             </div>
           </div>
-          <div className="qa-kanban-resumo__brand">Quero Armas</div>
         </header>
 
         <div className="qa-kanban-resumo__toolbar" aria-label="Filtros do kanban">
