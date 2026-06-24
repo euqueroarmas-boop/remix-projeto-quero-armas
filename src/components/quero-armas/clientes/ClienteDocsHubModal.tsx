@@ -392,6 +392,19 @@ function dataIsoFromBr(v?: string | null): string {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
+function isoToBr(v?: string | null): string {
+  if (!v) return "";
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+function applyDateMask(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
 type FormState = {
   tipo_documento: string;
   numero_documento: string;
@@ -549,6 +562,52 @@ function Field({
 const inputClassName =
   "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
 
+/**
+ * Input de data em formato BR (DD/MM/AAAA) com máscara, que mantém o
+ * valor pai em ISO (YYYY-MM-DD). Substitui o `<input type="date">`
+ * nativo — que renderiza em altura inconsistente no iOS Safari — e
+ * cumpre a regra de projeto (mem://style/admin-form-architecture).
+ */
+function DateInputBR({
+  value,
+  onChange,
+  className,
+  placeholder = "DD/MM/AAAA",
+}: {
+  value: string;
+  onChange: (iso: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  const [local, setLocal] = useState<string>(isoToBr(value));
+  useEffect(() => {
+    setLocal(isoToBr(value));
+  }, [value]);
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      value={local}
+      placeholder={placeholder}
+      maxLength={10}
+      className={className}
+      onChange={(e) => {
+        const masked = applyDateMask(e.target.value);
+        setLocal(masked);
+        if (masked.length === 0) {
+          onChange("");
+          return;
+        }
+        if (masked.length === 10) {
+          const iso = dataIsoFromBr(masked);
+          if (iso) onChange(iso);
+        }
+      }}
+    />
+  );
+}
+
 /** Badge inline de confirmação humana de um campo sensível extraído pela IA. */
 function ConfirmBadge({
   extraido,
@@ -645,6 +704,51 @@ export function ClienteDocsHubModal({
   const [showDeclaracao, setShowDeclaracao] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Auto-busca de dados do cliente para alimentar o motor de conformidade
+   * cruzada. Resolve cenários (ex.: Bancada/Arsenal) onde o componente
+   * pai não passa explicitamente clienteCpf/clienteNome/etc.
+   */
+  const [clienteAutoFetch, setClienteAutoFetch] = useState<{
+    nome: string | null;
+    cpf: string | null;
+    data_nascimento: string | null;
+    nome_mae: string | null;
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!open || !qaClienteId) return;
+      // Só busca se algum campo de referência estiver ausente nas props.
+      if (clienteNome && clienteCpf && clienteDataNascimento && clienteNomeMae) return;
+      try {
+        const { data } = await supabase
+          .from("qa_clientes" as any)
+          .select("nome_completo, cpf, data_nascimento, nome_mae")
+          .eq("id", qaClienteId)
+          .maybeSingle();
+        if (cancelled || !data) return;
+        const row = data as unknown as Record<string, string | null>;
+        setClienteAutoFetch({
+          nome: row.nome_completo || null,
+          cpf: row.cpf || null,
+          data_nascimento: row.data_nascimento || null,
+          nome_mae: row.nome_mae || null,
+        });
+      } catch {
+        // Silencioso — conformidade apenas degrada para "sem referência".
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [open, qaClienteId, clienteNome, clienteCpf, clienteDataNascimento, clienteNomeMae]);
+
+  const refClienteNome = clienteNome ?? clienteAutoFetch.nome;
+  const refClienteCpf = clienteCpf ?? clienteAutoFetch.cpf;
+  const refClienteDataNascimento = clienteDataNascimento ?? clienteAutoFetch.data_nascimento;
+  const refClienteNomeMae = clienteNomeMae ?? clienteAutoFetch.nome_mae;
 
   // Sincroniza tipo padrão a cada abertura (sem quebrar edição em andamento).
   // Reset apenas quando o modal abre.
@@ -916,10 +1020,10 @@ export function ClienteDocsHubModal({
       // Motor de conformidade: todos os documentos que extraem dados pessoais.
       const items = calcularConformidade(
         campos as Record<string, string | undefined>,
-        clienteNome,
-        clienteCpf,
-        clienteDataNascimento,
-        clienteNomeMae,
+        refClienteNome,
+        refClienteCpf,
+        refClienteDataNascimento,
+        refClienteNomeMae,
         docsAprovados,
       );
       setConformidade(items);
@@ -2141,10 +2245,9 @@ export function ClienteDocsHubModal({
                   }
                   icon={Calendar}
                 >
-                  <Input
-                    type="date"
+                  <DateInputBR
                     value={form.data_emissao}
-                    onChange={(event) => update("data_emissao", event.target.value)}
+                    onChange={(iso) => update("data_emissao", iso)}
                     className={inputClassName}
                   />
                 </Field>
@@ -2161,10 +2264,9 @@ export function ClienteDocsHubModal({
                   />
                 }
               >
-                <Input
-                  type="date"
+                <DateInputBR
                   value={form.data_validade}
-                  onChange={(event) => update("data_validade", event.target.value)}
+                  onChange={(iso) => update("data_validade", iso)}
                   className={inputClassName}
                 />
               </Field>
