@@ -515,6 +515,29 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
         {/* Body */}
         <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F3F1EF] px-8 py-6">
+          {(autoPrefillLoading || autoPrefillBanner) && (
+            <div className="mb-4 flex items-start gap-3 rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-3 shadow-sm">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
+                {autoPrefillLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                  IA · LEITURA DOS SEUS DOCUMENTOS
+                </div>
+                {autoPrefillLoading ? (
+                  <p className="mt-0.5 text-[12px] text-[#3A3A3A]">
+                    Lendo os documentos que você já enviou para preencher o que falta…
+                  </p>
+                ) : autoPrefillBanner ? (
+                  <p className="mt-0.5 text-[12.5px] text-[#0A0A0A]">
+                    <strong>{autoPrefillBanner.campos} campo(s)</strong> preenchidos automaticamente a partir de{" "}
+                    <strong>{autoPrefillBanner.docs} documento(s)</strong> seus. Revise abaixo — se você editar algum valor, sua correção fica salva e a IA não sobrescreve mais.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {modo === "escolher" && (
             <div className="space-y-3">
               <div className="rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-5 shadow-sm">
