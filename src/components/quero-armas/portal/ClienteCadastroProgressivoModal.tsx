@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  ArrowLeft, CheckCircle2, Loader2, Pencil, Sparkles, Upload, X,
+  ArrowLeft, CheckCircle2, Loader2, Pencil, Sparkles, Upload, X, Zap,
 } from "lucide-react";
 import {
   CAMPOS_CADASTRO, CampoCadastro, CadastroGrupo, GRUPO_LABELS,
@@ -66,6 +66,31 @@ interface Props {
 
 const DEBOUNCE_MS = 800;
 
+// Origem do valor de um campo. Espelha o que o backend grava em campo_origens.
+type CampoOrigem = "manual" | "ai" | "manual_override_ai";
+
+async function chamarAutoPrefill(): Promise<{ applied: Record<string, string>; docs: number } | null> {
+  try {
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess?.session?.access_token;
+    if (!token) return null;
+    const base = import.meta.env.VITE_SUPABASE_URL as string;
+    const resp = await fetch(`${base}/functions/v1/qa-cliente-auto-prefill`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({}),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return {
+      applied: (data?.applied || {}) as Record<string, string>,
+      docs: Number(data?.docs_processed || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function maskCep(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 8);
   return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
@@ -98,7 +123,10 @@ function formatBr(value: any, tipo?: string): string {
   return s;
 }
 
-async function chamarAtualizarCadastro(fields: Record<string, string>): Promise<{ ok: boolean; error?: string }> {
+async function chamarAtualizarCadastro(
+  fields: Record<string, string>,
+  fieldOrigins?: Record<string, CampoOrigem>,
+): Promise<{ ok: boolean; error?: string }> {
   try {
     const { data: sess } = await supabase.auth.getSession();
     const token = sess?.session?.access_token;
@@ -107,7 +135,7 @@ async function chamarAtualizarCadastro(fields: Record<string, string>): Promise<
     const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ fields, field_origins: fieldOrigins || {} }),
     });
     if (!resp.ok) {
       const txt = await resp.text();
