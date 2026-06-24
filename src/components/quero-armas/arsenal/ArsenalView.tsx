@@ -747,7 +747,9 @@ export function ArsenalView({
       list.push({
         id: `cr-${cadastroCr.id}`,
         category: "CR",
-        title: cadastroCr.numero_cr ? `CR ${cadastroCr.numero_cr}` : "Certificado de Registro",
+        title: cadastroCr.numero_cr
+          ? `CR ${cadastroCr.numero_cr} — Certificado de Registro de CAC (Exército)`
+          : "CR — Certificado de Registro de CAC (Exército)",
         date: cadastroCr.validade_cr,
         daysToExpire: daysUntil(cadastroCr.validade_cr),
         onOpen: () => setCrModal({ open: true, item: cadastroCr }),
