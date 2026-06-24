@@ -199,11 +199,11 @@ export default function ClienteResumoKanban({
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →"));
     gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →"));
     filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos"));
-    examesItems.forEach((e) => {
-      const isPsi = e.label.includes("PSICOLÓGICO");
-      const source = isPsi ? exameByTipo.get("psicologico") : exameByTipo.get("tiro");
-      pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos", "AGENDAR EXAMES →");
-    });
+    // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
+    // contabilizados via qa_documentos_cliente (laudo_psicologico /
+    // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.
+    // Mantemos os cards da frente "EXAMES" intactos — só removemos o push
+    // duplicado para a fila de urgentes.
     meusDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
     processoDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
     prazosProc.forEach((p: any) => {
