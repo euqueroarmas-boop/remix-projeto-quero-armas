@@ -1838,6 +1838,21 @@ export function ArsenalView({
         .qa-arsenal-z6 .font-mono{font-family:'Oswald','Arial Narrow',Arial,sans-serif !important;font-weight:900;letter-spacing:0}
         .qa-arsenal-z6 [class*="uppercase"][class*="tracking-"]{font-family:'Arial Narrow',Arial,sans-serif;letter-spacing:.22em !important;color:var(--muted)}
       `}</style>
+      {/* Boas-vindas — mesma tipografia/escala do resumo do cliente */}
+      <h1
+        style={{
+          fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+          fontWeight: 700,
+          fontSize: 24,
+          lineHeight: 1.05,
+          letterSpacing: ".04em",
+          color: "#0A0A0A",
+          textTransform: "uppercase",
+          margin: "4px 0 14px",
+        }}
+      >
+        {(String(clienteNome || "WILLIAN").trim().split(/\s+/)[0] || "WILLIAN").toUpperCase()}, AQUI ESTÃO SUAS ARMAS E MUNIÇÕES
+      </h1>
       {/* KPIs */}
       <ArsenalSummary
         totalArmas={weapons.length}
