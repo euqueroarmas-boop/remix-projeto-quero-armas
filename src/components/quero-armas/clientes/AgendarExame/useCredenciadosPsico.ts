@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type CredenciadoPF = {
+export type CredenciadoPsico = {
   id: string;
   tipo: "psicologo" | "instrutor_tiro";
   uf: string;
@@ -29,10 +29,10 @@ export type BuscarParams = {
   incluir_vencidos?: boolean;
 };
 
-export function useCredenciadosPF(params: BuscarParams | null) {
+export function useCredenciadosPsico(params: BuscarParams | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<CredenciadoPF[]>([]);
+  const [results, setResults] = useState<CredenciadoPsico[]>([]);
   const [origin, setOrigin] = useState<{ lat: number; lng: number; uf: string; cidade: string } | null>(null);
   const [foraDoRaio, setForaDoRaio] = useState(false);
   const [distanciaMaisProximo, setDistanciaMaisProximo] = useState<number | null>(null);
@@ -40,7 +40,7 @@ export function useCredenciadosPF(params: BuscarParams | null) {
   const run = useCallback(async (p: BuscarParams) => {
     setLoading(true); setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-pf-credenciados-buscar", { body: p });
+      const { data, error } = await supabase.functions.invoke("qa-psico-credenciados-buscar", { body: p });
       if (error) throw error;
       setResults((data as any)?.results || []);
       setOrigin((data as any)?.origin || null);

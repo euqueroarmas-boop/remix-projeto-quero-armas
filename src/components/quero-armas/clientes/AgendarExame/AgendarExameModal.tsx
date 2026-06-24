@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useCredenciadosPF, type CredenciadoPF } from "./useCredenciadosPF";
+import { useCredenciadosPsico, type CredenciadoPsico } from "./useCredenciadosPsico";
 import { useCredenciadosIAT, type CredenciadoIAT } from "./useCredenciadosIAT";
 import { AgendarExameList } from "./AgendarExameList";
 import { INSTRUTOR_PDF_PF } from "./instrutorPdfLinks";
@@ -30,7 +30,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
     ? ({ cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 20 })
     : null, [open, isInstrutor, cepValido, cepLimpo, uf, raio]);
 
-  const psico = useCredenciadosPF(psicoParams);
+  const psico = useCredenciadosPsico(psicoParams);
   const iat = useCredenciadosIAT(iatParams);
 
   const loading = isInstrutor ? iat.loading : psico.loading;
@@ -46,7 +46,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
     : psico.distanciaMaisProximo;
 
   // Adapta IAT -> shape da lista compartilhada
-  const results: CredenciadoPF[] = isInstrutor
+  const results: CredenciadoPsico[] = isInstrutor
     ? (iat.data?.results || []).map((r: CredenciadoIAT) => ({
         id: r.id,
         tipo: "instrutor_tiro",

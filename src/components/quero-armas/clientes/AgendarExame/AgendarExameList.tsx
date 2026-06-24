@@ -1,4 +1,4 @@
-import type { CredenciadoPF } from "./useCredenciadosPF";
+import type { CredenciadoPsico } from "./useCredenciadosPsico";
 
 function fmtKm(d?: number | null) {
   if (d === null || d === undefined) return null;
@@ -15,12 +15,12 @@ function fmtValidade(label: string | null, iso: string | null) {
   return label;
 }
 
-function mapsLink(c: CredenciadoPF) {
+function mapsLink(c: CredenciadoPsico) {
   const q = encodeURIComponent([c.endereco, c.cidade, c.uf, "Brasil"].filter(Boolean).join(", "));
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
-export function AgendarExameList({ results, loading, empty }: { results: CredenciadoPF[]; loading: boolean; empty: string }) {
+export function AgendarExameList({ results, loading, empty }: { results: CredenciadoPsico[]; loading: boolean; empty: string }) {
   if (loading) return <div style={{ padding: 28, textAlign: "center", color: "#6A6A6A", fontSize: 13 }}>Buscando profissionais credenciados na Polícia Federal…</div>;
   if (results.length === 0) return <div style={{ padding: 28, textAlign: "center", color: "#6A6A6A", fontSize: 13 }}>{empty}</div>;
   return (
