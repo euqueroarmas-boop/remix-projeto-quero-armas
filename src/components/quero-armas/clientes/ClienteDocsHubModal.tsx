@@ -1870,7 +1870,9 @@ export function ClienteDocsHubModal({
                 )}
               </div>
             )}
+          </div>
 
+          <div className="space-y-4">
             <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Categoria do documento">
