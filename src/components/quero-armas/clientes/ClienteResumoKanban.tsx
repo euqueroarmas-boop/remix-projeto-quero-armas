@@ -321,7 +321,7 @@ export default function ClienteResumoKanban({
                 aria-label="Completar cadastro"
                 title="Completar cadastro"
               >
-                <Crosshair size={16} strokeWidth={2.2} />
+                <img src={armaIcon.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </button>
             )}
           </div>
