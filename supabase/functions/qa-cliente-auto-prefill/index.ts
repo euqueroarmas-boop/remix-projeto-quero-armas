@@ -95,6 +95,15 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
       if (partsUf) set("estado", partsUf[1]);
       const partsCidade = full.match(/\/\s*([^-\/]+?)\s*(-|$)/);
       if (partsCidade) set("cidade", partsCidade[1].trim());
+      // Tenta parsear logradouro + número + bairro do trecho antes da "/"
+      // Ex.: "RUA CORNÉLIO RODRIGUES DA SILVA 35 JARDIM BELA VISTA"
+      const antesBarra = full.split("/")[0]?.trim() || "";
+      const mLog = antesBarra.match(/^(.+?)\s+(\d+[A-Z]?)\s+(.+)$/);
+      if (mLog) {
+        set("endereco", mLog[1].trim());
+        set("numero", mLog[2].trim());
+        set("bairro", mLog[3].trim());
+      }
     }
     set("endereco", extraidos.endereco ?? extraidos.logradouro);
     set("numero", extraidos.numero);
