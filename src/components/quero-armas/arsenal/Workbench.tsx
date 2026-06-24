@@ -868,25 +868,6 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
             )}
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="mb-2 flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-[#7A1F2B]" />
-              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
-                Documentos na Bancada
-              </div>
-            </div>
-            {documents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-[11px] text-slate-400">
-                Nenhum documento vinculado
-              </div>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {documents.map((d) => (
-                  <DocumentTag key={d.id} d={d} />
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
