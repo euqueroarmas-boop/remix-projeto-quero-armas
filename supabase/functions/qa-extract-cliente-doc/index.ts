@@ -140,6 +140,8 @@ function systemPromptFor(tipo: TipoDoc): string {
   };
   return (
     `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. ` +
+    `OBRIGATÓRIO: SEMPRE preencha 'titulo_oficial' com o título literal impresso no topo do documento ` +
+    `(em UPPERCASE, sem inventar nada). Esse é o nome oficial que será exibido para o cliente. ` +
     `Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA. ` +
     `REGRA CRÍTICA SOBRE arma_modelo: o campo arma_modelo deve conter SOMENTE o modelo comercial da arma ` +
     `(ex: G25, TS9, TX22, PT838, PUMP MILITARY 3.0). É TERMINANTEMENTE PROIBIDO colocar em arma_modelo: ` +
