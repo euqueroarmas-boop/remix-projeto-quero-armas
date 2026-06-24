@@ -34,6 +34,8 @@ export function useCredenciadosPF(params: BuscarParams | null) {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<CredenciadoPF[]>([]);
   const [origin, setOrigin] = useState<{ lat: number; lng: number; uf: string; cidade: string } | null>(null);
+  const [foraDoRaio, setForaDoRaio] = useState(false);
+  const [distanciaMaisProximo, setDistanciaMaisProximo] = useState<number | null>(null);
 
   const run = useCallback(async (p: BuscarParams) => {
     setLoading(true); setError(null);
@@ -42,13 +44,17 @@ export function useCredenciadosPF(params: BuscarParams | null) {
       if (error) throw error;
       setResults((data as any)?.results || []);
       setOrigin((data as any)?.origin || null);
+      setForaDoRaio(Boolean((data as any)?.fora_do_raio));
+      setDistanciaMaisProximo((data as any)?.distancia_mais_proximo ?? null);
     } catch (e: any) {
       setError(e?.message || "Erro ao buscar credenciados");
       setResults([]);
+      setForaDoRaio(false);
+      setDistanciaMaisProximo(null);
     } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { if (params) run(params); }, [params?.tipo, params?.cep, params?.uf, params?.raio_km, params?.incluir_vencidos]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { loading, error, results, origin, refetch: run };
+  return { loading, error, results, origin, foraDoRaio, distanciaMaisProximo, refetch: run };
 }

@@ -54,6 +54,10 @@ export default function QAClienteAgendarExamePage() {
   const iatMode = iat.data?.mode || null;
   const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
+  const foraDoRaio = isInstrutor ? Boolean(iat.data?.fora_do_raio) : psico.foraDoRaio;
+  const distanciaMaisProximo = isInstrutor
+    ? iat.data?.distancia_mais_proximo ?? null
+    : psico.distanciaMaisProximo;
 
   const results: CredenciadoPF[] = isInstrutor
     ? (iat.data?.results || []).map((r: CredenciadoIAT) => ({
@@ -128,6 +132,16 @@ export default function QAClienteAgendarExamePage() {
 
         {origin && <div style={{ fontSize: 11, color: "#6A6A6A", marginBottom: 10 }}>Origem: {origin.cidade}/{origin.uf}</div>}
         {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
+        {foraDoRaio && (
+          <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
+            Nenhum credenciado dentro de {raio} km{origin?.cidade ? ` de ${origin.cidade}` : ""}.
+            Mostrando os mais próximos
+            {typeof distanciaMaisProximo === "number"
+              ? ` — o mais perto está a ${Math.round(distanciaMaisProximo)} km`
+              : ""}.
+            {" "}Amplie o raio se quiser.
+          </div>
+        )}
 
         <AgendarExameList loading={loading} results={filtered} empty="Nenhum profissional encontrado. Tente ampliar o raio, escolher uma UF, ou consulte diretamente o gov.br/PF." />
         {isInstrutor && (

@@ -30,6 +30,9 @@ export type BuscarIATResponse = {
   tem_enderecos: boolean;
   origin: { lat: number; lng: number; uf: string; cidade: string } | null;
   results: CredenciadoIAT[];
+  fora_do_raio?: boolean;
+  raio_km?: number;
+  distancia_mais_proximo?: number | null;
 };
 
 export function useCredenciadosIAT(params: BuscarIATParams | null) {

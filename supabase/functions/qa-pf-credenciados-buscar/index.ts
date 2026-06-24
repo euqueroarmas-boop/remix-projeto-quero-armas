@@ -1,6 +1,7 @@
 // Consulta credenciados PF por proximidade ao CEP do cliente.
 // Lazy-geocoda endereços ainda sem coordenadas (até MAX_GEOCODE por chamada).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { geocodeEndereco, nominatimDelay } from "../_shared/geocode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,34 +9,9 @@ const corsHeaders = {
 };
 
 const MAX_GEOCODE_PER_CALL = 12; // Nominatim: 1 req/s
-const NOMINATIM_UA = "WMTi-QueroArmas/1.0 (contato@queroarmas.com.br)";
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-}
-
-async function geocodeAddress(supabase: any, endereco: string, uf: string, cidade: string | null): Promise<{ lat: number; lng: number } | null> {
-  const key = `${endereco}, ${cidade || ""} - ${uf}, Brasil`.replace(/\s+/g, " ").trim().toLowerCase();
-  const { data: cached } = await supabase.from("qa_endereco_geocache").select("latitude,longitude").eq("endereco_normalizado", key).maybeSingle();
-  if (cached) {
-    if (cached.latitude && cached.longitude) return { lat: cached.latitude, lng: cached.longitude };
-    return null;
-  }
-  try {
-    const q = encodeURIComponent(key);
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=br`, {
-      headers: { "User-Agent": NOMINATIM_UA },
-    });
-    if (!r.ok) return null;
-    const arr = await r.json();
-    const lat = arr?.[0]?.lat ? Number(arr[0].lat) : null;
-    const lng = arr?.[0]?.lon ? Number(arr[0].lon) : null;
-    await supabase.from("qa_endereco_geocache").upsert({
-      endereco_normalizado: key, latitude: lat, longitude: lng, provider: "nominatim", raw: arr?.[0] || null,
-    }, { onConflict: "endereco_normalizado" });
-    if (lat && lng) return { lat, lng };
-    return null;
-  } catch { return null; }
 }
 
 async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; lng: number; uf: string; cidade: string } | null> {
@@ -57,14 +33,18 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
   if (!addr) return null;
   const uf = String(addr.state || "").toUpperCase();
   const cidade = String(addr.city || "");
-  // 2. Geocode street/city
-  const enderecoTxt = `${addr.street || ""}, ${addr.neighborhood || ""}, ${cidade} - ${uf}, Brasil`;
-  const geo = await geocodeAddress(supabase, enderecoTxt, uf, cidade);
+  if (addr.location?.coordinates?.latitude && addr.location?.coordinates?.longitude) {
+    return {
+      lat: Number(addr.location.coordinates.latitude),
+      lng: Number(addr.location.coordinates.longitude),
+      uf, cidade,
+    };
+  }
+  // Fallback estruturado pela cidade — mesmo path do IAT
+  const enderecoTxt = `${addr.street || cidade}, ${addr.neighborhood || ""}, ${cidade}/${uf}`;
+  const geo = await geocodeEndereco(supabase, enderecoTxt, uf);
   if (geo) return { ...geo, uf, cidade };
-  // Fallback: só cidade
-  const fallback = await geocodeAddress(supabase, `${cidade} - ${uf}, Brasil`, uf, cidade);
-  if (fallback) return { ...fallback, uf, cidade };
-  return null;
+  return { lat: 0, lng: 0, uf, cidade };
 }
 
 Deno.serve(async (req) => {
@@ -88,33 +68,37 @@ Deno.serve(async (req) => {
     if (ufFiltro) {
       const { data: pendentes } = await supabase
         .from("qa_pf_credenciados")
-        .select("id,endereco,cidade,uf")
+        .select("id,endereco,uf")
         .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
         .is("latitude", null).not("endereco", "is", null)
         .limit(MAX_GEOCODE_PER_CALL);
       for (const e of pendentes || []) {
-        const g = await geocodeAddress(supabase, e.endereco, e.uf, e.cidade);
+        const g = await geocodeEndereco(supabase, e.endereco, e.uf);
         if (g) await supabase.from("qa_pf_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
-        await new Promise((r) => setTimeout(r, 1100));
+        await nominatimDelay();
       }
     }
 
-    if (origin) {
+    if (origin && origin.lat && origin.lng) {
       const { data, error } = await supabase.rpc("qa_pf_credenciados_proximos", {
         p_tipo: tipo, p_lat: origin.lat, p_lng: origin.lng,
         p_raio_km: raio_km, p_limit: limit, p_uf: ufFiltro, p_incluir_vencidos: incluirVencidos,
       });
       if (error) throw error;
-      // Se vazio dentro do raio, expande para estado inteiro
-      let results = data || [];
+      const results = data || [];
       if (results.length === 0 && ufFiltro) {
         const { data: d2 } = await supabase.rpc("qa_pf_credenciados_proximos", {
           p_tipo: tipo, p_lat: origin.lat, p_lng: origin.lng,
           p_raio_km: 99999, p_limit: limit, p_uf: ufFiltro, p_incluir_vencidos: incluirVencidos,
         });
-        results = d2 || [];
+        const proximos = d2 || [];
+        return json({
+          ok: true, origin, fora_do_raio: true, raio_km,
+          distancia_mais_proximo: proximos[0]?.distancia_km ?? null,
+          results: proximos, count: proximos.length,
+        });
       }
-      return json({ ok: true, origin, results, count: results.length });
+      return json({ ok: true, origin, fora_do_raio: false, raio_km, results, count: results.length });
     }
 
     // Sem CEP: lista por UF se fornecida, ordenada por cidade/nome

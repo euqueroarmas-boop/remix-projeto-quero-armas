@@ -307,6 +307,17 @@ Deno.serve(async (req) => {
     }).eq("id", logId);
   }
 
+  // Encadeia o backfill de geocode (fire-and-forget), igual ao IAT.
+  try {
+    const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-pf-credenciados-geocode-backfill`;
+    const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+    fetch(fnUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({ loop: true, batchSize: 20 }),
+    }).catch(() => {});
+  } catch { /* noop */ }
+
   return new Response(JSON.stringify({
     ok: true, totalPages, totalInserted, totalDeactivated, errors: errors.length,
   }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
