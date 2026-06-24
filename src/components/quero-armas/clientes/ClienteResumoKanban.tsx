@@ -328,6 +328,26 @@ export default function ClienteResumoKanban({
         .qa-kanban-resumo__v small{font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:var(--muted);margin-left:6px}
         @media (max-width:1100px){.qa-kanban-resumo__board{grid-template-columns:repeat(2,1fr)}.qa-kanban-resumo__summary{grid-template-columns:repeat(2,1fr)}}
         @media (max-width:640px){.qa-kanban-resumo{padding:14px 10px}.qa-kanban-resumo__top{align-items:flex-start;flex-direction:column;gap:6px}.qa-kanban-resumo h1{font-size:18px}.qa-kanban-resumo__board{grid-template-columns:1fr}.qa-kanban-resumo__summary{grid-template-columns:1fr 1fr}.qa-kanban-resumo__foot{align-items:flex-start;flex-direction:column}}
+        .qa-kanban-resumo__section-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin:18px 2px 10px}
+        .qa-urg{position:relative;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 22px 18px 26px;margin:6px 0 4px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+        .qa-urg__bar{position:absolute;left:0;top:10px;bottom:10px;width:3px;background:var(--danger);border-radius:3px}
+        .qa-urg__body{min-width:0}
+        .qa-urg__kicker{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--danger);font-weight:700;margin-bottom:8px}
+        .qa-urg__title{font-family:Georgia,serif;font-weight:700;font-size:28px;line-height:1.1;margin:0 0 6px;color:var(--ink)}
+        .qa-urg__sub{font-size:12px;color:var(--ink-2);margin:0 0 12px}
+        .qa-urg__cta{display:flex;gap:8px;flex-wrap:wrap}
+        .qa-urg__btn{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:9px 14px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-family:inherit}
+        .qa-urg__btn:hover{border-color:var(--ink-2)}
+        .qa-urg__btn--primary{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+        .qa-urg__btn--primary:hover{background:#5e1620;border-color:#5e1620}
+        .qa-urg__count{text-align:center;padding-left:18px;border-left:1px solid var(--line);min-width:140px}
+        .qa-urg__num{font-family:Georgia,serif;font-weight:700;font-size:72px;line-height:1;color:var(--danger);letter-spacing:-.02em}
+        .qa-urg__numlbl{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);font-weight:700;margin-top:6px}
+        .qa-urg__nav{position:absolute;right:18px;bottom:10px;display:flex;gap:4px}
+        .qa-urg__dot{font-family:Georgia,serif;font-weight:700;font-size:11px;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;letter-spacing:0;transition:all .15s}
+        .qa-urg__dot:hover{border-color:var(--bordo);color:var(--bordo)}
+        .qa-urg__dot.is-active{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+        @media (max-width:640px){.qa-urg{grid-template-columns:1fr;padding:16px 18px}.qa-urg__count{padding-left:0;border-left:0;border-top:1px solid var(--line);padding-top:14px;min-width:0}.qa-urg__num{font-size:56px}.qa-urg__nav{position:static;justify-content:center;margin-top:12px}}
       `}</style>
 
       <div className="qa-kanban-resumo__wrap">
