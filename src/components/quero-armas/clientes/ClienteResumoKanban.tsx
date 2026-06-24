@@ -61,8 +61,8 @@ function frontStatus(days: number | null): FrontItem["tone"] {
 function compactStatus(days: number | null, percent?: number | null) {
   if (typeof percent === "number") return `${Math.max(0, Math.min(100, Math.round(percent)))}%`;
   if (days === null) return "—";
-  if (days < 0) return `VENC. - ${Math.abs(days)}D`;
-  return `${days}D`;
+  if (days < 0) return `Venc. - ${Math.abs(days)} dias`;
+  return `${days} dias`;
 }
 
 function shortName(value: string, fallback: string) {
