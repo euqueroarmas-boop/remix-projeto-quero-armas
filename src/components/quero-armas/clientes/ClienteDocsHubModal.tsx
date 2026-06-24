@@ -1640,7 +1640,9 @@ export function ClienteDocsHubModal({
                 </div>
               )}
             </div>
+          </div>
 
+          <div className="space-y-4">
             <SectionTitle title="Dados do documento" />
 
             {classificacao && (
