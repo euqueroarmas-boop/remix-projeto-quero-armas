@@ -188,9 +188,9 @@ export default function ClienteResumoKanban({
       pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos");
     });
     meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos"));
-    processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos"));
+    processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
     prazosProc.forEach((p: any) => {
-      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos" });
+      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos", ctaLabel: "AGENDAR AGORA →" });
     });
 
     const sortedUrgents = urgents.sort((a, b) => a.days - b.days);
