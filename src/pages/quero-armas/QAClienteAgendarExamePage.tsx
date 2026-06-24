@@ -23,9 +23,9 @@ export default function QAClienteAgendarExamePage() {
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user?.user) return;
-        const { data } = await supabase.from("qa_clientes").select("endereco_cep,endereco_estado").eq("user_id", user.user.id).maybeSingle();
-        if (data?.endereco_cep) setCep(String(data.endereco_cep));
-        else if (data?.endereco_estado) setUf(String(data.endereco_estado).toUpperCase());
+        const { data } = await supabase.from("qa_clientes").select("cep,estado").eq("user_id", user.user.id).maybeSingle();
+        if ((data as any)?.cep) setCep(String((data as any).cep));
+        else if ((data as any)?.estado) setUf(String((data as any).estado).toUpperCase());
       } catch { /* noop */ }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
