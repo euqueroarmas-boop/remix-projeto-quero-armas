@@ -562,6 +562,52 @@ function Field({
 const inputClassName =
   "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
 
+/**
+ * Input de data em formato BR (DD/MM/AAAA) com máscara, que mantém o
+ * valor pai em ISO (YYYY-MM-DD). Substitui o `<input type="date">`
+ * nativo — que renderiza em altura inconsistente no iOS Safari — e
+ * cumpre a regra de projeto (mem://style/admin-form-architecture).
+ */
+function DateInputBR({
+  value,
+  onChange,
+  className,
+  placeholder = "DD/MM/AAAA",
+}: {
+  value: string;
+  onChange: (iso: string) => void;
+  className?: string;
+  placeholder?: string;
+}) {
+  const [local, setLocal] = useState<string>(isoToBr(value));
+  useEffect(() => {
+    setLocal(isoToBr(value));
+  }, [value]);
+  return (
+    <Input
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      value={local}
+      placeholder={placeholder}
+      maxLength={10}
+      className={className}
+      onChange={(e) => {
+        const masked = applyDateMask(e.target.value);
+        setLocal(masked);
+        if (masked.length === 0) {
+          onChange("");
+          return;
+        }
+        if (masked.length === 10) {
+          const iso = dataIsoFromBr(masked);
+          if (iso) onChange(iso);
+        }
+      }}
+    />
+  );
+}
+
 /** Badge inline de confirmação humana de um campo sensível extraído pela IA. */
 function ConfirmBadge({
   extraido,
