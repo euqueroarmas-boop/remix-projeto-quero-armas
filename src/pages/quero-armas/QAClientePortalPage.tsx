@@ -1463,6 +1463,7 @@ export default function QAClientePortalPage() {
           meusDocs={meusDocs}
           processoDocs={processoDocs}
           onNavigate={(tab) => setActiveSection(tab as any)}
+          onOpenCadastro={() => setShowCadastroModal(true)}
         />
         {false && (() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);
