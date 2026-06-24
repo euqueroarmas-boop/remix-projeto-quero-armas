@@ -57,6 +57,7 @@ const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"
 const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QAClientesTabsPage");
 const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QAAuditoriaTabsPage");
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
+const QAClienteAgendarExamePage = lazyRetry(() => import("./QAClienteAgendarExamePage"), "QAClienteAgendarExamePage");
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
 const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"), "QAPrazosExpiradosPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
@@ -229,6 +230,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><QAContratarSucessoPage /></QAScope>} />
+        <Route path="area-do-cliente/agendar-exame" element={<QAScope><QAClienteAgendarExamePage /></QAScope>} />
         <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}

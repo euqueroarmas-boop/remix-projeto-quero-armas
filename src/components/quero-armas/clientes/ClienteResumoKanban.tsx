@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { useNavigate } from "react-router-dom";
+import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -31,7 +33,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos" };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
@@ -215,10 +217,11 @@ export default function ClienteResumoKanban({
       navTo: string,
       ctaLabel: string,
       frontKey: Urgent["frontKey"],
+      examTipo?: Urgent["examTipo"],
     ) => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey });
+      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo });
     };
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
@@ -234,6 +237,10 @@ export default function ClienteResumoKanban({
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
       const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
       const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
+      const examTipo: Urgent["examTipo"] | undefined =
+        tipo === "laudo_psicologico" ? "psicologo"
+          : tipo === "laudo_capacidade_tecnica" ? "instrutor_tiro"
+          : undefined;
       pushUrgent(
         shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"),
         isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
@@ -241,6 +248,7 @@ export default function ClienteResumoKanban({
         "documentos",
         cta,
         fk,
+        examTipo,
       );
     });
     processoDocs.forEach((doc: any) => pushUrgent(
@@ -288,6 +296,10 @@ export default function ClienteResumoKanban({
   const [focusIndex, setFocusIndex] = useState(0);
   const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
   const [autoPaused, setAutoPaused] = useState(false);
+  const [exameModal, setExameModal] = useState<{ tipo: "psicologo" | "instrutor_tiro" } | null>(null);
+  const navigate = useNavigate();
+  const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
+  const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
 
   const filteredUrgents = useMemo(
     () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
@@ -417,7 +429,10 @@ export default function ClienteResumoKanban({
             <h2 className="qa-urgbanner__title">{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
             <p className="qa-urgbanner__sub">{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
             <div className="qa-urgbanner__actions">
-              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>
+              <button className="qa-urgbanner__cta" type="button" onClick={() => {
+                if (activeUrgent?.examTipo) { setExameModal({ tipo: activeUrgent.examTipo }); return; }
+                onNavigate(activeUrgent?.navTo || "documentos");
+              }}>
                 {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
               </button>
               <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate("documentos")}>ANEXAR</button>
@@ -472,6 +487,23 @@ export default function ClienteResumoKanban({
         </section>
         <div className="qa-client-summary-print__footer">QUERO ARMAS · COCKPIT Z6 · RESUMO · DECK V29</div>
       </div>
+      {exameModal && (
+        <AgendarExameModal
+          open
+          tipo={exameModal.tipo}
+          cep={clienteCep}
+          uf={clienteUf}
+          onClose={() => setExameModal(null)}
+          onVerListaCompleta={() => {
+            const qs = new URLSearchParams();
+            qs.set("tipo", exameModal.tipo);
+            if (clienteCep) qs.set("cep", String(clienteCep));
+            if (clienteUf) qs.set("uf", String(clienteUf));
+            navigate(`/area-do-cliente/agendar-exame?${qs.toString()}`);
+            setExameModal(null);
+          }}
+        />
+      )}
     </main>
   );
 }
