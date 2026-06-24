@@ -419,6 +419,8 @@ function applyDateMask(raw: string): string {
 
 type FormState = {
   tipo_documento: string;
+  /** Título oficial literal lido pela IA do PDF (ex.: "CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS"). */
+  nome_documento: string;
   numero_documento: string;
   orgao_emissor: string;
   data_emissao: string;
@@ -439,6 +441,7 @@ type FormState = {
 
 const EMPTY: FormState = {
   tipo_documento: "cr",
+  nome_documento: "",
   numero_documento: "",
   orgao_emissor: "",
   data_emissao: "",
