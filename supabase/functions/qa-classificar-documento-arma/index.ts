@@ -18,7 +18,7 @@
 //   }
 //
 // Diretrizes:
-//  - service_role no servidor; valida JWT do chamador.
+//  - service_role no servidor; aceita sessão autenticada ou fluxo público via anon key.
 //  - Não escreve em tabelas (decisão de salvar fica com o caller).
 //  - Modelo: google/gemini-3-flash-preview.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -312,7 +312,7 @@ const SYSTEM_PROMPT = [
   "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma.",
 ].join("\n");
 
-async function fetchFewShotBlock(supabase: ReturnType<typeof createClient>): Promise<string> {
+async function fetchFewShotBlock(supabase: any): Promise<string> {
   try {
     const { data } = await supabase
       .from("qa_exemplos_ia")
@@ -324,18 +324,22 @@ async function fetchFewShotBlock(supabase: ReturnType<typeof createClient>): Pro
 
     // Deduplica por tipo, mantendo o mais recente de cada
     const seen = new Set<string>();
-    const deduped = data.filter((e: { tipo_documento: string }) => {
-      if (seen.has(e.tipo_documento)) return false;
-      seen.add(e.tipo_documento);
+    const deduped = (data as Array<Record<string, unknown>>).filter((e) => {
+      const tipo = String(e.tipo_documento || "");
+      if (seen.has(tipo)) return false;
+      seen.add(tipo);
       return true;
     }).slice(0, 8);
 
-    const linhas = deduped.map((e: { tipo_documento: string; justificativa?: string; campos_extraidos?: Record<string, unknown> }) => {
-      const campos = Object.entries(e.campos_extraidos || {})
+    const linhas = deduped.map((e) => {
+      const camposExtraidos = e.campos_extraidos && typeof e.campos_extraidos === "object"
+        ? e.campos_extraidos as Record<string, unknown>
+        : {};
+      const campos = Object.entries(camposExtraidos)
         .filter(([, v]) => v !== null && v !== undefined && v !== "")
         .map(([k, v]) => `${k}=${v}`)
         .join(", ");
-      return `• [${e.tipo_documento}] ${e.justificativa || ""}${campos ? `\n  Campos extraídos: ${campos}` : ""}`;
+      return `• [${String(e.tipo_documento || "")}] ${String(e.justificativa || "")}${campos ? `\n  Campos extraídos: ${campos}` : ""}`;
     });
 
     return [
@@ -399,23 +403,32 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   return null;
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const [, payloadPart] = token.split(".");
+    if (!payloadPart) return null;
+    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization") || "";
+    const apiKeyHeader = req.headers.get("apikey") || "";
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const token = authHeader.slice(7);
 
-    let sub: string | undefined;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-      sub = payload?.sub;
-    } catch (_) {
-      // ignore
-    }
-    if (!sub) {
-      console.error("[qa-classificar] auth failed: missing sub");
+    const payload = decodeJwtPayload(token);
+    const hasUserSession = typeof payload?.sub === "string" && payload.sub.length > 0;
+    const isAnonFlow = payload?.role === "anon" && !!apiKeyHeader && apiKeyHeader === token;
+    if (!hasUserSession && !isAnonFlow) {
+      console.error("[qa-classificar] auth failed: invalid caller");
       return json({ error: "Unauthorized" }, 401);
     }
 
