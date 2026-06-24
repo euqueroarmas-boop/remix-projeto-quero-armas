@@ -952,26 +952,40 @@ export function ClienteDocsHubModal({
           body: { tipo_documento: tipoIA, imageDataUrl: dataUrl },
         });
         const sugestao = (extra as any)?.sugestao || {};
-        setForm((prev) => ({
-          ...prev,
-          numero_documento: prev.numero_documento || sugestao.numero_documento || "",
-          orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
-          data_emissao:
-            prev.data_emissao ||
-            (/laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA)
-              ? sugestao.data_avaliacao || sugestao.data_emissao
-              : sugestao.data_emissao) ||
-            "",
+        setForm((prev) => {
+          const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
+          // Para laudos/exames, a DATA DA AVALIAÇÃO do extractor SEMPRE prevalece
+          // sobre qualquer data_emissao previamente capturada pelo classify (que
+          // costuma trazer a data de emissão impressa do laudo, não a da avaliação).
+          // Regra legal (Lei 10.826/03): validade = data_avaliacao + 1 ano.
+          const dataAvaliacaoExtractor = isLaudoExame ? (sugestao.data_avaliacao || "") : "";
+          return ({
+            ...prev,
+            numero_documento: prev.numero_documento || sugestao.numero_documento || "",
+            orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
+            data_emissao:
+              dataAvaliacaoExtractor ||
+              prev.data_emissao ||
+              (isLaudoExame
+                ? sugestao.data_avaliacao || sugestao.data_emissao
+                : sugestao.data_emissao) ||
+              "",
           // Para comprovante de residência, nunca usar data_validade da sugestão:
           // a IA extrai o vencimento da conta (≈1 mês), não a validade do documento (90 dias).
-          data_validade: prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || "",
+            data_validade:
+              // Para laudos/exames, o extractor já recalcula data_validade = data_avaliacao + 1 ano
+              // no servidor; sobrescreve qualquer prev (que veio do classify, possivelmente errado).
+              (isLaudoExame && sugestao.data_validade)
+                ? sugestao.data_validade
+                : (prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || ""),
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
           arma_modelo: prev.arma_modelo || safeExtractedModel(sugestao.arma_modelo) || "",
           arma_calibre: prev.arma_calibre || sugestao.arma_calibre || "",
           arma_numero_serie: prev.arma_numero_serie || sugestao.arma_numero_serie || "",
           arma_especie: prev.arma_especie || sugestao.arma_especie || "",
-        }));
+          });
+        });
       } catch (eExt) {
         console.warn("[extract complementar] ignorado:", eExt);
       }
