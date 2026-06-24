@@ -6149,6 +6149,7 @@ export type Database = {
           email: string | null
           endereco: string | null
           fonte_url: string | null
+          geocode_falhou: boolean
           id: string
           lat: number | null
           lng: number | null
@@ -6165,6 +6166,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           fonte_url?: string | null
+          geocode_falhou?: boolean
           id?: string
           lat?: number | null
           lng?: number | null
@@ -6181,6 +6183,7 @@ export type Database = {
           email?: string | null
           endereco?: string | null
           fonte_url?: string | null
+          geocode_falhou?: boolean
           id?: string
           lat?: number | null
           lng?: number | null
