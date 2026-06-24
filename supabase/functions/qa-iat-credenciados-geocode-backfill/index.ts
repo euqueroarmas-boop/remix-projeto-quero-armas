@@ -20,6 +20,7 @@ async function processarLote(supabase: any, batchSize: number, uf?: string) {
     .is("lat", null)
     .not("endereco", "is", null)
     .neq("endereco", "")
+    .order("id")
     .limit(batchSize);
   if (uf) q = q.eq("uf", uf);
   const { data: pendentes, error } = await q;
