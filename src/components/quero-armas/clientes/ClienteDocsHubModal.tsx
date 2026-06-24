@@ -705,6 +705,51 @@ export function ClienteDocsHubModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Auto-busca de dados do cliente para alimentar o motor de conformidade
+   * cruzada. Resolve cenários (ex.: Bancada/Arsenal) onde o componente
+   * pai não passa explicitamente clienteCpf/clienteNome/etc.
+   */
+  const [clienteAutoFetch, setClienteAutoFetch] = useState<{
+    nome: string | null;
+    cpf: string | null;
+    data_nascimento: string | null;
+    nome_mae: string | null;
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null });
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!open || !qaClienteId) return;
+      // Só busca se algum campo de referência estiver ausente nas props.
+      if (clienteNome && clienteCpf && clienteDataNascimento && clienteNomeMae) return;
+      try {
+        const { data } = await supabase
+          .from("qa_clientes" as any)
+          .select("nome_completo, cpf, data_nascimento, nome_mae")
+          .eq("id", qaClienteId)
+          .maybeSingle();
+        if (cancelled || !data) return;
+        const row = data as Record<string, string | null>;
+        setClienteAutoFetch({
+          nome: row.nome_completo || null,
+          cpf: row.cpf || null,
+          data_nascimento: row.data_nascimento || null,
+          nome_mae: row.nome_mae || null,
+        });
+      } catch {
+        // Silencioso — conformidade apenas degrada para "sem referência".
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [open, qaClienteId, clienteNome, clienteCpf, clienteDataNascimento, clienteNomeMae]);
+
+  const refClienteNome = clienteNome ?? clienteAutoFetch.nome;
+  const refClienteCpf = clienteCpf ?? clienteAutoFetch.cpf;
+  const refClienteDataNascimento = clienteDataNascimento ?? clienteAutoFetch.data_nascimento;
+  const refClienteNomeMae = clienteNomeMae ?? clienteAutoFetch.nome_mae;
+
   // Sincroniza tipo padrão a cada abertura (sem quebrar edição em andamento).
   // Reset apenas quando o modal abre.
   // eslint-disable-next-line react-hooks/exhaustive-deps
