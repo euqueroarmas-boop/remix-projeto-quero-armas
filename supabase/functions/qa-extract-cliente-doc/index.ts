@@ -28,6 +28,8 @@ const TIPOS_VALIDOS = [
   "laudo_psicologico",
   "exame_psicologico",
   "laudo_psicotecnico",
+  "exame_tiro",
+  "capacidade_tecnica",
   "outro",
 ] as const;
 type TipoDoc = typeof TIPOS_VALIDOS[number];
@@ -66,7 +68,12 @@ function buildTool(tipo: TipoDoc) {
     arma_especie: { type: "string", description: "Espécie/tipo (Pistola, Revólver, Carabina, Espingarda, Fuzil)." },
   };
 
-  const isLaudo = tipo === "laudo_psicologico" || tipo === "exame_psicologico" || tipo === "laudo_psicotecnico";
+  const isLaudo =
+    tipo === "laudo_psicologico" ||
+    tipo === "exame_psicologico" ||
+    tipo === "laudo_psicotecnico" ||
+    tipo === "exame_tiro" ||
+    tipo === "capacidade_tecnica";
   const includeArma = !isLaudo && tipo !== "cr";
   let properties: Record<string, unknown> = { ...baseProps };
   if (includeArma) properties = { ...properties, ...armaProps };
@@ -108,6 +115,17 @@ function systemPromptFor(tipo: TipoDoc): string {
       "Você é especialista em EXAMES PSICOLÓGICOS para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
     laudo_psicotecnico:
       "Você é especialista em LAUDOS PSICOTÉCNICOS para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
+    exame_tiro:
+      "Você é especialista em EXAMES DE CAPACIDADE TÉCNICA / EXAMES DE TIRO para concessão/renovação de registro de arma de fogo (Lei 10.826/03). " +
+      "REGRA CRÍTICA DE VALIDADE: o exame de tiro / capacidade técnica tem validade de EXATAMENTE 1 ANO contado a partir da DATA DA AVALIAÇÃO " +
+        "(quando o avaliado efetivamente realizou o teste prático de tiro no estande), NUNCA a partir da data de emissão/assinatura do laudo. " +
+      "Sempre extraia 'data_avaliacao' procurando por termos como 'data da avaliação', 'data do exame', 'avaliado em', " +
+        "'realizado em', 'data do teste prático', 'data da prova de tiro', 'realizado no dia'. " +
+      "EXEMPLO DE TREINAMENTO: avaliação realizada em 03/03/2025 → data_avaliacao=03/03/2025 e data_validade=03/03/2026. " +
+      "Em 'orgao_emissor' coloque o nome do instrutor de tiro responsável (com credencial PF/EB) ou o clube/estande. " +
+      "Em 'numero_documento' coloque o número do credenciamento do instrutor (CR/PF) quando disponível.",
+    capacidade_tecnica:
+      "Você é especialista em LAUDOS DE CAPACIDADE TÉCNICA para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
   };
   return (
@@ -207,7 +225,12 @@ Deno.serve(async (req) => {
 
     // Laudo psicológico: validade = data_avaliacao + 1 ano (regra legal Lei 10.826/03).
     // Sobrescreve qualquer data_validade que a IA tenha tentado inferir errado.
-    const isLaudo = tipo === "laudo_psicologico" || tipo === "exame_psicologico" || tipo === "laudo_psicotecnico";
+    const isLaudo =
+      tipo === "laudo_psicologico" ||
+      tipo === "exame_psicologico" ||
+      tipo === "laudo_psicotecnico" ||
+      tipo === "exame_tiro" ||
+      tipo === "capacidade_tecnica";
     let dataValidadeISO = ddmmaaaaToISO(raw.data_validade);
     const dataAvaliacaoISO = ddmmaaaaToISO(raw.data_avaliacao);
     if (isLaudo && dataAvaliacaoISO) {
