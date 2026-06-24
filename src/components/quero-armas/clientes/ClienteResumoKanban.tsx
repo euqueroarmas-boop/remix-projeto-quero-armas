@@ -217,10 +217,11 @@ export default function ClienteResumoKanban({
       navTo: string,
       ctaLabel: string,
       frontKey: Urgent["frontKey"],
+      examTipo?: Urgent["examTipo"],
     ) => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey });
+      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo });
     };
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
@@ -236,6 +237,10 @@ export default function ClienteResumoKanban({
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
       const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
       const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
+      const examTipo: Urgent["examTipo"] | undefined =
+        tipo === "laudo_psicologico" ? "psicologo"
+          : tipo === "laudo_capacidade_tecnica" ? "instrutor_tiro"
+          : undefined;
       pushUrgent(
         shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"),
         isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
@@ -243,6 +248,7 @@ export default function ClienteResumoKanban({
         "documentos",
         cta,
         fk,
+        examTipo,
       );
     });
     processoDocs.forEach((doc: any) => pushUrgent(
