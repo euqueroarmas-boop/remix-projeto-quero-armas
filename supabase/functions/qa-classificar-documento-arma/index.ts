@@ -410,8 +410,11 @@ Deno.serve(async (req) => {
     const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } },
     });
-    const { data: userData } = await userClient.auth.getUser(token);
-    if (!userData?.user) return json({ error: "Unauthorized" }, 401);
+    const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error("[qa-classificar] auth failed", claimsErr?.message);
+      return json({ error: "Unauthorized" }, 401);
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
