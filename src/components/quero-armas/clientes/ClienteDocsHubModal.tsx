@@ -27,6 +27,7 @@ import { isCurrentUserStaff } from "./docsAprovacao";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
+  getNomeDocumentoDisplay,
   getTipoDocumentoMeta,
   inferEscopoDocumental,
   inferHubCategoriaFromTipo,
@@ -280,8 +281,7 @@ function calcularConformidade(
   for (const doc of sorted) {
     const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
     const tier = docTrustTier(doc.tipo_documento);
-    const meta = getTipoDocumentoMeta(doc.tipo_documento);
-    const nomeDoc = meta?.short || doc.tipo_documento;
+    const nomeDoc = getNomeDocumentoDisplay(doc, doc.tipo_documento);
     const fonte = doc.validado_admin ? `${nomeDoc} (equipe)` : nomeDoc;
 
     const trySet = (key: string, val: string | undefined) => {
@@ -1274,7 +1274,7 @@ export function ClienteDocsHubModal({
     setSaving(true);
     try {
       // Bloqueio de duplicidade
-      const tipoLabel = (getTipoDocumentoMeta(form.tipo_documento)?.short || form.tipo_documento || "documento").toUpperCase();
+      const tipoLabel = getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento, nome_documento: form.nome_documento, numero_documento: form.numero_documento, orgao_emissor: form.orgao_emissor }, form.tipo_documento || "documento").toUpperCase();
       const numeroNorm = (form.numero_documento || "").replace(/\s+/g, "").toUpperCase();
 
       // CR: único por cliente (não importa número)
@@ -1525,7 +1525,7 @@ export function ClienteDocsHubModal({
           return d.toLocaleDateString("pt-BR");
         })()
       : "não informado";
-    const tipoCertidaoLabel = getTipoDocumentoMeta(form.tipo_documento)?.label || form.tipo_documento;
+    const tipoCertidaoLabel = getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento, nome_documento: form.nome_documento, numero_documento: form.numero_documento, orgao_emissor: form.orgao_emissor }, form.tipo_documento);
 
     const texto = [
       "DECLARAÇÃO DE HOMONÍMIA",
@@ -2042,7 +2042,7 @@ export function ClienteDocsHubModal({
                             {[
                               "DECLARAÇÃO DE HOMONÍMIA",
                               "",
-                              `Eu, ${clienteNome || "Requerente"}, portador(a) do CPF ${clienteCpf ? clienteCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "---"}, declaro que NÃO possuo qualquer vínculo com o apontamento constante na ${getTipoDocumentoMeta(form.tipo_documento)?.label || form.tipo_documento}.`,
+                              `Eu, ${clienteNome || "Requerente"}, portador(a) do CPF ${clienteCpf ? clienteCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "---"}, declaro que NÃO possuo qualquer vínculo com o apontamento constante na ${getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento, nome_documento: form.nome_documento, numero_documento: form.numero_documento, orgao_emissor: form.orgao_emissor }, form.tipo_documento)}.`,
                               "",
                               "Trata-se de homonímia com outra pessoa de nome semelhante.",
                               "Declaro estar ciente das penalidades do Art. 299 do Código Penal.",

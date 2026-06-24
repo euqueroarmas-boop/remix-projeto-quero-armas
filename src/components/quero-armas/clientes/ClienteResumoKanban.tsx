@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
-import { getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
 
 interface Props {
   cliente: any;
@@ -167,15 +167,7 @@ export default function ClienteResumoKanban({
         return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
       })
       .map((doc: any) => {
-        // Prioridade: nome_documento (título oficial lido pela IA do PDF) →
-        // label oficial do catálogo (curto) → arquivo → fallback.
-        const meta = getTipoDocumentoMeta(doc?.tipo_documento);
-        const nomeBruto =
-          doc?.nome_documento ||
-          meta?.short ||
-          meta?.label ||
-          doc?.arquivo_nome ||
-          "DOCUMENTO";
+        const nomeBruto = getNomeDocumentoDisplay(doc, "DOCUMENTO");
         const nome = shortName(nomeBruto, "DOCUMENTO").toUpperCase();
         const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
         return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
@@ -212,8 +204,8 @@ export default function ClienteResumoKanban({
       const source = isPsi ? exameByTipo.get("psicologico") : exameByTipo.get("tiro");
       pushUrgent(isPsi ? "Laudo Psicológico" : "Exame de Tiro", isPsi ? URG_SUB.psicologico : URG_SUB.tiro, source?.data_vencimento, "documentos", "AGENDAR EXAMES →");
     });
-    meusDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
-    processoDocs.forEach((doc: any) => pushUrgent(shortName(doc?.nome_documento || doc?.tipo_documento || doc?.arquivo_nome, "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
+    meusDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
+    processoDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
     prazosProc.forEach((p: any) => {
       if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos", ctaLabel: "AGENDAR AGORA →" });
     });
