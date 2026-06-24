@@ -141,7 +141,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "documento_complementar_caso", label: "Documento complementar do caso", short: "COMPLEMENTAR", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "cr", label: "CR — Certificado de Registro de CAC (Exército)", short: "CR · Cert. Registro CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
+  { value: "cr", label: "CR — Certificado de Registro de Colecionador, Atirador Desportivo e Caçador (Exército)", short: "CR · Cert. Registro CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
   { value: "craf", label: "CRAF — Certificado de Registro de Arma de Fogo", short: "CRAF · Cert. Reg. de Arma de Fogo", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "sinarm", label: "SINARM — Certificado de Registro de Arma de Fogo (Polícia Federal)", short: "SINARM · Reg. PF", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "gt", label: "GT — Guia de Tráfego", short: "GT · Guia de Tráfego", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
@@ -290,7 +290,7 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
 
   // ===== Documentos de arma / acervo =====
   if (tipo === "cr") {
-    return "CR — Certificado de Registro de CAC (Exército)";
+    return "CR — Certificado de Registro de Colecionador, Atirador Desportivo e Caçador (Exército)";
   }
   if (tipo === "craf") {
     return "CRAF — Certificado de Registro de Arma de Fogo";
