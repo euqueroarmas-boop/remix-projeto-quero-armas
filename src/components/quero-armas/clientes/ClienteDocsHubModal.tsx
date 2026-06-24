@@ -1114,6 +1114,7 @@ export function ClienteDocsHubModal({
           const dataAvaliacaoExtractor = isLaudoExame ? (sugestao.data_avaliacao || "") : "";
           return ({
             ...prev,
+            nome_documento: prev.nome_documento || sugestao.titulo_oficial || "",
             numero_documento: prev.numero_documento || sugestao.numero_documento || "",
             orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
             data_emissao:
