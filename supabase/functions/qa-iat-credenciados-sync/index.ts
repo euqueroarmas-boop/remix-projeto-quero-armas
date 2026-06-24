@@ -277,7 +277,15 @@ async function sincronizarUF(supabase: any, uf: string) {
 
   await supabase.from("qa_iat_credenciados").delete().eq("uf", uf);
   if (registros.length) {
-    const rows = registros.map((r) => {
+    // Dedupe defensivo: a chave única é (uf, nome, portaria, endereco)
+    const seen = new Set<string>();
+    const unicos = registros.filter((r) => {
+      const k = `${r.nome}||${r.portaria || ""}||${r.endereco || ""}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    const rows = unicos.map((r) => {
       const prev = geoCache.get(`${r.nome}||${r.portaria || ""}`);
       return {
         ...r,
@@ -291,6 +299,7 @@ async function sincronizarUF(supabase: any, uf: string) {
       const { error } = await supabase.from("qa_iat_credenciados").insert(rows.slice(i, i + 500));
       if (error) throw new Error(error.message);
     }
+    registros = unicos;
   } else if (status === "ok") {
     status = "erro";
     mensagem = "0 registros (parse e/ou Gemini)";
