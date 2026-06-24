@@ -6,9 +6,10 @@ import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
+// Rótulo can\u00f4nico do Hub, mantendo a caixa original (mixed case)
 function hubLabel(tipo: string, fallback: string) {
   const meta = getTipoDocumentoMeta(tipo);
-  return (meta?.label || fallback).toUpperCase();
+  return meta?.label || fallback;
 }
 
 interface Props {
@@ -30,7 +31,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos" };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
@@ -126,21 +127,21 @@ export default function ClienteResumoKanban({
       const days = daysUntil(date);
       arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days) });
     };
-    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — CERTIFICADO DE REGISTRO"), cadastro.validade_cr);
+    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr);
     crafs.forEach((cr: any) =>
       addArsenal(
-        `${hubLabel("craf", "CRAF — CERTIFICADO DE REGISTRO DE ARMA DE FOGO")} — ${shortName(cr.nome_arma || cr.nome_craf, "ARMA").toUpperCase()}`,
+        `${hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo")} — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`,
         cr.data_validade,
       ),
     );
     gtes.forEach((g: any) =>
       addArsenal(
-        `${hubLabel("gte", "GTE — GUIA DE TRÁFEGO EVENTUAL")} — ${shortName(g.nome_arma || g.nome_gte, "ARMA").toUpperCase()}`,
+        `${hubLabel("gte", "GTE — Guia de Tráfego Eventual")} — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`,
         g.data_validade,
       ),
     );
     armasManual.forEach((arma: any) => {
-      const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "ARMA MANUAL", "ARMA MANUAL");
+      const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "Arma manual", "Arma manual");
       arsenalItems.push({ label: nome, status: "—", tone: "muted" });
     });
 
@@ -148,12 +149,12 @@ export default function ClienteResumoKanban({
     for (const e of examesAtuais) if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
     const examesItems: FrontItem[] = [
       exameByTipo.get("psicologico") && {
-        label: hubLabel("laudo_psicologico", "LAUDO PSICOLÓGICO"),
+        label: hubLabel("laudo_psicologico", "Laudo Psicológico"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
       },
       exameByTipo.get("tiro") && {
-        label: hubLabel("laudo_capacidade_tecnica", "EXAME DE TIRO"),
+        label: hubLabel("laudo_capacidade_tecnica", "Exame de Tiro"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
       },
@@ -162,19 +163,19 @@ export default function ClienteResumoKanban({
     const filiacaoItems = filiacoes.map((f: any) => {
       const days = daysUntil(f.validade_filiacao);
       return {
-        label: shortName(f.nome_filiacao || f.nome_clube || `CLUBE #${f.clube_id || ""}`, "CLUBE"),
+        label: shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"),
         status: compactStatus(days),
         tone: frontStatus(days),
       };
     });
 
     const processoItems = activeItems.map((item: any) => {
-      const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `SERVIÇO #${item.servico_id || ""}`;
+      const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
       const prazo = prazosProc.find((p: any) => p.id === item.id || p.servicoId === item.servico_id);
       if (prazo?.diasRestantes !== undefined) {
-        return { label: shortName(nome, "PROCESSO"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
+        return { label: shortName(nome, "Processo"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
-      return { label: shortName(nome, "PROCESSO"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
+      return { label: shortName(nome, "Processo"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
     const docItems: FrontItem[] = meusDocs
@@ -184,8 +185,8 @@ export default function ClienteResumoKanban({
         return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
       })
       .map((doc: any) => {
-        const nomeBruto = getNomeDocumentoDisplay(doc, "DOCUMENTO");
-        const nome = shortName(nomeBruto, "DOCUMENTO").toUpperCase();
+        const nomeBruto = getNomeDocumentoDisplay(doc, "Documento");
+        const nome = shortName(nomeBruto, "Documento");
         const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
         return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
       })
@@ -207,24 +208,60 @@ export default function ClienteResumoKanban({
     ];
 
     const urgents: Urgent[] = [];
-    const pushUrgent = (label: string, sub: string, date: string | null | undefined, navTo: string, ctaLabel = "AGENDAR AGORA →") => {
+    const pushUrgent = (
+      label: string,
+      sub: string,
+      date: string | null | undefined,
+      navTo: string,
+      ctaLabel: string,
+      frontKey: Urgent["frontKey"],
+    ) => {
       const days = daysUntil(date);
       if (days === null || days > 7) return;
-      urgents.push({ label, sub, days, navTo, ctaLabel });
+      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey });
     };
-    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →");
-    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →"));
-    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →"));
-    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos"));
+    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
+    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
+    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
     // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.
     // Mantemos os cards da frente "EXAMES" intactos — só removemos o push
     // duplicado para a fila de urgentes.
-    meusDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "documentos", "ATUALIZAR AGORA →"));
-    processoDocs.forEach((doc: any) => pushUrgent(shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"), URG_SUB.documento, doc?.data_validade_efetiva || doc?.data_validade, "processos", "ATUALIZAR AGORA →"));
+    meusDocs.forEach((doc: any) => {
+      const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
+      const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
+      const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
+      pushUrgent(
+        shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"),
+        isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
+        doc?.data_validade_efetiva || doc?.data_validade,
+        "documentos",
+        cta,
+        fk,
+      );
+    });
+    processoDocs.forEach((doc: any) => pushUrgent(
+      shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
+      URG_SUB.documento,
+      doc?.data_validade_efetiva || doc?.data_validade,
+      "processos",
+      "ATUALIZAR AGORA →",
+      "processos",
+    ));
     prazosProc.forEach((p: any) => {
-      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) urgents.push({ label: `${p.evento} — ${p.servicoNome || "Processo"}`, sub: URG_SUB.processo, days: p.diasRestantes, navTo: "processos", ctaLabel: "AGENDAR AGORA →" });
+      if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) {
+        urgents.push({
+          label: `${p.evento} — ${p.servicoNome || "Processo"}`,
+          sub: URG_SUB.processo,
+          days: p.diasRestantes,
+          navTo: "processos",
+          ctaLabel: "AGENDAR AGORA →",
+          frontKey: "processos",
+        });
+      }
     });
 
     const sortedUrgents = urgents.sort((a, b) => a.days - b.days);
@@ -249,12 +286,20 @@ export default function ClienteResumoKanban({
   }, [SERVICO_MAP, armasManual, cadastro, crafs, examesAtuais, filiacoes, gtes, itens, meusDocs, processoDocs]);
 
   const [focusIndex, setFocusIndex] = useState(0);
-  useEffect(() => setFocusIndex(0), [snapshot.urgents.length]);
+  const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
+  const [autoPaused, setAutoPaused] = useState(false);
+
+  const filteredUrgents = useMemo(
+    () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
+    [chipFilter, snapshot.urgents],
+  );
+
+  useEffect(() => setFocusIndex(0), [filteredUrgents.length, chipFilter]);
   useEffect(() => {
-    if (snapshot.urgents.length <= 1) return;
-    const id = window.setInterval(() => setFocusIndex((current) => (current + 1) % snapshot.urgents.length), 6000);
+    if (filteredUrgents.length <= 1 || autoPaused) return;
+    const id = window.setInterval(() => setFocusIndex((current) => (current + 1) % filteredUrgents.length), 6000);
     return () => window.clearInterval(id);
-  }, [snapshot.urgents.length]);
+  }, [filteredUrgents.length, autoPaused]);
 
   // Trava o scroll da página apenas no desktop (>=1024px).
   // No mobile/tablet o conteúdo precisa rolar para acessar os cards e o rodapé.
@@ -289,7 +334,7 @@ export default function ClienteResumoKanban({
     };
   }, []);
 
-  const activeUrgent = snapshot.urgents[focusIndex] || null;
+  const activeUrgent = filteredUrgents[focusIndex] || null;
   const memberSince = (() => {
     const d = (cliente as any)?.created_at || (cliente as any)?.data_cadastro;
     if (!d) return null;
@@ -313,12 +358,12 @@ export default function ClienteResumoKanban({
     ? (CATEGORIA_LABELS[rawCategoria] || rawCategoria.replace(/_/g, " ").toUpperCase())
     : (temCR ? "TITULAR" : "SEM CATEGORIA");
   const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
-  const filters = [
-    `TODOS ${snapshot.totalFronts}`,
-    `ARSENAL ${snapshot.fronts[0].count}`,
-    `EXAMES ${snapshot.fronts[1].count}`,
-    `DOCUMENTOS ${snapshot.fronts[3].count}`,
-    `PROCESSOS ${snapshot.fronts[4].count}`,
+  const filters: Array<{ key: "todos" | Urgent["frontKey"]; label: string }> = [
+    { key: "todos", label: `TODOS ${snapshot.urgents.length}` },
+    { key: "arsenal", label: `ARSENAL ${snapshot.urgents.filter((u) => u.frontKey === "arsenal").length}` },
+    { key: "exames", label: `EXAMES ${snapshot.urgents.filter((u) => u.frontKey === "exames").length}` },
+    { key: "documentos", label: `DOCUMENTOS ${snapshot.urgents.filter((u) => u.frontKey === "documentos").length}` },
+    { key: "processos", label: `PROCESSOS ${snapshot.urgents.filter((u) => u.frontKey === "processos").length}` },
   ];
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
@@ -328,7 +373,7 @@ export default function ClienteResumoKanban({
       <style>{`
         @keyframes qa-recoil{0%{transform:scale(1) translateX(0)}15%{transform:scale(1.08) translateX(-4px)}30%{transform:scale(1.14) translateX(3px)}45%{transform:scale(1.1) translateX(-2px)}60%{transform:scale(1.12) translateX(1px)}100%{transform:scale(1.12) translateX(0)}}
         .qa-client-summary-print{--paper:#f3f3f2;--card:#ffffff;--ink:#111111;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;--amber:#d5a33d;--green:#278652;--red:#df2727;color:var(--ink);font-family:'Arial Narrow',Arial,sans-serif;letter-spacing:.02em;padding:0;min-height:560px;border:0;border-radius:0;box-shadow:none;text-transform:uppercase}
-        .qa-client-summary-print *{box-sizing:border-box}.qa-client-summary-print__wrap{max-width:none;margin:0}.qa-client-summary-print__top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px}.qa-client-summary-print h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:24px;line-height:1.05;margin:0;letter-spacing:.04em;color:#0A0A0A;text-transform:uppercase}.qa-client-summary-print__meta{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:10px;font-weight:900;letter-spacing:.22em;color:var(--muted)}.qa-client-summary-print__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo);display:inline-block}.qa-client-summary-print__updated{text-align:right;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:11px;line-height:1.15;letter-spacing:.08em;padding-top:6px;white-space:nowrap;color:#6A6A6A}.qa-client-summary-print__updated small{display:block;color:var(--muted);font-size:9px;letter-spacing:.36em;margin-bottom:4px}.qa-client-summary-print__updated{display:flex;align-items:center;gap:12px;justify-content:flex-end}.qa-client-summary-print__updated-text{display:block}.qa-client-summary-print__cadastro-btn{display:inline-flex;align-items:center;justify-content:center;width:64px;height:52px;border:none;background:transparent;padding:0;border-radius:0;overflow:hidden;cursor:pointer;transition:transform .2s ease,filter .2s ease;flex-shrink:0}.qa-client-summary-print__cadastro-btn:hover{animation:qa-recoil .45s ease-out forwards}.qa-client-summary-print__toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.qa-client-summary-print__chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px 7px;font-size:9px;font-weight:900;letter-spacing:.18em;color:#303030;box-shadow:0 1px 1px rgba(0,0,0,.04)}.qa-client-summary-print__chip:first-child{background:#111;color:#fff;border-color:#111}.qa-client-summary-print__label{font-size:12px;font-weight:900;letter-spacing:.22em;margin:0 0 15px}.qa-client-summary-print__fronts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.qa-front-card{background:var(--card);border:1px solid var(--line);border-radius:3px;min-height:200px;padding:20px 14px 14px;box-shadow:0 6px 14px rgba(17,17,17,.04);position:relative}.qa-front-card:before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:4px;background:#cfcfcf;border-radius:3px 3px 0 0}.qa-front-card.s-bad:before{background:var(--red)}.qa-front-card.s-warn:before{background:var(--amber)}.qa-front-card.s-ok:before{background:var(--green)}.qa-front-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #ededed;padding-bottom:9px;margin-bottom:9px}.qa-front-card h2{font-family:Oswald,'Arial Narrow',Arial,sans-serif;margin:0;font-size:13px;font-weight:900;letter-spacing:.24em;line-height:1}.qa-front-card__sub{font-size:11px;letter-spacing:0;text-transform:none;color:#9a9a9f;margin-top:5px}.qa-front-card__num{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:28px;line-height:.82;font-weight:900;color:var(--muted);letter-spacing:0}.qa-front-card.s-bad .qa-front-card__num{color:var(--red)}.qa-front-card.s-warn .qa-front-card__num{color:var(--amber)}.qa-front-card.s-ok .qa-front-card__num{color:var(--green)}.qa-front-card__item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;font-size:11px;font-weight:900;letter-spacing:-.01em;text-transform:none;border-bottom:1px solid #f1f1f1}.qa-front-card__item:last-child{border-bottom:0}.qa-front-card__item span:first-child{white-space:normal;overflow:visible;text-overflow:clip}.qa-front-card__item strong{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}.qa-front-card__item strong.bad{color:var(--red)}.qa-front-card__item strong.warn{color:var(--amber)}.qa-front-card__item strong.ok{color:var(--green)}.qa-client-summary-print__focus{margin-top:0;margin-bottom:24px;background:var(--card);border:1px solid var(--line);border-radius:3px;min-height:78px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px 18px 18px 22px;position:relative}.qa-client-summary-print__focus:before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:4px;background:var(--red);border-radius:3px 0 0 3px}.qa-focus__k{font-size:10px;font-weight:900;letter-spacing:.24em;color:var(--red);margin-bottom:8px}.qa-focus__text{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:0;text-transform:none}.qa-focus__actions{display:flex;align-items:center;gap:10px}.qa-focus__pages{display:flex;gap:5px}.qa-focus__page{width:22px;height:22px;border:1px solid var(--line);background:#fff;color:var(--muted);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;cursor:pointer}.qa-focus__page.is-active{background:var(--bordo);border-color:var(--bordo);color:#fff}.qa-focus__btn{border:0;background:var(--bordo);color:#fff;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;padding:8px 12px;cursor:pointer}.qa-client-summary-print__summary{display:grid;grid-template-columns:repeat(4,1fr);margin-top:22px;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--card)}.qa-client-summary-print__sm{padding:16px 18px;border-right:1px solid var(--line);min-height:82px}.qa-client-summary-print__sm:last-child{border-right:0}.qa-client-summary-print__k{font-size:10px;font-weight:900;letter-spacing:.24em;color:var(--muted);margin-bottom:9px}.qa-client-summary-print__v{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:26px;line-height:1;font-weight:900;letter-spacing:0}.qa-client-summary-print__v small{font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:var(--muted);margin-left:6px;text-transform:none}.qa-client-summary-print__footer{text-align:center;margin-top:21px;color:#b1b1b1;font-size:9px;font-weight:900;letter-spacing:.22em}@media (max-width:1399px){.qa-client-summary-print__fronts{grid-template-columns:repeat(3,1fr)}}@media (max-width:900px){.qa-client-summary-print__fronts{grid-template-columns:repeat(2,1fr)}.qa-client-summary-print__summary{grid-template-columns:repeat(2,1fr)}.qa-client-summary-print__sm:nth-child(2){border-right:0}.qa-client-summary-print__sm:nth-child(-n+2){border-bottom:1px solid var(--line)}}.qa-urgbanner{position:relative;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:18px 22px 18px 26px;margin-bottom:18px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;box-shadow:0 6px 14px rgba(17,17,17,.04)}.qa-urgbanner:before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:5px;background:var(--red);border-radius:3px 0 0 3px}.qa-urgbanner__kicker{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.28em;color:var(--red);margin-bottom:10px;text-transform:uppercase}.qa-urgbanner__title{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.05;margin:0 0 6px;color:#0c0c0c;text-transform:none;letter-spacing:-.01em}.qa-urgbanner__sub{margin:0 0 16px;font-family:Arial,sans-serif;font-size:13px;color:#5a5a5a;text-transform:none;letter-spacing:0}.qa-urgbanner__actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.qa-urgbanner__cta{border:0;background:var(--bordo);color:#fff;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:11px 16px;cursor:pointer;border-radius:2px;text-transform:uppercase}.qa-urgbanner__ghost{border:1px solid #d6d6d4;background:transparent;color:#111;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:10px 16px;cursor:pointer;border-radius:2px;text-transform:uppercase}.qa-urgbanner__pages{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}.qa-urgbanner__page{min-width:30px;height:26px;border:1px solid var(--line);background:#fff;color:var(--muted);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.06em;cursor:pointer;border-radius:2px;padding:0 6px}.qa-urgbanner__page.is-active{background:var(--bordo);border-color:var(--bordo);color:#fff}.qa-urgbanner__count{text-align:right;padding-left:18px}.qa-urgbanner__num{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:900;font-size:78px;line-height:.82;color:var(--red);letter-spacing:-.02em}.qa-urgbanner__numk{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.32em;color:#0c0c0c;margin-top:6px}@media (max-width:880px){.qa-urgbanner{grid-template-columns:1fr;padding:20px 18px 18px 24px}.qa-urgbanner__count{text-align:left;padding-left:0}.qa-urgbanner__num{font-size:72px}.qa-urgbanner__title{font-size:26px}}@media (max-width:680px){.qa-client-summary-print{padding:20px 14px 28px}.qa-client-summary-print__top{flex-direction:column;gap:8px}.qa-client-summary-print__updated{text-align:left;padding-top:0}.qa-client-summary-print h1{font-size:24px}.qa-client-summary-print__fronts{grid-template-columns:1fr}.qa-client-summary-print__focus{grid-template-columns:1fr}.qa-focus__actions{justify-content:space-between;flex-wrap:wrap}.qa-client-summary-print__summary{grid-template-columns:1fr}.qa-client-summary-print__sm,.qa-client-summary-print__sm:nth-child(2){border-right:0;border-bottom:1px solid var(--line)}.qa-client-summary-print__sm:last-child{border-bottom:0}}
+        .qa-client-summary-print *{box-sizing:border-box}.qa-client-summary-print__wrap{max-width:none;margin:0}.qa-client-summary-print__top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px}.qa-client-summary-print h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:24px;line-height:1.05;margin:0;letter-spacing:.04em;color:#0A0A0A;text-transform:uppercase}.qa-client-summary-print__meta{display:flex;align-items:center;gap:8px;margin-top:11px;font-size:10px;font-weight:900;letter-spacing:.22em;color:var(--muted)}.qa-client-summary-print__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo);display:inline-block}.qa-client-summary-print__updated{text-align:right;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:11px;line-height:1.15;letter-spacing:.08em;padding-top:6px;white-space:nowrap;color:#6A6A6A}.qa-client-summary-print__updated small{display:block;color:var(--muted);font-size:9px;letter-spacing:.36em;margin-bottom:4px}.qa-client-summary-print__updated{display:flex;align-items:center;gap:12px;justify-content:flex-end}.qa-client-summary-print__updated-text{display:block}.qa-client-summary-print__cadastro-btn{display:inline-flex;align-items:center;justify-content:center;width:64px;height:52px;border:none;background:transparent;padding:0;border-radius:0;overflow:hidden;cursor:pointer;transition:transform .2s ease,filter .2s ease;flex-shrink:0}.qa-client-summary-print__cadastro-btn:hover{animation:qa-recoil .45s ease-out forwards}.qa-client-summary-print__toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.qa-client-summary-print__chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px 7px;font-size:9px;font-weight:900;letter-spacing:.18em;color:#303030;box-shadow:0 1px 1px rgba(0,0,0,.04)}.qa-client-summary-print__chip{cursor:pointer}.qa-client-summary-print__chip.is-active{background:#111;color:#fff;border-color:#111}.qa-client-summary-print__label{font-size:12px;font-weight:900;letter-spacing:.22em;margin:0 0 15px}.qa-client-summary-print__fronts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}.qa-front-card{background:var(--card);border:1px solid var(--line);border-radius:3px;min-height:200px;padding:20px 14px 14px;box-shadow:0 6px 14px rgba(17,17,17,.04);position:relative}.qa-front-card:before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:4px;background:#cfcfcf;border-radius:3px 3px 0 0}.qa-front-card.s-bad:before{background:var(--red)}.qa-front-card.s-warn:before{background:var(--amber)}.qa-front-card.s-ok:before{background:var(--green)}.qa-front-card__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-bottom:1px solid #ededed;padding-bottom:9px;margin-bottom:9px}.qa-front-card h2{font-family:Oswald,'Arial Narrow',Arial,sans-serif;margin:0;font-size:13px;font-weight:900;letter-spacing:.24em;line-height:1}.qa-front-card__sub{font-size:11px;letter-spacing:0;text-transform:none;color:#9a9a9f;margin-top:5px}.qa-front-card__num{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:28px;line-height:.82;font-weight:900;color:var(--muted);letter-spacing:0}.qa-front-card.s-bad .qa-front-card__num{color:var(--red)}.qa-front-card.s-warn .qa-front-card__num{color:var(--amber)}.qa-front-card.s-ok .qa-front-card__num{color:var(--green)}.qa-front-card__item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 0;font-size:11px;font-weight:900;letter-spacing:-.01em;text-transform:none;border-bottom:1px solid #f1f1f1}.qa-front-card__item:last-child{border-bottom:0}.qa-front-card__item span:first-child{white-space:normal;overflow:visible;text-overflow:clip;text-transform:none;font-weight:600;letter-spacing:0}.qa-front-card__item strong{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.08em;color:var(--muted);white-space:nowrap}.qa-front-card__item strong.bad{color:var(--red)}.qa-front-card__item strong.warn{color:var(--amber)}.qa-front-card__item strong.ok{color:var(--green)}.qa-client-summary-print__focus{margin-top:0;margin-bottom:24px;background:var(--card);border:1px solid var(--line);border-radius:3px;min-height:78px;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px 18px 18px 22px;position:relative}.qa-client-summary-print__focus:before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:4px;background:var(--red);border-radius:3px 0 0 3px}.qa-focus__k{font-size:10px;font-weight:900;letter-spacing:.24em;color:var(--red);margin-bottom:8px}.qa-focus__text{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:18px;font-weight:900;letter-spacing:0;text-transform:none}.qa-focus__actions{display:flex;align-items:center;gap:10px}.qa-focus__pages{display:flex;gap:5px}.qa-focus__page{width:22px;height:22px;border:1px solid var(--line);background:#fff;color:var(--muted);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;cursor:pointer}.qa-focus__page.is-active{background:var(--bordo);border-color:var(--bordo);color:#fff}.qa-focus__btn{border:0;background:var(--bordo);color:#fff;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;padding:8px 12px;cursor:pointer}.qa-client-summary-print__summary{display:grid;grid-template-columns:repeat(4,1fr);margin-top:22px;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:var(--card)}.qa-client-summary-print__sm{padding:16px 18px;border-right:1px solid var(--line);min-height:82px}.qa-client-summary-print__sm:last-child{border-right:0}.qa-client-summary-print__k{font-size:10px;font-weight:900;letter-spacing:.24em;color:var(--muted);margin-bottom:9px}.qa-client-summary-print__v{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:26px;line-height:1;font-weight:900;letter-spacing:0}.qa-client-summary-print__v small{font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:var(--muted);margin-left:6px;text-transform:none}.qa-client-summary-print__footer{text-align:center;margin-top:21px;color:#b1b1b1;font-size:9px;font-weight:900;letter-spacing:.22em}@media (max-width:1399px){.qa-client-summary-print__fronts{grid-template-columns:repeat(3,1fr)}}@media (max-width:900px){.qa-client-summary-print__fronts{grid-template-columns:repeat(2,1fr)}.qa-client-summary-print__summary{grid-template-columns:repeat(2,1fr)}.qa-client-summary-print__sm:nth-child(2){border-right:0}.qa-client-summary-print__sm:nth-child(-n+2){border-bottom:1px solid var(--line)}}.qa-urgbanner{position:relative;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:18px 22px 18px 26px;margin-bottom:18px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;box-shadow:0 6px 14px rgba(17,17,17,.04)}.qa-urgbanner:before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:5px;background:var(--red);border-radius:3px 0 0 3px}.qa-urgbanner__kicker{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.28em;color:var(--red);margin-bottom:10px;text-transform:uppercase}.qa-urgbanner__title{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.05;margin:0 0 6px;color:#0c0c0c;text-transform:none;letter-spacing:-.01em}.qa-urgbanner__sub{margin:0 0 16px;font-family:Arial,sans-serif;font-size:13px;color:#5a5a5a;text-transform:none;letter-spacing:0}.qa-urgbanner__actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.qa-urgbanner__cta{border:0;background:var(--bordo);color:#fff;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:11px 16px;cursor:pointer;border-radius:2px;text-transform:uppercase}.qa-urgbanner__ghost{border:1px solid #d6d6d4;background:transparent;color:#111;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:10px 16px;cursor:pointer;border-radius:2px;text-transform:uppercase}.qa-urgbanner__pages{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}.qa-urgbanner__page{min-width:30px;height:26px;border:1px solid var(--line);background:#fff;color:var(--muted);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.06em;cursor:pointer;border-radius:2px;padding:0 6px}.qa-urgbanner__page.is-active{background:var(--bordo);border-color:var(--bordo);color:#fff}.qa-urgbanner__count{text-align:right;padding-left:18px}.qa-urgbanner__num{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:900;font-size:78px;line-height:.82;color:var(--red);letter-spacing:-.02em}.qa-urgbanner__numk{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.32em;color:#0c0c0c;margin-top:6px}@media (max-width:880px){.qa-urgbanner{grid-template-columns:1fr;padding:20px 18px 18px 24px}.qa-urgbanner__count{text-align:left;padding-left:0}.qa-urgbanner__num{font-size:72px}.qa-urgbanner__title{font-size:26px}}@media (max-width:680px){.qa-client-summary-print{padding:20px 14px 28px}.qa-client-summary-print__top{flex-direction:column;gap:8px}.qa-client-summary-print__updated{text-align:left;padding-top:0}.qa-client-summary-print h1{font-size:24px}.qa-client-summary-print__fronts{grid-template-columns:1fr}.qa-client-summary-print__focus{grid-template-columns:1fr}.qa-focus__actions{justify-content:space-between;flex-wrap:wrap}.qa-client-summary-print__summary{grid-template-columns:1fr}.qa-client-summary-print__sm,.qa-client-summary-print__sm:nth-child(2){border-right:0;border-bottom:1px solid var(--line)}.qa-client-summary-print__sm:last-child{border-bottom:0}}
       `}</style>
       <div className="qa-client-summary-print__wrap">
         <header className="qa-client-summary-print__top">
@@ -353,7 +398,17 @@ export default function ClienteResumoKanban({
         </header>
 
         <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">
-          {filters.map((filter) => <span className="qa-client-summary-print__chip" key={filter}>{filter}</span>)}
+          {filters.map((filter) => (
+            <button
+              type="button"
+              key={filter.key}
+              className={`qa-client-summary-print__chip ${chipFilter === filter.key ? "is-active" : ""}`}
+              onClick={() => { setChipFilter(filter.key); setAutoPaused(true); }}
+              aria-pressed={chipFilter === filter.key}
+            >
+              {filter.label}
+            </button>
+          ))}
         </div>
 
         <section className="qa-urgbanner" aria-label="Próximo vencimento" aria-live="polite">
@@ -362,22 +417,20 @@ export default function ClienteResumoKanban({
             <h2 className="qa-urgbanner__title">{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
             <p className="qa-urgbanner__sub">{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
             <div className="qa-urgbanner__actions">
-              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>{(() => {
-                const txt = `${activeUrgent?.label || ""} ${activeUrgent?.sub || ""}`.toLowerCase();
-                if (/residênc|residenc|comprovante/.test(txt)) return "ATUALIZAR AGORA →";
-                return activeUrgent?.ctaLabel || "AGENDAR AGORA →";
-              })()}</button>
-              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>VER DETALHES</button>
+              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>
+                {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
+              </button>
+              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate("documentos")}>ANEXAR</button>
             </div>
-            {snapshot.urgents.length > 1 && (
+            {filteredUrgents.length > 1 && (
               <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
-                {snapshot.urgents.map((urgent, index) => (
+                {filteredUrgents.map((urgent, index) => (
                   <button
                     className={`qa-urgbanner__page ${index === focusIndex ? "is-active" : ""}`}
                     key={`${urgent.label}-${index}`}
                     type="button"
                     aria-label={`Ir para ${urgent.label}`}
-                    onClick={() => setFocusIndex(index)}
+                    onClick={() => { setFocusIndex(index); setAutoPaused(true); }}
                   >
                     {String(index + 1).padStart(2, "0")}
                   </button>
