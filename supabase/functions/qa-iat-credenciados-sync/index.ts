@@ -2,12 +2,8 @@
 // Processa UMA UF por invocação ({"uf":"SP"}) ou enfileira as 27 ({"uf":"ALL"}).
 // Parse-first com pdfjs-dist; fallback Gemini Flash em UFs irregulares.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  getDocument,
-  GlobalWorkerOptions,
-} from "https://esm.sh/pdfjs-dist@4.7.76/legacy/build/pdf.mjs";
-// @ts-ignore
-GlobalWorkerOptions.workerSrc = "";
+// pdfjs-serverless: build do pdfjs preparado para Deno/Edge (sem canvas).
+import { getDocument } from "https://esm.sh/pdfjs-serverless@0.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
