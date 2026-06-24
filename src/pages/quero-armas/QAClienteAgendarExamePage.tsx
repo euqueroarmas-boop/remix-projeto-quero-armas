@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredenciadosPF } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosPF";
+import { useCredenciadosPF, type CredenciadoPF } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosPF";
+import { useCredenciadosIAT, type CredenciadoIAT } from "@/components/quero-armas/clientes/AgendarExame/useCredenciadosIAT";
 import { AgendarExameList } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameList";
 import { INSTRUTOR_PDF_PF } from "@/components/quero-armas/clientes/AgendarExame/instrutorPdfLinks";
 
@@ -32,15 +33,48 @@ export default function QAClienteAgendarExamePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const cepLimpo = cep.replace(/\D/g, "");
-  const buscarParams = useMemo(() => ({
-    tipo, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined,
-    raio_km: raio, limit: 50, incluir_vencidos: incluirVencidos,
-  }), [tipo, cepLimpo, uf, raio, incluirVencidos]);
-
-  const { results, loading, error, origin } = useCredenciadosPF(buscarParams);
-  const ufResolved = (origin?.uf || uf || "").toUpperCase();
   const isInstrutor = tipo === "instrutor_tiro";
+
+  const psicoParams = useMemo(() => isInstrutor ? null : ({
+    tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined,
+    raio_km: raio, limit: 50, incluir_vencidos: incluirVencidos,
+  }), [isInstrutor, cepLimpo, uf, raio, incluirVencidos]);
+  const iatParams = useMemo(() => isInstrutor ? ({
+    cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 100,
+  }) : null, [isInstrutor, cepLimpo, uf, raio]);
+
+  const psico = useCredenciadosPF(psicoParams as any);
+  const iat = useCredenciadosIAT(iatParams);
+
+  const loading = isInstrutor ? iat.loading : psico.loading;
+  const error = isInstrutor ? iat.error : psico.error;
+  const origin = isInstrutor ? iat.data?.origin || null : psico.origin;
+  const ufResolved = (origin?.uf || uf || iat.data?.uf || "").toUpperCase();
+  const iatMode = iat.data?.mode || null;
+  const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
+
+  const results: CredenciadoPF[] = isInstrutor
+    ? (iat.data?.results || []).map((r: CredenciadoIAT) => ({
+        id: r.id,
+        tipo: "instrutor_tiro",
+        uf: r.uf,
+        cidade: null,
+        bairro: r.clube || null,
+        nome: r.nome,
+        registro: r.portaria ? `Portaria ${r.portaria}` : null,
+        endereco: r.endereco,
+        telefones: r.telefone ? [r.telefone] : [],
+        emails: r.email ? [r.email] : [],
+        validade: null,
+        validade_label: r.validade || null,
+        latitude: r.lat,
+        longitude: r.lng,
+        source_url: r.fonte_url || pdfHref || "",
+        distancia_km: iatMode === "proximity" ? r.distancia_km ?? null : null,
+      }))
+    : psico.results;
+
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return results;
