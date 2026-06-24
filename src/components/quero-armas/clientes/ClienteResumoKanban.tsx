@@ -222,6 +222,19 @@ export default function ClienteResumoKanban({
     return () => window.clearInterval(id);
   }, [snapshot.urgents.length]);
 
+  // Trava o scroll da página enquanto o Resumo estiver visível
+  useEffect(() => {
+    const { body, documentElement: html } = document;
+    const prevBody = body.style.overflow;
+    const prevHtml = html.style.overflow;
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = prevBody;
+      html.style.overflow = prevHtml;
+    };
+  }, []);
+
   const activeUrgent = snapshot.urgents[focusIndex] || null;
   const statusLine = `${cadastro?.categoria_titular || cliente?.status_cliente || "CAÇADOR"}${cadastro?.numero_cr ? ` · CR ${cadastro.numero_cr}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
   const filters = [
