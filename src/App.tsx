@@ -12,6 +12,7 @@ import { CartProvider } from "@/shared/cart/CartProvider";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
 const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
+const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "MockupsPreview");
 
 const queryClient = new QueryClient();
 
