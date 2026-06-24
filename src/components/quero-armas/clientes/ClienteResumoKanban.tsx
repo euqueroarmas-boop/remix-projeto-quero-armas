@@ -272,7 +272,7 @@ export default function ClienteResumoKanban({
             <h2 className="qa-urgbanner__title">{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
             <p className="qa-urgbanner__sub">{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
             <div className="qa-urgbanner__actions">
-              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>AGENDAR AGORA →</button>
+              <button className="qa-urgbanner__cta" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>{activeUrgent?.ctaLabel || "AGENDAR AGORA →"}</button>
               <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate(activeUrgent?.navTo || "documentos")}>VER DETALHES</button>
             </div>
             {snapshot.urgents.length > 1 && (
