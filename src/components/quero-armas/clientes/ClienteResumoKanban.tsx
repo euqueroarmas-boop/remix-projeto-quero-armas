@@ -20,7 +20,7 @@ interface Props {
 type FrontTone = "bordo" | "amber" | "green";
 type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
 type Front = { key: string; title: string; count: number; tone: FrontTone; items: FrontItem[]; navTo: string };
-type Urgent = { label: string; sub: string; days: number; navTo: string };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
