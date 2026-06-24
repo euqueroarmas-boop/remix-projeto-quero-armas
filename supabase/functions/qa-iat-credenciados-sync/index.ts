@@ -331,6 +331,16 @@ Deno.serve(async (req) => {
       });
     }
     const res = await sincronizarUF(supabase, uf);
+    // Fire-and-forget: dispara o backfill de geocode para esta UF.
+    try {
+      const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-iat-credenciados-geocode-backfill`;
+      const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+      fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: auth },
+        body: JSON.stringify({ loop: true, batchSize: 15, uf }),
+      }).catch(() => {});
+    } catch { /* noop */ }
     return new Response(JSON.stringify(res), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
