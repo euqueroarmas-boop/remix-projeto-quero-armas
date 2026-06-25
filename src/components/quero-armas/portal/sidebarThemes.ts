@@ -13,6 +13,16 @@ export type QASidebarTheme = {
   bg: string;     // background CSS do <aside>
   accent: string; // cor principal de destaque
   stripe: string; // gradient da faixa de 3px no topo
+  /**
+   * "compact" = menu colado no topo (padrão, temas sólidos/preto).
+   * "hero"    = abre um espaço nobre no topo (arte ou gradiente+emblema)
+   *             e empurra nome do cliente + menu para baixo.
+   */
+  topMode: "compact" | "hero";
+  /** URL da arte do bloco de topo (somente temas "hero" com imagem). */
+  heroImage?: string;
+  /** Emoji decorativo para o modo "hero" sem imagem (gradiente + emblema). */
+  emblem?: string;
 };
 
 export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
@@ -23,6 +33,7 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "#0A0A0A",
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, #D6A64B 0%, #7A1F2B 100%)",
+    topMode: "compact",
   },
   {
     key: "carnaval",
@@ -31,6 +42,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(160deg, #2D0A4E 0%, #4A148C 40%, #1A0033 100%)",
     accent: "#F5C518",
     stripe: "linear-gradient(90deg, #6B1B9A 0%, #F5C518 50%, #2E7D32 100%)",
+    topMode: "hero",
+    emblem: "🎭",
   },
   {
     key: "festa-junina",
@@ -39,6 +52,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(180deg, #3D1408 0%, #5C2110 50%, #1F0A04 100%)",
     accent: "#F2A93B",
     stripe: "linear-gradient(90deg, #C0392B 0%, #F2A93B 50%, #6B3410 100%)",
+    topMode: "hero",
+    emblem: "🎉",
   },
   {
     key: "independencia",
@@ -47,6 +62,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(165deg, #003D1F 0%, #00612E 45%, #0B2E6B 100%)",
     accent: "#F7C600",
     stripe: "linear-gradient(90deg, #008C45 0%, #F7C600 50%, #0B2E6B 100%)",
+    topMode: "hero",
+    emblem: "🇧🇷",
   },
   {
     key: "natal",
@@ -55,6 +72,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(180deg, #0E3B1C 0%, #1B5E20 50%, #4A0E12 100%)",
     accent: "#E63946",
     stripe: "linear-gradient(90deg, #1B5E20 0%, #E63946 100%)",
+    topMode: "hero",
+    emblem: "🎄",
   },
   {
     key: "ano-novo",
@@ -63,6 +82,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(180deg, #1A1405 0%, #2B2008 45%, #050505 100%)",
     accent: "#E6C24E",
     stripe: "linear-gradient(90deg, #E6C24E 0%, #FFF2B0 50%, #E6C24E 100%)",
+    topMode: "hero",
+    emblem: "🎆",
   },
   {
     key: "dia-das-maes",
@@ -71,6 +92,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(170deg, #3D0A22 0%, #6A1740 50%, #1F0612 100%)",
     accent: "#F48FB1",
     stripe: "linear-gradient(90deg, #AD1457 0%, #F48FB1 100%)",
+    topMode: "hero",
+    emblem: "💐",
   },
   {
     key: "dia-dos-pais",
@@ -79,6 +102,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(180deg, #0B2E6B 0%, #122E55 50%, #050B14 100%)",
     accent: "#C0C8D6",
     stripe: "linear-gradient(90deg, #0B2E6B 0%, #C0C8D6 100%)",
+    topMode: "hero",
+    emblem: "👔",
   },
   {
     key: "dia-das-criancas",
@@ -87,6 +112,8 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(170deg, #1A1A4E 0%, #2D1B5C 50%, #0A0A1F 100%)",
     accent: "#FFD166",
     stripe: "linear-gradient(90deg, #EF476F 0%, #FFD166 33%, #06D6A0 66%, #118AB2 100%)",
+    topMode: "hero",
+    emblem: "🎈",
   },
   {
     key: "pascoa",
@@ -95,6 +122,7 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(170deg, #2A1F4E 0%, #3D2B6B 50%, #14102B 100%)",
     accent: "#C8B6FF",
     stripe: "linear-gradient(90deg, #FFC8DD 0%, #C8B6FF 50%, #B8E0D2 100%)",
+    topMode: "compact",
   },
   {
     key: "black-friday",
@@ -103,6 +131,7 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "#000000",
     accent: "#FFE600",
     stripe: "linear-gradient(90deg, #FFE600 0%, #000000 50%, #FFE600 100%)",
+    topMode: "compact",
   },
   {
     key: "copa-2026",
@@ -111,6 +140,19 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     bg: "linear-gradient(165deg, #00471F 0%, #009B3A 40%, #002776 100%)",
     accent: "#FFDF1B",
     stripe: "linear-gradient(90deg, #009B3A 0%, #FFDF1B 50%, #002776 100%)",
+    topMode: "hero",
+    emblem: "🇧🇷",
+  },
+  {
+    key: "brasil-2026",
+    label: "Brasil 2026 (arte)",
+    description: "Arte dedicada da campanha Brasil 2026 no topo da sidebar.",
+    bg: "linear-gradient(165deg, #00471F 0%, #009B3A 40%, #002776 100%)",
+    accent: "#FFDF1B",
+    stripe: "linear-gradient(90deg, #009B3A 0%, #FFDF1B 50%, #002776 100%)",
+    topMode: "hero",
+    // Substituir por arte definitiva quando disponível.
+    heroImage: "/placeholder.svg",
   },
 ];
 
@@ -167,6 +209,8 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     bg: `linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.88) 100%), url("${c.image}") center/cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
+    topMode: "hero",
+    heroImage: c.image,
   };
 }
 
