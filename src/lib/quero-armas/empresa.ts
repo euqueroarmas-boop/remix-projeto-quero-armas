@@ -6,5 +6,5 @@ export const EMPRESA = {
   cidadeUf: "Jacareí/SP",
   cep: "12307-200",
   telefone: "(11) 97848-1919",
-  site: "www.euqueroarmas.com.br",
+  site: "https://www.euqueroarmas.com.br",
 } as const;
