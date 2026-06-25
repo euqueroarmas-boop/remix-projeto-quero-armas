@@ -308,7 +308,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
         .qa-docsz6 .kpi .l{font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.24em;color:#7A7A7A;display:flex;align-items:center;gap:6px;text-transform:uppercase}
         .qa-docsz6 .kpi .v{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:26px;font-weight:900;margin-top:9px;color:#0A0A0A;line-height:1;letter-spacing:0}
-        .qa-docsz6 .kpi .s{font-family:'Arial Narrow',Arial,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0}
+        .qa-docsz6 .kpi .s{font-family:'Arial Narrow',Arial,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0;font-weight:700}
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
         .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0;gap:12px}
         .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
