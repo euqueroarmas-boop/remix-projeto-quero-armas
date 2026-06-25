@@ -641,6 +641,9 @@ export default function QAConfiguracoesPage() {
 
       {/* Configurações de Monitoramento */}
       {isAdmin && <MonitoramentoToggles />}
+
+      {/* Temas da sidebar — administração global */}
+      {isAdmin && <QASidebarTemasAdmin />}
     </div>
   );
 }
@@ -692,9 +695,6 @@ function MonitoramentoToggles() {
           ))}
         </div>
       )}
-
-      {/* Temas da sidebar — administração global */}
-      {isAdmin && <QASidebarTemasAdmin />}
     </div>
   );
 }
