@@ -1267,7 +1267,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-white/10 text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
                 style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -1288,7 +1288,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-white/10 text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
                 style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
