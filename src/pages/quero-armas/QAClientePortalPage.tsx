@@ -1266,18 +1266,9 @@ export default function QAClientePortalPage() {
                     }}
                   />
                 )}
-                <button
-                  type="button"
-                  onClick={() => setShowFotoModal(true)}
-                  title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-                  aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition-all duration-200 group`}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 18px 3px ${sidebarTheme.accent}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
-                  }}
+                <div
+                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a]`}
+                  aria-label={userName || "Foto do cliente"}
                 >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
@@ -1289,10 +1280,7 @@ export default function QAClientePortalPage() {
                       QA
                     </span>
                   )}
-                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
-                    <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
-                  </span>
-                </button>
+                </div>
               </div>
               {!effectiveCollapsed && (
                 <div className={`min-w-0 flex-1 ${sidebarTheme.heroImage ? "rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10" : ""}`}>
@@ -2027,7 +2015,27 @@ export default function QAClientePortalPage() {
 
         {activeSection === "configuracoes" && (
           <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
-            <div className="grid gap-3 md:grid-cols-2 mb-4">
+            <div className="grid gap-3 md:grid-cols-3 mb-4">
+              <button
+                type="button"
+                onClick={() => setShowFotoModal(true)}
+                className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50 flex items-center gap-3"
+              >
+                <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-slate-200 bg-[#7A1F2B] flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={userName || "Foto"} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white font-bold text-[13px]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+                  )}
+                  <span className="absolute -bottom-0 -right-0 bg-slate-900 text-white rounded-full p-1">
+                    <Camera className="h-2.5 w-2.5" />
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[12px] font-bold text-slate-900">Minha foto</div>
+                  <p className="mt-1 text-[11px] text-slate-500">{avatarUrl ? "Trocar a foto exibida no menu." : "Adicione uma foto para o menu."}</p>
+                </div>
+              </button>
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
