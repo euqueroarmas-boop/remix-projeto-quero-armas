@@ -150,6 +150,7 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
 
   // Comuns
   set("nome_completo", extraidos.nome_completo);
+  set("cpf", extraidos.cpf);
   set("data_nascimento", extraidos.data_nascimento);
   set("sexo", extraidos.sexo);
   set("nacionalidade", extraidos.nacionalidade);
@@ -176,7 +177,10 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
 
   // RG / CIN / CNH
   if (t === "rg" || t === "cin" || t === "identidade") {
-    set("rg", extraidos.numero_documento ?? extraidos.rg);
+    const tipoExtraido = String(extraidos.tipo_documento || "").toLowerCase();
+    const isCin = t === "cin" || tipoExtraido === "cin";
+    const rgCandidato = Array.isArray(extraidos.rg_candidato) ? extraidos.rg_candidato[0] : extraidos.rg_candidato;
+    set("rg", extraidos.numero_documento ?? extraidos.rg ?? (isCin ? extraidos.cpf ?? rgCandidato : undefined));
     const emissor = String(extraidos.orgao_emissor ?? extraidos.emissor_rg ?? "").trim();
     const ufEmissor = inferirUfEmissor(extraidos, emissor);
     set("emissor_rg", limparUfDoEmissor(emissor));
