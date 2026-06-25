@@ -2409,14 +2409,15 @@ export function ClienteDocsHubModal({
             </div>
           </div>
           </div>
+          </div>
         </div>
 
-        <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
+        <div className="shrink-0 border-t-2 border-[#7A1F2B] bg-white px-4 py-4 sm:px-6">
           {autoResult?.safe ? (
             <div className="flex">
               <Button
                 onClick={onClose}
-                className="h-11 flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+                className="h-11 flex-1 rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#7A1F2B]"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
@@ -2426,7 +2427,7 @@ export function ClienteDocsHubModal({
             <Button
               variant="outline"
               onClick={onClose}
-              className="h-11 flex-1 rounded-2xl border-border bg-background text-foreground hover:bg-muted"
+              className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
             >
               Cancelar
             </Button>
@@ -2439,7 +2440,7 @@ export function ClienteDocsHubModal({
                 (temApontamento && reconheceApontamento === null) ||
                 (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
               }
-              className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               {saving
