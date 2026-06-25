@@ -414,6 +414,52 @@ Deno.serve(async (req) => {
         normalized.warnings.push("Verificar emissor do RG. Extração possivelmente incorreta.");
       }
     }
+    // Fallback determinístico para uf_emissor_rg:
+    // Quando o órgão emissor (emissor_rg) foi extraído mas a UF não, inferimos
+    // a UF a partir de pistas já presentes no próprio documento/cadastro,
+    // nesta ordem de prioridade:
+    //   1) sufixo "/UF" no próprio emissor_rg (ex.: "SSP/SP", "SSP-PC/PR")
+    //   2) naturalidade_uf (estado emissor do RG normalmente = estado natal)
+    //   3) estado (UF do endereço atual) — última tentativa, marca needs_review
+    // Nunca inventa: se nenhuma pista existir, deixa vazio.
+    {
+      const emissor = typeof normalized.emissor_rg === "string" ? normalized.emissor_rg.trim() : "";
+      const ufAtual = typeof normalized.uf_emissor_rg === "string" ? normalized.uf_emissor_rg.trim().toUpperCase() : "";
+      if (emissor && (!ufAtual || !/^[A-Z]{2}$/.test(ufAtual))) {
+        let ufInferida = "";
+        let origem: "emissor" | "naturalidade" | "endereco" | "" = "";
+        const m = emissor.toUpperCase().match(/[\/\-\s]([A-Z]{2})\s*$/);
+        if (m && m[1] !== "PC" && m[1] !== "PM") {
+          ufInferida = m[1];
+          origem = "emissor";
+          // limpa o sufixo do campo emissor_rg para evitar duplicação
+          normalized.emissor_rg = emissor.replace(/[\/\-\s][A-Z]{2}\s*$/i, "").trim();
+        } else if (typeof normalized.naturalidade_uf === "string" && /^[A-Z]{2}$/.test(normalized.naturalidade_uf.trim().toUpperCase())) {
+          ufInferida = normalized.naturalidade_uf.trim().toUpperCase();
+          origem = "naturalidade";
+        } else if (typeof normalized.estado === "string" && /^[A-Z]{2}$/.test(normalized.estado.trim().toUpperCase())) {
+          ufInferida = normalized.estado.trim().toUpperCase();
+          origem = "endereco";
+        }
+        if (ufInferida) {
+          normalized.uf_emissor_rg = ufInferida;
+          normalized.confidence = normalized.confidence || {};
+          // Confiança alta quando vem do próprio emissor; média na naturalidade;
+          // baixa quando inferida apenas do endereço.
+          const score = origem === "emissor" ? 0.95 : origem === "naturalidade" ? 0.7 : 0.45;
+          if (typeof normalized.confidence.uf_emissor_rg !== "number") {
+            normalized.confidence.uf_emissor_rg = score;
+          }
+          if (origem !== "emissor") {
+            normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+            const msg = origem === "naturalidade"
+              ? `UF do emissor do RG inferida a partir da naturalidade (${ufInferida}). Conferir no documento.`
+              : `UF do emissor do RG inferida a partir do endereço atual (${ufInferida}). Conferir no documento.`;
+            if (!normalized.warnings.includes(msg)) normalized.warnings.push(msg);
+          }
+        }
+      }
+    }
     // Filtra warnings falsos de "data no futuro" quando a data já passou.
     if (Array.isArray(normalized.warnings)) {
       normalized.warnings = filterFalseFutureWarnings(normalized.warnings);
