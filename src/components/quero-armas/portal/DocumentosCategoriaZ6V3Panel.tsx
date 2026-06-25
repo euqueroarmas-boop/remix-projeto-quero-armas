@@ -90,9 +90,12 @@ function dotColor(d: number | null): string {
 
 function remainingLabel(d: number | null): string {
   if (d === null) return "SEM DATA";
-  if (d < 0) return `VENCIDO HÁ ${Math.abs(d)}D`;
+  if (d < 0) {
+    const n = Math.abs(d);
+    return `VENCIDO HÁ ${n} ${n === 1 ? "DIA" : "DIAS"}`;
+  }
   if (d === 0) return "VENCE HOJE";
-  return `${d}D RESTANTES`;
+  return `${d} ${d === 1 ? "DIA RESTANTE" : "DIAS RESTANTES"}`;
 }
 
 async function logEvento(
