@@ -1374,6 +1374,17 @@ Deno.serve(async (req) => {
           return s === "" || ["none", "null", "undefined", "n/a", "na", "-"].includes(s);
         };
         const onlyDigits = (v: any) => cleanStr(v).replace(/\D+/g, "");
+        const UFS = new Set([
+          "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
+          "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+        ]);
+        const onlyUf = (v: any) => {
+          const tokens = Array.from(cleanStr(v).toUpperCase().matchAll(/\b([A-Z]{2})\b/g)).map((m) => m[1]);
+          for (let i = tokens.length - 1; i >= 0; i--) {
+            if (UFS.has(tokens[i])) return tokens[i];
+          }
+          return "";
+        };
 
         // Whitelist de promoção automática (ordem importa para auditoria)
         // Mapeia: campo do cliente -> possíveis chaves no extraído da IA + sanitizer
@@ -1386,6 +1397,9 @@ Deno.serve(async (req) => {
           { campoCliente: "nome_completo",   fontesIA: ["nome_completo", "nome"], sensivel: true },
           { campoCliente: "cpf",             fontesIA: ["cpf"], sanitize: onlyDigits, sensivel: true },
           { campoCliente: "rg",              fontesIA: ["rg", "numero_documento"] },
+          { campoCliente: "emissor_rg",      fontesIA: ["emissor_rg", "orgao_emissor", "emissor"] },
+          { campoCliente: "uf_emissor_rg",   fontesIA: ["uf_emissor_rg", "uf_emissor", "uf_emissao", "estado_emissao", "estado_orgao_emissor", "emissor_rg", "orgao_emissor", "emissor"], sanitize: onlyUf },
+          { campoCliente: "expedicao_rg",    fontesIA: ["expedicao_rg", "data_expedicao_rg", "data_emissao"] },
           { campoCliente: "data_nascimento", fontesIA: ["data_nascimento"] },
           // Endereço — não promove se for em nome de terceiro
           ...(enderecoTerceiro ? [] : [
