@@ -48,17 +48,14 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
-import CustomThemesUploader from "@/components/quero-armas/portal/CustomThemesUploader";
 import {
   QA_SIDEBAR_THEMES,
-  getStoredSidebarTheme,
-  setStoredSidebarTheme,
+  getPersonalThemeKey,
+  setPersonalThemeKey,
+  fetchSidebarThemesFromDb,
+  mergeThemes,
+  resolveEffectiveTheme,
   type QASidebarTheme,
-  QA_CUSTOM_SLOTS,
-  getCustomThemes,
-  setCustomThemeSlot,
-  customToTheme,
-  type QACustomTheme,
 } from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
@@ -216,27 +213,36 @@ export default function QAClientePortalPage() {
     | "configuracoes"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(() => getStoredSidebarTheme());
+  const [themeCatalog, setThemeCatalog] = useState<QASidebarTheme[]>(QA_SIDEBAR_THEMES);
+  const [globalDefaultKey, setGlobalDefaultKey] = useState<string | null>(null);
+  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(
+    () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
+  );
+
+  // Carrega temas do banco (inclui temas com imagem do bucket qa-temas) e o
+  // tema global padrão definido pela equipe.
   useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { themes: dbThemes, globalDefaultKey: gk } = await fetchSidebarThemesFromDb();
+      if (!alive) return;
+      const merged = mergeThemes(QA_SIDEBAR_THEMES, dbThemes);
+      setThemeCatalog(merged);
+      setGlobalDefaultKey(gk);
+      setSidebarTheme(resolveEffectiveTheme(merged, getPersonalThemeKey(), gk));
+    })();
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
-      if (!key) return;
-      if (key.startsWith("custom-")) {
-        const slot = Number(key.split("-")[1]);
-        const c = getCustomThemes()[slot];
-        if (c) setSidebarTheme(customToTheme(c));
-        return;
-      }
-      const next = QA_SIDEBAR_THEMES.find((t) => t.key === key);
-      if (next) setSidebarTheme(next);
+      setSidebarTheme((prev) =>
+        resolveEffectiveTheme(themeCatalog, key ?? getPersonalThemeKey(), globalDefaultKey) ?? prev,
+      );
     };
     window.addEventListener("qa:sidebar-theme-change", onChange);
-    const onCustom = () => setSidebarTheme(getStoredSidebarTheme());
-    window.addEventListener("qa:sidebar-custom-change", onCustom);
     return () => {
+      alive = false;
       window.removeEventListener("qa:sidebar-theme-change", onChange);
-      window.removeEventListener("qa:sidebar-custom-change", onCustom);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
   // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
@@ -2093,30 +2099,37 @@ export default function QAClientePortalPage() {
                   <select
                     value={sidebarTheme.key}
                     onChange={(e) => {
-                      const next = QA_SIDEBAR_THEMES.find((t) => t.key === e.target.value);
+                      const key = e.target.value;
+                      const next = themeCatalog.find((t) => t.key === key);
                       if (!next) return;
                       setSidebarTheme(next);
-                      setStoredSidebarTheme(next.key);
+                      setPersonalThemeKey(key);
                     }}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[12px] font-semibold text-slate-900 outline-none focus:border-slate-500"
                   >
-                    {QA_SIDEBAR_THEMES.map((t) => (
-                      <option key={t.key} value={t.key}>{t.label}</option>
+                    {themeCatalog.map((t) => (
+                      <option key={t.key} value={t.key}>
+                        {t.label}{globalDefaultKey === t.key ? "  •  padrão da equipe" : ""}
+                      </option>
                     ))}
                   </select>
                   <p className="text-[10.5px] text-slate-500 leading-relaxed">
-                    Os temas mudam apenas o acabamento visual do menu preto: topo, gradiente sutil e cor de destaque.
+                    Os temas com arte e o tema padrão são definidos pela equipe. Você pode alternar entre os disponíveis e voltar para o padrão a qualquer momento.
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPersonalThemeKey(null);
+                      const next = resolveEffectiveTheme(themeCatalog, null, globalDefaultKey);
+                      setSidebarTheme(next);
+                    }}
+                    className="mt-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                  >
+                    Usar o tema padrão da equipe
+                  </button>
                 </div>
-
               </div>
             </div>
-
-            {/* ── Suas Criações (upload de temas) ──────────────────────────── */}
-            <CustomThemesUploader
-              currentKey={sidebarTheme.key}
-              onApply={(t) => { setSidebarTheme(t); setStoredSidebarTheme(t.key); }}
-            />
           </SectionCard>
         )}
 

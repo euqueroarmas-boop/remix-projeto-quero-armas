@@ -8215,6 +8215,63 @@ export type Database = {
           },
         ]
       }
+      qa_sidebar_temas: {
+        Row: {
+          accent: string
+          ativo: boolean
+          bg: string
+          created_at: string
+          descricao: string | null
+          emblem: string | null
+          hero_image_path: string | null
+          hero_image_url: string | null
+          id: string
+          is_global_default: boolean
+          key: string
+          label: string
+          ordem: number
+          stripe: string | null
+          top_mode: string
+          updated_at: string
+        }
+        Insert: {
+          accent: string
+          ativo?: boolean
+          bg: string
+          created_at?: string
+          descricao?: string | null
+          emblem?: string | null
+          hero_image_path?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_global_default?: boolean
+          key: string
+          label: string
+          ordem?: number
+          stripe?: string | null
+          top_mode?: string
+          updated_at?: string
+        }
+        Update: {
+          accent?: string
+          ativo?: boolean
+          bg?: string
+          created_at?: string
+          descricao?: string | null
+          emblem?: string | null
+          hero_image_path?: string | null
+          hero_image_url?: string | null
+          id?: string
+          is_global_default?: boolean
+          key?: string
+          label?: string
+          ordem?: number
+          stripe?: string | null
+          top_mode?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_solicitacao_eventos: {
         Row: {
           ator: string | null

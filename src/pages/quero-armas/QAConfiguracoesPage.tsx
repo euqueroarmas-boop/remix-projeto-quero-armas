@@ -8,6 +8,7 @@ import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { BLOCOS_MONITORAMENTO } from "@/components/quero-armas/monitoramento/blocosCatalogo";
 import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/useMonitoramentoConfig";
 import { Switch } from "@/components/ui/switch";
+import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
@@ -640,6 +641,9 @@ export default function QAConfiguracoesPage() {
 
       {/* Configurações de Monitoramento */}
       {isAdmin && <MonitoramentoToggles />}
+
+      {/* Temas da sidebar — administração global */}
+      {isAdmin && <QASidebarTemasAdmin />}
     </div>
   );
 }

@@ -31,6 +31,8 @@ export type QASidebarTheme = {
   heroEmpty?: boolean;
 };
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
   {
     key: "default",
@@ -163,102 +165,147 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
 ];
 
 const STORAGE_KEY = "qa.sidebar.theme";
-const CUSTOM_KEY = "qa.sidebar.custom-themes";
-export const QA_CUSTOM_SLOTS = 6;
 
-export type QACustomTheme = {
-  key: string;       // ex: "custom-0"
-  label: string;     // ex: "Minha criação 1"
-  image: string;     // data URL
+/* ============================================================================
+ * TEMAS VINDOS DO BANCO (qa_sidebar_temas) + STORAGE (bucket qa-temas)
+ *
+ * - O cliente NÃO usa mais base64/localStorage para imagens (estourava cota).
+ * - A equipe administra temas em Configurações → Temas da Sidebar.
+ * - O tema aplicado a TODOS por padrão é o is_global_default = true.
+ * - Cada cliente pode manter uma preferência pessoal (apenas a chave do tema)
+ *   em localStorage; se a preferência apontar para um tema inexistente, cai
+ *   no global default e, por fim, no built-in "default".
+ * ========================================================================== */
+
+export type QASidebarThemeRow = {
+  id: string;
+  key: string;
+  label: string;
+  descricao: string | null;
+  bg: string;
+  accent: string;
+  stripe: string | null;
+  top_mode: "compact" | "hero";
+  hero_image_path: string | null;
+  hero_image_url: string | null;
+  emblem: string | null;
+  ativo: boolean;
+  is_global_default: boolean;
+  ordem: number;
 };
 
-export function getCustomThemes(): (QACustomTheme | null)[] {
-  const empty: (QACustomTheme | null)[] = Array.from({ length: QA_CUSTOM_SLOTS }, () => null);
-  if (typeof window === "undefined") return empty;
+function buildBgWithImage(imageUrl: string, fallback: string): string {
+  // A arte enviada é o background do bloco hero (topo). O restante (menu/footer)
+  // recebe escurecimento contínuo para garantir legibilidade do texto branco.
+  return (
+    `linear-gradient(180deg, ` +
+      `rgba(0,0,0,0) 0px, ` +
+      `rgba(0,0,0,0) 80px, ` +
+      `rgba(0,0,0,0.55) 130px, ` +
+      `rgba(0,0,0,0.55) 100%), ` +
+    `url("${imageUrl}") top center / cover no-repeat, ${fallback || "#0A0A0A"}`
+  );
+}
+
+export async function signHeroImagePath(path: string | null | undefined): Promise<string | null> {
+  if (!path) return null;
   try {
-    const raw = window.localStorage.getItem(CUSTOM_KEY);
-    if (!raw) return empty;
-    const parsed = JSON.parse(raw) as (QACustomTheme | null)[];
-    return empty.map((_, i) => parsed[i] ?? null);
+    const { data, error } = await supabase
+      .storage
+      .from("qa-temas")
+      .createSignedUrl(path, 60 * 60 * 24 * 7); // 7 dias
+    if (error || !data?.signedUrl) return null;
+    return data.signedUrl;
   } catch {
-    return empty;
+    return null;
   }
 }
 
-function persistCustom(list: (QACustomTheme | null)[]) {
-  try {
-    window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent("qa:sidebar-custom-change"));
-  } catch (e) {
-    // Quota excedida ou storage indisponível — propaga para a UI tratar.
-    throw e;
-  }
-}
-
-// Wrapper antigo mantido para chamadas externas que não querem tratar erro.
-function persistCustomSilent(list: (QACustomTheme | null)[]) {
-  try {
-    persistCustom(list);
-  } catch {}
-}
-
-export function setCustomThemeSlot(slot: number, image: string | null) {
-  const list = getCustomThemes();
-  if (image == null) {
-    list[slot] = null;
-  } else {
-    list[slot] = {
-      key: `custom-${slot}`,
-      label: `MINHA CRIAÇÃO ${slot + 1}`,
-      image,
-    };
-  }
-  persistCustom(list);
-}
-
-export function customToTheme(c: QACustomTheme): QASidebarTheme {
+export async function dbRowToTheme(row: QASidebarThemeRow): Promise<QASidebarTheme> {
+  const image =
+    row.hero_image_url ??
+    (row.hero_image_path ? await signHeroImagePath(row.hero_image_path) : null);
+  const bg = image ? buildBgWithImage(image, row.bg) : row.bg;
   return {
-    key: c.key,
-    label: c.label,
-    description: "Tema personalizado enviado por upload.",
-    // A arte enviada pelo usuário é o background COMPLETO da sidebar, alinhado
-    // ao topo. Mantemos o hero (topo) com a arte original visível e
-    // escurecemos todo o restante (menu + rodapé) para máxima legibilidade.
-    //  - 0–80px    : hero limpo (transparente)
-    //  - 80–130px  : fade de transição suave
-    //  - 130px–fim : escurecimento leve contínuo cobrindo menu e rodapé
-    bg:
-      `linear-gradient(180deg, ` +
-        `rgba(0,0,0,0) 0px, ` +
-        `rgba(0,0,0,0) 80px, ` +
-        `rgba(0,0,0,0.55) 130px, ` +
-        `rgba(0,0,0,0.55) 100%), ` +
-      `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
-    accent: "#D6A64B",
-    stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
-    topMode: "hero",
-    heroEmpty: true,
+    key: row.key,
+    label: row.label,
+    description: row.descricao ?? "",
+    bg,
+    accent: row.accent,
+    stripe: row.stripe ?? "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%)",
+    topMode: row.top_mode,
+    heroImage: image ?? undefined,
+    emblem: row.emblem ?? undefined,
+    heroEmpty: !!image, // se há arte, o hero não desenha emblema próprio
   };
 }
 
-export function getStoredSidebarTheme(): QASidebarTheme {
-  if (typeof window === "undefined") return QA_SIDEBAR_THEMES[0];
+export async function fetchSidebarThemesFromDb(): Promise<{
+  themes: QASidebarTheme[];
+  globalDefaultKey: string | null;
+}> {
   try {
-    const k = window.localStorage.getItem(STORAGE_KEY);
-    if (k && k.startsWith("custom-")) {
-      const slot = Number(k.split("-")[1]);
-      const c = getCustomThemes()[slot];
-      if (c) return customToTheme(c);
-    }
-    return QA_SIDEBAR_THEMES.find((t) => t.key === k) ?? QA_SIDEBAR_THEMES[0];
+    const { data, error } = await supabase
+      .from("qa_sidebar_temas")
+      .select("id,key,label,descricao,bg,accent,stripe,top_mode,hero_image_path,hero_image_url,emblem,ativo,is_global_default,ordem")
+      .eq("ativo", true)
+      .order("ordem", { ascending: true })
+      .order("label", { ascending: true });
+    if (error || !data) return { themes: [], globalDefaultKey: null };
+    const rows = data as unknown as QASidebarThemeRow[];
+    const themes = await Promise.all(rows.map((r) => dbRowToTheme(r)));
+    const globalDefaultKey = rows.find((r) => r.is_global_default)?.key ?? null;
+    return { themes, globalDefaultKey };
   } catch {
-    return QA_SIDEBAR_THEMES[0];
+    return { themes: [], globalDefaultKey: null };
   }
 }
 
-export function setStoredSidebarTheme(key: string) {
+/** Mescla built-in + DB; entradas do DB com a mesma key sobrescrevem built-in. */
+export function mergeThemes(builtIn: QASidebarTheme[], db: QASidebarTheme[]): QASidebarTheme[] {
+  const map = new Map<string, QASidebarTheme>();
+  for (const t of builtIn) map.set(t.key, t);
+  for (const t of db) map.set(t.key, t);
+  return Array.from(map.values());
+}
+
+export function getPersonalThemeKey(): string | null {
+  if (typeof window === "undefined") return null;
   try {
-    window.localStorage.setItem(STORAGE_KEY, key);
+    return window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setPersonalThemeKey(key: string | null) {
+  try {
+    if (key == null) window.localStorage.removeItem(STORAGE_KEY);
+    else window.localStorage.setItem(STORAGE_KEY, key);
     window.dispatchEvent(new CustomEvent("qa:sidebar-theme-change", { detail: { key } }));
   } catch {}
+}
+
+/** Resolve o tema efetivo: preferência pessoal → global default → built-in default. */
+export function resolveEffectiveTheme(
+  catalog: QASidebarTheme[],
+  personalKey: string | null,
+  globalDefaultKey: string | null,
+): QASidebarTheme {
+  const find = (k: string | null) => (k ? catalog.find((t) => t.key === k) : undefined);
+  return (
+    find(personalKey) ??
+    find(globalDefaultKey) ??
+    catalog.find((t) => t.key === "default") ??
+    QA_SIDEBAR_THEMES[0]
+  );
+}
+
+// ── Compat: nomes antigos que ainda podem ser importados em outros pontos ──
+export const setStoredSidebarTheme = setPersonalThemeKey;
+export function getStoredSidebarTheme(): QASidebarTheme {
+  // Sem await aqui — devolve o built-in por chave; o resolver assíncrono fica
+  // por conta do consumidor (que combina built-in + DB).
+  const k = getPersonalThemeKey();
+  return QA_SIDEBAR_THEMES.find((t) => t.key === k) ?? QA_SIDEBAR_THEMES[0];
 }
