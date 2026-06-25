@@ -1648,10 +1648,81 @@ const R25: React.FC = () => (
   </Paper>
 );
 
+/* ───────── R26–R30 · mesmo layout R11 (selo de cera), variando só o FUNDO ───────── */
+const waxStamp = (
+  <StampWax size={172} style={{ position: "absolute", top: -24, right: -32 }} />
+);
+
+// R26 — Papel kraft texturizado (noise + grain bordô)
+const R26: React.FC = () => (
+  <R7Frame
+    stamp={waxStamp}
+    bg={{ background: "#E8DCC4" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(122,31,43,.08) 1px, transparent 1px), radial-gradient(rgba(0,0,0,.05) 1px, transparent 1px)`, backgroundSize: "12px 12px, 7px 7px", backgroundPosition: "0 0, 3px 4px", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 40%, transparent 40%, rgba(89,44,17,.12) 100%)", pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
+// R27 — Papel quadriculado (grid sutil cinza + linhas guia bordô)
+const R27: React.FC = () => (
+  <R7Frame
+    stamp={waxStamp}
+    bg={{ background: "#FBFAF6" }}
+    bgOverlay={
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(0,0,0,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px), linear-gradient(rgba(122,31,43,.18) 1px, transparent 1px)`, backgroundSize: "24px 24px, 24px 24px, 100% 120px", pointerEvents: "none" }} />
+    }
+  />
+);
+
+// R28 — Gradiente radial papel manchado bordô (vinheta quente)
+const R28: React.FC = () => (
+  <R7Frame
+    stamp={waxStamp}
+    bg={{ background: "radial-gradient(ellipse at 50% 35%, #F7E9D6 0%, #E9D2B5 55%, #C49B6E 100%)" }}
+    bgOverlay={
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 80%, rgba(122,31,43,.12), transparent 45%), radial-gradient(circle at 80% 20%, rgba(122,31,43,.08), transparent 40%)", pointerEvents: "none" }} />
+    }
+  />
+);
+
+// R29 — Moldura de galeria · fundo preto absoluto com vinheta âmbar
+const R29: React.FC = () => (
+  <R7Frame
+    stamp={waxStamp}
+    bg={{ background: "#0A0A0A", padding: 36 }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 30%, rgba(214,166,75,.10), transparent 55%)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 14, border: `1px solid ${T.amber}`, opacity: 0.35, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 8, border: "1px solid rgba(255,255,255,.06)", pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
+// R30 — Hachura diagonal bordô (linhas finas estilo carimbo cartorial)
+const R30: React.FC = () => (
+  <R7Frame
+    stamp={waxStamp}
+    bg={{ background: "#F5F0E6" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `repeating-linear-gradient(45deg, rgba(122,31,43,.07) 0 1px, transparent 1px 14px)`, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: `repeating-linear-gradient(90deg, ${T.bordo} 0 18px, transparent 18px 24px)`, opacity: 0.85, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 6, background: `repeating-linear-gradient(90deg, ${T.bordo} 0 18px, transparent 18px 24px)`, opacity: 0.85, pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 25 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 30 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
@@ -1697,6 +1768,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 23, nome: "R23 · Ribbon Vertical Lateral", subtitulo: "PDF + FICHA + FAIXA VERTICAL 98%", render: () => <R23 /> },
   { id: 24, nome: "R24 · Blueprint Técnico", subtitulo: "PRANCHA COM COORDENADAS · OVAL", render: () => <R24 /> },
   { id: 25, nome: "R25 · Polaroid com Tape", subtitulo: "FOTO INCLINADA + WASHI · SELO CERA", render: () => <R25 /> },
+  { id: 26, nome: "R26 · Fundo Kraft Granulado", subtitulo: "PAPEL KRAFT + GRAIN + VINHETA QUENTE", render: () => <R26 /> },
+  { id: 27, nome: "R27 · Fundo Quadriculado", subtitulo: "GRID FINO + LINHAS GUIA BORDÔ", render: () => <R27 /> },
+  { id: 28, nome: "R28 · Fundo Manchado Bordô", subtitulo: "GRADIENTE RADIAL PAPEL + MANCHAS", render: () => <R28 /> },
+  { id: 29, nome: "R29 · Galeria Preta", subtitulo: "FUNDO #0A0A0A + MOLDURA ÂMBAR", render: () => <R29 /> },
+  { id: 30, nome: "R30 · Hachura Diagonal", subtitulo: "LINHAS BORDÔ 45° + FAIXAS TRACEJADAS", render: () => <R30 /> },
 ];
 
 export default function MockupsHubDoc() {
