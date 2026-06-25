@@ -83,8 +83,8 @@ const MAPA: { src: string[]; col: string; label: string }[] = [
   { src: ["nome_mae"], col: "nome_mae", label: "Nome da mãe" },
   { src: ["nome_pai"], col: "nome_pai", label: "Nome do pai" },
   { src: ["rg"], col: "rg", label: "RG" },
-  { src: ["orgao_emissor"], col: "emissor_rg", label: "Órgão emissor do RG" },
-  { src: ["uf_emissao"], col: "uf_emissor_rg", label: "UF emissora do RG" },
+  { src: ["emissor_rg", "orgao_emissor", "emissor"], col: "emissor_rg", label: "Órgão emissor do RG" },
+  { src: ["uf_emissor_rg", "uf_emissor", "uf_emissao", "estado_emissao", "estado_orgao_emissor"], col: "uf_emissor_rg", label: "UF emissora do RG" },
   { src: ["data_emissao"], col: "expedicao_rg", label: "Data de expedição do RG" },
   { src: ["logradouro", "endereco", "endereco_logradouro"], col: "endereco", label: "Endereço" },
   { src: ["numero", "endereco_numero"], col: "numero", label: "Número" },
@@ -98,6 +98,35 @@ const MAPA: { src: string[]; col: string; label: string }[] = [
 
 const norm = (v: any) => (v === null || v === undefined ? "" : String(v).trim());
 const normCmp = (v: any) => norm(v).toLowerCase().replace(/[\s.\-/()]/g, "");
+
+const UFS = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
+  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+]);
+
+function inferUfEmissor(extraidos: Record<string, any>): string {
+  const candidatos = [
+    extraidos?.uf_emissor_rg,
+    extraidos?.uf_emissor,
+    extraidos?.uf_emissao,
+    extraidos?.estado_emissao,
+    extraidos?.estado_orgao_emissor,
+    extraidos?.emissor_rg,
+    extraidos?.orgao_emissor,
+    extraidos?.emissor,
+  ];
+  for (const c of candidatos) {
+    const tokens = Array.from(String(c ?? "").toUpperCase().matchAll(/\b([A-Z]{2})\b/g)).map((m) => m[1]);
+    for (let i = tokens.length - 1; i >= 0; i--) {
+      if (UFS.has(tokens[i])) return tokens[i];
+    }
+  }
+  return "";
+}
+
+function limparUfDoEmissor(v: string): string {
+  return v.replace(/\s*(?:\/|-)\s*[A-Z]{2}\s*$/i, "").trim();
+}
 
 function buildSuggestions(
   cliente: any,
@@ -115,6 +144,8 @@ function buildSuggestions(
       const v = norm(extraidos?.[k]);
       if (v) { novo = v; break; }
     }
+    if (!novo && m.col === "uf_emissor_rg") novo = inferUfEmissor(extraidos);
+    if (novo && m.col === "emissor_rg") novo = limparUfDoEmissor(novo);
     if (!novo) continue;
     const atual = norm(cliente?.[m.col]);
     if (normCmp(atual) === normCmp(novo)) continue;

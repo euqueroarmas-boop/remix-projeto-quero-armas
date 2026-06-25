@@ -95,8 +95,10 @@ function normalizeText(value: unknown): string {
 
 function normalizeUf(value: unknown): string | null {
   const raw = String(value ?? "").trim().toUpperCase();
-  const direct = raw.match(/\b([A-Z]{2})\b/);
-  if (direct && UFS.has(direct[1])) return direct[1];
+  const directTokens = Array.from(raw.matchAll(/\b([A-Z]{2})\b/g)).map((m) => m[1]);
+  for (let i = directTokens.length - 1; i >= 0; i--) {
+    if (UFS.has(directTokens[i])) return directTokens[i];
+  }
 
   const normalized = normalizeText(value);
   for (const [estado, uf] of Object.entries(ESTADO_PARA_UF)) {
@@ -111,7 +113,8 @@ function inferirUfEmissor(extraidos: Record<string, any>, emissor: string): stri
       extraidos.uf_emissor ??
       extraidos.uf_emissao ??
       extraidos.estado_emissao ??
-      extraidos.estado_orgao_emissor,
+      extraidos.estado_orgao_emissor ??
+      extraidos.uf,
   );
   if (direct) return direct;
 
@@ -122,9 +125,11 @@ function inferirUfEmissor(extraidos: Record<string, any>, emissor: string): stri
     emissor,
     extraidos.orgao_emissor,
     extraidos.emissor_rg,
+    extraidos.emissor,
     extraidos.local_emissao,
     extraidos.local_expedicao,
     extraidos.cabecalho_estado,
+    extraidos.estado_documento,
   ].filter(Boolean).join(" "));
 }
 
@@ -252,6 +257,12 @@ function normalizar(col: string, valor: string): string | null {
   return v;
 }
 
+function isCampoVazio(v: unknown): boolean {
+  if (v === null || v === undefined) return true;
+  const s = String(v).trim().toLowerCase();
+  return s === "" || ["none", "null", "undefined", "n/a", "na", "-"].includes(s);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -327,7 +338,9 @@ Deno.serve(async (req) => {
     // Consolida: docs mais recentes prevalecem sobre antigos.
     const consolidado: Record<string, { value: string; doc_id: string }> = {};
     for (const d of relevantes) {
-      const extraidos = (d as any).ia_dados_extraidos?.camposExtraidos;
+      const extraidos =
+        (d as any).ia_dados_extraidos?.camposExtraidos ??
+        (d as any).ia_dados_extraidos?.auditoria?.camposExtraidos;
       if (!extraidos || typeof extraidos !== "object") continue;
       const mapped = mapearCampos((d as any).tipo_documento, extraidos);
       for (const [k, v] of Object.entries(mapped)) {
@@ -343,14 +356,14 @@ Deno.serve(async (req) => {
 
     for (const [col, info] of Object.entries(consolidado)) {
       const origem = origens[col]?.source;
-      if (origem === "manual_override_ai") {
+      const atual = clienteAtual?.[col];
+      if (origem === "manual_override_ai" && !isCampoVazio(atual)) {
         skippedLocked.push(col);
         continue;
       }
       const normalizado = normalizar(col, info.value);
       if (!normalizado) continue;
       // Não regrava se valor é idêntico ao que já está no cliente.
-      const atual = clienteAtual?.[col];
       if (atual != null && String(atual) === String(normalizado)) {
         novaOrigens[col] = { source: "ai", doc_id: info.doc_id, at: agora };
         continue;
