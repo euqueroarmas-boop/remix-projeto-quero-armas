@@ -28,6 +28,7 @@ interface Props {
   processoDocs?: any[];
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
+  onOpenDocsHub?: () => void;
 }
 
 type FrontTone = "bordo" | "amber" | "green";
