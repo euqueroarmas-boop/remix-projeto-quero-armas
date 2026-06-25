@@ -20,6 +20,37 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+/**
+ * Reduz a imagem para caber confortavelmente no localStorage (~5MB por origem).
+ * Mantém proporção. Saída em JPEG qualidade 0.82 (≈10x menor que PNG original).
+ */
+async function downscaleImage(
+  file: File,
+  maxW = 720,
+  maxH = 1280,
+  quality = 0.82,
+): Promise<string> {
+  const dataUrl = await fileToDataUrl(file);
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("decode"));
+    i.src = dataUrl;
+  });
+  const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+  const w = Math.round(img.width * ratio);
+  const h = Math.round(img.height * ratio);
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return dataUrl;
+  ctx.fillStyle = "#0A0A0A";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
 export default function CustomThemesUploader({
   currentKey,
   onApply,
@@ -42,8 +73,14 @@ export default function CustomThemesUploader({
     if (!file) return;
     if (!file.type.startsWith("image/")) { setErr("ARQUIVO PRECISA SER UMA IMAGEM (PNG/JPG/WEBP)."); return; }
     try {
-      const dataUrl = await fileToDataUrl(file);
-      setCustomThemeSlot(slot, dataUrl);
+      const dataUrl = await downscaleImage(file);
+      try {
+        setCustomThemeSlot(slot, dataUrl);
+      } catch {
+        setErr(
+          "ESPAÇO DE ARMAZENAMENTO LOCAL CHEIO. REMOVA UMA CRIAÇÃO EXISTENTE OU ENVIE UMA IMAGEM MENOR.",
+        );
+      }
     } catch {
       setErr("FALHA AO LER A IMAGEM.");
     }

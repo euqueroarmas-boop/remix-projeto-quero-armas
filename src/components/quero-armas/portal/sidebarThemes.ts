@@ -189,6 +189,16 @@ function persistCustom(list: (QACustomTheme | null)[]) {
   try {
     window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
     window.dispatchEvent(new CustomEvent("qa:sidebar-custom-change"));
+  } catch (e) {
+    // Quota excedida ou storage indisponível — propaga para a UI tratar.
+    throw e;
+  }
+}
+
+// Wrapper antigo mantido para chamadas externas que não querem tratar erro.
+function persistCustomSilent(list: (QACustomTheme | null)[]) {
+  try {
+    persistCustom(list);
   } catch {}
 }
 
