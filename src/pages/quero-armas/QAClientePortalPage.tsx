@@ -44,6 +44,7 @@ import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-arm
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
+import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
@@ -190,6 +191,8 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
+  const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   const [showArmaManual, setShowArmaManual] = useState(false);
   // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
@@ -1968,13 +1971,42 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <DocumentosCategoriaZ6V3Panel
-            cliente={cliente}
-            meusDocs={meusDocs}
-            customerId={customerId}
-            onReload={() => setDocsReloadKey((k) => k + 1)}
-            onOpenAdd={() => setShowAddDoc(true)}
-          />
+          <div>
+            <div className="no-print mb-3 flex items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
+              {(["lista", "extraidos"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setDocsSubview(k)}
+                  className="px-3 py-1.5 text-[10px] font-black uppercase rounded-sm transition-colors"
+                  style={{
+                    background: docsSubview === k ? "#7A1F2B" : "transparent",
+                    color: docsSubview === k ? "#fff" : "#7A7A7A",
+                  }}
+                >
+                  {k === "lista" ? "Lista" : "Dados extraídos"}
+                </button>
+              ))}
+            </div>
+            {docsSubview === "lista" ? (
+              <DocumentosCategoriaZ6V3Panel
+                cliente={cliente}
+                meusDocs={meusDocs}
+                customerId={customerId}
+                onReload={() => setDocsReloadKey((k) => k + 1)}
+                onOpenAdd={() => setShowAddDoc(true)}
+              />
+            ) : (
+              <DadosExtraidosPanel
+                cliente={cliente}
+                meusDocs={meusDocs}
+                onEditDoc={(d) => {
+                  setEditDocTipo(d?.tipo_documento || undefined);
+                  setShowAddDoc(true);
+                }}
+              />
+            )}
+          </div>
         )}
 
         {activeSection === "mensagens" && (
@@ -2180,10 +2212,11 @@ export default function QAClientePortalPage() {
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
           open={showAddDoc}
-          onClose={() => setShowAddDoc(false)}
+          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); }}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
           mode="portal"
+          defaultTipo={editDocTipo}
           clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
           clienteNome={cliente?.nome_completo || null}
           clienteDataNascimento={cliente?.data_nascimento || null}
