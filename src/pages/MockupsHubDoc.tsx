@@ -1359,6 +1359,71 @@ const V10: React.FC = () => (
 );
 
 /* ───────── Index ───────── */
+const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
+  <div
+    style={{
+      position: "fixed",
+      top: 12,
+      left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 100,
+      display: "flex",
+      gap: 6,
+      padding: "8px 10px",
+      background: T.ink,
+      border: `1px solid #222`,
+      borderRadius: 4,
+      boxShadow: "0 4px 14px rgba(0,0,0,.25)",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      maxWidth: "calc(100vw - 24px)",
+    }}
+  >
+    <a
+      href="/mockups-hub-doc"
+      style={{
+        fontFamily: OSWALD,
+        fontSize: 10,
+        letterSpacing: ".2em",
+        color: !current ? T.ink : T.amber,
+        background: !current ? T.amber : "transparent",
+        border: `1px solid ${T.amber}`,
+        padding: "6px 10px",
+        borderRadius: 2,
+        textDecoration: "none",
+        fontWeight: 600,
+      }}
+    >
+      TODAS
+    </a>
+    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+      const active = current === n;
+      return (
+        <a
+          key={n}
+          href={`/mockups-hub-doc?v=${n}`}
+          style={{
+            fontFamily: OSWALD,
+            fontSize: 11,
+            letterSpacing: ".12em",
+            color: active ? T.ink : "#fff",
+            background: active ? T.amber : "transparent",
+            border: `1px solid ${active ? T.amber : "#333"}`,
+            padding: "6px 10px",
+            minWidth: 34,
+            textAlign: "center",
+            borderRadius: 2,
+            textDecoration: "none",
+            fontWeight: 600,
+          }}
+        >
+          V{n}
+        </a>
+      );
+    })}
+  </div>
+);
+
 const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => React.ReactNode }[] = [
   { id: 1, nome: "V1 · 3 Colunas Refinadas", subtitulo: "MESMA ARQUITETURA, MODERNIZADA Z6", render: () => <V1 /> },
   { id: 2, nome: "V2 · Inspector Vertical", subtitulo: "SIDEBAR PRETA DE SEÇÕES + CANVAS", render: () => <V2 /> },
