@@ -57,7 +57,7 @@ export default function CustomThemesUploader({
             Suas Criações
           </div>
           <p className="mt-1 text-[11px] text-slate-500">
-            Envie suas próprias imagens (PNG/JPG/WEBP) — elas viram painel visual no topo do menu.
+            Envie suas próprias imagens (PNG/JPG/WEBP) — elas viram fundo do menu lateral.
             Os retângulos em branco aguardam o seu upload.
           </p>
         </div>
