@@ -1295,15 +1295,15 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
               {!effectiveCollapsed && (
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10">
                   <div
-                    className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase"
+                    className="text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)]"
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase"
+                    className="text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)]"
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Área do Cliente
@@ -1331,7 +1331,7 @@ export default function QAClientePortalPage() {
         {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
           {!effectiveCollapsed && (
-            <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#C9A64E] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+            <div className="mx-4 mt-3 mb-1.5 w-fit rounded bg-black/55 px-2 py-1 text-[9.5px] tracking-[0.18em] text-[#E5C25B] font-bold backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
           )}
           {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
@@ -1342,7 +1342,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-semibold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] ${active ? "text-white" : "text-[#F3F1EA] border-transparent hover:text-white hover:bg-white/5"}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10"} py-2 text-[12px] font-bold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${active ? "text-white" : "text-[#FBF8EF] border-transparent hover:text-white hover:bg-black/65"}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1356,7 +1356,7 @@ export default function QAClientePortalPage() {
             );
           })}
           {!effectiveCollapsed && (
-            <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#C9A64E] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+            <div className="mx-4 mt-4 mb-1.5 w-fit rounded bg-black/55 px-2 py-1 text-[9.5px] tracking-[0.18em] text-[#E5C25B] font-bold backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
           )}
           {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
@@ -1368,7 +1368,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-semibold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] ${active ? "text-white" : "text-[#F3F1EA] border-transparent hover:text-white hover:bg-white/5"}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10"} py-2 text-[12px] font-bold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${active ? "text-white" : "text-[#FBF8EF] border-transparent hover:text-white hover:bg-black/65"}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1405,9 +1405,11 @@ export default function QAClientePortalPage() {
             </button>
           </div>
         ) : (
-          <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-[#1a1a1a]">
-            <div className="text-[12px] font-semibold text-[#E8E8E8] mb-0.5">Precisa de ajuda?</div>
-            <div className="text-[10.5px] text-[#7A7A7A] mb-2.5">Atendimento direto pelo WhatsApp</div>
+          <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-white/15">
+            <div className="mb-2 rounded bg-black/50 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10">
+              <div className="text-[12px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">Precisa de ajuda?</div>
+              <div className="text-[10.5px] text-[#E6DFCE] drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">Atendimento direto pelo WhatsApp</div>
+            </div>
             <a
               href="https://wa.me/5511978481919"
               target="_blank"
