@@ -222,23 +222,18 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     label: c.label,
     description: "Tema personalizado enviado por upload.",
     // A arte enviada pelo usuário é o background COMPLETO da sidebar, alinhado
-    // ao topo. Escurecemos APENAS as faixas onde ficam o menu e o rodapé;
-    // o hero (topo) e os espaços vazios permanecem com a arte original visível.
-    //  - 0–110px       : hero limpo (transparente)
-    //  - 110–160px     : fade de transição
-    //  - 160–640px     : faixa escura sob os itens do menu (legibilidade)
-    //  - 640–calc(100% - 140px): volta a ficar transparente
-    //  - últimos ~140px: leve escurecimento sob o rodapé (Precisa de ajuda?)
+    // ao topo. Mantemos o hero (topo) com a arte original visível e
+    // escurecemos todo o restante (menu + rodapé) para máxima legibilidade.
+    //  - 0–110px   : hero limpo (transparente)
+    //  - 110–170px : fade de transição
+    //  - 170px–fim : escurecimento contínuo cobrindo menu e rodapé
     bg:
       `linear-gradient(180deg, ` +
         `rgba(0,0,0,0) 0px, ` +
         `rgba(0,0,0,0) 110px, ` +
-        `rgba(0,0,0,0.62) 160px, ` +
-        `rgba(0,0,0,0.62) 640px, ` +
-        `rgba(0,0,0,0) 700px, ` +
-        `rgba(0,0,0,0) calc(100% - 150px), ` +
-        `rgba(0,0,0,0.55) calc(100% - 100px), ` +
-        `rgba(0,0,0,0.55) 100%), ` +
+        `rgba(0,0,0,0.72) 170px, ` +
+        `rgba(0,0,0,0.72) calc(100% - 220px), ` +
+        `rgba(0,0,0,0.85) 100%), ` +
       `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
