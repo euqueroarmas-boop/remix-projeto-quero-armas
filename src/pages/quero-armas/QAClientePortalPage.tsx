@@ -1295,15 +1295,15 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
               {!effectiveCollapsed && (
-                <div className="min-w-0 flex-1 rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10">
+                <div className={`min-w-0 flex-1 ${sidebarTheme.heroImage ? "rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10" : ""}`}>
                   <div
-                    className="text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)]"
+                    className={`text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,1)]"
+                    className={`text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Área do Cliente
@@ -1331,7 +1331,7 @@ export default function QAClientePortalPage() {
         {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
           {!effectiveCollapsed && (
-            <div className="mx-4 mt-3 mb-1.5 w-fit rounded bg-black/55 px-2 py-1 text-[9.5px] tracking-[0.18em] text-[#E5C25B] font-bold backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+            <div className={`mx-4 mt-3 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
           )}
           {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
@@ -1342,7 +1342,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10"} py-2 text-[12px] font-bold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${active ? "text-white" : "text-[#FBF8EF] border-transparent hover:text-white hover:bg-black/65"}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1356,7 +1356,7 @@ export default function QAClientePortalPage() {
             );
           })}
           {!effectiveCollapsed && (
-            <div className="mx-4 mt-4 mb-1.5 w-fit rounded bg-black/55 px-2 py-1 text-[9.5px] tracking-[0.18em] text-[#E5C25B] font-bold backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+            <div className={`mx-4 mt-4 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
           )}
           {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
@@ -1368,7 +1368,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10"} py-2 text-[12px] font-bold border-l-2 transition drop-shadow-[0_1px_2px_rgba(0,0,0,1)] ${active ? "text-white" : "text-[#FBF8EF] border-transparent hover:text-white hover:bg-black/65"}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1406,9 +1406,9 @@ export default function QAClientePortalPage() {
           </div>
         ) : (
           <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-white/15">
-            <div className="mb-2 rounded bg-black/50 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10">
-              <div className="text-[12px] font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">Precisa de ajuda?</div>
-              <div className="text-[10.5px] text-[#E6DFCE] drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">Atendimento direto pelo WhatsApp</div>
+            <div className={`mb-2 ${sidebarTheme.heroImage ? "rounded bg-black/50 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`}>
+              <div className={`text-[12px] font-bold text-white ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Precisa de ajuda?</div>
+              <div className={`text-[10.5px] text-[#E6DFCE] ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Atendimento direto pelo WhatsApp</div>
             </div>
             <a
               href="https://wa.me/5511978481919"
