@@ -1329,9 +1329,20 @@ export default function QAClientePortalPage() {
         )}
 
         {/* Nav com grupos Principal / Secundário */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+        <nav
+          className="relative z-[1] flex-1 overflow-y-auto overflow-x-hidden px-3 py-2"
+          style={
+            !effectiveCollapsed && sidebarTheme.heroEmpty
+              ? {
+                  background:
+                    "linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.82) 48%, rgba(0,0,0,0.94) 100%)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.06)",
+                }
+              : undefined
+          }
+        >
           {!effectiveCollapsed && (
-            <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
+            <div className="px-1 pt-2 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#D6A64B] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
           )}
           {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
@@ -1342,7 +1353,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-3"} py-2.5 text-[12px] font-semibold border-l-2 transition ${active ? "text-white" : "text-[#F6F1E7] border-transparent bg-black/35 hover:text-white hover:bg-black/55"}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1356,7 +1367,7 @@ export default function QAClientePortalPage() {
             );
           })}
           {!effectiveCollapsed && (
-            <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
+            <div className="px-1 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#D6A64B] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
           )}
           {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
@@ -1368,7 +1379,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-3"} py-2.5 text-[12px] font-semibold border-l-2 transition ${active ? "text-white" : "text-[#F6F1E7] border-transparent bg-black/35 hover:text-white hover:bg-black/55"}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
