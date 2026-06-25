@@ -260,10 +260,21 @@ Deno.serve(async (req) => {
       tipo === "capacidade_tecnica";
     let dataValidadeISO = ddmmaaaaToISO(raw.data_validade);
     const dataAvaliacaoISO = ddmmaaaaToISO(raw.data_avaliacao);
-    if (isLaudo && dataAvaliacaoISO) {
-      const [y, m, d] = dataAvaliacaoISO.split("-").map(Number);
-      const venc = new Date(Date.UTC(y + 1, m - 1, d));
-      dataValidadeISO = venc.toISOString().slice(0, 10);
+    const dataEmissaoISO = ddmmaaaaToISO(raw.data_emissao);
+    if (isLaudo) {
+      // Regra legal (Lei 10.826/03 e Decreto 9.847/19): laudos psicológicos e
+      // de capacidade técnica têm validade fixa de 1 ano contado da data da
+      // avaliação. Quando a IA não extrai a data_avaliacao, cai para
+      // data_emissao. NUNCA aceitamos a data_validade que a IA tentou inferir
+      // (frequentemente vem com anos errados, ex.: 2028 em vez de 2026).
+      const base = dataAvaliacaoISO || dataEmissaoISO;
+      if (base) {
+        const [y, m, d] = base.split("-").map(Number);
+        const venc = new Date(Date.UTC(y + 1, m - 1, d));
+        dataValidadeISO = venc.toISOString().slice(0, 10);
+      } else {
+        dataValidadeISO = null;
+      }
     }
 
     const sugestao = {
