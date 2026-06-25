@@ -14,7 +14,10 @@
 //   • Se origem é "manual_override_ai" (cliente CORRIGIU uma sugestão da IA)
 //     → NÃO toca. A correção humana prevalece.
 //
-// Marca cada documento processado em `prefill_consumed_at` para não repetir.
+// Marca cada documento processado em `prefill_consumed_at` para auditoria, mas
+// reprocessa dados já extraídos em aberturas futuras. Isso permite que novos
+// mapeamentos/correções preencham campos que antes ficaram faltando, sem chamar
+// IA novamente — custo zero.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
@@ -37,6 +40,98 @@ function json(body: Record<string, unknown>, status = 200) {
 
 type Origem = "manual" | "ai" | "manual_override_ai";
 
+const UFS = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
+  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+]);
+
+const ESTADO_PARA_UF: Record<string, string> = {
+  acre: "AC",
+  alagoas: "AL",
+  amapá: "AP",
+  amapa: "AP",
+  amazonas: "AM",
+  bahia: "BA",
+  ceará: "CE",
+  ceara: "CE",
+  "distrito federal": "DF",
+  "espírito santo": "ES",
+  "espirito santo": "ES",
+  goiás: "GO",
+  goias: "GO",
+  maranhão: "MA",
+  maranhao: "MA",
+  "mato grosso": "MT",
+  "mato grosso do sul": "MS",
+  "minas gerais": "MG",
+  pará: "PA",
+  para: "PA",
+  paraíba: "PB",
+  paraiba: "PB",
+  paraná: "PR",
+  parana: "PR",
+  pernambuco: "PE",
+  piauí: "PI",
+  piaui: "PI",
+  "rio de janeiro": "RJ",
+  "rio grande do norte": "RN",
+  "rio grande do sul": "RS",
+  rondônia: "RO",
+  rondonia: "RO",
+  roraima: "RR",
+  "santa catarina": "SC",
+  "são paulo": "SP",
+  "sao paulo": "SP",
+  sergipe: "SE",
+  tocantins: "TO",
+};
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function normalizeUf(value: unknown): string | null {
+  const raw = String(value ?? "").trim().toUpperCase();
+  const direct = raw.match(/\b([A-Z]{2})\b/);
+  if (direct && UFS.has(direct[1])) return direct[1];
+
+  const normalized = normalizeText(value);
+  for (const [estado, uf] of Object.entries(ESTADO_PARA_UF)) {
+    if (normalized.includes(normalizeText(estado))) return uf;
+  }
+  return null;
+}
+
+function inferirUfEmissor(extraidos: Record<string, any>, emissor: string): string | null {
+  const direct = normalizeUf(
+    extraidos.uf_emissor_rg ??
+      extraidos.uf_emissor ??
+      extraidos.uf_emissao ??
+      extraidos.estado_emissao ??
+      extraidos.estado_orgao_emissor,
+  );
+  if (direct) return direct;
+
+  const emissorSuffix = String(emissor || "").match(/(?:\/|-|\s)\s*([A-Z]{2})\s*$/i);
+  if (emissorSuffix && UFS.has(emissorSuffix[1].toUpperCase())) return emissorSuffix[1].toUpperCase();
+
+  return normalizeUf([
+    emissor,
+    extraidos.orgao_emissor,
+    extraidos.emissor_rg,
+    extraidos.local_emissao,
+    extraidos.local_expedicao,
+    extraidos.cabecalho_estado,
+  ].filter(Boolean).join(" "));
+}
+
+function limparUfDoEmissor(emissor: string): string {
+  return emissor.replace(/\s*(?:\/|-)\s*[A-Z]{2}\s*$/i, "").trim();
+}
+
 // Tipos de documento que carregam dados cadastrais úteis.
 const TIPOS_RELEVANTES = new Set<string>([
   "rg", "cin", "identidade", "cnh",
@@ -58,11 +153,17 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
 
   // Comuns
   set("nome_completo", extraidos.nome_completo);
+  set("cpf", extraidos.cpf);
   set("data_nascimento", extraidos.data_nascimento);
   set("sexo", extraidos.sexo);
   set("nacionalidade", extraidos.nacionalidade);
+  set("estado_civil", extraidos.estado_civil);
   set("nome_mae", extraidos.filiacao_mae ?? extraidos.nome_mae);
   set("nome_pai", extraidos.filiacao_pai ?? extraidos.nome_pai);
+  set("titulo_eleitor", extraidos.titulo_eleitor);
+  set("cnh", extraidos.cnh);
+  set("ctps", extraidos.ctps);
+  set("pis_pasep", extraidos.pis_pasep ?? extraidos.nis);
 
   // Naturalidade vem como "CIDADE/UF" ou separada
   if (extraidos.naturalidade && typeof extraidos.naturalidade === "string") {
@@ -79,8 +180,14 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
 
   // RG / CIN / CNH
   if (t === "rg" || t === "cin" || t === "identidade") {
-    set("rg", extraidos.numero_documento ?? extraidos.rg);
-    set("emissor_rg", extraidos.orgao_emissor ?? extraidos.emissor_rg);
+    const tipoExtraido = String(extraidos.tipo_documento || "").toLowerCase();
+    const isCin = t === "cin" || tipoExtraido === "cin";
+    const rgCandidato = Array.isArray(extraidos.rg_candidato) ? extraidos.rg_candidato[0] : extraidos.rg_candidato;
+    set("rg", extraidos.numero_documento ?? extraidos.rg ?? (isCin ? extraidos.cpf ?? rgCandidato : undefined));
+    const emissor = String(extraidos.orgao_emissor ?? extraidos.emissor_rg ?? "").trim();
+    const ufEmissor = inferirUfEmissor(extraidos, emissor);
+    set("emissor_rg", limparUfDoEmissor(emissor));
+    set("uf_emissor_rg", ufEmissor);
     set("expedicao_rg", extraidos.data_emissao ?? extraidos.data_expedicao_rg);
     set("tipo_documento_identidade", t === "cin" ? "CIN" : "RG");
   }
@@ -131,6 +238,10 @@ function normalizar(col: string, valor: string): string | null {
   if (col === "celular") {
     v = v.replace(/\D/g, "").slice(0, 13);
     return v.length >= 10 ? v : null;
+  }
+  if (col === "cpf" || col === "titulo_eleitor" || col === "cnh" || col === "pis_pasep") {
+    v = v.replace(/\D/g, "");
+    return v || null;
   }
   if (col === "data_nascimento" || col === "expedicao_rg") {
     const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -185,12 +296,13 @@ Deno.serve(async (req) => {
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
-    // Busca documentos do cliente ainda não consumidos para prefill
+    // Busca documentos do cliente com dados extraídos para prefill. Não filtra
+    // por `prefill_consumed_at`: se uma versão antiga consumiu o documento sem
+    // mapear todos os campos, o portal precisa reaproveitar a extração existente.
     const { data: docs, error: docsErr } = await admin
       .from("qa_documentos_cliente")
       .select("id, tipo_documento, ia_dados_extraidos, created_at")
       .eq("qa_cliente_id", cliente.id)
-      .is("prefill_consumed_at", null)
       .not("ia_dados_extraidos", "is", null)
       .order("created_at", { ascending: true })
       .limit(50);
