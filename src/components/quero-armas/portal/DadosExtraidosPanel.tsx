@@ -253,7 +253,6 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
         <div className="qa-print-hdr">
           <div className="l-logo">
             <img src={logoQueroArmas} alt="Quero Armas" />
-            <div className="sub">Portal do Cliente</div>
           </div>
           <div className="r-emp">
             <div className="rz">{EMPRESA.razaoSocial}</div>
