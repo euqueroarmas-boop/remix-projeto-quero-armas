@@ -108,12 +108,102 @@
   .m10 .meta .t{text-transform:uppercase;letter-spacing:.18em;font-size:10px;color:#9a948c}
   .m10 .meta .v{font-family:Oswald,sans-serif;font-size:18px;font-weight:700;color:#0a0a0a;margin-top:2px}
   .m10 .meta .v span{color:#9a948c;font-weight:500;font-size:13px}
+
+  /* ---------- 11. Claquete (film slate) ---------- */
+  .m11{background:#0a0a0a;border-radius:8px;padding:14px 22px;display:flex;align-items:center;gap:18px;box-shadow:0 10px 24px -10px rgba(0,0,0,.45)}
+  .m11 .board{display:flex;flex-direction:column;align-items:center;gap:2px}
+  .m11 .board .stripe{width:44px;height:6px;background:linear-gradient(135deg,#fff 25%,#0a0a0a 25% 50%,#fff 50% 75%,#0a0a0a 75%);background-size:12px 12px;border-radius:2px}
+  .m11 .take{font-family:Oswald,sans-serif;font-weight:700;color:#d6a64b;font-size:22px;letter-spacing:.06em}
+  .m11 .meta{font-family:Inter,sans-serif;color:#8a8276;font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+  .m11 .slash{color:#3a3530;margin:0 8px}
+
+  /* ---------- 12. Régua deslizante ---------- */
+  .m12{position:relative;width:420px;max-width:90%}
+  .m12 .track{height:2px;background:#d9d4cb;position:relative}
+  .m12 .tick{position:absolute;top:-5px;width:1px;height:11px;background:#c4bdb1}
+  .m12 .tick:nth-child(1){left:0}.m12 .tick:nth-child(2){left:12.5%}.m12 .tick:nth-child(3){left:25%}.m12 .tick:nth-child(4){left:37.5%}
+  .m12 .tick:nth-child(5){left:50%}.m12 .tick:nth-child(6){left:62.5%}.m12 .tick:nth-child(7){left:75%}.m12 .tick:nth-child(8){left:87.5%}.m12 .tick:nth-child(9){left:100%}
+  .m12 .nums{display:flex;justify-content:space-between;margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9a948c}
+  .m12 .nums b{color:var(--bordo);font-size:14px}
+  .m12 .cursor{position:absolute;top:-10px;left:87.5%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:var(--bordo);border:3px solid #fbfaf7;box-shadow:0 4px 12px -4px rgba(122,31,43,.5);display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#fff;font-size:11px}
+
+  /* ---------- 13. Mira de escopo ---------- */
+  .m13{display:flex;align-items:center;gap:0}
+  .m13 .ring{width:44px;height:44px;border-radius:50%;border:2px solid #ddd6c7;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#b6afa2;font-size:14px;position:relative}
+  .m13 .ring::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1px dashed #c4bdb1}
+  .m13 .ring.done{border-color:var(--bordo);color:var(--bordo)}
+  .m13 .ring.active{border-color:var(--bordo);background:var(--bordo);color:#fff;transform:scale(1.12);box-shadow:0 0 0 6px rgba(122,31,43,.12)}
+  .m13 .ring.active::after{border-color:transparent}
+  .m13 .link{width:22px;height:2px;background:#e2dccf;position:relative}
+  .m13 .link::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:4px;height:4px;background:#c4bdb1;border-radius:50%}
+
+  /* ---------- 14. Fichas de poker empilhadas ---------- */
+  .m14{display:flex;gap:6px;align-items:flex-end}
+  .m14 .chip{width:34px;height:34px;border-radius:50%;border:3px dashed #c4bdb1;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#a8a195;font-size:12px;position:relative}
+  .m14 .chip::before{content:"";position:absolute;inset:4px;border-radius:50%;border:1px solid #e6dfd0}
+  .m14 .chip.done{background:var(--bordo);border-color:#5c1620;color:#fff}
+  .m14 .chip.done::before{border-color:rgba(255,255,255,.35)}
+  .m14 .chip.active{background:var(--bordo);border-style:solid;border-color:#5c1620;color:#fff;transform:translateY(-6px);box-shadow:0 10px 16px -8px rgba(122,31,43,.55)}
+  .m14 .chip.active::before{border-color:rgba(255,255,255,.45)}
+
+  /* ---------- 15. Tambor de revólver ---------- */
+  .m15{position:relative;width:120px;height:120px}
+  .m15 .cylinder{width:100%;height:100%;border-radius:50%;border:3px solid #d9d4cb;background:conic-gradient(from 0deg,#f0ece4 0deg,#e8e3da 90deg,#f0ece4 90deg,#e8e3da 180deg,#f0ece4 180deg,#e8e3da 270deg,#f0ece4 270deg);position:relative}
+  .m15 .hole{position:absolute;width:22px;height:22px;border-radius:50%;background:#3a3530;border:2px solid #c4bdb1;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#fff;font-size:9px;transform:translate(-50%,-50%)}
+  .m15 .hole.active{background:var(--bordo);border-color:#5c1620;box-shadow:0 0 0 4px rgba(122,31,43,.2)}
+  .m15 .center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:#0a0a0a;border:2px solid #d6a64b;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#d6a64b;font-size:13px}
+
+  /* ---------- 16. Etiquetas/tags ---------- */
+  .m16{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:90%}
+  .m16 .tag{font-family:Inter,sans-serif;font-size:11px;font-weight:600;color:#7a7368;background:#fff;border:1px solid #ddd6c7;padding:6px 12px;border-radius:4px;letter-spacing:.04em}
+  .m16 .tag.done{background:#0a0a0a;color:#d6a64b;border-color:#0a0a0a}
+  .m16 .tag.active{background:var(--bordo);color:#fff;border-color:var(--bordo-2);transform:translateY(-2px);box-shadow:0 6px 12px -6px rgba(122,31,43,.45)}
+
+  /* ---------- 17. Display digital 7-segment ---------- */
+  .m17{display:flex;align-items:center;gap:10px;background:#0a0a0a;padding:16px 24px;border-radius:10px;box-shadow:0 12px 28px -12px rgba(0,0,0,.5)}
+  .m17 .seg{font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:#2a2a2a;letter-spacing:.08em}
+  .m17 .seg.on{color:#d6a64b;text-shadow:0 0 12px rgba(214,166,75,.6),0 0 24px rgba(214,166,75,.25)}
+  .m17 .sep{color:#3a3530;font-size:28px;margin:0 6px;align-self:flex-end;padding-bottom:4px}
+  .m17 .label{font-family:Inter,sans-serif;color:#5c554c;font-size:10px;letter-spacing:.18em;text-transform:uppercase;margin-left:14px}
+
+  /* ---------- 18. Waypoints / pins de mapa ---------- */
+  .m18{display:flex;gap:6px;align-items:flex-start}
+  .m18 .pin{position:relative;width:30px;display:flex;flex-direction:column;align-items:center}
+  .m18 .pin .head{width:24px;height:24px;border-radius:50%;border:2px solid #ddd6c7;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#a8a195;font-size:11px}
+  .m18 .pin::after{content:"";width:2px;height:16px;background:#ddd6c7}
+  .m18 .pin.done .head{border-color:var(--bordo);color:var(--bordo);background:#fff}
+  .m18 .pin.done::after{background:var(--bordo)}
+  .m18 .pin.active .head{background:var(--bordo);border-color:#5c1620;color:#fff;transform:translateY(-4px);box-shadow:0 6px 12px -4px rgba(122,31,43,.4)}
+  .m18 .pin.active::after{background:var(--bordo);height:20px}
+  .m18 .ground{width:100%;height:2px;background:linear-gradient(90deg,transparent,#d9d4cb,transparent);margin-top:-1px;flex-shrink:0}
+
+  /* ---------- 19. Retículo de mira ---------- */
+  .m19{width:480px;max-width:90%;position:relative}
+  .m19 .line{height:1px;background:linear-gradient(90deg,transparent,#c4bdb1 10%,#c4bdb1 90%,transparent)}
+  .m19 .marks{display:flex;justify-content:space-between;margin-top:8px;position:relative}
+  .m19 .marks::before{content:"";position:absolute;top:-14px;left:0;right:0;height:12px;background:linear-gradient(180deg,transparent,rgba(122,31,43,.04))}
+  .m19 .mk{font-family:'JetBrains Mono',monospace;font-size:10px;color:#b8b1a6;position:relative}
+  .m19 .mk::before{content:"";position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:1px;height:10px;background:#c4bdb1}
+  .m19 .mk.on{color:var(--bordo);font-weight:700;font-size:13px}
+  .m19 .mk.on::before{background:var(--bordo);width:2px;height:14px;top:-16px}
+  .m19 .cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px}
+  .m19 .cross::before,.m19 .cross::after{content:"";position:absolute;background:var(--bordo)}
+  .m19 .cross::before{left:5px;top:0;bottom:0;width:2px}
+  .m19 .cross::after{top:5px;left:0;right:0;height:2px}
+
+  /* ---------- 20. Barras de energia / bateria ---------- */
+  .m20{display:flex;gap:5px;align-items:flex-end;height:50px}
+  .m20 .bar{width:10px;border-radius:2px;background:#e7e1d4;transition:all .2s}
+  .m20 .bar.on{background:linear-gradient(180deg,var(--bordo),#a93340)}
+  .m20 .bar.active{background:linear-gradient(180deg,#d6a64b,#b8862b);box-shadow:0 0 10px rgba(214,166,75,.35)}
+  .m20 .readout{margin-left:16px;font-family:Oswald,sans-serif;font-weight:700;color:#0a0a0a;font-size:22px;align-self:center}
+  .m20 .readout span{color:#9a948c;font-size:14px;font-weight:500;margin-left:4px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Numeração do carrossel · 10 mockups</h1>
+    <h1>Numeração do carrossel · 20 mockups</h1>
     <p>Estado: passo 08 de 09. Identidade Quero Armas (preto + bordô #7A1F2B sobre papel #f6f5f1).</p>
   </header>
 
@@ -237,6 +327,167 @@
       <div class="m10">
         <div class="ring"><b>08</b></div>
         <div class="meta"><div class="t">Etapa</div><div class="v">08 <span>de 09</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>11 · Claquete de filmagem</h2>
+    <p class="desc">Estilo cinema/action: listras de claquete + take bordô/brass. Tom cinematográfico.</p>
+    <div class="stage">
+      <div class="m11">
+        <div class="board">
+          <div class="stripe"></div><div class="stripe"></div><div class="stripe"></div>
+        </div>
+        <div class="take">TAKE 08</div>
+        <div class="slash">/</div>
+        <div class="meta">09 scenes</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>12 · Régua deslizante</h2>
+    <p class="desc">Marcador circular desliza sobre trilho graduado. Analógico e preciso.</p>
+    <div class="stage">
+      <div class="m12">
+        <div class="track">
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick"></div><div class="tick"></div><div class="tick"></div><div class="tick"></div>
+          <div class="tick"></div>
+        </div>
+        <div class="cursor">08</div>
+        <div class="nums"><span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span><b>08</b><span>09</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>13 · Mira de escopo</h2>
+    <p class="desc">Anéis conectados por linhas com ponto central. Concluídos em bordô vazio, ativo sólido.</p>
+    <div class="stage">
+      <div class="m13">
+        <div class="ring done">01</div><div class="link"></div>
+        <div class="ring done">02</div><div class="link"></div>
+        <div class="ring done">03</div><div class="link"></div>
+        <div class="ring done">04</div><div class="link"></div>
+        <div class="ring done">05</div><div class="link"></div>
+        <div class="ring done">06</div><div class="link"></div>
+        <div class="ring done">07</div><div class="link"></div>
+        <div class="ring active">08</div><div class="link"></div>
+        <div class="ring">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>14 · Fichas de poker</h2>
+    <p class="desc">Fichas circulares empilhadas. Ativo sobe, concluídos preenchidos. Visual de jogo/tático.</p>
+    <div class="stage">
+      <div class="m14">
+        <div class="chip done">01</div><div class="chip done">02</div><div class="chip done">03</div>
+        <div class="chip done">04</div><div class="chip done">05</div><div class="chip done">06</div>
+        <div class="chip done">07</div><div class="chip active">08</div><div class="chip">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>15 · Tambor de revólver</h2>
+    <p class="desc">Cilindro com 9 posições. Centro mostra etapa atual. Metáfora direta do arsenal.</p>
+    <div class="stage">
+      <div class="m15">
+        <div class="cylinder">
+          <div class="hole" style="top:18%;left:50%">01</div>
+          <div class="hole" style="top:32%;left:78%">02</div>
+          <div class="hole" style="top:60%;left:85%">03</div>
+          <div class="hole" style="top:82%;left:65%">04</div>
+          <div class="hole" style="top:82%;left:35%">05</div>
+          <div class="hole" style="top:60%;left:15%">06</div>
+          <div class="hole" style="top:32%;left:22%">07</div>
+          <div class="hole active" style="top:50%;left:72%">08</div>
+          <div class="hole" style="top:50%;left:28%">09</div>
+          <div class="center">08</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>16 · Etiquetas/tags</h2>
+    <p class="desc">Tags estilo preço/etiqueta. Concluídas em preto+brass, ativa em bordô levantada.</p>
+    <div class="stage">
+      <div class="m16">
+        <div class="tag done">01</div><div class="tag done">02</div><div class="tag done">03</div>
+        <div class="tag done">04</div><div class="tag done">05</div><div class="tag done">06</div>
+        <div class="tag done">07</div><div class="tag active">08</div><div class="tag">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>17 · Display digital 7-segment</h2>
+    <p class="desc">Painel escuro com números em brass brilhante. Ativo em bordô neon. Tom eletrônico.</p>
+    <div class="stage">
+      <div class="m17">
+        <span class="seg on">0</span><span class="seg on">8</span>
+        <span class="sep">/</span>
+        <span class="seg">0</span><span class="seg on">9</span>
+        <span class="label">Passo</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>18 · Waypoints de mapa</h2>
+    <p class="desc">Pins de mapa conectados por linha. Ativo levantado, concluídos com traço bordô.</p>
+    <div class="stage">
+      <div class="m18">
+        <div class="pin done"><div class="head">01</div></div>
+        <div class="pin done"><div class="head">02</div></div>
+        <div class="pin done"><div class="head">03</div></div>
+        <div class="pin done"><div class="head">04</div></div>
+        <div class="pin done"><div class="head">05</div></div>
+        <div class="pin done"><div class="head">06</div></div>
+        <div class="pin done"><div class="head">07</div></div>
+        <div class="pin active"><div class="head">08</div></div>
+        <div class="pin"><div class="head">09</div></div>
+      </div>
+      <div class="m18" style="margin-top:2px"><div class="ground"></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>19 · Retículo de mira</h2>
+    <p class="desc">Linha fina com marcas graduadas. Etapa ativa com cruz central. Visual tático de precisão.</p>
+    <div class="stage">
+      <div class="m19">
+        <div class="line"></div>
+        <div class="marks">
+          <div class="mk">01</div><div class="mk">02</div><div class="mk">03</div>
+          <div class="mk">04</div><div class="mk">05</div><div class="mk">06</div>
+          <div class="mk">07</div><div class="mk on">08</div><div class="mk">09</div>
+          <div class="cross"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>20 · Barras de energia</h2>
+    <p class="desc">Colunas verticais tipo bateria. Preenchidas em bordô, ativa em brass brilhante. Tom gauge/power.</p>
+    <div class="stage">
+      <div class="m20">
+        <div class="bar on" style="height:16px"></div>
+        <div class="bar on" style="height:20px"></div>
+        <div class="bar on" style="height:24px"></div>
+        <div class="bar on" style="height:28px"></div>
+        <div class="bar on" style="height:32px"></div>
+        <div class="bar on" style="height:36px"></div>
+        <div class="bar on" style="height:40px"></div>
+        <div class="bar active" style="height:50px"></div>
+        <div class="bar" style="height:12px"></div>
+        <div class="readout">08<span>/ 09</span></div>
       </div>
     </div>
   </div>
