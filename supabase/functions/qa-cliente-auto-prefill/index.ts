@@ -153,8 +153,13 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
   set("data_nascimento", extraidos.data_nascimento);
   set("sexo", extraidos.sexo);
   set("nacionalidade", extraidos.nacionalidade);
+  set("estado_civil", extraidos.estado_civil);
   set("nome_mae", extraidos.filiacao_mae ?? extraidos.nome_mae);
   set("nome_pai", extraidos.filiacao_pai ?? extraidos.nome_pai);
+  set("titulo_eleitor", extraidos.titulo_eleitor);
+  set("cnh", extraidos.cnh);
+  set("ctps", extraidos.ctps);
+  set("pis_pasep", extraidos.pis_pasep ?? extraidos.nis);
 
   // Naturalidade vem como "CIDADE/UF" ou separada
   if (extraidos.naturalidade && typeof extraidos.naturalidade === "string") {
@@ -226,6 +231,10 @@ function normalizar(col: string, valor: string): string | null {
   if (col === "celular") {
     v = v.replace(/\D/g, "").slice(0, 13);
     return v.length >= 10 ? v : null;
+  }
+  if (col === "cpf" || col === "titulo_eleitor" || col === "cnh" || col === "pis_pasep") {
+    v = v.replace(/\D/g, "");
+    return v || null;
   }
   if (col === "data_nascimento" || col === "expedicao_rg") {
     const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
