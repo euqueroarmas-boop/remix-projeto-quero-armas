@@ -1138,6 +1138,14 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
+      <ClienteFotoUploadModal
+        open={showFotoModal}
+        onOpenChange={setShowFotoModal}
+        onUploaded={() => {
+          setAvatarReloadKey((k) => k + 1);
+          setDocsReloadKey((k) => k + 1);
+        }}
+      />
       {/* ═══ SIDEBAR Z6 DARK ═══ */}
       <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${sidebarCollapsed ? "w-[68px]" : "w-[230px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
