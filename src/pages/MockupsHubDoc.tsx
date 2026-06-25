@@ -1039,7 +1039,7 @@ const R5: React.FC = () => {
 
 const PdfSheet: React.FC<{ height?: number; width?: number | string; scale?: number }> = ({ height = 460, width = "100%", scale = 1 }) => (
   <div style={{ width, height, background: "#E2E2E2", border: `1px solid ${T.border}`, borderRadius: 4, padding: 18, display: "flex", justifyContent: "center", alignItems: "flex-start", position: "relative", overflow: "hidden" }}>
-    <div style={{ width: "92%", height: "100%", background: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.08)", padding: 22 * scale, fontFamily: "Georgia, serif", color: "#222", display: "flex", flexDirection: "column", gap: 10 * scale, overflow: "hidden" }}>
+    <div style={{ width: "92%", height: "100%", background: "#fff", padding: 22 * scale, fontFamily: "Georgia, serif", color: "#222", display: "flex", flexDirection: "column", gap: 10 * scale, overflow: "hidden" }}>
       <div style={{ textAlign: "center", fontSize: 10 * scale, letterSpacing: ".24em", color: "#7a1f2b", fontWeight: 700 }}>REPÚBLICA FEDERATIVA DO BRASIL · POLÍCIA FEDERAL</div>
       <div style={{ textAlign: "center", fontSize: 13 * scale, fontWeight: 700, marginTop: 4 * scale, lineHeight: 1.3 }}>COMPROVANTE DE CAPACIDADE TÉCNICA<br />PARA O MANUSEIO DE ARMA DE FOGO</div>
       <div style={{ height: 1, background: "#333", margin: "4px 0" }} />
@@ -1801,10 +1801,221 @@ const R35: React.FC = () => (
   />
 );
 
+/* ───────── R36–R40 · CARIMBO 98% DO R7 PRESERVADO · varia layout/chrome ─────────
+   Regra dura: carimbo idêntico ao R7 (Stamp98R7). Tudo ao redor muda. */
+const Stamp98R7: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={{ position: "absolute", top: 30, right: -10, transform: "rotate(-8deg)", border: `5px solid ${T.bordo}`, padding: "10px 18px 6px", background: "rgba(255,255,255,.9)", borderRadius: 4, color: T.bordo, fontFamily: OSWALD, boxShadow: "0 6px 18px rgba(122,31,43,.25)", ...style }}>
+    <div style={{ fontSize: 72, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{COPY.iaConfRaw}%</div>
+    <div style={{ fontSize: 10, letterSpacing: ".3em", textAlign: "center", marginTop: 2 }}>IA · APROVADO</div>
+  </div>
+);
+
+const ChipConf: React.FC<{ pct?: string }> = ({ pct = "98%" }) => (
+  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontFamily: OSWALD, fontSize: 9, letterSpacing: ".22em", color: T.bordo, border: `1px solid ${T.bordo}`, padding: "2px 6px", borderRadius: 2, background: "rgba(122,31,43,.06)" }}>
+    <span style={{ width: 5, height: 5, borderRadius: 99, background: T.bordo }} />IA {pct}
+  </span>
+);
+
+// R36 — Pipeline bar no topo + PDF dominante + 4 campos densos abaixo
+const R36: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#F4F1EA", padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, fontFamily: OSWALD, fontSize: 10, letterSpacing: ".26em", color: T.ink3 }}>
+        {["UPLOAD", "OCR", "IA · LEITURA", "CONFIRMAÇÃO"].map((s, i) => (
+          <React.Fragment key={s}>
+            <span style={{ color: i < 3 ? T.bordo : T.ink, fontWeight: 700 }}>0{i+1} · {s}</span>
+            {i < 3 && <span style={{ flex: i === 2 ? 0 : 0, width: 28, height: 1, background: T.border }} />}
+          </React.Fragment>
+        ))}
+        <span style={{ marginLeft: "auto" }}><ChipConf /></span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 18 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Lab spacing=".24em">DOSSIÊ</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 13, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <EscopoBlock />
+        </div>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={520} />
+          <Stamp98R7 />
+        </div>
+      </div>
+      <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+        <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+        <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+        <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+        <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R37 — Ficha catalográfica: PDF esq · ficha numerada dir com linhas finas
+const R37: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FBF8F2", padding: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 24 }}>
+        <div style={{ position: "relative" }}>
+          <Lab spacing=".24em">ARQUIVO ENVIADO</Lab>
+          <div style={{ marginTop: 10 }}><PdfSheet height={560} /></div>
+          <Stamp98R7 />
+        </div>
+        <div style={{ border: `1px solid ${T.ink}`, padding: 18, background: "#fff" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", borderBottom: `1px solid ${T.ink}`, paddingBottom: 8 }}>
+            <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".22em", fontWeight: 700, color: T.ink }}>FICHA CATALOGRÁFICA</div>
+            <ChipConf />
+          </div>
+          {[
+            ["01", COPY.categoriaLab, COPY.categoriaVal],
+            ["02", COPY.tipoLab, COPY.tipoVal],
+            ["03", COPY.fNumLab, COPY.fNumVal],
+            ["04", COPY.fOrgaoLab, COPY.fOrgaoVal],
+            ["05", COPY.fEmissLab, COPY.fEmissVal],
+            ["06", COPY.fValLab, COPY.fValVal],
+          ].map(([n, lab, val]) => (
+            <div key={n} style={{ display: "grid", gridTemplateColumns: "28px 1fr 1.4fr", gap: 8, padding: "10px 0", borderBottom: `1px dashed ${T.border}`, alignItems: "baseline" }}>
+              <div style={{ fontFamily: OSWALD, fontSize: 11, color: T.bordo, fontWeight: 700 }}>{n}</div>
+              <div style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".22em", color: T.ink3, textTransform: "uppercase" }}>{lab}</div>
+              <div style={{ fontFamily: OSWALD, fontSize: 12, color: T.ink, fontWeight: 700, letterSpacing: ".04em" }}>{val}</div>
+            </div>
+          ))}
+          <div style={{ marginTop: 12 }}><EscopoBlock /></div>
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R38 — Console operacional: gradient bege + cantoneiras de canto + sidebar dupla
+const Corner: React.FC<{ pos: React.CSSProperties }> = ({ pos }) => (
+  <div style={{ position: "absolute", width: 18, height: 18, ...pos, pointerEvents: "none" }}>
+    <div style={{ position: "absolute", inset: 0, borderTop: `2px solid ${T.bordo}`, borderLeft: `2px solid ${T.bordo}`, ...(pos as any)._mirror }} />
+  </div>
+);
+const R38: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "linear-gradient(180deg, #F5EFE4 0%, #EAE2D2 100%)", padding: 26 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "200px 1fr 220px", gap: 16, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {["DOSSIÊ", "HISTÓRICO", "AUDITORIA"].map((t, i) => (
+            <div key={t} style={{ padding: "10px 12px", border: `1px solid ${i === 0 ? T.bordo : T.border}`, background: i === 0 ? "#fff" : "rgba(255,255,255,.55)", fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".24em", color: i === 0 ? T.bordo : T.ink3, fontWeight: 700 }}>
+              {t}
+            </div>
+          ))}
+          <div style={{ marginTop: 4 }}><FileBlock compact /></div>
+        </div>
+        <div style={{ position: "relative", padding: 14, background: "#fff", border: `1px solid ${T.border}` }}>
+          {/* cantoneiras */}
+          <div style={{ position: "absolute", top: 4, left: 4, width: 22, height: 22, borderTop: `2px solid ${T.bordo}`, borderLeft: `2px solid ${T.bordo}` }} />
+          <div style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderTop: `2px solid ${T.bordo}`, borderRight: `2px solid ${T.bordo}` }} />
+          <div style={{ position: "absolute", bottom: 4, left: 4, width: 22, height: 22, borderBottom: `2px solid ${T.bordo}`, borderLeft: `2px solid ${T.bordo}` }} />
+          <div style={{ position: "absolute", bottom: 4, right: 4, width: 22, height: 22, borderBottom: `2px solid ${T.bordo}`, borderRight: `2px solid ${T.bordo}` }} />
+          <PdfSheet height={560} />
+          <Stamp98R7 />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Lab spacing=".22em">CAMPOS · IA</Lab>
+            <ChipConf />
+          </div>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R39 — Expediente: header com timestamp gigante + PDF + bloco de assinatura digital
+const R39: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#F2EEE5", padding: 24 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", borderBottom: `2px solid ${T.ink}`, paddingBottom: 12, marginBottom: 16 }}>
+        <div>
+          <Lab spacing=".26em">EXPEDIENTE · ENTRADA</Lab>
+          <div style={{ fontFamily: OSWALD, fontWeight: 700, color: T.ink, fontSize: 44, letterSpacing: "-.01em", lineHeight: 1 }}>19/03/2025 · 14:08</div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <Lab color={T.bordo} spacing=".26em">PROTOCOLO IA</Lab>
+          <div style={{ fontFamily: OSWALD, fontWeight: 700, color: T.bordo, fontSize: 22, letterSpacing: ".06em" }}>HUB-DOC-2025-0005</div>
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 20 }}>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={560} />
+          <Stamp98R7 />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <div style={{ border: `1px dashed ${T.bordo}`, padding: 12, background: "rgba(255,255,255,.55)" }}>
+            <Lab color={T.bordo} spacing=".24em">ASSINATURA DIGITAL</Lab>
+            <div style={{ fontFamily: OSWALD, fontSize: 11, color: T.ink, marginTop: 6, lineHeight: 1.4, letterSpacing: ".02em" }}>SHA-256 · 9F3A·B71C·22E0·48DD<br/>VALIDADO POR IA · CARIMBO PADES-A1</div>
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R40 — Bento assimétrico: PDF gigante esq + 3 tiles dir (info / chips / escopo)
+const R40: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#EFE8DA", padding: 22 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gridTemplateRows: "auto auto auto", gap: 12 }}>
+        <div style={{ gridRow: "1 / span 3", position: "relative", background: "#fff", border: `1px solid ${T.border}`, padding: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <Lab spacing=".24em">ARQUIVO ENVIADO</Lab>
+            <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".22em", color: T.ink3 }}>{COPY.fileName} · {COPY.fileSize}</span>
+          </div>
+          <PdfSheet height={580} />
+          <Stamp98R7 />
+        </div>
+        <div style={{ background: T.ink, color: "#fff", padding: 16 }}>
+          <Lab color={T.amber} spacing=".26em">IDENTIFICAÇÃO IA</Lab>
+          <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, letterSpacing: ".04em", lineHeight: 1.15, marginTop: 6 }}>{COPY.iaTipo}</div>
+          <div style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".22em", color: "#cfc7b5", marginTop: 8 }}>CATEGORIA · {COPY.categoriaVal.toUpperCase()}</div>
+        </div>
+        <div style={{ background: "#fff", border: `1px solid ${T.border}`, padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+        </div>
+        <div style={{ background: "#fff", border: `1px solid ${T.border}`, padding: 14 }}>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 35 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 40 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
@@ -1860,6 +2071,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 33, nome: "R33 · Branco + Dot Grid", subtitulo: "PONTILHADO PREMIUM + MOLDURA INTERNA", render: () => <R33 /> },
   { id: 34, nome: "R34 · Branco Museu", subtitulo: "VINHETA RADIAL + DUPLA MOLDURA BORDÔ DISCRETA", render: () => <R34 /> },
   { id: 35, nome: "R35 · Branco Hachurado", subtitulo: "HACHURA 45° LEVE + FAIXAS TRACEJADAS TOPO/BASE", render: () => <R35 /> },
+  { id: 36, nome: "R36 · Pipeline + PDF + 4 Campos", subtitulo: "BREADCRUMB IA NO TOPO · CAMPOS DENSOS ABAIXO", render: () => <R36 /> },
+  { id: 37, nome: "R37 · Ficha Catalográfica", subtitulo: "PDF ESQ + FICHA NUMERADA 01-06 DIR", render: () => <R37 /> },
+  { id: 38, nome: "R38 · Console Operacional", subtitulo: "GRADIENTE BEGE + CANTONEIRAS + SIDEBAR DUPLA", render: () => <R38 /> },
+  { id: 39, nome: "R39 · Expediente Datado", subtitulo: "TIMESTAMP GIGANTE + ASSINATURA DIGITAL", render: () => <R39 /> },
+  { id: 40, nome: "R40 · Bento Assimétrico", subtitulo: "PDF GRANDE ESQ + 3 TILES DIR (DARK · CAMPOS · ESCOPO)", render: () => <R40 /> },
 ];
 
 export default function MockupsHubDoc() {
