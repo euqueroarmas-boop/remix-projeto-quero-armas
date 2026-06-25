@@ -124,6 +124,10 @@ function inferUfEmissor(extraidos: Record<string, any>): string {
   return "";
 }
 
+function limparUfDoEmissor(v: string): string {
+  return v.replace(/\s*(?:\/|-)\s*[A-Z]{2}\s*$/i, "").trim();
+}
+
 function buildSuggestions(
   cliente: any,
   extraidos: Record<string, any>,
@@ -141,6 +145,7 @@ function buildSuggestions(
       if (v) { novo = v; break; }
     }
     if (!novo && m.col === "uf_emissor_rg") novo = inferUfEmissor(extraidos);
+    if (novo && m.col === "emissor_rg") novo = limparUfDoEmissor(novo);
     if (!novo) continue;
     const atual = norm(cliente?.[m.col]);
     if (normCmp(atual) === normCmp(novo)) continue;
