@@ -1319,10 +1319,338 @@ const R15: React.FC = () => (
   } />
 );
 
+/* ───────── R16–R25 · PDF grande + carimbo, layouts variados ───────── */
+const StampWax: React.FC<{ size?: number; style?: React.CSSProperties }> = ({ size = 156, style }) => (
+  <div style={{ width: size, height: size, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #A8323F 0%, ${T.bordo} 55%, #5A1622 100%)`, boxShadow: "0 14px 28px rgba(122,31,43,.38), inset 0 -8px 16px rgba(0,0,0,.35), inset 0 6px 10px rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: OSWALD, border: "3px double rgba(255,255,255,.45)", ...style }}>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontSize: 8, letterSpacing: ".32em", opacity: 0.85 }}>IA · SELO</div>
+      <div style={{ fontSize: size * 0.36, fontWeight: 700, lineHeight: 0.85, letterSpacing: "-.02em" }}>98<span style={{ fontSize: size * 0.16 }}>%</span></div>
+      <div style={{ fontSize: 7.5, letterSpacing: ".3em", marginTop: 3, opacity: 0.85 }}>APROVADO</div>
+    </div>
+  </div>
+);
+
+const StampRibbon: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={{ position: "absolute", top: 0, right: 0, width: 220, height: 220, overflow: "hidden", pointerEvents: "none", ...style }}>
+    <div style={{ position: "absolute", top: 38, right: -58, width: 280, transform: "rotate(45deg)", background: `linear-gradient(180deg, ${T.bordo}, #5A1622)`, color: "#fff", textAlign: "center", padding: "10px 0", boxShadow: "0 6px 16px rgba(0,0,0,.25)", fontFamily: OSWALD }}>
+      <div style={{ fontSize: 9, letterSpacing: ".36em", opacity: 0.9 }}>IA · CONFIANÇA</div>
+      <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: ".02em", lineHeight: 1 }}>98% APROVADO</div>
+    </div>
+  </div>
+);
+
+const StampInk: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={{ border: `4px solid ${T.bordo}`, padding: "8px 22px 6px", color: T.bordo, fontFamily: OSWALD, background: "rgba(255,253,248,.92)", boxShadow: "0 8px 20px rgba(122,31,43,.22)", display: "inline-flex", alignItems: "center", gap: 14, ...style }}>
+    <div style={{ fontSize: 9, letterSpacing: ".34em", writingMode: "vertical-rl", transform: "rotate(180deg)", borderRight: `2px solid ${T.bordo}`, paddingRight: 8 }}>IA · APROVADO</div>
+    <div>
+      <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 0.85, letterSpacing: "-.03em" }}>98%</div>
+      <div style={{ fontSize: 8.5, letterSpacing: ".3em", marginTop: 2 }}>CONFIANÇA · LIMIAR 85%</div>
+    </div>
+  </div>
+);
+
+const StampOval: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={style}>
+    <svg width="210" height="170" viewBox="0 0 210 170">
+      <defs>
+        <path id="ovalArc" d="M 30 85 A 75 60 0 0 1 180 85" fill="none" />
+        <path id="ovalArc2" d="M 30 145 A 75 60 0 0 1 180 145" fill="none" />
+      </defs>
+      <ellipse cx="105" cy="85" rx="92" ry="72" fill="none" stroke={T.bordo} strokeWidth="3" />
+      <ellipse cx="105" cy="85" rx="82" ry="62" fill="none" stroke={T.bordo} strokeWidth="1.5" />
+      <text fill={T.bordo} fontFamily={OSWALD} fontSize="11" letterSpacing="4"><textPath href="#ovalArc" startOffset="50%" textAnchor="middle">CONFIANÇA · IA · SUPERVISIONADA</textPath></text>
+      <text fill={T.bordo} fontFamily={OSWALD} fontSize="10" letterSpacing="3"><textPath href="#ovalArc2" startOffset="50%" textAnchor="middle">DOC AUTENTICADO · 2026</textPath></text>
+      <text x="105" y="100" textAnchor="middle" fill={T.bordo} fontFamily={OSWALD} fontWeight="700" fontSize="52" letterSpacing="-1">98%</text>
+    </svg>
+  </div>
+);
+
+const StampBadge: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <div style={style}>
+    <svg width="200" height="200" viewBox="0 0 220 220">
+      <defs><path id="bdgCirc" d="M 110,110 m -88,0 a 88,88 0 1,1 176,0 a 88,88 0 1,1 -176,0" fill="none" /></defs>
+      <circle cx="110" cy="110" r="95" fill={T.bordo} />
+      <circle cx="110" cy="110" r="78" fill="none" stroke={T.amber} strokeWidth="2" strokeDasharray="3 4" />
+      <text fill={T.amber} fontFamily={OSWALD} fontSize="12" letterSpacing="6"><textPath href="#bdgCirc" startOffset="0">CONFIANÇA DA IA · 98% · ACIMA DO LIMIAR 85% ·</textPath></text>
+      <text x="110" y="118" textAnchor="middle" fill="#fff" fontFamily={OSWALD} fontWeight="700" fontSize="68" letterSpacing="-2">98%</text>
+      <text x="110" y="140" textAnchor="middle" fill={T.amber} fontFamily={OSWALD} fontSize="10" letterSpacing="4">APROVADO</text>
+    </svg>
+  </div>
+);
+
+const StatPill: React.FC<{ k: string; v: string; tone?: "ink" | "green" | "amber" }> = ({ k, v, tone = "ink" }) => {
+  const bg = tone === "green" ? T.greenBg : tone === "amber" ? T.amberBg : "#fff";
+  const ink = tone === "green" ? T.greenInk : tone === "amber" ? T.amberInk : T.ink;
+  return (
+    <div style={{ background: bg, border: `1px solid ${T.border}`, borderRadius: 2, padding: "8px 12px", minWidth: 0 }}>
+      <div style={{ fontFamily: OSWALD, fontSize: 8.5, letterSpacing: ".22em", color: T.ink3 }}>{k}</div>
+      <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 14, letterSpacing: ".04em", color: ink, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</div>
+    </div>
+  );
+};
+
+// R16 — PDF dominante centro · tira de stats no topo · selo de cera flutuante
+const R16: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 24, background: "#EEE9E1" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginBottom: 16 }}>
+        <StatPill k="Nº DOCUMENTO" v={COPY.fNumVal} tone="green" />
+        <StatPill k="ÓRGÃO" v={COPY.fOrgaoVal} />
+        <StatPill k="AVALIAÇÃO" v={COPY.fEmissVal} />
+        <StatPill k="VALIDADE" v={COPY.fValVal} tone="amber" />
+        <StatPill k="CATEGORIA" v={COPY.categoriaVal} />
+      </div>
+      <div style={{ position: "relative", maxWidth: 880, margin: "0 auto" }}>
+        <PdfSheet height={620} />
+        <StampWax size={172} style={{ position: "absolute", top: -28, right: -28 }} />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R17 — PDF full-width topo · 4 colunas embaixo · ribbon
+const R17: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 24, background: T.soft }}>
+      <div style={{ position: "relative" }}>
+        <PdfSheet height={520} />
+        <StampRibbon />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginTop: 18 }}>
+        <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+        <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+        <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+        <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R18 — Split 60/40 · PDF esq + painel narrativo IA dir · selo oval sobre PDF
+const R18: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", background: T.soft }}>
+      <div style={{ padding: 22, position: "relative" }}>
+        <PdfSheet height={620} />
+        <StampOval style={{ position: "absolute", top: 60, right: 0, transform: "rotate(-6deg)" }} />
+      </div>
+      <div style={{ padding: 22, background: T.ink, color: "#fff", display: "flex", flexDirection: "column", gap: 14 }}>
+        <Lab color={T.amber} spacing=".28em">NARRATIVA DA IA</Lab>
+        <div style={{ fontFamily: OSWALD, fontSize: 22, lineHeight: 1.15, letterSpacing: ".02em" }}>{COPY.iaTipo}</div>
+        <div style={{ fontSize: 12, lineHeight: 1.55, color: "#bdbdbd" }}>{COPY.iaJust}</div>
+        <Divider />
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[["Nº", COPY.fNumVal], ["ÓRGÃO", COPY.fOrgaoVal], ["AVALIAÇÃO", COPY.fEmissVal], ["VALIDADE", COPY.fValVal]].map(([k, v]) => (
+            <div key={k} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #1f1f1f", paddingBottom: 6 }}>
+              <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".22em", color: "#9a9a9a" }}>{k}</span>
+              <span style={{ fontFamily: OSWALD, fontSize: 13, color: "#fff", fontWeight: 600 }}>{v}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R19 — Lightbox dark · PDF flutuante · ink stamp inferior
+const R19: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 28, background: "#1a1a1a" }}>
+      <div style={{ position: "relative", maxWidth: 760, margin: "0 auto" }}>
+        <div style={{ filter: "drop-shadow(0 24px 60px rgba(0,0,0,.6))" }}>
+          <PdfSheet height={640} />
+        </div>
+        <div style={{ position: "absolute", bottom: -34, left: "50%", transform: "translateX(-50%) rotate(-3deg)" }}>
+          <StampInk />
+        </div>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 60 }}>
+        {[["DOCUMENTO", COPY.fNumVal], ["ÓRGÃO", COPY.fOrgaoVal], ["AVALIAÇÃO", COPY.fEmissVal], ["VALIDADE", COPY.fValVal], ["CATEGORIA", COPY.categoriaVal]].map(([k, v]) => (
+          <div key={k} style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", padding: "10px 12px", borderRadius: 2 }}>
+            <div style={{ fontFamily: OSWALD, fontSize: 8.5, letterSpacing: ".24em", color: T.amber }}>{k}</div>
+            <div style={{ fontFamily: OSWALD, fontSize: 13, color: "#fff", marginTop: 4, fontWeight: 600 }}>{v}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R20 — PDF + sidebar de chips categóricos · badge circular gigante
+const R20: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", background: T.soft }}>
+      <div style={{ padding: 22, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
+        <Lab spacing=".24em">TAGS DA IA</Lab>
+        {["LAUDO TÉCNICO", "POLÍCIA FEDERAL", "CAPACIDADE", "VÁLIDO ATÉ 2026", "REAPROVEITÁVEL", "ESCOPO PERMANENTE"].map((c) => (
+          <span key={c} style={{ background: T.bordoSoft, color: T.bordo, fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", padding: "8px 10px", borderRadius: 2, fontWeight: 600 }}>{c}</span>
+        ))}
+        <Divider />
+        <Lab spacing=".24em">ARQUIVO</Lab>
+        <FileBlock compact />
+      </div>
+      <div style={{ position: "relative", padding: 24 }}>
+        <PdfSheet height={620} />
+        <StampBadge style={{ position: "absolute", top: -10, right: -10 }} />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R21 — Jornal · headline + body em 3 colunas · stencil
+const R21: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 26, background: "#FAF7F0" }}>
+      <div style={{ borderTop: `4px solid ${T.ink}`, borderBottom: `1px solid ${T.ink}`, padding: "10px 0", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+        <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 28, letterSpacing: ".02em" }}>{COPY.iaTipo}</div>
+        <Lab spacing=".26em">EDIÇÃO · DOSSIÊ Nº {COPY.fNumVal}</Lab>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 22 }}>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={580} />
+          <div style={{ position: "absolute", bottom: 24, left: 24 }}>
+            <StampInk />
+          </div>
+        </div>
+        <div style={{ columnCount: 1, columnGap: 14, fontFamily: "Georgia, serif", fontSize: 12.5, lineHeight: 1.6, color: T.ink2 }}>
+          <div style={{ fontFamily: OSWALD, fontSize: 11, letterSpacing: ".26em", color: T.bordo, marginBottom: 8 }}>LEAD · ANÁLISE DA IA</div>
+          <p>{COPY.iaJust}</p>
+          <div style={{ borderTop: `1px solid ${T.border}`, margin: "10px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R22 — PDF gigante + dossiê embaixo em tabela densa · selo cera
+const R22: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 24, background: T.soft }}>
+      <div style={{ position: "relative", maxWidth: 900, margin: "0 auto" }}>
+        <PdfSheet height={560} />
+        <StampWax size={148} style={{ position: "absolute", top: 24, left: -36 }} />
+      </div>
+      <div style={{ marginTop: 16, border: `1px solid ${T.border}`, background: "#fff", borderRadius: 2 }}>
+        <div style={{ background: T.bordo, color: "#fff", padding: "8px 14px", fontFamily: OSWALD, letterSpacing: ".24em", fontSize: 10 }}>FICHA DO DOCUMENTO · 2 CAMPOS CONFIRMADOS PELA IA</div>
+        <div style={{ display: "grid", gridTemplateColumns: "180px 1fr 130px", fontFamily: OSWALD, fontSize: 12 }}>
+          {[["Nº DOCUMENTO", COPY.fNumVal, "CONFIRMADO"], ["ÓRGÃO EMISSOR", COPY.fOrgaoVal, "—"], ["AVALIAÇÃO", COPY.fEmissVal, "—"], ["VALIDADE", COPY.fValVal, "CONFIRMADO"], ["CATEGORIA", COPY.categoriaVal, "—"], ["TIPO", COPY.tipoVal, "—"]].map(([k, v, s], i) => (
+            <React.Fragment key={k}>
+              <div style={{ padding: "10px 14px", background: i % 2 ? T.soft : "#fff", color: T.ink3, letterSpacing: ".18em", fontSize: 10, borderTop: `1px solid ${T.line}` }}>{k}</div>
+              <div style={{ padding: "10px 14px", background: i % 2 ? T.soft : "#fff", color: T.ink, fontWeight: 600, letterSpacing: ".04em", borderTop: `1px solid ${T.line}` }}>{v}</div>
+              <div style={{ padding: "10px 14px", background: i % 2 ? T.soft : "#fff", color: s === "CONFIRMADO" ? T.greenInk : T.ink4, letterSpacing: ".2em", fontSize: 9.5, borderTop: `1px solid ${T.line}` }}>{s}</div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R23 — PDF + ficha técnica vertical lateral · ribbon vertical
+const R23: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.7fr 320px", background: T.soft }}>
+      <div style={{ padding: 22, position: "relative" }}>
+        <PdfSheet height={640} />
+        <div style={{ position: "absolute", top: 36, left: 0, width: 64, background: T.bordo, color: "#fff", fontFamily: OSWALD, padding: "16px 0", textAlign: "center", boxShadow: "0 6px 14px rgba(0,0,0,.2)" }}>
+          <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: 11, letterSpacing: ".36em", margin: "0 auto" }}>IA · CONFIANÇA</div>
+          <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, marginTop: 10 }}>98%</div>
+          <div style={{ fontSize: 9, letterSpacing: ".3em", marginTop: 6 }}>APROVADO</div>
+        </div>
+      </div>
+      <div style={{ padding: 22, borderLeft: `1px solid ${T.border}`, background: "#fff", display: "flex", flexDirection: "column", gap: 12 }}>
+        <Lab spacing=".26em">FICHA TÉCNICA</Lab>
+        <div style={{ fontFamily: OSWALD, fontSize: 16, color: T.ink, fontWeight: 700, lineHeight: 1.15 }}>{COPY.iaTipo}</div>
+        <Divider />
+        <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+        <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+        <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+        <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+        <EscopoBlock />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R24 — Blueprint · PDF + marcações de coordenadas · oval
+const R24: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 26, background: "#F3F1EA" }}>
+      <div style={{ display: "flex", gap: 20 }}>
+        <div style={{ width: 36, display: "flex", flexDirection: "column", justifyContent: "space-between", fontFamily: OSWALD, fontSize: 9, color: T.ink3, letterSpacing: ".24em", textAlign: "right", paddingTop: 18, paddingBottom: 36 }}>
+          {["A", "B", "C", "D", "E", "F", "G"].map((n) => <div key={n}>{n}—</div>)}
+        </div>
+        <div style={{ flex: 1, position: "relative", border: `1px dashed ${T.bordo}`, padding: 18 }}>
+          <div style={{ position: "absolute", top: -10, left: 18, background: "#F3F1EA", padding: "0 8px", fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".26em", color: T.bordo }}>PRANCHA Nº {COPY.fNumVal} · ESC. 1:1</div>
+          <PdfSheet height={580} />
+          <StampOval style={{ position: "absolute", bottom: -20, right: -16, transform: "rotate(-8deg)" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 16 }}>
+            <StatPill k="X · ÓRGÃO" v={COPY.fOrgaoVal} />
+            <StatPill k="Y · AVAL." v={COPY.fEmissVal} />
+            <StatPill k="Z · VALID." v={COPY.fValVal} tone="amber" />
+            <StatPill k="W · CATEG." v={COPY.categoriaVal} />
+          </div>
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R25 — Polaroid · PDF como foto com tape washi · selo angled
+const R25: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ padding: 32, background: "#E8E2D4" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 28, alignItems: "flex-start" }}>
+        <div style={{ background: "#fff", padding: "20px 20px 60px", boxShadow: "0 18px 36px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.08)", transform: "rotate(-1.5deg)", position: "relative" }}>
+          <div style={{ position: "absolute", top: -14, left: 60, width: 120, height: 28, background: "rgba(214,166,75,.55)", border: "1px dashed rgba(0,0,0,.15)", transform: "rotate(-4deg)" }} />
+          <div style={{ position: "absolute", top: -10, right: 80, width: 100, height: 24, background: "rgba(122,31,43,.35)", transform: "rotate(3deg)" }} />
+          <PdfSheet height={560} />
+          <div style={{ position: "absolute", bottom: 14, left: 0, right: 0, textAlign: "center", fontFamily: OSWALD, fontSize: 11, letterSpacing: ".26em", color: T.ink2 }}>{COPY.fileName.toUpperCase()}</div>
+          <StampWax size={120} style={{ position: "absolute", bottom: -36, right: -30, transform: "rotate(8deg)" }} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <Lab spacing=".26em">DOSSIÊ · {COPY.cliente}</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 22, color: T.ink, fontWeight: 700, lineHeight: 1.15 }}>{COPY.iaTipo}</div>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 15 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 25 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
@@ -1358,6 +1686,16 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 13, nome: "R13 · Selo Cartorial Oval", subtitulo: "DUPLO ANEL · TEXTO EM ARCO · 98%", render: () => <R13 /> },
   { id: 14, nome: "R14 · Ink Stamp Stencil", subtitulo: "CARIMBO RETANGULAR INFERIOR · TINTA BORDÔ", render: () => <R14 /> },
   { id: 15, nome: "R15 · Badge Circular Gigante", subtitulo: "DISCO BORDÔ + TEXTO ROTACIONADO · 98%", render: () => <R15 /> },
+  { id: 16, nome: "R16 · PDF Centro + Stats Top", subtitulo: "PREVIEW DOMINANTE + 5 STATS + SELO CERA", render: () => <R16 /> },
+  { id: 17, nome: "R17 · PDF Full-Width + 4 Cols", subtitulo: "PDF TOPO + 4 CAMPOS · RIBBON DIAGONAL", render: () => <R17 /> },
+  { id: 18, nome: "R18 · Split 60/40 Narrativo", subtitulo: "PDF ESQ + NARRATIVA IA DARK · OVAL", render: () => <R18 /> },
+  { id: 19, nome: "R19 · Lightbox Dark", subtitulo: "PDF FLUTUANTE EM PRETO · INK STAMP", render: () => <R19 /> },
+  { id: 20, nome: "R20 · Tags + Badge Gigante", subtitulo: "SIDEBAR DE TAGS + BADGE CIRCULAR", render: () => <R20 /> },
+  { id: 21, nome: "R21 · Jornal Editorial", subtitulo: "HEADLINE + 2 COLS · TINTA BORDÔ", render: () => <R21 /> },
+  { id: 22, nome: "R22 · PDF + Tabela Densa", subtitulo: "PREVIEW + FICHA STRIPED · SELO CERA", render: () => <R22 /> },
+  { id: 23, nome: "R23 · Ribbon Vertical Lateral", subtitulo: "PDF + FICHA + FAIXA VERTICAL 98%", render: () => <R23 /> },
+  { id: 24, nome: "R24 · Blueprint Técnico", subtitulo: "PRANCHA COM COORDENADAS · OVAL", render: () => <R24 /> },
+  { id: 25, nome: "R25 · Polaroid com Tape", subtitulo: "FOTO INCLINADA + WASHI · SELO CERA", render: () => <R25 /> },
 ];
 
 export default function MockupsHubDoc() {
