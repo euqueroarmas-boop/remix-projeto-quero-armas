@@ -1249,7 +1249,8 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
@@ -1269,7 +1270,8 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
