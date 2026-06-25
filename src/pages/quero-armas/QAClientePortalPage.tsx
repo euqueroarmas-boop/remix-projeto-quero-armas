@@ -44,6 +44,7 @@ import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-arm
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
+import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
