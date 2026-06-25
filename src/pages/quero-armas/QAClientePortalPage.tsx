@@ -1210,34 +1210,113 @@ export default function QAClientePortalPage() {
           className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none"
           style={{ background: sidebarTheme.stripe }}
         />
-        {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
-        <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
-          <button
-            type="button"
-            onClick={() => setShowFotoModal(true)}
-            title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-            aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition group"
-            style={{ ['--qa-ring' as any]: sidebarTheme.accent }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1px ${sidebarTheme.accent}`; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = ''; }}
+        {/* ── BLOCO DE TOPO (hero) — apenas temas com topMode "hero" expandidos ── */}
+        {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
+          <div
+            aria-hidden
+            className="relative w-full h-[200px] overflow-hidden shrink-0"
+            style={
+              sidebarTheme.heroImage
+                ? {
+                    backgroundImage: `linear-gradient(transparent 40%, rgba(0,0,0,0.85)), url("${sidebarTheme.heroImage}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                  }
+                : { background: sidebarTheme.bg }
+            }
           >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
-            ) : (
-              <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+            {!sidebarTheme.heroImage && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="text-[48px] leading-none select-none">{sidebarTheme.emblem}</div>
+                <div
+                  className="mt-2 text-[10px] tracking-[0.2em] uppercase text-white/70"
+                  style={{ fontFamily: "Oswald, sans-serif" }}
+                >
+                  {sidebarTheme.label}
+                </div>
+              </div>
             )}
-            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
-              <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
-            </span>
-          </button>
-          {!effectiveCollapsed && (
-            <div className="min-w-0 flex-1">
-              <div className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
-              <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Área do Cliente</div>
+          </div>
+        )}
+
+        {/* ── Brand: avatar + ARSENAL INTELIGENTE / ÁREA DO CLIENTE ── */}
+        {(() => {
+          const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
+          const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
+          return (
+            <div
+              className={
+                isHero
+                  ? "relative flex items-center px-4 pt-5 pb-4 gap-2.5"
+                  : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`
+              }
+            >
+              {/* Wrapper do avatar — em hero, ancorado no topo sobrepondo a arte */}
+              <div
+                className={
+                  isHero
+                    ? "absolute -top-10 left-4 z-20"
+                    : "relative shrink-0"
+                }
+              >
+                {isHero && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -m-3 rounded-full pointer-events-none"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(0,0,0,0.55) 40%, transparent 75%)",
+                    }}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowFotoModal(true)}
+                  title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+                  aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition-all duration-200 group`}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 18px 3px ${sidebarTheme.accent}`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+                  }}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
+                  ) : (
+                    <span
+                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]"
+                      style={{ fontFamily: "Oswald, sans-serif" }}
+                    >
+                      QA
+                    </span>
+                  )}
+                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
+                    <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
+                  </span>
+                </button>
+              </div>
+              {!effectiveCollapsed && (
+                <div className={`min-w-0 flex-1 ${isHero ? "ml-[5.5rem]" : ""}`}>
+                  <div
+                    className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase"
+                    style={{ fontFamily: "Oswald, sans-serif" }}
+                  >
+                    Arsenal Inteligente
+                  </div>
+                  <div
+                    className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase"
+                    style={{ fontFamily: "Oswald, sans-serif" }}
+                  >
+                    Área do Cliente
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
 
         {/* Botão moderno: regredir/expandir menu — apenas desktop (mobile/tablet fixo em mini) */}
         {!isBelowLg && (
