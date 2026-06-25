@@ -1369,7 +1369,7 @@ export default function QAClientePortalPage() {
               type="button"
               onClick={handleLogout}
               title="Sair"
-              className="w-10 h-10 rounded-md flex items-center justify-center text-[#7A7A7A] hover:text-white hover:bg-[#141414] transition"
+              className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
             >
               <LogOut className="h-4 w-4" />
             </button>
