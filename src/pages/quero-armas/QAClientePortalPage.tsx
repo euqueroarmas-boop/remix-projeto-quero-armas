@@ -70,7 +70,15 @@ const urgencyBg = (d: number | null) =>
   d <= 7    ? "bg-red-50" :
   d <= 30   ? "bg-amber-50" :
               "";
-const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VENCIDO HÁ ${Math.abs(d)}D` : d === 0 ? "VENCE HOJE" : `${d}D RESTANTES`;
+const urgencyLabel = (d: number | null) => {
+  if (d === null) return "SEM DATA";
+  if (d < 0) {
+    const n = Math.abs(d);
+    return `VENCIDO HÁ ${n} ${n === 1 ? "DIA" : "DIAS"}`;
+  }
+  if (d === 0) return "VENCE HOJE";
+  return `${d} ${d === 1 ? "DIA RESTANTE" : "DIAS RESTANTES"}`;
+};
 
 
 interface ExpiringDoc { label: string; date: string | null; days: number | null; category: string; }
