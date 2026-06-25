@@ -98,6 +98,7 @@ const tool = {
           properties: {
             numero_documento: { type: "string", description: "Número principal do documento (RG, CNH, CIN, CR, CRAF, protocolo etc.)" },
             orgao_emissor: { type: "string", description: "Órgão/entidade que emitiu o documento" },
+            uf_emissor_rg: { type: "string", description: "UF do órgão emissor do RG/CIN/CNH, em 2 letras, quando o documento trouxer UF explícita, órgão com /UF ou -UF, cabeçalho do estado emissor ou estado por extenso." },
             data_emissao: { type: "string", description: "Data de emissão DD/MM/AAAA" },
             data_validade: { type: "string", description: "Data de validade DD/MM/AAAA" },
             nome_completo: { type: "string", description: "Nome completo do titular do documento" },
