@@ -2077,52 +2077,6 @@ export default function QAClientePortalPage() {
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    const next = QA_SIDEBAR_THEMES.find((t) => t.key === sidebarTheme.key);
-                    if (!next) return;
-                    setSidebarTheme(next);
-                    setStoredSidebarTheme(next.key);
-                  }}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-900">Prévia do menu</div>
-                      <div className="text-[10px] text-slate-500">{sidebarTheme.description}</div>
-                    </div>
-                    <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B] text-white">
-                      {sidebarTheme.label}
-                    </span>
-                  </div>
-
-                  <div className="h-[120px] w-full rounded-xl relative overflow-hidden" style={{ background: sidebarTheme.bg }}>
-                    <div className="absolute top-0 left-0 right-0 h-[4px]" style={{ background: sidebarTheme.stripe }} />
-                    <div className="absolute inset-y-0 left-0 w-[84px] border-r border-white/10 bg-black/30" />
-                    <div className="absolute left-3 top-3 flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-[#7A1F2B] flex items-center justify-center text-[10px] font-bold text-white" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
-                      <div>
-                        <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
-                        <div className="text-[7px] uppercase tracking-[0.22em] text-white/50" style={{ fontFamily: "Oswald, sans-serif" }}>Área do Cliente</div>
-                      </div>
-                    </div>
-                    <div className="absolute left-0 top-[48px] w-[84px] px-0">
-                      <div className="flex items-center gap-2 border-l-2 bg-white/6 px-3 py-2" style={{ borderLeftColor: sidebarTheme.accent }}>
-                        <div className="h-2.5 w-2.5 rounded-sm bg-white/80" />
-                        <div className="h-[5px] w-8 rounded bg-white/90" />
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-2 opacity-70">
-                        <div className="h-2.5 w-2.5 rounded-sm bg-white/60" />
-                        <div className="h-[5px] w-7 rounded bg-white/60" />
-                      </div>
-                      <div className="flex items-center gap-2 px-3 py-2 opacity-70">
-                        <div className="h-2.5 w-2.5 rounded-sm bg-white/60" />
-                        <div className="h-[5px] w-9 rounded bg-white/60" />
-                      </div>
-                    </div>
-                  </div>
-                </button>
               </div>
             </div>
 
