@@ -941,7 +941,6 @@ export default function QAClientePortalPage() {
       console.log("[PortalNav] section click", key);
     }
     setActiveSection(key);
-    setMobileNavOpen(false);
     // Não usar navigate(): rotas internas como /area-do-cliente/arsenal não existem
     // e o catch-all do router devolveria para "/". Mantemos a URL em /area-do-cliente.
   };
@@ -949,7 +948,6 @@ export default function QAClientePortalPage() {
   const goContractsSection = () => {
     setShowContratoPopup(false);
     setActiveSection("contratos");
-    setMobileNavOpen(false);
     navigate("/area-do-cliente?secao=contratos", { replace: true });
     window.setTimeout(() => {
       const contratos = document.getElementById("qa-portal-contratos");
