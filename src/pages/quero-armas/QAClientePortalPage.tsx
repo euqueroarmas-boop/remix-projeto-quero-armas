@@ -1181,7 +1181,17 @@ export default function QAClientePortalPage() {
         }}
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
-      <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}>
+      <aside
+        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}
+        style={{ background: sidebarTheme.bg }}
+        data-qa-sb-theme={sidebarTheme.key}
+      >
+        {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none"
+          style={{ background: sidebarTheme.stripe }}
+        />
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
         <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
@@ -1189,7 +1199,10 @@ export default function QAClientePortalPage() {
             onClick={() => setShowFotoModal(true)}
             title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
             aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition group"
+            style={{ ['--qa-ring' as any]: sidebarTheme.accent }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1px ${sidebarTheme.accent}`; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = ''; }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
@@ -1214,7 +1227,9 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
           >
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
