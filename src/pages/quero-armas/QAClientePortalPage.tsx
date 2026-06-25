@@ -1199,6 +1199,7 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
+      <FlamingSkullButton onClick={() => setEntradaWizardOpen(true)} />
       <ClienteFotoUploadModal
         open={showFotoModal}
         onOpenChange={setShowFotoModal}
