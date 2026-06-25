@@ -1001,11 +1001,8 @@ export function ClienteDocsHubModal({
           // (que costuma ser inconsistente ou inexistente).
           if (isLaudoExame) {
             const avaliacao = dataIsoFromBr((campos as any).data_avaliacao) || dataIsoFromBr(campos.data_emissao);
-            if (avaliacao) {
-              const [y, m, d] = avaliacao.split("-").map(Number);
-              const venc = new Date(Date.UTC(y + 1, m - 1, d));
-              return venc.toISOString().slice(0, 10);
-            }
+            const venc = addOneYearIso(avaliacao);
+            if (venc) return venc;
             return prev.data_validade;
           }
           const valExplicita = dataIsoFromBr(campos.data_validade);
@@ -1059,7 +1056,14 @@ export function ClienteDocsHubModal({
         arma_marca: campos.arma_marca || "",
         arma_modelo: modeloExtraidoSeguro,
         arma_calibre: campos.arma_calibre || "",
-        data_validade: dataIsoFromBr(campos.data_validade) || "",
+        data_validade: (() => {
+          const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
+          if (isLaudoExame) {
+            const avaliacao = dataIsoFromBr((campos as any).data_avaliacao) || dataIsoFromBr(campos.data_emissao);
+            return addOneYearIso(avaliacao) || "";
+          }
+          return dataIsoFromBr(campos.data_validade) || "";
+        })(),
         sistema_registro: sistemaFinal,
       });
       // Tudo começa como NÃO confirmado — exige clique do humano.
@@ -1125,6 +1129,9 @@ export function ClienteDocsHubModal({
           // costuma trazer a data de emissão impressa do laudo, não a da avaliação).
           // Regra legal (Lei 10.826/03): validade = data_avaliacao + 1 ano.
           const dataAvaliacaoExtractor = isLaudoExame ? (sugestao.data_avaliacao || "") : "";
+          const validadeLaudoExame = isLaudoExame
+            ? addOneYearIso(dataAvaliacaoExtractor || sugestao.data_emissao || prev.data_emissao)
+            : "";
           return ({
             ...prev,
             nome_documento: prev.nome_documento || sugestao.titulo_oficial || "",
@@ -1140,10 +1147,10 @@ export function ClienteDocsHubModal({
           // Para comprovante de residência, nunca usar data_validade da sugestão:
           // a IA extrai o vencimento da conta (≈1 mês), não a validade do documento (90 dias).
             data_validade:
-              // Para laudos/exames, o extractor já recalcula data_validade = data_avaliacao + 1 ano
-              // no servidor; sobrescreve qualquer prev (que veio do classify, possivelmente errado).
-              (isLaudoExame && sugestao.data_validade)
-                ? sugestao.data_validade
+              // Para laudos/exames, recalcula localmente pela data da avaliação/emissão
+              // e nunca aceita a validade bruta inferida pela IA (ex.: 2028 em vez de 2026).
+              (isLaudoExame && validadeLaudoExame)
+                ? validadeLaudoExame
                 : (prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || ""),
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
