@@ -127,23 +127,48 @@ export default function ClienteResumoKanban({
     );
 
     const arsenalItems: FrontItem[] = [];
+    const arsenalKeys = new Set<string>();
+    const normArsenalKey = (value: unknown) => String(value || "").trim().toUpperCase();
+    const registerArsenalKey = (...values: unknown[]) => {
+      values.map(normArsenalKey).filter(Boolean).forEach((key) => arsenalKeys.add(key));
+    };
     const addArsenal = (label: string, date: string | null | undefined) => {
       const days = daysUntil(date);
       arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days) });
     };
     if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr);
-    crafs.forEach((cr: any) =>
+    crafs.forEach((cr: any) => {
+      registerArsenalKey(cr.numero_arma, cr.numero_sigma, cr.numero_registro_sigma, cr.numero_cad_sinarm, cr.nome_arma);
       addArsenal(
         `${hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo")} — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`,
         cr.data_validade,
-      ),
-    );
-    gtes.forEach((g: any) =>
+      );
+    });
+    gtes.forEach((g: any) => {
+      registerArsenalKey(g.numero_arma, g.numero_sigma, g.numero_registro_sigma, g.numero_gte, g.nome_arma);
       addArsenal(
         `${hubLabel("gte", "GTE — Guia de Tráfego Eventual")} — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`,
         g.data_validade,
-      ),
-    );
+      );
+    });
+    meusDocs.forEach((doc: any) => {
+      const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      if (tipo !== "craf" && tipo !== "sinarm") return;
+      const keys = [doc?.arma_numero_serie, doc?.numero_registro_sigma, doc?.numero_cad_sinarm]
+        .map(normArsenalKey)
+        .filter(Boolean);
+      if (keys.some((key) => arsenalKeys.has(key))) return;
+
+      const nomeArma = [doc?.arma_marca, doc?.arma_modelo, doc?.arma_calibre]
+        .map((v) => String(v || "").trim())
+        .filter(Boolean)
+        .join(" ");
+      const labelBase = tipo === "sinarm"
+        ? hubLabel("sinarm", "SINARM — Registro de Arma de Fogo")
+        : hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo");
+      addArsenal(`${labelBase} — ${shortName(nomeArma || doc?.nome_documento || doc?.nome_original, "Arma")}`, doc?.data_validade_efetiva || doc?.data_validade);
+      registerArsenalKey(...keys, nomeArma);
+    });
     armasManual.forEach((arma: any) => {
       const nome = shortName(arma?.modelo || arma?.nome || arma?.tipo || "Arma manual", "Arma manual");
       arsenalItems.push({ label: nome, status: "—", tone: "muted" });
