@@ -1216,7 +1216,9 @@ export default function QAClientePortalPage() {
             aria-hidden
             className="relative w-full h-[200px] overflow-hidden shrink-0"
             style={
-              sidebarTheme.heroImage
+              sidebarTheme.heroEmpty
+                ? { background: "transparent" }
+                : sidebarTheme.heroImage
                 ? {
                     backgroundImage: `linear-gradient(transparent 40%, rgba(0,0,0,0.85)), url("${sidebarTheme.heroImage}")`,
                     backgroundSize: "cover",
@@ -1226,7 +1228,7 @@ export default function QAClientePortalPage() {
                 : { background: sidebarTheme.bg }
             }
           >
-            {!sidebarTheme.heroImage && (
+            {!sidebarTheme.heroImage && !sidebarTheme.heroEmpty && (
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <div className="text-[48px] leading-none select-none">{sidebarTheme.emblem}</div>
                 <div
