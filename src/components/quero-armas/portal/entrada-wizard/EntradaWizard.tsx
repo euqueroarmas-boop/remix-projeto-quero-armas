@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   ArrowLeft,
-  ChevronRight,
-  Compass,
+  ArrowRight,
   FileSignature,
   Loader2,
-  Sparkles,
   Target,
   Wrench,
   HelpCircle,
@@ -18,6 +16,16 @@ import {
   Archive,
   Leaf,
 } from "lucide-react";
+
+/* Cockpit Z6 Light · V4 Denso Enxuto */
+const INK = "#0A0A0A";
+const SUB = "#6A6A6A";
+const LINE = "#E5E5E5";
+const SOFT = "#EFEFEF";
+const PAPER = "#FFFFFF";
+const BORDO = "#7A1F2B";
+const OSWALD = { fontFamily: "Oswald, sans-serif" } as const;
+const INTER = { fontFamily: "Inter, sans-serif" } as const;
 
 /* =============================================================================
  * EntradaWizard — Assistente de Entrada do portal
@@ -35,8 +43,6 @@ import {
  *
  * onConcluido devolve { objetivo, possuiArma, finalidadeArma }.
  * ============================================================================= */
-
-const MARROM = "#7A1F2B";
 
 export type EntradaObjetivo = "inicial" | "defesa_pessoal" | "continuidade" | "indefinido";
 export type EntradaPossuiArma = "sim" | "nao" | "nao_sei";
@@ -109,275 +115,183 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
 
   const passo2Completo = passo2EhFinalidade ? !!finalidadeArma : !!possuiArma;
 
+  const totalSteps = precisaPasso2 ? 2 : 1;
+
+  const objetivoList = [
+    { key: "inicial" as const,        icon: FileSignature, title: "TIRAR OU RENOVAR MEU CR DE CAC",      sub: "Concessão de CR, filiação a clube, declarações iniciais — SINARM CAC" },
+    { key: "defesa_pessoal" as const, icon: Shield,        title: "ADQUIRIR ARMA PARA DEFESA PESSOAL",   sub: "Posse, registro, porte, aquisição — Polícia Federal/SINARM" },
+    { key: "continuidade" as const,   icon: Wrench,        title: "MEXER NUMA ARMA QUE JÁ TENHO",        sub: "Renovar CRAF, transferir, apostilar, GTE, regularizar" },
+    { key: "indefinido" as const,     icon: Target,        title: "NÃO TENHO CERTEZA, ME MOSTRE TUDO",   sub: "Vou navegar e escolher" },
+  ];
+
+  const possuiList = [
+    { key: "sim" as const,     icon: ShieldCheck, label: "SIM" },
+    { key: "nao" as const,     icon: Crosshair,   label: "NÃO" },
+    { key: "nao_sei" as const, icon: HelpCircle,  label: "NÃO TENHO CERTEZA" },
+  ];
+
+  const finalidadeList = [
+    { key: "tiro_esportivo" as const, icon: Crosshair, label: "TIRO ESPORTIVO" },
+    { key: "caca" as const,           icon: Leaf,      label: "CAÇA" },
+    { key: "colecionamento" as const, icon: Archive,   label: "COLECIONAMENTO" },
+    { key: "defesa_pessoal" as const, icon: Shield,    label: "DEFESA PESSOAL" },
+  ];
+
+  function handleContinuar() {
+    if (step === 1) {
+      if (!objetivo) return;
+      if (objetivo === "indefinido") void concluir();
+      else setStep(2);
+      return;
+    }
+    if (!passo2Completo) return;
+    void concluir();
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
-      <DialogContent className="max-w-lg bg-[#f6f5f1] border-slate-200 max-h-[88vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: `${MARROM}14` }}>
-              <Compass className="h-4 w-4" style={{ color: MARROM }} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <DialogTitle className="text-[13px] font-bold uppercase tracking-tight text-slate-900">
-                Quer adquirir um novo serviço? Iremos te guiar pelo caminho certo
-              </DialogTitle>
-              <div className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Passo {step} de {precisaPasso2 ? "2" : "1"}
+      <DialogContent
+        className="max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto"
+        style={{ background: PAPER, borderColor: LINE }}
+      >
+        {/* ── Header: NOVO SERVIÇO · n/total + progress ──────────────── */}
+        <div className="px-5 py-3 border-b flex items-center justify-between gap-3" style={{ borderColor: SOFT }}>
+          <div className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>
+            NOVO SERVIÇO · {step}/{totalSteps}
+          </div>
+          <div className="flex gap-1 w-32">
+            <div className="h-[3px] flex-1 rounded-sm" style={{ background: BORDO }} />
+            <div className="h-[3px] flex-1 rounded-sm" style={{ background: step === 2 ? BORDO : SOFT }} />
+          </div>
+        </div>
+
+        {/* ── Title ──────────────────────────────────────────────────── */}
+        <div className="px-5 pt-4">
+          <h2 className="text-[20px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+            Quer adquirir um novo serviço?<br />Iremos te guiar pelo caminho certo.
+          </h2>
+        </div>
+
+        {/* ── Lista de opções ────────────────────────────────────────── */}
+        <div className="px-5 pb-5 pt-3">
+          {step === 1 && (
+            <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
+              {objetivoList.map((o) => {
+                const selected = objetivo === o.key;
+                return (
+                  <li key={o.key}>
+                    <button
+                      type="button"
+                      onClick={() => setObjetivo(o.key)}
+                      className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
+                      style={{ background: selected ? `${BORDO}0F` : PAPER }}
+                    >
+                      <o.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{o.title}</div>
+                        <div className="text-[11px] leading-snug" style={{ ...INTER, color: SUB }}>{o.sub}</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 shrink-0" style={{ color: selected ? BORDO : SUB }} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {step === 2 && !passo2EhFinalidade && (
+            <>
+              <div className="text-[11px] font-bold uppercase mb-2 tracking-wider" style={{ ...OSWALD, color: INK }}>
+                Você já possui arma de fogo registrada?
               </div>
-            </div>
+              <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
+                {possuiList.map((p) => {
+                  const selected = possuiArma === p.key;
+                  return (
+                    <li key={p.key}>
+                      <button
+                        type="button"
+                        onClick={() => setPossuiArma(p.key)}
+                        className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
+                        style={{ background: selected ? `${BORDO}0F` : PAPER }}
+                      >
+                        <p.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
+                        <div className="flex-1 text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{p.label}</div>
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full border" style={{ borderColor: selected ? BORDO : "#CFCFCF" }}>
+                          {selected && <span className="h-2 w-2 rounded-full" style={{ background: BORDO }} />}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
+                Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer.
+              </p>
+            </>
+          )}
+
+          {step === 2 && passo2EhFinalidade && (
+            <>
+              <div className="text-[11px] font-bold uppercase mb-2 tracking-wider" style={{ ...OSWALD, color: INK }}>
+                Qual é a finalidade da arma?
+              </div>
+              <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
+                {finalidadeList.map((f) => {
+                  const selected = finalidadeArma === f.key;
+                  return (
+                    <li key={f.key}>
+                      <button
+                        type="button"
+                        onClick={() => setFinalidadeArma(f.key)}
+                        className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
+                        style={{ background: selected ? `${BORDO}0F` : PAPER }}
+                      >
+                        <f.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
+                        <div className="flex-1 text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{f.label}</div>
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full border" style={{ borderColor: selected ? BORDO : "#CFCFCF" }}>
+                          {selected && <span className="h-2 w-2 rounded-full" style={{ background: BORDO }} />}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
+                Isso determina quais serviços são mostrados (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal).
+              </p>
+            </>
+          )}
+
+          {/* ── Footer ─────────────────────────────────────────────── */}
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              type="button"
+              disabled={salvando}
+              onClick={() => (step === 2 ? setStep(1) : onOpenChange(false))}
+              className="inline-flex items-center gap-1 text-[11px] font-bold uppercase disabled:opacity-50"
+              style={{ ...OSWALD, color: SUB }}
+            >
+              <ArrowLeft className="h-3 w-3" /> {step === 2 ? "VOLTAR" : "CANCELAR"}
+            </button>
+            <button
+              type="button"
+              disabled={salvando || (step === 1 ? !objetivo : !passo2Completo)}
+              onClick={handleContinuar}
+              className="inline-flex items-center gap-1.5 rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white disabled:opacity-50"
+              style={{ ...OSWALD, background: BORDO }}
+            >
+              {salvando ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <>
+                  {step === 2 ? "VER SERVIÇOS" : "CONTINUAR"} <ArrowRight className="h-3 w-3" />
+                </>
+              )}
+            </button>
           </div>
-        </DialogHeader>
-
-        {/* ── Passo 1: objetivo ─────────────────────────────────────────── */}
-        {step === 1 && (
-          <div className="space-y-3">
-            <p className="text-[12px] text-slate-600">
-              Escolha a opção que mais combina com o que você precisa — isso
-              só ajuda a mostrar os serviços certos. Você pode mudar depois.
-            </p>
-
-            <OptionCard
-              icon={<FileSignature className="h-5 w-5" style={{ color: MARROM }} />}
-              title="Tirar ou renovar meu CR de CAC"
-              subtitle="Concessão de CR, filiação a clube, declarações iniciais — SINARM CAC"
-              selected={objetivo === "inicial"}
-              onClick={() => setObjetivo("inicial")}
-            />
-            <OptionCard
-              icon={<Shield className="h-5 w-5" style={{ color: MARROM }} />}
-              title="Adquirir uma arma para defesa pessoal"
-              subtitle="Posse, registro, porte, aquisição — Polícia Federal/SINARM"
-              selected={objetivo === "defesa_pessoal"}
-              onClick={() => setObjetivo("defesa_pessoal")}
-            />
-            <OptionCard
-              icon={<Wrench className="h-5 w-5" style={{ color: MARROM }} />}
-              title="Mexer numa arma que já tenho"
-              subtitle="Renovar CRAF, transferir, apostilar, GTE, regularizar"
-              selected={objetivo === "continuidade"}
-              onClick={() => setObjetivo("continuidade")}
-            />
-            <OptionCard
-              icon={<Target className="h-5 w-5" style={{ color: MARROM }} />}
-              title="Não tenho certeza, me mostre tudo"
-              subtitle="Vou navegar e escolher"
-              selected={objetivo === "indefinido"}
-              onClick={() => setObjetivo("indefinido")}
-            />
-
-            <div className="flex justify-end pt-1">
-              <button
-                type="button"
-                disabled={!objetivo}
-                onClick={() => {
-                  if (!objetivo) return;
-                  if (objetivo === "indefinido") {
-                    void concluir();
-                  } else {
-                    setStep(2);
-                  }
-                }}
-                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
-                style={{ background: MARROM }}
-              >
-                {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Continuar <ChevronRight className="h-3.5 w-3.5" /></>}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Passo 2a: possuiArma (inicial / defesa_pessoal) ──────────── */}
-        {step === 2 && !passo2EhFinalidade && (
-          <div className="space-y-3">
-            <p className="text-[12px] text-slate-600">
-              Você já possui arma de fogo registrada em seu nome?
-            </p>
-
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <SmallOption
-                icon={<ShieldCheck className="h-4 w-4" style={{ color: MARROM }} />}
-                label="Sim"
-                selected={possuiArma === "sim"}
-                onClick={() => setPossuiArma("sim")}
-              />
-              <SmallOption
-                icon={<Sparkles className="h-4 w-4 text-slate-400" />}
-                label="Não"
-                selected={possuiArma === "nao"}
-                onClick={() => setPossuiArma("nao")}
-              />
-              <SmallOption
-                icon={<HelpCircle className="h-4 w-4 text-slate-400" />}
-                label="Não tenho certeza"
-                selected={possuiArma === "nao_sei"}
-                onClick={() => setPossuiArma("nao_sei")}
-              />
-            </div>
-
-            <p className="text-[10px] italic text-slate-500">
-              Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer.
-            </p>
-
-            <StepNavButtons
-              salvando={salvando}
-              onVoltar={() => setStep(1)}
-              onConcluir={() => void concluir()}
-              disabled={!passo2Completo}
-            />
-          </div>
-        )}
-
-        {/* ── Passo 2b: finalidadeArma (continuidade) ───────────────────── */}
-        {step === 2 && passo2EhFinalidade && (
-          <div className="space-y-3">
-            <p className="text-[12px] text-slate-600">
-              Qual é a finalidade da arma que você quer regularizar ou renovar?
-            </p>
-
-            <div className="grid grid-cols-2 gap-2">
-              <SmallOption
-                icon={<Crosshair className="h-4 w-4" style={{ color: MARROM }} />}
-                label="Tiro esportivo"
-                selected={finalidadeArma === "tiro_esportivo"}
-                onClick={() => setFinalidadeArma("tiro_esportivo")}
-              />
-              <SmallOption
-                icon={<Leaf className="h-4 w-4" style={{ color: MARROM }} />}
-                label="Caça"
-                selected={finalidadeArma === "caca"}
-                onClick={() => setFinalidadeArma("caca")}
-              />
-              <SmallOption
-                icon={<Archive className="h-4 w-4" style={{ color: MARROM }} />}
-                label="Colecionamento"
-                selected={finalidadeArma === "colecionamento"}
-                onClick={() => setFinalidadeArma("colecionamento")}
-              />
-              <SmallOption
-                icon={<Shield className="h-4 w-4" style={{ color: MARROM }} />}
-                label="Defesa pessoal"
-                selected={finalidadeArma === "defesa_pessoal"}
-                onClick={() => setFinalidadeArma("defesa_pessoal")}
-              />
-            </div>
-
-            <p className="text-[10px] italic text-slate-500">
-              Isso determina quais serviços são mostrados (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal).
-            </p>
-
-            <StepNavButtons
-              salvando={salvando}
-              onVoltar={() => setStep(1)}
-              onConcluir={() => void concluir()}
-              disabled={!passo2Completo}
-            />
-          </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/* ── Sub-components ─────────────────────────────────────────────────────────── */
-
-function StepNavButtons({
-  salvando,
-  onVoltar,
-  onConcluir,
-  disabled,
-}: {
-  salvando: boolean;
-  onVoltar: () => void;
-  onConcluir: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between pt-1">
-      <button
-        type="button"
-        onClick={onVoltar}
-        disabled={salvando}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Voltar
-      </button>
-      <button
-        type="button"
-        disabled={disabled || salvando}
-        onClick={onConcluir}
-        className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
-        style={{ background: "#7A1F2B" }}
-      >
-        {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-        Ver meus serviços
-      </button>
-    </div>
-  );
-}
-
-function OptionCard({
-  icon,
-  title,
-  subtitle,
-  selected,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
-        selected
-          ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
-          : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
-    >
-      <div className="mt-0.5 shrink-0">{icon}</div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-bold text-slate-900">{title}</div>
-        <div className="mt-0.5 text-[11px] leading-snug text-slate-600">{subtitle}</div>
-      </div>
-      <span
-        className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-          selected ? "border-[#7A1F2B]" : "border-slate-300"
-        }`}
-      >
-        {selected && <span className="h-2 w-2 rounded-full" style={{ background: "#7A1F2B" }} />}
-      </span>
-    </button>
-  );
-}
-
-function SmallOption({
-  icon,
-  label,
-  selected,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-3 text-center transition ${
-        selected
-          ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
-          : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
-    >
-      {icon}
-      <span className="text-[12px] font-bold text-slate-900">{label}</span>
-    </button>
   );
 }
