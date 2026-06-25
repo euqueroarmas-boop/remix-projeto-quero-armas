@@ -89,7 +89,8 @@ function buildTool(tipo: TipoDoc) {
     tipo === "exame_psicologico" ||
     tipo === "laudo_psicotecnico" ||
     tipo === "exame_tiro" ||
-    tipo === "capacidade_tecnica";
+    tipo === "capacidade_tecnica" ||
+    tipo === "laudo_capacidade_tecnica";
   const includeArma = !isLaudo && tipo !== "cr";
   let properties: Record<string, unknown> = { ...baseProps };
   if (includeArma) properties = { ...properties, ...armaProps };
@@ -262,7 +263,8 @@ Deno.serve(async (req) => {
       tipo === "exame_psicologico" ||
       tipo === "laudo_psicotecnico" ||
       tipo === "exame_tiro" ||
-      tipo === "capacidade_tecnica";
+      tipo === "capacidade_tecnica" ||
+      tipo === "laudo_capacidade_tecnica";
     let dataValidadeISO = ddmmaaaaToISO(raw.data_validade);
     const dataAvaliacaoISO = ddmmaaaaToISO(raw.data_avaliacao);
     const dataEmissaoISO = ddmmaaaaToISO(raw.data_emissao);
