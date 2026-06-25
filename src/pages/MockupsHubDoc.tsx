@@ -2012,6 +2012,194 @@ const R40: React.FC = () => (
   </Paper>
 );
 
+/* ───────── R41–R45 · FUNDO BRANCO · CARIMBO 98% DO R7 PRESERVADO · PDF SEM SOMBRA ─────────
+   Regras: bg #FFFFFF puro, Stamp98R7 idêntico, PdfSheet flat (sem mat cinza). */
+
+// R41 — Editorial limpo: header com filete bordô + 3 colunas (dossiê / pdf+selo / campos)
+const R41: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FFFFFF", padding: 28 }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", borderBottom: `2px solid ${T.bordo}`, paddingBottom: 10, marginBottom: 18 }}>
+        <Lab color={T.bordo} spacing=".28em">DOSSIÊ · ENTRADA</Lab>
+        <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".24em", color: T.ink3 }}>HUB-DOC-2025-0005 · pg 1/1</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 22, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Lab spacing=".24em">CLASSIFICAÇÃO IA</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <div style={{ height: 1, background: T.line }} />
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+        </div>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={540} flat />
+          <Stamp98R7 />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R42 — Branco + grid cinza claro · estilo blueprint enxuto
+const R42: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FFFFFF", padding: 28, position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(to right, rgba(0,0,0,.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,.035) 1px, transparent 1px)", backgroundSize: "24px 24px", pointerEvents: "none" }} />
+      <div style={{ position: "relative", display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Lab spacing=".24em">DOSSIÊ</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <div style={{ border: `1px solid ${T.border}`, background: "#fff", padding: 10 }}>
+            <Lab spacing=".22em">COORDENADAS</Lab>
+            <div style={{ fontFamily: "monospace", fontSize: 10.5, color: T.ink2, marginTop: 4, letterSpacing: ".08em" }}>LAT · -23.5505<br/>LON · -46.6333<br/>UNID · SR/PF/SP</div>
+          </div>
+        </div>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={540} flat />
+          <Stamp98R7 />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R43 — Branco museu: PDF gigante centro · barras laterais finas com Oswald vertical
+const R43: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FFFFFF", padding: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.55fr 1fr", gap: 20, alignItems: "stretch" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, borderRight: `1px solid ${T.line}`, paddingRight: 16 }}>
+          <Lab spacing=".24em">DOSSIÊ</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+        </div>
+        <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+          <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".34em", color: T.ink3 }}>EVIDÊNCIA · 14. EXAME DE TIRO · WILLIAN.PDF</div>
+          </div>
+          <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ writingMode: "vertical-rl", fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".34em", color: T.bordo }}>IA · 98% · ACIMA DO LIMIAR 85%</div>
+          </div>
+          <div style={{ position: "relative", width: "calc(100% - 36px)" }}>
+            <PdfSheet height={560} flat />
+            <Stamp98R7 />
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, borderLeft: `1px solid ${T.line}`, paddingLeft: 16 }}>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R44 — Branco com índice numerado · cada campo vira um item 01..04 abaixo do PDF
+const R44: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FFFFFF", padding: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 22, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Lab spacing=".24em">DOSSIÊ</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <EscopoBlock />
+        </div>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={520} flat />
+          <Stamp98R7 />
+        </div>
+      </div>
+      <div style={{ marginTop: 18, borderTop: `1px solid ${T.line}`, paddingTop: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+          <Lab spacing=".26em">CAMPOS LIDOS PELA IA · REVISE ANTES DE SALVAR</Lab>
+          <ChipConf />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+          {[["01", COPY.fNumLab, COPY.fNumVal, true], ["02", COPY.fOrgaoLab, COPY.fOrgaoVal, false], ["03", COPY.fEmissLab, COPY.fEmissVal, false], ["04", COPY.fValLab, COPY.fValVal, true]].map(([n, lab, val, conf]) => (
+            <div key={String(n)} style={{ border: `1px solid ${T.border}`, padding: 12, position: "relative" }}>
+              <div style={{ position: "absolute", top: -10, left: 10, background: "#fff", padding: "0 6px", fontFamily: OSWALD, fontSize: 10, letterSpacing: ".24em", color: T.bordo, fontWeight: 700 }}>{String(n)}</div>
+              <div style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".22em", color: T.ink3, marginTop: 2 }}>{String(lab).toUpperCase()}</div>
+              <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".04em", color: T.ink, fontWeight: 700, marginTop: 4 }}>{String(val)}</div>
+              {conf && <div style={{ marginTop: 6 }}><ConfirmBadge /></div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+// R45 — Branco minimalista: PDF maior, sidebar única à direita com tudo
+const R45: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#FFFFFF", padding: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 24, alignItems: "flex-start" }}>
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+            <Lab color={T.bordo} spacing=".26em">ARQUIVO ENVIADO</Lab>
+            <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".24em", color: T.ink3 }}>{COPY.fileName} · {COPY.fileSize}</span>
+          </div>
+          <PdfSheet height={600} flat />
+          <Stamp98R7 />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <Lab spacing=".24em">CLASSIFICAÇÃO IA</Lab>
+            <div style={{ fontFamily: OSWALD, fontSize: 18, letterSpacing: ".05em", color: T.ink, fontWeight: 700, lineHeight: 1.2, marginTop: 4 }}>{COPY.iaTipo}</div>
+            <div style={{ marginTop: 6 }}><ChipConf /></div>
+          </div>
+          <div style={{ height: 1, background: T.line }} />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
