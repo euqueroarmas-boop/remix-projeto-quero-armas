@@ -405,6 +405,18 @@ function dataIsoFromBr(v?: string | null): string {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
+function addOneYearIso(iso?: string | null): string {
+  if (!iso) return "";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return "";
+  const venc = new Date(Date.UTC(y + 1, mo - 1, d));
+  return venc.toISOString().slice(0, 10);
+}
+
 function isoToBr(v?: string | null): string {
   if (!v) return "";
   const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
