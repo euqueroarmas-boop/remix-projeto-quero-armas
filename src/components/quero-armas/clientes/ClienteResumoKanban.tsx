@@ -151,12 +151,12 @@ export default function ClienteResumoKanban({
     for (const e of examesAtuais) if (e?.tipo && !exameByTipo.has(e.tipo)) exameByTipo.set(e.tipo, e);
     const examesItems: FrontItem[] = [
       exameByTipo.get("psicologico") && {
-        label: hubLabel("laudo_psicologico", "Laudo Psicológico"),
+        label: getNomeDocumentoDisplay({ tipo_documento: "laudo_psicologico" }, "Laudo de Avaliação Psicológica para Aquisição/Porte de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
       },
       exameByTipo.get("tiro") && {
-        label: hubLabel("laudo_capacidade_tecnica", "Exame de Tiro"),
+        label: getNomeDocumentoDisplay({ tipo_documento: "laudo_capacidade_tecnica" }, "Atestado de Capacidade Técnica para Manuseio de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
       },
