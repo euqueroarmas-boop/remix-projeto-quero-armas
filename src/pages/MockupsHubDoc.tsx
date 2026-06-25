@@ -1719,10 +1719,92 @@ const R30: React.FC = () => (
   />
 );
 
+/* ───────── R31–R35 · FUNDO BRANCO PURO · elementos em paleta white ───────── */
+// Selo de cera em tom branco/marfim com aro bordô fino (mantém legibilidade no white)
+const waxStampWhite = (
+  <div style={{ position: "absolute", top: -24, right: -32, width: 172, height: 172, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #FFFFFF 0%, #F4EFE6 55%, #E6DDCB 100%)", boxShadow: "0 14px 28px rgba(0,0,0,.10), inset 0 -8px 16px rgba(0,0,0,.06), inset 0 6px 10px rgba(255,255,255,.9)", display: "flex", alignItems: "center", justifyContent: "center", color: T.bordo, fontFamily: OSWALD, border: `2px solid ${T.bordo}`, outline: "3px double rgba(122,31,43,.35)", outlineOffset: 3 }}>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontSize: 9, letterSpacing: ".32em", opacity: 0.75 }}>IA · SELO</div>
+      <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 0.85, letterSpacing: "-.02em" }}>98<span style={{ fontSize: 28 }}>%</span></div>
+      <div style={{ fontSize: 8.5, letterSpacing: ".3em", marginTop: 4, opacity: 0.75 }}>APROVADO</div>
+    </div>
+  </div>
+);
+
+// R31 — Branco absoluto · plano editorial limpo (sem texturas)
+const R31: React.FC = () => (
+  <R7Frame
+    stamp={waxStampWhite}
+    bg={{ background: "#FFFFFF" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", top: 14, left: 14, right: 14, height: 1, background: T.bordo, opacity: 0.85, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: 14, left: 14, right: 14, height: 1, background: T.bordo, opacity: 0.85, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 22, left: 22, fontFamily: OSWALD, fontSize: 9, letterSpacing: ".32em", color: T.bordo, opacity: 0.7, pointerEvents: "none" }}>WHITE PAPER · 001</div>
+        <div style={{ position: "absolute", bottom: 22, right: 22, fontFamily: OSWALD, fontSize: 9, letterSpacing: ".32em", color: T.bordo, opacity: 0.7, pointerEvents: "none" }}>IA · 98%</div>
+      </>
+    }
+  />
+);
+
+// R32 — Branco + grid quadriculado ultra leve cinza claro
+const R32: React.FC = () => (
+  <R7Frame
+    stamp={waxStampWhite}
+    bg={{ background: "#FFFFFF" }}
+    bgOverlay={
+      <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(15,15,15,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(15,15,15,.045) 1px, transparent 1px)`, backgroundSize: "20px 20px, 20px 20px", pointerEvents: "none" }} />
+    }
+  />
+);
+
+// R33 — Branco + pontilhado fino (dot grid) · estilo bloco de notas premium
+const R33: React.FC = () => (
+  <R7Frame
+    stamp={waxStampWhite}
+    bg={{ background: "#FFFFFF" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(rgba(15,15,15,.18) 1px, transparent 1px)`, backgroundSize: "16px 16px", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 18, left: 18, right: 18, bottom: 18, border: "1px solid rgba(15,15,15,.08)", pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
+// R34 — Branco + vinheta sutil cinza (foco no centro · museu)
+const R34: React.FC = () => (
+  <R7Frame
+    stamp={waxStampWhite}
+    bg={{ background: "radial-gradient(ellipse at 50% 40%, #FFFFFF 0%, #FAFAF8 55%, #ECEAE4 100%)" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 18, border: "1px solid rgba(15,15,15,.08)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", inset: 26, border: `1px solid ${T.bordo}`, opacity: 0.18, pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
+// R35 — Branco + hachura diagonal ultra leve · selo destaque
+const R35: React.FC = () => (
+  <R7Frame
+    stamp={waxStampWhite}
+    bg={{ background: "#FFFFFF" }}
+    bgOverlay={
+      <>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `repeating-linear-gradient(45deg, rgba(15,15,15,.035) 0 1px, transparent 1px 12px)`, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `repeating-linear-gradient(90deg, ${T.bordo} 0 16px, transparent 16px 22px)`, opacity: 0.7, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: `repeating-linear-gradient(90deg, ${T.bordo} 0 16px, transparent 16px 22px)`, opacity: 0.7, pointerEvents: "none" }} />
+      </>
+    }
+  />
+);
+
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 30 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 35 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
@@ -1773,6 +1855,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 28, nome: "R28 · Fundo Manchado Bordô", subtitulo: "GRADIENTE RADIAL PAPEL + MANCHAS", render: () => <R28 /> },
   { id: 29, nome: "R29 · Galeria Preta", subtitulo: "FUNDO #0A0A0A + MOLDURA ÂMBAR", render: () => <R29 /> },
   { id: 30, nome: "R30 · Hachura Diagonal", subtitulo: "LINHAS BORDÔ 45° + FAIXAS TRACEJADAS", render: () => <R30 /> },
+  { id: 31, nome: "R31 · Branco Editorial", subtitulo: "WHITE PAPER · LINHAS BORDÔ FINAS · SELO MARFIM", render: () => <R31 /> },
+  { id: 32, nome: "R32 · Branco + Grid Cinza", subtitulo: "QUADRICULADO 20PX ULTRA LEVE · SELO MARFIM", render: () => <R32 /> },
+  { id: 33, nome: "R33 · Branco + Dot Grid", subtitulo: "PONTILHADO PREMIUM + MOLDURA INTERNA", render: () => <R33 /> },
+  { id: 34, nome: "R34 · Branco Museu", subtitulo: "VINHETA RADIAL + DUPLA MOLDURA BORDÔ DISCRETA", render: () => <R34 /> },
+  { id: 35, nome: "R35 · Branco Hachurado", subtitulo: "HACHURA 45° LEVE + FAIXAS TRACEJADAS TOPO/BASE", render: () => <R35 /> },
 ];
 
 export default function MockupsHubDoc() {
