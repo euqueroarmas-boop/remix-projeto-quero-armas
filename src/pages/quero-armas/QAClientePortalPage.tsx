@@ -1252,14 +1252,8 @@ export default function QAClientePortalPage() {
                   : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`
               }
             >
-              {/* Wrapper do avatar — em hero, ancorado no topo sobrepondo a arte */}
-              <div
-                className={
-                  isHero
-                    ? "absolute -top-10 left-4 z-20"
-                    : "relative shrink-0"
-                }
-              >
+              {/* Wrapper do avatar — inline na linha do brand, no lugar do logo */}
+              <div className="relative shrink-0">
                 {isHero && (
                   <span
                     aria-hidden
@@ -1299,7 +1293,7 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
               {!effectiveCollapsed && (
-                <div className={`min-w-0 flex-1 ${isHero ? "ml-[5.5rem]" : ""}`}>
+                <div className="min-w-0 flex-1">
                   <div
                     className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase"
                     style={{ fontFamily: "Oswald, sans-serif" }}
