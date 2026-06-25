@@ -1449,6 +1449,62 @@ export function ClienteDocsHubModal({
       const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
       if (insertError) throw insertError;
 
+      // Promoção para o Arsenal operacional (qa_crafs) quando o documento for
+      // CRAF/SINARM com identificador físico da arma. Sem isso, a arma fica
+      // presa no Hub Documental e o card "ARSENAL · 5 Frentes" não a exibe
+      // (a frente lê de qa_crafs, não de qa_documentos_cliente).
+      try {
+        const tipoArma = form.tipo_documento;
+        const ehArmaRegistro = tipoArma === "craf" || tipoArma === "sinarm";
+        const serie = (form.arma_numero_serie || "").trim().toUpperCase();
+        const numSigma = (form.numero_registro_sigma || "").trim().toUpperCase();
+        const numCadSinarm = (form.numero_cad_sinarm || "").trim().toUpperCase();
+        if (qaClienteId && ehArmaRegistro && (serie || numSigma)) {
+          const sistema = (form.sistema_registro || (tipoArma === "craf" ? "SIGMA" : "SINARM")).toUpperCase();
+          const nomeArma = [form.arma_marca, form.arma_modelo, form.arma_calibre]
+            .map((v) => (v || "").trim()).filter(Boolean).join(" ").toUpperCase() || "ARMA";
+          const { data: existentes } = await supabase
+            .from("qa_crafs")
+            .select("id, numero_arma, numero_sigma")
+            .eq("cliente_id", qaClienteId);
+          const dup = (existentes || []).find((e: any) => {
+            const s = String(e.numero_arma || "").trim().toUpperCase();
+            const g = String(e.numero_sigma || "").trim().toUpperCase();
+            return (serie && s === serie) || (numSigma && g === numSigma);
+          });
+          if (dup) {
+            const patch: Record<string, unknown> = {
+              sistema_registro: sistema,
+              ...(form.data_validade ? { data_validade: form.data_validade } : {}),
+              ...(nomeArma ? { nome_arma: nomeArma } : {}),
+              ...(serie ? { numero_arma: serie } : {}),
+              ...(numSigma ? { numero_sigma: numSigma, numero_registro_sigma: numSigma } : {}),
+              ...(numCadSinarm ? { numero_cad_sinarm: numCadSinarm } : {}),
+              ...(form.arma_especie ? { arma_especie: form.arma_especie.toUpperCase() } : {}),
+            };
+            await supabase.from("qa_crafs").update(patch).eq("id", (dup as any).id);
+          } else {
+            await supabase.from("qa_crafs").insert({
+              cliente_id: qaClienteId,
+              nome_arma: nomeArma,
+              nome_craf: (form.numero_documento || "").toUpperCase() || null,
+              numero_arma: serie || null,
+              numero_sigma: numSigma || null,
+              numero_cad_sinarm: numCadSinarm || null,
+              numero_registro_sigma: sistema === "SIGMA" ? numSigma || null : null,
+              sistema_registro: sistema,
+              arma_especie: form.arma_especie ? form.arma_especie.toUpperCase() : null,
+              data_validade: form.data_validade || null,
+              arquivo_storage_path: storagePath,
+              arquivo_nome: fileName,
+              arquivo_mime: mime,
+            });
+          }
+        }
+      } catch (promErr) {
+        console.warn("[arsenal promote] falha não-crítica:", promErr);
+      }
+
       // Auto-sincroniza com qa_exames_cliente quando o documento for um
       // laudo psicológico ou atestado de capacidade técnica (exame de tiro).
       // O card EXAMES do Resumo lê dessa tabela — sem este upsert ele fica em 0.
