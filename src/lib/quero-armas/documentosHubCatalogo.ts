@@ -360,6 +360,11 @@ export function getNomeDocumentoDisplay(doc: Record<string, unknown> | null | un
   const explicit = cleanDocumentoName(doc?.nome_documento);
   const inferred = inferNomeCertidaoOficial(doc);
 
+  // Padronização: para tipos canônicos com nome oficial inferido (Title Case),
+  // o nome canônico SEMPRE prevalece sobre o título literal extraído pela IA
+  // (que costuma vir em UPPERCASE e com sufixos variáveis como "Nº 0005/2025").
+  // Isso garante o mesmo padrão visual em todos os documentos do hub.
+  if (inferred) return inferred;
   if (explicit && !shouldReplaceNomeCertidao(explicit, tipo)) return explicit;
   return inferred || explicit || meta?.short || meta?.label || cleanDocumentoName(doc?.arquivo_nome) || fallback;
 }
