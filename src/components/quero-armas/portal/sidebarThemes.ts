@@ -227,7 +227,8 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     // garantir legibilidade do texto branco do menu mesmo se a arte tiver
     // áreas claras na metade inferior.
     bg:
-      `linear-gradient(180deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 200px, rgba(0,0,0,0.78) 260px, rgba(0,0,0,0.88) 100%), ` +
+      `linear-gradient(180deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.10) 175px, rgba(0,0,0,0.58) 255px, rgba(0,0,0,0.72) 100%), ` +
+      `linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.18) 58%, rgba(0,0,0,0.45) 100%), ` +
       `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
