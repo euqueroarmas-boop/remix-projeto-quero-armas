@@ -2076,12 +2076,12 @@ export function ClienteDocsHubModal({
             )}
           </div>
 
-          <div className="space-y-4">
-            <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2.5">
+            <div className="grid gap-2.5 rounded-sm border border-[#E5E5E5] bg-white p-3 shadow-none">
+              <div className="grid gap-2.5 sm:grid-cols-2">
                 <Field label="Categoria do documento">
                   <Select value={categoriaHub} onValueChange={(value) => setCategoria(value as HubCategoria)}>
-                    <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                    <SelectTrigger className={cn(inputClassName, "text-left font-medium")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-popover text-popover-foreground">
@@ -2100,7 +2100,7 @@ export function ClienteDocsHubModal({
 
                 <Field label="Tipo do documento">
                   <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
-                    <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                    <SelectTrigger className={cn(inputClassName, "text-left font-medium")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="border-border bg-popover text-popover-foreground">
@@ -2118,14 +2118,14 @@ export function ClienteDocsHubModal({
                 </Field>
               </div>
 
-              <div className="rounded-2xl border border-border bg-muted/35 px-4 py-3">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              <div className="rounded-sm border border-[#EFEFEF] bg-[#FAFAFA] px-3 py-2">
+                <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
                   Escopo e reaproveitamento
                 </div>
-                <div className="mt-1 text-sm font-medium text-foreground">
+                <div className="mt-0.5 text-[12px] font-semibold text-[#0A0A0A]">
                   {categoriaAtualMeta?.label} · escopo {escopoAtual}
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-[11px] leading-snug text-[#5A5A5A] line-clamp-2">
                   {categoriaAtualMeta?.description}
                   {escopoAtual === "processo"
                     ? " Este documento tende a ficar vinculado ao processo atual."
@@ -2154,7 +2154,7 @@ export function ClienteDocsHubModal({
                         if (v === "SIGMA") update("numero_cad_sinarm", "");
                       }}
                     >
-                      <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                    <SelectTrigger className={cn(inputClassName, "text-left font-medium")}>
                         <SelectValue placeholder="Selecione o regime" />
                       </SelectTrigger>
                       <SelectContent className="border-border bg-popover text-popover-foreground">
@@ -2269,7 +2269,7 @@ export function ClienteDocsHubModal({
                 </Field>
               )}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 <Field label="Órgão emissor">
                   <Input
                     value={form.orgao_emissor}
