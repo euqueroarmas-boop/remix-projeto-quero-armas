@@ -437,7 +437,7 @@ export default function ClienteResumoKanban({
               }}>
                 {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
               </button>
-              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate("documentos")}>ANEXAR</button>
+              <button className="qa-urgbanner__ghost" type="button" onClick={() => { if (onOpenDocsHub) { onOpenDocsHub(); } else { onNavigate("documentos"); } }}>ANEXAR</button>
             </div>
             {filteredUrgents.length > 1 && (
               <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
