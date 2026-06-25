@@ -1831,7 +1831,7 @@ export function ClienteDocsHubModal({
           </div>
 
           {/* ───────── COL 3 · DADOS ───────── */}
-          <div className="space-y-4 lg:border-l lg:border-[#EFEFEF] lg:pl-5">
+          <div className="space-y-4 md:border-l md:border-[#EFEFEF] md:pl-4 lg:pl-5">
           <div className="space-y-4">
             <SectionTitle title="Dados do documento" />
 
