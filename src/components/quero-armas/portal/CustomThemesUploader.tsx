@@ -41,7 +41,6 @@ export default function CustomThemesUploader({
     setErr(null);
     if (!file) return;
     if (!file.type.startsWith("image/")) { setErr("ARQUIVO PRECISA SER UMA IMAGEM (PNG/JPG/WEBP)."); return; }
-    if (file.size > MAX_BYTES) { setErr("IMAGEM MUITO GRANDE — LIMITE 2MB."); return; }
     try {
       const dataUrl = await fileToDataUrl(file);
       setCustomThemeSlot(slot, dataUrl);
