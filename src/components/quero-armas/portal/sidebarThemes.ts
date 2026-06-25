@@ -232,8 +232,8 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     bg:
       `linear-gradient(180deg, ` +
         `rgba(0,0,0,0) 0px, ` +
-        `rgba(0,0,0,0) 230px, ` +
-        `rgba(0,0,0,0.62) 280px, ` +
+        `rgba(0,0,0,0) 200px, ` +
+        `rgba(0,0,0,0.62) 250px, ` +
         `rgba(0,0,0,0.62) 640px, ` +
         `rgba(0,0,0,0) 700px, ` +
         `rgba(0,0,0,0) calc(100% - 150px), ` +
