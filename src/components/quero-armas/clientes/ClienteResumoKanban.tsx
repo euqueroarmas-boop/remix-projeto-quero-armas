@@ -28,6 +28,7 @@ interface Props {
   processoDocs?: any[];
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
+  onOpenDocsHub?: () => void;
 }
 
 type FrontTone = "bordo" | "amber" | "green";
@@ -94,6 +95,7 @@ export default function ClienteResumoKanban({
   processoDocs = [],
   onNavigate,
   onOpenCadastro,
+  onOpenDocsHub,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
@@ -435,7 +437,7 @@ export default function ClienteResumoKanban({
               }}>
                 {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
               </button>
-              <button className="qa-urgbanner__ghost" type="button" onClick={() => onNavigate("documentos")}>ANEXAR</button>
+              <button className="qa-urgbanner__ghost" type="button" onClick={() => { if (onOpenDocsHub) { onOpenDocsHub(); } else { onNavigate("documentos"); } }}>ANEXAR</button>
             </div>
             {filteredUrgents.length > 1 && (
               <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
