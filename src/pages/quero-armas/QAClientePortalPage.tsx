@@ -47,11 +47,17 @@ import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/Docume
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
+import CustomThemesUploader from "@/components/quero-armas/portal/CustomThemesUploader";
 import {
   QA_SIDEBAR_THEMES,
   getStoredSidebarTheme,
   setStoredSidebarTheme,
   type QASidebarTheme,
+  QA_CUSTOM_SLOTS,
+  getCustomThemes,
+  setCustomThemeSlot,
+  customToTheme,
+  type QACustomTheme,
 } from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
@@ -211,11 +217,23 @@ export default function QAClientePortalPage() {
   useEffect(() => {
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
+      if (!key) return;
+      if (key.startsWith("custom-")) {
+        const slot = Number(key.split("-")[1]);
+        const c = getCustomThemes()[slot];
+        if (c) setSidebarTheme(customToTheme(c));
+        return;
+      }
       const next = QA_SIDEBAR_THEMES.find((t) => t.key === key);
       if (next) setSidebarTheme(next);
     };
     window.addEventListener("qa:sidebar-theme-change", onChange);
-    return () => window.removeEventListener("qa:sidebar-theme-change", onChange);
+    const onCustom = () => setSidebarTheme(getStoredSidebarTheme());
+    window.addEventListener("qa:sidebar-custom-change", onCustom);
+    return () => {
+      window.removeEventListener("qa:sidebar-theme-change", onChange);
+      window.removeEventListener("qa:sidebar-custom-change", onCustom);
+    };
   }, []);
   // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
   // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
@@ -2042,6 +2060,12 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
             </div>
+
+            {/* ── Suas Criações (upload de temas) ──────────────────────────── */}
+            <CustomThemesUploader
+              currentKey={sidebarTheme.key}
+              onApply={(t) => { setSidebarTheme(t); setStoredSidebarTheme(t.key); }}
+            />
           </SectionCard>
         )}
 
