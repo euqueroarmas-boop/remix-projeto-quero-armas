@@ -2410,17 +2410,6 @@ export function ClienteDocsHubModal({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <Field label="Observações">
-                <Textarea
-                  value={form.observacoes}
-                  onChange={(event) => update("observacoes", event.target.value)}
-                  rows={3}
-                  placeholder="Se necessário, adicione detalhes complementares."
-                  className="min-h-[110px] rounded-2xl border border-input bg-background text-sm text-foreground shadow-sm placeholder:text-muted-foreground/55 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0 resize-none"
-                />
-              </Field>
-            </div>
           </div>
           </div>
           </div>
