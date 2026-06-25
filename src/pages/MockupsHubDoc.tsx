@@ -710,7 +710,7 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
 export default function MockupsHubDoc() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const vRaw = params.get("v");
-  const v = vRaw ? Math.max(1, Math.min(5, Number(vRaw))) : null;
+  const v = vRaw ? Math.max(1, Math.min(10, Number(vRaw))) : null;
 
   const wrap: React.CSSProperties = {
     minHeight: "100vh",
