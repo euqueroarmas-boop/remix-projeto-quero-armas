@@ -13,24 +13,53 @@ import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } fr
 
 const DOC_BUCKET = "qa-documentos";
 
+function parseDateUTC(d: string | null | undefined): Date | null {
+  if (!d) return null;
+  const iso = String(d).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    const dt = new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])));
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  const br = String(d).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) {
+    const dt = new Date(Date.UTC(Number(br[3]), Number(br[2]) - 1, Number(br[1])));
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  return null;
+}
+
+function addOneYearISO(iso: string | null | undefined): string | null {
+  const base = parseDateUTC(iso);
+  if (!base) return null;
+  const venc = new Date(Date.UTC(base.getUTCFullYear() + 1, base.getUTCMonth(), base.getUTCDate()));
+  return `${venc.getUTCFullYear()}-${String(venc.getUTCMonth() + 1).padStart(2, "0")}-${String(venc.getUTCDate()).padStart(2, "0")}`;
+}
+
+function isLaudoExame(doc: any): boolean {
+  return /laudo|exame|capacidade_tecnica|psicotecnico/i.test(String(doc?.tipo_documento || ""));
+}
+
+function dataValidadeHub(doc: any): string | null {
+  if (isLaudoExame(doc)) {
+    return addOneYearISO(doc?.data_emissao) || doc?.data_validade_efetiva || doc?.data_validade || null;
+  }
+  return doc?.data_validade_efetiva || doc?.data_validade || null;
+}
+
 const formatDate = (d: string | null) => {
   if (!d) return "—";
-  try {
-    const p = new Date(d);
-    return isNaN(p.getTime()) ? d : p.toLocaleDateString("pt-BR");
-  } catch {
-    return d;
-  }
+  const p = parseDateUTC(d);
+  if (!p) return d;
+  return `${String(p.getUTCDate()).padStart(2, "0")}/${String(p.getUTCMonth() + 1).padStart(2, "0")}/${p.getUTCFullYear()}`;
 };
 
 const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
-  try {
-    const p = new Date(d);
-    return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000);
-  } catch {
-    return null;
-  }
+  const p = parseDateUTC(d);
+  if (!p) return null;
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((p.getTime() - todayUTC) / 86400000);
 };
 
 const formatCPF = (cpf: string | null | undefined) => {
@@ -177,7 +206,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     const hojeISO = new Date().toISOString().slice(0, 10);
     meusDocs.forEach((d) => {
       if (d.status === "aprovado") aprov++;
-      const dias = daysUntil(d.data_validade);
+      const dias = daysUntil(dataValidadeHub(d));
       if (dias !== null) {
         if (dias < 0) vencidos++;
         else if (dias <= 7) venc7++;
@@ -193,7 +222,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     if (!filter || filter === "total") return meusDocs;
     const hojeISO = new Date().toISOString().slice(0, 10);
     return meusDocs.filter((d) => {
-      const dias = daysUntil(d.data_validade);
+      const dias = daysUntil(dataValidadeHub(d));
       if (filter === "aprov") return d.status === "aprovado";
       if (filter === "venc7") return dias !== null && dias >= 0 && dias <= 7;
       if (filter === "venc30") return dias !== null && dias > 7 && dias <= 30;
@@ -206,8 +235,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   /* Foco do dia — doc mais urgente -------------------------- */
   const focoDoc = useMemo(() => {
     return [...meusDocs]
-      .filter((d) => d.data_validade)
-      .sort((a, b) => (daysUntil(a.data_validade) ?? 99999) - (daysUntil(b.data_validade) ?? 99999))[0];
+      .filter((d) => dataValidadeHub(d))
+      .sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999))[0];
   }, [meusDocs]);
 
   /* Agrupamento por categoria ------------------------------- */
@@ -224,7 +253,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       .map(([key, v]) => ({
         key,
         label: v.label.toUpperCase(),
-        docs: v.docs.sort((a, b) => (daysUntil(a.data_validade) ?? 99999) - (daysUntil(b.data_validade) ?? 99999)),
+        docs: v.docs.sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999)),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [docsFiltrados]);
@@ -407,7 +436,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
 
               {!isCollapsed && g.docs.map((d) => {
                 const nome = getNomeDocumentoDisplay(d, "Documento");
-                const dias = daysUntil(d.data_validade);
+                const validade = dataValidadeHub(d);
+                const dias = daysUntil(validade);
                 const cor = dotColor(dias);
                 const metaLine = [d.numero_documento, d.orgao_emissor, d.data_emissao ? `emitido ${formatDate(d.data_emissao)}` : null]
                   .filter(Boolean).join(" · ") || "emitido recente";
@@ -422,7 +452,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                       <div className="mt">{metaLine}</div>
                     </div>
                     <span className={pillCls}>{pillTxt}</span>
-                    <span className="dt">{d.data_validade ? formatDate(d.data_validade) : "—"}</span>
+                    <span className="dt">{validade ? formatDate(validade) : "—"}</span>
                     <span className="rem" style={{ color: cor }}>{remainingLabel(dias)}</span>
                     <div className="acts">
                       <button
