@@ -206,7 +206,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     const hojeISO = new Date().toISOString().slice(0, 10);
     meusDocs.forEach((d) => {
       if (d.status === "aprovado") aprov++;
-      const dias = daysUntil(d.data_validade);
+      const dias = daysUntil(dataValidadeHub(d));
       if (dias !== null) {
         if (dias < 0) vencidos++;
         else if (dias <= 7) venc7++;
@@ -222,7 +222,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     if (!filter || filter === "total") return meusDocs;
     const hojeISO = new Date().toISOString().slice(0, 10);
     return meusDocs.filter((d) => {
-      const dias = daysUntil(d.data_validade);
+      const dias = daysUntil(dataValidadeHub(d));
       if (filter === "aprov") return d.status === "aprovado";
       if (filter === "venc7") return dias !== null && dias >= 0 && dias <= 7;
       if (filter === "venc30") return dias !== null && dias > 7 && dias <= 30;
@@ -235,8 +235,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   /* Foco do dia — doc mais urgente -------------------------- */
   const focoDoc = useMemo(() => {
     return [...meusDocs]
-      .filter((d) => d.data_validade)
-      .sort((a, b) => (daysUntil(a.data_validade) ?? 99999) - (daysUntil(b.data_validade) ?? 99999))[0];
+      .filter((d) => dataValidadeHub(d))
+      .sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999))[0];
   }, [meusDocs]);
 
   /* Agrupamento por categoria ------------------------------- */
@@ -253,7 +253,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       .map(([key, v]) => ({
         key,
         label: v.label.toUpperCase(),
-        docs: v.docs.sort((a, b) => (daysUntil(a.data_validade) ?? 99999) - (daysUntil(b.data_validade) ?? 99999)),
+        docs: v.docs.sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999)),
       }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }, [docsFiltrados]);
@@ -436,7 +436,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
 
               {!isCollapsed && g.docs.map((d) => {
                 const nome = getNomeDocumentoDisplay(d, "Documento");
-                const dias = daysUntil(d.data_validade);
+                const validade = dataValidadeHub(d);
+                const dias = daysUntil(validade);
                 const cor = dotColor(dias);
                 const metaLine = [d.numero_documento, d.orgao_emissor, d.data_emissao ? `emitido ${formatDate(d.data_emissao)}` : null]
                   .filter(Boolean).join(" · ") || "emitido recente";
@@ -451,7 +452,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                       <div className="mt">{metaLine}</div>
                     </div>
                     <span className={pillCls}>{pillTxt}</span>
-                    <span className="dt">{d.data_validade ? formatDate(d.data_validade) : "—"}</span>
+                    <span className="dt">{validade ? formatDate(validade) : "—"}</span>
                     <span className="rem" style={{ color: cor }}>{remainingLabel(dias)}</span>
                     <div className="acts">
                       <button
