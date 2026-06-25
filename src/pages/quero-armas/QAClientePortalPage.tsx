@@ -47,6 +47,12 @@ import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/Docume
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
+import {
+  QA_SIDEBAR_THEMES,
+  getStoredSidebarTheme,
+  setStoredSidebarTheme,
+  type QASidebarTheme,
+} from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
