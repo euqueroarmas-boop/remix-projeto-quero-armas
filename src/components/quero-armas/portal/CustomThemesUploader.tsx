@@ -9,7 +9,7 @@ import {
   type QASidebarTheme,
 } from "./sidebarThemes";
 
-const MAX_BYTES = 2 * 1024 * 1024; // 2MB raw, ~2.7MB base64
+
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -41,7 +41,6 @@ export default function CustomThemesUploader({
     setErr(null);
     if (!file) return;
     if (!file.type.startsWith("image/")) { setErr("ARQUIVO PRECISA SER UMA IMAGEM (PNG/JPG/WEBP)."); return; }
-    if (file.size > MAX_BYTES) { setErr("IMAGEM MUITO GRANDE — LIMITE 2MB."); return; }
     try {
       const dataUrl = await fileToDataUrl(file);
       setCustomThemeSlot(slot, dataUrl);
@@ -58,7 +57,7 @@ export default function CustomThemesUploader({
             Suas Criações
           </div>
           <p className="mt-1 text-[11px] text-slate-500">
-            Envie suas próprias imagens (PNG/JPG/WEBP até 2MB) — elas viram fundo do menu lateral.
+            Envie suas próprias imagens (PNG/JPG/WEBP) — elas viram fundo do menu lateral.
             Os retângulos em branco aguardam o seu upload.
           </p>
         </div>
