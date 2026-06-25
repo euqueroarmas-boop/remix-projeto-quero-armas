@@ -256,13 +256,19 @@ async function sincronizarUF(supabase: any, uf: string) {
   }
 
   // Snapshot diário: apaga a UF e reinsere preservando lat/lng já geocodados.
+  // A chave INCLUI o endereço: um mesmo instrutor aparece em N clubes e cada
+  // clube tem coordenadas distintas. Sem o endereço na chave o Map colapsa
+  // todas as linhas para a coord do último clube geocodificado.
   const { data: existentes } = await supabase
     .from("qa_iat_credenciados")
-    .select("nome,portaria,lat,lng")
+    .select("nome,portaria,endereco,lat,lng")
     .eq("uf", uf);
   const geoCache = new Map<string, { lat: number | null; lng: number | null }>();
   for (const e of existentes || []) {
-    geoCache.set(`${e.nome}||${e.portaria || ""}`, { lat: e.lat, lng: e.lng });
+    geoCache.set(
+      `${e.nome}||${e.portaria || ""}||${e.endereco || ""}`,
+      { lat: e.lat, lng: e.lng },
+    );
   }
 
   await supabase.from("qa_iat_credenciados").delete().eq("uf", uf);
@@ -276,7 +282,9 @@ async function sincronizarUF(supabase: any, uf: string) {
       return true;
     });
     const rows = unicos.map((r) => {
-      const prev = geoCache.get(`${r.nome}||${r.portaria || ""}`);
+      const prev = geoCache.get(
+        `${r.nome}||${r.portaria || ""}||${r.endereco || ""}`,
+      );
       return {
         ...r,
         lat: prev?.lat ?? null,
