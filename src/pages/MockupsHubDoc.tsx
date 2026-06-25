@@ -1359,6 +1359,284 @@ const V10: React.FC = () => (
 );
 
 /* ───────── Index ───────── */
+/* ============================================================
+ * V11-V15 · PDF GRANDE + CONFIANÇA IA GIGANTE
+ * Variações focadas em destacar a % de confiança da IA de forma dominante,
+ * com pré-visualização ampliada do documento à esquerda.
+ * ============================================================ */
+const BigPdfPane: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+  <div
+    style={{
+      background: "#DEDEDE",
+      padding: 28,
+      borderRight: `1px solid ${T.border}`,
+      display: "flex",
+      flexDirection: "column",
+      gap: 16,
+      minHeight: 880,
+    }}
+  >
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <Lab>{COPY.arquivoLab} · PRÉ-VISUALIZAÇÃO</Lab>
+      <span style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".18em", color: T.bordo, background: T.bordoSoft, padding: "2px 7px", borderRadius: 2 }}>
+        {COPY.fileBadge}
+      </span>
+    </div>
+    <div
+      style={{
+        margin: "0 auto",
+        width: "min(640px, 100%)",
+        aspectRatio: "1 / 1.41",
+        background: "#fff",
+        boxShadow: "0 6px 28px rgba(0,0,0,.18)",
+        padding: "72px 68px",
+        fontFamily: OSWALD,
+        color: T.ink,
+      }}
+    >
+      <div style={{ fontSize: 13, color: T.bordo, letterSpacing: ".24em" }}>POLÍCIA FEDERAL</div>
+      <div style={{ fontSize: 11, color: T.ink3, marginTop: 2 }}>INSTRUTOR DE TIRO CREDENCIADO</div>
+      <div style={{ marginTop: 38, fontSize: 22, letterSpacing: ".1em", fontWeight: 600 }}>ATESTADO DE CAPACIDADE TÉCNICA</div>
+      <div style={{ marginTop: 8, fontSize: 13, color: T.ink2, letterSpacing: ".1em" }}>Nº 0005/2025</div>
+      <div style={{ marginTop: 34, fontSize: 12, color: T.ink3, letterSpacing: ".18em" }}>NOME</div>
+      <div style={{ fontSize: 16, letterSpacing: ".06em", color: T.ink, marginTop: 2 }}>WILLIAN RODRIGUES DA SILVA</div>
+      <div style={{ marginTop: 18, fontSize: 12, color: T.ink3, letterSpacing: ".18em" }}>CPF</div>
+      <div style={{ fontSize: 16, letterSpacing: ".06em", color: T.ink, marginTop: 2 }}>377.995.388-99</div>
+      <div style={{ marginTop: 18, fontSize: 12, color: T.ink3, letterSpacing: ".18em" }}>AVALIAÇÃO · VALIDADE</div>
+      <div style={{ fontSize: 16, letterSpacing: ".06em", color: T.ink, marginTop: 2 }}>19/03/2025 · 19/03/2026</div>
+      <div style={{ marginTop: 44, fontSize: 14, color: T.green, letterSpacing: ".1em" }}>✓ APROVADO</div>
+    </div>
+    <FileBlock compact />
+    {children}
+  </div>
+);
+
+/* V11 · Confiança gigante no topo do painel (verde sólido) */
+const V11: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr" }}>
+      <BigPdfPane />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ background: T.greenBg, borderBottom: `1px solid ${T.greenBorder}`, padding: "26px 24px", display: "flex", alignItems: "flex-end", gap: 16 }}>
+          <div style={{ fontFamily: OSWALD, fontSize: 128, lineHeight: 0.85, color: T.greenInk, fontWeight: 700, letterSpacing: "-.04em" }}>
+            98<span style={{ fontSize: 56, fontWeight: 500 }}>%</span>
+          </div>
+          <div style={{ paddingBottom: 10, flex: 1 }}>
+            <Lab color={T.greenInk} size={10} spacing=".24em">CONFIANÇA DA IA</Lab>
+            <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em", color: T.ink, fontWeight: 600, marginTop: 4 }}>{COPY.iaTipo}</div>
+            <div style={{ fontSize: 11, color: T.greenInk, marginTop: 6, letterSpacing: ".1em", fontFamily: OSWALD }}>◎ TIPO IDENTIFICADO AUTOMATICAMENTE</div>
+          </div>
+        </div>
+        <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+          <AlertRevise />
+          <AlertVencido />
+          <ConformidadeTable dense />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* V12 · Painel preto com 98% gigante em brass — cockpit dark */
+const V12: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr" }}>
+      <BigPdfPane />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ background: T.ink, color: "#fff", padding: "32px 24px", textAlign: "center", borderBottom: `2px solid ${T.amber}` }}>
+          <Lab color={T.amber} size={10} spacing=".3em">◎ CONFIANÇA DA IA</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 168, lineHeight: 0.85, color: T.amber, fontWeight: 700, letterSpacing: "-.05em", marginTop: 8 }}>
+            98<span style={{ fontSize: 72, fontWeight: 500 }}>%</span>
+          </div>
+          <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 14, letterSpacing: ".12em", color: "#fff", fontWeight: 600 }}>{COPY.iaTipo}</div>
+          <div style={{ marginTop: 4, fontSize: 10.5, color: T.ink4, letterSpacing: ".14em", fontFamily: OSWALD }}>ACIMA DO LIMIAR DE 85% · CLASSIFICAÇÃO AUTOMÁTICA</div>
+        </div>
+        <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+          <AlertRevise />
+          <AlertVencido />
+          <ConformidadeTable dense />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* V13 · Donut/Ring SVG com 98% gigante no centro */
+const V13: React.FC = () => {
+  const r = 78;
+  const c = 2 * Math.PI * r;
+  const off = c * (1 - 0.98);
+  return (
+    <Paper>
+      <HeaderBar />
+      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr" }}>
+        <BigPdfPane />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "26px 24px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", gap: 22, background: T.soft }}>
+            <div style={{ position: "relative", width: 180, height: 180, flexShrink: 0 }}>
+              <svg width="180" height="180" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r={r} stroke={T.line} strokeWidth="14" fill="none" />
+                <circle cx="90" cy="90" r={r} stroke={T.green} strokeWidth="14" fill="none" strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round" transform="rotate(-90 90 90)" />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                <div style={{ fontFamily: OSWALD, fontSize: 56, color: T.ink, fontWeight: 700, lineHeight: 1, letterSpacing: "-.02em" }}>98<span style={{ fontSize: 24 }}>%</span></div>
+                <div style={{ fontFamily: OSWALD, fontSize: 9, letterSpacing: ".24em", color: T.greenInk, fontWeight: 600 }}>CONFIANÇA</div>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Lab color={T.greenInk} size={10} spacing=".22em">◎ TIPO IDENTIFICADO PELA IA</Lab>
+              <div style={{ fontFamily: OSWALD, fontSize: 20, letterSpacing: ".06em", color: T.ink, fontWeight: 600, marginTop: 6 }}>{COPY.iaTipo}</div>
+              <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.5, color: T.ink2 }}>{COPY.iaJust}</p>
+            </div>
+          </div>
+          <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+            <AlertRevise />
+            <AlertVencido />
+            <ConformidadeTable dense />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+              <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+              <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+              <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+              <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+              <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+            </div>
+            <EscopoBlock />
+          </div>
+        </div>
+      </div>
+      <FooterBar />
+    </Paper>
+  );
+};
+
+/* V14 · 98% tipográfico OUTLINE gigante, marca d'água atrás do painel */
+const V14: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.15fr 1fr" }}>
+      <BigPdfPane />
+      <div style={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: -30,
+            right: -20,
+            fontFamily: OSWALD,
+            fontSize: 360,
+            fontWeight: 800,
+            letterSpacing: "-.06em",
+            lineHeight: 0.82,
+            color: "transparent",
+            WebkitTextStroke: `2px ${T.bordo}40`,
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          98%
+        </div>
+        <div style={{ position: "relative", padding: "26px 24px", borderBottom: `1px solid ${T.border}` }}>
+          <Lab color={T.bordo} size={11} spacing=".26em">◎ CONFIANÇA DA IA · 98%</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 22, letterSpacing: ".06em", color: T.ink, fontWeight: 700, marginTop: 8 }}>{COPY.iaTipo}</div>
+          <p style={{ marginTop: 8, fontSize: 11.5, lineHeight: 1.5, color: T.ink2, maxWidth: 420 }}>{COPY.iaJust}</p>
+        </div>
+        <div style={{ position: "relative", padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+          <AlertRevise />
+          <AlertVencido />
+          <ConformidadeTable dense />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* V15 · Barra vertical preta lateral com 98% rotacionado + painel */
+const V15: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.1fr 130px 1fr" }}>
+      <BigPdfPane />
+      <aside
+        style={{
+          background: T.ink,
+          color: "#fff",
+          padding: "26px 12px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderRight: `1px solid ${T.border}`,
+        }}
+      >
+        <Lab color={T.amber} size={10} spacing=".3em">CONFIANÇA</Lab>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1 }}>
+          <div style={{ fontFamily: OSWALD, fontSize: 132, lineHeight: 0.85, color: T.amber, fontWeight: 700, letterSpacing: "-.05em", writingMode: "horizontal-tb", textAlign: "center" }}>
+            98<span style={{ fontSize: 56, color: "#fff" }}>%</span>
+          </div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".22em", color: T.amber, fontWeight: 600 }}>◎ IA</div>
+          <div style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".14em", color: "#fff", marginTop: 4 }}>ACIMA DO</div>
+          <div style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".14em", color: "#fff" }}>LIMIAR 85%</div>
+        </div>
+      </aside>
+      <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+        <div style={{ background: T.greenBg, border: `1px solid ${T.greenBorder}`, borderLeft: `3px solid ${T.green}`, padding: 12, borderRadius: 3 }}>
+          <Lab color={T.greenInk} size={10} spacing=".22em">TIPO IDENTIFICADO</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em", color: T.ink, fontWeight: 600, marginTop: 6 }}>{COPY.iaTipo}</div>
+        </div>
+        <AlertRevise />
+        <AlertVencido />
+        <ConformidadeTable dense />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+        </div>
+        <EscopoBlock />
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* ───────── Index ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div
     style={{
@@ -1396,7 +1674,7 @@ const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
     >
       TODAS
     </a>
-    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+    {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
       const active = current === n;
       return (
         <a
@@ -1435,6 +1713,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 8, nome: "V8 · PDF + Stepper Horizontal", subtitulo: "BARRA DE PROGRESSO 5 ETAPAS", render: () => <V8 /> },
   { id: 9, nome: "V9 · PDF + 2 Subcolunas", subtitulo: "ALERTAS À ESQ · CAMPOS À DIR", render: () => <V9 /> },
   { id: 10, nome: "V10 · PDF + Accordion + Strip KPI", subtitulo: "PAINEL EXPANSÍVEL · KPIs LATERAIS", render: () => <V10 /> },
+  { id: 11, nome: "V11 · PDF Grande + 98% Verde Topo", subtitulo: "CONFIANÇA GIGANTE EM VERDE NO PAINEL", render: () => <V11 /> },
+  { id: 12, nome: "V12 · PDF Grande + 98% Cockpit Dark", subtitulo: "PAINEL PRETO COM 98% EM BRASS", render: () => <V12 /> },
+  { id: 13, nome: "V13 · PDF Grande + Donut Ring 98%", subtitulo: "MEDIDOR CIRCULAR CHEIO DE 98%", render: () => <V13 /> },
+  { id: 14, nome: "V14 · PDF Grande + 98% Marca d'Água", subtitulo: "TIPOGRAFIA OUTLINE GIGANTE DE FUNDO", render: () => <V14 /> },
+  { id: 15, nome: "V15 · PDF Grande + Strip Vertical 98%", subtitulo: "FAIXA PRETA LATERAL COM 98% BRASS", render: () => <V15 /> },
 ];
 
 export default function MockupsHubDoc() {
