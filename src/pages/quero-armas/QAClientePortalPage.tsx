@@ -556,7 +556,7 @@ export default function QAClientePortalPage() {
     return () => {
       active = false;
     };
-  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey]);
+  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey, avatarReloadKey]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
