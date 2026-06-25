@@ -200,8 +200,20 @@ export default function QAClientePortalPage() {
     | "mensagens"
     | "configuracoes"
   >("resumo");
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
+  // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
+  const [isBelowLg, setIsBelowLg] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    const onChange = (e: MediaQueryListEvent) => setIsBelowLg(e.matches);
+    mql.addEventListener("change", onChange);
+    setIsBelowLg(mql.matches);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  const effectiveCollapsed = isBelowLg ? true : sidebarCollapsed;
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -929,7 +941,6 @@ export default function QAClientePortalPage() {
       console.log("[PortalNav] section click", key);
     }
     setActiveSection(key);
-    setMobileNavOpen(false);
     // Não usar navigate(): rotas internas como /area-do-cliente/arsenal não existem
     // e o catch-all do router devolveria para "/". Mantemos a URL em /area-do-cliente.
   };
@@ -937,7 +948,6 @@ export default function QAClientePortalPage() {
   const goContractsSection = () => {
     setShowContratoPopup(false);
     setActiveSection("contratos");
-    setMobileNavOpen(false);
     navigate("/area-do-cliente?secao=contratos", { replace: true });
     window.setTimeout(() => {
       const contratos = document.getElementById("qa-portal-contratos");
@@ -1135,7 +1145,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-[68px]" : "lg:pl-[230px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[230px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1154,10 +1164,10 @@ export default function QAClientePortalPage() {
           setDocsReloadKey((k) => k + 1);
         }}
       />
-      {/* ═══ SIDEBAR Z6 DARK ═══ */}
-      <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${sidebarCollapsed ? "w-[68px]" : "w-[230px]"}`}>
+      {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
+      <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[230px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
-        <div className={`flex items-center px-4 py-4 ${sidebarCollapsed ? "justify-center" : "gap-2.5"}`}>
+        <div className={`flex items-center px-4 py-4 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
             type="button"
             onClick={() => setShowFotoModal(true)}
@@ -1174,7 +1184,7 @@ export default function QAClientePortalPage() {
               <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
             </span>
           </button>
-          {!sidebarCollapsed && (
+          {!effectiveCollapsed && (
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
               <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Área do Cliente</div>
@@ -1182,19 +1192,21 @@ export default function QAClientePortalPage() {
           )}
         </div>
 
-        {/* Botão moderno: regredir/expandir menu */}
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(v => !v)}
-          aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-          className="absolute -right-3 top-7 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
-        >
-          {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </button>
+        {/* Botão moderno: regredir/expandir menu — apenas desktop (mobile/tablet fixo em mini) */}
+        {!isBelowLg && (
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed(v => !v)}
+            aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+            className="absolute -right-3 top-7 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </button>
+        )}
 
         {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
-          {!sidebarCollapsed && (
+          {!effectiveCollapsed && (
             <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
           )}
           {navItems.filter(i => i.group === "primary").map((item) => {
@@ -1205,18 +1217,18 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                title={effectiveCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
+                {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
           })}
-          {!sidebarCollapsed && (
+          {!effectiveCollapsed && (
             <div className="px-4 pt-4 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
           )}
-          {sidebarCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
+          {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
@@ -1225,18 +1237,18 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => goSection(item.key)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${sidebarCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                title={effectiveCollapsed ? item.label : undefined}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {!sidebarCollapsed && <span className="flex-1 text-left">{item.label}</span>}
+                {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
           })}
         </nav>
 
         {/* Rodapé: WhatsApp + Sair */}
-        {sidebarCollapsed ? (
+        {effectiveCollapsed ? (
           <div className="mb-3.5 pt-3.5 mx-2 border-t border-[#1a1a1a] flex flex-col items-center gap-2">
             <a
               href="https://wa.me/5511978481919"
@@ -1280,44 +1292,7 @@ export default function QAClientePortalPage() {
         )}
       </aside>
 
-      {mobileNavOpen && (
-        <div className="fixed inset-0 z-[60] bg-slate-950/35 lg:hidden" onClick={() => setMobileNavOpen(false)}>
-          <div className="absolute left-0 top-0 h-full w-[82vw] max-w-xs bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
-            <nav className="mt-6 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold ${activeSection === item.key ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ TOP BAR — apenas mobile (header removido no desktop, conforme spec V1) ═══ */}
-      <header className="lg:hidden sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
-          <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowFotoModal(true)}
-              title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-              aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-              className="relative w-12 h-12 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-[#7A1F2B] transition"
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
-              ) : (
-                <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50"
-            >
-              <LogOut className="h-3 w-3 text-slate-500" />
-              <span>Sair</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
         {activeTab === "arsenal" && cliente && analysis && (
