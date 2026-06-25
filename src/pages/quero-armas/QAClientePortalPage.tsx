@@ -1266,18 +1266,9 @@ export default function QAClientePortalPage() {
                     }}
                   />
                 )}
-                <button
-                  type="button"
-                  onClick={() => setShowFotoModal(true)}
-                  title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-                  aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition-all duration-200 group`}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 18px 3px ${sidebarTheme.accent}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
-                  }}
+                <div
+                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a]`}
+                  aria-label={userName || "Foto do cliente"}
                 >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
@@ -1289,10 +1280,7 @@ export default function QAClientePortalPage() {
                       QA
                     </span>
                   )}
-                  <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
-                    <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
-                  </span>
-                </button>
+                </div>
               </div>
               {!effectiveCollapsed && (
                 <div className={`min-w-0 flex-1 ${sidebarTheme.heroImage ? "rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10" : ""}`}>
