@@ -385,9 +385,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         {([
           { k: "total",    dot: "#8A8A8A", l: "TOTAL",            v: kpis.total,    s: "documentos",     vc: "#0A0A0A" },
           { k: "aprov",    dot: "#2F8F4A", l: "APROVADOS",        v: kpis.aprov,    s: "validados",      vc: "#0A0A0A" },
-          { k: "venc7",    dot: "#D9342B", l: "A VENCER 7D",      v: kpis.venc7,    s: "ação imediata",  vc: kpis.venc7 > 0 ? "#D9342B" : "#0A0A0A" },
+          { k: "venc7",    dot: "#D6A64B", l: "A VENCER 7D",      v: kpis.venc7,    s: "ação imediata",  vc: kpis.venc7 > 0 ? "#7A5A14" : "#0A0A0A" },
           { k: "venc30",   dot: "#D6A64B", l: "A VENCER 30D",     v: kpis.venc30,   s: "atenção",        vc: kpis.venc30 > 0 ? "#7A5A14" : "#0A0A0A" },
-          { k: "vencidos", dot: "#7A1F2B", l: "VENCIDOS",         v: kpis.vencidos, s: "regularizar",    vc: kpis.vencidos > 0 ? "#7A1F2B" : "#0A0A0A" },
+          { k: "vencidos", dot: "#D9342B", l: "VENCIDOS",         v: kpis.vencidos, s: "regularizar",    vc: kpis.vencidos > 0 ? "#D9342B" : "#0A0A0A" },
           { k: "hoje",     dot: "#2F8F4A", l: "ATUALIZADOS HOJE", v: kpis.hoje,     s: "últimas 24h",    vc: "#0A0A0A" },
         ] as const).map((it) => (
           <button
