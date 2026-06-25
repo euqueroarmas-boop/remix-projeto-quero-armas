@@ -1335,11 +1335,9 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/35" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
-                  background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
-                  border: `1px solid ${sidebarTheme.accent}8C`,
-                  borderRadius: "8px",
+                  background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}00 100%)`,
                   borderLeftColor: sidebarTheme.accent,
                 } : undefined}
               >
