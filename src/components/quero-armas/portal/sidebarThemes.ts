@@ -23,6 +23,12 @@ export type QASidebarTheme = {
   heroImage?: string;
   /** Emoji decorativo para o modo "hero" sem imagem (gradiente + emblema). */
   emblem?: string;
+  /**
+   * Quando true, o bloco de topo "hero" é apenas um espaçador transparente
+   * (sem emblema, sem imagem própria). Útil para temas customizados, em que
+   * a arte do usuário já é o background completo da sidebar.
+   */
+  heroEmpty?: boolean;
 };
 
 export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
@@ -205,12 +211,14 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     key: c.key,
     label: c.label,
     description: "Tema personalizado enviado por upload.",
-    // Véu escuro por cima da imagem garante legibilidade do texto branco do menu.
-    bg: `linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.88) 100%), url("${c.image}") center/cover no-repeat, #0A0A0A`,
+    // A arte enviada pelo usuário é o background COMPLETO da sidebar, alinhado
+    // ao topo. O usuário desenha a região clara em cima (jogadores/arte) e a
+    // região escura embaixo, onde o menu vai se sobrepor naturalmente.
+    bg: `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
     topMode: "hero",
-    heroImage: c.image,
+    heroEmpty: true,
   };
 }
 
