@@ -163,7 +163,8 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     key: c.key,
     label: c.label,
     description: "Tema personalizado enviado por upload.",
-    bg: `url("${c.image}") center/cover no-repeat, #0A0A0A`,
+    // Véu escuro por cima da imagem garante legibilidade do texto branco do menu.
+    bg: `linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.88) 100%), url("${c.image}") center/cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
   };
