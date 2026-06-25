@@ -37,6 +37,98 @@ function json(body: Record<string, unknown>, status = 200) {
 
 type Origem = "manual" | "ai" | "manual_override_ai";
 
+const UFS = new Set([
+  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
+  "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+]);
+
+const ESTADO_PARA_UF: Record<string, string> = {
+  acre: "AC",
+  alagoas: "AL",
+  amapá: "AP",
+  amapa: "AP",
+  amazonas: "AM",
+  bahia: "BA",
+  ceará: "CE",
+  ceara: "CE",
+  "distrito federal": "DF",
+  "espírito santo": "ES",
+  "espirito santo": "ES",
+  goiás: "GO",
+  goias: "GO",
+  maranhão: "MA",
+  maranhao: "MA",
+  "mato grosso": "MT",
+  "mato grosso do sul": "MS",
+  "minas gerais": "MG",
+  pará: "PA",
+  para: "PA",
+  paraíba: "PB",
+  paraiba: "PB",
+  paraná: "PR",
+  parana: "PR",
+  pernambuco: "PE",
+  piauí: "PI",
+  piaui: "PI",
+  "rio de janeiro": "RJ",
+  "rio grande do norte": "RN",
+  "rio grande do sul": "RS",
+  rondônia: "RO",
+  rondonia: "RO",
+  roraima: "RR",
+  "santa catarina": "SC",
+  "são paulo": "SP",
+  "sao paulo": "SP",
+  sergipe: "SE",
+  tocantins: "TO",
+};
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function normalizeUf(value: unknown): string | null {
+  const raw = String(value ?? "").trim().toUpperCase();
+  const direct = raw.match(/\b([A-Z]{2})\b/);
+  if (direct && UFS.has(direct[1])) return direct[1];
+
+  const normalized = normalizeText(value);
+  for (const [estado, uf] of Object.entries(ESTADO_PARA_UF)) {
+    if (normalized.includes(normalizeText(estado))) return uf;
+  }
+  return null;
+}
+
+function inferirUfEmissor(extraidos: Record<string, any>, emissor: string): string | null {
+  const direct = normalizeUf(
+    extraidos.uf_emissor_rg ??
+      extraidos.uf_emissor ??
+      extraidos.uf_emissao ??
+      extraidos.estado_emissao ??
+      extraidos.estado_orgao_emissor,
+  );
+  if (direct) return direct;
+
+  const emissorSuffix = String(emissor || "").match(/(?:\/|-|\s)\s*([A-Z]{2})\s*$/i);
+  if (emissorSuffix && UFS.has(emissorSuffix[1].toUpperCase())) return emissorSuffix[1].toUpperCase();
+
+  return normalizeUf([
+    emissor,
+    extraidos.orgao_emissor,
+    extraidos.emissor_rg,
+    extraidos.local_emissao,
+    extraidos.local_expedicao,
+    extraidos.cabecalho_estado,
+  ].filter(Boolean).join(" "));
+}
+
+function limparUfDoEmissor(emissor: string): string {
+  return emissor.replace(/\s*(?:\/|-)\s*[A-Z]{2}\s*$/i, "").trim();
+}
+
 // Tipos de documento que carregam dados cadastrais úteis.
 const TIPOS_RELEVANTES = new Set<string>([
   "rg", "cin", "identidade", "cnh",
@@ -80,7 +172,10 @@ function mapearCampos(tipoDoc: string, extraidos: Record<string, any>): Record<s
   // RG / CIN / CNH
   if (t === "rg" || t === "cin" || t === "identidade") {
     set("rg", extraidos.numero_documento ?? extraidos.rg);
-    set("emissor_rg", extraidos.orgao_emissor ?? extraidos.emissor_rg);
+    const emissor = String(extraidos.orgao_emissor ?? extraidos.emissor_rg ?? "").trim();
+    const ufEmissor = inferirUfEmissor(extraidos, emissor);
+    set("emissor_rg", limparUfDoEmissor(emissor));
+    set("uf_emissor_rg", ufEmissor);
     set("expedicao_rg", extraidos.data_emissao ?? extraidos.data_expedicao_rg);
     set("tipo_documento_identidade", t === "cin" ? "CIN" : "RG");
   }
