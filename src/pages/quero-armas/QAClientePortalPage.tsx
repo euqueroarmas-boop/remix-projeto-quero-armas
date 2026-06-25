@@ -42,6 +42,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
+import FlamingSkullButton from "@/components/quero-armas/portal/entrada-wizard/FlamingSkullButton";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
 import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
@@ -1199,6 +1200,7 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
+      <FlamingSkullButton onClick={() => setEntradaWizardOpen(true)} />
       <ClienteFotoUploadModal
         open={showFotoModal}
         onOpenChange={setShowFotoModal}
