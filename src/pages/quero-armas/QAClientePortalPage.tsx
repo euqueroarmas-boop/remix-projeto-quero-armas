@@ -46,6 +46,7 @@ import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
+import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -196,6 +197,8 @@ export default function QAClientePortalPage() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarReloadKey, setAvatarReloadKey] = useState(0);
+  const [showFotoModal, setShowFotoModal] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
@@ -553,7 +556,7 @@ export default function QAClientePortalPage() {
     return () => {
       active = false;
     };
-  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey]);
+  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey, avatarReloadKey]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -1135,11 +1138,34 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
+      <ClienteFotoUploadModal
+        open={showFotoModal}
+        onOpenChange={setShowFotoModal}
+        onUploaded={() => {
+          setAvatarReloadKey((k) => k + 1);
+          setDocsReloadKey((k) => k + 1);
+        }}
+      />
       {/* ═══ SIDEBAR Z6 DARK ═══ */}
       <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${sidebarCollapsed ? "w-[68px]" : "w-[230px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
         <div className={`flex items-center px-4 py-4 ${sidebarCollapsed ? "justify-center" : "gap-2.5"}`}>
-          <div className="w-9 h-9 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[13px] tracking-[0.04em] shrink-0" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+          <button
+            type="button"
+            onClick={() => setShowFotoModal(true)}
+            title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+            aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+            className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+            )}
+            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
+              <Camera className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition" />
+            </span>
+          </button>
           {!sidebarCollapsed && (
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
@@ -1260,7 +1286,19 @@ export default function QAClientePortalPage() {
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+            <button
+              type="button"
+              onClick={() => setShowFotoModal(true)}
+              title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+              aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+              className="relative w-10 h-10 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-[#7A1F2B] transition"
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
+              ) : (
+                <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+              )}
+            </button>
             <button
               type="button"
               onClick={handleLogout}
