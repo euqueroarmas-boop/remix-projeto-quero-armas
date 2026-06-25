@@ -1036,7 +1036,7 @@ const R5: React.FC = () => {
 /* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 5 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 10 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
