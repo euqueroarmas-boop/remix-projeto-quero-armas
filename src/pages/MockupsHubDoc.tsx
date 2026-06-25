@@ -2264,6 +2264,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 38, nome: "R38 · Console Operacional", subtitulo: "GRADIENTE BEGE + CANTONEIRAS + SIDEBAR DUPLA", render: () => <R38 /> },
   { id: 39, nome: "R39 · Expediente Datado", subtitulo: "TIMESTAMP GIGANTE + ASSINATURA DIGITAL", render: () => <R39 /> },
   { id: 40, nome: "R40 · Bento Assimétrico", subtitulo: "PDF GRANDE ESQ + 3 TILES DIR (DARK · CAMPOS · ESCOPO)", render: () => <R40 /> },
+  { id: 41, nome: "R41 · Branco Editorial", subtitulo: "FILETE BORDÔ + 3 COLUNAS · PDF FLAT · CARIMBO R7", render: () => <R41 /> },
+  { id: 42, nome: "R42 · Branco Blueprint", subtitulo: "GRID FINO + COORDENADAS · PDF FLAT · CARIMBO R7", render: () => <R42 /> },
+  { id: 43, nome: "R43 · Branco Museu", subtitulo: "BARRAS LATERAIS COM TEXTO VERTICAL · PDF FLAT", render: () => <R43 /> },
+  { id: 44, nome: "R44 · Branco Índice 01-04", subtitulo: "PDF NO TOPO + 4 CAMPOS NUMERADOS COM ETIQUETA", render: () => <R44 /> },
+  { id: 45, nome: "R45 · Branco Minimal", subtitulo: "PDF GIGANTE ESQ + SIDEBAR ÚNICA DIR · TUDO LIMPO", render: () => <R45 /> },
 ];
 
 export default function MockupsHubDoc() {
