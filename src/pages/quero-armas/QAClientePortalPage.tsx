@@ -191,6 +191,8 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
+  const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   const [showArmaManual, setShowArmaManual] = useState(false);
   // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
