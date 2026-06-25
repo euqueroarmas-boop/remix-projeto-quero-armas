@@ -227,12 +227,15 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     //  - 0–80px    : hero limpo (transparente)
     //  - 80–130px  : fade de transição suave
     //  - 130px–fim : escurecimento leve contínuo cobrindo menu e rodapé
+    //  - rodapé    : escurecimento extra forte para esconder textos da imagem
     bg:
       `linear-gradient(180deg, ` +
         `rgba(0,0,0,0) 0px, ` +
         `rgba(0,0,0,0) 80px, ` +
         `rgba(0,0,0,0.55) 130px, ` +
-        `rgba(0,0,0,0.55) 100%), ` +
+        `rgba(0,0,0,0.55) calc(100% - 180px), ` +
+        `rgba(0,0,0,0.90) calc(100% - 90px), ` +
+        `rgba(0,0,0,0.90) 100%), ` +
       `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
