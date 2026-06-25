@@ -1971,13 +1971,42 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <DocumentosCategoriaZ6V3Panel
-            cliente={cliente}
-            meusDocs={meusDocs}
-            customerId={customerId}
-            onReload={() => setDocsReloadKey((k) => k + 1)}
-            onOpenAdd={() => setShowAddDoc(true)}
-          />
+          <div>
+            <div className="no-print mb-3 flex items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
+              {(["lista", "extraidos"] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setDocsSubview(k)}
+                  className="px-3 py-1.5 text-[10px] font-black uppercase rounded-sm transition-colors"
+                  style={{
+                    background: docsSubview === k ? "#7A1F2B" : "transparent",
+                    color: docsSubview === k ? "#fff" : "#7A7A7A",
+                  }}
+                >
+                  {k === "lista" ? "Lista" : "Dados extraídos"}
+                </button>
+              ))}
+            </div>
+            {docsSubview === "lista" ? (
+              <DocumentosCategoriaZ6V3Panel
+                cliente={cliente}
+                meusDocs={meusDocs}
+                customerId={customerId}
+                onReload={() => setDocsReloadKey((k) => k + 1)}
+                onOpenAdd={() => setShowAddDoc(true)}
+              />
+            ) : (
+              <DadosExtraidosPanel
+                cliente={cliente}
+                meusDocs={meusDocs}
+                onEditDoc={(d) => {
+                  setEditDocTipo(d?.tipo_documento || undefined);
+                  setShowAddDoc(true);
+                }}
+              />
+            )}
+          </div>
         )}
 
         {activeSection === "mensagens" && (
