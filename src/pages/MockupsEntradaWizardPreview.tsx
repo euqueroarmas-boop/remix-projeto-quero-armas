@@ -418,15 +418,281 @@ function V5({ step }: { step: 1 | 2 }) {
 }
 
 /* =========================================================================
+ * V6 — TERMINAL / ARQUIVO TÉCNICO: mono-style, prompt > opções, header preto
+ * ========================================================================= */
+function V6({ step }: { step: 1 | 2 }) {
+  return (
+    <Card className="overflow-hidden">
+      <div className="px-5 py-3 flex items-center justify-between" style={{ background: INK }}>
+        <div className="text-[10px] font-bold tracking-[0.22em] text-white" style={OSWALD}>
+          ARQUIVO · ASSISTENTE.QA / STEP {step}
+        </div>
+        <div className="flex gap-1">
+          <span className="h-2 w-2 rounded-full" style={{ background: "#FF5A1F" }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: AMBAR }} />
+          <span className="h-2 w-2 rounded-full" style={{ background: "#2F8F4A" }} />
+        </div>
+      </div>
+      <div className="p-5">
+        <div className="text-[11px]" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: SUB }}>
+          &gt; qa.assistente.iniciar()
+        </div>
+        <h3 className="mt-1 text-[18px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+          Quer adquirir um novo serviço?
+        </h3>
+        <div className="text-[12px]" style={{ ...INTER, color: SUB }}>
+          Iremos te guiar pelo caminho certo.
+        </div>
+
+        <div className="mt-4 space-y-1">
+          {(step === 1 ? objetivos : possui).map((o, i) => {
+            const Icon = (o as any).icon;
+            const title = (o as any).title ?? (o as any).label;
+            const sub = (o as any).sub;
+            const sel = i === 0;
+            return (
+              <button key={(o as any).key} className="flex w-full items-center gap-3 border-l-[3px] px-3 py-2 text-left"
+                style={{ borderColor: sel ? BORDO : "transparent", background: sel ? `${BORDO}0A` : "transparent" }}>
+                <span className="text-[10px] w-6" style={{ fontFamily: "ui-monospace, monospace", color: SUB }}>0{i + 1}</span>
+                <Icon className="h-4 w-4" style={{ color: sel ? BORDO : SUB }} />
+                <div className="flex-1">
+                  <div className="text-[12px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{title}</div>
+                  {sub && <div className="text-[10.5px]" style={{ ...INTER, color: SUB }}>{sub}</div>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: SOFT }}>
+          <button className="text-[11px] font-bold uppercase" style={{ ...OSWALD, color: SUB }}>← VOLTAR</button>
+          <button className="rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white" style={{ ...OSWALD, background: INK }}>
+            EXECUTAR →
+          </button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
+ * V7 — DOSSIÊ: numeração romana, cabeçalho serifa, ar de processo oficial
+ * ========================================================================= */
+function V7({ step }: { step: 1 | 2 }) {
+  return (
+    <Card className="overflow-hidden">
+      <div className="px-5 py-3 border-b" style={{ borderColor: INK, background: "#FAFAFA" }}>
+        <div className="flex items-center justify-between">
+          <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: INK }}>DOSSIÊ · NOVO SERVIÇO</div>
+          <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>FOLHA {step} / 2</div>
+        </div>
+        <h3 className="mt-1 text-[19px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+          Quer adquirir um novo serviço?
+        </h3>
+        <div className="text-[12px]" style={{ ...INTER, color: SUB }}>Iremos te guiar pelo caminho certo.</div>
+      </div>
+      <div className="p-5">
+        <ol className="space-y-2">
+          {(step === 1 ? objetivos : possui).map((o, i) => {
+            const Icon = (o as any).icon;
+            const title = (o as any).title ?? (o as any).label;
+            const sub = (o as any).sub;
+            const sel = i === 1;
+            const roman = ["I", "II", "III", "IV"][i];
+            return (
+              <li key={(o as any).key}>
+                <button className="flex w-full items-start gap-3 rounded-sm border p-3 text-left"
+                  style={{ borderColor: sel ? BORDO : LINE, background: sel ? `${BORDO}08` : PAPER }}>
+                  <div className="flex h-9 w-9 items-center justify-center border" style={{ borderColor: sel ? BORDO : LINE }}>
+                    <span className="text-[14px] font-bold" style={{ ...OSWALD, color: sel ? BORDO : INK }}>{roman}</span>
+                  </div>
+                  <Icon className="h-4 w-4 mt-2" style={{ color: BORDO }} />
+                  <div className="flex-1">
+                    <div className="text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{title}</div>
+                    {sub && <div className="text-[11px]" style={{ ...INTER, color: SUB }}>{sub}</div>}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: SOFT }}>
+          <button className="text-[11px] font-bold uppercase" style={{ ...OSWALD, color: SUB }}>← VOLTAR</button>
+          <button className="rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white" style={{ ...OSWALD, background: BORDO }}>
+            PROSSEGUIR →
+          </button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
+ * V8 — BIG-TILE: 4 quadrantes grandes (passo 1) / 3 quadrantes (passo 2)
+ * ========================================================================= */
+function V8({ step }: { step: 1 | 2 }) {
+  return (
+    <Card className="p-5">
+      <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>NOVO SERVIÇO · {step}/2</div>
+      <h3 className="mt-1 text-[20px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+        Quer adquirir um novo serviço?
+      </h3>
+      <p className="text-[12.5px] mt-1" style={{ ...INTER, color: SUB }}>Toque numa área pra começar.</p>
+
+      <div className={`mt-4 grid gap-2 ${step === 1 ? "grid-cols-2" : "grid-cols-3"}`}>
+        {(step === 1 ? objetivos : possui).map((o, i) => {
+          const Icon = (o as any).icon;
+          const title = (o as any).title ?? (o as any).label;
+          const sub = (o as any).sub;
+          const sel = i === 0;
+          return (
+            <button key={(o as any).key}
+              className="flex flex-col items-start gap-3 rounded border p-4 text-left transition hover:border-[#0A0A0A]"
+              style={{ borderColor: sel ? BORDO : LINE, background: sel ? `${BORDO}08` : PAPER, minHeight: step === 1 ? 130 : 100 }}>
+              <div className="flex h-9 w-9 items-center justify-center rounded-sm" style={{ background: sel ? BORDO : `${BORDO}14` }}>
+                <Icon className="h-5 w-5" style={{ color: sel ? "#fff" : BORDO }} />
+              </div>
+              <div>
+                <div className="text-[12.5px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{title}</div>
+                {sub && <div className="mt-0.5 text-[10.5px]" style={{ ...INTER, color: SUB }}>{sub}</div>}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 flex items-center justify-between border-t pt-3" style={{ borderColor: SOFT }}>
+        <button className="text-[11px] font-bold uppercase" style={{ ...OSWALD, color: SUB }}>VOLTAR</button>
+        <button className="rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white" style={{ ...OSWALD, background: BORDO }}>
+          CONTINUAR →
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
+ * V9 — CHIP-LINE: pergunta + chips horizontais selecionáveis
+ * ========================================================================= */
+function V9({ step }: { step: 1 | 2 }) {
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ ...OSWALD, background: BORDO }}>{step}</div>
+        <div className="text-[11px] font-bold tracking-[0.18em] uppercase" style={{ ...OSWALD, color: SUB }}>De 2</div>
+      </div>
+      <h3 className="mt-2 text-[19px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+        Quer adquirir um novo serviço?<br/>Iremos te guiar pelo caminho certo.
+      </h3>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {(step === 1 ? objetivos : possui).map((o, i) => {
+          const Icon = (o as any).icon;
+          const title = (o as any).title ?? (o as any).label;
+          const sel = i === 1;
+          return (
+            <button key={(o as any).key}
+              className="inline-flex items-center gap-2 rounded-full border px-4 py-2"
+              style={{ borderColor: sel ? BORDO : LINE, background: sel ? BORDO : PAPER, color: sel ? "#fff" : INK }}>
+              <Icon className="h-3.5 w-3.5" style={{ color: sel ? "#fff" : BORDO }} />
+              <span className="text-[11.5px] font-bold uppercase" style={OSWALD}>{title}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {step === 1 && (
+        <div className="mt-3 text-[11px]" style={{ ...INTER, color: SUB }}>
+          Toque numa opção pra filtrar os serviços. Você pode mudar depois.
+        </div>
+      )}
+
+      <div className="mt-5 flex items-center justify-between border-t pt-3" style={{ borderColor: SOFT }}>
+        <button className="text-[11px] font-bold uppercase" style={{ ...OSWALD, color: SUB }}>← VOLTAR</button>
+        <button className="rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white" style={{ ...OSWALD, background: BORDO }}>
+          CONTINUAR →
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
+ * V10 — SPLIT MILITAR: faixa lateral preta com brasão + lista à direita
+ * ========================================================================= */
+function V10({ step }: { step: 1 | 2 }) {
+  return (
+    <Card className="overflow-hidden">
+      <div className="grid grid-cols-[110px_1fr]">
+        <aside className="flex flex-col items-center justify-between p-4 text-white" style={{ background: INK }}>
+          <div className="text-[9px] font-bold tracking-[0.22em] opacity-70" style={OSWALD}>QUERO ARMAS</div>
+          <div className="flex flex-col items-center">
+            <Compass className="h-10 w-10" style={{ color: AMBAR }} />
+            <div className="mt-2 text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: AMBAR }}>ASSISTENTE</div>
+          </div>
+          <div className="text-[9px] font-bold tracking-[0.22em] opacity-70" style={OSWALD}>{step}/2</div>
+        </aside>
+        <div className="p-5">
+          <h3 className="text-[19px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+            Quer adquirir um novo serviço?
+          </h3>
+          <p className="text-[12px]" style={{ ...INTER, color: SUB }}>
+            Iremos te guiar pelo caminho certo — escolha a opção que mais combina.
+          </p>
+
+          <ul className="mt-4 space-y-1.5">
+            {(step === 1 ? objetivos : possui).map((o, i) => {
+              const Icon = (o as any).icon;
+              const title = (o as any).title ?? (o as any).label;
+              const sub = (o as any).sub;
+              const sel = i === 0;
+              return (
+                <li key={(o as any).key}>
+                  <button className="flex w-full items-center gap-3 rounded-sm border-l-[3px] bg-white border px-3 py-2.5 text-left"
+                    style={{
+                      borderLeftColor: sel ? BORDO : AMBAR,
+                      borderTopColor: LINE, borderRightColor: LINE, borderBottomColor: LINE,
+                      background: sel ? `${BORDO}08` : PAPER,
+                    }}>
+                    <Icon className="h-4 w-4" style={{ color: sel ? BORDO : INK }} />
+                    <div className="flex-1">
+                      <div className="text-[12px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{title}</div>
+                      {sub && <div className="text-[10.5px]" style={{ ...INTER, color: SUB }}>{sub}</div>}
+                    </div>
+                    <ArrowRight className="h-4 w-4" style={{ color: sel ? BORDO : SUB }} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-4 flex items-center justify-between border-t pt-3" style={{ borderColor: SOFT }}>
+            <button className="text-[11px] font-bold uppercase" style={{ ...OSWALD, color: SUB }}>← VOLTAR</button>
+            <button className="rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white" style={{ ...OSWALD, background: BORDO }}>
+              AVANÇAR →
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* =========================================================================
  * Page
  * ========================================================================= */
 export default function MockupsEntradaWizardPreview() {
   const variants: { id: number; title: string; sub: string; Comp: (p: { step: 1 | 2 }) => JSX.Element }[] = [
-    { id: 1, title: "V1 · CLÁSSICA",        sub: "Cards verticais + radio bordô", Comp: V1 },
-    { id: 2, title: "V2 · STEPPER LATERAL", sub: "Etapas na coluna esquerda",     Comp: V2 },
-    { id: 3, title: "V3 · KPI-STYLE",       sub: "Progresso 50/100% + numeração", Comp: V3 },
-    { id: 4, title: "V4 · DENSO ENXUTO",    sub: "Lista única, sem ruído",        Comp: V4 },
-    { id: 5, title: "V5 · HERO ÂMBAR",      sub: "Tira âmbar foco do dia",        Comp: V5 },
+    { id: 1,  title: "V1 · CLÁSSICA",        sub: "Cards verticais + radio bordô",  Comp: V1 },
+    { id: 2,  title: "V2 · STEPPER LATERAL", sub: "Etapas na coluna esquerda",      Comp: V2 },
+    { id: 3,  title: "V3 · KPI-STYLE",       sub: "Progresso 50/100% + numeração",  Comp: V3 },
+    { id: 4,  title: "V4 · DENSO ENXUTO ✓",  sub: "Aplicado no modal real",         Comp: V4 },
+    { id: 5,  title: "V5 · HERO ÂMBAR",      sub: "Tira âmbar foco do dia",         Comp: V5 },
+    { id: 6,  title: "V6 · TERMINAL",        sub: "Header preto + prompt técnico",  Comp: V6 },
+    { id: 7,  title: "V7 · DOSSIÊ",          sub: "Numeração romana + folha",       Comp: V7 },
+    { id: 8,  title: "V8 · BIG-TILE",        sub: "Quadrantes grandes em grid",     Comp: V8 },
+    { id: 9,  title: "V9 · CHIP-LINE",       sub: "Chips horizontais redondos",     Comp: V9 },
+    { id: 10, title: "V10 · SPLIT MILITAR",  sub: "Faixa preta com brasão lateral", Comp: V10 },
   ];
 
   return (
@@ -434,7 +700,7 @@ export default function MockupsEntradaWizardPreview() {
       <header className="mb-6">
         <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>QUERO ARMAS · COCKPIT Z6 LIGHT</div>
         <h1 className="text-[28px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
-          Assistente de Novos Serviços — 5 mockups × 2 passos
+          Assistente de Novos Serviços — 10 mockups × 2 passos
         </h1>
         <p className="text-[13px] mt-1" style={{ ...INTER, color: SUB }}>
           Escolha a variação preferida. Tudo renderizado em React puro com os tokens canônicos (Oswald + Inter, paleta papel + bordô + âmbar).
