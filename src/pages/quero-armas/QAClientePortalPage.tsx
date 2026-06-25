@@ -1291,12 +1291,12 @@ export default function QAClientePortalPage() {
               onClick={() => setShowFotoModal(true)}
               title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
               aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-              className="relative w-10 h-10 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-[#7A1F2B] transition"
+              className="relative w-12 h-12 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-[#7A1F2B] transition"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
               ) : (
-                <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+                <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
               )}
             </button>
             <button
