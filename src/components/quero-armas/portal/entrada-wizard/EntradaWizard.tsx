@@ -119,7 +119,7 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             </div>
             <div className="min-w-0 flex-1">
               <DialogTitle className="text-[13px] font-bold uppercase tracking-tight text-slate-900">
-                Assistente de Entrada — Vamos achar o caminho certo pra você
+                Quer adquirir um novo serviço? Iremos te guiar pelo caminho certo
               </DialogTitle>
               <div className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 Passo {step} de {precisaPasso2 ? "2" : "1"}
@@ -132,8 +132,8 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
         {step === 1 && (
           <div className="space-y-3">
             <p className="text-[12px] text-slate-600">
-              O que você quer fazer hoje? Escolha a opção que mais combina —
-              isso só ajuda a mostrar os serviços certos. Você pode mudar depois.
+              Escolha a opção que mais combina com o que você precisa — isso
+              só ajuda a mostrar os serviços certos. Você pode mudar depois.
             </p>
 
             <OptionCard
