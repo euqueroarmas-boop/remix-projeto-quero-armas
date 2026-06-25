@@ -115,11 +115,69 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
 ];
 
 const STORAGE_KEY = "qa.sidebar.theme";
+const CUSTOM_KEY = "qa.sidebar.custom-themes";
+export const QA_CUSTOM_SLOTS = 6;
+
+export type QACustomTheme = {
+  key: string;       // ex: "custom-0"
+  label: string;     // ex: "Minha criação 1"
+  image: string;     // data URL
+};
+
+export function getCustomThemes(): (QACustomTheme | null)[] {
+  const empty: (QACustomTheme | null)[] = Array.from({ length: QA_CUSTOM_SLOTS }, () => null);
+  if (typeof window === "undefined") return empty;
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_KEY);
+    if (!raw) return empty;
+    const parsed = JSON.parse(raw) as (QACustomTheme | null)[];
+    return empty.map((_, i) => parsed[i] ?? null);
+  } catch {
+    return empty;
+  }
+}
+
+function persistCustom(list: (QACustomTheme | null)[]) {
+  try {
+    window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent("qa:sidebar-custom-change"));
+  } catch {}
+}
+
+export function setCustomThemeSlot(slot: number, image: string | null) {
+  const list = getCustomThemes();
+  if (image == null) {
+    list[slot] = null;
+  } else {
+    list[slot] = {
+      key: `custom-${slot}`,
+      label: `MINHA CRIAÇÃO ${slot + 1}`,
+      image,
+    };
+  }
+  persistCustom(list);
+}
+
+export function customToTheme(c: QACustomTheme): QASidebarTheme {
+  return {
+    key: c.key,
+    label: c.label,
+    description: "Tema personalizado enviado por upload.",
+    bg: `url("${c.image}") center/cover no-repeat, #0A0A0A`,
+    accent: "#D6A64B",
+    stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
+  };
+}
 
 export function getStoredSidebarTheme(): QASidebarTheme {
   if (typeof window === "undefined") return QA_SIDEBAR_THEMES[0];
   try {
     const k = window.localStorage.getItem(STORAGE_KEY);
+    if (k && k.startsWith("custom-")) {
+      const slot = Number(k.split("-")[1]);
+      const c = getCustomThemes()[slot];
+      if (c) return customToTheme(c);
+    }
     return QA_SIDEBAR_THEMES.find((t) => t.key === k) ?? QA_SIDEBAR_THEMES[0];
   } catch {
     return QA_SIDEBAR_THEMES[0];
