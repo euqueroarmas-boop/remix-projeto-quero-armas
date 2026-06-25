@@ -576,7 +576,7 @@ function Field({
 }
 
 const inputClassName =
-  "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
+  "h-9 rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none transition-all placeholder:text-[#9A9A9A] hover:border-[#0A0A0A]/20 focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0";
 
 /**
  * Input de data em formato BR (DD/MM/AAAA) com máscara, que mantém o
