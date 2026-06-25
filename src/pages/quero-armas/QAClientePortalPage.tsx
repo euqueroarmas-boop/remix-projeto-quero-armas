@@ -1245,6 +1245,7 @@ export default function QAClientePortalPage() {
         {/* ── Brand: avatar + ARSENAL INTELIGENTE / ÁREA DO CLIENTE ── */}
         {(() => {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
+          const needsImageBackplate = Boolean(sidebarTheme.heroImage || sidebarTheme.heroEmpty);
           const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
           return (
             <div
@@ -1295,15 +1296,15 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
               {!effectiveCollapsed && (
-                <div className={`min-w-0 flex-1 ${sidebarTheme.heroImage ? "rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10" : ""}`}>
+                <div className={`min-w-0 flex-1 ${needsImageBackplate ? "rounded-md bg-black/75 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_10px_rgba(0,0,0,0.8)] ring-1 ring-white/10" : ""}`}>
                   <div
-                    className={`text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
+                    className={`text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase ${needsImageBackplate ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className={`text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
+                    className={`text-[9px] text-[#F3EBD7] tracking-[0.2em] mt-0.5 uppercase ${needsImageBackplate ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
                     style={{ fontFamily: "Oswald, sans-serif" }}
                   >
                     Área do Cliente
@@ -1330,9 +1331,10 @@ export default function QAClientePortalPage() {
 
         {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
-          {!effectiveCollapsed && (
-            <div className={`mx-4 mt-3 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
-          )}
+          {!effectiveCollapsed && (() => {
+            const needsImageBackplate = Boolean(sidebarTheme.heroImage || sidebarTheme.heroEmpty);
+            return <div className={`mx-4 mt-3 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${needsImageBackplate ? "w-fit rounded bg-black/70 px-2 py-1 text-[#F0CA63] backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.7)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>;
+          })()}
           {navItems.filter(i => i.group === "primary").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
@@ -1342,7 +1344,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "bg-black/68 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.7)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "text-[#FFF9EA] hover:bg-black/80" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1355,9 +1357,10 @@ export default function QAClientePortalPage() {
               </button>
             );
           })}
-          {!effectiveCollapsed && (
-            <div className={`mx-4 mt-4 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
-          )}
+          {!effectiveCollapsed && (() => {
+            const needsImageBackplate = Boolean(sidebarTheme.heroImage || sidebarTheme.heroEmpty);
+            return <div className={`mx-4 mt-4 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${needsImageBackplate ? "w-fit rounded bg-black/70 px-2 py-1 text-[#F0CA63] backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.7)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>;
+          })()}
           {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
           {navItems.filter(i => i.group === "secondary").map((item) => {
             const Icon = item.icon;
@@ -1368,7 +1371,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "bg-black/68 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.7)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "text-[#FFF9EA] hover:bg-black/80" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
                   border: `1px solid ${sidebarTheme.accent}8C`,
@@ -1405,16 +1408,16 @@ export default function QAClientePortalPage() {
             </button>
           </div>
         ) : (
-          <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-white/15">
-            <div className={`mb-2 ${sidebarTheme.heroImage ? "rounded bg-black/50 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`}>
-              <div className={`text-[12px] font-bold text-white ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Precisa de ajuda?</div>
-              <div className={`text-[10.5px] text-[#E6DFCE] ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Atendimento direto pelo WhatsApp</div>
+          <div className={`mx-3.5 mb-3.5 mt-2 pt-4 border-t border-white/15 ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "rounded-t bg-black/85 px-2 pb-2 shadow-[0_-10px_22px_rgba(0,0,0,0.9)] ring-1 ring-white/10" : ""}`}>
+            <div className={`mb-2 ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "rounded bg-black/75 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.75)] ring-1 ring-white/10" : ""}`}>
+              <div className={`text-[12px] font-bold text-white ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Precisa de ajuda?</div>
+              <div className={`text-[10.5px] text-[#F3EBD7] ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Atendimento direto pelo WhatsApp</div>
             </div>
             <a
               href="https://wa.me/5511978481919"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
+              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2.5 rounded text-[11.5px] font-semibold shadow-[0_3px_12px_rgba(0,0,0,0.65)] transition"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               +55 11 97848-1919
@@ -1422,7 +1425,7 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
+              className={`mt-2 w-full flex items-center justify-center gap-2 rounded py-2 text-[10px] tracking-[0.18em] uppercase font-semibold transition ${sidebarTheme.heroImage || sidebarTheme.heroEmpty ? "bg-black/80 text-[#F3EBD7] shadow-[0_2px_10px_rgba(0,0,0,0.65)] ring-1 ring-white/10 hover:bg-black hover:text-white" : "text-[#7A7A7A] hover:text-white"}`}
             >
               <LogOut className="h-3 w-3" /> Sair
             </button>
