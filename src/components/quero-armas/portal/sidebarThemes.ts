@@ -222,9 +222,13 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     label: c.label,
     description: "Tema personalizado enviado por upload.",
     // A arte enviada pelo usuário é o background COMPLETO da sidebar, alinhado
-    // ao topo. O usuário desenha a região clara em cima (jogadores/arte) e a
-    // região escura embaixo, onde o menu vai se sobrepor naturalmente.
-    bg: `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
+    // ao topo. Aplicamos um véu escuro vertical que começa transparente nos
+    // primeiros ~200px (preserva a arte do hero) e escurece a partir dali, para
+    // garantir legibilidade do texto branco do menu mesmo se a arte tiver
+    // áreas claras na metade inferior.
+    bg:
+      `linear-gradient(180deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 200px, rgba(0,0,0,0.78) 260px, rgba(0,0,0,0.88) 100%), ` +
+      `url("${c.image}") top center / cover no-repeat, #0A0A0A`,
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
     topMode: "hero",
