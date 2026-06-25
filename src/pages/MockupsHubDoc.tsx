@@ -1039,7 +1039,7 @@ const R5: React.FC = () => {
 
 const PdfSheet: React.FC<{ height?: number; width?: number | string; scale?: number }> = ({ height = 460, width = "100%", scale = 1 }) => (
   <div style={{ width, height, background: "#E2E2E2", border: `1px solid ${T.border}`, borderRadius: 4, padding: 18, display: "flex", justifyContent: "center", alignItems: "flex-start", position: "relative", overflow: "hidden" }}>
-    <div style={{ width: "92%", height: "100%", background: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,.18), 0 2px 4px rgba(0,0,0,.08)", padding: 22 * scale, fontFamily: "Georgia, serif", color: "#222", display: "flex", flexDirection: "column", gap: 10 * scale, overflow: "hidden" }}>
+    <div style={{ width: "92%", height: "100%", background: "#fff", padding: 22 * scale, fontFamily: "Georgia, serif", color: "#222", display: "flex", flexDirection: "column", gap: 10 * scale, overflow: "hidden" }}>
       <div style={{ textAlign: "center", fontSize: 10 * scale, letterSpacing: ".24em", color: "#7a1f2b", fontWeight: 700 }}>REPÚBLICA FEDERATIVA DO BRASIL · POLÍCIA FEDERAL</div>
       <div style={{ textAlign: "center", fontSize: 13 * scale, fontWeight: 700, marginTop: 4 * scale, lineHeight: 1.3 }}>COMPROVANTE DE CAPACIDADE TÉCNICA<br />PARA O MANUSEIO DE ARMA DE FOGO</div>
       <div style={{ height: 1, background: "#333", margin: "4px 0" }} />
