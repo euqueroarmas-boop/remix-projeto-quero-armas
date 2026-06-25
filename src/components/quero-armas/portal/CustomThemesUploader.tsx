@@ -9,7 +9,7 @@ import {
   type QASidebarTheme,
 } from "./sidebarThemes";
 
-const MAX_BYTES = 2 * 1024 * 1024; // 2MB raw, ~2.7MB base64
+
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
