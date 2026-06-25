@@ -1167,7 +1167,7 @@ export default function QAClientePortalPage() {
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
-        <div className={`flex items-center px-4 py-4 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
+        <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
             type="button"
             onClick={() => setShowFotoModal(true)}
