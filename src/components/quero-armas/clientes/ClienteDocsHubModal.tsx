@@ -562,8 +562,8 @@ function Field({
   action?: ReactNode;
 }) {
   return (
-    <label className={cn("block space-y-1.5", className)}>
-      <span className="font-heading flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+    <label className={cn("block space-y-1", className)}>
+      <span className="font-heading flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7A7A7A]">
         <span className="flex items-center gap-1.5">
           {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
           {label}
