@@ -198,6 +198,70 @@
   .m20 .bar.active{background:linear-gradient(180deg,#d6a64b,#b8862b);box-shadow:0 0 10px rgba(214,166,75,.35)}
   .m20 .readout{margin-left:16px;font-family:Oswald,sans-serif;font-weight:700;color:#0a0a0a;font-size:22px;align-self:center}
   .m20 .readout span{color:#9a948c;font-size:14px;font-weight:500;margin-left:4px}
+
+  /* ---------- 21. Ponto simples ---------- */
+  .m21{display:flex;gap:14px;align-items:center}
+  .m21 i{width:6px;height:6px;border-radius:50%;background:#d9d4cb}
+  .m21 i.done{background:#a8a195}
+  .m21 i.active{width:8px;height:8px;background:var(--bordo)}
+
+  /* ---------- 22. Linha contínua ---------- */
+  .m22{position:relative;width:280px;height:1px;background:#d9d4cb}
+  .m22 .pos{position:absolute;top:50%;left:87.5%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:var(--bordo)}
+  .m22 .meta{position:absolute;top:-22px;left:87.5%;transform:translateX(-50%);font-family:Inter,sans-serif;font-size:11px;color:#9a948c;letter-spacing:.06em;white-space:nowrap}
+
+  /* ---------- 23. Traços minimal ---------- */
+  .m23{display:flex;gap:8px;align-items:center}
+  .m23 s{display:inline-block;width:14px;height:2px;background:#d9d4cb;border-radius:1px}
+  .m23 s.done{background:#a8a195}
+  .m23 s.active{width:22px;height:3px;background:var(--bordo);border-radius:2px}
+
+  /* ---------- 24. Círculo vazio (outline) ---------- */
+  .m24{display:flex;gap:10px;align-items:center}
+  .m24 .o{width:22px;height:22px;border-radius:50%;border:1px solid #d9d4cb;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:9px;color:#b8b1a6}
+  .m24 .o.done{border-color:#a8a195;color:#7a7368}
+  .m24 .o.active{border-color:var(--bordo);background:var(--bordo);color:#fff;font-size:10px;font-weight:600}
+
+  /* ---------- 25. Contador fracionário ---------- */
+  .m25{font-family:Inter,sans-serif;font-size:13px;color:#9a948c;letter-spacing:.04em}
+  .m25 b{color:var(--bordo);font-weight:700;font-size:16px}
+  .m25 span{margin:0 3px}
+
+  /* ---------- 26. Underline dot ---------- */
+  .m26{display:flex;gap:0;align-items:center}
+  .m26 .d{width:30px;text-align:center;font-family:Inter,sans-serif;font-size:11px;color:#b8b1a6;position:relative;padding-bottom:8px}
+  .m26 .d::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:#d9d4cb}
+  .m26 .d.done{color:#7a7368}
+  .m26 .d.done::after{background:#a8a195}
+  .m26 .d.active{color:var(--bordo);font-weight:700}
+  .m26 .d.active::after{width:18px;height:2px;border-radius:1px;background:var(--bordo)}
+
+  /* ---------- 27. Micro números ---------- */
+  .m27{display:flex;gap:16px;align-items:baseline}
+  .m27 span{font-family:Inter,sans-serif;font-size:10px;color:#c4bdb1}
+  .m27 span.done{color:#9a948c}
+  .m27 span.active{color:var(--bordo);font-size:14px;font-weight:700}
+
+  /* ---------- 28. Linha com posição (diamante) ---------- */
+  .m28{position:relative;width:260px;height:1px;background:#d9d4cb}
+  .m28 .dia{position:absolute;top:50%;left:87.5%;transform:translate(-50%,-50%) rotate(45deg);width:5px;height:5px;background:var(--bordo)}
+  .m28 .meta{position:absolute;top:-20px;left:87.5%;transform:translateX(-50%);font-family:Inter,sans-serif;font-size:10px;color:#9a948c;letter-spacing:.08em;white-space:nowrap}
+
+  /* ---------- 29. Contador circular discreto ---------- */
+  .m29{display:flex;align-items:center;gap:10px}
+  .m29 .ring{width:28px;height:28px;border-radius:50%;border:1.5px solid #e2dccf;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:10px;color:#b8b1a6}
+  .m29 .ring.active{border-color:var(--bordo);color:var(--bordo);font-weight:700}
+  .m29 .txt{font-family:Inter,sans-serif;font-size:11px;color:#9a948c;letter-spacing:.06em}
+
+  /* ---------- 30. Linha de tempo minimal ---------- */
+  .m30{display:flex;align-items:center;gap:0}
+  .m30 .seg{position:relative;width:26px;height:1px;background:#d9d4cb}
+  .m30 .seg.on{background:#a8a195}
+  .m30 .node{width:5px;height:5px;border-radius:50%;background:#d9d4cb;flex-shrink:0}
+  .m30 .node.on{background:#a8a195}
+  .m30 .node.active{width:7px;height:7px;background:var(--bordo)}
+  .m30 .lbl{margin-left:14px;font-family:Inter,sans-serif;font-size:11px;color:#9a948c;letter-spacing:.04em}
+  .m30 .lbl b{color:var(--bordo);font-weight:700}
 </style>
 </head>
 <body>
@@ -488,6 +552,128 @@
         <div class="bar active" style="height:50px"></div>
         <div class="bar" style="height:12px"></div>
         <div class="readout">08<span>/ 09</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>21 · Ponto simples</h2>
+    <p class="desc">Apenas pontinhos redondos. Ativo levemente maior e em bordô. Extremamente sutil.</p>
+    <div class="stage">
+      <div class="m21">
+        <i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i>
+        <i class="done"></i><i class="done"></i><i class="done"></i>
+        <i class="active"></i><i></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>22 · Linha contínua</h2>
+    <p class="desc">Uma única linha fina com um ponto bordô indicando a posição. Sem números visíveis.</p>
+    <div class="stage">
+      <div class="m22">
+        <div class="pos"></div>
+        <div class="meta">08 / 09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>23 · Traços minimal</h2>
+    <p class="desc">Traços curtos e finos. Concluídos acinzentados, ativo mais longo e em bordô.</p>
+    <div class="stage">
+      <div class="m23">
+        <s class="done"></s><s class="done"></s><s class="done"></s><s class="done"></s>
+        <s class="done"></s><s class="done"></s><s class="done"></s>
+        <s class="active"></s><s></s>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>24 · Círculo vazio (outline)</h2>
+    <p class="desc">Círculos finos outline. Concluídos com borda acinzentada, ativo preenchido em bordô.</p>
+    <div class="stage">
+      <div class="m24">
+        <div class="o done">01</div><div class="o done">02</div><div class="o done">03</div>
+        <div class="o done">04</div><div class="o done">05</div><div class="o done">06</div>
+        <div class="o done">07</div><div class="o active">08</div><div class="o">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>25 · Contador fracionário</h2>
+    <p class="desc">"08 / 09" em tipografia limpa e pequena, sem adornos. Só o essencial.</p>
+    <div class="stage">
+      <div class="m25"><b>08</b><span>/</span>09</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>26 · Underline dot</h2>
+    <p class="desc">Números pequenos com pontinho abaixo. Ativo vira traço bordô. Muito discreto.</p>
+    <div class="stage">
+      <div class="m26">
+        <div class="done">01</div><div class="done">02</div><div class="done">03</div>
+        <div class="done">04</div><div class="done">05</div><div class="done">06</div>
+        <div class="done">07</div><div class="active">08</div><div>09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>27 · Micro números</h2>
+    <p class="desc">Números em 10px, quase apagados. Ativo aparece em 14px bordô bold. Quase invisível.</p>
+    <div class="stage">
+      <div class="m27">
+        <span class="done">01</span><span class="done">02</span><span class="done">03</span>
+        <span class="done">04</span><span class="done">05</span><span class="done">06</span>
+        <span class="done">07</span><span class="active">08</span><span>09</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>28 · Linha com posição (diamante)</h2>
+    <p class="desc">Linha fina com um pequeno diamante rotacionado na posição ativa. Meta numérica acima.</p>
+    <div class="stage">
+      <div class="m28">
+        <div class="dia"></div>
+        <div class="meta">08 / 09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>29 · Contador circular discreto</h2>
+    <p class="desc">Círculo fino ao redor do número ativo apenas. Total textual ao lado. Muito limpo.</p>
+    <div class="stage">
+      <div class="m29">
+        <div class="ring">01</div><div class="ring">02</div><div class="ring">03</div>
+        <div class="ring">04</div><div class="ring">05</div><div class="ring">06</div>
+        <div class="ring">07</div><div class="ring active">08</div><div class="ring">09</div>
+        <div class="txt">— 09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>30 · Linha de tempo minimal</h2>
+    <p class="desc">Linha segmentada com pontos. Passados acinzentados, ativo em bordô. Legenda textual lateral.</p>
+    <div class="stage">
+      <div class="m30">
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node on"></div><div class="seg on"></div>
+        <div class="node active"></div><div class="seg"></div>
+        <div class="node"></div>
+        <div class="lbl"><b>08</b> / 09</div>
       </div>
     </div>
   </div>
