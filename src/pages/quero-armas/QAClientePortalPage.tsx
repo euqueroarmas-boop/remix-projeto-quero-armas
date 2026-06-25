@@ -197,6 +197,8 @@ export default function QAClientePortalPage() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarReloadKey, setAvatarReloadKey] = useState(0);
+  const [showFotoModal, setShowFotoModal] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
