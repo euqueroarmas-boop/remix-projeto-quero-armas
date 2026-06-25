@@ -1212,11 +1212,12 @@ const R10: React.FC = () => (
 );
 
 /* ───────── Launcher de variantes ───────── */
-const R7Frame: React.FC<{ stamp: React.ReactNode }> = ({ stamp }) => (
+const R7Frame: React.FC<{ stamp: React.ReactNode; bg?: React.CSSProperties; bgOverlay?: React.ReactNode }> = ({ stamp, bg, bgOverlay }) => (
   <Paper>
     <HeaderBar />
-    <div style={{ background: "#EEE9E1", padding: 28 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18, alignItems: "flex-start" }}>
+    <div style={{ background: "#EEE9E1", padding: 28, position: "relative", overflow: "hidden", ...bg }}>
+      {bgOverlay}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18, alignItems: "flex-start", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Lab spacing=".24em">DOSSIÊ</Lab>
           <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
