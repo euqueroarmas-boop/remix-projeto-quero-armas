@@ -31,6 +31,8 @@ export type QASidebarTheme = {
   heroEmpty?: boolean;
 };
 
+import { supabase } from "@/integrations/supabase/client";
+
 export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
   {
     key: "default",
