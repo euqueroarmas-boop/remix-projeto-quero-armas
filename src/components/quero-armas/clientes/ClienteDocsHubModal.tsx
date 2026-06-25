@@ -1587,7 +1587,7 @@ export function ClienteDocsHubModal({
         style={modalTheme}
         className="w-[calc(100vw-1rem)] max-w-xl md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
-        <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-3 sm:px-6 sm:py-4">
+        <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#7A1F2B]/10 text-[#7A1F2B]">
               <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
@@ -1616,7 +1616,7 @@ export function ClienteDocsHubModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-5 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-3 sm:px-6 sm:py-4 [-webkit-overflow-scrolling:touch]">
           {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
           <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,220px)_minmax(0,1.45fr)_minmax(0,1fr)] md:gap-4 md:items-start lg:grid-cols-[minmax(0,260px)_minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-5">
           {/* ───────── COL 1 · DOSSIÊ ───────── */}
@@ -1811,10 +1811,24 @@ export function ClienteDocsHubModal({
                   </div>
                 </div>
               )}
+
+            {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
+            <div className="space-y-1.5 pt-1">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
+                Observações
+              </div>
+              <Textarea
+                value={form.observacoes}
+                onChange={(event) => update("observacoes", event.target.value)}
+                rows={3}
+                placeholder="Se necessário, adicione detalhes complementares."
+                className="min-h-[88px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+              />
+            </div>
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="min-h-[460px] md:min-h-[520px] lg:min-h-[560px]">
+          <div className="min-h-[360px] md:min-h-[400px] lg:min-h-[440px]">
             <HubDocPreviewSlot
               file={file}
               confianca={classificacao?.confianca ?? null}
@@ -2396,23 +2410,12 @@ export function ClienteDocsHubModal({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <Field label="Observações">
-                <Textarea
-                  value={form.observacoes}
-                  onChange={(event) => update("observacoes", event.target.value)}
-                  rows={3}
-                  placeholder="Se necessário, adicione detalhes complementares."
-                  className="min-h-[110px] rounded-2xl border border-input bg-background text-sm text-foreground shadow-sm placeholder:text-muted-foreground/55 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0 resize-none"
-                />
-              </Field>
-            </div>
           </div>
           </div>
           </div>
         </div>
 
-        <div className="shrink-0 border-t-2 border-[#7A1F2B] bg-white px-4 py-4 sm:px-6">
+        <div className="shrink-0 border-t-2 border-[#7A1F2B] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           {autoResult?.safe ? (
             <div className="flex">
               <Button
