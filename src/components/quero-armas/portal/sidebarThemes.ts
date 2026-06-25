@@ -224,16 +224,16 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     // A arte enviada pelo usuário é o background COMPLETO da sidebar, alinhado
     // ao topo. Escurecemos APENAS as faixas onde ficam o menu e o rodapé;
     // o hero (topo) e os espaços vazios permanecem com a arte original visível.
-    //  - 0–170px       : hero limpo (transparente)
-    //  - 170–220px     : fade de transição
-    //  - 220–640px     : faixa escura sob os itens do menu (legibilidade)
+    //  - 0–140px       : hero limpo (transparente)
+    //  - 140–190px     : fade de transição
+    //  - 190–640px     : faixa escura sob os itens do menu (legibilidade)
     //  - 640–calc(100% - 140px): volta a ficar transparente
     //  - últimos ~140px: leve escurecimento sob o rodapé (Precisa de ajuda?)
     bg:
       `linear-gradient(180deg, ` +
         `rgba(0,0,0,0) 0px, ` +
-        `rgba(0,0,0,0) 170px, ` +
-        `rgba(0,0,0,0.62) 220px, ` +
+        `rgba(0,0,0,0) 140px, ` +
+        `rgba(0,0,0,0.62) 190px, ` +
         `rgba(0,0,0,0.62) 640px, ` +
         `rgba(0,0,0,0) 700px, ` +
         `rgba(0,0,0,0) calc(100% - 150px), ` +
