@@ -441,6 +441,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 3, nome: "V3 · KPI strip + master/detail",    subtitulo: "4 KPIs Z6 NO TOPO",          render: () => <V3 /> },
   { id: 4, nome: "V4 · Timeline vertical",             subtitulo: "LINHA DO TEMPO Z6 ESQUERDA", render: () => <V4 /> },
   { id: 5, nome: "V5 · Cockpit denso · top rail preto",subtitulo: "RAIL #0A0A0A + GRID 12",    render: () => <V5 /> },
+  { id: 6, nome: "V6 · Foco do Dia",                   subtitulo: "BORDA ESQUERDA #D9342B Z6",  render: () => <V6 /> },
+  { id: 7, nome: "V7 · Split arquivo · dossiê",        subtitulo: "VIEWER ESQ · CAMPOS DIR",    render: () => <V7 /> },
+  { id: 8, nome: "V8 · Boarding pass tático",          subtitulo: "TICKET HORIZONTAL Z6",       render: () => <V8 /> },
+  { id: 9, nome: "V9 · Sidebar preta + canvas",         subtitulo: "SIDEBAR #0A0A0A + ÂMBAR",    render: () => <V9 /> },
+  { id: 10, nome: "V10 · Stepper vertical bordô",      subtitulo: "TRILHO ESQ · BORDO ATIVO",   render: () => <V10 /> },
 ];
 
 export default function MockupsHubDoc() {
