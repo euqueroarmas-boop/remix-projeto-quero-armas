@@ -436,263 +436,280 @@ const V5: React.FC = () => (
 );
 
 /* ============================================================
- *  V6 — Foco do Dia (card com borda esquerda #D9342B, padrão Z6)
+ *  V6 — Conversa com a IA (chat tático, campos inline em bolhas)
+ *  Paradigma novo: nada de cards/colunas. Diálogo vertical.
  * ============================================================ */
-const V6: React.FC = () => (
-  <Card>
-    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
-    <div style={{ padding: 22 }}>
-      <Card style={{ borderLeft: `3px solid ${T.red}`, marginBottom: 16 }}>
-        <div style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ minWidth: 0 }}>
-            <Lab color={T.red}>FOCO DO DIA · AÇÃO BLOQUEANTE</Lab>
-            <div style={{ fontSize: 15, marginTop: 6, fontWeight: 600, color: T.ink }}>Revise os dados identificados pela IA e salve o documento no Arsenal.</div>
-            <div style={{ fontSize: 11.5, color: T.ink2, marginTop: 4 }}>{COPY.iaTitle} · {COPY.iaConf}</div>
-          </div>
-          <BtnBordo>{COPY.salvar} →</BtnBordo>
+const V6: React.FC = () => {
+  const Bubble: React.FC<React.PropsWithChildren<{ from: "ia" | "user"; ts: string }>> = ({ from, ts, children }) => {
+    const isIa = from === "ia";
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: isIa ? "flex-start" : "flex-end", marginBottom: 14 }}>
+        <div style={{ fontFamily: OSWALD, fontSize: 9, letterSpacing: ".22em", color: T.ink3, marginBottom: 4 }}>
+          {isIa ? "IA · ARSENAL" : "VOCÊ"} · {ts}
         </div>
-      </Card>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 16 }}>
-        <Card style={{ padding: 16 }}>
-          <Lab>{COPY.arquivoLabel}</Lab>
-          <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
-          <div style={{ marginTop: 14 }}>
-            <Lab>{COPY.conformidadeLabel}</Lab>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-              <ConformidadeRow label="CPF confere com cadastro" badge="OK" tone="green" />
-              <ConformidadeRow label="Validade vigente" badge="OK" tone="green" />
-              <ConformidadeRow label="Endereço cruzado" badge="VERIFICAR" tone="amber" />
-            </div>
-          </div>
-        </Card>
-        <Card style={{ padding: 16 }}>
-          <Lab>{COPY.revisarLabel}</Lab>
-          <div style={{ fontSize: 11.5, color: T.ink3, marginTop: 6 }}>{COPY.revisarSub}</div>
-          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
-            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} /></div>
-            <Field label={COPY.campoData} value={COPY.campoDataVal} />
-            <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
-            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
-          </div>
-        </Card>
-      </div>
-    </div>
-    <Footer />
-  </Card>
-);
-
-/* ============================================================
- *  V7 — Split: viewer de documento à esquerda, dossiê à direita
- * ============================================================ */
-const DocViewer: React.FC = () => (
-  <div style={{ background: T.soft, border: `1px solid ${T.border}`, borderRadius: 3, aspectRatio: "1 / 1.35", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-    <div style={{ position: "absolute", top: 10, left: 10, fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".2em", color: T.ink3 }}>PRÉ-VISUALIZAÇÃO</div>
-    <div style={{ width: "70%", height: "78%", background: "#fff", border: `1px solid ${T.border}`, borderRadius: 2, padding: 18, fontFamily: OSWALD, color: T.ink, fontSize: 11, letterSpacing: ".06em", lineHeight: 1.6 }}>
-      <div style={{ fontSize: 13, color: T.bordo }}>REPÚBLICA FEDERATIVA DO BRASIL</div>
-      <div style={{ marginTop: 4, fontSize: 11 }}>JUSTIÇA FEDERAL · 1ª REGIÃO</div>
-      <div style={{ marginTop: 18, fontSize: 14 }}>CERTIDÃO DE ANTECEDENTES</div>
-      <div style={{ marginTop: 16, color: T.ink2 }}>NOME ▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
-      <div style={{ marginTop: 6, color: T.ink2 }}>CPF ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
-      <div style={{ marginTop: 6, color: T.ink2 }}>EMISSÃO 03/12/2025</div>
-      <div style={{ marginTop: 18, color: T.green }}>✓ NADA CONSTA</div>
-    </div>
-  </div>
-);
-
-const V7: React.FC = () => (
-  <Card>
-    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
-    <div style={{ padding: 22, display: "grid", gridTemplateColumns: "360px 1fr", gap: 24 }}>
-      <div>
-        <Lab>{COPY.arquivoLabel}</Lab>
-        <div style={{ marginTop: 12 }}><DocViewer /></div>
-        <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
-      </div>
-      <div>
-        <Lab>{COPY.iaEyebrow}</Lab>
-        <div style={{ marginTop: 8, fontFamily: OSWALD, fontSize: 14, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
-        <div style={{ marginTop: 8 }}><ConfChip /></div>
-        <p style={{ marginTop: 10, fontSize: 11.5, color: T.ink2, lineHeight: 1.5, maxWidth: 640 }}>{COPY.iaJust}</p>
-        <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
-          <Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} />
-          <Field label={COPY.campoCpf} value={COPY.campoCpfVal} />
-          <Field label={COPY.campoData} value={COPY.campoDataVal} />
-          <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
-        </div>
-        <div style={{ marginTop: 18 }}>
-          <Lab>{COPY.conformidadeLabel}</Lab>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-            <ConformidadeRow label="CPF confere com cadastro" badge="OK" tone="green" />
-            <ConformidadeRow label="Validade vigente" badge="OK" tone="green" />
-            <ConformidadeRow label="Endereço cruzado" badge="VERIFICAR" tone="amber" />
-          </div>
+        <div
+          style={{
+            maxWidth: 560,
+            padding: "12px 14px",
+            background: isIa ? "#fff" : T.ink,
+            color: isIa ? T.ink : "#fff",
+            border: isIa ? `1px solid ${T.border}` : "0",
+            borderRadius: 4,
+            borderLeft: isIa ? `3px solid ${T.amber}` : undefined,
+            fontSize: 12.5,
+            lineHeight: 1.5,
+          }}
+        >
+          {children}
         </div>
       </div>
+    );
+  };
+  const InlinePair: React.FC<{ k: string; v: string }> = ({ k, v }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: T.soft, borderRadius: 3, marginTop: 6 }}>
+      <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".14em", color: T.ink3 }}>{k}</span>
+      <span style={{ fontFamily: OSWALD, fontSize: 11.5, letterSpacing: ".06em", color: T.ink }}>{v}</span>
     </div>
-    <Footer />
-  </Card>
-);
-
-/* ============================================================
- *  V8 — Boarding pass tático (ticket horizontal Z6)
- * ============================================================ */
-const V8: React.FC = () => (
-  <Card>
-    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
-    <div style={{ padding: 22 }}>
-      <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 4, display: "grid", gridTemplateColumns: "1fr 2px 1.6fr 2px 1fr", overflow: "hidden" }}>
-        <div style={{ padding: 20, background: T.ink, color: "#fff" }}>
-          <Lab color={T.amber}>{COPY.arquivoLabel}</Lab>
-          <div style={{ marginTop: 14, fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em" }}>PDF · 184 KB</div>
-          <div style={{ marginTop: 4, fontSize: 11, color: "#BFBFBF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{COPY.fileName}</div>
-          <div style={{ marginTop: 24 }}>
-            <Lab color={T.amber}>STATUS</Lab>
-            <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 12, letterSpacing: ".14em", color: T.amber }}>● PRONTO PARA SALVAR</div>
-          </div>
-        </div>
-        <div style={{ background: `repeating-linear-gradient(0deg, ${T.border} 0 4px, transparent 4px 8px)` }} />
-        <div style={{ padding: 20 }}>
-          <Lab>{COPY.iaEyebrow}</Lab>
-          <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 15, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
-          <div style={{ marginTop: 8 }}><ConfChip /></div>
-          <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-            <Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} />
-            <Field label={COPY.campoData} value={COPY.campoDataVal} />
-            <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
-          </div>
-        </div>
-        <div style={{ background: `repeating-linear-gradient(0deg, ${T.border} 0 4px, transparent 4px 8px)` }} />
-        <div style={{ padding: 20, background: T.soft }}>
-          <Lab>{COPY.conformidadeLabel}</Lab>
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-            <ConformidadeRow label="CPF" badge="OK" tone="green" />
-            <ConformidadeRow label="Validade" badge="OK" tone="green" />
-            <ConformidadeRow label="Endereço" badge="VERIFICAR" tone="amber" />
-          </div>
-        </div>
-      </div>
-    </div>
-    <Footer />
-  </Card>
-);
-
-/* ============================================================
- *  V9 — Sidebar preta Z6 + canvas branco
- * ============================================================ */
-const V9: React.FC = () => (
-  <Card style={{ overflow: "hidden" }}>
-    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr" }}>
-      <aside style={{ background: T.ink, color: "#fff", padding: "22px 18px", minHeight: 620 }}>
-        <div style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".32em", color: T.amber }}>{COPY.eyebrow}</div>
-        <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".08em", marginTop: 6 }}>ADICIONAR DOCUMENTO</div>
-        <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 4 }}>
-          {[
-            { l: "ARQUIVO", s: "done" },
-            { l: "IA IDENTIFICOU", s: "done" },
-            { l: "REVISAR DADOS", s: "current" },
-            { l: "CONFORMIDADE", s: "pending" },
-            { l: "SALVAR", s: "pending" },
-          ].map((it) => {
-            const active = it.s === "current";
-            return (
-              <div key={it.l} style={{ padding: "10px 12px", background: active ? "#161616" : "transparent", borderLeft: `3px solid ${active ? T.amber : "transparent"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", color: it.s === "pending" ? "#7A7A7A" : "#fff" }}>{it.l}</span>
-                <span style={{ fontSize: 10, color: it.s === "done" ? T.green : active ? T.amber : "#5A5A5A" }}>
-                  {it.s === "done" ? "✓" : active ? "●" : "○"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </aside>
-      <div style={{ padding: 22 }}>
-        <Header />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <Card style={{ padding: 16 }}>
-            <Lab>{COPY.arquivoLabel}</Lab>
-            <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
-            <div style={{ marginTop: 14, padding: 12, background: T.greenBg, borderRadius: 3 }}>
-              <Lab color={T.greenInk}>{COPY.iaEyebrow}</Lab>
-              <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 12.5, color: T.ink }}>{COPY.iaTitle}</div>
-              <div style={{ marginTop: 8 }}><ConfChip /></div>
-            </div>
-          </Card>
-          <Card style={{ padding: 16 }}>
-            <Lab>{COPY.revisarLabel}</Lab>
-            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
-              <Field label={COPY.campoData} value={COPY.campoDataVal} />
-              <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
-              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-    <Footer />
-  </Card>
-);
-
-/* ============================================================
- *  V10 — Stepper vertical com trilho bordô na ativa
- * ============================================================ */
-const V10: React.FC = () => {
-  const steps = [
-    { l: "ANEXAR ARQUIVO", s: "done" as const, sub: COPY.fileName },
-    { l: "IA IDENTIFICOU", s: "done" as const, sub: COPY.iaTitle },
-    { l: "REVISAR DADOS", s: "current" as const, sub: COPY.revisarSub },
-    { l: "CONFORMIDADE", s: "pending" as const, sub: "Cruzamento final" },
-    { l: "SALVAR NO ARSENAL", s: "pending" as const, sub: "Gravar e indexar" },
-  ];
+  );
   return (
     <Card>
       <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
-      <div style={{ padding: 22, display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}>
+      <div style={{ padding: "28px 22px", maxWidth: 760, margin: "0 auto" }}>
+        <Bubble from="ia" ts="00:00">Pronto. Pode anexar o documento — foto ou PDF.</Bubble>
+        <Bubble from="user" ts="00:08">
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, background: "#fff", color: T.bordo, fontFamily: OSWALD, fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 3 }}>PDF</div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>{COPY.fileName}</div>
+              <div style={{ fontSize: 10.5, opacity: .7 }}>{COPY.fileSize}</div>
+            </div>
+          </div>
+        </Bubble>
+        <Bubble from="ia" ts="00:12">
+          Identifiquei: <b>{COPY.iaTitle}</b>. <ConfChip />
+          <div style={{ marginTop: 8, color: T.ink2, fontSize: 11.5 }}>{COPY.iaJust}</div>
+        </Bubble>
+        <Bubble from="ia" ts="00:13">
+          Extraí estes campos do documento. Confere?
+          <InlinePair k={COPY.campoEmissor} v={COPY.campoEmissorVal} />
+          <InlinePair k={COPY.campoData} v={COPY.campoDataVal} />
+          <InlinePair k={COPY.campoValidade} v={COPY.campoValidadeVal} />
+          <InlinePair k={COPY.campoCpf} v={COPY.campoCpfVal} />
+        </Bubble>
+        <Bubble from="ia" ts="00:14">
+          Cruzei com seu cadastro: <b style={{ color: T.greenInk }}>CPF OK</b>, <b style={{ color: T.greenInk }}>Validade OK</b>, <b style={{ color: T.amberInk }}>Endereço a verificar</b>.
+        </Bubble>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 18 }}>
+          <BtnGhost>Ajustar campos</BtnGhost>
+          <BtnBordo>{COPY.salvar}</BtnBordo>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+/* ============================================================
+ *  V7 — Document viewer fullwidth + pins numerados sobre o PDF
+ *  Paradigma novo: o documento É a tela. Painel lateral fino só lista os pins.
+ * ============================================================ */
+const V7: React.FC = () => {
+  const pins = [
+    { n: 1, top: "18%", left: "32%", label: COPY.campoTipo, val: COPY.campoTipoVal },
+    { n: 2, top: "34%", left: "20%", label: COPY.campoEmissor, val: COPY.campoEmissorVal },
+    { n: 3, top: "48%", left: "55%", label: COPY.campoCpf, val: COPY.campoCpfVal },
+    { n: 4, top: "62%", left: "28%", label: COPY.campoData, val: COPY.campoDataVal },
+    { n: 5, top: "74%", left: "60%", label: COPY.campoValidade, val: COPY.campoValidadeVal },
+  ];
+  return (
+    <Card style={{ overflow: "hidden" }}>
+      <div style={{ padding: "14px 22px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <div>
-          {steps.map((st, i) => {
-            const done = st.s === "done";
-            const cur = st.s === "current";
-            const bg = done ? T.green : cur ? T.bordo : "#EDEDED";
-            const fg = done || cur ? "#fff" : T.ink3;
-            return (
-              <div key={st.l} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 12, position: "relative", paddingBottom: i === steps.length - 1 ? 0 : 18 }}>
-                {i < steps.length - 1 && <span style={{ position: "absolute", left: 15, top: 30, bottom: 6, width: 2, background: done ? T.green : T.border }} />}
-                <div style={{ width: 32, height: 32, borderRadius: 99, background: bg, color: fg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: OSWALD, fontSize: 13, fontWeight: 700 }}>
-                  {done ? "✓" : i + 1}
-                </div>
+          <Lab>{COPY.eyebrow}</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 18, letterSpacing: ".06em", color: T.ink }}>{COPY.h1}</div>
+        </div>
+        <ConfChip />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", minHeight: 720 }}>
+        {/* Viewer com pins */}
+        <div style={{ position: "relative", background: "#E9E9E9", padding: 32, borderRight: `1px solid ${T.border}` }}>
+          <div style={{ position: "absolute", top: 12, left: 14, fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".22em", color: T.ink3 }}>PRÉ-VISUALIZAÇÃO · {COPY.fileName}</div>
+          <div style={{ position: "relative", margin: "20px auto 0", width: "min(560px, 90%)", aspectRatio: "1 / 1.41", background: "#fff", boxShadow: "0 2px 6px rgba(0,0,0,.08)", padding: "60px 56px", fontFamily: OSWALD, fontSize: 11.5, letterSpacing: ".05em", color: T.ink, lineHeight: 1.9 }}>
+            <div style={{ fontSize: 11, color: T.bordo, letterSpacing: ".22em" }}>REPÚBLICA FEDERATIVA DO BRASIL</div>
+            <div style={{ fontSize: 10, color: T.ink2 }}>JUSTIÇA FEDERAL · 1ª REGIÃO</div>
+            <div style={{ marginTop: 28, fontSize: 16, letterSpacing: ".1em" }}>CERTIDÃO DE ANTECEDENTES CRIMINAIS</div>
+            <div style={{ marginTop: 26, color: T.ink3 }}>NOME COMPLETO</div>
+            <div style={{ color: T.ink2 }}>▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
+            <div style={{ marginTop: 10, color: T.ink3 }}>CPF</div>
+            <div style={{ color: T.ink2 }}>▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
+            <div style={{ marginTop: 10, color: T.ink3 }}>DATA DE EMISSÃO &nbsp;·&nbsp; VALIDADE</div>
+            <div style={{ color: T.ink2 }}>▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
+            <div style={{ marginTop: 28, color: T.green, fontSize: 13 }}>✓ NADA CONSTA</div>
+
+            {/* Pins sobre o documento */}
+            {pins.map((p) => (
+              <div key={p.n} style={{ position: "absolute", top: p.top, left: p.left, transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 22, height: 22, borderRadius: 99, background: T.bordo, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: OSWALD, fontSize: 11, fontWeight: 700, boxShadow: "0 0 0 4px rgba(122,31,43,.18)" }}>{p.n}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Painel lateral fino */}
+        <div style={{ padding: 18, background: "#fff" }}>
+          <Lab>{COPY.revisarLabel}</Lab>
+          <div style={{ fontSize: 11, color: T.ink3, marginTop: 4 }}>Toque em um pin para localizar no documento.</div>
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+            {pins.map((p) => (
+              <div key={p.n} style={{ display: "grid", gridTemplateColumns: "24px 1fr", gap: 10, padding: "10px 8px", borderBottom: `1px solid ${T.line}` }}>
+                <span style={{ width: 22, height: 22, borderRadius: 99, background: T.bordo, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: OSWALD, fontSize: 11, fontWeight: 700 }}>{p.n}</span>
                 <div>
-                  <div style={{ fontFamily: OSWALD, fontSize: 11.5, letterSpacing: ".14em", color: cur ? T.bordo : T.ink }}>{st.l}</div>
-                  <div style={{ fontSize: 11, color: T.ink3, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{st.sub}</div>
+                  <div style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".16em", color: T.ink3 }}>{p.label}</div>
+                  <div style={{ fontFamily: OSWALD, fontSize: 12, letterSpacing: ".05em", color: T.ink, marginTop: 2 }}>{p.val}</div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-        <div>
-          <Card style={{ padding: 16, marginBottom: 14 }}>
-            <Lab>{COPY.iaEyebrow}</Lab>
-            <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 14, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
-            <div style={{ marginTop: 8 }}><ConfChip /></div>
-          </Card>
-          <Card style={{ padding: 16 }}>
-            <Lab>{COPY.revisarLabel}</Lab>
-            <div style={{ fontSize: 11.5, color: T.ink3, marginTop: 6 }}>{COPY.revisarSub}</div>
-            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
-              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} /></div>
-              <Field label={COPY.campoData} value={COPY.campoDataVal} />
-              <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
-              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
-            </div>
-          </Card>
+            ))}
+          </div>
         </div>
       </div>
       <Footer />
     </Card>
   );
 };
+
+/* ============================================================
+ *  V8 — One-field-at-a-time (campo único centralizado, foco extremo)
+ *  Paradigma novo: Superhuman/Typeform. Sem formulário.
+ * ============================================================ */
+const V8: React.FC = () => (
+  <Card>
+    <div style={{ padding: "14px 22px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div>
+        <Lab>{COPY.eyebrow}</Lab>
+        <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em", color: T.ink }}>{COPY.h1}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <span key={n} style={{ width: 22, height: 4, background: n <= 3 ? (n === 3 ? T.amber : T.green) : "#EDEDED", borderRadius: 2 }} />
+        ))}
+        <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".2em", color: T.ink3, marginLeft: 6 }}>03 / 05</span>
+      </div>
+    </div>
+    <div style={{ padding: "80px 22px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minHeight: 520, background: `radial-gradient(ellipse at top, #FFFFFF 0%, ${T.page} 70%)` }}>
+      <Lab color={T.ink3} style={{ marginBottom: 18 }}>03 · {COPY.campoCpf}</Lab>
+      <div style={{ fontFamily: OSWALD, fontSize: 64, letterSpacing: ".08em", color: T.ink, fontWeight: 600, lineHeight: 1 }}>
+        {COPY.campoCpfVal}
+      </div>
+      <div style={{ marginTop: 14, fontSize: 12.5, color: T.ink2, maxWidth: 480 }}>
+        Identifiquei este CPF no documento {COPY.iaTitle}. Confere com o cadastro vinculado a este Arsenal?
+      </div>
+      <div style={{ marginTop: 26, display: "flex", gap: 10 }}>
+        <BtnGhost>Corrigir</BtnGhost>
+        <BtnBordo>Confirmar &nbsp;↵</BtnBordo>
+      </div>
+      <div style={{ marginTop: 18, fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".22em", color: T.ink3 }}>
+        ENTER PARA AVANÇAR · ← VOLTAR · ESC CANCELAR
+      </div>
+      <div style={{ marginTop: 40, display: "flex", gap: 18, alignItems: "center" }}>
+        <ConfChip />
+        <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".2em", color: T.ink3 }}>2 OK · 1 VERIFICAR</span>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
+
+/* ============================================================
+ *  V9 — Diff side-by-side (IA leu × você revisou)
+ *  Paradigma novo: comparação tipo git diff, com highlights de mudança.
+ * ============================================================ */
+const V9: React.FC = () => {
+  const rows = [
+    { k: COPY.campoTipo,      ia: COPY.campoTipoVal,                user: COPY.campoTipoVal,                changed: false },
+    { k: COPY.campoEmissor,   ia: "JF · 1ª REG.",                   user: COPY.campoEmissorVal,             changed: true  },
+    { k: COPY.campoData,      ia: COPY.campoDataVal,                user: COPY.campoDataVal,                changed: false },
+    { k: COPY.campoValidade,  ia: "03/03/2025",                     user: COPY.campoValidadeVal,            changed: true  },
+    { k: COPY.campoCpf,       ia: COPY.campoCpfVal,                 user: COPY.campoCpfVal,                 changed: false },
+  ];
+  return (
+    <Card>
+      <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+      <div style={{ padding: "14px 22px", background: T.soft, borderBottom: `1px solid ${T.border}`, display: "grid", gridTemplateColumns: "200px 1fr 1fr", gap: 0 }}>
+        <div />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 99, background: T.amber }} />
+          <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", color: T.ink }}>IA LEU</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ width: 8, height: 8, borderRadius: 99, background: T.green }} />
+          <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", color: T.ink }}>VOCÊ REVISOU</span>
+        </div>
+      </div>
+      {rows.map((r, i) => (
+        <div key={r.k} style={{ display: "grid", gridTemplateColumns: "200px 1fr 1fr", borderBottom: i === rows.length - 1 ? "0" : `1px solid ${T.line}`, alignItems: "stretch" }}>
+          <div style={{ padding: "14px 22px", background: T.soft, fontFamily: OSWALD, fontSize: 10, letterSpacing: ".16em", color: T.ink3, display: "flex", alignItems: "center" }}>{r.k}</div>
+          <div style={{ padding: "14px 18px", background: r.changed ? "#FFF6E0" : "#fff", fontFamily: OSWALD, fontSize: 12.5, letterSpacing: ".05em", color: r.changed ? T.amberInk : T.ink, textDecoration: r.changed ? "line-through" : undefined, textDecorationColor: r.changed ? T.amber : undefined }}>{r.ia}</div>
+          <div style={{ padding: "14px 18px", background: r.changed ? "#E8F5EC" : "#fff", borderLeft: `1px solid ${T.line}`, fontFamily: OSWALD, fontSize: 12.5, letterSpacing: ".05em", color: r.changed ? T.greenInk : T.ink, fontWeight: r.changed ? 600 : 400 }}>{r.user}</div>
+        </div>
+      ))}
+      <div style={{ padding: "12px 22px", background: T.soft, borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", color: T.ink2 }}>2 CAMPOS AJUSTADOS · 3 MANTIDOS</span>
+        <ConfChip />
+      </div>
+      <Footer />
+    </Card>
+  );
+};
+
+/* ============================================================
+ *  V10 — Dropzone hero 70vh + reveal progressivo (estado vazio dominante)
+ *  Paradigma novo: tela quase vazia, o gesto de anexar É o produto.
+ * ============================================================ */
+const V10: React.FC = () => (
+  <Card>
+    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+    <div style={{ padding: 28 }}>
+      <div
+        style={{
+          position: "relative",
+          minHeight: 460,
+          background: `repeating-linear-gradient(135deg, #FFFFFF 0 18px, ${T.soft} 18px 19px)`,
+          border: `2px dashed ${T.bordo}`,
+          borderRadius: 6,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: 40,
+        }}
+      >
+        <div style={{ width: 88, height: 88, borderRadius: 99, background: "#fff", border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 18px rgba(0,0,0,.06)" }}>
+          <div style={{ fontFamily: OSWALD, fontSize: 28, color: T.bordo, fontWeight: 700, letterSpacing: ".04em" }}>↑</div>
+        </div>
+        <div style={{ marginTop: 22, fontFamily: OSWALD, fontSize: 30, letterSpacing: ".06em", color: T.ink, fontWeight: 600 }}>{COPY.dropTitle.toUpperCase()}</div>
+        <div style={{ marginTop: 8, fontSize: 13, color: T.ink2 }}>{COPY.dropSub}</div>
+        <div style={{ marginTop: 22, display: "flex", gap: 10 }}>
+          <BtnBordo>Escolher arquivo</BtnBordo>
+          <BtnGhost>{COPY.ctaCamera}</BtnGhost>
+        </div>
+        {/* Indicadores de etapas futuras, esmaecidos */}
+        <div style={{ position: "absolute", bottom: 18, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 22, opacity: .5 }}>
+          {["ANEXAR", "IA IDENTIFICA", "REVISAR", "SALVAR"].map((s, i) => (
+            <div key={s} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ width: 18, height: 18, borderRadius: 99, background: i === 0 ? T.bordo : "#EDEDED", color: i === 0 ? "#fff" : T.ink3, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: OSWALD, fontSize: 10, fontWeight: 700 }}>{i + 1}</span>
+              <span style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", color: T.ink3 }}>{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Tira de "o que acontece depois" — esmaecida, indica reveal progressivo */}
+      <div style={{ marginTop: 16, padding: "12px 16px", background: T.soft, border: `1px solid ${T.border}`, borderRadius: 4, display: "flex", justifyContent: "space-between", alignItems: "center", color: T.ink3 }}>
+        <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".2em" }}>APÓS ANEXAR ›</span>
+        <span style={{ fontSize: 11.5 }}>A IA identifica o tipo, extrai os campos e abre o painel de revisão. Você só confirma.</span>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
 
 const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => React.ReactNode }[] = [
   { id: 1, nome: "V1 · Ficha catalográfica 3 colunas", subtitulo: "ARQUIVO · IA · DADOS", render: () => <V1 /> },
@@ -710,7 +727,7 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
 export default function MockupsHubDoc() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const vRaw = params.get("v");
-  const v = vRaw ? Math.max(1, Math.min(5, Number(vRaw))) : null;
+  const v = vRaw ? Math.max(1, Math.min(10, Number(vRaw))) : null;
 
   const wrap: React.CSSProperties = {
     minHeight: "100vh",
