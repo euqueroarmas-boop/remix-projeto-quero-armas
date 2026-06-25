@@ -213,27 +213,36 @@ export default function QAClientePortalPage() {
     | "configuracoes"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(() => getStoredSidebarTheme());
+  const [themeCatalog, setThemeCatalog] = useState<QASidebarTheme[]>(QA_SIDEBAR_THEMES);
+  const [globalDefaultKey, setGlobalDefaultKey] = useState<string | null>(null);
+  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(
+    () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
+  );
+
+  // Carrega temas do banco (inclui temas com imagem do bucket qa-temas) e o
+  // tema global padrão definido pela equipe.
   useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { themes: dbThemes, globalDefaultKey: gk } = await fetchSidebarThemesFromDb();
+      if (!alive) return;
+      const merged = mergeThemes(QA_SIDEBAR_THEMES, dbThemes);
+      setThemeCatalog(merged);
+      setGlobalDefaultKey(gk);
+      setSidebarTheme(resolveEffectiveTheme(merged, getPersonalThemeKey(), gk));
+    })();
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
-      if (!key) return;
-      if (key.startsWith("custom-")) {
-        const slot = Number(key.split("-")[1]);
-        const c = getCustomThemes()[slot];
-        if (c) setSidebarTheme(customToTheme(c));
-        return;
-      }
-      const next = QA_SIDEBAR_THEMES.find((t) => t.key === key);
-      if (next) setSidebarTheme(next);
+      setSidebarTheme((prev) =>
+        resolveEffectiveTheme(themeCatalog, key ?? getPersonalThemeKey(), globalDefaultKey) ?? prev,
+      );
     };
     window.addEventListener("qa:sidebar-theme-change", onChange);
-    const onCustom = () => setSidebarTheme(getStoredSidebarTheme());
-    window.addEventListener("qa:sidebar-custom-change", onCustom);
     return () => {
+      alive = false;
       window.removeEventListener("qa:sidebar-theme-change", onChange);
-      window.removeEventListener("qa:sidebar-custom-change", onCustom);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
   // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
