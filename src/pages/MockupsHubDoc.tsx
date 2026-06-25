@@ -1389,6 +1389,7 @@ export default function MockupsHubDoc() {
     const variant = VARIANTS[v - 1];
     return (
       <div style={wrap}>
+        <VariantLauncher current={v} />
         <div id="mockup-shot" style={{ maxWidth: 1320, margin: "0 auto" }}>
           {variant.render()}
         </div>
@@ -1398,6 +1399,7 @@ export default function MockupsHubDoc() {
 
   return (
     <div style={wrap}>
+      <VariantLauncher />
       <div style={{ maxWidth: 1320, margin: "0 auto", marginBottom: 24 }}>
         <Lab>MOCKUPS · STACK COCKPIT Z6 LIGHT</Lab>
         <div style={{ fontFamily: OSWALD, fontSize: 26, letterSpacing: ".06em", color: T.ink, fontWeight: 700, marginTop: 2 }}>
