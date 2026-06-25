@@ -1278,7 +1278,19 @@ export default function QAClientePortalPage() {
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+            <button
+              type="button"
+              onClick={() => setShowFotoModal(true)}
+              title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+              aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+              className="relative w-10 h-10 rounded-full overflow-hidden ring-1 ring-slate-200 hover:ring-[#7A1F2B] transition"
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
+              ) : (
+                <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+              )}
+            </button>
             <button
               type="button"
               onClick={handleLogout}
