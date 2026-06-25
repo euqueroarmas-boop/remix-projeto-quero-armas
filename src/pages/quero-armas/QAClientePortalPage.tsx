@@ -47,6 +47,12 @@ import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/Docume
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
+import {
+  QA_SIDEBAR_THEMES,
+  getStoredSidebarTheme,
+  setStoredSidebarTheme,
+  type QASidebarTheme,
+} from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -201,6 +207,16 @@ export default function QAClientePortalPage() {
     | "configuracoes"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(() => getStoredSidebarTheme());
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key as string | undefined;
+      const next = QA_SIDEBAR_THEMES.find((t) => t.key === key);
+      if (next) setSidebarTheme(next);
+    };
+    window.addEventListener("qa:sidebar-theme-change", onChange);
+    return () => window.removeEventListener("qa:sidebar-theme-change", onChange);
+  }, []);
   // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
   // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
   const [isBelowLg, setIsBelowLg] = useState<boolean>(() =>
@@ -1165,7 +1181,17 @@ export default function QAClientePortalPage() {
         }}
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
-      <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}>
+      <aside
+        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}
+        style={{ background: sidebarTheme.bg }}
+        data-qa-sb-theme={sidebarTheme.key}
+      >
+        {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none"
+          style={{ background: sidebarTheme.stripe }}
+        />
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
         <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
@@ -1173,7 +1199,10 @@ export default function QAClientePortalPage() {
             onClick={() => setShowFotoModal(true)}
             title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
             aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] transition group"
+            style={{ ['--qa-ring' as any]: sidebarTheme.accent }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 0 0 1px ${sidebarTheme.accent}`; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = ''; }}
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
@@ -1198,7 +1227,9 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
           >
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
@@ -1218,7 +1249,8 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
@@ -1238,7 +1270,8 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white border-[#D6A64B]" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
@@ -1919,9 +1952,88 @@ export default function QAClientePortalPage() {
 
         {activeSection === "configuracoes" && (
           <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 mb-4">
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
+            </div>
+
+            {/* ── Tema do menu lateral ─────────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <div className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Tema do menu lateral</div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Personalize a aparência do menu preto à esquerda. O texto permanece sempre legível.
+                  </p>
+                </div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Atual: {sidebarTheme.label}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {QA_SIDEBAR_THEMES.map((t) => {
+                  const selected = t.key === sidebarTheme.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => {
+                        setSidebarTheme(t);
+                        setStoredSidebarTheme(t.key);
+                      }}
+                      className={`group relative rounded-lg border p-2 text-left transition ${
+                        selected
+                          ? "border-[#7A1F2B] ring-2 ring-[#7A1F2B]/30"
+                          : "border-slate-200 hover:border-slate-400"
+                      }`}
+                    >
+                      {/* Mini-preview do menu */}
+                      <div
+                        className="h-16 w-full rounded-md relative overflow-hidden"
+                        style={{ background: t.bg }}
+                      >
+                        <div
+                          className="absolute top-0 left-0 right-0 h-[3px]"
+                          style={{ background: t.stripe }}
+                        />
+                        <div className="absolute left-2 top-2.5 flex items-center gap-1.5">
+                          <div className="h-5 w-5 rounded-full bg-[#7A1F2B] flex items-center justify-center text-[7px] font-bold text-white" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+                          <div className="text-[7px] font-semibold text-white uppercase tracking-wider" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal</div>
+                        </div>
+                        <div className="absolute left-2 bottom-2 space-y-[3px]">
+                          <div className="flex items-center gap-1">
+                            <div className="h-[6px] w-[2px]" style={{ background: t.accent }} />
+                            <div className="h-[3px] w-12 bg-white/80 rounded-sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="h-[3px] w-[2px] bg-transparent" />
+                            <div className="h-[3px] w-10 bg-white/40 rounded-sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="h-[3px] w-[2px] bg-transparent" />
+                            <div className="h-[3px] w-14 bg-white/40 rounded-sm" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider truncate">
+                            {t.label}
+                          </div>
+                          <div className="text-[9.5px] text-slate-500 leading-tight truncate">
+                            {t.description}
+                          </div>
+                        </div>
+                        {selected && (
+                          <span className="shrink-0 text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B] text-white">
+                            Ativo
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </SectionCard>
         )}
