@@ -1585,22 +1585,22 @@ export function ClienteDocsHubModal({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
+        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
-        <div className="shrink-0 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#7A1F2B]/10 text-[#7A1F2B]">
               <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">
+              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-[#7A1F2B]">
                 Hub documental
               </div>
-              <h2 className="font-heading text-[22px] font-semibold uppercase leading-none tracking-[0.06em] text-foreground">
+              <h2 className="font-heading text-[22px] font-bold uppercase leading-none tracking-[0.06em] text-[#0A0A0A]">
                 Adicionar Documento
               </h2>
-              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-[#4A4A4A]">
                 Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
               </p>
             </div>
@@ -1608,7 +1608,7 @@ export function ClienteDocsHubModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:bg-[#F7F7F7] hover:text-[#0A0A0A]"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
