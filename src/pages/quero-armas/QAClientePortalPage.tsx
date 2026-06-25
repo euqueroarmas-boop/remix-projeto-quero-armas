@@ -1372,10 +1372,15 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-white/10 text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
-                style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
+                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-white/5"}`}
+                style={active ? {
+                  background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
+                  border: `1px solid ${sidebarTheme.accent}8C`,
+                  borderRadius: "8px",
+                  borderLeftColor: sidebarTheme.accent,
+                } : undefined}
               >
-                <Icon className="h-4 w-4 shrink-0" />
+                <Icon className="h-4 w-4 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
