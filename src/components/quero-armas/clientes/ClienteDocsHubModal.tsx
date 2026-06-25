@@ -1811,6 +1811,20 @@ export function ClienteDocsHubModal({
                   </div>
                 </div>
               )}
+
+            {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
+            <div className="space-y-1.5 pt-1">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
+                Observações
+              </div>
+              <Textarea
+                value={form.observacoes}
+                onChange={(event) => update("observacoes", event.target.value)}
+                rows={3}
+                placeholder="Se necessário, adicione detalhes complementares."
+                className="min-h-[88px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+              />
+            </div>
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
