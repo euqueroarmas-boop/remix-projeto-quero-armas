@@ -2051,6 +2051,12 @@ export default function QAClientePortalPage() {
 
                   <div className="h-[120px] w-full rounded-xl relative overflow-hidden" style={{ background: sidebarTheme.bg }}>
                     <div className="absolute top-0 left-0 right-0 h-[4px]" style={{ background: sidebarTheme.stripe }} />
+                    {sidebarTheme.heroImage && (
+                      <div
+                        className="absolute right-3 top-4 h-[68px] w-[108px] rounded-md border border-white/10"
+                        style={{ background: `url("${sidebarTheme.heroImage}") center/cover no-repeat` }}
+                      />
+                    )}
                     <div className="absolute inset-y-0 left-0 w-[84px] border-r border-white/10 bg-black/30" />
                     <div className="absolute left-3 top-3 flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-[#7A1F2B] flex items-center justify-center text-[10px] font-bold text-white" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
