@@ -241,8 +241,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         setAutoPrefillLoading(true);
         const r = await chamarAutoPrefill();
         setAutoPrefillLoading(false);
-        if (r && Object.keys(r.applied).length > 0) {
-          setAutoPrefillBanner({ campos: Object.keys(r.applied).length, docs: r.docs });
+        if (r && r.docs > 0) {
+          const camposAplicados = Object.keys(r.applied).length;
+          if (camposAplicados > 0) setAutoPrefillBanner({ campos: camposAplicados, docs: r.docs });
           onUpdated?.();
         }
       })();
