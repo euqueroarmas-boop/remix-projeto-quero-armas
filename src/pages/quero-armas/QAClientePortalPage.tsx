@@ -1155,15 +1155,15 @@ export default function QAClientePortalPage() {
             onClick={() => setShowFotoModal(true)}
             title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
             aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
-            className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
           >
             {avatarUrl ? (
               <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
             ) : (
-              <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+              <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
             )}
             <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
-              <Camera className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition" />
+              <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition" />
             </span>
           </button>
           {!sidebarCollapsed && (
