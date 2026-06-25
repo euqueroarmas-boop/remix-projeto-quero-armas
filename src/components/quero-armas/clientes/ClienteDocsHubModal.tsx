@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
+import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
