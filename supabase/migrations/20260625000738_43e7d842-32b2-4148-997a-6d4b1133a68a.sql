@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_iat_credenciados ADD COLUMN IF NOT EXISTS geocode_tentativas integer NOT NULL DEFAULT 0;
