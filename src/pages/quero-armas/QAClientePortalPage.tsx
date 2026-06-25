@@ -1142,7 +1142,22 @@ export default function QAClientePortalPage() {
       <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${sidebarCollapsed ? "w-[68px]" : "w-[230px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
         <div className={`flex items-center px-4 py-4 ${sidebarCollapsed ? "justify-center" : "gap-2.5"}`}>
-          <div className="w-9 h-9 rounded-md bg-[#7A1F2B] flex items-center justify-center text-white font-bold text-[13px] tracking-[0.04em] shrink-0" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+          <button
+            type="button"
+            onClick={() => setShowFotoModal(true)}
+            title={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+            aria-label={avatarUrl ? "Trocar minha foto" : "Adicionar minha foto"}
+            className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a] hover:ring-[#D6A64B] transition group"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[12px] tracking-[0.04em]" style={{ fontFamily: "Oswald, sans-serif" }}>QA</span>
+            )}
+            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition flex items-center justify-center">
+              <Camera className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition" />
+            </span>
+          </button>
           {!sidebarCollapsed && (
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white leading-tight tracking-[0.06em] uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal Inteligente</div>
