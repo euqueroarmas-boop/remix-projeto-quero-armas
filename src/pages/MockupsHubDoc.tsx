@@ -435,12 +435,276 @@ const V5: React.FC = () => (
   </Card>
 );
 
+/* ============================================================
+ *  V6 — Foco do Dia (card com borda esquerda #D9342B, padrão Z6)
+ * ============================================================ */
+const V6: React.FC = () => (
+  <Card>
+    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+    <div style={{ padding: 22 }}>
+      <Card style={{ borderLeft: `3px solid ${T.red}`, marginBottom: 16 }}>
+        <div style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0 }}>
+            <Lab color={T.red}>FOCO DO DIA · AÇÃO BLOQUEANTE</Lab>
+            <div style={{ fontSize: 15, marginTop: 6, fontWeight: 600, color: T.ink }}>Revise os dados identificados pela IA e salve o documento no Arsenal.</div>
+            <div style={{ fontSize: 11.5, color: T.ink2, marginTop: 4 }}>{COPY.iaTitle} · {COPY.iaConf}</div>
+          </div>
+          <BtnBordo>{COPY.salvar} →</BtnBordo>
+        </div>
+      </Card>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 16 }}>
+        <Card style={{ padding: 16 }}>
+          <Lab>{COPY.arquivoLabel}</Lab>
+          <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
+          <div style={{ marginTop: 14 }}>
+            <Lab>{COPY.conformidadeLabel}</Lab>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+              <ConformidadeRow label="CPF confere com cadastro" badge="OK" tone="green" />
+              <ConformidadeRow label="Validade vigente" badge="OK" tone="green" />
+              <ConformidadeRow label="Endereço cruzado" badge="VERIFICAR" tone="amber" />
+            </div>
+          </div>
+        </Card>
+        <Card style={{ padding: 16 }}>
+          <Lab>{COPY.revisarLabel}</Lab>
+          <div style={{ fontSize: 11.5, color: T.ink3, marginTop: 6 }}>{COPY.revisarSub}</div>
+          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
+            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} /></div>
+            <Field label={COPY.campoData} value={COPY.campoDataVal} />
+            <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
+            <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
+          </div>
+        </Card>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
+
+/* ============================================================
+ *  V7 — Split: viewer de documento à esquerda, dossiê à direita
+ * ============================================================ */
+const DocViewer: React.FC = () => (
+  <div style={{ background: T.soft, border: `1px solid ${T.border}`, borderRadius: 3, aspectRatio: "1 / 1.35", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+    <div style={{ position: "absolute", top: 10, left: 10, fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".2em", color: T.ink3 }}>PRÉ-VISUALIZAÇÃO</div>
+    <div style={{ width: "70%", height: "78%", background: "#fff", border: `1px solid ${T.border}`, borderRadius: 2, padding: 18, fontFamily: OSWALD, color: T.ink, fontSize: 11, letterSpacing: ".06em", lineHeight: 1.6 }}>
+      <div style={{ fontSize: 13, color: T.bordo }}>REPÚBLICA FEDERATIVA DO BRASIL</div>
+      <div style={{ marginTop: 4, fontSize: 11 }}>JUSTIÇA FEDERAL · 1ª REGIÃO</div>
+      <div style={{ marginTop: 18, fontSize: 14 }}>CERTIDÃO DE ANTECEDENTES</div>
+      <div style={{ marginTop: 16, color: T.ink2 }}>NOME ▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
+      <div style={{ marginTop: 6, color: T.ink2 }}>CPF ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔</div>
+      <div style={{ marginTop: 6, color: T.ink2 }}>EMISSÃO 03/12/2025</div>
+      <div style={{ marginTop: 18, color: T.green }}>✓ NADA CONSTA</div>
+    </div>
+  </div>
+);
+
+const V7: React.FC = () => (
+  <Card>
+    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+    <div style={{ padding: 22, display: "grid", gridTemplateColumns: "360px 1fr", gap: 24 }}>
+      <div>
+        <Lab>{COPY.arquivoLabel}</Lab>
+        <div style={{ marginTop: 12 }}><DocViewer /></div>
+        <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
+      </div>
+      <div>
+        <Lab>{COPY.iaEyebrow}</Lab>
+        <div style={{ marginTop: 8, fontFamily: OSWALD, fontSize: 14, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
+        <div style={{ marginTop: 8 }}><ConfChip /></div>
+        <p style={{ marginTop: 10, fontSize: 11.5, color: T.ink2, lineHeight: 1.5, maxWidth: 640 }}>{COPY.iaJust}</p>
+        <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
+          <Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} />
+          <Field label={COPY.campoCpf} value={COPY.campoCpfVal} />
+          <Field label={COPY.campoData} value={COPY.campoDataVal} />
+          <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <Lab>{COPY.conformidadeLabel}</Lab>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+            <ConformidadeRow label="CPF confere com cadastro" badge="OK" tone="green" />
+            <ConformidadeRow label="Validade vigente" badge="OK" tone="green" />
+            <ConformidadeRow label="Endereço cruzado" badge="VERIFICAR" tone="amber" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
+
+/* ============================================================
+ *  V8 — Boarding pass tático (ticket horizontal Z6)
+ * ============================================================ */
+const V8: React.FC = () => (
+  <Card>
+    <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+    <div style={{ padding: 22 }}>
+      <div style={{ background: "#fff", border: `1px solid ${T.border}`, borderRadius: 4, display: "grid", gridTemplateColumns: "1fr 2px 1.6fr 2px 1fr", overflow: "hidden" }}>
+        <div style={{ padding: 20, background: T.ink, color: "#fff" }}>
+          <Lab color={T.amber}>{COPY.arquivoLabel}</Lab>
+          <div style={{ marginTop: 14, fontFamily: OSWALD, fontSize: 16, letterSpacing: ".06em" }}>PDF · 184 KB</div>
+          <div style={{ marginTop: 4, fontSize: 11, color: "#BFBFBF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{COPY.fileName}</div>
+          <div style={{ marginTop: 24 }}>
+            <Lab color={T.amber}>STATUS</Lab>
+            <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 12, letterSpacing: ".14em", color: T.amber }}>● PRONTO PARA SALVAR</div>
+          </div>
+        </div>
+        <div style={{ background: `repeating-linear-gradient(0deg, ${T.border} 0 4px, transparent 4px 8px)` }} />
+        <div style={{ padding: 20 }}>
+          <Lab>{COPY.iaEyebrow}</Lab>
+          <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 15, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
+          <div style={{ marginTop: 8 }}><ConfChip /></div>
+          <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} />
+            <Field label={COPY.campoData} value={COPY.campoDataVal} />
+            <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
+          </div>
+        </div>
+        <div style={{ background: `repeating-linear-gradient(0deg, ${T.border} 0 4px, transparent 4px 8px)` }} />
+        <div style={{ padding: 20, background: T.soft }}>
+          <Lab>{COPY.conformidadeLabel}</Lab>
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+            <ConformidadeRow label="CPF" badge="OK" tone="green" />
+            <ConformidadeRow label="Validade" badge="OK" tone="green" />
+            <ConformidadeRow label="Endereço" badge="VERIFICAR" tone="amber" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
+
+/* ============================================================
+ *  V9 — Sidebar preta Z6 + canvas branco
+ * ============================================================ */
+const V9: React.FC = () => (
+  <Card style={{ overflow: "hidden" }}>
+    <div style={{ display: "grid", gridTemplateColumns: "220px 1fr" }}>
+      <aside style={{ background: T.ink, color: "#fff", padding: "22px 18px", minHeight: 620 }}>
+        <div style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".32em", color: T.amber }}>{COPY.eyebrow}</div>
+        <div style={{ fontFamily: OSWALD, fontSize: 16, letterSpacing: ".08em", marginTop: 6 }}>ADICIONAR DOCUMENTO</div>
+        <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 4 }}>
+          {[
+            { l: "ARQUIVO", s: "done" },
+            { l: "IA IDENTIFICOU", s: "done" },
+            { l: "REVISAR DADOS", s: "current" },
+            { l: "CONFORMIDADE", s: "pending" },
+            { l: "SALVAR", s: "pending" },
+          ].map((it) => {
+            const active = it.s === "current";
+            return (
+              <div key={it.l} style={{ padding: "10px 12px", background: active ? "#161616" : "transparent", borderLeft: `3px solid ${active ? T.amber : "transparent"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: OSWALD, fontSize: 10.5, letterSpacing: ".18em", color: it.s === "pending" ? "#7A7A7A" : "#fff" }}>{it.l}</span>
+                <span style={{ fontSize: 10, color: it.s === "done" ? T.green : active ? T.amber : "#5A5A5A" }}>
+                  {it.s === "done" ? "✓" : active ? "●" : "○"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </aside>
+      <div style={{ padding: 22 }}>
+        <Header />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Card style={{ padding: 16 }}>
+            <Lab>{COPY.arquivoLabel}</Lab>
+            <div style={{ marginTop: 12 }}><ArquivoBlock /></div>
+            <div style={{ marginTop: 14, padding: 12, background: T.greenBg, borderRadius: 3 }}>
+              <Lab color={T.greenInk}>{COPY.iaEyebrow}</Lab>
+              <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 12.5, color: T.ink }}>{COPY.iaTitle}</div>
+              <div style={{ marginTop: 8 }}><ConfChip /></div>
+            </div>
+          </Card>
+          <Card style={{ padding: 16 }}>
+            <Lab>{COPY.revisarLabel}</Lab>
+            <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
+              <Field label={COPY.campoData} value={COPY.campoDataVal} />
+              <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
+              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
+    <Footer />
+  </Card>
+);
+
+/* ============================================================
+ *  V10 — Stepper vertical com trilho bordô na ativa
+ * ============================================================ */
+const V10: React.FC = () => {
+  const steps = [
+    { l: "ANEXAR ARQUIVO", s: "done" as const, sub: COPY.fileName },
+    { l: "IA IDENTIFICOU", s: "done" as const, sub: COPY.iaTitle },
+    { l: "REVISAR DADOS", s: "current" as const, sub: COPY.revisarSub },
+    { l: "CONFORMIDADE", s: "pending" as const, sub: "Cruzamento final" },
+    { l: "SALVAR NO ARSENAL", s: "pending" as const, sub: "Gravar e indexar" },
+  ];
+  return (
+    <Card>
+      <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.border}` }}><Header /></div>
+      <div style={{ padding: 22, display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}>
+        <div>
+          {steps.map((st, i) => {
+            const done = st.s === "done";
+            const cur = st.s === "current";
+            const bg = done ? T.green : cur ? T.bordo : "#EDEDED";
+            const fg = done || cur ? "#fff" : T.ink3;
+            return (
+              <div key={st.l} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 12, position: "relative", paddingBottom: i === steps.length - 1 ? 0 : 18 }}>
+                {i < steps.length - 1 && <span style={{ position: "absolute", left: 15, top: 30, bottom: 6, width: 2, background: done ? T.green : T.border }} />}
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: bg, color: fg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: OSWALD, fontSize: 13, fontWeight: 700 }}>
+                  {done ? "✓" : i + 1}
+                </div>
+                <div>
+                  <div style={{ fontFamily: OSWALD, fontSize: 11.5, letterSpacing: ".14em", color: cur ? T.bordo : T.ink }}>{st.l}</div>
+                  <div style={{ fontSize: 11, color: T.ink3, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{st.sub}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div>
+          <Card style={{ padding: 16, marginBottom: 14 }}>
+            <Lab>{COPY.iaEyebrow}</Lab>
+            <div style={{ marginTop: 6, fontFamily: OSWALD, fontSize: 14, letterSpacing: ".05em", color: T.ink }}>{COPY.iaTitle}</div>
+            <div style={{ marginTop: 8 }}><ConfChip /></div>
+          </Card>
+          <Card style={{ padding: 16 }}>
+            <Lab>{COPY.revisarLabel}</Lab>
+            <div style={{ fontSize: 11.5, color: T.ink3, marginTop: 6 }}>{COPY.revisarSub}</div>
+            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoTipo} value={COPY.campoTipoVal} /></div>
+              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoEmissor} value={COPY.campoEmissorVal} /></div>
+              <Field label={COPY.campoData} value={COPY.campoDataVal} />
+              <Field label={COPY.campoValidade} value={COPY.campoValidadeVal} />
+              <div style={{ gridColumn: "1 / -1" }}><Field label={COPY.campoCpf} value={COPY.campoCpfVal} /></div>
+            </div>
+          </Card>
+        </div>
+      </div>
+      <Footer />
+    </Card>
+  );
+};
+
 const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => React.ReactNode }[] = [
   { id: 1, nome: "V1 · Ficha catalográfica 3 colunas", subtitulo: "ARQUIVO · IA · DADOS", render: () => <V1 /> },
   { id: 2, nome: "V2 · Wizard horizontal 4 etapas",   subtitulo: "STEPPER Z6 ANEXAR → SALVAR", render: () => <V2 /> },
   { id: 3, nome: "V3 · KPI strip + master/detail",    subtitulo: "4 KPIs Z6 NO TOPO",          render: () => <V3 /> },
   { id: 4, nome: "V4 · Timeline vertical",             subtitulo: "LINHA DO TEMPO Z6 ESQUERDA", render: () => <V4 /> },
   { id: 5, nome: "V5 · Cockpit denso · top rail preto",subtitulo: "RAIL #0A0A0A + GRID 12",    render: () => <V5 /> },
+  { id: 6, nome: "V6 · Foco do Dia",                   subtitulo: "BORDA ESQUERDA #D9342B Z6",  render: () => <V6 /> },
+  { id: 7, nome: "V7 · Split arquivo · dossiê",        subtitulo: "VIEWER ESQ · CAMPOS DIR",    render: () => <V7 /> },
+  { id: 8, nome: "V8 · Boarding pass tático",          subtitulo: "TICKET HORIZONTAL Z6",       render: () => <V8 /> },
+  { id: 9, nome: "V9 · Sidebar preta + canvas",         subtitulo: "SIDEBAR #0A0A0A + ÂMBAR",    render: () => <V9 /> },
+  { id: 10, nome: "V10 · Stepper vertical bordô",      subtitulo: "TRILHO ESQ · BORDO ATIVO",   render: () => <V10 /> },
 ];
 
 export default function MockupsHubDoc() {
