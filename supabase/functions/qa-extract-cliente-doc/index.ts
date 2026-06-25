@@ -30,6 +30,7 @@ const TIPOS_VALIDOS = [
   "laudo_psicotecnico",
   "exame_tiro",
   "capacidade_tecnica",
+  "laudo_capacidade_tecnica",
   "antecedentes_criminais",
   "antecedentes_federal",
   "antecedentes_estadual",
@@ -141,6 +142,10 @@ function systemPromptFor(tipo: TipoDoc): string {
       "Em 'numero_documento' coloque o número do credenciamento do instrutor (CR/PF) quando disponível.",
     capacidade_tecnica:
       "Você é especialista em LAUDOS DE CAPACIDADE TÉCNICA para registro de arma (Lei 10.826/03). Validade = data da avaliação + 1 ano.",
+    laudo_capacidade_tecnica:
+      "Você é especialista em ATESTADOS/LAUDOS DE CAPACIDADE TÉCNICA para manuseio de arma de fogo (Lei 10.826/03). " +
+      "REGRA CRÍTICA DE VALIDADE: validade = EXATAMENTE 1 ANO contado da data da avaliação/exame prático, NUNCA use datas de validade impressas ou inferidas. " +
+      "Se não houver campo 'data_avaliacao' literal, use a data de emissão/realização do atestado como base.",
     antecedentes_criminais:
       "Você é especialista em certidões criminais estaduais. Extraia o título literal da CERTIDÃO DE ANTECEDENTES CRIMINAIS da Polícia Civil/IIRGD, sem trocar por quitação eleitoral ou outro documento.",
     antecedentes_federal:
