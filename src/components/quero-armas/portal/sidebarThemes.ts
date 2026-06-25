@@ -13,6 +13,7 @@ export type QASidebarTheme = {
   bg: string;     // background CSS do <aside>
   accent: string; // cor principal de destaque
   stripe: string; // gradient da faixa de 3px no topo
+  heroImage?: string; // imagem customizada exibida como painel visual, fora da área dos menus
 };
 
 export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
@@ -162,16 +163,12 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
   return {
     key: c.key,
     label: c.label,
-    description: "Tema personalizado enviado por upload.",
-    // HARMONIA: a imagem vira "hero" no topo (~220px atrás da logo) e funde em
-    // preto sólido nos itens do menu — garante legibilidade total dos itens
-    // sem perder a identidade visual da imagem enviada.
+    description: "Sua imagem aparece como painel visual no topo; o menu permanece limpo e legível.",
     bg:
-      `linear-gradient(180deg, rgba(10,10,10,0.35) 0%, rgba(10,10,10,0.55) 35%, rgba(10,10,10,0.95) 70%, #0A0A0A 78%, #0A0A0A 100%), ` +
-      `url("${c.image}") top center / 260px 260px no-repeat, ` +
-      `#0A0A0A`,
+      "linear-gradient(180deg, #0A0A0A 0%, #101010 34%, #0A0A0A 100%)",
     accent: "#D6A64B",
     stripe: "linear-gradient(90deg, #D6A64B 0%, #7A1F2B 100%)",
+    heroImage: c.image,
   };
 }
 
