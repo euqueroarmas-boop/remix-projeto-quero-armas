@@ -1145,7 +1145,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[230px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[260px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1165,9 +1165,9 @@ export default function QAClientePortalPage() {
         }}
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
-      <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[230px]"}`}>
+      <aside className={`flex fixed inset-y-0 left-0 z-50 flex-col bg-[#0A0A0A] text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}>
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
-        <div className={`flex items-center px-4 py-4 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
+        <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
             type="button"
             onClick={() => setShowFotoModal(true)}
@@ -1198,7 +1198,7 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-7 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:border-[#D6A64B] hover:bg-[#1a1a1a] text-[#9a9a9a] hover:text-[#D6A64B] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
           >
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
