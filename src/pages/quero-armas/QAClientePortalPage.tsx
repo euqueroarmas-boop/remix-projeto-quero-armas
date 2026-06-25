@@ -1200,7 +1200,7 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
-        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}
+        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 border-r border-[#1A1A1A] shadow-[12px_0_36px_rgba(0,0,0,0.22)] ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}
         style={{ background: sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
@@ -1211,7 +1211,8 @@ export default function QAClientePortalPage() {
           style={{ background: sidebarTheme.stripe }}
         />
         {/* Brand: QA mark + ARSENAL INTELIGENTE / ÁREA DO CLIENTE */}
-        <div className={`flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
+        <div className={`relative px-4 ${effectiveCollapsed ? "py-5" : "pt-6 pb-3"}`}>
+          <div className={`flex items-center ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`}>
           <button
             type="button"
             onClick={() => setShowFotoModal(true)}
@@ -1237,6 +1238,22 @@ export default function QAClientePortalPage() {
               <div className="text-[9px] text-[#7A7A7A] tracking-[0.2em] mt-0.5 uppercase" style={{ fontFamily: "Oswald, sans-serif" }}>Área do Cliente</div>
             </div>
           )}
+          </div>
+          {!effectiveCollapsed && sidebarTheme.heroImage && (
+            <div className="mt-4 overflow-hidden rounded-md border border-[#242424] bg-[#0F0F0F] shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div
+                className="h-[92px] w-full bg-[#111]"
+                style={{ background: `url("${sidebarTheme.heroImage}") center/cover no-repeat` }}
+                aria-hidden
+              />
+              <div className="flex items-center justify-between gap-2 border-t border-[#242424] bg-[#101010] px-3 py-2">
+                <span className="truncate text-[9px] font-semibold uppercase tracking-[0.18em] text-[#A6A6A6]" style={{ fontFamily: "Oswald, sans-serif" }}>
+                  {sidebarTheme.label}
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: sidebarTheme.accent }} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Botão moderno: regredir/expandir menu — apenas desktop (mobile/tablet fixo em mini) */}
@@ -1254,7 +1271,7 @@ export default function QAClientePortalPage() {
         )}
 
         {/* Nav com grupos Principal / Secundário */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden border-t border-[#171717] pt-2">
           {!effectiveCollapsed && (
             <div className="px-4 pt-3 pb-1.5 text-[9.5px] tracking-[0.18em] text-[#5a5a5a] font-semibold" style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
           )}
@@ -1267,7 +1284,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`mx-2 w-[calc(100%-16px)] rounded-md flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#171717] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]" : "text-[#A6A6A6] border-transparent hover:text-white hover:bg-[#151515]"}`}
                 style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -1288,7 +1305,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`w-full flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-4"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#141414] text-white" : "text-[#9a9a9a] border-transparent hover:text-white hover:bg-[#141414]/40"}`}
+                className={`mx-2 w-[calc(100%-16px)] rounded-md flex items-center ${effectiveCollapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 text-[12px] font-medium border-l-2 transition ${active ? "bg-[#171717] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]" : "text-[#A6A6A6] border-transparent hover:text-white hover:bg-[#151515]"}`}
                 style={active ? { borderLeftColor: sidebarTheme.accent } : undefined}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -2034,6 +2051,12 @@ export default function QAClientePortalPage() {
 
                   <div className="h-[120px] w-full rounded-xl relative overflow-hidden" style={{ background: sidebarTheme.bg }}>
                     <div className="absolute top-0 left-0 right-0 h-[4px]" style={{ background: sidebarTheme.stripe }} />
+                    {sidebarTheme.heroImage && (
+                      <div
+                        className="absolute right-3 top-4 h-[68px] w-[108px] rounded-md border border-white/10"
+                        style={{ background: `url("${sidebarTheme.heroImage}") center/cover no-repeat` }}
+                      />
+                    )}
                     <div className="absolute inset-y-0 left-0 w-[84px] border-r border-white/10 bg-black/30" />
                     <div className="absolute left-3 top-3 flex items-center gap-2">
                       <div className="h-8 w-8 rounded-full bg-[#7A1F2B] flex items-center justify-center text-[10px] font-bold text-white" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
