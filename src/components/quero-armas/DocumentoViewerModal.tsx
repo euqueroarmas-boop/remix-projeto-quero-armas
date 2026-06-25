@@ -152,7 +152,7 @@ export default function DocumentoViewerModal({
       try {
         const buf = await blob.arrayBuffer();
         if (cancelled) return;
-        task = pdfjsLib.getDocument({ data: buf, isEvalSupported: false });
+        task = pdfjsLib.getDocument({ data: buf, isEvalSupported: false } as any);
         const doc = await task.promise;
         if (cancelled) return;
         setPdfDoc(doc);
