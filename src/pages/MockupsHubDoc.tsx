@@ -974,6 +974,390 @@ const V5: React.FC = () => (
   </Paper>
 );
 
+/* ───────── Reusable PDF preview (visual do documento) ───────── */
+const PdfPreview: React.FC<{ size?: "sm" | "md" | "lg" }> = ({ size = "md" }) => {
+  const w = size === "sm" ? 360 : size === "lg" ? 560 : 460;
+  return (
+    <div
+      style={{
+        margin: "0 auto",
+        width: `min(${w}px, 100%)`,
+        aspectRatio: "1 / 1.41",
+        background: "#fff",
+        boxShadow: "0 2px 10px rgba(0,0,0,.10)",
+        padding: "52px 48px",
+        fontFamily: OSWALD,
+        color: T.ink,
+        position: "relative",
+      }}
+    >
+      <div style={{ fontSize: 11, color: T.bordo, letterSpacing: ".22em" }}>POLÍCIA FEDERAL</div>
+      <div style={{ fontSize: 10, color: T.ink3 }}>INSTRUTOR DE TIRO CREDENCIADO</div>
+      <div style={{ marginTop: 24, fontSize: 16, letterSpacing: ".1em" }}>ATESTADO DE CAPACIDADE TÉCNICA</div>
+      <div style={{ marginTop: 6, fontSize: 11, color: T.ink2, letterSpacing: ".1em" }}>Nº 0005/2025</div>
+      <div style={{ marginTop: 22, fontSize: 11, color: T.ink3 }}>NOME</div>
+      <div style={{ fontSize: 13, letterSpacing: ".06em", color: T.ink }}>WILLIAN RODRIGUES DA SILVA</div>
+      <div style={{ marginTop: 12, fontSize: 11, color: T.ink3 }}>CPF</div>
+      <div style={{ fontSize: 13, letterSpacing: ".06em", color: T.ink }}>377.995.388-99</div>
+      <div style={{ marginTop: 12, fontSize: 11, color: T.ink3 }}>AVALIAÇÃO · VALIDADE</div>
+      <div style={{ fontSize: 13, letterSpacing: ".06em", color: T.ink }}>19/03/2025 · 19/03/2026</div>
+      <div style={{ marginTop: 28, fontSize: 12, color: T.green, letterSpacing: ".08em" }}>✓ APROVADO</div>
+    </div>
+  );
+};
+
+const LeftPdfPane: React.FC<{ children?: React.ReactNode; size?: "sm" | "md" | "lg" }> = ({ children, size = "md" }) => (
+  <div style={{ background: "#E9E9E9", padding: 22, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <Lab>{COPY.arquivoLab} · PRÉ-VISUALIZAÇÃO</Lab>
+      <span style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".18em", color: T.bordo, background: T.bordoSoft, padding: "2px 7px", borderRadius: 2 }}>
+        {COPY.fileBadge}
+      </span>
+    </div>
+    <PdfPreview size={size} />
+    <FileBlock compact />
+    {children}
+  </div>
+);
+
+/* ============================================================
+ * V6 · PDF + SEÇÕES NUMERADAS  — refinamento direto do V3 com timeline
+ * ============================================================ */
+const StepHeader: React.FC<{ n: string; title: string; status?: "done" | "current" }> = ({ n, title, status = "done" }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+    <span
+      style={{
+        width: 22,
+        height: 22,
+        borderRadius: 99,
+        background: status === "done" ? T.green : T.amber,
+        color: "#fff",
+        fontFamily: OSWALD,
+        fontSize: 10,
+        letterSpacing: ".1em",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontWeight: 700,
+      }}
+    >
+      {n}
+    </span>
+    <Lab size={10} spacing=".22em" color={T.ink}>
+      {title}
+    </Lab>
+    <div style={{ flex: 1, height: 1, background: T.line }} />
+  </div>
+);
+const V6: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1fr", minHeight: 780 }}>
+      <LeftPdfPane />
+      <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 18, overflowY: "auto" }}>
+        <div>
+          <StepHeader n="1" title="CLASSIFICAÇÃO IA" />
+          <IaBlock />
+        </div>
+        <div>
+          <StepHeader n="2" title="ALERTAS" status="current" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <AlertRevise />
+            <AlertVencido />
+          </div>
+        </div>
+        <div>
+          <StepHeader n="3" title="CONFORMIDADE" />
+          <ConformidadeTable dense />
+        </div>
+        <div>
+          <StepHeader n="4" title="DADOS & ESCOPO" />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <EscopoBlock />
+          </div>
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* ============================================================
+ * V7 · PDF + ABAS — painel direita com tabs (Resumo · Conformidade · Campos)
+ * ============================================================ */
+const V7: React.FC = () => {
+  const [tab, setTab] = React.useState(0);
+  const tabs = ["RESUMO IA", "CONFORMIDADE", "CAMPOS"];
+  return (
+    <Paper>
+      <HeaderBar />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", minHeight: 780 }}>
+        <LeftPdfPane />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", borderBottom: `1px solid ${T.border}`, background: T.soft }}>
+            {tabs.map((t, i) => {
+              const active = i === tab;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTab(i)}
+                  style={{
+                    flex: 1,
+                    padding: "14px 16px",
+                    background: active ? "#fff" : "transparent",
+                    border: 0,
+                    borderBottom: `2px solid ${active ? T.bordo : "transparent"}`,
+                    fontFamily: OSWALD,
+                    fontSize: 10.5,
+                    letterSpacing: ".2em",
+                    color: active ? T.ink : T.ink3,
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {String(i + 1).padStart(2, "0")} · {t}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto", flex: 1 }}>
+            {tab === 0 && (
+              <>
+                <IaBlock />
+                <AlertRevise />
+                <AlertVencido />
+              </>
+            )}
+            {tab === 1 && (
+              <>
+                <ConformidadeTable />
+                <EscopoBlock />
+              </>
+            )}
+            {tab === 2 && (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+                  <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+                  <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+                  <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+                  <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+                  <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+      <FooterBar />
+    </Paper>
+  );
+};
+
+/* ============================================================
+ * V8 · PDF + STEPPER HORIZONTAL  — barra de progresso topo + painel
+ * ============================================================ */
+const V8: React.FC = () => {
+  const steps = [
+    { l: "ANEXO", s: "done" },
+    { l: "IA CLASSIFICOU", s: "done" },
+    { l: "CONFORMIDADE", s: "done" },
+    { l: "REVISÃO CAMPOS", s: "current" },
+    { l: "SALVAR", s: "next" },
+  ];
+  return (
+    <Paper>
+      <HeaderBar />
+      <div style={{ display: "flex", gap: 0, padding: "14px 22px", borderBottom: `1px solid ${T.border}`, background: T.soft, alignItems: "center" }}>
+        {steps.map((s, i) => {
+          const color = s.s === "done" ? T.green : s.s === "current" ? T.bordo : T.ink4;
+          return (
+            <React.Fragment key={s.l}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span
+                  style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 99,
+                    background: s.s === "next" ? "#fff" : color,
+                    border: `1.5px solid ${color}`,
+                    color: s.s === "next" ? T.ink4 : "#fff",
+                    fontFamily: OSWALD,
+                    fontSize: 10,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                  }}
+                >
+                  {s.s === "done" ? "✓" : i + 1}
+                </span>
+                <Lab size={10} spacing=".2em" color={s.s === "current" ? T.bordo : T.ink2}>
+                  {s.l}
+                </Lab>
+              </div>
+              {i < steps.length - 1 && <div style={{ flex: 1, height: 1, background: T.border, margin: "0 14px" }} />}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", minHeight: 720 }}>
+        <LeftPdfPane size="sm" />
+        <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
+          <IaBlock compact />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <AlertRevise />
+            <AlertVencido />
+          </div>
+          <ConformidadeTable dense />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+      <FooterBar />
+    </Paper>
+  );
+};
+
+/* ============================================================
+ * V9 · PDF + 2 SUBCOLUNAS  — esquerda PDF, direita dividida (Alertas | Campos)
+ * ============================================================ */
+const V9: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.5fr", minHeight: 780 }}>
+      <LeftPdfPane size="sm" />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", borderLeft: 0 }}>
+        <div style={{ padding: 20, borderRight: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 12 }}>
+          <Lab>ANÁLISE & ALERTAS</Lab>
+          <IaBlock compact />
+          <AlertRevise />
+          <AlertVencido />
+          <ConformidadeTable dense />
+        </div>
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+          <Lab>DADOS DO DOCUMENTO</Lab>
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} full />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} full />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+/* ============================================================
+ * V10 · PDF + ACCORDION + STRIP KPI lateral — painel compacto, expansível
+ * ============================================================ */
+const Acc: React.FC<React.PropsWithChildren<{ title: string; meta?: string; open?: boolean }>> = ({ title, meta, open, children }) => (
+  <div style={{ border: `1px solid ${T.border}`, borderRadius: 3, background: "#fff" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 14px",
+        borderBottom: open ? `1px solid ${T.line}` : 0,
+        background: open ? T.soft : "#fff",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontFamily: OSWALD, fontSize: 11, color: T.ink3 }}>{open ? "▾" : "▸"}</span>
+        <Lab size={10} spacing=".22em" color={T.ink}>
+          {title}
+        </Lab>
+      </div>
+      {meta && (
+        <span style={{ fontFamily: OSWALD, fontSize: 9.5, letterSpacing: ".18em", color: T.ink3 }}>{meta}</span>
+      )}
+    </div>
+    {open && <div style={{ padding: 14 }}>{children}</div>}
+  </div>
+);
+const V10: React.FC = () => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ display: "grid", gridTemplateColumns: "1.05fr 64px 1fr", minHeight: 780 }}>
+      <LeftPdfPane />
+      {/* Strip KPI lateral preto Z6 */}
+      <aside style={{ background: T.ink, color: "#fff", padding: "20px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
+        <div style={{ textAlign: "center" }}>
+          <Lab color={T.amber} size={8.5} spacing=".22em">
+            IA
+          </Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 20, color: "#fff", marginTop: 4, fontWeight: 600 }}>{COPY.iaConfRaw}%</div>
+        </div>
+        <div style={{ width: 24, height: 1, background: "#262626" }} />
+        <div style={{ textAlign: "center" }}>
+          <Lab color={T.amber} size={8.5} spacing=".22em">
+            CONF
+          </Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 20, color: "#fff", marginTop: 4, fontWeight: 600 }}>2/2</div>
+        </div>
+        <div style={{ width: 24, height: 1, background: "#262626" }} />
+        <div style={{ textAlign: "center" }}>
+          <Lab color={T.amber} size={8.5} spacing=".22em">
+            STATUS
+          </Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 12, color: T.amber, marginTop: 4, fontWeight: 600, writingMode: "vertical-rl", letterSpacing: ".2em" }}>
+            VENCIDO
+          </div>
+        </div>
+      </aside>
+      <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10, overflowY: "auto" }}>
+        <Acc title="CLASSIFICAÇÃO IA" meta="98% · ATESTADO" open>
+          <IaBlock compact />
+        </Acc>
+        <Acc title="ALERTAS" meta="2 AVISOS" open>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <AlertRevise />
+            <AlertVencido />
+          </div>
+        </Acc>
+        <Acc title="CONFORMIDADE (DUPLA VERIFICAÇÃO)" meta="✓ 2/2 CONFORME">
+        </Acc>
+        <Acc title="DADOS DO DOCUMENTO" meta="2 CONFIRMADOS" open>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+            <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+            <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+            <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+            <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+            <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <EscopoBlock />
+          </div>
+        </Acc>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
 /* ───────── Index ───────── */
 const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => React.ReactNode }[] = [
   { id: 1, nome: "V1 · 3 Colunas Refinadas", subtitulo: "MESMA ARQUITETURA, MODERNIZADA Z6", render: () => <V1 /> },
@@ -981,12 +1365,17 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 3, nome: "V3 · Documento Centrado", subtitulo: "VIEWER PDF ESQ · PAINEL DIR", render: () => <V3 /> },
   { id: 4, nome: "V4 · KPI Strip + 2 Colunas", subtitulo: "4 KPIs Z6 NO TOPO · COCKPIT DENSO", render: () => <V4 /> },
   { id: 5, nome: "V5 · Worksheet Linha por Linha", subtitulo: "FICHA CATALOGRÁFICA · 5 ROWS", render: () => <V5 /> },
+  { id: 6, nome: "V6 · PDF + Seções Numeradas", subtitulo: "TIMELINE 1→4 NO PAINEL DIREITO", render: () => <V6 /> },
+  { id: 7, nome: "V7 · PDF + Abas", subtitulo: "RESUMO · CONFORMIDADE · CAMPOS", render: () => <V7 /> },
+  { id: 8, nome: "V8 · PDF + Stepper Horizontal", subtitulo: "BARRA DE PROGRESSO 5 ETAPAS", render: () => <V8 /> },
+  { id: 9, nome: "V9 · PDF + 2 Subcolunas", subtitulo: "ALERTAS À ESQ · CAMPOS À DIR", render: () => <V9 /> },
+  { id: 10, nome: "V10 · PDF + Accordion + Strip KPI", subtitulo: "PAINEL EXPANSÍVEL · KPIs LATERAIS", render: () => <V10 /> },
 ];
 
 export default function MockupsHubDoc() {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const vRaw = params.get("v");
-  const v = vRaw ? Math.max(1, Math.min(5, Number(vRaw))) : null;
+  const v = vRaw ? Math.max(1, Math.min(VARIANTS.length, Number(vRaw))) : null;
 
   const wrap: React.CSSProperties = {
     minHeight: "100vh",
