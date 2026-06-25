@@ -207,6 +207,16 @@ export default function QAClientePortalPage() {
     | "configuracoes"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(() => getStoredSidebarTheme());
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key as string | undefined;
+      const next = QA_SIDEBAR_THEMES.find((t) => t.key === key);
+      if (next) setSidebarTheme(next);
+    };
+    window.addEventListener("qa:sidebar-theme-change", onChange);
+    return () => window.removeEventListener("qa:sidebar-theme-change", onChange);
+  }, []);
   // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
   // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
   const [isBelowLg, setIsBelowLg] = useState<boolean>(() =>
