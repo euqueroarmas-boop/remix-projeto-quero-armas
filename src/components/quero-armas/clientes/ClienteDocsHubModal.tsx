@@ -1820,9 +1820,9 @@ export function ClienteDocsHubModal({
               <Textarea
                 value={form.observacoes}
                 onChange={(event) => update("observacoes", event.target.value)}
-                rows={3}
+                rows={5}
                 placeholder="Se necessário, adicione detalhes complementares."
-                className="min-h-[88px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+                className="min-h-[148px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
               />
             </div>
           </div>
