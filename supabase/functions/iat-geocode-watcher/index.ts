@@ -11,7 +11,7 @@ const corsHeaders = {
 };
 
 const MAX_TENTATIVAS = 3;
-const BATCH_SIZE = 30;
+const BATCH_SIZE = 20;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
