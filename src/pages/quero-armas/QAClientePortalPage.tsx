@@ -1952,9 +1952,88 @@ export default function QAClientePortalPage() {
 
         {activeSection === "configuracoes" && (
           <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 mb-4">
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
+            </div>
+
+            {/* ── Tema do menu lateral ─────────────────────────────────────── */}
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <div className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Tema do menu lateral</div>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Personalize a aparência do menu preto à esquerda. O texto permanece sempre legível.
+                  </p>
+                </div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Atual: {sidebarTheme.label}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {QA_SIDEBAR_THEMES.map((t) => {
+                  const selected = t.key === sidebarTheme.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => {
+                        setSidebarTheme(t);
+                        setStoredSidebarTheme(t.key);
+                      }}
+                      className={`group relative rounded-lg border p-2 text-left transition ${
+                        selected
+                          ? "border-[#7A1F2B] ring-2 ring-[#7A1F2B]/30"
+                          : "border-slate-200 hover:border-slate-400"
+                      }`}
+                    >
+                      {/* Mini-preview do menu */}
+                      <div
+                        className="h-16 w-full rounded-md relative overflow-hidden"
+                        style={{ background: t.bg }}
+                      >
+                        <div
+                          className="absolute top-0 left-0 right-0 h-[3px]"
+                          style={{ background: t.stripe }}
+                        />
+                        <div className="absolute left-2 top-2.5 flex items-center gap-1.5">
+                          <div className="h-5 w-5 rounded-full bg-[#7A1F2B] flex items-center justify-center text-[7px] font-bold text-white" style={{ fontFamily: "Oswald, sans-serif" }}>QA</div>
+                          <div className="text-[7px] font-semibold text-white uppercase tracking-wider" style={{ fontFamily: "Oswald, sans-serif" }}>Arsenal</div>
+                        </div>
+                        <div className="absolute left-2 bottom-2 space-y-[3px]">
+                          <div className="flex items-center gap-1">
+                            <div className="h-[6px] w-[2px]" style={{ background: t.accent }} />
+                            <div className="h-[3px] w-12 bg-white/80 rounded-sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="h-[3px] w-[2px] bg-transparent" />
+                            <div className="h-[3px] w-10 bg-white/40 rounded-sm" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="h-[3px] w-[2px] bg-transparent" />
+                            <div className="h-[3px] w-14 bg-white/40 rounded-sm" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-slate-900 uppercase tracking-wider truncate">
+                            {t.label}
+                          </div>
+                          <div className="text-[9.5px] text-slate-500 leading-tight truncate">
+                            {t.description}
+                          </div>
+                        </div>
+                        {selected && (
+                          <span className="shrink-0 text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B] text-white">
+                            Ativo
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </SectionCard>
         )}
