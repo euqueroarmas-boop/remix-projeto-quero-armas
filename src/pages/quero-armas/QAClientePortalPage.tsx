@@ -2059,6 +2059,12 @@ export default function QAClientePortalPage() {
                 </button>
               </div>
             </div>
+
+            {/* ── Suas Criações (upload de temas) ──────────────────────────── */}
+            <CustomThemesUploader
+              currentKey={sidebarTheme.key}
+              onApply={(t) => { setSidebarTheme(t); setStoredSidebarTheme(t.key); }}
+            />
           </SectionCard>
         )}
 
