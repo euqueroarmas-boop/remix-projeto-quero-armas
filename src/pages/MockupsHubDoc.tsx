@@ -1212,9 +1212,117 @@ const R10: React.FC = () => (
 );
 
 /* ───────── Launcher de variantes ───────── */
+const R7Frame: React.FC<{ stamp: React.ReactNode }> = ({ stamp }) => (
+  <Paper>
+    <HeaderBar />
+    <div style={{ background: "#EEE9E1", padding: 28 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr 1fr", gap: 18, alignItems: "flex-start" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Lab spacing=".24em">DOSSIÊ</Lab>
+          <div style={{ fontFamily: OSWALD, fontSize: 14, letterSpacing: ".06em", color: T.ink, fontWeight: 700, lineHeight: 1.2 }}>{COPY.iaTipo}</div>
+          <FileBlock compact />
+          <SelectField label={COPY.categoriaLab} value={COPY.categoriaVal} />
+          <SelectField label={COPY.tipoLab} value={COPY.tipoVal} />
+        </div>
+        <div style={{ position: "relative" }}>
+          <PdfSheet height={540} />
+          {stamp}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <FieldZ6 label={COPY.fNumLab} value={COPY.fNumVal} badge={<ConfirmBadge />} />
+          <FieldZ6 label={COPY.fOrgaoLab} value={COPY.fOrgaoVal} />
+          <FieldZ6 label={COPY.fEmissLab} value={COPY.fEmissVal} />
+          <FieldZ6 label={COPY.fValLab} value={COPY.fValVal} badge={<ConfirmBadge />} />
+          <EscopoBlock />
+        </div>
+      </div>
+    </div>
+    <FooterBar />
+  </Paper>
+);
+
+const R11: React.FC = () => (
+  <R7Frame stamp={
+    <div style={{ position: "absolute", top: 24, right: -22, width: 188, height: 188, borderRadius: "50%", background: `radial-gradient(circle at 35% 30%, #A8323F 0%, ${T.bordo} 55%, #5A1622 100%)`, boxShadow: "0 14px 28px rgba(122,31,43,.38), inset 0 -8px 16px rgba(0,0,0,.35), inset 0 6px 10px rgba(255,255,255,.18)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: OSWALD, border: "3px double rgba(255,255,255,.45)" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 9, letterSpacing: ".32em", opacity: 0.85 }}>IA · SELO</div>
+        <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 0.85, letterSpacing: "-.02em" }}>98<span style={{ fontSize: 28 }}>%</span></div>
+        <div style={{ fontSize: 8.5, letterSpacing: ".3em", marginTop: 4, opacity: 0.85 }}>APROVADO</div>
+      </div>
+    </div>
+  } />
+);
+
+const R12: React.FC = () => (
+  <R7Frame stamp={
+    <div style={{ position: "absolute", top: 0, right: 0, width: 220, height: 220, overflow: "hidden", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", top: 38, right: -58, width: 280, transform: "rotate(45deg)", background: `linear-gradient(180deg, ${T.bordo}, #5A1622)`, color: "#fff", textAlign: "center", padding: "10px 0", boxShadow: "0 6px 16px rgba(0,0,0,.25)", fontFamily: OSWALD }}>
+        <div style={{ fontSize: 9, letterSpacing: ".36em", opacity: 0.9 }}>IA · CONFIANÇA</div>
+        <div style={{ fontSize: 30, fontWeight: 700, letterSpacing: ".02em", lineHeight: 1 }}>98% APROVADO</div>
+      </div>
+    </div>
+  } />
+);
+
+const R13: React.FC = () => (
+  <R7Frame stamp={
+    <div style={{ position: "absolute", top: 40, right: -16, transform: "rotate(-6deg)" }}>
+      <svg width="210" height="170" viewBox="0 0 210 170">
+        <defs>
+          <path id="r13arc" d="M 30 85 A 75 60 0 0 1 180 85" fill="none" />
+          <path id="r13arc2" d="M 30 145 A 75 60 0 0 1 180 145" fill="none" />
+        </defs>
+        <ellipse cx="105" cy="85" rx="92" ry="72" fill="none" stroke={T.bordo} strokeWidth="3" />
+        <ellipse cx="105" cy="85" rx="82" ry="62" fill="none" stroke={T.bordo} strokeWidth="1.5" />
+        <text fill={T.bordo} fontFamily={OSWALD} fontSize="11" letterSpacing="4">
+          <textPath href="#r13arc" startOffset="50%" textAnchor="middle">CONFIANÇA · IA · SUPERVISIONADA</textPath>
+        </text>
+        <text fill={T.bordo} fontFamily={OSWALD} fontSize="10" letterSpacing="3">
+          <textPath href="#r13arc2" startOffset="50%" textAnchor="middle">DOC AUTENTICADO · 2026</textPath>
+        </text>
+        <text x="105" y="100" textAnchor="middle" fill={T.bordo} fontFamily={OSWALD} fontWeight="700" fontSize="52" letterSpacing="-1">98%</text>
+      </svg>
+    </div>
+  } />
+);
+
+const R14: React.FC = () => (
+  <R7Frame stamp={
+    <div style={{ position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%) rotate(-3deg)", border: `4px solid ${T.bordo}`, padding: "8px 22px 6px", color: T.bordo, fontFamily: OSWALD, background: "rgba(255,253,248,.92)", boxShadow: "0 8px 20px rgba(122,31,43,.22)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ fontSize: 10, letterSpacing: ".34em", writingMode: "vertical-rl", transform: "rotate(180deg)", borderRight: `2px solid ${T.bordo}`, paddingRight: 8 }}>IA · APROVADO</div>
+        <div>
+          <div style={{ fontSize: 78, fontWeight: 700, lineHeight: 0.85, letterSpacing: "-.03em" }}>98%</div>
+          <div style={{ fontSize: 9, letterSpacing: ".3em", marginTop: 2 }}>CONFIANÇA · LIMIAR 85%</div>
+        </div>
+      </div>
+    </div>
+  } />
+);
+
+const R15: React.FC = () => (
+  <R7Frame stamp={
+    <div style={{ position: "absolute", top: -18, right: -28 }}>
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <defs>
+          <path id="r15circ" d="M 110,110 m -88,0 a 88,88 0 1,1 176,0 a 88,88 0 1,1 -176,0" fill="none" />
+        </defs>
+        <circle cx="110" cy="110" r="95" fill={T.bordo} />
+        <circle cx="110" cy="110" r="78" fill="none" stroke={T.amber} strokeWidth="2" strokeDasharray="3 4" />
+        <text fill={T.amber} fontFamily={OSWALD} fontSize="12" letterSpacing="6">
+          <textPath href="#r15circ" startOffset="0">CONFIANÇA DA IA · 98% · ACIMA DO LIMIAR 85% ·</textPath>
+        </text>
+        <text x="110" y="118" textAnchor="middle" fill="#fff" fontFamily={OSWALD} fontWeight="700" fontSize="68" letterSpacing="-2">98%</text>
+        <text x="110" y="140" textAnchor="middle" fill={T.amber} fontFamily={OSWALD} fontSize="10" letterSpacing="4">APROVADO</text>
+      </svg>
+    </div>
+  } />
+);
+
+/* ───────── Launcher de variantes ───────── */
 const VariantLauncher: React.FC<{ current?: number }> = ({ current }) => (
   <div style={{ position: "sticky", top: 0, zIndex: 100, background: T.ink, padding: "10px 14px", marginBottom: 24, borderRadius: 4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 10 PARADIGMAS</Lab>
+    <Lab color={T.amber} size={9.5} spacing=".26em">REDESIGN Z6 · 15 PARADIGMAS</Lab>
     <span style={{ width: 1, height: 16, background: "#2a2a2a", margin: "0 4px" }} />
     <a href="?" style={{ fontFamily: OSWALD, fontSize: 10, letterSpacing: ".18em", padding: "6px 10px", borderRadius: 2, textDecoration: "none", background: !current ? T.amber : "transparent", color: !current ? T.ink : "#cfcfcf", border: `1px solid ${!current ? T.amber : "#2a2a2a"}` }}>
       TODAS
@@ -1245,6 +1353,11 @@ const VARIANTS: { id: number; nome: string; subtitulo: string; render: () => Rea
   { id: 8, nome: "R8 · Boarding Pass", subtitulo: "STUB PDF · DADOS · PORTÃO 98% DARK", render: () => <R8 /> },
   { id: 9, nome: "R9 · Bento PDF + 98% Hero", subtitulo: "TILE PDF GIGANTE + TILE 98% DARK GIGANTE", render: () => <R9 /> },
   { id: 10, nome: "R10 · Document Receipt", subtitulo: "PDF + RECIBO IA · 98% VERDE NO TOPO", render: () => <R10 /> },
+  { id: 11, nome: "R11 · Selo de Cera", subtitulo: "CARIMBO CIRCULAR EMBOSSED · BORDÔ", render: () => <R11 /> },
+  { id: 12, nome: "R12 · Ribbon Diagonal", subtitulo: "FAIXA DIAGONAL CANTO SUPERIOR · 98% APROVADO", render: () => <R12 /> },
+  { id: 13, nome: "R13 · Selo Cartorial Oval", subtitulo: "DUPLO ANEL · TEXTO EM ARCO · 98%", render: () => <R13 /> },
+  { id: 14, nome: "R14 · Ink Stamp Stencil", subtitulo: "CARIMBO RETANGULAR INFERIOR · TINTA BORDÔ", render: () => <R14 /> },
+  { id: 15, nome: "R15 · Badge Circular Gigante", subtitulo: "DISCO BORDÔ + TEXTO ROTACIONADO · 98%", render: () => <R15 /> },
 ];
 
 export default function MockupsHubDoc() {
