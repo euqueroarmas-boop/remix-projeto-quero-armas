@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Mockups · Numeração do carrossel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f5f1;
+    --ink:#0a0a0a;
+    --bordo:#7a1f2b;
+    --bordo-2:#5c1620;
+    --muted:#9a948c;
+    --line:#d9d4cb;
+    --bone:#efeae0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#ecebe5;color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:56px 28px 96px}
+  header h1{font-family:Oswald,sans-serif;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:32px;margin:0 0 6px}
+  header p{color:#5c554c;margin:0 0 40px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:28px;margin-bottom:22px;box-shadow:0 1px 0 #fff inset,0 14px 30px -22px rgba(0,0,0,.18)}
+  .card h2{font-family:Oswald,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--bordo);margin:0 0 4px}
+  .card .desc{font-size:13px;color:#6b6359;margin:0 0 22px}
+  .stage{display:flex;align-items:center;justify-content:center;min-height:110px;padding:14px 8px;background:#fbfaf7;border:1px dashed #e3ddd2;border-radius:10px;overflow:hidden}
+
+  /* ---------- 1. Pílulas finas (linha) ---------- */
+  .m1{display:flex;gap:14px;align-items:center}
+  .m1 .step{font-family:'JetBrains Mono',monospace;font-size:12px;color:#b8b1a6;letter-spacing:.1em;position:relative;padding-bottom:10px}
+  .m1 .step::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#e2dccf;border-radius:2px}
+  .m1 .step.active{color:var(--bordo)}
+  .m1 .step.active::after{background:var(--bordo)}
+
+  /* ---------- 2. Stepper conectado ---------- */
+  .m2{display:flex;align-items:center;gap:0}
+  .m2 .dot{width:28px;height:28px;border-radius:50%;border:1.5px solid #d6cfc1;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;font-size:12px;color:#a8a195}
+  .m2 .dot.done{background:var(--bordo);border-color:var(--bordo);color:#fff}
+  .m2 .dot.active{border-color:var(--bordo);color:var(--bordo);box-shadow:0 0 0 4px rgba(122,31,43,.12)}
+  .m2 .bar{width:34px;height:2px;background:#e2dccf}
+  .m2 .bar.done{background:var(--bordo)}
+
+  /* ---------- 3. Selo "08 / 09" tipográfico ---------- */
+  .m3{display:flex;align-items:baseline;gap:10px;font-family:Oswald,sans-serif}
+  .m3 .cur{font-size:64px;font-weight:700;line-height:.9;color:var(--bordo);letter-spacing:-.02em}
+  .m3 .slash{font-size:32px;color:#cfc8ba}
+  .m3 .tot{font-size:24px;color:#7a7368;font-weight:500}
+  .m3 .label{margin-left:14px;text-transform:uppercase;letter-spacing:.2em;font-size:11px;color:#9a948c;font-family:Inter,sans-serif;align-self:center}
+
+  /* ---------- 4. Trilho com barra de progresso ---------- */
+  .m4{width:520px;max-width:90%}
+  .m4 .nums{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a948c;margin-bottom:8px;letter-spacing:.08em}
+  .m4 .nums b{color:var(--bordo)}
+  .m4 .rail{height:4px;background:#e7e1d4;border-radius:99px;position:relative;overflow:hidden}
+  .m4 .fill{position:absolute;inset:0 22% 0 0;background:linear-gradient(90deg,var(--bordo),#a93340);border-radius:99px}
+  .m4 .ticks{position:absolute;inset:0;display:flex;justify-content:space-between;padding:0 2px}
+  .m4 .ticks i{width:2px;height:4px;background:#d3ccbd}
+
+  /* ---------- 5. Cartas de baralho (estilo carteado) ---------- */
+  .m5{display:flex;gap:8px}
+  .m5 .c{width:34px;height:46px;border-radius:6px;border:1px solid #ddd6c7;background:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#b6afa2;position:relative;box-shadow:0 1px 0 #fff inset}
+  .m5 .c::before,.m5 .c::after{content:"";position:absolute;width:6px;height:6px;border:1px solid #e6dfd0;border-radius:1px}
+  .m5 .c::before{top:3px;left:3px}
+  .m5 .c::after{bottom:3px;right:3px}
+  .m5 .c.active{background:var(--bordo);border-color:var(--bordo-2);color:#fff;transform:translateY(-3px);box-shadow:0 8px 14px -8px rgba(122,31,43,.6)}
+  .m5 .c.active::before,.m5 .c.active::after{border-color:rgba(255,255,255,.45)}
+
+  /* ---------- 6. Roleta horizontal (números deslizantes) ---------- */
+  .m6{display:flex;align-items:center;gap:18px}
+  .m6 .reel{position:relative;width:140px;height:48px;overflow:hidden;border-top:1px solid #e1dbcc;border-bottom:1px solid #e1dbcc;background:linear-gradient(180deg,#fff,#faf8f2)}
+  .m6 .reel::before,.m6 .reel::after{content:"";position:absolute;top:0;bottom:0;width:36px;z-index:2;pointer-events:none}
+  .m6 .reel::before{left:0;background:linear-gradient(90deg,#faf8f2,transparent)}
+  .m6 .reel::after{right:0;background:linear-gradient(-90deg,#faf8f2,transparent)}
+  .m6 .row{display:flex;height:100%;align-items:center;gap:22px;padding:0 18px;transform:translateX(-180px);font-family:Oswald,sans-serif;font-size:22px;color:#bdb6a9}
+  .m6 .row span.active{color:var(--bordo);font-size:30px}
+  .m6 .total{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8a8276;letter-spacing:.1em}
+
+  /* ---------- 7. Hexágonos arsenal ---------- */
+  .m7{display:flex;gap:10px}
+  .m7 .hex{width:38px;height:44px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#efeadd;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:#a59d8e;font-size:13px;position:relative}
+  .m7 .hex.done{background:#2a0d12;color:#d6a64b}
+  .m7 .hex.active{background:var(--bordo);color:#fff;transform:scale(1.08)}
+
+  /* ---------- 8. Munição (cartuchos) ---------- */
+  .m8{display:flex;gap:6px;align-items:flex-end}
+  .m8 .b{width:14px;height:38px;border-radius:3px 3px 6px 6px;background:linear-gradient(180deg,#e6dfcf 0 60%,#caa05a 60% 100%);position:relative;opacity:.55}
+  .m8 .b::after{content:"";position:absolute;left:0;right:0;top:60%;height:1px;background:rgba(0,0,0,.18)}
+  .m8 .b.done{opacity:.85}
+  .m8 .b.active{height:46px;opacity:1;background:linear-gradient(180deg,#7a1f2b 0 55%,#d6a64b 55% 100%);box-shadow:0 8px 12px -8px rgba(122,31,43,.55)}
+  .m8 .num{margin-left:14px;font-family:Oswald,sans-serif;font-weight:700;color:#0a0a0a;align-self:center}
+  .m8 .num b{color:var(--bordo);font-size:22px}
+  .m8 .num span{color:#9a948c;font-size:13px;margin-left:4px}
+
+  /* ---------- 9. Ticker monoespaçado ---------- */
+  .m9{font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:14px;background:#0a0a0a;color:#d6a64b;padding:10px 18px;border-radius:8px;letter-spacing:.18em;font-size:13px}
+  .m9 .dot{width:6px;height:6px;border-radius:50%;background:#d6a64b;box-shadow:0 0 8px #d6a64b}
+  .m9 .seq{color:#5c554c}
+  .m9 .seq b{color:#fff;background:var(--bordo);padding:2px 6px;border-radius:3px;margin:0 2px}
+
+  /* ---------- 10. Arco radial ---------- */
+  .m10{display:flex;align-items:center;gap:16px}
+  .m10 .ring{width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--bordo) 0 320deg,#e7e1d4 320deg 360deg);display:flex;align-items:center;justify-content:center;position:relative}
+  .m10 .ring::after{content:"";position:absolute;inset:6px;border-radius:50%;background:#fbfaf7}
+  .m10 .ring b{position:relative;z-index:1;font-family:Oswald,sans-serif;font-weight:700;color:var(--bordo);font-size:20px}
+  .m10 .meta{font-family:Inter,sans-serif}
+  .m10 .meta .t{text-transform:uppercase;letter-spacing:.18em;font-size:10px;color:#9a948c}
+  .m10 .meta .v{font-family:Oswald,sans-serif;font-size:18px;font-weight:700;color:#0a0a0a;margin-top:2px}
+  .m10 .meta .v span{color:#9a948c;font-weight:500;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Numeração do carrossel · 10 mockups</h1>
+    <p>Estado: passo 08 de 09. Identidade Quero Armas (preto + bordô #7A1F2B sobre papel #f6f5f1).</p>
+  </header>
+
+  <div class="card">
+    <h2>01 · Pílulas finas com sublinhado</h2>
+    <p class="desc">Tipografia mono pequena, sublinhado bordô marca a posição. Discreto e editorial.</p>
+    <div class="stage">
+      <div class="m1">
+        <span class="step">01</span><span class="step">02</span><span class="step">03</span><span class="step">04</span>
+        <span class="step">05</span><span class="step">06</span><span class="step">07</span>
+        <span class="step active">08</span><span class="step">09</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>02 · Stepper conectado</h2>
+    <p class="desc">Bolinhas preenchidas para concluídos, anel duplo no ativo, barras de conexão.</p>
+    <div class="stage">
+      <div class="m2">
+        <span class="dot done">1</span><span class="bar done"></span>
+        <span class="dot done">2</span><span class="bar done"></span>
+        <span class="dot done">3</span><span class="bar done"></span>
+        <span class="dot done">4</span><span class="bar done"></span>
+        <span class="dot done">5</span><span class="bar done"></span>
+        <span class="dot done">6</span><span class="bar done"></span>
+        <span class="dot done">7</span><span class="bar done"></span>
+        <span class="dot active">8</span><span class="bar"></span>
+        <span class="dot">9</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>03 · Selo tipográfico 08 / 09</h2>
+    <p class="desc">Foco no número atual, formato editorial. Mínimo, alto impacto.</p>
+    <div class="stage">
+      <div class="m3"><span class="cur">08</span><span class="slash">/</span><span class="tot">09</span><span class="label">Etapa atual</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>04 · Trilho com barra de progresso</h2>
+    <p class="desc">Barra preenchida + ticks discretos. Bom para fluxos longos.</p>
+    <div class="stage">
+      <div class="m4">
+        <div class="nums"><span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span><span>07</span><b>08</b><span>09</span></div>
+        <div class="rail"><div class="fill"></div><div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>05 · Cartas de baralho</h2>
+    <p class="desc">Cards verticais; o ativo sobe e ganha cor bordô. Visual tátil.</p>
+    <div class="stage">
+      <div class="m5">
+        <div class="c">01</div><div class="c">02</div><div class="c">03</div><div class="c">04</div>
+        <div class="c">05</div><div class="c">06</div><div class="c">07</div>
+        <div class="c active">08</div><div class="c">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>06 · Roleta horizontal</h2>
+    <p class="desc">Números deslizam horizontalmente; o ativo cresce no centro. Sensação cinética.</p>
+    <div class="stage">
+      <div class="m6">
+        <div class="reel">
+          <div class="row">
+            <span>05</span><span>06</span><span>07</span><span class="active">08</span><span>09</span>
+          </div>
+        </div>
+        <span class="total">08 / 09</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>07 · Hexágonos arsenal</h2>
+    <p class="desc">Forma hex remete a munição / engenharia. Concluídos em preto+brass, ativo bordô.</p>
+    <div class="stage">
+      <div class="m7">
+        <div class="hex done">01</div><div class="hex done">02</div><div class="hex done">03</div>
+        <div class="hex done">04</div><div class="hex done">05</div><div class="hex done">06</div>
+        <div class="hex done">07</div><div class="hex active">08</div><div class="hex">09</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>08 · Cartuchos de munição</h2>
+    <p class="desc">Metáfora literal: cada etapa é um cartucho. O ativo é maior, com ponta brass + corpo bordô.</p>
+    <div class="stage">
+      <div class="m8">
+        <div class="b done"></div><div class="b done"></div><div class="b done"></div>
+        <div class="b done"></div><div class="b done"></div><div class="b done"></div>
+        <div class="b done"></div><div class="b active"></div><div class="b"></div>
+        <div class="num"><b>08</b><span>/ 09</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>09 · Ticker terminal</h2>
+    <p class="desc">Linha mono escura, ponto pulsante brass, etapa ativa em bordô. Tom técnico/SOC.</p>
+    <div class="stage">
+      <div class="m9">
+        <span class="dot"></span>
+        <span>STEP</span>
+        <span class="seq">01 · 02 · 03 · 04 · 05 · 06 · 07 ·<b>08</b>· 09</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>10 · Arco radial</h2>
+    <p class="desc">Anel de progresso (8/9 ≈ 320°) + leitura textual ao lado. Compacto e moderno.</p>
+    <div class="stage">
+      <div class="m10">
+        <div class="ring"><b>08</b></div>
+        <div class="meta"><div class="t">Etapa</div><div class="v">08 <span>de 09</span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
