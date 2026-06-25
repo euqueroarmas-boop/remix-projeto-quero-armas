@@ -911,14 +911,14 @@ export default function QAClientePortalPage() {
   // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
     { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
+    { key: "arsenal" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "primary" as const },
     { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
     { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
     { key: "processos" as const, label: "Meus processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "arsenal" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
-    { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "secondary" as const },
-    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
   ], []);
 
   // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
@@ -1328,40 +1328,10 @@ export default function QAClientePortalPage() {
           </button>
         )}
 
-        {/* Nav com grupos Principal / Secundário */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden">
-          {!effectiveCollapsed && (
-            <div className={`mx-4 mt-3 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Principal</div>
-          )}
-          {navItems.filter(i => i.group === "primary").map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => goSection(item.key)}
-                title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : `mx-3 mb-1 w-[calc(100%-24px)] gap-3 rounded-[7px] px-3 ${sidebarTheme.heroImage ? "bg-black/50 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`} py-2 text-[12px] font-bold border-l-2 transition ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF] hover:bg-black/65" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
-                style={active ? {
-                  background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}12 100%)`,
-                  border: `1px solid ${sidebarTheme.accent}8C`,
-                  borderRadius: "8px",
-                  borderLeftColor: sidebarTheme.accent,
-                } : undefined}
-              >
-                <Icon className="h-4 w-4 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
-                {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
-              </button>
-            );
-          })}
-          {!effectiveCollapsed && (
-            <div className={`mx-4 mt-4 mb-1.5 text-[9.5px] tracking-[0.18em] font-bold ${sidebarTheme.heroImage ? "w-fit rounded bg-black/55 px-2 py-1 text-[#E5C25B] backdrop-blur-[2px] shadow-[0_1px_6px_rgba(0,0,0,0.45)] ring-1 ring-white/10 drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : "text-[#8a6a2a]"}`} style={{ fontFamily: "Oswald, sans-serif" }}>Secundário</div>
-          )}
-          {effectiveCollapsed && <div className="my-2 mx-3 border-t border-[#1a1a1a]" />}
-          {navItems.filter(i => i.group === "secondary").map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.key;
             return (
               <button
                 key={item.key}
