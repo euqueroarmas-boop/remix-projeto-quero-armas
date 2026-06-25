@@ -1422,9 +1422,9 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#E8E8E8] hover:text-white py-2.5 px-3 rounded-lg transition bg-white/10 hover:bg-white/20 ring-1 ring-white/20 hover:ring-white/40 shadow-sm"
+              className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#7A7A7A] hover:text-white py-2 transition"
             >
-              <LogOut className="h-3.5 w-3.5" /> Sair
+              <LogOut className="h-3 w-3" /> Sair
             </button>
           </div>
         )}
