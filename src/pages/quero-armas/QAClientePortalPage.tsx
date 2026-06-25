@@ -52,6 +52,11 @@ import {
   getStoredSidebarTheme,
   setStoredSidebarTheme,
   type QASidebarTheme,
+  QA_CUSTOM_SLOTS,
+  getCustomThemes,
+  setCustomThemeSlot,
+  customToTheme,
+  type QACustomTheme,
 } from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
