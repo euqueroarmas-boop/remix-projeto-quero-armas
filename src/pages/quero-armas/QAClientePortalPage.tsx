@@ -1292,16 +1292,16 @@ export default function QAClientePortalPage() {
                 </div>
               </div>
               {!effectiveCollapsed && (
-                <div className={`min-w-0 flex-1 ${sidebarTheme.heroImage ? "rounded-md bg-black/45 px-2 py-1 backdrop-blur-[2px] shadow-[0_1px_8px_rgba(0,0,0,0.45)] ring-1 ring-white/10" : ""}`}>
+                <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
-                    style={{ fontFamily: "Oswald, sans-serif" }}
+                    className="text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
+                    style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className={`text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}
-                    style={{ fontFamily: "Oswald, sans-serif" }}
+                    className="text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase"
+                    style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
                   </div>
@@ -1371,9 +1371,19 @@ export default function QAClientePortalPage() {
           </div>
         ) : (
           <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-white/15">
-            <div className={`mb-2 ${sidebarTheme.heroImage ? "rounded bg-black/50 px-2 py-1.5 backdrop-blur-[2px] shadow-[0_1px_7px_rgba(0,0,0,0.42)] ring-1 ring-white/10" : ""}`}>
-              <div className={`text-[12px] font-bold text-white ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Precisa de ajuda?</div>
-              <div className={`text-[10.5px] text-[#E6DFCE] ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""}`}>Atendimento direto pelo WhatsApp</div>
+            <div className="mb-2">
+              <div
+                className="text-[12px] font-bold text-white"
+                style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
+              >
+                Precisa de ajuda?
+              </div>
+              <div
+                className="text-[10.5px] text-[#E6DFCE]"
+                style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
+              >
+                Atendimento direto pelo WhatsApp
+              </div>
             </div>
             <a
               href="https://wa.me/5511978481919"
