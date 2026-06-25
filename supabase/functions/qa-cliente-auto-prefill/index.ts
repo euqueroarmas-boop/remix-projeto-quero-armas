@@ -14,7 +14,10 @@
 //   • Se origem é "manual_override_ai" (cliente CORRIGIU uma sugestão da IA)
 //     → NÃO toca. A correção humana prevalece.
 //
-// Marca cada documento processado em `prefill_consumed_at` para não repetir.
+// Marca cada documento processado em `prefill_consumed_at` para auditoria, mas
+// reprocessa dados já extraídos em aberturas futuras. Isso permite que novos
+// mapeamentos/correções preencham campos que antes ficaram faltando, sem chamar
+// IA novamente — custo zero.
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
@@ -293,12 +296,13 @@ Deno.serve(async (req) => {
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
-    // Busca documentos do cliente ainda não consumidos para prefill
+    // Busca documentos do cliente com dados extraídos para prefill. Não filtra
+    // por `prefill_consumed_at`: se uma versão antiga consumiu o documento sem
+    // mapear todos os campos, o portal precisa reaproveitar a extração existente.
     const { data: docs, error: docsErr } = await admin
       .from("qa_documentos_cliente")
       .select("id, tipo_documento, ia_dados_extraidos, created_at")
       .eq("qa_cliente_id", cliente.id)
-      .is("prefill_consumed_at", null)
       .not("ia_dados_extraidos", "is", null)
       .order("created_at", { ascending: true })
       .limit(50);
