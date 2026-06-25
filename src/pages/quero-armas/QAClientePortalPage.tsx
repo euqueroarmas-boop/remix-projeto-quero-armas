@@ -1300,8 +1300,8 @@ export default function QAClientePortalPage() {
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[9px] text-[#D8D2C2] tracking-[0.2em] mt-0.5 uppercase"
-                    style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
+                    className="text-[11px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase"
+                    style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
                   </div>
