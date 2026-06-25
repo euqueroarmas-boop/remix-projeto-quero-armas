@@ -13,6 +13,7 @@ import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
 const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
 const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "MockupsPreview");
+const MockupsHubDoc = lazyRetry(() => import("./pages/MockupsHubDoc.tsx"), "MockupsHubDoc");
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
 
                   {/* Preview de mockups */}
                   <Route path="/mockups-preview" element={<MockupsPreview />} />
+                  <Route path="/mockups-hub-doc" element={<MockupsHubDoc />} />
 
                   {/* Quero Armas (todas as rotas) */}
                   <Route path="/*" element={<QARoutes />} />
