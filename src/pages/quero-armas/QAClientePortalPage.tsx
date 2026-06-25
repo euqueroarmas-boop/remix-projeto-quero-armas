@@ -48,17 +48,14 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
-import CustomThemesUploader from "@/components/quero-armas/portal/CustomThemesUploader";
 import {
   QA_SIDEBAR_THEMES,
-  getStoredSidebarTheme,
-  setStoredSidebarTheme,
+  getPersonalThemeKey,
+  setPersonalThemeKey,
+  fetchSidebarThemesFromDb,
+  mergeThemes,
+  resolveEffectiveTheme,
   type QASidebarTheme,
-  QA_CUSTOM_SLOTS,
-  getCustomThemes,
-  setCustomThemeSlot,
-  customToTheme,
-  type QACustomTheme,
 } from "@/components/quero-armas/portal/sidebarThemes";
 
 const formatDate = (d: string | null) => {
