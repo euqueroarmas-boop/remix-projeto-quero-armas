@@ -13,15 +13,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const MAX_TENTATIVAS = 3;
+
 async function processarLote(supabase: any, batchSize: number, uf?: string, tipo?: string) {
   let q = supabase
     .from("qa_psico_credenciados")
-    .select("id, uf, endereco")
+    .select("id, uf, endereco, geocode_tentativas")
     .eq("ativo", true)
     .is("latitude", null)
+    .or("geocode_falhou.is.null,geocode_falhou.eq.false")
+    .lt("geocode_tentativas", MAX_TENTATIVAS)
     .not("endereco", "is", null)
     .neq("endereco", "")
     .ilike("endereco", "%,%")
+    .order("geocode_tentativas", { ascending: true })
     .order("id", { ascending: true })
     .limit(batchSize);
   if (uf) q = q.eq("uf", uf);
@@ -29,30 +34,45 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
   const { data: pendentes, error } = await q;
   if (error) throw new Error(error.message);
   const rows = pendentes || [];
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, marcadosFalha = 0;
   for (const r of rows) {
+    const tentativas = (r.geocode_tentativas ?? 0) + 1;
     try {
       const meta = await geocodeEnderecoMeta(supabase, r.endereco, r.uf);
       if (meta.result) {
         await supabase.from("qa_psico_credenciados")
-          .update({ latitude: meta.result.lat, longitude: meta.result.lng })
+          .update({
+            latitude: meta.result.lat,
+            longitude: meta.result.lng,
+            geocode_falhou: false,
+            geocode_tentativas: tentativas,
+          })
           .eq("id", r.id);
         ok++;
       } else {
-        // Marca com sentinel (-91, -91) — fora do range válido — para não bloquear
-        // a paginação do backfill. A RPC qa_psico_credenciados_proximos só considera
-        // pontos dentro do raio, então o sentinel é sempre descartado.
+        // Espelha o iat-geocode-watcher: só marca falha permanente após MAX_TENTATIVAS
+        // (evita penalizar falha transitória do Nominatim por throttling 1 req/s).
+        const atingiuLimite = tentativas >= MAX_TENTATIVAS;
         await supabase.from("qa_psico_credenciados")
-          .update({ latitude: -91, longitude: -91 })
+          .update({
+            geocode_tentativas: tentativas,
+            geocode_falhou: atingiuLimite ? true : false,
+          })
           .eq("id", r.id);
         fail++;
+        if (atingiuLimite) marcadosFalha++;
       }
       if (meta.hitNetwork) await nominatimDelay();
     } catch (_e) {
+      const atingiuLimite = tentativas >= MAX_TENTATIVAS;
       await supabase.from("qa_psico_credenciados")
-        .update({ latitude: -91, longitude: -91 })
+        .update({
+          geocode_tentativas: tentativas,
+          geocode_falhou: atingiuLimite ? true : false,
+        })
         .eq("id", r.id);
       fail++;
+      if (atingiuLimite) marcadosFalha++;
       await nominatimDelay();
     }
   }
@@ -61,12 +81,14 @@ async function processarLote(supabase: any, batchSize: number, uf?: string, tipo
     .select("id", { count: "exact", head: true })
     .eq("ativo", true)
     .is("latitude", null)
+    .or("geocode_falhou.is.null,geocode_falhou.eq.false")
+    .lt("geocode_tentativas", MAX_TENTATIVAS)
     .not("endereco", "is", null)
     .neq("endereco", "");
   if (uf) q2 = q2.eq("uf", uf);
   if (tipo) q2 = q2.eq("tipo", tipo);
   const { count: restantes } = await q2;
-  return { processados: rows.length, ok, fail, restantes: restantes ?? 0 };
+  return { processados: rows.length, ok, fail, marcadosFalha, restantes: restantes ?? 0 };
 }
 
 Deno.serve(async (req) => {

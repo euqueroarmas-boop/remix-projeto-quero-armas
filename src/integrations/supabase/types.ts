@@ -7710,6 +7710,8 @@ export type Database = {
           emails: string[]
           endereco: string | null
           fetched_at: string
+          geocode_falhou: boolean
+          geocode_tentativas: number
           hash_conteudo: string
           id: string
           latitude: number | null
@@ -7733,6 +7735,8 @@ export type Database = {
           emails?: string[]
           endereco?: string | null
           fetched_at?: string
+          geocode_falhou?: boolean
+          geocode_tentativas?: number
           hash_conteudo: string
           id?: string
           latitude?: number | null
@@ -7756,6 +7760,8 @@ export type Database = {
           emails?: string[]
           endereco?: string | null
           fetched_at?: string
+          geocode_falhou?: boolean
+          geocode_tentativas?: number
           hash_conteudo?: string
           id?: string
           latitude?: number | null
