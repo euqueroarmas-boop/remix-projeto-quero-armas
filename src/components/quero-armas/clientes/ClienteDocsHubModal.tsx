@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
+import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -1584,22 +1585,22 @@ export function ClienteDocsHubModal({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-border bg-background p-0 text-foreground shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
+        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
-        <div className="shrink-0 border-b border-border bg-muted/40 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary shadow-sm">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#7A1F2B]/10 text-[#7A1F2B]">
               <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">
+              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-[#7A1F2B]">
                 Hub documental
               </div>
-              <h2 className="font-heading text-[22px] font-semibold uppercase leading-none tracking-[0.06em] text-foreground">
+              <h2 className="font-heading text-[22px] font-bold uppercase leading-none tracking-[0.06em] text-[#0A0A0A]">
                 Adicionar Documento
               </h2>
-              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-muted-foreground">
+              <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-[#4A4A4A]">
                 Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
               </p>
             </div>
@@ -1607,7 +1608,7 @@ export function ClienteDocsHubModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:bg-[#F7F7F7] hover:text-[#0A0A0A]"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
@@ -1615,77 +1616,54 @@ export function ClienteDocsHubModal({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-4 [-webkit-overflow-scrolling:touch]">
-          {/* Ficha catalográfica horizontal — 3 colunas no desktop: Arquivo · Análise · Dados */}
-          <div className="space-y-4 pb-4 lg:space-y-0 lg:grid lg:grid-cols-3 lg:gap-4 lg:items-start">
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Arquivo</div>
-                  <div className="mt-1 text-sm text-foreground">A IA identifica o tipo automaticamente</div>
-                </div>
-                {classificacao && tipoAtual ? (
-                  <span className="rounded-full bg-accent/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent-foreground">
-                    {tipoAtual.short}
-                  </span>
-                ) : null}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-5 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
+          {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
+          <div className="space-y-5 pb-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,260px)_minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-5 lg:items-start">
+          {/* ───────── COL 1 · DOSSIÊ ───────── */}
+          <div className="space-y-3 lg:border-r lg:border-[#EFEFEF] lg:pr-5">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.28em] text-[#7A7A7A]">
+                Dossiê
               </div>
+              {classificacao && tipoAtual ? (
+                <span className="font-heading text-[9px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+                  {tipoAtual.short}
+                </span>
+              ) : null}
+            </div>
+            <div className="font-heading text-[14px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
+              {tipoAtual?.label || "Aguardando classificação"}
+            </div>
 
-              {!file ? (
-                <div className="space-y-2.5">
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      setDragOver(true);
-                    }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
-                    className={cn(
-                      "cursor-pointer rounded-2xl border-2 border-dashed p-6 text-center transition-all",
-                      dragOver ? "border-accent bg-accent/8" : "border-border bg-muted/45 hover:border-accent hover:bg-accent/6",
-                    )}
-                  >
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/18 text-accent-foreground shadow-sm">
-                      <Upload className="h-5 w-5" />
-                    </div>
-                    <div className="mt-4 text-base font-semibold text-foreground">Toque ou arraste o arquivo</div>
-                    <div className="mt-1 text-sm text-muted-foreground">JPG · PNG · PDF · até 20MB</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => cameraInputRef.current?.click()}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted active:bg-muted"
-                  >
-                    <Camera className="h-4 w-4" />
-                    Tirar foto agora
-                  </button>
+            {/* Card de arquivo compacto (apenas quando há arquivo) */}
+            {file ? (
+              <div className="flex items-center gap-2.5 border border-[#E5E5E5] bg-white p-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#F7F7F7] text-[#7A1F2B]">
+                  {file.type.startsWith("image/") ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
-              ) : (
-                <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-background text-accent-foreground shadow-sm">
-                    {file.type.startsWith("image/") ? <ImageIcon className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-heading text-[11px] font-bold uppercase tracking-[0.04em] text-[#0A0A0A]">
+                    {file.name}
                   </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-foreground">{file.name}</div>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-accent-foreground" />
-                      {(file.size / 1024).toFixed(0)} KB
-                    </div>
+                  <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#7A7A7A]">
+                    <CheckCircle2 className="h-3 w-3 text-[#2F8F4A]" />
+                    {(file.size / 1024).toFixed(0)} KB
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setFile(null)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label="Remover arquivo"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                  aria-label="Remover arquivo"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="border border-dashed border-[#E5E5E5] bg-[#FAFAFA] p-3 text-[11px] leading-relaxed text-[#7A7A7A]">
+                Anexe um arquivo no painel ao lado — a IA identifica o tipo e preenche os campos automaticamente.
+              </div>
+            )}
 
               <input
                 ref={fileInputRef}
@@ -1703,17 +1681,10 @@ export function ClienteDocsHubModal({
                 className="hidden"
               />
 
-              {extracting && (
-                <div className="mt-3 flex items-center justify-center gap-2 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Lendo o documento e identificando o tipo…
-                </div>
-              )}
-
               {!extracting && classificacao && (
                 <div
                   className={cn(
-                    "mt-3 rounded-2xl border p-3",
+                    "rounded-md border p-3",
                     autoResult?.safe === false
                       ? "border-amber-300 bg-amber-50"
                       : autoResult?.safe
@@ -1732,10 +1703,10 @@ export function ClienteDocsHubModal({
                       )
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
                         {autoResult?.safe ? "Cadastrado automaticamente no Arsenal" : "Tipo identificado pela IA"}
                       </div>
-                      <div className="mt-0.5 text-sm font-bold uppercase text-foreground">
+                      <div className="mt-0.5 font-heading text-[13px] font-bold uppercase tracking-[0.04em] text-[#0A0A0A]">
                         {tipoAtual?.label || form.tipo_documento.toUpperCase()}{" "}
                         <span className="text-xs font-medium text-muted-foreground">
                           · {Math.round((classificacao.confianca || 0) * 100)}% confiança
@@ -1840,9 +1811,27 @@ export function ClienteDocsHubModal({
                   </div>
                 </div>
               )}
-            </div>
           </div>
 
+          {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
+          <div className="min-h-[460px] lg:min-h-[560px]">
+            <HubDocPreviewSlot
+              file={file}
+              confianca={classificacao?.confianca ?? null}
+              fileNameDisplay={file?.name}
+              onPickFile={() => fileInputRef.current?.click()}
+              onPickCamera={() => cameraInputRef.current?.click()}
+              onRemove={() => setFile(null)}
+              onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              dragOver={dragOver}
+              extracting={extracting}
+            />
+          </div>
+
+          {/* ───────── COL 3 · DADOS ───────── */}
+          <div className="space-y-4 lg:border-l lg:border-[#EFEFEF] lg:pl-5">
           <div className="space-y-4">
             <SectionTitle title="Dados do documento" />
 
@@ -2420,14 +2409,15 @@ export function ClienteDocsHubModal({
             </div>
           </div>
           </div>
+          </div>
         </div>
 
-        <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
+        <div className="shrink-0 border-t-2 border-[#7A1F2B] bg-white px-4 py-4 sm:px-6">
           {autoResult?.safe ? (
             <div className="flex">
               <Button
                 onClick={onClose}
-                className="h-11 flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+                className="h-11 flex-1 rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#7A1F2B]"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
@@ -2437,7 +2427,7 @@ export function ClienteDocsHubModal({
             <Button
               variant="outline"
               onClick={onClose}
-              className="h-11 flex-1 rounded-2xl border-border bg-background text-foreground hover:bg-muted"
+              className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
             >
               Cancelar
             </Button>
@@ -2450,7 +2440,7 @@ export function ClienteDocsHubModal({
                 (temApontamento && reconheceApontamento === null) ||
                 (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
               }
-              className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               {saving
