@@ -1585,7 +1585,7 @@ export function ClienteDocsHubModal({
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
-        className="w-[calc(100vw-1rem)] max-w-xl lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
+        className="w-[calc(100vw-1rem)] max-w-xl md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
         <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-start gap-3">
@@ -1618,9 +1618,9 @@ export function ClienteDocsHubModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-5 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
           {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
-          <div className="space-y-5 pb-4 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,260px)_minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-5 lg:items-start">
+          <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,220px)_minmax(0,1.45fr)_minmax(0,1fr)] md:gap-4 md:items-start lg:grid-cols-[minmax(0,260px)_minmax(0,1.55fr)_minmax(0,1fr)] lg:gap-5">
           {/* ───────── COL 1 · DOSSIÊ ───────── */}
-          <div className="space-y-3 lg:border-r lg:border-[#EFEFEF] lg:pr-5">
+          <div className="space-y-3 md:border-r md:border-[#EFEFEF] md:pr-4 lg:pr-5">
             <div className="flex items-baseline justify-between gap-2">
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.28em] text-[#7A7A7A]">
                 Dossiê
@@ -1814,7 +1814,7 @@ export function ClienteDocsHubModal({
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="min-h-[460px] lg:min-h-[560px]">
+          <div className="min-h-[460px] md:min-h-[520px] lg:min-h-[560px]">
             <HubDocPreviewSlot
               file={file}
               confianca={classificacao?.confianca ?? null}
