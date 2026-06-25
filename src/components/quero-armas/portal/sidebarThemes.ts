@@ -163,10 +163,15 @@ export function customToTheme(c: QACustomTheme): QASidebarTheme {
     key: c.key,
     label: c.label,
     description: "Tema personalizado enviado por upload.",
-    // Véu escuro por cima da imagem garante legibilidade do texto branco do menu.
-    bg: `linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.78) 60%, rgba(0,0,0,0.88) 100%), url("${c.image}") center/cover no-repeat, #0A0A0A`,
+    // HARMONIA: a imagem vira "hero" no topo (~220px atrás da logo) e funde em
+    // preto sólido nos itens do menu — garante legibilidade total dos itens
+    // sem perder a identidade visual da imagem enviada.
+    bg:
+      `linear-gradient(180deg, rgba(10,10,10,0.35) 0%, rgba(10,10,10,0.55) 35%, rgba(10,10,10,0.95) 70%, #0A0A0A 78%, #0A0A0A 100%), ` +
+      `url("${c.image}") top center / 260px 260px no-repeat, ` +
+      `#0A0A0A`,
     accent: "#D6A64B",
-    stripe: "linear-gradient(90deg, rgba(255,255,255,0.0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.0) 100%)",
+    stripe: "linear-gradient(90deg, #D6A64B 0%, #7A1F2B 100%)",
   };
 }
 
