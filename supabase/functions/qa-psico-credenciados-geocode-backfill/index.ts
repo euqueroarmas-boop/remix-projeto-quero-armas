@@ -83,8 +83,19 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* vazio */ }
   const batchSize = Math.min(Number(body?.batchSize) || 15, 50);
   const uf = body?.uf ? String(body.uf).toUpperCase() : undefined;
+  const loop = Boolean(body?.loop);
   try {
     const res = await processarLote(supabase, batchSize, uf);
+    // Encadeia o próximo lote sem aguardar para não estourar o timeout (espelha o IAT).
+    if (loop && res.restantes > 0) {
+      const fnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/qa-psico-credenciados-geocode-backfill`;
+      const auth = `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+      fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: auth },
+        body: JSON.stringify({ batchSize, loop: true, uf }),
+      }).catch(() => {});
+    }
     return new Response(JSON.stringify(res), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
