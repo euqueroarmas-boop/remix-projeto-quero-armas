@@ -13,24 +13,53 @@ import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } fr
 
 const DOC_BUCKET = "qa-documentos";
 
+function parseDateUTC(d: string | null | undefined): Date | null {
+  if (!d) return null;
+  const iso = String(d).trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) {
+    const dt = new Date(Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3])));
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  const br = String(d).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) {
+    const dt = new Date(Date.UTC(Number(br[3]), Number(br[2]) - 1, Number(br[1])));
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+  return null;
+}
+
+function addOneYearISO(iso: string | null | undefined): string | null {
+  const base = parseDateUTC(iso);
+  if (!base) return null;
+  const venc = new Date(Date.UTC(base.getUTCFullYear() + 1, base.getUTCMonth(), base.getUTCDate()));
+  return `${venc.getUTCFullYear()}-${String(venc.getUTCMonth() + 1).padStart(2, "0")}-${String(venc.getUTCDate()).padStart(2, "0")}`;
+}
+
+function isLaudoExame(doc: any): boolean {
+  return /laudo|exame|capacidade_tecnica|psicotecnico/i.test(String(doc?.tipo_documento || ""));
+}
+
+function dataValidadeHub(doc: any): string | null {
+  if (isLaudoExame(doc)) {
+    return addOneYearISO(doc?.data_emissao) || doc?.data_validade_efetiva || doc?.data_validade || null;
+  }
+  return doc?.data_validade_efetiva || doc?.data_validade || null;
+}
+
 const formatDate = (d: string | null) => {
   if (!d) return "—";
-  try {
-    const p = new Date(d);
-    return isNaN(p.getTime()) ? d : p.toLocaleDateString("pt-BR");
-  } catch {
-    return d;
-  }
+  const p = parseDateUTC(d);
+  if (!p) return d;
+  return `${String(p.getUTCDate()).padStart(2, "0")}/${String(p.getUTCMonth() + 1).padStart(2, "0")}/${p.getUTCFullYear()}`;
 };
 
 const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
-  try {
-    const p = new Date(d);
-    return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000);
-  } catch {
-    return null;
-  }
+  const p = parseDateUTC(d);
+  if (!p) return null;
+  const now = new Date();
+  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((p.getTime() - todayUTC) / 86400000);
 };
 
 const formatCPF = (cpf: string | null | undefined) => {
