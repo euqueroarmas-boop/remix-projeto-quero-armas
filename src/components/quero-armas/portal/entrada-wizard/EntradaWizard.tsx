@@ -151,120 +151,107 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
   return (
     <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
       <DialogContent
-        className="max-w-lg p-0 overflow-hidden max-h-[90vh] overflow-y-auto"
+        className="max-w-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto"
         style={{ background: PAPER, borderColor: LINE }}
       >
-        {/* ── Header: NOVO SERVIÇO · n/total + progress ──────────────── */}
-        <div className="px-5 py-3 border-b flex items-center justify-between gap-3" style={{ borderColor: SOFT }}>
-          <div className="text-[11px] font-bold uppercase tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>
+        {/* ── V8 Big-Tile · cabeçalho ────────────────────────────────── */}
+        <div className="px-6 pt-5">
+          <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>
             NOVO SERVIÇO · {step}/{totalSteps}
           </div>
-          <div className="flex gap-1 w-32">
-            <div className="h-[3px] flex-1 rounded-sm" style={{ background: BORDO }} />
-            <div className="h-[3px] flex-1 rounded-sm" style={{ background: step === 2 ? BORDO : SOFT }} />
-          </div>
-        </div>
-
-        {/* ── Title ──────────────────────────────────────────────────── */}
-        <div className="px-5 pt-4">
-          <h2 className="text-[20px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
-            Quer adquirir um novo serviço?<br />Iremos te guiar pelo caminho certo.
+          <h2 className="mt-1 text-[22px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
+            Quer adquirir um novo serviço?
           </h2>
+          <p className="text-[12.5px] mt-1" style={{ ...INTER, color: SUB }}>
+            {step === 1
+              ? "Toque numa área pra começar — iremos te guiar pelo caminho certo."
+              : passo2EhFinalidade
+                ? "Qual é a finalidade da arma?"
+                : "Você já possui arma de fogo registrada?"}
+          </p>
         </div>
 
-        {/* ── Lista de opções ────────────────────────────────────────── */}
-        <div className="px-5 pb-5 pt-3">
+        {/* ── Quadrantes ─────────────────────────────────────────────── */}
+        <div className="px-6 pb-5 pt-4">
           {step === 1 && (
-            <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
+            <div className="grid grid-cols-2 gap-2">
               {objetivoList.map((o) => {
                 const selected = objetivo === o.key;
                 return (
-                  <li key={o.key}>
-                    <button
-                      type="button"
-                      onClick={() => setObjetivo(o.key)}
-                      className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
-                      style={{ background: selected ? `${BORDO}0F` : PAPER }}
-                    >
-                      <o.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{o.title}</div>
-                        <div className="text-[11px] leading-snug" style={{ ...INTER, color: SUB }}>{o.sub}</div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 shrink-0" style={{ color: selected ? BORDO : SUB }} />
-                    </button>
-                  </li>
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setObjetivo(o.key)}
+                    className="flex flex-col items-start gap-3 rounded border p-4 text-left transition hover:border-[#0A0A0A]"
+                    style={{ borderColor: selected ? BORDO : LINE, background: selected ? `${BORDO}0F` : PAPER, minHeight: 140 }}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: selected ? BORDO : `${BORDO}14` }}>
+                      <o.icon className="h-5 w-5" style={{ color: selected ? "#fff" : BORDO }} />
+                    </div>
+                    <div>
+                      <div className="text-[13px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{o.title}</div>
+                      <div className="mt-1 text-[10.5px] leading-snug" style={{ ...INTER, color: SUB }}>{o.sub}</div>
+                    </div>
+                  </button>
                 );
               })}
-            </ul>
+            </div>
           )}
 
           {step === 2 && !passo2EhFinalidade && (
-            <>
-              <div className="text-[11px] font-bold uppercase mb-2 tracking-wider" style={{ ...OSWALD, color: INK }}>
-                Você já possui arma de fogo registrada?
-              </div>
-              <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
-                {possuiList.map((p) => {
-                  const selected = possuiArma === p.key;
-                  return (
-                    <li key={p.key}>
-                      <button
-                        type="button"
-                        onClick={() => setPossuiArma(p.key)}
-                        className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
-                        style={{ background: selected ? `${BORDO}0F` : PAPER }}
-                      >
-                        <p.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
-                        <div className="flex-1 text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{p.label}</div>
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full border" style={{ borderColor: selected ? BORDO : "#CFCFCF" }}>
-                          {selected && <span className="h-2 w-2 rounded-full" style={{ background: BORDO }} />}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-2 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
-                Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer.
-              </p>
-            </>
+            <div className="grid grid-cols-3 gap-2">
+              {possuiList.map((p) => {
+                const selected = possuiArma === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setPossuiArma(p.key)}
+                    className="flex flex-col items-start gap-3 rounded border p-4 text-left transition hover:border-[#0A0A0A]"
+                    style={{ borderColor: selected ? BORDO : LINE, background: selected ? `${BORDO}0F` : PAPER, minHeight: 110 }}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: selected ? BORDO : `${BORDO}14` }}>
+                      <p.icon className="h-5 w-5" style={{ color: selected ? "#fff" : BORDO }} />
+                    </div>
+                    <div className="text-[12.5px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{p.label}</div>
+                  </button>
+                );
+              })}
+            </div>
           )}
 
           {step === 2 && passo2EhFinalidade && (
-            <>
-              <div className="text-[11px] font-bold uppercase mb-2 tracking-wider" style={{ ...OSWALD, color: INK }}>
-                Qual é a finalidade da arma?
-              </div>
-              <ul className="divide-y rounded border" style={{ borderColor: LINE }}>
-                {finalidadeList.map((f) => {
-                  const selected = finalidadeArma === f.key;
-                  return (
-                    <li key={f.key}>
-                      <button
-                        type="button"
-                        onClick={() => setFinalidadeArma(f.key)}
-                        className="flex w-full items-center gap-3 px-3 py-3 text-left transition"
-                        style={{ background: selected ? `${BORDO}0F` : PAPER }}
-                      >
-                        <f.icon className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
-                        <div className="flex-1 text-[12.5px] font-bold uppercase" style={{ ...OSWALD, color: INK }}>{f.label}</div>
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full border" style={{ borderColor: selected ? BORDO : "#CFCFCF" }}>
-                          {selected && <span className="h-2 w-2 rounded-full" style={{ background: BORDO }} />}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <p className="mt-2 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
-                Isso determina quais serviços são mostrados (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal).
-              </p>
-            </>
+            <div className="grid grid-cols-2 gap-2">
+              {finalidadeList.map((f) => {
+                const selected = finalidadeArma === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setFinalidadeArma(f.key)}
+                    className="flex flex-col items-start gap-3 rounded border p-4 text-left transition hover:border-[#0A0A0A]"
+                    style={{ borderColor: selected ? BORDO : LINE, background: selected ? `${BORDO}0F` : PAPER, minHeight: 120 }}
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: selected ? BORDO : `${BORDO}14` }}>
+                      <f.icon className="h-5 w-5" style={{ color: selected ? "#fff" : BORDO }} />
+                    </div>
+                    <div className="text-[12.5px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{f.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {step === 2 && (
+            <p className="mt-3 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
+              {passo2EhFinalidade
+                ? "Isso determina quais serviços aparecem (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal)."
+                : "Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer."}
+            </p>
           )}
 
           {/* ── Footer ─────────────────────────────────────────────── */}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-5 flex items-center justify-between border-t pt-4" style={{ borderColor: SOFT }}>
             <button
               type="button"
               disabled={salvando}
