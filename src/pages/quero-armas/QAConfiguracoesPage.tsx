@@ -692,6 +692,9 @@ function MonitoramentoToggles() {
           ))}
         </div>
       )}
+
+      {/* Temas da sidebar — administração global */}
+      {isAdmin && <QASidebarTemasAdmin />}
     </div>
   );
 }
