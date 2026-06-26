@@ -59,6 +59,11 @@ function cleanSubject(title: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Cron job paused — do not send any emails
+    return new Response(
+      JSON.stringify({ stopped: true, message: "Cron job pausado. Nenhum e-mail será enviado." }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
     const payload = await req.json().catch(() => ({} as any));
     const recipient = (payload?.to || "willmassaroto@gmail.com").toLowerCase();
     const indexParam = Number(payload?.index);
