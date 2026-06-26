@@ -3,7 +3,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-token",
 };
 
-const MOCK_URL = "https://projeto-quero-armas.lovable.app/mocks/email-arsenal-inteligente.html";
+import { ARSENAL_MOCK_HTML } from "./mock.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const INTERNAL_TOKEN = Deno.env.get("INTERNAL_FUNCTION_TOKEN")!;
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const { to } = await req.json().catch(() => ({ to: null }));
     const recipient = (to || "willmassaroto@gmail.com").toLowerCase();
 
-    const page = await fetch(MOCK_URL).then((r) => r.text());
+    const page = ARSENAL_MOCK_HTML;
     const styleMatch = page.match(/<style>([\s\S]*?)<\/style>/);
     const styleCss = styleMatch ? styleMatch[1] : "";
 
