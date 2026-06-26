@@ -4,9 +4,8 @@ const corsHeaders = {
 };
 
 import { ARSENAL_MOCK_HTML } from "./mock.ts";
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const INTERNAL_TOKEN = Deno.env.get("INTERNAL_FUNCTION_TOKEN")!;
+const RESEND_KEY = Deno.env.get("RESEND_API_KEY")!;
+const FROM = "Quero Armas Arsenal <onboarding@resend.dev>";
 
 const REPLACEMENTS: Record<string, string> = {
   nome_cliente: "WILLIAN MASSAROTO",
@@ -36,7 +35,7 @@ Deno.serve(async (req) => {
     const styleCss = styleMatch ? styleMatch[1] : "";
 
     // Each mockup = <div class="mock-label">...</div>\n<table class="email"...>...</table>
-    const blockRegex = /<div class="mock-label">[\s\S]*?<span>([\s\S]*?)<\/span>[\s\S]*?<\/div>\s*(<table class="email"[\s\S]*?<\/table>)/g;
+    const blockRegex = /<div class="mock-label"><span>\s*(?:<span class="status-dot"[^>]*><\/span>)?([\s\S]*?)<\/span>[\s\S]*?<\/div>\s*(<table class="email"[\s\S]*?<\/table>)/g;
     const mockups: { title: string; html: string }[] = [];
     let m: RegExpExecArray | null;
     while ((m = blockRegex.exec(page)) !== null) {
@@ -51,14 +50,13 @@ Deno.serve(async (req) => {
       const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}</style></head><body style="background:#000;margin:0;padding:24px 12px;">${fill(mock.html)}</body></html>`;
       const subject = `[ARSENAL INTELIGENTE · ${String(i).padStart(2, "0")}/12] ${fill(mock.title)}`;
       try {
-        const r = await fetch(`${SUPABASE_URL}/functions/v1/send-smtp-email`, {
+        const r = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${SERVICE_KEY}`,
-            "x-internal-token": INTERNAL_TOKEN,
+            Authorization: `Bearer ${RESEND_KEY}`,
           },
-          body: JSON.stringify({ to: recipient, subject, html: wrapped }),
+          body: JSON.stringify({ from: FROM, to: [recipient], subject, html: wrapped }),
         });
         const body = await r.text();
         if (!r.ok) throw new Error(`${r.status} ${body.slice(0, 200)}`);
