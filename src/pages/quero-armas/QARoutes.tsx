@@ -164,6 +164,7 @@ export default function QARoutes() {
         <Route path="mocks/resumo-cliente-kanban.html" element={<ResumoClienteKanbanMockPage />} />
         <Route path="mocks/resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
         <Route path="mocks/resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
+        <Route path="email-mockups" element={<QAEmailMockupsPage />} />
         <Route path="resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
         <Route path="resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
         <Route path="foco-no-que-vence" element={<ResumoClienteFocoMockPage />} />
