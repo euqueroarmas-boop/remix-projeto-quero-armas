@@ -28,8 +28,9 @@ function fill(html: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { to } = await req.json().catch(() => ({ to: null }));
-    const recipient = (to || "willmassaroto@gmail.com").toLowerCase();
+    const payload = await req.json().catch(() => ({} as any));
+    const recipient = (payload?.to || "willmassaroto@gmail.com").toLowerCase();
+    const indexParam = Number(payload?.index);
 
     const page = ARSENAL_MOCK_HTML;
     const styleMatch = page.match(/<style>([\s\S]*?)<\/style>/);
@@ -45,9 +46,20 @@ Deno.serve(async (req) => {
     }
 
     const results: Array<{ n: number; title: string; ok: boolean; error?: string }> = [];
-    let i = 0;
-    for (const mock of mockups) {
-      i++;
+    // If `index` (1-based) is provided OR mode=one, send a single mockup.
+    // Default rotation: pick based on current UTC minute (% mockups.length) so cron every 1 min cycles.
+    let toSend: { mock: { title: string; html: string }; i: number }[] = [];
+    if (payload?.mode === "all") {
+      toSend = mockups.map((mock, idx) => ({ mock, i: idx + 1 }));
+    } else {
+      const total = mockups.length;
+      const idx = Number.isFinite(indexParam) && indexParam >= 1 && indexParam <= total
+        ? Math.floor(indexParam) - 1
+        : new Date().getUTCMinutes() % total;
+      toSend = [{ mock: mockups[idx], i: idx + 1 }];
+    }
+
+    for (const { mock, i } of toSend) {
       const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}</style></head><body style="background:#000;margin:0;padding:24px 12px;">${fill(mock.html)}</body></html>`;
       const subject = `[ARSENAL INTELIGENTE · ${String(i).padStart(2, "0")}/12] ${fill(mock.title)}`;
       try {
