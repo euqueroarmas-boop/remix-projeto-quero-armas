@@ -153,6 +153,8 @@ function buildMimeMessage(input: {
   html?: string;
   text?: string;
   replyTo?: string;
+  listUnsubscribe?: string;
+  listUnsubscribePost?: string;
   traceId: string;
   messageId: string;
 }) {
@@ -171,6 +173,16 @@ function buildMimeMessage(input: {
 
   if (input.replyTo) {
     headers.push(`Reply-To: ${formatAddress(input.replyTo)}`);
+  }
+
+  const listUnsubscribe = sanitizeHeader(input.listUnsubscribe);
+  if (listUnsubscribe) {
+    headers.push(`List-Unsubscribe: ${listUnsubscribe}`);
+  }
+
+  const listUnsubscribePost = sanitizeHeader(input.listUnsubscribePost);
+  if (listUnsubscribePost) {
+    headers.push(`List-Unsubscribe-Post: ${listUnsubscribePost}`);
   }
 
   if (input.html && input.text) {
@@ -199,6 +211,8 @@ async function sendViaSmtp(payload: {
   html?: string;
   text?: string;
   reply_to?: string;
+  list_unsubscribe?: string;
+  list_unsubscribe_post?: string;
   trace_id?: string;
   from_name?: string;
 }): Promise<SmtpSendResult> {
@@ -248,6 +262,8 @@ async function sendViaSmtp(payload: {
       html: payload.html,
       text: payload.text,
       replyTo: payload.reply_to,
+      listUnsubscribe: payload.list_unsubscribe,
+      listUnsubscribePost: payload.list_unsubscribe_post,
       traceId,
       messageId,
     });
@@ -279,7 +295,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { to, subject, html, text, reply_to, trace_id, from_name } = body;
+    const { to, subject, html, text, reply_to, list_unsubscribe, list_unsubscribe_post, trace_id, from_name } = body;
     const traceId = createTraceId(trace_id || requestTraceId);
 
     if (!to || !subject || (!html && !text)) {
@@ -298,7 +314,17 @@ Deno.serve(async (req) => {
       replyTo: reply_to ? sanitizeHeader(reply_to) : null,
     }));
 
-    const result = await sendViaSmtp({ to, subject, html, text, reply_to, trace_id: traceId, from_name });
+    const result = await sendViaSmtp({
+      to,
+      subject,
+      html,
+      text,
+      reply_to,
+      list_unsubscribe,
+      list_unsubscribe_post,
+      trace_id: traceId,
+      from_name,
+    });
 
     console.info(`[send-smtp-email][${result.traceId}] email_accepted`, JSON.stringify({
       to: sanitizeHeader(to),

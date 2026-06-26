@@ -25,6 +25,37 @@ function fill(html: string) {
   return html.replace(/\{\{(\w+)\}\}/g, (_, k) => REPLACEMENTS[k] ?? `{{${k}}}`);
 }
 
+function decodeEntities(value: string) {
+  return value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
+function toPlainText(html: string) {
+  return decodeEntities(fill(html)
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|h1|h2|h3|table|section)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim());
+}
+
+function cleanSubject(title: string) {
+  const base = fill(title)
+    .replace(/^\d+\s*[·.-]\s*/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return base || "Atualização do Arsenal Inteligente";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -61,7 +92,8 @@ Deno.serve(async (req) => {
 
     for (const { mock, i } of toSend) {
       const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}</style></head><body style="background:#000;margin:0;padding:24px 12px;">${fill(mock.html)}</body></html>`;
-      const subject = `[ARSENAL INTELIGENTE · ${String(i).padStart(2, "0")}/12] ${fill(mock.title)}`;
+      const subject = cleanSubject(mock.title);
+      const text = `${subject}\n\n${toPlainText(mock.html)}\n\nAcesse seu Arsenal Inteligente: ${REPLACEMENTS.link_hub}\n\nPara não receber estes avisos, responda este e-mail com a palavra REMOVER.`;
       try {
         const r = await fetch(`${SUPABASE_URL}/functions/v1/send-smtp-email`, {
           method: "POST",
@@ -70,7 +102,16 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${SERVICE_ROLE}`,
             "x-internal-token": INTERNAL_TOKEN,
           },
-          body: JSON.stringify({ to: recipient, subject, html: wrapped, from_name: "Quero Armas · Arsenal Inteligente" }),
+          body: JSON.stringify({
+            to: recipient,
+            subject,
+            html: wrapped,
+            text,
+            from_name: "Quero Armas",
+            reply_to: "contato@euqueroarmas.com.br",
+            list_unsubscribe: "<mailto:contato@euqueroarmas.com.br?subject=REMOVER>",
+            list_unsubscribe_post: "List-Unsubscribe=One-Click",
+          }),
         });
         const body = await r.text();
         if (!r.ok) throw new Error(`${r.status} ${body.slice(0, 200)}`);
