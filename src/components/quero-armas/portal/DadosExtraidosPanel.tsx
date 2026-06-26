@@ -317,9 +317,6 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
           <span><b>Campos:</b> {totalCampos}</span>
         </div>
 
-        {grupos.map((g) => (
-          <></>
-        ))}
         <div className="qa-print-grp">
           <div className="qa-print-grp-h">DADOS DO TITULAR</div>
           <table className="qa-print-table">
