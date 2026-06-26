@@ -4,8 +4,9 @@ const corsHeaders = {
 };
 
 import { ARSENAL_MOCK_HTML } from "./mock.ts";
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY")!;
-const FROM = "Quero Armas Arsenal <onboarding@resend.dev>";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const INTERNAL_TOKEN = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
 
 const REPLACEMENTS: Record<string, string> = {
   nome_cliente: "WILLIAN MASSAROTO",
@@ -50,13 +51,14 @@ Deno.serve(async (req) => {
       const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}</style></head><body style="background:#000;margin:0;padding:24px 12px;">${fill(mock.html)}</body></html>`;
       const subject = `[ARSENAL INTELIGENTE · ${String(i).padStart(2, "0")}/12] ${fill(mock.title)}`;
       try {
-        const r = await fetch("https://api.resend.com/emails", {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/send-smtp-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_KEY}`,
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            "x-internal-token": INTERNAL_TOKEN,
           },
-          body: JSON.stringify({ from: FROM, to: [recipient], subject, html: wrapped }),
+          body: JSON.stringify({ to: recipient, subject, html: wrapped, from_name: "Quero Armas · Arsenal Inteligente" }),
         });
         const body = await r.text();
         if (!r.ok) throw new Error(`${r.status} ${body.slice(0, 200)}`);
