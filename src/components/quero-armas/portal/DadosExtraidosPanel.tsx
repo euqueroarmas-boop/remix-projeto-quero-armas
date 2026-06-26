@@ -88,6 +88,30 @@ interface Props {
 export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
+  const camposTitular: Campo[] = useMemo(() => {
+    const c = cliente || {};
+    const enderecoLinha = [c.endereco, c.numero, c.bairro, c.cidade, c.cep]
+      .map((v) => (v ? String(v).trim() : ""))
+      .filter(Boolean)
+      .join(", ");
+    const rg = [c.rg, c.emissor_rg, c.uf_emissor_rg].filter(Boolean).join(" ");
+    return [
+      { label: "Nome completo", valor: c.nome_completo || "—" },
+      { label: "CPF", valor: c.cpf || "—" },
+      { label: "Data de nascimento", valor: fmtDate(c.data_nascimento) },
+      { label: "Sexo", valor: c.sexo || "—" },
+      { label: "Estado civil", valor: c.estado_civil || "—" },
+      { label: "Profissão", valor: c.profissao || "—" },
+      { label: "Nacionalidade", valor: c.nacionalidade || "—" },
+      { label: "Naturalidade", valor: c.naturalidade || [c.naturalidade_municipio, c.naturalidade_uf].filter(Boolean).join("/") || "—" },
+      { label: "Nome da mãe", valor: c.nome_mae || "—" },
+      { label: "Nome do pai", valor: c.nome_pai || "—" },
+      { label: "RG / CIN", valor: rg || c.numero_documento_identidade || "—" },
+      { label: "E-mail", valor: c.email || "—" },
+      { label: "Endereço", valor: enderecoLinha || "—" },
+    ];
+  }, [cliente]);
+
   const grupos = useMemo(() => {
     const map = new Map<string, { label: string; docs: any[] }>();
     meusDocs.forEach((d) => {
@@ -105,8 +129,9 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
   }, [meusDocs]);
 
   const totalCampos = useMemo(() => {
-    return meusDocs.reduce((acc, d) => acc + camposDoc(d).length + (camposArma(d)?.length || 0), 0);
-  }, [meusDocs]);
+    const docTotal = meusDocs.reduce((acc, d) => acc + camposDoc(d).length + (camposArma(d)?.length || 0), 0);
+    return docTotal + camposTitular.filter((c) => c.valor && c.valor !== "—").length;
+  }, [meusDocs, camposTitular]);
 
   const nomeCliente = String(cliente?.nome_completo || cliente?.nome || "—").toUpperCase();
   const cr = String(cliente?.cr_numero || cliente?.numero_cr || "—");
@@ -197,6 +222,25 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
       </div>
 
       {/* Grupos */}
+      {/* Dados do titular */}
+      <div className="qa-dx-grp">
+        <div className="qa-dx-grp-h" onClick={() => setCollapsed((s) => ({ ...s, __titular: !s.__titular }))}>
+          <div className="gt">DADOS DO TITULAR <span className="gc">{camposTitular.filter((c) => c.valor && c.valor !== "—").length}</span></div>
+          {collapsed.__titular ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        </div>
+        {!collapsed.__titular && (
+          <div className="qa-dx-doc">
+            <table className="qa-dx-table">
+              <tbody>
+                {camposTitular.map((c) => (
+                  <tr key={c.label}><th>{c.label}</th><td>{c.valor}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {grupos.length === 0 ? (
         <div className="qa-dx-empty">Nenhum documento com dados extraídos.</div>
       ) : (
@@ -273,6 +317,19 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
           <span><b>Campos:</b> {totalCampos}</span>
         </div>
 
+        {grupos.map((g) => (
+          <></>
+        ))}
+        <div className="qa-print-grp">
+          <div className="qa-print-grp-h">DADOS DO TITULAR</div>
+          <table className="qa-print-table">
+            <tbody>
+              {camposTitular.map((c) => (
+                <tr key={c.label}><th>{c.label}</th><td>{c.valor}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {grupos.map((g) => (
           <div key={g.key} className="qa-print-grp">
             <div className="qa-print-grp-h">{g.label} · {g.docs.length}</div>
