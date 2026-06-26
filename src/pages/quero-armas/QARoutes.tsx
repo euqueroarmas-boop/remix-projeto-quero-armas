@@ -65,6 +65,7 @@ const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"),
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
 const ResumoClienteKanbanMockPage = lazyRetry(() => import("./mocks/ResumoClienteKanbanMockPage"), "ResumoClienteKanbanMockPage");
 const ResumoClienteFocoMockPage = lazyRetry(() => import("./mocks/ResumoClienteFocoMockPage"), "ResumoClienteFocoMockPage");
+const QAEmailMockupsPage = lazyRetry(() => import("./QAEmailMockupsPage"), "QAEmailMockupsPage");
 // ============================================================================
 // DEV-ONLY: Bancada visual do Wizard KYC (DocumentDataOnboardingWizard).
 //   - Permite QA do fluxo de cadastro documental SEM login real, SEM cliente
