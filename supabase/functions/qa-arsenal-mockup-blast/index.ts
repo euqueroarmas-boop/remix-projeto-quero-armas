@@ -10,6 +10,7 @@ const INTERNAL_TOKEN = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
 
 const REPLACEMENTS: Record<string, string> = {
   nome_cliente: "WILLIAN MASSAROTO",
+  nome_cliente_humano: "Willian Massaroto",
   nome_documento: "CRAF — PISTOLA TAURUS G2C 9MM",
   tipo_documento: "CRAF",
   data_vencimento: "15/03/2027",
