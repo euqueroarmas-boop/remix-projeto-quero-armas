@@ -105,6 +105,9 @@ Deno.serve(async (req) => {
       .meta td:last-child{color:#0A0A0A !important;}
       .note{color:#74747E !important;}
       .cta{color:#FFFFFF !important;}
+      .email-header{display:table !important;width:100% !important;}
+      .brand{display:table-cell !important;vertical-align:middle !important;text-align:left !important;width:60% !important;}
+      .header-code{display:table-cell !important;vertical-align:middle !important;text-align:right !important;white-space:nowrap !important;width:40% !important;}
     `;
     for (const { mock, i } of toSend) {
       // Boas-vindas usa --status:#FFFFFF (invisível no fundo branco) → troca para tinta preta.
