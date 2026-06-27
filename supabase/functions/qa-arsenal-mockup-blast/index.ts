@@ -19,6 +19,13 @@ const REPLACEMENTS: Record<string, string> = {
   numero_serie: "ABC123456",
   sistema_origem: "SIGMA / EXÉRCITO",
   link_hub: "https://www.euqueroarmas.com.br/area-do-cliente/arsenal",
+  // Concordância de gênero para a arma do exemplo (pistola — feminino)
+  arma_nome: "pistola Taurus G2C 9mm",
+  arma_artigo: "sua",
+  arma_artigo_cap: "Sua",
+  arma_artigo_a: "à sua",
+  arma_artigo_de: "da sua",
+  link_gerenciar_avisos: "https://www.euqueroarmas.com.br/area-do-cliente/preferencias",
 };
 
 function fill(html: string) {
