@@ -1,0 +1,225 @@
+<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><title>Mockups de E-mails · Arsenal Inteligente</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+:root{
+  --bg:#000000;
+  --panel:#000000;
+  --line:#1D1D1F;
+  --line-soft:#111113;
+  --text:#F5F5F7;
+  --muted:#A1A1AA;
+  --dim:#66666E;
+  --white:#FFFFFF;
+  --green:#28C840;
+  --yellow:#FFBD2E;
+  --red:#B00020;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#000000;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;}
+.page{max-width:980px;margin:0 auto;padding:34px 18px 72px;background:#000000;}
+.kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 10px;font-weight:700;}
+h1{font-size:34px;letter-spacing:-.035em;line-height:1.05;margin:0 0 12px;font-weight:760;color:#fff;}
+.lead{max-width:760px;color:var(--muted);font-size:15px;line-height:1.7;margin:0 0 26px;}
+.guardrail{border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin:0 0 28px;background:#000;}
+.guardrail h3{font-size:13px;text-transform:uppercase;letter-spacing:.14em;color:#fff;margin:0 0 12px;}
+.guardrail p{font-size:13px;line-height:1.65;color:var(--muted);margin:0 0 10px;}
+.token-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.token{font-size:12px;color:#E8E8ED;background:#09090A;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;}
+.section-title{margin:38px 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:#fff;font-weight:800;}
+.mock-label{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 auto 8px;max-width:640px;color:var(--dim);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;}
+.status-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle;background:var(--status)}
+.email{width:100%;max-width:640px;margin:0 auto 34px;background:#000;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.015),0 20px 60px rgba(0,0,0,.55);}
+.email-top{height:4px;background:var(--status)}
+.email-header{padding:24px 34px 18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.brand{display:flex;align-items:center;gap:14px;min-width:0;}
+.brand-logo{display:block;width:132px;max-width:132px;height:auto;border:0;outline:none;flex:0 0 auto;}
+.brand-mark{width:32px;height:32px;border:1px solid var(--status);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--status);font-weight:900;font-size:12px;letter-spacing:-.04em;}
+.brand-name{line-height:1.08;min-width:0}.brand-name strong{display:block;font-size:14px;color:#fff;letter-spacing:.02em}.brand-name span{display:block;font-size:11px;color:var(--muted);margin-top:3px;}
+.header-code{font-size:10px;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;text-align:right;font-weight:800;}
+.email-body{padding:28px 34px 34px;}
+.state{font-size:12px;color:var(--status);text-transform:uppercase;letter-spacing:.16em;font-weight:900;margin:0 0 16px;}
+h2{font-size:24px;line-height:1.18;letter-spacing:-.03em;font-weight:760;color:#fff;margin:0 0 13px;}
+.copy{font-size:14.5px;line-height:1.72;color:#B8B8C0;margin:0 0 24px;}
+.meta{width:100%;border-collapse:collapse;margin:0 0 26px;font-size:13px;}
+.meta td{padding:10px 0;border-bottom:1px solid var(--line-soft);vertical-align:top;}
+.meta tr:last-child td{border-bottom:0}.meta td:first-child{color:#74747E;text-transform:uppercase;letter-spacing:.10em;font-size:11px;font-weight:800;padding-right:18px;white-space:nowrap;}.meta td:last-child{color:#F2F2F4;text-align:right;font-weight:650;}
+.cta{display:inline-block;background:var(--status);color:var(--status-fg);text-decoration:none;padding:13px 22px;border-radius:9px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
+.email-footer{border-top:1px solid var(--line-soft);padding:18px 34px 24px;color:#5F5F68;font-size:11px;line-height:1.6;}
+.email-footer a{color:var(--status);text-decoration:none;font-weight:800;}
+.note{max-width:640px;margin:-18px auto 38px;color:#5F5F68;font-size:12px;line-height:1.65;}
+@media (max-width:680px){.brand-logo{width:118px;max-width:118px}.page{padding:24px 12px 50px}.email-header,.email-body,.email-footer{padding-left:22px;padding-right:22px}.mock-label{padding:0 4px}.header-code{display:none}.meta td:first-child{white-space:normal}.meta td:last-child{text-align:left}.meta td{display:block;border-bottom:0;padding:7px 0}.meta tr{display:block;border-bottom:1px solid var(--line-soft);padding:6px 0}.meta tr:last-child{border-bottom:0}}
+
+body{background:#FFFFFF !important;color:#0A0A0A !important;}
+.page{background:#FFFFFF !important;}
+.email{background:#FFFFFF !important;border-color:#E5E5E7 !important;box-shadow:0 1px 3px rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.08) !important;}
+.email-header{border-bottom-color:#EFEFF1 !important;}
+.email-footer{border-top-color:#EFEFF1 !important;color:#74747E !important;background:#FFFFFF !important;}
+.brand-name strong,h1,h2,.section-title,.kicker,.guardrail h3{color:#0A0A0A !important;}
+.brand-name span,.header-code,.mock-label{color:#74747E !important;}
+.copy,.lead,.guardrail p{color:#3A3A3F !important;}
+.meta td{border-bottom-color:#EFEFF1 !important;}
+.meta td:first-child{color:#74747E !important;}
+.meta td:last-child{color:#0A0A0A !important;}
+.note{color:#74747E !important;}
+.cta{color:#FFFFFF !important;}
+.email-header{display:table !important;width:100% !important;}
+.brand{display:table-cell !important;vertical-align:middle !important;text-align:left !important;width:60% !important;}
+.header-code{display:table-cell !important;vertical-align:middle !important;text-align:right !important;white-space:nowrap !important;width:40% !important;}
+.preview-wrap{max-width:720px;margin:0 auto 32px;}
+.preview-title{font:600 12px/1.4 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#74747E;padding:24px 8px 10px;border-top:1px solid #EFEFF1;}
+.preview-title:first-of-type{border-top:0;}
+</style></head><body style="background:#F5F5F7;margin:0;padding:24px 12px;"><div style="max-width:760px;margin:0 auto 24px;font:600 13px/1.4 -apple-system,sans-serif;color:#0A0A0A;text-transform:uppercase;letter-spacing:.18em;">Bancada · 12 e-mails como serão recebidos</div><div class="preview-wrap"><div class="preview-title">E-MAIL 01 · 01 · Boas-vindas ao Arsenal Inteligente</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#0A0A0A;--status-fg:#FFFFFF">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Acesso ativado</div>
+    <h2>Seu Arsenal Inteligente está ativo</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. Seu painel de controle foi ativado. A partir de agora, os documentos cadastrados no Arsenal Inteligente ficarão organizados por validade, tipo, sistema de origem e, quando houver vínculo, pelo armamento TAURUS G2C. Você envia o documento; nós registramos, monitoramos e avisamos quando algo realmente depender de você.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Plano</td><td>Controle de prazos e documentos</td></tr>
+<tr><td>Escopo</td><td>Monitoramento do acervo</td></tr>
+<tr><td>Ação inicial</td><td>Cadastrar documentos</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 02 · 02 · Documento cadastrado no acervo</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#28C840;--status-fg:#021006">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Documento cadastrado</div>
+    <h2>CRAF — PISTOLA TAURUS G2C 9MM entrou no seu radar</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. CRAF — PISTOLA TAURUS G2C 9MM foi cadastrado no Arsenal Inteligente e passou a compor seu acervo monitorado. Quando aplicável, o documento ficará vinculado ao armamento TAURUS G2C, nº de série ABC123456, e ao sistema SIGMA / EXÉRCITO.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Tipo</td><td>CRAF</td></tr>
+<tr><td>Sistema</td><td>SIGMA / EXÉRCITO</td></tr>
+<tr><td>Status</td><td>Cadastrado e monitorado</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 03 · 03 · Documento recebido para conferência</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#FFBD2E;--status-fg:#171100">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Recebido para conferência</div>
+    <h2>Recebemos CRAF — PISTOLA TAURUS G2C 9MM</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. CRAF — PISTOLA TAURUS G2C 9MM foi recebido no Arsenal Inteligente. Faremos a conferência de legibilidade, validade e dados principais antes de posicionar o documento no radar. Se houver algo que dependa de você, enviaremos uma orientação objetiva pelo Hub.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Recebido em</td><td>{{data_recebimento}}</td></tr>
+<tr><td>Status</td><td>Conferência será iniciada</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 04 · 04 · Documento validado e monitorado</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#28C840;--status-fg:#021006">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Validado</div>
+    <h2>CRAF — PISTOLA TAURUS G2C 9MM foi validado</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. CRAF — PISTOLA TAURUS G2C 9MM foi conferido, validado e registrado no radar do Arsenal Inteligente. A partir daqui, você não precisa controlar este prazo manualmente: avisaremos com antecedência quando houver janela preventiva, vencimento ou atualização necessária.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Validade</td><td>15/03/2027</td></tr>
+<tr><td>Status</td><td>Validado e monitorado</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 05 · 05 · Pendência no arquivo enviado</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#FFBD2E;--status-fg:#171100">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Ação necessária</div>
+    <h2>Precisamos corrigir CRAF — PISTOLA TAURUS G2C 9MM</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. Durante a conferência de CRAF — PISTOLA TAURUS G2C 9MM, identificamos uma pendência no arquivo enviado: {{motivo_pendencia}}. O controle do prazo continua no Arsenal Inteligente, mas precisamos que você reenvie o documento corrigido para concluir o cadastro.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Pendência</td><td>{{motivo_pendencia}}</td></tr>
+<tr><td>Status</td><td>Aguardando reenvio</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 06 · 06 · Documento próximo do vencimento</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#FFBD2E;--status-fg:#171100">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Janela preventiva</div>
+    <h2>CRAF — PISTOLA TAURUS G2C 9MM vence em 45 dias</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. CRAF — PISTOLA TAURUS G2C 9MM entrou na janela preventiva de vencimento. O Arsenal Inteligente colocou este prazo em destaque para que você não seja surpreendido. Caso deseje que a Quero Armas assuma a renovação ou regularização, solicite o serviço pelo Hub.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Vencimento</td><td>15/03/2027</td></tr>
+<tr><td>Restam</td><td>45 dias</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 07 · 07 · Documento vencido</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#B00020;--status-fg:#FFFFFF">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Vencido</div>
+    <h2>CRAF — PISTOLA TAURUS G2C 9MM consta como vencido</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. CRAF — PISTOLA TAURUS G2C 9MM consta como vencido no Arsenal Inteligente desde 15/03/2027. Este aviso é de monitoramento: para renovar, regularizar ou abrir um procedimento, será necessário solicitar o serviço correspondente à Quero Armas pelo Hub.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Venceu em</td><td>15/03/2027</td></tr>
+<tr><td>Status</td><td>Vencido</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 08 · 08 · Acervo sem pendências imediatas</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#28C840;--status-fg:#021006">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Radar regular</div>
+    <h2>Seu acervo está sem alertas críticos</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. No momento, os documentos cadastrados no Arsenal Inteligente não apresentam vencimento crítico ou pendência imediata. Continuaremos monitorando o acervo e avisaremos quando surgir qualquer ação que dependa de você.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Período analisado</td><td>{{periodo_resumo}}</td></tr>
+<tr><td>Status</td><td>Sem pendências críticas</td></tr>
+<tr><td>Próximo alerta</td><td>Automático</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 09 · 09 · Novo prazo registrado</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#28C840;--status-fg:#021006">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Prazo registrado</div>
+    <h2>Novo vencimento de CRAF — PISTOLA TAURUS G2C 9MM cadastrado</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. Registramos a nova validade de CRAF — PISTOLA TAURUS G2C 9MM no Arsenal Inteligente. O documento ficará monitorado até 15/03/2027, com alertas preventivos antes da data crítica.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Nova validade</td><td>15/03/2027</td></tr>
+<tr><td>Status</td><td>Prazo monitorado</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 10 · 10 · Atualização de dados do acervo</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#FFBD2E;--status-fg:#171100">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Atualização recomendada</div>
+    <h2>Atualize os dados de CRAF — PISTOLA TAURUS G2C 9MM</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. Detectamos que CRAF — PISTOLA TAURUS G2C 9MM pode precisar de atualização cadastral no Arsenal Inteligente. Confirme os dados do documento, do sistema SIGMA / EXÉRCITO e, quando aplicável, do armamento TAURUS G2C para manter o monitoramento preciso.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Sistema</td><td>SIGMA / EXÉRCITO</td></tr>
+<tr><td>Status</td><td>Aguardando confirmação</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 11 · 11 · Resumo periódico do acervo</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#0A0A0A;--status-fg:#FFFFFF">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Resumo do radar</div>
+    <h2>Resumo do seu acervo monitorado</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. Este é o resumo do período {{periodo_resumo}}. O Arsenal Inteligente consolidou seus documentos, prazos ativos, vencimentos futuros e pendências de arquivo em um único painel para facilitar sua tomada de decisão.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Período</td><td>{{periodo_resumo}}</td></tr>
+<tr><td>Documentos monitorados</td><td>{{total_documentos}}</td></tr>
+<tr><td>Alertas ativos</td><td>{{total_alertas}}</td></tr></table></div>
+<div class="preview-wrap"><div class="preview-title">E-MAIL 12 · 12 · Arquivo ilegível ou incompatível</div><table class="email" role="presentation" cellpadding="0" cellspacing="0" style="--status:#FFBD2E;--status-fg:#171100">
+  <tr><td class="email-top"></td></tr>
+  <tr><td class="email-header">
+    <div class="brand"><img class="brand-logo" src="https://euqueroarmas.com.br/__l5e/assets-v1/aca4fc79-59f9-4a35-9333-a1de35226264/logo-eu-quero-armas.png" width="132" alt="Quero Armas" style="display:block;border:0;outline:none;"></div>
+    <div class="header-code">// ARSENAL INTELIGENTE</div>
+  </td></tr>
+  <tr><td class="email-body">
+    <div class="state">Leitura não concluída</div>
+    <h2>Não foi possível validar CRAF — PISTOLA TAURUS G2C 9MM</h2>
+    <p class="copy">Olá, WILLIAN MASSAROTO. O arquivo enviado para CRAF — PISTOLA TAURUS G2C 9MM não pôde ser validado porque está ilegível, incompleto ou em formato incompatível. Reenvie uma versão nítida para que o Arsenal Inteligente consiga registrar os dados e iniciar o monitoramento corretamente.</p>
+    <table class="meta" role="presentation" cellpadding="0" cellspacing="0"><tr><td>Documento</td><td>CRAF — PISTOLA TAURUS G2C 9MM</td></tr>
+<tr><td>Motivo</td><td>{{motivo_pendencia}}</td></tr>
+<tr><td>Status</td><td>Aguardando novo arquivo</td></tr></table></div></body></html>
