@@ -90,11 +90,30 @@ Deno.serve(async (req) => {
       toSend = [{ mock: mockups[idx], i: idx + 1 }];
     }
 
-    // DARK MOCK ORIGINAL (preto + dourado) — conforme HTML aprovado pelo cliente.
-    const darkOverride = "";
+    // LIGHT (fundo branco) preservando indicadores coloridos, header, status pill e botão CTA.
+    const lightOverride = `
+      body{background:#FFFFFF !important;color:#0A0A0A !important;}
+      .page{background:#FFFFFF !important;}
+      .email{background:#FFFFFF !important;border-color:#E5E5E7 !important;box-shadow:0 1px 3px rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.08) !important;}
+      .email-header{border-bottom-color:#EFEFF1 !important;}
+      .email-footer{border-top-color:#EFEFF1 !important;color:#74747E !important;background:#FFFFFF !important;}
+      .brand-name strong,h1,h2,.section-title,.kicker,.guardrail h3{color:#0A0A0A !important;}
+      .brand-name span,.header-code,.mock-label{color:#74747E !important;}
+      .copy,.lead,.guardrail p{color:#3A3A3F !important;}
+      .meta td{border-bottom-color:#EFEFF1 !important;}
+      .meta td:first-child{color:#74747E !important;}
+      .meta td:last-child{color:#0A0A0A !important;}
+      .note{color:#74747E !important;}
+      .cta{color:#FFFFFF !important;}
+    `;
     for (const { mock, i } of toSend) {
-      const mockHtml = fill(mock.html);
-      const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}${darkOverride}</style></head><body style="background:#000000;margin:0;padding:24px 12px;">${mockHtml}</body></html>`;
+      // Boas-vindas usa --status:#FFFFFF (invisível no fundo branco) → troca para tinta preta.
+      // Remove o filter que deixa a logo branca (some no fundo branco).
+      const mockHtml = fill(mock.html)
+        .replace(/--status:\s*#FFFFFF/gi, "--status:#0A0A0A")
+        .replace(/--status-fg:\s*#000000/gi, "--status-fg:#FFFFFF")
+        .replace(/filter:\s*brightness\(0\)\s*invert\(1\);?/gi, "");
+      const wrapped = `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><style>${styleCss}${lightOverride}</style></head><body style="background:#FFFFFF;margin:0;padding:24px 12px;">${mockHtml}</body></html>`;
       const subject = cleanSubject(mock.title);
       const text = `${subject}\n\n${toPlainText(mock.html)}\n\nAcesse seu Arsenal Inteligente: ${REPLACEMENTS.link_hub}\n\nPara não receber estes avisos, responda este e-mail com a palavra REMOVER.`;
       try {
