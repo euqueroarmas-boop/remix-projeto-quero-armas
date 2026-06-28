@@ -23,7 +23,7 @@ export function GoogleSignInButton({ mode, next, className, label = "Entrar com 
   const handleClick = async () => {
     setLoading(true);
     try {
-      const callback = new URL("/auth/callback", window.location.origin);
+      const callback = new URL("/auth/oauth-callback", window.location.origin);
       callback.searchParams.set("mode", mode);
       if (next && next.startsWith("/")) callback.searchParams.set("next", next);
 
