@@ -183,6 +183,19 @@ Deno.serve(async (req) => {
       console.error("[cliente-portal-request-otp] email error", e);
     }
 
+    // Envio paralelo via Lovable Emails (template otp-cliente, com queue/retry/log)
+    try {
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      await sendTransactional({
+        templateName: "otp-cliente",
+        recipientEmail: emailDestino,
+        idempotencyKey: `otp-${otpRow.id}`,
+        templateData: { nome, codigo: code },
+      });
+    } catch (e) {
+      console.error("[cliente-portal-request-otp] sendTransactional error", e);
+    }
+
     await logAcesso(supabase, {
       evento: "otp_enviado",
       identificador: ident,
