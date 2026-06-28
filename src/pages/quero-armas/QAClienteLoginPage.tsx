@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
-import { GoogleSignInButton, AppleSignInButton } from "@/shared/auth/GoogleSignInButton";
 
 const RESET_COOLDOWN_MS = 60_000;
 
@@ -356,20 +355,6 @@ export default function QAClienteLoginPage() {
                 </button>
               </div>
             </form>
-
-            <div className="flex items-center gap-3">
-              <div className="h-px bg-slate-200 flex-1" />
-              <span className="text-[10px] uppercase tracking-[0.22em] text-slate-400">ou continue com</span>
-              <div className="h-px bg-slate-200 flex-1" />
-            </div>
-            <GoogleSignInButton
-              mode="cliente"
-              next={searchParams.get("next") || undefined}
-            />
-            <AppleSignInButton
-              mode="cliente"
-              next={searchParams.get("next") || undefined}
-            />
 
             {diag && (
               <div

@@ -46,7 +46,6 @@ const QAArsenalDigitalGratuitoPage = lazyRetry(() => import("./QAArsenalDigitalG
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QARedefinirSenhaPage = lazyRetry(() => import("./QARedefinirSenhaPage"), "QARedefinirSenhaPage");
-const QAAuthCallbackPage = lazyRetry(() => import("./QAAuthCallbackPage"), "QAAuthCallbackPage");
 const QAContratarServicoPage = lazyRetry(() => import("./QAContratarServicoPage"), "QAContratarServicoPage");
 const QAContratarConfirmarPage = lazyRetry(() => import("./QAContratarConfirmarPage"), "QAContratarConfirmarPage");
 const QAContratarIdentificarPage = lazyRetry(() => import("./QAContratarIdentificarPage"), "QAContratarIdentificarPage");
@@ -212,7 +211,6 @@ export default function QARoutes() {
         <Route path="login" element={<QAScope><QALoginPage /></QAScope>} />
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
-        <Route path="auth/oauth-callback" element={<QAScope><QAAuthCallbackPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
         {/* /cadastro-mira agora usa o MESMO componente real de /cadastro
             (upload, extração, revisão, checkout 2C). Visual Mira já é o padrão. */}
