@@ -198,6 +198,57 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Cancelamento de assinatura → e-mail assinatura-cancelada ──
+    if (event === "SUBSCRIPTION_DELETED" || event === "SUBSCRIPTION_CANCELLED") {
+      console.log("[asaas-webhook] Evento de cancelamento de assinatura:", event);
+      try {
+        const subscription = body.subscription || body;
+        const asaasCustomerId = subscription?.customer || subscription?.customerId || null;
+        let custEmail: string | null = null;
+        let custNome: string | null = null;
+        if (asaasCustomerId) {
+          const { data: map } = await supabase
+            .from("customer_asaas_mapping")
+            .select("customer_id")
+            .eq("asaas_customer_id", asaasCustomerId)
+            .maybeSingle();
+          if (map?.customer_id) {
+            const { data: cust } = await supabase
+              .from("customers")
+              .select("email, razao_social, responsavel")
+              .eq("id", map.customer_id)
+              .maybeSingle();
+            custEmail = cust?.email || null;
+            custNome = cust?.responsavel || cust?.razao_social || null;
+          }
+        }
+        if (custEmail && /^\S+@\S+\.\S+$/.test(custEmail)) {
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          await sendTransactional({
+            templateName: "assinatura-cancelada",
+            recipientEmail: custEmail.toLowerCase(),
+            idempotencyKey: `assinatura-cancelada-${subscription?.id || asaasCustomerId}-${Date.now()}`,
+            templateData: {
+              nome: custNome || undefined,
+              portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+            },
+          });
+        }
+      } catch (e) {
+        console.error("[asaas-webhook] assinatura-cancelada email error:", (e as Error)?.message);
+      }
+      await supabase.from("integration_logs").insert({
+        integration_name: "asaas",
+        operation_name: `subscription_${event.toLowerCase()}`,
+        request_payload: body,
+        status: "success",
+      });
+      return new Response(JSON.stringify({ received: true, event }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ══════════════════════════════════════════════════════════════
     // ── Handle INVOICE (Nota Fiscal) events — PRIMARY source ──
     // ══════════════════════════════════════════════════════════════
