@@ -5,7 +5,6 @@ import type { TemplateEntry } from './registry.ts'
 
 interface Props {
   nome?: string
-  ?: string
   codigo?: string;
 }
 
