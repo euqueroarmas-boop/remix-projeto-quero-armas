@@ -494,6 +494,31 @@ Deno.serve(async (req) => {
     },
   });
 
+  // Lovable Emails: avisa cliente que o contrato está pronto para assinatura.
+  try {
+    const { data: cliEmail } = await sb
+      .from("qa_clientes")
+      .select("email, nome_completo")
+      .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
+      .limit(1)
+      .maybeSingle();
+    if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      await sendTransactional({
+        templateName: "contrato-pronto-assinatura",
+        recipientEmail: String(cliEmail.email).toLowerCase(),
+        idempotencyKey: `contrato-pronto-${contract.id}`,
+        templateData: {
+          nome: cliEmail.nome_completo || undefined,
+          contrato: contractNumber,
+          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${contract.id}`,
+        },
+      });
+    }
+  } catch (e) {
+    console.error("[qa-generate-contract] contrato-pronto-assinatura email error:", (e as Error)?.message);
+  }
+
   return jsonResp({
     ok: true,
     contract: {
