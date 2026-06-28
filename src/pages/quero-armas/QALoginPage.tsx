@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
-import { GoogleSignInButton } from "@/shared/auth/GoogleSignInButton";
+import { GoogleSignInButton, AppleSignInButton } from "@/shared/auth/GoogleSignInButton";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");
@@ -113,6 +113,7 @@ export default function QALoginPage() {
             <div className="h-px bg-slate-200 flex-1" />
           </div>
           <GoogleSignInButton mode="admin" />
+          <AppleSignInButton mode="admin" />
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
               className="text-[10px] text-slate-400 hover:text-[#7A1F2B] transition-colors">
