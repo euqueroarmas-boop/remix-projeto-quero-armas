@@ -75,13 +75,46 @@ Deno.serve(async (req) => {
     const styleMatch = page.match(/<style>([\s\S]*?)<\/style>/);
     const styleCss = styleMatch ? styleMatch[1] : "";
 
-    // Each mockup = <div class="mock-label">...</div>\n<table class="email"...>...</table>
-    const blockRegex = /<div class="mock-label"><span>\s*(?:<span class="status-dot"[^>]*><\/span>)?([\s\S]*?)<\/span>[\s\S]*?<\/div>\s*(<table class="email"[\s\S]*?<\/table>)/g;
+    // Cada mockup começa em <div class="mock-label">…</div> e é seguido por
+    // <table class="email">…</table>. O corpo do e-mail tem <table class="meta">
+    // aninhada, então um regex simples para no primeiro </table>. Aqui fazemos
+    // um parsing balanceado: encontramos cada início de <table class="email"
+    // e contamos abre/fecha até bater zero.
+    const labelRe = /<div class="mock-label"><span>(?:\s*<span class="status-dot"[^>]*><\/span>)?([\s\S]*?)<\/span>[\s\S]*?<\/div>/g;
     const mockups: { title: string; html: string }[] = [];
-    let m: RegExpExecArray | null;
-    while ((m = blockRegex.exec(page)) !== null) {
-      const rawTitle = m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-      mockups.push({ title: rawTitle, html: m[2] });
+    let lm: RegExpExecArray | null;
+    while ((lm = labelRe.exec(page)) !== null) {
+      const rawTitle = lm[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      // Encontra o próximo <table class="email" após o label
+      const startSearchFrom = lm.index + lm[0].length;
+      const tableStart = page.indexOf('<table class="email"', startSearchFrom);
+      if (tableStart < 0) continue;
+      // Balanceia <table ... > e </table>
+      const openRe = /<table\b[^>]*>/g;
+      const closeRe = /<\/table>/g;
+      openRe.lastIndex = tableStart;
+      closeRe.lastIndex = tableStart;
+      let depth = 0;
+      let cursor = tableStart;
+      let end = -1;
+      // Itera pegando o próximo open ou close, o que vier antes
+      while (true) {
+        openRe.lastIndex = cursor;
+        closeRe.lastIndex = cursor;
+        const openMatch = openRe.exec(page);
+        const closeMatch = closeRe.exec(page);
+        if (!closeMatch) break;
+        if (openMatch && openMatch.index < closeMatch.index) {
+          depth += 1;
+          cursor = openMatch.index + openMatch[0].length;
+        } else {
+          depth -= 1;
+          cursor = closeMatch.index + closeMatch[0].length;
+          if (depth === 0) { end = cursor; break; }
+        }
+      }
+      if (end < 0) continue;
+      mockups.push({ title: rawTitle, html: page.slice(tableStart, end) });
     }
 
     const results: Array<{ n: number; title: string; ok: boolean; error?: string }> = [];
