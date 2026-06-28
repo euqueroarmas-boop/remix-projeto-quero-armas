@@ -238,6 +238,26 @@ Deno.serve(async (req) => {
       ip, user_agent: ua,
     });
 
+    // Aviso de novo acesso / dispositivo (login-suspeito) via Lovable Emails.
+    try {
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      const nomeCli = (otp.qa_cliente_id || otp.customer_id) ? (email.split("@")[0]) : "";
+      await sendTransactional({
+        templateName: "login-suspeito",
+        recipientEmail: email,
+        idempotencyKey: `login-${authUser.id}-${Date.now()}`,
+        templateData: {
+          nome: nomeCli,
+          quando: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+          local: ip || "desconhecido",
+          dispositivo: ua || "desconhecido",
+          resetUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+        },
+      });
+    } catch (e) {
+      console.error("[cliente-portal-verify-otp] login-suspeito error", e);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       email,
