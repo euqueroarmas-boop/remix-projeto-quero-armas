@@ -198,6 +198,25 @@ ${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><stro
     });
     const emailOk = !emailRes.error && (emailRes.data as any)?.success;
 
+    // Lovable Emails: confirma recebimento ao próprio cliente (orcamento-recebido).
+    try {
+      if (email && email !== "—" && /^\S+@\S+\.\S+$/.test(email)) {
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        await sendTransactional({
+          templateName: "orcamento-recebido",
+          recipientEmail: email.toLowerCase(),
+          idempotencyKey: `orcamento-recebido-${venda_id ?? processo_id ?? traceId}`,
+          templateData: {
+            nome,
+            protocolo: String(venda_id || processo_id || traceId),
+            portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+          },
+        });
+      }
+    } catch (e) {
+      console.error(`[qa-notificar-admin-contratacao][${traceId}] orcamento-recebido error:`, e);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
