@@ -359,6 +359,22 @@ Deno.serve(async (req) => {
     console.error("[arsenal_welcome] envio falhou:", (e as Error)?.message);
   }
 
+  // Lovable Emails: template boas-vindas com queue/log/unsubscribe.
+  try {
+    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+    await sendTransactional({
+      templateName: "boas-vindas",
+      recipientEmail: emailNorm,
+      idempotencyKey: `boas-vindas-${emailNorm}`,
+      templateData: {
+        nome,
+        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+      },
+    });
+  } catch (e) {
+    console.error("[boas-vindas] envio falhou:", (e as Error)?.message);
+  }
+
   return json({
     ok: true,
     qa_cliente_id: result.qa_cliente_id ?? null,
