@@ -15,6 +15,7 @@ const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QA
 const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "MockupsPreview");
 const MockupsHubDoc = lazyRetry(() => import("./pages/MockupsHubDoc.tsx"), "MockupsHubDoc");
 const MockupsEntradaWizardPreview = lazyRetry(() => import("./pages/MockupsEntradaWizardPreview.tsx"), "MockupsEntradaWizardPreview");
+const UnsubscribePage = lazyRetry(() => import("./pages/UnsubscribePage.tsx"), "UnsubscribePage");
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,9 @@ const App = () => (
                   <Route path="/mockups-preview" element={<MockupsPreview />} />
                   <Route path="/mockups-hub-doc" element={<MockupsHubDoc />} />
                   <Route path="/mockups-entrada-wizard" element={<MockupsEntradaWizardPreview />} />
+
+                  {/* Unsubscribe (rodapé de e-mails) */}
+                  <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
                   {/* Quero Armas (todas as rotas) */}
                   <Route path="/*" element={<QARoutes />} />
