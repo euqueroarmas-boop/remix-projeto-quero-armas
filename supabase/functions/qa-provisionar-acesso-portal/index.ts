@@ -324,6 +324,29 @@ Deno.serve(async (req) => {
     isNewUser,
   });
 
+  // Lovable Emails: dispara template credenciais-portal com senha provisória.
+  try {
+    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+    const { data: clienteAtualizado } = await admin
+      .from("qa_clientes")
+      .select("senha_temporaria")
+      .eq("id", cliente.id)
+      .maybeSingle();
+    await sendTransactional({
+      templateName: "credenciais-portal",
+      recipientEmail: email,
+      idempotencyKey: `credenciais-${authUser.id}-${vendaId ?? "x"}`,
+      templateData: {
+        nome: cliente.nome_completo || email.split("@")[0],
+        loginEmail: email,
+        senhaProvisoria: clienteAtualizado?.senha_temporaria || "(use Esqueci minha senha)",
+        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+      },
+    });
+  } catch (e) {
+    console.error("[qa-provisionar-acesso-portal] credenciais-portal error:", (e as Error)?.message);
+  }
+
   // 9) Auditoria
   await logEvento(admin, cliente.id, "acesso_portal_preparado_pos_pagamento",
     `Acesso ao portal preparado após pagamento (venda ${vendaId ?? "?"}). Novo usuário: ${isNewUser ? "sim" : "não"}.`);

@@ -369,6 +369,26 @@ Deno.serve(async (req) => {
     // Log failure should not block contract creation (já registrado em qa_contracts).
     if (lErr) console.error("[qa-contract-aceite-registrar] log insert failed:", lErr.message);
 
+    // Lovable Emails: notifica cliente que o contrato foi assinado.
+    try {
+      if (cliente_email && /^\S+@\S+\.\S+$/.test(cliente_email)) {
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        const pdfUrl = `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${contract.id}`;
+        await sendTransactional({
+          templateName: "contrato-assinado",
+          recipientEmail: String(cliente_email).toLowerCase(),
+          idempotencyKey: `contrato-assinado-${contract.id}`,
+          templateData: {
+            nome: undefined,
+            contrato: contract.contract_number,
+            pdfUrl,
+          },
+        });
+      }
+    } catch (e) {
+      console.error("[qa-contract-aceite-registrar] contrato-assinado email error:", (e as Error)?.message);
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,

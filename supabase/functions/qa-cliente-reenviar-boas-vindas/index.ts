@@ -73,5 +73,21 @@ Deno.serve(async (req) => {
     return json({ ok: false, reason: "smtp_failed", message: smtpErr.message }, 502);
   }
 
+  // Lovable Emails: também enfileira via template boas-vindas.
+  try {
+    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+    await sendTransactional({
+      templateName: "boas-vindas",
+      recipientEmail: email,
+      idempotencyKey: `boas-vindas-reenvio-${email}-${Date.now()}`,
+      templateData: {
+        nome: nome ?? undefined,
+        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+      },
+    });
+  } catch (e) {
+    console.error("[reenviar-boas-vindas] sendTransactional error", e);
+  }
+
   return json({ ok: true, to: email, nome, smtp: smtpData ?? null });
 });
