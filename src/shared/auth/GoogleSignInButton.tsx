@@ -10,6 +10,8 @@ interface Props {
   next?: string;
   className?: string;
   label?: string;
+  /** Provider OAuth — default "google". */
+  provider?: "google" | "apple";
 }
 
 /**
@@ -17,8 +19,16 @@ interface Props {
  * (interno e portal do cliente). A validação de perfil acontece
  * em /auth/callback (QAAuthCallbackPage).
  */
-export function GoogleSignInButton({ mode, next, className, label = "Entrar com Google" }: Props) {
+export function GoogleSignInButton({
+  mode,
+  next,
+  className,
+  label,
+  provider = "google",
+}: Props) {
   const [loading, setLoading] = useState(false);
+  const defaultLabel = provider === "apple" ? "Entrar com Apple" : "Entrar com Google";
+  const finalLabel = label ?? defaultLabel;
 
   const handleClick = async () => {
     setLoading(true);
@@ -27,11 +37,11 @@ export function GoogleSignInButton({ mode, next, className, label = "Entrar com 
       callback.searchParams.set("mode", mode);
       if (next && next.startsWith("/")) callback.searchParams.set("next", next);
 
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: callback.toString(),
       });
       if (result.error) {
-        toast.error("Não foi possível iniciar o login com Google.");
+        toast.error(`Não foi possível iniciar o login com ${provider === "apple" ? "Apple" : "Google"}.`);
         setLoading(false);
         return;
       }
@@ -39,7 +49,7 @@ export function GoogleSignInButton({ mode, next, className, label = "Entrar com 
       // Caso popup tenha retornado tokens — encaminha ao callback para validar perfil.
       window.location.replace(callback.toString());
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao entrar com Google");
+      toast.error(err?.message || "Erro ao entrar");
       setLoading(false);
     }
   };
@@ -56,6 +66,10 @@ export function GoogleSignInButton({ mode, next, className, label = "Entrar com 
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
+      ) : provider === "apple" ? (
+        <svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true" fill="currentColor">
+          <path d="M11.5 8.5c0-2 1.6-2.9 1.7-3-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.4 0-2.6.8-3.3 2-1.4 2.4-.4 6 1 8 .7.9 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2 0-.1-2.1-.8-2.1-3.3zM9.6 2.7c.5-.6.9-1.5.8-2.4-.8 0-1.7.5-2.2 1.2-.5.6-.9 1.5-.8 2.3.8.1 1.7-.4 2.2-1.1z" />
+        </svg>
       ) : (
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.44a5.5 5.5 0 0 1-2.39 3.61v3h3.86c2.26-2.08 3.58-5.15 3.58-8.85z"/>
@@ -64,9 +78,14 @@ export function GoogleSignInButton({ mode, next, className, label = "Entrar com 
           <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.29 6.6l3.98 3.11C6.22 6.86 8.87 4.75 12 4.75z"/>
         </svg>
       )}
-      {loading ? "Conectando..." : label}
+      {loading ? "Conectando..." : finalLabel}
     </button>
   );
 }
 
 export default GoogleSignInButton;
+
+/** Atalho semântico para Apple. */
+export function AppleSignInButton(props: Omit<Props, "provider">) {
+  return <GoogleSignInButton {...props} provider="apple" />;
+}
