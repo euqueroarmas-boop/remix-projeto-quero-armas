@@ -1,46 +1,49 @@
 project_id = "ogkltfqvzweeqkfmrzts"
 
-[functions.customer-lookup-email]
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.customer-lookup-email]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.qa-armamento-buscar-foto-real]
+    verify_jwt = false
+  [functions.qa-armamento-buscar-imagens]
+    verify_jwt = false
+  [functions.qa-armamento-remove-bg]
+    verify_jwt = false
+  [functions.qa-armamento-scrape]
+    verify_jwt = false
+  [functions.qa-armamento-validar-imagem]
+    verify_jwt = false
+  [functions.qa-asaas-webhook]
+    verify_jwt = false
+  [functions.qa-bootstrap-normativas]
+    verify_jwt = false
+  [functions.qa-checkout-criar-venda]
+    verify_jwt = false
+  [functions.qa-checkout-iniciar-pagamento]
+    verify_jwt = false
+  [functions.qa-cliente-criar-conta-publica]
+    verify_jwt = false
+  [functions.qa-contratar-publico]
+    verify_jwt = false
+  [functions.qa-generate-embeddings]
+    verify_jwt = false
+  [functions.qa-processo-prazo-alertas]
+    verify_jwt = false
+  [functions.qa-senha-gov]
+    verify_jwt = false
+
+[functions.send-transactional-email]
+verify_jwt = true
+
+[functions.preview-transactional-email]
 verify_jwt = false
 
-[functions.qa-armamento-buscar-foto-real]
+[functions.handle-email-unsubscribe]
 verify_jwt = false
 
-[functions.qa-armamento-buscar-imagens]
-verify_jwt = false
-
-[functions.qa-armamento-remove-bg]
-verify_jwt = false
-
-[functions.qa-armamento-scrape]
-verify_jwt = false
-
-[functions.qa-armamento-validar-imagem]
-verify_jwt = false
-
-[functions.qa-senha-gov]
-verify_jwt = false
-
-[functions.qa-contratar-publico]
-verify_jwt = false
-
-[functions.qa-cliente-criar-conta-publica]
-verify_jwt = false
-
-[functions.qa-generate-embeddings]
-verify_jwt = false
-
-[functions.qa-bootstrap-normativas]
-verify_jwt = false
-
-[functions.qa-processo-prazo-alertas]
-verify_jwt = false
-
-[functions.qa-asaas-webhook]
-verify_jwt = false
-
-[functions.qa-checkout-criar-venda]
-verify_jwt = false
-
-[functions.qa-checkout-iniciar-pagamento]
+[functions.handle-email-suppression]
 verify_jwt = false
