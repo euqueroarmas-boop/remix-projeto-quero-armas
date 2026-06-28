@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { GoogleSignInButton } from "@/shared/auth/GoogleSignInButton";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");
@@ -106,6 +107,12 @@ export default function QALoginPage() {
           <Button type="submit" disabled={loading} className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
+          <div className="flex items-center gap-2 pt-1">
+            <div className="h-px bg-slate-200 flex-1" />
+            <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">ou</span>
+            <div className="h-px bg-slate-200 flex-1" />
+          </div>
+          <GoogleSignInButton mode="admin" />
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
               className="text-[10px] text-slate-400 hover:text-[#7A1F2B] transition-colors">
