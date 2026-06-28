@@ -612,6 +612,11 @@ Deno.serve(async (req) => {
       case "PAYMENT_AWAITING_RISK_ANALYSIS":
         newStatus = "AWAITING_RISK_ANALYSIS";
         break;
+      case "PAYMENT_REFUSED":
+      case "PAYMENT_FAILED":
+      case "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED":
+        newStatus = "REFUSED";
+        break;
       default:
         newStatus = payment.status || event;
     }
@@ -639,6 +644,41 @@ Deno.serve(async (req) => {
 
     // Update payment status (only for non-LGPD customers)
     await supabase.from("payments").update({ payment_status: newStatus }).eq("id", paymentRecord.id);
+
+    // ── falha-cartao: cobrança recorrente recusada no cartão ──
+    if (newStatus === "REFUSED" && (payment.billingType === "CREDIT_CARD" || event.includes("CREDIT_CARD"))) {
+      try {
+        let custEmail: string | null = null;
+        let custNome: string | null = null;
+        if (paymentRecord.quote_id) {
+          const { data: contractForCard } = await supabase
+            .from("contracts").select("customer_id")
+            .eq("quote_id", paymentRecord.quote_id).limit(1).maybeSingle();
+          if (contractForCard?.customer_id) {
+            const { data: cust } = await supabase
+              .from("customers").select("email, razao_social, responsavel")
+              .eq("id", contractForCard.customer_id).maybeSingle();
+            custEmail = cust?.email || null;
+            custNome = cust?.responsavel || cust?.razao_social || null;
+          }
+        }
+        if (custEmail && /^\S+@\S+\.\S+$/.test(custEmail)) {
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          await sendTransactional({
+            templateName: "falha-cartao",
+            recipientEmail: custEmail.toLowerCase(),
+            idempotencyKey: `falha-cartao-${payment.id}`,
+            templateData: {
+              nome: custNome || undefined,
+              motivo: payment.refusalReason || payment.description || "Cobrança recusada pelo emissor.",
+              portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+            },
+          });
+        }
+      } catch (e) {
+        console.error("[asaas-webhook] falha-cartao email error:", (e as Error)?.message);
+      }
+    }
 
     // ── Auto-populate customer mapping when we have payment context ──
     if (payment.customer && paymentRecord.quote_id) {
