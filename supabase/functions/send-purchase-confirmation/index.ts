@@ -152,20 +152,31 @@ Deno.serve(async (req) => {
     console.log(`[send-purchase-confirmation] Service: ${service_name}, Value: ${valueFormatted}`);
     await logSistemaBackend({ tipo: "email", status: "info", mensagem: `Enviando confirmação para ${customer_email}`, payload: { service_name, value } });
 
-    // Send email via central SMTP function
+    // Send via Lovable Emails (template: pagamento-confirmado)
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
 
-    const smtpResponse = await supabase.functions.invoke("send-smtp-email", {
-      body: {
-        to: customer_email,
-        subject: `✅ Pagamento confirmado — ${service_name} — WMTi`,
-        html: emailHtml,
+    const idempotencyKey = contract_ref
+      ? `purchase-confirm-${contract_ref}`
+      : `purchase-confirm-${customer_email}-${Date.now()}`;
+
+    const sendResult = await sendTransactional({
+      templateName: "pagamento-confirmado",
+      recipientEmail: customer_email,
+      idempotencyKey,
+      templateData: {
+        nome: customer_name,
+        valor: valueFormatted,
+        data: new Date().toLocaleDateString("pt-BR"),
+        referencia: contract_ref || service_name,
+        reciboUrl: "https://euqueroarmas.com.br/area-do-cliente/financeiro",
       },
     });
 
-    const smtpOk = !smtpResponse.error && smtpResponse.data?.success;
+    const smtpOk = sendResult.ok;
+    const smtpResponse = { data: { success: sendResult.ok, queued: sendResult.queued, messageId: idempotencyKey }, error: sendResult.error ? { message: sendResult.error } : null } as any;
 
     if (!smtpOk) {
       console.error("[send-purchase-confirmation] SMTP error:", JSON.stringify(smtpResponse.error || smtpResponse.data));

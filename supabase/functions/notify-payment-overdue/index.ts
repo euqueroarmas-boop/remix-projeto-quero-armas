@@ -1,80 +1,62 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
-import { buildPaymentOverdueHtml, buildPaymentOverdueText } from "../_shared/emailTemplates.ts";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
+import { sendTransactional } from "../_shared/sendTransactional.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
 };
 
 /**
  * Notifica o cliente que a cobrança está vencida.
- * Disparado pelo asaas-webhook no evento PAYMENT_OVERDUE.
- * Envia via send-smtp-email (gateway central).
+ * Template Lovable Emails: pagamento-atrasado
  */
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  // 🔒 Onda 6
   const guard = await requireAdminOrInternal(req);
   if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
-    const { customer_email, customer_name, value, due_date, invoice_url, trace_id } = body;
-    const traceId = trace_id || `pmt-overdue-${crypto.randomUUID()}`;
+    const { customer_email, customer_name, value, due_date, invoice_url, trace_id, payment_id } = body;
+    const traceId = trace_id || `pmt-overdue-${payment_id || crypto.randomUUID()}`;
 
     if (!customer_email || !customer_name || !value) {
       return new Response(JSON.stringify({ error: "Missing required fields", traceId }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const valueFormatted = `R$ ${Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const dueDateFormatted = due_date
-      ? new Date(due_date + "T12:00:00").toLocaleDateString("pt-BR")
-      : "N/A";
+    const venceuEm = due_date ? new Date(due_date + "T12:00:00") : null;
+    const diasAtraso = venceuEm
+      ? Math.max(0, Math.floor((Date.now() - venceuEm.getTime()) / (1000 * 60 * 60 * 24)))
+      : 0;
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
-
-    const subject = `⚠️ Cobrança vencida — WMTi`;
-
-    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-    const smtpRes = await supabase.functions.invoke("send-smtp-email", {
-      headers: internalToken ? { "x-internal-token": internalToken } : undefined,
-      body: {
-        to: customer_email,
-        subject,
-        html: buildPaymentOverdueHtml({ customerName: customer_name, value: valueFormatted, dueDate: dueDateFormatted, invoiceUrl: invoice_url }),
-        text: buildPaymentOverdueText({ customerName: customer_name, value: valueFormatted, dueDate: dueDateFormatted }),
-        trace_id: traceId,
+    const result = await sendTransactional({
+      templateName: "pagamento-atrasado",
+      recipientEmail: customer_email,
+      idempotencyKey: traceId,
+      templateData: {
+        nome: customer_name,
+        valor: Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        venceuEm: venceuEm ? venceuEm.toLocaleDateString("pt-BR") : "—",
+        diasAtraso: String(diasAtraso),
+        linkPagamento: invoice_url || "https://euqueroarmas.com.br/area-do-cliente/financeiro",
       },
     });
 
-    const ok = !smtpRes.error && smtpRes.data?.success;
-    console.info(`[notify-payment-overdue][${traceId}]`, ok ? "sent" : "failed");
-
-    if (!ok) {
-      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio pagamento vencido: ${customer_email}`, payload: { trace_id: traceId } });
+    if (result.ok) {
+      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Aviso de pagamento vencido enviado: ${customer_email}`, payload: { trace_id: traceId } });
     } else {
-      await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Aviso de pagamento vencido enviado: ${customer_email}`, payload: { trace_id: traceId, subject } });
+      await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio pagamento vencido: ${customer_email}`, payload: { trace_id: traceId, error: result.error } });
     }
 
-    return new Response(JSON.stringify({ success: ok, traceId }), {
-      status: ok ? 200 : 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify({ success: result.ok, traceId }), {
+      status: result.ok ? 200 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error("[notify-payment-overdue] error", msg);
     return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
