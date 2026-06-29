@@ -99,6 +99,26 @@ export default function ClienteResumoKanban({
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
+  // Detecta primeiro acesso vs retorno para alternar a saudação do resumo.
+  // Usa localStorage por cliente (chave estável); se não houver id, cai no nome.
+  const welcomeKey = `qa_welcomed_${cliente?.id || cliente?.id_legado || cliente?.cpf || firstName(cliente)}`;
+  const [isReturning, setIsReturning] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return !!window.localStorage.getItem(welcomeKey); } catch { return false; }
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (!window.localStorage.getItem(welcomeKey)) {
+        window.localStorage.setItem(welcomeKey, new Date().toISOString());
+      }
+    } catch { /* ignore */ }
+    // Não muda isReturning nesta sessão: só ficará true no próximo login.
+  }, [welcomeKey]);
+  const greetingTitle = isReturning
+    ? `BEM-VINDO DE VOLTA, ${firstName(cliente)}! ESTE É O SEU RESUMO DE TUDO`
+    : `BEM-VINDO, ${firstName(cliente)}! ESTE É O RESUMO DE TUDO`;
+
   const URG_SUB: Record<string, string> = {
     cr: "Certificado de Registro · sem ele toda atividade na PF trava",
     craf: "Sem CRAF vigente o transporte da arma é ilegal",
@@ -417,7 +437,7 @@ export default function ClienteResumoKanban({
       <div className="qa-client-summary-print__wrap">
         <header className="qa-client-summary-print__top">
           <div>
-            <h1>{firstName(cliente)}, ESTE É O RESUMO DE TUDO</h1>
+            <h1>{greetingTitle}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
           <div className="qa-client-summary-print__updated">
