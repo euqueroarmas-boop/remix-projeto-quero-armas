@@ -10555,6 +10555,7 @@ export type Database = {
         Args: { p_catalogo_slug: string; p_cliente_id: number }
         Returns: Json
       }
+      qa_vincular_por_cpf: { Args: { _cpf: string }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
