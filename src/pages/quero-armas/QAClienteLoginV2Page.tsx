@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play } from "lucide-react";
+import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play, Star } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -235,47 +235,53 @@ export default function QAClienteLoginV2Page() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col" style={{ background: "#f6f5f1" }}>
-      <div className="w-full border-b border-black/10 bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-black/60 hover:text-[#7A1F2B]"
-          >
-            <ChevronLeft size={14} /> Voltar
-          </button>
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-black/40">
-            <ShieldCheck size={12} /> Conexão protegida
-          </span>
-        </div>
+    <div className="min-h-screen w-full relative overflow-hidden text-white" style={{ background: "#050505" }}>
+      {/* Ambient backdrop */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full" style={{ background: "radial-gradient(circle, rgba(122,31,43,0.55) 0%, rgba(122,31,43,0) 70%)", filter: "blur(40px)" }} />
+        <div className="absolute -bottom-40 -right-32 h-[480px] w-[480px] rounded-full" style={{ background: "radial-gradient(circle, rgba(214,166,75,0.18) 0%, rgba(214,166,75,0) 70%)", filter: "blur(40px)" }} />
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)", backgroundSize: "64px 64px" }} />
       </div>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-6xl grid gap-6 lg:grid-cols-[1.25fr_minmax(340px,400px)] items-stretch">
-          {/* Coluna de publicidade · Carrossel */}
-          <AdCarousel />
+      {/* Top bar */}
+      <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-white/60 hover:text-white transition"
+        >
+          <ChevronLeft size={14} /> Voltar
+        </button>
+        <img src={logoColor} alt="Quero Armas" className="h-7 w-auto opacity-90" />
+        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-white/40">
+          <ShieldCheck size={12} /> LGPD
+        </span>
+      </header>
 
-          {/* Coluna do formulário (compacto) */}
-          <div className="w-full max-w-md mx-auto lg:mx-0">
-          <div className="flex flex-col items-center mb-5">
-            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto mb-3" />
-            <h1 className="text-lg font-bold uppercase tracking-wide text-black text-center">
-              Acesso do Cliente
-            </h1>
-            <p className="text-[12px] text-black/55 mt-1 text-center">
-              Entre na sua área Quero Armas.
-            </p>
-          </div>
+      <main className="relative z-10 px-6 lg:px-12 pb-10">
+        <div className="mx-auto w-full max-w-7xl grid gap-8 lg:grid-cols-[1fr_minmax(360px,420px)] items-center min-h-[calc(100vh-140px)]">
+          {/* Sponsor showcase — esquerda */}
+          <SponsorShowcase />
 
-          <div className="bg-white border border-black/10 rounded-xl shadow-sm p-4">
+          {/* Login card — direita */}
+          <div className="w-full max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] p-6 lg:p-7">
+            <div className="mb-5">
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em]" style={{ color: "#D6A64B" }}>Área do Cliente</span>
+              <h1 className="text-2xl font-bold text-white mt-1.5" style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".01em" }}>
+                Acesse sua conta
+              </h1>
+              <p className="text-[12.5px] text-white/55 mt-1">
+                Seu arsenal, processos e prazos num só lugar.
+              </p>
+            </div>
             {needCpf ? (
               <form onSubmit={handleLinkByCpf} className="space-y-4">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-black mb-1">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white mb-1">
                     Localizar seu cadastro
                   </h2>
-                  <p className="text-xs text-black/60 leading-relaxed">
+                  <p className="text-xs text-white/60 leading-relaxed">
                     Não localizamos seu cadastro automaticamente pelo e-mail/telefone do login. Informe seu <strong>CPF</strong> para vincular.
                   </p>
                 </div>
@@ -294,7 +300,7 @@ export default function QAClienteLoginV2Page() {
                   <button
                     type="button"
                     onClick={handleCancelCpf}
-                    className="h-11 px-4 rounded-lg border border-black/15 text-sm font-semibold text-black/70 hover:bg-black/[0.03]"
+                    className="h-11 px-4 rounded-lg border border-white/15 text-sm font-semibold text-white/70 hover:bg-white/[0.05]"
                   >
                     Cancelar
                   </button>
@@ -309,7 +315,7 @@ export default function QAClienteLoginV2Page() {
                     type="button"
                     onClick={() => handleSocial("google")}
                     disabled={loadingProvider !== null}
-                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg border border-black/15 bg-white hover:bg-black/[0.03] transition text-sm font-medium text-black disabled:opacity-60"
+                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg border border-white/15 bg-white hover:bg-white/90 transition text-sm font-medium text-black disabled:opacity-60"
                   >
                     {loadingProvider === "google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
                     Continuar com Google
@@ -318,7 +324,7 @@ export default function QAClienteLoginV2Page() {
                     type="button"
                     onClick={() => handleSocial("apple")}
                     disabled={loadingProvider !== null}
-                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg bg-black hover:bg-black/90 transition text-sm font-medium text-white disabled:opacity-60"
+                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg bg-white/[0.06] border border-white/15 hover:bg-white/[0.1] transition text-sm font-medium text-white disabled:opacity-60"
                   >
                     {loadingProvider === "apple" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AppleIcon />}
                     Continuar com Apple
@@ -326,12 +332,12 @@ export default function QAClienteLoginV2Page() {
                 </div>
 
                 <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px bg-black/10" />
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-black/40">ou</span>
-                  <div className="flex-1 h-px bg-black/10" />
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/40">ou</span>
+                  <div className="flex-1 h-px bg-white/10" />
                 </div>
 
-                <div className="flex rounded-lg bg-black/5 p-1 mb-4">
+                <div className="flex rounded-lg bg-white/[0.05] p-1 mb-4">
                   <TabButton active={tab === "email"} onClick={() => setTab("email")}>
                     <Mail size={14} /> E-mail
                   </TabButton>
@@ -349,7 +355,7 @@ export default function QAClienteLoginV2Page() {
                   >
                     <Phone size={14} /> Telefone
                     {!PHONE_LOGIN_ENABLED && (
-                      <span className="ml-1 text-[8px] uppercase tracking-[0.18em] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
+                      <span className="ml-1 text-[8px] uppercase tracking-[0.18em] bg-amber-300/20 text-amber-300 px-1.5 py-0.5 rounded">
                         em breve
                       </span>
                     )}
@@ -383,7 +389,7 @@ export default function QAClienteLoginV2Page() {
                         <button
                           type="button"
                           onClick={() => setShowPwd((s) => !s)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-black/40 hover:text-black"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white"
                           tabIndex={-1}
                         >
                           {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -395,7 +401,7 @@ export default function QAClienteLoginV2Page() {
                         type="button"
                         onClick={handleForgotPassword}
                         disabled={resetLoading}
-                        className="text-xs uppercase tracking-wider text-[#7A1F2B] hover:underline disabled:opacity-60"
+                        className="text-xs uppercase tracking-wider text-[#D6A64B] hover:underline disabled:opacity-60"
                       >
                         {resetLoading ? "Enviando..." : "Esqueci minha senha"}
                       </button>
@@ -420,7 +426,7 @@ export default function QAClienteLoginV2Page() {
                         />
                       </div>
                     </Field>
-                    <p className="text-xs text-black/55 leading-relaxed">
+                    <p className="text-xs text-white/55 leading-relaxed">
                       Enviaremos um <strong>código SMS de 6 dígitos</strong> para confirmar seu acesso.
                     </p>
                     <SubmitBtn loading={loadingPhone}>Receber código</SubmitBtn>
@@ -444,7 +450,7 @@ export default function QAClienteLoginV2Page() {
                       <button
                         type="button"
                         onClick={() => { setPhoneStep("input"); setOtp(""); }}
-                        className="h-11 px-4 rounded-lg border border-black/15 text-xs font-semibold uppercase tracking-wider text-black/70 hover:bg-black/[0.03]"
+                        className="h-11 px-4 rounded-lg border border-white/15 text-xs font-semibold uppercase tracking-wider text-white/70 hover:bg-white/[0.05]"
                       >
                         Trocar nº
                       </button>
@@ -461,16 +467,16 @@ export default function QAClienteLoginV2Page() {
               <button
                 type="button"
                 onClick={() => navigate("/ativar-acesso")}
-                className="w-full mt-4 inline-flex items-center justify-center gap-2 h-10 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold uppercase tracking-wider transition"
+                className="w-full mt-4 inline-flex items-center justify-center gap-2 h-10 rounded-lg border border-[#D6A64B]/40 bg-[#D6A64B]/10 hover:bg-[#D6A64B]/15 text-[#D6A64B] text-xs font-semibold uppercase tracking-wider transition"
               >
                 <Sparkles size={14} /> Primeiro acesso · Ativar conta
               </button>
 
-              <p className="text-center text-sm text-black/60 mt-6">
+              <p className="text-center text-sm text-white/60 mt-6">
                 Ainda não tem cadastro?{" "}
                 <Link
                   to="/cadastro"
-                  className="text-[#7A1F2B] font-semibold uppercase tracking-wider text-xs hover:underline"
+                  className="text-[#D6A64B] font-semibold uppercase tracking-wider text-xs hover:underline"
                 >
                   Criar cadastro
                 </Link>
@@ -478,7 +484,7 @@ export default function QAClienteLoginV2Page() {
             </>
           )}
 
-          <div className="flex items-center justify-center gap-2 mt-6 text-[11px] uppercase tracking-wider text-black/40">
+          <div className="flex items-center justify-center gap-2 mt-6 text-[11px] uppercase tracking-wider text-white/40">
             <ShieldCheck size={14} />
             Conexão protegida · LGPD
           </div>
@@ -491,17 +497,19 @@ export default function QAClienteLoginV2Page() {
           width: 100%;
           height: 40px;
           padding: 0 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(0,0,0,0.15);
-          background: #fff;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.04);
           font-size: 14px;
-          color: #000;
+          color: #fff;
           outline: none;
           transition: border-color .15s, box-shadow .15s;
         }
+        .qa-input::placeholder { color: rgba(255,255,255,0.35); }
         .qa-input:focus {
-          border-color: #7A1F2B;
-          box-shadow: 0 0 0 3px rgba(122,31,43,0.12);
+          border-color: #D6A64B;
+          background: rgba(255,255,255,0.06);
+          box-shadow: 0 0 0 3px rgba(214,166,75,0.18);
         }
       `}</style>
     </div>
@@ -526,7 +534,7 @@ function TabButton({ active, onClick, children, disabled }: { active: boolean; o
       onClick={onClick}
       aria-disabled={disabled}
       className={`flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs uppercase tracking-wider font-semibold transition ${
-        active ? "bg-white text-black shadow-sm" : "text-black/55 hover:text-black"
+        active ? "bg-white text-black shadow-sm" : "text-white/55 hover:text-white"
       } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       {children}
@@ -539,7 +547,7 @@ function SubmitBtn({ children, loading }: { children: React.ReactNode; loading?:
     <button
       type="submit"
       disabled={loading}
-      className="flex-1 w-full h-11 rounded-lg bg-[#7A1F2B] hover:bg-[#651822] transition text-white text-sm font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-2 disabled:opacity-60"
+      className="flex-1 w-full h-11 rounded-lg bg-[#7A1F2B] hover:bg-[#8a2532] transition text-white text-sm font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_8px_24px_-8px_rgba(122,31,43,0.6)]"
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
       {children}
