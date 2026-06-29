@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles } from "lucide-react";
+import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -237,7 +237,7 @@ export default function QAClienteLoginV2Page() {
   return (
     <div className="min-h-screen w-full flex flex-col" style={{ background: "#f6f5f1" }}>
       <div className="w-full border-b border-black/10 bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate(-1)}
@@ -251,19 +251,24 @@ export default function QAClienteLoginV2Page() {
         </div>
       </div>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col items-center mb-8">
-            <img src={logoColor} alt="Quero Armas" className="h-14 w-auto mb-4" />
-            <h1 className="text-2xl font-bold uppercase tracking-wide text-black text-center">
+      <main className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-6xl grid gap-6 lg:grid-cols-[1.25fr_minmax(340px,400px)] items-stretch">
+          {/* Coluna de publicidade · Carrossel */}
+          <AdCarousel />
+
+          {/* Coluna do formulário (compacto) */}
+          <div className="w-full max-w-md mx-auto lg:mx-0">
+          <div className="flex flex-col items-center mb-5">
+            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto mb-3" />
+            <h1 className="text-lg font-bold uppercase tracking-wide text-black text-center">
               Acesso do Cliente
             </h1>
-            <p className="text-sm text-black/60 mt-1 text-center">
-              Entre na sua área para acompanhar processos e documentos.
+            <p className="text-[12px] text-black/55 mt-1 text-center">
+              Entre na sua área Quero Armas.
             </p>
           </div>
 
-          <div className="bg-white border border-black/10 rounded-xl shadow-sm p-6">
+          <div className="bg-white border border-black/10 rounded-xl shadow-sm p-4">
             {needCpf ? (
               <form onSubmit={handleLinkByCpf} className="space-y-4">
                 <div>
@@ -476,6 +481,7 @@ export default function QAClienteLoginV2Page() {
           <div className="flex items-center justify-center gap-2 mt-6 text-[11px] uppercase tracking-wider text-black/40">
             <ShieldCheck size={14} />
             Conexão protegida · LGPD
+          </div>
           </div>
         </div>
       </main>
