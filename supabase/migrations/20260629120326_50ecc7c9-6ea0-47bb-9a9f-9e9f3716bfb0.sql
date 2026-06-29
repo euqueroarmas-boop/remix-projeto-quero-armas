@@ -1,0 +1,1 @@
+SELECT cron.unschedule('qa-arsenal-mockup-blast-1min');
