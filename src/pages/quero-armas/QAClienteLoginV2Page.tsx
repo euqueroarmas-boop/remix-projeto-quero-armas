@@ -513,14 +513,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabButton({ active, onClick, children, disabled }: { active: boolean; onClick: () => void; children: React.ReactNode; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-disabled={disabled}
       className={`flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs uppercase tracking-wider font-semibold transition ${
         active ? "bg-white text-black shadow-sm" : "text-black/55 hover:text-black"
-      }`}
+      } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       {children}
     </button>
