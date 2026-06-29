@@ -580,132 +580,206 @@ function AppleIcon() {
  * navegação por setas e pontos. Slides são definidos localmente
  * para que a equipe possa editar copy/imagens sem mexer no auth.
  * ============================================================ */
-type AdSlide = {
-  kicker: string;
-  title: string;
-  text: string;
+/* ============================================================
+ * SponsorShowcase — vitrine de LANÇAMENTOS dos patrocinadores.
+ * Espaço pago: marcas exibem novos produtos direto na tela de
+ * login. Editável pelo painel admin (config futura).
+ * ============================================================ */
+type SponsorSlide = {
+  brand: string;            // marca do patrocinador
+  category: string;         // categoria/linha
+  product: string;          // nome do lançamento
+  tagline: string;          // chamada curta
+  accent: string;           // cor de destaque
   cta?: { label: string; href: string };
-  bg: string; // gradient/cor de fundo
-  ink?: string; // cor do texto
 };
 
-const AD_SLIDES: AdSlide[] = [
+const SPONSOR_SLIDES: SponsorSlide[] = [
   {
-    kicker: "ARSENAL INTELIGENTE",
-    title: "Sua coleção sob controle, 24h por dia.",
-    text: "CR, CRAFs, GTs, exames e prazos da PF organizados num só lugar. Alertas automáticos antes de qualquer vencimento.",
-    cta: { label: "Conhecer o Arsenal", href: "/" },
-    bg: "linear-gradient(135deg,#0A0A0A 0%,#1a1a1a 55%,#3a0d14 100%)",
-    ink: "#f6f5f1",
+    brand: "TAURUS",
+    category: "Pistola · Linha Defesa",
+    product: "TH9 PRO Compact",
+    tagline: "Nova geração da TH9 chega com gatilho refinado e ergonomia premium.",
+    accent: "#D6A64B",
+    cta: { label: "Ver lançamento", href: "/" },
   },
   {
-    kicker: "PROCESSOS NA PF",
-    title: "Do protocolo ao deferimento, sem dor de cabeça.",
-    text: "Acompanhe cada etapa do seu processo — documentos, exigências, prazos críticos e respostas oficiais — em tempo real.",
-    cta: { label: "Ver serviços", href: "/servicos" },
-    bg: "linear-gradient(135deg,#7A1F2B 0%,#5a1721 60%,#2a0a0f 100%)",
-    ink: "#fff",
+    brand: "CBC",
+    category: "Munição · Calibre .40",
+    product: "Gold Hex Expansiva",
+    tagline: "Performance balística certificada para porte e defesa pessoal.",
+    accent: "#C75B3F",
+    cta: { label: "Conhecer munição", href: "/" },
   },
   {
-    kicker: "ATENDIMENTO ESPECIALIZADO",
-    title: "Equipe Quero Armas ao seu lado.",
-    text: "Advogados e despachantes especializados em armamento. Suporte humano + automação para você focar no que importa.",
-    cta: { label: "Falar conosco", href: "/contato" },
-    bg: "linear-gradient(135deg,#1f1a14 0%,#3a2d1a 55%,#7A1F2B 100%)",
-    ink: "#f6f5f1",
+    brand: "IMBEL",
+    category: "Pistola · Linha Tática",
+    product: "MD7 .40 Stainless",
+    tagline: "Aço inox, slide reforçado e mira ajustável — pronta para o registro PF.",
+    accent: "#9DB1C7",
+    cta: { label: "Ver ficha técnica", href: "/" },
+  },
+  {
+    brand: "QUERO ARMAS",
+    category: "Plataforma · Arsenal",
+    product: "Arsenal Inteligente 2.0",
+    tagline: "CR, CRAFs, GTs e exames com alertas automáticos antes de vencer.",
+    accent: "#7A1F2B",
+    cta: { label: "Conhecer", href: "/" },
   },
 ];
 
-function AdCarousel() {
+function SponsorShowcase() {
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const total = AD_SLIDES.length;
+  const total = SPONSOR_SLIDES.length;
 
   useEffect(() => {
     if (!playing) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % total), 6000);
+    const t = setInterval(() => setIdx((i) => (i + 1) % total), 6500);
     return () => clearInterval(t);
   }, [playing, total]);
 
   const go = (n: number) => setIdx(((n % total) + total) % total);
-  const slide = AD_SLIDES[idx];
+  const slide = SPONSOR_SLIDES[idx];
 
   return (
-    <aside
-      className="relative hidden lg:flex flex-col justify-between rounded-2xl overflow-hidden border border-black/10 shadow-sm min-h-[520px]"
-      style={{ background: slide.bg, color: slide.ink || "#fff", transition: "background 500ms ease" }}
-      aria-label="Publicidade Quero Armas"
-    >
-      {/* Topo */}
-      <div className="p-7 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.3em] opacity-70">Quero Armas · Publicidade</span>
-        <button
-          type="button"
-          onClick={() => setPlaying((p) => !p)}
-          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] opacity-70 hover:opacity-100 border border-white/20 rounded-full px-2.5 py-1"
-          aria-label={playing ? "Pausar carrossel" : "Reproduzir carrossel"}
-        >
-          {playing ? <Pause size={11} /> : <Play size={11} />} {playing ? "Auto" : "Pausado"}
-        </button>
+    <aside className="hidden lg:flex flex-col gap-6 max-w-[640px]" aria-label="Lançamentos dos patrocinadores">
+      {/* Headline */}
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-7 items-center gap-1.5 px-2.5 rounded-full border border-[#D6A64B]/40 bg-[#D6A64B]/10 text-[10px] font-bold uppercase tracking-[0.28em] text-[#D6A64B]">
+          <Star size={11} fill="currentColor" /> Lançamentos
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+          Espaço dos patrocinadores
+        </span>
       </div>
 
-      {/* Conteúdo do slide */}
-      <div className="px-9 pb-6">
-        <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-80 mb-3" style={{ color: "#D6A64B" }}>
-          {slide.kicker}
-        </div>
-        <h2 className="font-bold text-[28px] leading-tight mb-3" style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".01em" }}>
-          {slide.title}
-        </h2>
-        <p className="text-[13.5px] leading-relaxed opacity-85 max-w-md">
-          {slide.text}
-        </p>
-        {slide.cta && (
-          <Link
-            to={slide.cta.href}
-            className="mt-5 inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white text-black text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-white/90 transition"
-          >
-            {slide.cta.label} <ChevronRight size={14} />
-          </Link>
-        )}
-      </div>
+      {/* Card principal */}
+      <article
+        className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
+        style={{ minHeight: 460 }}
+      >
+        {/* Glow do patrocinador */}
+        <div
+          className="absolute -top-20 -right-20 h-[360px] w-[360px] rounded-full pointer-events-none transition-colors duration-700"
+          style={{ background: `radial-gradient(circle, ${slide.accent}55 0%, transparent 65%)`, filter: "blur(20px)" }}
+          aria-hidden
+        />
 
-      {/* Rodapé · controles */}
-      <div className="px-7 pb-6 flex items-center justify-between">
-        <div className="flex gap-1.5" role="tablist" aria-label="Slides">
-          {AD_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => go(i)}
-              aria-label={`Ir para slide ${i + 1}`}
-              aria-selected={i === idx}
-              className="h-1.5 rounded-full transition-all"
-              style={{
-                width: i === idx ? 28 : 12,
-                background: i === idx ? "#fff" : "rgba(255,255,255,0.35)",
-              }}
-            />
-          ))}
+        <div className="relative grid grid-rows-[auto_1fr_auto] h-full p-7 lg:p-9 gap-6">
+          {/* Top: marca + selo patrocinado */}
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.32em] text-white/40 mb-2">Apresentado por</div>
+              <div
+                className="text-2xl font-black tracking-[0.08em]"
+                style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", color: slide.accent }}
+              >
+                {slide.brand}
+              </div>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.3em] text-white/35 border border-white/15 rounded-full px-2.5 py-1">
+              Ad
+            </span>
+          </div>
+
+          {/* Centro: produto */}
+          <div className="flex flex-col justify-center">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55 mb-2">
+              {slide.category}
+            </div>
+            <h2
+              className="text-[42px] lg:text-[52px] leading-[0.95] font-bold text-white mb-4"
+              style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".005em" }}
+            >
+              {slide.product}
+            </h2>
+            <p className="text-[15px] leading-relaxed text-white/65 max-w-md">
+              {slide.tagline}
+            </p>
+          </div>
+
+          {/* Rodapé: CTA + controles */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {slide.cta && (
+              <Link
+                to={slide.cta.href}
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-[11px] font-bold uppercase tracking-[0.22em] text-black transition hover:scale-[1.02]"
+                style={{ background: slide.accent }}
+              >
+                {slide.cta.label} <ChevronRight size={14} />
+              </Link>
+            )}
+
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5" role="tablist" aria-label="Slides">
+                {SPONSOR_SLIDES.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => go(i)}
+                    aria-label={`${s.brand} · ${s.product}`}
+                    aria-selected={i === idx}
+                    className="h-1.5 rounded-full transition-all"
+                    style={{
+                      width: i === idx ? 28 : 10,
+                      background: i === idx ? slide.accent : "rgba(255,255,255,0.25)",
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPlaying((p) => !p)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label={playing ? "Pausar" : "Reproduzir"}
+                >
+                  {playing ? <Pause size={12} /> : <Play size={12} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(idx - 1)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label="Anterior"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(idx + 1)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label="Próximo"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
+      </article>
+
+      {/* Faixa de marcas */}
+      <div className="flex items-center gap-2 flex-wrap pl-1">
+        <span className="text-[10px] uppercase tracking-[0.28em] text-white/35 mr-2">
+          Patrocinadores
+        </span>
+        {SPONSOR_SLIDES.map((s, i) => (
           <button
+            key={s.brand + i}
             type="button"
-            onClick={() => go(idx - 1)}
-            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
-            aria-label="Slide anterior"
+            onClick={() => go(i)}
+            className={`text-[11px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-md border transition ${
+              i === idx
+                ? "border-white/30 bg-white/[0.06] text-white"
+                : "border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+            }`}
+            style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif" }}
           >
-            <ChevronLeft size={14} />
+            {s.brand}
           </button>
-          <button
-            type="button"
-            onClick={() => go(idx + 1)}
-            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
-            aria-label="Próximo slide"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
+        ))}
       </div>
     </aside>
   );
