@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import logoSrc from "@/assets/quero-armas-logo.png";
 
 /**
  * 10 mockups REAIS em React/HTML usando fotos reais de armas/tiro (Unsplash).
@@ -8,7 +9,7 @@ import { Link } from "react-router-dom";
  *         /mockups-login-v9/1..10 → tela cheia
  */
 
-const LOGO = "https://euqueroarmas.com.br/favicon-512.png";
+const LOGO = logoSrc;
 
 // Fotos REAIS (Unsplash) — universo de armas / tiro esportivo
 const PHOTOS = [
