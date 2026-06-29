@@ -437,7 +437,7 @@ export default function ClienteResumoKanban({
       <div className="qa-client-summary-print__wrap">
         <header className="qa-client-summary-print__top">
           <div>
-            <h1>{firstName(cliente)}, ESTE É O RESUMO DE TUDO</h1>
+            <h1>{greetingTitle}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
           <div className="qa-client-summary-print__updated">
