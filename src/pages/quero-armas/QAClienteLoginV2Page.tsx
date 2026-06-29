@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play } from "lucide-react";
+import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play, Star } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -235,47 +235,53 @@ export default function QAClienteLoginV2Page() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col" style={{ background: "#f6f5f1" }}>
-      <div className="w-full border-b border-black/10 bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-black/60 hover:text-[#7A1F2B]"
-          >
-            <ChevronLeft size={14} /> Voltar
-          </button>
-          <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-black/40">
-            <ShieldCheck size={12} /> Conexão protegida
-          </span>
-        </div>
+    <div className="min-h-screen w-full relative overflow-hidden text-white" style={{ background: "#050505" }}>
+      {/* Ambient backdrop */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden>
+        <div className="absolute -top-40 -left-40 h-[520px] w-[520px] rounded-full" style={{ background: "radial-gradient(circle, rgba(122,31,43,0.55) 0%, rgba(122,31,43,0) 70%)", filter: "blur(40px)" }} />
+        <div className="absolute -bottom-40 -right-32 h-[480px] w-[480px] rounded-full" style={{ background: "radial-gradient(circle, rgba(214,166,75,0.18) 0%, rgba(214,166,75,0) 70%)", filter: "blur(40px)" }} />
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)", backgroundSize: "64px 64px" }} />
       </div>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-6xl grid gap-6 lg:grid-cols-[1.25fr_minmax(340px,400px)] items-stretch">
-          {/* Coluna de publicidade · Carrossel */}
-          <AdCarousel />
+      {/* Top bar */}
+      <header className="relative z-10 px-6 lg:px-12 py-5 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-white/60 hover:text-white transition"
+        >
+          <ChevronLeft size={14} /> Voltar
+        </button>
+        <img src={logoColor} alt="Quero Armas" className="h-7 w-auto opacity-90" />
+        <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.25em] text-white/40">
+          <ShieldCheck size={12} /> LGPD
+        </span>
+      </header>
 
-          {/* Coluna do formulário (compacto) */}
-          <div className="w-full max-w-md mx-auto lg:mx-0">
-          <div className="flex flex-col items-center mb-5">
-            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto mb-3" />
-            <h1 className="text-lg font-bold uppercase tracking-wide text-black text-center">
-              Acesso do Cliente
-            </h1>
-            <p className="text-[12px] text-black/55 mt-1 text-center">
-              Entre na sua área Quero Armas.
-            </p>
-          </div>
+      <main className="relative z-10 px-6 lg:px-12 pb-10">
+        <div className="mx-auto w-full max-w-7xl grid gap-8 lg:grid-cols-[1fr_minmax(360px,420px)] items-center min-h-[calc(100vh-140px)]">
+          {/* Sponsor showcase — esquerda */}
+          <SponsorShowcase />
 
-          <div className="bg-white border border-black/10 rounded-xl shadow-sm p-4">
+          {/* Login card — direita */}
+          <div className="w-full max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] p-6 lg:p-7">
+            <div className="mb-5">
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em]" style={{ color: "#D6A64B" }}>Área do Cliente</span>
+              <h1 className="text-2xl font-bold text-white mt-1.5" style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".01em" }}>
+                Acesse sua conta
+              </h1>
+              <p className="text-[12.5px] text-white/55 mt-1">
+                Seu arsenal, processos e prazos num só lugar.
+              </p>
+            </div>
             {needCpf ? (
               <form onSubmit={handleLinkByCpf} className="space-y-4">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-black mb-1">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-white mb-1">
                     Localizar seu cadastro
                   </h2>
-                  <p className="text-xs text-black/60 leading-relaxed">
+                  <p className="text-xs text-white/60 leading-relaxed">
                     Não localizamos seu cadastro automaticamente pelo e-mail/telefone do login. Informe seu <strong>CPF</strong> para vincular.
                   </p>
                 </div>
@@ -294,7 +300,7 @@ export default function QAClienteLoginV2Page() {
                   <button
                     type="button"
                     onClick={handleCancelCpf}
-                    className="h-11 px-4 rounded-lg border border-black/15 text-sm font-semibold text-black/70 hover:bg-black/[0.03]"
+                    className="h-11 px-4 rounded-lg border border-white/15 text-sm font-semibold text-white/70 hover:bg-white/[0.05]"
                   >
                     Cancelar
                   </button>
@@ -309,7 +315,7 @@ export default function QAClienteLoginV2Page() {
                     type="button"
                     onClick={() => handleSocial("google")}
                     disabled={loadingProvider !== null}
-                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg border border-black/15 bg-white hover:bg-black/[0.03] transition text-sm font-medium text-black disabled:opacity-60"
+                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg border border-white/15 bg-white hover:bg-white/90 transition text-sm font-medium text-black disabled:opacity-60"
                   >
                     {loadingProvider === "google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
                     Continuar com Google
@@ -318,7 +324,7 @@ export default function QAClienteLoginV2Page() {
                     type="button"
                     onClick={() => handleSocial("apple")}
                     disabled={loadingProvider !== null}
-                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg bg-black hover:bg-black/90 transition text-sm font-medium text-white disabled:opacity-60"
+                    className="w-full h-11 inline-flex items-center justify-center gap-3 rounded-lg bg-white/[0.06] border border-white/15 hover:bg-white/[0.1] transition text-sm font-medium text-white disabled:opacity-60"
                   >
                     {loadingProvider === "apple" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AppleIcon />}
                     Continuar com Apple
@@ -326,12 +332,12 @@ export default function QAClienteLoginV2Page() {
                 </div>
 
                 <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px bg-black/10" />
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-black/40">ou</span>
-                  <div className="flex-1 h-px bg-black/10" />
+                  <div className="flex-1 h-px bg-white/10" />
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-white/40">ou</span>
+                  <div className="flex-1 h-px bg-white/10" />
                 </div>
 
-                <div className="flex rounded-lg bg-black/5 p-1 mb-4">
+                <div className="flex rounded-lg bg-white/[0.05] p-1 mb-4">
                   <TabButton active={tab === "email"} onClick={() => setTab("email")}>
                     <Mail size={14} /> E-mail
                   </TabButton>
@@ -349,7 +355,7 @@ export default function QAClienteLoginV2Page() {
                   >
                     <Phone size={14} /> Telefone
                     {!PHONE_LOGIN_ENABLED && (
-                      <span className="ml-1 text-[8px] uppercase tracking-[0.18em] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
+                      <span className="ml-1 text-[8px] uppercase tracking-[0.18em] bg-amber-300/20 text-amber-300 px-1.5 py-0.5 rounded">
                         em breve
                       </span>
                     )}
@@ -383,7 +389,7 @@ export default function QAClienteLoginV2Page() {
                         <button
                           type="button"
                           onClick={() => setShowPwd((s) => !s)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-black/40 hover:text-black"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white"
                           tabIndex={-1}
                         >
                           {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -395,7 +401,7 @@ export default function QAClienteLoginV2Page() {
                         type="button"
                         onClick={handleForgotPassword}
                         disabled={resetLoading}
-                        className="text-xs uppercase tracking-wider text-[#7A1F2B] hover:underline disabled:opacity-60"
+                        className="text-xs uppercase tracking-wider text-[#D6A64B] hover:underline disabled:opacity-60"
                       >
                         {resetLoading ? "Enviando..." : "Esqueci minha senha"}
                       </button>
@@ -420,7 +426,7 @@ export default function QAClienteLoginV2Page() {
                         />
                       </div>
                     </Field>
-                    <p className="text-xs text-black/55 leading-relaxed">
+                    <p className="text-xs text-white/55 leading-relaxed">
                       Enviaremos um <strong>código SMS de 6 dígitos</strong> para confirmar seu acesso.
                     </p>
                     <SubmitBtn loading={loadingPhone}>Receber código</SubmitBtn>
@@ -444,7 +450,7 @@ export default function QAClienteLoginV2Page() {
                       <button
                         type="button"
                         onClick={() => { setPhoneStep("input"); setOtp(""); }}
-                        className="h-11 px-4 rounded-lg border border-black/15 text-xs font-semibold uppercase tracking-wider text-black/70 hover:bg-black/[0.03]"
+                        className="h-11 px-4 rounded-lg border border-white/15 text-xs font-semibold uppercase tracking-wider text-white/70 hover:bg-white/[0.05]"
                       >
                         Trocar nº
                       </button>
@@ -461,16 +467,16 @@ export default function QAClienteLoginV2Page() {
               <button
                 type="button"
                 onClick={() => navigate("/ativar-acesso")}
-                className="w-full mt-4 inline-flex items-center justify-center gap-2 h-10 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold uppercase tracking-wider transition"
+                className="w-full mt-4 inline-flex items-center justify-center gap-2 h-10 rounded-lg border border-[#D6A64B]/40 bg-[#D6A64B]/10 hover:bg-[#D6A64B]/15 text-[#D6A64B] text-xs font-semibold uppercase tracking-wider transition"
               >
                 <Sparkles size={14} /> Primeiro acesso · Ativar conta
               </button>
 
-              <p className="text-center text-sm text-black/60 mt-6">
+              <p className="text-center text-sm text-white/60 mt-6">
                 Ainda não tem cadastro?{" "}
                 <Link
                   to="/cadastro"
-                  className="text-[#7A1F2B] font-semibold uppercase tracking-wider text-xs hover:underline"
+                  className="text-[#D6A64B] font-semibold uppercase tracking-wider text-xs hover:underline"
                 >
                   Criar cadastro
                 </Link>
@@ -478,7 +484,7 @@ export default function QAClienteLoginV2Page() {
             </>
           )}
 
-          <div className="flex items-center justify-center gap-2 mt-6 text-[11px] uppercase tracking-wider text-black/40">
+          <div className="flex items-center justify-center gap-2 mt-6 text-[11px] uppercase tracking-wider text-white/40">
             <ShieldCheck size={14} />
             Conexão protegida · LGPD
           </div>
@@ -491,17 +497,19 @@ export default function QAClienteLoginV2Page() {
           width: 100%;
           height: 40px;
           padding: 0 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(0,0,0,0.15);
-          background: #fff;
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.04);
           font-size: 14px;
-          color: #000;
+          color: #fff;
           outline: none;
           transition: border-color .15s, box-shadow .15s;
         }
+        .qa-input::placeholder { color: rgba(255,255,255,0.35); }
         .qa-input:focus {
-          border-color: #7A1F2B;
-          box-shadow: 0 0 0 3px rgba(122,31,43,0.12);
+          border-color: #D6A64B;
+          background: rgba(255,255,255,0.06);
+          box-shadow: 0 0 0 3px rgba(214,166,75,0.18);
         }
       `}</style>
     </div>
@@ -526,7 +534,7 @@ function TabButton({ active, onClick, children, disabled }: { active: boolean; o
       onClick={onClick}
       aria-disabled={disabled}
       className={`flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs uppercase tracking-wider font-semibold transition ${
-        active ? "bg-white text-black shadow-sm" : "text-black/55 hover:text-black"
+        active ? "bg-white text-black shadow-sm" : "text-white/55 hover:text-white"
       } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       {children}
@@ -539,7 +547,7 @@ function SubmitBtn({ children, loading }: { children: React.ReactNode; loading?:
     <button
       type="submit"
       disabled={loading}
-      className="flex-1 w-full h-11 rounded-lg bg-[#7A1F2B] hover:bg-[#651822] transition text-white text-sm font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-2 disabled:opacity-60"
+      className="flex-1 w-full h-11 rounded-lg bg-[#7A1F2B] hover:bg-[#8a2532] transition text-white text-sm font-semibold uppercase tracking-[0.18em] inline-flex items-center justify-center gap-2 disabled:opacity-60 shadow-[0_8px_24px_-8px_rgba(122,31,43,0.6)]"
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
       {children}
@@ -572,132 +580,206 @@ function AppleIcon() {
  * navegação por setas e pontos. Slides são definidos localmente
  * para que a equipe possa editar copy/imagens sem mexer no auth.
  * ============================================================ */
-type AdSlide = {
-  kicker: string;
-  title: string;
-  text: string;
+/* ============================================================
+ * SponsorShowcase — vitrine de LANÇAMENTOS dos patrocinadores.
+ * Espaço pago: marcas exibem novos produtos direto na tela de
+ * login. Editável pelo painel admin (config futura).
+ * ============================================================ */
+type SponsorSlide = {
+  brand: string;            // marca do patrocinador
+  category: string;         // categoria/linha
+  product: string;          // nome do lançamento
+  tagline: string;          // chamada curta
+  accent: string;           // cor de destaque
   cta?: { label: string; href: string };
-  bg: string; // gradient/cor de fundo
-  ink?: string; // cor do texto
 };
 
-const AD_SLIDES: AdSlide[] = [
+const SPONSOR_SLIDES: SponsorSlide[] = [
   {
-    kicker: "ARSENAL INTELIGENTE",
-    title: "Sua coleção sob controle, 24h por dia.",
-    text: "CR, CRAFs, GTs, exames e prazos da PF organizados num só lugar. Alertas automáticos antes de qualquer vencimento.",
-    cta: { label: "Conhecer o Arsenal", href: "/" },
-    bg: "linear-gradient(135deg,#0A0A0A 0%,#1a1a1a 55%,#3a0d14 100%)",
-    ink: "#f6f5f1",
+    brand: "TAURUS",
+    category: "Pistola · Linha Defesa",
+    product: "TH9 PRO Compact",
+    tagline: "Nova geração da TH9 chega com gatilho refinado e ergonomia premium.",
+    accent: "#D6A64B",
+    cta: { label: "Ver lançamento", href: "/" },
   },
   {
-    kicker: "PROCESSOS NA PF",
-    title: "Do protocolo ao deferimento, sem dor de cabeça.",
-    text: "Acompanhe cada etapa do seu processo — documentos, exigências, prazos críticos e respostas oficiais — em tempo real.",
-    cta: { label: "Ver serviços", href: "/servicos" },
-    bg: "linear-gradient(135deg,#7A1F2B 0%,#5a1721 60%,#2a0a0f 100%)",
-    ink: "#fff",
+    brand: "CBC",
+    category: "Munição · Calibre .40",
+    product: "Gold Hex Expansiva",
+    tagline: "Performance balística certificada para porte e defesa pessoal.",
+    accent: "#C75B3F",
+    cta: { label: "Conhecer munição", href: "/" },
   },
   {
-    kicker: "ATENDIMENTO ESPECIALIZADO",
-    title: "Equipe Quero Armas ao seu lado.",
-    text: "Advogados e despachantes especializados em armamento. Suporte humano + automação para você focar no que importa.",
-    cta: { label: "Falar conosco", href: "/contato" },
-    bg: "linear-gradient(135deg,#1f1a14 0%,#3a2d1a 55%,#7A1F2B 100%)",
-    ink: "#f6f5f1",
+    brand: "IMBEL",
+    category: "Pistola · Linha Tática",
+    product: "MD7 .40 Stainless",
+    tagline: "Aço inox, slide reforçado e mira ajustável — pronta para o registro PF.",
+    accent: "#9DB1C7",
+    cta: { label: "Ver ficha técnica", href: "/" },
+  },
+  {
+    brand: "QUERO ARMAS",
+    category: "Plataforma · Arsenal",
+    product: "Arsenal Inteligente 2.0",
+    tagline: "CR, CRAFs, GTs e exames com alertas automáticos antes de vencer.",
+    accent: "#7A1F2B",
+    cta: { label: "Conhecer", href: "/" },
   },
 ];
 
-function AdCarousel() {
+function SponsorShowcase() {
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const total = AD_SLIDES.length;
+  const total = SPONSOR_SLIDES.length;
 
   useEffect(() => {
     if (!playing) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % total), 6000);
+    const t = setInterval(() => setIdx((i) => (i + 1) % total), 6500);
     return () => clearInterval(t);
   }, [playing, total]);
 
   const go = (n: number) => setIdx(((n % total) + total) % total);
-  const slide = AD_SLIDES[idx];
+  const slide = SPONSOR_SLIDES[idx];
 
   return (
-    <aside
-      className="relative hidden lg:flex flex-col justify-between rounded-2xl overflow-hidden border border-black/10 shadow-sm min-h-[520px]"
-      style={{ background: slide.bg, color: slide.ink || "#fff", transition: "background 500ms ease" }}
-      aria-label="Publicidade Quero Armas"
-    >
-      {/* Topo */}
-      <div className="p-7 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.3em] opacity-70">Quero Armas · Publicidade</span>
-        <button
-          type="button"
-          onClick={() => setPlaying((p) => !p)}
-          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] opacity-70 hover:opacity-100 border border-white/20 rounded-full px-2.5 py-1"
-          aria-label={playing ? "Pausar carrossel" : "Reproduzir carrossel"}
-        >
-          {playing ? <Pause size={11} /> : <Play size={11} />} {playing ? "Auto" : "Pausado"}
-        </button>
+    <aside className="hidden lg:flex flex-col gap-6 max-w-[640px]" aria-label="Lançamentos dos patrocinadores">
+      {/* Headline */}
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-7 items-center gap-1.5 px-2.5 rounded-full border border-[#D6A64B]/40 bg-[#D6A64B]/10 text-[10px] font-bold uppercase tracking-[0.28em] text-[#D6A64B]">
+          <Star size={11} fill="currentColor" /> Lançamentos
+        </span>
+        <span className="text-[10px] uppercase tracking-[0.28em] text-white/40">
+          Espaço dos patrocinadores
+        </span>
       </div>
 
-      {/* Conteúdo do slide */}
-      <div className="px-9 pb-6">
-        <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-80 mb-3" style={{ color: "#D6A64B" }}>
-          {slide.kicker}
-        </div>
-        <h2 className="font-bold text-[28px] leading-tight mb-3" style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".01em" }}>
-          {slide.title}
-        </h2>
-        <p className="text-[13.5px] leading-relaxed opacity-85 max-w-md">
-          {slide.text}
-        </p>
-        {slide.cta && (
-          <Link
-            to={slide.cta.href}
-            className="mt-5 inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white text-black text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-white/90 transition"
-          >
-            {slide.cta.label} <ChevronRight size={14} />
-          </Link>
-        )}
-      </div>
+      {/* Card principal */}
+      <article
+        className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.01] backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
+        style={{ minHeight: 460 }}
+      >
+        {/* Glow do patrocinador */}
+        <div
+          className="absolute -top-20 -right-20 h-[360px] w-[360px] rounded-full pointer-events-none transition-colors duration-700"
+          style={{ background: `radial-gradient(circle, ${slide.accent}55 0%, transparent 65%)`, filter: "blur(20px)" }}
+          aria-hidden
+        />
 
-      {/* Rodapé · controles */}
-      <div className="px-7 pb-6 flex items-center justify-between">
-        <div className="flex gap-1.5" role="tablist" aria-label="Slides">
-          {AD_SLIDES.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => go(i)}
-              aria-label={`Ir para slide ${i + 1}`}
-              aria-selected={i === idx}
-              className="h-1.5 rounded-full transition-all"
-              style={{
-                width: i === idx ? 28 : 12,
-                background: i === idx ? "#fff" : "rgba(255,255,255,0.35)",
-              }}
-            />
-          ))}
+        <div className="relative grid grid-rows-[auto_1fr_auto] h-full p-7 lg:p-9 gap-6">
+          {/* Top: marca + selo patrocinado */}
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.32em] text-white/40 mb-2">Apresentado por</div>
+              <div
+                className="text-2xl font-black tracking-[0.08em]"
+                style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", color: slide.accent }}
+              >
+                {slide.brand}
+              </div>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.3em] text-white/35 border border-white/15 rounded-full px-2.5 py-1">
+              Ad
+            </span>
+          </div>
+
+          {/* Centro: produto */}
+          <div className="flex flex-col justify-center">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55 mb-2">
+              {slide.category}
+            </div>
+            <h2
+              className="text-[42px] lg:text-[52px] leading-[0.95] font-bold text-white mb-4"
+              style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".005em" }}
+            >
+              {slide.product}
+            </h2>
+            <p className="text-[15px] leading-relaxed text-white/65 max-w-md">
+              {slide.tagline}
+            </p>
+          </div>
+
+          {/* Rodapé: CTA + controles */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            {slide.cta && (
+              <Link
+                to={slide.cta.href}
+                className="inline-flex items-center gap-2 h-11 px-5 rounded-full text-[11px] font-bold uppercase tracking-[0.22em] text-black transition hover:scale-[1.02]"
+                style={{ background: slide.accent }}
+              >
+                {slide.cta.label} <ChevronRight size={14} />
+              </Link>
+            )}
+
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1.5" role="tablist" aria-label="Slides">
+                {SPONSOR_SLIDES.map((s, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => go(i)}
+                    aria-label={`${s.brand} · ${s.product}`}
+                    aria-selected={i === idx}
+                    className="h-1.5 rounded-full transition-all"
+                    style={{
+                      width: i === idx ? 28 : 10,
+                      background: i === idx ? slide.accent : "rgba(255,255,255,0.25)",
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPlaying((p) => !p)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label={playing ? "Pausar" : "Reproduzir"}
+                >
+                  {playing ? <Pause size={12} /> : <Play size={12} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(idx - 1)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label="Anterior"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(idx + 1)}
+                  className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/15 text-white/60 hover:text-white hover:bg-white/[0.06] transition"
+                  aria-label="Próximo"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
+      </article>
+
+      {/* Faixa de marcas */}
+      <div className="flex items-center gap-2 flex-wrap pl-1">
+        <span className="text-[10px] uppercase tracking-[0.28em] text-white/35 mr-2">
+          Patrocinadores
+        </span>
+        {SPONSOR_SLIDES.map((s, i) => (
           <button
+            key={s.brand + i}
             type="button"
-            onClick={() => go(idx - 1)}
-            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
-            aria-label="Slide anterior"
+            onClick={() => go(i)}
+            className={`text-[11px] font-bold tracking-[0.18em] uppercase px-3 py-1.5 rounded-md border transition ${
+              i === idx
+                ? "border-white/30 bg-white/[0.06] text-white"
+                : "border-white/10 text-white/40 hover:text-white/70 hover:border-white/20"
+            }`}
+            style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif" }}
           >
-            <ChevronLeft size={14} />
+            {s.brand}
           </button>
-          <button
-            type="button"
-            onClick={() => go(idx + 1)}
-            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
-            aria-label="Próximo slide"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
+        ))}
       </div>
     </aside>
   );
