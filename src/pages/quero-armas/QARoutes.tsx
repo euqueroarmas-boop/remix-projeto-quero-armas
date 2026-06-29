@@ -41,6 +41,7 @@ const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACad
 // Componentes legados permanecem no projeto para histórico, mas não são mais montados.
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
+const QAClienteLoginMockupPage = lazyRetry(() => import("./QAClienteLoginMockupPage"), "QAClienteLoginMockupPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
 const QAArsenalDigitalGratuitoPage = lazyRetry(() => import("./QAArsenalDigitalGratuitoPage"), "QAArsenalDigitalGratuitoPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
@@ -226,6 +227,7 @@ export default function QARoutes() {
         
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAScope><QAClienteLoginPage /></QAScope>} />
+        <Route path="area-do-cliente/login-mockup" element={<QAScope><QAClienteLoginMockupPage /></QAScope>} />
         <Route path="area-do-cliente/criar-conta" element={<QAScope><QACriarContaPage /></QAScope>} />
         <Route path="area-do-cliente" element={<QAScope><QAClientePortalPage /></QAScope>} />
         <Route path="area-do-cliente/contratar" element={<QAScope><QAContratarServicoPage /></QAScope>} />
