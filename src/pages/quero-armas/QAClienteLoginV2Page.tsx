@@ -565,3 +565,140 @@ function AppleIcon() {
     </svg>
   );
 }
+
+/* ============================================================
+ * AdCarousel — área publicitária ao lado do formulário de login.
+ * Permite habilitar/desabilitar a auto-rotação (botão play/pause),
+ * navegação por setas e pontos. Slides são definidos localmente
+ * para que a equipe possa editar copy/imagens sem mexer no auth.
+ * ============================================================ */
+type AdSlide = {
+  kicker: string;
+  title: string;
+  text: string;
+  cta?: { label: string; href: string };
+  bg: string; // gradient/cor de fundo
+  ink?: string; // cor do texto
+};
+
+const AD_SLIDES: AdSlide[] = [
+  {
+    kicker: "ARSENAL INTELIGENTE",
+    title: "Sua coleção sob controle, 24h por dia.",
+    text: "CR, CRAFs, GTs, exames e prazos da PF organizados num só lugar. Alertas automáticos antes de qualquer vencimento.",
+    cta: { label: "Conhecer o Arsenal", href: "/" },
+    bg: "linear-gradient(135deg,#0A0A0A 0%,#1a1a1a 55%,#3a0d14 100%)",
+    ink: "#f6f5f1",
+  },
+  {
+    kicker: "PROCESSOS NA PF",
+    title: "Do protocolo ao deferimento, sem dor de cabeça.",
+    text: "Acompanhe cada etapa do seu processo — documentos, exigências, prazos críticos e respostas oficiais — em tempo real.",
+    cta: { label: "Ver serviços", href: "/servicos" },
+    bg: "linear-gradient(135deg,#7A1F2B 0%,#5a1721 60%,#2a0a0f 100%)",
+    ink: "#fff",
+  },
+  {
+    kicker: "ATENDIMENTO ESPECIALIZADO",
+    title: "Equipe Quero Armas ao seu lado.",
+    text: "Advogados e despachantes especializados em armamento. Suporte humano + automação para você focar no que importa.",
+    cta: { label: "Falar conosco", href: "/contato" },
+    bg: "linear-gradient(135deg,#1f1a14 0%,#3a2d1a 55%,#7A1F2B 100%)",
+    ink: "#f6f5f1",
+  },
+];
+
+function AdCarousel() {
+  const [idx, setIdx] = useState(0);
+  const [playing, setPlaying] = useState(true);
+  const total = AD_SLIDES.length;
+
+  useEffect(() => {
+    if (!playing) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % total), 6000);
+    return () => clearInterval(t);
+  }, [playing, total]);
+
+  const go = (n: number) => setIdx(((n % total) + total) % total);
+  const slide = AD_SLIDES[idx];
+
+  return (
+    <aside
+      className="relative hidden lg:flex flex-col justify-between rounded-2xl overflow-hidden border border-black/10 shadow-sm min-h-[520px]"
+      style={{ background: slide.bg, color: slide.ink || "#fff", transition: "background 500ms ease" }}
+      aria-label="Publicidade Quero Armas"
+    >
+      {/* Topo */}
+      <div className="p-7 flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.3em] opacity-70">Quero Armas · Publicidade</span>
+        <button
+          type="button"
+          onClick={() => setPlaying((p) => !p)}
+          className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] opacity-70 hover:opacity-100 border border-white/20 rounded-full px-2.5 py-1"
+          aria-label={playing ? "Pausar carrossel" : "Reproduzir carrossel"}
+        >
+          {playing ? <Pause size={11} /> : <Play size={11} />} {playing ? "Auto" : "Pausado"}
+        </button>
+      </div>
+
+      {/* Conteúdo do slide */}
+      <div className="px-9 pb-6">
+        <div className="text-[10px] font-black uppercase tracking-[0.32em] opacity-80 mb-3" style={{ color: "#D6A64B" }}>
+          {slide.kicker}
+        </div>
+        <h2 className="font-bold text-[28px] leading-tight mb-3" style={{ fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", letterSpacing: ".01em" }}>
+          {slide.title}
+        </h2>
+        <p className="text-[13.5px] leading-relaxed opacity-85 max-w-md">
+          {slide.text}
+        </p>
+        {slide.cta && (
+          <Link
+            to={slide.cta.href}
+            className="mt-5 inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white text-black text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-white/90 transition"
+          >
+            {slide.cta.label} <ChevronRight size={14} />
+          </Link>
+        )}
+      </div>
+
+      {/* Rodapé · controles */}
+      <div className="px-7 pb-6 flex items-center justify-between">
+        <div className="flex gap-1.5" role="tablist" aria-label="Slides">
+          {AD_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => go(i)}
+              aria-label={`Ir para slide ${i + 1}`}
+              aria-selected={i === idx}
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: i === idx ? 28 : 12,
+                background: i === idx ? "#fff" : "rgba(255,255,255,0.35)",
+              }}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => go(idx - 1)}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
+            aria-label="Slide anterior"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => go(idx + 1)}
+            className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10"
+            aria-label="Próximo slide"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
