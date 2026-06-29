@@ -42,6 +42,7 @@ const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACad
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClienteLoginMockupPage = lazyRetry(() => import("./QAClienteLoginMockupPage"), "QAClienteLoginMockupPage");
+const QAClienteLoginV2Page = lazyRetry(() => import("./QAClienteLoginV2Page"), "QAClienteLoginV2Page");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
 const QAArsenalDigitalGratuitoPage = lazyRetry(() => import("./QAArsenalDigitalGratuitoPage"), "QAArsenalDigitalGratuitoPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
@@ -226,7 +227,8 @@ export default function QARoutes() {
         <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         
         {/* Client portal (separate auth flow) */}
-        <Route path="area-do-cliente/login" element={<QAScope><QAClienteLoginPage /></QAScope>} />
+        <Route path="area-do-cliente/login" element={<QAScope><QAClienteLoginV2Page /></QAScope>} />
+        <Route path="area-do-cliente/login-classico" element={<QAScope><QAClienteLoginPage /></QAScope>} />
         <Route path="area-do-cliente/login-mockup" element={<QAScope><QAClienteLoginMockupPage /></QAScope>} />
         <Route path="area-do-cliente/criar-conta" element={<QAScope><QACriarContaPage /></QAScope>} />
         <Route path="area-do-cliente" element={<QAScope><QAClientePortalPage /></QAScope>} />
