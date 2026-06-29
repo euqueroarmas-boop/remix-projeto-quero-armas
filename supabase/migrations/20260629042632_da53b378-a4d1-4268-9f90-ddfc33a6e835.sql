@@ -1,0 +1,1 @@
+SELECT pgmq.purge_queue('transactional_emails'); SELECT pgmq.purge_queue('auth_emails'); SELECT cron.unschedule('process-email-queue');
