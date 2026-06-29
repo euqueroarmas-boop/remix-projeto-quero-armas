@@ -10,6 +10,10 @@ import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 type Tab = "email" | "telefone";
 type PhoneStep = "input" | "code";
 
+// Enquanto não houver provedor SMS configurado no backend, a aba Telefone
+// fica visível porém desabilitada com selo "Em breve".
+const PHONE_LOGIN_ENABLED = false;
+
 /**
  * Login da Área do Cliente — Quero Armas
  * Métodos: Google, Apple, E-mail/Senha, Telefone (SMS OTP)
@@ -326,12 +330,28 @@ export default function QAClienteLoginV2Page() {
                   <TabButton active={tab === "email"} onClick={() => setTab("email")}>
                     <Mail size={14} /> E-mail
                   </TabButton>
-                  <TabButton active={tab === "telefone"} onClick={() => { setTab("telefone"); setPhoneStep("input"); }}>
+                  <TabButton
+                    active={tab === "telefone"}
+                    onClick={() => {
+                      if (!PHONE_LOGIN_ENABLED) {
+                        toast.info("Login por telefone (SMS) chega em breve. Por enquanto, use Google, Apple ou e-mail.");
+                        return;
+                      }
+                      setTab("telefone");
+                      setPhoneStep("input");
+                    }}
+                    disabled={!PHONE_LOGIN_ENABLED}
+                  >
                     <Phone size={14} /> Telefone
+                    {!PHONE_LOGIN_ENABLED && (
+                      <span className="ml-1 text-[8px] uppercase tracking-[0.18em] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">
+                        em breve
+                      </span>
+                    )}
                   </TabButton>
                 </div>
 
-                {tab === "email" ? (
+                {tab === "email" || !PHONE_LOGIN_ENABLED ? (
                   <form className="space-y-3" onSubmit={handleEmailLogin}>
                     <Field label="E-mail">
                       <input
@@ -493,14 +513,15 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabButton({ active, onClick, children, disabled }: { active: boolean; onClick: () => void; children: React.ReactNode; disabled?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-disabled={disabled}
       className={`flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs uppercase tracking-wider font-semibold transition ${
         active ? "bg-white text-black shadow-sm" : "text-black/55 hover:text-black"
-      }`}
+      } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       {children}
     </button>
