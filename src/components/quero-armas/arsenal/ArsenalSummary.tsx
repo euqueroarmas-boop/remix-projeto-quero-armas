@@ -294,7 +294,7 @@ function KpiCard({
       />
       <div className="flex items-start justify-between gap-2">
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-xl"
+          className={`flex items-center justify-center rounded-xl ${compact ? "h-7 w-7" : "h-9 w-9"}`}
           style={{ background: `${color}14`, color }}
         >
           {def.icon}
