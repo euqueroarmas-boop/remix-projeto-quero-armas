@@ -724,7 +724,7 @@ export default function QAContratarConfirmarPage() {
                 fontSize: 9, fontWeight: 500, textTransform: "uppercase",
                 letterSpacing: "0.2em", color: D.inkGhost,
               }}>
-                AMBIENTE SEGURO · PROTOCOLO CANÔNICO · NEUTRAL SCALE AAA
+                AMBIENTE SEGURO
               </p>
             </div>
           </div>
