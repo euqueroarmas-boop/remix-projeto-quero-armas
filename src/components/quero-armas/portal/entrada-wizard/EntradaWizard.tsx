@@ -160,14 +160,18 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             NOVO SERVIÇO · {step}/{totalSteps}
           </div>
           <h2 className="mt-1 text-[22px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
-            Quer adquirir um novo serviço?
+            {step === 1
+              ? "Quer adquirir um novo serviço?"
+              : passo2EhFinalidade
+                ? "Qual é a finalidade da arma?"
+                : "VOCE JA POSSUI ARMA DE FOGO REGISTRADA?"}
           </h2>
           <p className="text-[12.5px] mt-1" style={{ ...INTER, color: SUB }}>
             {step === 1
               ? "Toque numa área pra começar — iremos te guiar pelo caminho certo."
               : passo2EhFinalidade
-                ? "Qual é a finalidade da arma?"
-                : "Você já possui arma de fogo registrada?"}
+                ? "Isso determina quais serviços aparecem para você."
+                : "Toque na opção que melhor descreve sua situação atual."}
           </p>
         </div>
 
