@@ -143,7 +143,6 @@ export default function MockupsLoginV9() {
                   src={logoQA}
                   alt="Quero Armas"
                   className="h-auto w-[160px] object-contain"
-                  style={{ mixBlendMode: "screen" }}
                   draggable={false}
                 />
               </div>
