@@ -617,7 +617,13 @@ export default function QAContratarConfirmarPage() {
 
               {/* 04 Valor do serviço */}
               <Section n={4} label="VALOR DO SERVIÇO" statusDot="ok">
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+                    letterSpacing: "0.1em", color: D.inkFaint,
+                  }}>
+                    PREÇO OFICIAL
+                  </span>
                   <span style={{
                     fontFamily: "Oswald, sans-serif",
                     fontSize: 32, fontWeight: 700, letterSpacing: "-0.025em",
@@ -626,12 +632,6 @@ export default function QAContratarConfirmarPage() {
                     {valorNumerico > 0
                       ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
                       : "—"}
-                  </span>
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, textTransform: "uppercase",
-                    letterSpacing: "0.1em", color: D.inkFaint,
-                  }}>
-                    PREÇO OFICIAL
                   </span>
                 </div>
               </Section>
