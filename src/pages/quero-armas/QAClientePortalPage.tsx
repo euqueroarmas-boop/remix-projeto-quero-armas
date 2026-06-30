@@ -1333,7 +1333,7 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    navigate("/area-do-cliente/contratar");
+                    setEntradaWizardOpen(true);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
