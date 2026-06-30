@@ -163,10 +163,9 @@ export default function MockupsLoginV9() {
       className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
       style={{ backgroundImage: `url(${BG_URL})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
     >
-      {/* Overlays */}
-      <div className="absolute inset-0 bg-black/50" />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.8) 100%)" }} />
-      <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 260px 70px rgba(0,0,0,0.9)" }} />
+      {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
+      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
+      <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 150px 26px rgba(0,0,0,0.48)" }} />
       <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.35) 0%, transparent 70%)" }} />
 
       {/* Patrocínio */}
