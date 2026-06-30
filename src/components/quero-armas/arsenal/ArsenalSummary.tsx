@@ -990,6 +990,7 @@ export function ArsenalSummary({
                     extraSlot={isArmas ? armasExtraSlot : isMunicoes ? municoesExtraSlot : undefined}
                     badge={isArmas ? armasBadge : null}
                     footerNote={isArmas ? armasFooter : undefined}
+                    compact={id === "status_cr"}
                   />
                 </div>
               );
