@@ -344,17 +344,17 @@ function KpiCard({
       ) : (
         <>
           <div
-            className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
-              typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+            className={`${compact ? "mt-2" : "mt-3"} flex ${compact ? "h-5" : "h-7"} items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+              typeof def.value === "string" && def.value.length > 3 ? (compact ? "text-base" : "text-lg") : (compact ? "text-xl" : "text-2xl")
             }`}
             title={String(def.value)}
           >
             {def.value}
           </div>
-          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight break-words">
+          <div className={`${compact ? "mt-0.5" : "mt-1"} text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight break-words`}>
             {def.label}
           </div>
-          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400 leading-snug">{def.hint || ""}</div>
+          <div className={`${compact ? "mt-1 min-h-0" : "mt-2 min-h-[14px]"} text-[10px] text-slate-400 leading-snug`}>{def.hint || ""}</div>
           {extraSlot}
         </>
       )}
