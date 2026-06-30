@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, Crosshair, Shield, Lock as LockIcon, Star, Briefcase } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Crosshair,
+  Shield,
+  Lock as LockIcon,
+  Star,
+  Briefcase,
+} from "lucide-react";
 import logoQA from "@/assets/quero-armas-logo.png";
 import bgAsset from "@/assets/quero-armas-tactical-bench.png.asset.json";
 
@@ -27,46 +37,49 @@ export default function MockupsLoginV9() {
       }}
     >
       {/* Overlays para legibilidade */}
-      <div className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-0 bg-black/50" />
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 30% 50%, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 70%, rgba(0,0,0,0.85) 100%)",
+            "linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.8) 100%)",
         }}
       />
       {/* vinheta */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{
-          boxShadow: "inset 0 0 240px 60px rgba(0,0,0,0.85)",
-        }}
+        style={{ boxShadow: "inset 0 0 260px 70px rgba(0,0,0,0.9)" }}
       />
       {/* brilho vermelho discreto atrás do card */}
       <div
-        className="pointer-events-none absolute right-[5vw] top-1/2 hidden h-[520px] w-[520px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block"
+        className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block"
         style={{ background: "radial-gradient(circle, rgba(180,30,45,0.35) 0%, transparent 70%)" }}
       />
 
-      {/* CONTEÚDO */}
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1480px] flex-col px-6 py-8 lg:px-12">
-        {/* TOPO ESQUERDO: Patrocínio */}
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-md border border-white/15 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-[#B41E2D] font-bold text-sm">T</span>
+      {/* TOPO ESQUERDO: Patrocínio */}
+      <div className="absolute left-6 top-6 z-20 flex items-center gap-3 lg:left-12 lg:top-10">
+        <div className="leading-tight">
+          <div
+            className="mb-1 text-[10px] font-semibold tracking-[0.28em] text-white/65"
+            style={{ fontFamily: "Rajdhani, sans-serif" }}
+          >
+            PATROCINADO POR
           </div>
-          <div className="leading-tight">
-            <div className="text-[10px] tracking-[0.25em] text-white/60 font-medium">PATROCINADO POR</div>
-            <div className="text-lg font-bold tracking-[0.18em] text-white" style={{ fontFamily: "Oswald, sans-serif" }}>
-              TAURUS<span className="text-[#B41E2D]">®</span>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <TaurusBull />
+            <span
+              className="text-[26px] font-bold leading-none tracking-[0.18em] text-white"
+              style={{ fontFamily: "Oswald, sans-serif" }}
+            >
+              TAURUS<span className="align-top text-[10px] text-white/70">™</span>
+            </span>
           </div>
         </div>
+      </div>
 
-        {/* GRID PRINCIPAL */}
-        <div className="flex flex-1 flex-col items-stretch gap-12 py-10 lg:flex-row lg:items-center lg:justify-between lg:py-0">
-          {/* ESQUERDA — headline */}
-          <div className="max-w-2xl">
+      {/* ESQUERDA — headline (centro-esquerda) */}
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1480px] flex-col justify-center px-6 pt-28 pb-10 lg:px-12 lg:pt-0 lg:pb-0">
+        <div className="max-w-2xl">
             <h1
               className="text-5xl font-bold uppercase leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[88px]"
               style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "-0.01em", textShadow: "0 4px 24px rgba(0,0,0,0.6)" }}
@@ -109,10 +122,11 @@ export default function MockupsLoginV9() {
                 </div>
               ))}
             </div>
-          </div>
+        </div>
+      </div>
 
-          {/* DIREITA — CARD LOGIN */}
-          <div className="relative mx-auto w-full max-w-[420px] lg:mx-0">
+      {/* DIREITA — CARD LOGIN flutuante */}
+      <div className="relative z-20 mx-auto w-full max-w-[420px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
             <div
               className="relative rounded-2xl p-7 sm:p-8"
               style={{
@@ -255,10 +269,27 @@ export default function MockupsLoginV9() {
             <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-white/35">
               Ambiente Seguro · Acesso Auditado
             </p>
-          </div>
-        </div>
       </div>
     </div>
+  );
+}
+
+function TaurusBull() {
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      className="h-9 w-9"
+      aria-hidden="true"
+      fill="none"
+    >
+      {/* Estilizado: cabeça de touro Taurus */}
+      <path
+        d="M20 10c-4 0-7 2-9 5-2-1-4-1-5 0-1 1 0 4 2 5 1 1 2 1 3 1 1 4 5 7 9 7s8-3 9-7c1 0 2 0 3-1 2-1 3-4 2-5-1-1-3-1-5 0-2-3-5-5-9-5z"
+        fill="#B41E2D"
+      />
+      <circle cx="16" cy="22" r="1.4" fill="#0a0a0a" />
+      <circle cx="24" cy="22" r="1.4" fill="#0a0a0a" />
+    </svg>
   );
 }
 
