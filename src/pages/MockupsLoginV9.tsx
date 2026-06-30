@@ -206,11 +206,11 @@ export default function MockupsLoginV9() {
       <div className="relative z-20 mx-auto w-full max-w-[440px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
         <div className="relative rounded-2xl p-8 sm:p-9" style={{ background: "rgba(10,10,10,0.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.55)", boxShadow: "0 24px 80px rgba(0,0,0,0.65), 0 0 32px rgba(180,30,45,0.12)" }}>
           {/* Logo HORIZONTAL: fuzil + QUERO ARMAS */}
-          <div className="mb-5 flex items-center justify-center gap-2.5">
-            <img src="/icone-arma-cadastro-squircle.png" alt="Quero Armas" className="h-12 w-12 shrink-0 object-contain" draggable={false} />
-            <div className="text-left leading-[0.82]" style={{ fontFamily: "Oswald, 'Arial Narrow', sans-serif", fontWeight: 700, fontStyle: "italic" }}>
-              <span className="block text-[24px] tracking-wide text-white">QUERO</span>
-              <span className="block text-[24px] tracking-wide text-white">ARMAS</span>
+          <div className="mb-5 flex items-center justify-center gap-3">
+            <img src="/icone-arma-cadastro-squircle.png" alt="Quero Armas" className="h-14 w-14 shrink-0 object-contain" draggable={false} />
+            <div className="text-left leading-[0.8]" style={{ fontFamily: "Oswald, 'Arial Narrow', sans-serif", fontWeight: 700, fontStyle: "italic" }}>
+              <span className="block text-[30px] tracking-wide" style={{ color: "#ffffff" }}>QUERO</span>
+              <span className="block text-[30px] tracking-wide" style={{ color: "#ffffff" }}>ARMAS</span>
             </div>
           </div>
           <div className="mb-6 flex items-center gap-3">
