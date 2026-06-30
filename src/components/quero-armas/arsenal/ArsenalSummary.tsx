@@ -259,7 +259,7 @@ function KpiCard({
   return (
     <div
       ref={setNodeRef}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white ${compact ? "p-3" : "p-4"} text-left shadow-sm transition-all ${
+      className={`group relative flex ${compact ? "h-auto" : "h-full"} w-full flex-col overflow-hidden rounded-2xl border bg-white ${compact ? "p-3" : "p-4"} text-left shadow-sm transition-all ${
         editing
           ? "border-dashed border-amber-300 select-none"
           : "border-slate-200/80 hover:-translate-y-0.5 hover:shadow-md"
@@ -286,7 +286,7 @@ function KpiCard({
         type="button"
         onClick={onClick}
         disabled={editing}
-        className="flex h-full w-full flex-col text-left focus:outline-none focus:ring-2 focus:ring-amber-300/50 rounded-xl"
+        className={`flex ${compact ? "h-auto" : "h-full"} w-full flex-col text-left focus:outline-none focus:ring-2 focus:ring-amber-300/50 rounded-xl`}
       >
       <div
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
