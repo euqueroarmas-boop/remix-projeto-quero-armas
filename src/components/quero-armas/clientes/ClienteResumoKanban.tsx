@@ -486,8 +486,8 @@ export default function ClienteResumoKanban({
             </div>
           </div>
           <div className="qa-urgbanner__count" aria-hidden={!activeUrgent}>
-            <div className="qa-urgbanner__num">{activeUrgent ? String(Math.max(0, activeUrgent.days)).padStart(2, "0") : "--"}</div>
-            <div className="qa-urgbanner__numk">DIAS RESTANTES</div>
+            <div className="qa-urgbanner__num">{activeUrgent ? (activeUrgent.days < 0 ? "!!" : String(Math.max(0, activeUrgent.days)).padStart(2, "0")) : "--"}</div>
+            <div className="qa-urgbanner__numk">{activeUrgent && activeUrgent.days < 0 ? "VENCIDO" : "DIAS RESTANTES"}</div>
             {filteredUrgents.length > 1 && (
               <div className="qa-urgbanner__pages" role="tablist" aria-label="Documentos críticos">
                 {filteredUrgents.map((urgent, index) => (
