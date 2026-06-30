@@ -233,6 +233,7 @@ function KpiCard({
   extraSlot,
   badge,
   footerNote,
+  compact,
 }: {
   def: KpiDefinition;
   editing: boolean;
@@ -241,6 +242,7 @@ function KpiCard({
   extraSlot?: React.ReactNode;
   badge?: { tone: "ok" | "warn" | "danger"; label: string } | null;
   footerNote?: string;
+  compact?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: def.id });
