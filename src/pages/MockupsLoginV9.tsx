@@ -207,7 +207,7 @@ export default function MockupsLoginV9() {
       <div className="relative z-20 mx-auto w-full max-w-[400px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
         <div className="relative rounded-2xl p-7 sm:p-8" style={{ background: "rgba(10,10,10,0.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.55)", boxShadow: "0 24px 80px rgba(0,0,0,0.65), 0 0 32px rgba(180,30,45,0.12)" }}>
           <div className="mb-4 flex justify-center">
-            <img src={logoQA} alt="Quero Armas" className="h-auto w-[160px] object-contain" draggable={false} />
+            <img src={logoQA} alt="Quero Armas" className="h-auto w-[120px] object-contain" draggable={false} />
           </div>
           <div className="mb-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/70" />
