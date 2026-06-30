@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
+import InlineContractReader from "@/components/quero-armas/contratar/InlineContractReader";
 
 /* =============================================================================
  * Design tokens — Escala neutra canônica LIGHT (AAA Pass).
@@ -623,7 +624,7 @@ export default function QAContratarConfirmarPage() {
                 statusDot={aceiteContrato ? "ok" : "error"}
               >
                 <p style={{ margin: "0 0 14px", fontSize: 12, lineHeight: 1.7, color: D.inkBody, maxWidth: 560 }}>
-                  Você vai revisar e aceitar o contrato de adesão completo na etapa de pagamento. Ao confirmar aqui, você concorda com os{" "}
+                  Leia o contrato de adesão na íntegra abaixo. Ao marcar o aceite, você concorda com os{" "}
                   <a href="/termos" target="_blank" rel="noopener noreferrer" style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.divider}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
                     TERMOS DE SERVIÇO <ExternalLink size={10} />
                   </a>{" "}e a{" "}
@@ -631,9 +632,26 @@ export default function QAContratarConfirmarPage() {
                     POLÍTICA DE PRIVACIDADE <ExternalLink size={10} />
                   </a>{" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
                 </p>
+
+                <InlineContractReader
+                  servicoSlug={catalogo.slug}
+                  vars={{
+                    cliente_nome: cliente.nome_completo || "—",
+                    cliente_cpf_cnpj: cliente.cpf || "—",
+                    cliente_endereco: enderecoAtualLinha || "—",
+                    cliente_email: cliente.email || userEmail || "—",
+                    cliente_telefone: "—",
+                    servico_slug: catalogo.slug,
+                    servico_nome: catalogo.nome,
+                    servico_preco: valorNumerico > 0
+                      ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
+                      : "—",
+                  }}
+                />
+
                 <label
                   onClick={() => setAceiteContrato((v) => !v)}
-                  style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: "pointer" }}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 14, cursor: "pointer", marginTop: 16 }}
                 >
                   <span style={{
                     marginTop: 2, width: 18, height: 18, flexShrink: 0,
