@@ -259,7 +259,7 @@ function KpiCard({
   return (
     <div
       ref={setNodeRef}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-sm transition-all ${
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white ${compact ? "p-3" : "p-4"} text-left shadow-sm transition-all ${
         editing
           ? "border-dashed border-amber-300 select-none"
           : "border-slate-200/80 hover:-translate-y-0.5 hover:shadow-md"
