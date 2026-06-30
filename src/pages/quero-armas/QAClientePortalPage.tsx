@@ -1267,13 +1267,18 @@ export default function QAClientePortalPage() {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
           const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
           return (
-            <div
-              className={
-                isHero
-                  ? "relative flex items-center px-4 pt-5 pb-4 gap-2.5"
-                  : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`
-              }
-            >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Atalhos rápidos da Quero Armas"
+                  className={
+                    (isHero
+                      ? "relative flex items-center px-4 pt-5 pb-4 gap-2.5"
+                      : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
+                    " w-full text-left rounded-md transition hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70"
+                  }
+                >
               {/* Wrapper do avatar — inline na linha do brand, no lugar do logo */}
               <div className="relative shrink-0">
                 {isHero && (
@@ -1318,7 +1323,45 @@ export default function QAClientePortalPage() {
                   </div>
                 </div>
               )}
-            </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" side="bottom" className="w-72">
+                <DropdownMenuLabel className="text-[11px] uppercase tracking-[0.12em] text-slate-500">
+                  Atalhos rápidos
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    navigate("/area-do-cliente/contratar");
+                  }}
+                  className="flex items-start gap-3 py-2.5 cursor-pointer"
+                >
+                  <ShoppingCart className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-semibold text-slate-900">Contratar novo serviço</div>
+                    <div className="text-[11.5px] text-slate-500 leading-snug">
+                      Reaproveita os documentos do seu Arsenal Inteligente.
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setShowCadastroModal(true);
+                  }}
+                  className="flex items-start gap-3 py-2.5 cursor-pointer"
+                >
+                  <UserCog className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-semibold text-slate-900">Completar meu cadastro</div>
+                    <div className="text-[11.5px] text-slate-500 leading-snug">
+                      Preencha os dados que ainda estão faltando.
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         })()}
 
