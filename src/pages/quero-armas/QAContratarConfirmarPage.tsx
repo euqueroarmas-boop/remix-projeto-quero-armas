@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
+import InlineContractReader from "@/components/quero-armas/contratar/InlineContractReader";
 
 /* =============================================================================
  * Design tokens — Escala neutra canônica LIGHT (AAA Pass).
