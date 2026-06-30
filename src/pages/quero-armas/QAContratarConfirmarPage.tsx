@@ -586,13 +586,32 @@ export default function QAContratarConfirmarPage() {
                     Nenhum documento prévio validado — você enviará todos no processo novo.
                   </p>
                 ) : (
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: D.ink }}>
-                    {docsReaproveitados.length} DOC{docsReaproveitados.length > 1 ? "S" : ""}{" "}
-                    <span style={{ color: D.inkMuted, fontWeight: 400, marginLeft: 6, fontSize: 12, letterSpacing: "0.04em" }}>
-                      — {docsReaproveitados.slice(0, 8).join(", ")}
-                      {docsReaproveitados.length > 8 && ` +${docsReaproveitados.length - 8}`}
-                    </span>
-                  </p>
+                  <div>
+                    <p style={{ margin: "0 0 10px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkMuted }}>
+                      {docsReaproveitados.length} DOCUMENTO{docsReaproveitados.length > 1 ? "S" : ""} JÁ VALIDADO{docsReaproveitados.length > 1 ? "S" : ""} NO SEU ARSENAL
+                    </p>
+                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                      {docsReaproveitados.map((nome) => (
+                        <li key={nome} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: D.ink }}>
+                          <span style={{
+                            width: 16, height: 16, flexShrink: 0,
+                            background: D.ink, color: "#FFFFFF",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="square">
+                              <path d="M2 6l3 3 5-6" />
+                            </svg>
+                          </span>
+                          <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                            {String(nome).toUpperCase()}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: "10px 0 0", fontSize: 11, color: D.inkFaint, lineHeight: 1.6 }}>
+                      Estes documentos serão reaproveitados automaticamente — você não precisa enviá-los novamente.
+                    </p>
+                  </div>
                 )}
               </Section>
 
