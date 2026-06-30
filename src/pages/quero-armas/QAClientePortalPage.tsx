@@ -58,6 +58,15 @@ import {
   resolveEffectiveTheme,
   type QASidebarTheme,
 } from "@/components/quero-armas/portal/sidebarThemes";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ShoppingCart, UserCog } from "lucide-react";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
