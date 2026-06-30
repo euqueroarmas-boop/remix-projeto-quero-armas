@@ -79,15 +79,15 @@ export default function MockupsLoginV9() {
 
       {/* ESQUERDA — headline (centro-esquerda) */}
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1480px] flex-col justify-center px-6 pt-28 pb-10 lg:px-12 lg:pt-0 lg:pb-0">
-        <div className="max-w-2xl">
+        <div className="w-full max-w-[560px] lg:max-w-[600px] lg:pr-8">
             <h1
-              className="text-5xl font-bold uppercase leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-[88px]"
+              className="text-[44px] font-bold uppercase leading-[0.95] tracking-tight text-white sm:text-[56px] lg:text-[64px]"
               style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "-0.01em", textShadow: "0 4px 24px rgba(0,0,0,0.6)" }}
             >
               CONTROLE TOTAL
             </h1>
             <h2
-              className="mt-2 text-3xl font-bold uppercase leading-tight text-white/75 sm:text-4xl lg:text-5xl"
+              className="mt-2 text-2xl font-bold uppercase leading-tight text-white/80 sm:text-3xl lg:text-[34px]"
               style={{ fontFamily: "Oswald, sans-serif" }}
             >
               DOS SEUS DOCUMENTOS
@@ -106,15 +106,15 @@ export default function MockupsLoginV9() {
             </div>
 
             {/* CHIPS */}
-            <div className="mt-8 flex flex-wrap gap-2.5">
+            <div className="mt-8 flex max-w-[520px] flex-wrap gap-2.5">
               {CATEGORIAS.map(({ label, Icon }) => (
                 <div
                   key={label}
-                  className="inline-flex h-11 items-center gap-2 rounded-[10px] border border-white/[0.16] bg-black/55 px-4 backdrop-blur-md transition-colors hover:border-[#B41E2D]/60"
+                  className="inline-flex h-10 items-center gap-2 rounded-[10px] border border-white/[0.16] bg-black/55 px-3.5 backdrop-blur-md transition-colors hover:border-[#B41E2D]/60"
                 >
-                  <Icon className="h-4 w-4 text-[#B41E2D]" strokeWidth={2} />
+                  <Icon className="h-3.5 w-3.5 text-[#B41E2D]" strokeWidth={2} />
                   <span
-                    className="text-[12px] font-semibold uppercase tracking-[0.1em] text-white/90"
+                    className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/90"
                     style={{ fontFamily: "Rajdhani, sans-serif" }}
                   >
                     {label}
@@ -126,7 +126,7 @@ export default function MockupsLoginV9() {
       </div>
 
       {/* DIREITA — CARD LOGIN flutuante */}
-      <div className="relative z-20 mx-auto w-full max-w-[420px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
+      <div className="relative z-20 mx-auto w-full max-w-[400px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
             <div
               className="relative rounded-2xl p-7 sm:p-8"
               style={{
@@ -138,11 +138,11 @@ export default function MockupsLoginV9() {
               }}
             >
               {/* Logo */}
-              <div className="mb-5 flex justify-center">
+              <div className="mb-4 flex justify-center">
                 <img
                   src={logoQA}
                   alt="Quero Armas"
-                  className="h-auto w-[210px] object-contain"
+                  className="h-auto w-[160px] object-contain"
                   draggable={false}
                 />
               </div>
