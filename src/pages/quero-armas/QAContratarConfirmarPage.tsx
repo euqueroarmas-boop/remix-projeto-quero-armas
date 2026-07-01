@@ -162,7 +162,7 @@ function LightInput({ placeholder, value, onChange, wide, maxLength }: {
 export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
   const { slug = "" } = useParams();
-  const { addItem } = useCart();
+  const { addItem, clear } = useCart();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -347,8 +347,47 @@ export default function QAContratarConfirmarPage() {
         unit_price_cents: Math.round(valorNumerico * 100),
         quantity: 1,
       });
-      toast.success("Tudo certo! Escolha como pagar.");
-      navigate("/checkout/finalizar");
+
+      /* Fluxo direto: cria venda + inicia pagamento (PIX padrão) e redireciona
+       * ao checkout hospedado do Asaas. Após a confirmação, o Asaas devolve o
+       * cliente para a página de conclusão via successUrl. */
+      const successUrl =
+        `${window.location.origin}/area-do-cliente/contratar/${catalogo.slug}/sucesso`;
+
+      const { data: vendaData, error: vendaErr } = await supabase.functions.invoke(
+        "qa-checkout-criar-venda",
+        {
+          body: {
+            cart: [{ servico_id: catalogo.id, slug: catalogo.slug, quantidade: 1 }],
+          },
+        },
+      );
+      if (vendaErr) throw new Error(vendaErr.message || "Falha ao registrar venda.");
+      const venda = vendaData as any;
+      if (!venda?.ok || !venda?.venda_id || !venda?.checkout_token) {
+        throw new Error(venda?.error || "Falha ao registrar venda.");
+      }
+
+      const { data: payData, error: payErr } = await supabase.functions.invoke(
+        "qa-checkout-iniciar-pagamento",
+        {
+          body: {
+            venda_id: venda.venda_id,
+            checkout_token: venda.checkout_token,
+            billing_type: "PIX",
+            success_url: `${successUrl}?venda=${venda.venda_id}`,
+          },
+        },
+      );
+      if (payErr) throw new Error(payErr.message || "Falha ao gerar cobrança.");
+      const pay = payData as any;
+      const invoiceUrl = pay?.asaas_invoice_url;
+      if (!invoiceUrl) throw new Error(pay?.error || "Cobrança sem link de pagamento.");
+
+      toast.success("Redirecionando para o pagamento seguro…");
+      clear();
+      window.location.href = invoiceUrl;
+      return;
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
