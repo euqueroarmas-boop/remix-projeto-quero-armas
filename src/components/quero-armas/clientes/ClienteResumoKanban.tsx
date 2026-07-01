@@ -586,7 +586,7 @@ export default function ClienteResumoKanban({
                 <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}
                   style={{ display: 'block', width: '100%', textAlign: 'left', border: 0, background: 'transparent', padding: '9px 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 500, letterSpacing: '0', color: '#1a1a1a', textTransform: 'none' }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = '#f4f4f2'; }}
-                  onMouseLeave={(e) => { e.currentTarget is full, so it needs to end. Let me close the tag properly. }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >Cadastro</button>
               )}
             </div>
