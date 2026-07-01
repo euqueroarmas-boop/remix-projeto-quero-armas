@@ -1665,6 +1665,7 @@ export default function QAClientePortalPage() {
           processoDocs={processoDocs}
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
+          onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
           onOpenDocsHub={() => setShowAddDoc(true)}
         />
         {false && (() => {
