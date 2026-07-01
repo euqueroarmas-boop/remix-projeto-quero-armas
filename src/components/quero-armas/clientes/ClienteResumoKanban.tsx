@@ -574,19 +574,15 @@ export default function ClienteResumoKanban({
           style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}
         >
           {atalhosOpen && (
-            <div role="menu" style={{ background: '#fff', border: '1px solid #e3e3e1', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,.10)', padding: 6, minWidth: 180, textTransform: 'none' }}>
+            <div role="menu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, padding: '0 8px 4px 0', textTransform: 'none' }}>
               {onOpenComprar && (
                 <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenComprar(); }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 0, background: 'transparent', padding: '9px 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 500, letterSpacing: '0', color: '#1a1a1a', textTransform: 'none' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f4f4f2'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0', color: '#0a0a0a', textTransform: 'none', lineHeight: 1 }}
                 >Novo serviço</button>
               )}
               {onOpenCadastro && (
                 <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 0, background: 'transparent', padding: '9px 12px', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 500, letterSpacing: '0', color: '#1a1a1a', textTransform: 'none' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f4f4f2'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                  style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0', color: '#0a0a0a', textTransform: 'none', lineHeight: 1 }}
                 >Cadastro</button>
               )}
             </div>
