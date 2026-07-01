@@ -464,18 +464,36 @@ export default function ClienteResumoKanban({
           </div>
           <div className="qa-client-summary-print__updated">
             <span className="qa-client-summary-print__updated-text"><small>ATUALIZADO</small>{updated} · {updatedTime}</span>
-            {onOpenCadastro && (
-              <span className="qa-client-summary-print__cadastro-wrap">
-                <span className="qa-client-summary-print__cadastro-pulse" aria-hidden />
+            {(onOpenCadastro || onOpenComprar) && (
+              <span className="qa-client-summary-print__cadastro-wrap" data-qa-atalhos-root style={{ animationPlayState: atalhosOpen ? 'paused' : undefined }}>
+                {!atalhosOpen && <span className="qa-client-summary-print__cadastro-pulse" aria-hidden />}
                 <button
                   type="button"
                   className="qa-client-summary-print__cadastro-btn"
-                  onClick={onOpenCadastro}
-                  aria-label="Completar cadastro"
+                  onClick={() => setAtalhosOpen((v) => !v)}
+                  aria-label="Abrir atalhos"
+                  aria-expanded={atalhosOpen}
                   title="Clique para ver seus atalhos"
                 >
                   <img src="/icone-arma-cadastro-squircle.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                 </button>
+                {atalhosOpen && (
+                  <div className="qa-atalhos-pop" role="menu">
+                    <div className="qa-atalhos-pop__head">ATALHOS RÁPIDOS</div>
+                    {onOpenComprar && (
+                      <button type="button" role="menuitem" className="qa-atalhos-pop__item" onClick={() => { setAtalhosOpen(false); onOpenComprar(); }}>
+                        <span className="qa-atalhos-pop__k">COMPRAR</span>
+                        <span className="qa-atalhos-pop__d">Contratar novo serviço (checklist guiado)</span>
+                      </button>
+                    )}
+                    {onOpenCadastro && (
+                      <button type="button" role="menuitem" className="qa-atalhos-pop__item" onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}>
+                        <span className="qa-atalhos-pop__k">CADASTRO</span>
+                        <span className="qa-atalhos-pop__d">Completar meus dados (checklist)</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </span>
             )}
           </div>
