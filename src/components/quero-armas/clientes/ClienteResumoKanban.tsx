@@ -624,7 +624,7 @@ export default function ClienteResumoKanban({
                   style={{
                     border: 0,
                     background: 'transparent',
-                    padding: '6px 0',
+                    padding: '2px 0',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontSize: 12,
