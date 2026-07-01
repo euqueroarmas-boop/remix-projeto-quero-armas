@@ -1267,7 +1267,7 @@ export default function QAClientePortalPage() {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
           const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
           return (
-            <DropdownMenu>
+            <DropdownMenu open={brandMenuOpen} onOpenChange={setBrandMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
@@ -1276,7 +1276,8 @@ export default function QAClientePortalPage() {
                     (isHero
                       ? "relative flex items-center px-4 pt-5 pb-4 gap-2.5"
                       : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
-                    " w-full text-left rounded-md transition hover:bg-white/[0.04] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70"
+                    " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
+                    (brandMenuOpen ? " translate-y-[3px]" : "")
                   }
                 >
               {/* Wrapper do avatar — inline na linha do brand, no lugar do logo */}
@@ -1306,6 +1307,13 @@ export default function QAClientePortalPage() {
                     </span>
                   )}
                 </div>
+                {/* Ponto pulsante estilo Asaas — chama o clique nos atalhos */}
+                {!brandMenuOpen && (
+                  <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-3 w-3 pointer-events-none">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E11D48] opacity-70" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#7A1F2B] ring-2 ring-[#0A0A0A]" />
+                  </span>
+                )}
               </div>
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
@@ -1333,10 +1341,11 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    // Fecha o CADASTRO (caso esteja aberto/auto-aberto) e abre
-                    // o COMPRAR no próximo tick — evita empilhamento de Dialogs.
+                    // Fecha o menu E o CADASTRO explicitamente, depois abre COMPRAR
+                    // depois que o Radix desmontou os overlays (evita Dialog "engolido").
+                    setBrandMenuOpen(false);
                     setShowCadastroModal(false);
-                    setTimeout(() => setEntradaWizardOpen(true), 30);
+                    setTimeout(() => setEntradaWizardOpen(true), 120);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
@@ -1353,8 +1362,9 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
+                    setBrandMenuOpen(false);
                     setEntradaWizardOpen(false);
-                    setTimeout(() => setShowCadastroModal(true), 30);
+                    setTimeout(() => setShowCadastroModal(true), 120);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
