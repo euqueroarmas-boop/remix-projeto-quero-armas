@@ -613,7 +613,7 @@ export default function ClienteResumoKanban({
                   >
                     Novo serviço
                   </button>
-                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '4px 0 4px auto' }} />
+                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '1px 0 1px auto' }} />
                 </>
               )}
               {onOpenCadastro && (
