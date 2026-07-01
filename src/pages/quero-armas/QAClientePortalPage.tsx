@@ -1309,13 +1309,6 @@ export default function QAClientePortalPage() {
                     </span>
                   )}
                 </div>
-                {/* Ponto pulsante estilo Asaas — chama o clique nos atalhos */}
-                {!brandMenuOpen && (
-                  <span aria-hidden className="absolute -top-0.5 -right-0.5 flex h-3 w-3 pointer-events-none">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E11D48] opacity-70" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#7A1F2B] ring-2 ring-[#0A0A0A]" />
-                  </span>
-                )}
               </div>
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
