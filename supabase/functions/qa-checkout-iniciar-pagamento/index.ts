@@ -92,6 +92,10 @@ Deno.serve(async (req) => {
   const checkout_token = String(body?.checkout_token || "");
   const billing_type = String(body?.billing_type || "").toUpperCase();
   const due_date_in = typeof body?.due_date === "string" ? body.due_date : null;
+  /* 🆕 URL de retorno após o pagamento no checkout hospedado do Asaas. */
+  const success_url_in = typeof body?.success_url === "string" ? body.success_url : null;
+  const success_url =
+    success_url_in && /^https?:\/\//i.test(success_url_in) ? success_url_in : null;
   /* 🆕 número de parcelas — só faz sentido para CREDIT_CARD; demais ignoram. */
   const installment_count_in = Number(body?.installment_count ?? 1);
 
@@ -294,6 +298,7 @@ Deno.serve(async (req) => {
       installmentValue: pricing.valorParcela,
       dueDate: due_date,
       description,
+      callbackSuccessUrl: success_url,
     },
     env,
   );
