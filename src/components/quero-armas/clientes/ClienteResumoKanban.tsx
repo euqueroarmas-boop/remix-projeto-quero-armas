@@ -579,20 +579,11 @@ export default function ClienteResumoKanban({
               style={{
                 position: 'absolute',
                 bottom: 62,
-                right: '50%',
-                transform: 'translateX(50%)',
+                right: 62,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                alignItems: 'flex-end',
                 gap: 0,
-                padding: '10px 0',
-                background: 'rgba(255,255,255,0.96)',
-                border: '1px solid rgba(0,0,0,0.06)',
-                borderRadius: 14,
-                boxShadow: '0 10px 28px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                minWidth: 140,
               }}
             >
               {onOpenComprar && (
@@ -604,25 +595,25 @@ export default function ClienteResumoKanban({
                     style={{
                       border: 0,
                       background: 'transparent',
-                      padding: '9px 18px',
+                      padding: '6px 0',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
                       fontSize: 12,
-                      fontWeight: 600,
-                      letterSpacing: '0.04em',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
                       color: '#1c1c1c',
                       textTransform: 'none',
                       lineHeight: 1.3,
-                      width: '100%',
-                      textAlign: 'center',
+                      textAlign: 'right',
                       transition: 'color 0.2s ease',
+                      whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
                   >
                     Novo serviço
                   </button>
-                  <div style={{ width: '60%', height: 1, background: 'rgba(0,0,0,0.06)', margin: '0 auto' }} />
+                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '4px 0 4px auto' }} />
                 </>
               )}
               {onOpenCadastro && (
@@ -633,18 +624,18 @@ export default function ClienteResumoKanban({
                   style={{
                     border: 0,
                     background: 'transparent',
-                    padding: '9px 18px',
+                    padding: '6px 0',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
                     color: '#1c1c1c',
                     textTransform: 'none',
                     lineHeight: 1.3,
-                    width: '100%',
-                    textAlign: 'center',
+                    textAlign: 'right',
                     transition: 'color 0.2s ease',
+                    whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
