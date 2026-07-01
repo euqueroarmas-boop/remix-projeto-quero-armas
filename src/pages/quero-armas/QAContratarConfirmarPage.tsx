@@ -162,7 +162,7 @@ function LightInput({ placeholder, value, onChange, wide, maxLength }: {
 export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
   const { slug = "" } = useParams();
-  const { addItem, clear } = useCart();
+  const { addItem } = useCart();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -347,50 +347,8 @@ export default function QAContratarConfirmarPage() {
         unit_price_cents: Math.round(valorNumerico * 100),
         quantity: 1,
       });
-
-      /* 🚀 Fluxo direto: cria a venda e gera cobrança PIX no Asaas,
-       * redirecionando o cliente para a página de pagamento hospedada. */
-      const cartPayload = [{
-        servico_id: catalogo.id,
-        slug: catalogo.slug,
-        quantidade: 1,
-      }];
-
-      const { data: vendaData, error: vendaErr } = await supabase.functions.invoke(
-        "qa-checkout-criar-venda",
-        { body: { cart: cartPayload } },
-      );
-      if (vendaErr) {
-        const body = await (vendaErr as any).context?.json?.().catch?.(() => null);
-        throw new Error(body?.error || body?.message || vendaErr.message || "Falha ao criar venda.");
-      }
-      const venda = vendaData as any;
-      if (!venda?.ok || !venda?.venda_id || !venda?.checkout_token) {
-        throw new Error(venda?.error || "Falha ao criar venda.");
-      }
-
-      const { data: payData, error: payErr } = await supabase.functions.invoke(
-        "qa-checkout-iniciar-pagamento",
-        {
-          body: {
-            venda_id: venda.venda_id,
-            checkout_token: venda.checkout_token,
-            billing_type: "PIX",
-          },
-        },
-      );
-      if (payErr) {
-        const body = await (payErr as any).context?.json?.().catch?.(() => null);
-        throw new Error(body?.error || body?.message || payErr.message || "Falha ao gerar cobrança.");
-      }
-      const pay = payData as any;
-      const invoiceUrl: string | null = pay?.asaas_invoice_url ?? null;
-      if (!invoiceUrl) throw new Error(pay?.error || "Cobrança gerada, mas sem URL de pagamento.");
-
-      clear();
-      toast.success("Redirecionando para o pagamento…");
-      window.location.href = invoiceUrl;
-      return;
+      toast.success("Tudo certo! Escolha como pagar.");
+      navigate("/checkout/finalizar");
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
