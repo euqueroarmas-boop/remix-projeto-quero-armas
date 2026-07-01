@@ -346,6 +346,19 @@ export default function ClienteResumoKanban({
   const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
   const [autoPaused, setAutoPaused] = useState(false);
   const [exameModal, setExameModal] = useState<{ tipo: "psicologo" | "instrutor_tiro" } | null>(null);
+  const [atalhosOpen, setAtalhosOpen] = useState(false);
+  useEffect(() => {
+    if (!atalhosOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest('[data-qa-atalhos-root]')) return;
+      setAtalhosOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setAtalhosOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onEsc);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onEsc); };
+  }, [atalhosOpen]);
   const navigate = useNavigate();
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
