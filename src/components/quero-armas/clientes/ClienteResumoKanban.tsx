@@ -568,6 +568,49 @@ export default function ClienteResumoKanban({
           }}
         />
       )}
+      {(onOpenCadastro || onOpenComprar) && (
+        <div
+          data-qa-atalhos-root
+          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}
+        >
+          {atalhosOpen && (
+            <div role="menu" style={{ background: '#fff', border: '1px solid #1a1a1a', borderRadius: 6, boxShadow: '0 18px 40px rgba(0,0,0,.22)', padding: 6, minWidth: 200, textTransform: 'none' }}>
+              {onOpenComprar && (
+                <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenComprar(); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 0, background: 'transparent', padding: '10px 12px', borderRadius: 4, cursor: 'pointer', fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", fontSize: 13, fontWeight: 900, letterSpacing: '.18em', color: '#0A0A0A', textTransform: 'uppercase' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f4efe6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >COMPRAR</button>
+              )}
+              {onOpenCadastro && (
+                <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 0, background: 'transparent', padding: '10px 12px', borderRadius: 4, cursor: 'pointer', fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif", fontSize: 13, fontWeight: 900, letterSpacing: '.18em', color: '#0A0A0A', textTransform: 'uppercase' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#f4efe6'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                >CADASTRO</button>
+              )}
+            </div>
+          )}
+          <div style={{ position: 'relative', animation: atalhosOpen ? undefined : 'qa-descend 2.4s ease-in-out infinite' }}>
+            {!atalhosOpen && (
+              <span aria-hidden style={{ position: 'absolute', top: 2, right: 2, width: 12, height: 12, pointerEvents: 'none', zIndex: 2 }}>
+                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#E11D48', animation: 'qa-pulse-ring 1.6s cubic-bezier(0,0,.2,1) infinite' }} />
+                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#E11D48', boxShadow: '0 0 0 2px #fff' }} />
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setAtalhosOpen((v) => !v)}
+              aria-label="Abrir atalhos"
+              aria-expanded={atalhosOpen}
+              title="Atalhos"
+              style={{ width: 64, height: 64, border: 'none', background: '#0A0A0A', borderRadius: 999, padding: 8, cursor: 'pointer', boxShadow: '0 10px 24px rgba(0,0,0,.28)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <img src="/icone-arma-cadastro-squircle.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
