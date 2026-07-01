@@ -277,6 +277,8 @@ export default function QAClientePortalPage() {
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
   const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
+  // Estado controlado do dropdown "Atalhos rápidos" da marca (avatar + Arsenal).
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
   // lê qa_processo_eventos (somente os processos do cliente).
   const [processoEventos, setProcessoEventos] = useState<any[]>([]);
