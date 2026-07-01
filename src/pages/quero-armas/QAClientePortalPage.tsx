@@ -1333,28 +1333,35 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    setEntradaWizardOpen(true);
+                    // Fecha o dropdown primeiro e abre o modal no próximo tick
+                    // (evita conflito de foco Radix Dropdown ↔ Dialog que impedia
+                    // o CHECKLIST COMPRAR de abrir).
+                    setTimeout(() => setEntradaWizardOpen(true), 0);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
                   <ShoppingCart className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-slate-900">Contratar novo serviço</div>
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      Checklist COMPRAR <span className="text-[10px] font-bold tracking-[0.14em] text-[#7A1F2B] ml-1">· NOVO SERVIÇO</span>
+                    </div>
                     <div className="text-[11.5px] text-slate-500 leading-snug">
-                      Reaproveita os documentos do seu Arsenal Inteligente.
+                      Descubra qual serviço contratar e reaproveite os documentos do seu Arsenal.
                     </div>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    setShowCadastroModal(true);
+                    setTimeout(() => setShowCadastroModal(true), 0);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
                   <UserCog className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-slate-900">Completar meu cadastro</div>
+                    <div className="text-[13px] font-semibold text-slate-900">
+                      Checklist CADASTRO <span className="text-[10px] font-bold tracking-[0.14em] text-[#7A1F2B] ml-1">· MEUS DADOS</span>
+                    </div>
                     <div className="text-[11.5px] text-slate-500 leading-snug">
                       Preencha os dados que ainda estão faltando.
                     </div>
