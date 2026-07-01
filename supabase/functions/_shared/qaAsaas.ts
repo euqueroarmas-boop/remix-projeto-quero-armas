@@ -117,6 +117,12 @@ export interface QaVendaPaymentInput {
    * Para 1x, ignorado (Asaas usa `value`).
    */
   installmentValue?: number;
+  /**
+   * 🆕 URL de retorno após o pagamento no checkout hospedado do Asaas.
+   * Quando informado, o Asaas devolve o cliente automaticamente para essa
+   * URL logo após a confirmação (autoRedirect=true).
+   */
+  callbackSuccessUrl?: string | null;
 }
 
 export interface QaVendaPaymentResult {
@@ -145,6 +151,10 @@ export async function createQaVendaPayment(
           }
         : {};
 
+    const callback = input.callbackSuccessUrl
+      ? { callback: { successUrl: input.callbackSuccessUrl, autoRedirect: true } }
+      : {};
+
     const payRes = await fetch(`${env.baseUrl}/payments`, {
       method: "POST",
       headers: asaasHeaders(env.key),
@@ -156,6 +166,7 @@ export async function createQaVendaPayment(
         description: input.description,
         externalReference: `qa_venda:${input.vendaId}`,
         ...installments,
+        ...callback,
       }),
     });
     paymentData = await payRes.json().catch(() => ({}));

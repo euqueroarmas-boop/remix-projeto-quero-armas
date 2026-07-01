@@ -167,39 +167,38 @@ export default function QAContratarSucessoPage() {
   const preco = formatBRL(venda?.valor_aprovado ?? catalogo?.preco ?? null);
 
   return (
-    <div data-tactical-portal className="min-h-screen bg-slate-50">
-      {/* HERO */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-        <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_20%,#fbbf24_0,transparent_45%),radial-gradient(circle_at_80%_80%,#10b981_0,transparent_45%)]" />
+    <div data-tactical-portal className="min-h-screen" style={{ background: "#FAFAFA" }}>
+      {/* HERO — Light AAA (matches checkout confirmar) */}
+      <header className="relative overflow-hidden" style={{ background: "#FFFFFF", borderBottom: "1px solid #E5E5E5" }}>
         <div
           className="relative max-w-5xl mx-auto px-4 pt-6 pb-10 md:pt-10 md:pb-14"
           style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)" }}
         >
           <button
             onClick={() => navigate("/servicos")}
-            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-widest text-slate-300 hover:text-amber-300 transition mb-4"
+            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition mb-4"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao catálogo
           </button>
 
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase tracking-widest mb-4">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-widest mb-4">
             <CheckCircle2 className="h-3.5 w-3.5" /> Recebido com sucesso
           </div>
 
-          <h1 className="text-2xl md:text-4xl font-extrabold uppercase tracking-tight leading-tight">
+          <h1 className="text-2xl md:text-4xl font-extrabold uppercase tracking-tight leading-tight text-neutral-900">
             Contratação recebida
           </h1>
-          <p className="text-[13px] md:text-base text-slate-300 mt-2 max-w-2xl leading-relaxed">
+          <p className="text-[13px] md:text-base text-neutral-700 mt-2 max-w-2xl leading-relaxed">
             Sua solicitação foi registrada com sucesso pela Equipe Quero Armas.
           </p>
-          <p className="text-[12px] md:text-sm text-slate-400 mt-3 max-w-2xl leading-relaxed">
+          <p className="text-[12px] md:text-sm text-neutral-500 mt-3 max-w-2xl leading-relaxed">
             Agora nossa equipe validará sua contratação e dará sequência ao fluxo
             adequado conforme o serviço contratado.
           </p>
 
           {/* Aviso real do fluxo (sem cobrança automática) */}
-          <div className="mt-5 max-w-2xl flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[12px] text-amber-100">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
+          <div className="mt-5 max-w-2xl flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-900">
+            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-600" />
             <p>
               Nenhuma cobrança automática foi gerada neste momento. A Equipe Quero
               Armas validará os dados antes da continuidade.
@@ -208,25 +207,25 @@ export default function QAContratarSucessoPage() {
 
           {/* Resumo + status */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-            <div className="rounded-xl bg-white/5 border border-white/10 backdrop-blur px-4 py-3">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
+            <div className="rounded-xl bg-neutral-50 border border-neutral-200 px-4 py-3">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
                 Serviço contratado
               </div>
-              <div className="text-sm md:text-base font-bold uppercase mt-0.5">
+              <div className="text-sm md:text-base font-bold uppercase mt-0.5 text-neutral-900">
                 {loading ? "Carregando…" : catalogo?.nome || slug.toUpperCase()}
               </div>
-              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-300">
+              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-neutral-600">
                 {preco && (
                   <span>
-                    <span className="text-slate-400">Valor:</span>{" "}
-                    <strong className="text-white">{preco}</strong>
-                    {catalogo?.recorrente && <span className="text-slate-400"> /mês</span>}
+                    <span className="text-neutral-500">Valor:</span>{" "}
+                    <strong className="text-neutral-900">{preco}</strong>
+                    {catalogo?.recorrente && <span className="text-neutral-500"> /mês</span>}
                   </span>
                 )}
                 {venda?.id && (
                   <span>
-                    <span className="text-slate-400">Protocolo:</span>{" "}
-                    <strong className="text-white">#{venda.id}</strong>
+                    <span className="text-neutral-500">Protocolo:</span>{" "}
+                    <strong className="text-neutral-900">#{venda.id}</strong>
                   </span>
                 )}
               </div>
@@ -343,16 +342,16 @@ export default function QAContratarSucessoPage() {
 
         {/* CTAs */}
         <section
-          className="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-5 md:p-7"
+          className="rounded-2xl bg-white border border-neutral-200 p-5 md:p-7"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)" }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-amber-300" />
-            <h2 className="text-sm md:text-base font-bold uppercase tracking-wider">
+            <Sparkles className="h-4 w-4 text-amber-600" />
+            <h2 className="text-sm md:text-base font-bold uppercase tracking-wider text-neutral-900">
               Próximo passo
             </h2>
           </div>
-          <p className="text-[12px] md:text-sm text-slate-300 leading-relaxed max-w-2xl">
+          <p className="text-[12px] md:text-sm text-neutral-600 leading-relaxed max-w-2xl">
             Você pode acompanhar o andamento pelo portal do cliente, falar com um
             especialista no WhatsApp ou voltar ao catálogo.
           </p>
@@ -361,14 +360,14 @@ export default function QAContratarSucessoPage() {
             {hasPortal ? (
               <button
                 onClick={() => navigate("/area-do-cliente")}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-[12px] font-bold uppercase tracking-wider transition"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-[12px] font-bold uppercase tracking-wider transition"
               >
                 <LayoutDashboard className="h-4 w-4" /> Ir para portal
               </button>
             ) : (
               <button
                 onClick={() => navigate("/area-do-cliente/login")}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-[12px] font-bold uppercase tracking-wider transition"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-[12px] font-bold uppercase tracking-wider transition"
               >
                 <LayoutDashboard className="h-4 w-4" /> Acessar portal
               </button>
@@ -385,7 +384,7 @@ export default function QAContratarSucessoPage() {
 
             <button
               onClick={() => navigate("/servicos")}
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[12px] font-bold uppercase tracking-wider transition"
+              className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white hover:bg-neutral-50 border border-neutral-200 text-neutral-900 text-[12px] font-bold uppercase tracking-wider transition"
             >
               <ArrowLeft className="h-4 w-4" /> Voltar ao catálogo
             </button>
