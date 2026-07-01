@@ -1333,10 +1333,10 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    // Fecha o dropdown primeiro e abre o modal no próximo tick
-                    // (evita conflito de foco Radix Dropdown ↔ Dialog que impedia
-                    // o CHECKLIST COMPRAR de abrir).
-                    setTimeout(() => setEntradaWizardOpen(true), 0);
+                    // Fecha o CADASTRO (caso esteja aberto/auto-aberto) e abre
+                    // o COMPRAR no próximo tick — evita empilhamento de Dialogs.
+                    setShowCadastroModal(false);
+                    setTimeout(() => setEntradaWizardOpen(true), 30);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
@@ -1353,7 +1353,8 @@ export default function QAClientePortalPage() {
                 <DropdownMenuItem
                   onSelect={(e) => {
                     e.preventDefault();
-                    setTimeout(() => setShowCadastroModal(true), 0);
+                    setEntradaWizardOpen(false);
+                    setTimeout(() => setShowCadastroModal(true), 30);
                   }}
                   className="flex items-start gap-3 py-2.5 cursor-pointer"
                 >
