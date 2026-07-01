@@ -578,7 +578,7 @@ export default function ClienteResumoKanban({
               role="menu"
               style={{
                 position: 'absolute',
-                bottom: 48,
+                bottom: 32,
                 right: 62,
                 display: 'flex',
                 flexDirection: 'column',
