@@ -578,12 +578,11 @@ export default function ClienteResumoKanban({
               role="menu"
               style={{
                 position: 'absolute',
-                bottom: 48,
-                left: '50%',
-                transform: 'translateX(-50%)',
+                bottom: 62,
+                right: 62,
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                alignItems: 'flex-end',
                 gap: 0,
               }}
             >
@@ -605,7 +604,7 @@ export default function ClienteResumoKanban({
                       color: '#1c1c1c',
                       textTransform: 'none',
                       lineHeight: 1.3,
-                      textAlign: 'center',
+                      textAlign: 'right',
                       transition: 'color 0.2s ease',
                       whiteSpace: 'nowrap',
                     }}
@@ -614,7 +613,7 @@ export default function ClienteResumoKanban({
                   >
                     Novo serviço
                   </button>
-                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '4px 0' }} />
+                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '4px 0 4px auto' }} />
                 </>
               )}
               {onOpenCadastro && (
@@ -634,7 +633,7 @@ export default function ClienteResumoKanban({
                     color: '#1c1c1c',
                     textTransform: 'none',
                     lineHeight: 1.3,
-                    textAlign: 'center',
+                    textAlign: 'right',
                     transition: 'color 0.2s ease',
                     whiteSpace: 'nowrap',
                   }}
