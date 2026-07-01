@@ -571,27 +571,94 @@ export default function ClienteResumoKanban({
       {(onOpenCadastro || onOpenComprar) && (
         <div
           data-qa-atalhos-root
-          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}
+          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}
         >
           {atalhosOpen && (
-            <div role="menu" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, padding: '0 8px 4px 0', textTransform: 'none' }}>
+            <div
+              role="menu"
+              style={{
+                position: 'absolute',
+                bottom: 62,
+                right: '50%',
+                transform: 'translateX(50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 0,
+                padding: '10px 0',
+                background: 'rgba(255,255,255,0.96)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                borderRadius: 14,
+                boxShadow: '0 10px 28px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                minWidth: 140,
+              }}
+            >
               {onOpenComprar && (
-                <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenComprar(); }}
-                  style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0', color: '#0a0a0a', textTransform: 'none', lineHeight: 1 }}
-                >Novo serviço</button>
+                <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setAtalhosOpen(false); onOpenComprar(); }}
+                    style={{
+                      border: 0,
+                      background: 'transparent',
+                      padding: '9px 18px',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      letterSpacing: '0.04em',
+                      color: '#1c1c1c',
+                      textTransform: 'none',
+                      lineHeight: 1.3,
+                      width: '100%',
+                      textAlign: 'center',
+                      transition: 'color 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
+                  >
+                    Novo serviço
+                  </button>
+                  <div style={{ width: '60%', height: 1, background: 'rgba(0,0,0,0.06)', margin: '0 auto' }} />
+                </>
               )}
               {onOpenCadastro && (
-                <button type="button" role="menuitem" onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}
-                  style={{ border: 0, background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, letterSpacing: '0', color: '#0a0a0a', textTransform: 'none', lineHeight: 1 }}
-                >Cadastro</button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => { setAtalhosOpen(false); onOpenCadastro(); }}
+                  style={{
+                    border: 0,
+                    background: 'transparent',
+                    padding: '9px 18px',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.04em',
+                    color: '#1c1c1c',
+                    textTransform: 'none',
+                    lineHeight: 1.3,
+                    width: '100%',
+                    textAlign: 'center',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
+                >
+                  Cadastro
+                </button>
               )}
             </div>
           )}
           <div style={{ position: 'relative', animation: atalhosOpen ? undefined : 'qa-descend 2.4s ease-in-out infinite' }}>
             {!atalhosOpen && (
               <span aria-hidden style={{ position: 'absolute', top: 2, right: 2, width: 10, height: 10, pointerEvents: 'none', zIndex: 2 }}>
-                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#E11D48', animation: 'qa-pulse-ring 1.6s cubic-bezier(0,0,.2,1) infinite' }} />
-                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#E11D48', boxShadow: '0 0 0 2px #fff' }} />
+                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#7A1F2B', animation: 'qa-pulse-ring 1.6s cubic-bezier(0,0,.2,1) infinite' }} />
+                <span style={{ position: 'absolute', inset: 0, borderRadius: 999, background: '#7A1F2B', boxShadow: '0 0 0 2px #fff' }} />
               </span>
             )}
             <button
