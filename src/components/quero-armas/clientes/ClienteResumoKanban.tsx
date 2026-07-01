@@ -96,6 +96,7 @@ export default function ClienteResumoKanban({
   processoDocs = [],
   onNavigate,
   onOpenCadastro,
+  onOpenComprar,
   onOpenDocsHub,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
