@@ -555,11 +555,11 @@ export default function QAContratarConfirmarPage() {
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: D.ink }}>
-                    {(cliente.estado_civil || "—").replace(/\(.*$/, "")} <span style={{ color: D.inkGhost, margin: "0 6px" }}>·</span> {(cliente.profissao || "—")}
+                    {(cliente.estado_civil || "—").replace(/\(.*$/, "").toUpperCase()} <span style={{ color: D.inkGhost, margin: "0 6px" }}>·</span> {(cliente.profissao || "—")}
                   </p>
                   <ToggleConfirm
                     value={dadosOk} onChange={setDadosOk}
-                    labelSim="NÃO MUDOU" labelNao="MUDOU ALGO"
+                    labelSim="É O MESMO" labelNao="MUDOU"
                   />
                 </div>
                 {dadosOk === "nao" && (
