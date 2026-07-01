@@ -35,7 +35,7 @@ export default function InlineContractReader({ servicoSlug, vars }: Props) {
   const [template, setTemplate] = useState<{ titulo: string; corpo_html: string; versao: number } | null>(null);
 
   useEffect(() => {
-    if (!open || template || loading) return;
+    if (!open || template) return;
     let cancel = false;
     setLoading(true);
     (async () => {
@@ -54,7 +54,7 @@ export default function InlineContractReader({ servicoSlug, vars }: Props) {
       setLoading(false);
     })();
     return () => { cancel = true; };
-  }, [open, template, loading]);
+  }, [open, template]);
 
   const renderedHtml = useMemo(() => {
     if (!template) return "";
