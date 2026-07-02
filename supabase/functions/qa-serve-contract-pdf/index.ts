@@ -29,6 +29,7 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Expose-Headers": "content-disposition, content-type, x-original-sha256",
 };
 const BUCKET = "paid-contracts";
 
@@ -715,7 +716,7 @@ Deno.serve(async (req) => {
       if (variant === "download_url") {
         const { data: signed, error: signedErr } = await sb.storage
           .from(BUCKET)
-          .createSignedUrl(canon.path, 120, { download: fname });
+          .createSignedUrl(canon.path, 600, { download: fname });
 
         if (signedErr || !signed?.signedUrl) {
           return await failContractDownload(
@@ -732,7 +733,7 @@ Deno.serve(async (req) => {
           url: signed.signedUrl,
           filename: fname,
           sha256: canon.sha256,
-          expires_in: 120,
+          expires_in: 600,
         });
       }
 
@@ -741,7 +742,7 @@ Deno.serve(async (req) => {
         headers: {
           ...corsHeaders,
           "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="${fname}"`,
+          "Content-Disposition": `attachment; filename="${fname}"`,
           "Cache-Control": "private, max-age=60",
           "X-Original-Sha256": canon.sha256,
         },
@@ -794,7 +795,7 @@ Deno.serve(async (req) => {
     headers: {
       ...corsHeaders,
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${fname}"`,
+      "Content-Disposition": `attachment; filename="${fname}"`,
       "Cache-Control": "private, max-age=60",
     },
   });
