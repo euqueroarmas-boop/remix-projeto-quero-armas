@@ -475,7 +475,7 @@ export default function ChecklistGuiadoModal({
       setErroAcao(r.error ?? "Não foi possível reaproveitar este documento.");
       return;
     }
-    toast.success("Documento reaproveitado. Próximo item.");
+    toast.success("Documento reutilizado do Hub de Documentos. Próximo item.");
     onUpdated?.();
     const c = await recarregarCarga(carga.processo.id);
     avancarPara(c, pularIds);
