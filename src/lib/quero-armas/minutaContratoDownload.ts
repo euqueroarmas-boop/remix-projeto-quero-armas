@@ -10,34 +10,34 @@ type OpenMinutaArgs = {
   slugs?: string[];
 };
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+function triggerHiddenFrameDownload(url: string) {
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.src = url;
+  document.body.appendChild(iframe);
+  setTimeout(() => iframe.remove(), 120_000);
 }
 
-function renderDownloadWindow(win: Window | null, title: string, body: string) {
-  if (!win) return;
-  try {
-    win.document.open();
-    win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8" /><title>${escapeHtml(title)}</title><style>body{margin:0;background:#f6f5f1;color:#0a0a0a;font-family:Arial,sans-serif}.wrap{max-width:720px;margin:56px auto;padding:0 24px}h1{font-family:Arial Narrow,Arial,sans-serif;font-size:20px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px}p{font-size:14px;line-height:1.5;color:#444}.btn{display:inline-block;margin-top:18px;background:#0a0a0a;color:#fff;text-decoration:none;padding:12px 16px;border-radius:2px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.hint{margin-top:14px;font-size:12px;color:#666}iframe{width:100%;height:70vh;border:1px solid #ddd;background:#fff;margin-top:20px}</style></head><body><main class="wrap">${body}</main></body></html>`);
-    win.document.close();
-  } catch {
-    // Se o navegador impedir escrita na janela, o download por anchor abaixo ainda será tentado.
-  }
+async function triggerBlobDownload(url: string, filename: string) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Download failed");
+  const blob = await response.blob();
+  if (!blob || blob.size === 0) throw new Error("Contrato retornou vazio. Fale com o suporte.");
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
 
 export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
-  const downloadWindow = window.open("", "_blank");
-  renderDownloadWindow(
-    downloadWindow,
-    "Preparando contrato",
-    "<h1>Preparando contrato</h1><p>O PDF correto está sendo gerado. Esta janela será atualizada automaticamente.</p>",
-  );
-
   const { data: { session } } = await supabase.auth.getSession();
   let resp: Response;
   try {
@@ -57,22 +57,12 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
       }),
     });
   } catch (e) {
-    renderDownloadWindow(
-      downloadWindow,
-      "Falha ao preparar contrato",
-      "<h1>Falha ao preparar contrato</h1><p>Não foi possível conectar ao sistema agora. Volte para a área do cliente e tente novamente.</p>",
-    );
     throw e;
   }
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     const message = err?.message || err?.error || `HTTP ${resp.status}`;
-    renderDownloadWindow(
-      downloadWindow,
-      "Falha ao preparar contrato",
-      `<h1>Falha ao preparar contrato</h1><p>${escapeHtml(message)}</p>`,
-    );
     throw new Error(message);
   }
 
@@ -82,37 +72,17 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
   if (contentType.includes("application/json")) {
     const data = await resp.json().catch(() => ({}));
     if (!data?.url) throw new Error("Link de download indisponível. Tente novamente.");
-
-    if (downloadWindow) {
-      renderDownloadWindow(
-        downloadWindow,
-        "Contrato pronto",
-        `<h1>Contrato pronto</h1><p>O download deve abrir automaticamente. Se não abrir, clique no botão abaixo.</p><a class="btn" href="${escapeHtml(data.url)}">Baixar contrato PDF</a><p class="hint">Depois de baixar, assine este mesmo PDF no GOV.BR sem editar, imprimir ou digitalizar.</p>`,
-      );
-      downloadWindow.location.href = data.url;
-    } else {
-      window.location.href = data.url;
-    }
+    triggerHiddenFrameDownload(String(data.url));
     return;
   }
 
   if (contentType.includes("text/html")) {
-    // Fallback: abre HTML numa nova aba para o cliente imprimir/salvar como PDF
-    const html = await resp.text();
-    if (!downloadWindow) throw new Error("Pop-up bloqueado. Permita pop-ups ou downloads para este site.");
-    downloadWindow.document.open();
-    downloadWindow.document.write(html);
-    downloadWindow.document.close();
+    throw new Error("Contrato retornou em HTML. Fale com o suporte para gerar o PDF canônico.");
     return;
   }
 
   const blob = await resp.blob();
   if (!blob || blob.size === 0) {
-    renderDownloadWindow(
-      downloadWindow,
-      "Contrato vazio",
-      "<h1>Contrato vazio</h1><p>O sistema retornou um arquivo vazio. Fale com o suporte.</p>",
-    );
     throw new Error("Contrato retornou vazio. Fale com o suporte.");
   }
   const blobUrl = URL.createObjectURL(blob);
@@ -122,11 +92,5 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-
-  renderDownloadWindow(
-    downloadWindow,
-    "Contrato pronto",
-    `<h1>Contrato pronto</h1><p>Se o download não começou automaticamente, clique no botão abaixo.</p><a class="btn" href="${blobUrl}" download="${escapeHtml(filename)}">Baixar contrato PDF</a><p class="hint">Depois de baixar, assine este mesmo PDF no GOV.BR sem editar, imprimir ou digitalizar.</p><iframe src="${blobUrl}" title="Contrato PDF"></iframe>`,
-  );
   setTimeout(() => URL.revokeObjectURL(blobUrl), 10 * 60_000);
 }
