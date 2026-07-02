@@ -42,7 +42,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
-import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
+import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
@@ -214,6 +214,7 @@ export default function QAClientePortalPage() {
     contract_number: string | null;
     venda_id: number | null;
   } | null>(null);
+  const [preparedPendingDownload, setPreparedPendingDownload] = useState<PreparedMinutaDownload | null>(null);
   const [downloadingPendingContract, setDownloadingPendingContract] = useState(false);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
@@ -1019,6 +1020,43 @@ export default function QAClientePortalPage() {
       contratos?.focus({ preventScroll: true });
     }, 80);
   };
+
+  useEffect(() => {
+    if (!showContratoPopup || !pendingContractDownload) return;
+    let alive = true;
+    setDownloadingPendingContract(true);
+    setPreparedPendingDownload((prev) => {
+      prev?.revoke();
+      return null;
+    });
+
+    prepareMinutaContratoQueroArmas({
+      contractId: pendingContractDownload.id,
+      contractNumber: pendingContractDownload.contract_number,
+      vendaId: pendingContractDownload.venda_id,
+    })
+      .then((prepared) => {
+        if (!alive) {
+          prepared.revoke();
+          return;
+        }
+        setPreparedPendingDownload(prepared);
+      })
+      .catch((e) => {
+        if (alive) toast.error(e instanceof Error ? e.message : "Não foi possível preparar o contrato.");
+      })
+      .finally(() => {
+        if (alive) setDownloadingPendingContract(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [showContratoPopup, pendingContractDownload?.id]);
+
+  useEffect(() => {
+    return () => preparedPendingDownload?.revoke();
+  }, [preparedPendingDownload]);
 
   const downloadPendingContractFromPopup = async () => {
     if (!pendingContractDownload) {
@@ -2440,15 +2478,26 @@ export default function QAClientePortalPage() {
                     >
                       Agora não
                     </button>
-                    <button
-                      type="button"
-                      onClick={downloadPendingContractFromPopup}
-                      disabled={downloadingPendingContract}
-                      className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
-                    >
-                      {downloadingPendingContract ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                      Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
+                    {preparedPendingDownload ? (
+                      <a
+                        href={preparedPendingDownload.href}
+                        download={preparedPendingDownload.filename}
+                        onClick={() => toast.success("Download iniciado.")}
+                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
+                      >
+                        Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={downloadPendingContractFromPopup}
+                        disabled={downloadingPendingContract}
+                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 disabled:cursor-wait"
+                      >
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Preparando PDF
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

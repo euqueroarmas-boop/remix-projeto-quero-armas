@@ -10,87 +10,72 @@ type OpenMinutaArgs = {
   slugs?: string[];
 };
 
-function triggerHiddenFrameDownload(url: string) {
-  const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.setAttribute("aria-hidden", "true");
-  iframe.src = url;
-  document.body.appendChild(iframe);
-  setTimeout(() => iframe.remove(), 120_000);
+export type PreparedMinutaDownload = {
+  href: string;
+  filename: string;
+  revoke: () => void;
+};
+
+function filenameFromContentDisposition(header: string | null, fallback: string) {
+  if (!header) return fallback;
+  const utf8 = header.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  if (utf8) return decodeURIComponent(utf8.replace(/\+/g, "%20"));
+  const quoted = header.match(/filename="([^"]+)"/i)?.[1];
+  if (quoted) return quoted;
+  const plain = header.match(/filename=([^;]+)/i)?.[1]?.trim();
+  return plain || fallback;
 }
 
-async function triggerBlobDownload(url: string, filename: string) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Download failed");
-  const blob = await response.blob();
-  if (!blob || blob.size === 0) throw new Error("Contrato retornou vazio. Fale com o suporte.");
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = blobUrl;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-}
-
-export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
+export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Promise<PreparedMinutaDownload> {
   const { data: { session } } = await supabase.auth.getSession();
-  let resp: Response;
-  try {
-    resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session?.access_token ?? ""}`,
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-      },
-      body: JSON.stringify({
-        contract_id: args.contractId,
-        venda_id: args.vendaId ? Number(args.vendaId) : undefined,
-        variant: "download_url",
-        template_source: QA_CONTRACT_MINUTA_SOURCE,
-        template_codigo: QA_CONTRACT_TEMPLATE_CODE,
-      }),
-    });
-  } catch (e) {
-    throw e;
-  }
+  const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session?.access_token ?? ""}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify({
+      contract_id: args.contractId,
+      venda_id: args.vendaId ? Number(args.vendaId) : undefined,
+      variant: "company_signed",
+      template_source: QA_CONTRACT_MINUTA_SOURCE,
+      template_codigo: QA_CONTRACT_TEMPLATE_CODE,
+    }),
+  });
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    const message = err?.message || err?.error || `HTTP ${resp.status}`;
-    throw new Error(message);
+    throw new Error(err?.message || err?.error || `HTTP ${resp.status}`);
   }
 
   const contentType = resp.headers.get("content-type") || "";
-  const filename = `Contrato-${args.contractNumber || args.contractId}.${contentType.includes("pdf") ? "pdf" : "html"}`;
-
-  if (contentType.includes("application/json")) {
-    const data = await resp.json().catch(() => ({}));
-    if (!data?.url) throw new Error("Link de download indisponível. Tente novamente.");
-    triggerHiddenFrameDownload(String(data.url));
-    return;
-  }
-
-  if (contentType.includes("text/html")) {
-    throw new Error("Contrato retornou em HTML. Fale com o suporte para gerar o PDF canônico.");
-    return;
+  if (!contentType.includes("pdf")) {
+    throw new Error("Contrato PDF indisponível. Fale com o suporte.");
   }
 
   const blob = await resp.blob();
   if (!blob || blob.size === 0) {
     throw new Error("Contrato retornou vazio. Fale com o suporte.");
   }
-  const blobUrl = URL.createObjectURL(blob);
+
+  const fallback = `Contrato-${args.contractNumber || args.contractId}.pdf`;
+  const filename = filenameFromContentDisposition(resp.headers.get("content-disposition"), fallback);
+  const href = URL.createObjectURL(blob);
+  return {
+    href,
+    filename,
+    revoke: () => URL.revokeObjectURL(href),
+  };
+}
+
+export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
+  const prepared = await prepareMinutaContratoQueroArmas(args);
   const a = document.createElement("a");
-  a.href = blobUrl;
-  a.download = filename;
+  a.href = prepared.href;
+  a.download = prepared.filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 10 * 60_000);
+  setTimeout(prepared.revoke, 60_000);
 }
