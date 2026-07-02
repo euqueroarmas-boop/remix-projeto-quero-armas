@@ -15,7 +15,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowRight, CheckCircle2, Download, Upload, Loader2 } from "lucide-react";
-import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
+import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
@@ -108,6 +108,8 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
+  const [preparedFeaturedDownload, setPreparedFeaturedDownload] = useState<PreparedMinutaDownload | null>(null);
+  const [preparingFeaturedDownload, setPreparingFeaturedDownload] = useState(false);
 
   useEffect(() => {
     if (!cliente?.id) { setLoading(false); return; }
@@ -181,8 +183,60 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     featured &&
     (featured.status === "pending_customer_signature" || featured.status === "rejected");
 
+  useEffect(() => {
+    if (!featured?.id) {
+      setPreparedFeaturedDownload((prev) => {
+        prev?.revoke();
+        return null;
+      });
+      return;
+    }
+
+    let alive = true;
+    setPreparingFeaturedDownload(true);
+    setPreparedFeaturedDownload((prev) => {
+      prev?.revoke();
+      return null;
+    });
+
+    prepareMinutaContratoQueroArmas({
+      contractId: featured.id,
+      contractNumber: featured.contract_number,
+      vendaId: featured.venda_id,
+    })
+      .then((prepared) => {
+        if (!alive) {
+          prepared.revoke();
+          return;
+        }
+        setPreparedFeaturedDownload(prepared);
+      })
+      .catch((e) => console.warn("[QAContratosCockpitV1] preparar contrato:", e))
+      .finally(() => {
+        if (alive) setPreparingFeaturedDownload(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [featured?.id]);
+
+  useEffect(() => {
+    return () => preparedFeaturedDownload?.revoke();
+  }, [preparedFeaturedDownload]);
+
   const handleAssinar = async () => {
     if (!featured) return;
+    if (preparedFeaturedDownload) {
+      const a = document.createElement("a");
+      a.href = preparedFeaturedDownload.href;
+      a.download = preparedFeaturedDownload.filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success("Download iniciado.");
+      return;
+    }
     const toastId = toast.loading("Preparando contrato correto…");
     try {
       await openMinutaContratoQueroArmas({
@@ -241,13 +295,26 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
                 : <>Contrato {featured?.contract_number || ""} aguarda sua assinatura via GOV.BR</>}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleAssinar}
-            className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black"
-          >
-            {featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA"} <ArrowRight className="h-3 w-3" />
-          </button>
+          {preparedFeaturedDownload ? (
+            <a
+              href={preparedFeaturedDownload.href}
+              download={preparedFeaturedDownload.filename}
+              onClick={() => toast.success("Download iniciado.")}
+              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black"
+            >
+              {featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA"} <ArrowRight className="h-3 w-3" />
+            </a>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAssinar}
+              disabled={preparingFeaturedDownload}
+              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
+            >
+              {preparingFeaturedDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              {preparingFeaturedDownload ? "PREPARANDO PDF" : (featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA")} <ArrowRight className="h-3 w-3" />
+            </button>
+          )}
         </div>
       )}
 
@@ -267,7 +334,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
           <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mb-2.5 font-semibold uppercase">
             CONTRATO PRINCIPAL · EM DESTAQUE
           </div>
-          <FeaturedContractCard contract={featured} onAssinar={handleAssinar} />
+          <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} />
         </>
       )}
 
