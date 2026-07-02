@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
   let bindingOk = false;
   let bindingReason = "";
   let bindingDetails: Record<string, unknown> = {};
+  let shaIntegrityOk = false;
 
   // SEGURANÇA: binding é SEMPRE byte-a-byte. O PDF assinado precisa ser uma
   // atualização incremental PAdES do PDF canônico gerado por este sistema
@@ -153,6 +154,7 @@ Deno.serve(async (req) => {
       const origSha = Array.from(new Uint8Array(origDigest))
         .map((x) => x.toString(16).padStart(2, "0")).join("");
       const shaMatchInternal = !expectedSha || origSha === expectedSha;
+      shaIntegrityOk = shaMatchInternal;
       // 2) Prefixo: o PDF assinado precisa começar com os bytes do original.
       let isPrefix = bytes.byteLength >= origBytes.byteLength;
       if (isPrefix) {
@@ -183,7 +185,21 @@ Deno.serve(async (req) => {
   const pdfText = extractPdfPlainText(bytes);
   const numeroPresente = numero.length > 0 && pdfText.includes(numero);
 
-  if (!bindingOk || !numeroPresente) {
+  // Fallback GOV.BR/ITI: o assinador do gov.br frequentemente re-lineariza o
+  // PDF, quebrando o prefix_match byte-a-byte mesmo com uma assinatura ICP-Brasil
+  // 100% válida. Se TODAS as demais camadas passarem (SHA do original íntegro,
+  // número do contrato presente no PDF assinado e assinatura ICP-Brasil válida),
+  // o binding é tratado como "soft" e o contrato entra em REVISÃO MANUAL em vez
+  // de ser rejeitado. Se o CPF do signatário também bater com o do cliente,
+  // aprovamos automaticamente.
+  const softBindingOk =
+    !bindingOk &&
+    shaIntegrityOk &&
+    numeroPresente &&
+    !!meta.valida &&
+    !!meta.icp_brasil;
+
+  if (!bindingOk && !softBindingOk) {
     const motivo = bindingReason
       || (numero
         ? `O PDF enviado não corresponde a este contrato (${numero}).`
@@ -226,6 +242,11 @@ Deno.serve(async (req) => {
     outcome = "invalid";
     newStatus = "rejected";
     eventType = "customer_signature_invalid";
+  } else if (softBindingOk && !cpfMatch) {
+    // Binding suave (GOV.BR re-linearizou): exige revisão manual, mesmo com ICP-Brasil.
+    outcome = "indeterminate";
+    newStatus = "pending_manual_review";
+    eventType = "customer_signature_manual_review";
   } else if (cpfMatch || meta.icp_brasil) {
     outcome = "valid";
     newStatus = "validated";
@@ -243,7 +264,8 @@ Deno.serve(async (req) => {
       ...meta,
       cpf_match: cpfMatch || false,
       cliente_cpf_normalized: cpfCliente || null,
-      binding_check: "ok",
+      binding_check: bindingOk ? "ok" : "soft_ok_govbr_relinearized",
+      prefix_match: (bindingDetails as any).prefix_match ?? null,
       expected_contract_number: numero,
       original_sha256_stored: expectedSha || null,
       original_size: bindingDetails.original_size,
