@@ -520,34 +520,97 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.28fr_0.72fr]">
-        <div className="relative min-h-[650px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
-          <div className="relative flex min-h-[520px] items-center justify-center px-6 pb-24 pt-10">
-            {fotos[0] ? (
-              <img src={fotos[0]} alt={selected.titulo} className="max-h-[500px] w-full object-contain drop-shadow-2xl" />
-            ) : (
-              <div className="text-center text-slate-500">
-                <ImageIcon className="mx-auto h-12 w-12" />
-                <p className="mt-3 text-sm font-semibold">Foto pendente no catalogo tecnico</p>
-              </div>
-            )}
+      <div className="grid gap-6 xl:grid-cols-[1.14fr_0.86fr]">
+        <div className="space-y-5">
+          <div className="relative min-h-[455px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
+            <div className="relative flex min-h-[360px] items-center justify-center px-6 pb-20 pt-10">
+              {fotos[0] ? (
+                <img src={fotos[0]} alt={selected.titulo} className="max-h-[330px] w-full object-contain drop-shadow-2xl" />
+              ) : (
+                <div className="text-center text-slate-500">
+                  <ImageIcon className="mx-auto h-12 w-12" />
+                  <p className="mt-3 text-sm font-semibold">Foto pendente no catalogo tecnico</p>
+                </div>
+              )}
+            </div>
+
+            <div className="absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+              {selected.tipo}
+            </div>
+
+            <div className="absolute bottom-5 left-7 right-7 grid grid-cols-7 gap-2">
+              {fotos.length ? fotos.slice(0, 7).map((src, idx) => (
+                <div key={`${src}-${idx}`} className={`h-14 border bg-white p-1 ${idx === 0 ? "border-slate-950" : "border-slate-200"}`}>
+                  <img src={src} alt={`${selected.titulo} foto ${idx + 1}`} className="h-full w-full object-contain" />
+                </div>
+              )) : (
+                <div className="col-span-7 border border-dashed border-slate-300 bg-white p-4 text-center text-[12px] text-slate-500">
+                  Sem fotos aprovadas para esta arma.
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
-            {selected.tipo}
-          </div>
+          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+                <BadgeCheck className="h-4 w-4" /> Dados expostos pelo fabricante
+              </div>
+              {fabricante ? (
+                <div className="mt-3 grid gap-2 text-[12px] leading-relaxed text-slate-700 md:grid-cols-2">
+                  <FieldBox label="Item do fabricante" value={fabricante.item} />
+                  <FieldBox label="Miras" value={fabricante.miras} />
+                  <FieldBox label="Trilho" value={fabricante.trilho} />
+                  <FieldBox label="Materiais" value={fabricante.materiais} />
+                  <FieldBox label="Seguranças" value={fabricante.segurancas} />
+                  <FieldBox label="Fonte" value="Taurus USA - TaurusTX 22" />
+                </div>
+              ) : (
+                <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
+                  Dados do fabricante ainda nao vinculados para este modelo. A tela exibe o que foi identificado no CRAF,
+                  no Hub de Documentos e no catalogo tecnico.
+                </p>
+              )}
+              {selected.catalogo?.status_revisao !== "verificado" && (
+                <div className="mt-4 flex items-start gap-2 border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-700">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-950" />
+                  <span>Ficha tecnica do catalogo marcada como revisao pendente. Exibir com auditoria da equipe.</span>
+                </div>
+              )}
+            </div>
 
-          <div className="absolute bottom-7 left-7 right-7 grid grid-cols-7 gap-2">
-            {fotos.length ? fotos.slice(0, 7).map((src, idx) => (
-              <div key={`${src}-${idx}`} className={`h-16 border bg-white p-1 ${idx === 0 ? "border-slate-950" : "border-slate-200"}`}>
-                <img src={src} alt={`${selected.titulo} foto ${idx + 1}`} className="h-full w-full object-contain" />
+            <div className="border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+                <BookOpen className="h-4 w-4" /> Fontes do dossie
               </div>
-            )) : (
-              <div className="col-span-7 border border-dashed border-slate-300 bg-white p-4 text-center text-[12px] text-slate-500">
-                Sem fotos aprovadas para esta arma.
+              <div className="mt-4 space-y-3 text-[12px] text-slate-700">
+                <div>
+                  <div className="font-black text-slate-950">Documento do cliente</div>
+                  <div>{selected.fonteDocumento || "Hub de Documentos"}</div>
+                </div>
+                {fabricante?.fonteUrl && (
+                  <div>
+                    <div className="font-black text-slate-950">Fabricante</div>
+                    <a className="break-all text-slate-950 underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
+                      Taurus USA - TaurusTX 22
+                    </a>
+                  </div>
+                )}
+                {selected.catalogo?.fonte_url && (
+                  <div>
+                    <div className="font-black text-slate-950">Catalogo tecnico</div>
+                    <a className="break-all text-slate-950 underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
+                      Fonte cadastrada
+                    </a>
+                  </div>
+                )}
+                <div>
+                  <div className="font-black text-slate-950">Base normativa</div>
+                  <div>{BASE_NORMATIVA.join(" · ")}</div>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
 
@@ -621,66 +684,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </aside>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
-            <BadgeCheck className="h-4 w-4" /> Dados expostos pelo fabricante
-          </div>
-          {fabricante ? (
-            <div className="mt-3 grid gap-2 text-[12px] leading-relaxed text-slate-700 md:grid-cols-2">
-              <FieldBox label="Item do fabricante" value={fabricante.item} />
-              <FieldBox label="Miras" value={fabricante.miras} />
-              <FieldBox label="Trilho" value={fabricante.trilho} />
-              <FieldBox label="Materiais" value={fabricante.materiais} />
-              <FieldBox label="Seguranças" value={fabricante.segurancas} />
-              <FieldBox label="Fonte" value="Taurus USA - TaurusTX 22" />
-            </div>
-          ) : (
-            <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
-              Dados do fabricante ainda nao vinculados para este modelo. A tela exibe o que foi identificado no CRAF,
-              no Hub de Documentos e no catalogo tecnico.
-            </p>
-          )}
-          {selected.catalogo?.status_revisao !== "verificado" && (
-            <div className="mt-4 flex items-start gap-2 border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-700">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-950" />
-              <span>Ficha tecnica do catalogo marcada como revisao pendente. Exibir com auditoria da equipe.</span>
-            </div>
-          )}
-        </div>
-
-        <div className="border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
-            <BookOpen className="h-4 w-4" /> Fontes do dossie
-          </div>
-          <div className="mt-4 space-y-3 text-[12px] text-slate-700">
-            <div>
-              <div className="font-black text-slate-950">Documento do cliente</div>
-              <div>{selected.fonteDocumento || "Hub de Documentos"}</div>
-            </div>
-            {fabricante?.fonteUrl && (
-              <div>
-                <div className="font-black text-slate-950">Fabricante</div>
-                <a className="break-all text-slate-950 underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
-                  Taurus USA - TaurusTX 22
-                </a>
-              </div>
-            )}
-            {selected.catalogo?.fonte_url && (
-              <div>
-                <div className="font-black text-slate-950">Catalogo tecnico</div>
-                <a className="break-all text-slate-950 underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
-                  Fonte cadastrada
-                </a>
-              </div>
-            )}
-            <div>
-              <div className="font-black text-slate-950">Base normativa</div>
-              <div>{BASE_NORMATIVA.join(" · ")}</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }
