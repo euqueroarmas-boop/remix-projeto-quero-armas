@@ -85,7 +85,7 @@ const LOWER_WORDS = new Set([
 ]);
 function titleCaseServico(value: string, fallback: string): string {
   const raw = shortName(value, fallback);
-  const spaced = raw.replace(/\s*\/\s*/g, "\u00A0/\u00A0");
+  const spaced = raw.replace(/\s*\/\s*/g, " / ");
   return spaced
     .split(" ")
     .map((token, idx) => {
@@ -94,7 +94,8 @@ function titleCaseServico(value: string, fallback: string): string {
       if (idx > 0 && LOWER_WORDS.has(lower)) return lower;
       return lower.charAt(0).toLocaleUpperCase("pt-BR") + lower.slice(1);
     })
-    .join(" ");
+    .join(" ")
+    .replace(/\s+\/\s+/g, "\u00A0/\u00A0");
 }
 
 function firstName(cliente: any) {
