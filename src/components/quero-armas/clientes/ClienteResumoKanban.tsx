@@ -574,7 +574,10 @@ export default function ClienteResumoKanban({
               </div>
               {front.items.length === 0 && <div className="qa-front-card__item"><span>Nenhum item monitorado</span><strong>—</strong></div>}
               {front.items.map((item, index) => (
-                <div className="qa-front-card__item" key={`${front.key}-${index}-${item.label}`}>
+                <div
+                  className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
+                  key={`${front.key}-${index}-${item.label}`}
+                >
                   <span>{item.label}</span><strong className={item.tone}>{item.status}</strong>
                 </div>
               ))}
