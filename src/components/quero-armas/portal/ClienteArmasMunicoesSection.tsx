@@ -3,8 +3,6 @@ import {
   AlertTriangle,
   BadgeCheck,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
   Crosshair,
   Gauge,
   Image as ImageIcon,
@@ -293,7 +291,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
-  const [tecnicaSlide, setTecnicaSlide] = useState<0 | 1>(0);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -444,10 +441,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   useEffect(() => {
     if (!selectedUid && armasView[0]?.uid) setSelectedUid(armasView[0].uid);
   }, [armasView, selectedUid]);
-
-  useEffect(() => {
-    setTecnicaSlide(0);
-  }, [selectedUid]);
 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
   const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
@@ -627,66 +620,30 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           )}
 
           {activeTab === "tecnica" && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
-                  {tecnicaSlide === 0 ? "Características tecnicas" : "Operação e construção"}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / 2</span>
-                  <button
-                    type="button"
-                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
-                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Bloco tecnico anterior"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
-                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Proximo bloco tecnico"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Características tecnicas</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
+                  <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
+                  <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
+                  <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
+                  <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
+                  <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
+                  <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
+                  <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
                 </div>
               </div>
-
-              <div className="mt-3 min-h-[368px]">
-                {tecnicaSlide === 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
-                    <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
-                    <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
-                    <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
-                    <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
-                    <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
-                    <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
-                    <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
-                    <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
-                    <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
-                    <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
-                    <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
-                    <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {[0, 1].map((slide) => (
-                  <button
-                    key={slide}
-                    type="button"
-                    onClick={() => setTecnicaSlide(slide as 0 | 1)}
-                    className={`h-1.5 ${tecnicaSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
-                    aria-label={slide === 0 ? "Ver características tecnicas" : "Ver operação e construção"}
-                  />
-                ))}
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Operação e construção</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
+                  <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
+                  <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
+                  <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
+                  <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
+                  <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
+                </div>
               </div>
             </div>
           )}
