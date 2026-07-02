@@ -588,7 +588,10 @@ function FeaturedContractCard({
       {/* stepper */}
       <div className="flex gap-0 mb-5 py-1.5">
         {STEP_LABELS.map((lbl, i) => {
-          const isValidated = contract.status === "validated";
+          const isValidated =
+            contract.status === "validated" ||
+            contract.validation_status === "valid" ||
+            !!contract.customer_signature_validated_at;
           const done = isValidated ? true : i < step;
           const curr = !isValidated && i === step;
           const circBg = done ? "bg-[#2F8F4A] border-[#2F8F4A] text-white" : curr ? "bg-[#D6A64B] border-[#D6A64B] text-white" : "bg-[#F2F2F2] border-[#DADADA] text-[#9a9a9a]";
