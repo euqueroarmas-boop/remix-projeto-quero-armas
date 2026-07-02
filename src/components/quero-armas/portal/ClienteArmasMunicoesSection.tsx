@@ -124,7 +124,7 @@ type Props = {
   onOpenDocumentos?: () => void;
 };
 
-type DossieTab = "resumo" | "ficha" | "tecnica" | "municoes" | "craf";
+type DossieTab = "resumo" | "ficha" | "tecnica" | "municoes" | "craf" | "fabricante" | "fontes";
 
 const TX22_FABRICANTE = {
   fonteUrl: "https://www.taurususa.com/product/pistols/taurustx-22/taurustx-22/",
@@ -456,6 +456,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { id: "tecnica", label: "Tecnica" },
     { id: "municoes", label: "Municoes" },
     { id: "craf", label: "CRAF" },
+    { id: "fabricante", label: "Fabricante" },
+    { id: "fontes", label: "Fontes" },
   ];
 
   if (loading) {
@@ -564,66 +566,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
             </div>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
-                <BadgeCheck className="h-4 w-4" /> Dados expostos pelo fabricante
-              </div>
-              {fabricante ? (
-                <div className="mt-3 grid gap-2 text-[12px] leading-relaxed text-slate-700 md:grid-cols-2">
-                  <FieldBox label="Item do fabricante" value={fabricante.item} />
-                  <FieldBox label="Miras" value={fabricante.miras} />
-                  <FieldBox label="Trilho" value={fabricante.trilho} />
-                  <FieldBox label="Materiais" value={fabricante.materiais} />
-                  <FieldBox label="Seguranças" value={fabricante.segurancas} />
-                  <FieldBox label="Fonte" value="Taurus USA - TaurusTX 22" />
-                </div>
-              ) : (
-                <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
-                  Dados do fabricante ainda nao vinculados para este modelo. A tela exibe o que foi identificado no CRAF,
-                  no Hub de Documentos e no catalogo tecnico.
-                </p>
-              )}
-              {selected.catalogo?.status_revisao !== "verificado" && (
-                <div className="mt-4 flex items-start gap-2 border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-700">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-950" />
-                  <span>Ficha tecnica do catalogo marcada como revisao pendente. Exibir com auditoria da equipe.</span>
-                </div>
-              )}
-            </div>
-
-            <div className="border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
-                <BookOpen className="h-4 w-4" /> Fontes do dossie
-              </div>
-              <div className="mt-4 space-y-3 text-[12px] text-slate-700">
-                <div>
-                  <div className="font-black text-slate-950">Documento do cliente</div>
-                  <div>{selected.fonteDocumento || "Hub de Documentos"}</div>
-                </div>
-                {fabricante?.fonteUrl && (
-                  <div>
-                    <div className="font-black text-slate-950">Fabricante</div>
-                    <a className="break-all text-slate-950 underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
-                      Taurus USA - TaurusTX 22
-                    </a>
-                  </div>
-                )}
-                {selected.catalogo?.fonte_url && (
-                  <div>
-                    <div className="font-black text-slate-950">Catalogo tecnico</div>
-                    <a className="break-all text-slate-950 underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
-                      Fonte cadastrada
-                    </a>
-                  </div>
-                )}
-                <div>
-                  <div className="font-black text-slate-950">Base normativa</div>
-                  <div>{BASE_NORMATIVA.join(" · ")}</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <aside className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
@@ -750,6 +692,69 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                   <FieldBox label="Arquivo" value={selected.fonteDocumento || "Hub de Documentos"} />
                   <FieldBox label="Catalogo" value={selected.catalogo?.fonte_dados || "Nao informado"} />
                   <FieldBox label="ID CRAF" value={selected.craf?.id ? String(selected.craf.id) : "Nao informado"} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "fabricante" && (
+            <div className="mt-6 space-y-5">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+                <BadgeCheck className="h-4 w-4" /> Dados expostos pelo fabricante
+              </div>
+              {fabricante ? (
+                <div className="grid gap-2 text-[12px] leading-relaxed text-slate-700 md:grid-cols-2">
+                  <FieldBox label="Item do fabricante" value={fabricante.item} />
+                  <FieldBox label="Miras" value={fabricante.miras} />
+                  <FieldBox label="Trilho" value={fabricante.trilho} />
+                  <FieldBox label="Materiais" value={fabricante.materiais} />
+                  <FieldBox label="Seguranças" value={fabricante.segurancas} />
+                  <FieldBox label="Fonte" value="Taurus USA - TaurusTX 22" />
+                </div>
+              ) : (
+                <p className="text-[12px] leading-relaxed text-slate-600">
+                  Dados do fabricante ainda nao vinculados para este modelo. A tela exibe o que foi identificado no CRAF,
+                  no Hub de Documentos e no catalogo tecnico.
+                </p>
+              )}
+              {selected.catalogo?.status_revisao !== "verificado" && (
+                <div className="flex items-start gap-2 border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-700">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-950" />
+                  <span>Ficha tecnica do catalogo marcada como revisao pendente. Exibir com auditoria da equipe.</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "fontes" && (
+            <div className="mt-6 space-y-5">
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+                <BookOpen className="h-4 w-4" /> Fontes do dossie
+              </div>
+              <div className="space-y-3 text-[12px] text-slate-700">
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <div className="font-black text-slate-950">Documento do cliente</div>
+                  <div>{selected.fonteDocumento || "Hub de Documentos"}</div>
+                </div>
+                {fabricante?.fonteUrl && (
+                  <div className="border border-slate-200 bg-slate-50 p-3">
+                    <div className="font-black text-slate-950">Fabricante</div>
+                    <a className="break-all text-slate-950 underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
+                      Taurus USA - TaurusTX 22
+                    </a>
+                  </div>
+                )}
+                {selected.catalogo?.fonte_url && (
+                  <div className="border border-slate-200 bg-slate-50 p-3">
+                    <div className="font-black text-slate-950">Catalogo tecnico</div>
+                    <a className="break-all text-slate-950 underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
+                      Fonte cadastrada
+                    </a>
+                  </div>
+                )}
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <div className="font-black text-slate-950">Base normativa</div>
+                  <div>{BASE_NORMATIVA.join(" · ")}</div>
                 </div>
               </div>
             </div>
