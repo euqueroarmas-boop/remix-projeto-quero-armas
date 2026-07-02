@@ -293,7 +293,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
-  const [tecnicaIndex, setTecnicaIndex] = useState(0);
+  const [tecnicaSlide, setTecnicaSlide] = useState<0 | 1>(0);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -446,21 +446,12 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   }, [armasView, selectedUid]);
 
   useEffect(() => {
-    setTecnicaIndex(0);
+    setTecnicaSlide(0);
   }, [selectedUid]);
 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
   const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
   const fabricante = selected && isTx22(selected) ? TX22_FABRICANTE : null;
-  const tecnicaCarousel = [
-    { label: "Ação", value: fabricante?.acao || "Nao informado" },
-    { label: "Raiamento", value: fabricante?.passoRaiamento || "Nao informado" },
-    { label: "Miras", value: fabricante?.miras || "Nao informado" },
-    { label: "Trilho", value: fabricante?.trilho || "Nao informado" },
-    { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
-    { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
-  ];
-  const tecnicaAtual = tecnicaCarousel[tecnicaIndex] || tecnicaCarousel[0];
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -546,13 +537,13 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </div>
       )}
 
-      <div className="grid items-stretch gap-6 xl:grid-cols-[1.14fr_0.86fr]">
-        <div className="h-[720px]">
+      <div className="grid items-stretch gap-6 xl:grid-cols-2">
+        <div className="h-[560px]">
           <div className="relative h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
             <div className="relative flex h-full items-center justify-center px-6 pb-24 pt-12">
               {fotos[0] ? (
-                <img src={fotos[0]} alt={selected.titulo} className="max-h-[560px] w-full object-contain drop-shadow-2xl" />
+                <img src={fotos[0]} alt={selected.titulo} className="max-h-[390px] w-full object-contain drop-shadow-2xl" />
               ) : (
                 <div className="text-center text-slate-500">
                   <ImageIcon className="mx-auto h-12 w-12" />
@@ -580,7 +571,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
         </div>
 
-        <aside className="flex h-[720px] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+        <aside className="flex h-[560px] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="shrink-0 flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
@@ -636,68 +627,66 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           )}
 
           {activeTab === "tecnica" && (
-            <div className="mt-6 space-y-5">
-              <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Características tecnicas</div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
-                  <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
-                  <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
-                  <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
-                  <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
-                  <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
-                  <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
-                  <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
+                  {tecnicaSlide === 0 ? "Características tecnicas" : "Operação e construção"}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / 2</span>
+                  <button
+                    type="button"
+                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
+                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                    aria-label="Bloco tecnico anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
+                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                    aria-label="Proximo bloco tecnico"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Carrossel tecnico</div>
-                  <div className="font-mono text-[11px] font-black text-slate-500">
-                    {String(tecnicaIndex + 1).padStart(2, "0")} / {String(tecnicaCarousel.length).padStart(2, "0")}
-                  </div>
-                </div>
 
-                <div className="mt-3 border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{tecnicaAtual.label}</div>
-                      <div className="mt-3 min-h-[64px] text-xl font-black leading-tight text-slate-950">
-                        {tecnicaAtual.value}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setTecnicaIndex((idx) => (idx - 1 + tecnicaCarousel.length) % tecnicaCarousel.length)}
-                        className="flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                        aria-label="Tecnica anterior"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTecnicaIndex((idx) => (idx + 1) % tecnicaCarousel.length)}
-                        className="flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                        aria-label="Proxima tecnica"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
+              <div className="mt-3 min-h-[368px]">
+                {tecnicaSlide === 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
+                    <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
+                    <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
+                    <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
+                    <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
+                    <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
+                    <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
+                    <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
                   </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
+                    <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
+                    <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
+                    <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
+                    <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
+                    <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
+                  </div>
+                )}
+              </div>
 
-                  <div className="mt-4 grid grid-cols-6 gap-2">
-                    {tecnicaCarousel.map((item, idx) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => setTecnicaIndex(idx)}
-                        className={`h-1.5 ${idx === tecnicaIndex ? "bg-slate-950" : "bg-slate-300"}`}
-                        aria-label={`Ver ${item.label}`}
-                      />
-                    ))}
-                  </div>
-                </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {[0, 1].map((slide) => (
+                  <button
+                    key={slide}
+                    type="button"
+                    onClick={() => setTecnicaSlide(slide as 0 | 1)}
+                    className={`h-1.5 ${tecnicaSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
+                    aria-label={slide === 0 ? "Ver características tecnicas" : "Ver operação e construção"}
+                  />
+                ))}
               </div>
             </div>
           )}
