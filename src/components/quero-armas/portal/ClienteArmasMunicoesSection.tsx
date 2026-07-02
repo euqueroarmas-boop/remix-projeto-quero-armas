@@ -3,14 +3,12 @@ import {
   AlertTriangle,
   BadgeCheck,
   BookOpen,
-  Camera,
   Crosshair,
   Gauge,
   Image as ImageIcon,
   Info,
   Loader2,
   ShieldCheck,
-  Sparkles,
   Target,
   Upload,
   Zap,
@@ -244,16 +242,39 @@ function isTx22(arma: ArmaView): boolean {
 function StatBar({ label, value, icon: Icon }: { label: string; value: number | null | undefined; icon: typeof Zap }) {
   const safe = Math.max(0, Math.min(100, Number(value ?? 0)));
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="border border-slate-200 bg-white p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-700">
-          <Icon className="h-3.5 w-3.5 text-[#7A1F2B]" /> {label}
+          <Icon className="h-3.5 w-3.5 text-slate-950" /> {label}
         </div>
         <span className="font-mono text-[12px] font-bold text-slate-900">{safe || "—"}</span>
       </div>
-      <div className="mt-2 h-1.5 rounded-full bg-slate-100">
-        <div className="h-1.5 rounded-full bg-[#7A1F2B]" style={{ width: `${safe}%` }} />
+      <div className="mt-2 h-1.5 bg-slate-100">
+        <div className="h-1.5 bg-slate-950" style={{ width: `${safe}%` }} />
       </div>
+    </div>
+  );
+}
+
+function TabChip({ children, active = false }: { children: string; active?: boolean }) {
+  return (
+    <span
+      className={`inline-flex h-8 items-center justify-center rounded-full border px-4 text-[10px] font-black uppercase tracking-[0.18em] ${
+        active
+          ? "border-slate-950 bg-slate-950 text-white"
+          : "border-slate-300 bg-white text-slate-950"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function FieldBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-slate-200 bg-slate-50 px-3 py-3">
+      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{label}</div>
+      <div className="mt-1 break-words text-[13px] font-black leading-snug text-slate-950">{value}</div>
     </div>
   );
 }
@@ -428,7 +449,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-600">
-        <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#7A1F2B]" />
+        <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-950" />
         <p className="mt-3 text-sm font-semibold">Carregando armas pelo Hub de Documentos...</p>
       </div>
     );
@@ -436,7 +457,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
   if (erro) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-800">
+      <div className="rounded-2xl border border-slate-300 bg-white p-6 text-slate-950">
         <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.18em]">
           <AlertTriangle className="h-4 w-4" /> Armas e Munições
         </div>
@@ -455,7 +476,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           ficha técnica, fotos e munições compatíveis.
         </p>
         {onOpenDocumentos && (
-          <Button onClick={onOpenDocumentos} className="mt-5 bg-[#7A1F2B] text-white hover:bg-[#641722]">
+          <Button onClick={onOpenDocumentos} className="mt-5 bg-slate-950 text-white hover:bg-slate-800">
             <Upload className="mr-2 h-4 w-4" /> Abrir Documentos
           </Button>
         )}
@@ -467,16 +488,16 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     <section className="space-y-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#7A1F2B]">Armas e Munições</div>
+          <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-950">Armas e Munições</div>
           <h1 className="mt-1 text-3xl font-black leading-tight text-slate-950 md:text-4xl">{selected.titulo}</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-600">
-            Arma puxada dos documentos anexados pelo cliente no Hub de Documentos, com prioridade para CRAF,
-            dados técnicos do catálogo e fonte do fabricante quando disponível.
+            Dados consolidados a partir do CRAF e dos documentos anexados pelo cliente no Hub de Documentos,
+            complementados pelo catálogo técnico e pela fonte do fabricante quando disponível.
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-          <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Base normativa</div>
-          <div className="mt-1 text-[12px] font-semibold text-slate-800">{BASE_NORMATIVA.join(" · ")}</div>
+        <div className="border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Base normativa</div>
+          <div className="mt-1 text-[12px] font-bold text-slate-800">{BASE_NORMATIVA.join(" · ")}</div>
         </div>
       </div>
 
@@ -489,8 +510,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               onClick={() => setSelectedUid(arma.uid)}
               className={`shrink-0 rounded-full border px-4 py-2 text-[12px] font-bold ${
                 arma.uid === selected.uid
-                  ? "border-[#7A1F2B] bg-[#7A1F2B] text-white"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-[#7A1F2B]/50"
+                  ? "border-slate-950 bg-slate-950 text-white"
+                  : "border-slate-300 bg-white text-slate-700 hover:border-slate-950"
               }`}
             >
               {arma.titulo}
@@ -499,100 +520,97 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </div>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid min-h-[420px] md:grid-cols-[1fr_0.92fr]">
-            <div className="relative flex min-h-[320px] items-center justify-center bg-slate-950 p-6">
-              {fotos[0] ? (
-                <img src={fotos[0]} alt={selected.titulo} className="max-h-[360px] w-full object-contain drop-shadow-2xl" />
-              ) : (
-                <div className="text-center text-white/70">
-                  <ImageIcon className="mx-auto h-12 w-12" />
-                  <p className="mt-3 text-sm font-semibold">Foto pendente no catálogo técnico</p>
-                </div>
-              )}
-              <div className="absolute left-4 top-4 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur">
-                {selected.tipo}
-              </div>
-            </div>
-
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Identificação do CRAF</div>
-                  <h2 className="mt-1 text-2xl font-black text-slate-950">{selected.titulo}</h2>
-                </div>
-                <div className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-emerald-700">
-                  {selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"}
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                {[
-                  ["Calibre", selected.calibre],
-                  ["Sistema", selected.sistema],
-                  ["No. serie", selected.numeroSerie || "Nao informado"],
-                  ["No. CRAF", selected.numeroCraf || "Nao informado"],
-                  ["SIGMA", selected.numeroSigma || "Nao informado"],
-                  ["SINARM/CAD", selected.numeroSinarm || "Nao informado"],
-                  ["Validade", formatDate(selected.dataValidade)],
-                  ["Fonte", selected.fonteDocumento || "Hub de Documentos"],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-                    <div className="mt-1 break-words text-[13px] font-bold text-slate-900">{value}</div>
-                  </div>
-                ))}
-              </div>
-
-              {selected.catalogo?.status_revisao !== "verificado" && (
-                <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
-                  <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>Ficha técnica do catálogo ainda marcada como revisão pendente. Exibir, mas manter auditoria da equipe.</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-              <BadgeCheck className="h-4 w-4" /> Dados técnicos
-            </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {[
-                ["Capacidade", selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"],
-                ["Peso", selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"],
-                ["Cano", selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"],
-                ["Alcance", selected.catalogo?.alcance_efetivo_m ? `${selected.catalogo.alcance_efetivo_m} m` : "Nao informado"],
-                ["Velocidade", selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"],
-                ["Potencia/energia", energiaEstimativa(selected.catalogo || null)],
-                ["Ação", fabricante?.acao || "Nao informado"],
-                ["Raiamento", fabricante?.passoRaiamento || "Nao informado"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-lg bg-slate-50 px-3 py-2">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-                  <div className="mt-1 text-[13px] font-bold text-slate-900">{value}</div>
-                </div>
-              ))}
-            </div>
-            {fabricante && (
-              <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 text-[12px] text-slate-700">
-                <div className="font-bold text-slate-900">Fabricante informa ainda:</div>
-                <div className="mt-1 leading-relaxed">
-                  item {fabricante.item}; {fabricante.miras}; {fabricante.trilho}; {fabricante.materiais}; seguranças:
-                  {" "}{fabricante.segurancas}.
-                </div>
+      <div className="grid gap-6 xl:grid-cols-[1.28fr_0.72fr]">
+        <div className="relative min-h-[650px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
+          <div className="relative flex min-h-[520px] items-center justify-center px-6 pb-24 pt-10">
+            {fotos[0] ? (
+              <img src={fotos[0]} alt={selected.titulo} className="max-h-[500px] w-full object-contain drop-shadow-2xl" />
+            ) : (
+              <div className="text-center text-slate-500">
+                <ImageIcon className="mx-auto h-12 w-12" />
+                <p className="mt-3 text-sm font-semibold">Foto pendente no catalogo tecnico</p>
               </div>
             )}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-              <Gauge className="h-4 w-4" /> Performance comparativa
+          <div className="absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+            {selected.tipo}
+          </div>
+
+          <div className="absolute bottom-7 left-7 right-7 grid grid-cols-7 gap-2">
+            {fotos.length ? fotos.slice(0, 7).map((src, idx) => (
+              <div key={`${src}-${idx}`} className={`h-16 border bg-white p-1 ${idx === 0 ? "border-slate-950" : "border-slate-200"}`}>
+                <img src={src} alt={`${selected.titulo} foto ${idx + 1}`} className="h-full w-full object-contain" />
+              </div>
+            )) : (
+              <div className="col-span-7 border border-dashed border-slate-300 bg-white p-4 text-center text-[12px] text-slate-500">
+                Sem fotos aprovadas para esta arma.
+              </div>
+            )}
+          </div>
+        </div>
+
+        <aside className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            <TabChip active>Resumo</TabChip>
+            <TabChip>Ficha</TabChip>
+            <TabChip>Tecnica</TabChip>
+            <TabChip>Municoes</TabChip>
+            <TabChip>CRAF</TabChip>
+          </div>
+
+          <div className="mt-6 flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">{selected.marca} {selected.modelo}</div>
+              <div className="mt-1 text-[13px] font-bold text-slate-500">{selected.tipo} · {selected.calibre}</div>
             </div>
-            <div className="mt-4 grid gap-3">
+            <div className="text-right text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              Fonte: {selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <FieldBox label="Fabricante" value={selected.marca} />
+            <FieldBox label="Modelo" value={selected.modelo} />
+            <FieldBox label="Calibre" value={selected.calibre} />
+            <FieldBox label="Tipo" value={selected.tipo} />
+            <FieldBox label="Numero de serie" value={selected.numeroSerie || "Nao informado"} />
+            <FieldBox label="CRAF" value={selected.numeroCraf || "Nao informado"} />
+            <FieldBox label="SIGMA" value={selected.numeroSigma || "Nao informado"} />
+            <FieldBox label="SINARM/CAD" value={selected.numeroSinarm || "Nao informado"} />
+            <FieldBox label="Sistema" value={selected.sistema} />
+            <FieldBox label="Validade" value={formatDate(selected.dataValidade)} />
+          </div>
+
+          <div className="mt-5">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Caracteristicas tecnicas</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
+              <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
+              <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
+              <FieldBox label="Alcance" value={selected.catalogo?.alcance_efetivo_m ? `${selected.catalogo.alcance_efetivo_m} m` : "Nao informado"} />
+              <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
+              <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
+              <FieldBox label="Acao" value={fabricante?.acao || "Nao informado"} />
+              <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Munições compatíveis</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {municoes.map((m) => (
+                <span key={m} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[12px] font-black text-slate-950">
+                  {m}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Performance comparativa</div>
+            <div className="mt-3 grid gap-2">
               <StatBar label="Dano" value={selected.catalogo?.stat_dano} icon={Zap} />
               <StatBar label="Precisao" value={selected.catalogo?.stat_precisao} icon={Target} />
               <StatBar label="Alcance" value={selected.catalogo?.stat_alcance} icon={Crosshair} />
@@ -600,69 +618,66 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               <StatBar label="Controle" value={selected.catalogo?.stat_controle} icon={ShieldCheck} />
             </div>
           </div>
-        </div>
+        </aside>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-            <Sparkles className="h-4 w-4" /> Munições compatíveis
+      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+            <BadgeCheck className="h-4 w-4" /> Dados expostos pelo fabricante
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {municoes.map((m) => (
-              <span key={m} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[12px] font-bold text-slate-800">
-                {m}
-              </span>
-            ))}
-          </div>
-          <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
-            Compatibilidade exibida a partir do CRAF/catálogo. A escolha e aquisição de munições deve seguir a legislação vigente,
-            limites aplicáveis e documentação do acervo.
-          </p>
+          {fabricante ? (
+            <div className="mt-3 grid gap-2 text-[12px] leading-relaxed text-slate-700 md:grid-cols-2">
+              <FieldBox label="Item do fabricante" value={fabricante.item} />
+              <FieldBox label="Miras" value={fabricante.miras} />
+              <FieldBox label="Trilho" value={fabricante.trilho} />
+              <FieldBox label="Materiais" value={fabricante.materiais} />
+              <FieldBox label="Seguranças" value={fabricante.segurancas} />
+              <FieldBox label="Fonte" value="Taurus USA - TaurusTX 22" />
+            </div>
+          ) : (
+            <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
+              Dados do fabricante ainda nao vinculados para este modelo. A tela exibe o que foi identificado no CRAF,
+              no Hub de Documentos e no catalogo tecnico.
+            </p>
+          )}
+          {selected.catalogo?.status_revisao !== "verificado" && (
+            <div className="mt-4 flex items-start gap-2 border border-slate-200 bg-slate-50 p-3 text-[12px] text-slate-700">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-950" />
+              <span>Ficha tecnica do catalogo marcada como revisao pendente. Exibir com auditoria da equipe.</span>
+            </div>
+          )}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-            <Camera className="h-4 w-4" /> Fotos
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {fotos.length ? fotos.slice(0, 6).map((src) => (
-              <div key={src} className="aspect-square rounded-lg border border-slate-200 bg-slate-50 p-1">
-                <img src={src} alt={selected.titulo} className="h-full w-full rounded-md object-contain" />
-              </div>
-            )) : (
-              <div className="col-span-3 rounded-lg border border-dashed border-slate-300 p-4 text-center text-[12px] text-slate-500">
-                Sem fotos aprovadas para esta arma.
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
-            <BookOpen className="h-4 w-4" /> Fontes
+        <div className="border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+            <BookOpen className="h-4 w-4" /> Fontes do dossie
           </div>
           <div className="mt-4 space-y-3 text-[12px] text-slate-700">
             <div>
-              <div className="font-bold text-slate-900">Documento do cliente</div>
+              <div className="font-black text-slate-950">Documento do cliente</div>
               <div>{selected.fonteDocumento || "Hub de Documentos"}</div>
             </div>
             {fabricante?.fonteUrl && (
               <div>
-                <div className="font-bold text-slate-900">Fabricante</div>
-                <a className="break-all text-[#7A1F2B] underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
+                <div className="font-black text-slate-950">Fabricante</div>
+                <a className="break-all text-slate-950 underline" href={fabricante.fonteUrl} target="_blank" rel="noreferrer">
                   Taurus USA - TaurusTX 22
                 </a>
               </div>
             )}
             {selected.catalogo?.fonte_url && (
               <div>
-                <div className="font-bold text-slate-900">Catálogo interno</div>
-                <a className="break-all text-[#7A1F2B] underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
+                <div className="font-black text-slate-950">Catalogo tecnico</div>
+                <a className="break-all text-slate-950 underline" href={selected.catalogo.fonte_url} target="_blank" rel="noreferrer">
                   Fonte cadastrada
                 </a>
               </div>
             )}
+            <div>
+              <div className="font-black text-slate-950">Base normativa</div>
+              <div>{BASE_NORMATIVA.join(" · ")}</div>
+            </div>
           </div>
         </div>
       </div>
