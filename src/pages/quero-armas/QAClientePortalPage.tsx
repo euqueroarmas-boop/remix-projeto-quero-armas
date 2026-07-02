@@ -1021,6 +1021,43 @@ export default function QAClientePortalPage() {
     }, 80);
   };
 
+  useEffect(() => {
+    if (!showContratoPopup || !pendingContractDownload) return;
+    let alive = true;
+    setDownloadingPendingContract(true);
+    setPreparedPendingDownload((prev) => {
+      prev?.revoke();
+      return null;
+    });
+
+    prepareMinutaContratoQueroArmas({
+      contractId: pendingContractDownload.id,
+      contractNumber: pendingContractDownload.contract_number,
+      vendaId: pendingContractDownload.venda_id,
+    })
+      .then((prepared) => {
+        if (!alive) {
+          prepared.revoke();
+          return;
+        }
+        setPreparedPendingDownload(prepared);
+      })
+      .catch((e) => {
+        if (alive) toast.error(e instanceof Error ? e.message : "Não foi possível preparar o contrato.");
+      })
+      .finally(() => {
+        if (alive) setDownloadingPendingContract(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [showContratoPopup, pendingContractDownload?.id]);
+
+  useEffect(() => {
+    return () => preparedPendingDownload?.revoke();
+  }, [preparedPendingDownload]);
+
   const downloadPendingContractFromPopup = async () => {
     if (!pendingContractDownload) {
       goContractsSection();
