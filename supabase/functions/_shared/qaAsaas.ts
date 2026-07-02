@@ -155,21 +155,45 @@ export async function createQaVendaPayment(
       ? { callback: { successUrl: input.callbackSuccessUrl, autoRedirect: true } }
       : {};
 
-    const payRes = await fetch(`${env.baseUrl}/payments`, {
-      method: "POST",
-      headers: asaasHeaders(env.key),
-      body: JSON.stringify({
-        customer: input.customerId,
-        billingType: input.billingType,
-        value: input.value,
-        dueDate: input.dueDate,
-        description: input.description,
-        externalReference: `qa_venda:${input.vendaId}`,
-        ...installments,
-        ...callback,
-      }),
-    });
-    paymentData = await payRes.json().catch(() => ({}));
+    const basePayload: Record<string, unknown> = {
+      customer: input.customerId,
+      billingType: input.billingType,
+      value: input.value,
+      dueDate: input.dueDate,
+      description: input.description,
+      externalReference: `qa_venda:${input.vendaId}`,
+      ...installments,
+    };
+
+    async function submit(payload: Record<string, unknown>) {
+      const res = await fetch(`${env.baseUrl}/payments`, {
+        method: "POST",
+        headers: asaasHeaders(env.key),
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { res, data };
+    }
+
+    let { res: payRes, data } = await submit({ ...basePayload, ...callback });
+    paymentData = data;
+
+    /* Se o Asaas rejeitar por falta de domínio configurado na conta,
+     * refaz o pagamento sem o callback (sem redirecionamento automático). */
+    if (!payRes.ok && callback.callback) {
+      const errs = Array.isArray((paymentData as any)?.errors) ? (paymentData as any).errors : [];
+      const needsDomain = errs.some((e: any) =>
+        String(e?.description || "").toLowerCase().includes("domínio")
+        || String(e?.description || "").toLowerCase().includes("dominio"),
+      );
+      if (needsDomain) {
+        console.warn("[qaAsaas] Asaas sem domínio configurado — retry sem callback.successUrl");
+        const retry = await submit(basePayload);
+        payRes = retry.res;
+        paymentData = retry.data;
+      }
+    }
+
     if (!payRes.ok || !paymentData?.id) {
       return {
         ok: false,
