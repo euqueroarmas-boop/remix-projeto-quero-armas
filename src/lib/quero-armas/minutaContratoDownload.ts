@@ -26,32 +26,55 @@ function filenameFromContentDisposition(header: string | null, fallback: string)
   return plain || fallback;
 }
 
-export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Promise<PreparedMinutaDownload> {
+async function sessionHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session?.access_token ?? ""}`,
+    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  };
+}
+
+function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "download_url") {
+  return JSON.stringify({
+    contract_id: args.contractId,
+    venda_id: args.vendaId ? Number(args.vendaId) : undefined,
+    variant,
+    template_source: QA_CONTRACT_MINUTA_SOURCE,
+    template_codigo: QA_CONTRACT_TEMPLATE_CODE,
+  });
+}
+
+export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Promise<PreparedMinutaDownload> {
+  const headers = await sessionHeaders();
+  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
+
+  const urlResp = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: contractRequestBody(args, "download_url"),
+  });
+
+  if (urlResp.ok) {
+    const data = await urlResp.json().catch(() => null);
+    if (data?.url) {
+      return {
+        href: data.url,
+        filename: data.filename || `Contrato-${args.contractNumber || args.contractId}.pdf`,
+        revoke: () => undefined,
+      };
+    }
+  }
+
   const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session?.access_token ?? ""}`,
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    },
-    body: JSON.stringify({
-      contract_id: args.contractId,
-      venda_id: args.vendaId ? Number(args.vendaId) : undefined,
-      variant: "company_signed",
-      template_source: QA_CONTRACT_MINUTA_SOURCE,
-      template_codigo: QA_CONTRACT_TEMPLATE_CODE,
-    }),
+    headers,
+    body: contractRequestBody(args, "company_signed"),
   });
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     throw new Error(err?.message || err?.error || `HTTP ${resp.status}`);
-  }
-
-  const contentType = resp.headers.get("content-type") || "";
-  if (!contentType.includes("pdf")) {
-    throw new Error("Contrato PDF indisponível. Fale com o suporte.");
   }
 
   const blob = await resp.blob();
