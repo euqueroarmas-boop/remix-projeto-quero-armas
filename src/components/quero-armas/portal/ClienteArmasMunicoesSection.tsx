@@ -154,6 +154,19 @@ const TX22_FABRICANTE = {
   segurancas: "Bloqueio do percussor, trava de gatilho e trava manual",
 };
 
+const TX22_FOTOS = [
+  "/armas/tx22/tx22-01.png",
+  "/armas/tx22/tx22-02.png",
+  "/armas/tx22/tx22-03.png",
+  "/armas/tx22/tx22-04.png",
+  "/armas/tx22/tx22-05.png",
+  "/armas/tx22/tx22-06.png",
+  "/armas/tx22/tx22-07.png",
+  "/armas/tx22/tx22-08.png",
+  "/armas/tx22/tx22-09.png",
+  "/armas/tx22/tx22-10.png",
+];
+
 const BASE_NORMATIVA = [
   "Lei 10.826/2003",
   "Decreto 11.615/2023",
@@ -259,6 +272,10 @@ function isTx22(arma: ArmaView): boolean {
   return busca.includes("TAURUS") && busca.includes("TX22");
 }
 
+function uniqueList(values: Array<string | null | undefined>): string[] {
+  return [...new Set(values.filter(Boolean).map(String))];
+}
+
 function StatBar({ label, value, icon: Icon }: { label: string; value: number | null | undefined; icon: typeof Zap }) {
   const safe = Math.max(0, Math.min(100, Number(value ?? 0)));
   return (
@@ -361,6 +378,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
   const [fotoSlide, setFotoSlide] = useState(0);
   const [fotoPaused, setFotoPaused] = useState(false);
+  const [tabsPaused, setTabsPaused] = useState(false);
   const [tecnicaSlide, setTecnicaSlide] = useState(0);
   const [tecnicaPaused, setTecnicaPaused] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -524,12 +542,18 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     setTecnicaSlide(0);
     setFotoSlide(0);
     setFotoPaused(false);
+    setTabsPaused(false);
     setTecnicaPaused(false);
   }, [selectedUid]);
 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
-  const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
   const fabricante = selected && isTx22(selected) ? TX22_FABRICANTE : null;
+  const tx22Selecionada = Boolean(selected && isTx22(selected));
+  const fotos = uniqueList([
+    selected?.catalogo?.imagem,
+    ...(selected?.catalogo?.imagens || []),
+    ...(tx22Selecionada ? TX22_FOTOS : []),
+  ]).slice(0, 10);
   const dadosTecnicos = selected ? [
     { label: "Capacidade", value: selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado" },
     { label: "Peso", value: selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado" },
@@ -567,12 +591,25 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { id: "fabricante", label: "Fabricante" },
     { id: "fontes", label: "Fontes" },
   ];
+  const activeTabIndex = Math.max(0, tabs.findIndex((tab) => tab.id === activeTab));
+  const advanceTab = () => setActiveTab((tab) => tabs[(Math.max(0, tabs.findIndex((item) => item.id === tab)) + 1) % tabs.length].id);
+  const rewindTab = () => setActiveTab((tab) => tabs[(Math.max(0, tabs.findIndex((item) => item.id === tab)) - 1 + tabs.length) % tabs.length].id);
+  const handleTabClick = (tab: DossieTab) => {
+    setActiveTab(tab);
+    setTabsPaused(true);
+  };
 
   useEffect(() => {
     if (fotoPaused || fotos.length <= 1) return undefined;
     const timer = window.setInterval(advanceFoto, 5000);
     return () => window.clearInterval(timer);
   }, [fotoPaused, fotos.length]);
+
+  useEffect(() => {
+    if (tabsPaused || tabs.length <= 1) return undefined;
+    const timer = window.setInterval(advanceTab, 5000);
+    return () => window.clearInterval(timer);
+  }, [tabsPaused, tabs.length]);
 
   useEffect(() => {
     if (activeTab !== "tecnica" || tecnicaPaused || dadosTecnicosSlides.length <= 1) return undefined;
@@ -620,6 +657,12 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
   return (
     <section className="space-y-5">
+      <style>{`
+        @keyframes qa-tab-timer {
+          from { transform: scaleX(0); }
+          to { transform: scaleX(1); }
+        }
+      `}</style>
       <div>
         <div>
           <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-950">Armas e Munições</div>
@@ -653,10 +696,9 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
       <div className="grid items-stretch gap-6 xl:grid-cols-2">
         <div className="h-[560px]">
           <div className="relative h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
-            <div className="relative flex h-full items-center justify-center px-6 pb-24 pt-12">
+            <div className="relative flex h-full items-center justify-center bg-white px-6 pb-24 pt-12">
               {fotoAtual ? (
-                <img src={fotoAtual} alt={selected.titulo} className="max-h-[390px] w-full object-contain drop-shadow-2xl" />
+                <img src={fotoAtual} alt={selected.titulo} className="max-h-[390px] w-full object-contain" />
               ) : (
                 <div className="text-center text-slate-500">
                   <ImageIcon className="mx-auto h-12 w-12" />
@@ -681,8 +723,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               />
             </div>
 
-            <div className="absolute bottom-5 left-7 right-7 grid grid-cols-7 gap-2">
-              {fotos.length ? fotos.slice(0, 7).map((src, idx) => (
+            <div className="absolute bottom-5 left-7 right-7 grid grid-cols-5 gap-2 md:grid-cols-10">
+              {fotos.length ? fotos.map((src, idx) => (
                 <button
                   key={`${src}-${idx}`}
                   type="button"
@@ -703,12 +745,30 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </div>
 
         <aside className="flex h-[560px] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="shrink-0 flex flex-wrap gap-2">
-            {tabs.map((tab) => (
-              <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
-                {tab.label}
-              </TabChip>
-            ))}
+          <div className="shrink-0 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                {tabs.map((tab) => (
+                  <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => handleTabClick(tab.id)}>
+                    {tab.label}
+                  </TabChip>
+                ))}
+              </div>
+              <CarouselControls
+                current={activeTabIndex}
+                total={tabs.length}
+                paused={tabsPaused}
+                onPrev={rewindTab}
+                onNext={advanceTab}
+                onTogglePause={() => setTabsPaused((paused) => !paused)}
+                label="abas do dossie"
+              />
+            </div>
+            {!tabsPaused && (
+              <div className="h-1 overflow-hidden bg-slate-100">
+                <div key={activeTab} className="h-full origin-left animate-[qa-tab-timer_5s_linear] bg-slate-950" />
+              </div>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto pr-1">
