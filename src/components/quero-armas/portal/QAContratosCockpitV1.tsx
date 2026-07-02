@@ -14,8 +14,9 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, CheckCircle2, Download } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download, Upload, Loader2 } from "lucide-react";
 import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
+import { toast } from "sonner";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
 
@@ -289,6 +290,51 @@ function KpiCard({ tone, label, value, sub }: { tone: Tone; label: string; value
 
 /* ─────────────────── FEATURED ─────────────────── */
 function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onAssinar: () => void }) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const canUpload = !!contract.issued_at && [
+    "generated_pending_company_signature",
+    "pending_customer_signature",
+    "rejected",
+    "pending_manual_review",
+    "customer_signature_uploaded",
+  ].includes(String(contract.status));
+
+  async function handleUpload(file: File) {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Envie apenas arquivo PDF");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Arquivo maior que 25 MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const fd = new FormData();
+      fd.append("contract_id", contract.id);
+      fd.append("file", file);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-upload-signed-contract`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: fd,
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+      toast.success("Contrato enviado. Validação em andamento.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar contrato");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
   const step = statusToStep(contract.status);                          // 0..4
   const stepIndex1Based = step + 1;
   const progress = Math.round(((step + 1) / 5) * 100);
@@ -337,6 +383,32 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
             >
               <Download className="h-3 w-3" /> BAIXAR CONTRATO
             </button>
+          )}
+          {canUpload && (
+            <>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f);
+                }}
+              />
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+                className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                title="Enviar PDF assinado (GOV.BR ou ICP-Brasil)"
+              >
+                {uploading
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <Upload className="h-3 w-3" />}
+                ENVIAR ASSINADO
+              </button>
+            </>
           )}
         </div>
       </div>
