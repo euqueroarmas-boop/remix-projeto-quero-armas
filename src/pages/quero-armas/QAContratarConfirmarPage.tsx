@@ -232,6 +232,9 @@ export default function QAContratarConfirmarPage() {
   const [novaProfissao, setNovaProfissao] = useState("");
 
   const [aceiteContrato, setAceiteContrato] = useState(false);
+  /* Link da fatura Asaas quando o redirect automático não é possível
+   * (app rodando em iframe — ex.: preview do Lovable — e popup bloqueado). */
+  const [pagamentoUrl, setPagamentoUrl] = useState<string | null>(null);
 
   const [legadoBlock, setLegadoBlock] = useState<{
     homologacao_status?: string | null;
@@ -442,9 +445,25 @@ export default function QAContratarConfirmarPage() {
         console.warn("[confirmar] aceite-registrar falhou:", aceiteFail);
       }
 
-      toast.success("Redirecionando para o pagamento seguro…");
       clear();
-      window.location.href = invoiceUrl;
+
+      /* A fatura do Asaas envia X-Frame-Options/frame-ancestors e NÃO abre
+       * dentro de iframe (ex.: preview do Lovable). Se estivermos em iframe,
+       * abre em aba nova; se o navegador bloquear o popup (gesto do usuário
+       * expirado após os awaits), mostra botão manual como fallback. */
+      const emIframe = window.self !== window.top;
+      if (!emIframe) {
+        toast.success("Redirecionando para o pagamento seguro…");
+        window.location.href = invoiceUrl;
+        return;
+      }
+      const aba = window.open(invoiceUrl, "_blank", "noopener");
+      if (aba) {
+        toast.success("Pagamento aberto em nova aba.");
+      } else {
+        toast.info("Clique no botão abaixo para abrir o pagamento.");
+      }
+      setPagamentoUrl(invoiceUrl);
       return;
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
@@ -791,6 +810,37 @@ export default function QAContratarConfirmarPage() {
 
             {/* ── CTA ────────────────────────────────────────────────── */}
             <div style={{ marginTop: 64 }}>
+              {pagamentoUrl && (
+                <a
+                  href={pagamentoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    boxSizing: "border-box",
+                    textAlign: "center",
+                    textDecoration: "none",
+                    background: D.inkStrong,
+                    color: "#FFFFFF",
+                    padding: "24px",
+                    marginBottom: 12,
+                    fontFamily: "Oswald, sans-serif",
+                    fontSize: 20, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em",
+                  }}
+                >
+                  ABRIR PAGAMENTO SEGURO ↗
+                </a>
+              )}
+              {pagamentoUrl && (
+                <p style={{
+                  textAlign: "center", margin: "0 0 24px",
+                  fontSize: 11, color: D.inkMuted, textTransform: "uppercase", letterSpacing: "0.08em",
+                }}>
+                  O pagamento abre em uma nova aba no ambiente do Asaas.
+                </p>
+              )}
+              {!pagamentoUrl && (
               <button
                 type="button"
                 disabled={!podeConfirmarBool}
@@ -816,6 +866,7 @@ export default function QAContratarConfirmarPage() {
                   "IR PARA PAGAMENTO"
                 )}
               </button>
+              )}
               <p style={{
                 textAlign: "center", marginTop: 24,
                 fontSize: 9, fontWeight: 500, textTransform: "uppercase",
