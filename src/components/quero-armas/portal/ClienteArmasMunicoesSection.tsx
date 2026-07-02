@@ -3,6 +3,8 @@ import {
   AlertTriangle,
   BadgeCheck,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Crosshair,
   Gauge,
   Image as ImageIcon,
@@ -291,6 +293,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
+  const [tecnicaIndex, setTecnicaIndex] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -442,9 +445,22 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     if (!selectedUid && armasView[0]?.uid) setSelectedUid(armasView[0].uid);
   }, [armasView, selectedUid]);
 
+  useEffect(() => {
+    setTecnicaIndex(0);
+  }, [selectedUid]);
+
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
   const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
   const fabricante = selected && isTx22(selected) ? TX22_FABRICANTE : null;
+  const tecnicaCarousel = [
+    { label: "Ação", value: fabricante?.acao || "Nao informado" },
+    { label: "Raiamento", value: fabricante?.passoRaiamento || "Nao informado" },
+    { label: "Miras", value: fabricante?.miras || "Nao informado" },
+    { label: "Trilho", value: fabricante?.trilho || "Nao informado" },
+    { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
+    { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
+  ];
+  const tecnicaAtual = tecnicaCarousel[tecnicaIndex] || tecnicaCarousel[0];
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -634,14 +650,52 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Operação e construção</div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
-                  <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
-                  <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
-                  <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
-                  <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
-                  <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Carrossel tecnico</div>
+                  <div className="font-mono text-[11px] font-black text-slate-500">
+                    {String(tecnicaIndex + 1).padStart(2, "0")} / {String(tecnicaCarousel.length).padStart(2, "0")}
+                  </div>
+                </div>
+
+                <div className="mt-3 border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{tecnicaAtual.label}</div>
+                      <div className="mt-3 min-h-[64px] text-xl font-black leading-tight text-slate-950">
+                        {tecnicaAtual.value}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTecnicaIndex((idx) => (idx - 1 + tecnicaCarousel.length) % tecnicaCarousel.length)}
+                        className="flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                        aria-label="Tecnica anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTecnicaIndex((idx) => (idx + 1) % tecnicaCarousel.length)}
+                        className="flex h-9 w-9 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                        aria-label="Proxima tecnica"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-6 gap-2">
+                    {tecnicaCarousel.map((item, idx) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => setTecnicaIndex(idx)}
+                        className={`h-1.5 ${idx === tecnicaIndex ? "bg-slate-950" : "bg-slate-300"}`}
+                        aria-label={`Ver ${item.label}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
