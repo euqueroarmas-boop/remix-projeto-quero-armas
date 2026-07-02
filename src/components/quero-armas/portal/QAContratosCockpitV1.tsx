@@ -384,6 +384,32 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
               <Download className="h-3 w-3" /> BAIXAR CONTRATO
             </button>
           )}
+          {canUpload && (
+            <>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f);
+                }}
+              />
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+                className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                title="Enviar PDF assinado (GOV.BR ou ICP-Brasil)"
+              >
+                {uploading
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <Upload className="h-3 w-3" />}
+                ENVIAR ASSINADO
+              </button>
+            </>
+          )}
         </div>
       </div>
 
