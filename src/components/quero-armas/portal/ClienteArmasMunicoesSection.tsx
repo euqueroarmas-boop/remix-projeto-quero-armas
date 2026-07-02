@@ -298,7 +298,7 @@ function TabChip({ children, active = false, onClick }: { children: string; acti
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-8 items-center justify-center rounded-full border px-4 text-[10px] font-black uppercase tracking-[0.18em] ${
+      className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-2.5 text-[9px] font-black uppercase tracking-[0.12em] ${
         active
           ? "border-slate-950 bg-slate-950 text-white"
           : "border-slate-300 bg-white text-slate-950"
@@ -338,31 +338,31 @@ function CarouselControls({
   if (total <= 1) return null;
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="font-mono text-[11px] font-black text-slate-500">{current + 1} / {total}</span>
+    <div className="flex h-7 shrink-0 items-center gap-1.5">
+      <span className="min-w-8 text-center font-mono text-[10px] font-black leading-none text-slate-500">{current + 1}/{total}</span>
       <button
         type="button"
         onClick={onPrev}
-        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        className="flex h-7 w-7 shrink-0 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
         aria-label={`Anterior: ${label}`}
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
         onClick={onTogglePause}
-        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        className="flex h-7 w-7 shrink-0 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
         aria-label={paused ? `Retomar ${label}` : `Pausar ${label}`}
       >
-        {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
       </button>
       <button
         type="button"
         onClick={onNext}
-        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        className="flex h-7 w-7 shrink-0 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
         aria-label={`Próximo: ${label}`}
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-3.5 w-3.5" />
       </button>
     </div>
   );
@@ -746,8 +746,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
         <aside className="flex h-[560px] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="shrink-0 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-x-auto">
                 {tabs.map((tab) => (
                   <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => handleTabClick(tab.id)}>
                     {tab.label}

@@ -17,7 +17,7 @@ SET
     '/armas/tx22/tx22-09.png',
     '/armas/tx22/tx22-10.png'
   ]::text[],
-  imagem_fonte = 'Taurus USA, Guns.com, EveryGunPart e American Rifleman',
+  imagem_fonte = 'Taurus USA, EveryGunPart e American Rifleman',
   fonte_url = COALESCE(fonte_url, 'https://www.taurususa.com/product/pistols/taurustx-22/taurustx-22/'),
   imagem_status = 'pronta',
   imagem_aprovada = true,
