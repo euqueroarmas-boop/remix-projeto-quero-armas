@@ -500,7 +500,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
   return (
     <section className="space-y-5">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
         <div>
           <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-950">Armas e Munições</div>
           <h1 className="mt-1 text-3xl font-black leading-tight text-slate-950 md:text-4xl">{selected.titulo}</h1>
@@ -508,10 +508,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
             Dados consolidados a partir do CRAF e dos documentos anexados pelo cliente no Hub de Documentos,
             complementados pelo catálogo técnico e pela fonte do fabricante quando disponível.
           </p>
-        </div>
-        <div className="border border-slate-200 bg-white px-4 py-3 text-right shadow-sm">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Base normativa</div>
-          <div className="mt-1 text-[12px] font-bold text-slate-800">{BASE_NORMATIVA.join(" · ")}</div>
         </div>
       </div>
 
