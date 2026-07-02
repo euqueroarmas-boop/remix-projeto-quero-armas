@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
           try {
             const { data: confRes, error: confErr } = await supabase.rpc(
               "qa_confirmar_pagamento_processo",
-              { p_processo_id: p.id, p_origem: "asaas_webhook" },
+              { p_processo_id: p.id, p_origem: "asaas_webhook", p_bypass_contrato_validado: false },
             );
             if (confErr) {
               await logSistemaBackend({
