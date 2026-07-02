@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download } from "lucide-react";
 import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
@@ -325,8 +325,19 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
             {contract.contract_number || "—"}{contract.service_label ? ` · ${contract.service_label}` : ""}
           </h2>
         </div>
-        <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase whitespace-nowrap">
-          PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
+        <div className="flex items-center gap-3 whitespace-nowrap">
+          <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">
+            PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
+          </div>
+          {contract.issued_at && (
+            <button
+              type="button"
+              onClick={onAssinar}
+              className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+            >
+              <Download className="h-3 w-3" /> BAIXAR CONTRATO
+            </button>
+          )}
         </div>
       </div>
 
