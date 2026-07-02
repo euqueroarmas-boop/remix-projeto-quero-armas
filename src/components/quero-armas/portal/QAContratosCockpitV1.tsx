@@ -116,11 +116,18 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, total_amount, service_label, created_at, validation_details")
+          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, valor, servico_slug, created_at, validation_details")
           .eq("cliente_id", cliente.id)
           .order("created_at", { ascending: false });
         if (error) console.warn("[QAContratosCockpitV1] qa_contracts:", error.message);
-        if (!cancel) setContracts(((data as any) || []) as Contract[]);
+        if (!cancel) {
+          const mapped = ((data as any) || []).map((r: any) => ({
+            ...r,
+            total_amount: r.valor ?? null,
+            service_label: r.servico_slug ?? null,
+          })) as Contract[];
+          setContracts(mapped);
+        }
       } catch (e) {
         console.warn("[QAContratosCockpitV1] erro:", e);
         if (!cancel) setContracts([]);
