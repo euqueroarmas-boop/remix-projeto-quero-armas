@@ -382,6 +382,28 @@ function FeaturedContractCard({
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
+  const [showDone, setShowDone] = React.useState(false);
+  const prevStatusRef = React.useRef<string | null>(null);
+
+  // Abre o modal de conclusão quando o contrato transita para "validated"
+  // (ou já entra validado sem que o cliente tenha visto a comemoração).
+  React.useEffect(() => {
+    const status = String(contract.status || "");
+    const seenKey = `qa_contract_completed_seen_${contract.id}`;
+    const already = typeof window !== "undefined" && window.localStorage.getItem(seenKey);
+    if (status === "validated" && !already) {
+      // pequena espera para não competir com toast/realtime
+      const t = setTimeout(() => setShowDone(true), 350);
+      return () => clearTimeout(t);
+    }
+    prevStatusRef.current = status;
+  }, [contract.status, contract.id]);
+
+  function closeDone() {
+    try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
+    setShowDone(false);
+  }
+
   const canUpload = !!contract.issued_at && [
     "generated_pending_company_signature",
     "pending_customer_signature",
