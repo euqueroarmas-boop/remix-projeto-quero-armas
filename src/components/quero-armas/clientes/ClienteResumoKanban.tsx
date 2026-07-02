@@ -593,7 +593,7 @@ export default function ClienteResumoKanban({
             </div>
           ))}
         </section>
-        <div className="qa-client-summary-print__footer">QUERO ARMAS · COCKPIT Z6 · RESUMO · DECK V29</div>
+        <div className="qa-client-summary-print__footer">QUERO ARMAS · TODOS OS DIREITOS RESERVADOS</div>
       </div>
       {exameModal && (
         <AgendarExameModal
