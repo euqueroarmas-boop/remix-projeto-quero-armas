@@ -9,7 +9,7 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
-  ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal,
+  ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -42,6 +42,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
+import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
@@ -208,6 +209,12 @@ export default function QAClientePortalPage() {
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
+  const [pendingContractDownload, setPendingContractDownload] = useState<{
+    id: string;
+    contract_number: string | null;
+    venda_id: number | null;
+  } | null>(null);
+  const [downloadingPendingContract, setDownloadingPendingContract] = useState(false);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -1013,6 +1020,27 @@ export default function QAClientePortalPage() {
     }, 80);
   };
 
+  const downloadPendingContractFromPopup = async () => {
+    if (!pendingContractDownload) {
+      goContractsSection();
+      return;
+    }
+    const toastId = toast.loading("Preparando contrato correto…");
+    setDownloadingPendingContract(true);
+    try {
+      await openMinutaContratoQueroArmas({
+        contractId: pendingContractDownload.id,
+        contractNumber: pendingContractDownload.contract_number,
+        vendaId: pendingContractDownload.venda_id,
+      });
+      toast.success("Contrato pronto para baixar.", { id: toastId });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
+    } finally {
+      setDownloadingPendingContract(false);
+    }
+  };
+
   const resumoState = useMemo(() => {
     const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
@@ -1147,25 +1175,34 @@ export default function QAClientePortalPage() {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, status")
+          .select("id, status, contract_number, venda_id, created_at")
           .eq("cliente_id", idLegado)
           .in("status", [
             "generated_pending_company_signature",
             "pending_customer_signature",
             "rejected",
-          ]);
+          ])
+          .order("created_at", { ascending: false });
         if (!alive) return;
         if (error) {
           setPendingContracts(0);
+          setPendingContractDownload(null);
           setPendingContractsLoaded(true);
           return;
         }
         const count = Array.isArray(data) ? data.length : 0;
         setPendingContracts(count);
+        const first = Array.isArray(data) ? (data[0] as any) : null;
+        setPendingContractDownload(first ? {
+          id: first.id,
+          contract_number: first.contract_number ?? null,
+          venda_id: first.venda_id ?? null,
+        } : null);
         setPendingContractsLoaded(true);
       } catch {
         if (alive) {
           setPendingContracts(0);
+          setPendingContractDownload(null);
           setPendingContractsLoaded(true);
         }
       }
@@ -2405,10 +2442,12 @@ export default function QAClientePortalPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={goContractsSection}
+                      onClick={downloadPendingContractFromPopup}
+                      disabled={downloadingPendingContract}
                       className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
                     >
-                      Assinar agora <ChevronRight className="h-3.5 w-3.5" />
+                      {downloadingPendingContract ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                      Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>

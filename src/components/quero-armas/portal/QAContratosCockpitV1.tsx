@@ -183,14 +183,17 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
   const handleAssinar = async () => {
     if (!featured) return;
+    const toastId = toast.loading("Preparando contrato correto…");
     try {
       await openMinutaContratoQueroArmas({
         contractId: featured.id,
         contractNumber: featured.contract_number,
         vendaId: featured.venda_id,
       });
+      toast.success("Contrato pronto para baixar.", { id: toastId });
     } catch (e) {
       console.warn("[QAContratosCockpitV1] abrir contrato:", e);
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
     }
   };
 
