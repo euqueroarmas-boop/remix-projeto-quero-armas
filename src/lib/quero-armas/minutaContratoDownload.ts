@@ -51,7 +51,7 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
       body: JSON.stringify({
         contract_id: args.contractId,
         venda_id: args.vendaId ? Number(args.vendaId) : undefined,
-        variant: "company_signed",
+        variant: "download_url",
         template_source: QA_CONTRACT_MINUTA_SOURCE,
         template_codigo: QA_CONTRACT_TEMPLATE_CODE,
       }),
@@ -78,6 +78,23 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
 
   const contentType = resp.headers.get("content-type") || "";
   const filename = `Contrato-${args.contractNumber || args.contractId}.${contentType.includes("pdf") ? "pdf" : "html"}`;
+
+  if (contentType.includes("application/json")) {
+    const data = await resp.json().catch(() => ({}));
+    if (!data?.url) throw new Error("Link de download indisponível. Tente novamente.");
+
+    if (downloadWindow) {
+      renderDownloadWindow(
+        downloadWindow,
+        "Contrato pronto",
+        `<h1>Contrato pronto</h1><p>O download deve abrir automaticamente. Se não abrir, clique no botão abaixo.</p><a class="btn" href="${escapeHtml(data.url)}">Baixar contrato PDF</a><p class="hint">Depois de baixar, assine este mesmo PDF no GOV.BR sem editar, imprimir ou digitalizar.</p>`,
+      );
+      downloadWindow.location.href = data.url;
+    } else {
+      window.location.href = data.url;
+    }
+    return;
+  }
 
   if (contentType.includes("text/html")) {
     // Fallback: abre HTML numa nova aba para o cliente imprimir/salvar como PDF
