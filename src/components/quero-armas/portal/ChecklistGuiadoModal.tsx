@@ -1772,11 +1772,6 @@ export default function ChecklistGuiadoModal({
         }}
       />
 
-      {/* Wizard de Perguntas vinculado à exigência — abre antes de qualquer ação */}
-      <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
-      {/* nada aqui — apenas para agrupar */}
-      </Dialog>
-
       {/* Modal do Documento Gerado — opções explícitas Baixar / Compartilhar / Já assinei */}
       <Dialog
         open={documentoGerado.open}
@@ -1857,7 +1852,7 @@ export default function ChecklistGuiadoModal({
         </DialogContent>
       </Dialog>
 
-      {/* Wrapper duplicado abaixo mantém o Dialog original do wizardPre — reabrimos aqui */}
+      {/* Wizard de Perguntas vinculado à exigência — abre antes de qualquer ação */}
       <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
         <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
