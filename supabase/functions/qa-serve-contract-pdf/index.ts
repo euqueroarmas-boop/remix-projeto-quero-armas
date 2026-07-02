@@ -704,13 +704,38 @@ Deno.serve(async (req) => {
   }
 
   // PDF canônico (bytes idênticos que serão comparados com o PDF assinado)
-  if (variant === "company_signed" || variant === "original") {
+  if (variant === "company_signed" || variant === "original" || variant === "download_url") {
     if (!html || !html.trim()) {
       return await failContractDownload(req, user, auditedContract as any, variant, "contrato_renderizado_indisponivel", 409);
     }
     try {
       const canon = await ensureCanonicalPdf(sb, auditedContract as any, html);
       const fname = contractDownloadFilename(auditedContract, "pdf");
+
+      if (variant === "download_url") {
+        const { data: signed, error: signedErr } = await sb.storage
+          .from(BUCKET)
+          .createSignedUrl(canon.path, 120, { download: fname });
+
+        if (signedErr || !signed?.signedUrl) {
+          return await failContractDownload(
+            req,
+            user,
+            auditedContract as any,
+            variant,
+            `signed_url_failed:${signedErr?.message ?? "url_ausente"}`,
+            500,
+          );
+        }
+
+        return jsonResp({
+          url: signed.signedUrl,
+          filename: fname,
+          sha256: canon.sha256,
+          expires_in: 120,
+        });
+      }
+
       return new Response(canon.bytes as BodyInit, {
         status: 200,
         headers: {
