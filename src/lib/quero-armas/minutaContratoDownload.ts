@@ -69,33 +69,6 @@ export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Pro
   };
 }
 
-function triggerHiddenFrameDownload(url: string) {
-  const iframe = document.createElement("iframe");
-  iframe.style.display = "none";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.setAttribute("aria-hidden", "true");
-  iframe.src = url;
-  document.body.appendChild(iframe);
-  setTimeout(() => iframe.remove(), 120_000);
-}
-
-async function triggerBlobDownload(url: string, filename: string) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Download failed");
-  const blob = await response.blob();
-  if (!blob || blob.size === 0) throw new Error("Contrato retornou vazio. Fale com o suporte.");
-  const blobUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = blobUrl;
-  a.download = filename;
-  a.rel = "noopener";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-}
-
 export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
   const prepared = await prepareMinutaContratoQueroArmas(args);
   const a = document.createElement("a");
