@@ -25,6 +25,10 @@ export type CaixaDocumento = "permanente" | "arma" | "processo";
 export interface DocClassificavel {
   etapa?: string | null;
   arma_id?: string | null;
+  status?: string | null;
+  obrigatorio?: boolean | null;
+  regra_validacao?: any;
+  metadados_documento_json?: any;
 }
 
 export const ETAPAS_PERMANENTES: ReadonlySet<string> = new Set([
@@ -52,6 +56,19 @@ export interface ContagensCaixas {
   total: number;
 }
 
+export interface BreakdownStatus {
+  total: number;
+  resolvidos: number;
+  reutilizados_hub: number;
+  pendentes: number;
+  em_analise: number;
+  ocultos: number;
+}
+
+export interface ContagensCaixasComStatus extends ContagensCaixas {
+  porCaixa: Record<CaixaDocumento, BreakdownStatus>;
+}
+
 export function contarPorCaixa(
   docs: ReadonlyArray<DocClassificavel> | null | undefined,
 ): ContagensCaixas {
@@ -60,6 +77,67 @@ export function contarPorCaixa(
   for (const d of docs) {
     out[classificarCaixa(d)]++;
     out.total++;
+  }
+  return out;
+}
+
+// Espelho enxuto de itemVisivelGuia — mantém a UI alinhada com o assistente
+// (respeita depende_de e exige_quando) sem importar do engine (evita ciclo).
+function itemVisivel(doc: DocClassificavel, respostas: Record<string, any>): boolean {
+  const r = doc?.regra_validacao;
+  if (!r || typeof r !== "object") return true;
+  if (r.depende_de && typeof r.depende_de === "object") {
+    if (respostas[r.depende_de.chave] !== r.depende_de.valor) return false;
+  }
+  if (r.exige_quando && typeof r.exige_quando === "object") {
+    return Object.entries(r.exige_quando as Record<string, string>).every(
+      ([k, v]) => respostas[k] === v,
+    );
+  }
+  return true;
+}
+
+const STATUS_CUMPRIDO = new Set([
+  "aprovado", "validado", "concluido", "concluído",
+  "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento", "nao_aplicavel",
+]);
+const STATUS_EM_ANALISE = new Set([
+  "em_analise", "enviado", "fila", "processando",
+  "revisao_humana", "em_revisao_humana", "pendente_aprovacao", "aguardando_equipe",
+]);
+
+function ehReutilizadoHub(doc: DocClassificavel): boolean {
+  const s = String(doc?.status ?? "").toLowerCase();
+  if (s === "dispensado_por_reaproveitamento") return true;
+  const m = doc?.metadados_documento_json;
+  return !!(m && typeof m === "object" && m.reutilizado_do_hub === true);
+}
+
+export function contarPorCaixaComStatus(
+  docs: ReadonlyArray<DocClassificavel> | null | undefined,
+  respostas: Record<string, any> = {},
+): ContagensCaixasComStatus {
+  const zero = (): BreakdownStatus => ({
+    total: 0, resolvidos: 0, reutilizados_hub: 0,
+    pendentes: 0, em_analise: 0, ocultos: 0,
+  });
+  const out: ContagensCaixasComStatus = {
+    permanente: 0, arma: 0, processo: 0, total: 0,
+    porCaixa: { permanente: zero(), arma: zero(), processo: zero() },
+  };
+  if (!docs) return out;
+  for (const d of docs) {
+    const c = classificarCaixa(d);
+    out[c]++;
+    out.total++;
+    const b = out.porCaixa[c];
+    b.total++;
+    if (!itemVisivel(d, respostas)) { b.ocultos++; continue; }
+    const s = String(d?.status ?? "").toLowerCase();
+    if (ehReutilizadoHub(d)) { b.resolvidos++; b.reutilizados_hub++; continue; }
+    if (STATUS_CUMPRIDO.has(s)) { b.resolvidos++; continue; }
+    if (STATUS_EM_ANALISE.has(s)) { b.em_analise++; continue; }
+    b.pendentes++;
   }
   return out;
 }
