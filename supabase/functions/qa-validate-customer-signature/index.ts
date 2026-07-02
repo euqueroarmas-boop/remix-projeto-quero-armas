@@ -136,8 +136,18 @@ Deno.serve(async (req) => {
   let bindingReason = "";
   let bindingDetails: Record<string, unknown> = {};
 
+  // Contrato de adesão: o cliente baixa a MINUTA em HTML e a converte em PDF
+  // pelo próprio navegador antes de assinar no Gov.br. Nesses casos, não existe
+  // um "PDF original" persistido no storage para comparar byte-a-byte. Nessa
+  // hipótese, o vínculo é comprovado por:
+  //   (a) presença do número do contrato dentro do PDF assinado (checagem
+  //       adicional feita logo abaixo);
+  //   (b) assinatura ICP-Brasil/Gov.br válida do CPF do titular do contrato
+  //       (checagem feita mais adiante).
+  // Só exigimos prefixo byte-a-byte quando existe original_pdf_path salvo.
   if (!originalPath) {
-    bindingReason = "Contrato original não localizado para comparação criptográfica.";
+    bindingOk = true;
+    bindingDetails = { soft_binding: true, motivo: "sem_original_persistido" };
   } else {
     const { data: origFile, error: origErr } = await sb.storage.from(BUCKET).download(originalPath);
     if (origErr || !origFile) {
