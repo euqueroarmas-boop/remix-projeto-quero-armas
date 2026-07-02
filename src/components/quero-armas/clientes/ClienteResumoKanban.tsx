@@ -34,7 +34,7 @@ interface Props {
 }
 
 type FrontTone = "bordo" | "amber" | "green";
-type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted" };
+type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
@@ -257,10 +257,10 @@ export default function ClienteResumoKanban({
       const statusProcesso = String(item.status || "").toLowerCase();
       const nomeProcesso = titleCaseServico(nome, "Processo");
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
-        return { label: nomeProcesso, status: "Checklist documental aberto", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Checklist documental aberto", tone: "warn" as const, stack: true };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
-        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const, stack: true };
       }
       if (prazo?.diasRestantes !== undefined) {
         return { label: nomeProcesso, status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
