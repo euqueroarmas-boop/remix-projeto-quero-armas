@@ -1951,6 +1951,13 @@ function DocumentoView({
   return (
     <div>
       <h3 className="text-base font-bold text-slate-900">{doc.nome_documento}</h3>
+      {/* Reutilizado do Hub de Documentos — item cumprido sem novo upload */}
+      {doc.status === "dispensado_por_reaproveitamento" && (
+        <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          REUTILIZADO DO HUB DE DOCUMENTOS
+        </div>
+      )}
       {isCertidaoAltNome ? (
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           Envie sua certidão de casamento ou nascimento averbada para comprovar a alteração do seu nome.
