@@ -124,6 +124,8 @@ type Props = {
   onOpenDocumentos?: () => void;
 };
 
+type DossieTab = "resumo" | "ficha" | "tecnica" | "municoes" | "craf";
+
 const TX22_FABRICANTE = {
   fonteUrl: "https://www.taurususa.com/product/pistols/taurustx-22/taurustx-22/",
   item: "1-TX22141O",
@@ -256,9 +258,11 @@ function StatBar({ label, value, icon: Icon }: { label: string; value: number | 
   );
 }
 
-function TabChip({ children, active = false }: { children: string; active?: boolean }) {
+function TabChip({ children, active = false, onClick }: { children: string; active?: boolean; onClick: () => void }) {
   return (
-    <span
+    <button
+      type="button"
+      onClick={onClick}
       className={`inline-flex h-8 items-center justify-center rounded-full border px-4 text-[10px] font-black uppercase tracking-[0.18em] ${
         active
           ? "border-slate-950 bg-slate-950 text-white"
@@ -266,7 +270,7 @@ function TabChip({ children, active = false }: { children: string; active?: bool
       }`}
     >
       {children}
-    </span>
+    </button>
   );
 }
 
@@ -286,6 +290,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [crafsDb, setCrafsDb] = useState<Craf[]>([]);
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -445,6 +450,13 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     : selected?.calibre
       ? [selected.calibre]
       : ["Nao identificado"];
+  const tabs: Array<{ id: DossieTab; label: string }> = [
+    { id: "resumo", label: "Resumo" },
+    { id: "ficha", label: "Ficha" },
+    { id: "tecnica", label: "Tecnica" },
+    { id: "municoes", label: "Municoes" },
+    { id: "craf", label: "CRAF" },
+  ];
 
   if (loading) {
     return (
@@ -616,71 +628,132 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
         <aside className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap gap-2">
-            <TabChip active>Resumo</TabChip>
-            <TabChip>Ficha</TabChip>
-            <TabChip>Tecnica</TabChip>
-            <TabChip>Municoes</TabChip>
-            <TabChip>CRAF</TabChip>
+            {tabs.map((tab) => (
+              <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
+                {tab.label}
+              </TabChip>
+            ))}
           </div>
 
-          <div className="mt-6 flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
-            <div>
-              <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">{selected.marca} {selected.modelo}</div>
-              <div className="mt-1 text-[13px] font-bold text-slate-500">{selected.tipo} · {selected.calibre}</div>
+          {activeTab === "resumo" && (
+            <div className="mt-6 space-y-5">
+              <div className="border-b border-slate-200 pb-4">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Dossie do armamento</div>
+                <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
+                  Visão consolidada da arma encontrada no Hub de Documentos, cruzando documento anexado,
+                  catalogo tecnico e fonte do fabricante quando houver correspondencia.
+                </p>
+              </div>
+              <div className="grid gap-2">
+                <StatBar label="Dano" value={selected.catalogo?.stat_dano} icon={Zap} />
+                <StatBar label="Precisao" value={selected.catalogo?.stat_precisao} icon={Target} />
+                <StatBar label="Controle" value={selected.catalogo?.stat_controle} icon={ShieldCheck} />
+                <StatBar label="Mobilidade" value={selected.catalogo?.stat_mobilidade} icon={Gauge} />
+              </div>
+              <div className="border border-slate-200 bg-slate-50 p-4 text-[12px] leading-relaxed text-slate-700">
+                A leitura segue a base normativa exibida no topo da tela e separa dados cadastrais,
+                dados tecnicos, munições e registro para evitar duplicidade entre as guias.
+              </div>
             </div>
-            <div className="text-right text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
-              Fonte: {selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"}
-            </div>
-          </div>
+          )}
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <FieldBox label="Fabricante" value={selected.marca} />
-            <FieldBox label="Modelo" value={selected.modelo} />
-            <FieldBox label="Calibre" value={selected.calibre} />
-            <FieldBox label="Tipo" value={selected.tipo} />
-            <FieldBox label="Numero de serie" value={selected.numeroSerie || "Nao informado"} />
-            <FieldBox label="CRAF" value={selected.numeroCraf || "Nao informado"} />
-            <FieldBox label="SIGMA" value={selected.numeroSigma || "Nao informado"} />
-            <FieldBox label="SINARM/CAD" value={selected.numeroSinarm || "Nao informado"} />
-            <FieldBox label="Sistema" value={selected.sistema} />
-            <FieldBox label="Validade" value={formatDate(selected.dataValidade)} />
-          </div>
-
-          <div className="mt-5">
-            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Caracteristicas tecnicas</div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
-              <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
-              <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
-              <FieldBox label="Alcance" value={selected.catalogo?.alcance_efetivo_m ? `${selected.catalogo.alcance_efetivo_m} m` : "Nao informado"} />
-              <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
-              <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
-              <FieldBox label="Acao" value={fabricante?.acao || "Nao informado"} />
-              <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
+          {activeTab === "ficha" && (
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Identificação comercial</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Fabricante" value={selected.marca} />
+                  <FieldBox label="Modelo" value={selected.modelo} />
+                  <FieldBox label="Tipo" value={selected.tipo} />
+                  <FieldBox label="Calibre nominal" value={selected.calibre} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Classificação do catalogo</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Apelido" value={selected.catalogo?.apelido || "Nao informado"} />
+                  <FieldBox label="Origem" value={selected.catalogo?.origem || "Nao informado"} />
+                  <FieldBox label="Classe legal" value={selected.catalogo?.classificacao_legal || "Nao informado"} />
+                  <FieldBox label="Revisão" value={selected.catalogo?.status_revisao || "Pendente"} />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mt-5">
-            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Munições compatíveis</div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {municoes.map((m) => (
-                <span key={m} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[12px] font-black text-slate-950">
-                  {m}
-                </span>
-              ))}
+          {activeTab === "tecnica" && (
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Características tecnicas</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
+                  <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
+                  <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
+                  <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
+                  <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
+                  <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
+                  <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
+                  <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Operação e construção</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
+                  <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
+                  <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
+                  <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
+                  <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
+                  <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="mt-5">
-            <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Performance comparativa</div>
-            <div className="mt-3 grid gap-2">
-              <StatBar label="Dano" value={selected.catalogo?.stat_dano} icon={Zap} />
-              <StatBar label="Precisao" value={selected.catalogo?.stat_precisao} icon={Target} />
-              <StatBar label="Alcance" value={selected.catalogo?.stat_alcance} icon={Crosshair} />
-              <StatBar label="Cadencia" value={selected.catalogo?.stat_cadencia} icon={Gauge} />
-              <StatBar label="Controle" value={selected.catalogo?.stat_controle} icon={ShieldCheck} />
+          {activeTab === "municoes" && (
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Munições compatíveis</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {municoes.map((m) => (
+                    <span key={m} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[12px] font-black text-slate-950">
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <FieldBox label="Calibre base" value={selected.calibre} />
+                <FieldBox label="Alcance efetivo" value={selected.catalogo?.alcance_efetivo_m ? `${selected.catalogo.alcance_efetivo_m} m` : "Nao informado"} />
+                <FieldBox label="Energia estimada" value={energiaEstimativa(selected.catalogo || null)} />
+                <FieldBox label="Observação" value="Valores variam conforme munição, lote e fabricante." />
+              </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === "craf" && (
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Registro documental</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Numero de serie" value={selected.numeroSerie || "Nao informado"} />
+                  <FieldBox label="CRAF" value={selected.numeroCraf || "Nao informado"} />
+                  <FieldBox label="SIGMA" value={selected.numeroSigma || "Nao informado"} />
+                  <FieldBox label="SINARM/CAD" value={selected.numeroSinarm || "Nao informado"} />
+                  <FieldBox label="Sistema" value={selected.sistema} />
+                  <FieldBox label="Validade" value={formatDate(selected.dataValidade)} />
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Origem do dossie</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <FieldBox label="Fonte principal" value={selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"} />
+                  <FieldBox label="Arquivo" value={selected.fonteDocumento || "Hub de Documentos"} />
+                  <FieldBox label="Catalogo" value={selected.catalogo?.fonte_dados || "Nao informado"} />
+                  <FieldBox label="ID CRAF" value={selected.craf?.id ? String(selected.craf.id) : "Nao informado"} />
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 
