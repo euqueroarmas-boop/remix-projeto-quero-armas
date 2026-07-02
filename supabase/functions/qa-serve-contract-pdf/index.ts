@@ -23,6 +23,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { jsPDF } from "npm:jspdf@2.5.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,204 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 const BUCKET = "paid-contracts";
+
+// ============================================================================
+// PDF CANÔNICO (binding byte-a-byte)
+// ---------------------------------------------------------------------------
+// O PDF servido ao cliente PRECISA ser byte-idêntico ao PDF que ele assina no
+// GOV.BR/ICP-Brasil, para que a assinatura PAdES seja uma atualização
+// incremental (prefixo binário do original). Geramos UMA vez por contrato e
+// persistimos em storage; toda leitura posterior devolve exatamente esses
+// mesmos bytes.
+// ============================================================================
+
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&aacute;/gi, "á").replace(/&eacute;/gi, "é").replace(/&iacute;/gi, "í")
+    .replace(/&oacute;/gi, "ó").replace(/&uacute;/gi, "ú")
+    .replace(/&atilde;/gi, "ã").replace(/&otilde;/gi, "õ")
+    .replace(/&acirc;/gi, "â").replace(/&ecirc;/gi, "ê").replace(/&ocirc;/gi, "ô")
+    .replace(/&ccedil;/gi, "ç")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+type Block =
+  | { kind: "h1"; text: string }
+  | { kind: "h2"; text: string }
+  | { kind: "h3"; text: string }
+  | { kind: "p"; text: string }
+  | { kind: "li"; text: string }
+  | { kind: "hr" };
+
+function htmlToBlocks(html: string): Block[] {
+  const blocks: Block[] = [];
+  // Normaliza: remove <script>, <style>, <button> (não pertence ao contrato)
+  let src = html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<button[\s\S]*?<\/button>/gi, "");
+  // Extrai body se existir
+  const bodyMatch = src.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) src = bodyMatch[1];
+
+  const tagRe = /<(h1|h2|h3|p|li|hr)[^>]*>([\s\S]*?)<\/\1>|<hr\s*\/?>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = tagRe.exec(src)) !== null) {
+    if (m[0].startsWith("<hr")) {
+      blocks.push({ kind: "hr" });
+      continue;
+    }
+    const tag = m[1].toLowerCase() as Block["kind"];
+    const raw = m[2] || "";
+    // Remove tags internas (b, i, strong, span, a) mantendo texto.
+    const txt = decodeHtmlEntities(raw.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
+    if (!txt) continue;
+    blocks.push({ kind: tag, text: txt });
+  }
+  return blocks;
+}
+
+function buildCanonicalPdf(contract: any, html: string): Uint8Array {
+  const blocks = htmlToBlocks(html);
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: false });
+
+  // Metadados fixos garantem determinismo caso a geração seja reexecutada
+  // em recuperação de desastre. Não usamos timestamp de "agora".
+  const fixedDate = new Date(String(contract.aceite_eletronico_data || contract.created_at || "2020-01-01T00:00:00Z"));
+  const yyyymmdd = `D:${fixedDate.getUTCFullYear()}${String(fixedDate.getUTCMonth() + 1).padStart(2, "0")}${String(fixedDate.getUTCDate()).padStart(2, "0")}${String(fixedDate.getUTCHours()).padStart(2, "0")}${String(fixedDate.getUTCMinutes()).padStart(2, "0")}${String(fixedDate.getUTCSeconds()).padStart(2, "0")}Z`;
+  try {
+    (doc as any).setCreationDate(yyyymmdd);
+    (doc as any).setFileId(String(contract.id).replace(/-/g, "").toUpperCase().slice(0, 32).padEnd(32, "0"));
+  } catch { /* ignore */ }
+
+  doc.setProperties({
+    title: contractDownloadBaseName(contract),
+    subject: `Contrato ${contract.contract_number || contract.id}`,
+    author: "Quero Armas",
+    creator: "Quero Armas Sistema",
+    keywords: `contrato,${contract.contract_number || ""}`,
+  });
+
+  const PAGE_W = doc.internal.pageSize.getWidth();
+  const PAGE_H = doc.internal.pageSize.getHeight();
+  const MARGIN_X = 48;
+  const MARGIN_TOP = 56;
+  const MARGIN_BOTTOM = 56;
+  const CONTENT_W = PAGE_W - MARGIN_X * 2;
+  let y = MARGIN_TOP;
+
+  const ensureSpace = (needed: number) => {
+    if (y + needed > PAGE_H - MARGIN_BOTTOM) {
+      doc.addPage();
+      y = MARGIN_TOP;
+    }
+  };
+
+  const writeParagraph = (text: string, opts: { size: number; bold?: boolean; align?: "left" | "center" | "justify"; upper?: boolean; indent?: number; lineGap?: number; bullet?: string; }) => {
+    doc.setFont("times", opts.bold ? "bold" : "normal");
+    doc.setFontSize(opts.size);
+    const t = opts.upper ? text.toUpperCase() : text;
+    const indent = opts.indent || 0;
+    const bulletText = opts.bullet ? `${opts.bullet}  ` : "";
+    const bulletW = bulletText ? doc.getTextWidth(bulletText) : 0;
+    const width = CONTENT_W - indent - bulletW;
+    const lines = doc.splitTextToSize(t, width) as string[];
+    const lineHeight = opts.size * 1.35;
+    ensureSpace(lineHeight * lines.length + (opts.lineGap || 6));
+    if (bulletText) {
+      doc.text(bulletText, MARGIN_X + indent, y + opts.size);
+    }
+    lines.forEach((ln, i) => {
+      const opt: any = {};
+      if (opts.align === "center") opt.align = "center";
+      if (opts.align === "justify" && i < lines.length - 1) opt.maxWidth = width;
+      const x = opts.align === "center" ? PAGE_W / 2 : MARGIN_X + indent + bulletW;
+      doc.text(ln, x, y + opts.size);
+      y += lineHeight;
+    });
+    y += (opts.lineGap ?? 6);
+  };
+
+  // Título (contrato) sempre no topo
+  writeParagraph(contractDownloadBaseName(contract), { size: 13, bold: true, align: "center", upper: true, lineGap: 4 });
+  writeParagraph(`Nº ${contract.contract_number || contract.id} · Pedido ${contract.venda_id ?? "—"}`, { size: 9, align: "center", lineGap: 12 });
+
+  for (const b of blocks) {
+    if (b.kind === "h1") writeParagraph(b.text, { size: 13, bold: true, align: "center", upper: true, lineGap: 8 });
+    else if (b.kind === "h2") writeParagraph(b.text, { size: 11, bold: true, upper: true, lineGap: 6 });
+    else if (b.kind === "h3") writeParagraph(b.text, { size: 10, bold: true, upper: true, lineGap: 4 });
+    else if (b.kind === "p")  writeParagraph(b.text, { size: 10, align: "justify", lineGap: 6 });
+    else if (b.kind === "li") writeParagraph(b.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 3 });
+    else if (b.kind === "hr") { ensureSpace(12); doc.setDrawColor(180); doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y); y += 12; }
+  }
+
+  // Rodapé probatório (aceite eletrônico)
+  const rodape =
+    `Aceite eletrônico: ${contract.aceite_eletronico_data || "—"} · ` +
+    `IP ${contract.aceite_ip || "—"} · ` +
+    `Hash ${contract.aceite_hash || "—"}`;
+  ensureSpace(30);
+  y += 8;
+  doc.setDrawColor(200);
+  doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+  y += 10;
+  writeParagraph(rodape, { size: 8, align: "left", lineGap: 0 });
+
+  const ab = doc.output("arraybuffer") as ArrayBuffer;
+  return new Uint8Array(ab);
+}
+
+async function sha256Bytes(bytes: Uint8Array): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function ensureCanonicalPdf(
+  sb: ReturnType<typeof svc>,
+  contract: any,
+  html: string,
+): Promise<{ bytes: Uint8Array; path: string; sha256: string }> {
+  // Já existe? Devolve do storage (byte-idêntico).
+  const existingPath = (contract as any).original_pdf_path as string | null;
+  const existingSha = ((contract as any).original_sha256 || "").toString().toLowerCase();
+  if (existingPath) {
+    const { data, error } = await sb.storage.from(BUCKET).download(existingPath);
+    if (!error && data) {
+      const bytes = new Uint8Array(await data.arrayBuffer());
+      const sha = await sha256Bytes(bytes);
+      if (!existingSha || sha === existingSha) {
+        return { bytes, path: existingPath, sha256: sha };
+      }
+      // hash divergente: registra e regenera (não deveria acontecer)
+      console.warn("[qa-serve-contract-pdf] hash divergente do original salvo, regenerando");
+    }
+  }
+
+  const bytes = buildCanonicalPdf(contract, html);
+  const sha = await sha256Bytes(bytes);
+  const path = `qa/${contract.venda_id ?? "sem-venda"}/original-${contract.id}.pdf`;
+  const { error: upErr } = await sb.storage.from(BUCKET).upload(path, bytes, {
+    contentType: "application/pdf",
+    upsert: true,
+  });
+  if (upErr) throw new Error(`upload_original_failed:${upErr.message}`);
+  await sb.from("qa_contracts").update({
+    original_pdf_path: path,
+    original_sha256: sha,
+  }).eq("id", contract.id);
+  await sb.from("qa_contract_events").insert({
+    contract_id: contract.id,
+    event_type: "original_pdf_gerado",
+    event_payload: { path, sha256: sha, size: bytes.byteLength },
+  });
+  return { bytes, path, sha256: sha };
+}
 
 function svc() {
   return createClient(
@@ -489,12 +688,9 @@ Deno.serve(async (req) => {
 
   const auditedContract = await ensureRenderedContractAudit(sb, req, contract as any);
   const html = auditedContract.conteudo_renderizado as string | null;
-  const canServeRenderedHtml =
-    variant !== "customer_signed" &&
-    html &&
-    html.trim();
 
-  if (canServeRenderedHtml) {
+  // Preview HTML (staff, para depuração visual antes da geração do PDF)
+  if (variant === "html_preview" && isStaff && html && html.trim()) {
     const fname = contractDownloadFilename(auditedContract, "html");
     return new Response(printableContractHtml(auditedContract as any, html), {
       status: 200,
@@ -507,17 +703,39 @@ Deno.serve(async (req) => {
     });
   }
 
+  // PDF canônico (bytes idênticos que serão comparados com o PDF assinado)
+  if (variant === "company_signed" || variant === "original") {
+    if (!html || !html.trim()) {
+      return await failContractDownload(req, user, auditedContract as any, variant, "contrato_renderizado_indisponivel", 409);
+    }
+    try {
+      const canon = await ensureCanonicalPdf(sb, auditedContract as any, html);
+      const fname = contractDownloadFilename(auditedContract, "pdf");
+      return new Response(canon.bytes as BodyInit, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${fname}"`,
+          "Cache-Control": "private, max-age=60",
+          "X-Original-Sha256": canon.sha256,
+        },
+      });
+    } catch (e: any) {
+      return await failContractDownload(req, user, auditedContract as any, variant, `pdf_generation_failed:${e?.message ?? "erro"}`, 500);
+    }
+  }
+
   let path: string | null = null;
-  if (variant === "original") path = (auditedContract as any).original_pdf_path ?? null;
-  else if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
+  if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
   else {
     return await failContractDownload(
       req,
       user,
       auditedContract as any,
       variant,
-      "contrato_renderizado_indisponivel",
-      409,
+      "variant_desconhecida",
+      400,
     );
   }
 
