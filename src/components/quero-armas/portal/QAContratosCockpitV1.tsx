@@ -780,13 +780,6 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
   );
 }
 
-const _TAG_CLS_ALIAS: Record<string, string> = {
-  ok:        "bg-[#E3F2E8] text-[#1F6638]",
-  pendente:  "bg-[#FCEFCE] text-[#7A5A14]",
-  confirmar: "bg-[#FFF5DD] text-[#7A5A14]",
-  aguarda:   "bg-[#EDEDED] text-[#444]",
-};
-
 function buildChecklist(contract: Contract): Array<{ label: string; tag: "ok"|"pendente"|"confirmar"|"aguarda" }> {
   const isPendingCustomer = contract.status === "pending_customer_signature";
   const isUploaded = contract.status === "customer_signature_uploaded";
