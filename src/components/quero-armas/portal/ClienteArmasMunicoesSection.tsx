@@ -3,6 +3,8 @@ import {
   AlertTriangle,
   BadgeCheck,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Crosshair,
   Gauge,
   Image as ImageIcon,
@@ -291,6 +293,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
+  const [detalheTecnicoSlide, setDetalheTecnicoSlide] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -442,9 +445,27 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     if (!selectedUid && armasView[0]?.uid) setSelectedUid(armasView[0].uid);
   }, [armasView, selectedUid]);
 
+  useEffect(() => {
+    setDetalheTecnicoSlide(0);
+  }, [selectedUid]);
+
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
   const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
   const fabricante = selected && isTx22(selected) ? TX22_FABRICANTE : null;
+  const detalhesTecnicos = [
+    { label: "Ação", value: fabricante?.acao || "Nao informado" },
+    { label: "Raiamento", value: fabricante?.passoRaiamento || "Nao informado" },
+    { label: "Miras", value: fabricante?.miras || "Nao informado" },
+    { label: "Trilho", value: fabricante?.trilho || "Nao informado" },
+    { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
+    { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
+  ];
+  const detalhesTecnicosSlides = [
+    detalhesTecnicos.slice(0, 2),
+    detalhesTecnicos.slice(2, 4),
+    detalhesTecnicos.slice(4, 6),
+  ];
+  const detalhesTecnicosAtuais = detalhesTecnicosSlides[detalheTecnicoSlide] || detalhesTecnicosSlides[0];
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -635,14 +656,45 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Operação e construção</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Detalhes técnicos</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] font-black text-slate-500">
+                      {detalheTecnicoSlide + 1} / {detalhesTecnicosSlides.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDetalheTecnicoSlide((slide) => (slide - 1 + detalhesTecnicosSlides.length) % detalhesTecnicosSlides.length)}
+                      className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                      aria-label="Detalhes técnicos anteriores"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDetalheTecnicoSlide((slide) => (slide + 1) % detalhesTecnicosSlides.length)}
+                      className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                      aria-label="Próximos detalhes técnicos"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <FieldBox label="Ação" value={fabricante?.acao || "Nao informado"} />
-                  <FieldBox label="Raiamento" value={fabricante?.passoRaiamento || "Nao informado"} />
-                  <FieldBox label="Miras" value={fabricante?.miras || "Nao informado"} />
-                  <FieldBox label="Trilho" value={fabricante?.trilho || "Nao informado"} />
-                  <FieldBox label="Materiais" value={fabricante?.materiais || "Nao informado"} />
-                  <FieldBox label="Segurança" value={fabricante?.segurancas || "Nao informado"} />
+                  {detalhesTecnicosAtuais.map((item) => (
+                    <FieldBox key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  {detalhesTecnicosSlides.map((_, slide) => (
+                    <button
+                      key={slide}
+                      type="button"
+                      onClick={() => setDetalheTecnicoSlide(slide)}
+                      className={`h-1.5 ${detalheTecnicoSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
+                      aria-label={`Ver grupo ${slide + 1} de detalhes técnicos`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
