@@ -44,6 +44,7 @@ const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QACl
 const QAClienteLoginMockupPage = lazyRetry(() => import("./QAClienteLoginMockupPage"), "QAClienteLoginMockupPage");
 const QAClienteLoginV2Page = lazyRetry(() => import("./QAClienteLoginV2Page"), "QAClienteLoginV2Page");
 const QAClienteLoginV9Page = lazyRetry(() => import("@/pages/MockupsLoginV9"), "QAClienteLoginV9Page");
+const QAAuthCallbackPage = lazyRetry(() => import("./QAAuthCallbackPage"), "QAAuthCallbackPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
 const QAArsenalDigitalGratuitoPage = lazyRetry(() => import("./QAArsenalDigitalGratuitoPage"), "QAArsenalDigitalGratuitoPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
@@ -213,7 +214,7 @@ export default function QARoutes() {
         <Route path="privacidade" element={<PrivacidadePage />} />
         <Route path="login" element={<QAScope><QALoginPage /></QAScope>} />
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
-        <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
+        <Route path="auth/callback" element={<QAScope><QAAuthCallbackPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
         {/* /cadastro-mira agora usa o MESMO componente real de /cadastro
             (upload, extração, revisão, checkout 2C). Visual Mira já é o padrão. */}
@@ -229,6 +230,7 @@ export default function QARoutes() {
         
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAScope><QAClienteLoginV9Page /></QAScope>} />
+        <Route path="area-do-cliente/auth/callback" element={<QAScope><QAAuthCallbackPage /></QAScope>} />
         <Route path="area-do-cliente/login-v2" element={<QAScope><QAClienteLoginV2Page /></QAScope>} />
         <Route path="area-do-cliente/login-classico" element={<QAScope><QAClienteLoginPage /></QAScope>} />
         <Route path="area-do-cliente/login-mockup" element={<QAScope><QAClienteLoginMockupPage /></QAScope>} />
