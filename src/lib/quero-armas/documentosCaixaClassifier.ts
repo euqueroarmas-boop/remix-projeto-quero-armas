@@ -81,9 +81,9 @@ export const CAIXA_META: Record<
 > = {
   permanente: {
     label: "Seus dados (permanente)",
-    descricaoCurta: "Cofre do cliente",
+    descricaoCurta: "Hub de Documentos",
     descricaoLonga:
-      "Documentos do seu cofre pessoal — identidade, endereço, antecedentes e declarações gerais. Valem para qualquer processo.",
+      "Documentos disponíveis no Hub de Documentos — identidade, endereço, antecedentes e declarações gerais. Valem para qualquer processo.",
   },
   arma: {
     label: "Documentos da arma",
@@ -95,6 +95,6 @@ export const CAIXA_META: Record<
     label: "Documentos deste processo",
     descricaoCurta: "Específicos deste serviço",
     descricaoLonga:
-      "Documentos próprios deste processo — exigências do serviço contratado que não entram no cofre permanente.",
+      "Documentos próprios deste processo — exigências do serviço contratado que não fazem parte do Hub de Documentos.",
   },
 };
