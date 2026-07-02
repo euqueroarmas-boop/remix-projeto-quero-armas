@@ -566,14 +566,15 @@ function FeaturedContractCard({
       {/* stepper */}
       <div className="flex gap-0 mb-5 py-1.5">
         {STEP_LABELS.map((lbl, i) => {
-          const done = i < step;
-          const curr = i === step;
+          const isValidated = contract.status === "validated";
+          const done = isValidated ? true : i < step;
+          const curr = !isValidated && i === step;
           const circBg = done ? "bg-[#2F8F4A] border-[#2F8F4A] text-white" : curr ? "bg-[#D6A64B] border-[#D6A64B] text-white" : "bg-[#F2F2F2] border-[#DADADA] text-[#9a9a9a]";
           const dt = i === 0 ? fmtDateShort(contract.issued_at)
                    : i === 1 ? fmtDateShort(contract.company_signed_at)
                    : i === 2 ? (curr ? "EM ANDAMENTO" : fmtDateShort(contract.customer_uploaded_at))
                    : i === 3 ? (curr ? "EM VALIDAÇÃO" : fmtDateShort(contract.customer_signature_validated_at))
-                             : (done ? "VIGENTE" : "—");
+                             : (isValidated ? fmtDateShort(contract.customer_signature_validated_at) : done ? "VIGENTE" : "—");
           return (
             <div key={lbl} className="flex-1 text-center">
               <div className={`w-7 h-7 rounded-full border flex items-center justify-center mx-auto font-['Oswald'] font-semibold text-[11.5px] ${circBg}`}>
