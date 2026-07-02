@@ -316,26 +316,6 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      /* Registra aceite de contrato (best-effort) */
-      try {
-        await supabase.functions.invoke("qa-contract-aceite-registrar", {
-          body: {
-            cliente_id: cliente.id, venda_id: null, solicitacao_id: null,
-            servico_slug: catalogo.slug, servico_slugs: [catalogo.slug],
-            servico_preco: valorNumerico,
-            dados_pessoais: {
-              nome_completo: cliente.nome_completo, cpf: cliente.cpf, email: cliente.email,
-              estado_civil: dadosOk === "nao" && novoEstadoCivil ? novoEstadoCivil : cliente.estado_civil,
-              profissao: dadosOk === "nao" && novaProfissao ? novaProfissao : cliente.profissao,
-            },
-            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
-            template_codigo: "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS",
-          },
-        });
-      } catch (aceiteFail: any) {
-        console.warn("[confirmar] aceite-registrar falhou:", aceiteFail);
-      }
-
       if (!valorNumerico) {
         toast.error("Serviço sem preço configurado no catálogo. Fale com a equipe.");
         return;
@@ -383,6 +363,31 @@ export default function QAContratarConfirmarPage() {
       const pay = payData as any;
       const invoiceUrl = pay?.asaas_invoice_url;
       if (!invoiceUrl) throw new Error(pay?.error || "Cobrança sem link de pagamento.");
+
+      /* Registra aceite de contrato (best-effort) — agora com venda_id real */
+      try {
+        await supabase.functions.invoke("qa-contract-aceite-registrar", {
+          body: {
+            cliente_id: cliente.id,
+            venda_id: venda.venda_id,
+            solicitacao_id: null,
+            servico_slug: catalogo.slug,
+            servico_slugs: [catalogo.slug],
+            servico_preco: valorNumerico,
+            dados_pessoais: {
+              nome_completo: cliente.nome_completo,
+              cpf: cliente.cpf,
+              email: cliente.email,
+              estado_civil: dadosOk === "nao" && novoEstadoCivil ? novoEstadoCivil : cliente.estado_civil,
+              profissao: dadosOk === "nao" && novaProfissao ? novaProfissao : cliente.profissao,
+            },
+            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            template_codigo: "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS",
+          },
+        });
+      } catch (aceiteFail: any) {
+        console.warn("[confirmar] aceite-registrar falhou:", aceiteFail);
+      }
 
       toast.success("Redirecionando para o pagamento seguro…");
       clear();
