@@ -32,6 +32,8 @@ function extrairDadosArma(cx: Record<string, any>): {
   numero_sinarm: string | null;
   numero_sigma: string | null;
   numero_autorizacao_compra: string | null;
+  funcionamento: string | null;
+  gatilho: string | null;
 } {
   const pick = (k: string) => {
     const v = cx?.[k];
@@ -39,7 +41,7 @@ function extrairDadosArma(cx: Record<string, any>): {
     const s = String(v).trim();
     return s.length === 0 ? null : s;
   };
-  return {
+  const dados = {
     tipo_arma: pick("tipo_arma"),
     marca: pick("marca"),
     modelo: pick("modelo"),
@@ -49,11 +51,30 @@ function extrairDadosArma(cx: Record<string, any>): {
     numero_sinarm: pick("numero_sinarm"),
     numero_sigma: pick("numero_sigma"),
     numero_autorizacao_compra: pick("numero_autorizacao_compra"),
+    funcionamento: pick("funcionamento"),
+    gatilho: pick("gatilho"),
+  };
+  const tecnica = inferirTecnicaArmamento(dados.marca, dados.modelo, dados.calibre);
+  return {
+    ...dados,
+    funcionamento: dados.funcionamento || tecnica.funcionamento,
+    gatilho: dados.gatilho || tecnica.gatilho,
   };
 }
 
 const normCmp = (v: string | null) =>
   v ? String(v).replace(/\s+/g, "").toUpperCase() : null;
+
+function inferirTecnicaArmamento(marca: string | null, modelo: string | null, calibre: string | null) {
+  const busca = [marca, modelo, calibre].filter(Boolean).join(" ").toUpperCase().replace(/[^A-Z0-9]+/g, "");
+  if (busca.includes("TAURUS") && busca.includes("TX22")) {
+    return {
+      funcionamento: "Blowback",
+      gatilho: "SAO (ação simples apenas)",
+    };
+  }
+  return { funcionamento: null, gatilho: null };
+}
 
 /**
  * Retornos:
@@ -203,6 +224,8 @@ export async function popularArsenalAposAprovacao(
         tipo_documento: doc.tipo_documento,
         campos_complementares: cx,
       },
+      p_funcionamento: dados.funcionamento,
+      p_gatilho: dados.gatilho,
     });
 
     if (errRpc) {

@@ -3588,6 +3588,8 @@ export type Database = {
           calibre: string | null
           created_at: string
           dados_extraidos_json: Json | null
+          funcionamento: string | null
+          gatilho: string | null
           id: number
           marca: string | null
           modelo: string | null
@@ -3612,6 +3614,8 @@ export type Database = {
           calibre?: string | null
           created_at?: string
           dados_extraidos_json?: Json | null
+          funcionamento?: string | null
+          gatilho?: string | null
           id?: number
           marca?: string | null
           modelo?: string | null
@@ -3636,6 +3640,8 @@ export type Database = {
           calibre?: string | null
           created_at?: string
           dados_extraidos_json?: Json | null
+          funcionamento?: string | null
+          gatilho?: string | null
           id?: number
           marca?: string | null
           modelo?: string | null
@@ -4782,6 +4788,8 @@ export type Database = {
           cliente_id: number | null
           data_validade: string | null
           documento_origem_id: string | null
+          funcionamento: string | null
+          gatilho: string | null
           id: number
           id_legado: number | null
           nome_arma: string | null
@@ -4801,6 +4809,8 @@ export type Database = {
           cliente_id?: number | null
           data_validade?: string | null
           documento_origem_id?: string | null
+          funcionamento?: string | null
+          gatilho?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
@@ -4820,6 +4830,8 @@ export type Database = {
           cliente_id?: number | null
           data_validade?: string | null
           documento_origem_id?: string | null
+          funcionamento?: string | null
+          gatilho?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
@@ -9813,6 +9825,8 @@ export type Database = {
           calibre: string | null
           created_at: string | null
           fonte: string | null
+          funcionamento: string | null
+          gatilho: string | null
           marca: string | null
           modelo: string | null
           needs_review: boolean | null

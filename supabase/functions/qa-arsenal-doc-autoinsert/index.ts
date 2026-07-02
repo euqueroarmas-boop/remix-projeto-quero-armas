@@ -81,6 +81,17 @@ function up(v?: string | null): string | null {
   return s ? s.toUpperCase() : null;
 }
 
+function inferirTecnicaArmamento(marca?: string | null, modelo?: string | null, calibre?: string | null) {
+  const busca = [marca, modelo, calibre].filter(Boolean).join(" ").toUpperCase().replace(/[^A-Z0-9]+/g, "");
+  if (busca.includes("TAURUS") && busca.includes("TX22")) {
+    return {
+      funcionamento: "Blowback",
+      gatilho: "SAO (ação simples apenas)",
+    };
+  }
+  return { funcionamento: null, gatilho: null };
+}
+
 function normSerie(v?: string | null): string | null {
   if (!v) return null;
   const s = String(v).replace(/\s+/g, "").toUpperCase();
@@ -359,6 +370,7 @@ Deno.serve(async (req) => {
         if (!numeroSerie && !numeroSigma) {
           promocao.motivo = "sem_identificador_fisico";
         } else {
+          const tecnica = inferirTecnicaArmamento(campos.arma_marca, campos.arma_modelo, campos.arma_calibre);
           // Procura arma já cadastrada (mesma série OU mesmo SIGMA) para evitar duplicidade
           const { data: existentes } = await supabase
             .from("qa_crafs")
@@ -375,7 +387,7 @@ Deno.serve(async (req) => {
             if (!dup) {/* noop */}
             const { data: full } = await supabase
               .from("qa_crafs")
-              .select("data_validade, nome_craf, numero_arma, numero_sigma, nome_arma")
+              .select("data_validade, nome_craf, numero_arma, numero_sigma, nome_arma, funcionamento, gatilho")
               .eq("id", (dup as any).id)
               .maybeSingle();
             if (full && !full.data_validade && dataIsoFromBr(campos.data_validade)) {
@@ -388,6 +400,8 @@ Deno.serve(async (req) => {
             if (numeroCadSinarm) patch.numero_cad_sinarm = numeroCadSinarm;
             if (numeroSigma && sistema_registro_final === "SIGMA") patch.numero_registro_sigma = numeroSigma;
             patch.sistema_registro = sistema_registro_final;
+            if (full && !full.funcionamento && tecnica.funcionamento) patch.funcionamento = tecnica.funcionamento;
+            if (full && !full.gatilho && tecnica.gatilho) patch.gatilho = tecnica.gatilho;
             // Espécie/tipo do documento (ESPINGARDA, REVÓLVER, PISTOLA, etc.)
             // — prova canônica para classificação do card.
             if (campos.arma_especie) patch.arma_especie = up(campos.arma_especie);
@@ -419,6 +433,8 @@ Deno.serve(async (req) => {
                 numero_cad_sinarm: numeroCadSinarm,
                 numero_registro_sigma: sistema_registro_final === "SIGMA" ? numeroSigma : null,
                 sistema_registro: sistema_registro_final,
+                funcionamento: tecnica.funcionamento,
+                gatilho: tecnica.gatilho,
                 arma_especie: campos.arma_especie ? up(campos.arma_especie) : null,
                 data_validade: dataIsoFromBr(campos.data_validade),
                 arquivo_storage_path: arquivo_storage_path,

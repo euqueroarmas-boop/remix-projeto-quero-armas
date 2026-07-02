@@ -1482,6 +1482,11 @@ export function ClienteDocsHubModal({
           const sistema = (form.sistema_registro || (tipoArma === "craf" ? "SIGMA" : "SINARM")).toUpperCase();
           const nomeArma = [form.arma_marca, form.arma_modelo, form.arma_calibre]
             .map((v) => (v || "").trim()).filter(Boolean).join(" ").toUpperCase() || "ARMA";
+          const buscaTecnica = [form.arma_marca, form.arma_modelo, form.arma_calibre]
+            .map((v) => (v || "").trim()).filter(Boolean).join(" ").toUpperCase().replace(/[^A-Z0-9]+/g, "");
+          const tecnica = buscaTecnica.includes("TAURUS") && buscaTecnica.includes("TX22")
+            ? { funcionamento: "Blowback", gatilho: "SAO (ação simples apenas)" }
+            : { funcionamento: null, gatilho: null };
           const { data: existentes } = await supabase
             .from("qa_crafs")
             .select("id, numero_arma, numero_sigma")
@@ -1500,6 +1505,8 @@ export function ClienteDocsHubModal({
               ...(numSigma ? { numero_sigma: numSigma, numero_registro_sigma: numSigma } : {}),
               ...(numCadSinarm ? { numero_cad_sinarm: numCadSinarm } : {}),
               ...(form.arma_especie ? { arma_especie: form.arma_especie.toUpperCase() } : {}),
+              ...(tecnica.funcionamento ? { funcionamento: tecnica.funcionamento } : {}),
+              ...(tecnica.gatilho ? { gatilho: tecnica.gatilho } : {}),
             };
             await supabase.from("qa_crafs").update(patch).eq("id", (dup as any).id);
           } else {
@@ -1512,6 +1519,8 @@ export function ClienteDocsHubModal({
               numero_cad_sinarm: numCadSinarm || null,
               numero_registro_sigma: sistema === "SIGMA" ? numSigma || null : null,
               sistema_registro: sistema,
+              funcionamento: tecnica.funcionamento,
+              gatilho: tecnica.gatilho,
               arma_especie: form.arma_especie ? form.arma_especie.toUpperCase() : null,
               data_validade: form.data_validade || null,
               arquivo_storage_path: storagePath,

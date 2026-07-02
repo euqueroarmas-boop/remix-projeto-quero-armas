@@ -35,6 +35,8 @@ type ClienteArma = {
   numero_sinarm: string | null;
   numero_sigma: string | null;
   status_documental: string | null;
+  funcionamento?: string | null;
+  gatilho?: string | null;
   needs_review: boolean | null;
 };
 
@@ -48,6 +50,8 @@ type Craf = {
   numero_registro_sigma?: string | null;
   numero_sigma?: string | null;
   sistema_registro?: string | null;
+  funcionamento?: string | null;
+  gatilho?: string | null;
   arma_especie?: string | null;
   data_validade?: string | null;
   documento_origem_id?: string | null;
@@ -114,6 +118,8 @@ type ArmaView = {
   numeroSigma: string | null;
   numeroSinarm: string | null;
   dataValidade: string | null;
+  funcionamento: string | null;
+  gatilho: string | null;
   origem: "craf" | "manual" | "documento";
   fonteDocumento: string | null;
   craf?: Craf | null;
@@ -133,7 +139,8 @@ type DossieTab = "resumo" | "ficha" | "tecnica" | "municoes" | "craf" | "fabrica
 const TX22_FABRICANTE = {
   fonteUrl: "https://www.taurususa.com/product/pistols/taurustx-22/taurustx-22/",
   item: "1-TX22141O",
-  acao: "SAO (ação simples)",
+  funcionamento: "Blowback",
+  gatilho: "SAO (ação simples apenas)",
   capacidade: "16 cartuchos",
   cano: "4,10 pol. / 104 mm",
   comprimento: "7,06 pol. / 179 mm",
@@ -248,7 +255,8 @@ function energiaMunicaoCadastrada(catalogo: CatalogoArma | null): string {
 }
 
 function isTx22(arma: ArmaView): boolean {
-  return norm([arma.marca, arma.modelo, arma.calibre].join(" ")).includes("TAURUS TX22");
+  const busca = norm([arma.marca, arma.modelo, arma.calibre].join(" ")).replace(/\s+/g, "");
+  return busca.includes("TAURUS") && busca.includes("TX22");
 }
 
 function StatBar({ label, value, icon: Icon }: { label: string; value: number | null | undefined; icon: typeof Zap }) {
@@ -433,6 +441,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         numeroSigma: arma.numero_sigma || craf?.numero_sigma || craf?.numero_registro_sigma || documento?.numero_registro_sigma || null,
         numeroSinarm: arma.numero_sinarm || craf?.numero_cad_sinarm || documento?.numero_cad_sinarm || null,
         dataValidade: craf?.data_validade || documento?.data_validade || null,
+        funcionamento: (arma as any).funcionamento || craf?.funcionamento || null,
+        gatilho: (arma as any).gatilho || craf?.gatilho || null,
         origem: arma.fonte === "manual" ? "manual" : "craf",
         fonteDocumento: documento?.arquivo_nome || craf?.nome_craf || null,
         craf,
@@ -463,6 +473,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           numeroSigma: craf.numero_sigma || craf.numero_registro_sigma || documento?.numero_registro_sigma || null,
           numeroSinarm: craf.numero_cad_sinarm || documento?.numero_cad_sinarm || null,
           dataValidade: craf.data_validade || documento?.data_validade || null,
+          funcionamento: craf.funcionamento || null,
+          gatilho: craf.gatilho || null,
           origem: "craf",
           fonteDocumento: documento?.arquivo_nome || craf.nome_craf || null,
           craf,
@@ -492,6 +504,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           numeroSigma: doc.numero_registro_sigma || null,
           numeroSinarm: doc.numero_cad_sinarm || null,
           dataValidade: doc.data_validade || null,
+          funcionamento: null,
+          gatilho: null,
           origem: "documento",
           fonteDocumento: doc.arquivo_nome || null,
           documento: doc,
@@ -521,7 +535,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { label: "Peso", value: selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado" },
     { label: "Cano", value: selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado" },
     { label: "Comprimento", value: fabricante?.comprimento || "Nao informado" },
-    { label: "Ação", value: fabricante?.acao || "Nao informado" },
+    { label: "Funcionamento", value: selected.funcionamento || fabricante?.funcionamento || "Nao informado" },
+    { label: "Gatilho", value: selected.gatilho || fabricante?.gatilho || "Nao informado" },
     { label: "Raiamento", value: fabricante?.passoRaiamento || "Nao informado" },
     { label: "Miras", value: fabricante?.miras || "Nao informado" },
     { label: "Altura", value: fabricante?.altura || "Nao informado" },
