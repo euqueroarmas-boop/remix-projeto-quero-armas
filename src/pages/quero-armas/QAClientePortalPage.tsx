@@ -10,6 +10,7 @@ import {
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
+  Boxes,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -227,6 +228,7 @@ export default function QAClientePortalPage() {
     | "contratos"
     | "contratacoes"
     | "arsenal"
+    | "armas_municoes"
     | "mensagens"
     | "configuracoes"
   >("resumo");
@@ -943,9 +945,10 @@ export default function QAClientePortalPage() {
   const navItems = useMemo(() => [
     { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
     { key: "arsenal" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "primary" as const },
+    { key: "armas_municoes" as const, label: "Armas e Munições", icon: Boxes, path: "/area-do-cliente/armas-municoes", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
     { key: "processos" as const, label: "Meus Processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
     { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
@@ -2404,6 +2407,20 @@ export default function QAClientePortalPage() {
             ) : (
               <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
             )}
+          </div>
+        )}
+
+        {activeSection === "armas_municoes" && (
+          <div id="qa-portal-armas-municoes" tabIndex={-1} className="outline-none">
+            <div className="rounded-sm border border-[#E4E4E4] bg-white p-8 md:p-12 text-center shadow-sm">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                <Boxes className="h-6 w-6 text-slate-500" />
+              </div>
+              <h2 className="text-lg font-bold uppercase tracking-wider text-slate-900">Armas e Munições</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                Nova central de gerenciamento de armas, acervo e munições. Em implantação.
+              </p>
+            </div>
           </div>
         )}
       </main>
