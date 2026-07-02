@@ -63,6 +63,53 @@ interface ClienteData {
 
 const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)", "UNIÃO ESTÁVEL"];
 
+/* ── Tradução de erros do checkout ──────────────────────────────────────────
+ * supabase.functions.invoke devolve FunctionsHttpError com mensagem genérica
+ * ("Edge Function returned a non-2xx status code"); o corpo real fica em
+ * error.context (Response). Sem isso, qualquer recusa do Asaas vira um toast
+ * inútil e o cliente acha que o botão "não funciona". */
+async function extractFnError(err: unknown): Promise<Record<string, any> | null> {
+  try {
+    const ctx = (err as any)?.context;
+    if (ctx && typeof ctx.json === "function") return await ctx.json();
+  } catch { /* corpo não-JSON */ }
+  return null;
+}
+
+function explainCheckoutError(body: Record<string, any> | null, fallback: string): string {
+  if (!body) return fallback;
+  const asaasDesc = Array.isArray(body?.details?.errors)
+    ? body.details.errors.map((e: any) => e?.description).filter(Boolean).join(" · ")
+    : null;
+  switch (body.error) {
+    case "cliente_incompleto":
+      return "Seu cadastro está incompleto (nome, CPF ou e-mail). Atualize seus dados na área do cliente e tente novamente.";
+    case "asaas_customer_failed":
+      return asaasDesc
+        ? `O banco recusou seus dados de cadastro: ${asaasDesc}`
+        : "O banco recusou seus dados de cadastro. Confira CPF, e-mail e celular.";
+    case "asaas_payment_failed":
+      return asaasDesc
+        ? `O banco recusou a cobrança: ${asaasDesc}`
+        : "O banco recusou a geração da cobrança. Tente novamente em instantes.";
+    case "asaas_network_customer":
+    case "asaas_network_payment":
+      return "Falha de comunicação com o banco. Tente novamente em instantes.";
+    case "venda_ja_paga":
+    case "cobranca_ja_confirmada":
+      return "Esta contratação já está paga. Veja seus processos na área do cliente.";
+    case "checkout_token_invalido":
+    case "checkout_token_expirado":
+      return "Sua sessão de checkout expirou. Recarregue a página e tente novamente.";
+    case "service_unavailable":
+      return "Este serviço está temporariamente indisponível no catálogo.";
+    case "valor_invalido":
+      return "Serviço sem preço válido configurado. Fale com a equipe.";
+    default:
+      return typeof body.error === "string" ? `${fallback} (${body.error})` : fallback;
+  }
+}
+
 type Confirmacao = "sim" | "nao" | null;
 
 /* ── Primitivos LIGHT (Ficha catalográfica) ────────────────────────────────── */
@@ -342,7 +389,10 @@ export default function QAContratarConfirmarPage() {
           },
         },
       );
-      if (vendaErr) throw new Error(vendaErr.message || "Falha ao registrar venda.");
+      if (vendaErr) {
+        const body = await extractFnError(vendaErr);
+        throw new Error(explainCheckoutError(body, "Falha ao registrar venda."));
+      }
       const venda = vendaData as any;
       if (!venda?.ok || !venda?.venda_id || !venda?.checkout_token) {
         throw new Error(venda?.error || "Falha ao registrar venda.");
@@ -359,7 +409,10 @@ export default function QAContratarConfirmarPage() {
           },
         },
       );
-      if (payErr) throw new Error(payErr.message || "Falha ao gerar cobrança.");
+      if (payErr) {
+        const body = await extractFnError(payErr);
+        throw new Error(explainCheckoutError(body, "Falha ao gerar cobrança."));
+      }
       const pay = payData as any;
       const invoiceUrl = pay?.asaas_invoice_url;
       if (!invoiceUrl) throw new Error(pay?.error || "Cobrança sem link de pagamento.");

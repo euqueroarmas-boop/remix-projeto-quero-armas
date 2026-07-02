@@ -80,12 +80,38 @@ export async function createOrReuseQaAsaasCustomer(
     const tel = digitsOnly(cliente.celular);
     if (tel) customerPayload.mobilePhone = tel;
 
-    const createRes = await fetch(`${env.baseUrl}/customers`, {
-      method: "POST",
-      headers: asaasHeaders(env.key),
-      body: JSON.stringify(customerPayload),
-    });
-    const createData = await createRes.json().catch(() => ({}));
+    async function submitCustomer(payload: Record<string, unknown>) {
+      const res = await fetch(`${env.baseUrl}/customers`, {
+        method: "POST",
+        headers: asaasHeaders(env.key),
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      return { res, data };
+    }
+
+    let { res: createRes, data: createData } = await submitCustomer(customerPayload);
+
+    /* Celular é OPCIONAL para o Asaas, mas quando enviado inválido derruba a
+     * criação inteira do customer (invalid_mobilePhone) e trava o checkout.
+     * Se for esse o caso, recria sem o telefone — nome/CPF/e-mail bastam. */
+    if (!createRes.ok && customerPayload.mobilePhone) {
+      const errs = Array.isArray((createData as any)?.errors) ? (createData as any).errors : [];
+      const phoneRejected = errs.some((e: any) =>
+        String(e?.code || "").toLowerCase().includes("mobilephone")
+        || String(e?.code || "").toLowerCase().includes("phone")
+        || String(e?.description || "").toLowerCase().includes("celular")
+        || String(e?.description || "").toLowerCase().includes("telefone"),
+      );
+      if (phoneRejected) {
+        console.warn("[qaAsaas] Asaas recusou mobilePhone — retry sem telefone");
+        delete customerPayload.mobilePhone;
+        const retry = await submitCustomer(customerPayload);
+        createRes = retry.res;
+        createData = retry.data;
+      }
+    }
+
     if (!createRes.ok || !createData?.id) {
       return {
         ok: false,
