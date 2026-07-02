@@ -673,6 +673,14 @@ function FeaturedContractCard({
           )}
         </div>
       </div>
+
+      {/* ─────────── Modal de conclusão ─────────── */}
+      {showDone && (
+        <ContractCompletedDialog
+          contract={contract}
+          onClose={closeDone}
+        />
+      )}
     </div>
   );
 }
