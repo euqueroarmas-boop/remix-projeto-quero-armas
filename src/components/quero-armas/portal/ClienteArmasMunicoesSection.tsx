@@ -546,13 +546,13 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.14fr_0.86fr]">
-        <div className="space-y-5">
-          <div className="relative min-h-[455px] overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+      <div className="grid items-stretch gap-6 xl:grid-cols-[1.14fr_0.86fr]">
+        <div className="h-[720px]">
+          <div className="relative h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
-            <div className="relative flex min-h-[360px] items-center justify-center px-6 pb-20 pt-10">
+            <div className="relative flex h-full items-center justify-center px-6 pb-24 pt-12">
               {fotos[0] ? (
-                <img src={fotos[0]} alt={selected.titulo} className="max-h-[330px] w-full object-contain drop-shadow-2xl" />
+                <img src={fotos[0]} alt={selected.titulo} className="max-h-[560px] w-full object-contain drop-shadow-2xl" />
               ) : (
                 <div className="text-center text-slate-500">
                   <ImageIcon className="mx-auto h-12 w-12" />
@@ -580,8 +580,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
         </div>
 
-        <aside className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap gap-2">
+        <aside className="flex h-[720px] flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="shrink-0 flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <TabChip key={tab.id} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)}>
                 {tab.label}
@@ -589,6 +589,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
             ))}
           </div>
 
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           {activeTab === "resumo" && (
             <div className="mt-6 space-y-5">
               <div className="border-b border-slate-200 pb-4">
@@ -809,6 +810,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               </div>
             </div>
           )}
+          </div>
         </aside>
       </div>
 
