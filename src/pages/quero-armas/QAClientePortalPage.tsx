@@ -2442,10 +2442,12 @@ export default function QAClientePortalPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={goContractsSection}
+                      onClick={downloadPendingContractFromPopup}
+                      disabled={downloadingPendingContract}
                       className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
                     >
-                      Assinar agora <ChevronRight className="h-3.5 w-3.5" />
+                      {downloadingPendingContract ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                      Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
