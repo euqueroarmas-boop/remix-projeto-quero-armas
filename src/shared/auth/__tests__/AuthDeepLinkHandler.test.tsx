@@ -47,4 +47,14 @@ describe("AuthDeepLinkHandler", () => {
       );
     });
   });
+
+  it("não confunde callback OAuth do Google com redefinição de senha", async () => {
+    renderWithRoute("/area-do-cliente/login?code=oauth-google-code");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location")).toHaveTextContent(
+        "/area-do-cliente/login?code=oauth-google-code"
+      );
+    });
+  });
 });

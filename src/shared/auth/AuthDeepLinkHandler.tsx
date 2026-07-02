@@ -39,10 +39,7 @@ export function AuthDeepLinkHandler() {
       type === "recovery" ||
       mode === "recovery" ||
       reset === "true" ||
-      hasRecoveryError ||
-      // Heurística: `code` PKCE em raiz ou home → tratar como callback de auth.
-      (!!code && ["/", "", "/auth/callback", "/login", "/area-do-cliente/login"].includes(location.pathname)) ||
-      (!!accessToken && !!refreshToken && ["/", "", "/auth/callback", "/login", "/area-do-cliente/login"].includes(location.pathname));
+      hasRecoveryError;
 
     if (!isRecovery) return;
 
