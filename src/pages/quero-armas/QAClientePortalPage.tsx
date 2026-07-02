@@ -1739,6 +1739,7 @@ export default function QAClientePortalPage() {
           cadastro={cadastro}
           examesAtuais={examesCliente}
           meusDocs={meusDocs}
+          processos={processos}
           processoDocs={processoDocs}
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}

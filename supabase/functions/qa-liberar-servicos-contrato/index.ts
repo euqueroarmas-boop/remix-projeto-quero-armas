@@ -170,6 +170,28 @@ Deno.serve(async (req) => {
     return json({ ok: false, skipped: "payment_not_confirmed" }, 200);
   }
 
+  // Resolve o cliente canônico (qa_clientes.id REAL). Contratos/vendas legados
+  // podem carregar id_legado, mas processos, documentos, solicitações e o
+  // ChecklistGuiado devem gravar/consultar sempre o id real usado pela RLS.
+  const clienteCandidates = Array.from(
+    new Set([contract.cliente_id, venda.cliente_id].filter((v) => v != null).map((v) => Number(v))),
+  ).filter((v) => Number.isFinite(v));
+  const clienteOr = clienteCandidates
+    .flatMap((id) => [`id.eq.${id}`, `id_legado.eq.${id}`])
+    .join(",");
+  let clienteCanonicoId = Number(contract.cliente_id);
+  if (clienteOr) {
+    const { data: clienteCanonico, error: cliErr } = await admin
+      .from("qa_clientes")
+      .select("id, id_legado")
+      .or(clienteOr)
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (cliErr) return json({ error: "cliente_lookup_failed", detail: cliErr.message }, 500);
+    if (clienteCanonico?.id) clienteCanonicoId = Number(clienteCanonico.id);
+  }
+
   // 3) Idempotência: já liberado?
   const { data: prevEvents } = await admin
     .from("qa_contract_events")
@@ -198,7 +220,7 @@ Deno.serve(async (req) => {
   const result: any = {
     contract_id: contractId,
     venda_id: venda.id,
-    cliente_id: contract.cliente_id,
+    cliente_id: clienteCanonicoId,
     items_processados: 0,
     solicitacoes: [] as any[],
     processos: [] as any[],
@@ -290,7 +312,7 @@ Deno.serve(async (req) => {
         const { data: anterior } = await admin
           .from("qa_solicitacoes_servico")
           .select("id, venda_id")
-          .eq("cliente_id", contract.cliente_id)
+          .eq("cliente_id", clienteCanonicoId)
           .eq("service_slug", slug)
           .is("cadastro_publico_id", null)
           .limit(1)
@@ -310,7 +332,7 @@ Deno.serve(async (req) => {
         const { data: novaSol, error: nsErr } = await admin
           .from("qa_solicitacoes_servico")
           .insert({
-            cliente_id: contract.cliente_id,
+            cliente_id: clienteCanonicoId,
             servico_id: servicoId,
             service_slug: slug,
             service_name: nome,
@@ -363,7 +385,7 @@ Deno.serve(async (req) => {
       const { data: novoProc, error: npErr } = await admin
         .from("qa_processos")
         .insert({
-          cliente_id: contract.cliente_id,
+          cliente_id: clienteCanonicoId,
           servico_id: servicoId,
           servico_nome: nome,
           venda_id: venda.id,
@@ -411,12 +433,18 @@ Deno.serve(async (req) => {
       result.erros.push({ processo_id: processoId, etapa: "checklist", erro: String(e) });
     }
 
-    // Vincula processo na solicitação se faltar
+    // Marca a solicitação como processo aberto. O campo legado
+    // qa_solicitacoes_servico.processo_id é INTEGER e não comporta o UUID de
+    // qa_processos.id; por isso o vínculo canônico permanece por
+    // (venda_id, servico_id, cliente_id) e pelo próprio qa_processos.solicitacao_id.
     if (solicitacaoId && processoId) {
-      await admin.from("qa_solicitacoes_servico")
-        .update({ processo_id: processoId, status_processo: "processo_aberto" })
+      const { error: linkErr } = await admin.from("qa_solicitacoes_servico")
+        .update({ status_processo: "processo_aberto" })
         .eq("id", solicitacaoId)
-        .is("processo_id", null);
+        .neq("status_processo", "processo_aberto");
+      if (linkErr) {
+        result.erros.push({ processo_id: processoId, solicitacao_id: solicitacaoId, etapa: "vincular_solicitacao", erro: linkErr.message });
+      }
     }
 
     await recordContractEvent(admin, contractId, "servico_liberado_por_contrato_validado", {

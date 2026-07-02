@@ -135,6 +135,14 @@ describe("FASE 2C-7 — qa-liberar-servicos-contrato", () => {
     expect(src).toMatch(/\.eq\("servico_id",\s*servicoId\)/);
   });
 
+  it("resolve cliente canônico real antes de criar solicitação/processo/checklist", () => {
+    const src = r(FN);
+    expect(src).toMatch(/clienteCanonicoId/);
+    expect(src).toMatch(/from\("qa_clientes"\)/);
+    expect(src).toMatch(/id_legado\.eq/);
+    expect(src).toMatch(/cliente_id:\s*clienteCanonicoId/);
+  });
+
   it("delega checklist à RPC canônica qa_confirmar_pagamento_processo", () => {
     const src = r(FN);
     expect(src).toMatch(/qa_confirmar_pagamento_processo/);

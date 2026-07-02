@@ -18,6 +18,7 @@ interface Props {
   cliente: any;
   vendas: any[];
   itens: any[];
+  processos?: any[];
   crafs: any[];
   gtes: any[];
   filiacoes: any[];
@@ -86,6 +87,7 @@ function serviceProgress(item: any) {
 export default function ClienteResumoKanban({
   cliente,
   itens,
+  processos = [],
   crafs,
   gtes,
   filiacoes,
@@ -134,6 +136,8 @@ export default function ClienteResumoKanban({
 
   const snapshot = useMemo(() => {
     const activeItems = itens.filter((i: any) => !ACTIVE_FINAL_STATUSES.includes(String(i.status || "").toUpperCase()));
+    const PROCESSO_FINAL_STATUSES = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "arquivado", "desistiu", "restituido"]);
+    const activeProcessos = processos.filter((p: any) => !PROCESSO_FINAL_STATUSES.has(String(p.status || "").toLowerCase()));
     const prazosProc = calcularPrazosProcessuais(
       itens.map((it: any) => ({
         id: it.id,
@@ -220,9 +224,20 @@ export default function ClienteResumoKanban({
       };
     });
 
-    const processoItems = activeItems.map((item: any) => {
+    const processoItems = (activeProcessos.length ? activeProcessos : activeItems).map((item: any) => {
       const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
-      const prazo = prazosProc.find((p: any) => p.id === item.id || p.servicoId === item.servico_id);
+      const prazo = prazosProc.find((p: any) =>
+        p.id === item.id ||
+        p.servicoId === item.servico_id ||
+        (item.venda_id != null && p.vendaId === item.venda_id && p.servicoId === item.servico_id),
+      );
+      const statusProcesso = String(item.status || "").toLowerCase();
+      if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
+        return { label: shortName(nome, "Processo"), status: "Checklist documental aberto", tone: "warn" as const };
+      }
+      if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
+        return { label: shortName(nome, "Processo"), status: "Processo em preparação", tone: "warn" as const };
+      }
       if (prazo?.diasRestantes !== undefined) {
         return { label: shortName(nome, "Processo"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
@@ -255,7 +270,7 @@ export default function ClienteResumoKanban({
       { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: examesItems.slice(0, 3), navTo: "documentos" },
       { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", status: aggregateStatus(filiacaoItems), items: filiacaoItems.slice(0, 3), navTo: "documentos" },
       { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: docItems.slice(0, 3), navTo: "documentos" },
-      { key: "processos", title: "PROCESSOS", count: activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems.slice(0, 3), navTo: "processos" },
+      { key: "processos", title: "PROCESSOS", count: activeProcessos.length || activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems.slice(0, 3), navTo: "processos" },
     ];
 
     const urgents: Urgent[] = [];
@@ -331,16 +346,17 @@ export default function ClienteResumoKanban({
       .sort((a, b) => a - b)[0];
     const totalFronts = fronts.reduce((sum, front) => sum + front.count, 0);
     const redCount = sortedUrgents.length;
-    const totalTasks = Math.max(totalFronts + activeItems.length, redCount + activeItems.length);
+    const activeProcessosCount = activeProcessos.length || activeItems.length;
+    const totalTasks = Math.max(totalFronts + activeProcessosCount, redCount + activeProcessosCount);
     const summary: Array<[string, string, string]> = [
-      ["TAREFAS ABERTAS", String(redCount + activeItems.length), `de ${totalTasks}`],
+      ["TAREFAS ABERTAS", String(redCount + activeProcessosCount), `de ${totalTasks}`],
       ["PRÓXIMO VENCIMENTO", nextDue !== undefined ? String(nextDue) : "—", nextDue !== undefined ? "dias" : ""],
       ["DOCUMENTOS A RENOVAR", String(redCount), redCount > 0 ? "urgente" : ""],
-      ["PROCESSOS ATIVOS", String(activeItems.length), ""],
+      ["PROCESSOS ATIVOS", String(activeProcessosCount), activeProcessos.length ? "checklist aberto" : ""],
     ];
 
-    return { fronts, urgents: sortedUrgents, totalFronts, activeItems, summary };
-  }, [SERVICO_MAP, armasManual, cadastro, crafs, examesAtuais, filiacoes, gtes, itens, meusDocs, processoDocs]);
+    return { fronts, urgents: sortedUrgents, totalFronts, activeItems, activeProcessos, summary };
+  }, [SERVICO_MAP, armasManual, cadastro, crafs, examesAtuais, filiacoes, gtes, itens, meusDocs, processoDocs, processos]);
 
   const [focusIndex, setFocusIndex] = useState(0);
   const [chipFilter, setChipFilter] = useState<"todos" | Urgent["frontKey"]>("todos");
@@ -431,13 +447,14 @@ export default function ClienteResumoKanban({
   const categoriaLabel = rawCategoria
     ? (CATEGORIA_LABELS[rawCategoria] || rawCategoria.replace(/_/g, " ").toUpperCase())
     : (temCR ? "TITULAR" : "SEM CATEGORIA");
-  const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${snapshot.activeItems.length} PROCESSOS EM ANDAMENTO`;
+  const processosEmAndamento = snapshot.activeProcessos.length || snapshot.activeItems.length;
+  const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${processosEmAndamento} PROCESSOS EM ANDAMENTO`;
   const filters: Array<{ key: "todos" | Urgent["frontKey"]; label: string }> = [
     { key: "todos", label: `TODOS ${snapshot.urgents.length}` },
     { key: "arsenal", label: `ARSENAL ${snapshot.urgents.filter((u) => u.frontKey === "arsenal").length}` },
     { key: "exames", label: `EXAMES ${snapshot.urgents.filter((u) => u.frontKey === "exames").length}` },
     { key: "documentos", label: `DOCUMENTOS ${snapshot.urgents.filter((u) => u.frontKey === "documentos").length}` },
-    { key: "processos", label: `PROCESSOS ${snapshot.urgents.filter((u) => u.frontKey === "processos").length}` },
+    { key: "processos", label: `PROCESSOS ${Math.max(snapshot.urgents.filter((u) => u.frontKey === "processos").length, processosEmAndamento)}` },
   ];
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
