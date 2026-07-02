@@ -388,6 +388,7 @@ Deno.serve(async (req) => {
       const { data: rpc, error: rpcErr } = await admin.rpc("qa_confirmar_pagamento_processo", {
         p_processo_id: processoId,
         p_origem: "contrato_validado",
+        p_bypass_contrato_validado: true,
       });
       if (rpcErr) {
         result.erros.push({ processo_id: processoId, etapa: "checklist", erro: rpcErr.message });
