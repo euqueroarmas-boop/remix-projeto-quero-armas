@@ -419,6 +419,41 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
         </div>
       </div>
 
+      {/* aviso de rejeição — passo a passo claro */}
+      {contract.status === "rejected" && (
+        <div className="mb-5 border border-[#F4C6C2] bg-[#FDECEA] rounded-sm px-4 py-3.5">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#8A1410] font-bold uppercase mb-1.5">
+            ASSINATURA REJEITADA · PRÓXIMOS PASSOS
+          </div>
+          <div className="text-[12px] text-[#5a1410] leading-relaxed mb-2.5">
+            {contract.validation_details?.motivo_falha
+              || "O PDF enviado não confere byte-a-byte com o contrato original deste sistema."}
+          </div>
+          <ol className="text-[12px] text-[#0A0A0A] space-y-1 pl-4 list-decimal mb-3">
+            <li>Clique em <b>BAIXAR CONTRATO</b> aqui em cima e salve o PDF.</li>
+            <li>Abra <b>assinador.iti.br</b> (GOV.BR), envie esse PDF e assine — <b>não edite, não imprima e não digitalize</b>.</li>
+            <li>Baixe o PDF assinado e clique em <b>ENVIAR ASSINADO</b>.</li>
+          </ol>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={onAssinar}
+              className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+            >
+              <Download className="h-3 w-3" /> BAIXAR CONTRATO CERTO
+            </button>
+            <a
+              href="https://assinador.iti.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-[#0A0A0A] text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-[#0A0A0A] hover:text-white"
+            >
+              ABRIR ASSINADOR GOV.BR
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* stepper */}
       <div className="flex gap-0 mb-5 py-1.5">
         {STEP_LABELS.map((lbl, i) => {
