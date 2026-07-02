@@ -21,6 +21,7 @@ import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { ClienteArmasMunicoesSection } from "@/components/quero-armas/clientes/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
