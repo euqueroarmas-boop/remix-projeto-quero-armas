@@ -257,10 +257,10 @@ export default function ClienteResumoKanban({
       const statusProcesso = String(item.status || "").toLowerCase();
       const nomeProcesso = titleCaseServico(nome, "Processo");
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
-        return { label: nomeProcesso, status: "Checklist documental aberto", tone: "warn" as const, stack: true };
+        return { label: nomeProcesso, status: "Checklist documental aberto", tone: "warn" as const };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
-        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const, stack: true };
+        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
       }
       if (prazo?.diasRestantes !== undefined) {
         return { label: nomeProcesso, status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
