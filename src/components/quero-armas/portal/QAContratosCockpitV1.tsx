@@ -184,7 +184,11 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   const handleAssinar = async () => {
     if (!featured) return;
     try {
-      await openMinutaContratoQueroArmas({ contractId: featured.id });
+      await openMinutaContratoQueroArmas({
+        contractId: featured.id,
+        contractNumber: featured.contract_number,
+        vendaId: featured.venda_id,
+      });
     } catch (e) {
       console.warn("[QAContratosCockpitV1] abrir contrato:", e);
     }
