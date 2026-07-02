@@ -648,7 +648,7 @@ export default function QAContratarConfirmarPage() {
               <Section
                 n={2}
                 label="ESTADO CIVIL E PROFISSÃO"
-                statusDot={dadosOk === "nao" ? "warn" : "ok"}
+                statusDot={dadosOk === "sim" ? "ok" : dadosOk === "nao" ? "warn" : "error"}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 14, alignItems: "flex-start" }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: D.ink }}>
