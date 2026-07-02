@@ -452,14 +452,23 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
   const fotos = selected?.catalogo ? [selected.catalogo.imagem, ...(selected.catalogo.imagens || [])].filter(Boolean) as string[] : [];
   const fabricante = selected && isTx22(selected) ? TX22_FABRICANTE : null;
-  const detalhesTecnicos = [
+  const dadosTecnicos = selected ? [
+    { label: "Capacidade", value: selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado" },
+    { label: "Peso", value: selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado" },
+    { label: "Cano", value: selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado" },
+    { label: "Comprimento", value: fabricante?.comprimento || "Nao informado" },
     { label: "Ação", value: fabricante?.acao || "Nao informado" },
     { label: "Raiamento", value: fabricante?.passoRaiamento || "Nao informado" },
     { label: "Miras", value: fabricante?.miras || "Nao informado" },
+    { label: "Altura", value: fabricante?.altura || "Nao informado" },
+    { label: "Largura", value: fabricante?.largura || "Nao informado" },
+    { label: "Velocidade", value: selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado" },
+    { label: "Energia", value: energiaEstimativa(selected.catalogo || null) },
     { label: "Trilho", value: fabricante?.trilho || "Nao informado" },
     { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
     { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
-  ];
+  ] : [];
+  const dadosTecnicosSlides = [dadosTecnicos.slice(0, 7), dadosTecnicos.slice(7)];
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -638,15 +647,15 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
             <div className="mt-6">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
-                  {tecnicaSlide === 0 ? "Características tecnicas" : "Detalhes técnicos"}
+                  Dados técnicos
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / 2</span>
+                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / {dadosTecnicosSlides.length}</span>
                   <button
                     type="button"
                     onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
                     className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Bloco técnico anterior"
+                    aria-label="Dados técnicos anteriores"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -654,7 +663,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                     type="button"
                     onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
                     className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Próximo bloco técnico"
+                    aria-label="Próximos dados técnicos"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -662,24 +671,11 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               </div>
 
               <div className="mt-3 min-h-[368px]">
-                {tecnicaSlide === 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
-                    <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
-                    <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
-                    <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
-                    <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
-                    <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
-                    <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
-                    <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {detalhesTecnicos.map((item) => (
-                      <FieldBox key={item.label} label={item.label} value={item.value} />
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-2 gap-2">
+                  {(dadosTecnicosSlides[tecnicaSlide] || []).map((item) => (
+                    <FieldBox key={item.label} label={item.label} value={item.value} />
+                  ))}
+                </div>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
@@ -689,7 +685,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                     type="button"
                     onClick={() => setTecnicaSlide(slide as 0 | 1)}
                     className={`h-1.5 ${tecnicaSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
-                    aria-label={slide === 0 ? "Ver características técnicas" : "Ver detalhes técnicos"}
+                    aria-label={`Ver dados técnicos ${slide + 1}`}
                   />
                 ))}
               </div>
