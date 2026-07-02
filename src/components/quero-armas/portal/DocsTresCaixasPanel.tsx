@@ -3,7 +3,7 @@ import {
   type CaixaDocumento,
   type DocClassificavel,
   CAIXA_META,
-  contarPorCaixa,
+  contarPorCaixaComStatus,
 } from "@/lib/quero-armas/documentosCaixaClassifier";
 
 /* =============================================================================
@@ -21,6 +21,8 @@ const MARROM = "#7A1F2B";
 
 interface Props {
   docs: ReadonlyArray<DocClassificavel> | null | undefined;
+  /** Respostas de perguntas do assistente — usadas para ocultar itens condicionais. */
+  respostas?: Record<string, any>;
   /** Esconde caixas com 0 documentos. Default: false (mostra todas). */
   ocultarVazias?: boolean;
   /** Chamado quando o usuário clica em uma caixa (opcional, para futuro scroll/filter). */
@@ -36,8 +38,8 @@ const ICONS: Record<CaixaDocumento, React.ComponentType<{ className?: string; st
 
 const ORDEM: CaixaDocumento[] = ["permanente", "arma", "processo"];
 
-export default function DocsTresCaixasPanel({ docs, ocultarVazias = false, onCaixaClick, className }: Props) {
-  const contagens = contarPorCaixa(docs);
+export default function DocsTresCaixasPanel({ docs, respostas, ocultarVazias = false, onCaixaClick, className }: Props) {
+  const contagens = contarPorCaixaComStatus(docs, respostas ?? {});
   if (contagens.total === 0) return null;
 
   const visiveis = ORDEM.filter((c) => !ocultarVazias || contagens[c] > 0);
@@ -65,11 +67,11 @@ export default function DocsTresCaixasPanel({ docs, ocultarVazias = false, onCai
             color: MARROM,
           }}
         >
-          Como seus documentos estão organizados
+          {contagens.total} {contagens.total === 1 ? "item cadastrado" : "itens cadastrados"} no checklist
         </h3>
         <p style={{ margin: "4px 0 0", fontSize: 12, color: "#475569", lineHeight: 1.4 }}>
-          Tudo que você envia é guardado em uma de três caixas. As caixas
-          permanentes valem para qualquer processo futuro.
+          Organizado em três caixas. Documentos permanentes vivem no Hub de
+          Documentos e valem para qualquer processo futuro.
         </p>
       </header>
 
@@ -83,7 +85,8 @@ export default function DocsTresCaixasPanel({ docs, ocultarVazias = false, onCai
         {visiveis.map((caixa) => {
           const meta = CAIXA_META[caixa];
           const Icon = ICONS[caixa];
-          const qtd = contagens[caixa];
+          const b = contagens.porCaixa[caixa];
+          const qtd = b.total;
           const isInteractive = !!onCaixaClick;
           const Tag = isInteractive ? "button" : "div";
           return (
@@ -143,6 +146,36 @@ export default function DocsTresCaixasPanel({ docs, ocultarVazias = false, onCai
               <div style={{ fontSize: 10.5, color: "#64748b", lineHeight: 1.35 }}>
                 {meta.descricaoCurta}
               </div>
+              {/* Breakdown — mesma base do progresso do assistente */}
+              {qtd > 0 && (
+                <ul style={{
+                  margin: "4px 0 0", padding: 0, listStyle: "none",
+                  display: "flex", flexDirection: "column", gap: 2,
+                  fontSize: 10.5, lineHeight: 1.35,
+                }}>
+                  {b.resolvidos > 0 && (
+                    <li style={{ color: "#166534" }}>
+                      ✓ {b.resolvidos} resolvido{b.resolvidos === 1 ? "" : "s"}
+                      {b.reutilizados_hub > 0
+                        ? ` (${b.reutilizados_hub} reutilizado${b.reutilizados_hub === 1 ? "" : "s"} do Hub de Documentos)`
+                        : ""}
+                    </li>
+                  )}
+                  {b.em_analise > 0 && (
+                    <li style={{ color: "#92400e" }}>… {b.em_analise} em análise</li>
+                  )}
+                  {b.pendentes > 0 && (
+                    <li style={{ color: MARROM, fontWeight: 700 }}>
+                      ! {b.pendentes} pendente{b.pendentes === 1 ? "" : "s"} para você
+                    </li>
+                  )}
+                  {b.ocultos > 0 && (
+                    <li style={{ color: "#64748b" }}>
+                      · {b.ocultos} não aplicável no momento
+                    </li>
+                  )}
+                </ul>
+              )}
             </Tag>
           );
         })}
