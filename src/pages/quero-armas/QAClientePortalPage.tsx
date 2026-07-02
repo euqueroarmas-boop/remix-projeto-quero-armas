@@ -21,7 +21,7 @@ import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
-import { ClienteArmasMunicoesSection } from "@/components/quero-armas/clientes/ClienteArmasMunicoesSection";
+import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
@@ -101,6 +101,45 @@ const urgencyLabel = (d: number | null) => {
   }
   if (d === 0) return "VENCE HOJE";
   return `${d} ${d === 1 ? "DIA RESTANTE" : "DIAS RESTANTES"}`;
+};
+
+const PROCESSO_PREPOSICOES = new Set([
+  "a",
+  "ao",
+  "aos",
+  "as",
+  "da",
+  "das",
+  "de",
+  "do",
+  "dos",
+  "e",
+  "em",
+  "na",
+  "nas",
+  "no",
+  "nos",
+  "o",
+  "os",
+  "para",
+  "por",
+]);
+
+const formatProcessoNome = (nome: string | null | undefined) => {
+  const raw = String(nome || "Serviço").replace(/\s+/g, " ").trim();
+  if (!raw) return "Serviço";
+
+  return raw
+    .toLocaleLowerCase("pt-BR")
+    .split(" ")
+    .map((word, index) => {
+      if (index > 0 && PROCESSO_PREPOSICOES.has(word)) return word;
+      return word
+        .split("/")
+        .map((part) => part ? part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1) : part)
+        .join("/");
+    })
+    .join(" ");
 };
 
 
@@ -302,7 +341,12 @@ export default function QAClientePortalPage() {
   const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
   const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
   const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
-  const activeTab: "arsenal" | "resumo" | null = activeSection === "arsenal" ? "arsenal" : activeSection === "resumo" ? "resumo" : null;
+  const activeTab: "arsenal" | "resumo" | null =
+    activeSection === "arsenal"
+      ? "arsenal"
+      : activeSection === "resumo"
+        ? "resumo"
+        : null;
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
 
   function handleEntradaConcluido(respostas: EntradaWizardRespostas) {
@@ -1731,6 +1775,15 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
+        {activeSection === "armas_municoes" && cliente && (
+          <ClienteArmasMunicoesSection
+            clienteId={cliente.id}
+            meusDocs={meusDocs}
+            crafs={crafs}
+            onOpenDocumentos={() => goSection("documentos")}
+          />
+        )}
+
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
         <ClienteResumoKanban
@@ -2001,15 +2054,24 @@ export default function QAClientePortalPage() {
                         const sKey = String(p.status || "").toLowerCase();
                         const done = ["concluido", "deferido", "finalizado"].includes(sKey);
                         const bad = ["indeferido", "cancelado"].includes(sKey);
+                        const nomeProcesso = formatProcessoNome(p.servico_nome);
+                        const statusLabel = sKey.replace(/_/g, " ") || "ativo";
                         return (
                           <button key={p.id} type="button" onClick={() => setActiveSection("processos")}
                             className="w-full text-left px-4 py-3 hover:bg-slate-50 transition">
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <div className="text-[12px] font-bold text-slate-900 truncate">{p.servico_nome || "Serviço"}</div>
-                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0
-                                ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
-                                {sKey.replace(/_/g, " ") || "ativo"}
-                              </span>
+                            <div className="mb-2 space-y-1.5">
+                              <div className="text-[12px] font-bold leading-snug text-slate-900 line-clamp-2">
+                                {nomeProcesso}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.08em]
+                                  ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                                  {statusLabel}
+                                </span>
+                                <span className="text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                  Checklist documental
+                                </span>
+                              </div>
                             </div>
                             <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
                               <div className="h-full rounded-full"
@@ -2411,7 +2473,6 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
-        {activeSection === "armas_municoes" && <ClienteArmasMunicoesSection />}
       </main>
 
       {(customerId || cliente?.id) && (
