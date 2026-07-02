@@ -2,7 +2,9 @@ import { lazy, type ComponentType } from "react";
 import { logSistema } from "@/lib/logSistema";
 
 const RELOAD_KEY = "qa_chunk_reload";
-const RELOAD_MAX_MS = 60_000; // janela em que NÃO tentamos outro reload
+const RELOAD_COUNT_KEY = "qa_chunk_reload_count";
+const RELOAD_MAX_MS = 5 * 60_000;
+const RELOAD_MAX_ATTEMPTS = 3;
 
 function isChunkError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -19,6 +21,50 @@ function isChunkError(error: unknown): boolean {
     msg.includes("reading 'default'") ||
     msg.includes("lazyinvalidmodule")
   );
+}
+
+function getStoredChunkReloadState() {
+  const rawTs = localStorage.getItem(RELOAD_KEY) || sessionStorage.getItem(RELOAD_KEY);
+  const ts = rawTs ? parseInt(rawTs, 10) : 0;
+  const fresh = !!ts && Date.now() - ts < RELOAD_MAX_MS;
+  const count = fresh ? parseInt(localStorage.getItem(RELOAD_COUNT_KEY) || sessionStorage.getItem(RELOAD_COUNT_KEY) || "0", 10) || 0 : 0;
+  return { count, fresh };
+}
+
+export function attemptChunkReload(reason: string, moduleName?: string, error?: unknown): boolean {
+  const { count } = getStoredChunkReloadState();
+  if (count >= RELOAD_MAX_ATTEMPTS) return false;
+
+  const nextCount = count + 1;
+  const now = Date.now().toString();
+  sessionStorage.setItem(RELOAD_KEY, now);
+  localStorage.setItem(RELOAD_KEY, now);
+  sessionStorage.setItem(RELOAD_COUNT_KEY, String(nextCount));
+  localStorage.setItem(RELOAD_COUNT_KEY, String(nextCount));
+
+  logSistema({
+    tipo: "erro",
+    status: "error",
+    mensagem: `[ChunkReload] tentativa ${nextCount}/${RELOAD_MAX_ATTEMPTS}: ${reason}`,
+    payload: {
+      module: moduleName,
+      url: window.location.href,
+      error_message: error instanceof Error ? error.message : error ? String(error) : null,
+      attempt: nextCount,
+      user_agent: navigator.userAgent,
+    },
+  });
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("_cb", Date.now().toString());
+    url.searchParams.set("_chunk_retry", String(nextCount));
+    window.location.replace(url.toString());
+  } catch {
+    window.location.reload();
+  }
+
+  return true;
 }
 
 /**
@@ -50,27 +96,8 @@ export function lazyRetry<T extends ComponentType<any>>(
         if (!isChunkError(err) || attempt === retries) {
           // Not a chunk error or exhausted retries — try auto reload once
           if (isChunkError(err)) {
-            // Usa localStorage para que o flag persista entre reloads,
-            // mesmo se sessionStorage for limpo pelo navegador/iframe.
-            // Considera "já recarregado" se foi nos últimos 60s.
-            const rawTs =
-              localStorage.getItem(RELOAD_KEY) ||
-              sessionStorage.getItem(RELOAD_KEY);
-            const ts = rawTs ? parseInt(rawTs, 10) : 0;
-            // Fallback à prova de iframe: alguns previews limpam localStorage
-            // entre navegações. Se a URL já tem ?_cb=... significa que já
-            // recarregamos uma vez nesta sessão de navegação — não recarregar
-            // de novo, deixar o erro subir para o ErrorBoundary.
-            let urlHasCacheBuster = false;
-            try {
-              urlHasCacheBuster = new URL(window.location.href).searchParams.has("_cb");
-            } catch {
-              urlHasCacheBuster = false;
-            }
-            const alreadyReloaded =
-              urlHasCacheBuster ||
-              (ts && Date.now() - ts < RELOAD_MAX_MS);
-            
+            const { count } = getStoredChunkReloadState();
+
             logSistema({
               tipo: "erro",
               status: "error",
@@ -79,31 +106,18 @@ export function lazyRetry<T extends ComponentType<any>>(
                 module: moduleName,
                 url: window.location.href,
                 error_message: err instanceof Error ? err.message : String(err),
-                already_reloaded: !!alreadyReloaded,
+                reload_count: count,
                 user_agent: navigator.userAgent,
                 attempt: attempt + 1,
               },
             });
 
-            if (!alreadyReloaded) {
-              const now = Date.now().toString();
-              sessionStorage.setItem(RELOAD_KEY, now);
-              localStorage.setItem(RELOAD_KEY, now);
-              // Force cache bypass on Safari iOS: append cache-buster query.
-              // window.location.reload() alone can reuse cached index.html on iOS.
-              try {
-                const url = new URL(window.location.href);
-                url.searchParams.set("_cb", Date.now().toString());
-                window.location.replace(url.toString());
-              } catch {
-                window.location.reload();
-              }
+            if (attemptChunkReload("lazy-import-failed", moduleName, err)) {
               // Return a never-resolving promise to prevent rendering while reloading
               return new Promise(() => {});
             }
-            // Já recarregamos recentemente — NÃO limpar o flag e NÃO recarregar
-            // de novo. Deixa o erro subir para o ErrorBoundary mostrar UI clara
-            // em vez de cair em loop infinito de reloads.
+            // Limite de recargas atingido: deixa o erro subir para o
+            // ErrorBoundary mostrar UI clara em vez de cair em loop infinito.
           }
           throw err;
         }
@@ -124,6 +138,8 @@ export function clearChunkReloadFlag() {
   window.setTimeout(() => {
     sessionStorage.removeItem(RELOAD_KEY);
     localStorage.removeItem(RELOAD_KEY);
+    sessionStorage.removeItem(RELOAD_COUNT_KEY);
+    localStorage.removeItem(RELOAD_COUNT_KEY);
   }, 60_000);
 }
 

@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { logSistema } from "@/lib/logSistema";
 import { buildAppError, formatErrorForClipboard, type AppError } from "@/lib/errorLogger";
-import { isChunkError } from "@/lib/lazyRetry";
+import { attemptChunkReload, isChunkError } from "@/lib/lazyRetry";
 
 interface Props {
   children: ReactNode;
@@ -26,6 +26,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (this.state.isChunkError && attemptChunkReload("error-boundary", "react-render", error)) {
+      return;
+    }
+
     const appErr = buildAppError({
       action: this.state.isChunkError ? "ChunkLoadError" : "ErrorBoundary",
       message: error.message,
