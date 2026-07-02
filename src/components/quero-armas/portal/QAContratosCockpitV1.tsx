@@ -513,6 +513,9 @@ function FeaturedContractCard({
         </div>
       </div>
 
+      {/* painel SLA — acompanhamento pós-envio */}
+      <ValidationSLAPanel contract={contract} />
+
       {/* aviso de rejeição — passo a passo claro */}
       {contract.status === "rejected" && (
         <div className="mb-5 border border-[#F4C6C2] bg-[#FDECEA] rounded-sm px-4 py-3.5">
