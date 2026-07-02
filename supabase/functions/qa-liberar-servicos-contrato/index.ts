@@ -416,10 +416,12 @@ Deno.serve(async (req) => {
         result.erros.push({ processo_id: processoId, etapa: "checklist", erro: rpcErr.message });
       } else {
         const inseridos = Number((rpc as any)?.checklist_inseridos ?? 0);
-        if (inseridos > 0) {
+        const jaExistentes = Number((rpc as any)?.checklist_ja_existentes ?? 0);
+        if (inseridos > 0 || jaExistentes > 0) {
           await recordContractEvent(admin, contractId, "checklist_criado_por_contrato_validado", {
             processo_id: processoId, servico_id: servicoId, inseridos,
-            ja_existentes: Number((rpc as any)?.checklist_ja_existentes ?? 0),
+            ja_existentes: jaExistentes,
+            idempotente: inseridos === 0,
           });
         }
         // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
