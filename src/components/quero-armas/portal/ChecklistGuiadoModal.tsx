@@ -1430,7 +1430,7 @@ export default function ChecklistGuiadoModal({
                                       : c.escopo === "cac_atividade"
                                         ? "Documento de atividade CAC"
                                         : "Documento"}
-                                  {c.origem === "hub_cliente" ? " · hub do cliente" : " · processo anterior"}
+                                  {c.origem === "hub_cliente" ? " · Hub de Documentos" : " · processo anterior"}
                                   {c.data_envio
                                     ? ` · enviado em ${new Date(c.data_envio).toLocaleDateString("pt-BR")}`
                                     : ""}
