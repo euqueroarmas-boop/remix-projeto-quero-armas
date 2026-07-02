@@ -55,6 +55,7 @@ import {
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { saveOrShareBlob, isMobileUA } from "@/lib/quero-armas/saveOrShareBlob";
 import {
   clearDocumentAssistantProgress,
   loadDocumentAssistantProgress,
@@ -1019,6 +1020,15 @@ export default function ChecklistGuiadoModal({
   >({ open: false, doc: null, templateKey: null });
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
+  // ----- Documento gerado (declaração/template) — fluxo robusto mobile -----
+  const [documentoGerado, setDocumentoGerado] = useState<{
+    open: boolean;
+    blob: Blob | null;
+    fileName: string;
+    doc: GuiaDoc | null;
+  }>({ open: false, blob: null, fileName: "", doc: null });
+  const [documentoGeradoAcao, setDocumentoGeradoAcao] = useState<null | "baixar" | "compartilhar">(null);
+
   // ----- Wizard de Perguntas vinculado a uma exigência (regra_validacao.wizard_pre_documento) -----
   type WizardPreAction = "continuar" | "anexar" | "baixar_template" | "reaproveitar";
   const [wizardPre, setWizardPre] = useState<{
@@ -1126,15 +1136,42 @@ export default function ChecklistGuiadoModal({
     const baseNome = slugifyParaArquivo(doc.nome_documento || templateKey);
     const sufixoCliente = slugifyParaArquivo(carga.clienteNome || "cliente");
     const fileName = `${baseNome || "declaracao"}-${sufixoCliente || "cliente"}.docx`;
-    const a = document.createElement("a");
-    const objUrl = URL.createObjectURL(blob);
-    a.href = objUrl;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(objUrl);
-    toast.success("Documento gerado. Confira o arquivo baixado.");
+    // Abre o modal com opções explícitas de Baixar / Compartilhar / Já assinei.
+    // NÃO dispara download automático — em iOS/in-app o a.click() é silencioso.
+    setDocumentoGerado({ open: true, blob, fileName, doc });
+  };
+
+  const executarSalvarDocumento = async (
+    modo: "baixar" | "compartilhar",
+  ) => {
+    if (!documentoGerado.blob) return;
+    setDocumentoGeradoAcao(modo);
+    try {
+      const r = await saveOrShareBlob(documentoGerado.blob, documentoGerado.fileName, {
+        preferShare: modo === "compartilhar",
+      });
+      if (r.method === "share") toast.success("Escolha onde salvar no compartilhamento do sistema.");
+      else if (r.method === "open") toast.success("Documento aberto em nova aba. Toque em Compartilhar/Salvar em Arquivos.");
+      else if (r.method === "download") toast.success("Download iniciado.");
+      else if (r.method === "cancelled") { /* usuário fechou */ }
+      else toast.error("Não foi possível abrir o arquivo. Tente 'Compartilhar / salvar no celular'.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao acessar o arquivo. Tente outro modo.");
+    } finally {
+      setDocumentoGeradoAcao(null);
+    }
+  };
+
+  const jaAssineiAnexarPdfAssinado = () => {
+    const doc = documentoGerado.doc;
+    setDocumentoGerado({ open: false, blob: null, fileName: "", doc: null });
+    // Reabre o seletor de arquivo com foco em PDF.
+    if (fileRef.current) {
+      fileRef.current.accept = "application/pdf,.pdf";
+      fileRef.current.value = "";
+      fileRef.current.click();
+    }
+    void doc;
   };
 
   return (
