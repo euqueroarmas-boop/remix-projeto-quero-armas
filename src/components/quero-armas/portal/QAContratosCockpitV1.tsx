@@ -369,7 +369,17 @@ function KpiCard({ tone, label, value, sub }: { tone: Tone; label: string; value
 }
 
 /* ─────────────────── FEATURED ─────────────────── */
-function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onAssinar: () => void }) {
+function FeaturedContractCard({
+  contract,
+  onAssinar,
+  preparedDownload,
+  preparingDownload,
+}: {
+  contract: Contract;
+  onAssinar: () => void;
+  preparedDownload: PreparedMinutaDownload | null;
+  preparingDownload: boolean;
+}) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const canUpload = !!contract.issued_at && [
@@ -455,15 +465,25 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
           <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">
             PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
           </div>
-          {contract.issued_at && (
-            <button
-              type="button"
-              onClick={onAssinar}
+          {contract.issued_at && preparedDownload ? (
+            <a
+              href={preparedDownload.href}
+              download={preparedDownload.filename}
+              onClick={() => toast.success("Download iniciado.")}
               className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all duration-200"
             >
               <Download className="h-3 w-3" /> BAIXAR CONTRATO
+            </a>
+          ) : contract.issued_at ? (
+            <button
+              type="button"
+              onClick={onAssinar}
+              disabled={preparingDownload}
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+            >
+              {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} {preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO"}
             </button>
-          )}
+          ) : null}
           {canUpload && (
             <>
               <input
@@ -509,13 +529,25 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
             <li>Baixe o PDF assinado e clique em <b>ENVIAR ASSINADO</b>.</li>
           </ol>
           <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={onAssinar}
-              className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
-            >
-              <Download className="h-3 w-3" /> BAIXAR CONTRATO CERTO
-            </button>
+            {preparedDownload ? (
+              <a
+                href={preparedDownload.href}
+                download={preparedDownload.filename}
+                onClick={() => toast.success("Download iniciado.")}
+                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+              >
+                <Download className="h-3 w-3" /> BAIXAR CONTRATO CERTO
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={onAssinar}
+                disabled={preparingDownload}
+                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
+              >
+                {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} {preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO CERTO"}
+              </button>
+            )}
             <a
               href="https://assinador.iti.br/"
               target="_blank"
