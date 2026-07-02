@@ -1774,6 +1774,91 @@ export default function ChecklistGuiadoModal({
 
       {/* Wizard de Perguntas vinculado à exigência — abre antes de qualquer ação */}
       <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
+      {/* nada aqui — apenas para agrupar */}
+      </Dialog>
+
+      {/* Modal do Documento Gerado — opções explícitas Baixar / Compartilhar / Já assinei */}
+      <Dialog
+        open={documentoGerado.open}
+        onOpenChange={(n) => !n && setDocumentoGerado({ open: false, blob: null, fileName: "", doc: null })}
+      >
+        <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-md rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+          <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
+                <FileDown className="h-5 w-5" strokeWidth={2.3} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Declaração pronta</div>
+                <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
+                  Salve o arquivo no seu dispositivo
+                </h2>
+                <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
+                  {documentoGerado.doc?.nome_documento || documentoGerado.fileName}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDocumentoGerado({ open: false, blob: null, fileName: "", doc: null })}
+                aria-label="Fechar"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-[12px] leading-relaxed text-slate-600">
+              Baixe ou compartilhe o arquivo, assine no <span className="font-semibold">gov.br</span> e depois volte
+              aqui para anexar o PDF assinado.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={!!documentoGeradoAcao}
+                onClick={() => void executarSalvarDocumento("baixar")}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold uppercase tracking-wide text-white shadow-sm disabled:opacity-60"
+                style={{ background: MARROM }}
+              >
+                {documentoGeradoAcao === "baixar" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Baixar declaração preenchida
+              </button>
+              <button
+                type="button"
+                disabled={!!documentoGeradoAcao}
+                onClick={() => void executarSalvarDocumento("compartilhar")}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold uppercase tracking-wide border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {documentoGeradoAcao === "compartilhar" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ExternalLink className="h-4 w-4" />
+                )}
+                {isMobileUA() ? "Compartilhar / salvar no celular" : "Abrir em nova aba"}
+              </button>
+              <div className="my-1 h-px bg-slate-200" />
+              <button
+                type="button"
+                onClick={jaAssineiAnexarPdfAssinado}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-bold uppercase tracking-wide border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+              >
+                <Upload className="h-4 w-4" />
+                Já assinei, anexar PDF assinado
+              </button>
+            </div>
+            <p className="text-[11px] leading-relaxed text-slate-500">
+              Base legal: Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e 311.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Wrapper duplicado abaixo mantém o Dialog original do wizardPre — reabrimos aqui */}
+      <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
         <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
             <div className="flex items-start gap-3">
