@@ -2478,15 +2478,26 @@ export default function QAClientePortalPage() {
                     >
                       Agora não
                     </button>
-                    <button
-                      type="button"
-                      onClick={downloadPendingContractFromPopup}
-                      disabled={downloadingPendingContract}
-                      className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
-                    >
-                      {downloadingPendingContract ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                      Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
+                    {preparedPendingDownload ? (
+                      <a
+                        href={preparedPendingDownload.href}
+                        download={preparedPendingDownload.filename}
+                        onClick={() => toast.success("Download iniciado.")}
+                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
+                      >
+                        Baixar contrato certo <ChevronRight className="h-3.5 w-3.5" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={downloadPendingContractFromPopup}
+                        disabled={downloadingPendingContract}
+                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 disabled:cursor-wait"
+                      >
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Preparando PDF
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
