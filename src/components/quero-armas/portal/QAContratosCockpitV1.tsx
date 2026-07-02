@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, CheckCircle2, Download, Upload, Loader2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
@@ -513,6 +513,9 @@ function FeaturedContractCard({
         </div>
       </div>
 
+      {/* painel SLA — acompanhamento pós-envio */}
+      <ValidationSLAPanel contract={contract} />
+
       {/* aviso de rejeição — passo a passo claro */}
       {contract.status === "rejected" && (
         <div className="mb-5 border border-[#F4C6C2] bg-[#FDECEA] rounded-sm px-4 py-3.5">
@@ -689,6 +692,120 @@ function buildNextAuto(contract: Contract): string | null {
 }
 
 /* ─────────────────── COMPACT ─────────────────── */
+
+/**
+ * Painel de acompanhamento da análise/validação após o cliente enviar o PDF assinado.
+ * - customer_signature_uploaded / validating: contagem regressiva do SLA automático (2 min).
+ * - pending_manual_review: aviso de revisão manual (até 1 dia útil).
+ * - validated: confirmação com data.
+ */
+function ValidationSLAPanel({ contract }: { contract: Contract }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  const status = String(contract.status || "");
+  const isAuto = status === "customer_signature_uploaded" || status === "validating";
+  const isManual = status === "pending_manual_review";
+  const isValidated = status === "validated";
+  const isRelevant = isAuto || isManual || isValidated;
+
+  useEffect(() => {
+    if (!isAuto) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [isAuto]);
+
+  if (!isRelevant) return null;
+
+  const sentAt = contract.customer_uploaded_at ? new Date(contract.customer_uploaded_at).getTime() : null;
+  const SLA_MS = 2 * 60 * 1000; // 2 min
+  const deadline = sentAt ? sentAt + SLA_MS : null;
+  const remainingMs = deadline ? deadline - now : null;
+  const elapsedSec = sentAt ? Math.max(0, Math.floor((now - sentAt) / 1000)) : null;
+
+  function fmtClock(ms: number) {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+  }
+
+  if (isValidated) {
+    return (
+      <div className="mb-5 border border-[#B7E0C2] bg-[#EAF7EE] rounded-sm px-4 py-3.5 flex items-start gap-3">
+        <CheckCircle2 className="h-4 w-4 text-[#1F6638] mt-0.5" />
+        <div className="text-[12px] text-[#1F4A2A] leading-relaxed">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#1F6638] font-bold uppercase mb-0.5">
+            ASSINATURA VALIDADA
+          </div>
+          Contrato liberado em <b>{fmtDateLong(contract.customer_signature_validated_at)}</b>. Seu processo já está ativo.
+        </div>
+      </div>
+    );
+  }
+
+  if (isManual) {
+    return (
+      <div className="mb-5 border border-[#F0DDA0] bg-[#FFF5DD] rounded-sm px-4 py-3.5 flex items-start gap-3">
+        <Clock className="h-4 w-4 text-[#7A5A14] mt-0.5" />
+        <div className="text-[12px] text-[#5a4410] leading-relaxed">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#7A5A14] font-bold uppercase mb-0.5">
+            EM REVISÃO MANUAL · ATÉ 1 DIA ÚTIL
+          </div>
+          A validação automática não conseguiu concluir. Nossa equipe está revisando manualmente
+          {contract.customer_uploaded_at ? <> desde <b>{fmtDateLong(contract.customer_uploaded_at)}</b></> : null}.
+          Você receberá um e-mail/WhatsApp assim que aprovarmos.
+        </div>
+      </div>
+    );
+  }
+
+  // isAuto — contagem regressiva
+  const stillWithinSla = remainingMs !== null && remainingMs > 0;
+  const overdue = remainingMs !== null && remainingMs <= 0;
+  const pct = deadline && sentAt
+    ? Math.min(100, Math.max(0, Math.round(((now - sentAt) / SLA_MS) * 100)))
+    : 0;
+
+  return (
+    <div className="mb-5 border border-[#C9D9F0] bg-[#EEF4FC] rounded-sm px-4 py-3.5">
+      <div className="flex items-start gap-3">
+        <Loader2 className="h-4 w-4 text-[#1F4D8A] mt-0.5 animate-spin" />
+        <div className="flex-1 min-w-0">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#1F4D8A] font-bold uppercase mb-0.5">
+            ANÁLISE DA ASSINATURA EM ANDAMENTO
+          </div>
+          <div className="text-[12px] text-[#0A0A0A] leading-relaxed">
+            Recebemos seu PDF{contract.customer_uploaded_at ? <> em <b>{fmtDateLong(contract.customer_uploaded_at)}</b></> : null}
+            {elapsedSec !== null ? <> · há <b>{elapsedSec < 60 ? `${elapsedSec}s` : `${Math.floor(elapsedSec / 60)}m ${elapsedSec % 60}s`}</b></> : null}.
+            Validação automática ICP-Brasil conclui em até <b>2 minutos</b>.
+          </div>
+          <div className="mt-2.5 flex items-center gap-3">
+            <div className="flex-1 h-[5px] bg-white border border-[#D6E0F0] rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-500 ${overdue ? "bg-[#7A5A14]" : "bg-[#1F4D8A]"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="font-['Oswald'] text-[11px] tracking-[0.1em] font-bold tabular-nums whitespace-nowrap">
+              {stillWithinSla ? (
+                <span className="text-[#1F4D8A]">TEMPO RESTANTE {fmtClock(remainingMs!)}</span>
+              ) : (
+                <span className="text-[#7A5A14]">FINALIZANDO…</span>
+              )}
+            </div>
+          </div>
+          {overdue && (
+            <div className="mt-2 text-[11.5px] text-[#5a4410]">
+              Passou do tempo previsto — se em alguns minutos o status não mudar, cairá em
+              <b> revisão manual</b> automaticamente. Você não precisa fazer nada.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CompactContractCard({ contract }: { contract: Contract }) {
   const step = statusToStep(contract.status);
   const badge = STATUS_BADGE[String(contract.status)] || { label: String(contract.status || "—").toUpperCase(), cls: "bg-[#EDEDED] text-[#444]" };
