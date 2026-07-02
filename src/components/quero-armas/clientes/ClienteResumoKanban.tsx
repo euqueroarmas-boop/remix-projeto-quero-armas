@@ -74,6 +74,29 @@ function shortName(value: string, fallback: string) {
   return String(value || fallback).replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
+// Title Case pt-BR para nomes de serviço/processo.
+// Mantém preposições/artigos em minúsculas (exceto quando é a primeira palavra).
+// Também garante espaços em volta de "/" para evitar quebras feias tipo
+// "AQUISIÇÃO/REGISTRO/POSSE" empilhado verticalmente.
+const LOWER_WORDS = new Set([
+  "de", "da", "do", "das", "dos",
+  "e", "em", "no", "na", "nos", "nas",
+  "para", "por", "a", "o", "as", "os",
+]);
+function titleCaseServico(value: string, fallback: string): string {
+  const raw = shortName(value, fallback);
+  const spaced = raw.replace(/\s*\/\s*/g, " / ");
+  return spaced
+    .split(" ")
+    .map((token, idx) => {
+      if (token === "/") return "/";
+      const lower = token.toLocaleLowerCase("pt-BR");
+      if (idx > 0 && LOWER_WORDS.has(lower)) return lower;
+      return lower.charAt(0).toLocaleUpperCase("pt-BR") + lower.slice(1);
+    })
+    .join(" ");
+}
+
 function firstName(cliente: any) {
   const nome = String(cliente?.nome_completo || cliente?.nome || cliente?.name || "WILLIAN").trim();
   return (nome.split(/\s+/)[0] || "WILLIAN").toUpperCase();
@@ -232,16 +255,17 @@ export default function ClienteResumoKanban({
         (item.venda_id != null && p.vendaId === item.venda_id && p.servicoId === item.servico_id),
       );
       const statusProcesso = String(item.status || "").toLowerCase();
+      const nomeProcesso = titleCaseServico(nome, "Processo");
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
-        return { label: shortName(nome, "Processo"), status: "Checklist documental aberto", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Checklist documental aberto", tone: "warn" as const };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
-        return { label: shortName(nome, "Processo"), status: "Processo em preparação", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
       }
       if (prazo?.diasRestantes !== undefined) {
-        return { label: shortName(nome, "Processo"), status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
+        return { label: nomeProcesso, status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
-      return { label: shortName(nome, "Processo"), status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
+      return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
     const docItems: FrontItem[] = meusDocs
