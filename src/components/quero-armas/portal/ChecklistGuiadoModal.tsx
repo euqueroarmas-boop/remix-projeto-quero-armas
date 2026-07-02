@@ -1196,7 +1196,7 @@ export default function ChecklistGuiadoModal({
                 </div>
                 {/* Bloco 11 — Resumo das 3 caixas (aditivo, não altera o fluxo guiado) */}
                 <div className="mt-3">
-                  <DocsTresCaixasPanel docs={carga.docs} />
+                  <DocsTresCaixasPanel docs={carga.docs} respostas={carga.respostas} />
                 </div>
               </div>
             )}
