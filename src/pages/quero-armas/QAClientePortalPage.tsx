@@ -21,6 +21,7 @@ import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
 import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
@@ -269,6 +270,7 @@ export default function QAClientePortalPage() {
     | "contratacoes"
     | "arsenal"
     | "armas_municoes"
+    | "analise_alvo"
     | "mensagens"
     | "configuracoes"
   >("resumo");
@@ -995,6 +997,7 @@ export default function QAClientePortalPage() {
     { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
     { key: "processos" as const, label: "Meus Processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
     { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
@@ -1782,6 +1785,10 @@ export default function QAClientePortalPage() {
             crafs={crafs}
             onOpenDocumentos={() => goSection("documentos")}
           />
+        )}
+
+        {activeSection === "analise_alvo" && (
+          <ClienteAnaliseAlvoSection />
         )}
 
         {activeTab === "resumo" && (
