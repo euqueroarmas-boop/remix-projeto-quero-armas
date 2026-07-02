@@ -10,6 +10,8 @@ import {
   Image as ImageIcon,
   Info,
   Loader2,
+  Pause,
+  Play,
   ShieldCheck,
   Target,
   Upload,
@@ -291,6 +293,56 @@ function FieldBox({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CarouselControls({
+  current,
+  total,
+  paused,
+  onPrev,
+  onNext,
+  onTogglePause,
+  label,
+}: {
+  current: number;
+  total: number;
+  paused: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  onTogglePause: () => void;
+  label: string;
+}) {
+  if (total <= 1) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-[11px] font-black text-slate-500">{current + 1} / {total}</span>
+      <button
+        type="button"
+        onClick={onPrev}
+        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        aria-label={`Anterior: ${label}`}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onTogglePause}
+        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        aria-label={paused ? `Retomar ${label}` : `Pausar ${label}`}
+      >
+        {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={onNext}
+        className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+        aria-label={`Próximo: ${label}`}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], crafs = [], onOpenDocumentos }: Props) {
   const [loading, setLoading] = useState(true);
   const [armas, setArmas] = useState<ClienteArma[]>([]);
@@ -299,7 +351,10 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
-  const [tecnicaSlide, setTecnicaSlide] = useState<0 | 1>(0);
+  const [fotoSlide, setFotoSlide] = useState(0);
+  const [fotoPaused, setFotoPaused] = useState(false);
+  const [tecnicaSlide, setTecnicaSlide] = useState(0);
+  const [tecnicaPaused, setTecnicaPaused] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -453,6 +508,9 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
 
   useEffect(() => {
     setTecnicaSlide(0);
+    setFotoSlide(0);
+    setFotoPaused(false);
+    setTecnicaPaused(false);
   }, [selectedUid]);
 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
@@ -475,6 +533,11 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
   ] : [];
   const dadosTecnicosSlides = [dadosTecnicos.slice(0, 7), dadosTecnicos.slice(7)];
+  const fotoAtual = fotos[fotoSlide] || fotos[0] || null;
+  const advanceFoto = () => setFotoSlide((slide) => (slide + 1) % Math.max(fotos.length, 1));
+  const rewindFoto = () => setFotoSlide((slide) => (slide - 1 + Math.max(fotos.length, 1)) % Math.max(fotos.length, 1));
+  const advanceTecnica = () => setTecnicaSlide((slide) => (slide + 1) % dadosTecnicosSlides.length);
+  const rewindTecnica = () => setTecnicaSlide((slide) => (slide - 1 + dadosTecnicosSlides.length) % dadosTecnicosSlides.length);
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -489,6 +552,18 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { id: "fabricante", label: "Fabricante" },
     { id: "fontes", label: "Fontes" },
   ];
+
+  useEffect(() => {
+    if (fotoPaused || fotos.length <= 1) return undefined;
+    const timer = window.setInterval(advanceFoto, 5000);
+    return () => window.clearInterval(timer);
+  }, [fotoPaused, fotos.length]);
+
+  useEffect(() => {
+    if (activeTab !== "tecnica" || tecnicaPaused || dadosTecnicosSlides.length <= 1) return undefined;
+    const timer = window.setInterval(advanceTecnica, 5000);
+    return () => window.clearInterval(timer);
+  }, [activeTab, tecnicaPaused, dadosTecnicosSlides.length]);
 
   if (loading) {
     return (
@@ -565,8 +640,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           <div className="relative h-full overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(0deg,rgba(15,23,42,0.035)_1px,transparent_1px)] bg-[size:48px_48px]" />
             <div className="relative flex h-full items-center justify-center px-6 pb-24 pt-12">
-              {fotos[0] ? (
-                <img src={fotos[0]} alt={selected.titulo} className="max-h-[390px] w-full object-contain drop-shadow-2xl" />
+              {fotoAtual ? (
+                <img src={fotoAtual} alt={selected.titulo} className="max-h-[390px] w-full object-contain drop-shadow-2xl" />
               ) : (
                 <div className="text-center text-slate-500">
                   <ImageIcon className="mx-auto h-12 w-12" />
@@ -579,11 +654,29 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               {selected.tipo}
             </div>
 
+            <div className="absolute right-7 top-7">
+              <CarouselControls
+                current={fotoSlide}
+                total={fotos.length}
+                paused={fotoPaused}
+                onPrev={rewindFoto}
+                onNext={advanceFoto}
+                onTogglePause={() => setFotoPaused((paused) => !paused)}
+                label="fotos da arma"
+              />
+            </div>
+
             <div className="absolute bottom-5 left-7 right-7 grid grid-cols-7 gap-2">
               {fotos.length ? fotos.slice(0, 7).map((src, idx) => (
-                <div key={`${src}-${idx}`} className={`h-14 border bg-white p-1 ${idx === 0 ? "border-slate-950" : "border-slate-200"}`}>
+                <button
+                  key={`${src}-${idx}`}
+                  type="button"
+                  onClick={() => setFotoSlide(idx)}
+                  className={`h-14 border bg-white p-1 ${idx === fotoSlide ? "border-slate-950" : "border-slate-200"}`}
+                  aria-label={`Ver foto ${idx + 1}`}
+                >
                   <img src={src} alt={`${selected.titulo} foto ${idx + 1}`} className="h-full w-full object-contain" />
-                </div>
+                </button>
               )) : (
                 <div className="col-span-7 border border-dashed border-slate-300 bg-white p-4 text-center text-[12px] text-slate-500">
                   Sem fotos aprovadas para esta arma.
@@ -655,25 +748,15 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
                   Dados técnicos
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / {dadosTecnicosSlides.length}</span>
-                  <button
-                    type="button"
-                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
-                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Dados técnicos anteriores"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
-                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                    aria-label="Próximos dados técnicos"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+                <CarouselControls
+                  current={tecnicaSlide}
+                  total={dadosTecnicosSlides.length}
+                  paused={tecnicaPaused}
+                  onPrev={rewindTecnica}
+                  onNext={advanceTecnica}
+                  onTogglePause={() => setTecnicaPaused((paused) => !paused)}
+                  label="dados técnicos"
+                />
               </div>
 
               <div className="mt-3 min-h-[368px]">
@@ -685,11 +768,11 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2">
-                {[0, 1].map((slide) => (
+                {dadosTecnicosSlides.map((_, slide) => (
                   <button
                     key={slide}
                     type="button"
-                    onClick={() => setTecnicaSlide(slide as 0 | 1)}
+                    onClick={() => setTecnicaSlide(slide)}
                     className={`h-1.5 ${tecnicaSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
                     aria-label={`Ver dados técnicos ${slide + 1}`}
                   />
