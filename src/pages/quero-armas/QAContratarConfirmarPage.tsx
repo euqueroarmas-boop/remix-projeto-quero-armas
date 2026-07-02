@@ -620,7 +620,7 @@ export default function QAContratarConfirmarPage() {
               <Section
                 n={1}
                 label="ENDEREÇO"
-                statusDot={enderecoOk === "nao" ? "warn" : "ok"}
+                statusDot={enderecoOk === "sim" ? "ok" : enderecoOk === "nao" ? "warn" : "error"}
               >
                 <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
                   <p style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: D.ink, fontWeight: 500, maxWidth: 480 }}>
