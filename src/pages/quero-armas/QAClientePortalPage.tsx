@@ -562,11 +562,13 @@ export default function QAClientePortalPage() {
           setMeusDocs((docsData as any[]) ?? []);
         }
 
-        // Processos canônicos do cliente (fonte real de progresso/etapa/checklist)
+        // Processos canônicos do cliente (fonte real de progresso/etapa/checklist).
+        // Dados históricos mistos: admin criava por id real; o pipeline de
+        // contrato validado grava id_legado — buscamos pelas duas chaves.
         const { data: procsData } = await supabase
           .from("qa_processos" as any)
           .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
-          .eq("cliente_id", clienteIdReal)
+          .in("cliente_id", Array.from(new Set([clienteIdReal, clienteIdVendas])))
           // Processos órfãos (cancelados/arquivados pela reconciliação porque
           // o admin removeu a venda/contrato) NUNCA devem aparecer ao cliente.
           .not("status", "in", "(cancelado,arquivado)")
