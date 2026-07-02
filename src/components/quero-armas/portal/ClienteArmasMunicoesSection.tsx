@@ -293,7 +293,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   const [catalogo, setCatalogo] = useState<CatalogoArma[]>([]);
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DossieTab>("resumo");
-  const [detalheTecnicoSlide, setDetalheTecnicoSlide] = useState(0);
+  const [tecnicaSlide, setTecnicaSlide] = useState<0 | 1>(0);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -446,7 +446,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   }, [armasView, selectedUid]);
 
   useEffect(() => {
-    setDetalheTecnicoSlide(0);
+    setTecnicaSlide(0);
   }, [selectedUid]);
 
   const selected = armasView.find((a) => a.uid === selectedUid) || armasView[0] || null;
@@ -460,12 +460,6 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
     { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
   ];
-  const detalhesTecnicosSlides = [
-    detalhesTecnicos.slice(0, 2),
-    detalhesTecnicos.slice(2, 4),
-    detalhesTecnicos.slice(4, 6),
-  ];
-  const detalhesTecnicosAtuais = detalhesTecnicosSlides[detalheTecnicoSlide] || detalhesTecnicosSlides[0];
   const municoes = selected?.calibre === ".22 LR"
     ? [".22 LR", ".22 Long Rifle"]
     : selected?.calibre
@@ -641,61 +635,63 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           )}
 
           {activeTab === "tecnica" && (
-            <div className="mt-6 space-y-5">
-              <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Características tecnicas</div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
-                  <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
-                  <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
-                  <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
-                  <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
-                  <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
-                  <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
-                  <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
+                  {tecnicaSlide === 0 ? "Características tecnicas" : "Detalhes técnicos"}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[11px] font-black text-slate-500">{tecnicaSlide + 1} / 2</span>
+                  <button
+                    type="button"
+                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
+                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                    aria-label="Bloco técnico anterior"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTecnicaSlide((slide) => (slide === 0 ? 1 : 0))}
+                    className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
+                    aria-label="Próximo bloco técnico"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Detalhes técnicos</div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[11px] font-black text-slate-500">
-                      {detalheTecnicoSlide + 1} / {detalhesTecnicosSlides.length}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDetalheTecnicoSlide((slide) => (slide - 1 + detalhesTecnicosSlides.length) % detalhesTecnicosSlides.length)}
-                      className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                      aria-label="Detalhes técnicos anteriores"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDetalheTecnicoSlide((slide) => (slide + 1) % detalhesTecnicosSlides.length)}
-                      className="flex h-8 w-8 items-center justify-center border border-slate-300 bg-white text-slate-950 hover:border-slate-950"
-                      aria-label="Próximos detalhes técnicos"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+
+              <div className="mt-3 min-h-[368px]">
+                {tecnicaSlide === 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <FieldBox label="Capacidade" value={selected.catalogo?.capacidade_carregador ? `${selected.catalogo.capacidade_carregador} cartuchos` : fabricante?.capacidade || "Nao informado"} />
+                    <FieldBox label="Peso" value={selected.catalogo?.peso_gramas ? `${selected.catalogo.peso_gramas} g` : fabricante?.peso || "Nao informado"} />
+                    <FieldBox label="Cano" value={selected.catalogo?.comprimento_cano_mm ? `${selected.catalogo.comprimento_cano_mm} mm` : fabricante?.cano || "Nao informado"} />
+                    <FieldBox label="Comprimento" value={fabricante?.comprimento || "Nao informado"} />
+                    <FieldBox label="Altura" value={fabricante?.altura || "Nao informado"} />
+                    <FieldBox label="Largura" value={fabricante?.largura || "Nao informado"} />
+                    <FieldBox label="Velocidade" value={selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado"} />
+                    <FieldBox label="Energia" value={energiaEstimativa(selected.catalogo || null)} />
                   </div>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {detalhesTecnicosAtuais.map((item) => (
-                    <FieldBox key={item.label} label={item.label} value={item.value} />
-                  ))}
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {detalhesTecnicosSlides.map((_, slide) => (
-                    <button
-                      key={slide}
-                      type="button"
-                      onClick={() => setDetalheTecnicoSlide(slide)}
-                      className={`h-1.5 ${detalheTecnicoSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
-                      aria-label={`Ver grupo ${slide + 1} de detalhes técnicos`}
-                    />
-                  ))}
-                </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {detalhesTecnicos.map((item) => (
+                      <FieldBox key={item.label} label={item.label} value={item.value} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {[0, 1].map((slide) => (
+                  <button
+                    key={slide}
+                    type="button"
+                    onClick={() => setTecnicaSlide(slide as 0 | 1)}
+                    className={`h-1.5 ${tecnicaSlide === slide ? "bg-slate-950" : "bg-slate-300"}`}
+                    aria-label={slide === 0 ? "Ver características técnicas" : "Ver detalhes técnicos"}
+                  />
+                ))}
               </div>
             </div>
           )}
