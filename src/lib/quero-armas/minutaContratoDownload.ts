@@ -11,15 +11,6 @@ type OpenMinutaArgs = {
 };
 
 export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
-  const win = window.open("", "_blank");
-  if (!win) throw new Error("Pop-up bloqueado. Permita pop-ups para abrir o contrato.");
-
-  win.document.open();
-  win.document.write(
-    '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carregando contrato...</title><body style="font-family:system-ui;padding:24px;color:#444">Carregando contrato renderizado...</body>',
-  );
-  win.document.close();
-
   const { data: { session } } = await supabase.auth.getSession();
   const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
     method: "POST",
@@ -39,24 +30,33 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
 
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    win.close();
     throw new Error(err?.message || err?.error || `HTTP ${resp.status}`);
   }
 
   const contentType = resp.headers.get("content-type") || "";
+  const filename = `Contrato-${args.contractNumber || args.contractId}.${contentType.includes("pdf") ? "pdf" : "html"}`;
+
   if (contentType.includes("text/html")) {
+    // Fallback: abre HTML numa nova aba para o cliente imprimir/salvar como PDF
     const html = await resp.text();
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    setTimeout(() => {
-      try { win.print(); } catch { /* ignore */ }
-    }, 500);
+    const w = window.open("", "_blank");
+    if (!w) throw new Error("Pop-up bloqueado. Permita pop-ups.");
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
     return;
   }
 
   const blob = await resp.blob();
+  if (!blob || blob.size === 0) {
+    throw new Error("Contrato retornou vazio. Fale com o suporte.");
+  }
   const blobUrl = URL.createObjectURL(blob);
-  win.location.href = blobUrl;
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }
