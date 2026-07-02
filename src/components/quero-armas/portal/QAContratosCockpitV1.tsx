@@ -177,7 +177,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   const cpf = maskCpf(cliente?.cpf);
   const membro = fmtMemberSince(cliente?.created_at);
 
-  const focoBloqueante = featured && featured.status === "pending_customer_signature";
+  const focoBloqueante =
+    featured &&
+    (featured.status === "pending_customer_signature" || featured.status === "rejected");
 
   const handleAssinar = async () => {
     if (!featured) return;
@@ -222,10 +224,14 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <div className="mb-5 bg-white border border-[#E5E5E5] border-l-4 border-l-[#C32E26] rounded-sm px-5 py-4 flex items-center gap-4">
           <div className="flex-1">
             <div className="font-['Oswald'] text-[9.5px] tracking-[0.18em] text-[#C32E26] font-bold mb-1 uppercase">
-              FOCO DO DIA · <span className="text-[#0A0A0A]">AÇÃO BLOQUEANTE</span>
+              FOCO DO DIA · <span className="text-[#0A0A0A]">
+                {featured?.status === "rejected" ? "ASSINATURA REJEITADA" : "AÇÃO BLOQUEANTE"}
+              </span>
             </div>
             <div className="text-[13px] text-[#0A0A0A] font-medium">
-              Contrato {featured?.contract_number || ""} aguarda sua assinatura via GOV.BR
+              {featured?.status === "rejected"
+                ? <>O PDF enviado não é o contrato {featured?.contract_number}. Baixe o contrato deste sistema, assine no GOV.BR sem editar e reenvie.</>
+                : <>Contrato {featured?.contract_number || ""} aguarda sua assinatura via GOV.BR</>}
             </div>
           </div>
           <button
@@ -233,7 +239,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
             onClick={handleAssinar}
             className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black"
           >
-            ASSINAR AGORA <ArrowRight className="h-3 w-3" />
+            {featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA"} <ArrowRight className="h-3 w-3" />
           </button>
         </div>
       )}
