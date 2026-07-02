@@ -230,13 +230,19 @@ function matchCatalogo(arma: Partial<ArmaView>, craf: Craf | null, catalogo: Cat
   }) || null;
 }
 
-function energiaEstimativa(catalogo: CatalogoArma | null): string {
+function calcularEnergiaReferencia(catalogo: CatalogoArma | null): string {
   if (!catalogo?.velocidade_projetil_ms) return "Nao informado";
   const calibre = norm(catalogo.calibre);
   const massaKg = calibre.includes("22") ? 0.00259 : null;
-  if (!massaKg) return `${catalogo.velocidade_projetil_ms} m/s (energia depende da munição)`;
+  if (!massaKg) return `${catalogo.velocidade_projetil_ms} m/s; energia depende da munição`;
   const joules = Math.round((massaKg * catalogo.velocidade_projetil_ms ** 2) / 2);
-  return `~${joules} J, variavel conforme munição`;
+  return `min. ~${joules} J, referencia do armamento`;
+}
+
+function energiaMunicaoCadastrada(catalogo: CatalogoArma | null): string {
+  const referencia = calcularEnergiaReferencia(catalogo);
+  if (referencia === "Nao informado") return "Sem munição cadastrada com energia informada";
+  return `Sem munição cadastrada com energia informada; usando ${referencia}`;
 }
 
 function isTx22(arma: ArmaView): boolean {
@@ -463,7 +469,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     { label: "Altura", value: fabricante?.altura || "Nao informado" },
     { label: "Largura", value: fabricante?.largura || "Nao informado" },
     { label: "Velocidade", value: selected.catalogo?.velocidade_projetil_ms ? `${selected.catalogo.velocidade_projetil_ms} m/s` : "Nao informado" },
-    { label: "Energia", value: energiaEstimativa(selected.catalogo || null) },
+    { label: "Energia mínima", value: calcularEnergiaReferencia(selected.catalogo || null) },
     { label: "Trilho", value: fabricante?.trilho || "Nao informado" },
     { label: "Materiais", value: fabricante?.materiais || "Nao informado" },
     { label: "Segurança", value: fabricante?.segurancas || "Nao informado" },
@@ -707,8 +713,8 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               <div className="grid grid-cols-2 gap-2">
                 <FieldBox label="Calibre base" value={selected.calibre} />
                 <FieldBox label="Alcance efetivo" value={selected.catalogo?.alcance_efetivo_m ? `${selected.catalogo.alcance_efetivo_m} m` : "Nao informado"} />
-                <FieldBox label="Energia estimada" value={energiaEstimativa(selected.catalogo || null)} />
-                <FieldBox label="Observação" value="Valores variam conforme munição, lote e fabricante." />
+                <FieldBox label="Energia da munição" value={energiaMunicaoCadastrada(selected.catalogo || null)} />
+                <FieldBox label="Observação" value="Ao cadastrar munição com dados balísticos, a energia passa a refletir o lote/munição do cliente." />
               </div>
             </div>
           )}
