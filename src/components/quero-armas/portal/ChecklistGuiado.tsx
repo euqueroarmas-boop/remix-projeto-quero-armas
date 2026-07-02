@@ -57,6 +57,18 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
     let cancel = false;
     (async () => {
       try {
+        // Antes de contar pendências, roda a revisão de exigências para que
+        // itens do checklist já cobertos por documentos aprovados do
+        // Hub de Documentos sejam marcados como cumpridos (status
+        // `dispensado_por_reaproveitamento`) — evita pedir upload duplicado.
+        try {
+          await supabase.rpc("qa_processo_rever_exigencias" as any, {
+            p_cliente_id: clienteId,
+          });
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn("[ChecklistGuiado] rever_exigencias falhou (silencioso)", e);
+        }
         const pendentes = await contarPendentesClienteGuia(clienteId);
         // eslint-disable-next-line no-console
         console.info("[ChecklistGuiado] auto-open check", { clienteId, pendentes });
