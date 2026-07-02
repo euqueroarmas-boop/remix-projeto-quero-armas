@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     const { data: rpcRes, error: rpcErr } = await supabase.rpc(
       "qa_confirmar_pagamento_processo",
-      { p_processo_id: processo_id, p_origem: "manual_admin" },
+      { p_processo_id: processo_id, p_origem: "manual_admin", p_bypass_contrato_validado: false },
     );
     if (rpcErr) {
       console.error("[confirmar-pagamento] RPC erro:", rpcErr.message);

@@ -10231,16 +10231,14 @@ export type Database = {
         Returns: Json
       }
       qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
-      qa_confirmar_pagamento_processo:
-        | { Args: { p_origem?: string; p_processo_id: string }; Returns: Json }
-        | {
-            Args: {
-              p_bypass_contrato_validado?: boolean
-              p_origem?: string
-              p_processo_id: string
-            }
-            Returns: Json
-          }
+      qa_confirmar_pagamento_processo: {
+        Args: {
+          p_bypass_contrato_validado?: boolean
+          p_origem?: string
+          p_processo_id: string
+        }
+        Returns: Json
+      }
       qa_create_processo_from_venda: {
         Args: { p_servico_id: number; p_venda_id: number }
         Returns: Json
