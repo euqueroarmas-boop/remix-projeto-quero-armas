@@ -333,7 +333,7 @@ function FeaturedContractCard({ contract, onAssinar }: { contract: Contract; onA
             <button
               type="button"
               onClick={onAssinar}
-              className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all duration-200"
             >
               <Download className="h-3 w-3" /> BAIXAR CONTRATO
             </button>
