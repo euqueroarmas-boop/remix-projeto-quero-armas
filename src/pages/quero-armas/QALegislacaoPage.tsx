@@ -50,11 +50,30 @@ export default function QALegislacaoPage() {
   const handleSave = async () => {
     if (!form.titulo_norma) { toast.error("Título é obrigatório"); return; }
     setSaving(true);
+    const numero = form.numero_norma?.trim() || null;
+    const ano = form.ano_norma ? parseInt(form.ano_norma) : null;
+
+    // Validação amigável: bloqueia duplicata antes de tentar inserir
+    if (numero && ano) {
+      const { data: existente } = await supabase
+        .from("qa_fontes_normativas" as any)
+        .select("id,titulo_norma")
+        .eq("tipo_norma", form.tipo_norma)
+        .eq("numero_norma", numero)
+        .eq("ano_norma", ano)
+        .maybeSingle();
+      if (existente) {
+        setSaving(false);
+        toast.error(`Esta norma já está cadastrada: ${(existente as any).titulo_norma}`);
+        return;
+      }
+    }
+
     const { error } = await supabase.from("qa_fontes_normativas" as any).insert({
       titulo_norma: form.titulo_norma,
       tipo_norma: form.tipo_norma,
-      numero_norma: form.numero_norma || null,
-      ano_norma: form.ano_norma ? parseInt(form.ano_norma) : null,
+      numero_norma: numero,
+      ano_norma: ano,
       orgao_emissor: form.orgao_emissor || null,
       ementa: form.ementa || null,
       texto_integral: form.texto_integral || null,
@@ -62,7 +81,14 @@ export default function QALegislacaoPage() {
       origem: "cadastro_manual",
     });
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      if ((error as any).code === "23505") {
+        toast.error("Esta norma (tipo + número + ano) já está cadastrada.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     toast.success("Norma cadastrada");
     setOpen(false);
     setForm({ titulo_norma: "", tipo_norma: "lei", numero_norma: "", ano_norma: "", orgao_emissor: "", ementa: "", texto_integral: "", palavras_chave: "" });
