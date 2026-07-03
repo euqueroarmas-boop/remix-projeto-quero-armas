@@ -412,10 +412,10 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
         if (docsRes.error) throw docsRes.error;
         if (catalogoRes.error) throw catalogoRes.error;
 
-        setArmas((armasRes.data as ClienteArma[]) ?? []);
-        setCrafsDb((crafsRes.data as Craf[]) ?? []);
-        setDocs((docsRes.data as DocumentoArma[]) ?? []);
-        setCatalogo((catalogoRes.data as CatalogoArma[]) ?? []);
+        setArmas((armasRes.data as unknown as ClienteArma[]) ?? []);
+        setCrafsDb((crafsRes.data as unknown as Craf[]) ?? []);
+        setDocs((docsRes.data as unknown as DocumentoArma[]) ?? []);
+        setCatalogo((catalogoRes.data as unknown as CatalogoArma[]) ?? []);
       } catch (e: any) {
         if (alive) setErro(e?.message || "Nao foi possivel carregar armas e munições.");
       } finally {
