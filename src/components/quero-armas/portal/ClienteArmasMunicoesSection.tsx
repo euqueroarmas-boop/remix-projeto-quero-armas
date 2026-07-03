@@ -281,7 +281,7 @@ function StatBar({ label, value, icon: Icon }: { label: string; value: number | 
   return (
     <div className="border border-slate-200 bg-white p-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-700">
+        <div className="qa-av-label flex items-center gap-2 text-slate-700">
           <Icon className="h-3.5 w-3.5 text-slate-950" /> {label}
         </div>
         <span className="font-mono text-[12px] font-bold text-slate-900">{safe || "—"}</span>
