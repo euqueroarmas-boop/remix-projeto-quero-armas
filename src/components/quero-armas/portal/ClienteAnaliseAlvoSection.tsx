@@ -4,7 +4,7 @@ const legalBase = "Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN
 
 export default function ClienteAnaliseAlvoSection() {
   return (
-    <section className="flex h-[calc(100vh-150px)] max-h-[760px] min-h-0 flex-col gap-3 overflow-hidden">
+    <section className="flex h-[calc(100vh-132px)] max-h-[820px] min-h-0 flex-col gap-3 overflow-hidden">
       <div className="shrink-0">
         <div className="text-[14px] font-black uppercase tracking-[0.18em] text-slate-950 md:text-[20px]">
           Análise de Alvo
@@ -20,8 +20,8 @@ export default function ClienteAnaliseAlvoSection() {
 
       <div className="min-h-0 flex-1 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
         <div className="grid h-full min-h-0 lg:grid-cols-[1fr_1fr]">
-          <div className="relative flex min-h-0 items-center justify-center border-b border-slate-200 bg-white p-5 lg:border-b-0 lg:border-r">
-            <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-[#8A0F1D]/30 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A0F1D]">
+          <div className="relative flex min-h-0 items-center justify-center border-b border-slate-200 bg-white p-7 lg:border-b-0 lg:border-r">
+            <div className="absolute left-7 top-7 inline-flex items-center gap-2 rounded-full border border-[#8A0F1D]/30 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A0F1D]">
               <Lock className="h-4 w-4" />
               Arsenal Inteligente Premium
             </div>
@@ -40,13 +40,13 @@ export default function ClienteAnaliseAlvoSection() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col justify-center overflow-hidden p-5 md:p-7">
+          <div className="flex min-h-0 flex-col justify-center overflow-hidden px-7 py-8 md:px-9 md:py-9">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">
               <Sparkles className="h-4 w-4" />
               Em construção
             </div>
 
-            <h2 className="mt-4 max-w-xl text-2xl font-black leading-tight text-slate-950 md:text-[32px]">
+            <h2 className="mt-4 max-w-xl text-2xl font-black leading-tight text-slate-950 md:text-[30px]">
               Você vai saber exatamente o que melhorar no próximo treino.
             </h2>
 
@@ -62,15 +62,17 @@ export default function ClienteAnaliseAlvoSection() {
                 { icon: Zap, title: "Evolução", text: "Compara treinos e mede ganho real de precisão." },
                 { icon: BadgeCheck, title: "Instrução Premium", text: "Conteúdo treinado por instrutor CTT/CBC e por quem sabe dar aula." },
               ].map((item) => (
-                <div key={item.title} className="border border-slate-200 bg-slate-50 p-3">
-                  <item.icon className="h-4 w-4 text-slate-950" />
-                  <div className="mt-2 text-[11px] font-black uppercase tracking-[0.14em] text-slate-950">{item.title}</div>
-                  <p className="mt-1 text-[12px] leading-4 text-slate-600">{item.text}</p>
+                <div key={item.title} className="grid min-h-[74px] grid-cols-[18px_1fr] gap-x-3 border border-slate-200 bg-slate-50 p-3">
+                  <item.icon className="mt-0.5 h-4 w-4 text-slate-950" />
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-950">{item.title}</div>
+                    <p className="mt-1 text-[12px] leading-4 text-slate-600">{item.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 border border-[#8A0F1D]/20 bg-white p-4">
+            <div className="mt-6 border border-[#8A0F1D]/20 bg-white p-4">
               <div className="text-[11px] font-black uppercase tracking-[0.16em] text-[#8A0F1D]">
                 Para membros pagantes
               </div>
