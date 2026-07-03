@@ -113,23 +113,26 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
     // 2) Registra em segundo plano (sem bloquear o clique).
     setEscalating(true);
-    supabase
-      .from("qa_central_ajuda_perguntas" as any)
-      .insert({
-        cliente_id: cliente.id,
-        pergunta: aiQuery,
-        resposta_ia: aiAnswer || null,
-        artigos_relacionados: aiHits.map((h) => ({ id: h.id, title: h.title })),
-        status: "escalada_whatsapp",
-      })
-      .then(({ error }) => {
+    (async () => {
+      try {
+        const { error } = await supabase
+          .from("qa_central_ajuda_perguntas" as any)
+          .insert({
+            cliente_id: cliente.id,
+            pergunta: aiQuery,
+            resposta_ia: aiAnswer || null,
+            artigos_relacionados: aiHits.map((h) => ({ id: h.id, title: h.title })),
+            status: "escalada_whatsapp",
+          });
         if (error) {
           toast.error("Abrimos o WhatsApp, mas não foi possível registrar o histórico.");
         } else {
           toast.success("Sua pergunta foi registrada. Continue a conversa no WhatsApp que abrimos.");
         }
-      })
-      .finally(() => setEscalating(false));
+      } finally {
+        setEscalating(false);
+      }
+    })();
   }
 
   if (selected) {
