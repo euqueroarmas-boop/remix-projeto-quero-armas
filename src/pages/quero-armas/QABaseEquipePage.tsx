@@ -917,7 +917,7 @@ export default function QABaseEquipePage() {
     if (!editing) return null;
     return (
       <Dialog open={!!editing} onOpenChange={() => !saving && setEditing(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="qa-scope max-w-3xl max-h-[85vh] overflow-y-auto bg-white text-slate-900">
           <DialogHeader>
             <DialogTitle className="uppercase">{editing.id ? "Editar artigo" : "Novo artigo"}</DialogTitle>
           </DialogHeader>
@@ -1235,7 +1235,7 @@ export default function QABaseEquipePage() {
       {renderEditor()}
 
       <Dialog open={showLogs} onOpenChange={setShowLogs}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="qa-scope max-w-3xl max-h-[85vh] overflow-y-auto bg-white text-slate-900">
           <DialogHeader>
             <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
               <ScrollText className="h-4 w-4" /> Logs de geração de vetores
@@ -1286,7 +1286,7 @@ export default function QABaseEquipePage() {
       </Dialog>
 
       <Dialog open={reviewOpen} onOpenChange={(o) => !reviewSubmitting && setReviewOpen(o)}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="qa-scope max-w-md max-h-[85vh] overflow-y-auto bg-white text-slate-900">
           <DialogHeader>
             <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
               <ThumbsDown className="h-4 w-4 text-red-600" /> Reprovar e refazer com IA
