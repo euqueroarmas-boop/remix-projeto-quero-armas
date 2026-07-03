@@ -281,7 +281,7 @@ function StatBar({ label, value, icon: Icon }: { label: string; value: number | 
   return (
     <div className="border border-slate-200 bg-white p-3">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-700">
+        <div className="qa-av-label flex items-center gap-2 text-slate-700">
           <Icon className="h-3.5 w-3.5 text-slate-950" /> {label}
         </div>
         <span className="font-mono text-[12px] font-bold text-slate-900">{safe || "—"}</span>
@@ -298,7 +298,7 @@ function TabChip({ children, active = false, onClick }: { children: string; acti
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-2.5 text-[9px] font-black uppercase tracking-[0.12em] ${
+      className={`qa-av-chip inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-2.5 ${
         active
           ? "border-slate-950 bg-slate-950 text-white"
           : "border-slate-300 bg-white text-slate-950"
@@ -312,8 +312,8 @@ function TabChip({ children, active = false, onClick }: { children: string; acti
 function FieldBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-slate-200 bg-slate-50 px-3 py-3">
-      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      <div className="mt-1 break-words text-[13px] font-black leading-snug text-slate-950">{value}</div>
+      <div className="qa-av-field-label">{label}</div>
+      <div className="mt-1 break-words qa-av-field-value">{value}</div>
     </div>
   );
 }
@@ -656,20 +656,28 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   }
 
   return (
-    <section className="space-y-5">
+    <section className="qa-arsenal-view space-y-5">
       <style>{`
         @keyframes qa-tab-timer {
           from { transform: scaleX(0); }
           to { transform: scaleX(1); }
         }
+        .qa-arsenal-view { font-family: 'Arial Narrow', Arial, sans-serif; letter-spacing: .02em; }
+        .qa-arsenal-view h1, .qa-arsenal-view .qa-av-h1 { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-label { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 11px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-num { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 28px; line-height: .82; font-weight: 900; letter-spacing: 0; }
+        .qa-arsenal-view .qa-av-body { font-family: 'Arial Narrow', Arial, sans-serif; letter-spacing: 0; text-transform: none; }
+        .qa-arsenal-view .qa-av-chip { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-field-label { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: #6A6A6A; }
+        .qa-arsenal-view .qa-av-field-value { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 13px; font-weight: 900; line-height: 1.22; letter-spacing: 0; text-transform: none; color: #111111; }
       `}</style>
       <div>
         <div>
-          <div className="text-[14px] font-black uppercase tracking-[0.18em] text-slate-950 md:text-[20px]">
+          <div className="qa-av-label text-slate-950 md:text-[14px]">
             Armas e Munições
           </div>
-          <h1 className="mt-1 text-[36px] font-black leading-none text-slate-950 md:text-[46px]">{selected.titulo}</h1>
-          <p className="mt-2 max-w-none text-sm text-slate-600 md:whitespace-nowrap">
+          <h1 className="qa-av-h1 mt-1 text-[36px] font-black leading-none text-slate-950 md:text-[46px]">{selected.titulo}</h1>
+          <p className="qa-av-body mt-2 max-w-none text-sm text-slate-600 md:whitespace-nowrap">
             Dados do CRAF, Hub de Documentos, catálogo técnico e fabricante, quando disponível.
           </p>
         </div>
@@ -708,7 +716,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               )}
             </div>
 
-            <div className="absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+            <div className="qa-av-label absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-950">
               {selected.tipo}
             </div>
 
@@ -776,7 +784,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "resumo" && (
             <div className="mt-6 space-y-5">
               <div className="border-b border-slate-200 pb-4">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Dossie do armamento</div>
+                <div className="qa-av-label text-slate-950">Dossie do armamento</div>
                 <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
                   Visão consolidada da arma encontrada no Hub de Documentos, cruzando documento anexado,
                   catalogo tecnico e fonte do fabricante quando houver correspondencia.
@@ -798,7 +806,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "ficha" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Identificação comercial</div>
+                <div className="qa-av-label text-slate-950">Identificação comercial</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Fabricante" value={selected.marca} />
                   <FieldBox label="Modelo" value={selected.modelo} />
@@ -807,7 +815,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Classificação do catalogo</div>
+                <div className="qa-av-label text-slate-950">Classificação do catalogo</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Apelido" value={selected.catalogo?.apelido || "Nao informado"} />
                   <FieldBox label="Origem" value={selected.catalogo?.origem || "Nao informado"} />
@@ -821,7 +829,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "tecnica" && (
             <div className="mt-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
+                <div className="qa-av-label text-slate-950">
                   Dados técnicos
                 </div>
                 <CarouselControls
@@ -860,7 +868,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "municoes" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Munições compatíveis</div>
+                <div className="qa-av-label text-slate-950">Munições compatíveis</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {municoes.map((m) => (
                     <span key={m} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[12px] font-black text-slate-950">
@@ -881,7 +889,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "craf" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Registro documental</div>
+                <div className="qa-av-label text-slate-950">Registro documental</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Numero de serie" value={selected.numeroSerie || "Nao informado"} />
                   <FieldBox label="CRAF" value={selected.numeroCraf || "Nao informado"} />
@@ -892,7 +900,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Origem do dossie</div>
+                <div className="qa-av-label text-slate-950">Origem do dossie</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Fonte principal" value={selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"} />
                   <FieldBox label="Arquivo" value={selected.fonteDocumento || "Hub de Documentos"} />
