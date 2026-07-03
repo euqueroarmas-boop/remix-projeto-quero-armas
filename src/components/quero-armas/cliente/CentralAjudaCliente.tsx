@@ -92,37 +92,44 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     } finally { setAiLoading(false); }
   }
 
-  async function escalarParaEquipe() {
+  function escalarParaEquipe() {
     if (!cliente) {
       toast.error("Faça login novamente para falar com a equipe.");
       return;
     }
     if (!aiQuery.trim()) return;
+
+    // 1) Monta URL e abre o WhatsApp SÍNCRONO (dentro do gesto do clique)
+    //    para não ser bloqueado por popup blocker.
+    const cpfPart = cliente.cpf ? `, CPF ${cliente.cpf}` : "";
+    const respostaPart = aiAnswer ? `A resposta que recebi foi:\n${aiAnswer}\n\n` : "";
+    const texto =
+      `Olá! Sou ${cliente.nome_completo}${cpfPart}.\n\n` +
+      `Perguntei na Central de Ajuda: "${aiQuery}"\n\n` +
+      respostaPart +
+      `Isso não resolveu minha dúvida, pode me ajudar?`;
+    const url = `https://wa.me/5511978481919?text=${encodeURIComponent(texto)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+
+    // 2) Registra em segundo plano (sem bloquear o clique).
     setEscalating(true);
-    try {
-      await supabase.from("qa_central_ajuda_perguntas" as any).insert({
+    supabase
+      .from("qa_central_ajuda_perguntas" as any)
+      .insert({
         cliente_id: cliente.id,
         pergunta: aiQuery,
         resposta_ia: aiAnswer || null,
         artigos_relacionados: aiHits.map((h) => ({ id: h.id, title: h.title })),
         status: "escalada_whatsapp",
-      });
-
-      const cpfPart = cliente.cpf ? `, CPF ${cliente.cpf}` : "";
-      const respostaPart = aiAnswer ? `A resposta que recebi foi:\n${aiAnswer}\n\n` : "";
-      const texto =
-        `Olá! Sou ${cliente.nome_completo}${cpfPart}.\n\n` +
-        `Perguntei na Central de Ajuda: "${aiQuery}"\n\n` +
-        respostaPart +
-        `Isso não resolveu minha dúvida, pode me ajudar?`;
-      const url = `https://wa.me/5511978481919?text=${encodeURIComponent(texto)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      toast.success("Sua pergunta foi registrada. Continue a conversa no WhatsApp que abrimos.");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Não foi possível registrar sua pergunta.");
-    } finally {
-      setEscalating(false);
-    }
+      })
+      .then(({ error }) => {
+        if (error) {
+          toast.error("Abrimos o WhatsApp, mas não foi possível registrar o histórico.");
+        } else {
+          toast.success("Sua pergunta foi registrada. Continue a conversa no WhatsApp que abrimos.");
+        }
+      })
+      .finally(() => setEscalating(false));
   }
 
   if (selected) {
