@@ -433,7 +433,7 @@ function NovoTemplateModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="qa-scope max-w-md bg-white text-slate-900 border-slate-200">
         <DialogHeader>
           <DialogTitle className="uppercase">Novo template</DialogTitle>
           <DialogDescription className="text-xs">
@@ -521,7 +521,7 @@ function SubstituirTemplateModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="qa-scope max-w-md bg-white text-slate-900 border-slate-200">
         <DialogHeader>
           <DialogTitle className="uppercase">Substituir template</DialogTitle>
           <DialogDescription className="text-xs font-mono">{row.template_key}.docx</DialogDescription>
@@ -580,7 +580,7 @@ function ExcluirTemplateModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="qa-scope max-w-md bg-white text-slate-900 border-slate-200">
         <DialogHeader>
           <DialogTitle className="uppercase">Excluir template</DialogTitle>
           <DialogDescription className="text-xs font-mono">{row.template_key}.docx</DialogDescription>
@@ -728,7 +728,7 @@ function VisualizarTemplateModal({
 
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+      <DialogContent className="qa-scope max-w-3xl max-h-[90vh] p-0 overflow-hidden flex flex-col bg-white text-slate-900 border-slate-200">
         {/* Cabeçalho */}
         <div className="px-5 py-4 border-b flex items-start justify-between gap-3" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <div className="min-w-0">
