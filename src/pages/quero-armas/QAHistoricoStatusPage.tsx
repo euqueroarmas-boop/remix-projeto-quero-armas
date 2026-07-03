@@ -351,7 +351,7 @@ export default function QAHistoricoStatusPage() {
 
       {/* Linhas expandidas: mostradas via dialog para reaproveitar UI */}
       <Dialog open={!!detailJson} onOpenChange={(o) => !o && setDetailJson(null)}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogContent className="qa-scope max-w-md max-h-[85vh] overflow-y-auto bg-white text-slate-900 border-slate-200">
           <DialogHeader>
             <DialogTitle className="text-sm uppercase tracking-wider">Detalhes do evento</DialogTitle>
           </DialogHeader>
