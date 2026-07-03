@@ -3451,6 +3451,36 @@ export type Database = {
           },
         ]
       }
+      qa_central_ajuda_perguntas: {
+        Row: {
+          artigos_relacionados: Json | null
+          cliente_id: number
+          created_at: string
+          id: string
+          pergunta: string
+          resposta_ia: string | null
+          status: string
+        }
+        Insert: {
+          artigos_relacionados?: Json | null
+          cliente_id: number
+          created_at?: string
+          id?: string
+          pergunta: string
+          resposta_ia?: string | null
+          status?: string
+        }
+        Update: {
+          artigos_relacionados?: Json | null
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          pergunta?: string
+          resposta_ia?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       qa_chunks_conhecimento: {
         Row: {
           created_at: string

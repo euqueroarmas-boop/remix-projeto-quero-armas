@@ -2243,7 +2243,7 @@ export default function QAClientePortalPage() {
 
         {activeSection === "mensagens" && (
           <SectionCard icon={MessageCircle} title="Mensagens" color="hsl(35 92% 48%)">
-            <CentralAjudaCliente />
+            <CentralAjudaCliente cliente={cliente as any} />
           </SectionCard>
         )}
 

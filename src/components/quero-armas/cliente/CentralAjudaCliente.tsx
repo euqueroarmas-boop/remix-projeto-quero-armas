@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Search, HelpCircle, ArrowLeft, Sparkles } from "lucide-react";
+import { Loader2, Search, HelpCircle, ArrowLeft, Sparkles, MessageCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -12,7 +12,11 @@ type Article = {
   module: string | null; body: string;
 };
 
-export function CentralAjudaCliente() {
+interface CentralAjudaClienteProps {
+  cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
+}
+
+export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Article | null>(null);
@@ -21,6 +25,7 @@ export function CentralAjudaCliente() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAnswer, setAiAnswer] = useState("");
   const [aiHits, setAiHits] = useState<Array<{ id: string; title: string; category: string }>>([]);
+  const [escalating, setEscalating] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -85,6 +90,39 @@ export function CentralAjudaCliente() {
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao buscar");
     } finally { setAiLoading(false); }
+  }
+
+  async function escalarParaEquipe() {
+    if (!cliente) {
+      toast.error("Faça login novamente para falar com a equipe.");
+      return;
+    }
+    if (!aiQuery.trim()) return;
+    setEscalating(true);
+    try {
+      await supabase.from("qa_central_ajuda_perguntas" as any).insert({
+        cliente_id: cliente.id,
+        pergunta: aiQuery,
+        resposta_ia: aiAnswer || null,
+        artigos_relacionados: aiHits.map((h) => ({ id: h.id, title: h.title })),
+        status: "escalada_whatsapp",
+      });
+
+      const cpfPart = cliente.cpf ? `, CPF ${cliente.cpf}` : "";
+      const respostaPart = aiAnswer ? `A resposta que recebi foi:\n${aiAnswer}\n\n` : "";
+      const texto =
+        `Olá! Sou ${cliente.nome_completo}${cpfPart}.\n\n` +
+        `Perguntei na Central de Ajuda: "${aiQuery}"\n\n` +
+        respostaPart +
+        `Isso não resolveu minha dúvida, pode me ajudar?`;
+      const url = `https://wa.me/5511978481919?text=${encodeURIComponent(texto)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast.success("Sua pergunta foi registrada. Continue a conversa no WhatsApp que abrimos.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Não foi possível registrar sua pergunta.");
+    } finally {
+      setEscalating(false);
+    }
   }
 
   if (selected) {
@@ -165,6 +203,24 @@ export function CentralAjudaCliente() {
                   </Button>
                 );
               })}
+            </div>
+          )}
+          {aiAnswer && (
+            <div className="pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={escalarParaEquipe}
+                disabled={escalating}
+                className="border-amber-200 text-amber-700 hover:bg-amber-50"
+              >
+                {escalating ? (
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-4 w-4 mr-1.5" />
+                )}
+                Não resolveu? Falar com a equipe
+              </Button>
             </div>
           )}
         </CardContent>
