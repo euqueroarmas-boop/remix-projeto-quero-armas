@@ -298,7 +298,7 @@ function TabChip({ children, active = false, onClick }: { children: string; acti
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-2.5 text-[9px] font-black uppercase tracking-[0.12em] ${
+      className={`qa-av-chip inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-2.5 ${
         active
           ? "border-slate-950 bg-slate-950 text-white"
           : "border-slate-300 bg-white text-slate-950"
