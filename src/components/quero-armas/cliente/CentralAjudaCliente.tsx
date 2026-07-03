@@ -12,6 +12,14 @@ type Article = {
   module: string | null; body: string;
 };
 
+type AiHit = {
+  id: string;
+  title: string;
+  category: string;
+  type?: "article" | "legislation";
+  body?: string;
+};
+
 interface CentralAjudaClienteProps {
   cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
 }
@@ -24,7 +32,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   const [aiQuery, setAiQuery] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAnswer, setAiAnswer] = useState("");
-  const [aiHits, setAiHits] = useState<Array<{ id: string; title: string; category: string }>>([]);
+  const [aiHits, setAiHits] = useState<AiHit[]>([]);
   const [escalating, setEscalating] = useState(false);
 
   useEffect(() => {
@@ -208,7 +216,19 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                 const a = articles.find((x) => x.id === h.id);
                 return (
                   <Button key={h.id} size="sm" variant="outline" className="text-xs"
-                    onClick={() => a && setSelected(a)}>
+                    onClick={() => {
+                      if (a) return setSelected(a);
+                      if (h.type === "legislation" && h.body) {
+                        setSelected({
+                          id: h.id,
+                          title: h.title,
+                          slug: h.id,
+                          category: h.category || "Legislação",
+                          module: "legislacao",
+                          body: h.body,
+                        });
+                      }
+                    }}>
                     {h.title}
                   </Button>
                 );
