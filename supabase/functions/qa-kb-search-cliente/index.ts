@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
                 title: n.titulo_norma,
                 category: "Legislação",
                 type: "legislation",
-                body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 4000)}`,
+                body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 1000000)}`,
               })),
             ],
           }),
@@ -264,7 +264,7 @@ Deno.serve(async (req) => {
       .slice(0, 5)
       .map(
         (n, i) =>
-          `### Base legal ${i + 1}: ${n.titulo_norma}\nReferência: ${buildNormReference(n)}\nÓrgão: ${n.orgao_emissor || "não informado"}\nEmenta: ${n.ementa || "não informada"}\nTexto: ${(n.texto_integral || "").substring(0, 4500)}`,
+          `### Base legal ${i + 1}: ${n.titulo_norma}\nReferência: ${buildNormReference(n)}\nÓrgão: ${n.orgao_emissor || "não informado"}\nEmenta: ${n.ementa || "não informada"}\nTexto: ${(n.texto_integral || "").substring(0, 1000000)}`,
       )
       .join("\n\n---\n\n");
 
@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
             title: n.titulo_norma,
             category: "Legislação",
             type: "legislation",
-            body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 4000)}`,
+            body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 1000000)}`,
           })),
         ],
       }),
