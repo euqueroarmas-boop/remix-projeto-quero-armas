@@ -656,12 +656,20 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   }
 
   return (
-    <section className="space-y-5">
+    <section className="qa-arsenal-view space-y-5">
       <style>{`
         @keyframes qa-tab-timer {
           from { transform: scaleX(0); }
           to { transform: scaleX(1); }
         }
+        .qa-arsenal-view { font-family: 'Arial Narrow', Arial, sans-serif; letter-spacing: .02em; }
+        .qa-arsenal-view h1, .qa-arsenal-view .qa-av-h1 { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-label { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 11px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-num { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 28px; line-height: .82; font-weight: 900; letter-spacing: 0; }
+        .qa-arsenal-view .qa-av-body { font-family: 'Arial Narrow', Arial, sans-serif; letter-spacing: 0; text-transform: none; }
+        .qa-arsenal-view .qa-av-chip { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 9px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+        .qa-arsenal-view .qa-av-field-label { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: #6A6A6A; }
+        .qa-arsenal-view .qa-av-field-value { font-family: Oswald, 'Arial Narrow', Arial, sans-serif; font-size: 13px; font-weight: 900; line-height: 1.22; letter-spacing: 0; text-transform: none; color: #111111; }
       `}</style>
       <div>
         <div>
