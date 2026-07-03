@@ -784,7 +784,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "resumo" && (
             <div className="mt-6 space-y-5">
               <div className="border-b border-slate-200 pb-4">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Dossie do armamento</div>
+                <div className="qa-av-label text-slate-950">Dossie do armamento</div>
                 <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
                   Visão consolidada da arma encontrada no Hub de Documentos, cruzando documento anexado,
                   catalogo tecnico e fonte do fabricante quando houver correspondencia.
@@ -806,7 +806,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "ficha" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Identificação comercial</div>
+                <div className="qa-av-label text-slate-950">Identificação comercial</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Fabricante" value={selected.marca} />
                   <FieldBox label="Modelo" value={selected.modelo} />
@@ -815,7 +815,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Classificação do catalogo</div>
+                <div className="qa-av-label text-slate-950">Classificação do catalogo</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Apelido" value={selected.catalogo?.apelido || "Nao informado"} />
                   <FieldBox label="Origem" value={selected.catalogo?.origem || "Nao informado"} />
@@ -829,7 +829,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "tecnica" && (
             <div className="mt-6">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">
+                <div className="qa-av-label text-slate-950">
                   Dados técnicos
                 </div>
                 <CarouselControls
@@ -868,7 +868,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "municoes" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Munições compatíveis</div>
+                <div className="qa-av-label text-slate-950">Munições compatíveis</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {municoes.map((m) => (
                     <span key={m} className="rounded-full border border-slate-300 bg-white px-3 py-1 text-[12px] font-black text-slate-950">
@@ -889,7 +889,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           {activeTab === "craf" && (
             <div className="mt-6 space-y-5">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Registro documental</div>
+                <div className="qa-av-label text-slate-950">Registro documental</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Numero de serie" value={selected.numeroSerie || "Nao informado"} />
                   <FieldBox label="CRAF" value={selected.numeroCraf || "Nao informado"} />
@@ -900,7 +900,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
                 </div>
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-[0.22em] text-slate-950">Origem do dossie</div>
+                <div className="qa-av-label text-slate-950">Origem do dossie</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldBox label="Fonte principal" value={selected.origem === "craf" ? "CRAF" : selected.origem === "manual" ? "Manual" : "Documento"} />
                   <FieldBox label="Arquivo" value={selected.fonteDocumento || "Hub de Documentos"} />
