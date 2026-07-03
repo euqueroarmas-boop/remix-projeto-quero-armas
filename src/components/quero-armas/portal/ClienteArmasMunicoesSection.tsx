@@ -312,8 +312,8 @@ function TabChip({ children, active = false, onClick }: { children: string; acti
 function FieldBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-slate-200 bg-slate-50 px-3 py-3">
-      <div className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      <div className="mt-1 break-words text-[13px] font-black leading-snug text-slate-950">{value}</div>
+      <div className="qa-av-field-label">{label}</div>
+      <div className="mt-1 break-words qa-av-field-value">{value}</div>
     </div>
   );
 }
