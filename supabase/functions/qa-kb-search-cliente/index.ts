@@ -5,6 +5,63 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const STOPWORDS = new Set([
+  "para", "com", "uma", "umas", "uns", "das", "dos", "por", "que", "sobre", "tema", "qual", "quais",
+  "de", "da", "do", "no", "na", "nos", "nas", "e", "o", "a", "os", "as", "em", "ao", "aos",
+]);
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function queryTokens(query: string): string[] {
+  return Array.from(new Set(
+    normalizeText(query)
+      .split(" ")
+      .filter((token) => token.length >= 3 && !STOPWORDS.has(token)),
+  ));
+}
+
+function buildNormReference(n: any): string {
+  const tipo = String(n.tipo_norma ?? "norma").replace(/_/g, " ");
+  const numero = n.numero_norma ? ` nº ${n.numero_norma}` : "";
+  const ano = n.ano_norma ? `/${n.ano_norma}` : "";
+  return `${tipo}${numero}${ano}`.trim();
+}
+
+function scoreNorma(n: any, query: string, tokens: string[]): number {
+  const q = normalizeText(query);
+  const numeroQuery = q.replace(/\D/g, "");
+  const numeroNorma = normalizeText(`${n.numero_norma ?? ""}${n.ano_norma ?? ""}`).replace(/\D/g, "");
+  const title = normalizeText(`${n.titulo_norma ?? ""} ${buildNormReference(n)}`);
+  const ementa = normalizeText(n.ementa);
+  const texto = normalizeText(n.texto_integral);
+  const keywords = normalizeText(Array.isArray(n.palavras_chave) ? n.palavras_chave.join(" ") : n.palavras_chave);
+
+  let score = 0;
+  if (numeroQuery.length >= 4 && numeroNorma && numeroQuery.includes(numeroNorma.slice(0, Math.min(numeroNorma.length, 5)))) score += 8;
+  if (title.includes(q)) score += 8;
+  if (ementa.includes(q)) score += 6;
+  if (texto.includes(q)) score += 4;
+  if (keywords.includes(q)) score += 7;
+
+  for (const token of tokens) {
+    if (title.includes(token)) score += 4;
+    if (keywords.includes(token)) score += 4;
+    if (ementa.includes(token)) score += 2;
+    if (texto.includes(token)) score += 1;
+  }
+
+  if (n.revisada_humanamente) score += 1;
+  return score;
+}
+
 /**
  * Busca da Base Operacional do CLIENTE.
  * Sempre força audience='cliente' e status='published' via qa_kb_search_hybrid.
@@ -65,7 +122,22 @@ Deno.serve(async (req) => {
     if (error) throw error;
 
     const articles = (hits ?? []) as Array<any>;
-    if (articles.length === 0) {
+
+    const tokens = queryTokens(query);
+    const { data: normas, error: normasError } = await supabase
+      .from("qa_fontes_normativas")
+      .select("id,titulo_norma,tipo_norma,numero_norma,ano_norma,orgao_emissor,ementa,texto_integral,palavras_chave,revisada_humanamente")
+      .eq("ativa", true)
+      .limit(250);
+    if (normasError) throw normasError;
+
+    const legalSources = ((normas ?? []) as Array<any>)
+      .map((n) => ({ ...n, score: scoreNorma(n, query, tokens) }))
+      .filter((n) => n.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.max(3, Math.min(Number(limit) || 5, 6)));
+
+    if (articles.length === 0 && legalSources.length === 0) {
       return new Response(JSON.stringify({
         answer: "Não encontrei essa informação na nossa central de ajuda. Se precisar, entre em contato com a equipe Quero Armas pelo WhatsApp.",
         articles: [],
@@ -73,15 +145,43 @@ Deno.serve(async (req) => {
     }
 
     if (!KEY) {
+      if (legalSources.length > 0) {
+        const answer = [
+          "Encontrei referência na base legal cadastrada:",
+          ...legalSources.slice(0, 3).map((n, i) => `${i + 1}. **${n.titulo_norma}** — ${n.ementa || buildNormReference(n)}`),
+        ].join("\n");
+        return new Response(JSON.stringify({
+          answer,
+          articles: [
+            ...articles.map((a) => ({ id: a.id, title: a.title, category: a.category, type: "article" })),
+            ...legalSources.map((n) => ({
+              id: `norma:${n.id}`,
+              title: n.titulo_norma,
+              category: "Legislação",
+              type: "legislation",
+              body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 4000)}`,
+            })),
+          ],
+        }), { headers: { ...cors, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({
         answer: "Veja os artigos relacionados abaixo.",
         articles: articles.map((a) => ({ id: a.id, title: a.title, category: a.category })),
       }), { headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    const ctx = articles.slice(0, 3).map((a, i) =>
+    const ctxArticles = articles.slice(0, 3).map((a, i) =>
       `### Artigo ${i + 1}: ${a.title}\n${(a.body || "").substring(0, 3500)}`
     ).join("\n\n---\n\n");
+
+    const ctxLegislacao = legalSources.slice(0, 5).map((n, i) =>
+      `### Base legal ${i + 1}: ${n.titulo_norma}\nReferência: ${buildNormReference(n)}\nÓrgão: ${n.orgao_emissor || "não informado"}\nEmenta: ${n.ementa || "não informada"}\nTexto: ${(n.texto_integral || "").substring(0, 4500)}`
+    ).join("\n\n---\n\n");
+
+    const ctx = [
+      ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
+      ctxLegislacao ? `## Base legal cadastrada em Legislação\n${ctxLegislacao}` : "",
+    ].filter(Boolean).join("\n\n======\n\n");
 
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -89,8 +189,8 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "Você é o assistente da Central de Ajuda do Cliente Quero Armas. Responda em português, de forma simples, acolhedora e objetiva. Use SOMENTE as informações dos artigos fornecidos. NUNCA mencione termos internos como 'equipe', 'admin', 'banco de dados', 'edge function'. Se a resposta não estiver nos artigos, diga claramente que aquela informação não está na central de ajuda e oriente entrar em contato com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Passo a passo** (numerado quando aplicável)." },
-          { role: "user", content: `Dúvida do cliente: "${query}"\n\nArtigos da central de ajuda:\n\n${ctx}` },
+          { role: "system", content: "Você é o assistente da Central de Ajuda do Cliente Quero Armas. Responda em português, de forma simples, acolhedora e objetiva. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Pode citar normas da seção Legislação quando elas responderem ao tema. NUNCA mencione termos internos como 'admin', 'banco de dados', 'edge function' ou detalhes técnicos. Se a resposta não estiver nas fontes fornecidas, diga claramente que aquela informação não está na central de ajuda e oriente entrar em contato com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável." },
+          { role: "user", content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctx}` },
         ],
       }),
     });
@@ -105,7 +205,16 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       answer,
-      articles: articles.map((a) => ({ id: a.id, title: a.title, category: a.category })),
+      articles: [
+        ...articles.map((a) => ({ id: a.id, title: a.title, category: a.category, type: "article" })),
+        ...legalSources.map((n) => ({
+          id: `norma:${n.id}`,
+          title: n.titulo_norma,
+          category: "Legislação",
+          type: "legislation",
+          body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 4000)}`,
+        })),
+      ],
     }), { headers: { ...cors, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("qa-kb-search-cliente error", e);
