@@ -716,7 +716,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
               )}
             </div>
 
-            <div className="absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-slate-950">
+            <div className="qa-av-label absolute left-7 top-7 rounded-full border border-slate-300 bg-white px-4 py-2 text-slate-950">
               {selected.tipo}
             </div>
 
