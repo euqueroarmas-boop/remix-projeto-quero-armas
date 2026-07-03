@@ -1364,7 +1364,7 @@ export default function QAClientePortalPage() {
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
             aria-hidden
-            className="relative w-full h-[200px] overflow-hidden shrink-0"
+            className="relative w-full h-[160px] overflow-hidden shrink-0"
             style={
               sidebarTheme.heroEmpty
                 ? { background: "transparent" }
@@ -1404,8 +1404,8 @@ export default function QAClientePortalPage() {
                   aria-label="Atalhos rápidos da Quero Armas"
                   className={
                     (isHero
-                      ? "relative flex items-center px-4 pt-5 pb-4 gap-2.5"
-                      : `flex items-center px-4 py-6 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
+                      ? "relative flex items-center px-4 pt-3 pb-2.5 gap-2.5"
+                      : `flex items-center px-4 py-5 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
                     " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
                     (brandMenuOpen ? " translate-y-[3px]" : "")
                   }
@@ -1520,7 +1520,7 @@ export default function QAClientePortalPage() {
           </button>
         )}
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
@@ -1530,7 +1530,7 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2 text-[12px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-1.5 text-[12px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}00 100%)`,
                   borderLeftColor: sidebarTheme.accent,
@@ -1545,7 +1545,7 @@ export default function QAClientePortalPage() {
 
         {/* Rodapé: WhatsApp + Sair */}
         {effectiveCollapsed ? (
-          <div className="mb-3.5 pt-3.5 mx-2 border-t border-[#1a1a1a] flex flex-col items-center gap-2">
+          <div className="mb-2.5 pt-2.5 mx-2 border-t border-[#1a1a1a] flex flex-col items-center gap-1.5">
             <a
               href="https://wa.me/5511978481919"
               target="_blank"
@@ -1565,8 +1565,8 @@ export default function QAClientePortalPage() {
             </button>
           </div>
         ) : (
-          <div className="mx-3.5 mb-3.5 pt-3.5 border-t border-white/15">
-            <div className="mb-2">
+          <div className="mx-3.5 mb-2.5 pt-2.5 border-t border-white/15">
+            <div className="mb-1.5">
               <div
                 className="text-[12px] font-bold text-white"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
@@ -1584,7 +1584,7 @@ export default function QAClientePortalPage() {
               href="https://wa.me/5511978481919"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-2 rounded text-[11.5px] font-semibold transition"
+              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[11.5px] font-semibold transition"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               +55 11 97848-1919
@@ -1592,7 +1592,7 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-2 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-2 transition"
+              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
             >
               <LogOut className="h-3 w-3" /> Sair
             </button>
