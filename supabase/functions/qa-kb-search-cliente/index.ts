@@ -196,15 +196,10 @@ Deno.serve(async (req) => {
       .slice(0, Math.max(3, Math.min(Number(limit) || 5, 6)));
 
     // ══════════════════════════════════════════════════════════
-    // Busca vetorial em chunks — SOMENTE docs marcados como
-    // visíveis ao cliente (visivel_cliente = true).
-    // A RPC qa_busca_similar já garante:
-    //   papel_documento = 'aprendizado'
-    //   ativo_na_ia = true
-    //   status_validacao = 'validado'
-    //   status_processamento = 'concluido'
-    // Filtro adicional visivel_cliente é aplicado em TS pois a RPC
-    // não expõe esse campo (defesa em profundidade).
+    // Busca vetorial em chunks — a RPC qa_busca_similar já garante
+    // todos os filtros de segurança (papel_documento='aprendizado',
+    // ativo_na_ia=true, status_validacao='validado',
+    // status_processamento='concluido', visivel_cliente=true).
     // ══════════════════════════════════════════════════════════
     let chunkSources: Array<{
       texto: string;
@@ -215,30 +210,25 @@ Deno.serve(async (req) => {
     if (qemb) {
       try {
         const { data: vHits } = await supabase.rpc("qa_busca_similar", {
-          query_embedding: `[${qemb.join(",")}]`,
-          match_threshold: 0.55,
-          match_count: 12,
+          _query: query,
+          _qemb: qemb as any,
+          _limit: 12,
+          somente_visivel_cliente: true,
         });
         const hitList = (vHits ?? []) as Array<any>;
         if (hitList.length > 0) {
           const docIds = Array.from(new Set(hitList.map((h) => h.documento_id).filter(Boolean)));
           const { data: docsMeta } = await supabase
             .from("qa_documentos_conhecimento")
-            .select("id, titulo, visivel_cliente, ativo_na_ia, papel_documento, fonte_normativa_id")
+            .select("id, titulo, fonte_normativa_id")
             .in("id", docIds);
-          const allowed = new Map<string, any>();
+          const docMetaById = new Map<string, any>();
           for (const d of (docsMeta ?? []) as Array<any>) {
-            if (
-              d.visivel_cliente === true &&
-              d.ativo_na_ia === true &&
-              d.papel_documento === "aprendizado"
-            ) {
-              allowed.set(d.id, d);
-            }
+            docMetaById.set(d.id, d);
           }
           const normaIds = Array.from(
             new Set(
-              Array.from(allowed.values())
+              Array.from(docMetaById.values())
                 .map((d) => d.fonte_normativa_id)
                 .filter(Boolean),
             ),
@@ -254,10 +244,9 @@ Deno.serve(async (req) => {
             }
           }
           chunkSources = hitList
-            .filter((h) => allowed.has(h.documento_id))
             .slice(0, 6)
             .map((h) => {
-              const doc = allowed.get(h.documento_id);
+              const doc = docMetaById.get(h.documento_id);
               const normaTitle = doc?.fonte_normativa_id
                 ? normaTitleById.get(doc.fonte_normativa_id) ?? null
                 : null;
