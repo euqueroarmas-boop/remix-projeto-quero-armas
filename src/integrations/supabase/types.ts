@@ -3486,6 +3486,7 @@ export type Database = {
           created_at: string
           documento_id: string
           embedding_status: string
+          fonte_normativa_id: string | null
           id: string
           metadados_json: Json | null
           ordem_chunk: number
@@ -3496,6 +3497,7 @@ export type Database = {
           created_at?: string
           documento_id: string
           embedding_status?: string
+          fonte_normativa_id?: string | null
           id?: string
           metadados_json?: Json | null
           ordem_chunk?: number
@@ -3506,6 +3508,7 @@ export type Database = {
           created_at?: string
           documento_id?: string
           embedding_status?: string
+          fonte_normativa_id?: string | null
           id?: string
           metadados_json?: Json | null
           ordem_chunk?: number
@@ -3525,6 +3528,13 @@ export type Database = {
             columns: ["documento_id"]
             isOneToOne: false
             referencedRelation: "qa_documentos_conhecimento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_chunks_conhecimento_fonte_normativa_id_fkey"
+            columns: ["fonte_normativa_id"]
+            isOneToOne: false
+            referencedRelation: "qa_fontes_normativas"
             referencedColumns: ["id"]
           },
         ]
@@ -5370,6 +5380,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           enviado_por: string | null
+          fonte_normativa_id: string | null
           hash_arquivo: string | null
           id: string
           metadados_json: Json | null
@@ -5390,6 +5401,7 @@ export type Database = {
           titulo: string
           updated_at: string
           url_origem: string | null
+          visivel_cliente: boolean
         }
         Insert: {
           ativo?: boolean
@@ -5399,6 +5411,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           enviado_por?: string | null
+          fonte_normativa_id?: string | null
           hash_arquivo?: string | null
           id?: string
           metadados_json?: Json | null
@@ -5419,6 +5432,7 @@ export type Database = {
           titulo: string
           updated_at?: string
           url_origem?: string | null
+          visivel_cliente?: boolean
         }
         Update: {
           ativo?: boolean
@@ -5428,6 +5442,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           enviado_por?: string | null
+          fonte_normativa_id?: string | null
           hash_arquivo?: string | null
           id?: string
           metadados_json?: Json | null
@@ -5448,8 +5463,17 @@ export type Database = {
           titulo?: string
           updated_at?: string
           url_origem?: string | null
+          visivel_cliente?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_documentos_conhecimento_fonte_normativa_id_fkey"
+            columns: ["fonte_normativa_id"]
+            isOneToOne: false
+            referencedRelation: "qa_fontes_normativas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_documentos_modelos_aprovados: {
         Row: {
