@@ -10214,20 +10214,36 @@ export type Database = {
           texto_chunk: string
         }[]
       }
-      qa_busca_similar: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          chunk_id: string
-          documento_id: string
-          resumo_chunk: string
-          similarity: number
-          texto_chunk: string
-        }[]
-      }
+      qa_busca_similar:
+        | {
+            Args: {
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+            }
+            Returns: {
+              chunk_id: string
+              documento_id: string
+              resumo_chunk: string
+              similarity: number
+              texto_chunk: string
+            }[]
+          }
+        | {
+            Args: {
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+              somente_visivel_cliente?: boolean
+            }
+            Returns: {
+              chunk_id: string
+              documento_id: string
+              resumo_chunk: string
+              similarity: number
+              texto_chunk: string
+            }[]
+          }
       qa_cadastro_publico_excluir_total: {
         Args: { p_cadastro_id: string }
         Returns: Json
