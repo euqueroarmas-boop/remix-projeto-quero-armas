@@ -153,6 +153,30 @@ async function processDocument(storage_path: string, user_id: string | null) {
 
   await updateDocStatus(supabase, doc.id, "verificando_arquivo");
 
+  // ══════════════════════════════════════════════════════
+  // GUARD DE POLÍTICA — documentos de evidência de cliente
+  // NÃO entram na pipeline de conhecimento/IA.
+  // Defesa em profundidade: mesmo se algum caller esquecer
+  // de setar papel_documento, uploads em auxiliares/ são
+  // bloqueados aqui e marcados como ignorados.
+  // ══════════════════════════════════════════════════════
+  const isAuxiliar =
+    doc.papel_documento === "auxiliar_caso" ||
+    doc.ativo_na_ia === false ||
+    (typeof doc.storage_path === "string" && doc.storage_path.startsWith("auxiliares/"));
+  if (isAuxiliar) {
+    await updateDocStatus(supabase, doc.id, "ignorado_politica", {
+      resumo_extraido:
+        "Documento de evidência de cliente — fora da pipeline de conhecimento por política. Não reprocessar.",
+    });
+    await audit(supabase, "ingestao_bloqueada_politica", doc.id, user_id, {
+      papel_documento: doc.papel_documento,
+      ativo_na_ia: doc.ativo_na_ia,
+      storage_path: doc.storage_path,
+    });
+    return;
+  }
+
   try {
     const { data: fileData, error: dlErr } = await supabase.storage
       .from("qa-documentos")
@@ -280,6 +304,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
       ordem_chunk: i,
       texto_chunk: texto,
       embedding_status: "pendente",
+      fonte_normativa_id: doc.fonte_normativa_id ?? null,
     }));
 
     const { error: chunkErr } = await supabase.from("qa_chunks_conhecimento").insert(chunkInserts);
