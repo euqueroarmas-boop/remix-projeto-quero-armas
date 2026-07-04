@@ -62,6 +62,27 @@ async function updateStatus(supabase: any, doc_id: string, status: string) {
 async function processUrl(url: string, titulo: string, tipo_documento: string, user_id: string, doc_id: string) {
   const supabase = getSupabase();
 
+  // Guard de política — se por engano criarem doc URL como auxiliar_caso,
+  // NÃO processar (defesa em profundidade).
+  const { data: docCheck } = await supabase
+    .from("qa_documentos_conhecimento")
+    .select("papel_documento, ativo_na_ia, storage_path, fonte_normativa_id")
+    .eq("id", doc_id)
+    .maybeSingle();
+  const isAuxiliar =
+    docCheck?.papel_documento === "auxiliar_caso" ||
+    docCheck?.ativo_na_ia === false ||
+    (typeof docCheck?.storage_path === "string" && docCheck.storage_path.startsWith("auxiliares/"));
+  if (isAuxiliar) {
+    await supabase.from("qa_documentos_conhecimento").update({
+      status_processamento: "ignorado_politica",
+      resumo_extraido: "Documento de evidência de cliente — fora da pipeline de conhecimento por política.",
+      updated_at: new Date().toISOString(),
+    }).eq("id", doc_id);
+    return;
+  }
+  const fonteNormativaId = docCheck?.fonte_normativa_id ?? null;
+
   await updateStatus(supabase, doc_id, "acessando_url");
 
   try {
@@ -250,6 +271,7 @@ async function processUrl(url: string, titulo: string, tipo_documento: string, u
       ordem_chunk: i,
       texto_chunk: texto,
       embedding_status: "pendente",
+      fonte_normativa_id: fonteNormativaId,
     }));
 
     const { error: chunkErr } = await supabase.from("qa_chunks_conhecimento").insert(chunkInserts);

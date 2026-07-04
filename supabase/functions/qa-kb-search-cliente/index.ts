@@ -195,7 +195,86 @@ Deno.serve(async (req) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, Math.max(3, Math.min(Number(limit) || 5, 6)));
 
-    if (articles.length === 0 && legalSources.length === 0) {
+    // ══════════════════════════════════════════════════════════
+    // Busca vetorial em chunks — SOMENTE docs marcados como
+    // visíveis ao cliente (visivel_cliente = true).
+    // A RPC qa_busca_similar já garante:
+    //   papel_documento = 'aprendizado'
+    //   ativo_na_ia = true
+    //   status_validacao = 'validado'
+    //   status_processamento = 'concluido'
+    // Filtro adicional visivel_cliente é aplicado em TS pois a RPC
+    // não expõe esse campo (defesa em profundidade).
+    // ══════════════════════════════════════════════════════════
+    let chunkSources: Array<{
+      texto: string;
+      titulo_doc: string;
+      titulo_norma: string | null;
+      similarity: number;
+    }> = [];
+    if (qemb) {
+      try {
+        const { data: vHits } = await supabase.rpc("qa_busca_similar", {
+          query_embedding: `[${qemb.join(",")}]`,
+          match_threshold: 0.55,
+          match_count: 12,
+        });
+        const hitList = (vHits ?? []) as Array<any>;
+        if (hitList.length > 0) {
+          const docIds = Array.from(new Set(hitList.map((h) => h.documento_id).filter(Boolean)));
+          const { data: docsMeta } = await supabase
+            .from("qa_documentos_conhecimento")
+            .select("id, titulo, visivel_cliente, ativo_na_ia, papel_documento, fonte_normativa_id")
+            .in("id", docIds);
+          const allowed = new Map<string, any>();
+          for (const d of (docsMeta ?? []) as Array<any>) {
+            if (
+              d.visivel_cliente === true &&
+              d.ativo_na_ia === true &&
+              d.papel_documento === "aprendizado"
+            ) {
+              allowed.set(d.id, d);
+            }
+          }
+          const normaIds = Array.from(
+            new Set(
+              Array.from(allowed.values())
+                .map((d) => d.fonte_normativa_id)
+                .filter(Boolean),
+            ),
+          );
+          const normaTitleById = new Map<string, string>();
+          if (normaIds.length > 0) {
+            const { data: normasMeta } = await supabase
+              .from("qa_fontes_normativas")
+              .select("id, titulo_norma")
+              .in("id", normaIds);
+            for (const n of (normasMeta ?? []) as Array<any>) {
+              normaTitleById.set(n.id, n.titulo_norma);
+            }
+          }
+          chunkSources = hitList
+            .filter((h) => allowed.has(h.documento_id))
+            .slice(0, 6)
+            .map((h) => {
+              const doc = allowed.get(h.documento_id);
+              const normaTitle = doc?.fonte_normativa_id
+                ? normaTitleById.get(doc.fonte_normativa_id) ?? null
+                : null;
+              return {
+                texto: (h.texto_chunk || "").substring(0, 4000),
+                titulo_doc: doc?.titulo || "Documento",
+                titulo_norma: normaTitle,
+                similarity: Number(h.similarity) || 0,
+              };
+            });
+        }
+      } catch (e) {
+        console.warn("chunk vector search skipped:", e);
+      }
+    }
+
+    if (articles.length === 0 && legalSources.length === 0 && chunkSources.length === 0) {
       return new Response(
         JSON.stringify({
           answer:
@@ -256,7 +335,7 @@ Deno.serve(async (req) => {
       .slice(0, 3)
       .map(
         (a, i) =>
-          `### Artigo ${i + 1}: ${a.title}\n${(a.body || "").substring(0, 3500)}`,
+          `### Artigo ${i + 1}: ${a.title}\n${(a.body || "").substring(0, 50000)}${(a.body || "").length > 50000 ? "\n[...conteúdo adicional truncado...]" : ""}`,
       )
       .join("\n\n---\n\n");
 
@@ -268,10 +347,22 @@ Deno.serve(async (req) => {
       )
       .join("\n\n---\n\n");
 
+    const ctxChunks = chunkSources
+      .map((c, i) => {
+        const origem = c.titulo_norma
+          ? `${c.titulo_norma} (via ${c.titulo_doc})`
+          : c.titulo_doc;
+        return `### Trecho ${i + 1} — ${origem}\n${c.texto}`;
+      })
+      .join("\n\n---\n\n");
+
     const ctx = [
       ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxLegislacao
         ? `## Base legal cadastrada em Legislação\n${ctxLegislacao}`
+        : "",
+      ctxChunks
+        ? `## Trechos da legislação anexada (PDFs oficiais)\n${ctxChunks}`
         : "",
     ]
       .filter(Boolean)
@@ -291,7 +382,7 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                "Você é o assistente da Central de Ajuda do Cliente Quero Armas. Responda em português, de forma simples, acolhedora e objetiva. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Pode citar normas da seção Legislação quando elas responderem ao tema. NUNCA mencione termos internos como 'admin', 'banco de dados', 'edge function' ou detalhes técnicos. Se a resposta não estiver nas fontes fornecidas, diga claramente que aquela informação não está na central de ajuda e oriente entrar em contato com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável.",
+                "Você é o assistente da Central de Ajuda do Cliente Quero Armas. Responda em português, de forma simples, acolhedora e objetiva. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'admin', 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.",
             },
             {
               role: "user",
