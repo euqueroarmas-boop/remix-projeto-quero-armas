@@ -215,7 +215,12 @@ async function processJob(jobId: string, authToken: string) {
       tentativas: (job.tentativas || 0) + 1,
     });
 
-    await updateDocumentStatus("erro", { resumo_extraido: `Erro: ${message}` });
+    const finalStatus = message.includes("texto_invalido") ? "texto_invalido" : "erro";
+    const finalSummary = finalStatus === "texto_invalido"
+      ? "Texto extraído é ilegível ou insuficiente para uso jurídico."
+      : `Erro: ${message}`;
+
+    await updateDocumentStatus(finalStatus, { resumo_extraido: finalSummary });
 
     try {
       await supabase.from("qa_logs_auditoria").insert({
