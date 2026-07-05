@@ -1,276 +1,488 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Search, HelpCircle, ArrowLeft, Sparkles, MessageCircle } from "lucide-react";
+import {
+  Loader2, Send, HelpCircle, MessageCircle, Plus, BookOpen, Sparkles,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
-type Article = {
-  id: string; title: string; slug: string; category: string;
-  module: string | null; body: string;
+const BRAND = "#7A1F2B";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+type Fonte = {
+  tipo: "legislacao" | "documento";
+  titulo_norma: string | null;
+  titulo_doc: string | null;
 };
 
-type AiHit = {
+type Mensagem = {
   id: string;
-  title: string;
-  category: string;
-  type?: "article" | "legislation";
-  body?: string;
+  role: "user" | "assistant";
+  content: string;
+  fontes?: Fonte[];
+  isStreaming?: boolean;
 };
 
 interface CentralAjudaClienteProps {
   cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
 }
 
+const SUGESTOES = [
+  "O que preciso para comprar uma arma como policial civil?",
+  "Quais documentos o vigilante precisa para a CNV?",
+  "Como funciona o registro CAC?",
+];
+
 export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Article | null>(null);
-  const [selectedImages, setSelectedImages] = useState<Array<{ id: string; image_url: string | null; step_number: number; step_title: string | null; caption: string | null }>>([]);
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiAnswer, setAiAnswer] = useState("");
-  const [aiHits, setAiHits] = useState<AiHit[]>([]);
+  const [sessaoId, setSessaoId] = useState<string | null>(null);
+  const [mensagens, setMensagens] = useState<Mensagem[]>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [initLoading, setInitLoading] = useState(true);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ao montar: procura a sessão mais recente (<24h) e carrega mensagens.
   useEffect(() => {
+    if (!cliente) { setInitLoading(false); return; }
+    let alive = true;
     (async () => {
-      const { data, error } = await supabase
-        .from("qa_kb_artigos" as any)
-        .select("id,title,slug,category,module,body")
-        .eq("status", "published")
-        .eq("audience", "cliente")
-        .order("category")
-        .order("title");
-      if (!error) {
-        const list = (data as any[]) ?? [];
-        // Cliente só pode ver artigos que já tenham PRINT REAL ou UPLOAD MANUAL aprovado.
-        // (Imagens geradas por IA não contam.)
-        const ids = list.map((a) => a.id);
-        if (ids.length === 0) { setArticles([]); setLoading(false); return; }
-        const { data: imgs } = await supabase
-          .from("qa_kb_artigo_imagens" as any)
-          .select("article_id,image_type,status,is_ai_generated_blocked,original_image_type")
-          .in("article_id", ids)
-          .eq("status", "approved")
-          .eq("is_ai_generated_blocked", false)
-          .neq("original_image_type", "imagem_ia")
-          .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"]);
-        const okSet = new Set<string>(((imgs as any[]) ?? []).map((i) => i.article_id));
-        setArticles(list.filter((a) => okSet.has(a.id)));
+      try {
+        const { data: sessoes } = await (supabase as any)
+          .from("qa_chat_sessoes")
+          .select("id, updated_at")
+          .eq("cliente_id", cliente.id)
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        const recente = (sessoes ?? [])[0];
+        if (
+          recente &&
+          new Date(recente.updated_at).getTime() > Date.now() - 24 * 60 * 60 * 1000
+        ) {
+          const { data: msgs } = await (supabase as any)
+            .from("qa_chat_mensagens")
+            .select("id, role, content, fontes, created_at")
+            .eq("sessao_id", recente.id)
+            .order("created_at", { ascending: true })
+            .limit(50);
+          if (!alive) return;
+          setSessaoId(recente.id);
+          setMensagens(
+            ((msgs ?? []) as any[]).map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              fontes: Array.isArray(m.fontes) ? m.fontes : [],
+            })),
+          );
+        }
+      } finally {
+        if (alive) setInitLoading(false);
       }
-      setLoading(false);
     })();
-  }, []);
+    return () => { alive = false; };
+  }, [cliente?.id]);
 
+  // Auto-scroll para o fim.
   useEffect(() => {
-    if (!selected) { setSelectedImages([]); return; }
-    (async () => {
-      const { data } = await supabase
-        .from("qa_kb_artigo_imagens" as any)
-        .select("id,image_url,step_number,step_title,caption,image_type")
-        .eq("article_id", selected.id)
-        .eq("status", "approved")
-        .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"])
-        .eq("is_ai_generated_blocked", false)
-        .neq("original_image_type", "imagem_ia")
-        .order("step_number");
-      setSelectedImages(((data ?? []) as any[]));
-    })();
-  }, [selected?.id]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [mensagens]);
 
-  async function ask() {
-    if (aiQuery.trim().length < 3) {
-      toast.error("Digite sua dúvida com mais detalhes.");
-      return;
-    }
-    setAiLoading(true); setAiAnswer(""); setAiHits([]);
+  // Autosize textarea (1→4 linhas).
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    const max = 4 * 24 + 16; // ~4 linhas
+    ta.style.height = Math.min(ta.scrollHeight, max) + "px";
+  }, [input]);
+
+  const enviar = useCallback(async (texto: string) => {
+    if (!cliente || loading) return;
+    const query = texto.trim();
+    if (query.length < 2) return;
+
+    setInput("");
+    const userMsg: Mensagem = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: query,
+    };
+    const asstId = `a-${Date.now()}`;
+    const asstMsg: Mensagem = {
+      id: asstId,
+      role: "assistant",
+      content: "",
+      fontes: [],
+      isStreaming: true,
+    };
+
+    // histórico enviado: até 10 pares (20 mensagens) já completos.
+    const historico = mensagens
+      .filter((m) => !m.isStreaming && m.content.trim().length > 0)
+      .slice(-20)
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    setMensagens((prev) => [...prev, userMsg, asstMsg]);
+    setLoading(true);
+
+    let localSessaoId = sessaoId;
+    let localFontes: Fonte[] = [];
+
     try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-search-cliente", {
-        body: { query: aiQuery, limit: 5 },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      setAiAnswer((data as any).answer ?? "");
-      setAiHits((data as any).articles ?? []);
+      const { data: sess } = await supabase.auth.getSession();
+      const jwt = sess.session?.access_token ?? PUBLISHABLE_KEY;
+
+      const res = await fetch(
+        `${SUPABASE_URL}/functions/v1/qa-kb-search-cliente`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwt}`,
+            apikey: PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            query,
+            sessao_id: sessaoId,
+            historico,
+            limit: 5,
+          }),
+        },
+      );
+
+      if (!res.ok || !res.body) {
+        // fallback: talvez retorno JSON (sem streaming)
+        try {
+          const j = await res.json();
+          if (j?.error) throw new Error(j.error);
+          if (j?.answer) {
+            setMensagens((prev) =>
+              prev.map((m) =>
+                m.id === asstId
+                  ? { ...m, content: j.answer, isStreaming: false }
+                  : m,
+              ),
+            );
+            return;
+          }
+        } catch (_) { /* ignore */ }
+        throw new Error("Falha ao consultar a Central de Ajuda.");
+      }
+
+      const contentType = res.headers.get("Content-Type") || "";
+      if (!contentType.includes("text/event-stream")) {
+        const j = await res.json();
+        setMensagens((prev) =>
+          prev.map((m) =>
+            m.id === asstId
+              ? {
+                  ...m,
+                  content: j?.answer ?? "Sem resposta.",
+                  isStreaming: false,
+                }
+              : m,
+          ),
+        );
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let full = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const payload = trimmed.slice(5).trim();
+          if (!payload) continue;
+          if (payload === "[DONE]") continue;
+          try {
+            const evt = JSON.parse(payload);
+            if (evt.type === "token" && evt.content) {
+              full += evt.content;
+              setMensagens((prev) =>
+                prev.map((m) =>
+                  m.id === asstId ? { ...m, content: full } : m,
+                ),
+              );
+            } else if (evt.type === "meta" && Array.isArray(evt.fontes)) {
+              localFontes = evt.fontes;
+            } else if (evt.type === "session" && evt.sessao_id) {
+              localSessaoId = evt.sessao_id;
+              setSessaoId(evt.sessao_id);
+            } else if (evt.type === "error") {
+              throw new Error(evt.message || "Erro no streaming.");
+            }
+          } catch (e) {
+            // ignora chunk malformado
+          }
+        }
+      }
+
+      setMensagens((prev) =>
+        prev.map((m) =>
+          m.id === asstId
+            ? { ...m, content: full || m.content, fontes: localFontes, isStreaming: false }
+            : m,
+        ),
+      );
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao buscar");
-    } finally { setAiLoading(false); }
+      setMensagens((prev) =>
+        prev.map((m) =>
+          m.id === asstId
+            ? {
+                ...m,
+                content:
+                  "Não consegui responder agora. Tente novamente em instantes ou fale com a equipe pelo WhatsApp.",
+                isStreaming: false,
+              }
+            : m,
+        ),
+      );
+      toast.error(e?.message ?? "Erro ao consultar a Central de Ajuda.");
+    } finally {
+      setLoading(false);
+      // Suprime warning de var não usada em produção.
+      void localSessaoId;
+    }
+  }, [cliente, loading, mensagens, sessaoId]);
+
+  function novaConversa() {
+    if (loading) return;
+    setSessaoId(null);
+    setMensagens([]);
+    setInput("");
+    setTimeout(() => textareaRef.current?.focus(), 0);
   }
 
-  function escalarParaEquipe() {
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      enviar(input);
+    }
+  }
+
+  function escalarParaEquipe(ultimaResposta: string) {
     if (!cliente) {
       toast.error("Faça login novamente para falar com a equipe.");
       return;
     }
-    if (!aiQuery.trim()) return;
+    const ultimaPergunta =
+      [...mensagens].reverse().find((m) => m.role === "user")?.content ?? "";
+    if (!ultimaPergunta) return;
 
-    // 1) Monta URL e abre o WhatsApp SÍNCRONO (dentro do gesto do clique)
-    //    para não ser bloqueado por popup blocker.
     const cpfPart = cliente.cpf ? `, CPF ${cliente.cpf}` : "";
-    const respostaPart = aiAnswer ? `A resposta que recebi foi:\n${aiAnswer}\n\n` : "";
+    const respostaPart = ultimaResposta ? `A resposta que recebi foi:\n${ultimaResposta}\n\n` : "";
     const texto =
       `Olá! Sou ${cliente.nome_completo}${cpfPart}.\n\n` +
-      `Perguntei na Central de Ajuda: "${aiQuery}"\n\n` +
+      `Perguntei na Central de Ajuda: "${ultimaPergunta}"\n\n` +
       respostaPart +
       `Isso não resolveu minha dúvida, pode me ajudar?`;
     const url = `https://wa.me/5511978481919?text=${encodeURIComponent(texto)}`;
     window.open(url, "_blank", "noopener,noreferrer");
 
-    // 2) Registra em segundo plano (sem bloquear o clique).
     setEscalating(true);
     (async () => {
       try {
-        const { error } = await supabase
-          .from("qa_central_ajuda_perguntas" as any)
+        await (supabase as any)
+          .from("qa_central_ajuda_perguntas")
           .insert({
             cliente_id: cliente.id,
-            pergunta: aiQuery,
-            resposta_ia: aiAnswer || null,
-            artigos_relacionados: aiHits.map((h) => ({ id: h.id, title: h.title })),
+            pergunta: ultimaPergunta,
+            resposta_ia: ultimaResposta || null,
+            artigos_relacionados: [],
             status: "escalada_whatsapp",
           });
-        if (error) {
-          toast.error("Abrimos o WhatsApp, mas não foi possível registrar o histórico.");
-        } else {
-          toast.success("Sua pergunta foi registrada. Continue a conversa no WhatsApp que abrimos.");
-        }
       } finally {
         setEscalating(false);
       }
     })();
   }
 
-  if (selected) {
-    return (
-      <div className="space-y-3">
-        <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">{selected.title}</CardTitle>
-            <p className="text-xs text-slate-500 uppercase tracking-wide">{selected.category}</p>
-          </CardHeader>
-          <CardContent>
-            <article className="prose prose-sm max-w-none">
-              <ReactMarkdown>{selected.body}</ReactMarkdown>
-            </article>
-            {selectedImages.length > 0 && (
-              <div className="mt-4 grid gap-3">
-                {selectedImages.map(img => (
-                  <figure key={img.id} className="border rounded-md overflow-hidden bg-white">
-                    {img.image_url && (
-                      <img src={img.image_url} alt={img.caption ?? img.step_title ?? "ilustração"} className="w-full h-auto" loading="lazy" />
-                    )}
-                    {(img.step_title || img.caption) && (
-                      <figcaption className="p-2 text-[11px] text-slate-600">
-                        {img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption}
-                      </figcaption>
-                    )}
-                  </figure>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const ultimaAssistente = [...mensagens].reverse().find(
+    (m) => m.role === "assistant" && !m.isStreaming && m.content.trim().length > 0,
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <HelpCircle className="h-5 w-5 text-amber-600" />
-        <h2 className="font-bold text-base">Central de Ajuda</h2>
+    <div className="flex flex-col h-[70vh] min-h-[520px] bg-white rounded-lg border border-slate-200 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="h-5 w-5" style={{ color: BRAND }} />
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Central de Ajuda</div>
+            <div className="text-[11px] text-slate-500">Assistente Quero Armas</div>
+          </div>
+        </div>
+        {mensagens.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={novaConversa}
+            disabled={loading}
+            className="text-slate-600 hover:text-slate-900"
+          >
+            <Plus className="h-4 w-4 mr-1" /> Nova conversa
+          </Button>
+        )}
       </div>
 
-      <Card className="border-amber-200">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-600" /> Pergunte com suas palavras
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Ex: como reenvio um documento que foi reprovado?"
-              value={aiQuery}
-              onChange={(e) => setAiQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-            />
-            <Button onClick={ask} disabled={aiLoading}>
-              {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+      {/* Mensagens */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-3 bg-slate-50/50"
+      >
+        {initLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          </div>
+        ) : mensagens.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-8 md:py-12 gap-4">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center"
+              style={{ background: `${BRAND}12`, color: BRAND }}
+            >
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+              <div className="text-base md:text-lg font-semibold text-slate-900">
+                Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}! Como posso ajudar?
+              </div>
+              <div className="text-xs text-slate-500 mt-1">
+                Tire dúvidas sobre documentos, prazos, exigências e legislação.
+              </div>
+            </div>
+            <div className="w-full max-w-md space-y-2 pt-2">
+              {SUGESTOES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => enviar(s)}
+                  className="w-full text-left text-sm px-3 py-2.5 rounded-md bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-colors text-slate-700"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          mensagens.map((m) => (
+            <div
+              key={m.id}
+              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div className={`max-w-[85%] md:max-w-[75%] ${m.role === "user" ? "" : "w-full md:w-auto"}`}>
+                {m.role === "user" ? (
+                  <div
+                    className="rounded-2xl rounded-tr-sm px-3.5 py-2 text-sm text-white shadow-sm whitespace-pre-wrap break-words"
+                    style={{ background: BRAND }}
+                  >
+                    {m.content}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 shadow-sm">
+                    {m.content ? (
+                      <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-strong:text-slate-900">
+                        <ReactMarkdown>
+                          {m.isStreaming ? m.content + "▊" : m.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : m.isStreaming ? (
+                      <div className="flex items-center gap-1 py-1 text-slate-400 text-xs">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "150ms" }} />
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-400 animate-pulse" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    ) : null}
+                    {!m.isStreaming && m.fontes && m.fontes.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
+                        {m.fontes.slice(0, 6).map((f, i) => {
+                          const label =
+                            f.titulo_norma ||
+                            f.titulo_doc ||
+                            "Fonte";
+                          return (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                            >
+                              <BookOpen className="h-3 w-3" />
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+
+        {ultimaAssistente && (
+          <div className="flex justify-start">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => escalarParaEquipe(ultimaAssistente.content)}
+              disabled={escalating}
+              className="text-xs border-slate-200 text-slate-700 hover:bg-white"
+            >
+              {escalating ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Não resolveu? Falar com a equipe
             </Button>
           </div>
-          {aiAnswer && (
-            <div className="rounded-md bg-amber-50/60 border border-amber-200 p-3 prose prose-sm max-w-none">
-              <ReactMarkdown>{aiAnswer}</ReactMarkdown>
-            </div>
-          )}
-          {aiHits.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {aiHits.map((h) => {
-                const a = articles.find((x) => x.id === h.id);
-                return (
-                  <Button key={h.id} size="sm" variant="outline" className="text-xs"
-                    onClick={() => {
-                      if (a) return setSelected(a);
-                      if (h.type === "legislation" && h.body) {
-                        setSelected({
-                          id: h.id,
-                          title: h.title,
-                          slug: h.id,
-                          category: h.category || "Legislação",
-                          module: "legislacao",
-                          body: h.body,
-                        });
-                      }
-                    }}>
-                    {h.title}
-                  </Button>
-                );
-              })}
-            </div>
-          )}
-          {aiAnswer && (
-            <div className="pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={escalarParaEquipe}
-                disabled={escalating}
-                className="border-amber-200 text-amber-700 hover:bg-amber-50"
-              >
-                {escalating ? (
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                ) : (
-                  <MessageCircle className="h-4 w-4 mr-1.5" />
-                )}
-                Não resolveu? Falar com a equipe
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
-      {loading ? (
-        <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
-      ) : articles.length === 0 ? (
-        <p className="text-sm text-center text-slate-500 py-6">Nenhum artigo disponível.</p>
-      ) : (
-        <div className="grid gap-2">
-          {articles.map((a) => (
-            <button key={a.id} onClick={() => setSelected(a)}
-              className="text-left border rounded-md p-3 hover:bg-amber-50/40 transition-colors">
-              <div className="font-semibold text-sm">{a.title}</div>
-              <div className="text-[11px] text-slate-500 uppercase mt-0.5">{a.category}</div>
-            </button>
-          ))}
+      {/* Footer */}
+      <div className="border-t border-slate-200 bg-white p-3">
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Digite sua dúvida..."
+            disabled={loading || !cliente}
+            rows={1}
+            className="flex-1 resize-none px-3 py-2 text-sm rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:bg-slate-50 disabled:text-slate-400 leading-6"
+            style={{ maxHeight: 112 }}
+          />
+          <Button
+            onClick={() => enviar(input)}
+            disabled={loading || !cliente || input.trim().length < 2}
+            size="icon"
+            className="shrink-0 h-10 w-10"
+            style={{ background: BRAND, color: "white" }}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-      )}
+        <div className="text-[10px] text-slate-400 mt-1.5 px-1">
+          Enter envia · Shift+Enter quebra linha
+        </div>
+      </div>
     </div>
   );
 }

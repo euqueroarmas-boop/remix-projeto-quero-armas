@@ -3481,6 +3481,68 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_chat_mensagens: {
+        Row: {
+          cliente_id: number
+          content: string
+          created_at: string
+          fontes: Json | null
+          id: string
+          role: string
+          sessao_id: string
+        }
+        Insert: {
+          cliente_id: number
+          content: string
+          created_at?: string
+          fontes?: Json | null
+          id?: string
+          role: string
+          sessao_id: string
+        }
+        Update: {
+          cliente_id?: number
+          content?: string
+          created_at?: string
+          fontes?: Json | null
+          id?: string
+          role?: string
+          sessao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_chat_mensagens_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_chat_sessoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_chat_sessoes: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          id: string
+          titulo: string | null
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          titulo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_chunks_conhecimento: {
         Row: {
           created_at: string
