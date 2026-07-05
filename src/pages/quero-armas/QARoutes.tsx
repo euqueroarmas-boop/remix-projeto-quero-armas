@@ -33,6 +33,7 @@ const QAProcessosAuditoriaPage = lazyRetry(() => import("./QAProcessosAuditoriaP
 const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"), "QAArmamentosAdminPage");
 const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcessosPage");
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
+const QAChatAprovacaoPage = lazyRetry(() => import("./QAChatAprovacaoPage"), "QAChatAprovacaoPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACadastroRefinadoPage"), "QACadastroRefinadoPage");
 // MiraPrototypePage (sandbox visual com dados fake) NÃO é mais montado em nenhuma
@@ -268,6 +269,7 @@ export default function QARoutes() {
           <Route path="armamentos" element={<QAArmamentosAdminPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
           <Route path="correcoes-ia" element={<QACorrecoesIAPage />} />
+          <Route path="chat-aprovacao" element={<QAChatAprovacaoPage />} />
           <Route path="casos" element={<QACasosPage />} />
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
