@@ -137,7 +137,7 @@ async function audit(supabase: ReturnType<typeof getSupabase>, action: string, d
   } catch { /* non-critical */ }
 }
 
-async function processDocument(storage_path: string, user_id: string | null) {
+async function processDocument(storage_path: string, user_id: string | null, authToken: string) {
   const supabase = getSupabase();
 
   const { data: doc, error: docErr } = await supabase
@@ -335,7 +335,7 @@ async function processDocument(storage_path: string, user_id: string | null) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Authorization": `Bearer ${authToken}`,
         },
         body: JSON.stringify({ documento_id: doc.id }),
       });
@@ -369,7 +369,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    (globalThis as any).EdgeRuntime?.waitUntil(processDocument(storage_path, user_id));
+    const authToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    (globalThis as any).EdgeRuntime?.waitUntil(processDocument(storage_path, user_id, authToken));
 
     return new Response(JSON.stringify({ success: true, message: "Processamento iniciado" }), {
       headers: { ...corsH, "Content-Type": "application/json" },
