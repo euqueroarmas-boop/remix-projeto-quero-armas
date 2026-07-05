@@ -408,16 +408,35 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                     {!m.isStreaming && m.fontes && m.fontes.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-slate-100">
                         {m.fontes.slice(0, 6).map((f, i) => {
-                          const label =
-                            f.titulo_norma ||
-                            f.titulo_doc ||
-                            "Fonte";
+                          const raw = f.titulo_norma || f.titulo_doc || "Fonte";
+                          const isAprovada =
+                            typeof raw === "string" && raw.startsWith("QA: ");
+                          const label = isAprovada
+                            ? "Resposta anterior aprovada"
+                            : raw;
                           return (
                             <span
                               key={i}
-                              className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                              className={
+                                isAprovada
+                                  ? "inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border"
+                                  : "inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200"
+                              }
+                              style={
+                                isAprovada
+                                  ? {
+                                      background: "hsl(352 33% 97%)",
+                                      color: "hsl(352 60% 30%)",
+                                      borderColor: "hsl(352 33% 88%)",
+                                    }
+                                  : undefined
+                              }
                             >
-                              <BookOpen className="h-3 w-3" />
+                              {isAprovada ? (
+                                <MessageCircle className="h-3 w-3" />
+                              ) : (
+                                <BookOpen className="h-3 w-3" />
+                              )}
                               {label}
                             </span>
                           );
