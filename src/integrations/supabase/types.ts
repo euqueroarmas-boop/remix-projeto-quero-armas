@@ -3488,6 +3488,7 @@ export type Database = {
           aprovada_por: string | null
           cliente_id: number
           content: string
+          conteudo_corrigido: string | null
           created_at: string
           doc_kb_id: string | null
           fontes: Json | null
@@ -3501,6 +3502,7 @@ export type Database = {
           aprovada_por?: string | null
           cliente_id: number
           content: string
+          conteudo_corrigido?: string | null
           created_at?: string
           doc_kb_id?: string | null
           fontes?: Json | null
@@ -3514,6 +3516,7 @@ export type Database = {
           aprovada_por?: string | null
           cliente_id?: number
           content?: string
+          conteudo_corrigido?: string | null
           created_at?: string
           doc_kb_id?: string | null
           fontes?: Json | null
