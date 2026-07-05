@@ -246,13 +246,26 @@ Deno.serve(async (req) => {
     let fewShotSources: Array<{ titulo: string; texto: string }> = [];
     if (qemb) {
       try {
-        const { data: vHits } = await supabase.rpc("qa_busca_similar", {
-          _query: query,
-          _qemb: qemb as any,
-          _limit: 12,
-          somente_visivel_cliente: true,
-        });
-        const hitList = (vHits ?? []) as Array<any>;
+        const [vHitsResult, fsHitsResult] = await Promise.all([
+          supabase.rpc("qa_busca_similar", {
+            _query: query,
+            _qemb: qemb as any,
+            _limit: 12,
+            somente_visivel_cliente: true,
+          }),
+          supabase.rpc("qa_busca_similar", {
+            _query: query,
+            _qemb: qemb as any,
+            _limit: 25,
+            somente_visivel_cliente: true,
+          }),
+        ]);
+
+        const vHits = vHitsResult.data ?? [];
+        const fsHits = fsHitsResult.data ?? [];
+
+        // Processamento de chunks de legislação (exclui qa_aprovado)
+        const hitList = vHits as Array<any>;
         if (hitList.length > 0) {
           const docIds = Array.from(new Set(hitList.map((h) => h.documento_id).filter(Boolean)));
           const { data: docsMeta } = await supabase
@@ -295,20 +308,9 @@ Deno.serve(async (req) => {
               };
             });
         }
-      } catch (e) {
-        console.warn("chunk vector search skipped:", e);
-      }
-    }
 
-    // Busca few-shot separada, com filtro por tipo_documento='qa_aprovado'.
-    try {
-      if (qemb) {
-        const { data: fsHits } = await supabase.rpc("qa_busca_similar", {
-          query_embedding: qemb as any,
-          match_threshold: 0.5,
-          match_count: 25,
-        });
-        const hits = (fsHits ?? []) as Array<any>;
+        // Processamento de few-shot (só tipo_documento='qa_aprovado')
+        const hits = fsHits as Array<any>;
         if (hits.length > 0) {
           const docIds = Array.from(new Set(hits.map((h) => h.documento_id).filter(Boolean)));
           const { data: docsMeta } = await supabase
@@ -331,9 +333,14 @@ Deno.serve(async (req) => {
             if (fewShotSources.length >= 3) break;
           }
         }
+      } catch (e) {
+        console.warn("vector search skipped:", e);
       }
-      // Fallback sem embedding: 3 mais recentes aprovados preferenciais.
-      if (fewShotSources.length === 0) {
+    }
+
+    // Fallback sem embedding: 3 mais recentes aprovados preferenciais.
+    if (fewShotSources.length === 0) {
+      try {
         const { data: recentes } = await supabase
           .from("qa_documentos_conhecimento")
           .select("id, titulo, texto_extraido")
@@ -348,9 +355,9 @@ Deno.serve(async (req) => {
             texto: (d.texto_extraido || "").substring(0, 2000),
           });
         }
+      } catch (e) {
+        console.warn("few-shot fallback skipped:", e);
       }
-    } catch (e) {
-      console.warn("few-shot lookup skipped:", e);
     }
 
     if (articles.length === 0 && legalSources.length === 0 && chunkSources.length === 0) {
