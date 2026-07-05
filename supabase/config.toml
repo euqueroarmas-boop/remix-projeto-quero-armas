@@ -31,6 +31,8 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-generate-embeddings]
     verify_jwt = false
+  [functions.qa-ingest-document]
+    verify_jwt = false
   [functions.qa-processo-prazo-alertas]
     verify_jwt = false
   [functions.qa-senha-gov]
