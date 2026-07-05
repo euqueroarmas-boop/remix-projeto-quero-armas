@@ -125,6 +125,23 @@ async function extractDocxSimple(rawBytes: Uint8Array): Promise<string> {
   }
 }
 
+async function extractPdfNative(rawBytes: Uint8Array): Promise<string> {
+  try {
+    const { getDocumentProxy, extractText } = await import("https://esm.sh/unpdf@1.6.2?bundle");
+    const pdf = await getDocumentProxy(rawBytes);
+    try {
+      const result = await extractText(pdf, { mergePages: true });
+      const text = typeof result?.text === "string" ? result.text : "";
+      return sanitizeText(text);
+    } finally {
+      try { await pdf?.destroy?.(); } catch { /* non-critical */ }
+    }
+  } catch (e) {
+    console.warn("native PDF extraction failed, falling back to Vision:", e);
+    return "";
+  }
+}
+
 async function audit(supabase: ReturnType<typeof getSupabase>, action: string, docId: string, userId: string | null, details: Record<string, unknown>) {
   try {
     await supabase.from("qa_logs_auditoria").insert({
@@ -216,11 +233,16 @@ async function processDocument(storage_path: string, user_id: string | null, aut
       extractionMethod = textoExtraido === "__402__" ? "vision-402" : "vision-image-ocr";
 
     } else if (documentKind === "pdf") {
-      // Use Vision API directly - unpdf causes CPU Time exceeded in edge functions
-      await updateDocStatus(supabase, doc.id, "rodando_ocr");
-      console.log(`PDF ${doc.id}: using Vision API directly (${rawBytes.length} bytes)`);
-      textoExtraido = await extractWithVisionApi(rawBytes, "application/pdf", "Extraia todo o texto legível deste documento PDF. Capture todos os campos, números, datas e informações relevantes.");
-      extractionMethod = textoExtraido === "__402__" ? "vision-402" : "vision-pdf";
+      await updateDocStatus(supabase, doc.id, "extraindo_texto");
+      textoExtraido = await extractPdfNative(rawBytes);
+      if (isTextValid(textoExtraido)) {
+        extractionMethod = "pdf-native";
+      } else {
+        await updateDocStatus(supabase, doc.id, "rodando_ocr");
+        console.log(`PDF ${doc.id}: native extraction insufficient, using Vision API (${rawBytes.length} bytes)`);
+        textoExtraido = await extractWithVisionApi(rawBytes, "application/pdf", "Extraia todo o texto legível deste documento PDF. Capture todos os campos, números, datas e informações relevantes.");
+        extractionMethod = textoExtraido === "__402__" ? "vision-402" : "vision-pdf";
+      }
 
     } else {
       extractionMethod = "unsupported-format";
