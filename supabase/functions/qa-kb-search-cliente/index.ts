@@ -112,7 +112,17 @@ function scoreNorma(n: any, query: string, tokens: string[]): number {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const { query, limit = 5 } = await req.json();
+    const {
+      query,
+      limit = 5,
+      sessao_id = null,
+      historico = [],
+    }: {
+      query: string;
+      limit?: number;
+      sessao_id?: string | null;
+      historico?: Array<{ role: "user" | "assistant"; content: string }>;
+    } = await req.json();
     if (!query || typeof query !== "string" || query.trim().length < 2) {
       return new Response(JSON.stringify({ error: "query inválida" }), {
         status: 400,
@@ -124,6 +134,29 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Resolve o cliente autenticado a partir do JWT do request. Usado só
+    // para gravar as mensagens do chat depois do streaming.
+    let clienteId: number | null = null;
+    let effectiveSessaoId: string | null = sessao_id;
+    try {
+      const authHeader = req.headers.get("Authorization") ?? "";
+      const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+      if (jwt) {
+        const { data: userData } = await supabase.auth.getUser(jwt);
+        const uid = userData?.user?.id;
+        if (uid) {
+          const { data: cid } = await supabase.rpc(
+            "qa_current_cliente_id",
+            { _uid: uid } as any,
+          );
+          if (typeof cid === "number") clienteId = cid;
+          else if (cid) clienteId = Number(cid) || null;
+        }
+      }
+    } catch (_) {
+      /* ignore — chat persistence is best-effort */
+    }
 
     const KEY = Deno.env.get("LOVABLE_API_KEY");
     let qemb: number[] | null = null;
@@ -357,6 +390,19 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join("\n\n======\n\n");
 
+    // Chamada em STREAMING para a IA — mantemos todo o contexto (artigos +
+    // legislação + chunks) e injetamos o histórico da conversa.
+    const historyMessages = (Array.isArray(historico) ? historico : [])
+      .slice(-20)
+      .filter(
+        (m) =>
+          m &&
+          (m.role === "user" || m.role === "assistant") &&
+          typeof m.content === "string" &&
+          m.content.trim().length > 0,
+      )
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+
     const r = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -367,12 +413,14 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
+          stream: true,
           messages: [
             {
               role: "system",
               content:
-                "Você é o assistente da Central de Ajuda do Cliente Quero Armas. Responda em português, de forma simples, acolhedora e objetiva. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'admin', 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.",
+                "Você é o assistente virtual da Quero Armas, especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.",
             },
+            ...historyMessages,
             {
               role: "user",
               content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctx}`,
@@ -413,31 +461,139 @@ Deno.serve(async (req) => {
         { headers: { ...cors, "Content-Type": "application/json" } },
       );
     }
-    const j = await r.json();
-    const answer =
-      j?.choices?.[0]?.message?.content ?? "Veja os artigos abaixo.";
 
-    return new Response(
-      JSON.stringify({
-        answer,
-        articles: [
-          ...articles.map((a) => ({
-            id: a.id,
-            title: a.title,
-            category: a.category,
-            type: "article",
-          })),
-          ...legalSources.map((n) => ({
-            id: `norma:${n.id}`,
-            title: n.titulo_norma,
-            category: "Legislação",
-            type: "legislation",
-            body: `**${buildNormReference(n)}**\n\n${n.ementa || ""}\n\n${(n.texto_integral || "").substring(0, 1000000)}`,
-          })),
-        ],
-      }),
-      { headers: { ...cors, "Content-Type": "application/json" } },
-    );
+    // ═══════════════════════════════════════════════════════════════
+    // STREAMING SSE → cliente
+    //   data: {"type":"meta","fontes":[...]}
+    //   data: {"type":"token","content":"..."}
+    //   data: {"type":"session","sessao_id":"..."}
+    //   data: [DONE]
+    // ═══════════════════════════════════════════════════════════════
+    const fontesResumo = [
+      ...legalSources.map((n) => ({
+        tipo: "legislacao" as const,
+        titulo_norma: n.titulo_norma,
+        titulo_doc: null as string | null,
+      })),
+      ...chunkSources.map((c) => ({
+        tipo: "documento" as const,
+        titulo_norma: c.titulo_norma,
+        titulo_doc: c.titulo_doc,
+      })),
+    ];
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const reader = r.body!.getReader();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (obj: unknown) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+
+        // meta primeiro
+        send({ type: "meta", fontes: fontesResumo });
+
+        // Garante sessão. Cria antes do streaming para poder mandar o id.
+        if (clienteId && !effectiveSessaoId) {
+          try {
+            const { data: novaSessao } = await supabase
+              .from("qa_chat_sessoes")
+              .insert({
+                cliente_id: clienteId,
+                titulo: query.slice(0, 60),
+              })
+              .select("id")
+              .single();
+            if (novaSessao?.id) {
+              effectiveSessaoId = novaSessao.id as string;
+              send({ type: "session", sessao_id: effectiveSessaoId });
+            }
+          } catch (e) {
+            console.warn("erro criando sessao chat:", e);
+          }
+        } else if (effectiveSessaoId) {
+          send({ type: "session", sessao_id: effectiveSessaoId });
+        }
+
+        let full = "";
+        let buffer = "";
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) continue;
+              const payload = trimmed.slice(5).trim();
+              if (!payload || payload === "[DONE]") continue;
+              try {
+                const parsed = JSON.parse(payload);
+                const delta =
+                  parsed?.choices?.[0]?.delta?.content ??
+                  parsed?.choices?.[0]?.message?.content ??
+                  "";
+                if (delta) {
+                  full += delta;
+                  send({ type: "token", content: delta });
+                }
+              } catch (_) {
+                /* ignora chunks parciais */
+              }
+            }
+          }
+        } catch (e) {
+          console.error("stream read error:", e);
+          send({ type: "error", message: "Falha durante o streaming." });
+        }
+
+        // Persistência: user + assistant
+        if (clienteId && effectiveSessaoId && full.trim().length > 0) {
+          try {
+            await supabase.from("qa_chat_mensagens").insert([
+              {
+                sessao_id: effectiveSessaoId,
+                cliente_id: clienteId,
+                role: "user",
+                content: query,
+                fontes: [],
+              },
+              {
+                sessao_id: effectiveSessaoId,
+                cliente_id: clienteId,
+                role: "assistant",
+                content: full,
+                fontes: fontesResumo,
+              },
+            ] as any);
+            await supabase
+              .from("qa_chat_sessoes")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", effectiveSessaoId);
+          } catch (e) {
+            console.warn("erro persistindo mensagens chat:", e);
+          }
+        }
+
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+      cancel() {
+        try { reader.cancel(); } catch (_) { /* noop */ }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        ...cors,
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
   } catch (e) {
     console.error("qa-kb-search-cliente error", e);
     return new Response(
