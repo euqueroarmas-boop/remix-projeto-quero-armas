@@ -84,7 +84,7 @@ async function extractWithVisionApi(rawBytes: Uint8Array, mime: string, prompt: 
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
         messages: [
           {
             role: "user",
