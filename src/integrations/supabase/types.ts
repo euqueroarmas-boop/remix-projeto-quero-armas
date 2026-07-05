@@ -3483,33 +3483,52 @@ export type Database = {
       }
       qa_chat_mensagens: {
         Row: {
+          aprovada_em: string | null
+          aprovada_kb: boolean | null
+          aprovada_por: string | null
           cliente_id: number
           content: string
           created_at: string
+          doc_kb_id: string | null
           fontes: Json | null
           id: string
           role: string
           sessao_id: string
         }
         Insert: {
+          aprovada_em?: string | null
+          aprovada_kb?: boolean | null
+          aprovada_por?: string | null
           cliente_id: number
           content: string
           created_at?: string
+          doc_kb_id?: string | null
           fontes?: Json | null
           id?: string
           role: string
           sessao_id: string
         }
         Update: {
+          aprovada_em?: string | null
+          aprovada_kb?: boolean | null
+          aprovada_por?: string | null
           cliente_id?: number
           content?: string
           created_at?: string
+          doc_kb_id?: string | null
           fontes?: Json | null
           id?: string
           role?: string
           sessao_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_chat_mensagens_doc_kb_id_fkey"
+            columns: ["doc_kb_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_conhecimento"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_chat_mensagens_sessao_id_fkey"
             columns: ["sessao_id"]

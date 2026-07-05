@@ -240,6 +240,10 @@ Deno.serve(async (req) => {
       titulo_norma: string | null;
       similarity: number;
     }> = [];
+    // Few-shot dinâmico: até 3 respostas anteriores aprovadas (tipo_documento=qa_aprovado
+    // + referencia_preferencial=true) mais similares à pergunta atual. Usadas SÓ como
+    // referência de tom e formato — nunca copiadas literalmente.
+    let fewShotSources: Array<{ titulo: string; texto: string }> = [];
     if (qemb) {
       try {
         const { data: vHits } = await supabase.rpc("qa_busca_similar", {
@@ -294,6 +298,59 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.warn("chunk vector search skipped:", e);
       }
+    }
+
+    // Busca few-shot separada, com filtro por tipo_documento='qa_aprovado'.
+    try {
+      if (qemb) {
+        const { data: fsHits } = await supabase.rpc("qa_busca_similar", {
+          query_embedding: qemb as any,
+          match_threshold: 0.5,
+          match_count: 25,
+        });
+        const hits = (fsHits ?? []) as Array<any>;
+        if (hits.length > 0) {
+          const docIds = Array.from(new Set(hits.map((h) => h.documento_id).filter(Boolean)));
+          const { data: docsMeta } = await supabase
+            .from("qa_documentos_conhecimento")
+            .select("id, titulo, tipo_documento, referencia_preferencial")
+            .in("id", docIds)
+            .eq("tipo_documento", "qa_aprovado")
+            .eq("referencia_preferencial", true);
+          const okIds = new Set((docsMeta ?? []).map((d: any) => d.id));
+          const titleById = new Map((docsMeta ?? []).map((d: any) => [d.id, d.titulo]));
+          const seenDocs = new Set<string>();
+          for (const h of hits) {
+            if (!okIds.has(h.documento_id)) continue;
+            if (seenDocs.has(h.documento_id)) continue;
+            seenDocs.add(h.documento_id);
+            fewShotSources.push({
+              titulo: titleById.get(h.documento_id) || "QA aprovado",
+              texto: (h.texto_chunk || "").substring(0, 2000),
+            });
+            if (fewShotSources.length >= 3) break;
+          }
+        }
+      }
+      // Fallback sem embedding: 3 mais recentes aprovados preferenciais.
+      if (fewShotSources.length === 0) {
+        const { data: recentes } = await supabase
+          .from("qa_documentos_conhecimento")
+          .select("id, titulo, texto_extraido")
+          .eq("tipo_documento", "qa_aprovado")
+          .eq("referencia_preferencial", true)
+          .eq("status_processamento", "concluido")
+          .order("created_at", { ascending: false })
+          .limit(3);
+        for (const d of (recentes ?? []) as Array<any>) {
+          fewShotSources.push({
+            titulo: d.titulo || "QA aprovado",
+            texto: (d.texto_extraido || "").substring(0, 2000),
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("few-shot lookup skipped:", e);
     }
 
     if (articles.length === 0 && legalSources.length === 0 && chunkSources.length === 0) {
@@ -378,6 +435,10 @@ Deno.serve(async (req) => {
       })
       .join("\n\n---\n\n");
 
+    const ctxFewShot = fewShotSources
+      .map((f, i) => `### Exemplo ${i + 1} — ${f.titulo}\n${f.texto}`)
+      .join("\n\n---\n\n");
+
     const ctx = [
       ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxLegislacao
@@ -385,6 +446,9 @@ Deno.serve(async (req) => {
         : "",
       ctxChunks
         ? `## Trechos da legislação anexada (PDFs oficiais)\n${ctxChunks}`
+        : "",
+      ctxFewShot
+        ? `## Exemplos de respostas aprovadas anteriores\n${ctxFewShot}`
         : "",
     ]
       .filter(Boolean)
@@ -418,7 +482,7 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                "Você é o assistente virtual da Quero Armas, especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.",
+                  "Você é o assistente virtual da Quero Armas, especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os como referência de tom, profundidade e formato — mas nunca copie o conteúdo diretamente. Adapte ao contexto atual da pergunta.",
             },
             ...historyMessages,
             {

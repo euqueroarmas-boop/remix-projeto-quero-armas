@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, Tags, GraduationCap,
-  History, LifeBuoy, FileSignature, AlertTriangle,
+  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
+import { supabase } from "@/integrations/supabase/client";
 
 // FASE 22-B: Menu reorganizado em 7 grupos.
 // Itens ocultados (rotas mantidas em QARoutes.tsx, acessíveis por URL direta):
@@ -49,6 +50,7 @@ const NAV_GROUPS = [
       { title: "Modelos de Declaração", url: "/modelos-declaracao", icon: FileSignature },
       { title: "Wizard de Perguntas", url: "/wizard-perguntas", icon: FileSignature },
       { title: "Correções da IA", url: "/correcoes-ia", icon: GraduationCap },
+      { title: "Aprendizado IA", url: "/chat-aprovacao", icon: BrainCircuit },
     ],
   },
   {
@@ -82,6 +84,33 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
   const collapsed = !expanded;
   const location = useLocation();
   const toggleSidebar = () => setExpanded(v => !v);
+
+  // Contagem em tempo real de respostas do chat pendentes de aprovação.
+  const [pendentesAprendizado, setPendentesAprendizado] = useState<number>(0);
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const { count } = await supabase
+        .from("qa_chat_mensagens")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "assistant")
+        .is("aprovada_kb", null);
+      if (!cancelled) setPendentesAprendizado(count ?? 0);
+    };
+    refresh();
+    const channel = supabase
+      .channel("qa_sidebar_aprendizado_ia")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_chat_mensagens" },
+        () => { refresh(); }
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -164,7 +193,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                         <Link
                           to={item.url}
                           title={collapsed ? item.title : undefined}
-                          className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
+                          className={`${itemBase} relative ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
                           style={{
                             background: active ? "hsl(352 33% 97%)" : "transparent",
                             color: active ? "hsl(352 60% 46%)" : "hsl(220 10% 46%)",
@@ -185,7 +214,15 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
                             color: active ? "hsl(352 60% 30%)" : "hsl(220 10% 62%)",
                           }} />
-                          {!collapsed && <span className="truncate">{item.title}</span>}
+                          {!collapsed && <span className="truncate flex-1">{item.title}</span>}
+                          {item.url === "/chat-aprovacao" && pendentesAprendizado > 0 && (
+                            <span
+                              className={`inline-flex items-center justify-center font-bold rounded-full ${collapsed ? "absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 text-[9px]" : "h-4 min-w-[18px] px-1 text-[10px]"}`}
+                              style={{ background: "hsl(352 60% 30%)", color: "#fff" }}
+                            >
+                              {pendentesAprendizado > 99 ? "99+" : pendentesAprendizado}
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );
