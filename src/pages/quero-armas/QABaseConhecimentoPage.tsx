@@ -123,6 +123,18 @@ function normalizeJobStage(jobStatus?: string | null, etapaAtual?: string | null
 
 const TERMINAL = ["concluido", "erro", "texto_invalido"];
 
+function sanitizeStorageFileName(name: string): string {
+  const sanitized = (name || "documento")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 120);
+
+  return sanitized || "documento.pdf";
+}
+
 /* ─── Tracked import type ─── */
 type TrackedImport = {
   doc_id: string;
@@ -532,7 +544,8 @@ export default function QABaseConhecimentoPage() {
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const path = `${user.id}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${file.name}`;
+        const safeName = sanitizeStorageFileName(file.name);
+        const path = `${user.id}/${Date.now()}_${crypto.randomUUID().slice(0, 8)}_${safeName}`;
         const { error: uploadErr } = await supabase.storage.from("qa-documentos").upload(path, file);
         if (uploadErr) throw uploadErr;
 
