@@ -193,7 +193,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                         <Link
                           to={item.url}
                           title={collapsed ? item.title : undefined}
-                          className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
+                          className={`${itemBase} relative ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
                           style={{
                             background: active ? "hsl(352 33% 97%)" : "transparent",
                             color: active ? "hsl(352 60% 46%)" : "hsl(220 10% 46%)",
