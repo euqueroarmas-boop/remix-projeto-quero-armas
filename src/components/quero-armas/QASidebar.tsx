@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
@@ -8,7 +8,6 @@ import {
   History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
-import { useEffect, useState as useStateReact } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // FASE 22-B: Menu reorganizado em 7 grupos.
