@@ -5,9 +5,11 @@ import {
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, Tags, GraduationCap,
-  History, LifeBuoy, FileSignature, AlertTriangle,
+  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
+import { useEffect, useState as useStateReact } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // FASE 22-B: Menu reorganizado em 7 grupos.
 // Itens ocultados (rotas mantidas em QARoutes.tsx, acessíveis por URL direta):
@@ -49,6 +51,7 @@ const NAV_GROUPS = [
       { title: "Modelos de Declaração", url: "/modelos-declaracao", icon: FileSignature },
       { title: "Wizard de Perguntas", url: "/wizard-perguntas", icon: FileSignature },
       { title: "Correções da IA", url: "/correcoes-ia", icon: GraduationCap },
+      { title: "Aprendizado IA", url: "/chat-aprovacao", icon: BrainCircuit },
     ],
   },
   {
