@@ -12,7 +12,7 @@ function getSupabase() {
   );
 }
 
-async function processJob(jobId: string) {
+async function processJob(jobId: string, authToken: string) {
   const supabase = getSupabase();
 
   const { data: job, error: jobErr } = await supabase
@@ -97,7 +97,7 @@ async function processJob(jobId: string) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        "Authorization": `Bearer ${authToken}`,
       },
       body: JSON.stringify({ storage_path: storagePath, user_id: job.user_id }),
     });
@@ -167,7 +167,7 @@ async function processJob(jobId: string) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          "Authorization": `Bearer ${authToken}`,
         },
         body: JSON.stringify({ documento_id: docId, user_id: job.user_id }),
       });
@@ -248,7 +248,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    (globalThis as any).EdgeRuntime?.waitUntil(processJob(job_id));
+    const authToken = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    (globalThis as any).EdgeRuntime?.waitUntil(processJob(job_id, authToken));
 
     return new Response(JSON.stringify({
       success: true,
