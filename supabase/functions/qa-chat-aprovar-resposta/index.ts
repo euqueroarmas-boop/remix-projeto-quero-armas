@@ -28,10 +28,14 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
     const staffUserId = guard.userId;
 
-    const { mensagem_id, acao } = await req.json();
+    const { mensagem_id, acao, conteudo_corrigido } = await req.json();
     if (!mensagem_id || !["aprovar", "rejeitar"].includes(acao)) {
       return json({ error: "mensagem_id e acao (aprovar|rejeitar) obrigatórios" }, 400);
     }
+    const conteudoCorrigido =
+      typeof conteudo_corrigido === "string" && conteudo_corrigido.trim().length > 0
+        ? conteudo_corrigido.trim()
+        : null;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     const pergunta = (perguntaRow?.content || "").trim() || "Pergunta não localizada";
-    const resposta = String(msg.content || "").trim();
+    const resposta = (conteudoCorrigido ?? String(msg.content || "")).trim();
 
     const textoExtraido = `Pergunta: ${pergunta}\n\nResposta: ${resposta}`;
     const titulo = `QA: ${pergunta.substring(0, 80).replace(/\s+/g, " ").trim()}`;
@@ -107,6 +111,7 @@ Deno.serve(async (req) => {
           fontes_originais: msg.fontes ?? [],
           aprovado_por: staffUserId,
           aprovado_em: new Date().toISOString(),
+          corrigido_manualmente: !!conteudoCorrigido,
         },
       })
       .select("id")
@@ -170,14 +175,16 @@ Deno.serve(async (req) => {
     (globalThis as any).EdgeRuntime?.waitUntil?.(triggerEmbeddings);
 
     // 4) marca mensagem como aprovada
+    const updatePayload: Record<string, unknown> = {
+      aprovada_kb: true,
+      aprovada_por: staffUserId,
+      aprovada_em: new Date().toISOString(),
+      doc_kb_id: docId,
+    };
+    if (conteudoCorrigido) updatePayload.conteudo_corrigido = conteudoCorrigido;
     const { error: updErr } = await supabase
       .from("qa_chat_mensagens")
-      .update({
-        aprovada_kb: true,
-        aprovada_por: staffUserId,
-        aprovada_em: new Date().toISOString(),
-        doc_kb_id: docId,
-      })
+      .update(updatePayload)
       .eq("id", mensagem_id);
     if (updErr) return json({ error: updErr.message }, 500);
 

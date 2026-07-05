@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { BrainCircuit, CheckCircle2, XCircle, Loader2, MessageCircle, Bot, BookOpen } from "lucide-react";
+import { BrainCircuit, CheckCircle2, XCircle, Loader2, MessageCircle, Bot, BookOpen, Pencil } from "lucide-react";
 
 type Filtro = "pendentes" | "todos";
 
@@ -19,6 +20,7 @@ type LinhaFila = {
   pergunta: string;
   sessao_titulo: string | null;
   cliente_nome: string | null;
+  conteudo_corrigido: string | null;
 };
 
 function chipFontes(fontes: any): { label: string; kind: "legislacao" | "documento" | "aprendizado" }[] {
@@ -39,13 +41,15 @@ export default function QAChatAprovacaoPage() {
   const [loading, setLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [pendentesCount, setPendentesCount] = useState(0);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<string>("");
 
   const carregar = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
         .from("qa_chat_mensagens")
-        .select("id, sessao_id, cliente_id, content, fontes, created_at, aprovada_kb, aprovada_em, doc_kb_id")
+        .select("id, sessao_id, cliente_id, content, fontes, created_at, aprovada_kb, aprovada_em, doc_kb_id, conteudo_corrigido")
         .eq("role", "assistant")
         .order("created_at", { ascending: false })
         .limit(200);
@@ -105,6 +109,7 @@ export default function QAChatAprovacaoPage() {
         aprovada_kb: m.aprovada_kb,
         aprovada_em: m.aprovada_em,
         doc_kb_id: m.doc_kb_id,
+        conteudo_corrigido: m.conteudo_corrigido ?? null,
         pergunta: perguntasByMsg.get(m.id) || "Pergunta não localizada",
         sessao_titulo: sessMap.get(m.sessao_id) ?? null,
         cliente_nome: cliMap.get(m.cliente_id) ?? null,
@@ -142,16 +147,28 @@ export default function QAChatAprovacaoPage() {
     return () => { supabase.removeChannel(channel); };
   }, [carregarContagem]);
 
-  const executar = async (mensagem_id: string, acao: "aprovar" | "rejeitar") => {
+  const executar = async (
+    mensagem_id: string,
+    acao: "aprovar" | "rejeitar",
+    conteudo_corrigido?: string,
+  ) => {
     setPendingId(mensagem_id);
     try {
       const { data, error } = await supabase.functions.invoke("qa-chat-aprovar-resposta", {
-        body: { mensagem_id, acao },
+        body: { mensagem_id, acao, ...(conteudo_corrigido ? { conteudo_corrigido } : {}) },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      if (acao === "aprovar") toast.success("Resposta aprovada — a IA já consulta esse conhecimento.");
+      if (acao === "aprovar") {
+        toast.success(
+          conteudo_corrigido
+            ? "Correção salva e aprovada — a IA já consulta essa versão."
+            : "Resposta aprovada — a IA já consulta esse conhecimento.",
+        );
+      }
       else toast.success("Resposta rejeitada — não será usada como referência.");
+      setEditingId(null);
+      setEditDraft("");
       await Promise.all([carregar(), carregarContagem()]);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha na operação");
@@ -270,10 +287,29 @@ export default function QAChatAprovacaoPage() {
                     <div className="text-[11px] uppercase tracking-widest mb-1 flex items-center gap-1.5" style={{ color: "hsl(220 10% 55%)" }}>
                       <Bot className="h-3 w-3" /> Resposta da IA
                     </div>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-lg p-3 border"
-                      style={{ color: "hsl(220 20% 18%)", background: "hsl(220 14% 98%)", borderColor: "hsl(220 13% 93%)" }}>
-                      {row.content}
-                    </div>
+                    {editingId === row.id ? (
+                      <Textarea
+                        value={editDraft}
+                        onChange={(e) => {
+                          setEditDraft(e.target.value);
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
+                        ref={(el) => {
+                          if (el) {
+                            el.style.height = "auto";
+                            el.style.height = `${el.scrollHeight}px`;
+                          }
+                        }}
+                        className="text-sm leading-relaxed"
+                        style={{ color: "hsl(220 20% 18%)", background: "#fff", borderColor: "hsl(352 33% 80%)" }}
+                      />
+                    ) : (
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-lg p-3 border"
+                        style={{ color: "hsl(220 20% 18%)", background: "hsl(220 14% 98%)", borderColor: "hsl(220 13% 93%)" }}>
+                        {row.content}
+                      </div>
+                    )}
                   </div>
 
                   {chips.length > 0 && (
@@ -300,26 +336,65 @@ export default function QAChatAprovacaoPage() {
                     </div>
                   )}
 
+                  {row.conteudo_corrigido && (
+                    <div className="text-[11px] inline-flex items-center gap-1" style={{ color: "hsl(352 60% 30%)" }}>
+                      <Pencil className="h-3 w-3" /> Corrigida pela equipe
+                    </div>
+                  )}
+
                   {row.aprovada_kb === null && (
                     <div className="flex flex-wrap gap-2 pt-2 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-                      <Button
-                        size="sm"
-                        disabled={isPending}
-                        onClick={() => executar(row.id, "aprovar")}
-                        style={{ background: "hsl(150 55% 32%)", color: "#fff" }}
-                      >
-                        {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
-                        Aprovar e aprender
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={isPending}
-                        onClick={() => executar(row.id, "rejeitar")}
-                      >
-                        <XCircle className="h-3.5 w-3.5 mr-1.5" />
-                        Rejeitar
-                      </Button>
+                      {editingId === row.id ? (
+                        <>
+                          <Button
+                            size="sm"
+                            disabled={isPending || !editDraft.trim()}
+                            onClick={() => executar(row.id, "aprovar", editDraft.trim())}
+                            style={{ background: "hsl(150 55% 32%)", color: "#fff" }}
+                          >
+                            {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+                            Salvar correção e aprovar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => { setEditingId(null); setEditDraft(""); }}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            disabled={isPending}
+                            onClick={() => executar(row.id, "aprovar")}
+                            style={{ background: "hsl(150 55% 32%)", color: "#fff" }}
+                          >
+                            {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />}
+                            Aprovar e aprender
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => { setEditingId(row.id); setEditDraft(row.content); }}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                            Corrigir e aprovar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => executar(row.id, "rejeitar")}
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                            Rejeitar
+                          </Button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
