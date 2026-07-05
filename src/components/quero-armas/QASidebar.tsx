@@ -85,6 +85,33 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
   const location = useLocation();
   const toggleSidebar = () => setExpanded(v => !v);
 
+  // Contagem em tempo real de respostas do chat pendentes de aprovação.
+  const [pendentesAprendizado, setPendentesAprendizado] = useState<number>(0);
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      const { count } = await supabase
+        .from("qa_chat_mensagens")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "assistant")
+        .is("aprovada_kb", null);
+      if (!cancelled) setPendentesAprendizado(count ?? 0);
+    };
+    refresh();
+    const channel = supabase
+      .channel("qa_sidebar_aprendizado_ia")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_chat_mensagens" },
+        () => { refresh(); }
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const initials = (nome || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   const isActive = (url: string) =>
@@ -187,7 +214,15 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
                             color: active ? "hsl(352 60% 30%)" : "hsl(220 10% 62%)",
                           }} />
-                          {!collapsed && <span className="truncate">{item.title}</span>}
+                          {!collapsed && <span className="truncate flex-1">{item.title}</span>}
+                          {item.url === "/chat-aprovacao" && pendentesAprendizado > 0 && (
+                            <span
+                              className={`inline-flex items-center justify-center font-bold rounded-full ${collapsed ? "absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 text-[9px]" : "h-4 min-w-[18px] px-1 text-[10px]"}`}
+                              style={{ background: "hsl(352 60% 30%)", color: "#fff" }}
+                            >
+                              {pendentesAprendizado > 99 ? "99+" : pendentesAprendizado}
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );
