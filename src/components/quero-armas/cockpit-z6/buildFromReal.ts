@@ -234,12 +234,29 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   const concluidos = processos.filter((p) => ["concluido","deferido","finalizado"].includes(String(p.status || "").toLowerCase())).length;
 
   const anoAtual = new Date().getFullYear();
-  const pagoAno = vendas
-    .filter((v) => {
-      const dt = v.cobranca_confirmada_em || v.aprovado_em;
-      return dt && new Date(dt).getFullYear() === anoAtual;
-    })
-    .reduce((acc, v) => acc + Number(v.valor_aprovado ?? v.valor_a_pagar ?? 0), 0);
+  // Só entram vendas efetivamente PAGAS (e não canceladas). Se o cliente
+  // cancela um pedido, ele deixa este total automaticamente.
+  const vendasPagas = vendas.filter((v) => {
+    const st = String(v.status || "").toUpperCase();
+    const cob = String(v.cobranca_status || "").toLowerCase();
+    if (st === "CANCELADO" || cob === "cancelada") return false;
+    return st === "PAGO" || cob === "confirmada";
+  });
+  const vendasPagasAno = vendasPagas.filter((v) => {
+    const dt = v.cobranca_confirmada_em || v.aprovado_em || v.data_cadastro;
+    return dt && new Date(dt).getFullYear() === anoAtual;
+  });
+  // Valor = soma do PREÇO DO CATÁLOGO dos itens de cada venda paga.
+  // Fallback para o valor do próprio item apenas quando o catálogo não tem preço.
+  const pagoAno = vendasPagasAno.reduce((acc, v) => {
+    const itens: any[] = Array.isArray(v.qa_itens_venda) ? v.qa_itens_venda : [];
+    if (!itens.length) return acc + Number(v.valor_aprovado ?? v.valor_a_pagar ?? 0);
+    return acc + itens.reduce((s, it) => {
+      const preco = Number(it?.qa_servicos_catalogo?.preco);
+      if (Number.isFinite(preco) && preco > 0) return s + preco;
+      return s + (Number(it?.valor) || 0);
+    }, 0);
+  }, 0);
 
   // Docs vencendo nos próximos 30 dias (CRAF, GT, Exames)
   const vencendo: { label: string; dias: number }[] = [];
@@ -260,7 +277,7 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
     { label: "COM EQUIPE",   value: String(comEquipe),  sub: "em análise",                                    dot: "blue" },
     { label: "NA PF",        value: String(naPF),       sub: naPF ? "aguardando deferimento" : "nenhum",      dot: "bordo" },
     { label: "CONCLUÍDOS",   value: String(concluidos), sub: "últimos 12 meses",                              dot: "green" },
-    { label: `PAGO ${anoAtual}`, value: pagoFmt,        sub: `${vendas.length} contrato${vendas.length === 1 ? "" : "s"}`, dot: "gray" },
+    { label: `PAGO ${anoAtual}`, value: pagoFmt,        sub: `${vendasPagasAno.length} pedido${vendasPagasAno.length === 1 ? "" : "s"} pago${vendasPagasAno.length === 1 ? "" : "s"}`, dot: "gray" },
     {
       label: "DOC VENCENDO",
       value: String(vencendo.length),
