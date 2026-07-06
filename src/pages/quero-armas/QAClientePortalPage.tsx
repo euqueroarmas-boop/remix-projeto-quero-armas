@@ -1545,7 +1545,7 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            className="hidden lg:flex absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
           >
