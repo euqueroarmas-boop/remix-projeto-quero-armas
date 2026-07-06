@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_chat_mensagens ADD COLUMN IF NOT EXISTS servico_sugerido_slug text;

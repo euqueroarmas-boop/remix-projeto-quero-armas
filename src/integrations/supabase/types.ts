@@ -3496,6 +3496,7 @@ export type Database = {
           motivo_rejeicao: string | null
           nivel_confianca: string | null
           role: string
+          servico_sugerido_slug: string | null
           sessao_id: string
         }
         Insert: {
@@ -3512,6 +3513,7 @@ export type Database = {
           motivo_rejeicao?: string | null
           nivel_confianca?: string | null
           role: string
+          servico_sugerido_slug?: string | null
           sessao_id: string
         }
         Update: {
@@ -3528,6 +3530,7 @@ export type Database = {
           motivo_rejeicao?: string | null
           nivel_confianca?: string | null
           role?: string
+          servico_sugerido_slug?: string | null
           sessao_id?: string
         }
         Relationships: [
