@@ -360,7 +360,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <KpiCard tone="blue"  label="EM ASSINATURA" value={kpis.emAssin} sub="aguardando contraparte" />
         <KpiCard tone="green" label="ASSINADOS" value={kpis.assinados} sub="no histórico" />
         <KpiCard tone="bordo" label="EM VIGÊNCIA" value={kpis.vigentes} sub="contratos ativos" />
-        <KpiCard tone="gray"  label="VALOR TOTAL" value={kpis.valor ? `R$ ${(kpis.valor/1000).toFixed(1)}K` : "R$ 0"} sub="somatório anual" />
+        <KpiCard tone="gray"  label="VALOR TOTAL" value={formatBRLKpi(kpis.valor)} sub="pedidos pagos" />
         <KpiCard tone="red"   label="EXPIRA EM" value={contracts.length ? "—" : "0"} sub="renovação contratual" />
       </div>
 
