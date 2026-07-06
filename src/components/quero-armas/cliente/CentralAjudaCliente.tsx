@@ -316,7 +316,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   );
 
   return (
-    <div className="flex flex-col h-[70vh] min-h-[520px] bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div className="flex flex-col h-[82vh] min-h-[600px] bg-white rounded-lg border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-2">
