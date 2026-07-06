@@ -452,12 +452,12 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   })();
 
   return (
-    <div className="w-full" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
+    <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
       {/* Header */}
       <div className="px-4 md:px-8 pt-6 pb-4 border-b" style={{ borderColor: CARD_BORDER }}>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h1 className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 26, letterSpacing: "0.06em", color: INK, lineHeight: 1.05 }}>
+          <div className="min-w-0">
+            <h1 className="uppercase text-[20px] md:text-[26px] break-words" style={{ fontFamily: OSWALD, fontWeight: 600, letterSpacing: "0.06em", color: INK, lineHeight: 1.05 }}>
               Central de Ajuda · Klal
             </h1>
             <p className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>
@@ -466,11 +466,11 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           </div>
           <div className="flex flex-wrap items-stretch gap-2">
             {cliente && (
-              <div className="uppercase px-3 py-2 bg-white border" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.14em", color: INK }}>
+              <div className="uppercase px-3 py-2 bg-white border break-words" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.14em", color: INK, overflowWrap: "anywhere" }}>
                 Cliente: {cliente.nome_completo}
               </div>
             )}
-            <div className="uppercase px-3 py-2 bg-white border-2" style={{ borderColor: INK, fontFamily: OSWALD, fontWeight: 700, fontSize: 11, letterSpacing: "0.14em", color: INK }}>
+            <div className="uppercase px-3 py-2 bg-white border-2 break-words" style={{ borderColor: INK, fontFamily: OSWALD, fontWeight: 700, fontSize: 11, letterSpacing: "0.14em", color: INK, overflowWrap: "anywhere" }}>
               Protocolo {proto?.protocolo || "—"}
             </div>
           </div>
@@ -480,7 +480,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       {/* Grid */}
       <div className="px-4 md:px-8 py-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Chat */}
-        <div className="bg-white flex flex-col overflow-hidden" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
+        <div className="bg-white flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
           <div className="flex items-start justify-between px-5 py-4 border-b" style={{ borderColor: LINE }}>
             <div>
               <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", color: INK }}>
