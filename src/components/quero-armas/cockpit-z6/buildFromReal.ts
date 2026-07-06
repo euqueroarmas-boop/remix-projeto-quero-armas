@@ -55,9 +55,9 @@ function formatServicoNome(value: string | null | undefined): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "PROCESSO";
   return raw
+    .replace(/[ \t]+/g, " ")
     .toLocaleUpperCase("pt-BR")
-    .replace(/\s*\/\s*/g, "\u00A0/\u00A0")
-    .replace(/\s+/g, " ")
+    .replace(/ *\/ */g, "\u00A0/\u00A0")
     .trim();
 }
 
