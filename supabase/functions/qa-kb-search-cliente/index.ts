@@ -787,6 +787,25 @@ Deno.serve(async (req) => {
 
         let full = "";
         let buffer = "";
+        // Buffer para segurar tokens até termos certeza de que não fazem parte
+        // da marca "[[SERVICO: slug]]" — nunca enviar essa marca ao cliente.
+        let holdBuffer = "";
+        const flushHold = () => {
+          if (holdBuffer) {
+            send({ type: "token", content: holdBuffer });
+            holdBuffer = "";
+          }
+        };
+        // Regex conservador para casar a marca em qualquer lugar do texto.
+        const MARK_RE = /\[\[SERVICO:\s*([a-z0-9-_]+)\s*\]\]/gi;
+        // Se qualquer prefixo do buffer combina com o início de "[[SERVICO:", segure.
+        const isPartialMark = (s: string) => {
+          for (let i = 1; i <= Math.min(s.length, 32); i++) {
+            const tail = s.slice(-i);
+            if ("[[SERVICO:".startsWith(tail)) return true;
+          }
+          return false;
+        };
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -807,21 +826,52 @@ Deno.serve(async (req) => {
                   "";
                 if (delta) {
                   full += delta;
-                  send({ type: "token", content: delta });
+                  holdBuffer += delta;
+                  // Remove marcas completas do holdBuffer antes de enviar.
+                  holdBuffer = holdBuffer.replace(MARK_RE, "");
+                  // Se o final do buffer parece início de marca, segure até
+                  // termos mais tokens; senão envie tudo.
+                  if (isPartialMark(holdBuffer)) {
+                    // aguarda mais tokens
+                  } else {
+                    flushHold();
+                  }
                 }
               } catch (_) {
                 /* ignora chunks parciais */
               }
             }
           }
+          // Fim do stream: garanta que qualquer marca residual seja removida
+          // e envie o restante do buffer.
+          holdBuffer = holdBuffer.replace(MARK_RE, "");
+          flushHold();
         } catch (e) {
           console.error("stream read error:", e);
           send({ type: "error", message: "Falha durante o streaming." });
         }
 
+        // Resolve serviço sugerido a partir da marca no texto completo.
+        let servicoSugerido: { id: string; slug: string; nome: string; preco_cents: number } | null = null;
+        let servicoSugeridoSlug: string | null = null;
+        const matches = Array.from(full.matchAll(MARK_RE));
+        if (matches.length > 0) {
+          const slug = matches[matches.length - 1][1].toLowerCase();
+          const s = catalogoBySlug.get(slug);
+          if (s) {
+            servicoSugerido = { id: s.id, slug: s.slug, nome: s.nome, preco_cents: s.preco_cents };
+            servicoSugeridoSlug = s.slug;
+          }
+        }
+        // Limpa marcas do texto salvo/persistido.
+        const fullLimpo = full.replace(MARK_RE, "").trim();
+        if (servicoSugerido) {
+          send({ type: "servico_sugerido", servico: servicoSugerido });
+        }
+
         // Persistência: user + assistant (pulada no modo refinamento — o chat
         // interno de refinamento não deve poluir a fila de aprovação).
-        if (!modo_refinamento && clienteId && effectiveSessaoId && full.trim().length > 0) {
+        if (!modo_refinamento && clienteId && effectiveSessaoId && fullLimpo.length > 0) {
           try {
             await supabase.from("qa_chat_mensagens").insert([
               {
@@ -835,9 +885,10 @@ Deno.serve(async (req) => {
                 sessao_id: effectiveSessaoId,
                 cliente_id: clienteId,
                 role: "assistant",
-                content: full,
+                content: fullLimpo,
                 fontes: fontesResumo,
                 nivel_confianca: nivelConfianca,
+                servico_sugerido_slug: servicoSugeridoSlug,
               },
             ] as any);
             await supabase
