@@ -3493,6 +3493,7 @@ export type Database = {
           doc_kb_id: string | null
           fontes: Json | null
           id: string
+          motivo_rejeicao: string | null
           role: string
           sessao_id: string
         }
@@ -3507,6 +3508,7 @@ export type Database = {
           doc_kb_id?: string | null
           fontes?: Json | null
           id?: string
+          motivo_rejeicao?: string | null
           role: string
           sessao_id: string
         }
@@ -3521,6 +3523,7 @@ export type Database = {
           doc_kb_id?: string | null
           fontes?: Json | null
           id?: string
+          motivo_rejeicao?: string | null
           role?: string
           sessao_id?: string
         }
