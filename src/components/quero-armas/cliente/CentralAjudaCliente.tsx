@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageCircle, Pencil, AlertTriangle } from "lucide-react";
+import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -12,10 +12,13 @@ const CARD_BORDER = "#E5E5E5";
 const LINE = "#EFEFEF";
 const OK = "#2F8F4A";
 const OK_BG = "#E3F2E8";
+const AMBER = "#B45309";
+const AMBER_BG = "#FEF3C7";
+const RED = "#B91C1C";
+const RED_BG = "#FEE2E2";
 const OSWALD = "Oswald, 'Inter', sans-serif";
 
 const INACTIVITY_MS = 30 * 60 * 1000;
-const PROTOCOLS_KEY = "qa_klal_protocolos_v1";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
@@ -25,6 +28,8 @@ type Fonte = {
   titulo_norma: string | null;
   titulo_doc: string | null;
 };
+
+type NivelConfianca = "alta" | "media" | "baixa";
 
 type Mensagem = {
   id: string;
@@ -37,78 +42,63 @@ type Mensagem = {
   createdAt?: string;
   finishedAt?: string;
   latencyMs?: number;
-  confidence?: number;
+  nivelConfianca?: NivelConfianca | null;
 };
 
-type ProtocoloSalvo = {
-  id: string;
-  startedAt: string;
-  updatedAt: string;
-  subject: string;
-  messagesCount: number;
-  confidenceAvg: number;
-  sessaoId?: string | null;
+type ProtocoloAtivo = {
+  sessaoId: string;
+  protocolo: string;
+  protocoloData: string; // created_at ISO original
+  lastActivityAt: string;
+  status: "ativo" | "encerrado";
+  reaberto?: boolean;
 };
+
+type ProtocoloResumo = {
+  sessaoId: string;
+  protocolo: string | null;
+  createdAt: string;
+  updatedAt: string;
+  status: "ativo" | "encerrado";
+  titulo: string | null;
+};
+
+const SP_TZ = "America/Sao_Paulo";
 
 function twoDigits(n: number) { return n.toString().padStart(2, "0"); }
-function threeDigits(n: number) { return n.toString().padStart(3, "0"); }
-
-function loadProtocolos(): ProtocoloSalvo[] {
-  try {
-    const raw = localStorage.getItem(PROTOCOLS_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch { return []; }
-}
-function saveProtocolos(list: ProtocoloSalvo[]) {
-  try { localStorage.setItem(PROTOCOLS_KEY, JSON.stringify(list.slice(-30))); } catch {}
-}
-function novoProtocoloId(list: ProtocoloSalvo[]): string {
-  const d = new Date();
-  const prefix = `KLA-${d.getFullYear()}-${twoDigits(d.getMonth() + 1)}-${twoDigits(d.getDate())}`;
-  const seqHoje = list.filter((p) => p.id.startsWith(prefix)).length + 1;
-  return `${prefix}-${threeDigits(seqHoje)}`;
-}
-function palavrasChave(t: string): Set<string> {
-  return new Set(
-    (t || "").toLowerCase().replace(/[^a-zà-ú0-9\s]/gi, " ").split(/\s+/).filter((w) => w.length >= 4),
-  );
-}
-function mesmoAssunto(a: string, b: string): boolean {
-  const A = palavrasChave(a), B = palavrasChave(b);
-  if (A.size === 0 || B.size === 0) return false;
-  let inter = 0; A.forEach((w) => { if (B.has(w)) inter++; });
-  const jaccard = inter / (A.size + B.size - inter);
-  return jaccard >= 0.28;
-}
-function confidenceFromFontes(n: number): number {
-  if (n >= 3) return 0.94;
-  if (n === 2) return 0.82;
-  if (n === 1) return 0.70;
-  return 0.45;
-}
 function fmtHM(iso: string | undefined): string {
   if (!iso) return "";
   const d = new Date(iso); if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: SP_TZ });
 }
 function fmtHMS(iso: string | undefined): string {
   if (!iso) return "";
   const d = new Date(iso); if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: SP_TZ });
 }
-function fmtDMY(iso: string | undefined): string {
+function fmtDMYHM(iso: string | undefined): string {
   if (!iso) return "";
   const d = new Date(iso); if (isNaN(d.getTime())) return "";
-  return `${twoDigits(d.getDate())}/${twoDigits(d.getMonth() + 1)} ${fmtHM(iso)}`;
+  return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: SP_TZ });
 }
 function labelRelativo(iso: string): string {
-  const d = new Date(iso); const now = new Date();
-  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  const d = new Date(iso);
+  const now = new Date();
+  const spNow = new Date(now.toLocaleString("en-US", { timeZone: SP_TZ }));
+  const spThen = new Date(d.toLocaleString("en-US", { timeZone: SP_TZ }));
+  const dayMs = 86400000;
+  const diffDays = Math.floor((spNow.setHours(0,0,0,0) - spThen.setHours(0,0,0,0)) / dayMs);
   if (diffDays === 0) return "Hoje";
   if (diffDays === 1) return "Ontem";
-  return `${twoDigits(d.getDate())}/${twoDigits(d.getMonth() + 1)}`;
+  if (diffDays < 7) {
+    const dia = d.toLocaleDateString("pt-BR", { weekday: "long", timeZone: SP_TZ });
+    return dia.charAt(0).toUpperCase() + dia.slice(1);
+  }
+  return d.toLocaleDateString("pt-BR", { timeZone: SP_TZ });
+}
+function formatTimestamp(iso: string | undefined): string {
+  if (!iso) return "";
+  return `${labelRelativo(iso)} às ${fmtHM(iso)}`;
 }
 
 interface CentralAjudaClienteProps {
@@ -121,16 +111,22 @@ const SUGESTOES = [
   "Como funciona o registro CAC?",
 ];
 
+const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg: string; bg: string }> = {
+  alta:  { label: "Confiança alta",  icon: <ShieldCheck className="h-3 w-3" />, fg: OK,    bg: OK_BG    },
+  media: { label: "Confiança média", icon: <ShieldAlert className="h-3 w-3" />, fg: AMBER, bg: AMBER_BG },
+  baixa: { label: "Confiança baixa", icon: <ShieldX     className="h-3 w-3" />, fg: RED,   bg: RED_BG   },
+};
+
 export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
-  const [sessaoId, setSessaoId] = useState<string | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [escalating, setEscalating] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
-  const [protocolos, setProtocolos] = useState<ProtocoloSalvo[]>([]);
-  const [protocoloAtual, setProtocoloAtual] = useState<ProtocoloSalvo | null>(null);
+  const [proto, setProto] = useState<ProtocoloAtivo | null>(null);
+  const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
   const [now, setNow] = useState<number>(Date.now());
+  const [reabertoBannerFor, setReabertoBannerFor] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -140,8 +136,30 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     return () => clearInterval(t);
   }, []);
 
-  useEffect(() => { setProtocolos(loadProtocolos()); }, []);
+  const carregarAnteriores = useCallback(async (excludeId?: string) => {
+    if (!cliente) return;
+    try {
+      const { data } = await (supabase as any)
+        .from("qa_chat_sessoes")
+        .select("id, numero_protocolo, titulo, status, created_at, updated_at, last_activity_at")
+        .eq("cliente_id", cliente.id)
+        .order("last_activity_at", { ascending: false })
+        .limit(10);
+      const arr = ((data ?? []) as any[])
+        .filter((s) => !excludeId || s.id !== excludeId)
+        .map((s) => ({
+          sessaoId: s.id,
+          protocolo: s.numero_protocolo ?? null,
+          createdAt: s.created_at,
+          updatedAt: s.last_activity_at || s.updated_at,
+          status: (s.status || "ativo") as "ativo" | "encerrado",
+          titulo: s.titulo ?? null,
+        } as ProtocoloResumo));
+      setProtocolosAnteriores(arr);
+    } catch (_) { /* best-effort */ }
+  }, [cliente?.id]);
 
+  // Ao montar: procura a sessão mais recente e carrega mensagens se ainda ativa (<30min).
   useEffect(() => {
     if (!cliente) { setInitLoading(false); return; }
     let alive = true;
@@ -149,86 +167,55 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       try {
         const { data: sessoes } = await (supabase as any)
           .from("qa_chat_sessoes")
-          .select("id, updated_at")
+          .select("id, numero_protocolo, status, created_at, last_activity_at")
           .eq("cliente_id", cliente.id)
-          .order("updated_at", { ascending: false })
+          .order("last_activity_at", { ascending: false })
           .limit(1);
-        const recente = (sessoes ?? [])[0];
-        if (recente && new Date(recente.updated_at).getTime() > Date.now() - 24 * 60 * 60 * 1000) {
+        const recente = (sessoes ?? [])[0] as any;
+        if (
+          recente &&
+          recente.status === "ativo" &&
+          new Date(recente.last_activity_at).getTime() > Date.now() - INACTIVITY_MS
+        ) {
           const { data: msgs } = await (supabase as any)
             .from("qa_chat_mensagens")
-            .select("id, role, content, fontes, created_at, aprovada_kb, conteudo_corrigido")
+            .select("id, role, content, fontes, created_at, aprovada_kb, conteudo_corrigido, nivel_confianca")
             .eq("sessao_id", recente.id)
             .order("created_at", { ascending: true })
             .limit(50);
           if (!alive) return;
-          setSessaoId(recente.id);
+          setProto({
+            sessaoId: recente.id,
+            protocolo: recente.numero_protocolo || "—",
+            protocoloData: recente.created_at,
+            lastActivityAt: recente.last_activity_at,
+            status: "ativo",
+          });
           setMensagens(((msgs ?? []) as any[]).map((m) => ({
             id: m.id, role: m.role, content: m.content,
             fontes: Array.isArray(m.fontes) ? m.fontes : [],
             aprovadaKb: m.aprovada_kb, conteudoCorrigido: m.conteudo_corrigido,
             createdAt: m.created_at ?? undefined,
-            confidence: Array.isArray(m.fontes) ? confidenceFromFontes(m.fontes.length) : undefined,
+            nivelConfianca: (m.nivel_confianca as NivelConfianca | null) ?? null,
           })));
         }
+        await carregarAnteriores(recente?.id);
       } finally {
         if (alive) setInitLoading(false);
       }
     })();
     return () => { alive = false; };
-  }, [cliente?.id]);
+  }, [cliente?.id, carregarAnteriores]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [mensagens]);
-
-  const resolverProtocolo = useCallback((pergunta: string): ProtocoloSalvo => {
-    const list = loadProtocolos();
-    const nowIso = new Date().toISOString();
-    const ativo = protocoloAtual;
-    if (ativo && Date.now() - new Date(ativo.updatedAt).getTime() < INACTIVITY_MS) {
-      const upd: ProtocoloSalvo = { ...ativo, updatedAt: nowIso };
-      const next = list.map((p) => (p.id === upd.id ? upd : p));
-      saveProtocolos(next); setProtocolos(next); setProtocoloAtual(upd);
-      return upd;
-    }
-    const reabrir = [...list].reverse().find((p) => mesmoAssunto(p.subject, pergunta));
-    if (reabrir) {
-      const upd: ProtocoloSalvo = { ...reabrir, updatedAt: nowIso };
-      const next = list.map((p) => (p.id === upd.id ? upd : p));
-      saveProtocolos(next); setProtocolos(next); setProtocoloAtual(upd);
-      return upd;
-    }
-    const novo: ProtocoloSalvo = {
-      id: novoProtocoloId(list), startedAt: nowIso, updatedAt: nowIso,
-      subject: pergunta, messagesCount: 0, confidenceAvg: 0, sessaoId,
-    };
-    const next = [...list, novo];
-    saveProtocolos(next); setProtocolos(next); setProtocoloAtual(novo);
-    return novo;
-  }, [protocoloAtual, sessaoId]);
-
-  const atualizarProtocoloComResposta = useCallback((protoId: string, novaConfianca: number) => {
-    setProtocolos((prev) => {
-      const next = prev.map((p) => {
-        if (p.id !== protoId) return p;
-        const nMsgs = p.messagesCount + 1;
-        const avg = ((p.confidenceAvg * p.messagesCount) + novaConfianca) / nMsgs;
-        return { ...p, messagesCount: nMsgs, confidenceAvg: avg, updatedAt: new Date().toISOString() };
-      });
-      saveProtocolos(next);
-      const atual = next.find((p) => p.id === protoId) || null;
-      if (atual) setProtocoloAtual(atual);
-      return next;
-    });
-  }, []);
 
   const enviar = useCallback(async (texto: string) => {
     if (!cliente || loading) return;
     const query = texto.trim();
     if (query.length < 2) return;
 
-    const proto = resolverProtocolo(query);
     setInput("");
     const startIso = new Date().toISOString();
     const startMs = Date.now();
@@ -245,6 +232,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     setLoading(true);
 
     let localFontes: Fonte[] = [];
+    let localNivel: NivelConfianca | null = null;
 
     try {
       const { data: sess } = await supabase.auth.getSession();
@@ -257,7 +245,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           Authorization: `Bearer ${jwt}`,
           apikey: PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ query, sessao_id: sessaoId, historico, limit: 5 }),
+        body: JSON.stringify({ query, sessao_id: proto?.sessaoId ?? null, historico, limit: 5 }),
       });
 
       if (!res.ok || !res.body) {
@@ -266,9 +254,8 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           if (j?.error) throw new Error(j.error);
           if (j?.answer) {
             setMensagens((prev) => prev.map((m) => m.id === asstId
-              ? { ...m, content: j.answer, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, confidence: confidenceFromFontes(0) }
+              ? { ...m, content: j.answer, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs }
               : m));
-            atualizarProtocoloComResposta(proto.id, confidenceFromFontes(0));
             return;
           }
         } catch (_) { /* ignore */ }
@@ -279,9 +266,8 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       if (!contentType.includes("text/event-stream")) {
         const j = await res.json();
         setMensagens((prev) => prev.map((m) => m.id === asstId
-          ? { ...m, content: j?.answer ?? "Sem resposta.", isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, confidence: confidenceFromFontes(0) }
+          ? { ...m, content: j?.answer ?? "Sem resposta.", isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs }
           : m));
-        atualizarProtocoloComResposta(proto.id, confidenceFromFontes(0));
         return;
       }
 
@@ -306,8 +292,20 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               setMensagens((prev) => prev.map((m) => m.id === asstId ? { ...m, content: full } : m));
             } else if (evt.type === "meta" && Array.isArray(evt.fontes)) {
               localFontes = evt.fontes;
-            } else if (evt.type === "session" && evt.sessao_id) {
-              setSessaoId(evt.sessao_id);
+            } else if (evt.type === "session") {
+              const nova: ProtocoloAtivo = {
+                sessaoId: evt.sessao_id,
+                protocolo: evt.protocolo || "—",
+                protocoloData: evt.protocolo_data || new Date().toISOString(),
+                lastActivityAt: new Date().toISOString(),
+                status: "ativo",
+                reaberto: !!evt.reaberto,
+              };
+              setProto(nova);
+              if (evt.reaberto) setReabertoBannerFor(evt.sessao_id);
+            } else if (evt.type === "confianca" && evt.nivel) {
+              localNivel = evt.nivel as NivelConfianca;
+              setMensagens((prev) => prev.map((m) => m.id === asstId ? { ...m, nivelConfianca: localNivel } : m));
             } else if (evt.type === "error") {
               throw new Error(evt.message || "Erro no streaming.");
             }
@@ -315,27 +313,27 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
         }
       }
 
-      const conf = confidenceFromFontes(localFontes.length);
       setMensagens((prev) => prev.map((m) => m.id === asstId
-        ? { ...m, content: full || m.content, fontes: localFontes, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, confidence: conf }
+        ? { ...m, content: full || m.content, fontes: localFontes, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, nivelConfianca: localNivel }
         : m));
-      atualizarProtocoloComResposta(proto.id, conf);
+      // Refresh rail
+      carregarAnteriores(proto?.sessaoId);
     } catch (e: any) {
       setMensagens((prev) => prev.map((m) => m.id === asstId
-        ? { ...m, content: "Não consegui responder agora. Tente novamente em instantes ou fale com a equipe pelo WhatsApp.", isStreaming: false, finishedAt: new Date().toISOString(), confidence: 0 }
+        ? { ...m, content: "Não consegui responder agora. Tente novamente em instantes ou fale com a equipe pelo WhatsApp.", isStreaming: false, finishedAt: new Date().toISOString(), nivelConfianca: "baixa" }
         : m));
       toast.error(e?.message ?? "Erro ao consultar a Central de Ajuda.");
     } finally {
       setLoading(false);
     }
-  }, [cliente, loading, mensagens, sessaoId, resolverProtocolo, atualizarProtocoloComResposta]);
+  }, [cliente, loading, mensagens, proto?.sessaoId, carregarAnteriores]);
 
   function novaConversa() {
     if (loading) return;
-    setSessaoId(null);
     setMensagens([]);
     setInput("");
-    setProtocoloAtual(null);
+    setProto(null);
+    setReabertoBannerFor(null);
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
@@ -351,9 +349,10 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     const ultimaPergunta = [...mensagens].reverse().find((m) => m.role === "user")?.content ?? "";
     if (!ultimaPergunta) return;
     const cpfPart = cliente.cpf ? `, CPF ${cliente.cpf}` : "";
+    const protoPart = proto ? ` — Protocolo ${proto.protocolo}` : "";
     const respostaPart = ultimaResposta ? `A resposta que recebi foi:\n${ultimaResposta}\n\n` : "";
     const texto =
-      `Olá! Sou ${cliente.nome_completo}${cpfPart}.\n\n` +
+      `Olá! Sou ${cliente.nome_completo}${cpfPart}${protoPart}.\n\n` +
       `Perguntei na Central de Ajuda: "${ultimaPergunta}"\n\n` +
       respostaPart +
       `Isso não resolveu minha dúvida, pode me ajudar?`;
@@ -375,13 +374,23 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     (m) => m.role === "assistant" && !m.isStreaming && m.content.trim().length > 0,
   );
 
-  const proto = protocoloAtual;
   const expiraEmMin = proto
-    ? Math.max(0, Math.round((new Date(proto.updatedAt).getTime() + INACTIVITY_MS - now) / 60000))
+    ? Math.max(0, Math.round((new Date(proto.lastActivityAt).getTime() + INACTIVITY_MS - now) / 60000))
     : 30;
-  const isAtiva = proto ? expiraEmMin > 0 : false;
-  const confMediaPct = proto ? Math.round((proto.confidenceAvg || 0) * 100) : 0;
-  const anteriores = [...protocolos].filter((p) => !proto || p.id !== proto.id).reverse().slice(0, 5);
+  const isAtiva = proto ? expiraEmMin > 0 && proto.status === "ativo" : false;
+  const nivelCounts = mensagens.reduce((acc, m) => {
+    if (m.role === "assistant" && m.nivelConfianca) acc[m.nivelConfianca] = (acc[m.nivelConfianca] || 0) + 1;
+    return acc;
+  }, {} as Record<NivelConfianca, number>);
+  const totalConf = (nivelCounts.alta || 0) + (nivelCounts.media || 0) + (nivelCounts.baixa || 0);
+  const confMediaLabel = totalConf === 0
+    ? "—"
+    : (nivelCounts.alta || 0) >= Math.max(nivelCounts.media || 0, nivelCounts.baixa || 0)
+      ? "Alta" : (nivelCounts.media || 0) >= (nivelCounts.baixa || 0) ? "Média" : "Baixa";
+
+  const mensagensCount = mensagens.filter((m) => !m.isStreaming).length;
+  const anteriores = protocolosAnteriores.filter((p) => !proto || p.sessaoId !== proto.sessaoId).slice(0, 5);
+  const showReaberto = proto?.reaberto && reabertoBannerFor === proto.sessaoId;
 
   const ultimasFontes: Fonte[] = (() => {
     const seen = new Set<string>();
@@ -408,7 +417,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               Central de Ajuda · Klal
             </h1>
             <p className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>
-              Chat central + rail de contexto
+              Assistente jurídico e consultor da Quero Armas
             </p>
           </div>
           <div className="flex flex-wrap items-stretch gap-2">
@@ -418,7 +427,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               </div>
             )}
             <div className="uppercase px-3 py-2 bg-white border-2" style={{ borderColor: INK, fontFamily: OSWALD, fontWeight: 700, fontSize: 11, letterSpacing: "0.14em", color: INK }}>
-              Protocolo #{proto?.id || "—"}
+              Protocolo {proto?.protocolo || "—"}
             </div>
           </div>
         </div>
@@ -435,7 +444,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               </div>
               <div className="mt-1 text-[12px]" style={{ color: INK_2 }}>
                 {proto
-                  ? <>Iniciada {labelRelativo(proto.startedAt).toLowerCase()} às {fmtHM(proto.startedAt)} · Expira em {expiraEmMin}min de inatividade</>
+                  ? <>Iniciada {labelRelativo(proto.protocoloData).toLowerCase()} às {fmtHM(proto.protocoloData)} · Expira em {expiraEmMin}min de inatividade</>
                   : "Envie sua primeira dúvida para abrir um protocolo"}
               </div>
             </div>
@@ -444,6 +453,15 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               {isAtiva ? "Ativa" : proto ? "Expirada" : "Aguardando"}
             </span>
           </div>
+
+          {showReaberto && proto && (
+            <div className="mx-5 mt-3 px-3 py-2 flex items-start gap-2" style={{ background: AMBER_BG, borderLeft: `3px solid ${AMBER}`, borderRadius: 2 }}>
+              <Sparkles className="h-4 w-4 mt-0.5 shrink-0" style={{ color: AMBER }} />
+              <div className="text-[12px]" style={{ color: "#78350F" }}>
+                Retomando o protocolo <strong>{proto.protocolo}</strong>, aberto em <strong>{fmtDMYHM(proto.protocoloData)}</strong>.
+              </div>
+            </div>
+          )}
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ background: "#FFFFFF" }}>
             {initLoading ? (
@@ -469,7 +487,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                 {proto && (
                   <div className="flex items-center justify-center">
                     <span className="uppercase inline-flex items-center gap-2 px-3 py-1 bg-white border" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.18em", color: INK_2, borderRadius: 2 }}>
-                      {labelRelativo(proto.startedAt)} · {fmtHM(proto.startedAt)} · Protocolo {isAtiva ? "aberto" : "encerrado"}
+                      {labelRelativo(proto.protocoloData)} · {fmtHM(proto.protocoloData)} · Protocolo {proto.protocolo}
                     </span>
                   </div>
                 )}
@@ -483,27 +501,21 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                           </div>
                           {m.createdAt && (
                             <div className="text-right mt-1" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 10.5, letterSpacing: "0.14em", color: INK_2 }}>
-                              {fmtHMS(m.createdAt)}
+                              {formatTimestamp(m.createdAt)}
                             </div>
                           )}
                         </div>
                       </div>
                     );
                   }
-                  const confPct = m.confidence != null
-                    ? Math.round(m.confidence * 100)
-                    : (m.fontes && m.fontes.length ? Math.round(confidenceFromFontes(m.fontes.length) * 100) : null);
+                  const nivel = m.nivelConfianca || null;
+                  const nMeta = nivel ? NIVEL_META[nivel] : null;
                   return (
                     <div key={m.id} className="flex justify-start">
                       <div className="w-full max-w-[92%]">
                         <div className="bg-white" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
                           <div className="flex items-center gap-2 px-4 pt-3">
                             <span className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 12, letterSpacing: "0.16em", color: INK }}>Klal</span>
-                            {!m.isStreaming && confPct != null && (
-                              <span className="uppercase px-2 py-0.5" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.16em", background: OK_BG, color: OK, borderRadius: 2 }}>
-                                Confiança {confPct}%
-                              </span>
-                            )}
                           </div>
                           <div className="px-4 py-3">
                             {!m.isStreaming && m.aprovadaKb === false && (
@@ -529,21 +541,30 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                 <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: INK_2, animationDelay: "300ms" }} />
                               </div>
                             ) : null}
-                            {!m.isStreaming && m.fontes && m.fontes.length > 0 && (
-                              <div className="mt-3 pt-3 text-[12px]" style={{ borderTop: `1px dashed ${CARD_BORDER}`, color: INK }}>
-                                <span style={{ fontWeight: 700 }}>Fontes:</span>{" "}
-                                {m.fontes.slice(0, 6).map((f, i) => {
-                                  const raw = f.titulo_norma || f.titulo_doc || "Fonte";
-                                  const label = raw.startsWith("QA: ") ? "Klal — resposta aprovada" : raw;
-                                  return <span key={i} style={{ color: INK_2 }}>{i > 0 ? " · " : ""}{label}</span>;
-                                })}
+                            {!m.isStreaming && ((m.fontes && m.fontes.length > 0) || nMeta) && (
+                              <div className="mt-3 pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]" style={{ borderTop: `1px dashed ${CARD_BORDER}`, color: INK }}>
+                                {m.fontes && m.fontes.length > 0 && (
+                                  <span>
+                                    <span style={{ fontWeight: 700 }}>Fontes:</span>{" "}
+                                    {m.fontes.slice(0, 6).map((f, i) => {
+                                      const raw = f.titulo_norma || f.titulo_doc || "Fonte";
+                                      const label = raw.startsWith("QA: ") ? "Klal — resposta aprovada" : raw;
+                                      return <span key={i} style={{ color: INK_2 }}>{i > 0 ? " · " : ""}{label}</span>;
+                                    })}
+                                  </span>
+                                )}
+                                {nMeta && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 uppercase" style={{ background: nMeta.bg, color: nMeta.fg, borderRadius: 2, fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.14em" }}>
+                                    {nMeta.icon} {nMeta.label}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
                         </div>
                         {!m.isStreaming && m.createdAt && (
                           <div className="mt-1" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 10.5, letterSpacing: "0.14em", color: INK_2 }}>
-                            {fmtHMS(m.finishedAt || m.createdAt)}
+                            {formatTimestamp(m.finishedAt || m.createdAt)}
                             {m.latencyMs ? <> · gerado em {(m.latencyMs / 1000).toFixed(1)}s</> : null}
                           </div>
                         )}
@@ -591,12 +612,12 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           <div className="bg-white p-4" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
             <div className="uppercase mb-2" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Protocolo atual</div>
             <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 20, letterSpacing: "0.06em", color: INK, wordBreak: "break-all" }}>
-              #{proto?.id || "—"}
+              {proto?.protocolo || "—"}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Aberto</div>
-                <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{proto ? fmtDMY(proto.startedAt) : "—"}</div>
+                <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{proto ? fmtDMYHM(proto.protocoloData) : "—"}</div>
               </div>
               <div>
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Expira em</div>
@@ -604,11 +625,11 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               </div>
               <div>
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Mensagens</div>
-                <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{proto ? proto.messagesCount : 0}</div>
+                <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{mensagensCount}</div>
               </div>
               <div>
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Confiança média</div>
-                <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 14, color: INK }}>{confMediaPct ? `${confMediaPct}%` : "—"}</div>
+                <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 14, color: INK }}>{confMediaLabel}</div>
               </div>
             </div>
             <div className="text-[11px] mt-3" style={{ color: INK_2, lineHeight: 1.5 }}>
@@ -652,19 +673,16 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               <div className="text-[12px]" style={{ color: INK_2 }}>Nenhum protocolo anterior.</div>
             ) : (
               <div className="space-y-1.5">
-                {anteriores.map((p) => {
-                  const shortId = p.id.slice(-3);
-                  return (
-                    <div key={p.id} className="flex items-center justify-between px-3 py-2" style={{ background: "#FAFAFA", borderRadius: 2 }} title={p.subject}>
-                      <span className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 12, letterSpacing: "0.08em", color: INK }}>
-                        #KLA-…{shortId}
-                      </span>
-                      <span className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 11, letterSpacing: "0.14em", color: INK_2 }}>
-                        {labelRelativo(p.updatedAt)}
-                      </span>
-                    </div>
-                  );
-                })}
+                {anteriores.map((p) => (
+                  <div key={p.sessaoId} className="flex items-center justify-between px-3 py-2" style={{ background: "#FAFAFA", borderRadius: 2 }} title={p.titulo || ""}>
+                    <span className="uppercase truncate" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 12, letterSpacing: "0.08em", color: INK, maxWidth: 170 }}>
+                      {p.protocolo || "—"}
+                    </span>
+                    <span className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 11, letterSpacing: "0.14em", color: INK_2 }}>
+                      {labelRelativo(p.updatedAt)}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
