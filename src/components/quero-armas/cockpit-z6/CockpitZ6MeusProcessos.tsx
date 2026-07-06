@@ -380,14 +380,14 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         <Card style={{ marginBottom: 16, borderLeft: "3px solid #D9342B" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 10, letterSpacing: ".2em", color: "#D9342B" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
-              <div style={{ fontSize: 15, marginTop: 6, fontWeight: 600 }}>{focoDoDia.titulo}</div>
-              <div style={{ fontSize: 11.5, color: "#6A6A6A", marginTop: 4 }}>{focoDoDia.descricao}</div>
+              <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
+              <div style={{ fontFamily: "Georgia,'Times New Roman',serif", fontSize: 26, lineHeight: 1.1, marginTop: 10, fontWeight: 700, letterSpacing: "-.015em", color: "#0c0c0c" }}>{focoDoDia.titulo}</div>
+              <div style={{ fontFamily: "Arial,sans-serif", fontSize: 13, color: "#5a5a5a", marginTop: 6 }}>{focoDoDia.descricao}</div>
             </div>
             <button
               type="button"
               onClick={focoDoDia.cta.onClick}
-              style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "10px 18px", fontFamily: "'Oswald', sans-serif", letterSpacing: ".16em", fontSize: 11, cursor: "pointer", borderRadius: 2 }}
+              style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "11px 16px", fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontWeight: 900, letterSpacing: ".22em", fontSize: 11, cursor: "pointer", borderRadius: 2, textTransform: "uppercase" }}
             >
               {focoDoDia.cta.label}
             </button>
@@ -411,12 +411,12 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         `}</style>
         {kpis.map((k, i) => (
           <div key={i} style={{ background: "#fff", border: "1px solid #E5E5E5", padding: "14px 14px", borderRadius: 4 }}>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 9.5, letterSpacing: ".18em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".24em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", display: "inline-block", background: DOT[k.dot] }} />
               {k.label}
             </div>
-            <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 26, fontWeight: 600, marginTop: 8, color: "#0A0A0A" }}>{k.value}</div>
-            <div style={{ fontSize: 10.5, color: "#7A7A7A", marginTop: 2 }}>{k.sub}</div>
+            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 26, lineHeight: 1, fontWeight: 900, marginTop: 9, color: "#0A0A0A" }}>{k.value}</div>
+            <div style={{ fontFamily: "Arial,sans-serif", fontSize: 11, fontWeight: 700, color: "#7A7A7A", marginTop: 4 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -427,10 +427,10 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #EFEFEF", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
               <Badge tone={p.badgeTone}>{p.badge}</Badge>
-              <h2 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 13, letterSpacing: ".2em", color: "#0A0A0A", fontWeight: 600 }}>{p.titulo}</h2>
+              <h2 style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 13, letterSpacing: ".24em", color: "#0A0A0A", fontWeight: 900, margin: 0, textTransform: "uppercase" }}>{p.titulo}</h2>
             </div>
             {p.protocolo && (
-              <div style={{ fontFamily: "'Oswald', sans-serif", fontSize: 11, color: "#6A6A6A", letterSpacing: ".14em" }}>{p.protocolo}</div>
+              <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, color: "#6A6A6A", letterSpacing: ".22em", textTransform: "uppercase" }}>{p.protocolo}</div>
             )}
           </div>
           <div style={{ padding: "16px 18px" }}>
