@@ -694,26 +694,26 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
         {/* Rail */}
         <div className="space-y-4">
-          <div className="bg-white p-4" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
+          <div className="bg-white p-3.5" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
             <div className="uppercase mb-2" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Protocolo atual</div>
-            <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 20, letterSpacing: "0.06em", color: INK, wordBreak: "break-all" }}>
+            <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 18, letterSpacing: "0.06em", color: INK, wordBreak: "break-all" }}>
               {proto?.protocolo || "—"}
             </div>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <div>
-                <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Aberto</div>
+            <div className="grid grid-cols-1 gap-x-3 gap-y-4 mt-4">
+              <div className="pt-3" style={{ borderTop: `1px solid ${LINE}` }}>
+                <div className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Aberto</div>
                 <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{proto ? fmtDMYHM(proto.protocoloData) : "—"}</div>
               </div>
-              <div>
-                <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Expira em</div>
+              <div className="pt-3" style={{ borderTop: `1px solid ${LINE}` }}>
+                <div className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Expira em</div>
                 <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 16, color: isAtiva ? BRAND : INK_2 }}>{proto ? `${expiraEmMin}min` : "—"}</div>
               </div>
-              <div>
-                <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Mensagens</div>
+              <div className="pt-3" style={{ borderTop: `1px solid ${LINE}` }}>
+                <div className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Mensagens</div>
                 <div style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 14, color: INK }}>{mensagensCount}</div>
               </div>
-              <div>
-                <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Confiança média</div>
+              <div className="pt-3" style={{ borderTop: `1px solid ${LINE}` }}>
+                <div className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 9.5, letterSpacing: "0.18em", color: INK_2 }}>Confiança média</div>
                 <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 14, color: INK }}>{confMediaLabel}</div>
               </div>
             </div>
@@ -722,7 +722,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             </div>
           </div>
 
-          <div className="bg-white p-4" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
+          <div className="bg-white p-3.5" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
             <div className="uppercase mb-3" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Fontes consultadas</div>
             {ultimasFontes.length === 0 ? (
               <div className="text-[12px]" style={{ color: INK_2 }}>As fontes citadas nas respostas aparecerão aqui.</div>
@@ -733,7 +733,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                   const isAprovada = raw.startsWith("QA: ");
                   const label = isAprovada ? "Klal — resposta anterior aprovada" : raw;
                   return (
-                    <div key={i} className="px-3 py-2" style={{ background: "#FAFAFA", borderLeft: `3px solid ${BRAND}`, borderRadius: 2 }}>
+                    <div key={i} className="px-3 py-2" style={{ background: "#FAFAFA", borderLeft: `3px solid ${BRAND}`, borderRadius: 10 }}>
                       <div style={{ fontWeight: 700, fontSize: 12.5, color: INK }}>{label}</div>
                       <div className="text-[11px] mt-0.5" style={{ color: INK_2 }}>
                         {f.tipo === "legislacao" ? "Legislação · base oficial" : "Documento aprovado"}
@@ -745,7 +745,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             )}
           </div>
 
-          <div className="bg-white p-4" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
+          <div className="bg-white p-3.5" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
             <div className="flex items-center justify-between mb-3">
               <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Protocolos anteriores</div>
               {mensagens.length > 0 && (
@@ -759,7 +759,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             ) : (
               <div className="space-y-1.5">
                 {anteriores.map((p) => (
-                  <div key={p.sessaoId} className="flex items-center justify-between px-3 py-2" style={{ background: "#FAFAFA", borderRadius: 2 }} title={p.titulo || ""}>
+                  <div key={p.sessaoId} className="flex items-center justify-between px-3 py-2" style={{ background: "#FAFAFA", borderRadius: 10 }} title={p.titulo || ""}>
                     <span className="uppercase truncate" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 12, letterSpacing: "0.08em", color: INK, maxWidth: 170 }}>
                       {p.protocolo || "—"}
                     </span>
