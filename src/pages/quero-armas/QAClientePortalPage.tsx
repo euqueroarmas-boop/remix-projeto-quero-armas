@@ -2242,8 +2242,12 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "mensagens" && (
-          <SectionCard icon={MessageCircle} title="Mensagens" color="hsl(35 92% 48%)">
-            <CentralAjudaCliente cliente={cliente as any} />
+          <SectionCard icon={MessageCircle} title="Mensagens" color="hsl(35 92% 48%)"
+            containerClassName="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col"
+            headerClassName="flex items-center gap-2.5 px-4 py-2.5 border-b border-slate-100 shrink-0">
+            <div className="flex-1 min-h-0 p-0">
+              <CentralAjudaCliente cliente={cliente as any} />
+            </div>
           </SectionCard>
         )}
 
