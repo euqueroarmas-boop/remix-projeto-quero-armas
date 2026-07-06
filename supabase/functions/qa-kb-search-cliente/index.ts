@@ -141,6 +141,9 @@ Deno.serve(async (req) => {
     // para gravar as mensagens do chat depois do streaming.
     let clienteId: number | null = null;
     let effectiveSessaoId: string | null = sessao_id;
+    let effectiveProtocolo: string | null = null;
+    let effectiveProtocoloData: string | null = null;
+    let sessaoReaberta = false;
     try {
       const authHeader = req.headers.get("Authorization") ?? "";
       const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
