@@ -117,11 +117,13 @@ Deno.serve(async (req) => {
       limit = 5,
       sessao_id = null,
       historico = [],
+      modo_refinamento = false,
     }: {
       query: string;
       limit?: number;
       sessao_id?: string | null;
       historico?: Array<{ role: "user" | "assistant"; content: string }>;
+      modo_refinamento?: boolean;
     } = await req.json();
     if (!query || typeof query !== "string" || query.trim().length < 2) {
       return new Response(JSON.stringify({ error: "query inválida" }), {
