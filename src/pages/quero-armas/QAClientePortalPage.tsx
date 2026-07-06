@@ -321,6 +321,9 @@ export default function QAClientePortalPage() {
     return () => mql.removeEventListener("change", onChange);
   }, []);
   const effectiveCollapsed = sidebarCollapsed;
+  // Em tablet/celular (<lg), quando o menu está recolhido, ele some 100%
+  // e fica apenas uma seta colada no canto esquerdo da tela.
+  const mobileHidden = sidebarCollapsed && isBelowLg;
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -1329,7 +1332,20 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[260px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${mobileHidden ? "pl-0" : effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[260px]"}`}>
+      {/* Seta flutuante para reabrir o menu em tablet/celular quando recolhido */}
+      {mobileHidden && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(false)}
+          aria-label="Expandir menu"
+          className="fixed left-0 top-16 z-50 w-7 h-9 rounded-r-md bg-[#141414] border border-l-0 border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#c9c2b3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1351,7 +1367,7 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
-        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"}`}
+        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[260px]"} ${mobileHidden ? "-translate-x-full" : "translate-x-0"}`}
         style={{ background: sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
