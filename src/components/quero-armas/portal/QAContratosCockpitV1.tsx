@@ -99,6 +99,11 @@ function maskCpf(cpf: string | null | undefined): string {
   if (d.length !== 11) return cpf || "—";
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
+function formatBRLKpi(v: number): string {
+  if (!v || v <= 0) return "R$ 0";
+  if (v >= 1000) return `R$ ${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}K`;
+  return `R$ ${Math.round(v)}`;
+}
 
 interface Props {
   cliente: any;
