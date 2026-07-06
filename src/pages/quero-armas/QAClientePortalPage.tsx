@@ -1924,8 +1924,8 @@ export default function QAClientePortalPage() {
                 {/* Banner de ação (só quando tem) */}
                 {temAcao && (
                   <div className="border-t border-slate-100 bg-[#7A1F2B]/5 px-5 py-3 flex items-center gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12px] font-bold text-[#7A1F2B] truncate">{acaoTitulo}</div>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="text-[12px] font-bold text-[#7A1F2B] truncate whitespace-nowrap overflow-hidden">{acaoTitulo}</div>
                       <div className="text-[11px] text-slate-600 mt-0.5">{acaoSub}</div>
                     </div>
                     <div className="shrink-0">
