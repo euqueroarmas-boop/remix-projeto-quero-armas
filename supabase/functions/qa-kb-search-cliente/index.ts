@@ -607,7 +607,8 @@ Deno.serve(async (req) => {
         send({ type: "meta", fontes: fontesResumo });
 
         // Garante sessão. Cria antes do streaming para poder mandar o id.
-        if (clienteId && !effectiveSessaoId) {
+        // No modo refinamento não criamos sessão nova (chat interno da equipe).
+        if (!modo_refinamento && clienteId && !effectiveSessaoId) {
           try {
             const { data: novaSessao } = await supabase
               .from("qa_chat_sessoes")
