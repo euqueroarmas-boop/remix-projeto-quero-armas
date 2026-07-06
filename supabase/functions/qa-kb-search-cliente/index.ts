@@ -774,6 +774,71 @@ Deno.serve(async (req) => {
           }
         }
 
+        // ═════ Auto-conserto: nenhuma sessão sem numero_protocolo ═════
+        if (effectiveSessaoId && (!effectiveProtocolo || effectiveProtocolo.trim() === "")) {
+          let protocoloGerado: string | null = null;
+          try {
+            const { data: protoData, error: protoErr } = await supabase.rpc(
+              "qa_gerar_protocolo_chat",
+            );
+            if (protoErr) {
+              console.error("[auto-conserto] qa_gerar_protocolo_chat error:", protoErr);
+            }
+            if (typeof protoData === "string" && protoData.trim().length > 0) {
+              protocoloGerado = protoData.trim();
+            }
+          } catch (e) {
+            console.error("[auto-conserto] qa_gerar_protocolo_chat throw:", e);
+          }
+          if (!protocoloGerado) {
+            // Fallback JS: QA-AAAAMMDD-NNNN (São Paulo)
+            try {
+              const parts = new Intl.DateTimeFormat("en-CA", {
+                timeZone: "America/Sao_Paulo",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })
+                .format(new Date())
+                .split("-");
+              const yyyymmdd = `${parts[0]}${parts[1]}${parts[2]}`;
+              const startIso = `${parts[0]}-${parts[1]}-${parts[2]}T00:00:00-03:00`;
+              const endIso = `${parts[0]}-${parts[1]}-${parts[2]}T23:59:59-03:00`;
+              const { count } = await supabase
+                .from("qa_chat_sessoes")
+                .select("id", { count: "exact", head: true })
+                .eq("cliente_id", clienteId as number)
+                .gte("created_at", startIso)
+                .lte("created_at", endIso);
+              const seq = String(((count ?? 0) + 1)).padStart(4, "0");
+              protocoloGerado = `QA-${yyyymmdd}-${seq}`;
+            } catch (e) {
+              console.error("[auto-conserto] fallback JS falhou:", e);
+            }
+          }
+          if (protocoloGerado) {
+            try {
+              const { data: upd, error: updErr } = await supabase
+                .from("qa_chat_sessoes")
+                .update({ numero_protocolo: protocoloGerado })
+                .eq("id", effectiveSessaoId)
+                .select("numero_protocolo, created_at")
+                .single();
+              if (updErr) {
+                console.error("[auto-conserto] update sessão falhou:", updErr);
+              } else {
+                effectiveProtocolo =
+                  (upd as any)?.numero_protocolo || protocoloGerado;
+                if (!effectiveProtocoloData) {
+                  effectiveProtocoloData = (upd as any)?.created_at ?? null;
+                }
+              }
+            } catch (e) {
+              console.error("[auto-conserto] update throw:", e);
+            }
+          }
+        }
+
         if (effectiveSessaoId) {
           send({
             type: "session",
