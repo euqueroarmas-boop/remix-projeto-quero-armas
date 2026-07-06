@@ -99,6 +99,11 @@ function maskCpf(cpf: string | null | undefined): string {
   if (d.length !== 11) return cpf || "—";
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
+function formatBRLKpi(v: number): string {
+  if (!v || v <= 0) return "R$ 0";
+  if (v >= 1000) return `R$ ${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}K`;
+  return `R$ ${Math.round(v)}`;
+}
 
 interface Props {
   cliente: any;
@@ -107,6 +112,7 @@ interface Props {
 export default function QAContratosCockpitV1({ cliente }: Props) {
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [valorPago, setValorPago] = useState<number>(0);
   const [reloadKey, setReloadKey] = useState(0);
   const [preparedFeaturedDownload, setPreparedFeaturedDownload] = useState<PreparedMinutaDownload | null>(null);
   const [preparingFeaturedDownload, setPreparingFeaturedDownload] = useState(false);
@@ -141,12 +147,47 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     return () => { cancel = true; };
   }, [cliente?.id, reloadKey]);
 
+  // Valor total = soma do PREÇO DO CATÁLOGO dos itens de vendas PAGAS
+  // (status = 'PAGO' e cobranca_status != 'cancelada'). Cancelamentos removem
+  // automaticamente do total via realtime abaixo.
+  useEffect(() => {
+    if (!cliente?.id) { setValorPago(0); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("qa_vendas" as any)
+          .select("id, status, cobranca_status, qa_itens_venda(servico_id, qa_servicos_catalogo(preco))")
+          .eq("cliente_id", cliente.id)
+          .eq("status", "PAGO");
+        if (error) { console.warn("[QAContratosCockpitV1] vendas pagas:", error.message); return; }
+        if (cancel) return;
+        const total = ((data as any) || [])
+          .filter((v: any) => v.cobranca_status !== "cancelada")
+          .reduce((sum: number, v: any) => {
+            const itens = Array.isArray(v.qa_itens_venda) ? v.qa_itens_venda : [];
+            return sum + itens.reduce((s: number, it: any) => {
+              const preco = Number(it?.qa_servicos_catalogo?.preco) || 0;
+              return s + preco;
+            }, 0);
+          }, 0);
+        setValorPago(total);
+      } catch (e) {
+        console.warn("[QAContratosCockpitV1] valor pago:", e);
+        if (!cancel) setValorPago(0);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [cliente?.id, reloadKey]);
+
   // Realtime: refresh on any update for this cliente's contracts
   useEffect(() => {
     if (!cliente?.id) return;
     const ch = supabase
       .channel(`qa_contratos_v1_${cliente.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "qa_contracts", filter: `cliente_id=eq.${cliente.id}` },
+        () => setReloadKey((k) => k + 1))
+      .on("postgres_changes", { event: "*", schema: "public", table: "qa_vendas", filter: `cliente_id=eq.${cliente.id}` },
         () => setReloadKey((k) => k + 1))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -158,9 +199,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     const emAssin = contracts.filter((c) => ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status))).length;
     const assinados = contracts.filter((c) => c.status === "validated").length;
     const vigentes = assinados; // simplificação: validados = vigentes
-    const valor = contracts.reduce((s, c) => s + (Number(c.total_amount) || 0), 0);
+    const valor = valorPago;
     return { aguarda, emAssin, assinados, vigentes, valor };
-  }, [contracts]);
+  }, [contracts, valorPago]);
 
   // Featured: primeiro aguardando cliente, senão primeiro em assinatura, senão mais recente
   const featured = useMemo<Contract | null>(() => {
@@ -324,7 +365,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <KpiCard tone="blue"  label="EM ASSINATURA" value={kpis.emAssin} sub="aguardando contraparte" />
         <KpiCard tone="green" label="ASSINADOS" value={kpis.assinados} sub="no histórico" />
         <KpiCard tone="bordo" label="EM VIGÊNCIA" value={kpis.vigentes} sub="contratos ativos" />
-        <KpiCard tone="gray"  label="VALOR TOTAL" value={kpis.valor ? `R$ ${(kpis.valor/1000).toFixed(1)}K` : "R$ 0"} sub="somatório anual" />
+        <KpiCard tone="gray"  label="VALOR TOTAL" value={formatBRLKpi(kpis.valor)} sub="pedidos pagos" />
         <KpiCard tone="red"   label="EXPIRA EM" value={contracts.length ? "—" : "0"} sub="renovação contratual" />
       </div>
 
