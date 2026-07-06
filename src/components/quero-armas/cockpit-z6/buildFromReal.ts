@@ -45,6 +45,22 @@ function daysUntil(d: string | null | undefined): number | null {
   return Math.ceil((dt.getTime() - Date.now()) / 86_400_000);
 }
 
+/**
+ * Normaliza nome de serviço para exibição uniforme na tela do cliente:
+ * UPPERCASE + espaços em volta de "/" (com no-break space para evitar quebra feia).
+ * Ex: "Aquisição/Registro/Posse de arma de fogo"
+ *   → "AQUISIÇÃO / REGISTRO / POSSE DE ARMA DE FOGO"
+ */
+function formatServicoNome(value: string | null | undefined): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "PROCESSO";
+  return raw
+    .toLocaleUpperCase("pt-BR")
+    .replace(/\s*\/\s*/g, "\u00A0/\u00A0")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Mapeia status do qa_processos → badge visual canônica do Z6. */
 function badgeForStatus(status: string | null | undefined): { badge: string; tone: CockpitZ6Process["badgeTone"] } {
   const s = String(status || "").toLowerCase();
