@@ -693,7 +693,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
         </div>
 
         {/* Rail */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="bg-white p-3.5" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
             <div className="uppercase mb-2" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Protocolo atual</div>
             <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 18, letterSpacing: "0.06em", color: INK, wordBreak: "break-all" }}>
