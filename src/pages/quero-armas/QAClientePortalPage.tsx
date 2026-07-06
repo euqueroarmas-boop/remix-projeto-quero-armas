@@ -1332,7 +1332,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[260px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left,padding-top] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[260px]"} ${mobileHidden ? "pt-16" : ""}`}>
       {/* Botão hambúrguer — visível apenas <lg quando o menu está escondido */}
       {mobileHidden && (
         <button
