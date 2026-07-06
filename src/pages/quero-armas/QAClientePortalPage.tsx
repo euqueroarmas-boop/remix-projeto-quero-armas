@@ -274,7 +274,9 @@ export default function QAClientePortalPage() {
     | "mensagens"
     | "configuracoes"
   >("resumo");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
+  );
   const [themeCatalog, setThemeCatalog] = useState<QASidebarTheme[]>(QA_SIDEBAR_THEMES);
   const [globalDefaultKey, setGlobalDefaultKey] = useState<string | null>(null);
   const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(
@@ -306,8 +308,8 @@ export default function QAClientePortalPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Em telas < lg (1024px) o sidebar é sempre forçado para o modo colapsado (mini-rail),
-  // mantendo o mesmo layout/fontes/paleta do desktop em tablet e mobile.
+  // Em telas < lg (1024px) o sidebar inicia colapsado (mini-rail), mas o
+  // usuário pode expandir/recolher usando a mesma seta do desktop.
   const [isBelowLg, setIsBelowLg] = useState<boolean>(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
   );
@@ -318,7 +320,7 @@ export default function QAClientePortalPage() {
     setIsBelowLg(mql.matches);
     return () => mql.removeEventListener("change", onChange);
   }, []);
-  const effectiveCollapsed = isBelowLg ? true : sidebarCollapsed;
+  const effectiveCollapsed = sidebarCollapsed;
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -1505,9 +1507,8 @@ export default function QAClientePortalPage() {
           );
         })()}
 
-        {/* Botão moderno: regredir/expandir menu — apenas desktop (mobile/tablet fixo em mini) */}
-        {!isBelowLg && (
-          <button
+        {/* Botão moderno: regredir/expandir menu — em todas as larguras */}
+        <button
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
@@ -1517,7 +1518,6 @@ export default function QAClientePortalPage() {
           >
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
-        )}
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
           {navItems.map((item) => {
