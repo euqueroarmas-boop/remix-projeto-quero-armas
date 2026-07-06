@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, ChevronLeft, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
+  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu, X,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
   Boxes,
@@ -1332,7 +1332,26 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[220px] lg:pl-[260px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[260px]"}`}>
+      {/* Botão hambúrguer — visível apenas <lg quando o menu está escondido */}
+      {mobileHidden && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(false)}
+          aria-label="Abrir menu"
+          className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-[#141414] text-white border border-[#2a2a2a] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
+      {/* Backdrop — visível apenas <lg quando o drawer está aberto */}
+      {!mobileHidden && isBelowLg && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setSidebarCollapsed(true)}
+          aria-hidden
+        />
+      )}
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1354,10 +1373,21 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
-        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 ${effectiveCollapsed ? "w-[68px]" : "w-[220px] lg:w-[260px]"}`}
+        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 max-w-[80vw] ${effectiveCollapsed ? "w-[260px] lg:w-[68px]" : "w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
         style={{ background: sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
+        {/* Botão X — fechar drawer, visível apenas <lg quando aberto */}
+        {!mobileHidden && isBelowLg && (
+          <button
+            type="button"
+            onClick={() => setSidebarCollapsed(true)}
+            aria-label="Fechar menu"
+            className="lg:hidden absolute top-2 right-2 z-[60] w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
         {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
         <div
           aria-hidden
@@ -1515,7 +1545,7 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(v => !v)}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
+            className="hidden lg:flex absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
           >
