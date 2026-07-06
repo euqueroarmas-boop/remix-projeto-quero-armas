@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
-  Loader2, Send, HelpCircle, MessageCircle, Plus, BookOpen, Sparkles,
+  Loader2, Send, HelpCircle, MessageCircle, Plus, BookOpen, Sparkles, Pencil, AlertTriangle,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ type Mensagem = {
   content: string;
   fontes?: Fonte[];
   isStreaming?: boolean;
+  aprovadaKb?: boolean | null;
+  conteudoCorrigido?: string | null;
 };
 
 interface CentralAjudaClienteProps {
@@ -65,7 +67,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
         ) {
           const { data: msgs } = await (supabase as any)
             .from("qa_chat_mensagens")
-            .select("id, role, content, fontes, created_at")
+            .select("id, role, content, fontes, created_at, aprovada_kb, conteudo_corrigido")
             .eq("sessao_id", recente.id)
             .order("created_at", { ascending: true })
             .limit(50);
@@ -77,6 +79,8 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               role: m.role,
               content: m.content,
               fontes: Array.isArray(m.fontes) ? m.fontes : [],
+              aprovadaKb: m.aprovada_kb,
+              conteudoCorrigido: m.conteudo_corrigido,
             })),
           );
         }
@@ -392,10 +396,28 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                   </div>
                 ) : (
                   <div className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 shadow-sm">
+                    {!m.isStreaming && m.aprovadaKb === false && (
+                      <div
+                        className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md mb-2"
+                        style={{ background: "hsl(0 70% 96%)", color: "hsl(0 60% 40%)" }}
+                      >
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                        Resposta sinalizada pela nossa equipe como incorreta ou desatualizada
+                      </div>
+                    )}
+                    {!m.isStreaming && m.conteudoCorrigido && (
+                      <div
+                        className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-md mb-2"
+                        style={{ background: `${BRAND}12`, color: BRAND }}
+                      >
+                        <Pencil className="h-3 w-3 shrink-0" />
+                        Resposta corrigida pela equipe
+                      </div>
+                    )}
                     {m.content ? (
                       <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-strong:text-slate-900">
                         <ReactMarkdown>
-                          {m.isStreaming ? m.content + "▊" : m.content}
+                          {m.isStreaming ? m.content + "▊" : (m.conteudoCorrigido || m.content)}
                         </ReactMarkdown>
                       </div>
                     ) : m.isStreaming ? (
