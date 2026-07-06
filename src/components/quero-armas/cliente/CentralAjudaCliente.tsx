@@ -557,25 +557,25 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                   return (
                     <div key={m.id} className="flex justify-start">
                       <div className="w-full max-w-[92%]">
-                        <div className="bg-white" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4 }}>
+                        <div className="bg-white" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
                           <div className="flex items-center gap-2 px-4 pt-3">
                             <span className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 12, letterSpacing: "0.16em", color: INK }}>Klal</span>
                           </div>
                           <div className="px-4 py-3">
                             {!m.isStreaming && m.aprovadaKb === false && (
-                              <div className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 mb-2" style={{ background: "hsl(0 70% 96%)", color: "hsl(0 60% 40%)", borderRadius: 2 }}>
+                              <div className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 mb-2" style={{ background: "hsl(0 70% 96%)", color: "hsl(0 60% 40%)", borderRadius: 8 }}>
                                 <AlertTriangle className="h-3 w-3 shrink-0" />
                                 Resposta sinalizada pela nossa equipe como incorreta ou desatualizada
                               </div>
                             )}
                             {!m.isStreaming && m.conteudoCorrigido && (
-                              <div className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 mb-2" style={{ background: `${BRAND}12`, color: BRAND, borderRadius: 2 }}>
+                              <div className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 mb-2" style={{ background: `${BRAND}12`, color: BRAND, borderRadius: 8 }}>
                                 <Pencil className="h-3 w-3 shrink-0" />
                                 Resposta corrigida pela equipe
                               </div>
                             )}
                             {m.content ? (
-                              <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-headings:my-2 prose-strong:text-slate-900" style={{ color: INK, fontSize: 14, lineHeight: 1.55 }}>
+                              <div className="prose prose-sm max-w-none prose-p:my-2.5 prose-headings:mt-4 prose-headings:mb-2 prose-strong:text-slate-900 prose-li:my-1 prose-ul:my-2" style={{ color: INK, fontSize: 14, lineHeight: 1.6 }}>
                                 <ReactMarkdown>{m.isStreaming ? m.content + "▊" : (m.conteudoCorrigido || m.content)}</ReactMarkdown>
                               </div>
                             ) : m.isStreaming ? (
