@@ -264,9 +264,11 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   gtes.forEach((g) => pushIf("GT", g.data_validade));
   examesCliente.forEach((e) => pushIf(String(e.tipo_exame || "Exame").toUpperCase(), e.data_vencimento));
 
-  const pagoFmt = pagoAno >= 1000
-    ? `R$ ${(pagoAno / 1000).toFixed(1).replace(".", ",")}K`
-    : `R$ ${pagoAno.toFixed(0)}`;
+  // Valor exato, sem arredondar. Ex.: R$ 2.997,00
+  const pagoFmt = `R$ ${pagoAno.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   const kpis: CockpitZ6Kpi[] = [
     { label: "COM VOCÊ",     value: String(comVoce),    sub: comVoce ? "aguardando ação" : "nada pendente",   dot: comVoce ? "amber" : "gray" },
