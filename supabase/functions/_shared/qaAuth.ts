@@ -41,23 +41,40 @@ export async function requireQAStaff(
   const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // 1) Validate the JWT via getUser (more reliable across SDK versions
-  //    than getClaims, which requires JWKS support).
-  const userClient = createClient(url, anon, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userData, error: userErr } = await userClient.auth.getUser(token);
-  if (userErr || !userData?.user?.id) {
+  // 1) Validate the JWT by calling /auth/v1/user directly. This avoids
+  //    supabase-js quirks ("Auth session missing!") on the signing-keys
+  //    system where the client expects a local session.
+  let userId = "";
+  let email: string | null = null;
+  try {
+    const resp = await fetch(`${url}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: anon,
+      },
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      return {
+        ok: false,
+        response: jsonResp(
+          { error: "Invalid token", detail: detail || `status ${resp.status}` },
+          401,
+        ),
+      };
+    }
+    const u = await resp.json();
+    userId = u?.id || "";
+    email = u?.email ?? null;
+    if (!userId) {
+      return { ok: false, response: jsonResp({ error: "Invalid token", detail: "no user id" }, 401) };
+    }
+  } catch (e: any) {
     return {
       ok: false,
-      response: jsonResp(
-        { error: "Invalid token", detail: userErr?.message || "no user" },
-        401,
-      ),
+      response: jsonResp({ error: "Invalid token", detail: e?.message || "fetch failed" }, 401),
     };
   }
-  const userId = userData.user.id;
-  const email = userData.user.email ?? null;
 
   // 2) Check active profile via service role (bypass RLS, single source of truth)
   const adminClient = createClient(url, service);
