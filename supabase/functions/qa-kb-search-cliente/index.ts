@@ -629,28 +629,123 @@ Deno.serve(async (req) => {
         // meta primeiro
         send({ type: "meta", fontes: fontesResumo });
 
-        // Garante sessão. Cria antes do streaming para poder mandar o id.
-        // No modo refinamento não criamos sessão nova (chat interno da equipe).
-        if (!modo_refinamento && clienteId && !effectiveSessaoId) {
+        // ═════ Resolve/abre/reabre sessão + protocolo ═════
+        // Regra: última sessão do cliente é ATIVA se status='ativo' E
+        // last_activity_at > now() - 30min. Se ociosa >30min, encerra e
+        // tenta REABERTURA POR ASSUNTO (similaridade >= 0.80). Caso contrário
+        // cria sessão nova com número de protocolo próprio.
+        if (!modo_refinamento && clienteId) {
           try {
-            const { data: novaSessao } = await supabase
+            const nowIso = new Date().toISOString();
+            const assuntoResumo = query.slice(0, 140);
+
+            // 1) Última sessão do cliente
+            const { data: ultimaArr } = await supabase
               .from("qa_chat_sessoes")
-              .insert({
-                cliente_id: clienteId,
-                titulo: query.slice(0, 60),
-              })
-              .select("id")
-              .single();
-            if (novaSessao?.id) {
-              effectiveSessaoId = novaSessao.id as string;
-              send({ type: "session", sessao_id: effectiveSessaoId });
+              .select("id, numero_protocolo, status, last_activity_at, created_at")
+              .eq("cliente_id", clienteId)
+              .order("last_activity_at", { ascending: false })
+              .limit(1);
+            const ultima = (ultimaArr ?? [])[0] as any;
+
+            const trintaMinAtras = Date.now() - 30 * 60 * 1000;
+            const ativa =
+              ultima &&
+              ultima.status === "ativo" &&
+              new Date(ultima.last_activity_at).getTime() > trintaMinAtras;
+
+            if (ativa) {
+              effectiveSessaoId = ultima.id;
+              effectiveProtocolo = ultima.numero_protocolo;
+              effectiveProtocoloData = ultima.created_at;
+              await supabase
+                .from("qa_chat_sessoes")
+                .update({ last_activity_at: nowIso })
+                .eq("id", effectiveSessaoId);
+            } else {
+              // Se havia sessão ativa expirada, encerrar.
+              if (ultima && ultima.status === "ativo") {
+                await supabase
+                  .from("qa_chat_sessoes")
+                  .update({ status: "encerrado", closed_at: nowIso })
+                  .eq("id", ultima.id);
+              }
+              // 2) Reabertura por assunto
+              let reabriu = false;
+              if (qemb) {
+                try {
+                  const { data: similarArr } = await supabase.rpc(
+                    "qa_chat_sessao_por_assunto",
+                    { _cliente_id: clienteId, _emb: qemb as any } as any,
+                  );
+                  const similar = (similarArr ?? [])[0] as any;
+                  if (similar && Number(similar.similarity) >= 0.8) {
+                    effectiveSessaoId = similar.id;
+                    effectiveProtocolo = similar.numero_protocolo;
+                    effectiveProtocoloData = similar.created_at;
+                    await supabase
+                      .from("qa_chat_sessoes")
+                      .update({
+                        status: "ativo",
+                        last_activity_at: nowIso,
+                        closed_at: null,
+                      })
+                      .eq("id", effectiveSessaoId);
+                    sessaoReaberta = true;
+                    reabriu = true;
+                  }
+                } catch (e) {
+                  console.warn("reabertura por assunto falhou:", e);
+                }
+              }
+              // 3) Sessão nova
+              if (!reabriu) {
+                let protocolo: string | null = null;
+                try {
+                  const { data: protoData } = await supabase.rpc(
+                    "qa_gerar_protocolo_chat",
+                  );
+                  protocolo =
+                    typeof protoData === "string" ? protoData : null;
+                } catch (e) {
+                  console.warn("gerar protocolo falhou:", e);
+                }
+                const { data: novaSessao } = await supabase
+                  .from("qa_chat_sessoes")
+                  .insert({
+                    cliente_id: clienteId,
+                    titulo: query.slice(0, 60),
+                    numero_protocolo: protocolo,
+                    status: "ativo",
+                    assunto: assuntoResumo,
+                    assunto_embedding: qemb as any,
+                    last_activity_at: nowIso,
+                  } as any)
+                  .select("id, numero_protocolo, created_at")
+                  .single();
+                if (novaSessao?.id) {
+                  effectiveSessaoId = novaSessao.id as string;
+                  effectiveProtocolo =
+                    (novaSessao as any).numero_protocolo || protocolo;
+                  effectiveProtocoloData = (novaSessao as any).created_at;
+                }
+              }
             }
           } catch (e) {
-            console.warn("erro criando sessao chat:", e);
+            console.warn("erro resolvendo sessao/protocolo:", e);
           }
-        } else if (effectiveSessaoId) {
-          send({ type: "session", sessao_id: effectiveSessaoId });
         }
+
+        if (effectiveSessaoId) {
+          send({
+            type: "session",
+            sessao_id: effectiveSessaoId,
+            protocolo: effectiveProtocolo,
+            protocolo_data: effectiveProtocoloData,
+            reaberto: sessaoReaberta,
+          });
+        }
+        send({ type: "confianca", nivel: nivelConfianca });
 
         let full = "";
         let buffer = "";
@@ -704,11 +799,15 @@ Deno.serve(async (req) => {
                 role: "assistant",
                 content: full,
                 fontes: fontesResumo,
+                nivel_confianca: nivelConfianca,
               },
             ] as any);
             await supabase
               .from("qa_chat_sessoes")
-              .update({ updated_at: new Date().toISOString() })
+              .update({
+                updated_at: new Date().toISOString(),
+                last_activity_at: new Date().toISOString(),
+              })
               .eq("id", effectiveSessaoId);
           } catch (e) {
             console.warn("erro persistindo mensagens chat:", e);
