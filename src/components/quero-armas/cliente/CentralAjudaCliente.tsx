@@ -480,7 +480,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       {/* Grid */}
       <div className="px-4 md:px-8 py-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Chat */}
-        <div className="bg-white flex flex-col" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4, minHeight: 620 }}>
+        <div className="bg-white flex flex-col overflow-hidden" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
           <div className="flex items-start justify-between px-5 py-4 border-b" style={{ borderColor: LINE }}>
             <div>
               <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", color: INK }}>
@@ -492,14 +492,14 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                   : "Envie sua primeira dúvida para abrir um protocolo"}
               </div>
             </div>
-            <span className="uppercase inline-flex items-center gap-1.5 px-2.5 py-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.16em", background: isAtiva ? OK_BG : "#F2F2F2", color: isAtiva ? OK : INK_2, borderRadius: 2 }}>
+            <span className="uppercase inline-flex items-center gap-1.5 px-2.5 py-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.16em", background: isAtiva ? OK_BG : "#F2F2F2", color: isAtiva ? OK : INK_2, borderRadius: 8 }}>
               <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: isAtiva ? OK : INK_2 }} />
               {isAtiva ? "Ativa" : proto ? "Expirada" : "Aguardando"}
             </span>
           </div>
 
           {showReaberto && proto && (
-            <div className="mx-5 mt-3 px-3 py-2 flex items-start gap-2" style={{ background: AMBER_BG, borderLeft: `3px solid ${AMBER}`, borderRadius: 2 }}>
+            <div className="mx-5 mt-3 px-3 py-2 flex items-start gap-2" style={{ background: AMBER_BG, borderLeft: `3px solid ${AMBER}`, borderRadius: 10 }}>
               <Sparkles className="h-4 w-4 mt-0.5 shrink-0" style={{ color: AMBER }} />
               <div className="text-[12px]" style={{ color: "#78350F" }}>
                 Retomando o protocolo <strong>{proto.protocolo}</strong>, aberto em <strong>{fmtDMYHM(proto.protocoloData)}</strong>.
@@ -520,7 +520,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                 </div>
                 <div className="w-full max-w-md space-y-2 pt-2">
                   {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[13px] px-3 py-2.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 2, color: INK }}>
+                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[13px] px-3 py-2.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK }}>
                       {s}
                     </button>
                   ))}
@@ -530,7 +530,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               <>
                 {proto && (
                   <div className="flex items-center justify-center">
-                    <span className="uppercase inline-flex items-center gap-2 px-3 py-1 bg-white border" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.18em", color: INK_2, borderRadius: 2 }}>
+                    <span className="uppercase inline-flex items-center gap-2 px-3 py-1 bg-white border" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.18em", color: INK_2, borderRadius: 10 }}>
                       {labelRelativo(proto.protocoloData)} · {fmtHM(proto.protocoloData)} · Protocolo {proto.protocolo}
                     </span>
                   </div>
@@ -540,7 +540,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                     return (
                       <div key={m.id} className="flex justify-end">
                         <div className="max-w-[80%]">
-                          <div className="px-3.5 py-2 text-[14px] text-white whitespace-pre-wrap break-words" style={{ background: BRAND, borderRadius: 4 }}>
+                          <div className="px-3.5 py-2 text-[14px] text-white whitespace-pre-wrap break-words" style={{ background: BRAND, borderRadius: 10 }}>
                             {m.content}
                           </div>
                           {m.createdAt && (
