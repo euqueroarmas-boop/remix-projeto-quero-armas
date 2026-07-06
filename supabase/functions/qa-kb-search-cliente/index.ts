@@ -448,6 +448,42 @@ Deno.serve(async (req) => {
       .map((f, i) => `### Exemplo ${i + 1} — ${f.titulo}\n${f.texto}`)
       .join("\n\n---\n\n");
 
+    // Motivos de rejeições anteriores relevantes — evitam repetir os mesmos erros.
+    let rejeitadasCtx = "";
+    try {
+      const { data: rejeitadas } = await supabase
+        .from("qa_chat_mensagens")
+        .select("content, motivo_rejeicao, sessao_id, created_at")
+        .eq("aprovada_kb", false)
+        .not("motivo_rejeicao", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(60);
+      const rej = (rejeitadas ?? []) as Array<any>;
+      if (rej.length > 0) {
+        // score simples por overlap de tokens contra a query
+        const scored = rej
+          .map((r) => {
+            const hay = normalizeText(`${r.content ?? ""} ${r.motivo_rejeicao ?? ""}`);
+            let s = 0;
+            for (const t of tokens) if (hay.includes(t)) s += 1;
+            return { r, s };
+          })
+          .filter((x) => x.s > 0)
+          .sort((a, b) => b.s - a.s)
+          .slice(0, 3);
+        if (scored.length > 0) {
+          rejeitadasCtx = scored
+            .map(
+              (x, i) =>
+                `### Rejeição ${i + 1}\nMotivo apontado pela equipe: ${String(x.r.motivo_rejeicao).slice(0, 800)}`,
+            )
+            .join("\n\n---\n\n");
+        }
+      }
+    } catch (e) {
+      console.warn("busca de rejeitadas skipped:", e);
+    }
+
     const ctx = [
       ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxLegislacao
