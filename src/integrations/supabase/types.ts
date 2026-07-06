@@ -3494,6 +3494,7 @@ export type Database = {
           fontes: Json | null
           id: string
           motivo_rejeicao: string | null
+          nivel_confianca: string | null
           role: string
           sessao_id: string
         }
@@ -3509,6 +3510,7 @@ export type Database = {
           fontes?: Json | null
           id?: string
           motivo_rejeicao?: string | null
+          nivel_confianca?: string | null
           role: string
           sessao_id: string
         }
@@ -3524,6 +3526,7 @@ export type Database = {
           fontes?: Json | null
           id?: string
           motivo_rejeicao?: string | null
+          nivel_confianca?: string | null
           role?: string
           sessao_id?: string
         }
@@ -3544,25 +3547,58 @@ export type Database = {
           },
         ]
       }
+      qa_chat_protocolo_seq: {
+        Row: {
+          dia: string
+          ultimo: number
+        }
+        Insert: {
+          dia: string
+          ultimo?: number
+        }
+        Update: {
+          dia?: string
+          ultimo?: number
+        }
+        Relationships: []
+      }
       qa_chat_sessoes: {
         Row: {
+          assunto: string | null
+          assunto_embedding: string | null
           cliente_id: number
+          closed_at: string | null
           created_at: string
           id: string
+          last_activity_at: string
+          numero_protocolo: string | null
+          status: string
           titulo: string | null
           updated_at: string
         }
         Insert: {
+          assunto?: string | null
+          assunto_embedding?: string | null
           cliente_id: number
+          closed_at?: string | null
           created_at?: string
           id?: string
+          last_activity_at?: string
+          numero_protocolo?: string | null
+          status?: string
           titulo?: string | null
           updated_at?: string
         }
         Update: {
+          assunto?: string | null
+          assunto_embedding?: string | null
           cliente_id?: number
+          closed_at?: string | null
           created_at?: string
           id?: string
+          last_activity_at?: string
+          numero_protocolo?: string | null
+          status?: string
           titulo?: string | null
           updated_at?: string
         }
@@ -10345,6 +10381,15 @@ export type Database = {
         }[]
       }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
+      qa_chat_sessao_por_assunto: {
+        Args: { _cliente_id: number; _emb: string }
+        Returns: {
+          created_at: string
+          id: string
+          numero_protocolo: string
+          similarity: number
+        }[]
+      }
       qa_cliente_arquivar: {
         Args: { p_cliente_id: number; p_motivo?: string }
         Returns: Json
@@ -10440,6 +10485,7 @@ export type Database = {
       }
       qa_gen_temp_password: { Args: never; Returns: string }
       qa_gerar_protocolo: { Args: { p_venda_id: number }; Returns: string }
+      qa_gerar_protocolo_chat: { Args: never; Returns: string }
       qa_get_senha_gov_source: {
         Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
         Returns: {
