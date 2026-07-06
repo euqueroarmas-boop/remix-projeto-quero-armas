@@ -246,17 +246,13 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
     const dt = v.cobranca_confirmada_em || v.aprovado_em || v.data_cadastro;
     return dt && new Date(dt).getFullYear() === anoAtual;
   });
-  // Valor = soma do PREÇO DO CATÁLOGO dos itens de cada venda paga.
-  // Fallback para o valor do próprio item apenas quando o catálogo não tem preço.
-  const pagoAno = vendasPagasAno.reduce((acc, v) => {
-    const itens: any[] = Array.isArray(v.qa_itens_venda) ? v.qa_itens_venda : [];
-    if (!itens.length) return acc + Number(v.valor_aprovado ?? v.valor_a_pagar ?? 0);
-    return acc + itens.reduce((s, it) => {
-      const preco = Number(it?.qa_servicos_catalogo?.preco);
-      if (Number.isFinite(preco) && preco > 0) return s + preco;
-      return s + (Number(it?.valor) || 0);
-    }, 0);
-  }, 0);
+  // Valor = soma do preço travado no momento do checkout (que é o preço
+  // do catálogo vigente naquele instante). Cancelamentos já foram filtrados
+  // acima, então saem automaticamente do total.
+  const pagoAno = vendasPagasAno.reduce(
+    (acc, v) => acc + Number(v.valor_aprovado ?? v.valor_a_pagar ?? 0),
+    0,
+  );
 
   // Docs vencendo nos próximos 30 dias (CRAF, GT, Exames)
   const vencendo: { label: string; dias: number }[] = [];

@@ -157,20 +157,18 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       try {
         const { data, error } = await supabase
           .from("qa_vendas" as any)
-          .select("id, status, cobranca_status, qa_itens_venda(servico_id, qa_servicos_catalogo(preco))")
+          .select("id, status, cobranca_status, valor_a_pagar, valor_aprovado")
           .eq("cliente_id", cliente.id)
           .eq("status", "PAGO");
         if (error) { console.warn("[QAContratosCockpitV1] vendas pagas:", error.message); return; }
         if (cancel) return;
         const total = ((data as any) || [])
           .filter((v: any) => v.cobranca_status !== "cancelada")
-          .reduce((sum: number, v: any) => {
-            const itens = Array.isArray(v.qa_itens_venda) ? v.qa_itens_venda : [];
-            return sum + itens.reduce((s: number, it: any) => {
-              const preco = Number(it?.qa_servicos_catalogo?.preco) || 0;
-              return s + preco;
-            }, 0);
-          }, 0);
+          .reduce(
+            (sum: number, v: any) =>
+              sum + Number(v.valor_aprovado ?? v.valor_a_pagar ?? 0),
+            0,
+          );
         setValorPago(total);
       } catch (e) {
         console.warn("[QAContratosCockpitV1] valor pago:", e);
