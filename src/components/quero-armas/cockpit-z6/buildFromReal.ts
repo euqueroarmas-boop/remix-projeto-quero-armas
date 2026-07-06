@@ -146,7 +146,7 @@ function buildProcessoCard(args: {
   const previsao = proc.prazo_critico_data || proc.etapa_liberada_ate;
   const diasEmAndamento = daysBetween(proc.data_criacao || proc.created_at);
 
-  const servicoSlug = String(proc.servico_nome || "PROCESSO").toUpperCase();
+  const servicoSlug = formatServicoNome(proc.servico_nome || "PROCESSO");
   const protocoloShort = String(proc.id || "").split("-")[0].toUpperCase();
   const titulo = `${servicoSlug} · ${protocoloShort}`;
 
@@ -262,20 +262,20 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   const procDocs = processos.find((p) => String(p.status).toLowerCase() === "aguardando_documentos");
   if (procPagamento) {
     focoDoDia = {
-      titulo: `Pagamento pendente — ${String(procPagamento.servico_nome || "Processo")}`,
+      titulo: `Pagamento pendente — ${formatServicoNome(procPagamento.servico_nome || "Processo")}`,
       descricao: "Liberamos a próxima etapa assim que o pagamento for confirmado.",
       cta: { label: "PAGAR AGORA →", onClick: onFocoCta },
     };
   } else if (procAssinatura) {
     focoDoDia = {
-      titulo: `Assinatura pendente — ${String(procAssinatura.servico_nome || "Processo")}`,
+      titulo: `Assinatura pendente — ${formatServicoNome(procAssinatura.servico_nome || "Processo")}`,
       descricao: "Pagamento confirmado. Assine o contrato para liberarmos o checklist e iniciarmos o seu processo. O Arsenal Inteligente segue liberado.",
       cta: { label: "ASSINAR CONTRATO →", onClick: onFocoCta },
     };
   } else if (procDocs) {
     const docsAbertos = processoDocs.filter((d) => d.processo_id === procDocs.id && !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
     focoDoDia = {
-      titulo: `${docsAbertos.length} documento(s) pendente(s) — ${String(procDocs.servico_nome || "Processo")}`,
+      titulo: `${docsAbertos.length} documento(s) pendente(s) — ${formatServicoNome(procDocs.servico_nome || "Processo")}`,
       descricao: "Conclua a etapa atual para liberar o próximo passo do seu processo.",
       cta: { label: "ENVIAR DOCUMENTOS →", onClick: onFocoCta },
     };
