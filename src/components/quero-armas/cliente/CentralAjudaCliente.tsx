@@ -604,6 +604,47 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                 )}
                               </div>
                             )}
+                            {!m.isStreaming && m.servicoSugerido && (
+                              <div className="mt-3 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: "#FAFAFA", border: `1px solid ${CARD_BORDER}`, borderLeft: `3px solid ${BRAND}`, borderRadius: 2 }}>
+                                <div className="min-w-0">
+                                  <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.18em", color: INK_2 }}>
+                                    Serviço recomendado pela Quero Armas
+                                  </div>
+                                  <div className="truncate mt-0.5" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 15, color: INK, letterSpacing: "0.02em" }}>
+                                    {m.servicoSugerido.nome}
+                                  </div>
+                                  <div className="text-[12px] mt-0.5" style={{ color: INK_2 }}>
+                                    A partir de{" "}
+                                    <strong style={{ color: INK }}>
+                                      {(m.servicoSugerido.preco_cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                    </strong>
+                                    {" · "}
+                                    <Link to={`/servicos/${m.servicoSugerido.slug}`} className="underline underline-offset-2" style={{ color: INK_2 }}>
+                                      ver detalhes do serviço
+                                    </Link>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    if (!m.servicoSugerido) return;
+                                    addItem({
+                                      service_id: m.servicoSugerido.id,
+                                      service_slug: m.servicoSugerido.slug,
+                                      service_name: m.servicoSugerido.nome,
+                                      unit_price_cents: m.servicoSugerido.preco_cents,
+                                      quantity: 1,
+                                    });
+                                    toast.success("Serviço adicionado ao carrinho.");
+                                    navigate("/carrinho");
+                                  }}
+                                  className="uppercase inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white shrink-0"
+                                  style={{ background: BRAND, borderRadius: 2, fontFamily: OSWALD, fontWeight: 700, fontSize: 11.5, letterSpacing: "0.16em" }}
+                                >
+                                  <ShoppingCart className="h-3.5 w-3.5" />
+                                  Contratar
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {!m.isStreaming && m.createdAt && (
