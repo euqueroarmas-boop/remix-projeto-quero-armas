@@ -28,13 +28,17 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
     const staffUserId = guard.userId;
 
-    const { mensagem_id, acao, conteudo_corrigido } = await req.json();
+    const { mensagem_id, acao, conteudo_corrigido, motivo_rejeicao } = await req.json();
     if (!mensagem_id || !["aprovar", "rejeitar"].includes(acao)) {
       return json({ error: "mensagem_id e acao (aprovar|rejeitar) obrigatórios" }, 400);
     }
     const conteudoCorrigido =
       typeof conteudo_corrigido === "string" && conteudo_corrigido.trim().length > 0
         ? conteudo_corrigido.trim()
+        : null;
+    const motivoRejeicao =
+      typeof motivo_rejeicao === "string" && motivo_rejeicao.trim().length > 0
+        ? motivo_rejeicao.trim()
         : null;
 
     const supabase = createClient(
@@ -58,6 +62,7 @@ Deno.serve(async (req) => {
           aprovada_kb: false,
           aprovada_por: staffUserId,
           aprovada_em: new Date().toISOString(),
+          motivo_rejeicao: motivoRejeicao,
         })
         .eq("id", mensagem_id);
       if (error) return json({ error: error.message }, 500);

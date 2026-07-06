@@ -117,11 +117,13 @@ Deno.serve(async (req) => {
       limit = 5,
       sessao_id = null,
       historico = [],
+      modo_refinamento = false,
     }: {
       query: string;
       limit?: number;
       sessao_id?: string | null;
       historico?: Array<{ role: "user" | "assistant"; content: string }>;
+      modo_refinamento?: boolean;
     } = await req.json();
     if (!query || typeof query !== "string" || query.trim().length < 2) {
       return new Response(JSON.stringify({ error: "query inválida" }), {
@@ -446,6 +448,42 @@ Deno.serve(async (req) => {
       .map((f, i) => `### Exemplo ${i + 1} — ${f.titulo}\n${f.texto}`)
       .join("\n\n---\n\n");
 
+    // Motivos de rejeições anteriores relevantes — evitam repetir os mesmos erros.
+    let rejeitadasCtx = "";
+    try {
+      const { data: rejeitadas } = await supabase
+        .from("qa_chat_mensagens")
+        .select("content, motivo_rejeicao, sessao_id, created_at")
+        .eq("aprovada_kb", false)
+        .not("motivo_rejeicao", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(60);
+      const rej = (rejeitadas ?? []) as Array<any>;
+      if (rej.length > 0) {
+        // score simples por overlap de tokens contra a query
+        const scored = rej
+          .map((r) => {
+            const hay = normalizeText(`${r.content ?? ""} ${r.motivo_rejeicao ?? ""}`);
+            let s = 0;
+            for (const t of tokens) if (hay.includes(t)) s += 1;
+            return { r, s };
+          })
+          .filter((x) => x.s > 0)
+          .sort((a, b) => b.s - a.s)
+          .slice(0, 3);
+        if (scored.length > 0) {
+          rejeitadasCtx = scored
+            .map(
+              (x, i) =>
+                `### Rejeição ${i + 1}\nMotivo apontado pela equipe: ${String(x.r.motivo_rejeicao).slice(0, 800)}`,
+            )
+            .join("\n\n---\n\n");
+        }
+      }
+    } catch (e) {
+      console.warn("busca de rejeitadas skipped:", e);
+    }
+
     const ctx = [
       ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxLegislacao
@@ -489,7 +527,10 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                  "Você é Klal (כלל), o assistente virtual da Quero Armas.\n\nSeu nome vem do hebraico e significa 'regra geral — o princípio que abrange tudo'. Especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é Klal, o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os como referência de tom, profundidade e formato — mas nunca copie o conteúdo diretamente. Adapte ao contexto atual da pergunta.",
+                  "Você é Klal (כלל), o assistente virtual da Quero Armas.\n\nSeu nome vem do hebraico e significa 'regra geral — o princípio que abrange tudo'. Especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é Klal, o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas. Estruture a resposta em: **Resposta** (curta) + **Base legal encontrada** ou **Passo a passo** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os como referência de tom, profundidade e formato — mas nunca copie o conteúdo diretamente. Adapte ao contexto atual da pergunta." +
+                  (rejeitadasCtx
+                    ? `\n\nRESPOSTAS ANTERIORES REJEITADAS PELA EQUIPE para perguntas similares:\n${rejeitadasCtx}\n\nEvite cometer os mesmos erros.`
+                    : ""),
             },
             ...historyMessages,
             {
@@ -566,7 +607,8 @@ Deno.serve(async (req) => {
         send({ type: "meta", fontes: fontesResumo });
 
         // Garante sessão. Cria antes do streaming para poder mandar o id.
-        if (clienteId && !effectiveSessaoId) {
+        // No modo refinamento não criamos sessão nova (chat interno da equipe).
+        if (!modo_refinamento && clienteId && !effectiveSessaoId) {
           try {
             const { data: novaSessao } = await supabase
               .from("qa_chat_sessoes")
@@ -621,8 +663,9 @@ Deno.serve(async (req) => {
           send({ type: "error", message: "Falha durante o streaming." });
         }
 
-        // Persistência: user + assistant
-        if (clienteId && effectiveSessaoId && full.trim().length > 0) {
+        // Persistência: user + assistant (pulada no modo refinamento — o chat
+        // interno de refinamento não deve poluir a fila de aprovação).
+        if (!modo_refinamento && clienteId && effectiveSessaoId && full.trim().length > 0) {
           try {
             await supabase.from("qa_chat_mensagens").insert([
               {
