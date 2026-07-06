@@ -46,7 +46,8 @@ function isTextValid(text: string, minLen = 30): boolean {
   const letters = (text.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
   if (letters / text.length < 0.12) return false;
   const pdfMarkers = (text.match(/(endobj|endstream|obj|Type|Page|Font|Filter)/g) || []).length;
-  if (pdfMarkers > 10) return false;
+  const markerLimit = Math.max(60, Math.floor(text.length / 180));
+  if (pdfMarkers > markerLimit) return false;
   return true;
 }
 
