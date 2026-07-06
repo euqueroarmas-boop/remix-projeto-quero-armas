@@ -323,7 +323,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           <HelpCircle className="h-5 w-5" style={{ color: BRAND }} />
           <div>
             <div className="text-sm font-semibold text-slate-900">Central de Ajuda</div>
-            <div className="text-[11px] text-slate-500">Assistente Quero Armas</div>
+            <div className="text-[11px] text-slate-500">Klal — Assistente Quero Armas</div>
           </div>
         </div>
         {mensagens.length > 0 && (
@@ -358,7 +358,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             </div>
             <div>
               <div className="text-base md:text-lg font-semibold text-slate-900">
-                Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}! Como posso ajudar?
+                Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}! Sou o Klal, assistente da Quero Armas. Como posso ajudar?
               </div>
               <div className="text-xs text-slate-500 mt-1">
                 Tire dúvidas sobre documentos, prazos, exigências e legislação.
@@ -412,7 +412,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                           const isAprovada =
                             typeof raw === "string" && raw.startsWith("QA: ");
                           const label = isAprovada
-                            ? "Resposta anterior aprovada"
+                            ? "Klal — resposta anterior aprovada"
                             : raw;
                           return (
                             <span
@@ -478,7 +478,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Digite sua dúvida..."
+            placeholder="Digite sua dúvida para o Klal..."
             disabled={loading || !cliente}
             rows={1}
             className="flex-1 resize-none px-3 py-2 text-sm rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:bg-slate-50 disabled:text-slate-400 leading-6"
