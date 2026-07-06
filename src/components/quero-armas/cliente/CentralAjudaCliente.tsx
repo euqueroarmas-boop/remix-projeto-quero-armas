@@ -598,14 +598,14 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                   </span>
                                 )}
                                 {nMeta && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 uppercase" style={{ background: nMeta.bg, color: nMeta.fg, borderRadius: 2, fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.14em" }}>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 uppercase" style={{ background: nMeta.bg, color: nMeta.fg, borderRadius: 8, fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.14em" }}>
                                     {nMeta.icon} {nMeta.label}
                                   </span>
                                 )}
                               </div>
                             )}
                             {!m.isStreaming && m.servicoSugerido && (
-                              <div className="mt-3 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: "#FAFAFA", border: `1px solid ${CARD_BORDER}`, borderLeft: `3px solid ${BRAND}`, borderRadius: 2 }}>
+                              <div className="mt-3 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: "#FAFAFA", border: `1px solid ${CARD_BORDER}`, borderLeft: `3px solid ${BRAND}`, borderRadius: 10 }}>
                                 <div className="min-w-0">
                                   <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.18em", color: INK_2 }}>
                                     Serviço recomendado pela Quero Armas
@@ -638,7 +638,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                     navigate("/carrinho");
                                   }}
                                   className="uppercase inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white shrink-0"
-                                  style={{ background: BRAND, borderRadius: 2, fontFamily: OSWALD, fontWeight: 700, fontSize: 11.5, letterSpacing: "0.16em" }}
+                                  style={{ background: BRAND, borderRadius: 10, fontFamily: OSWALD, fontWeight: 700, fontSize: 11.5, letterSpacing: "0.16em" }}
                                 >
                                   <ShoppingCart className="h-3.5 w-3.5" />
                                   Contratar
@@ -662,7 +662,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
             {ultimaAssistente && (
               <div className="flex justify-start pt-1">
-                <button onClick={() => escalarParaEquipe(ultimaAssistente.content)} disabled={escalating} className="uppercase inline-flex items-center gap-1.5 px-3 py-2 text-white disabled:opacity-60" style={{ background: INK, borderRadius: 2, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.16em" }}>
+                <button onClick={() => escalarParaEquipe(ultimaAssistente.content)} disabled={escalating} className="uppercase inline-flex items-center gap-1.5 px-3 py-2 text-white disabled:opacity-60" style={{ background: INK, borderRadius: 10, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.16em" }}>
                   {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
                   Não resolveu? Falar com a equipe
                 </button>
@@ -679,13 +679,13 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               placeholder="Digite sua dúvida para o Klal..."
               disabled={loading || !cliente}
               className="flex-1 px-3 py-2.5 text-[14px] bg-white border focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
-              style={{ borderColor: CARD_BORDER, borderRadius: 2, color: INK }}
+              style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK }}
             />
             <button
               onClick={() => enviar(input)}
               disabled={loading || !cliente || input.trim().length < 2}
               className="uppercase px-5 text-white disabled:opacity-60"
-              style={{ background: BRAND, borderRadius: 2, fontFamily: OSWALD, fontWeight: 700, fontSize: 12, letterSpacing: "0.16em", minWidth: 110 }}
+              style={{ background: BRAND, borderRadius: 10, fontFamily: OSWALD, fontWeight: 700, fontSize: 12, letterSpacing: "0.16em", minWidth: 110 }}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin inline" /> : "Enviar"}
             </button>
