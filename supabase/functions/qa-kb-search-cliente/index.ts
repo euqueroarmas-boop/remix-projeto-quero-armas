@@ -597,6 +597,26 @@ Deno.serve(async (req) => {
       })),
     ];
 
+    // ═════ Nível de confiança ═════
+    // Sinais: melhor similaridade de trechos, presença de resposta aprovada
+    // preferencial (few-shot) e rejeições anteriores no tema.
+    const bestChunkSim = chunkSources.reduce(
+      (acc, c) => Math.max(acc, Number(c.similarity) || 0),
+      0,
+    );
+    const temFewShotAprovado = fewShotSources.length > 0;
+    const temRejeicaoAnterior = rejeitadasCtx.trim().length > 0;
+    let nivelConfianca: "alta" | "media" | "baixa";
+    if (temRejeicaoAnterior || (bestChunkSim < 0.7 && !temFewShotAprovado)) {
+      nivelConfianca = "baixa";
+    } else if (bestChunkSim >= 0.82 || temFewShotAprovado) {
+      nivelConfianca = "alta";
+    } else if (bestChunkSim >= 0.7) {
+      nivelConfianca = "media";
+    } else {
+      nivelConfianca = "baixa";
+    }
+
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     const reader = r.body!.getReader();
