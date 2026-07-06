@@ -25,7 +25,24 @@ type Mensagem = {
   isStreaming?: boolean;
   aprovadaKb?: boolean | null;
   conteudoCorrigido?: string | null;
+  createdAt?: string;
 };
+
+function formatTimestamp(iso: string | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const now = new Date();
+  const hhmm = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays === 0) return `Hoje às ${hhmm}`;
+  if (diffDays === 1) return `Ontem às ${hhmm}`;
+  if (diffDays < 7) {
+    const dia = d.toLocaleDateString("pt-BR", { weekday: "long" });
+    return `${dia.charAt(0).toUpperCase() + dia.slice(1)} às ${hhmm}`;
+  }
+  return `${d.toLocaleDateString("pt-BR")} às ${hhmm}`;
+}
 
 interface CentralAjudaClienteProps {
   cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
@@ -81,6 +98,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               fontes: Array.isArray(m.fontes) ? m.fontes : [],
               aprovadaKb: m.aprovada_kb,
               conteudoCorrigido: m.conteudo_corrigido,
+              createdAt: m.created_at ?? undefined,
             })),
           );
         }
@@ -111,10 +129,12 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     if (query.length < 2) return;
 
     setInput("");
+    const now = new Date().toISOString();
     const userMsg: Mensagem = {
       id: `u-${Date.now()}`,
       role: "user",
       content: query,
+      createdAt: now,
     };
     const asstId = `a-${Date.now()}`;
     const asstMsg: Mensagem = {
@@ -123,6 +143,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       content: "",
       fontes: [],
       isStreaming: true,
+      createdAt: now,
     };
 
     // histórico enviado: até 10 pares (20 mensagens) já completos.
@@ -388,13 +409,21 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             >
               <div className={`${m.role === "user" ? "max-w-[80%]" : "w-full"}`}>
                 {m.role === "user" ? (
-                  <div
-                    className="rounded-2xl rounded-tr-sm px-3.5 py-2 text-sm text-white shadow-sm whitespace-pre-wrap break-words"
-                    style={{ background: BRAND }}
-                  >
-                    {m.content}
+                  <div>
+                    <div
+                      className="rounded-2xl rounded-tr-sm px-3.5 py-2 text-sm text-white shadow-sm whitespace-pre-wrap break-words"
+                      style={{ background: BRAND }}
+                    >
+                      {m.content}
+                    </div>
+                    {m.createdAt && (
+                      <p className="text-[10px] text-slate-400 mt-0.5 text-right pr-1">
+                        {formatTimestamp(m.createdAt)}
+                      </p>
+                    )}
                   </div>
                 ) : (
+                  <div>
                   <div className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 shadow-sm">
                     {!m.isStreaming && m.aprovadaKb === false && (
                       <div
@@ -465,6 +494,12 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                         })}
                       </div>
                     )}
+                  </div>
+                  {!m.isStreaming && m.createdAt && (
+                    <p className="text-[10px] text-slate-400 mt-0.5 pl-1">
+                      {formatTimestamp(m.createdAt)}
+                    </p>
+                  )}
                   </div>
                 )}
               </div>
