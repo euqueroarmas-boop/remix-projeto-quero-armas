@@ -141,6 +141,9 @@ Deno.serve(async (req) => {
     // para gravar as mensagens do chat depois do streaming.
     let clienteId: number | null = null;
     let effectiveSessaoId: string | null = sessao_id;
+    let effectiveProtocolo: string | null = null;
+    let effectiveProtocoloData: string | null = null;
+    let sessaoReaberta = false;
     try {
       const authHeader = req.headers.get("Authorization") ?? "";
       const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -527,7 +530,7 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-  "Você é Klal (כלל), o assistente virtual da Quero Armas.\n\nSeu nome vem do hebraico e significa 'regra geral — o princípio que abrange tudo'. Especializado em regulamentação de armas de fogo no Brasil. Responda sempre em português brasileiro, com linguagem clara, direta e acolhedora — como um especialista que conversa com o cliente, não como um documento oficial. Nunca use jargão jurídico sem explicar. Se a pergunta for uma continuação de conversa anterior, leve em conta o contexto já discutido para não repetir informações desnecessárias.\n\nVocê é Klal, o assistente da Central de Ajuda do Cliente Quero Armas. Use SOMENTE as informações fornecidas nos artigos e na base legal cadastrada. Antes de responder, leia os textos fornecidos POR INTEIRO. Pode citar normas da seção Legislação quando elas responderem ao tema. Ao citar trechos de legislação, SEMPRE nomeie a norma de origem (ex.: 'Lei nº 10.826/2003', 'Portaria COLOG nº ...'). NUNCA mencione termos internos como 'banco de dados', 'edge function', 'chunk' ou detalhes técnicos. Se os trechos parecerem insuficientes para responder com segurança, diga claramente o que foi encontrado e oriente o cliente a falar com a equipe Quero Armas.\n\nSUA FUNÇÃO É ESCLARECER, NÃO ENSINAR: Você esclarece dúvidas conceituais e jurídicas. NUNCA forneça tutoriais, roteiros operacionais, passo a passo de processos ou instruções de como executar um procedimento. Se o cliente perguntar 'como fazer', explique o conceito e o que a norma prevê, mas não descreva o caminho operacional. Caso o cliente precise de orientação procedimental detalhada, informe: 'Para orientações passo a passo sobre este processo, conheça o Klal Elite — em breve disponível na plataforma Quero Armas com respostas completas e guiadas.'\n\nEstruture a resposta em: **Resposta** (curta e conceitual) + **Base legal encontrada** quando aplicável. Ao final, inclua a seção **Atenção** listando vedações, restrições, prazos de validade, exceções ou condições presentes nos textos que alterem ou complementem a resposta — mesmo que o cliente não tenha perguntado sobre isso. Se não houver, omita a seção Atenção.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os como referência de tom, profundidade e formato — mas nunca copie o conteúdo diretamente. Adapte ao contexto atual da pergunta." +
+  "Você é Klal (כלל), o assistente jurídico e consultor de vendas da Quero Armas.\n\nSeu nome vem do hebraico e significa \"regra geral — o princípio que abrange tudo\". Você é especialista em regulamentação de armas de fogo no Brasil e conversa com o cliente de forma humana, acolhedora e natural — como um consultor experiente que explica numa conversa fluida, jamais como um documento oficial ou um manual em tópicos.\n\nQuem é a Quero Armas: a Quero Armas é a empresa fornecedora do serviço. Nós executamos a burocracia pelo cliente — preparamos autorizações, geramos as taxas e damos entrada nos pedidos junto aos órgãos competentes. Você trabalha exclusivamente para a Quero Armas.\n\nSua missão é dupla: (1) esclarecer, de forma jurídica e conceitual, a dúvida do cliente — o que a lei diz, o que muda para ele, quais os cuidados; (2) conduzir o cliente a contratar o serviço da Quero Armas que resolve aquela necessidade.\n\nNunca ensine o passo a passo operacional. É terminantemente proibido explicar como o cliente faria o processo sozinho. Não diga para ele ir à Polícia Federal, protocolar requerimento, reunir documentos, dar entrada em pedido ou solicitar registro por conta própria. Esse know-how é justamente o serviço que vendemos; ensiná-lo faz o cliente dispensar a Quero Armas. Explique o que a lei exige e por quê, mas deixe claro que quem executa é a Quero Armas.\n\nComo falar das taxas: a Quero Armas NÃO recolhe nem paga a taxa. Nós geramos a guia (GRU) e a disponibilizamos no painel do cliente para que ele mesmo efetue o pagamento. Diga sempre assim — \"geramos a guia e deixamos disponível no seu painel para você pagar\" —, nunca \"nós pagamos\" ou \"nós recolhemos\".\n\nPosicione a Quero Armas como executora: em vez de instruir o cliente, diga o que a Quero Armas faz por ele — \"cuidamos de toda a solicitação\", \"damos entrada no pedido e acompanhamos junto ao órgão\", \"preparamos a autorização e você acompanha tudo pelo painel\".\n\nFeche sempre conduzindo para a venda, de forma natural na conversa. Quando existir a página do serviço, direcione o cliente para ela pronta para compra; quando o cliente estiver logado, ofereça adicionar o serviço direto ao carrinho (\"posso já adicionar esse serviço ao seu carrinho para você concluir agora?\"). Faça isso encaixado na conversa, nunca como um anúncio colado no fim.\n\nEstilo: escreva em texto corrido, humanizado, como uma conversa real. NÃO segmente a resposta em blocos ou seções com títulos (\"Resposta\", \"Passo a passo\", \"Base legal\", \"Atenção\"). Ao citar uma norma, encaixe-a naturalmente na frase (ex.: \"pela Lei nº 10.826/2003, você...\"), sempre nomeando a norma de origem. Traga vedações, prazos e restrições relevantes no próprio fluxo da conversa, não numa lista à parte.\n\nConteúdo: use SOMENTE as informações dos artigos e da base legal fornecidos; leia-os por inteiro antes de responder. Se o material for insuficiente para responder com segurança, diga com honestidade o que encontrou e convide o cliente a falar com a equipe Quero Armas. Nunca invente. Nunca mencione termos internos como \"banco de dados\", \"chunk\", \"edge function\" ou detalhes técnicos.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os apenas como referência de tom e profundidade — nunca copie o conteúdo." +
                   (rejeitadasCtx
                     ? `\n\nRESPOSTAS ANTERIORES REJEITADAS PELA EQUIPE para perguntas similares:\n${rejeitadasCtx}\n\nEvite cometer os mesmos erros.`
                     : ""),
@@ -594,6 +597,26 @@ Deno.serve(async (req) => {
       })),
     ];
 
+    // ═════ Nível de confiança ═════
+    // Sinais: melhor similaridade de trechos, presença de resposta aprovada
+    // preferencial (few-shot) e rejeições anteriores no tema.
+    const bestChunkSim = chunkSources.reduce(
+      (acc, c) => Math.max(acc, Number(c.similarity) || 0),
+      0,
+    );
+    const temFewShotAprovado = fewShotSources.length > 0;
+    const temRejeicaoAnterior = rejeitadasCtx.trim().length > 0;
+    let nivelConfianca: "alta" | "media" | "baixa";
+    if (temRejeicaoAnterior || (bestChunkSim < 0.7 && !temFewShotAprovado)) {
+      nivelConfianca = "baixa";
+    } else if (bestChunkSim >= 0.82 || temFewShotAprovado) {
+      nivelConfianca = "alta";
+    } else if (bestChunkSim >= 0.7) {
+      nivelConfianca = "media";
+    } else {
+      nivelConfianca = "baixa";
+    }
+
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     const reader = r.body!.getReader();
@@ -606,28 +629,123 @@ Deno.serve(async (req) => {
         // meta primeiro
         send({ type: "meta", fontes: fontesResumo });
 
-        // Garante sessão. Cria antes do streaming para poder mandar o id.
-        // No modo refinamento não criamos sessão nova (chat interno da equipe).
-        if (!modo_refinamento && clienteId && !effectiveSessaoId) {
+        // ═════ Resolve/abre/reabre sessão + protocolo ═════
+        // Regra: última sessão do cliente é ATIVA se status='ativo' E
+        // last_activity_at > now() - 30min. Se ociosa >30min, encerra e
+        // tenta REABERTURA POR ASSUNTO (similaridade >= 0.80). Caso contrário
+        // cria sessão nova com número de protocolo próprio.
+        if (!modo_refinamento && clienteId) {
           try {
-            const { data: novaSessao } = await supabase
+            const nowIso = new Date().toISOString();
+            const assuntoResumo = query.slice(0, 140);
+
+            // 1) Última sessão do cliente
+            const { data: ultimaArr } = await supabase
               .from("qa_chat_sessoes")
-              .insert({
-                cliente_id: clienteId,
-                titulo: query.slice(0, 60),
-              })
-              .select("id")
-              .single();
-            if (novaSessao?.id) {
-              effectiveSessaoId = novaSessao.id as string;
-              send({ type: "session", sessao_id: effectiveSessaoId });
+              .select("id, numero_protocolo, status, last_activity_at, created_at")
+              .eq("cliente_id", clienteId)
+              .order("last_activity_at", { ascending: false })
+              .limit(1);
+            const ultima = (ultimaArr ?? [])[0] as any;
+
+            const trintaMinAtras = Date.now() - 30 * 60 * 1000;
+            const ativa =
+              ultima &&
+              ultima.status === "ativo" &&
+              new Date(ultima.last_activity_at).getTime() > trintaMinAtras;
+
+            if (ativa) {
+              effectiveSessaoId = ultima.id;
+              effectiveProtocolo = ultima.numero_protocolo;
+              effectiveProtocoloData = ultima.created_at;
+              await supabase
+                .from("qa_chat_sessoes")
+                .update({ last_activity_at: nowIso })
+                .eq("id", effectiveSessaoId);
+            } else {
+              // Se havia sessão ativa expirada, encerrar.
+              if (ultima && ultima.status === "ativo") {
+                await supabase
+                  .from("qa_chat_sessoes")
+                  .update({ status: "encerrado", closed_at: nowIso })
+                  .eq("id", ultima.id);
+              }
+              // 2) Reabertura por assunto
+              let reabriu = false;
+              if (qemb) {
+                try {
+                  const { data: similarArr } = await supabase.rpc(
+                    "qa_chat_sessao_por_assunto",
+                    { _cliente_id: clienteId, _emb: qemb as any } as any,
+                  );
+                  const similar = (similarArr ?? [])[0] as any;
+                  if (similar && Number(similar.similarity) >= 0.8) {
+                    effectiveSessaoId = similar.id;
+                    effectiveProtocolo = similar.numero_protocolo;
+                    effectiveProtocoloData = similar.created_at;
+                    await supabase
+                      .from("qa_chat_sessoes")
+                      .update({
+                        status: "ativo",
+                        last_activity_at: nowIso,
+                        closed_at: null,
+                      })
+                      .eq("id", effectiveSessaoId);
+                    sessaoReaberta = true;
+                    reabriu = true;
+                  }
+                } catch (e) {
+                  console.warn("reabertura por assunto falhou:", e);
+                }
+              }
+              // 3) Sessão nova
+              if (!reabriu) {
+                let protocolo: string | null = null;
+                try {
+                  const { data: protoData } = await supabase.rpc(
+                    "qa_gerar_protocolo_chat",
+                  );
+                  protocolo =
+                    typeof protoData === "string" ? protoData : null;
+                } catch (e) {
+                  console.warn("gerar protocolo falhou:", e);
+                }
+                const { data: novaSessao } = await supabase
+                  .from("qa_chat_sessoes")
+                  .insert({
+                    cliente_id: clienteId,
+                    titulo: query.slice(0, 60),
+                    numero_protocolo: protocolo,
+                    status: "ativo",
+                    assunto: assuntoResumo,
+                    assunto_embedding: qemb as any,
+                    last_activity_at: nowIso,
+                  } as any)
+                  .select("id, numero_protocolo, created_at")
+                  .single();
+                if (novaSessao?.id) {
+                  effectiveSessaoId = novaSessao.id as string;
+                  effectiveProtocolo =
+                    (novaSessao as any).numero_protocolo || protocolo;
+                  effectiveProtocoloData = (novaSessao as any).created_at;
+                }
+              }
             }
           } catch (e) {
-            console.warn("erro criando sessao chat:", e);
+            console.warn("erro resolvendo sessao/protocolo:", e);
           }
-        } else if (effectiveSessaoId) {
-          send({ type: "session", sessao_id: effectiveSessaoId });
         }
+
+        if (effectiveSessaoId) {
+          send({
+            type: "session",
+            sessao_id: effectiveSessaoId,
+            protocolo: effectiveProtocolo,
+            protocolo_data: effectiveProtocoloData,
+            reaberto: sessaoReaberta,
+          });
+        }
+        send({ type: "confianca", nivel: nivelConfianca });
 
         let full = "";
         let buffer = "";
@@ -681,11 +799,15 @@ Deno.serve(async (req) => {
                 role: "assistant",
                 content: full,
                 fontes: fontesResumo,
+                nivel_confianca: nivelConfianca,
               },
             ] as any);
             await supabase
               .from("qa_chat_sessoes")
-              .update({ updated_at: new Date().toISOString() })
+              .update({
+                updated_at: new Date().toISOString(),
+                last_activity_at: new Date().toISOString(),
+              })
               .eq("id", effectiveSessaoId);
           } catch (e) {
             console.warn("erro persistindo mensagens chat:", e);
