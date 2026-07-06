@@ -217,6 +217,40 @@ Deno.serve(async (req) => {
 
     const articles = (hits ?? []) as Array<any>;
 
+    // ═════ Catálogo de serviços ativos (para oferta comercial) ═════
+    let catalogo: Array<{
+      id: string;
+      slug: string;
+      nome: string;
+      categoria: string;
+      preco_cents: number;
+      descricao_curta: string | null;
+    }> = [];
+    try {
+      const { data: catRows } = await supabase
+        .from("qa_servicos_catalogo")
+        .select("id, slug, nome, categoria, preco, descricao_curta, ativo, display_order")
+        .eq("ativo", true)
+        .order("display_order", { ascending: true });
+      catalogo = ((catRows ?? []) as Array<any>).map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        nome: r.nome,
+        categoria: r.categoria,
+        preco_cents: Math.round(Number(r.preco || 0) * 100),
+        descricao_curta: r.descricao_curta ?? null,
+      }));
+    } catch (e) {
+      console.warn("catalogo load skipped:", e);
+    }
+    const catalogoBySlug = new Map(catalogo.map((s) => [s.slug, s]));
+    const ctxCatalogo = catalogo
+      .map(
+        (s) =>
+          `- slug: \`${s.slug}\` — ${s.nome} (${s.categoria}) — R$ ${(s.preco_cents / 100).toFixed(2)}${s.descricao_curta ? ` — ${s.descricao_curta}` : ""}`,
+      )
+      .join("\n");
+
     const tokens = queryTokens(query);
     const { data: normas, error: normasError } = await supabase
       .from("qa_fontes_normativas")
@@ -498,6 +532,9 @@ Deno.serve(async (req) => {
       ctxFewShot
         ? `## Exemplos de respostas aprovadas anteriores\n${ctxFewShot}`
         : "",
+      ctxCatalogo
+        ? `## Catálogo de serviços da Quero Armas (para oferta)\n${ctxCatalogo}`
+        : "",
     ]
       .filter(Boolean)
       .join("\n\n======\n\n");
@@ -531,6 +568,7 @@ Deno.serve(async (req) => {
               role: "system",
               content:
   "Você é Klal (כלל), o assistente jurídico e consultor de vendas da Quero Armas.\n\nSeu nome vem do hebraico e significa \"regra geral — o princípio que abrange tudo\". Você é especialista em regulamentação de armas de fogo no Brasil e conversa com o cliente de forma humana, acolhedora e natural — como um consultor experiente que explica numa conversa fluida, jamais como um documento oficial ou um manual em tópicos.\n\nQuem é a Quero Armas: a Quero Armas é a empresa fornecedora do serviço. Nós executamos a burocracia pelo cliente — preparamos autorizações, geramos as taxas e damos entrada nos pedidos junto aos órgãos competentes. Você trabalha exclusivamente para a Quero Armas.\n\nSua missão é dupla: (1) esclarecer, de forma jurídica e conceitual, a dúvida do cliente — o que a lei diz, o que muda para ele, quais os cuidados; (2) conduzir o cliente a contratar o serviço da Quero Armas que resolve aquela necessidade.\n\nNunca ensine o passo a passo operacional. É terminantemente proibido explicar como o cliente faria o processo sozinho. Não diga para ele ir à Polícia Federal, protocolar requerimento, reunir documentos, dar entrada em pedido ou solicitar registro por conta própria. Esse know-how é justamente o serviço que vendemos; ensiná-lo faz o cliente dispensar a Quero Armas. Explique o que a lei exige e por quê, mas deixe claro que quem executa é a Quero Armas.\n\nComo falar das taxas: a Quero Armas NÃO recolhe nem paga a taxa. Nós geramos a guia (GRU) e a disponibilizamos no painel do cliente para que ele mesmo efetue o pagamento. Diga sempre assim — \"geramos a guia e deixamos disponível no seu painel para você pagar\" —, nunca \"nós pagamos\" ou \"nós recolhemos\".\n\nPosicione a Quero Armas como executora: em vez de instruir o cliente, diga o que a Quero Armas faz por ele — \"cuidamos de toda a solicitação\", \"damos entrada no pedido e acompanhamos junto ao órgão\", \"preparamos a autorização e você acompanha tudo pelo painel\".\n\nFeche sempre conduzindo para a venda, de forma natural na conversa. Quando existir a página do serviço, direcione o cliente para ela pronta para compra; quando o cliente estiver logado, ofereça adicionar o serviço direto ao carrinho (\"posso já adicionar esse serviço ao seu carrinho para você concluir agora?\"). Faça isso encaixado na conversa, nunca como um anúncio colado no fim.\n\nEstilo: escreva em texto corrido, humanizado, como uma conversa real. NÃO segmente a resposta em blocos ou seções com títulos (\"Resposta\", \"Passo a passo\", \"Base legal\", \"Atenção\"). Ao citar uma norma, encaixe-a naturalmente na frase (ex.: \"pela Lei nº 10.826/2003, você...\"), sempre nomeando a norma de origem. Traga vedações, prazos e restrições relevantes no próprio fluxo da conversa, não numa lista à parte.\n\nConteúdo: use SOMENTE as informações dos artigos e da base legal fornecidos; leia-os por inteiro antes de responder. Se o material for insuficiente para responder com segurança, diga com honestidade o que encontrou e convide o cliente a falar com a equipe Quero Armas. Nunca invente. Nunca mencione termos internos como \"banco de dados\", \"chunk\", \"edge function\" ou detalhes técnicos.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os apenas como referência de tom e profundidade — nunca copie o conteúdo." +
+                  "\n\nOFERTA COMERCIAL: quando existir na lista de Catálogo um serviço que resolve a necessidade do cliente, ofereça-o pelo nome dentro da conversa (sem inventar serviços que não estão na lista) e, na ÚLTIMA linha da resposta, emita a marca oculta [[SERVICO: <slug>]] com o slug exato do serviço escolhido. Se nenhum serviço se aplicar, não emita a marca. Nunca cite preços de memória — quem exibe o preço é o botão de contratação." +
                   (rejeitadasCtx
                     ? `\n\nRESPOSTAS ANTERIORES REJEITADAS PELA EQUIPE para perguntas similares:\n${rejeitadasCtx}\n\nEvite cometer os mesmos erros.`
                     : ""),
@@ -749,6 +787,25 @@ Deno.serve(async (req) => {
 
         let full = "";
         let buffer = "";
+        // Buffer para segurar tokens até termos certeza de que não fazem parte
+        // da marca "[[SERVICO: slug]]" — nunca enviar essa marca ao cliente.
+        let holdBuffer = "";
+        const flushHold = () => {
+          if (holdBuffer) {
+            send({ type: "token", content: holdBuffer });
+            holdBuffer = "";
+          }
+        };
+        // Regex conservador para casar a marca em qualquer lugar do texto.
+        const MARK_RE = /\[\[SERVICO:\s*([a-z0-9-_]+)\s*\]\]/gi;
+        // Se qualquer prefixo do buffer combina com o início de "[[SERVICO:", segure.
+        const isPartialMark = (s: string) => {
+          for (let i = 1; i <= Math.min(s.length, 32); i++) {
+            const tail = s.slice(-i);
+            if ("[[SERVICO:".startsWith(tail)) return true;
+          }
+          return false;
+        };
         try {
           while (true) {
             const { done, value } = await reader.read();
@@ -769,21 +826,52 @@ Deno.serve(async (req) => {
                   "";
                 if (delta) {
                   full += delta;
-                  send({ type: "token", content: delta });
+                  holdBuffer += delta;
+                  // Remove marcas completas do holdBuffer antes de enviar.
+                  holdBuffer = holdBuffer.replace(MARK_RE, "");
+                  // Se o final do buffer parece início de marca, segure até
+                  // termos mais tokens; senão envie tudo.
+                  if (isPartialMark(holdBuffer)) {
+                    // aguarda mais tokens
+                  } else {
+                    flushHold();
+                  }
                 }
               } catch (_) {
                 /* ignora chunks parciais */
               }
             }
           }
+          // Fim do stream: garanta que qualquer marca residual seja removida
+          // e envie o restante do buffer.
+          holdBuffer = holdBuffer.replace(MARK_RE, "");
+          flushHold();
         } catch (e) {
           console.error("stream read error:", e);
           send({ type: "error", message: "Falha durante o streaming." });
         }
 
+        // Resolve serviço sugerido a partir da marca no texto completo.
+        let servicoSugerido: { id: string; slug: string; nome: string; preco_cents: number } | null = null;
+        let servicoSugeridoSlug: string | null = null;
+        const matches = Array.from(full.matchAll(MARK_RE));
+        if (matches.length > 0) {
+          const slug = matches[matches.length - 1][1].toLowerCase();
+          const s = catalogoBySlug.get(slug);
+          if (s) {
+            servicoSugerido = { id: s.id, slug: s.slug, nome: s.nome, preco_cents: s.preco_cents };
+            servicoSugeridoSlug = s.slug;
+          }
+        }
+        // Limpa marcas do texto salvo/persistido.
+        const fullLimpo = full.replace(MARK_RE, "").trim();
+        if (servicoSugerido) {
+          send({ type: "servico_sugerido", servico: servicoSugerido });
+        }
+
         // Persistência: user + assistant (pulada no modo refinamento — o chat
         // interno de refinamento não deve poluir a fila de aprovação).
-        if (!modo_refinamento && clienteId && effectiveSessaoId && full.trim().length > 0) {
+        if (!modo_refinamento && clienteId && effectiveSessaoId && fullLimpo.length > 0) {
           try {
             await supabase.from("qa_chat_mensagens").insert([
               {
@@ -797,9 +885,10 @@ Deno.serve(async (req) => {
                 sessao_id: effectiveSessaoId,
                 cliente_id: clienteId,
                 role: "assistant",
-                content: full,
+                content: fullLimpo,
                 fontes: fontesResumo,
                 nivel_confianca: nivelConfianca,
+                servico_sugerido_slug: servicoSugeridoSlug,
               },
             ] as any);
             await supabase

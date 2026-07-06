@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { useNavigate, Link } from "react-router-dom";
+import { useCart } from "@/shared/cart/CartProvider";
+import { getServiceBySlug } from "@/shared/data/catalog";
 
 const BRAND = "#7A1F2B";
 const INK = "#0A0A0A";
@@ -31,6 +34,13 @@ type Fonte = {
 
 type NivelConfianca = "alta" | "media" | "baixa";
 
+type ServicoSugerido = {
+  id: string;
+  slug: string;
+  nome: string;
+  preco_cents: number;
+};
+
 type Mensagem = {
   id: string;
   role: "user" | "assistant";
@@ -43,6 +53,8 @@ type Mensagem = {
   finishedAt?: string;
   latencyMs?: number;
   nivelConfianca?: NivelConfianca | null;
+  servicoSugerido?: ServicoSugerido | null;
+  servicoSugeridoSlug?: string | null;
 };
 
 type ProtocoloAtivo = {
@@ -127,6 +139,8 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
   const [now, setNow] = useState<number>(Date.now());
   const [reabertoBannerFor, setReabertoBannerFor] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -191,13 +205,39 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             lastActivityAt: recente.last_activity_at,
             status: "ativo",
           });
-          setMensagens(((msgs ?? []) as any[]).map((m) => ({
+          const restauradas: Mensagem[] = ((msgs ?? []) as any[]).map((m) => ({
             id: m.id, role: m.role, content: m.content,
             fontes: Array.isArray(m.fontes) ? m.fontes : [],
             aprovadaKb: m.aprovada_kb, conteudoCorrigido: m.conteudo_corrigido,
             createdAt: m.created_at ?? undefined,
             nivelConfianca: (m.nivel_confianca as NivelConfianca | null) ?? null,
-          })));
+            servicoSugeridoSlug: (m as any).servico_sugerido_slug ?? null,
+          }));
+          setMensagens(restauradas);
+          // Resolve o serviço para cada mensagem cujo slug ainda esteja ativo.
+          const slugs = Array.from(
+            new Set(
+              restauradas
+                .map((m) => m.servicoSugeridoSlug)
+                .filter((s): s is string => !!s),
+            ),
+          );
+          for (const slug of slugs) {
+            getServiceBySlug(slug)
+              .then((res) => {
+                if (!alive || !res) return;
+                const svc: ServicoSugerido = {
+                  id: res.service.id,
+                  slug: res.service.slug,
+                  nome: res.service.name,
+                  preco_cents: res.service.base_price_cents,
+                };
+                setMensagens((prev) =>
+                  prev.map((m) => (m.servicoSugeridoSlug === slug ? { ...m, servicoSugerido: svc } : m)),
+                );
+              })
+              .catch(() => { /* serviço saiu do catálogo — mantém sem CTA */ });
+          }
         }
         await carregarAnteriores(recente?.id);
       } finally {
@@ -233,6 +273,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
     let localFontes: Fonte[] = [];
     let localNivel: NivelConfianca | null = null;
+    let localServico: ServicoSugerido | null = null;
 
     try {
       const { data: sess } = await supabase.auth.getSession();
@@ -306,6 +347,9 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             } else if (evt.type === "confianca" && evt.nivel) {
               localNivel = evt.nivel as NivelConfianca;
               setMensagens((prev) => prev.map((m) => m.id === asstId ? { ...m, nivelConfianca: localNivel } : m));
+            } else if (evt.type === "servico_sugerido" && evt.servico) {
+              localServico = evt.servico as ServicoSugerido;
+              setMensagens((prev) => prev.map((m) => m.id === asstId ? { ...m, servicoSugerido: localServico, servicoSugeridoSlug: localServico?.slug ?? null } : m));
             } else if (evt.type === "error") {
               throw new Error(evt.message || "Erro no streaming.");
             }
@@ -314,7 +358,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       }
 
       setMensagens((prev) => prev.map((m) => m.id === asstId
-        ? { ...m, content: full || m.content, fontes: localFontes, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, nivelConfianca: localNivel }
+        ? { ...m, content: full || m.content, fontes: localFontes, isStreaming: false, finishedAt: new Date().toISOString(), latencyMs: Date.now() - startMs, nivelConfianca: localNivel, servicoSugerido: localServico ?? m.servicoSugerido ?? null, servicoSugeridoSlug: localServico?.slug ?? m.servicoSugeridoSlug ?? null }
         : m));
       // Refresh rail
       carregarAnteriores(proto?.sessaoId);
@@ -558,6 +602,47 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                     {nMeta.icon} {nMeta.label}
                                   </span>
                                 )}
+                              </div>
+                            )}
+                            {!m.isStreaming && m.servicoSugerido && (
+                              <div className="mt-3 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ background: "#FAFAFA", border: `1px solid ${CARD_BORDER}`, borderLeft: `3px solid ${BRAND}`, borderRadius: 2 }}>
+                                <div className="min-w-0">
+                                  <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.18em", color: INK_2 }}>
+                                    Serviço recomendado pela Quero Armas
+                                  </div>
+                                  <div className="truncate mt-0.5" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 15, color: INK, letterSpacing: "0.02em" }}>
+                                    {m.servicoSugerido.nome}
+                                  </div>
+                                  <div className="text-[12px] mt-0.5" style={{ color: INK_2 }}>
+                                    A partir de{" "}
+                                    <strong style={{ color: INK }}>
+                                      {(m.servicoSugerido.preco_cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                                    </strong>
+                                    {" · "}
+                                    <Link to={`/servicos/${m.servicoSugerido.slug}`} className="underline underline-offset-2" style={{ color: INK_2 }}>
+                                      ver detalhes do serviço
+                                    </Link>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    if (!m.servicoSugerido) return;
+                                    addItem({
+                                      service_id: m.servicoSugerido.id,
+                                      service_slug: m.servicoSugerido.slug,
+                                      service_name: m.servicoSugerido.nome,
+                                      unit_price_cents: m.servicoSugerido.preco_cents,
+                                      quantity: 1,
+                                    });
+                                    toast.success("Serviço adicionado ao carrinho.");
+                                    navigate("/carrinho");
+                                  }}
+                                  className="uppercase inline-flex items-center justify-center gap-2 px-4 py-2.5 text-white shrink-0"
+                                  style={{ background: BRAND, borderRadius: 2, fontFamily: OSWALD, fontWeight: 700, fontSize: 11.5, letterSpacing: "0.16em" }}
+                                >
+                                  <ShoppingCart className="h-3.5 w-3.5" />
+                                  Contratar
+                                </button>
                               </div>
                             )}
                           </div>
