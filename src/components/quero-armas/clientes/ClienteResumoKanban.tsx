@@ -529,17 +529,28 @@ export default function ClienteResumoKanban({
           ))}
         </div>
 
-        <section className="qa-urgbanner" aria-label="Próximo vencimento" aria-live="polite">
+        {(() => {
+          const isVencido = !!activeUrgent && activeUrgent.days < 0;
+          const kicker = isVencido
+            ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
+            : "PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA";
+          const subFallback = activeUrgent
+            ? isVencido
+              ? (activeUrgent.sub || "").replace(/próxima do vencimento/gi, "vencida").replace(/próximo do vencimento/gi, "vencido")
+              : activeUrgent.sub
+            : "Tudo em dia · nenhum item em status vermelho nesta semana.";
+          return (
+        <section className="qa-urgbanner" aria-label={isVencido ? "Documento vencido" : "Próximo vencimento"} aria-live="polite">
           <div className="qa-urgbanner__body">
-            <div className="qa-urgbanner__kicker">PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA</div>
+            <div className="qa-urgbanner__kicker">{kicker}</div>
             <h2 className="qa-urgbanner__title" title={activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}>{activeUrgent ? activeUrgent.label : "Nenhum documento crítico"}</h2>
-            <p className="qa-urgbanner__sub" title={activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}>{activeUrgent ? activeUrgent.sub : "Tudo em dia · nenhum item em status vermelho nesta semana."}</p>
+            <p className="qa-urgbanner__sub" title={subFallback}>{subFallback}</p>
             <div className="qa-urgbanner__actions">
               <button className="qa-urgbanner__cta" type="button" onClick={() => {
                 if (activeUrgent?.examTipo) { setExameModal({ tipo: activeUrgent.examTipo }); return; }
                 onNavigate(activeUrgent?.navTo || "documentos");
               }}>
-                {activeUrgent?.ctaLabel || "ATUALIZAR AGORA →"}
+                {activeUrgent?.ctaLabel || (isVencido ? "REGULARIZAR AGORA →" : "ATUALIZAR AGORA →")}
               </button>
               <button className="qa-urgbanner__ghost" type="button" onClick={() => { if (onOpenDocsHub) { onOpenDocsHub(); } else { onNavigate("documentos"); } }}>ANEXAR</button>
             </div>
@@ -564,6 +575,8 @@ export default function ClienteResumoKanban({
             )}
           </div>
         </section>
+          );
+        })()}
 
         <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS CINCO FRENTES</div>
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
