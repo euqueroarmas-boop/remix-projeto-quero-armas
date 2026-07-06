@@ -411,9 +411,9 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         `}</style>
         {kpis.map((k, i) => (
           <div key={i} style={{ background: "#fff", border: "1px solid #E5E5E5", padding: "14px 14px", borderRadius: 4 }}>
-            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".24em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase" }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", display: "inline-block", background: DOT[k.dot] }} />
-              {k.label}
+            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".18em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", display: "inline-block", background: DOT[k.dot], flexShrink: 0 }} />
+              <span style={{ whiteSpace: "nowrap" }}>{k.label}</span>
             </div>
             <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 26, lineHeight: 1, fontWeight: 900, marginTop: 9, color: "#0A0A0A" }}>{k.value}</div>
             <div style={{ fontFamily: "Arial,sans-serif", fontSize: 11, fontWeight: 700, color: "#7A7A7A", marginTop: 4 }}>{k.sub}</div>
