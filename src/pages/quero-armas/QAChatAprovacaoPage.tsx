@@ -1,9 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { BrainCircuit, CheckCircle2, XCircle, Loader2, MessageCircle, Bot, BookOpen, Pencil } from "lucide-react";
+import {
+  BrainCircuit,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  MessageCircle,
+  Bot,
+  BookOpen,
+  Pencil,
+  Copy,
+  Sparkles,
+  Send,
+  CornerDownLeft,
+} from "lucide-react";
 
 type Filtro = "pendentes" | "todos";
 
@@ -22,6 +36,8 @@ type LinhaFila = {
   cliente_nome: string | null;
   conteudo_corrigido: string | null;
 };
+
+type RefineMsg = { role: "user" | "assistant"; content: string };
 
 function chipFontes(fontes: any): { label: string; kind: "legislacao" | "documento" | "aprendizado" }[] {
   if (!Array.isArray(fontes)) return [];
@@ -43,6 +59,17 @@ export default function QAChatAprovacaoPage() {
   const [pendentesCount, setPendentesCount] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<string>("");
+
+  // Rejeição com motivo
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectDraft, setRejectDraft] = useState<string>("");
+
+  // Refinamento com IA
+  const [refiningId, setRefiningId] = useState<string | null>(null);
+  const [refineMessages, setRefineMessages] = useState<RefineMsg[]>([]);
+  const [refineInput, setRefineInput] = useState<string>("");
+  const [refineStreaming, setRefineStreaming] = useState(false);
+  const refineAbortRef = useRef<AbortController | null>(null);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -151,11 +178,17 @@ export default function QAChatAprovacaoPage() {
     mensagem_id: string,
     acao: "aprovar" | "rejeitar",
     conteudo_corrigido?: string,
+    motivo_rejeicao?: string,
   ) => {
     setPendingId(mensagem_id);
     try {
       const { data, error } = await supabase.functions.invoke("qa-chat-aprovar-resposta", {
-        body: { mensagem_id, acao, ...(conteudo_corrigido ? { conteudo_corrigido } : {}) },
+        body: {
+          mensagem_id,
+          acao,
+          ...(conteudo_corrigido ? { conteudo_corrigido } : {}),
+          ...(motivo_rejeicao ? { motivo_rejeicao } : {}),
+        },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
@@ -169,12 +202,158 @@ export default function QAChatAprovacaoPage() {
       else toast.success("Resposta rejeitada — não será usada como referência.");
       setEditingId(null);
       setEditDraft("");
+      setRejectingId(null);
+      setRejectDraft("");
       await Promise.all([carregar(), carregarContagem()]);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha na operação");
     } finally {
       setPendingId(null);
     }
+  };
+
+  const copiarTudo = async (row: LinhaFila) => {
+    const fontesArr = Array.isArray(row.fontes) ? row.fontes : [];
+    const fontesTxt = fontesArr
+      .map((f: any) => "• " + (f?.titulo_norma || f?.titulo_doc || f?.titulo || "Fonte"))
+      .join("\n") || "—";
+    const texto = [
+      "PERGUNTA DO CLIENTE:",
+      row.pergunta,
+      "",
+      "RESPOSTA DO KLAL:",
+      row.content,
+      "",
+      "FONTES USADAS:",
+      fontesTxt,
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Copiado — cole no chat para refinar.");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const abrirRefinamento = (row: LinhaFila) => {
+    setRefiningId(row.id);
+    const fontesArr = Array.isArray(row.fontes) ? row.fontes : [];
+    const fontesTxt = fontesArr
+      .map((f: any) => "• " + (f?.titulo_norma || f?.titulo_doc || f?.titulo || "Fonte"))
+      .join("\n") || "—";
+    const contextoInicial = [
+      `**Pergunta original do cliente:**\n${row.pergunta}`,
+      `**Minha resposta original:**\n${row.content}`,
+      `**Fontes que usei:**\n${fontesTxt}`,
+      "",
+      "Diga o que precisa corrigir ou aprofundar — vou tentar de novo.",
+    ].join("\n\n");
+    setRefineMessages([{ role: "assistant", content: contextoInicial }]);
+    setRefineInput("");
+  };
+
+  const fecharRefinamento = () => {
+    try { refineAbortRef.current?.abort(); } catch { /* noop */ }
+    setRefiningId(null);
+    setRefineMessages([]);
+    setRefineInput("");
+    setRefineStreaming(false);
+  };
+
+  const enviarRefinamento = async (row: LinhaFila) => {
+    const orientacao = refineInput.trim();
+    if (!orientacao || refineStreaming) return;
+
+    const historico: RefineMsg[] = [
+      { role: "user", content: row.pergunta },
+      { role: "assistant", content: row.content },
+      { role: "user", content: orientacao },
+    ];
+
+    setRefineMessages((prev) => [...prev, { role: "user", content: orientacao }]);
+    setRefineInput("");
+    setRefineStreaming(true);
+
+    let assistantIndex = -1;
+    setRefineMessages((prev) => {
+      assistantIndex = prev.length;
+      return [...prev, { role: "assistant", content: "" }];
+    });
+
+    const controller = new AbortController();
+    refineAbortRef.current = controller;
+
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token ?? "";
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-kb-search-cliente`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
+          Authorization: `Bearer ${token || (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string)}`,
+        },
+        body: JSON.stringify({
+          query: orientacao,
+          historico,
+          modo_refinamento: true,
+        }),
+        signal: controller.signal,
+      });
+      if (!resp.ok || !resp.body) throw new Error(`HTTP ${resp.status}`);
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let full = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          const t = line.trim();
+          if (!t.startsWith("data:")) continue;
+          const payload = t.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(payload);
+            if (parsed?.type === "token" && typeof parsed.content === "string") {
+              full += parsed.content;
+              setRefineMessages((prev) => {
+                const next = [...prev];
+                if (assistantIndex >= 0 && next[assistantIndex]) {
+                  next[assistantIndex] = { role: "assistant", content: full };
+                }
+                return next;
+              });
+            }
+          } catch { /* ignore */ }
+        }
+      }
+      if (!full.trim()) {
+        setRefineMessages((prev) => {
+          const next = [...prev];
+          if (assistantIndex >= 0) next[assistantIndex] = { role: "assistant", content: "(sem resposta)" };
+          return next;
+        });
+      }
+    } catch (e: any) {
+      if (e?.name !== "AbortError") toast.error(e?.message ?? "Falha ao refinar");
+    } finally {
+      setRefineStreaming(false);
+      refineAbortRef.current = null;
+    }
+  };
+
+  const usarRespostaRefinada = (conteudo: string) => {
+    if (!refiningId) return;
+    setEditingId(refiningId);
+    setEditDraft(conteudo);
+    fecharRefinamento();
+    toast.success("Resposta carregada no editor — revise e aprove.");
   };
 
   return (
@@ -364,6 +543,35 @@ export default function QAChatAprovacaoPage() {
                             Cancelar
                           </Button>
                         </>
+                      ) : rejectingId === row.id ? (
+                        <div className="w-full space-y-2">
+                          <Textarea
+                            value={rejectDraft}
+                            onChange={(e) => setRejectDraft(e.target.value)}
+                            placeholder="Por que essa resposta está errada? (opcional mas recomendado)"
+                            className="text-sm"
+                            style={{ background: "#fff", borderColor: "hsl(0 40% 80%)" }}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              disabled={isPending}
+                              onClick={() => executar(row.id, "rejeitar", undefined, rejectDraft.trim() || undefined)}
+                              style={{ background: "hsl(0 60% 45%)", color: "#fff" }}
+                            >
+                              {isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5 mr-1.5" />}
+                              Confirmar rejeição
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={isPending}
+                              onClick={() => { setRejectingId(null); setRejectDraft(""); }}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
                       ) : (
                         <>
                           <Button
@@ -388,13 +596,118 @@ export default function QAChatAprovacaoPage() {
                             size="sm"
                             variant="outline"
                             disabled={isPending}
-                            onClick={() => executar(row.id, "rejeitar")}
+                            onClick={() => abrirRefinamento(row)}
+                          >
+                            <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                            Refinar com IA
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => { setRejectingId(row.id); setRejectDraft(""); }}
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1.5" />
                             Rejeitar
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={isPending}
+                            onClick={() => copiarTudo(row)}
+                          >
+                            <Copy className="h-3.5 w-3.5 mr-1.5" />
+                            Copiar tudo
+                          </Button>
                         </>
                       )}
+                    </div>
+                  )}
+
+                  {refiningId === row.id && (
+                    <div
+                      className="mt-3 rounded-lg border overflow-hidden"
+                      style={{ borderColor: "hsl(352 33% 85%)", background: "hsl(352 33% 98%)" }}
+                    >
+                      <div
+                        className="px-3 py-2 border-b flex items-center justify-between"
+                        style={{ borderColor: "hsl(352 33% 88%)", background: "hsl(352 33% 96%)" }}
+                      >
+                        <div className="text-[11px] uppercase tracking-widest flex items-center gap-1.5" style={{ color: "hsl(352 60% 30%)" }}>
+                          <Sparkles className="h-3 w-3" />
+                          Refinamento com Klal — use este chat para chegar na resposta certa antes de aprovar.
+                        </div>
+                        <button
+                          onClick={fecharRefinamento}
+                          className="text-[11px] underline"
+                          style={{ color: "hsl(220 10% 45%)" }}
+                        >
+                          Fechar
+                        </button>
+                      </div>
+                      <div className="p-3 space-y-2 max-h-[420px] overflow-y-auto">
+                        {refineMessages.map((m, i) => (
+                          <div
+                            key={i}
+                            className="rounded-md p-2.5 text-sm whitespace-pre-wrap"
+                            style={
+                              m.role === "user"
+                                ? { background: "hsl(220 14% 96%)", color: "hsl(220 20% 20%)" }
+                                : { background: "#fff", color: "hsl(220 20% 18%)", border: "1px solid hsl(220 13% 90%)" }
+                            }
+                          >
+                            <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "hsl(220 10% 55%)" }}>
+                              {m.role === "user" ? "Equipe" : "Klal"}
+                            </div>
+                            {m.content || (refineStreaming && i === refineMessages.length - 1 ? "…" : "")}
+                            {m.role === "assistant" && i > 0 && m.content.trim() && !refineStreaming && (
+                              <div className="pt-2 mt-2 border-t flex" style={{ borderColor: "hsl(220 13% 90%)" }}>
+                                <Button
+                                  size="sm"
+                                  onClick={() => usarRespostaRefinada(m.content)}
+                                  style={{ background: "hsl(150 55% 32%)", color: "#fff" }}
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                                  Usar esta resposta
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <div
+                        className="p-2 border-t flex gap-2"
+                        style={{ borderColor: "hsl(352 33% 88%)", background: "#fff" }}
+                      >
+                        <Input
+                          value={refineInput}
+                          onChange={(e) => setRefineInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              enviarRefinamento(row);
+                            }
+                          }}
+                          disabled={refineStreaming}
+                          placeholder="Ex.: essa resposta está errada sobre o prazo. O correto é 180 dias conforme..."
+                          className="text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          disabled={refineStreaming || !refineInput.trim()}
+                          onClick={() => enviarRefinamento(row)}
+                          style={{ background: "hsl(352 60% 30%)", color: "#fff" }}
+                        >
+                          {refineStreaming ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                      <div className="px-3 pb-2 text-[10px] flex items-center gap-1" style={{ color: "hsl(220 10% 55%)" }}>
+                        <CornerDownLeft className="h-3 w-3" /> Enter para enviar · Shift+Enter para quebrar linha
+                      </div>
                     </div>
                   )}
                 </div>
