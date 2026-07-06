@@ -380,9 +380,9 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
           mensagens.map((m) => (
             <div
               key={m.id}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex w-full ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div className={`max-w-[85%] md:max-w-[75%] ${m.role === "user" ? "" : "w-full md:w-auto"}`}>
+              <div className={`${m.role === "user" ? "max-w-[80%]" : "w-full"}`}>
                 {m.role === "user" ? (
                   <div
                     className="rounded-2xl rounded-tr-sm px-3.5 py-2 text-sm text-white shadow-sm whitespace-pre-wrap break-words"
