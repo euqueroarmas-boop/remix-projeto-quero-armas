@@ -1332,20 +1332,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${mobileHidden ? "pl-0" : effectiveCollapsed ? "pl-[68px]" : "pl-[68px] lg:pl-[260px]"}`}>
-      {/* Seta flutuante para reabrir o menu em tablet/celular quando recolhido */}
-      {mobileHidden && (
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(false)}
-          aria-label="Expandir menu"
-          className="fixed left-0 top-16 z-50 w-7 h-9 rounded-r-md bg-[#141414] border border-l-0 border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#c9c2b3] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-[68px]" : "pl-[220px] lg:pl-[260px]"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
