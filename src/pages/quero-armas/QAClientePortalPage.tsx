@@ -1910,11 +1910,11 @@ export default function QAClientePortalPage() {
                       {totalDocs} documento{totalDocs !== 1 ? "s" : ""} enviado{totalDocs !== 1 ? "s" : ""} · {docsAprovados} aprovado{docsAprovados !== 1 ? "s" : ""}{docsAnalise > 0 ? ` · ${docsAnalise} em análise` : ""}
                     </div>
                     {temAcao ? (
-                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-50 text-red-700">
+                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap bg-red-50 text-red-700">
                         <AlertTriangle className="h-3 w-3" /> Ação necessária
                       </span>
                     ) : (
-                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap bg-emerald-50 text-emerald-700">
                         <CheckCircle className="h-3 w-3" /> Nenhuma ação necessária agora
                       </span>
                     )}
@@ -2070,7 +2070,7 @@ export default function QAClientePortalPage() {
                                 {nomeProcesso}
                               </div>
                               <div className="flex flex-wrap items-center gap-1.5">
-                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-[0.08em]
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-[0.08em]
                                   ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
                                   {statusLabel}
                                 </span>
@@ -2112,7 +2112,7 @@ export default function QAClientePortalPage() {
                       </div>
                       <div className="flex items-center justify-between px-4 py-3">
                         <span className="text-[11px] text-slate-500">Cobranças</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap
                           ${vendas.length > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
                           {vendas.length > 0 ? `${vendas.length} em aberto` : "Em dia"}
                         </span>
@@ -2288,7 +2288,7 @@ export default function QAClientePortalPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</span>
-                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${badge.cls}`}>{badge.label}</span>
+                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border whitespace-nowrap text-[9px] font-bold uppercase tracking-wider ${badge.cls}`}>{badge.label}</span>
                             </div>
                             <div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div>
                           </div>
@@ -2452,7 +2452,7 @@ export default function QAClientePortalPage() {
                                       {d.etapa ? String(d.etapa).toUpperCase() : "—"}
                                     </div>
                                   </div>
-                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
                                     {reprov ? "Reenviar" : "Pendente"}
                                   </span>
                                 </button>
