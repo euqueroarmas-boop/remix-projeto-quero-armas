@@ -478,7 +478,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
       </div>
 
       {/* Grid */}
-      <div className="px-4 md:px-8 py-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="px-4 md:px-8 py-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Chat */}
         <div className="bg-white flex flex-col" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 4, minHeight: 620 }}>
           <div className="flex items-start justify-between px-5 py-4 border-b" style={{ borderColor: LINE }}>
