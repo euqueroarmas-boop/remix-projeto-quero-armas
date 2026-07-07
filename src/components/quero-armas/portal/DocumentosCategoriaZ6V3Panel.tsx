@@ -173,13 +173,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       return;
     }
     try {
-      const { data, error } = await supabase.storage
-        .from(DOC_BUCKET)
-        .createSignedUrl(doc.arquivo_storage_path, 3600);
-      if (error || !data?.signedUrl) {
-        toast.error("Não foi possível abrir o arquivo.");
-        return;
-      }
       const nome = String(doc.arquivo_nome || doc.tipo_documento || "documento");
       const ext = nome.toLowerCase().split(".").pop() || "";
       const mime = ext === "pdf"
@@ -187,7 +180,21 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         : ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)
           ? `image/${ext === "jpg" ? "jpeg" : ext}`
           : "application/octet-stream";
-      setPreview({ url: data.signedUrl, nome, mime });
+      // URL inline para visualização
+      const inlineRes = await supabase.storage
+        .from(DOC_BUCKET)
+        .createSignedUrl(doc.arquivo_storage_path, 3600);
+      if (inlineRes.error || !inlineRes.data?.signedUrl) {
+        toast.error("Não foi possível abrir o arquivo.");
+        return;
+      }
+      // URL forçando download (Content-Disposition: attachment) — funciona
+      // cross-origin em Safari/Firefox, onde o atributo download é ignorado.
+      const dlRes = await supabase.storage
+        .from(DOC_BUCKET)
+        .createSignedUrl(doc.arquivo_storage_path, 3600, { download: nome });
+      const downloadUrl = dlRes.data?.signedUrl || inlineRes.data.signedUrl;
+      setPreview({ url: inlineRes.data.signedUrl, nome, mime, downloadUrl });
       await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "visualizado", { path: doc.arquivo_storage_path });
     } catch (e) {
       toast.error("Erro ao acessar arquivo.");
