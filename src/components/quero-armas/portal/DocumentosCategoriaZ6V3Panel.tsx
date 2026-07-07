@@ -168,7 +168,7 @@ interface Props {
 export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, customerId, onReload, onOpenAdd }: Props) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<null | "total" | "aprov" | "venc7" | "venc30" | "vencidos" | "hoje">(null);
-  const [preview, setPreview] = useState<null | { url: string; nome: string; mime: string; downloadUrl?: string }>(null);
+  const [preview, setPreview] = useState<null | { url: string; nome: string; mime: string; blob: Blob }>(null);
 
   const openPreview = async (doc: any) => {
     if (!doc?.arquivo_storage_path) {
@@ -183,21 +183,18 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         : ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)
           ? `image/${ext === "jpg" ? "jpeg" : ext}`
           : "application/octet-stream";
-      // URL inline para visualização
-      const inlineRes = await supabase.storage
+      // Baixa o binário e serve via blob local — sem expor URL do Supabase
+      // e sem depender do visualizador nativo do navegador (bloqueado no Edge).
+      const { data: blob, error } = await supabase.storage
         .from(DOC_BUCKET)
-        .createSignedUrl(doc.arquivo_storage_path, 3600);
-      if (inlineRes.error || !inlineRes.data?.signedUrl) {
+        .download(doc.arquivo_storage_path);
+      if (error || !blob) {
         toast.error("Não foi possível abrir o arquivo.");
         return;
       }
-      // URL forçando download (Content-Disposition: attachment) — funciona
-      // cross-origin em Safari/Firefox, onde o atributo download é ignorado.
-      const dlRes = await supabase.storage
-        .from(DOC_BUCKET)
-        .createSignedUrl(doc.arquivo_storage_path, 3600, { download: nome });
-      const downloadUrl = dlRes.data?.signedUrl || inlineRes.data.signedUrl;
-      setPreview({ url: inlineRes.data.signedUrl, nome, mime, downloadUrl });
+      const typed = blob.type ? blob : new Blob([blob], { type: mime });
+      const url = URL.createObjectURL(typed);
+      setPreview({ url, nome, mime, blob: typed });
       await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "visualizado", { path: doc.arquivo_storage_path });
     } catch (e) {
       toast.error("Erro ao acessar arquivo.");
