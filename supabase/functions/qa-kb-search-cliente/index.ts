@@ -522,13 +522,13 @@ Deno.serve(async (req) => {
     }
 
     const ctx = [
-      ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxLegislacao
         ? `## Base legal cadastrada em Legislação\n${ctxLegislacao}`
         : "",
       ctxChunks
         ? `## Trechos da legislação anexada (PDFs oficiais)\n${ctxChunks}`
         : "",
+      ctxArticles ? `## Artigos da Central de Ajuda\n${ctxArticles}` : "",
       ctxFewShot
         ? `## Exemplos de respostas aprovadas anteriores\n${ctxFewShot}`
         : "",
