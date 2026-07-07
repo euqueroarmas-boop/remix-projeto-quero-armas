@@ -557,11 +557,15 @@ Deno.serve(async (req) => {
     let ctxCompetencia = "";
     try {
       if (tokens.length > 0) {
-        const { data: comp } = await supabase.rpc("qa_consulta_competencia", {
+        console.log("[competencia] tokens:", tokens);
+        const { data: comp, error: compErr } = await supabase.rpc("qa_consulta_competencia", {
           _tokens: tokens,
         });
-        if (comp && comp.length > 0) {
+        if (compErr) {
+          console.warn("[competencia] rpc error:", JSON.stringify(compErr));
+        } else if (comp && comp.length > 0) {
           const c = comp[0];
+          console.log("[competencia] match:", c.materia_slug, "count:", c.match_count);
           if (c.match_count > 0) {
             ctxCompetencia =
               `## COMPETÊNCIA DETERMINADA PELA BASE LOCAL (autoritativa)\n` +
@@ -571,10 +575,12 @@ Deno.serve(async (req) => {
               `base legal: ${c.artigo ?? "não especificado"}\n` +
               (c.observacao ? `observação: ${c.observacao}\n` : "");
           }
+        } else {
+          console.log("[competencia] sem match para tokens:", tokens);
         }
       }
     } catch (e) {
-      console.warn("consulta_competencia falhou:", e);
+      console.warn("[competencia] exceção:", e);
     }
 
     const ctxFinal = ctxCompetencia
