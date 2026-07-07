@@ -509,10 +509,53 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       )}
 
       {preview && (
-        <div
+        <PreviewModal preview={preview} onClose={() => setPreview(null)} />
+      )}
+    </div>
+  );
+}
+
+function PreviewModal({
+  preview,
+  onClose,
+}: {
+  preview: { url: string; nome: string; mime: string; blob: Blob };
+  onClose: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState<number>(0);
+  const [numPages, setNumPages] = useState<number>(0);
+  const isPdf = preview.mime === "application/pdf";
+  const isImage = preview.mime.startsWith("image/");
+
+  useEffect(() => {
+    return () => URL.revokeObjectURL(preview.url);
+  }, [preview.url]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const cr = entries[0]?.contentRect;
+      if (cr) setWidth(cr.width);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const triggerDownload = () => {
+    const a = document.createElement("a");
+    a.href = preview.url;
+    a.download = preview.nome;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  return (
+    <div
           role="dialog"
           aria-modal="true"
-          onClick={() => setPreview(null)}
+          onClick={onClose}
           style={{
             position: "fixed",
             inset: 0,
@@ -567,11 +610,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 {preview.nome}
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <a
-                  href={preview.downloadUrl || preview.url}
-                  download={preview.nome}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={triggerDownload}
                   style={{
                     background: "#7A1F2B",
                     color: "#fff",
@@ -583,34 +624,14 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                     fontWeight: 900,
                     borderRadius: 2,
                     textTransform: "uppercase",
-                    textDecoration: "none",
+                    cursor: "pointer",
                   }}
                 >
                   Baixar
-                </a>
-                <a
-                  href={preview.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    background: "transparent",
-                    color: "#0A0A0A",
-                    border: "1px solid #c8c8c8",
-                    padding: "7px 12px",
-                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
-                    letterSpacing: ".22em",
-                    fontSize: 10,
-                    fontWeight: 900,
-                    borderRadius: 2,
-                    textTransform: "uppercase",
-                    textDecoration: "none",
-                  }}
-                >
-                  Abrir em nova aba
-                </a>
+                </button>
                 <button
                   type="button"
-                  onClick={() => setPreview(null)}
+                  onClick={onClose}
                   aria-label="Fechar"
                   style={{
                     background: "transparent",
@@ -629,45 +650,67 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 </button>
               </div>
             </div>
-            <div style={{ flex: 1, background: "#1c1c1c", overflow: "auto" }}>
-              {preview.mime.startsWith("image/") ? (
+            <div ref={containerRef} style={{ flex: 1, background: "#1c1c1c", overflow: "auto" }}>
+              {isImage ? (
                 <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
                   <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                 </div>
+              ) : isPdf ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: 16 }}>
+                  <Document
+                    file={preview.blob}
+                    onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                    loading={
+                      <div style={{ color: "#fff", fontFamily: "'Oswald',sans-serif", letterSpacing: ".22em", fontSize: 11, padding: 40 }}>
+                        CARREGANDO PDF…
+                      </div>
+                    }
+                    error={
+                      <div style={{ color: "#fff", fontFamily: "'Oswald',sans-serif", letterSpacing: ".22em", fontSize: 11, padding: 40 }}>
+                        NÃO FOI POSSÍVEL RENDERIZAR ESTE PDF.
+                      </div>
+                    }
+                  >
+                    {Array.from({ length: numPages }, (_, i) => (
+                      <div key={i} style={{ marginBottom: 12, background: "#fff", boxShadow: "0 4px 14px rgba(0,0,0,.4)" }}>
+                        <Page
+                          pageNumber={i + 1}
+                          width={Math.min(width - 32, 980)}
+                          renderAnnotationLayer={false}
+                          renderTextLayer={false}
+                        />
+                      </div>
+                    ))}
+                  </Document>
+                </div>
               ) : (
-                <object
-                  data={preview.url}
-                  type={preview.mime}
-                  style={{ width: "100%", height: "100%", background: "#fff" }}
-                >
-                  <div style={{
-                    width: "100%", height: "100%",
-                    display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center",
-                    gap: 12, color: "#fff", padding: 24, textAlign: "center",
-                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
-                    letterSpacing: ".14em", fontSize: 12,
-                  }}>
-                    <div>SEU NAVEGADOR NÃO EXIBE ESTE ARQUIVO INLINE.</div>
-                    <a
-                      href={preview.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: "#7A1F2B", color: "#fff",
-                        padding: "10px 16px", textDecoration: "none",
-                        letterSpacing: ".22em", fontWeight: 900, borderRadius: 2,
-                      }}
-                    >
-                      ABRIR EM NOVA ABA
-                    </a>
-                  </div>
-                </object>
+                <div style={{
+                  width: "100%", height: "100%",
+                  display: "flex", flexDirection: "column",
+                  alignItems: "center", justifyContent: "center",
+                  gap: 12, color: "#fff", padding: 24, textAlign: "center",
+                  fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                  letterSpacing: ".14em", fontSize: 12,
+                }}>
+                  <div>FORMATO NÃO SUPORTADO PARA VISUALIZAÇÃO INLINE.</div>
+                  <button
+                    type="button"
+                    onClick={triggerDownload}
+                    style={{
+                      background: "#7A1F2B", color: "#fff", border: 0,
+                      padding: "10px 16px",
+                      letterSpacing: ".22em", fontWeight: 900, borderRadius: 2,
+                      cursor: "pointer",
+                      fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                      fontSize: 11,
+                    }}
+                  >
+                    BAIXAR ARQUIVO
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
-      )}
-    </div>
   );
 }
