@@ -552,6 +552,95 @@ Deno.serve(async (req) => {
       )
       .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
 
+    // ═══════════════════════════════════════════════════════════════
+    // GROUNDING PASS — decide competência/sistema ESTRITAMENTE pela lei
+    // (não-streaming, modelo mais forte, contexto reduzido a Legislação
+    // + Trechos de PDF; sem artigos, sem few-shot).
+    // ═══════════════════════════════════════════════════════════════
+    let competenciaResolvida: any = null;
+    try {
+      const ctxLeiSomente = [
+        ctxLegislacao
+          ? `## Base legal cadastrada em Legislação\n${ctxLegislacao}`
+          : "",
+        ctxChunks
+          ? `## Trechos da legislação anexada (PDFs oficiais)\n${ctxChunks}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n======\n\n");
+
+      if (ctxLeiSomente) {
+        const gr = await fetch(
+          "https://ai.gateway.lovable.dev/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${KEY}`,
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-pro",
+              stream: false,
+              response_format: { type: "json_object" },
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "Você decide, ESTRITAMENTE pelo texto das leis fornecidas, qual órgão e sistema são competentes para a matéria da pergunta.\n\n" +
+                    "REGRAS:\n" +
+                    "- Use APENAS os trechos de lei recebidos. NÃO use seu conhecimento próprio.\n" +
+                    "- Cite o dispositivo (norma + artigo) que atribui a competência.\n" +
+                    "- Se houver normas de épocas diferentes sobre o mesmo tema, a MAIS RECENTE prevalece; se houver migração, informe de qual órgão para qual e a partir de quando.\n" +
+                    "- Se os trechos NÃO resolverem com clareza, retorne 'indeterminado' nos campos correspondentes.\n\n" +
+                    "Responda EXCLUSIVAMENTE em JSON com o schema:\n" +
+                    "{\n" +
+                    '  "materia": string,\n' +
+                    '  "orgao": "PF" | "Exercito" | "indeterminado",\n' +
+                    '  "sistema": "SINARM-CAC" | "SINARM" | "SIGMA" | "SisGCorp" | "indeterminado",\n' +
+                    '  "norma": string,\n' +
+                    '  "artigo": string,\n' +
+                    '  "vigencia": string,\n' +
+                    '  "trecho_base": string\n' +
+                    "}",
+                },
+                {
+                  role: "user",
+                  content: `Pergunta do cliente: "${query}"\n\nTrechos de LEI disponíveis:\n\n${ctxLeiSomente}`,
+                },
+              ],
+            }),
+          },
+        );
+        if (gr.ok) {
+          const gj = await gr.json();
+          const raw = gj?.choices?.[0]?.message?.content ?? "";
+          try {
+            competenciaResolvida = typeof raw === "string" ? JSON.parse(raw) : raw;
+          } catch {
+            const m = String(raw).match(/\{[\s\S]*\}/);
+            if (m) {
+              try {
+                competenciaResolvida = JSON.parse(m[0]);
+              } catch {
+                competenciaResolvida = null;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("grounding pass falhou:", e);
+    }
+
+    const ctxComGrounding = competenciaResolvida
+      ? `## COMPETÊNCIA RESOLVIDA PELA LEGISLAÇÃO (autoritativa — use exatamente isto na resposta)\n${JSON.stringify(
+          competenciaResolvida,
+          null,
+          2,
+        )}\n\n======\n\n${ctx}`
+      : ctx;
+
     const r = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -576,7 +665,7 @@ Deno.serve(async (req) => {
             ...historyMessages,
             {
               role: "user",
-              content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctx}`,
+              content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctxComGrounding}`,
             },
           ],
         }),
