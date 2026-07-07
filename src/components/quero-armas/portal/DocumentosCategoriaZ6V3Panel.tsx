@@ -173,13 +173,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       return;
     }
     try {
-      const { data, error } = await supabase.storage
-        .from(DOC_BUCKET)
-        .createSignedUrl(doc.arquivo_storage_path, 3600);
-      if (error || !data?.signedUrl) {
-        toast.error("Não foi possível abrir o arquivo.");
-        return;
-      }
       const nome = String(doc.arquivo_nome || doc.tipo_documento || "documento");
       const ext = nome.toLowerCase().split(".").pop() || "";
       const mime = ext === "pdf"
@@ -187,7 +180,21 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         : ["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)
           ? `image/${ext === "jpg" ? "jpeg" : ext}`
           : "application/octet-stream";
-      setPreview({ url: data.signedUrl, nome, mime });
+      // URL inline para visualização
+      const inlineRes = await supabase.storage
+        .from(DOC_BUCKET)
+        .createSignedUrl(doc.arquivo_storage_path, 3600);
+      if (inlineRes.error || !inlineRes.data?.signedUrl) {
+        toast.error("Não foi possível abrir o arquivo.");
+        return;
+      }
+      // URL forçando download (Content-Disposition: attachment) — funciona
+      // cross-origin em Safari/Firefox, onde o atributo download é ignorado.
+      const dlRes = await supabase.storage
+        .from(DOC_BUCKET)
+        .createSignedUrl(doc.arquivo_storage_path, 3600, { download: nome });
+      const downloadUrl = dlRes.data?.signedUrl || inlineRes.data.signedUrl;
+      setPreview({ url: inlineRes.data.signedUrl, nome, mime, downloadUrl });
       await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "visualizado", { path: doc.arquivo_storage_path });
     } catch (e) {
       toast.error("Erro ao acessar arquivo.");
@@ -561,8 +568,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <a
-                  href={preview.url}
+                  href={preview.downloadUrl || preview.url}
                   download={preview.nome}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     background: "#7A1F2B",
                     color: "#fff",
@@ -578,6 +587,26 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   }}
                 >
                   Baixar
+                </a>
+                <a
+                  href={preview.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: "transparent",
+                    color: "#0A0A0A",
+                    border: "1px solid #c8c8c8",
+                    padding: "7px 12px",
+                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                    letterSpacing: ".22em",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    borderRadius: 2,
+                    textTransform: "uppercase",
+                    textDecoration: "none",
+                  }}
+                >
+                  Abrir em nova aba
                 </a>
                 <button
                   type="button"
@@ -606,11 +635,34 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                 </div>
               ) : (
-                <iframe
-                  src={preview.url}
-                  title={preview.nome}
-                  style={{ width: "100%", height: "100%", border: 0, background: "#fff" }}
-                />
+                <object
+                  data={preview.url}
+                  type={preview.mime}
+                  style={{ width: "100%", height: "100%", background: "#fff" }}
+                >
+                  <div style={{
+                    width: "100%", height: "100%",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center",
+                    gap: 12, color: "#fff", padding: 24, textAlign: "center",
+                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                    letterSpacing: ".14em", fontSize: 12,
+                  }}>
+                    <div>SEU NAVEGADOR NÃO EXIBE ESTE ARQUIVO INLINE.</div>
+                    <a
+                      href={preview.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: "#7A1F2B", color: "#fff",
+                        padding: "10px 16px", textDecoration: "none",
+                        letterSpacing: ".22em", fontWeight: 900, borderRadius: 2,
+                      }}
+                    >
+                      ABRIR EM NOVA ABA
+                    </a>
+                  </div>
+                </object>
               )}
             </div>
           </div>
