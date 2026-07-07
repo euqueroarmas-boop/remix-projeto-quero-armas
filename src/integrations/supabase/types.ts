@@ -4485,6 +4485,62 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_competencia_materia: {
+        Row: {
+          artigo: string | null
+          ativo: boolean
+          atualizado_em: string
+          atualizado_por: string | null
+          fonte_normativa_id: string | null
+          id: string
+          materia_descricao: string
+          materia_slug: string
+          observacao: string | null
+          orgao_competente: string
+          palavras_chave: string[]
+          sistema_registro: string
+          vigencia_inicio: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          fonte_normativa_id?: string | null
+          id?: string
+          materia_descricao: string
+          materia_slug: string
+          observacao?: string | null
+          orgao_competente: string
+          palavras_chave?: string[]
+          sistema_registro: string
+          vigencia_inicio?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          fonte_normativa_id?: string | null
+          id?: string
+          materia_descricao?: string
+          materia_slug?: string
+          observacao?: string | null
+          orgao_competente?: string
+          palavras_chave?: string[]
+          sistema_registro?: string
+          vigencia_inicio?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_competencia_materia_fonte_normativa_id_fkey"
+            columns: ["fonte_normativa_id"]
+            isOneToOne: false
+            referencedRelation: "qa_fontes_normativas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_config: {
         Row: {
           chave: string
