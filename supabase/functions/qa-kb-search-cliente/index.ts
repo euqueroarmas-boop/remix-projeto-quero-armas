@@ -553,9 +553,10 @@ Deno.serve(async (req) => {
       .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }));
 
     // Lookup determinístico de competência — banco local, sem IA
+    // Não depende de qemb; usa apenas tokens de palavras-chave.
     let ctxCompetencia = "";
     try {
-      if (qemb && tokens.length > 0) {
+      if (tokens.length > 0) {
         const { data: comp } = await supabase.rpc("qa_consulta_competencia", {
           _tokens: tokens,
         });
