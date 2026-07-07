@@ -333,14 +333,14 @@ Deno.serve(async (req) => {
             }
           }
           chunkSources = hitList
-            .slice(0, 6)
+            .slice(0, 10)
             .map((h) => {
               const doc = docMetaById.get(h.documento_id);
               const normaTitle = doc?.fonte_normativa_id
                 ? normaTitleById.get(doc.fonte_normativa_id) ?? null
                 : null;
               return {
-                texto: (h.texto_chunk || "").substring(0, 4000),
+                texto: (h.texto_chunk || "").substring(0, 6000),
                 titulo_doc: doc?.titulo || "Documento",
                 titulo_norma: normaTitle,
                 similarity: Number(h.similarity) || 0,
