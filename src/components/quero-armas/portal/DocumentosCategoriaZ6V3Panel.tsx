@@ -635,11 +635,34 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                 </div>
               ) : (
-                <iframe
-                  src={preview.url}
-                  title={preview.nome}
-                  style={{ width: "100%", height: "100%", border: 0, background: "#fff" }}
-                />
+                <object
+                  data={preview.url}
+                  type={preview.mime}
+                  style={{ width: "100%", height: "100%", background: "#fff" }}
+                >
+                  <div style={{
+                    width: "100%", height: "100%",
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center",
+                    gap: 12, color: "#fff", padding: 24, textAlign: "center",
+                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                    letterSpacing: ".14em", fontSize: 12,
+                  }}>
+                    <div>SEU NAVEGADOR NÃO EXIBE ESTE ARQUIVO INLINE.</div>
+                    <a
+                      href={preview.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: "#7A1F2B", color: "#fff",
+                        padding: "10px 16px", textDecoration: "none",
+                        letterSpacing: ".22em", fontWeight: 900, borderRadius: 2,
+                      }}
+                    >
+                      ABRIR EM NOVA ABA
+                    </a>
+                  </div>
+                </object>
               )}
             </div>
           </div>
