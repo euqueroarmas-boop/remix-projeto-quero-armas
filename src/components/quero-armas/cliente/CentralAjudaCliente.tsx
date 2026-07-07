@@ -585,23 +585,16 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                                 <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: INK_2, animationDelay: "300ms" }} />
                               </div>
                             ) : null}
-                            {!m.isStreaming && ((m.fontes && m.fontes.length > 0) || nMeta) && (
+                            {!m.isStreaming && (m.fontes && m.fontes.length > 0) && (
                               <div className="mt-3 pt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]" style={{ borderTop: `1px dashed ${CARD_BORDER}`, color: INK }}>
-                                {m.fontes && m.fontes.length > 0 && (
-                                  <span>
-                                    <span style={{ fontWeight: 700 }}>Fontes:</span>{" "}
-                                    {m.fontes.slice(0, 6).map((f, i) => {
-                                      const raw = f.titulo_norma || f.titulo_doc || "Fonte";
-                                      const label = raw.startsWith("QA: ") ? "Klal — resposta aprovada" : raw;
-                                      return <span key={i} style={{ color: INK_2 }}>{i > 0 ? " · " : ""}{label}</span>;
-                                    })}
-                                  </span>
-                                )}
-                                {nMeta && (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 uppercase" style={{ background: nMeta.bg, color: nMeta.fg, borderRadius: 8, fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.14em" }}>
-                                    {nMeta.icon} {nMeta.label}
-                                  </span>
-                                )}
+                                <span>
+                                  <span style={{ fontWeight: 700 }}>Fontes:</span>{" "}
+                                  {m.fontes.slice(0, 6).map((f, i) => {
+                                    const raw = f.titulo_norma || f.titulo_doc || "Fonte";
+                                    const label = raw.startsWith("QA: ") ? "Klal — resposta aprovada" : raw;
+                                    return <span key={i} style={{ color: INK_2 }}>{i > 0 ? " · " : ""}{label}</span>;
+                                  })}
+                                </span>
                               </div>
                             )}
                             {!m.isStreaming && m.servicoSugerido && (
