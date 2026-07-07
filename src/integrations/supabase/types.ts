@@ -10501,6 +10501,18 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_consulta_competencia: {
+        Args: { _tokens: string[] }
+        Returns: {
+          artigo: string
+          match_count: number
+          materia_descricao: string
+          materia_slug: string
+          observacao: string
+          orgao_competente: string
+          sistema_registro: string
+        }[]
+      }
       qa_create_processo_from_venda: {
         Args: { p_servico_id: number; p_venda_id: number }
         Returns: Json
