@@ -568,8 +568,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <a
-                  href={preview.url}
+                  href={preview.downloadUrl || preview.url}
                   download={preview.nome}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     background: "#7A1F2B",
                     color: "#fff",
@@ -585,6 +587,26 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   }}
                 >
                   Baixar
+                </a>
+                <a
+                  href={preview.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: "transparent",
+                    color: "#0A0A0A",
+                    border: "1px solid #c8c8c8",
+                    padding: "7px 12px",
+                    fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif",
+                    letterSpacing: ".22em",
+                    fontSize: 10,
+                    fontWeight: 900,
+                    borderRadius: 2,
+                    textTransform: "uppercase",
+                    textDecoration: "none",
+                  }}
+                >
+                  Abrir em nova aba
                 </a>
                 <button
                   type="button"
