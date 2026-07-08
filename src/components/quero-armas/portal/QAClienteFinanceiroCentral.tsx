@@ -197,6 +197,33 @@ function servicoDaVenda(
   return `COBRANÇA #${v.id_legado}`;
 }
 
+// Banco emissor a partir da linha digitável / código de barras do boleto.
+// Os 3 primeiros dígitos do código de barras são o código COMPE do banco.
+const BANCOS_COMPE: Record<string, string> = {
+  "001": "Banco do Brasil",
+  "033": "Santander",
+  "041": "Banrisul",
+  "070": "BRB",
+  "077": "Inter",
+  "104": "Caixa",
+  "212": "Banco Original",
+  "237": "Bradesco",
+  "260": "Nubank",
+  "290": "PagBank",
+  "323": "Mercado Pago",
+  "336": "C6 Bank",
+  "341": "Itaú",
+  "380": "PicPay",
+  "422": "Safra",
+  "748": "Sicredi",
+  "756": "Sicoob",
+};
+function bancoEmissor(identificationField?: string | null, barCode?: string | null): string | null {
+  const raw = String(identificationField || barCode || "").replace(/\D/g, "");
+  if (raw.length < 3) return null;
+  return BANCOS_COMPE[raw.slice(0, 3)] || null;
+}
+
 // ─── Cards ───────────────────────────────────────────────────────────────────
 
 function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
@@ -285,6 +312,8 @@ type Detalhe = {
   pix?: { payload?: string | null; encodedImage?: string | null } | null;
   bankSlipUrl?: string | null;
   invoiceUrl?: string | null;
+  billingType?: string | null;
+  boletoError?: string | null;
 };
 
 function CobrancaAberta({
@@ -310,6 +339,7 @@ function CobrancaAberta({
     : "AGUARDANDO PAGAMENTO";
   const valor = Number(venda.valor_a_pagar || 0);
   const cobId = `#${venda.id_legado}`;
+  const banco = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
 
   // ─── COLAPSADO ─────────────────────────────────────
   if (!expanded) {
@@ -319,6 +349,7 @@ function CobrancaAberta({
           <div className="t">{servico}</div>
           <div className="m">
             Cob. {cobId} · vence {fmtDatePt(venda.asaas_due_date)}
+            {banco ? <> · <b style={{ color: "var(--ink)" }}>{banco}</b></> : null}
           </div>
           <div style={{ marginTop: 8 }}>
             <span className={`pill ${pillCls}`}>{stLabel}</span>
@@ -366,6 +397,9 @@ function CobrancaAberta({
         <div><div className="k">Serviço contratado</div><div className="v">{servico}</div></div>
         <div><div className="k">Código Asaas</div><div className="v">{cobId}</div></div>
         <div><div className="k">Vencimento</div><div className="v">{fmtDatePt(venda.asaas_due_date)}</div></div>
+        {banco ? (
+          <div><div className="k">Banco emissor</div><div className="v">{banco}</div></div>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 14 }}>
@@ -406,13 +440,22 @@ function CobrancaAberta({
               <div className="copy">Buscando linha digitável na Asaas…</div>
             ) : boletoLine ? (
               <div className="copy">{boletoLine}</div>
+            ) : detalhe?.billingType && detalhe.billingType !== "BOLETO" ? (
+              <div className="copy">
+                Esta cobrança não possui boleto: forma configurada na Asaas é <b>{detalhe.billingType}</b>.
+                Use a aba <b>{detalhe.billingType === "PIX" ? "PIX" : "CARTÃO"}</b> acima.
+              </div>
             ) : (
               <div className="copy">Não foi possível recuperar a linha digitável. {detalhe?.error || ""}</div>
             )}
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button className="btn pri" disabled={!boletoLine} onClick={() => boletoLine && copyToClipboard(boletoLine, "Linha digitável copiada")}>COPIAR LINHA DIGITÁVEL</button>
               {boletoPdf && <a className="btn out" href={boletoPdf} target="_blank" rel="noreferrer">BAIXAR PDF</a>}
-              {invoiceUrl && <a className="btn" href={invoiceUrl} target="_blank" rel="noreferrer">ABRIR NA ASAAS</a>}
+              {invoiceUrl && (
+                <a className="btn" href={invoiceUrl} target="_blank" rel="noreferrer">
+                  {banco ? `PAGAR NO APP DO ${banco.toUpperCase()}` : "ABRIR NA ASAAS"}
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -565,6 +608,8 @@ export default function QAClienteFinanceiroCentral({
           },
           bankSlipUrl: (data as any)?.asaas_bank_slip_url ?? venda.asaas_bank_slip_url ?? null,
           invoiceUrl: (data as any)?.asaas_invoice_url ?? venda.asaas_invoice_url ?? null,
+          billingType: (data as any)?.billing_type ?? prev[venda.id_legado]?.billingType ?? null,
+          boletoError: (data as any)?.boleto_error ?? null,
         },
       }));
     } catch (e: any) {
