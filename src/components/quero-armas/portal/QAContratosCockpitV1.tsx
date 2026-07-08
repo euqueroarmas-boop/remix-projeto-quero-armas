@@ -130,28 +130,11 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
           .order("created_at", { ascending: false });
         if (error) console.warn("[QAContratosCockpitV1] qa_contracts:", error.message);
         if (!cancel) {
-          const rows = ((data as any) || []) as any[];
-          // Busca itens para exibir o NOME do serviço contratado (não o slug bruto)
-          const ids = rows.map((r) => r.id);
-          let itemsByContract: Record<string, string[]> = {};
-          if (ids.length) {
-            const { data: its } = await supabase
-              .from("qa_contract_items" as any)
-              .select("contract_id, service_name_snapshot, service_slug_snapshot")
-              .in("contract_id", ids);
-            ((its as any[]) || []).forEach((it: any) => {
-              const name = (it.service_name_snapshot || it.service_slug_snapshot || "").toString();
-              if (!name) return;
-              (itemsByContract[it.contract_id] ||= []).push(name);
-            });
-          }
-          const mapped = rows.map((r: any) => {
-            const names = itemsByContract[r.id];
-            const label = names && names.length
-              ? Array.from(new Set(names)).join(" · ")
-              : (r.servico_slug ?? null);
-            return { ...r, total_amount: r.valor ?? null, service_label: label } as Contract;
-          });
+          const mapped = ((data as any) || []).map((r: any) => ({
+            ...r,
+            total_amount: r.valor ?? null,
+            service_label: r.servico_slug ?? null,
+          })) as Contract[];
           setContracts(mapped);
         }
       } catch (e) {
