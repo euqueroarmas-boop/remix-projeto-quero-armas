@@ -337,6 +337,7 @@ function CobrancaAberta({
     : "AGUARDANDO PAGAMENTO";
   const valor = Number(venda.valor_a_pagar || 0);
   const cobId = `#${venda.id_legado}`;
+  const banco = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
 
   // ─── COLAPSADO ─────────────────────────────────────
   if (!expanded) {
@@ -346,6 +347,7 @@ function CobrancaAberta({
           <div className="t">{servico}</div>
           <div className="m">
             Cob. {cobId} · vence {fmtDatePt(venda.asaas_due_date)}
+            {banco ? <> · <b style={{ color: "var(--ink)" }}>{banco}</b></> : null}
           </div>
           <div style={{ marginTop: 8 }}>
             <span className={`pill ${pillCls}`}>{stLabel}</span>
@@ -393,6 +395,9 @@ function CobrancaAberta({
         <div><div className="k">Serviço contratado</div><div className="v">{servico}</div></div>
         <div><div className="k">Código Asaas</div><div className="v">{cobId}</div></div>
         <div><div className="k">Vencimento</div><div className="v">{fmtDatePt(venda.asaas_due_date)}</div></div>
+        {banco ? (
+          <div><div className="k">Banco emissor</div><div className="v">{banco}</div></div>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 14 }}>
@@ -439,7 +444,11 @@ function CobrancaAberta({
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button className="btn pri" disabled={!boletoLine} onClick={() => boletoLine && copyToClipboard(boletoLine, "Linha digitável copiada")}>COPIAR LINHA DIGITÁVEL</button>
               {boletoPdf && <a className="btn out" href={boletoPdf} target="_blank" rel="noreferrer">BAIXAR PDF</a>}
-              {invoiceUrl && <a className="btn" href={invoiceUrl} target="_blank" rel="noreferrer">ABRIR NA ASAAS</a>}
+              {invoiceUrl && (
+                <a className="btn" href={invoiceUrl} target="_blank" rel="noreferrer">
+                  {banco ? `PAGAR NO APP DO ${banco.toUpperCase()}` : "ABRIR NA ASAAS"}
+                </a>
+              )}
             </div>
           </div>
         )}
