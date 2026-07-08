@@ -33,7 +33,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}
-        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr}.qa-alvo__target{min-height:220px}.qa-alvo__cards{grid-template-columns:1fr}}
+        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr}.qa-alvo__target{min-height:260px}.qa-alvo__cards{grid-template-columns:1fr}}
       `}</style>
 
       <div className="qa-alvo__head">
