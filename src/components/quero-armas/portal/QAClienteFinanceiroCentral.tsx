@@ -47,7 +47,7 @@ const CSS = `
 .qafin-central .charge.o{border-left-color:var(--ok);background:#fafaf7}
 .qafin-central .charge .body{min-width:0;flex:1}
 .qafin-central .charge .t{font-family:'Arial Narrow',Arial;font-size:15px;font-weight:700;line-height:1.25}
-.qafin-central .charge .m{font-family:Arial;font-size:11.5px;color:var(--ink-soft);margin-top:3px}
+.qafin-central .charge .m{font-family:Arial;font-size:11.5px;color:var(--ink-soft);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qafin-central .charge .val{font-family:Oswald,sans-serif;font-size:22px;font-weight:600;text-align:right;min-width:110px}
 .qafin-central .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .qafin-central .btn{padding:7px 11px;font-family:Oswald,sans-serif;font-size:10.5px;letter-spacing:.1em;
