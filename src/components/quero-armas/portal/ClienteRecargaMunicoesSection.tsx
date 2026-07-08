@@ -15,8 +15,8 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:var(--muted);margin:8px 0 0;max-width:640px}
         .qa-alvo__badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bordo);background:#fff;color:var(--bordo);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:7px 12px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:22px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:24px;box-shadow:0 6px 14px rgba(17,17,17,.04);flex:1;min-height:0;align-items:stretch}
-        .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px solid var(--line);border-radius:3px;padding:20px;min-height:0;height:100%}
-        .qa-recarga__hero{width:100%;max-width:280px;height:auto;object-fit:contain;display:block}
+        .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px solid var(--line);border-radius:3px;padding:0;min-height:0;height:100%;overflow:hidden}
+        .qa-recarga__hero{width:100%;height:100%;max-width:none;object-fit:contain;display:block}
         .qa-alvo__body{display:flex;flex-direction:column;gap:16px;min-width:0;justify-content:center}
         .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
