@@ -4,13 +4,13 @@ const legalBase = "Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN
 
 export default function ClienteAnaliseAlvoSection() {
   return (
-    <section className="flex h-[calc(100vh-132px)] max-h-[820px] min-h-0 flex-col gap-3 overflow-hidden">
+    <section className="flex min-h-0 flex-col gap-3">
       <div className="shrink-0">
         <div className="text-[14px] font-black uppercase tracking-[0.18em] text-slate-950 md:text-[20px]">
           Análise de Alvo
         </div>
         <h1 className="mt-1 text-[32px] font-black leading-none text-slate-950 md:text-[46px]">
-          Seu Disparo, Explicado Pela IA
+          Seu Disparo, Explicado por Nós
         </h1>
         <p className="mt-2 max-w-4xl text-sm leading-5 text-slate-600">
           Em breve, o Arsenal Inteligente analisará seus alvos e apontará correções pontuais para você evoluir com precisão,
@@ -18,15 +18,15 @@ export default function ClienteAnaliseAlvoSection() {
         </p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
-        <div className="grid h-full min-h-0 lg:grid-cols-[1fr_1fr]">
-          <div className="relative flex min-h-0 items-center justify-center border-b border-slate-200 bg-white p-7 lg:border-b-0 lg:border-r">
+      <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm">
+        <div className="grid lg:grid-cols-[1fr_1fr]">
+          <div className="relative flex items-center justify-center border-b border-slate-200 bg-white p-7 pt-16 lg:border-b-0 lg:border-r">
             <div className="absolute left-7 top-7 inline-flex items-center gap-2 rounded-full border border-[#8A0F1D]/30 bg-white px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#8A0F1D]">
               <Lock className="h-4 w-4" />
               Arsenal Inteligente Premium
             </div>
 
-            <div className="relative h-[clamp(230px,42vh,340px)] w-[clamp(230px,42vh,340px)] max-w-full rounded-full border border-slate-200 bg-[radial-gradient(circle,#ffffff_0_36%,#f8fafc_37%_39%,#ffffff_40%_54%,#f8fafc_55%_57%,#ffffff_58%_100%)] shadow-inner">
+            <div className="relative aspect-square w-full max-w-[340px] rounded-full border border-slate-200 bg-[radial-gradient(circle,#ffffff_0_36%,#f8fafc_37%_39%,#ffffff_40%_54%,#f8fafc_55%_57%,#ffffff_58%_100%)] shadow-inner">
               <div className="absolute inset-8 rounded-full border border-slate-300" />
               <div className="absolute inset-20 rounded-full border border-slate-300" />
               <div className="absolute inset-[36%] rounded-full border border-[#8A0F1D] bg-[#8A0F1D]" />
@@ -40,7 +40,7 @@ export default function ClienteAnaliseAlvoSection() {
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col justify-center overflow-hidden px-7 py-8 md:px-9 md:py-9">
+          <div className="flex flex-col justify-center px-7 py-8 md:px-9 md:py-9">
             <div className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-950 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">
               <Sparkles className="h-4 w-4" />
               Em construção
@@ -51,8 +51,8 @@ export default function ClienteAnaliseAlvoSection() {
             </h2>
 
             <p className="mt-3 max-w-xl text-sm leading-5 text-slate-600">
-              A IA analisará seus alvos, interpretará a dispersão dos impactos e transformará cada sessão em orientações
-              objetivas: postura, empunhadura, visada, acionamento do gatilho, controle de recuo e repetição do fundamento.
+              Analisaremos seus alvos, interpretaremos a dispersão dos impactos e transformaremos cada sessão em orientações
+              objetivas: postura, empunhadura, visada, acionamento de gatilho, controle de recuo e repetição do fundamento.
             </p>
 
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
