@@ -603,6 +603,8 @@ export default function QAClienteFinanceiroCentral({
           },
           bankSlipUrl: (data as any)?.asaas_bank_slip_url ?? venda.asaas_bank_slip_url ?? null,
           invoiceUrl: (data as any)?.asaas_invoice_url ?? venda.asaas_invoice_url ?? null,
+          billingType: (data as any)?.billing_type ?? prev[venda.id_legado]?.billingType ?? null,
+          boletoError: (data as any)?.boleto_error ?? null,
         },
       }));
     } catch (e: any) {
