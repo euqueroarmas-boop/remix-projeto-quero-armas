@@ -440,6 +440,11 @@ function CobrancaAberta({
               <div className="copy">Buscando linha digitável na Asaas…</div>
             ) : boletoLine ? (
               <div className="copy">{boletoLine}</div>
+            ) : detalhe?.billingType && detalhe.billingType !== "BOLETO" ? (
+              <div className="copy">
+                Esta cobrança não possui boleto: forma configurada na Asaas é <b>{detalhe.billingType}</b>.
+                Use a aba <b>{detalhe.billingType === "PIX" ? "PIX" : "CARTÃO"}</b> acima.
+              </div>
             ) : (
               <div className="copy">Não foi possível recuperar a linha digitável. {detalhe?.error || ""}</div>
             )}
