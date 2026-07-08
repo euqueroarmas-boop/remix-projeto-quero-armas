@@ -205,11 +205,16 @@ const MINUSCULAS_PT = new Set([
   "com","sem","sob","sobre","ao","aos","à","às","ou","se","que"
 ]);
 function titleCasePt(s: string): string {
-  const lower = s.toLowerCase();
-  return lower.split(/(\s+)/).map((tok, i) => {
+  // Preserva siglas curtas (≤4 letras) que vinham em CAIXA ALTA no original,
+  // ex.: "CONCESSÃO DE CR" → "Concessão de CR" (e não "Cr").
+  const origTokens = s.split(/(\s+)/);
+  return origTokens.map((tok, i) => {
     if (/^\s+$/.test(tok)) return tok;
-    if (i > 0 && MINUSCULAS_PT.has(tok)) return tok;
-    return tok.charAt(0).toUpperCase() + tok.slice(1);
+    const isAcronym = tok.length <= 4 && /^[A-ZÀ-Ý]+$/.test(tok);
+    if (isAcronym) return tok;
+    const lower = tok.toLowerCase();
+    if (i > 0 && MINUSCULAS_PT.has(lower)) return lower;
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
   }).join("");
 }
 
