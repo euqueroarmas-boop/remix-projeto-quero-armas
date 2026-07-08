@@ -433,10 +433,11 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         <div className="empty">Nenhum documento cadastrado ainda.</div>
       ) : (
         grupos.map((g) => {
-          const isCollapsed = collapsed[g.key];
+          // Padrão: categorias iniciam RECOLHIDAS (só expandem por clique do usuário)
+          const isCollapsed = collapsed[g.key] ?? true;
           return (
             <div className="grp" key={g.key}>
-              <div className="grp-h" onClick={() => setCollapsed((s) => ({ ...s, [g.key]: !s[g.key] }))}>
+              <div className="grp-h" onClick={() => setCollapsed((s) => ({ ...s, [g.key]: !(s[g.key] ?? true) }))}>
                 <div className="gt">
                   {g.label}
                   <span className="gc">{g.docs.length}</span>
