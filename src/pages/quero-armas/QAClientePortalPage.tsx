@@ -22,6 +22,7 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
+import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/ClienteRecargaMunicoesSection";
 import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
@@ -272,6 +273,7 @@ export default function QAClientePortalPage() {
     | "arsenal"
     | "armas_municoes"
     | "analise_alvo"
+    | "recarga_municoes"
     | "mensagens"
     | "configuracoes"
   >("resumo");
