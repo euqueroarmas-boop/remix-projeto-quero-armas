@@ -46,6 +46,7 @@ import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/Cli
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
+import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
 
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
@@ -2283,62 +2284,29 @@ export default function QAClientePortalPage() {
         {activeSection === "financeiro" && analysis && (
           <div className="space-y-4">
             <PortalScopeSelector hint="Cobranças sem venda vinculada só aparecem em 'Todos os processos'." />
-            <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
-              {(() => {
-                const vendaIdAlvo = currentScope.type === "processo" ? currentScope.vendaId : null;
-                const isCancelada = (v: any) => {
-                  const st = String(v.status || "").toUpperCase();
-                  const cb = String(v.cobranca_status || "").toLowerCase();
-                  return st === "CANCELADO" || st === "DESISTIU" || cb === "cancelada" || cb === "estornada";
-                };
-                const vendasVisiveis = vendas.filter((v: any) => !isCancelada(v));
-                const vendasFiltradas = vendaIdAlvo != null
-                  ? vendasVisiveis.filter((v: any) => Number(getVendaFK(v)) === Number(vendaIdAlvo))
-                  : vendasVisiveis;
-                const isPaga = (v: any) => String(v.status || "").toUpperCase() === "PAGO"
-                  || String(v.cobranca_status || "").toLowerCase() === "confirmada";
-                const totalFiltrado = vendasFiltradas
-                  .filter(isPaga)
-                  .reduce((a: number, v: any) => a + Number(v.valor_a_pagar || 0), 0);
-                if (vendasFiltradas.length === 0) {
-                  return (
-                    <p className="py-8 text-center text-sm text-slate-500">
-                      {currentScope.type === "processo"
-                        ? "Nenhuma cobrança vinculada a este processo."
-                        : "Nenhuma cobrança registrada."}
-                    </p>
-                  );
-                }
-                return (
-                  <>
-                    <div className="space-y-2">{vendasFiltradas.map((v: any) => {
-                      const paga = isPaga(v);
-                      const badge = paga
-                        ? { label: "PAGO", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" }
-                        : { label: "PENDENTE", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-                      return (
-                        <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</span>
-                              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border whitespace-nowrap text-[9px] font-bold uppercase tracking-wider ${badge.cls}`}>{badge.label}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className={`font-mono text-sm font-bold ${paga ? "text-slate-900" : "text-slate-400 line-through"}`}>{formatCurrency(Number(v.valor_a_pagar || 0))}</span>
-                            {!paga && v.asaas_invoice_url ? (
-                              <a href={v.asaas_invoice_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center h-8 px-3 rounded-lg bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:opacity-90">Pagar</a>
-                            ) : null}
-                          </div>
-                        </div>
-                      );
-                    })}</div>
-                    <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">{currentScope.type === "processo" ? "Total pago no processo" : "Total investido"}</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(totalFiltrado)}</span></div>
-                  </>
-                );
-              })()}
-            </SectionCard>
+            {(() => {
+              const vendaIdAlvo = currentScope.type === "processo" ? currentScope.vendaId : null;
+              const vendasFiltradas = vendaIdAlvo != null
+                ? vendas.filter((v: any) => Number(getVendaFK(v)) === Number(vendaIdAlvo))
+                : vendas;
+              const servicoNomePorId: Record<number, string> = {};
+              for (const [id, meta] of Object.entries(SERVICO_MAP || {})) {
+                const n = (meta as any)?.nome_servico || (meta as any)?.nome;
+                if (n) servicoNomePorId[Number(id)] = String(n);
+              }
+              const scopeLabel = currentScope.type === "processo"
+                ? `Processo #${currentScope.vendaId}`
+                : undefined;
+              return (
+                <QAClienteFinanceiroCentral
+                  vendas={vendasFiltradas as any}
+                  itens={itens as any}
+                  servicoNomePorId={servicoNomePorId}
+                  premium={null}
+                  scopeLabel={scopeLabel}
+                />
+              );
+            })()}
           </div>
         )}
 
