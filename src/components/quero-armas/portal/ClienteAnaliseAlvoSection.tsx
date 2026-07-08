@@ -6,7 +6,7 @@ export default function ClienteAnaliseAlvoSection() {
   return (
     <section className="qa-alvo qa-client-summary-print">
       <style>{`
-        .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0}
+        .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
         .qa-alvo__head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
         .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
