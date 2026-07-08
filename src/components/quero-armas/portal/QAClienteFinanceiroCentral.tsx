@@ -312,6 +312,8 @@ type Detalhe = {
   pix?: { payload?: string | null; encodedImage?: string | null } | null;
   bankSlipUrl?: string | null;
   invoiceUrl?: string | null;
+  billingType?: string | null;
+  boletoError?: string | null;
 };
 
 function CobrancaAberta({
