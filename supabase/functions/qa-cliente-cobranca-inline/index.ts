@@ -108,7 +108,20 @@ Deno.serve(async (req) => {
         out.boleto_nossoNumero = d?.nossoNumero ?? null;
         out.boleto_barCode = d?.barCode ?? null;
       } else {
-        out.boleto_error = `status_${r.status}`;
+        // Asaas devolve 400 quando a cobrança não é boleto (ex: PIX/cartão).
+        // Consulta o pagamento p/ informar o billingType real ao frontend.
+        let billing: string | null = null;
+        try {
+          const p = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}`, { headers });
+          if (p.ok) {
+            const pd = await p.json();
+            billing = pd?.billingType ?? null;
+          }
+        } catch { /* ignore */ }
+        out.boleto_error = billing && billing !== "BOLETO"
+          ? `nao_e_boleto_${billing.toLowerCase()}`
+          : `status_${r.status}`;
+        out.billing_type = billing;
       }
     }
   } catch (e) {
