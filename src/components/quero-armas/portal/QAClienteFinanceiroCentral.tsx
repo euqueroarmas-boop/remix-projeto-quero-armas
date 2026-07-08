@@ -144,6 +144,7 @@ interface Props {
   servicoNomePorId?: Record<number, string>;
   premium?: QAArsenalPremiumSubscription | null; // hoje sempre null
   scopeLabel?: string;
+  clienteNome?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
