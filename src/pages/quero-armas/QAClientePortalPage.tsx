@@ -2289,6 +2289,11 @@ export default function QAClientePortalPage() {
                 const n = (meta as any)?.nome_servico || (meta as any)?.nome;
                 if (n) servicoNomePorId[Number(id)] = String(n);
               }
+              // Mescla nomes vindos do qa_servicos_catalogo (cobre IDs novos como CONCESSÃO DE CR = 44).
+              for (const [id, meta] of Object.entries(catalogoByServicoId || {})) {
+                const n = (meta as any)?.nome;
+                if (n) servicoNomePorId[Number(id)] = String(n);
+              }
               return (
                 <QAClienteFinanceiroCentral
                   vendas={vendas as any}
