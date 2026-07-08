@@ -2571,6 +2571,98 @@ export type Database = {
           },
         ]
       }
+      qa_arsenal_assinaturas: {
+        Row: {
+          aceite_contrato_em: string | null
+          aceite_contrato_ip: string | null
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
+          atualizado_em: string
+          cancelamento_solicitado_em: string | null
+          cliente_id: number
+          cpf: string
+          criado_em: string
+          forma_pagamento: string | null
+          id: string
+          origem_gratuidade: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          valor_anual: number
+        }
+        Insert: {
+          aceite_contrato_em?: string | null
+          aceite_contrato_ip?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          atualizado_em?: string
+          cancelamento_solicitado_em?: string | null
+          cliente_id: number
+          cpf: string
+          criado_em?: string
+          forma_pagamento?: string | null
+          id?: string
+          origem_gratuidade?: string | null
+          periodo_fim: string
+          periodo_inicio: string
+          status: string
+          valor_anual?: number
+        }
+        Update: {
+          aceite_contrato_em?: string | null
+          aceite_contrato_ip?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          atualizado_em?: string
+          cancelamento_solicitado_em?: string | null
+          cliente_id?: number
+          cpf?: string
+          criado_em?: string
+          forma_pagamento?: string | null
+          id?: string
+          origem_gratuidade?: string | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          status?: string
+          valor_anual?: number
+        }
+        Relationships: []
+      }
+      qa_arsenal_avisos_enviados: {
+        Row: {
+          assinatura_id: string
+          canal: string
+          enviado_em: string
+          id: number
+          marco: number
+          periodo_fim: string
+        }
+        Insert: {
+          assinatura_id: string
+          canal?: string
+          enviado_em?: string
+          id?: never
+          marco: number
+          periodo_fim: string
+        }
+        Update: {
+          assinatura_id?: string
+          canal?: string
+          enviado_em?: string
+          id?: never
+          marco?: number
+          periodo_fim?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_arsenal_avisos_enviados_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "qa_arsenal_assinaturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_arsenal_grupos_layout: {
         Row: {
           cliente_id: number
