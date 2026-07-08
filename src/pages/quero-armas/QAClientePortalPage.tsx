@@ -48,6 +48,8 @@ import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-arm
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
+import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
+import { useArsenalPremium } from "@/hooks/useArsenalPremium";
 
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
@@ -231,6 +233,7 @@ export default function QAClientePortalPage() {
   const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
   const [cliente, setCliente] = useState<any>(null);
+  const arsenalPremium = useArsenalPremium(cliente?.id ?? null);
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
   const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string }>>({});
@@ -1815,20 +1818,26 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "armas_municoes" && cliente && (
-          <ClienteArmasMunicoesSection
-            clienteId={cliente.id}
-            meusDocs={meusDocs}
-            crafs={crafs}
-            onOpenDocumentos={() => goSection("documentos")}
-          />
+          <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Gestão de Armas e Munições">
+            <ClienteArmasMunicoesSection
+              clienteId={cliente.id}
+              meusDocs={meusDocs}
+              crafs={crafs}
+              onOpenDocumentos={() => goSection("documentos")}
+            />
+          </ArsenalPremiumGate>
         )}
 
         {activeSection === "analise_alvo" && (
-          <ClienteAnaliseAlvoSection />
+          <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Análise de Alvo">
+            <ClienteAnaliseAlvoSection />
+          </ArsenalPremiumGate>
         )}
 
         {activeSection === "recarga_municoes" && (
-          <ClienteRecargaMunicoesSection />
+          <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Recarga de Munições">
+            <ClienteRecargaMunicoesSection />
+          </ArsenalPremiumGate>
         )}
 
         {activeTab === "resumo" && (
@@ -2283,9 +2292,11 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "mensagens" && (
-          <div className="-mx-4 lg:-mx-8 -mt-5">
-            <CentralAjudaCliente cliente={cliente as any} />
-          </div>
+          <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Klal — Assistente Jurídico">
+            <div className="-mx-4 lg:-mx-8 -mt-5">
+              <CentralAjudaCliente cliente={cliente as any} />
+            </div>
+          </ArsenalPremiumGate>
         )}
 
         {activeSection === "financeiro" && analysis && (
@@ -2301,12 +2312,28 @@ export default function QAClientePortalPage() {
                 const n = (meta as any)?.nome;
                 if (n) servicoNomePorId[Number(id)] = String(n);
               }
+              const ass = arsenalPremium.assinatura;
+              const premium = ass && ["gratuidade", "ativa", "aguardando_pagamento"].includes(ass.status)
+                ? {
+                    ativa: arsenalPremium.liberado,
+                    valor_mensal: Number(ass.valor_anual || 297) / 12,
+                    dia_cobranca: Number(String(ass.periodo_inicio || "").slice(8, 10)) || 1,
+                    proxima_em: ass.periodo_fim,
+                    cartao: null,
+                    descricao:
+                      ass.status === "gratuidade"
+                        ? `Período gratuito ativo até ${String(ass.periodo_fim).split("-").reverse().join("/")}. Depois, R$ 297/ano (12x de R$ 24,75 no cartão).`
+                        : ass.status === "aguardando_pagamento"
+                          ? "Adesão aguardando confirmação do pagamento."
+                          : `Plano anual de R$ 297 (12x de R$ 24,75). Renovação em ${String(ass.periodo_fim).split("-").reverse().join("/")}.`,
+                  }
+                : null;
               return (
                 <QAClienteFinanceiroCentral
                   vendas={vendas as any}
                   itens={itens as any}
                   servicoNomePorId={servicoNomePorId}
-                  premium={null}
+                  premium={premium}
                   clienteNome={String(userName || cliente?.nome || cliente?.nome_completo || "").trim()}
                 />
               );

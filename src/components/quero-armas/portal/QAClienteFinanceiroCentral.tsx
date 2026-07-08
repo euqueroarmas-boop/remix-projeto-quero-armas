@@ -131,6 +131,8 @@ export interface QAArsenalPremiumSubscription {
   valor_mensal: number;      // em reais
   dia_cobranca: number;      // 1..31
   proxima_em: string | null; // ISO date
+  /** Texto livre do plano (gratuidade, anual 12x…). Se ausente, usa a frase mensal padrão. */
+  descricao?: string | null;
   cartao?: {
     bandeira: string;        // VISA, MASTER…
     ultimos4: string;
@@ -258,12 +260,18 @@ function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 18, alignItems: "center" }}>
         <div>
           <div style={{ fontFamily: "'Arial Narrow',Arial", fontSize: 15, fontWeight: 700 }}>
-            {premium.ativa ? "Assinatura mensal ativa" : "Assinatura pausada"}
+            {premium.ativa ? "Assinatura ativa" : "Assinatura pausada"}
           </div>
           <div style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>
-            Cobrança automática de <b>{fmtBRL(premium.valor_mensal)}</b> todo dia {String(premium.dia_cobranca).padStart(2, "0")}
-            {cc ? <>, direto no cartão {cc.bandeira} •••• {cc.ultimos4}</> : null}
-            {premium.proxima_em ? <>. Próxima em <b>{fmtDatePt(premium.proxima_em)}</b>.</> : "."}
+            {premium.descricao ? (
+              premium.descricao
+            ) : (
+              <>
+                Cobrança automática de <b>{fmtBRL(premium.valor_mensal)}</b> todo dia {String(premium.dia_cobranca).padStart(2, "0")}
+                {cc ? <>, direto no cartão {cc.bandeira} •••• {cc.ultimos4}</> : null}
+                {premium.proxima_em ? <>. Próxima em <b>{fmtDatePt(premium.proxima_em)}</b>.</> : "."}
+              </>
+            )}
           </div>
         </div>
         {cc ? (
