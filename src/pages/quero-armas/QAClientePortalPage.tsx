@@ -10,7 +10,7 @@ import {
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu, X,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
-  Boxes,
+  Boxes, PackageOpen,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -1005,6 +1005,7 @@ export default function QAClientePortalPage() {
     { key: "processos" as const, label: "Meus Processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
     { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
     { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
+    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen, path: "/area-do-cliente/recarga-de-municoes", group: "primary" as const },
     { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
     { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
     { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
