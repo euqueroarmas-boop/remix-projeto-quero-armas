@@ -473,7 +473,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function QAClienteFinanceiroCentral({
-  vendas, itens, servicoNomePorId = {}, premium = null, scopeLabel,
+  vendas, itens, servicoNomePorId = {}, premium = null, clienteNome,
 }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
