@@ -354,7 +354,8 @@ function CobrancaAberta({
     : "AGUARDANDO PAGAMENTO";
   const valor = Number(venda.valor_a_pagar || 0);
   const cobId = `#${venda.id_legado}`;
-  const banco = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
+  const bancoDetectado = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
+  const banco = bancoDetectado || "Asaas";
 
   // ─── COLAPSADO ─────────────────────────────────────
   if (!expanded) {
