@@ -21,7 +21,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__ring::after{top:50%;left:0;right:0;height:1px;transform:translateY(-50%)}
         .qa-alvo__bulls{position:absolute;inset:36%;border-radius:999px;background:var(--bordo)}
         .qa-alvo__hit{position:absolute;width:16px;height:16px;border-radius:999px;background:#fff;border:3px solid var(--bordo)}
-        .qa-alvo__body{display:flex;flex-direction:column;gap:12px;min-width:0}
+        .qa-alvo__body{display:flex;flex-direction:column;gap:16px;min-width:0;justify-content:center}
         .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
