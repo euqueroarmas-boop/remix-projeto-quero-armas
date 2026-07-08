@@ -1827,6 +1827,10 @@ export default function QAClientePortalPage() {
           <ClienteAnaliseAlvoSection />
         )}
 
+        {activeSection === "recarga_municoes" && (
+          <ClienteRecargaMunicoesSection />
+        )}
+
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
         <ClienteResumoKanban
