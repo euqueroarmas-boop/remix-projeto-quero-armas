@@ -24,8 +24,9 @@ const CSS = `
   font-family:'Arial Narrow',Arial,sans-serif;padding:4px 0 24px}
 .qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:11px;
   letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:600}
-.qafin-central h1.qatitle{font-family:Oswald,sans-serif;font-size:28px;
-  letter-spacing:.02em;font-weight:600;text-transform:uppercase;margin-top:2px}
+.qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:24px;
+  line-height:1.05;letter-spacing:.04em;font-weight:700;text-transform:uppercase;
+  color:#0A0A0A;margin:0 0 14px}
 .qafin-central .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 22px}
 .qafin-central .summary.cols-3{grid-template-columns:repeat(3,1fr)}
 .qafin-central .sumcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
@@ -143,6 +144,7 @@ interface Props {
   servicoNomePorId?: Record<number, string>;
   premium?: QAArsenalPremiumSubscription | null; // hoje sempre null
   scopeLabel?: string;
+  clienteNome?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -471,7 +473,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function QAClienteFinanceiroCentral({
-  vendas, itens, servicoNomePorId = {}, premium = null, scopeLabel,
+  vendas, itens, servicoNomePorId = {}, premium = null, clienteNome,
 }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
@@ -592,8 +594,10 @@ export default function QAClienteFinanceiroCentral({
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <div>
-        <div className="eyebrow">CENTRAL FINANCEIRA · QUERO ARMAS{scopeLabel ? ` · ${scopeLabel.toUpperCase()}` : ""}</div>
-        <h1 className="qatitle">Financeiro</h1>
+        <h1 className="qatitle">
+          {(clienteNome ? String(clienteNome).trim().split(/\s+/)[0].toUpperCase() : "CLIENTE")}
+          , ESTE É O SEU CONTROLE FINANCEIRO
+        </h1>
       </div>
 
       {premium && <PremiumCard premium={premium} />}
