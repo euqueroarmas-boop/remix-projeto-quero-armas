@@ -15,7 +15,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bordo);background:#fff;color:var(--bordo);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:7px 12px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;box-shadow:0 6px 14px rgba(17,17,17,.04);flex:1;min-height:0;align-items:stretch}
         .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px solid var(--line);border-radius:3px;padding:0;min-height:300px;height:100%;overflow:hidden}
-        .qa-alvo__ring{position:relative;aspect-ratio:1/1;width:100%;max-width:280px;border-radius:999px;border:1px solid var(--line);background:radial-gradient(circle,#fff 0 36%,#f2f2f0 37% 39%,#fff 40% 54%,#f2f2f0 55% 57%,#fff 58% 100%)}
+        .qa-alvo__ring{position:relative;aspect-ratio:1/1;width:100%;max-width:none;border-radius:999px;border:1px solid var(--line);background:radial-gradient(circle,#fff 0 36%,#f2f2f0 37% 39%,#fff 40% 54%,#f2f2f0 55% 57%,#fff 58% 100%)}
         .qa-alvo__ring::before,.qa-alvo__ring::after{content:"";position:absolute;background:#e0e0dd}
         .qa-alvo__ring::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-50%)}
         .qa-alvo__ring::after{top:50%;left:0;right:0;height:1px;transform:translateY(-50%)}
