@@ -2295,6 +2295,7 @@ export default function QAClientePortalPage() {
                   itens={itens as any}
                   servicoNomePorId={servicoNomePorId}
                   premium={null}
+                  clienteNome={String(userName || cliente?.nome || cliente?.nome_completo || "").trim()}
                 />
               );
             })()}
