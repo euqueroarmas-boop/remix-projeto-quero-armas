@@ -594,8 +594,10 @@ export default function QAClienteFinanceiroCentral({
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <div>
-        <div className="eyebrow">CENTRAL FINANCEIRA · QUERO ARMAS{scopeLabel ? ` · ${scopeLabel.toUpperCase()}` : ""}</div>
-        <h1 className="qatitle">Financeiro</h1>
+        <h1 className="qatitle">
+          {(clienteNome ? String(clienteNome).trim().split(/\s+/)[0].toUpperCase() : "CLIENTE")}
+          , ESTE É O SEU CONTROLE FINANCEIRO
+        </h1>
       </div>
 
       {premium && <PremiumCard premium={premium} />}
