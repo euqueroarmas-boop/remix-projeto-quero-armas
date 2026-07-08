@@ -24,8 +24,8 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__body{display:flex;flex-direction:column;gap:16px;min-width:0;justify-content:center}
         .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
-        .qa-alvo__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-        .qa-alvo__card{border:1px solid var(--line);background:#fafafa;border-radius:3px;padding:10px 12px;display:grid;grid-template-columns:16px 1fr;gap:10px;align-items:start;min-height:68px}
+        .qa-alvo__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        .qa-alvo__card{border:1px solid var(--line);background:#fafafa;border-radius:3px;padding:14px 16px;display:grid;grid-template-columns:16px 1fr;gap:14px;align-items:start;min-height:80px}
         .qa-alvo__card svg{width:14px;height:14px;color:var(--ink);margin-top:2px}
         .qa-alvo__card-t{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.18em;color:var(--ink);text-transform:uppercase;line-height:1.1}
         .qa-alvo__card-d{font-family:Arial,sans-serif;font-size:12px;line-height:1.35;color:var(--muted);margin-top:3px}
