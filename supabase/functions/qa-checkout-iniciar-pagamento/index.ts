@@ -283,7 +283,31 @@ Deno.serve(async (req) => {
   }
 
   // 10) Cria payment — agora respeitando parcelamento
-  const description = `Quero Armas — Venda #${venda.id_legado ?? venda.id}`;
+  // Busca serviços da venda para descrever no Asaas (financeiro vê o serviço, não só o código)
+  const vendaLegadoId = venda.id_legado ?? venda.id;
+  let servicosLabel = "";
+  try {
+    const { data: itens } = await supabase
+      .from("qa_itens_venda")
+      .select("servico_id")
+      .eq("venda_id", vendaLegadoId);
+    const ids = Array.from(new Set((itens || []).map((i: any) => i.servico_id).filter(Boolean)));
+    if (ids.length) {
+      const { data: servs } = await supabase
+        .from("qa_servicos")
+        .select("id, nome_servico")
+        .in("id", ids);
+      const nomes = (servs || [])
+        .map((s: any) => String(s.nome_servico || "").trim())
+        .filter(Boolean);
+      if (nomes.length) servicosLabel = nomes.join(" + ");
+    }
+  } catch {
+    /* fallback silencioso — descrição volta ao formato antigo */
+  }
+  const description = servicosLabel
+    ? `Quero Armas — ${servicosLabel} (Venda #${vendaLegadoId})`
+    : `Quero Armas — Venda #${vendaLegadoId}`;
   const pay = await createQaVendaPayment(
     {
       vendaId: venda.id,
