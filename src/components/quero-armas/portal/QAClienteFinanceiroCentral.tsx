@@ -80,8 +80,9 @@ const CSS = `
 .qafin-central .bar-code{height:56px;background:repeating-linear-gradient(90deg,#141414 0 2px,#fff 2px 4px,#141414 4px 5px,#fff 5px 9px);border-radius:4px}
 .qafin-central .copy{font-family:'Courier New',monospace;font-size:10.5px;background:#faf9f5;
   border:1px dashed var(--line);padding:10px;border-radius:6px;word-break:break-all;color:var(--ink);line-height:1.5}
-.qafin-central .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:#faf9f5;
+.qafin-central .meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#faf9f5;
   border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-top:12px}
+.qafin-central .meta>div{text-align:center}
 .qafin-central .meta .k{font-family:Oswald,sans-serif;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
 .qafin-central .meta .v{font-family:'Arial Narrow',Arial;font-size:13px;font-weight:700;margin-top:3px}
 .qafin-central .expanded{background:#fff;border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:10px;padding:16px 18px;margin-bottom:10px}
