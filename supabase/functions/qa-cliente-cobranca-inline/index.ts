@@ -57,12 +57,35 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, service);
 
-  // 2) Localiza qa_clientes.id_legado do usuário autenticado
-  const { data: cli } = await admin
-    .from("qa_clientes")
-    .select("id, id_legado")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // 2) Localiza qa_clientes do usuário autenticado.
+  // Tenta primeiro user_id direto; cai no cliente_auth_links para clientes
+  // vinculados via OTP/link (que podem ter user_id null em qa_clientes).
+  let cli: { id: unknown; id_legado: unknown } | null = null;
+  {
+    const { data } = await admin
+      .from("qa_clientes")
+      .select("id, id_legado")
+      .eq("user_id", userId)
+      .maybeSingle();
+    cli = data;
+  }
+  if (!cli) {
+    const { data: link } = await admin
+      .from("cliente_auth_links")
+      .select("qa_cliente_id")
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (link?.qa_cliente_id) {
+      const { data } = await admin
+        .from("qa_clientes")
+        .select("id, id_legado")
+        .eq("id", link.qa_cliente_id)
+        .maybeSingle();
+      cli = data;
+    }
+  }
   if (!cli) return json({ error: "cliente_not_found" }, 403);
 
   // 3) Localiza venda e valida ownership + presença do payment_id
