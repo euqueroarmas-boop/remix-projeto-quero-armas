@@ -193,8 +193,23 @@ function servicoDaVenda(
   const nomes = its
     .map(i => i.nome_servico || (i.servico_id ? nomePorId[i.servico_id] : null))
     .filter(Boolean) as string[];
-  if (nomes.length) return nomes.join(" · ").toUpperCase();
-  return `COBRANÇA #${v.id_legado}`;
+  if (nomes.length) return nomes.map(titleCasePt).join(" · ");
+  return "Serviço contratado";
+}
+
+// Title Case pt-BR: primeira letra de cada palavra maiúscula, exceto preposições/artigos curtos.
+const MINUSCULAS_PT = new Set([
+  "a","o","as","os","um","uma","uns","umas","de","do","da","dos","das",
+  "e","em","no","na","nos","nas","para","por","pelo","pela","pelos","pelas",
+  "com","sem","sob","sobre","ao","aos","à","às","ou","se","que"
+]);
+function titleCasePt(s: string): string {
+  const lower = s.toLowerCase();
+  return lower.split(/(\s+)/).map((tok, i) => {
+    if (/^\s+$/.test(tok)) return tok;
+    if (i > 0 && MINUSCULAS_PT.has(tok)) return tok;
+    return tok.charAt(0).toUpperCase() + tok.slice(1);
+  }).join("");
 }
 
 // Banco emissor a partir da linha digitável / código de barras do boleto.
@@ -339,7 +354,8 @@ function CobrancaAberta({
     : "AGUARDANDO PAGAMENTO";
   const valor = Number(venda.valor_a_pagar || 0);
   const cobId = `#${venda.id_legado}`;
-  const banco = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
+  const bancoDetectado = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
+  const banco = bancoDetectado || "Asaas";
 
   // ─── COLAPSADO ─────────────────────────────────────
   if (!expanded) {
