@@ -197,6 +197,33 @@ function servicoDaVenda(
   return `COBRANÇA #${v.id_legado}`;
 }
 
+// Banco emissor a partir da linha digitável / código de barras do boleto.
+// Os 3 primeiros dígitos do código de barras são o código COMPE do banco.
+const BANCOS_COMPE: Record<string, string> = {
+  "001": "Banco do Brasil",
+  "033": "Santander",
+  "041": "Banrisul",
+  "070": "BRB",
+  "077": "Inter",
+  "104": "Caixa",
+  "212": "Banco Original",
+  "237": "Bradesco",
+  "260": "Nubank",
+  "290": "PagBank",
+  "323": "Mercado Pago",
+  "336": "C6 Bank",
+  "341": "Itaú",
+  "380": "PicPay",
+  "422": "Safra",
+  "748": "Sicredi",
+  "756": "Sicoob",
+};
+function bancoEmissor(identificationField?: string | null, barCode?: string | null): string | null {
+  const raw = String(identificationField || barCode || "").replace(/\D/g, "");
+  if (raw.length < 3) return null;
+  return BANCOS_COMPE[raw.slice(0, 3)] || null;
+}
+
 // ─── Cards ───────────────────────────────────────────────────────────────────
 
 function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
