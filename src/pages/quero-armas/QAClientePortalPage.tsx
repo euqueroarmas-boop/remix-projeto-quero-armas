@@ -2283,27 +2283,18 @@ export default function QAClientePortalPage() {
 
         {activeSection === "financeiro" && analysis && (
           <div className="space-y-4">
-            <PortalScopeSelector hint="Cobranças sem venda vinculada só aparecem em 'Todos os processos'." />
             {(() => {
-              const vendaIdAlvo = currentScope.type === "processo" ? currentScope.vendaId : null;
-              const vendasFiltradas = vendaIdAlvo != null
-                ? vendas.filter((v: any) => Number(getVendaFK(v)) === Number(vendaIdAlvo))
-                : vendas;
               const servicoNomePorId: Record<number, string> = {};
               for (const [id, meta] of Object.entries(SERVICO_MAP || {})) {
                 const n = (meta as any)?.nome_servico || (meta as any)?.nome;
                 if (n) servicoNomePorId[Number(id)] = String(n);
               }
-              const scopeLabel = currentScope.type === "processo"
-                ? `Processo #${currentScope.vendaId}`
-                : undefined;
               return (
                 <QAClienteFinanceiroCentral
-                  vendas={vendasFiltradas as any}
+                  vendas={vendas as any}
                   itens={itens as any}
                   servicoNomePorId={servicoNomePorId}
                   premium={null}
-                  scopeLabel={scopeLabel}
                 />
               );
             })()}
