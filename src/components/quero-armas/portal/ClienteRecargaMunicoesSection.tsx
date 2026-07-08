@@ -1,4 +1,5 @@
 import { BadgeCheck, FlaskConical, Gauge, Lock, Scale, Sparkles } from "lucide-react";
+import recargaHero from "@/assets/recarga-municoes-hero.png.asset.json";
 
 const legalBase = "Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311";
 
@@ -15,11 +16,7 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bordo);background:#fff;color:var(--bordo);font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;padding:7px 12px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(240px,320px) minmax(0,1fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;box-shadow:0 6px 14px rgba(17,17,17,.04)}
         .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px solid var(--line);border-radius:3px;padding:16px;min-height:300px}
-        .qa-recarga__cart{position:relative;width:100%;max-width:220px;aspect-ratio:1/2.1;display:flex;flex-direction:column;align-items:center}
-        .qa-recarga__bullet{width:70%;aspect-ratio:1/1;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:linear-gradient(180deg,#d9b26a 0%,#a67c2a 60%,#7a5a1e 100%);border:1px solid #7a5a1e;box-shadow:inset 0 -6px 10px rgba(0,0,0,.25)}
-        .qa-recarga__case{width:88%;flex:1;margin-top:-6px;border-radius:6px 6px 3px 3px;background:linear-gradient(180deg,#c9a24a 0%,#a4801f 55%,#7a5a1e 100%);border:1px solid #7a5a1e;position:relative;box-shadow:inset 0 -8px 14px rgba(0,0,0,.28), inset 4px 0 8px rgba(0,0,0,.15)}
-        .qa-recarga__case::before{content:"";position:absolute;left:0;right:0;top:38%;height:1px;background:rgba(0,0,0,.22)}
-        .qa-recarga__case::after{content:"";position:absolute;left:50%;bottom:6px;width:22%;aspect-ratio:1/1;transform:translateX(-50%);border-radius:999px;background:#5c4415;border:1px solid #3d2d0e}
+        .qa-recarga__hero{width:100%;max-width:220px;height:auto;object-fit:contain;display:block}
         .qa-alvo__body{display:flex;flex-direction:column;gap:12px;min-width:0}
         .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
@@ -48,10 +45,7 @@ export default function ClienteRecargaMunicoesSection() {
 
       <div className="qa-alvo__grid">
         <div className="qa-alvo__target">
-          <div className="qa-recarga__cart" aria-hidden="true">
-            <div className="qa-recarga__bullet" />
-            <div className="qa-recarga__case" />
-          </div>
+          <img src={recargaHero.url} alt="Componentes de recarga: pólvora, estojo, espoletas e projéteis" className="qa-recarga__hero" />
         </div>
 
         <div className="qa-alvo__body">
