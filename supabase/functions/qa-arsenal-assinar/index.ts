@@ -1,13 +1,13 @@
 // qa-arsenal-assinar
-// Adesão e renovação do Arsenal Inteligente Premium (R$ 297/ano).
+// Adesão e renovação do Arsenal Inteligente Premium.
+// Preço lido de qa_arsenal_planos (ativo=true) — sem hardcode.
 //
 // Regras:
 //   • Gratuidade por CPF, uma única vez: 3 meses se o CPF tem serviço Quero
 //     Armas pago; 1 mês para assinante direto. Nesse caso NÃO gera cobrança.
 //   • CPF que já usou gratuidade (ou renovação): gera cobrança na Asaas —
-//     CREDIT_CARD em 12x de R$ 24,75 (installment) via página da Asaas,
-//     PIX/BOLETO em cobrança anual única. Quando a tokenização de cartão
-//     estiver disponível, a cobrança de cartão migra para chargeWithToken.
+//     CREDIT_CARD em parcelas (installment) via página da Asaas,
+//     PIX/BOLETO em cobrança anual única.
 //   • Aceite do termo de adesão é obrigatório (registra data/hora + IP).
 //
 // Body: { forma: 'CREDIT_CARD' | 'PIX' | 'BOLETO', aceite: true }
@@ -23,9 +23,18 @@ import {
   safeAsaasErr,
 } from "../_shared/qaAsaas.ts";
 
-const VALOR_ANUAL = 297;
-const PARCELAS = 12;
-const VALOR_PARCELA = 24.75;
+interface Plano { valor_anual: number; parcelas_max: number }
+
+async function getActivePlano(sb: ReturnType<typeof createClient>): Promise<Plano> {
+  const { data } = await sb
+    .from("qa_arsenal_planos")
+    .select("valor_anual, parcelas_max")
+    .eq("ativo", true)
+    .order("criado_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data as Plano | null) ?? { valor_anual: 297, parcelas_max: 12 };
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +94,12 @@ Deno.serve(async (req) => {
   if (body?.aceite !== true) return json({ error: "aceite_obrigatorio" }, 400);
 
   const admin = createClient(url, service);
+
+  // Plano ativo (preço/parcelas vêm de qa_arsenal_planos, não hardcoded)
+  const plano = await getActivePlano(admin);
+  const valorAnual = plano.valor_anual;
+  const parcelas = plano.parcelas_max;
+  const valorParcela = Math.round((valorAnual / parcelas) * 100) / 100;
 
   // 2) Localiza qa_clientes do usuário (user_id direto ou cliente_auth_links)
   let cli: any = null;
@@ -165,7 +180,7 @@ Deno.serve(async (req) => {
         periodo_inicio: hojeISO,
         periodo_fim: fim,
         forma_pagamento: forma,
-        valor_anual: VALOR_ANUAL,
+        valor_anual: valorAnual,
         aceite_contrato_em: new Date().toISOString(),
         aceite_contrato_ip: ip,
       })
@@ -219,10 +234,10 @@ Deno.serve(async (req) => {
     externalReference: `arsenal_premium:${cli.id}`,
   };
   if (forma === "CREDIT_CARD") {
-    payload.installmentCount = PARCELAS;
-    payload.installmentValue = VALOR_PARCELA;
+    payload.installmentCount = parcelas;
+    payload.installmentValue = valorParcela;
   } else {
-    payload.value = VALOR_ANUAL;
+    payload.value = valorAnual;
   }
 
   let payment: any;
@@ -266,7 +281,7 @@ Deno.serve(async (req) => {
       periodo_inicio: hojeISO,
       periodo_fim: periodoFim,
       forma_pagamento: forma,
-      valor_anual: VALOR_ANUAL,
+      valor_anual: valorAnual,
       asaas_payment_id: payment.id,
       asaas_invoice_url: payment.invoiceUrl ?? null,
       aceite_contrato_em: new Date().toISOString(),
@@ -281,8 +296,8 @@ Deno.serve(async (req) => {
     modo: "cobranca",
     assinatura_id: nova.id,
     forma,
-    valor_anual: VALOR_ANUAL,
-    parcelas: forma === "CREDIT_CARD" ? PARCELAS : 1,
+    valor_anual: valorAnual,
+    parcelas: forma === "CREDIT_CARD" ? parcelas : 1,
     invoice_url: payment.invoiceUrl ?? null,
     bank_slip_url: payment.bankSlipUrl ?? null,
     pix_payload: pixPayload,

@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Check, Crosshair, FileText, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import type { ArsenalPremiumState } from "@/hooks/useArsenalPremium";
+import { useArsenalPlano } from "@/hooks/useArsenalPlano";
 
 const CSS = `
 .qagate{position:relative}
@@ -48,12 +49,15 @@ const BENEFICIOS = [
   { icon: ShieldCheck, txt: "Análise de Alvo e Recarga de Munições (em breve)" },
 ];
 
-const TERMO_RESUMO =
-  "Assinatura anual de R$ 297,00 com renovação automática. Cancelamento mediante " +
-  "chamado à equipe com 30 dias de aviso prévio; sem o aviso, cobra-se pro-rata do mês em uso. " +
-  "Direito de arrependimento em 7 dias com reembolso integral (art. 49, CDC). " +
-  "Após o vencimento, 3 dias de carência antes da suspensão do acesso Premium. " +
-  "O acompanhamento de processos contratados independe da assinatura.";
+function termoResumo(valorAnual: number): string {
+  return (
+    `Assinatura anual de R$ ${valorAnual.toFixed(2).replace(".", ",")} com renovação automática. Cancelamento mediante ` +
+    "chamado à equipe com 30 dias de aviso prévio; sem o aviso, cobra-se pro-rata do mês em uso. " +
+    "Direito de arrependimento em 7 dias com reembolso integral (art. 49, CDC). " +
+    "Após o vencimento, 3 dias de carência antes da suspensão do acesso Premium. " +
+    "O acompanhamento de processos contratados independe da assinatura."
+  );
+}
 
 interface Props {
   arsenal: ArsenalPremiumState;
@@ -65,6 +69,7 @@ interface Props {
 type Forma = "CREDIT_CARD" | "PIX" | "BOLETO";
 
 export default function ArsenalPremiumGate({ arsenal, children, recurso }: Props) {
+  const { plano, valorParcela } = useArsenalPlano();
   const [forma, setForma] = useState<Forma>("CREDIT_CARD");
   const [aceite, setAceite] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -165,8 +170,8 @@ export default function ArsenalPremiumGate({ arsenal, children, recurso }: Props
             )}
 
             <div className="qagate__price">
-              <span className="v">R$ 297<span style={{ fontSize: 14 }}>/ano</span></span>
-              <span className="s">12x de R$ 24,75 no cartão · ou à vista no PIX/boleto</span>
+              <span className="v">R$ {plano.valor_anual}<span style={{ fontSize: 14 }}>/ano</span></span>
+              <span className="s">{plano.parcelas_max}x de R$ {valorParcela.toFixed(2).replace(".", ",")} no cartão · ou à vista no PIX/boleto</span>
             </div>
 
             <div className="qagate__formas">
@@ -180,7 +185,7 @@ export default function ArsenalPremiumGate({ arsenal, children, recurso }: Props
             <label className="qagate__aceite">
               <input type="checkbox" checked={aceite} onChange={(e) => setAceite(e.target.checked)} />
               <span>
-                Li e aceito o <b>Termo de Adesão do Arsenal Inteligente Premium</b>: {TERMO_RESUMO}
+                Li e aceito o <b>Termo de Adesão do Arsenal Inteligente Premium</b>: {termoResumo(plano.valor_anual)}
               </span>
             </label>
 
