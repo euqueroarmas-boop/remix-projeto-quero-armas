@@ -12,7 +12,7 @@
 //     receber o dado quando a equipe modelar.
 //   • Banner "Próxima ação" foi ocultado por decisão explícita do cliente.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -95,10 +95,20 @@ const CSS = `
 .qafin-central .paybody{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:start;margin-top:14px}
 .qafin-central .h4c{font-family:Oswald,sans-serif;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:8px}
 .qafin-central .empty{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:24px;text-align:center;color:var(--ink-soft);font-family:Arial;font-size:13px}
+.qafin-central .cc-form{background:#faf9f5;border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-top:14px}
+.qafin-central .cc-form h4{font-family:Oswald,sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:12px}
+.qafin-central .cc-form .row{display:grid;gap:10px;margin-bottom:10px}
+.qafin-central .cc-form .row.cols-2{grid-template-columns:1fr 1fr}
+.qafin-central .cc-form .row.cols-3{grid-template-columns:2fr 1fr 1fr}
+.qafin-central .cc-form label{font-family:Oswald,sans-serif;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;display:block;margin-bottom:4px}
+.qafin-central .cc-form input{width:100%;padding:8px 10px;font-family:'Arial Narrow',Arial;font-size:13px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);outline:none;box-sizing:border-box}
+.qafin-central .cc-form input:focus{border-color:var(--bordo)}
+.qafin-central .cc-form .actions{display:flex;gap:8px;margin-top:14px}
 @media(max-width:720px){.qafin-central .summary,.qafin-central .summary.cols-3{grid-template-columns:repeat(2,1fr)}
 .qafin-central .charge,.qafin-central .expanded .head,.qafin-central .paybody{flex-direction:column;grid-template-columns:1fr}
 .qafin-central .charge .val,.qafin-central .expanded .head .val{text-align:left}
-.qafin-central .meta{grid-template-columns:repeat(2,1fr)}}
+.qafin-central .meta{grid-template-columns:repeat(2,1fr)}
+.qafin-central .cc-form .row.cols-2,.qafin-central .cc-form .row.cols-3{grid-template-columns:1fr}}
 `;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -146,7 +156,8 @@ interface Props {
   vendas: QAVendaFinanceira[];
   itens: QAVendaItemLite[];
   servicoNomePorId?: Record<number, string>;
-  premium?: QAArsenalPremiumSubscription | null; // hoje sempre null
+  premium?: QAArsenalPremiumSubscription | null;
+  onPremiumRefresh?: () => void;
   scopeLabel?: string;
   clienteNome?: string;
 }
@@ -256,11 +267,42 @@ function bancoEmissor(identificationField?: string | null, barCode?: string | nu
 
 // ─── Cards ───────────────────────────────────────────────────────────────────
 
-function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
+const BLANK_FORM = { holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "", cep: "", addressNumber: "" };
+
+function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscription; onRefresh?: () => void }) {
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving]   = useState(false);
+  const [form, setForm]       = useState(BLANK_FORM);
+  const numRef = useRef<HTMLInputElement>(null);
+
   const cc = premium.cartao;
   const st = premium.status;
-  const badgeCls = st === "gratuidade" ? "pill paid" : st === "aguardando_pagamento" ? "pill wait" : st === "suspensa" ? "pill over" : "pill rec";
+  const badgeCls  = st === "gratuidade" ? "pill paid" : st === "aguardando_pagamento" ? "pill wait" : st === "suspensa" ? "pill over" : "pill rec";
   const badgeLabel = st === "gratuidade" ? "GRATUIDADE" : st === "aguardando_pagamento" ? "PENDENTE" : st === "suspensa" ? "SUSPENSA" : "ANUAL";
+
+  function setF(k: keyof typeof BLANK_FORM, v: string) {
+    setForm(prev => ({ ...prev, [k]: v }));
+  }
+
+  async function salvarCartao(e: React.FormEvent) {
+    e.preventDefault();
+    if (saving) return;
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-arsenal-cartao", { body: form });
+      if (error) throw new Error(error.message || "Falha ao salvar cartão");
+      if ((data as any)?.error) throw new Error((data as any).detalhe || String((data as any).error));
+      toast.success(`Cartão ${(data as any).brand || ""} •••• ${(data as any).last4} salvo com sucesso.`);
+      setShowForm(false);
+      setForm(BLANK_FORM);
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível salvar o cartão.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="card" style={{ borderLeft: "4px solid var(--bordo)", marginBottom: 20 }}>
       <h3>
@@ -273,9 +315,7 @@ function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
             {premium.ativa ? "Assinatura ativa" : "Assinatura pausada"}
           </div>
           <div style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", marginTop: 4 }}>
-            {premium.descricao ? (
-              premium.descricao
-            ) : (
+            {premium.descricao || (
               <>
                 Cobrança automática de <b>{fmtBRL(premium.valor_mensal)}</b> todo dia {String(premium.dia_cobranca).padStart(2, "0")}
                 {cc ? <>, direto no cartão {cc.bandeira} •••• {cc.ultimos4}</> : null}
@@ -291,12 +331,116 @@ function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
               <div className="num">•••• {cc.ultimos4}</div>
               <div className="sub">{cc.titular.toUpperCase()} · {cc.validade}</div>
             </div>
-            <div className="flag">{cc.bandeira.toUpperCase()}</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+              <div className="flag">{cc.bandeira.toUpperCase()}</div>
+              <button className="btn ghost" style={{ fontSize: 10 }} onClick={() => setShowForm(v => !v)}>
+                {showForm ? "CANCELAR" : "TROCAR"}
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="cc-light"><div className="sub">Nenhum cartão salvo</div></div>
+          <div className="cc-light" style={{ flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+            <div className="sub">Nenhum cartão salvo</div>
+            <button className="btn out" style={{ fontSize: 10.5 }} onClick={() => setShowForm(v => !v)}>
+              {showForm ? "CANCELAR" : "ADICIONAR CARTÃO"}
+            </button>
+          </div>
         )}
       </div>
+
+      {showForm && (
+        <form className="cc-form" onSubmit={salvarCartao}>
+          <h4>Adicionar cartão de crédito</h4>
+          <div className="row">
+            <div>
+              <label>Nome no cartão</label>
+              <input
+                placeholder="Como impresso no cartão"
+                value={form.holderName}
+                onChange={e => setF("holderName", e.target.value.toUpperCase())}
+                required autoComplete="cc-name"
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div>
+              <label>Número do cartão</label>
+              <input
+                ref={numRef}
+                placeholder="0000 0000 0000 0000"
+                value={form.number}
+                maxLength={19}
+                onChange={e => setF("number", e.target.value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim())}
+                required autoComplete="cc-number" inputMode="numeric"
+              />
+            </div>
+          </div>
+          <div className="row cols-3">
+            <div>
+              <label>Validade (mês)</label>
+              <input
+                placeholder="MM"
+                value={form.expiryMonth}
+                maxLength={2}
+                onChange={e => setF("expiryMonth", e.target.value.replace(/\D/g, ""))}
+                required autoComplete="cc-exp-month" inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label>Ano</label>
+              <input
+                placeholder="AAAA"
+                value={form.expiryYear}
+                maxLength={4}
+                onChange={e => setF("expiryYear", e.target.value.replace(/\D/g, ""))}
+                required autoComplete="cc-exp-year" inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label>CVV</label>
+              <input
+                placeholder="000"
+                value={form.ccv}
+                maxLength={4}
+                onChange={e => setF("ccv", e.target.value.replace(/\D/g, ""))}
+                required autoComplete="cc-csc" inputMode="numeric"
+              />
+            </div>
+          </div>
+          <div className="row cols-2">
+            <div>
+              <label>CEP do titular</label>
+              <input
+                placeholder="00000-000"
+                value={form.cep}
+                maxLength={9}
+                onChange={e => setF("cep", e.target.value.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2"))}
+                required inputMode="numeric"
+              />
+            </div>
+            <div>
+              <label>Número do endereço</label>
+              <input
+                placeholder="Ex: 123"
+                value={form.addressNumber}
+                onChange={e => setF("addressNumber", e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="actions">
+            <button type="button" className="btn ghost" onClick={() => { setShowForm(false); setForm(BLANK_FORM); }}>
+              CANCELAR
+            </button>
+            <button type="submit" className="btn pri" disabled={saving}>
+              {saving ? "SALVANDO…" : "SALVAR CARTÃO"}
+            </button>
+          </div>
+          <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 10, lineHeight: 1.5 }}>
+            Seus dados são enviados diretamente à Asaas (PCI-DSS nível 1) — a Quero Armas não armazena o número completo do cartão.
+          </div>
+        </form>
+      )}
     </div>
   );
 }
@@ -583,7 +727,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function QAClienteFinanceiroCentral({
-  vendas, itens, servicoNomePorId = {}, premium = null, clienteNome,
+  vendas, itens, servicoNomePorId = {}, premium = null, onPremiumRefresh, clienteNome,
 }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
@@ -759,7 +903,7 @@ export default function QAClienteFinanceiroCentral({
         </h1>
       </div>
 
-      {premium && <PremiumCard premium={premium} />}
+      {premium && <PremiumCard premium={premium} onRefresh={onPremiumRefresh} />}
 
       <KpiRow
         emAbertoTotal={kpi.emAbertoTotal} emAbertoQtd={kpi.emAbertoQtd}

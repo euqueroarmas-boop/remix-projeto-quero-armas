@@ -18,6 +18,10 @@ export interface ArsenalAssinatura {
   forma_pagamento: "CREDIT_CARD" | "PIX" | "BOLETO" | null;
   valor_anual: number;
   asaas_invoice_url: string | null;
+  asaas_credit_card_brand:  string | null;
+  asaas_credit_card_last4:  string | null;
+  asaas_credit_card_holder: string | null;
+  asaas_credit_card_expiry: string | null;
 }
 
 export interface ArsenalPremiumState {
@@ -53,7 +57,7 @@ export function useArsenalPremium(clienteId: number | string | null | undefined)
       setLoading(true);
       const { data, error } = await supabase
         .from("qa_arsenal_assinaturas" as any)
-        .select("id, status, origem_gratuidade, periodo_inicio, periodo_fim, forma_pagamento, valor_anual, asaas_invoice_url")
+        .select("id, status, origem_gratuidade, periodo_inicio, periodo_fim, forma_pagamento, valor_anual, asaas_invoice_url, asaas_credit_card_brand, asaas_credit_card_last4, asaas_credit_card_holder, asaas_credit_card_expiry")
         .order("criado_em", { ascending: false })
         .limit(1)
         .maybeSingle();

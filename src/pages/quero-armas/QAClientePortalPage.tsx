@@ -2320,7 +2320,14 @@ export default function QAClientePortalPage() {
                     valor_mensal: Number(ass.valor_anual || 297) / 12,
                     dia_cobranca: Number(String(ass.periodo_inicio || "").slice(8, 10)) || 1,
                     proxima_em: ass.periodo_fim,
-                    cartao: null,
+                    cartao: ass.asaas_credit_card_last4
+                      ? {
+                          bandeira: ass.asaas_credit_card_brand || "CARTÃO",
+                          ultimos4: ass.asaas_credit_card_last4,
+                          titular: ass.asaas_credit_card_holder || "",
+                          validade: ass.asaas_credit_card_expiry || "",
+                        }
+                      : null,
                     descricao:
                       ass.status === "gratuidade"
                         ? `Período gratuito ativo até ${String(ass.periodo_fim).split("-").reverse().join("/")}. Depois, R$ 297/ano (12x de R$ 24,75 no cartão).`
@@ -2335,6 +2342,7 @@ export default function QAClientePortalPage() {
                   itens={itens as any}
                   servicoNomePorId={servicoNomePorId}
                   premium={premium}
+                  onPremiumRefresh={arsenalPremium.refresh}
                   clienteNome={String(userName || cliente?.nome || cliente?.nome_completo || "").trim()}
                 />
               );
