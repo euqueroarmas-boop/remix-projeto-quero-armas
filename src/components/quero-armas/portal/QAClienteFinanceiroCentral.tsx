@@ -207,16 +207,22 @@ const MINUSCULAS_PT = new Set([
   "e","em","no","na","nos","nas","para","por","pelo","pela","pelos","pelas",
   "com","sem","sob","sobre","ao","aos","à","às","ou","se","que"
 ]);
+// Siglas do domínio de armas/documentação preservadas em caixa alta.
+const SIGLAS_QA = new Set([
+  "CR","CRAF","GTE","CAC","CPF","RG","DPF","PF","PM","PC","NF","NFE",
+  "LAC","PPMB","SINARM","SIGMA","CRM","OAB","CNPJ","CEP","UFG",
+]);
 function titleCasePt(s: string): string {
-  // Preserva siglas curtas (≤4 letras) que vinham em CAIXA ALTA no original,
-  // ex.: "CONCESSÃO DE CR" → "Concessão de CR" (e não "Cr").
   const origTokens = s.split(/(\s+)/);
   return origTokens.map((tok, i) => {
     if (/^\s+$/.test(tok)) return tok;
-    const isAcronym = tok.length <= 4 && /^[A-ZÀ-Ý]+$/.test(tok);
-    if (isAcronym) return tok;
     const lower = tok.toLowerCase();
+    // Preposições/artigos nunca ficam em maiúscula no meio da frase
     if (i > 0 && MINUSCULAS_PT.has(lower)) return lower;
+    // Sigla conhecida ou ≤ 3 letras todas maiúsculas (ex.: CR, GTE)
+    const isAcronym = SIGLAS_QA.has(tok) ||
+      (tok.length <= 3 && /^[A-ZÀ-Ý]+$/.test(tok));
+    if (isAcronym) return tok;
     return lower.charAt(0).toUpperCase() + lower.slice(1);
   }).join("");
 }
