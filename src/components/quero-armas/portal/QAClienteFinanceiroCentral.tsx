@@ -370,7 +370,7 @@ type Detalhe = {
 };
 
 function CobrancaAberta({
-  venda, servico, defaultMode, onExpand, expanded, mode, setMode, detalhe, onFetchMode, temNfe,
+  venda, servico, defaultMode, onExpand, expanded, mode, setMode, detalhe, onFetchMode, onReemitirBoleto, reemitindoBoleto, temNfe,
 }: {
   venda: QAVendaFinanceira;
   servico: string;
@@ -381,6 +381,8 @@ function CobrancaAberta({
   setMode: (m: "pix" | "boleto" | "cartao") => void;
   detalhe: Detalhe | undefined;
   onFetchMode: (m: "pix" | "boleto") => void;
+  onReemitirBoleto: () => void;
+  reemitindoBoleto: boolean;
   temNfe: boolean;
 }) {
   const dias = diasAte(venda.asaas_due_date);
@@ -491,7 +493,7 @@ function CobrancaAberta({
             <span className="h4c">Linha digitável do boleto</span>
             <div className="bar-code" style={{ marginBottom: 8 }} />
             {detalhe?.loading && !boletoLine ? (
-              <div className="copy">Buscando linha digitável na Asaas…</div>
+              <div className="copy">{reemitindoBoleto ? "Reemitindo boleto na Asaas…" : "Buscando linha digitável na Asaas…"}</div>
             ) : boletoLine ? (
               <div className="copy">{boletoLine}</div>
             ) : detalhe?.billingType && detalhe.billingType !== "BOLETO" ? (
@@ -504,7 +506,16 @@ function CobrancaAberta({
             )}
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button className="btn pri" disabled={!boletoLine} onClick={() => boletoLine && copyToClipboard(boletoLine, "Linha digitável copiada")}>COPIAR LINHA DIGITÁVEL</button>
-              {boletoPdf && <a className="btn out" href={boletoPdf} target="_blank" rel="noreferrer">BAIXAR PDF</a>}
+              {vencida && (
+                <button
+                  className="btn out"
+                  disabled={reemitindoBoleto || !!detalhe?.loading}
+                  onClick={onReemitirBoleto}
+                >
+                  {reemitindoBoleto ? "REEMITINDO…" : "REEMITIR BOLETO"}
+                </button>
+              )}
+              {boletoPdf && <a className="btn" href={boletoPdf} target="_blank" rel="noreferrer">BAIXAR PDF</a>}
               {invoiceUrl && (
                 <a className="btn" href={invoiceUrl} target="_blank" rel="noreferrer">
                   {banco ? `PAGAR NO APP DO ${banco.toUpperCase()}` : "ABRIR NA ASAAS"}
@@ -575,6 +586,7 @@ export default function QAClienteFinanceiroCentral({
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
   const [detalhePorVenda, setDetalhePorVenda] = useState<Record<number, Detalhe>>({});
+  const [reemitindoPorVenda, setReemitindoPorVenda] = useState<Record<number, boolean>>({});
   const [nfePorPayment, setNfePorPayment] = useState<Record<string, string>>({});
 
   const vendasVisiveis = useMemo(() => vendas.filter(v => !isCancelada(v)), [vendas]);
@@ -674,6 +686,47 @@ export default function QAClienteFinanceiroCentral({
     }
   };
 
+  const reemitirBoleto = async (venda: QAVendaFinanceira) => {
+    if (reemitindoPorVenda[venda.id_legado]) return;
+    setReemitindoPorVenda(prev => ({ ...prev, [venda.id_legado]: true }));
+    setDetalhePorVenda(prev => ({
+      ...prev,
+      [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: true, error: null },
+    }));
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", {
+        body: { venda_id: venda.id_legado, action: "reemitir_boleto" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      setDetalhePorVenda(prev => ({
+        ...prev,
+        [venda.id_legado]: {
+          loading: false,
+          error: null,
+          boleto: {
+            identificationField: (data as any)?.boleto_identification_field ?? null,
+            barCode: (data as any)?.boleto_barCode ?? null,
+            nossoNumero: (data as any)?.boleto_nossoNumero ?? null,
+          },
+          pix: prev[venda.id_legado]?.pix ?? null,
+          bankSlipUrl: prev[venda.id_legado]?.bankSlipUrl ?? null,
+          invoiceUrl: prev[venda.id_legado]?.invoiceUrl ?? venda.asaas_invoice_url ?? null,
+          billingType: "BOLETO",
+        },
+      }));
+      toast.success("Boleto reemitido com vencimento em 3 dias.");
+    } catch (e: any) {
+      setDetalhePorVenda(prev => ({
+        ...prev,
+        [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: e?.message || "erro" },
+      }));
+      toast.error("Não foi possível reemitir o boleto. Tente pelo PIX.");
+    } finally {
+      setReemitindoPorVenda(prev => ({ ...prev, [venda.id_legado]: false }));
+    }
+  };
+
   const primeiraAbertaId = abertas[0]?.id_legado ?? null;
   const [expandedInitDone, setExpandedInitDone] = useState(false);
   useEffect(() => {
@@ -732,6 +785,8 @@ export default function QAClienteFinanceiroCentral({
               onExpand={() => setExpandedId(isOpen ? null : v.id_legado)}
               detalhe={detalhePorVenda[v.id_legado]}
               onFetchMode={(m) => { if (v.asaas_payment_id) void fetchDetalhe(v, m); }}
+              onReemitirBoleto={() => void reemitirBoleto(v)}
+              reemitindoBoleto={!!reemitindoPorVenda[v.id_legado]}
               temNfe={false}
             />
           );

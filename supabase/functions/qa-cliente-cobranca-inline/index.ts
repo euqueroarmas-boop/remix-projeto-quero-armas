@@ -4,7 +4,7 @@
 // URL do PDF). Autenticado pelo JWT do cliente; valida que a venda
 // pertence ao qa_clientes vinculado ao auth.uid().
 //
-// Body: { venda_id: number, action?: 'pix' | 'boleto' | 'both' }
+// Body: { venda_id: number, action?: 'pix' | 'boleto' | 'both' | 'reemitir_boleto' }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -112,6 +112,35 @@ Deno.serve(async (req) => {
   };
 
   try {
+    if (action === "reemitir_boleto") {
+      // Atualiza vencimento na Asaas para hoje + 3 dias e busca nova linha digitável.
+      const novaData = new Date();
+      novaData.setDate(novaData.getDate() + 3);
+      const novaDueDate = novaData.toISOString().slice(0, 10);
+
+      const rUpd = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ dueDate: novaDueDate }),
+      });
+      if (!rUpd.ok) {
+        const detail = await rUpd.text().catch(() => "");
+        return json({ ...out, error: "reemissao_falhou", detail }, 422);
+      }
+
+      const rBol = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}/identificationField`, { headers });
+      if (!rBol.ok) return json({ ...out, error: "boleto_nao_gerado", asaas_due_date: novaDueDate }, 422);
+      const d = await rBol.json();
+      out.boleto_identification_field = d?.identificationField ?? null;
+      out.boleto_nossoNumero = d?.nossoNumero ?? null;
+      out.boleto_barCode = d?.barCode ?? null;
+      out.asaas_due_date = novaDueDate;
+
+      // Persiste novo vencimento na venda
+      await admin.from("qa_vendas").update({ asaas_due_date: novaDueDate }).eq("id_legado", vendaId);
+      return json({ success: true, reemitido: true, ...out });
+    }
+
     if (action === "pix" || action === "both") {
       const r = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}/pixQrCode`, { headers });
       if (r.ok) {
