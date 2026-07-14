@@ -2316,6 +2316,7 @@ export default function QAClientePortalPage() {
               const premium = ass && ["gratuidade", "ativa", "aguardando_pagamento"].includes(ass.status)
                 ? {
                     ativa: arsenalPremium.liberado,
+                    status: ass.status,
                     valor_mensal: Number(ass.valor_anual || 297) / 12,
                     dia_cobranca: Number(String(ass.periodo_inicio || "").slice(8, 10)) || 1,
                     proxima_em: ass.periodo_fim,

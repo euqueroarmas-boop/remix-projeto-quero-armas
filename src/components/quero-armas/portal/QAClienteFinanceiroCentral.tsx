@@ -128,6 +128,7 @@ export interface QAVendaItemLite {
 
 export interface QAArsenalPremiumSubscription {
   ativa: boolean;
+  status?: "gratuidade" | "ativa" | "aguardando_pagamento" | "suspensa" | "cancelada" | null;
   valor_mensal: number;      // em reais
   dia_cobranca: number;      // 1..31
   proxima_em: string | null; // ISO date
@@ -251,11 +252,14 @@ function bancoEmissor(identificationField?: string | null, barCode?: string | nu
 
 function PremiumCard({ premium }: { premium: QAArsenalPremiumSubscription }) {
   const cc = premium.cartao;
+  const st = premium.status;
+  const badgeCls = st === "gratuidade" ? "pill paid" : st === "aguardando_pagamento" ? "pill wait" : st === "suspensa" ? "pill over" : "pill rec";
+  const badgeLabel = st === "gratuidade" ? "GRATUIDADE" : st === "aguardando_pagamento" ? "PENDENTE" : st === "suspensa" ? "SUSPENSA" : "ANUAL";
   return (
     <div className="card" style={{ borderLeft: "4px solid var(--bordo)", marginBottom: 20 }}>
       <h3>
         <span>Arsenal Inteligente · Premium</span>
-        <span className="pill rec">RECORRENTE</span>
+        <span className={badgeCls}>{badgeLabel}</span>
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 18, alignItems: "center" }}>
         <div>
@@ -321,11 +325,25 @@ function KpiRow({
       {premium && (
         <div className="sumcard">
           <div className="sumlabel">Assinatura Premium</div>
-          <div className="sumval">
-            {fmtBRLShort(premium.valor_mensal)}
-            <small style={{ fontFamily: "Oswald,sans-serif", fontSize: 12, color: "var(--ink-soft)" }}>/mês</small>
-          </div>
-          <div className="sumsub">recorrente {premium.cartao ? "· cartão" : ""}</div>
+          {premium.status === "gratuidade" ? (
+            <>
+              <div className="sumval ok" style={{ fontSize: 16 }}>Gratuidade</div>
+              <div className="sumsub">até {fmtDatePt(premium.proxima_em)}</div>
+            </>
+          ) : premium.status === "aguardando_pagamento" ? (
+            <>
+              <div className="sumval amber" style={{ fontSize: 16 }}>Pendente</div>
+              <div className="sumsub">aguardando pagamento</div>
+            </>
+          ) : (
+            <>
+              <div className="sumval">
+                {fmtBRLShort(Number(premium.valor_mensal) * 12)}
+                <small style={{ fontFamily: "Oswald,sans-serif", fontSize: 12, color: "var(--ink-soft)" }}>/ano</small>
+              </div>
+              <div className="sumsub">anual {premium.cartao ? "· cartão" : ""}</div>
+            </>
+          )}
         </div>
       )}
     </div>
