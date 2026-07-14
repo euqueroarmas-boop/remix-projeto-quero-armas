@@ -139,6 +139,7 @@ export interface QAVendaItemLite {
 export interface QAArsenalPremiumSubscription {
   ativa: boolean;
   status?: "gratuidade" | "ativa" | "aguardando_pagamento" | "suspensa" | "cancelada" | null;
+  forma_pagamento?: "CREDIT_CARD" | "PIX" | "BOLETO" | null;
   valor_mensal: number;      // em reais
   dia_cobranca: number;      // 1..31
   proxima_em: string | null; // ISO date
@@ -267,21 +268,41 @@ function bancoEmissor(identificationField?: string | null, barCode?: string | nu
 
 // ─── Cards ───────────────────────────────────────────────────────────────────
 
-const BLANK_FORM = { holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "", cep: "", addressNumber: "" };
+const BLANK_FORM = { holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "" };
 
 function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscription; onRefresh?: () => void }) {
-  const [showForm, setShowForm] = useState(false);
-  const [saving, setSaving]   = useState(false);
-  const [form, setForm]       = useState(BLANK_FORM);
+  const [showForm, setShowForm]       = useState(false);
+  const [saving, setSaving]           = useState(false);
+  const [vinculando, setVinculando]   = useState(false);
+  const [form, setForm]               = useState(BLANK_FORM);
   const numRef = useRef<HTMLInputElement>(null);
 
-  const cc = premium.cartao;
-  const st = premium.status;
-  const badgeCls  = st === "gratuidade" ? "pill paid" : st === "aguardando_pagamento" ? "pill wait" : st === "suspensa" ? "pill over" : "pill rec";
+  const cc  = premium.cartao;
+  const st  = premium.status;
+  const pagouCartao = premium.forma_pagamento === "CREDIT_CARD";
+  const badgeCls   = st === "gratuidade" ? "pill paid" : st === "aguardando_pagamento" ? "pill wait" : st === "suspensa" ? "pill over" : "pill rec";
   const badgeLabel = st === "gratuidade" ? "GRATUIDADE" : st === "aguardando_pagamento" ? "PENDENTE" : st === "suspensa" ? "SUSPENSA" : "ANUAL";
 
   function setF(k: keyof typeof BLANK_FORM, v: string) {
     setForm(prev => ({ ...prev, [k]: v }));
+  }
+
+  async function vincularDoPagamento() {
+    if (vinculando) return;
+    setVinculando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-arsenal-cartao", {
+        body: { action: "vincular_do_pagamento" },
+      });
+      if (error) throw new Error(error.message || "Falha ao vincular cartão");
+      if ((data as any)?.error) throw new Error((data as any).detalhe || String((data as any).error));
+      toast.success(`Cartão ${(data as any).brand || ""} •••• ${(data as any).last4} vinculado com sucesso.`);
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível vincular o cartão do pagamento.");
+    } finally {
+      setVinculando(false);
+    }
   }
 
   async function salvarCartao(e: React.FormEvent) {
@@ -289,7 +310,9 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
     if (saving) return;
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-arsenal-cartao", { body: form });
+      const { data, error } = await supabase.functions.invoke("qa-arsenal-cartao", {
+        body: { action: "tokenizar", ...form },
+      });
       if (error) throw new Error(error.message || "Falha ao salvar cartão");
       if ((data as any)?.error) throw new Error((data as any).detalhe || String((data as any).error));
       toast.success(`Cartão ${(data as any).brand || ""} •••• ${(data as any).last4} salvo com sucesso.`);
@@ -324,12 +347,13 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
             )}
           </div>
         </div>
+
         {cc ? (
           <div className="cc-light">
             <div>
               <div className="brand">CARTÃO SALVO</div>
               <div className="num">•••• {cc.ultimos4}</div>
-              <div className="sub">{cc.titular.toUpperCase()} · {cc.validade}</div>
+              <div className="sub">{cc.titular ? cc.titular.toUpperCase() : ""}{cc.validade ? ` · ${cc.validade}` : ""}</div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
               <div className="flag">{cc.bandeira.toUpperCase()}</div>
@@ -339,10 +363,24 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
             </div>
           </div>
         ) : (
-          <div className="cc-light" style={{ flexDirection: "column", alignItems: "flex-start", gap: 10 }}>
+          <div className="cc-light" style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
             <div className="sub">Nenhum cartão salvo</div>
-            <button className="btn out" style={{ fontSize: 10.5 }} onClick={() => setShowForm(v => !v)}>
-              {showForm ? "CANCELAR" : "ADICIONAR CARTÃO"}
+            {pagouCartao && (
+              <button
+                className="btn pri"
+                style={{ fontSize: 10.5, width: "100%" }}
+                disabled={vinculando}
+                onClick={vincularDoPagamento}
+              >
+                {vinculando ? "VINCULANDO…" : "USAR CARTÃO DO PAGAMENTO"}
+              </button>
+            )}
+            <button
+              className="btn out"
+              style={{ fontSize: 10.5, width: "100%" }}
+              onClick={() => setShowForm(v => !v)}
+            >
+              {showForm ? "CANCELAR" : "DIGITAR NOVO CARTÃO"}
             </button>
           </div>
         )}
@@ -350,7 +388,7 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
 
       {showForm && (
         <form className="cc-form" onSubmit={salvarCartao}>
-          <h4>Adicionar cartão de crédito</h4>
+          <h4>Dados do cartão de crédito</h4>
           <div className="row">
             <div>
               <label>Nome no cartão</label>
@@ -377,7 +415,7 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
           </div>
           <div className="row cols-3">
             <div>
-              <label>Validade (mês)</label>
+              <label>Mês</label>
               <input
                 placeholder="MM"
                 value={form.expiryMonth}
@@ -404,27 +442,6 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
                 maxLength={4}
                 onChange={e => setF("ccv", e.target.value.replace(/\D/g, ""))}
                 required autoComplete="cc-csc" inputMode="numeric"
-              />
-            </div>
-          </div>
-          <div className="row cols-2">
-            <div>
-              <label>CEP do titular</label>
-              <input
-                placeholder="00000-000"
-                value={form.cep}
-                maxLength={9}
-                onChange={e => setF("cep", e.target.value.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2"))}
-                required inputMode="numeric"
-              />
-            </div>
-            <div>
-              <label>Número do endereço</label>
-              <input
-                placeholder="Ex: 123"
-                value={form.addressNumber}
-                onChange={e => setF("addressNumber", e.target.value)}
-                required
               />
             </div>
           </div>

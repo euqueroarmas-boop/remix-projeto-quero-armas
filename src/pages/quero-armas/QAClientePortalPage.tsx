@@ -2317,6 +2317,7 @@ export default function QAClientePortalPage() {
                 ? {
                     ativa: arsenalPremium.liberado,
                     status: ass.status,
+                    forma_pagamento: ass.forma_pagamento ?? null,
                     valor_mensal: Number(ass.valor_anual || 297) / 12,
                     dia_cobranca: Number(String(ass.periodo_inicio || "").slice(8, 10)) || 1,
                     proxima_em: ass.periodo_fim,
