@@ -1,15 +1,17 @@
 // qa-arsenal-cartao
-// Dois modos:
-//   action: "tokenizar"              — tokeniza cartão novo digitado pelo usuário
-//   action: "vincular_do_pagamento"  — extrai token do pagamento já existente (sem form)
+// Três modos:
+//   action: "verificar"              — tokeniza + cobra R$0,01 para verificação
+//   action: "tokenizar"              — tokeniza sem cobrar (substituição de cartão)
+//   action: "vincular_do_pagamento"  — extrai token de pagamento já existente
 //
-// Body tokenizar: { action?, holderName, number, expiryMonth, expiryYear, ccv }
-// Body vincular:  { action: "vincular_do_pagamento" }
+// Body verificar/tokenizar: { action, holderName, number, expiryMonth, expiryYear, ccv }
+// Body vincular:            { action: "vincular_do_pagamento" }
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   asaasHeaders,
   createOrReuseQaAsaasCustomer,
+  defaultDueDate,
   digitsOnly,
   getAsaasEnv,
   safeAsaasErr,
@@ -91,24 +93,21 @@ Deno.serve(async (req) => {
   const cpf = digitsOnly(cli.cpf);
   if (!cpf) return json({ error: "cpf_ausente" }, 422);
 
-  // Assinatura ativa mais recente
-  const { data: ass } = await admin
-    .from("qa_arsenal_assinaturas")
-    .select("id, status, forma_pagamento, asaas_payment_id")
-    .eq("cpf", cpf)
-    .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
-    .order("criado_em", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!ass) return json({ error: "sem_assinatura_ativa" }, 404);
-
   const env = getAsaasEnv();
   if ("error" in env) return json({ error: env.error }, 500);
 
-  // ── Modo 1: vincular token do pagamento já existente ─────────────────────────
+  // ── Modo: vincular token do pagamento já existente ────────────────────────────
   if (action === "vincular_do_pagamento") {
-    if (!ass.asaas_payment_id || ass.forma_pagamento !== "CREDIT_CARD") {
-      return json({ error: "sem_pagamento_cartao", detalhe: "A assinatura não foi paga via cartão de crédito." }, 409);
+    const { data: ass } = await admin
+      .from("qa_arsenal_assinaturas")
+      .select("id, status, forma_pagamento, asaas_payment_id")
+      .eq("cpf", cpf)
+      .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
+      .order("criado_em", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!ass?.asaas_payment_id || ass.forma_pagamento !== "CREDIT_CARD") {
+      return json({ error: "sem_pagamento_cartao" }, 409);
     }
     let payment: any;
     try {
@@ -118,28 +117,25 @@ Deno.serve(async (req) => {
       payment = await r.json().catch(() => ({}));
       if (!r.ok) return json({ error: "asaas_payment_error" }, 502);
     } catch (e) {
-      return json({ error: "asaas_network", detalhe: e instanceof Error ? e.message : "unknown" }, 502);
+      return json({ error: "asaas_network" }, 502);
     }
-
     const cc = payment?.creditCard;
     if (!cc?.creditCardToken) {
-      return json({ error: "token_nao_disponivel", detalhe: "Token de cartão não encontrado neste pagamento." }, 404);
+      return json({ error: "token_nao_disponivel" }, 404);
     }
-
     const last4 = cc.creditCardNumber ? cc.creditCardNumber.replace(/\*/g, "").slice(-4) : "????";
-
     await admin.from("qa_arsenal_assinaturas").update({
       asaas_credit_card_token:  cc.creditCardToken,
       asaas_credit_card_brand:  cc.creditCardBrand  ?? null,
       asaas_credit_card_last4:  last4,
       asaas_credit_card_holder: cc.creditCardHolderName ?? null,
       asaas_credit_card_expiry: null,
+      card_verificado: true,
     }).eq("id", ass.id);
-
     return json({ success: true, brand: cc.creditCardBrand ?? null, last4, holder: cc.creditCardHolderName ?? null, expiry: null });
   }
 
-  // ── Modo 2: tokenizar cartão digitado (sem CEP/endereço — campos opcionais) ──
+  // ── Modos tokenizar / verificar ───────────────────────────────────────────────
   const holderName  = String(body?.holderName  || "").trim();
   const number      = String(body?.number      || "").replace(/\D/g, "");
   const expiryMonth = String(body?.expiryMonth || "").padStart(2, "0");
@@ -156,6 +152,7 @@ Deno.serve(async (req) => {
   );
   if (!customer.ok) return json(customer.body, customer.status);
 
+  // Tokeniza o cartão
   let tokenData: any;
   try {
     const r = await fetch(`${env.baseUrl}/creditCards/tokenize`, {
@@ -169,28 +166,74 @@ Deno.serve(async (req) => {
     tokenData = await r.json().catch(() => ({}));
     if (!r.ok || !tokenData?.creditCardToken) {
       const errs = safeAsaasErr(tokenData);
-      return json({ error: "tokenizacao_falhou", detalhe: errs.description || "Asaas rejeitou os dados do cartão." }, 422);
+      return json({ error: "tokenizacao_falhou", detalhe: errs.description || "Cartão recusado pela Asaas." }, 422);
     }
   } catch (e) {
-    return json({ error: "asaas_network", detalhe: e instanceof Error ? e.message : "unknown" }, 502);
+    return json({ error: "asaas_network" }, 502);
   }
 
-  const last4  = tokenData.creditCardNumber
-    ? tokenData.creditCardNumber.replace(/\*/g, "").slice(-4)
-    : number.slice(-4);
+  const last4  = tokenData.creditCardNumber ? tokenData.creditCardNumber.replace(/\*/g, "").slice(-4) : number.slice(-4);
   const expiry = `${expiryMonth}/${expiryYear.slice(-2)}`;
+  const brand  = tokenData.creditCardBrand ?? null;
 
-  const { error: updErr } = await admin
+  // ── Verificar: cobra R$0,01 para confirmar que o cartão é válido e ativo ──────
+  if (action === "verificar") {
+    let verificacaoPayment: any;
+    try {
+      const r = await fetch(`${env.baseUrl}/payments`, {
+        method: "POST",
+        headers: asaasHeaders(env.key),
+        body: JSON.stringify({
+          customer: customer.customerId,
+          billingType: "CREDIT_CARD",
+          value: 0.01,
+          dueDate: defaultDueDate(1),
+          description: "Verificação de cartão — Arsenal Inteligente Premium",
+          externalReference: `arsenal_verificacao:${cli.id_legado}`,
+          creditCardToken: tokenData.creditCardToken,
+        }),
+      });
+      verificacaoPayment = await r.json().catch(() => ({}));
+      if (!r.ok || !verificacaoPayment?.id) {
+        const errs = safeAsaasErr(verificacaoPayment);
+        return json({
+          error: "verificacao_falhou",
+          detalhe: errs.description || "Não foi possível processar a cobrança de verificação.",
+        }, 422);
+      }
+    } catch (e) {
+      return json({ error: "asaas_network" }, 502);
+    }
+
+    return json({
+      success: true,
+      verificacao_id:  verificacaoPayment.id,
+      card_token:      tokenData.creditCardToken,
+      brand,
+      last4,
+      holder:          holderName,
+      expiry,
+    });
+  }
+
+  // ── Tokenizar simples (substituição de cartão em assinatura existente) ─────────
+  const { data: ass } = await admin
     .from("qa_arsenal_assinaturas")
-    .update({
-      asaas_credit_card_token:  tokenData.creditCardToken,
-      asaas_credit_card_brand:  tokenData.creditCardBrand  ?? null,
-      asaas_credit_card_last4:  last4,
-      asaas_credit_card_holder: holderName,
-      asaas_credit_card_expiry: expiry,
-    })
-    .eq("id", ass.id);
-  if (updErr) return json({ error: "db_update_failed", detalhe: updErr.message }, 500);
+    .select("id")
+    .eq("cpf", cpf)
+    .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
+    .order("criado_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!ass) return json({ error: "sem_assinatura_ativa" }, 404);
 
-  return json({ success: true, brand: tokenData.creditCardBrand ?? null, last4, holder: holderName, expiry });
+  await admin.from("qa_arsenal_assinaturas").update({
+    asaas_credit_card_token:  tokenData.creditCardToken,
+    asaas_credit_card_brand:  brand,
+    asaas_credit_card_last4:  last4,
+    asaas_credit_card_holder: holderName,
+    asaas_credit_card_expiry: expiry,
+  }).eq("id", ass.id);
+
+  return json({ success: true, brand, last4, holder: holderName, expiry });
 });

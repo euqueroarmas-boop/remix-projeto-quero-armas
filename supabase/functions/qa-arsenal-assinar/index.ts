@@ -10,7 +10,9 @@
 //     PIX/BOLETO em cobrança anual única.
 //   • Aceite do termo de adesão é obrigatório (registra data/hora + IP).
 //
-// Body: { forma: 'CREDIT_CARD' | 'PIX' | 'BOLETO', aceite: true }
+// Body: { forma, aceite, verificacao_id?, card_token?, card_brand?, card_last4?, card_holder?, card_expiry? }
+// Se verificacao_id não for fornecido, o servidor verifica se o CPF já tem cartão salvo.
+// Caso não tenha, retorna { error: "cartao_obrigatorio", step: "card" } com HTTP 400.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
@@ -93,6 +95,14 @@ Deno.serve(async (req) => {
   if (!["CREDIT_CARD", "PIX", "BOLETO"].includes(forma)) return json({ error: "forma_invalida" }, 400);
   if (body?.aceite !== true) return json({ error: "aceite_obrigatorio" }, 400);
 
+  // Dados do cartão verificado — fornecidos pelo frontend após qa-arsenal-cartao/verificar
+  const verificacaoId  = body?.verificacao_id  ? String(body.verificacao_id)  : null;
+  const cardToken      = body?.card_token       ? String(body.card_token)      : null;
+  const cardBrand      = body?.card_brand       ? String(body.card_brand)      : null;
+  const cardLast4      = body?.card_last4       ? String(body.card_last4)      : null;
+  const cardHolder     = body?.card_holder      ? String(body.card_holder)     : null;
+  const cardExpiry     = body?.card_expiry      ? String(body.card_expiry)     : null;
+
   const admin = createClient(url, service);
 
   // Plano ativo (preço/parcelas vêm de qa_arsenal_planos, não hardcoded)
@@ -136,7 +146,37 @@ Deno.serve(async (req) => {
   const hojeISO = hoje.toISOString().slice(0, 10);
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
 
-  // 3) Assinatura vigente? (gratuidade/ativa dentro do período, ou cobrança pendente)
+  // 3a) Cartão obrigatório — verificar se CPF já tem cartão salvo ou verificacao_id foi fornecido
+  if (!verificacaoId) {
+    const { data: cartaoExistente } = await admin
+      .from("qa_arsenal_assinaturas")
+      .select("id, asaas_credit_card_token, asaas_credit_card_brand, asaas_credit_card_last4, asaas_credit_card_holder, asaas_credit_card_expiry")
+      .eq("cpf", cpf)
+      .not("asaas_credit_card_token", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (!cartaoExistente) {
+      // Nenhum cartão cadastrado e nenhuma verificação fornecida
+      return json({ error: "cartao_obrigatorio", step: "card" }, 400);
+    }
+    // Usa cartão já verificado de assinatura anterior
+    if (!cardToken)  Object.assign(body, {
+      card_token:  cartaoExistente.asaas_credit_card_token,
+      card_brand:  cartaoExistente.asaas_credit_card_brand,
+      card_last4:  cartaoExistente.asaas_credit_card_last4,
+      card_holder: cartaoExistente.asaas_credit_card_holder,
+      card_expiry: cartaoExistente.asaas_credit_card_expiry,
+    });
+  }
+
+  // Referência final do cartão a persistir na nova assinatura
+  const finalCardToken  = cardToken  || body.card_token  || null;
+  const finalCardBrand  = cardBrand  || body.card_brand  || null;
+  const finalCardLast4  = cardLast4  || body.card_last4  || null;
+  const finalCardHolder = cardHolder || body.card_holder || null;
+  const finalCardExpiry = cardExpiry || body.card_expiry || null;
+
+  // 3b) Assinatura vigente? (gratuidade/ativa dentro do período, ou cobrança pendente)
   const { data: vigente } = await admin
     .from("qa_arsenal_assinaturas")
     .select("id, status, periodo_fim")
@@ -183,6 +223,13 @@ Deno.serve(async (req) => {
         valor_anual: valorAnual,
         aceite_contrato_em: new Date().toISOString(),
         aceite_contrato_ip: ip,
+        asaas_credit_card_token:          finalCardToken,
+        asaas_credit_card_brand:          finalCardBrand,
+        asaas_credit_card_last4:          finalCardLast4,
+        asaas_credit_card_holder:         finalCardHolder,
+        asaas_credit_card_expiry:         finalCardExpiry,
+        card_verificado:                  !!finalCardToken,
+        asaas_verificacao_payment_id:     verificacaoId,
       })
       .select("id")
       .single();
@@ -194,6 +241,8 @@ Deno.serve(async (req) => {
       meses_gratis: meses,
       periodo_fim: fim,
       assinatura_id: nova.id,
+      card_brand: finalCardBrand,
+      card_last4: finalCardLast4,
     });
   }
 
@@ -286,6 +335,13 @@ Deno.serve(async (req) => {
       asaas_invoice_url: payment.invoiceUrl ?? null,
       aceite_contrato_em: new Date().toISOString(),
       aceite_contrato_ip: ip,
+      asaas_credit_card_token:          finalCardToken,
+      asaas_credit_card_brand:          finalCardBrand,
+      asaas_credit_card_last4:          finalCardLast4,
+      asaas_credit_card_holder:         finalCardHolder,
+      asaas_credit_card_expiry:         finalCardExpiry,
+      card_verificado:                  !!finalCardToken,
+      asaas_verificacao_payment_id:     verificacaoId,
     })
     .select("id")
     .single();
