@@ -128,6 +128,9 @@ Deno.serve(async (req) => {
         return json({ ...out, error: "reemissao_falhou", detail }, 422);
       }
 
+      // Aguarda Asaas regenerar o código de barras após atualização do vencimento
+      await new Promise(r => setTimeout(r, 2500));
+
       const rBol = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}/identificationField`, { headers });
       if (!rBol.ok) return json({ ...out, error: "boleto_nao_gerado", asaas_due_date: novaDueDate }, 422);
       const d = await rBol.json();

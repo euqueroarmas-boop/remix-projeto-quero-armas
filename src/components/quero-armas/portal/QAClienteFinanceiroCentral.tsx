@@ -415,7 +415,7 @@ function CobrancaAberta({
         <div className="actions" style={{ flexDirection: "column", gap: 6, minWidth: 160 }}>
           <button className="btn pri" onClick={() => { setMode("pix"); onExpand(); onFetchMode("pix"); }}>PIX</button>
           <button className="btn out" onClick={() => { setMode("boleto"); onExpand(); onFetchMode("boleto"); }}>BOLETO</button>
-          <button className="btn" onClick={() => { setMode("cartao"); onExpand(); }}>CARTÃO</button>
+          <button className="btn" onClick={() => { setMode("cartao"); onExpand(); onFetchMode("boleto"); }}>CARTÃO</button>
         </div>
       </div>
     );
@@ -444,7 +444,7 @@ function CobrancaAberta({
         <div className="ptabs">
           <button className={`ptab ${mode === "pix" ? "on" : ""}`} onClick={() => { setMode("pix"); onFetchMode("pix"); }}>PIX</button>
           <button className={`ptab ${mode === "boleto" ? "on" : ""}`} onClick={() => { setMode("boleto"); onFetchMode("boleto"); }}>BOLETO</button>
-          <button className={`ptab ${mode === "cartao" ? "on" : ""}`} onClick={() => setMode("cartao")}>CARTÃO</button>
+          <button className={`ptab ${mode === "cartao" ? "on" : ""}`} onClick={() => { setMode("cartao"); if (!invoiceUrl) onFetchMode("boleto"); }}>CARTÃO</button>
         </div>
         <button className="btn ghost" onClick={onExpand}>RECOLHER</button>
       </div>
@@ -530,13 +530,15 @@ function CobrancaAberta({
             <div>
               <span className="h4c">Pagamento no cartão de crédito</span>
               <div style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", lineHeight: 1.6 }}>
-                O pagamento com cartão de crédito é feito no ambiente seguro da Asaas.
-                As parcelas e taxas são exibidas na tela de checkout.
+                Clique em <b>PAGAR COM CARTÃO</b> para abrir o checkout seguro da Asaas.
+                Lá você digita os dados do cartão e escolhe o número de parcelas disponíveis.
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
                 {invoiceUrl
                   ? <a className="btn pri" href={invoiceUrl} target="_blank" rel="noreferrer">PAGAR COM CARTÃO</a>
-                  : <button className="btn pri" disabled>PAGAR COM CARTÃO</button>}
+                  : detalhe?.loading
+                    ? <button className="btn pri" disabled>CARREGANDO…</button>
+                    : <button className="btn pri" disabled>PAGAR COM CARTÃO</button>}
               </div>
             </div>
             <div style={{ minWidth: 140, textAlign: "center" }}>
@@ -699,13 +701,14 @@ export default function QAClienteFinanceiroCentral({
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error(String((data as any).error));
+      const boletoLine = (data as any)?.boleto_identification_field ?? null;
       setDetalhePorVenda(prev => ({
         ...prev,
         [venda.id_legado]: {
           loading: false,
           error: null,
           boleto: {
-            identificationField: (data as any)?.boleto_identification_field ?? null,
+            identificationField: boletoLine,
             barCode: (data as any)?.boleto_barCode ?? null,
             nossoNumero: (data as any)?.boleto_nossoNumero ?? null,
           },
@@ -716,6 +719,10 @@ export default function QAClienteFinanceiroCentral({
         },
       }));
       toast.success("Boleto reemitido com vencimento em 3 dias.");
+      // Se Asaas ainda não retornou o código (sandbox ou atraso), tenta novamente em 3s
+      if (!boletoLine) {
+        setTimeout(() => void fetchDetalhe(venda, "boleto"), 3000);
+      }
     } catch (e: any) {
       setDetalhePorVenda(prev => ({
         ...prev,
