@@ -2575,6 +2575,11 @@ export type Database = {
         Row: {
           aceite_contrato_em: string | null
           aceite_contrato_ip: string | null
+          asaas_credit_card_brand: string | null
+          asaas_credit_card_expiry: string | null
+          asaas_credit_card_holder: string | null
+          asaas_credit_card_last4: string | null
+          asaas_credit_card_token: string | null
           asaas_invoice_url: string | null
           asaas_payment_id: string | null
           atualizado_em: string
@@ -2593,6 +2598,11 @@ export type Database = {
         Insert: {
           aceite_contrato_em?: string | null
           aceite_contrato_ip?: string | null
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_expiry?: string | null
+          asaas_credit_card_holder?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           atualizado_em?: string
@@ -2611,6 +2621,11 @@ export type Database = {
         Update: {
           aceite_contrato_em?: string | null
           aceite_contrato_ip?: string | null
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_expiry?: string | null
+          asaas_credit_card_holder?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
           atualizado_em?: string
