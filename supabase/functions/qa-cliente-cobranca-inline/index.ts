@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       const rUpd = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}`, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ dueDate: novaDueDate }),
+        body: JSON.stringify({ dueDate: novaDueDate, billingType: "BOLETO" }),
       });
       if (!rUpd.ok) {
         const detail = await rUpd.text().catch(() => "");
@@ -132,15 +132,25 @@ Deno.serve(async (req) => {
       await new Promise(r => setTimeout(r, 2500));
 
       const rBol = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}/identificationField`, { headers });
-      if (!rBol.ok) return json({ ...out, error: "boleto_nao_gerado", asaas_due_date: novaDueDate }, 422);
-      const d = await rBol.json();
-      out.boleto_identification_field = d?.identificationField ?? null;
-      out.boleto_nossoNumero = d?.nossoNumero ?? null;
-      out.boleto_barCode = d?.barCode ?? null;
       out.asaas_due_date = novaDueDate;
+      if (rBol.ok) {
+        const d = await rBol.json();
+        out.boleto_identification_field = d?.identificationField ?? null;
+        out.boleto_nossoNumero = d?.nossoNumero ?? null;
+        out.boleto_barCode = d?.barCode ?? null;
+      } else {
+        // Linha digitável pode levar alguns segundos a mais — não bloqueia a reemissão.
+        // O cliente sempre pode abrir a fatura pela invoice_url.
+        const detail = await rBol.text().catch(() => "");
+        out.boleto_error = `status_${rBol.status}`;
+        out.boleto_error_detail = detail?.slice(0, 300) ?? null;
+      }
 
       // Persiste novo vencimento na venda
-      await admin.from("qa_vendas").update({ asaas_due_date: novaDueDate }).eq("id_legado", vendaId);
+      await admin
+        .from("qa_vendas")
+        .update({ asaas_due_date: novaDueDate, cobranca_status: "PENDING" })
+        .eq("id_legado", vendaId);
       return json({ success: true, reemitido: true, ...out });
     }
 
