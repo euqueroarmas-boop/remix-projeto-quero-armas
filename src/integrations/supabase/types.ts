@@ -2743,6 +2743,39 @@ export type Database = {
           },
         ]
       }
+      qa_arsenal_planos: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string | null
+          criado_em: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          parcelas_max: number
+          valor_anual: number
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          parcelas_max?: number
+          valor_anual?: number
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          parcelas_max?: number
+          valor_anual?: number
+        }
+        Relationships: []
+      }
       qa_asaas_webhook_events: {
         Row: {
           asaas_payment_id: string | null
