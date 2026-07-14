@@ -528,10 +528,12 @@ type Detalhe = {
   invoiceUrl?: string | null;
   billingType?: string | null;
   boletoError?: string | null;
+  cartaoInvoiceUrl?: string | null;
 };
 
 function CobrancaAberta({
   venda, servico, defaultMode, onExpand, expanded, mode, setMode, detalhe, onFetchMode, onReemitirBoleto, reemitindoBoleto, temNfe,
+  selectedParcelas, onSelectParcelas, onPagarCartao,
 }: {
   venda: QAVendaFinanceira;
   servico: string;
@@ -545,6 +547,9 @@ function CobrancaAberta({
   onReemitirBoleto: () => void;
   reemitindoBoleto: boolean;
   temNfe: boolean;
+  selectedParcelas?: number;
+  onSelectParcelas: (n: number) => void;
+  onPagarCartao: (parcelas: number) => void;
 }) {
   const dias = diasAte(venda.asaas_due_date);
   const vencida = dias !== null && dias < 0;
@@ -576,7 +581,7 @@ function CobrancaAberta({
         <div className="actions" style={{ flexDirection: "column", gap: 6, minWidth: 160 }}>
           <button className="btn pri" onClick={() => { setMode("pix"); onExpand(); onFetchMode("pix"); }}>PIX</button>
           <button className="btn out" onClick={() => { setMode("boleto"); onExpand(); onFetchMode("boleto"); }}>BOLETO</button>
-          <button className="btn" onClick={() => { setMode("cartao"); onExpand(); onFetchMode("boleto"); }}>CARTÃO</button>
+          <button className="btn" onClick={() => { setMode("cartao"); onExpand(); }}>CARTÃO</button>
         </div>
       </div>
     );
@@ -605,7 +610,7 @@ function CobrancaAberta({
         <div className="ptabs">
           <button className={`ptab ${mode === "pix" ? "on" : ""}`} onClick={() => { setMode("pix"); onFetchMode("pix"); }}>PIX</button>
           <button className={`ptab ${mode === "boleto" ? "on" : ""}`} onClick={() => { setMode("boleto"); onFetchMode("boleto"); }}>BOLETO</button>
-          <button className={`ptab ${mode === "cartao" ? "on" : ""}`} onClick={() => { setMode("cartao"); if (!invoiceUrl) onFetchMode("boleto"); }}>CARTÃO</button>
+          <button className={`ptab ${mode === "cartao" ? "on" : ""}`} onClick={() => setMode("cartao")}>CARTÃO</button>
         </div>
         <button className="btn ghost" onClick={onExpand}>RECOLHER</button>
       </div>
@@ -686,28 +691,68 @@ function CobrancaAberta({
           </div>
         )}
 
-        {mode === "cartao" && (
-          <div className="paybody">
+        {mode === "cartao" && (() => {
+          const MIN_PARCELA = 5; // R$5 mínimo por parcela
+          const OPCOES = [1, 2, 3, 4, 5, 6, 9, 12].filter(n => (valor / n) >= MIN_PARCELA);
+          return (
             <div>
-              <span className="h4c">Pagamento no cartão de crédito</span>
-              <div style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", lineHeight: 1.6 }}>
-                Clique em <b>PAGAR COM CARTÃO</b> para abrir o checkout seguro da Asaas.
-                Lá você digita os dados do cartão e escolhe o número de parcelas disponíveis.
+              <span className="h4c">Parcelamento no cartão de crédito</span>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))",
+                gap: 8,
+                marginBottom: 14,
+              }}>
+                {OPCOES.map(n => (
+                  <button
+                    key={n}
+                    className={`btn${selectedParcelas === n ? " pri" : ""}`}
+                    style={{ justifyContent: "space-between", padding: "10px 14px" }}
+                    onClick={() => onSelectParcelas(n)}
+                  >
+                    <span style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".1em" }}>
+                      {n === 1 ? "À VISTA" : `${n}×`}
+                    </span>
+                    <span style={{ fontFamily: "'Arial Narrow',Arial", fontWeight: 700, fontSize: 14 }}>
+                      {fmtBRL(valor / n)}
+                    </span>
+                  </button>
+                ))}
               </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                {invoiceUrl
-                  ? <a className="btn pri" href={invoiceUrl} target="_blank" rel="noreferrer">PAGAR COM CARTÃO</a>
-                  : detalhe?.loading
-                    ? <button className="btn pri" disabled>CARREGANDO…</button>
-                    : <button className="btn pri" disabled>PAGAR COM CARTÃO</button>}
+
+              {selectedParcelas ? (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                  <button
+                    className="btn pri"
+                    style={{ flex: 1, minWidth: 200, padding: "11px 16px" }}
+                    disabled={!!detalhe?.loading}
+                    onClick={() => onPagarCartao(selectedParcelas)}
+                  >
+                    {detalhe?.loading
+                      ? "GERANDO COBRANÇA…"
+                      : selectedParcelas === 1
+                        ? `PAGAR À VISTA — ${fmtBRL(valor)}`
+                        : `PAGAR EM ${selectedParcelas}× — ${fmtBRL(valor / selectedParcelas)}/MÊS`}
+                  </button>
+                  {detalhe?.cartaoInvoiceUrl && (
+                    <a className="btn out" href={detalhe.cartaoInvoiceUrl} target="_blank" rel="noreferrer">
+                      ABRIR FATURA
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <p style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", margin: 0 }}>
+                  Selecione acima o número de parcelas para continuar.
+                </p>
+              )}
+
+              <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 12, lineHeight: 1.5 }}>
+                Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
+                Uma nova aba será aberta para conclusão do pagamento.
               </div>
             </div>
-            <div style={{ minWidth: 140, textAlign: "center" }}>
-              <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 10, letterSpacing: ".14em", color: "var(--ink-soft)", textTransform: "uppercase" }}>Cobrado por</div>
-              <div style={{ fontFamily: "Oswald,sans-serif", fontWeight: 600, fontSize: 14, marginTop: 4 }}>ASAAS</div>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
@@ -751,6 +796,7 @@ export default function QAClienteFinanceiroCentral({
   const [detalhePorVenda, setDetalhePorVenda] = useState<Record<number, Detalhe>>({});
   const [reemitindoPorVenda, setReemitindoPorVenda] = useState<Record<number, boolean>>({});
   const [nfePorPayment, setNfePorPayment] = useState<Record<string, string>>({});
+  const [parcelasPorVenda, setParcelasPorVenda] = useState<Record<number, number>>({});
 
   const vendasVisiveis = useMemo(() => vendas.filter(v => !isCancelada(v)), [vendas]);
   const abertas = useMemo(() => vendasVisiveis.filter(v => !isPaga(v)), [vendasVisiveis]);
@@ -808,7 +854,7 @@ export default function QAClienteFinanceiroCentral({
   const fetchDetalhe = async (venda: QAVendaFinanceira, wanted: "pix" | "boleto") => {
     const already = detalhePorVenda[venda.id_legado];
     if (already?.loading) return;
-    if (wanted === "pix" && already?.pix?.payload) return;
+    if (wanted === "pix"    && already?.pix?.payload) return;
     if (wanted === "boleto" && already?.boleto?.identificationField) return;
 
     setDetalhePorVenda(prev => ({
@@ -817,35 +863,78 @@ export default function QAClienteFinanceiroCentral({
     }));
 
     try {
+      const forma = wanted === "pix" ? "PIX" : "BOLETO";
       const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", {
-        body: { venda_id: venda.id_legado, action: wanted },
+        body: { venda_id: venda.id_legado, action: "gerar_por_forma", forma },
       });
       if (error) throw error;
-      setDetalhePorVenda(prev => ({
-        ...prev,
-        [venda.id_legado]: {
-          loading: false,
-          error: null,
-          pix: {
-            payload: (data as any)?.pix_payload ?? prev[venda.id_legado]?.pix?.payload ?? null,
-            encodedImage: (data as any)?.pix_encoded_image ?? prev[venda.id_legado]?.pix?.encodedImage ?? null,
+      const d = data as any;
+      setDetalhePorVenda(prev => {
+        const cur = prev[venda.id_legado] || {};
+        return {
+          ...prev,
+          [venda.id_legado]: {
+            loading: false,
+            error: null,
+            pix: wanted === "pix" ? {
+              payload:      d?.pix_payload       ?? cur.pix?.payload      ?? null,
+              encodedImage: d?.pix_encoded_image  ?? cur.pix?.encodedImage ?? null,
+            } : cur.pix ?? null,
+            boleto: wanted === "boleto" ? {
+              identificationField: d?.boleto_identification_field ?? cur.boleto?.identificationField ?? null,
+              barCode:             d?.boleto_barCode              ?? null,
+              nossoNumero:         d?.boleto_nossoNumero          ?? null,
+            } : cur.boleto ?? null,
+            bankSlipUrl:       d?.asaas_bank_slip_url ?? cur.bankSlipUrl ?? venda.asaas_bank_slip_url ?? null,
+            invoiceUrl:        d?.asaas_invoice_url   ?? cur.invoiceUrl  ?? venda.asaas_invoice_url   ?? null,
+            billingType:       wanted === "boleto" ? "BOLETO" : cur.billingType ?? null,
+            boletoError:       wanted === "boleto" ? (d?.boleto_error ?? null) : cur.boletoError ?? null,
+            cartaoInvoiceUrl:  cur.cartaoInvoiceUrl ?? null,
           },
-          boleto: {
-            identificationField: (data as any)?.boleto_identification_field ?? prev[venda.id_legado]?.boleto?.identificationField ?? null,
-            barCode: (data as any)?.boleto_barCode ?? null,
-            nossoNumero: (data as any)?.boleto_nossoNumero ?? null,
-          },
-          bankSlipUrl: (data as any)?.asaas_bank_slip_url ?? venda.asaas_bank_slip_url ?? null,
-          invoiceUrl: (data as any)?.asaas_invoice_url ?? venda.asaas_invoice_url ?? null,
-          billingType: (data as any)?.billing_type ?? prev[venda.id_legado]?.billingType ?? null,
-          boletoError: (data as any)?.boleto_error ?? null,
-        },
-      }));
+        };
+      });
     } catch (e: any) {
       setDetalhePorVenda(prev => ({
         ...prev,
         [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: e?.message || "erro" },
       }));
+    }
+  };
+
+  const pagarCartao = async (venda: QAVendaFinanceira, parcelas: number) => {
+    if (detalhePorVenda[venda.id_legado]?.loading) return;
+    setDetalhePorVenda(prev => ({
+      ...prev,
+      [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: true, error: null },
+    }));
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", {
+        body: { venda_id: venda.id_legado, action: "gerar_por_forma", forma: "CREDIT_CARD", parcelas },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      const invoiceUrl = (data as any)?.asaas_invoice_url ?? null;
+      setDetalhePorVenda(prev => ({
+        ...prev,
+        [venda.id_legado]: {
+          ...(prev[venda.id_legado] || {}),
+          loading: false,
+          error: null,
+          invoiceUrl:       invoiceUrl ?? prev[venda.id_legado]?.invoiceUrl ?? venda.asaas_invoice_url ?? null,
+          cartaoInvoiceUrl: invoiceUrl,
+        },
+      }));
+      if (invoiceUrl) {
+        window.open(invoiceUrl, "_blank", "noopener,noreferrer");
+      } else {
+        toast.error("Não foi possível gerar a cobrança no cartão. Tente novamente.");
+      }
+    } catch (e: any) {
+      setDetalhePorVenda(prev => ({
+        ...prev,
+        [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: e?.message || "erro" },
+      }));
+      toast.error(e?.message || "Erro ao gerar cobrança no cartão.");
     }
   };
 
@@ -956,6 +1045,9 @@ export default function QAClienteFinanceiroCentral({
               onReemitirBoleto={() => void reemitirBoleto(v)}
               reemitindoBoleto={!!reemitindoPorVenda[v.id_legado]}
               temNfe={false}
+              selectedParcelas={parcelasPorVenda[v.id_legado]}
+              onSelectParcelas={(n) => setParcelasPorVenda(prev => ({ ...prev, [v.id_legado]: n }))}
+              onPagarCartao={(n) => void pagarCartao(v, n)}
             />
           );
         })
