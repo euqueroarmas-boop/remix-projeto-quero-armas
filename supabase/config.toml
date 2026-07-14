@@ -33,6 +33,10 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-ingest-document]
     verify_jwt = false
+  [functions.qa-arsenal-assinar]
+    verify_jwt = true
+  [functions.qa-arsenal-premium-cron]
+    verify_jwt = false
   [functions.qa-processo-prazo-alertas]
     verify_jwt = false
   [functions.qa-senha-gov]
