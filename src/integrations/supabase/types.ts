@@ -2582,8 +2582,10 @@ export type Database = {
           asaas_credit_card_token: string | null
           asaas_invoice_url: string | null
           asaas_payment_id: string | null
+          asaas_verificacao_payment_id: string | null
           atualizado_em: string
           cancelamento_solicitado_em: string | null
+          card_verificado: boolean
           cliente_id: number
           cpf: string
           criado_em: string
@@ -2605,8 +2607,10 @@ export type Database = {
           asaas_credit_card_token?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
+          asaas_verificacao_payment_id?: string | null
           atualizado_em?: string
           cancelamento_solicitado_em?: string | null
+          card_verificado?: boolean
           cliente_id: number
           cpf: string
           criado_em?: string
@@ -2628,8 +2632,10 @@ export type Database = {
           asaas_credit_card_token?: string | null
           asaas_invoice_url?: string | null
           asaas_payment_id?: string | null
+          asaas_verificacao_payment_id?: string | null
           atualizado_em?: string
           cancelamento_solicitado_em?: string | null
+          card_verificado?: boolean
           cliente_id?: number
           cpf?: string
           criado_em?: string
