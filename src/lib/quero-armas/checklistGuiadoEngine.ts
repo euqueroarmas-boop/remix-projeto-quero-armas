@@ -368,11 +368,23 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   // antigos nunca veriam o gate até serem re-explodidos. A fonte é sempre o
   // catálogo do serviço: se o admin remover o vínculo, o gate também some.
   let catalogoRegraMap = new Map<string, any>();
+  // Mapa de campos de conteúdo (instrucoes, link_emissao, etc.) — mesmo motivo:
+  // o admin pode preencher DEPOIS da explosão do checklist; processos antigos
+  // ficam sem os dados. Sempre usa catálogo como fallback para campos vazios.
+  let catalogoConteudoMap = new Map<string, {
+    link_emissao: string | null;
+    instrucoes: string | null;
+    observacoes_cliente: string | null;
+    orgao_emissor: string | null;
+    modelo_url: string | null;
+    exemplo_url: string | null;
+    prazo_recomendado_dias: number | null;
+  }>();
   if (processo.servico_id && (dList?.length ?? 0) > 0) {
     try {
       const { data: tpl } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("tipo_documento, ordem, regra_validacao")
+        .select("tipo_documento, ordem, regra_validacao, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, modelo_url, exemplo_url, prazo_recomendado_dias")
         .eq("servico_id", processo.servico_id);
       if (tpl) {
         for (const t of tpl as any[]) {
@@ -381,13 +393,23 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
           if (t.regra_validacao && typeof t.regra_validacao === "object") {
             catalogoRegraMap.set(key, t.regra_validacao);
           }
+          catalogoConteudoMap.set(key, {
+            link_emissao:           t.link_emissao           ?? null,
+            instrucoes:             t.instrucoes             ?? null,
+            observacoes_cliente:    t.observacoes_cliente    ?? null,
+            orgao_emissor:          t.orgao_emissor          ?? null,
+            modelo_url:             t.modelo_url             ?? null,
+            exemplo_url:            t.exemplo_url            ?? null,
+            prazo_recomendado_dias: t.prazo_recomendado_dias ?? null,
+          });
         }
       }
     } catch { /* fallback silencioso para ordenação alfabética */ }
   }
   const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => {
     const key = String((d as any).tipo_documento ?? "").toLowerCase();
-    const catalogoRegra = catalogoRegraMap.get(key);
+    const catalogoRegra   = catalogoRegraMap.get(key);
+    const cat             = catalogoConteudoMap.get(key);
     return {
       ...d,
       // Hidrata wizard_pre_documento do catálogo quando o doc do processo não
@@ -397,6 +419,15 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
         (d as any).regra_validacao,
         catalogoRegra,
       ),
+      // Hidrata campos de conteúdo do catálogo quando o snapshot do processo
+      // está vazio — o admin preencheu instrucoes/link_emissao depois da explosão.
+      link_emissao:           (d as any).link_emissao           || cat?.link_emissao           || null,
+      instrucoes:             (d as any).instrucoes             || cat?.instrucoes             || null,
+      observacoes_cliente:    (d as any).observacoes_cliente    || cat?.observacoes_cliente    || null,
+      orgao_emissor:          (d as any).orgao_emissor          || cat?.orgao_emissor          || null,
+      modelo_url:             (d as any).modelo_url             || cat?.modelo_url             || null,
+      exemplo_url:            (d as any).exemplo_url            || cat?.exemplo_url            || null,
+      prazo_recomendado_dias: (d as any).prazo_recomendado_dias ?? cat?.prazo_recomendado_dias ?? null,
       // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
       // depois o catálogo (qa_servicos_documentos.ordem).
       _template_ordem:
