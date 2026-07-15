@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { calcularPrecoFinal } from "@/lib/checkoutPricing";
 
 // ─── Tokens (papel, tinta, bordô) ────────────────────────────────────────────
 const CSS = `
@@ -657,6 +658,10 @@ function CobrancaAberta({
         {mode === "boleto" && (
           <div>
             <span className="h4c">Linha digitável do boleto</span>
+            <div style={{ fontFamily: "Arial", fontSize: 11, color: "var(--ink-soft)", marginBottom: 6 }}>
+              Valor do boleto: <strong style={{ color: "var(--ink)" }}>{fmtBRL(calcularPrecoFinal(valor, "BOLETO").valorTotal)}</strong>
+              <span style={{ marginLeft: 6, opacity: 0.7 }}>(+R$ 1,99 de taxa bancária)</span>
+            </div>
             <div className="bar-code" style={{ marginBottom: 8 }} />
             {detalhe?.loading && !boletoLine ? (
               <div className="copy">{reemitindoBoleto ? "Reemitindo boleto na Asaas…" : "Buscando linha digitável na Asaas…"}</div>
@@ -692,8 +697,12 @@ function CobrancaAberta({
         )}
 
         {mode === "cartao" && (() => {
-          const MIN_PARCELA = 5; // R$5 mínimo por parcela
-          const OPCOES = [1, 2, 3, 4, 5, 6, 9, 12].filter(n => (valor / n) >= MIN_PARCELA);
+          const MIN_PARCELA = 5;
+          const OPCOES = [1, 2, 3, 4, 5, 6, 9, 12].filter(n => {
+            const p = calcularPrecoFinal(valor, "CREDIT_CARD", n);
+            return p.valorParcela >= MIN_PARCELA;
+          });
+          const selP = selectedParcelas ? calcularPrecoFinal(valor, "CREDIT_CARD", selectedParcelas) : null;
           return (
             <div>
               <span className="h4c">Parcelamento no cartão de crédito</span>
@@ -703,36 +712,39 @@ function CobrancaAberta({
                 gap: 8,
                 marginBottom: 14,
               }}>
-                {OPCOES.map(n => (
-                  <button
-                    key={n}
-                    className={`btn${selectedParcelas === n ? " pri" : ""}`}
-                    style={{ justifyContent: "space-between", padding: "10px 14px" }}
-                    onClick={() => onSelectParcelas(n)}
-                  >
-                    <span style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".1em" }}>
-                      {n === 1 ? "À VISTA" : `${n}×`}
-                    </span>
-                    <span style={{ fontFamily: "'Arial Narrow',Arial", fontWeight: 700, fontSize: 14 }}>
-                      {fmtBRL(valor / n)}
-                    </span>
-                  </button>
-                ))}
+                {OPCOES.map(n => {
+                  const p = calcularPrecoFinal(valor, "CREDIT_CARD", n);
+                  return (
+                    <button
+                      key={n}
+                      className={`btn${selectedParcelas === n ? " pri" : ""}`}
+                      style={{ justifyContent: "space-between", padding: "10px 14px" }}
+                      onClick={() => onSelectParcelas(n)}
+                    >
+                      <span style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".1em" }}>
+                        {n === 1 ? "À VISTA" : `${n}×`}
+                      </span>
+                      <span style={{ fontFamily: "'Arial Narrow',Arial", fontWeight: 700, fontSize: 14 }}>
+                        {fmtBRL(p.valorParcela)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {selectedParcelas ? (
+              {selP ? (
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <button
                     className="btn pri"
                     style={{ flex: 1, minWidth: 200, padding: "11px 16px" }}
                     disabled={!!detalhe?.loading}
-                    onClick={() => onPagarCartao(selectedParcelas)}
+                    onClick={() => onPagarCartao(selectedParcelas!)}
                   >
                     {detalhe?.loading
                       ? "GERANDO COBRANÇA…"
                       : selectedParcelas === 1
-                        ? `PAGAR À VISTA — ${fmtBRL(valor)}`
-                        : `PAGAR EM ${selectedParcelas}× — ${fmtBRL(valor / selectedParcelas)}/MÊS`}
+                        ? `PAGAR À VISTA — ${fmtBRL(selP.valorTotal)}`
+                        : `PAGAR EM ${selectedParcelas}× — ${fmtBRL(selP.valorParcela)}/MÊS`}
                   </button>
                   {detalhe?.cartaoInvoiceUrl && (
                     <a className="btn out" href={detalhe.cartaoInvoiceUrl} target="_blank" rel="noreferrer">
@@ -746,7 +758,13 @@ function CobrancaAberta({
                 </p>
               )}
 
-              <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 12, lineHeight: 1.5 }}>
+              {selP && selP.parcelas > 1 && (
+                <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 8 }}>
+                  Total: {fmtBRL(selP.valorTotal)} · inclui MDR + antecipação Asaas.
+                  PIX sem acréscimo: {fmtBRL(valor)}.
+                </div>
+              )}
+              <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.5 }}>
                 Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
                 Uma nova aba será aberta para conclusão do pagamento.
               </div>

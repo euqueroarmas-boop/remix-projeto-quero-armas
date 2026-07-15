@@ -32,6 +32,32 @@ function addDias(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+// ── Gross-up Asaas (espelha checkoutPricing.ts) ──────────────────────────────
+// Taxas reais da conta (MDR + antecipação automática + taxa fixa).
+const ASAAS_MDR_1X    = 0.0299;
+const ASAAS_MDR_2A6   = 0.0349;
+const ASAAS_MDR_7A12  = 0.0399;
+const ASAAS_TAXA_FIXA = 0.49;
+const ASAAS_ANT_AVISTA    = 0.0115; // 1,15% a.m.
+const ASAAS_ANT_PARC      = 0.016;  // 1,6% a.m.
+const ASAAS_TAXA_BOLETO   = 1.99;
+
+function mdrCC(n: number): number {
+  if (n === 1) return ASAAS_MDR_1X;
+  if (n <= 6)  return ASAAS_MDR_2A6;
+  return ASAAS_MDR_7A12;
+}
+
+function grossUpCC(precoBase: number, n: number): { valorTotal: number; valorParcela: number } {
+  const mdr = mdrCC(n);
+  const i   = n === 1 ? ASAAS_ANT_AVISTA : ASAAS_ANT_PARC;
+  const s   = i === 0 ? n : ((1 - i) * (1 - Math.pow(1 - i, n))) / i;
+  const pmt = (precoBase + ASAAS_TAXA_FIXA) / ((1 - mdr) * s);
+  const valorParcela = Math.round(pmt * 100) / 100;
+  const valorTotal   = Math.round(valorParcela * n * 100) / 100;
+  return { valorTotal, valorParcela };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -195,11 +221,20 @@ Deno.serve(async (req) => {
           description:       `Cobrança QA #${venda.id_legado}`,
         };
 
-        if (forma === "CREDIT_CARD" && parcelas > 1) {
-          const parcelVal = Math.round((valor / parcelas) * 100) / 100;
-          createPayload.installmentCount = parcelas;
-          createPayload.installmentValue = parcelVal;
+        if (forma === "CREDIT_CARD") {
+          // Gross-up: cliente paga MDR + antecipação Asaas
+          const gu = grossUpCC(valor, parcelas);
+          if (parcelas > 1) {
+            createPayload.installmentCount = parcelas;
+            createPayload.installmentValue = gu.valorParcela;
+          } else {
+            createPayload.value = gu.valorTotal;
+          }
+        } else if (forma === "BOLETO") {
+          // Taxa bancária de R$1,99 repassada ao cliente
+          createPayload.value = Math.round((valor + ASAAS_TAXA_BOLETO) * 100) / 100;
         } else {
+          // PIX: sem acréscimo
           createPayload.value = valor;
         }
 
