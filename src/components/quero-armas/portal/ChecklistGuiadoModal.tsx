@@ -2075,12 +2075,11 @@ function DocumentoView({
           REUTILIZADO DO HUB DE DOCUMENTOS
         </div>
       )}
-      {isCertidaoAltNome ? (
+      {isCertidaoAltNome && (
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
           Envie sua certidão de casamento ou nascimento averbada para comprovar a alteração do seu nome.
         </p>
-      ) : doc.instrucoes && <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{doc.instrucoes}</p>}
-      {doc.observacoes_cliente && <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{doc.observacoes_cliente}</p>}
+      )}
 
       {/* validade efetiva (apenas para envios já feitos) */}
       {!ehEnderecoHistorico && !!doc.arquivo_storage_key && validade.label && (
@@ -2117,23 +2116,61 @@ function DocumentoView({
         </div>
       )}
 
-      {/* botões auxiliares: emitir online / links externos / modelo / exemplo */}
-      {(doc.link_emissao || doc.modelo_url || doc.exemplo_url || externalLinks.length > 0) && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {doc.link_emissao && (
-            <a href={doc.link_emissao} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:brightness-95">
-              <ExternalLink className="h-3.5 w-3.5" /> Emitir online
-            </a>
+      {/* Como obter / onde emitir */}
+      {(doc.instrucoes || doc.observacoes_cliente || doc.link_emissao || externalLinks.length > 0) && !isCertidaoAltNome && (
+        <div className="mt-3 rounded-xl border border-[#E5C2C6] bg-[#FBF3F4]/60 p-3.5">
+          <div className="mb-2.5 flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5 shrink-0 text-[#7A1F2B]" />
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#7A1F2B]">
+              Como obter este documento
+            </span>
+          </div>
+          {doc.instrucoes && (
+            <p className="mb-3 whitespace-pre-line text-[12px] leading-relaxed text-slate-700">
+              {doc.instrucoes}
+            </p>
           )}
-          {externalLinks
-            .filter(l => l.url && l.url !== doc.link_emissao)
-            .map(l => (
-              <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer"
-                 title={l.descricao ?? undefined}
-                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:brightness-95">
-                <ExternalLink className="h-3.5 w-3.5" /> {l.nome_botao}
-              </a>
-            ))}
+          {doc.observacoes_cliente && (
+            <p className="mb-3 whitespace-pre-line text-[12px] leading-relaxed text-slate-600">
+              {doc.observacoes_cliente}
+            </p>
+          )}
+          {(doc.link_emissao || externalLinks.length > 0) && (
+            <div className="flex flex-col gap-1.5">
+              {doc.link_emissao && (
+                <a
+                  href={doc.link_emissao}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold uppercase tracking-wide text-white shadow-sm"
+                  style={{ background: MARROM }}
+                >
+                  <ExternalLink className="h-4 w-4" /> Acessar no site oficial
+                </a>
+              )}
+              {externalLinks
+                .filter(l => l.url && l.url !== doc.link_emissao)
+                .map(l => (
+                  <a
+                    key={l.id}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl border border-[#E5C2C6] bg-white px-4 py-2 text-[12px] font-bold text-[#7A1F2B] hover:bg-[#FBF3F4]"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span className="uppercase tracking-wide">{l.nome_botao}</span>
+                    {l.descricao && (
+                      <span className="ml-1 text-[10px] font-normal normal-case text-slate-500">{l.descricao}</span>
+                    )}
+                  </a>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
+      {(doc.modelo_url || doc.exemplo_url) && (
+        <div className="mt-2 flex flex-wrap gap-2">
           {doc.modelo_url && (
             <a href={doc.modelo_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 hover:brightness-95">
               <FileDown className="h-3.5 w-3.5" /> Baixar modelo
