@@ -301,6 +301,64 @@ Deno.serve(async (req) => {
       return json({ success: true, ...out });
     }
 
+    // ── ACTION: verificar_pagamento ──────────────────────────────────────────
+    if (action === "verificar_pagamento") {
+      const PAID = ["RECEIVED", "CONFIRMED"];
+      let pagoId: string | null = null;
+      let pagoStatus: string | null = null;
+      let pagoBillingType: string | null = null;
+
+      // 1. Verifica payment principal
+      try {
+        const r = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}`, { headers });
+        if (r.ok) {
+          const pd = await r.json();
+          if (PAID.includes(pd?.status)) {
+            pagoId = pd.id; pagoStatus = pd.status; pagoBillingType = pd.billingType;
+          }
+        }
+      } catch { /* ignora */ }
+
+      // 2. Verifica payments alternativos (gerados via gerar_por_forma)
+      if (!pagoId) {
+        for (const forma of ["CREDIT_CARD", "PIX", "BOLETO"]) {
+          try {
+            const extRef = `qa_alt:${venda.id_legado}:${forma}`;
+            const r = await fetch(
+              `${ASAAS_BASE_URL}/payments?externalReference=${encodeURIComponent(extRef)}&limit=10`,
+              { headers },
+            );
+            if (r.ok) {
+              const d = await r.json();
+              const found = (d?.data || []).find((p: any) => PAID.includes(p.status));
+              if (found) {
+                pagoId = found.id; pagoStatus = found.status; pagoBillingType = found.billingType;
+                break;
+              }
+            }
+          } catch { /* ignora */ }
+        }
+      }
+
+      if (pagoId) {
+        // Atualiza venda como paga
+        await admin.from("qa_vendas").update({
+          cobranca_status: "confirmada",
+          status: "PAGO",
+          cobranca_confirmada_em: new Date().toISOString(),
+        }).eq("id_legado", vendaId);
+        return json({
+          success: true,
+          pago: true,
+          payment_id: pagoId,
+          payment_status: pagoStatus,
+          billing_type: pagoBillingType,
+        });
+      }
+
+      return json({ success: true, pago: false });
+    }
+
     // ── ACTION: reemitir_boleto ───────────────────────────────────────────────
     if (action === "reemitir_boleto") {
       const novaDueDate = addDias(3);

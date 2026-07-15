@@ -534,7 +534,7 @@ type Detalhe = {
 
 function CobrancaAberta({
   venda, servico, defaultMode, onExpand, expanded, mode, setMode, detalhe, onFetchMode, onReemitirBoleto, reemitindoBoleto, temNfe,
-  selectedParcelas, onSelectParcelas, onPagarCartao,
+  selectedParcelas, onSelectParcelas, onPagarCartao, onVerificarPagamento, verificandoPagamento,
 }: {
   venda: QAVendaFinanceira;
   servico: string;
@@ -551,6 +551,8 @@ function CobrancaAberta({
   selectedParcelas?: number;
   onSelectParcelas: (n: number) => void;
   onPagarCartao: (parcelas: number) => void;
+  onVerificarPagamento: () => void;
+  verificandoPagamento: boolean;
 }) {
   const dias = diasAte(venda.asaas_due_date);
   const vencida = dias !== null && dias < 0;
@@ -768,6 +770,17 @@ function CobrancaAberta({
                 Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
                 Uma nova aba será aberta para conclusão do pagamento.
               </div>
+
+              {detalhe?.cartaoInvoiceUrl && (
+                <button
+                  className="btn out"
+                  style={{ marginTop: 12, width: "100%", padding: "10px 16px" }}
+                  disabled={verificandoPagamento}
+                  onClick={onVerificarPagamento}
+                >
+                  {verificandoPagamento ? "VERIFICANDO…" : "JÁ PAGUEI — VERIFICAR PAGAMENTO"}
+                </button>
+              )}
             </div>
           );
         })()}
@@ -956,6 +969,30 @@ export default function QAClienteFinanceiroCentral({
     }
   };
 
+  const [verificandoPorVenda, setVerificandoPorVenda] = useState<Record<number, boolean>>({});
+
+  const verificarPagamento = async (venda: QAVendaFinanceira) => {
+    if (verificandoPorVenda[venda.id_legado]) return;
+    setVerificandoPorVenda(prev => ({ ...prev, [venda.id_legado]: true }));
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", {
+        body: { venda_id: venda.id_legado, action: "verificar_pagamento" },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      if ((data as any)?.pago) {
+        toast.success("Pagamento confirmado! A cobrança foi baixada.");
+        onRefresh?.();
+      } else {
+        toast.info("Pagamento ainda não confirmado pela Asaas. Aguarde alguns instantes e tente novamente.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao verificar pagamento.");
+    } finally {
+      setVerificandoPorVenda(prev => ({ ...prev, [venda.id_legado]: false }));
+    }
+  };
+
   const reemitirBoleto = async (venda: QAVendaFinanceira) => {
     if (reemitindoPorVenda[venda.id_legado]) return;
     setReemitindoPorVenda(prev => ({ ...prev, [venda.id_legado]: true }));
@@ -1066,6 +1103,8 @@ export default function QAClienteFinanceiroCentral({
               selectedParcelas={parcelasPorVenda[v.id_legado]}
               onSelectParcelas={(n) => setParcelasPorVenda(prev => ({ ...prev, [v.id_legado]: n }))}
               onPagarCartao={(n) => void pagarCartao(v, n)}
+              onVerificarPagamento={() => void verificarPagamento(v)}
+              verificandoPagamento={!!verificandoPorVenda[v.id_legado]}
             />
           );
         })

@@ -98,6 +98,7 @@ Deno.serve(async (req) => {
 
   // ── Modo: vincular token do pagamento já existente ────────────────────────────
   if (action === "vincular_do_pagamento") {
+    // Assinatura Arsenal ativa do CPF
     const { data: ass } = await admin
       .from("qa_arsenal_assinaturas")
       .select("id, status, forma_pagamento, asaas_payment_id")
@@ -106,33 +107,81 @@ Deno.serve(async (req) => {
       .order("criado_em", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!ass?.asaas_payment_id || ass.forma_pagamento !== "CREDIT_CARD") {
-      return json({ error: "sem_pagamento_cartao" }, 409);
+    if (!ass) return json({ error: "sem_assinatura_ativa" }, 404);
+
+    // Helper: salva token na assinatura e retorna resposta de sucesso
+    async function salvarToken(p: any): Promise<Response | null> {
+      const cc = p?.creditCard;
+      if (!cc?.creditCardToken) return null;
+      const last4 = cc.creditCardNumber
+        ? cc.creditCardNumber.replace(/\*/g, "").slice(-4) : "????";
+      await admin.from("qa_arsenal_assinaturas").update({
+        asaas_credit_card_token:  cc.creditCardToken,
+        asaas_credit_card_brand:  cc.creditCardBrand  ?? null,
+        asaas_credit_card_last4:  last4,
+        asaas_credit_card_holder: cc.creditCardHolderName ?? null,
+        asaas_credit_card_expiry: null,
+        card_verificado: true,
+      }).eq("id", ass.id);
+      return json({ success: true, brand: cc.creditCardBrand ?? null, last4, holder: cc.creditCardHolderName ?? null, expiry: null });
     }
-    let payment: any;
-    try {
-      const r = await fetch(`${env.baseUrl}/payments/${ass.asaas_payment_id}`, {
-        headers: asaasHeaders(env.key),
-      });
-      payment = await r.json().catch(() => ({}));
-      if (!r.ok) return json({ error: "asaas_payment_error" }, 502);
-    } catch (e) {
-      return json({ error: "asaas_network" }, 502);
+
+    // 1. Tenta extrair token do próprio pagamento Arsenal CC (caso existente)
+    if (ass.asaas_payment_id && ass.forma_pagamento === "CREDIT_CARD") {
+      try {
+        const r = await fetch(`${env.baseUrl}/payments/${ass.asaas_payment_id}`, {
+          headers: asaasHeaders(env.key),
+        });
+        if (r.ok) {
+          const res = await salvarToken(await r.json().catch(() => ({})));
+          if (res) return res;
+        }
+      } catch { /* ignora, tenta fallback */ }
     }
-    const cc = payment?.creditCard;
-    if (!cc?.creditCardToken) {
-      return json({ error: "token_nao_disponivel" }, 404);
+
+    // 2. Fallback: procura nos pagamentos de venda CC do cliente
+    //    Útil quando o Arsenal está em gratuidade mas o cliente pagou um serviço via CC.
+    const { data: vendas } = await admin
+      .from("qa_vendas")
+      .select("id_legado, asaas_payment_id")
+      .eq("cliente_id", cli.id_legado)
+      .not("asaas_payment_id", "is", null)
+      .order("id", { ascending: false })
+      .limit(5);
+
+    for (const v of (vendas || []) as any[]) {
+      // 2a. Verifica payment principal da venda
+      try {
+        const r = await fetch(`${env.baseUrl}/payments/${v.asaas_payment_id}`, {
+          headers: asaasHeaders(env.key),
+        });
+        if (r.ok) {
+          const pd = await r.json().catch(() => ({}));
+          if (pd?.billingType === "CREDIT_CARD") {
+            const res = await salvarToken(pd);
+            if (res) return res;
+          }
+        }
+      } catch { /* ignora */ }
+
+      // 2b. Verifica payment alternativo CC (criado via gerar_por_forma)
+      try {
+        const extRef = `qa_alt:${v.id_legado}:CREDIT_CARD`;
+        const r = await fetch(
+          `${env.baseUrl}/payments?externalReference=${encodeURIComponent(extRef)}&limit=5`,
+          { headers: asaasHeaders(env.key) },
+        );
+        if (r.ok) {
+          const d = await r.json().catch(() => ({}));
+          for (const p of (d?.data || [])) {
+            const res = await salvarToken(p);
+            if (res) return res;
+          }
+        }
+      } catch { /* ignora */ }
     }
-    const last4 = cc.creditCardNumber ? cc.creditCardNumber.replace(/\*/g, "").slice(-4) : "????";
-    await admin.from("qa_arsenal_assinaturas").update({
-      asaas_credit_card_token:  cc.creditCardToken,
-      asaas_credit_card_brand:  cc.creditCardBrand  ?? null,
-      asaas_credit_card_last4:  last4,
-      asaas_credit_card_holder: cc.creditCardHolderName ?? null,
-      asaas_credit_card_expiry: null,
-      card_verificado: true,
-    }).eq("id", ass.id);
-    return json({ success: true, brand: cc.creditCardBrand ?? null, last4, holder: cc.creditCardHolderName ?? null, expiry: null });
+
+    return json({ error: "token_nao_disponivel", detalhe: "Nenhum pagamento via cartão encontrado nesta conta." }, 404);
   }
 
   // ── Modos tokenizar / verificar ───────────────────────────────────────────────
