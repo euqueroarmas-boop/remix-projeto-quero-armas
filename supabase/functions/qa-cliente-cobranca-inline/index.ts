@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
   {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, cpf")
+      .select("id, id_legado, cpf, nome_completo, email, celular, cep, numero, endereco")
       .eq("user_id", userId)
       .maybeSingle();
     cli = data;
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     if (link?.qa_cliente_id) {
       const { data } = await admin
         .from("qa_clientes")
-        .select("id, id_legado, cpf")
+        .select("id, id_legado, cpf, nome_completo, email, celular, cep, numero, endereco")
         .eq("id", link.qa_cliente_id)
         .maybeSingle();
       cli = data;
