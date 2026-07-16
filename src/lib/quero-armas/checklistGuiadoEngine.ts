@@ -450,27 +450,44 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
 
   // Busca contrato pendente de assinatura do cliente para este processo.
   // Contrato "pendente" = existe, mas o cliente ainda não enviou o arquivo assinado.
-  // Statuses que requerem ação do cliente: pending_customer_signature, rejected,
-  // generated_pending_company_signature (esperando empresa assinar antes).
+  // Busca contrato pendente de assinatura do cliente.
+  // Tenta primeiro por venda_id (preciso); cai em cliente_id como fallback
+  // (pega o contrato mais recente não-validado, útil quando venda_id é nulo).
   let contratoPendente: ContratoPendente | null = null;
+  const ehContratoPendente = (ct: any): boolean => {
+    if (!ct) return false;
+    const validado = (ct.status as string) === "validated";
+    const jaMandou = !!(ct.customer_signed_pdf_path);
+    return !validado && !jaMandou;
+  };
   try {
     const vendaId = (processo as any).venda_id ?? null;
+    let ct: any = null;
     if (vendaId) {
-      const { data: ct } = await supabase
+      const { data } = await supabase
         .from("qa_contracts" as any)
         .select("id, status, servico_slug, contract_number, customer_signed_pdf_path, customer_uploaded_at")
         .eq("venda_id", vendaId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (ct) {
-        const st = (ct as any).status as string;
-        const jaMandou = !!(ct as any).customer_signed_pdf_path;
-        const validado = st === "validated";
-        if (!validado && !jaMandou) {
-          contratoPendente = ct as unknown as ContratoPendente;
-        }
-      }
+      ct = data;
+    }
+    // Fallback: busca pelo cliente_id (venda_id pode estar nulo em processos antigos)
+    if (!ct || !ehContratoPendente(ct)) {
+      const { data } = await supabase
+        .from("qa_contracts" as any)
+        .select("id, status, servico_slug, contract_number, customer_signed_pdf_path, customer_uploaded_at")
+        .eq("cliente_id", processo.cliente_id)
+        .neq("status", "validated")
+        .is("customer_signed_pdf_path", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) ct = data;
+    }
+    if (ehContratoPendente(ct)) {
+      contratoPendente = ct as unknown as ContratoPendente;
     }
   } catch {
     // silencioso — feature aditiva
