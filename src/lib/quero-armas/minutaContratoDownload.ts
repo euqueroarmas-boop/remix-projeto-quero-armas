@@ -37,7 +37,7 @@ async function sessionHeaders() {
   };
 }
 
-function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "download_url") {
+function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "download_url" | "html_preview") {
   return JSON.stringify({
     contract_id: args.contractId,
     venda_id: args.vendaId ? Number(args.vendaId) : undefined,
