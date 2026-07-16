@@ -477,27 +477,11 @@ Deno.serve(async (req) => {
           cobranca_confirmada_em: new Date().toISOString(),
         }).eq("id_legado", vendaId);
 
-        // Ativação síncrona: gerar contrato → validar → liberar serviços.
-        // Falhas não cancelam o pagamento já confirmado — apenas logadas.
-        try {
-          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-          const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-
-          // 1. Gera contrato (idempotente)
-          const genRes = await fetch(`${supabaseUrl}/functions/v1/qa-generate-contract`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-internal-token": internalToken },
-            body: JSON.stringify({ venda_id: venda.id_legado }),
-          });
-          const genData = await genRes.json().catch(() => ({}));
-          const contractId = genData?.contract?.id ?? genData?.contract_id ?? null;
-
-          // Contrato gerado aguarda assinatura do cliente no Arsenal Inteligente.
-          // NÃO auto-validar: a validação ocorre após o cliente assinar e a QA aprovar,
-          // e é nesse momento que qa-liberar-servicos-contrato cria os processos.
-        } catch (e) {
-          console.error("[cobrar_cartao] falha na ativação síncrona (pagamento ok):", e);
-        }
+        // Pipeline pós-pagamento canônico (protocolo + contrato + notificações).
+        // Contrato nasce 'generated_pending_company_signature' e aguarda assinatura
+        // do cliente no Arsenal Inteligente. Processo só é criado depois, via
+        // trigger qa_contracts_after_validated_release → qa-liberar-servicos-contrato.
+        await executarPipelinePosPagamento(admin as any, Number(venda.id), "cobrar_cartao");
       }
 
       return json({
@@ -558,6 +542,8 @@ Deno.serve(async (req) => {
           status: "PAGO",
           cobranca_confirmada_em: new Date().toISOString(),
         }).eq("id_legado", vendaId);
+        // Pipeline pós-pagamento canônico (protocolo + contrato + notificações).
+        await executarPipelinePosPagamento(admin as any, Number(venda.id), "verificar_pagamento");
         return json({
           success: true,
           pago: true,
