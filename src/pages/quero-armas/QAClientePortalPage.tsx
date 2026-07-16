@@ -1125,15 +1125,18 @@ export default function QAClientePortalPage() {
       goContractsSection();
       return;
     }
+    if (downloadingPendingContract) return;
     const toastId = toast.loading("Preparando contrato correto…");
     setDownloadingPendingContract(true);
+    setPreparedPendingDownload((prev) => { prev?.revoke(); return null; });
     try {
-      await openMinutaContratoQueroArmas({
+      const prepared = await prepareMinutaContratoQueroArmas({
         contractId: pendingContractDownload.id,
         contractNumber: pendingContractDownload.contract_number,
         vendaId: pendingContractDownload.venda_id,
       });
-      toast.success("Contrato pronto para baixar.", { id: toastId });
+      setPreparedPendingDownload(prepared);
+      toast.success("Clique em 'Baixar contrato' para salvar o PDF.", { id: toastId });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
     } finally {
@@ -2620,13 +2623,6 @@ export default function QAClientePortalPage() {
                   </p>
 
                   <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowContratoPopup(false)}
-                      className="h-10 px-5 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] text-[11px] font-bold uppercase tracking-[0.18em] hover:bg-[#FAFAFA] transition-colors"
-                    >
-                      Agora não
-                    </button>
                     {preparedPendingDownload ? (
                       <a
                         href={preparedPendingDownload.href}
