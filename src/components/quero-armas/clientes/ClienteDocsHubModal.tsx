@@ -450,6 +450,8 @@ type FormState = {
   numero_registro_sigma: string;
   /** Regime canônico inferido pela IA: SINARM | SIGMA | REVISAR. */
   sistema_registro: "" | "SINARM" | "SIGMA" | "REVISAR";
+  /** Validade da filiação anual (comprovante_clube_tiro): data_filiacao + 1 ano. */
+  validade_filiacao: string;
 };
 
 const EMPTY: FormState = {
@@ -468,6 +470,7 @@ const EMPTY: FormState = {
   numero_cad_sinarm: "",
   numero_registro_sigma: "",
   sistema_registro: "",
+  validade_filiacao: "",
 };
 
 /**
@@ -1015,6 +1018,12 @@ export function ClienteDocsHubModal({
             d.setMonth(d.getMonth() + 3);
             return d.toISOString().slice(0, 10);
           }
+          // Comprovante de clube: declaração válida por 90 dias da data de emissão
+          if (tipoIA === "comprovante_clube_tiro") {
+            const d = new Date(emissao);
+            d.setDate(d.getDate() + 90);
+            return d.toISOString().slice(0, 10);
+          }
           // Comprovante de residência e demais certidões de antecedentes: + 1 mês
           const tiposValidade1mes = [
             "comprovante_residencia",
@@ -1029,6 +1038,14 @@ export function ClienteDocsHubModal({
             return d.toISOString().slice(0, 10);
           }
           return prev.data_validade;
+        })(),
+        validade_filiacao: (() => {
+          if (tipoIA !== "comprovante_clube_tiro") return prev.validade_filiacao;
+          const dataFiliacao = dataIsoFromBr((campos as any).data_filiacao);
+          if (!dataFiliacao) return prev.validade_filiacao;
+          const d = new Date(dataFiliacao);
+          d.setFullYear(d.getFullYear() + 1);
+          return d.toISOString().slice(0, 10);
         })(),
         arma_marca: campos.arma_marca || prev.arma_marca,
         arma_modelo: modeloExtraidoSeguro || prev.arma_modelo,
@@ -1371,6 +1388,7 @@ export function ClienteDocsHubModal({
         orgao_emissor: form.orgao_emissor || null,
         data_emissao: form.data_emissao || null,
         data_validade: form.data_validade || null,
+        validade_filiacao: form.tipo_documento === "comprovante_clube_tiro" ? (form.validade_filiacao || null) : null,
         observacoes: form.observacoes || null,
         arma_marca: showArmaFields ? form.arma_marca || null : null,
         arma_modelo: showArmaFields ? form.arma_modelo || null : null,
@@ -2397,6 +2415,25 @@ export function ClienteDocsHubModal({
                 />
               </Field>
             </div>
+
+            {form.tipo_documento === "comprovante_clube_tiro" && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-amber-700" />
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">Controle de prazos — filiação</div>
+                    <div className="text-xs text-amber-900">A declaração vale 90 dias (campo Validade acima). A filiação anual tem prazo próprio.</div>
+                  </div>
+                </div>
+                <Field label="Validade da filiação anual" icon={Calendar}>
+                  <DateInputBR
+                    value={form.validade_filiacao}
+                    onChange={(iso) => setForm((prev) => ({ ...prev, validade_filiacao: iso }))}
+                    className={inputClassName}
+                  />
+                </Field>
+              </div>
+            )}
 
             {showArmaVinculada ? (
               <div className="rounded-2xl border border-accent/30 bg-accent/8 p-4 shadow-sm sm:p-5">
