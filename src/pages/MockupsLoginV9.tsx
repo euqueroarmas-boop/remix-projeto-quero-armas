@@ -37,7 +37,10 @@ const CATEGORIAS = [
 export default function MockupsLoginV9() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [customHero, setCustomHero] = useState<string | null>(null);
+  // undefined = ainda buscando no banco; string = custom; null = usa padrão.
+  // Nunca renderizamos o BG padrão antes de sabermos se existe custom,
+  // para não haver "flash" do papel antigo por cima do novo.
+  const [customHero, setCustomHero] = useState<string | null | undefined>(undefined);
 
   useEffect(() => {
     let alive = true;
@@ -47,8 +50,19 @@ export default function MockupsLoginV9() {
       .eq("chave", "cliente_login_hero")
       .maybeSingle()
       .then(({ data }) => {
-        if (alive) setCustomHero(((data as any)?.data_url as string) || null);
-      }, () => {});
+        if (!alive) return;
+        const url = ((data as any)?.data_url as string) || null;
+        if (url) {
+          // Pré-carrega a imagem custom antes de commitá-la, evitando
+          // qualquer frame com fundo diferente.
+          const img = new Image();
+          img.onload = () => { if (alive) setCustomHero(url); };
+          img.onerror = () => { if (alive) setCustomHero(null); };
+          img.src = url;
+        } else {
+          setCustomHero(null);
+        }
+      }, () => { if (alive) setCustomHero(null); });
     return () => { alive = false; };
   }, []);
 
@@ -173,15 +187,21 @@ export default function MockupsLoginV9() {
   const inputCls =
     "h-[48px] w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]";
 
+  const heroReady = customHero !== undefined;
+  const heroUrl = customHero || BG_URL;
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
-      style={{
-        backgroundImage: `url(${customHero || BG_URL})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
+      style={
+        heroReady
+          ? {
+              backgroundImage: `url(${heroUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }
+          : { background: "#000" }
+      }
     >
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
       {!customHero && (
