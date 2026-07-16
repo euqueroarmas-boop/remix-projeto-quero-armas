@@ -187,8 +187,8 @@ export default function MockupsLoginV9() {
       {!customHero && (
         <>
           <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
-          <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 150px 26px rgba(0,0,0,0.48)" }} />
-          <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.35) 0%, transparent 70%)" }} />
+          <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 72px 10px rgba(0,0,0,0.28)" }} />
+          <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-32 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.28) 0%, transparent 70%)" }} />
         </>
       )}
 
