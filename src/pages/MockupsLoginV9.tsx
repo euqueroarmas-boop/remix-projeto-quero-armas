@@ -170,7 +170,7 @@ export default function MockupsLoginV9() {
   }
 
   const inputCls =
-    "h-[48px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none transition-all focus:border-[#B41E2D] focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]";
+    "h-[48px] w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]";
 
   return (
     <div
@@ -227,10 +227,10 @@ export default function MockupsLoginV9() {
 
       {/* DIREITA — CARD */}
       <div className="relative z-20 mx-auto w-full max-w-[340px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
-        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(10,10,10,0.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.55)", boxShadow: "0 24px 80px rgba(0,0,0,0.65), 0 0 32px rgba(180,30,45,0.12)" }}>
+        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(255,255,255,0.94)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.75)", boxShadow: "0 24px 80px rgba(0,0,0,0.45), 0 0 28px rgba(180,30,45,0.22)" }}>
           <div className="mb-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/70" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/70" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-600" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#B41E2D]/70" />
           </div>
 
