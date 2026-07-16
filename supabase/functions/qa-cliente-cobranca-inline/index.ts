@@ -32,6 +32,29 @@ function addDias(days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function digitsOnly(v: unknown): string {
+  return String(v ?? "").replace(/\D/g, "");
+}
+
+function clientIpFromRequest(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for") || "";
+  const firstForwarded = forwarded.split(",")[0]?.trim();
+  return firstForwarded
+    || req.headers.get("cf-connecting-ip")
+    || req.headers.get("x-real-ip")
+    || "127.0.0.1";
+}
+
+function safeAsaasDescription(payload: unknown, fallback: string): string {
+  const p = payload as any;
+  return String(
+    p?.errors?.[0]?.description
+    || p?.description
+    || p?.message
+    || fallback,
+  ).slice(0, 300);
+}
+
 // ── Gross-up Asaas (espelha checkoutPricing.ts) ──────────────────────────────
 // Taxas reais da conta (MDR + antecipação automática + taxa fixa).
 const ASAAS_MDR_1X    = 0.0299;
@@ -318,7 +341,6 @@ Deno.serve(async (req) => {
       if (!customerId) return json({ error: "customer_nao_encontrado" }, 500);
 
       // Monta holderInfo mesclando Asaas + qa_clientes (fallback) e usa defaults seguros p/ sandbox.
-      const digits = (s: unknown) => String(s || "").replace(/\D/g, "");
       let asaasCust: any = {};
       try {
         const rc = await fetch(`${ASAAS_BASE_URL}/customers/${customerId}`, { headers });
@@ -328,10 +350,10 @@ Deno.serve(async (req) => {
       const holderInfo: Record<string, string> = {
         name:          String(asaasCust?.name || c?.nome_completo || "Titular do Cartão").trim(),
         email:         String(asaasCust?.email || c?.email || "").trim(),
-        cpfCnpj:       digits(asaasCust?.cpfCnpj || c?.cpf),
-        postalCode:    digits(asaasCust?.postalCode || c?.cep) || "01310100",
+        cpfCnpj:       digitsOnly(asaasCust?.cpfCnpj || c?.cpf),
+        postalCode:    digitsOnly(asaasCust?.postalCode || c?.cep) || "01310100",
         addressNumber: String(asaasCust?.addressNumber || c?.numero || "S/N").trim() || "S/N",
-        phone:         digits(asaasCust?.phone || asaasCust?.mobilePhone || c?.celular) || "11999999999",
+        phone:         digitsOnly(asaasCust?.phone || asaasCust?.mobilePhone || c?.celular) || "11999999999",
       };
       if (!holderInfo.name || !holderInfo.email || !holderInfo.cpfCnpj) {
         return json({
@@ -381,21 +403,38 @@ Deno.serve(async (req) => {
         if (!holderName || number.length < 13 || !expiryMonth || expiryYear.length < 2 || !ccv) {
           return json({ error: "dados_cartao_incompletos" }, 400);
         }
-        const tokReq = await fetch(`${ASAAS_BASE_URL}/creditCards/tokenize`, {
+        const remoteIp = clientIpFromRequest(req);
+        const tokenizePayload = {
+          customer: customerId,
+          creditCard: { holderName, number, expiryMonth, expiryYear, ccv },
+          creditCardHolderInfo: holderInfo,
+          // Campo obrigatório na API atual da Asaas; deve ser o IP do comprador, não do servidor.
+          remoteIp,
+        };
+
+        let tokReq = await fetch(`${ASAAS_BASE_URL}/creditCard/tokenizeCreditCard`, {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customer: customerId,
-            creditCard: { holderName, number, expiryMonth, expiryYear, ccv },
-            creditCardHolderInfo: holderInfo,
-          }),
+          body: JSON.stringify(tokenizePayload),
         });
         const tokData = await tokReq.json().catch(() => ({}));
-        if (!tokReq.ok || !tokData?.creditCardToken) {
-          const msg = (tokData as any)?.errors?.[0]?.description || "Cartão recusado";
-          return json({ error: "tokenizacao_falhou", detalhe: String(msg).slice(0, 300) }, 422);
+        if (!tokReq.ok && [404, 405].includes(tokReq.status)) {
+          tokReq = await fetch(`${ASAAS_BASE_URL}/creditCards/tokenize`, {
+            method: "POST",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify(tokenizePayload),
+          });
         }
-        creditCardToken = tokData.creditCardToken;
+        const finalTokData = tokReq === undefined ? tokData : (tokReq.ok ? await Promise.resolve(tokData) : await tokReq.clone().json().catch(() => tokData));
+        if (!tokReq.ok || !(finalTokData as any)?.creditCardToken) {
+          const sandbox = String(ASAAS_BASE_URL).includes("sandbox");
+          const refused = safeAsaasDescription(finalTokData, "Cartão recusado");
+          const detalhe = sandbox && number !== "4444444444444444"
+            ? "Cartão recusado no sandbox. Para simular aprovação na Asaas, use o cartão teste 4444 4444 4444 4444, validade futura e CVV 123."
+            : refused;
+          return json({ error: "tokenizacao_falhou", detalhe }, 422);
+        }
+        creditCardToken = (finalTokData as any).creditCardToken;
         // Token usado apenas para esta cobrança — não é armazenado no servidor.
       }
 
