@@ -17,7 +17,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
-import { ArsenalLogo } from "@/components/quero-armas/arsenal/ArsenalLogo";
 import { ArsenalInteligenteLogo } from "@/components/branding/ArsenalInteligenteLogo";
 
 const BG_URL = bgAsset.url;
