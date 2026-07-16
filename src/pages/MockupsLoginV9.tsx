@@ -36,6 +36,20 @@ const CATEGORIAS = [
 export default function MockupsLoginV9() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [customHero, setCustomHero] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    supabase
+      .from("qa_branding" as any)
+      .select("data_url")
+      .eq("chave", "cliente_login_hero")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setCustomHero(((data as any)?.data_url as string) || null);
+      }, () => {});
+    return () => { alive = false; };
+  }, []);
 
   const [showPwd, setShowPwd] = useState(false);
   const [email, setEmail] = useState("");
@@ -161,7 +175,7 @@ export default function MockupsLoginV9() {
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
-      style={{ backgroundImage: `url(${BG_URL})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
+      style={{ backgroundImage: `url(${customHero || BG_URL})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
     >
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
       <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
