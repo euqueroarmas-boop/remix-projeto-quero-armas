@@ -339,6 +339,7 @@ Deno.serve(async (req) => {
         if (r.ok) { const pd = await r.json(); customerId = pd?.customer ?? null; }
       } catch { /* ignora */ }
       if (!customerId) return json({ error: "customer_nao_encontrado" }, 500);
+      const remoteIp = clientIpFromRequest(req);
 
       // Monta holderInfo mesclando Asaas + qa_clientes (fallback) e usa defaults seguros p/ sandbox.
       let asaasCust: any = {};
@@ -403,7 +404,6 @@ Deno.serve(async (req) => {
         if (!holderName || number.length < 13 || !expiryMonth || expiryYear.length < 2 || !ccv) {
           return json({ error: "dados_cartao_incompletos" }, 400);
         }
-        const remoteIp = clientIpFromRequest(req);
         const tokenizePayload = {
           customer: customerId,
           creditCard: { holderName, number, expiryMonth, expiryYear, ccv },
@@ -448,6 +448,7 @@ Deno.serve(async (req) => {
         description:       `Serviço QA #${venda.id_legado}`,
         externalReference: `qa_alt:${venda.id_legado}:CREDIT_CARD`,
         creditCardToken,
+        remoteIp,
       };
       if (parcelas > 1) {
         chargePayload.installmentCount = parcelas;
