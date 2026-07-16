@@ -1049,7 +1049,7 @@ export default function QAClienteFinanceiroCentral({
       if (error) throw error;
       const d = data as any;
       if (d?.error || d?.network_error) throw new Error(d.detalhe || d.network_error || String(d.error));
-      if (!d?.payment_id) throw new Error("Cobrança não foi criada na Asaas — aguarde alguns instantes e tente novamente.");
+      if (!d?.payment_id) throw new Error("Não foi possível criar a cobrança. Verifique os dados do cartão e tente novamente.");
       const precoBase = Number(venda.valor_a_pagar || 0);
       const gu = precoBase > 0 ? calcularPrecoFinal(precoBase, "CREDIT_CARD", parcelas) : null;
       const cobrado = {
