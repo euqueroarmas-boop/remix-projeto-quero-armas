@@ -261,7 +261,21 @@ export default function ClienteResumoKanban({
       const statusProcesso = String(item.status || "").toLowerCase();
       const nomeProcesso = titleCaseServico(nome, "Processo");
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
-        return { label: nomeProcesso, status: "Checklist aberto", tone: "warn" as const };
+        return {
+          label: nomeProcesso,
+          status: "Te aguardando",
+          tone: "warn" as const,
+          onClick: () => {
+            // Se ainda há contrato pendente de assinatura, leva o cliente
+            // para o passo anterior (assinatura do contrato). Caso contrário,
+            // abre o assistente de documentação já focado neste processo.
+            if (pendingContracts > 0) {
+              onNavigate("contratos");
+              return;
+            }
+            abrirChecklistGuiado({ processoId: item?.id ? String(item.id) : null });
+          },
+        };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
         return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
