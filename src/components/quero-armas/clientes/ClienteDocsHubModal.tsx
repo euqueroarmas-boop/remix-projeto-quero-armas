@@ -1060,9 +1060,12 @@ export function ClienteDocsHubModal({
         })(),
         validade_filiacao: (() => {
           if (tipoIA !== "comprovante_clube_tiro") return prev.validade_filiacao;
-          const dataFiliacao = dataIsoFromBr((campos as any).data_filiacao);
-          if (!dataFiliacao) return prev.validade_filiacao;
-          const d = new Date(dataFiliacao);
+          // Prioridade: data_filiacao extraída do corpo do documento, senão data_emissao
+          const base =
+            dataIsoFromBr((campos as any).data_filiacao) ||
+            dataIsoFromBr(campos.data_emissao);
+          if (!base) return prev.validade_filiacao;
+          const d = new Date(base);
           d.setFullYear(d.getFullYear() + 1);
           return d.toISOString().slice(0, 10);
         })(),
