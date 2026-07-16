@@ -243,20 +243,20 @@ export default function MockupsLoginV9() {
             <ArsenalLogo height={34} />
           </div>
           <div className="mb-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/70" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-600" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#B41E2D]/70" />
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/80" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/95" style={{ fontFamily: "Rajdhani, sans-serif", textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}>Área Restrita</span>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#B41E2D]/80" />
           </div>
 
           {needCpf ? (
             <form className="space-y-4" onSubmit={handleLinkByCpf}>
-              <p className="text-xs leading-relaxed text-slate-600">Não localizamos seu cadastro automaticamente. Informe seu <strong className="text-slate-900">CPF</strong> para vincular.</p>
+              <p className="text-xs leading-relaxed text-white/85" style={{ textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>Não localizamos seu cadastro automaticamente. Informe seu <strong className="text-white">CPF</strong> para vincular.</p>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>CPF</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90" style={{ fontFamily: "Rajdhani, sans-serif", textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>CPF</label>
                 <input type="text" inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(e.target.value)} autoFocus className="h-[48px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={handleCancelCpf} className="h-[48px] flex-1 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Cancelar</button>
+                <button type="button" onClick={handleCancelCpf} className="h-[48px] flex-1 rounded-lg border border-white/30 bg-white/80 text-sm font-semibold text-slate-800 transition hover:bg-white">Cancelar</button>
                 <button type="submit" disabled={loadingCpf} className="flex h-[48px] flex-[1.4] items-center justify-center gap-2 rounded-lg bg-[#B41E2D] text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-[#7A1F2B] disabled:opacity-60" style={{ fontFamily: "Oswald, sans-serif" }}>
                   {loadingCpf && <Loader2 className="h-4 w-4 animate-spin" />}Vincular
                 </button>
@@ -265,14 +265,14 @@ export default function MockupsLoginV9() {
           ) : (
             <form className="space-y-4" onSubmit={handleEmailLogin}>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>E-mail</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90" style={{ fontFamily: "Rajdhani, sans-serif", textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>E-mail</label>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>Senha</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90" style={{ fontFamily: "Rajdhani, sans-serif", textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>Senha</label>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input type={showPwd ? "text" : "password"} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-[48px] w-full rounded-lg border border-slate-300 bg-white pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
@@ -285,9 +285,9 @@ export default function MockupsLoginV9() {
                 {loadingEmail && <Loader2 className="h-4 w-4 animate-spin" />}Entrar
               </button>
               <div className="flex items-center gap-3 pt-1">
-                <div className="h-px flex-1 bg-slate-200" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500" style={{ fontFamily: "Rajdhani, sans-serif" }}>Ou continue com</span>
-                <div className="h-px flex-1 bg-slate-200" />
+                <div className="h-px flex-1 bg-white/30" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/85" style={{ fontFamily: "Rajdhani, sans-serif", textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>Ou continue com</span>
+                <div className="h-px flex-1 bg-white/30" />
               </div>
               <div className="space-y-2.5">
                 <button type="button" onClick={() => handleSocial("google")} disabled={loadingProvider !== null} className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-all hover:border-[#B41E2D]/40 hover:bg-slate-50 disabled:opacity-60">
@@ -298,13 +298,13 @@ export default function MockupsLoginV9() {
                 </button>
               </div>
               <div className="flex items-center justify-between pt-3 text-xs">
-                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="text-slate-500 transition-colors hover:text-slate-800 disabled:opacity-60">{resetLoading ? "Enviando..." : "Esqueceu a senha?"}</button>
-                <Link to="/cadastro" className="font-semibold text-[#B41E2D] transition-colors hover:text-[#E03546]">Criar conta →</Link>
+                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="text-white/85 transition-colors hover:text-white disabled:opacity-60" style={{ textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>{resetLoading ? "Enviando..." : "Esqueceu a senha?"}</button>
+                <Link to="/cadastro" className="font-semibold text-white transition-colors hover:text-[#E0E0E0]" style={{ textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>Criar conta →</Link>
               </div>
             </form>
           )}
         </div>
-        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-slate-400">Ambiente Seguro · Acesso Auditado</p>
+        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-white/80" style={{ textShadow: "0 1px 5px rgba(0,0,0,0.55)" }}>Ambiente Seguro · Acesso Auditado</p>
       </div>
     </div>
   );
