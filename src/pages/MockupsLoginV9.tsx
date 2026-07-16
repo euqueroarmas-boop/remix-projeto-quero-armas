@@ -186,15 +186,15 @@ export default function MockupsLoginV9() {
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
       {!customHero && (
         <>
-          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
-          <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 72px 10px rgba(0,0,0,0.28)" }} />
-          <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-32 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.28) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.03) 38%, rgba(0,0,0,0.06) 62%, rgba(0,0,0,0.30) 85%, rgba(0,0,0,0.45) 100%)" }} />
+          <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 48px 8px rgba(0,0,0,0.20)" }} />
+          <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-28 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.24) 0%, transparent 70%)" }} />
         </>
       )}
 
       {/* Overlay leve à direita quando há imagem custom, para o card manter contraste. */}
       {customHero && (
-        <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
+        <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.30) 85%, rgba(0,0,0,0.45) 100%)" }} />
       )}
 
       {/* Patrocínio + textos do hero — ocultos quando há imagem custom (usuário quer só a imagem) */}
