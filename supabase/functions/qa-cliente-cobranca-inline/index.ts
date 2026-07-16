@@ -417,24 +417,24 @@ Deno.serve(async (req) => {
           headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify(tokenizePayload),
         });
-        const tokData = await tokReq.json().catch(() => ({}));
+        let tokData = await tokReq.json().catch(() => ({}));
         if (!tokReq.ok && [404, 405].includes(tokReq.status)) {
           tokReq = await fetch(`${ASAAS_BASE_URL}/creditCards/tokenize`, {
             method: "POST",
             headers: { ...headers, "Content-Type": "application/json" },
             body: JSON.stringify(tokenizePayload),
           });
+          tokData = await tokReq.json().catch(() => ({}));
         }
-        const finalTokData = tokReq === undefined ? tokData : (tokReq.ok ? await Promise.resolve(tokData) : await tokReq.clone().json().catch(() => tokData));
-        if (!tokReq.ok || !(finalTokData as any)?.creditCardToken) {
+        if (!tokReq.ok || !tokData?.creditCardToken) {
           const sandbox = String(ASAAS_BASE_URL).includes("sandbox");
-          const refused = safeAsaasDescription(finalTokData, "Cartão recusado");
+          const refused = safeAsaasDescription(tokData, "Cartão recusado");
           const detalhe = sandbox && number !== "4444444444444444"
             ? "Cartão recusado no sandbox. Para simular aprovação na Asaas, use o cartão teste 4444 4444 4444 4444, validade futura e CVV 123."
             : refused;
           return json({ error: "tokenizacao_falhou", detalhe }, 422);
         }
-        creditCardToken = (finalTokData as any).creditCardToken;
+        creditCardToken = tokData.creditCardToken;
         // Token usado apenas para esta cobrança — não é armazenado no servidor.
       }
 
