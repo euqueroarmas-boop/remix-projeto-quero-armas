@@ -2553,7 +2553,7 @@ export default function QAClientePortalPage() {
       )}
 
       {cliente?.id ? (
-        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} blockOutsideDismiss={showContratoPopup} />
+        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
       ) : null}
 
       {cliente?.id ? (
@@ -2570,6 +2570,7 @@ export default function QAClientePortalPage() {
           className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           role="dialog"
           aria-modal="true"
+          data-qa-overlay
           onClick={() => setShowContratoPopup(false)}
           style={{ pointerEvents: "auto" }}
         >

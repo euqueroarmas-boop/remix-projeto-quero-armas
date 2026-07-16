@@ -22,13 +22,11 @@ interface Props {
   clienteId: number;
   /** chamado quando o assistente altera algo (para recarregar contadores do portal) */
   onUpdated?: () => void;
-  /** impede que o Radix Dialog feche ao clicar fora (ex: outro modal sobreposto) */
-  blockOutsideDismiss?: boolean;
 }
 
 const guardKey = (contractId: string) => `qa_checklist_guiado_auto_${contractId}`;
 
-export default function ChecklistGuiado({ clienteId, onUpdated, blockOutsideDismiss }: Props) {
+export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [processoIdAlvo, setProcessoIdAlvo] = useState<string | null>(null);
   const [focusDocId, setFocusDocId] = useState<string | null>(null);
@@ -168,7 +166,6 @@ export default function ChecklistGuiado({ clienteId, onUpdated, blockOutsideDism
       processoIdInicial={processoIdAlvo}
       focusDocIdInicial={focusDocId}
       onUpdated={onUpdated}
-      blockOutsideDismiss={blockOutsideDismiss}
     />
   );
 }
