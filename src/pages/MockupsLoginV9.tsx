@@ -170,7 +170,7 @@ export default function MockupsLoginV9() {
   }
 
   const inputCls =
-    "h-[48px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] pl-10 pr-3 text-sm text-white placeholder:text-white/35 outline-none transition-all focus:border-[#B41E2D] focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]";
+    "h-[48px] w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]";
 
   return (
     <div
@@ -227,22 +227,22 @@ export default function MockupsLoginV9() {
 
       {/* DIREITA — CARD */}
       <div className="relative z-20 mx-auto w-full max-w-[340px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
-        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(10,10,10,0.72)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.55)", boxShadow: "0 24px 80px rgba(0,0,0,0.65), 0 0 32px rgba(180,30,45,0.12)" }}>
+        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(255,255,255,0.94)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.75)", boxShadow: "0 24px 80px rgba(0,0,0,0.45), 0 0 28px rgba(180,30,45,0.22)" }}>
           <div className="mb-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/70" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-white/70" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-600" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#B41E2D]/70" />
           </div>
 
           {needCpf ? (
             <form className="space-y-4" onSubmit={handleLinkByCpf}>
-              <p className="text-xs leading-relaxed text-white/65">Não localizamos seu cadastro automaticamente. Informe seu <strong className="text-white">CPF</strong> para vincular.</p>
+              <p className="text-xs leading-relaxed text-slate-600">Não localizamos seu cadastro automaticamente. Informe seu <strong className="text-slate-900">CPF</strong> para vincular.</p>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80" style={{ fontFamily: "Rajdhani, sans-serif" }}>CPF</label>
-                <input type="text" inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(e.target.value)} autoFocus className="h-[48px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] px-3 text-sm text-white placeholder:text-white/35 outline-none transition-all focus:border-[#B41E2D] focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>CPF</label>
+                <input type="text" inputMode="numeric" placeholder="000.000.000-00" value={cpf} onChange={(e) => setCpf(e.target.value)} autoFocus className="h-[48px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={handleCancelCpf} className="h-[48px] flex-1 rounded-lg border border-white/15 text-sm font-semibold text-white/70 transition hover:bg-white/[0.05]">Cancelar</button>
+                <button type="button" onClick={handleCancelCpf} className="h-[48px] flex-1 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">Cancelar</button>
                 <button type="submit" disabled={loadingCpf} className="flex h-[48px] flex-[1.4] items-center justify-center gap-2 rounded-lg bg-[#B41E2D] text-sm font-bold uppercase tracking-[0.1em] text-white transition hover:bg-[#7A1F2B] disabled:opacity-60" style={{ fontFamily: "Oswald, sans-serif" }}>
                   {loadingCpf && <Loader2 className="h-4 w-4 animate-spin" />}Vincular
                 </button>
@@ -251,18 +251,18 @@ export default function MockupsLoginV9() {
           ) : (
             <form className="space-y-4" onSubmit={handleEmailLogin}>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80" style={{ fontFamily: "Rajdhani, sans-serif" }}>E-mail</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>E-mail</label>
                 <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input type="email" required autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className={inputCls} />
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80" style={{ fontFamily: "Rajdhani, sans-serif" }}>Senha</label>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700" style={{ fontFamily: "Rajdhani, sans-serif" }}>Senha</label>
                 <div className="relative">
-                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/45" />
-                  <input type={showPwd ? "text" : "password"} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-[48px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] pl-10 pr-11 text-sm text-white placeholder:text-white/35 outline-none transition-all focus:border-[#B41E2D] focus:bg-white/[0.06] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
-                  <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/45 transition-colors hover:text-white" aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}>
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input type={showPwd ? "text" : "password"} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="h-[48px] w-full rounded-lg border border-slate-300 bg-white pl-10 pr-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-[#B41E2D] focus:shadow-[0_0_0_3px_rgba(180,30,45,0.18)]" />
+                  <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 transition-colors hover:text-slate-700" aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}>
                     {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -271,26 +271,26 @@ export default function MockupsLoginV9() {
                 {loadingEmail && <Loader2 className="h-4 w-4 animate-spin" />}Entrar
               </button>
               <div className="flex items-center gap-3 pt-1">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/50" style={{ fontFamily: "Rajdhani, sans-serif" }}>Ou continue com</span>
-                <div className="h-px flex-1 bg-white/10" />
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500" style={{ fontFamily: "Rajdhani, sans-serif" }}>Ou continue com</span>
+                <div className="h-px flex-1 bg-slate-200" />
               </div>
               <div className="space-y-2.5">
-                <button type="button" onClick={() => handleSocial("google")} disabled={loadingProvider !== null} className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-white/[0.14] bg-white/[0.035] text-sm font-medium text-white/85 transition-all hover:border-white/30 hover:bg-white/[0.07] disabled:opacity-60">
+                <button type="button" onClick={() => handleSocial("google")} disabled={loadingProvider !== null} className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-all hover:border-[#B41E2D]/40 hover:bg-slate-50 disabled:opacity-60">
                   {loadingProvider === "google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}Continuar com Google
                 </button>
-                <button type="button" onClick={() => handleSocial("apple")} disabled={loadingProvider !== null} className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-white/[0.14] bg-white/[0.035] text-sm font-medium text-white/85 transition-all hover:border-white/30 hover:bg-white/[0.07] disabled:opacity-60">
+                <button type="button" onClick={() => handleSocial("apple")} disabled={loadingProvider !== null} className="flex h-[44px] w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-700 transition-all hover:border-[#B41E2D]/40 hover:bg-slate-50 disabled:opacity-60">
                   {loadingProvider === "apple" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AppleIcon />}Continuar com Apple
                 </button>
               </div>
               <div className="flex items-center justify-between pt-3 text-xs">
-                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="text-white/55 transition-colors hover:text-white/85 disabled:opacity-60">{resetLoading ? "Enviando..." : "Esqueceu a senha?"}</button>
+                <button type="button" onClick={handleForgotPassword} disabled={resetLoading} className="text-slate-500 transition-colors hover:text-slate-800 disabled:opacity-60">{resetLoading ? "Enviando..." : "Esqueceu a senha?"}</button>
                 <Link to="/cadastro" className="font-semibold text-[#B41E2D] transition-colors hover:text-[#E03546]">Criar conta →</Link>
               </div>
             </form>
           )}
         </div>
-        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-white/35">Ambiente Seguro · Acesso Auditado</p>
+        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-slate-400">Ambiente Seguro · Acesso Auditado</p>
       </div>
     </div>
   );
