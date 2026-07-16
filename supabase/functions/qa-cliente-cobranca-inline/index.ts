@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
           return json({ error: "tokenizacao_falhou", detalhe }, 422);
         }
         creditCardToken = tokData.creditCardToken;
-        // Token usado apenas para esta cobrança — não é armazenado no servidor.
+        // Token guardado logo abaixo em qa_arsenal_assinaturas (last4/brand/holder).
       }
 
       // Cria cobrança direta com token (sem invoiceUrl)
@@ -471,6 +471,22 @@ Deno.serve(async (req) => {
 
       const pago = ["RECEIVED", "CONFIRMED"].includes((charged as any)?.status);
       if (pago) {
+        // Extrai metadados do cartão a partir da resposta da Asaas.
+        const chargedCard = (charged as any)?.creditCard ?? {};
+        const cardLast4 = String(chargedCard?.creditCardNumber || "").slice(-4)
+          || String((tokData as any)?.creditCardNumber || "").slice(-4)
+          || null;
+        const cardBrand = String(chargedCard?.creditCardBrand || (tokData as any)?.creditCardBrand || "").toUpperCase() || null;
+        const cardHolder = (body?.usar_arsenal_cartao === true)
+          ? null
+          : String(body?.holderName || "").trim().toUpperCase() || null;
+        const cardExpiry = (body?.usar_arsenal_cartao === true)
+          ? null
+          : (body?.expiryMonth && body?.expiryYear
+              ? `${String(body.expiryMonth).padStart(2, "0")}/${String(body.expiryYear).slice(-2)}`
+              : null);
+        const chargedToken = String(chargedCard?.creditCardToken || creditCardToken || "") || null;
+
         // Persiste método real, parcelas, valor efetivamente cobrado e o novo
         // asaas_payment_id — caso contrário a venda continuaria refletindo a
         // cobrança PIX/boleto original criada no checkout.
@@ -488,6 +504,27 @@ Deno.serve(async (req) => {
           updatePayload.asaas_payment_id = newPaymentId;
         }
         await admin.from("qa_vendas").update(updatePayload).eq("id_legado", vendaId);
+
+        // Sincroniza cartão salvo (qa_arsenal_assinaturas) com o cartão usado
+        // agora, exceto quando o cliente reutilizou o cartão do Arsenal.
+        if (body?.usar_arsenal_cartao !== true && (cardLast4 || cardBrand || chargedToken)) {
+          try {
+            const cpfDigits = digitsOnly((cli as any)?.cpf);
+            if (cpfDigits) {
+              const patch: Record<string, unknown> = { atualizado_em: new Date().toISOString() };
+              if (cardLast4) patch.asaas_credit_card_last4 = cardLast4;
+              if (cardBrand) patch.asaas_credit_card_brand = cardBrand;
+              if (cardHolder) patch.asaas_credit_card_holder = cardHolder;
+              if (cardExpiry) patch.asaas_credit_card_expiry = cardExpiry;
+              if (chargedToken) patch.asaas_credit_card_token = chargedToken;
+              await admin
+                .from("qa_arsenal_assinaturas")
+                .update(patch)
+                .eq("cpf", cpfDigits)
+                .in("status", ["gratuidade", "ativa", "aguardando_pagamento"]);
+            }
+          } catch { /* ignora */ }
+        }
 
         // Auditoria (best-effort)
         try {
