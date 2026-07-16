@@ -96,7 +96,7 @@ function htmlToBlocks(html: string): Block[] {
 }
 
 function buildCanonicalPdf(contract: any, html: string): Uint8Array {
-  const blocks = htmlToBlocks(html);
+  const blocks = htmlToBlocks(sanitizeTechnicalJargon(html));
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: false });
 
   // Metadados fixos garantem determinismo caso a geração seja reexecutada
