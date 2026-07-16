@@ -12,6 +12,7 @@
 //   both             — (legado) busca PIX + boleto do payment principal.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { executarPipelinePosPagamento } from "../_shared/qaPosPagamento.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
