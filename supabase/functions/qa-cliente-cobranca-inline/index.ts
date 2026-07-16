@@ -355,29 +355,7 @@ Deno.serve(async (req) => {
           return json({ error: "tokenizacao_falhou", detalhe: String(msg).slice(0, 300) }, 422);
         }
         creditCardToken = tokData.creditCardToken;
-
-        // Salva token no Arsenal se o cliente tiver assinatura
-        const cpf = String(cli.cpf || "").replace(/\D/g, "");
-        if (cpf) {
-          const { data: ass } = await admin
-            .from("qa_arsenal_assinaturas")
-            .select("id")
-            .eq("cpf", cpf)
-            .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
-            .order("criado_em", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (ass) {
-            const last4 = tokData.creditCardNumber
-              ? String(tokData.creditCardNumber).replace(/\*/g, "").slice(-4) : number.slice(-4);
-            await admin.from("qa_arsenal_assinaturas").update({
-              asaas_credit_card_token:  creditCardToken,
-              asaas_credit_card_brand:  tokData.creditCardBrand  ?? null,
-              asaas_credit_card_last4:  last4,
-              asaas_credit_card_holder: holderName,
-            }).eq("id", (ass as any).id);
-          }
-        }
+        // Token usado apenas para esta cobrança — não é armazenado no servidor.
       }
 
       // Cria cobrança direta com token (sem invoiceUrl)
