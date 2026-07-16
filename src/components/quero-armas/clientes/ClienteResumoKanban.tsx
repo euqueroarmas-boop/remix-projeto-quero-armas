@@ -122,6 +122,7 @@ export default function ClienteResumoKanban({
   armasManual = [],
   meusDocs = [],
   processoDocs = [],
+  pendingContracts = 0,
   onNavigate,
   onOpenCadastro,
   onOpenComprar,
