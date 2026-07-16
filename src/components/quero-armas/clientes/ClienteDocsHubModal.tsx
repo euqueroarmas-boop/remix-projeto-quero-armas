@@ -1576,8 +1576,9 @@ export function ClienteDocsHubModal({
       // O card EXAMES do Resumo lê dessa tabela — sem este upsert ele fica em 0.
       // Regra Lei 10.826/03: vencimento = data_avaliacao + 1 ano.
       try {
+        const t = form.tipo_documento.toLowerCase();
+        const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico|psicologico/i.test(t);
         if (qaClienteId && isLaudoExameTipo) {
-          const t = form.tipo_documento.toLowerCase();
           const tipoExame: "psicologico" | "tiro" | null = /psico|laudo_psi|psicotec/.test(t)
             ? "psicologico"
             : /capacidade_tecnica|exame_tiro|tiro/.test(t)
