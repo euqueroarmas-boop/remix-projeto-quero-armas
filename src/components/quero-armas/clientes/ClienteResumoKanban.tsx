@@ -605,12 +605,26 @@ export default function ClienteResumoKanban({
               </div>
               {front.items.length === 0 && <div className="qa-front-card__item"><span title="Nenhum item monitorado">Nenhum item monitorado</span><strong title="—">—</strong></div>}
               {front.items.map((item, index) => (
-                <div
-                  className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
-                  key={`${front.key}-${index}-${item.label}`}
-                >
-                  <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
-                </div>
+                item.onClick ? (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); item.onClick?.(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); item.onClick?.(); } }}
+                    className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
+                    style={{ cursor: "pointer" }}
+                    key={`${front.key}-${index}-${item.label}`}
+                  >
+                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status} style={{ textDecoration: "underline" }}>{item.status}</strong>
+                  </div>
+                ) : (
+                  <div
+                    className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
+                    key={`${front.key}-${index}-${item.label}`}
+                  >
+                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
+                  </div>
+                )
               ))}
             </article>
           ))}
