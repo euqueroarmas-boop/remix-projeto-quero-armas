@@ -748,6 +748,25 @@ export function ClienteDocsHubModal({
     nome_mae: string | null;
   }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null });
 
+  // Reseta todo o estado do modal quando ele é fechado, para que ao abrir
+  // novamente não persista arquivo, resultado de IA ou campos preenchidos.
+  useEffect(() => {
+    if (open) return;
+    setFile(null);
+    setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+    setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
+    setClassificacao(null);
+    setAutoResult(null);
+    setIaExtraido({});
+    setConfirmados({});
+    setConformidade([]);
+    setTemApontamento(false);
+    setReconheceApontamento(null);
+    setHomonimiaSalva(false);
+    setShowDeclaracao(false);
+    setExtracting(false);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
