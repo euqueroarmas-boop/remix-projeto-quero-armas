@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { ArsenalPremiumState } from "@/hooks/useArsenalPremium";
 import { useArsenalPlano } from "@/hooks/useArsenalPlano";
+import { ArsenalLogoMark } from "@/components/quero-armas/arsenal/ArsenalLogo";
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -23,6 +24,7 @@ const CSS = `
 .qagate__dim{filter:grayscale(.9) opacity(.35);pointer-events:none;user-select:none;max-height:420px;overflow:hidden}
 .qagate__dim::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,#f6f5f1 95%)}
 .qagate__cta{position:relative;margin-top:-360px;z-index:2;background:#fff;border:1px solid #e3e0d8;border-top:4px solid #7A1F2B;border-radius:12px;padding:26px 28px;max-width:680px;margin-left:auto;margin-right:auto;box-shadow:0 14px 40px rgba(17,17,17,.10)}
+.qagate__brand{display:flex;justify-content:center;margin:0 0 14px}
 .qagate__kicker{display:flex;align-items:center;gap:8px;font-family:Oswald,sans-serif;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#7A1F2B;font-weight:600}
 .qagate h2{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#0A0A0A;margin:8px 0 6px}
 .qagate__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:#4a4a4a;margin:0 0 14px}
@@ -213,7 +215,10 @@ export default function ArsenalPremiumGate({ arsenal, children, recurso }: Props
       <div className="qagate__dim" aria-hidden>{children}</div>
 
       <div className="qagate__cta">
-        <div className="qagate__kicker"><Lock size={13} /> Arsenal Inteligente · Premium</div>
+        <div className="qagate__brand" aria-label="Arsenal Inteligente">
+          <ArsenalLogoMark height={72} />
+        </div>
+        <div className="qagate__kicker"><Lock size={13} /> Premium</div>
         <h2>{recurso ? `Desbloqueie: ${recurso}` : "Desbloqueie o Arsenal completo"}</h2>
         <p className="qagate__lead">
           {arsenal.assinatura?.status === "suspensa"
