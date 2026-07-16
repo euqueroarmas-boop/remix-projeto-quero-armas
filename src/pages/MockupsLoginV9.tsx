@@ -244,7 +244,8 @@ export default function MockupsLoginV9() {
               orientation="horizontal"
               color="burgundy"
               className="mx-auto"
-              symbolClassName="h-11 w-auto"
+              symbolClassName="h-14 w-auto"
+              wordmarkClassName="[&>span:first-child]:text-xl [&>span:last-child]:text-[9px]"
             />
           </div>
           <div className="mb-5 flex items-center gap-3">
