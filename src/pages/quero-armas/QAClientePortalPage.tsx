@@ -607,7 +607,35 @@ export default function QAClientePortalPage() {
         setCadastro(Array.isArray(crRes.data) ? (crRes.data[0] ?? null) : crRes.data);
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
-        setFiliacoes((flRes.data as any[]) ?? []);
+
+        // Filiacoes canônicas (qa_filiacoes) + comprovante_clube_tiro aprovados do hub
+        // que ainda não têm entrada em qa_filiacoes (histórico via hub documental).
+        const filiacoesCanon = (flRes.data as any[]) ?? [];
+        const docFiltersEarly = [
+          clienteData.id ? `qa_cliente_id.eq.${clienteData.id}` : "",
+          customerLink?.id ? `customer_id.eq.${customerLink.id}` : "",
+        ].filter(Boolean).join(",");
+        if (docFiltersEarly) {
+          const { data: clubeDocs } = await supabase
+            .from("qa_documentos_cliente" as any)
+            .select("id, orgao_emissor, data_emissao, data_validade, validade_filiacao, status")
+            .or(docFiltersEarly)
+            .eq("tipo_documento", "comprovante_clube_tiro")
+            .neq("status", "excluido")
+            .order("data_emissao", { ascending: false });
+          const hubFil = ((clubeDocs as any[]) ?? []).map((d: any) => ({
+            id: `hub_${d.id}`,
+            nome_clube: d.orgao_emissor || "Clube",
+            nome_filiacao: d.orgao_emissor || "Clube",
+            data_emissao: d.data_emissao,
+            validade_filiacao: d.validade_filiacao || d.data_validade,
+            status: d.status,
+            _fromHub: true,
+          }));
+          setFiliacoes([...filiacoesCanon, ...hubFil]);
+        } else {
+          setFiliacoes(filiacoesCanon);
+        }
 
         // Pega apenas o exame mais recente de cada tipo (psicologico, tiro)
         const exames = (exRes.data as any[]) ?? [];

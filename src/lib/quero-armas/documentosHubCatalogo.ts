@@ -305,6 +305,19 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     return "GTE — Guia de Tráfego Eventual";
   }
 
+  // ===== CAC / habitualidade =====
+  if (tipo === "comprovante_clube_tiro") {
+    const orgao = String(doc?.orgao_emissor || "").trim();
+    if (orgao) return `Declaração de Filiação — ${orgao}`;
+    return "Declaração de Filiação a Clube de Tiro";
+  }
+  if (tipo === "comprovante_habitualidade") {
+    return "Comprovante de Habitualidade";
+  }
+  if (tipo === "comprovante_competicao") {
+    return "Comprovante de Competição";
+  }
+
   return null;
 }
 
