@@ -921,9 +921,14 @@ export default function QAClienteFinanceiroCentral({
   const [reemitindoPorVenda, setReemitindoPorVenda] = useState<Record<number, boolean>>({});
   const [nfePorPayment, setNfePorPayment] = useState<Record<string, string>>({});
   const [parcelasPorVenda, setParcelasPorVenda] = useState<Record<number, number>>({});
+  // IDs de vendas confirmadas nesta sessão (update otimista — não espera reload do pai)
+  const [confirmadasIds, setConfirmadasIds] = useState<Set<number>>(new Set());
 
   const vendasVisiveis = useMemo(() => vendas.filter(v => !isCancelada(v)), [vendas]);
-  const abertas = useMemo(() => vendasVisiveis.filter(v => !isPaga(v)), [vendasVisiveis]);
+  const abertas = useMemo(
+    () => vendasVisiveis.filter(v => !isPaga(v) && !confirmadasIds.has(v.id_legado)),
+    [vendasVisiveis, confirmadasIds],
+  );
   const pagas = useMemo(
     () => vendasVisiveis.filter(isPaga).sort((a, b) => {
       const da = a.cobranca_confirmada_em || a.data_cadastro || "";
@@ -1064,6 +1069,7 @@ export default function QAClienteFinanceiroCentral({
         [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: null, cartaoCobrado: cobrado },
       }));
       if (cobrado.pago) {
+        setConfirmadasIds(prev => new Set([...prev, venda.id_legado]));
         toast.success("Pagamento confirmado!");
         onRefresh?.();
       } else {
@@ -1090,6 +1096,7 @@ export default function QAClienteFinanceiroCentral({
       if (error) throw error;
       if ((data as any)?.error) throw new Error(String((data as any).error));
       if ((data as any)?.pago) {
+        setConfirmadasIds(prev => new Set([...prev, venda.id_legado]));
         toast.success("Pagamento confirmado! A cobrança foi baixada.");
         onRefresh?.();
       } else {
