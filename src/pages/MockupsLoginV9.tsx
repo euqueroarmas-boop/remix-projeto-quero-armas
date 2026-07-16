@@ -290,7 +290,7 @@ export default function MockupsLoginV9() {
             </form>
           )}
         </div>
-        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-white/35">Ambiente Seguro · Acesso Auditado</p>
+        <p className="mt-4 text-center text-[10px] uppercase tracking-[0.22em] text-slate-400">Ambiente Seguro · Acesso Auditado</p>
       </div>
     </div>
   );
