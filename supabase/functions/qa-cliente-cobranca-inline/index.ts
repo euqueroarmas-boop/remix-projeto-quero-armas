@@ -471,11 +471,43 @@ Deno.serve(async (req) => {
 
       const pago = ["RECEIVED", "CONFIRMED"].includes((charged as any)?.status);
       if (pago) {
-        await admin.from("qa_vendas").update({
+        // Persiste método real, parcelas, valor efetivamente cobrado e o novo
+        // asaas_payment_id — caso contrário a venda continuaria refletindo a
+        // cobrança PIX/boleto original criada no checkout.
+        const newPaymentId = String((charged as any)?.id || "");
+        const updatePayload: Record<string, unknown> = {
           cobranca_status: "confirmada",
           status: "PAGO",
           cobranca_confirmada_em: new Date().toISOString(),
-        }).eq("id_legado", vendaId);
+          forma_pagamento: "CARTÃO DE CRÉDITO",
+          parcelas_cobranca: parcelas,
+          valor_cobrado: gu.valorTotal,
+          cobranca_origem: "cobrar_cartao_inline",
+        };
+        if (newPaymentId && newPaymentId !== paymentId) {
+          updatePayload.asaas_payment_id = newPaymentId;
+        }
+        await admin.from("qa_vendas").update(updatePayload).eq("id_legado", vendaId);
+
+        // Auditoria (best-effort)
+        try {
+          await admin.from("qa_pagamento_auditoria").insert({
+            venda_id: Number(venda.id),
+            cliente_id: (venda as any)?.cliente_id ?? null,
+            campo: "forma_pagamento",
+            valor_anterior: (venda as any)?.forma_pagamento ?? null,
+            valor_novo: "CARTÃO DE CRÉDITO",
+            origem: "manual_financeiro",
+            ator: `user:${userId}`,
+            contexto: {
+              action: "cobrar_cartao",
+              parcelas,
+              valor_total: gu.valorTotal,
+              asaas_payment_id_anterior: paymentId,
+              asaas_payment_id_novo: newPaymentId,
+            },
+          });
+        } catch { /* ignora */ }
 
         // Pipeline pós-pagamento canônico (protocolo + contrato + notificações).
         // Contrato nasce 'generated_pending_company_signature' e aguarda assinatura
@@ -536,12 +568,74 @@ Deno.serve(async (req) => {
       }
 
       if (pagoId) {
-        // Atualiza venda como paga
-        await admin.from("qa_vendas").update({
+        // Persiste método real conforme apurado no Asaas. Sem isso, o portal
+        // continua exibindo a forma inferida (PIX) mesmo após pagamento por cartão.
+        let installments: number | null = null;
+        let valorRecebido: number | null = null;
+        try {
+          const rp = await fetch(`${ASAAS_BASE_URL}/payments/${pagoId}`, { headers });
+          if (rp.ok) {
+            const pd = await rp.json();
+            installments = Number(pd?.installmentCount) || null;
+            valorRecebido = Number(pd?.value) || null;
+            if (!installments && pd?.installment) {
+              try {
+                const ri = await fetch(
+                  `${ASAAS_BASE_URL}/installments/${pd.installment}`,
+                  { headers },
+                );
+                if (ri.ok) {
+                  const idata = await ri.json();
+                  installments = Number(idata?.installmentCount) || installments;
+                  valorRecebido = Number(idata?.value) || valorRecebido;
+                }
+              } catch { /* ignora */ }
+            }
+          }
+        } catch { /* ignora */ }
+
+        const formaLabel = pagoBillingType === "CREDIT_CARD"
+          ? "CARTÃO DE CRÉDITO"
+          : pagoBillingType === "BOLETO"
+          ? "BOLETO"
+          : pagoBillingType === "PIX"
+          ? "PIX"
+          : null;
+
+        const updatePayload: Record<string, unknown> = {
           cobranca_status: "confirmada",
           status: "PAGO",
           cobranca_confirmada_em: new Date().toISOString(),
-        }).eq("id_legado", vendaId);
+          cobranca_origem: "verificar_pagamento_inline",
+        };
+        if (formaLabel) updatePayload.forma_pagamento = formaLabel;
+        if (installments) updatePayload.parcelas_cobranca = installments;
+        else if (pagoBillingType && pagoBillingType !== "CREDIT_CARD") updatePayload.parcelas_cobranca = 1;
+        if (valorRecebido) updatePayload.valor_cobrado = valorRecebido;
+        if (pagoId && pagoId !== paymentId) updatePayload.asaas_payment_id = pagoId;
+
+        await admin.from("qa_vendas").update(updatePayload).eq("id_legado", vendaId);
+
+        try {
+          await admin.from("qa_pagamento_auditoria").insert({
+            venda_id: Number(venda.id),
+            cliente_id: (venda as any)?.cliente_id ?? null,
+            campo: "forma_pagamento",
+            valor_anterior: (venda as any)?.forma_pagamento ?? null,
+            valor_novo: formaLabel,
+            origem: "manual_financeiro",
+            ator: `user:${userId}`,
+            contexto: {
+              action: "verificar_pagamento",
+              billing_type: pagoBillingType,
+              installments,
+              valor_recebido: valorRecebido,
+              asaas_payment_id_anterior: paymentId,
+              asaas_payment_id_novo: pagoId,
+            },
+          });
+        } catch { /* ignora */ }
+
         // Pipeline pós-pagamento canônico (protocolo + contrato + notificações).
         await executarPipelinePosPagamento(admin as any, Number(venda.id), "verificar_pagamento");
         return json({
