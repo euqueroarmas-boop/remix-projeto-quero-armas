@@ -491,20 +491,9 @@ Deno.serve(async (req) => {
           const genData = await genRes.json().catch(() => ({}));
           const contractId = genData?.contract?.id ?? genData?.contract_id ?? null;
 
-          if (contractId) {
-            // 2. Valida contrato (pagamento = autorização contratual)
-            await admin.from("qa_contracts")
-              .update({ status: "validated" })
-              .eq("id", contractId)
-              .neq("status", "validated"); // idempotente
-
-            // 3. Libera serviços (cria processos, solicitações e checklist)
-            await fetch(`${supabaseUrl}/functions/v1/qa-liberar-servicos-contrato`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "x-internal-token": internalToken },
-              body: JSON.stringify({ contract_id: contractId, origem_trigger: "cobrar_cartao_sync" }),
-            });
-          }
+          // Contrato gerado aguarda assinatura do cliente no Arsenal Inteligente.
+          // NÃO auto-validar: a validação ocorre após o cliente assinar e a QA aprovar,
+          // e é nesse momento que qa-liberar-servicos-contrato cria os processos.
         } catch (e) {
           console.error("[cobrar_cartao] falha na ativação síncrona (pagamento ok):", e);
         }
