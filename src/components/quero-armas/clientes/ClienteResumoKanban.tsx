@@ -394,7 +394,7 @@ export default function ClienteResumoKanban({
       ["TAREFAS ABERTAS", String(redCount + activeProcessosCount), `de ${totalTasks}`],
       ["PRÓXIMO VENCIMENTO", nextDue !== undefined ? String(nextDue) : "—", nextDue !== undefined ? "dias" : ""],
       ["DOCUMENTOS A RENOVAR", String(redCount), redCount > 0 ? "urgente" : ""],
-      ["PROCESSOS ATIVOS", String(activeProcessosCount), activeProcessos.length ? "checklist aberto" : ""],
+      ["PROCESSOS ATIVOS", String(activeProcessosCount), activeProcessos.length ? "te aguardando" : ""],
     ];
 
     return { fronts, urgents: sortedUrgents, totalFronts, activeItems, activeProcessos, summary };
