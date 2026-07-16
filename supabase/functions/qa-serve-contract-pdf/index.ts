@@ -642,13 +642,22 @@ Deno.serve(async (req) => {
 
   const sb = svc();
 
-  // Resolve perfil + cliente
-  const [{ data: perfil }, { data: link }] = await Promise.all([
-    sb.from("qa_usuarios_perfis").select("perfil, ativo").eq("user_id", user.userId).eq("ativo", true).maybeSingle(),
-    sb.from("cliente_auth_links").select("qa_cliente_id, status").eq("user_id", user.userId).eq("status", "active").maybeSingle(),
-  ]);
+  // Resolve perfil + cliente (espelha cobranca-inline: tenta user_id direto, fallback via cliente_auth_links)
+  const { data: perfil } = await sb.from("qa_usuarios_perfis").select("perfil, ativo").eq("user_id", user.userId).eq("ativo", true).maybeSingle();
   const isStaff = !!perfil;
-  const clienteId = (link as any)?.qa_cliente_id ?? null;
+
+  let cli: { id: unknown; id_legado: unknown } | null = null;
+  if (!isStaff) {
+    const { data: cliDireto } = await sb.from("qa_clientes").select("id, id_legado").eq("user_id", user.userId).maybeSingle();
+    cli = cliDireto;
+    if (!cli) {
+      const { data: link } = await sb.from("cliente_auth_links").select("qa_cliente_id").eq("user_id", user.userId).eq("status", "active").maybeSingle();
+      if ((link as any)?.qa_cliente_id) {
+        const { data: cliLink } = await sb.from("qa_clientes").select("id, id_legado").eq("id", (link as any).qa_cliente_id).maybeSingle();
+        cli = cliLink;
+      }
+    }
+  }
 
   let contractId: string | null = null;
   let vendaId: number | null = null;
@@ -679,9 +688,9 @@ Deno.serve(async (req) => {
   const { data: contract } = await q.maybeSingle();
   if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
 
-  // Ownership
+  // Ownership — compara id_legado (inteiro) com id_legado do cliente autenticado
   if (!isStaff) {
-    if (!clienteId || (contract as any).cliente_id !== clienteId) {
+    if (!cli || Number((contract as any).cliente_id) !== Number((cli as any).id_legado)) {
       return jsonResp({ error: "Acesso negado" }, 403);
     }
     if (variant === "original") variant = "company_signed";
