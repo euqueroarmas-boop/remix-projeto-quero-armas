@@ -47,25 +47,9 @@ function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "
 
 export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Promise<PreparedMinutaDownload> {
   const headers = await sessionHeaders();
-  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
 
-  const urlResp = await fetch(endpoint, {
-    method: "POST",
-    headers,
-    body: contractRequestBody(args, "download_url"),
-  });
-
-  if (urlResp.ok) {
-    const data = await urlResp.json().catch(() => null);
-    if (data?.url) {
-      return {
-        href: data.url,
-        filename: data.filename || `Contrato-${args.contractNumber || args.contractId}.pdf`,
-        revoke: () => undefined,
-      };
-    }
-  }
-
+  // Sempre usa company_signed (blob URL) — garante download real no Safari,
+  // evitando o comportamento cross-origin de signed URLs que Safari ignora.
   const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
     method: "POST",
     headers,
