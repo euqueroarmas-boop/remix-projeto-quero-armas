@@ -475,6 +475,39 @@ Deno.serve(async (req) => {
           status: "PAGO",
           cobranca_confirmada_em: new Date().toISOString(),
         }).eq("id_legado", vendaId);
+
+        // Ativação síncrona: gerar contrato → validar → liberar serviços.
+        // Falhas não cancelam o pagamento já confirmado — apenas logadas.
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+
+          // 1. Gera contrato (idempotente)
+          const genRes = await fetch(`${supabaseUrl}/functions/v1/qa-generate-contract`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-internal-token": internalToken },
+            body: JSON.stringify({ venda_id: venda.id_legado }),
+          });
+          const genData = await genRes.json().catch(() => ({}));
+          const contractId = genData?.contract?.id ?? genData?.contract_id ?? null;
+
+          if (contractId) {
+            // 2. Valida contrato (pagamento = autorização contratual)
+            await admin.from("qa_contracts")
+              .update({ status: "validated" })
+              .eq("id", contractId)
+              .neq("status", "validated"); // idempotente
+
+            // 3. Libera serviços (cria processos, solicitações e checklist)
+            await fetch(`${supabaseUrl}/functions/v1/qa-liberar-servicos-contrato`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-internal-token": internalToken },
+              body: JSON.stringify({ contract_id: contractId, origem_trigger: "cobrar_cartao_sync" }),
+            });
+          }
+        } catch (e) {
+          console.error("[cobrar_cartao] falha na ativação síncrona (pagamento ok):", e);
+        }
       }
 
       return json({
