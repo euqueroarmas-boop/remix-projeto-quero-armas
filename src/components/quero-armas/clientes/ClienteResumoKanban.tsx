@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
-import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getNomeDocumentoDisplay, getTipoDocumentoMeta, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
@@ -73,7 +73,10 @@ function compactStatus(days: number | null, percent?: number | null) {
 }
 
 function shortName(value: string, fallback: string) {
-  return String(value || fallback).replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  const raw = String(value || fallback).replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  const letters = raw.replace(/[^a-zA-ZÀ-ú]/g, "");
+  const isAllCaps = letters.length > 0 && letters === letters.toUpperCase();
+  return isAllCaps ? toTitleCasePtBR(raw) : raw;
 }
 
 // Title Case pt-BR para nomes de serviço/processo.
