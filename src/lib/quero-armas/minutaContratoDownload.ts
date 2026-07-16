@@ -14,6 +14,8 @@ export type PreparedMinutaDownload = {
   href: string;
   filename: string;
   revoke: () => void;
+  /** true quando o href é uma página HTML para abrir em nova aba (não um PDF para download direto) */
+  openInNewTab?: boolean;
 };
 
 function filenameFromContentDisposition(header: string | null, fallback: string) {
@@ -47,10 +49,29 @@ function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "
 
 export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Promise<PreparedMinutaDownload> {
   const headers = await sessionHeaders();
+  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
 
-  // Sempre usa company_signed (blob URL) — garante download real no Safari,
-  // evitando o comportamento cross-origin de signed URLs que Safari ignora.
-  const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`, {
+  // Tenta html_preview primeiro — renderização perfeita via browser (fonts, acentos, layout).
+  // O usuário vê o HTML em nova aba com botão "Salvar/assinar em PDF" para gerar o PDF final.
+  const htmlResp = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: contractRequestBody(args, "html_preview"),
+  });
+  if (htmlResp.ok) {
+    const htmlText = await htmlResp.text();
+    const blob = new Blob([htmlText], { type: "text/html; charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    return {
+      href,
+      filename: `Contrato-${args.contractNumber || args.contractId}.html`,
+      revoke: () => URL.revokeObjectURL(href),
+      openInNewTab: true,
+    };
+  }
+
+  // Fallback: company_signed (blob PDF via jsPDF)
+  const resp = await fetch(endpoint, {
     method: "POST",
     headers,
     body: contractRequestBody(args, "company_signed"),

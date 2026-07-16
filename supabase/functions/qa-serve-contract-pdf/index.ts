@@ -699,8 +699,8 @@ Deno.serve(async (req) => {
   const auditedContract = await ensureRenderedContractAudit(sb, req, contract as any);
   const html = auditedContract.conteudo_renderizado as string | null;
 
-  // Preview HTML (staff, para depuração visual antes da geração do PDF)
-  if (variant === "html_preview" && isStaff && html && html.trim()) {
+  // Preview HTML — disponível para staff e para o próprio cliente (após ownership check acima)
+  if (variant === "html_preview" && html && html.trim()) {
     const fname = contractDownloadFilename(auditedContract, "html");
     return new Response(printableContractHtml(auditedContract as any, html), {
       status: 200,
