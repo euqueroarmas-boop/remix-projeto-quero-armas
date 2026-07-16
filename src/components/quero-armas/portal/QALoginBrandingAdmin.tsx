@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 
 const CHAVE = "cliente_login_hero";
-const MAX_BYTES = 800 * 1024; // 800KB (base64 ≈ +33%)
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -38,10 +37,6 @@ export default function QALoginBrandingAdmin() {
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem."); return; }
-    if (file.size > MAX_BYTES) {
-      toast.error(`Imagem muito grande (máx ${Math.round(MAX_BYTES / 1024)}KB). Otimize/comprima antes.`);
-      return;
-    }
     setSaving(true);
     try {
       const url = await fileToDataUrl(file);
