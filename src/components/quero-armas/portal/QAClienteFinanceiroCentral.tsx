@@ -1048,13 +1048,16 @@ export default function QAClienteFinanceiroCentral({
       const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", { body });
       if (error) throw error;
       const d = data as any;
-      if (d?.error) throw new Error(d.detalhe || String(d.error));
+      if (d?.error || d?.network_error) throw new Error(d.detalhe || d.network_error || String(d.error));
+      if (!d?.payment_id) throw new Error("Cobrança não foi criada na Asaas — aguarde alguns instantes e tente novamente.");
+      const precoBase = Number(venda.valor_a_pagar || 0);
+      const gu = precoBase > 0 ? calcularPrecoFinal(precoBase, "CREDIT_CARD", parcelas) : null;
       const cobrado = {
         status:       String(d.status || "PENDING"),
         pago:         !!d.pago,
-        valorTotal:   Number(d.valor_total || 0),
-        valorParcela: Number(d.valor_parcela || 0),
-        parcelas:     Number(d.parcelas || parcelas),
+        valorTotal:   Number(d.valor_total) || gu?.valorTotal || 0,
+        valorParcela: Number(d.valor_parcela) || gu?.valorParcela || 0,
+        parcelas:     Number(d.parcelas) || parcelas,
       };
       setDetalhePorVenda(prev => ({
         ...prev,
