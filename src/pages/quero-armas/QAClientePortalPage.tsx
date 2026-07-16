@@ -413,6 +413,7 @@ export default function QAClientePortalPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/area-do-cliente/login", { replace: true }); return; }
+        setAuthKnown(true);
 
         // Força troca de senha no primeiro acesso
         if (user.user_metadata?.password_change_required === true) {
