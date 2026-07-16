@@ -1211,7 +1211,8 @@ export default function QAClientePortalPage() {
     const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
     // Cadastro incompleto reabre em todo refresh até ser preenchido —
     // é bloqueante para o restante do fluxo.
-    const ignorarTrava = portalStartupAction.type === "cadastro";
+    // contrato: popup deve aparecer a cada sessão até ser assinado (como cadastro)
+    const ignorarTrava = portalStartupAction.type === "cadastro" || portalStartupAction.type === "contrato";
     if (!ignorarTrava && sessionStorage.getItem(key)) {
       setEntradaAutoChecked(true);
       return;
@@ -2576,7 +2577,9 @@ export default function QAClientePortalPage() {
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#28C840]" />
               </div>
               <div className="text-[10px] font-bold text-[#6A6A6A] tracking-[0.1em] uppercase">
-                Protocolo {new Date().toISOString().slice(0,10).replace(/-/g,'.')}
+                {pendingContractDownload?.contract_number
+                  ? `Protocolo ${pendingContractDownload.contract_number}`
+                  : "Contrato pendente"}
               </div>
               <div className="w-8" />
             </div>
