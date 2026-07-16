@@ -37,6 +37,7 @@ import {
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
   CargaProcesso,
+  ContratoPendente,
   CONDICAO_OPCOES_GUIA,
   GuiaDoc,
   ProcessoElegivel,
@@ -132,6 +133,7 @@ type Fase =
   | "resultado_erro"
   | "resultado_demorando"
   | "concluido"
+  | "contrato_pendente"
   | "vazio";
 
 interface Props {
@@ -296,7 +298,8 @@ export default function ChecklistGuiadoModal({
     if (fila.length === 0) {
       // tudo concluído neste processo — limpa marcador de retomada
       clearDocumentAssistantProgress({ clienteId, processoId: c.processo.id });
-      setFase("concluido");
+      // Se há contrato pendente de assinatura, mostra tela específica em vez de "concluído"
+      setFase(c.contratoPendente ? "contrato_pendente" : "concluido");
       setDocAtivoId(null);
     } else {
       const resumeId = resolveResumeDocId(
@@ -1729,6 +1732,62 @@ export default function ChecklistGuiadoModal({
                 </p>
                 <button onClick={onClose} className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: MARROM }}>
                   Concluir
+                </button>
+              </div>
+            )}
+
+            {/* CONTRATO PENDENTE DE ASSINATURA */}
+            {fase === "contrato_pendente" && carga?.contratoPendente && (
+              <div className="flex flex-col gap-5 py-6 px-1">
+                {/* Cabeçalho de status */}
+                <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-700">Aguardando assinatura</div>
+                    <div className="mt-0.5 text-[13px] font-extrabold leading-snug text-slate-900">
+                      Contrato {carga.contratoPendente.contract_number}
+                    </div>
+                    <div className="mt-1 text-[12px] leading-relaxed text-slate-600">
+                      O serviço será iniciado somente após você assinar e enviar o contrato.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instruções */}
+                <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Como assinar</div>
+                  <ol className="space-y-2.5">
+                    {[
+                      { n: "1", text: "Acesse a seção Contratos no seu painel e baixe o PDF do contrato." },
+                      { n: "2", text: "Assine digitalmente pelo Gov.br (assinatura eletrônica com certificado ICP-Brasil) ou outro certificado ICP-Brasil válido." },
+                      { n: "3", text: "Volte ao painel, abra o contrato e anexe o PDF assinado." },
+                    ].map(({ n, text }) => (
+                      <li key={n} className="flex items-start gap-2.5">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-extrabold text-white" style={{ background: MARROM }}>{n}</span>
+                        <span className="text-[12px] leading-relaxed text-slate-700">{text}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {/* Aviso */}
+                <p className="text-center text-[11px] leading-relaxed text-slate-400">
+                  A Equipe Quero Armas está aguardando o envio do contrato assinado para dar início ao processo.
+                </p>
+
+                {/* Ação */}
+                <button
+                  onClick={() => {
+                    onClose();
+                    window.location.href = "/area-do-cliente?secao=contratos";
+                  }}
+                  className="mx-auto inline-flex items-center gap-2 rounded-xl px-6 py-3 text-[13px] font-bold text-white shadow-sm"
+                  style={{ background: MARROM }}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Ir para Contratos
                 </button>
               </div>
             )}

@@ -37,6 +37,16 @@ export interface GuiaProcesso {
   etapa_liberada_ate?: number | null;
   respostas_questionario_json?: Record<string, string> | null;
   condicao_profissional?: string | null;
+  venda_id?: number | null;
+}
+
+export interface ContratoPendente {
+  id: string;
+  status: string;
+  servico_slug: string | null;
+  contract_number: string;
+  customer_signed_pdf_path: string | null;
+  customer_uploaded_at: string | null;
 }
 
 // Linha de documento — superset dos campos usados na UI guiada.
@@ -306,6 +316,8 @@ export interface CargaProcesso {
   respostas: Record<string, string>;
   etapaLiberada: number;
   clienteNome?: string | null;
+  /** Contrato pendente de assinatura do cliente. Null quando validado ou inexistente. */
+  contratoPendente: ContratoPendente | null;
 }
 
 /**
@@ -336,7 +348,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
     .select(
-      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional",
+      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, venda_id",
     )
     .eq("id", processoId)
     .maybeSingle();
@@ -436,12 +448,41 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     };
   });
 
+  // Busca contrato pendente de assinatura do cliente para este processo.
+  // Contrato "pendente" = existe, mas o cliente ainda não enviou o arquivo assinado.
+  // Statuses que requerem ação do cliente: pending_customer_signature, rejected,
+  // generated_pending_company_signature (esperando empresa assinar antes).
+  let contratoPendente: ContratoPendente | null = null;
+  try {
+    const vendaId = (processo as any).venda_id ?? null;
+    if (vendaId) {
+      const { data: ct } = await supabase
+        .from("qa_contracts" as any)
+        .select("id, status, servico_slug, contract_number, customer_signed_pdf_path, customer_uploaded_at")
+        .eq("venda_id", vendaId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (ct) {
+        const st = (ct as any).status as string;
+        const jaMandou = !!(ct as any).customer_signed_pdf_path;
+        const validado = st === "validated";
+        if (!validado && !jaMandou) {
+          contratoPendente = ct as ContratoPendente;
+        }
+      }
+    }
+  } catch {
+    // silencioso — feature aditiva
+  }
+
   return {
     processo,
     docs: docsComOrdem as GuiaDoc[],
     respostas,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
+    contratoPendente,
   };
 }
 
