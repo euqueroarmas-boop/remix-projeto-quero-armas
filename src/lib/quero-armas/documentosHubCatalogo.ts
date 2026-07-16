@@ -192,8 +192,33 @@ function normalizeDocumentoName(value: unknown): string {
     .toUpperCase();
 }
 
+// Preposições, conjunções e artigos do português que ficam em minúscula
+// quando não são a primeira palavra do título.
+const PREP_PT = new Set([
+  "a", "à", "ao", "aos", "às",
+  "com", "contra", "de", "da", "das", "do", "dos",
+  "e", "em", "na", "nas", "no", "nos",
+  "o", "os", "ou", "para", "per", "por",
+  "sem", "sob", "sobre", "um", "uma", "uns", "umas",
+]);
+
+export function toTitleCasePtBR(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\s—\-\/()]+/g, (word, offset) => {
+      if (offset === 0) return word.charAt(0).toUpperCase() + word.slice(1);
+      if (PREP_PT.has(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    });
+}
+
 function cleanDocumentoName(value: unknown): string {
-  return String(value || "").replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  const raw = String(value || "").replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  if (!raw) return raw;
+  // Aplica title case apenas quando o nome vier todo em maiúsculas (padrão da IA).
+  const upper = raw.replace(/[^a-zA-ZÀ-ú\s]/g, "");
+  const isAllCaps = upper.length > 0 && upper === upper.toUpperCase();
+  return isAllCaps ? toTitleCasePtBR(raw) : raw;
 }
 
 function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
