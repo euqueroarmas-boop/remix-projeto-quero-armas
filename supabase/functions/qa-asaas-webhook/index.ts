@@ -16,6 +16,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { executarPipelinePosPagamento } from "../_shared/qaPosPagamento.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -261,33 +262,9 @@ Deno.serve(async (req) => {
       payload: { event, paymentId, venda_id },
     });
 
-    // Gera protocolo oficial (QA{SIGLA}{ANO}{SEQ}) — idempotente.
-    // Best-effort: falha NÃO compromete o webhook.
-    try {
-      const { data: protoData, error: protoErr } = await supabase.rpc(
-        "qa_gerar_protocolo",
-        { p_venda_id: venda_id },
-      );
-      if (protoErr) {
-        await logSistemaBackend({
-          tipo: "protocolo", status: "error",
-          mensagem: `qa-asaas-webhook: falha gerar protocolo venda ${venda_id}`,
-          payload: { venda_id, error: protoErr.message },
-        });
-      } else {
-        await logSistemaBackend({
-          tipo: "protocolo", status: "success",
-          mensagem: `qa-asaas-webhook: protocolo ${protoData} gerado p/ venda ${venda_id}`,
-          payload: { venda_id, numero_protocolo: protoData },
-        });
-      }
-    } catch (e) {
-      await logSistemaBackend({
-        tipo: "protocolo", status: "error",
-        mensagem: `qa-asaas-webhook: exceção gerar protocolo venda ${venda_id}`,
-        payload: { venda_id, error: String((e as any)?.message || e) },
-      });
-    }
+    // Pipeline canônico pós-pagamento: gerar_protocolo + qa-generate-contract
+    // + notificações. Idempotente e best-effort.
+    await executarPipelinePosPagamento(supabase as any, venda_id, "asaas_webhook");
 
     // ── Camada ADITIVA: provisiona acesso ao Arsenal Inteligente (portal)
     //    para o cliente da venda. A function é idempotente (no-op se
