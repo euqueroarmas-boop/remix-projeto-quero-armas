@@ -129,6 +129,7 @@ export interface QAVendaFinanceira {
   asaas_pix_payload: string | null;
   asaas_due_date: string | null;
   cobranca_confirmada_em: string | null;
+  parcelas_cobranca?: number | null;
 }
 
 export interface QAVendaItemLite {
