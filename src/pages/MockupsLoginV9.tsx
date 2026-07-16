@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { ArsenalLogo } from "@/components/quero-armas/arsenal/ArsenalLogo";
 
 const BG_URL = bgAsset.url;
 
@@ -237,7 +238,10 @@ export default function MockupsLoginV9() {
 
       {/* DIREITA — CARD */}
       <div className="relative z-20 mx-auto w-full max-w-[340px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
-        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(255,255,255,0.94)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", border: "1px solid rgba(180,30,45,0.75)", boxShadow: "0 24px 80px rgba(0,0,0,0.45), 0 0 28px rgba(180,30,45,0.22)" }}>
+        <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(18px) saturate(1.1)", WebkitBackdropFilter: "blur(18px) saturate(1.1)", border: "1px solid rgba(180,30,45,0.75)", boxShadow: "0 24px 80px rgba(0,0,0,0.45), 0 0 28px rgba(180,30,45,0.22)" }}>
+          <div className="mb-4 flex justify-center">
+            <ArsenalLogo height={34} />
+          </div>
           <div className="mb-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#B41E2D]/70" />
             <span className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-600" style={{ fontFamily: "Rajdhani, sans-serif" }}>Área Restrita</span>
