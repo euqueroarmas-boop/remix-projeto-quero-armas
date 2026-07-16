@@ -248,7 +248,7 @@ export default function ClienteResumoKanban({
     const filiacaoItems = filiacoes.map((f: any) => {
       const days = daysUntil(f.validade_filiacao);
       return {
-        label: shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"),
+        label: titleCaseServico(shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"), "Clube"),
         status: compactStatus(days),
         tone: frontStatus(days),
       };
