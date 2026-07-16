@@ -734,11 +734,59 @@ function CobrancaAberta({
                 })}
               </div>
 
-              {selP ? (
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {detalhe?.cartaoInvoiceUrl ? (
+                // ── Estado pós-geração: guiar para pagar e depois confirmar ──────
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+                  <div style={{
+                    display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: "11px 13px", borderRadius: 10,
+                    background: "#F0FDF4", border: "1.5px solid #86EFAC",
+                  }}>
+                    <span style={{ fontSize: 17, lineHeight: 1, marginTop: 1 }}>✅</span>
+                    <div>
+                      <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", color: "#15803D", marginBottom: 2 }}>
+                        COBRANÇA GERADA{selectedParcelas && selectedParcelas > 1 ? ` EM ${selectedParcelas}×` : " À VISTA"}
+                      </div>
+                      <div style={{ fontFamily: "Arial", fontSize: 11.5, color: "#166534", lineHeight: 1.45 }}>
+                        Acesse a página da Asaas para inserir os dados do cartão e concluir o pagamento.
+                      </div>
+                    </div>
+                  </div>
+                  <a
+                    className="btn pri"
+                    href={detalhe.cartaoInvoiceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 16px", textDecoration: "none" }}
+                  >
+                    ABRIR PÁGINA DE PAGAMENTO
+                  </a>
+                  <button
+                    className="btn out"
+                    style={{ padding: "9px 16px", fontSize: 12 }}
+                    disabled={verificandoPagamento}
+                    onClick={onVerificarPagamento}
+                  >
+                    {verificandoPagamento ? "VERIFICANDO…" : "Já paguei — verificar confirmação"}
+                  </button>
+                  <button
+                    style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      fontFamily: "Arial", fontSize: 11, color: "var(--ink-soft)",
+                      textDecoration: "underline", padding: "2px 0", textAlign: "left",
+                    }}
+                    disabled={!!detalhe?.loading}
+                    onClick={() => selP && onPagarCartao(selectedParcelas!)}
+                  >
+                    {detalhe?.loading ? "Gerando…" : "↺ Gerar nova cobrança"}
+                  </button>
+                </div>
+              ) : selP ? (
+                // ── Estado inicial: botão para gerar ─────────────────────────────
+                <>
                   <button
                     className="btn pri"
-                    style={{ flex: 1, minWidth: 200, padding: "11px 16px" }}
+                    style={{ width: "100%", padding: "11px 16px" }}
                     disabled={!!detalhe?.loading}
                     onClick={() => onPagarCartao(selectedParcelas!)}
                   >
@@ -748,38 +796,21 @@ function CobrancaAberta({
                         ? `PAGAR À VISTA — ${fmtBRL(selP.valorTotal)}`
                         : `PAGAR EM ${selectedParcelas}× — ${fmtBRL(selP.valorParcela)}/MÊS`}
                   </button>
-                  {detalhe?.cartaoInvoiceUrl && (
-                    <a className="btn out" href={detalhe.cartaoInvoiceUrl} target="_blank" rel="noreferrer">
-                      ABRIR FATURA
-                    </a>
+                  {selP.parcelas > 1 && (
+                    <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 6 }}>
+                      Total: {fmtBRL(selP.valorTotal)} · inclui MDR + antecipação Asaas.
+                      PIX sem acréscimo: {fmtBRL(valor)}.
+                    </div>
                   )}
-                </div>
+                  <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.5 }}>
+                    Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
+                    Uma nova aba será aberta para conclusão do pagamento.
+                  </div>
+                </>
               ) : (
                 <p style={{ fontFamily: "Arial", fontSize: 12, color: "var(--ink-soft)", margin: 0 }}>
                   Selecione acima o número de parcelas para continuar.
                 </p>
-              )}
-
-              {selP && selP.parcelas > 1 && (
-                <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 8 }}>
-                  Total: {fmtBRL(selP.valorTotal)} · inclui MDR + antecipação Asaas.
-                  PIX sem acréscimo: {fmtBRL(valor)}.
-                </div>
-              )}
-              <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.5 }}>
-                Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
-                Uma nova aba será aberta para conclusão do pagamento.
-              </div>
-
-              {detalhe?.cartaoInvoiceUrl && (
-                <button
-                  className="btn out"
-                  style={{ marginTop: 12, width: "100%", padding: "10px 16px" }}
-                  disabled={verificandoPagamento}
-                  onClick={onVerificarPagamento}
-                >
-                  {verificandoPagamento ? "VERIFICANDO…" : "JÁ PAGUEI — VERIFICAR PAGAMENTO"}
-                </button>
               )}
             </div>
           );
