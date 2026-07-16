@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Image as ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 
 const CHAVE = "cliente_login_hero";
-const MAX_BYTES = 800 * 1024; // 800KB (base64 ≈ +33%)
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -38,10 +37,6 @@ export default function QALoginBrandingAdmin() {
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem."); return; }
-    if (file.size > MAX_BYTES) {
-      toast.error(`Imagem muito grande (máx ${Math.round(MAX_BYTES / 1024)}KB). Otimize/comprima antes.`);
-      return;
-    }
     setSaving(true);
     try {
       const url = await fileToDataUrl(file);
@@ -88,8 +83,7 @@ export default function QALoginBrandingAdmin() {
         </span>
       </div>
       <p className="text-[11px] mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Aparece na coluna esquerda da página <span className="font-semibold">/area-do-cliente</span>. Recomendado:
-        formato horizontal (16:9 ou 4:3), até 800KB, PNG/JPG.
+        Aparece na coluna esquerda da página <span className="font-semibold">/area-do-cliente</span>. Sem limite de tamanho — recomendado formato horizontal (16:9 ou 4:3), PNG/JPG/WEBP.
       </p>
 
       <div className="flex flex-col md:flex-row gap-4 items-start">
