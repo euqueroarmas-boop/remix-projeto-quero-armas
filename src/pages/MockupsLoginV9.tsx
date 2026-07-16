@@ -178,11 +178,16 @@ export default function MockupsLoginV9() {
       style={{ backgroundImage: `url(${customHero || BG_URL})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}
     >
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
-      <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 150px 26px rgba(0,0,0,0.48)" }} />
-      <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.35) 0%, transparent 70%)" }} />
+      {!customHero && (
+        <>
+          <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.04) 32%, rgba(0,0,0,0.10) 58%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
+          <div className="pointer-events-none absolute inset-0" style={{ boxShadow: "inset 0 0 150px 26px rgba(0,0,0,0.48)" }} />
+          <div className="pointer-events-none absolute right-[3vw] top-1/2 hidden h-[560px] w-[560px] -translate-y-1/2 rounded-full opacity-40 blur-3xl lg:block" style={{ background: "radial-gradient(circle, rgba(180,30,45,0.35) 0%, transparent 70%)" }} />
+        </>
+      )}
 
-      {/* Patrocínio */}
+      {/* Patrocínio + textos do hero — ocultos quando há imagem custom (usuário quer só a imagem) */}
+      {!customHero && (
       <div className="absolute left-6 top-6 z-20 flex items-center gap-3 lg:left-12 lg:top-10">
         <div className="leading-tight">
           <div className="mb-1 text-[10px] font-semibold tracking-[0.28em] text-white/65" style={{ fontFamily: "Rajdhani, sans-serif" }}>PATROCINADO POR</div>
@@ -194,8 +199,10 @@ export default function MockupsLoginV9() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ESQUERDA */}
+      {!customHero && (
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1480px] flex-col justify-center px-6 pt-28 pb-10 lg:px-12 lg:pt-0 lg:pb-0">
         <div className="w-full max-w-[560px] lg:max-w-[600px] lg:pr-8">
           <h1 className="text-[44px] font-bold uppercase leading-[0.95] tracking-tight text-white sm:text-[56px] lg:text-[64px]" style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "-0.01em", textShadow: "0 4px 24px rgba(0,0,0,0.6)" }}>CONTROLE TOTAL</h1>
@@ -216,6 +223,7 @@ export default function MockupsLoginV9() {
           </div>
         </div>
       </div>
+      )}
 
       {/* DIREITA — CARD */}
       <div className="relative z-20 mx-auto w-full max-w-[440px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
