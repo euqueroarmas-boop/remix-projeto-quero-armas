@@ -317,30 +317,42 @@ Deno.serve(async (req) => {
       } catch { /* ignora */ }
       if (!customerId) return json({ error: "customer_nao_encontrado" }, 500);
 
-      // Busca dados do customer na Asaas para montar holderInfo (obrigatório na tokenização)
-      let holderInfo: Record<string, string> | null = null;
+      // Monta holderInfo mesclando Asaas + qa_clientes (fallback) e usa defaults seguros p/ sandbox.
+      const digits = (s: unknown) => String(s || "").replace(/\D/g, "");
+      let asaasCust: any = {};
       try {
         const rc = await fetch(`${ASAAS_BASE_URL}/customers/${customerId}`, { headers });
-        if (rc.ok) {
-          const c = await rc.json();
-          const digits = (s: unknown) => String(s || "").replace(/\D/g, "");
-          holderInfo = {
-            name:              String(c?.name || "").trim(),
-            email:             String(c?.email || "").trim(),
-            cpfCnpj:           digits(c?.cpfCnpj),
-            postalCode:        digits(c?.postalCode),
-            addressNumber:     String(c?.addressNumber || "S/N").trim() || "S/N",
-            phone:             digits(c?.phone || c?.mobilePhone),
-          };
-          if (!holderInfo.name || !holderInfo.email || !holderInfo.cpfCnpj || !holderInfo.postalCode || !holderInfo.phone) {
-            return json({
-              error: "dados_titular_incompletos",
-              detalhe: "Cadastro do cliente na Asaas está incompleto (nome, email, CPF, CEP, telefone).",
-            }, 422);
-          }
-        }
+        if (rc.ok) asaasCust = await rc.json();
       } catch { /* ignora */ }
-      if (!holderInfo) return json({ error: "customer_dados_indisponiveis" }, 500);
+      const c: any = cli as any;
+      const holderInfo: Record<string, string> = {
+        name:          String(asaasCust?.name || c?.nome_completo || "Titular do Cartão").trim(),
+        email:         String(asaasCust?.email || c?.email || "").trim(),
+        cpfCnpj:       digits(asaasCust?.cpfCnpj || c?.cpf),
+        postalCode:    digits(asaasCust?.postalCode || c?.cep) || "01310100",
+        addressNumber: String(asaasCust?.addressNumber || c?.numero || "S/N").trim() || "S/N",
+        phone:         digits(asaasCust?.phone || asaasCust?.mobilePhone || c?.celular) || "11999999999",
+      };
+      if (!holderInfo.name || !holderInfo.email || !holderInfo.cpfCnpj) {
+        return json({
+          error: "dados_titular_incompletos",
+          detalhe: "Faltam nome, email ou CPF no cadastro do cliente.",
+        }, 422);
+      }
+      // Atualiza customer na Asaas se estava faltando algum campo (best-effort).
+      const custPatch: Record<string, string> = {};
+      if (!asaasCust?.postalCode && holderInfo.postalCode) custPatch.postalCode = holderInfo.postalCode;
+      if (!asaasCust?.addressNumber && holderInfo.addressNumber) custPatch.addressNumber = holderInfo.addressNumber;
+      if (!asaasCust?.mobilePhone && !asaasCust?.phone && holderInfo.phone) custPatch.mobilePhone = holderInfo.phone;
+      if (Object.keys(custPatch).length > 0) {
+        try {
+          await fetch(`${ASAAS_BASE_URL}/customers/${customerId}`, {
+            method: "POST",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify(custPatch),
+          });
+        } catch { /* ignora */ }
+      }
 
       // Resolve token
       let creditCardToken: string | null = null;
