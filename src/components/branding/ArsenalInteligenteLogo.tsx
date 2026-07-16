@@ -23,23 +23,31 @@ const COLORS: Record<NonNullable<ArsenalInteligenteLogoProps["color"]>, string> 
  * Sem cérebro, circuitos, escudo, alvo, arma, cadeado, etc.
  */
 function ArsenalSymbol({ className, style }: { className?: string; style?: CSSProperties }) {
+  // Reconstrução fiel do MODELO 08:
+  // - A com topo reto (flat top), haste esquerda diagonal longa,
+  //   haste direita vertical robusta e barra horizontal curta central.
+  // - I como barra vertical independente, mesma altura e espessura da haste
+  //   direita do A, com espaço estreito entre A e I.
   return (
     <svg
       className={className}
       style={style}
-      viewBox="0 0 200 180"
+      viewBox="0 0 240 180"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       focusable="false"
     >
-      {/* Haste esquerda diagonal do A */}
-      <polygon points="0,175 40,175 92,15 60,15" fill="currentColor" />
+      {/* Haste esquerda diagonal do A (topo reto) */}
+      <polygon
+        points="0,172 48,172 100,8 60,8"
+        fill="currentColor"
+      />
       {/* Haste direita vertical do A */}
-      <rect x="92" y="15" width="30" height="160" fill="currentColor" />
-      {/* Barra horizontal curta do A (entra pelo lado esquerdo) */}
-      <rect x="46" y="102" width="46" height="18" fill="currentColor" />
+      <rect x="100" y="8" width="38" height="164" fill="currentColor" />
+      {/* Barra horizontal curta central do A */}
+      <rect x="52" y="88" width="48" height="18" fill="currentColor" />
       {/* Letra I — barra vertical independente */}
-      <rect x="155" y="15" width="30" height="160" fill="currentColor" />
+      <rect x="160" y="8" width="38" height="164" fill="currentColor" />
     </svg>
   );
 }
