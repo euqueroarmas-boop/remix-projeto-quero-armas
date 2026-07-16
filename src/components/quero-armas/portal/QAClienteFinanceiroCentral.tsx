@@ -498,7 +498,7 @@ function KpiRow({
           <div className="sumlabel">Assinatura Premium</div>
           {premium.status === "gratuidade" ? (
             <>
-              <div className="sumval ok" style={{ fontSize: 16 }}>Gratuidade</div>
+              <div className="sumval ok" style={{ fontSize: 16 }}>GRATUIDADE</div>
               <div className="sumsub">até {fmtDatePt(premium.proxima_em)}</div>
             </>
           ) : premium.status === "aguardando_pagamento" ? (
