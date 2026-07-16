@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { ArsenalPremiumState } from "@/hooks/useArsenalPremium";
 import { useArsenalPlano } from "@/hooks/useArsenalPlano";
+import { ArsenalLogoMark } from "@/components/quero-armas/arsenal/ArsenalLogo";
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
@@ -213,7 +214,10 @@ export default function ArsenalPremiumGate({ arsenal, children, recurso }: Props
       <div className="qagate__dim" aria-hidden>{children}</div>
 
       <div className="qagate__cta">
-        <div className="qagate__kicker"><Lock size={13} /> Arsenal Inteligente · Premium</div>
+        <div className="qagate__brand" aria-label="Arsenal Inteligente">
+          <ArsenalLogoMark height={72} />
+        </div>
+        <div className="qagate__kicker"><Lock size={13} /> Premium</div>
         <h2>{recurso ? `Desbloqueie: ${recurso}` : "Desbloqueie o Arsenal completo"}</h2>
         <p className="qagate__lead">
           {arsenal.assinatura?.status === "suspensa"
