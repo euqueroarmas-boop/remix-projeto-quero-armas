@@ -331,7 +331,7 @@ export default function ClienteResumoKanban({
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
     gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
-    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${shortName(f.nome_filiacao || f.nome_clube, "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
     // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.
