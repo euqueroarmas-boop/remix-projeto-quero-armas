@@ -266,13 +266,9 @@ export default function ClienteResumoKanban({
           status: "Te aguardando",
           tone: "warn" as const,
           onClick: () => {
-            // Se ainda há contrato pendente de assinatura, leva o cliente
-            // para o passo anterior (assinatura do contrato). Caso contrário,
-            // abre o assistente de documentação já focado neste processo.
-            if (pendingContracts > 0) {
-              onNavigate("contratos");
-              return;
-            }
+            // Abre SEMPRE o assistente de documentação já focado neste
+            // processo — é ele quem exibe o passo pendente (contrato,
+            // documento, exame etc.) do processo clicado.
             abrirChecklistGuiado({ processoId: item?.id ? String(item.id) : null });
           },
         };
