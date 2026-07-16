@@ -899,14 +899,14 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
   venda: QAVendaFinanceira; servico: string; nfeUrl: string | null;
 }) {
   const dataPg = venda.cobranca_confirmada_em || venda.data_cadastro;
-  const forma = (venda.forma_pagamento || "").trim();
+  const meio = resolveMeioPagamento(venda);
   return (
     <div className="charge o">
       <div className="body">
         <div className="t">{servico}</div>
         <div className="m">
           Cob. #{venda.id_legado} · pago {fmtDatePt(dataPg ? String(dataPg).slice(0, 10) : null)}
-          {forma ? ` · ${forma}` : ""}
+          {meio ? ` · ${meio}` : ""}
         </div>
         <div style={{ marginTop: 8 }}><span className="pill paid">PAGA</span></div>
       </div>
@@ -919,6 +919,38 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
       </div>
     </div>
   );
+}
+
+/**
+ * Deriva o meio de pagamento exibido no comprovante:
+ * - Usa `forma_pagamento` quando preenchido (PIX, BOLETO, CARTÃO…)
+ * - Caso contrário infere pelos campos Asaas (pix_payload → PIX, bank_slip_url → BOLETO, senão CARTÃO)
+ * - Acrescenta o parcelamento quando `parcelas_cobranca > 1`
+ */
+function resolveMeioPagamento(venda: QAVendaFinanceira): string {
+  const raw = (venda.forma_pagamento || "").trim().toUpperCase();
+  let label = "";
+  if (raw) {
+    if (raw.includes("PIX")) label = "Pix";
+    else if (raw.includes("BOLETO")) label = "Boleto";
+    else if (raw.includes("CRÉDITO") || raw.includes("CREDITO") || raw.includes("CARTÃO") || raw.includes("CARTAO") || raw === "CREDIT_CARD") label = "Cartão de crédito";
+    else if (raw.includes("DÉBITO") || raw.includes("DEBITO")) label = "Cartão de débito";
+    else if (raw.includes("DINHEIRO")) label = "Dinheiro";
+    else label = raw.charAt(0) + raw.slice(1).toLowerCase();
+  } else {
+    if (venda.asaas_pix_payload) label = "Pix";
+    else if (venda.asaas_bank_slip_url) label = "Boleto";
+    else if (venda.asaas_payment_id) label = "Cartão de crédito";
+  }
+  if (!label) return "";
+  const parcelas = Number(venda.parcelas_cobranca || 0);
+  if (parcelas > 1 && /cart[ãa]o/i.test(label)) {
+    return `${label} em ${parcelas}×`;
+  }
+  if (parcelas === 1 && /cart[ãa]o/i.test(label)) {
+    return `${label} à vista`;
+  }
+  return label;
 }
 
 // ─── Componente principal ───────────────────────────────────────────────────
