@@ -547,11 +547,27 @@ export default function ClienteResumoKanban({
           const kicker = isVencido
             ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
             : "PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA";
-          const subFallback = activeUrgent
-            ? isVencido
+          const buildSub = () => {
+            if (!activeUrgent) return "Tudo em dia · nenhum item em status vermelho nesta semana.";
+            const label = String(activeUrgent.label || "").toLowerCase();
+            const diasVenc = Math.abs(activeUrgent.days);
+            const suf = isVencido ? ` e está vencida há ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}.` : ".";
+            // Declaração de Filiação: validade de 90 dias, uso restrito a processos.
+            if (/declara[cç][aã]o\s+de\s+filia[cç][aã]o/.test(label)) {
+              return `A declaração de filiação expedida tem validade de 90 dias apenas para uso em processos${suf}`;
+            }
+            // Filiação vigente (clube/entidade) — usada para CAC ativo.
+            if (/^filia[cç][aã]o\b/.test(label)) {
+              const sufFil = isVencido
+                ? ` e sua filiação está vencida há ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}.`
+                : ".";
+              return `Filiação vigente é exigida para CAC ativo${sufFil}`;
+            }
+            return isVencido
               ? (activeUrgent.sub || "").replace(/próxima do vencimento/gi, "vencida").replace(/próximo do vencimento/gi, "vencido")
-              : activeUrgent.sub
-            : "Tudo em dia · nenhum item em status vermelho nesta semana.";
+              : activeUrgent.sub;
+          };
+          const subFallback = buildSub();
           return (
         <section className="qa-urgbanner" aria-label={isVencido ? "Documento vencido" : "Próximo vencimento"} aria-live="polite">
           <div className="qa-urgbanner__body">
