@@ -346,8 +346,10 @@ export default function ClienteResumoKanban({
         tipo === "laudo_psicologico" ? "psicologo"
           : tipo === "laudo_capacidade_tecnica" ? "instrutor_tiro"
           : undefined;
+      const docLabel = shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento");
+      const isFiliacaoDoc = /filia[cç][aã]o/i.test(docLabel);
       pushUrgent(
-        shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento"),
+        isFiliacaoDoc ? titleCaseServico(docLabel, "Documento") : docLabel,
         isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
         doc?.data_validade_efetiva || doc?.data_validade,
         "documentos",
