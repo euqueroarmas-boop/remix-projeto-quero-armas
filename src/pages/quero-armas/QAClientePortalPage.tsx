@@ -1319,6 +1319,11 @@ export default function QAClientePortalPage() {
   }, [cliente, docsReloadKey]);
 
   if (loading) {
+    // Enquanto não sabemos se há sessão, renderiza fundo escuro invisível
+    // para não “piscar” um spinner claro antes do redirect para /login.
+    if (!authKnown) {
+      return <div className="min-h-dvh bg-[#050505]" aria-hidden />;
+    }
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
