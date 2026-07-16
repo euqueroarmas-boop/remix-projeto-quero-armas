@@ -2564,10 +2564,12 @@ export default function QAClientePortalPage() {
           role="dialog"
           aria-modal="true"
           onClick={() => setShowContratoPopup(false)}
+          style={{ pointerEvents: "auto" }}
         >
           <div
             className="w-full max-w-2xl bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
             onClick={(e) => e.stopPropagation()}
+            style={{ pointerEvents: "auto" }}
           >
             {/* Window Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
