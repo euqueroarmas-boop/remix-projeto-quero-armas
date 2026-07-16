@@ -5,6 +5,7 @@ import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
+import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -27,6 +28,7 @@ interface Props {
   armasManual?: any[];
   meusDocs?: any[];
   processoDocs?: any[];
+  pendingContracts?: number;
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
   onOpenComprar?: () => void;
@@ -34,7 +36,7 @@ interface Props {
 }
 
 type FrontTone = "bordo" | "amber" | "green";
-type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean };
+type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean; onClick?: () => void };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
