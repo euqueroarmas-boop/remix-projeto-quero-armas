@@ -994,7 +994,7 @@ export default function QAClienteFinanceiroCentral({
       if (error) throw error;
       const d = data as any;
       setDetalhePorVenda(prev => {
-        const cur = prev[venda.id_legado] || {};
+        const cur: any = prev[venda.id_legado] || {};
         return {
           ...prev,
           [venda.id_legado]: {

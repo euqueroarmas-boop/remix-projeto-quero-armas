@@ -317,6 +317,31 @@ Deno.serve(async (req) => {
       } catch { /* ignora */ }
       if (!customerId) return json({ error: "customer_nao_encontrado" }, 500);
 
+      // Busca dados do customer na Asaas para montar holderInfo (obrigatório na tokenização)
+      let holderInfo: Record<string, string> | null = null;
+      try {
+        const rc = await fetch(`${ASAAS_BASE_URL}/customers/${customerId}`, { headers });
+        if (rc.ok) {
+          const c = await rc.json();
+          const digits = (s: unknown) => String(s || "").replace(/\D/g, "");
+          holderInfo = {
+            name:              String(c?.name || "").trim(),
+            email:             String(c?.email || "").trim(),
+            cpfCnpj:           digits(c?.cpfCnpj),
+            postalCode:        digits(c?.postalCode),
+            addressNumber:     String(c?.addressNumber || "S/N").trim() || "S/N",
+            phone:             digits(c?.phone || c?.mobilePhone),
+          };
+          if (!holderInfo.name || !holderInfo.email || !holderInfo.cpfCnpj || !holderInfo.postalCode || !holderInfo.phone) {
+            return json({
+              error: "dados_titular_incompletos",
+              detalhe: "Cadastro do cliente na Asaas está incompleto (nome, email, CPF, CEP, telefone).",
+            }, 422);
+          }
+        }
+      } catch { /* ignora */ }
+      if (!holderInfo) return json({ error: "customer_dados_indisponiveis" }, 500);
+
       // Resolve token
       let creditCardToken: string | null = null;
 
@@ -347,7 +372,11 @@ Deno.serve(async (req) => {
         const tokReq = await fetch(`${ASAAS_BASE_URL}/creditCards/tokenize`, {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
-          body: JSON.stringify({ customer: customerId, creditCard: { holderName, number, expiryMonth, expiryYear, ccv } }),
+          body: JSON.stringify({
+            customer: customerId,
+            creditCard: { holderName, number, expiryMonth, expiryYear, ccv },
+            creditCardHolderInfo: holderInfo,
+          }),
         });
         const tokData = await tokReq.json().catch(() => ({}));
         if (!tokReq.ok || !tokData?.creditCardToken) {
