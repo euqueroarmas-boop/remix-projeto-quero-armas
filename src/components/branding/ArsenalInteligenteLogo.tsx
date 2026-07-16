@@ -1,4 +1,5 @@
-import { CSSProperties } from "react";
+import type { CSSProperties } from "react";
+import arsenalHorizontalAsset from "@/assets/branding/arsenal-inteligente-horizontal.png.asset.json";
 
 export type ArsenalInteligenteLogoProps = {
   orientation?: "horizontal" | "vertical";
@@ -14,6 +15,10 @@ const COLORS: Record<NonNullable<ArsenalInteligenteLogoProps["color"]>, string> 
   black: "#0A0A0A",
   white: "#FFFFFF",
 };
+
+// Logo oficial (arte final MODELO 08) — usada como imagem raster
+// para fidelidade 1:1 com a referência aprovada pelo cliente.
+const HORIZONTAL_LOGO_URL = arsenalHorizontalAsset.url;
 
 /**
  * Monograma "AI" oficial do Arsenal Inteligente.
@@ -62,6 +67,40 @@ export function ArsenalInteligenteLogo({
 }: ArsenalInteligenteLogoProps) {
   const tone = COLORS[color];
   const isHorizontal = orientation === "horizontal";
+
+  // Versão horizontal com wordmark: usa a arte oficial (PNG) para bater 1:1
+  // com o MODELO 08 aprovado. Os filtros invertem o bordô para preto/branco
+  // quando solicitado.
+  if (isHorizontal && showWordmark) {
+    const filter =
+      color === "black"
+        ? "grayscale(1) brightness(0)"
+        : color === "white"
+          ? "grayscale(1) brightness(0) invert(1)"
+          : undefined;
+    return (
+      <div
+        className={className}
+        role="img"
+        aria-label="Arsenal Inteligente"
+        style={{ display: "inline-flex", alignItems: "center", lineHeight: 0 }}
+      >
+        <img
+          src={HORIZONTAL_LOGO_URL}
+          alt="Arsenal Inteligente"
+          className={symbolClassName}
+          style={{
+            width: "auto",
+            height: "auto",
+            maxWidth: "100%",
+            display: "block",
+            filter,
+          }}
+          draggable={false}
+        />
+      </div>
+    );
+  }
 
   const rootStyle: CSSProperties = {
     color: tone,
