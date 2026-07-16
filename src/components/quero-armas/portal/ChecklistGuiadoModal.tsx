@@ -247,6 +247,8 @@ export default function ChecklistGuiadoModal({
     // server-side (perguntas respondidas, docs cumpridos, nada em análise) e
     // só altera o estado quando seguro. Se liberar, recarrega para refletir.
     try {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess?.session) { setCarga(c); return c; }
       const { data } = await supabase.functions.invoke("qa-processo-etapa-auto-liberar", {
         body: { processo_id: pid, origem: "assistente_cliente" },
       });

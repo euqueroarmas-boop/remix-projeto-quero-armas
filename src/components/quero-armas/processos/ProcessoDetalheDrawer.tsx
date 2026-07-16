@@ -1099,6 +1099,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     autoLiberadoRef.current.add(chave);
     (async () => {
       try {
+        const { data: sess } = await supabase.auth.getSession();
+        if (!sess?.session) return;
         const { data } = await supabase.functions.invoke("qa-processo-etapa-auto-liberar", {
           body: { processo_id: processo.id, origem: "drawer_admin" },
         });
