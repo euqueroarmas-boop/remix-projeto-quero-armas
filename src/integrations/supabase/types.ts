@@ -5510,6 +5510,7 @@ export type Database = {
           titular_comprovante_documento: string | null
           titular_comprovante_nome: string | null
           updated_at: string
+          validade_filiacao: string | null
           validado_admin: boolean
           validado_em: string | null
           validado_por: string | null
@@ -5568,6 +5569,7 @@ export type Database = {
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
           updated_at?: string
+          validade_filiacao?: string | null
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
@@ -5626,6 +5628,7 @@ export type Database = {
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
           updated_at?: string
+          validade_filiacao?: string | null
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
