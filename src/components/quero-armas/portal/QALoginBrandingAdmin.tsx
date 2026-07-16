@@ -83,8 +83,7 @@ export default function QALoginBrandingAdmin() {
         </span>
       </div>
       <p className="text-[11px] mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Aparece na coluna esquerda da página <span className="font-semibold">/area-do-cliente</span>. Recomendado:
-        formato horizontal (16:9 ou 4:3), até 800KB, PNG/JPG.
+        Aparece na coluna esquerda da página <span className="font-semibold">/area-do-cliente</span>. Sem limite de tamanho — recomendado formato horizontal (16:9 ou 4:3), PNG/JPG/WEBP.
       </p>
 
       <div className="flex flex-col md:flex-row gap-4 items-start">
