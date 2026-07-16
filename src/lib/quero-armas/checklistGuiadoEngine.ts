@@ -468,7 +468,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
         const jaMandou = !!(ct as any).customer_signed_pdf_path;
         const validado = st === "validated";
         if (!validado && !jaMandou) {
-          contratoPendente = ct as ContratoPendente;
+          contratoPendente = ct as unknown as ContratoPendente;
         }
       }
     }
@@ -907,7 +907,7 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     }
     const respostas = (p.respostas_questionario_json ?? {}) as Record<string, string>;
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-    const carga: CargaProcesso = { processo: p, docs: docsHidratados, respostas, etapaLiberada };
+    const carga: CargaProcesso = { processo: p, docs: docsHidratados, respostas, etapaLiberada, contratoPendente: null };
     const resumo = calcularResumoProcessoAssistente(carga, clienteRow as any);
     // `pendentes` agora reflete o que o cliente pode resolver AGORA:
     // documentos acionáveis (não bloqueados por wizard) + perguntas/wizards pendentes.
