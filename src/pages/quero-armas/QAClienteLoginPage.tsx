@@ -16,9 +16,23 @@ export default function QAClienteLoginPage() {
   const [resetCooldownUntil, setResetCooldownUntil] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [diag, setDiag] = useState<{ reason: string; hint: string } | null>(null);
+  const [heroUrl, setHeroUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+
+  useEffect(() => {
+    let alive = true;
+    supabase
+      .from("qa_branding" as any)
+      .select("data_url")
+      .eq("chave", "cliente_login_hero")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setHeroUrl(((data as any)?.data_url as string) || null);
+      }, () => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const state = location.state as { prefillEmail?: string; prefillPassword?: string } | null;
@@ -217,6 +231,14 @@ export default function QAClienteLoginPage() {
       <div className="flex-1 grid md:grid-cols-2">
         {/* Coluna esquerda — branding premium light */}
         <div className="hidden md:flex relative flex-col items-center justify-center p-10 lg:p-14 bg-white border-r border-slate-200">
+          {heroUrl ? (
+            <img
+              src={heroUrl}
+              alt="Quero Armas"
+              className="max-w-full max-h-[80vh] w-auto h-auto object-contain"
+              draggable={false}
+            />
+          ) : (
           <div className="max-w-[480px] w-full flex flex-col gap-6">
             <img src={logoColor} alt="Quero Armas" className="h-16 w-auto object-contain" draggable={false} />
             <span className="inline-flex w-fit items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-slate-500 px-2.5 py-1 border border-slate-200 rounded-md bg-slate-50">
@@ -244,6 +266,7 @@ export default function QAClienteLoginPage() {
               © {new Date().getFullYear()} Quero Armas
             </div>
           </div>
+          )}
         </div>
 
         {/* Coluna direita — autenticação */}

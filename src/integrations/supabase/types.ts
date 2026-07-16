@@ -2839,6 +2839,30 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_branding: {
+        Row: {
+          chave: string
+          data_url: string
+          mime_type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          chave: string
+          data_url: string
+          mime_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          chave?: string
+          data_url?: string
+          mime_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
