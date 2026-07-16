@@ -160,6 +160,7 @@ interface Props {
   servicoNomePorId?: Record<number, string>;
   premium?: QAArsenalPremiumSubscription | null;
   onPremiumRefresh?: () => void;
+  onRefresh?: () => void;
   scopeLabel?: string;
   clienteNome?: string;
 }
@@ -520,6 +521,9 @@ function KpiRow({
 
 // ─── Cobrança em aberto (colapsada / expandida) ─────────────────────────────
 
+type CardForm = { holderName: string; number: string; expiryMonth: string; expiryYear: string; ccv: string };
+const BLANK_CARD: CardForm = { holderName: "", number: "", expiryMonth: "", expiryYear: "", ccv: "" };
+
 type Detalhe = {
   loading: boolean;
   error?: string | null;
@@ -530,11 +534,12 @@ type Detalhe = {
   billingType?: string | null;
   boletoError?: string | null;
   cartaoInvoiceUrl?: string | null;
+  cartaoCobrado?: { status: string; pago: boolean; valorTotal: number; valorParcela: number; parcelas: number } | null;
 };
 
 function CobrancaAberta({
   venda, servico, defaultMode, onExpand, expanded, mode, setMode, detalhe, onFetchMode, onReemitirBoleto, reemitindoBoleto, temNfe,
-  selectedParcelas, onSelectParcelas, onPagarCartao, onVerificarPagamento, verificandoPagamento,
+  selectedParcelas, onSelectParcelas, onCobrarCartao, onVerificarPagamento, verificandoPagamento, arsenalCartao,
 }: {
   venda: QAVendaFinanceira;
   servico: string;
@@ -550,10 +555,14 @@ function CobrancaAberta({
   temNfe: boolean;
   selectedParcelas?: number;
   onSelectParcelas: (n: number) => void;
-  onPagarCartao: (parcelas: number) => void;
+  onCobrarCartao: (parcelas: number, card?: CardForm) => void;
   onVerificarPagamento: () => void;
   verificandoPagamento: boolean;
+  arsenalCartao?: { ultimos4: string; bandeira: string } | null;
 }) {
+  const [cardForm, setCardForm] = useState<CardForm>(BLANK_CARD);
+  const setC = (k: keyof CardForm, v: string) => setCardForm(prev => ({ ...prev, [k]: v }));
+
   const dias = diasAte(venda.asaas_due_date);
   const vencida = dias !== null && dias < 0;
   const lvl = vencida ? "d" : "";
@@ -705,15 +714,83 @@ function CobrancaAberta({
             return p.valorParcela >= MIN_PARCELA;
           });
           const selP = selectedParcelas ? calcularPrecoFinal(valor, "CREDIT_CARD", selectedParcelas) : null;
+          const cobrado = detalhe?.cartaoCobrado ?? null;
+          const iS = { fontFamily: "Arial, sans-serif", fontSize: 13, padding: "8px 10px", border: "1px solid #d0ccc4", borderRadius: 8, background: "#fff", width: "100%", outline: "none" };
+
           return (
             <div>
-              <span className="h4c">Parcelamento no cartão de crédito</span>
-              <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))",
-                gap: 8,
-                marginBottom: 14,
-              }}>
+              <span className="h4c">Cartão de crédito</span>
+
+              {/* ── Cartão Arsenal salvo ──────────────────────────────── */}
+              {arsenalCartao ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, background: "#F8F5F0", border: "1px solid #e0d8cc", marginBottom: 14 }}>
+                  <span style={{ fontSize: 20 }}>💳</span>
+                  <div>
+                    <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".06em", color: "var(--ink-soft)" }}>CARTÃO ARSENAL SALVO</div>
+                    <div style={{ fontFamily: "'Arial Narrow',Arial", fontSize: 14, fontWeight: 700 }}>
+                      {arsenalCartao.bandeira} •••• {arsenalCartao.ultimos4}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* ── Formulário de cartão inline ─────────────────────── */
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                  <input
+                    type="text"
+                    placeholder="Nome no cartão"
+                    maxLength={60}
+                    style={iS}
+                    value={cardForm.holderName}
+                    onChange={e => setC("holderName", e.target.value.toUpperCase())}
+                    autoComplete="cc-name"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Número do cartão"
+                    maxLength={19}
+                    inputMode="numeric"
+                    style={iS}
+                    value={cardForm.number.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim()}
+                    onChange={e => setC("number", e.target.value.replace(/\D/g, "").slice(0, 16))}
+                    autoComplete="cc-number"
+                  />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      type="text"
+                      placeholder="Mês (MM)"
+                      maxLength={2}
+                      inputMode="numeric"
+                      style={{ ...iS, flex: 1 }}
+                      value={cardForm.expiryMonth}
+                      onChange={e => setC("expiryMonth", e.target.value.replace(/\D/g, "").slice(0, 2))}
+                      autoComplete="cc-exp-month"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Ano (AAAA)"
+                      maxLength={4}
+                      inputMode="numeric"
+                      style={{ ...iS, flex: 1 }}
+                      value={cardForm.expiryYear}
+                      onChange={e => setC("expiryYear", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      autoComplete="cc-exp-year"
+                    />
+                    <input
+                      type="text"
+                      placeholder="CVV"
+                      maxLength={4}
+                      inputMode="numeric"
+                      style={{ ...iS, flex: 1 }}
+                      value={cardForm.ccv}
+                      onChange={e => setC("ccv", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      autoComplete="cc-csc"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ── Seleção de parcelas ───────────────────────────────── */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))", gap: 8, marginBottom: 14 }}>
                 {OPCOES.map(n => {
                   const p = calcularPrecoFinal(valor, "CREDIT_CARD", n);
                   return (
@@ -734,64 +811,50 @@ function CobrancaAberta({
                 })}
               </div>
 
-              {detalhe?.cartaoInvoiceUrl ? (
-                // ── Estado pós-geração: guiar para pagar e depois confirmar ──────
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
-                  <div style={{
-                    display: "flex", alignItems: "flex-start", gap: 10,
-                    padding: "11px 13px", borderRadius: 10,
-                    background: "#F0FDF4", border: "1.5px solid #86EFAC",
-                  }}>
-                    <span style={{ fontSize: 17, lineHeight: 1, marginTop: 1 }}>✅</span>
+              {/* ── Estado após cobrança ──────────────────────────────── */}
+              {cobrado ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", borderRadius: 10, background: cobrado.pago ? "#F0FDF4" : "#FEF9C3", border: `1.5px solid ${cobrado.pago ? "#86EFAC" : "#FDE047"}` }}>
+                    <span style={{ fontSize: 17, lineHeight: 1, marginTop: 1 }}>{cobrado.pago ? "✅" : "⏳"}</span>
                     <div>
-                      <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", color: "#15803D", marginBottom: 2 }}>
-                        COBRANÇA GERADA{selectedParcelas && selectedParcelas > 1 ? ` EM ${selectedParcelas}×` : " À VISTA"}
+                      <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11.5, fontWeight: 700, letterSpacing: ".06em", color: cobrado.pago ? "#15803D" : "#92400E", marginBottom: 2 }}>
+                        {cobrado.pago ? "PAGAMENTO CONFIRMADO" : `COBRANÇA ENVIADA EM ${cobrado.parcelas}×`}
                       </div>
-                      <div style={{ fontFamily: "Arial", fontSize: 11.5, color: "#166534", lineHeight: 1.45 }}>
-                        Acesse a página da Asaas para inserir os dados do cartão e concluir o pagamento.
+                      <div style={{ fontFamily: "Arial", fontSize: 11.5, color: cobrado.pago ? "#166534" : "#92400E", lineHeight: 1.45 }}>
+                        {cobrado.pago
+                          ? `${fmtBRL(cobrado.valorTotal)} confirmado — esta tela será atualizada em instantes.`
+                          : `${fmtBRL(cobrado.valorParcela)}/mês · total ${fmtBRL(cobrado.valorTotal)}. A Asaas processa em alguns instantes.`}
                       </div>
                     </div>
                   </div>
-                  <a
-                    className="btn pri"
-                    href={detalhe.cartaoInvoiceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px 16px", textDecoration: "none" }}
-                  >
-                    ABRIR PÁGINA DE PAGAMENTO
-                  </a>
-                  <button
-                    className="btn out"
-                    style={{ padding: "9px 16px", fontSize: 12 }}
-                    disabled={verificandoPagamento}
-                    onClick={onVerificarPagamento}
-                  >
-                    {verificandoPagamento ? "VERIFICANDO…" : "Já paguei — verificar confirmação"}
-                  </button>
-                  <button
-                    style={{
-                      background: "none", border: "none", cursor: "pointer",
-                      fontFamily: "Arial", fontSize: 11, color: "var(--ink-soft)",
-                      textDecoration: "underline", padding: "2px 0", textAlign: "left",
-                    }}
-                    disabled={!!detalhe?.loading}
-                    onClick={() => selP && onPagarCartao(selectedParcelas!)}
-                  >
-                    {detalhe?.loading ? "Gerando…" : "↺ Gerar nova cobrança"}
-                  </button>
+                  {!cobrado.pago && (
+                    <button
+                      className="btn out"
+                      style={{ padding: "9px 16px", fontSize: 12 }}
+                      disabled={verificandoPagamento}
+                      onClick={onVerificarPagamento}
+                    >
+                      {verificandoPagamento ? "VERIFICANDO…" : "Já processou — verificar confirmação"}
+                    </button>
+                  )}
                 </div>
               ) : selP ? (
-                // ── Estado inicial: botão para gerar ─────────────────────────────
+                /* ── Botão de pagar ──────────────────────────────────── */
                 <>
                   <button
                     className="btn pri"
                     style={{ width: "100%", padding: "11px 16px" }}
                     disabled={!!detalhe?.loading}
-                    onClick={() => onPagarCartao(selectedParcelas!)}
+                    onClick={() => {
+                      if (arsenalCartao) {
+                        onCobrarCartao(selectedParcelas!);
+                      } else {
+                        onCobrarCartao(selectedParcelas!, cardForm);
+                      }
+                    }}
                   >
                     {detalhe?.loading
-                      ? "GERANDO COBRANÇA…"
+                      ? "PROCESSANDO…"
                       : selectedParcelas === 1
                         ? `PAGAR À VISTA — ${fmtBRL(selP.valorTotal)}`
                         : `PAGAR EM ${selectedParcelas}× — ${fmtBRL(selP.valorParcela)}/MÊS`}
@@ -803,8 +866,7 @@ function CobrancaAberta({
                     </div>
                   )}
                   <div style={{ fontFamily: "Arial", fontSize: 10.5, color: "var(--ink-soft)", marginTop: 4, lineHeight: 1.5 }}>
-                    Os dados do cartão são inseridos no checkout seguro da Asaas (PCI-DSS nível 1).
-                    Uma nova aba será aberta para conclusão do pagamento.
+                    Checkout PCI-DSS nível 1 via Asaas — sem redirect.
                   </div>
                 </>
               ) : (
@@ -851,7 +913,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function QAClienteFinanceiroCentral({
-  vendas, itens, servicoNomePorId = {}, premium = null, onPremiumRefresh, clienteNome,
+  vendas, itens, servicoNomePorId = {}, premium = null, onPremiumRefresh, onRefresh, clienteNome,
 }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
@@ -963,40 +1025,53 @@ export default function QAClienteFinanceiroCentral({
     }
   };
 
-  const pagarCartao = async (venda: QAVendaFinanceira, parcelas: number) => {
+  const cobrarCartao = async (venda: QAVendaFinanceira, parcelas: number, card?: CardForm) => {
     if (detalhePorVenda[venda.id_legado]?.loading) return;
     setDetalhePorVenda(prev => ({
       ...prev,
-      [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: true, error: null },
+      [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: true, error: null, cartaoCobrado: null },
     }));
     try {
-      const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", {
-        body: { venda_id: venda.id_legado, action: "gerar_por_forma", forma: "CREDIT_CARD", parcelas },
-      });
+      const usarArsenal = !card && !!premium?.cartao?.ultimos4;
+      const body: Record<string, unknown> = {
+        venda_id: venda.id_legado,
+        action: "cobrar_cartao",
+        parcelas,
+      };
+      if (usarArsenal) {
+        body.usar_arsenal_cartao = true;
+      } else if (card) {
+        Object.assign(body, card);
+      } else {
+        throw new Error("Preencha os dados do cartão para continuar.");
+      }
+      const { data, error } = await supabase.functions.invoke("qa-cliente-cobranca-inline", { body });
       if (error) throw error;
-      if ((data as any)?.error) throw new Error(String((data as any).error));
-      const invoiceUrl = (data as any)?.asaas_invoice_url ?? null;
+      const d = data as any;
+      if (d?.error) throw new Error(d.detalhe || String(d.error));
+      const cobrado = {
+        status:       String(d.status || "PENDING"),
+        pago:         !!d.pago,
+        valorTotal:   Number(d.valor_total || 0),
+        valorParcela: Number(d.valor_parcela || 0),
+        parcelas:     Number(d.parcelas || parcelas),
+      };
       setDetalhePorVenda(prev => ({
         ...prev,
-        [venda.id_legado]: {
-          ...(prev[venda.id_legado] || {}),
-          loading: false,
-          error: null,
-          invoiceUrl:       invoiceUrl ?? prev[venda.id_legado]?.invoiceUrl ?? venda.asaas_invoice_url ?? null,
-          cartaoInvoiceUrl: invoiceUrl,
-        },
+        [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: null, cartaoCobrado: cobrado },
       }));
-      if (invoiceUrl) {
-        window.open(invoiceUrl, "_blank", "noopener,noreferrer");
+      if (cobrado.pago) {
+        toast.success("Pagamento confirmado!");
+        onRefresh?.();
       } else {
-        toast.error("Não foi possível gerar a cobrança no cartão. Tente novamente.");
+        toast.info("Cobrança enviada — a Asaas está processando. Clique em verificar em alguns instantes.");
       }
     } catch (e: any) {
       setDetalhePorVenda(prev => ({
         ...prev,
         [venda.id_legado]: { ...(prev[venda.id_legado] || {}), loading: false, error: e?.message || "erro" },
       }));
-      toast.error(e?.message || "Erro ao gerar cobrança no cartão.");
+      toast.error(e?.message || "Erro ao processar cobrança no cartão.");
     }
   };
 
@@ -1133,9 +1208,10 @@ export default function QAClienteFinanceiroCentral({
               temNfe={false}
               selectedParcelas={parcelasPorVenda[v.id_legado]}
               onSelectParcelas={(n) => setParcelasPorVenda(prev => ({ ...prev, [v.id_legado]: n }))}
-              onPagarCartao={(n) => void pagarCartao(v, n)}
+              onCobrarCartao={(n, card) => void cobrarCartao(v, n, card)}
               onVerificarPagamento={() => void verificarPagamento(v)}
               verificandoPagamento={!!verificandoPorVenda[v.id_legado]}
+              arsenalCartao={premium?.cartao ? { ultimos4: premium.cartao.ultimos4, bandeira: premium.cartao.bandeira } : null}
             />
           );
         })

@@ -95,11 +95,11 @@ Deno.serve(async (req) => {
   const admin = createClient(url, service);
 
   // 2) Resolve qa_clientes do usuário
-  let cli: { id: unknown; id_legado: unknown } | null = null;
+  let cli: { id: unknown; id_legado: unknown; cpf?: string | null } | null = null;
   {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado")
+      .select("id, id_legado, cpf")
       .eq("user_id", userId)
       .maybeSingle();
     cli = data;
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
     if (link?.qa_cliente_id) {
       const { data } = await admin
         .from("qa_clientes")
-        .select("id, id_legado")
+        .select("id, id_legado, cpf")
         .eq("id", link.qa_cliente_id)
         .maybeSingle();
       cli = data;
@@ -224,11 +224,10 @@ Deno.serve(async (req) => {
         if (forma === "CREDIT_CARD") {
           // Gross-up: cliente paga MDR + antecipação Asaas
           const gu = grossUpCC(valor, parcelas);
+          createPayload.value = gu.valorTotal; // sempre necessário; Asaas usa como total
           if (parcelas > 1) {
             createPayload.installmentCount = parcelas;
             createPayload.installmentValue = gu.valorParcela;
-          } else {
-            createPayload.value = gu.valorTotal;
           }
         } else if (forma === "BOLETO") {
           // Taxa bancária de R$1,99 repassada ao cliente
@@ -299,6 +298,136 @@ Deno.serve(async (req) => {
       // CREDIT_CARD: invoice_url já está em out.asaas_invoice_url — frontend abre direto
 
       return json({ success: true, ...out });
+    }
+
+    // ── ACTION: cobrar_cartao ────────────────────────────────────────────────
+    // Cobra diretamente via token (sem redirect p/ Asaas).
+    // Body: { venda_id, parcelas, usar_arsenal_cartao?: true }
+    //    OU { venda_id, parcelas, holderName, number, expiryMonth, expiryYear, ccv }
+    if (action === "cobrar_cartao") {
+      const parcelas = Math.max(1, Math.min(12, Math.round(Number(body?.parcelas) || 1)));
+      const valor    = Number(venda.valor_a_pagar || 0);
+      if (valor <= 0) return json({ error: "valor_invalido" }, 400);
+
+      // Resolve customer ID a partir do payment principal
+      let customerId: string | null = null;
+      try {
+        const r = await fetch(`${ASAAS_BASE_URL}/payments/${paymentId}`, { headers });
+        if (r.ok) { const pd = await r.json(); customerId = pd?.customer ?? null; }
+      } catch { /* ignora */ }
+      if (!customerId) return json({ error: "customer_nao_encontrado" }, 500);
+
+      // Resolve token
+      let creditCardToken: string | null = null;
+
+      if (body?.usar_arsenal_cartao === true) {
+        const cpf = String(cli.cpf || "").replace(/\D/g, "");
+        if (!cpf) return json({ error: "cpf_ausente" }, 422);
+        const { data: ass } = await admin
+          .from("qa_arsenal_assinaturas")
+          .select("asaas_credit_card_token")
+          .eq("cpf", cpf)
+          .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
+          .not("asaas_credit_card_token", "is", null)
+          .order("criado_em", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        creditCardToken = (ass as any)?.asaas_credit_card_token ?? null;
+        if (!creditCardToken) return json({ error: "token_arsenal_nao_encontrado" }, 404);
+      } else {
+        // Tokeniza cartão fornecido pelo cliente
+        const holderName  = String(body?.holderName  || "").trim();
+        const number      = String(body?.number      || "").replace(/\D/g, "");
+        const expiryMonth = String(body?.expiryMonth || "").padStart(2, "0");
+        const expiryYear  = String(body?.expiryYear  || "");
+        const ccv         = String(body?.ccv         || "").trim();
+        if (!holderName || number.length < 13 || !expiryMonth || expiryYear.length < 2 || !ccv) {
+          return json({ error: "dados_cartao_incompletos" }, 400);
+        }
+        const tokReq = await fetch(`${ASAAS_BASE_URL}/creditCards/tokenize`, {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify({ customer: customerId, creditCard: { holderName, number, expiryMonth, expiryYear, ccv } }),
+        });
+        const tokData = await tokReq.json().catch(() => ({}));
+        if (!tokReq.ok || !tokData?.creditCardToken) {
+          const msg = (tokData as any)?.errors?.[0]?.description || "Cartão recusado";
+          return json({ error: "tokenizacao_falhou", detalhe: String(msg).slice(0, 300) }, 422);
+        }
+        creditCardToken = tokData.creditCardToken;
+
+        // Salva token no Arsenal se o cliente tiver assinatura
+        const cpf = String(cli.cpf || "").replace(/\D/g, "");
+        if (cpf) {
+          const { data: ass } = await admin
+            .from("qa_arsenal_assinaturas")
+            .select("id")
+            .eq("cpf", cpf)
+            .in("status", ["gratuidade", "ativa", "aguardando_pagamento"])
+            .order("criado_em", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (ass) {
+            const last4 = tokData.creditCardNumber
+              ? String(tokData.creditCardNumber).replace(/\*/g, "").slice(-4) : number.slice(-4);
+            await admin.from("qa_arsenal_assinaturas").update({
+              asaas_credit_card_token:  creditCardToken,
+              asaas_credit_card_brand:  tokData.creditCardBrand  ?? null,
+              asaas_credit_card_last4:  last4,
+              asaas_credit_card_holder: holderName,
+            }).eq("id", (ass as any).id);
+          }
+        }
+      }
+
+      // Cria cobrança direta com token (sem invoiceUrl)
+      const gu = grossUpCC(valor, parcelas);
+      const chargePayload: Record<string, unknown> = {
+        customer:          customerId,
+        billingType:       "CREDIT_CARD",
+        value:             gu.valorTotal,
+        dueDate:           addDias(1),
+        description:       `Serviço QA #${venda.id_legado}`,
+        externalReference: `qa_alt:${venda.id_legado}:CREDIT_CARD`,
+        creditCardToken,
+      };
+      if (parcelas > 1) {
+        chargePayload.installmentCount = parcelas;
+        chargePayload.installmentValue = gu.valorParcela;
+      }
+
+      const chargeReq = await fetch(`${ASAAS_BASE_URL}/payments`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(chargePayload),
+      });
+      const charged = await chargeReq.json().catch(() => ({}));
+      if (!chargeReq.ok || !(charged as any)?.id) {
+        const msg = (charged as any)?.errors?.[0]?.description
+          || (charged as any)?.description
+          || chargeReq.status;
+        return json({ error: "cobranca_falhou", detalhe: String(msg).slice(0, 300) }, 502);
+      }
+
+      const pago = ["RECEIVED", "CONFIRMED"].includes((charged as any)?.status);
+      if (pago) {
+        await admin.from("qa_vendas").update({
+          cobranca_status: "confirmada",
+          status: "PAGO",
+          cobranca_confirmada_em: new Date().toISOString(),
+        }).eq("id_legado", vendaId);
+      }
+
+      return json({
+        success: true,
+        pago,
+        status:      (charged as any).status,
+        payment_id:  (charged as any).id,
+        invoice_url: (charged as any).invoiceUrl ?? null,
+        valor_total: gu.valorTotal,
+        valor_parcela: gu.valorParcela,
+        parcelas,
+      });
     }
 
     // ── ACTION: verificar_pagamento ──────────────────────────────────────────
