@@ -5,6 +5,7 @@ import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
+import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -27,6 +28,7 @@ interface Props {
   armasManual?: any[];
   meusDocs?: any[];
   processoDocs?: any[];
+  pendingContracts?: number;
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
   onOpenComprar?: () => void;
@@ -34,7 +36,7 @@ interface Props {
 }
 
 type FrontTone = "bordo" | "amber" | "green";
-type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean };
+type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean; onClick?: () => void };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
@@ -120,6 +122,7 @@ export default function ClienteResumoKanban({
   armasManual = [],
   meusDocs = [],
   processoDocs = [],
+  pendingContracts = 0,
   onNavigate,
   onOpenCadastro,
   onOpenComprar,
@@ -258,7 +261,21 @@ export default function ClienteResumoKanban({
       const statusProcesso = String(item.status || "").toLowerCase();
       const nomeProcesso = titleCaseServico(nome, "Processo");
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
-        return { label: nomeProcesso, status: "Checklist aberto", tone: "warn" as const };
+        return {
+          label: nomeProcesso,
+          status: "Te aguardando",
+          tone: "warn" as const,
+          onClick: () => {
+            // Se ainda há contrato pendente de assinatura, leva o cliente
+            // para o passo anterior (assinatura do contrato). Caso contrário,
+            // abre o assistente de documentação já focado neste processo.
+            if (pendingContracts > 0) {
+              onNavigate("contratos");
+              return;
+            }
+            abrirChecklistGuiado({ processoId: item?.id ? String(item.id) : null });
+          },
+        };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
         return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
@@ -377,7 +394,7 @@ export default function ClienteResumoKanban({
       ["TAREFAS ABERTAS", String(redCount + activeProcessosCount), `de ${totalTasks}`],
       ["PRÓXIMO VENCIMENTO", nextDue !== undefined ? String(nextDue) : "—", nextDue !== undefined ? "dias" : ""],
       ["DOCUMENTOS A RENOVAR", String(redCount), redCount > 0 ? "urgente" : ""],
-      ["PROCESSOS ATIVOS", String(activeProcessosCount), activeProcessos.length ? "checklist aberto" : ""],
+      ["PROCESSOS ATIVOS", String(activeProcessosCount), activeProcessos.length ? "te aguardando" : ""],
     ];
 
     return { fronts, urgents: sortedUrgents, totalFronts, activeItems, activeProcessos, summary };
@@ -588,12 +605,26 @@ export default function ClienteResumoKanban({
               </div>
               {front.items.length === 0 && <div className="qa-front-card__item"><span title="Nenhum item monitorado">Nenhum item monitorado</span><strong title="—">—</strong></div>}
               {front.items.map((item, index) => (
-                <div
-                  className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
-                  key={`${front.key}-${index}-${item.label}`}
-                >
-                  <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
-                </div>
+                item.onClick ? (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); item.onClick?.(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); item.onClick?.(); } }}
+                    className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
+                    style={{ cursor: "pointer" }}
+                    key={`${front.key}-${index}-${item.label}`}
+                  >
+                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status} style={{ textDecoration: "underline" }}>{item.status}</strong>
+                  </div>
+                ) : (
+                  <div
+                    className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
+                    key={`${front.key}-${index}-${item.label}`}
+                  >
+                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
+                  </div>
+                )
               ))}
             </article>
           ))}
