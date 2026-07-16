@@ -232,6 +232,7 @@ export default function QAClientePortalPage() {
   const location = useLocation();
   const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
+  const [authKnown, setAuthKnown] = useState(false);
   const [cliente, setCliente] = useState<any>(null);
   const arsenalPremium = useArsenalPremium(cliente?.id ?? null);
   const [vendas, setVendas] = useState<any[]>([]);
