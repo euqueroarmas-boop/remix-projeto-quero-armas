@@ -2344,6 +2344,7 @@ export default function QAClientePortalPage() {
                   servicoNomePorId={servicoNomePorId}
                   premium={premium}
                   onPremiumRefresh={arsenalPremium.refresh}
+                  onNavigateContratos={() => setActiveSection("contratos" as any)}
                   clienteNome={String(userName || cliente?.nome || cliente?.nome_completo || "").trim()}
                 />
               );

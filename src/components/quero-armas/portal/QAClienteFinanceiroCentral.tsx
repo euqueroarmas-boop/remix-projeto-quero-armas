@@ -161,6 +161,7 @@ interface Props {
   premium?: QAArsenalPremiumSubscription | null;
   onPremiumRefresh?: () => void;
   onRefresh?: () => void;
+  onNavigateContratos?: () => void;
   scopeLabel?: string;
   clienteNome?: string;
 }
@@ -558,10 +559,17 @@ function CobrancaAberta({
   onCobrarCartao: (parcelas: number, card?: CardForm) => void;
   onVerificarPagamento: () => void;
   verificandoPagamento: boolean;
-  arsenalCartao?: { ultimos4: string; bandeira: string } | null;
+  arsenalCartao?: { ultimos4: string; bandeira: string; titular?: string } | null;
 }) {
   const [cardForm, setCardForm] = useState<CardForm>(BLANK_CARD);
   const setC = (k: keyof CardForm, v: string) => setCardForm(prev => ({ ...prev, [k]: v }));
+
+  // Quando Arsenal card disponível e aba cartão ativa, pré-seleciona 1× automaticamente
+  useEffect(() => {
+    if (arsenalCartao && mode === "cartao" && selectedParcelas === undefined) {
+      onSelectParcelas(1);
+    }
+  }, [arsenalCartao, mode]);
 
   const dias = diasAte(venda.asaas_due_date);
   const vencida = dias !== null && dias < 0;
@@ -726,7 +734,9 @@ function CobrancaAberta({
                 <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10, background: "#F8F5F0", border: "1px solid #e0d8cc", marginBottom: 14 }}>
                   <span style={{ fontSize: 20 }}>💳</span>
                   <div>
-                    <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".06em", color: "var(--ink-soft)" }}>CARTÃO ARSENAL SALVO</div>
+                    <div style={{ fontFamily: "Oswald,sans-serif", fontSize: 11, letterSpacing: ".06em", color: "var(--ink-soft)" }}>
+                      {arsenalCartao.titular ? arsenalCartao.titular.toUpperCase() : "CARTÃO SALVO"}
+                    </div>
                     <div style={{ fontFamily: "'Arial Narrow',Arial", fontSize: 14, fontWeight: 700 }}>
                       {arsenalCartao.bandeira} •••• {arsenalCartao.ultimos4}
                     </div>
@@ -913,7 +923,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
 // ─── Componente principal ───────────────────────────────────────────────────
 
 export default function QAClienteFinanceiroCentral({
-  vendas, itens, servicoNomePorId = {}, premium = null, onPremiumRefresh, onRefresh, clienteNome,
+  vendas, itens, servicoNomePorId = {}, premium = null, onPremiumRefresh, onRefresh, onNavigateContratos, clienteNome,
 }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [modePorVenda, setModePorVenda] = useState<Record<number, "pix" | "boleto" | "cartao">>({});
@@ -1072,6 +1082,12 @@ export default function QAClienteFinanceiroCentral({
         setConfirmadasIds(prev => new Set([...prev, venda.id_legado]));
         toast.success("Pagamento confirmado!");
         onRefresh?.();
+        setTimeout(() => {
+          toast.info("Contrato gerado e aguardando sua assinatura.", {
+            action: { label: "Assinar contrato", onClick: () => onNavigateContratos?.() },
+            duration: 10000,
+          });
+        }, 1500);
       } else {
         toast.info("Cobrança enviada — a Asaas está processando. Clique em verificar em alguns instantes.");
       }
@@ -1199,14 +1215,14 @@ export default function QAClienteFinanceiroCentral({
       ) : (
         abertas.map(v => {
           const isOpen = expandedId === v.id_legado;
-          const mode = modePorVenda[v.id_legado] || "boleto";
+          const mode = modePorVenda[v.id_legado] || (premium?.cartao ? "cartao" : "boleto");
           const servico = servicoDaVenda(v, itens, servicoNomePorId);
           return (
             <CobrancaAberta
               key={v.id}
               venda={v}
               servico={servico}
-              defaultMode="boleto"
+              defaultMode={premium?.cartao ? "cartao" : "boleto"}
               expanded={isOpen}
               mode={mode}
               setMode={(m) => setModePorVenda(prev => ({ ...prev, [v.id_legado]: m }))}
@@ -1221,7 +1237,7 @@ export default function QAClienteFinanceiroCentral({
               onCobrarCartao={(n, card) => void cobrarCartao(v, n, card)}
               onVerificarPagamento={() => void verificarPagamento(v)}
               verificandoPagamento={!!verificandoPorVenda[v.id_legado]}
-              arsenalCartao={premium?.cartao ? { ultimos4: premium.cartao.ultimos4, bandeira: premium.cartao.bandeira } : null}
+              arsenalCartao={premium?.cartao ? { ultimos4: premium.cartao.ultimos4, bandeira: premium.cartao.bandeira, titular: premium.cartao.titular } : null}
             />
           );
         })
