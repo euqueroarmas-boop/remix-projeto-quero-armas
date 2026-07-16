@@ -232,6 +232,7 @@ export default function QAClientePortalPage() {
   const location = useLocation();
   const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
+  const [authKnown, setAuthKnown] = useState(false);
   const [cliente, setCliente] = useState<any>(null);
   const arsenalPremium = useArsenalPremium(cliente?.id ?? null);
   const [vendas, setVendas] = useState<any[]>([]);
@@ -412,6 +413,7 @@ export default function QAClientePortalPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { navigate("/area-do-cliente/login", { replace: true }); return; }
+        setAuthKnown(true);
 
         // Força troca de senha no primeiro acesso
         if (user.user_metadata?.password_change_required === true) {
@@ -1317,6 +1319,11 @@ export default function QAClientePortalPage() {
   }, [cliente, docsReloadKey]);
 
   if (loading) {
+    // Enquanto não sabemos se há sessão, renderiza fundo escuro invisível
+    // para não “piscar” um spinner claro antes do redirect para /login.
+    if (!authKnown) {
+      return <div className="min-h-dvh bg-[#050505]" aria-hidden />;
+    }
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
