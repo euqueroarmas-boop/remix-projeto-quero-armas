@@ -2553,7 +2553,7 @@ export default function QAClientePortalPage() {
       )}
 
       {cliente?.id ? (
-        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
+        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} blockOutsideDismiss={showContratoPopup} />
       ) : null}
 
       {cliente?.id ? (
