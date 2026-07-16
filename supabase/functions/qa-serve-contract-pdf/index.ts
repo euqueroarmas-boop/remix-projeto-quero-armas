@@ -146,11 +146,16 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
       doc.text(bulletText, MARGIN_X + indent, y + opts.size);
     }
     lines.forEach((ln, i) => {
-      const opt: any = {};
-      if (opts.align === "center") opt.align = "center";
-      if (opts.align === "justify" && i < lines.length - 1) opt.maxWidth = width;
-      const x = opts.align === "center" ? PAGE_W / 2 : MARGIN_X + indent + bulletW;
-      doc.text(ln, x, y + opts.size);
+      const isCenter = opts.align === "center";
+      const isJustify = opts.align === "justify" && i < lines.length - 1 && ln.trim().split(/\s+/).length > 1;
+      const textOpt: any = {};
+      if (isCenter) textOpt.align = "center";
+      if (isJustify) {
+        textOpt.align = "justify";
+        textOpt.maxWidth = width;
+      }
+      const x = isCenter ? PAGE_W / 2 : MARGIN_X + indent + bulletW;
+      doc.text(ln, x, y + opts.size, textOpt);
       y += lineHeight;
     });
     y += (opts.lineGap ?? 6);
