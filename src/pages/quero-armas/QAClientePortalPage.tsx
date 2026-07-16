@@ -1865,6 +1865,7 @@ export default function QAClientePortalPage() {
           meusDocs={meusDocs}
           processos={processos}
           processoDocs={processoDocs}
+          pendingContracts={pendingContracts}
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
           onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
