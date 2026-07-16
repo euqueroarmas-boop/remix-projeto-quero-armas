@@ -175,11 +175,12 @@ export default function MockupsLoginV9() {
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
-      style={
-        customHero
-          ? undefined
-          : { backgroundImage: `url(${BG_URL})`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }
-      }
+      style={{
+        backgroundImage: `url(${customHero || BG_URL})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
       {!customHero && (
@@ -190,19 +191,9 @@ export default function MockupsLoginV9() {
         </>
       )}
 
-      {/* Painel esquerdo com imagem custom — mantém proporção original (sem esticar).
-          Mobile: imagem no topo com aspect-video; Desktop: metade esquerda com contain. */}
+      {/* Overlay leve à direita quando há imagem custom, para o card manter contraste. */}
       {customHero && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col lg:flex-row">
-          <div className="relative w-full h-[42vh] lg:h-full lg:w-1/2 flex items-center justify-center bg-black overflow-hidden">
-            <img
-              src={customHero}
-              alt="Imagem de destaque"
-              className="max-h-full max-w-full w-auto h-auto object-contain"
-            />
-          </div>
-          <div className="hidden lg:block lg:w-1/2 bg-black" />
-        </div>
+        <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 82%, rgba(0,0,0,0.80) 100%)" }} />
       )}
 
       {/* Patrocínio + textos do hero — ocultos quando há imagem custom (usuário quer só a imagem) */}
