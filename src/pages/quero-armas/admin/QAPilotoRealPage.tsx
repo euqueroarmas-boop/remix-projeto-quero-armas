@@ -113,19 +113,104 @@ export default function QAPilotoRealPage() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [criandoVenda, setCriandoVenda] = useState(false);
 
+  /* ---------- Passo 3b: Preço negociado ---------- */
+  const TIPOS_AJUSTE = [
+    { v: "promocao", l: "Promoção" },
+    { v: "negociacao_individual", l: "Negociação individual" },
+    { v: "cortesia_parcial", l: "Cortesia parcial" },
+    { v: "complemento", l: "Complemento" },
+    { v: "correcao", l: "Correção" },
+    { v: "outro", l: "Outro" },
+  ] as const;
+  const [precoAplicadoStr, setPrecoAplicadoStr] = useState<string>("");
+  const [tipoAjuste, setTipoAjuste] = useState<string>("negociacao_individual");
+  const [motivoPreco, setMotivoPreco] = useState<string>("");
+  const [evidenciaFile, setEvidenciaFile] = useState<File | null>(null);
+  const [evidenciaPath, setEvidenciaPath] = useState<string | null>(null);
+  const [confirmadoPreco, setConfirmadoPreco] = useState<boolean>(false);
+
+  // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
+  useEffect(() => {
+    if (servico) {
+      setPrecoAplicadoStr(
+        servico.preco != null ? Number(servico.preco).toFixed(2).replace(".", ",") : "",
+      );
+      setMotivoPreco("");
+      setEvidenciaFile(null);
+      setEvidenciaPath(null);
+      setConfirmadoPreco(false);
+      setTipoAjuste("negociacao_individual");
+    }
+  }, [servico?.id]);
+
+  const precoCatalogo = servico?.preco != null ? Number(servico.preco) : 0;
+  const precoAplicadoNum = (() => {
+    const s = (precoAplicadoStr || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  })();
+  const precoValido = Number.isFinite(precoAplicadoNum);
+  const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
+  const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
+  const percentualDif = precoCatalogo > 0 && precoValido
+    ? Number(((diferencaValor / precoCatalogo) * 100).toFixed(2))
+    : 0;
+  const motivoOk = motivoPreco.trim().length >= 20;
+  const podeCriarVenda =
+    !!cliente && !!servico && precoValido &&
+    (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco));
+
+  const uploadEvidencia = useCallback(async () => {
+    if (!evidenciaFile || !cliente || !servico) return null;
+    const ext = (evidenciaFile.name.split(".").pop() || "bin").toLowerCase();
+    const path = `qa/negociacoes/${cliente.id}/${servico.slug}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("paid-contracts").upload(path, evidenciaFile, {
+      contentType: evidenciaFile.type || "application/octet-stream",
+      upsert: true,
+    });
+    if (error) throw error;
+    setEvidenciaPath(path);
+    return path;
+  }, [evidenciaFile, cliente, servico]);
+
   const criarVenda = useCallback(async () => {
     if (!cliente || !servico) return;
+    if (!precoValido) { toast.error("Preço aplicado inválido."); return; }
+    if (precoDiferente) {
+      if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+      if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+    }
     setCriandoVenda(true);
     try {
+      let evPath = evidenciaPath;
+      if (precoDiferente && evidenciaFile && !evPath) {
+        try { evPath = await uploadEvidencia(); } catch (e: any) {
+          toast.error(`Falha no upload da evidência: ${e?.message || e}`);
+          setCriandoVenda(false);
+          return;
+        }
+      }
       const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
         body: {
-          cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1 }],
+          cart: [{
+            servico_id: servico.id,
+            slug: servico.slug,
+            quantidade: 1,
+            preco_negociado: precoAplicadoNum,
+          }],
           identificacao: {
             nome_completo: cliente.nome_completo,
             cpf: cliente.cpf || "",
             email: cliente.email || "",
             celular: cliente.celular || "",
           },
+          negociacao: precoDiferente ? {
+            motivo: motivoPreco.trim(),
+            tipo_ajuste: tipoAjuste,
+            evidencia_path: evPath,
+            confirmado: true,
+            origem: "piloto_real_preco_negociado",
+          } : null,
         },
       });
       if (error) throw error;
@@ -137,7 +222,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico]);
+  }, [cliente, servico, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoNum, motivoPreco, tipoAjuste]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
