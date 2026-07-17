@@ -333,12 +333,97 @@ Deno.serve(async (req) => {
 
   // Calcula total snapshot.
   let totalCents = 0;
-  const itensSnapshot = body.cart.map((it) => {
+  // Detecta se há itens com preço negociado diferente do catálogo.
+  const negociacaoRecebida = body.negociacao ?? null;
+  const itensNegociadosAudit: Array<{
+    slug: string;
+    nome: string;
+    quantidade: number;
+    preco_catalogo: number;
+    preco_aplicado: number;
+    diferenca: number;
+    percentual: number;
+  }> = [];
+  const cartAvaliado = body.cart.map((it) => {
     const r: any = byCartId.get(String(it.servico_id)) ?? bySlug.get(it.slug);
-    const precoNum = Number(r.preco ?? 0);
+    const precoCatalogo = Number(r.preco ?? 0);
+    const rawNeg = it.preco_negociado;
+    const precoAplicado =
+      rawNeg != null && Number.isFinite(Number(rawNeg)) && Number(rawNeg) >= 0
+        ? Number(rawNeg)
+        : precoCatalogo;
+    const diferente = Math.abs(precoAplicado - precoCatalogo) > 0.0049;
+    return { it, r, precoCatalogo, precoAplicado, diferente };
+  });
+  const temNegociacao = cartAvaliado.some((c) => c.diferente);
+
+  if (temNegociacao) {
+    // Precisa de staff ativo (mesma regra de qa_usuarios_perfis).
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "staff_required_for_negotiated_price" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const { data: perfilRow } = await admin
+      .from("qa_usuarios_perfis")
+      .select("perfil, ativo")
+      .eq("user_id", userId)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (!perfilRow) {
+      return new Response(
+        JSON.stringify({ error: "staff_profile_required_for_negotiated_price" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!negociacaoRecebida) {
+      return new Response(
+        JSON.stringify({ error: "negociacao_obrigatoria" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const motivo = String(negociacaoRecebida.motivo || "").trim();
+    if (motivo.length < 20) {
+      return new Response(
+        JSON.stringify({ error: "motivo_minimo_20_chars" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!TIPOS_AJUSTE.has(String(negociacaoRecebida.tipo_ajuste))) {
+      return new Response(
+        JSON.stringify({ error: "tipo_ajuste_invalido", allowed: [...TIPOS_AJUSTE] }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (negociacaoRecebida.confirmado !== true) {
+      return new Response(
+        JSON.stringify({ error: "confirmacao_obrigatoria" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  }
+
+  const itensSnapshot = body.cart.map((it) => {
+    const av = cartAvaliado.find((c) => c.it === it)!;
+    const r = av.r;
+    const precoNum = av.precoAplicado;
     const valorUnit = Math.round(precoNum * 100);
     const sub = valorUnit * it.quantidade;
     totalCents += sub;
+    if (av.diferente) {
+      const diff = av.precoAplicado - av.precoCatalogo;
+      const pct = av.precoCatalogo > 0 ? (diff / av.precoCatalogo) * 100 : 0;
+      itensNegociadosAudit.push({
+        slug: r.slug,
+        nome: r.nome,
+        quantidade: it.quantidade,
+        preco_catalogo: av.precoCatalogo,
+        preco_aplicado: av.precoAplicado,
+        diferenca: Number(diff.toFixed(2)),
+        percentual: Number(pct.toFixed(2)),
+      });
+    }
     return {
       servico_id_legado: r.servico_id ?? null,
       catalogo_uuid: r.id,
@@ -347,6 +432,9 @@ Deno.serve(async (req) => {
       valor_unitario: precoNum,
       quantidade: it.quantidade,
       valor_total: precoNum * it.quantidade,
+      preco_catalogo_no_momento: av.precoCatalogo,
+      preco_aplicado: av.precoAplicado,
+      preco_negociado_flag: av.diferente,
     };
   });
 
