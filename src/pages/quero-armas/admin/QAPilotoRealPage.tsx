@@ -264,8 +264,13 @@ export default function QAPilotoRealPage() {
     if (!cliente || !servico) return;
     if (!precoValido) { toast.error("Preço aplicado inválido."); return; }
     if (precoDiferente) {
-      if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
-      if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+      if (modoPacote) {
+        if (!motivoPacoteOk) { toast.error("Motivo do pacote obrigatório (mín. 20 caracteres)."); return; }
+      } else {
+        if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+        if (!tipoAjuste) { toast.error("Selecione o tipo de ajuste."); return; }
+        if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+      }
     }
     setCriandoVenda(true);
     try {
@@ -325,7 +330,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
