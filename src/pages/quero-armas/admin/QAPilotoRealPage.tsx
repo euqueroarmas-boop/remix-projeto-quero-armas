@@ -380,9 +380,24 @@ export default function QAPilotoRealPage() {
           } : null,
           exibicao_contrato: temExtras ? {
             modo: modoExibicao,
-            valor_final_pacote: modoPacote && precoValido ? precoAplicadoNum : null,
+            // Valor final oficial do pacote no contrato:
+            //  - custo_fin: preço dos serviços = total do catálogo
+            //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
+            valor_final_pacote: modoPacote && precoValido
+              ? (modoPacoteCustoFin ? precoCatalogo : precoAplicadoNum)
+              : null,
             ocultar_precos_individuais_no_contrato: modoPacote,
-            motivo: modoPacote && precoDiferente ? motivoPacote.trim() : null,
+            motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
+            // Auditoria estendida do pacote fechado.
+            tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
+            total_catalogo_servicos: modoPacote ? precoCatalogo : null,
+            valor_total_pago_cliente:
+              modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
+            diferenca_valor: modoPacote ? diferencaPacoteValor : null,
+            custo_financeiro_adquirente: modoPacoteCustoFin ? custoFinanceiroAdquirente : null,
+            adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
+            parcelas: modoPacoteCustoFin ? parcelasPacote : null,
+            valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
           } : null,
         },
       });
@@ -395,7 +410,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
