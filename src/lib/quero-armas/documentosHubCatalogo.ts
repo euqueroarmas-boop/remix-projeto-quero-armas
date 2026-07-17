@@ -169,6 +169,17 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
 
 const META_BY_TIPO = new Map(HUB_TIPOS_DOCUMENTO.map((item) => [item.value, item] as const));
 
+/**
+ * Tipos legados mantidos no catálogo apenas para retrocompatibilidade de
+ * registros antigos (label/meta lookup). Não devem mais aparecer nos selects:
+ * toda certidão foi refinada em subtipos específicos (Distribuição vs
+ * Execuções, TRF3 Regional vs SJSP/JEF).
+ */
+const TIPOS_LEGADOS_OCULTOS = new Set<string>([
+  "antecedentes_estadual",
+  "antecedentes_federal",
+]);
+
 const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
   [/^renda_/, "renda_ocupacao"],
   [/^antecedentes_/, "antecedentes_regularidade"],
@@ -454,7 +465,9 @@ export function inferEscopoDocumental(input: {
 }
 
 export function listTiposByCategoria(categoria: HubCategoria): HubTipoDocumentoMeta[] {
-  return HUB_TIPOS_DOCUMENTO.filter((item) => item.categoria === categoria);
+  return HUB_TIPOS_DOCUMENTO.filter(
+    (item) => item.categoria === categoria && !TIPOS_LEGADOS_OCULTOS.has(item.value),
+  );
 }
 
 export function isCategoriaArmaAcervo(categoria: HubCategoria | null | undefined): boolean {
