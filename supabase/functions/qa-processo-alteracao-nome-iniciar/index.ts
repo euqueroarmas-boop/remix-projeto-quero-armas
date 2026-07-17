@@ -107,6 +107,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    const baseRow: Record<string, unknown> = {
+      processo_id: processoId,
+      cliente_id: processo.cliente_id,
+      tipo_documento: TIPO,
+      nome_documento: NOME,
+      etapa: "complementar",
+      obrigatorio: true,
+      formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+      campos_complementares_json: { incluir_no_dossie: true },
+      regra_validacao: {
+        descricao:
+          "Comprovação de alteração de nome: aceita certidão averbada OU documento oficial de identidade emitido por órgão competente com o nome atualizado.",
+        exige: ["nome_atual"],
+      },
+      instrucoes:
+        "Envie sua certidão averbada OU um documento oficial de identidade (CIN, RG, CNH, Passaporte) com o nome já atualizado. Qualquer um comprova a alteração.",
+    };
+
     // 2a) Existe DOCUMENTO OFICIAL DE IDENTIDADE (CIN/RG/CNH/Passaporte/CTPS)
     //     aprovado no Hub cujo nome bate com o cadastro atual? Juridicamente,
     //     um documento de identidade emitido por órgão competente já comprova
@@ -224,24 +242,6 @@ Deno.serve(async (req) => {
       .limit(1);
 
     const reaproveitar = (aprovadasOutros ?? [])[0] ?? null;
-
-    const baseRow: Record<string, unknown> = {
-      processo_id: processoId,
-      cliente_id: processo.cliente_id,
-      tipo_documento: TIPO,
-      nome_documento: NOME,
-      etapa: "complementar",
-      obrigatorio: true,
-      formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-      campos_complementares_json: { incluir_no_dossie: true },
-      regra_validacao: {
-        descricao:
-          "Certidão de casamento ou nascimento AVERBADA, ou outro documento oficial com averbação de alteração de nome em cartório.",
-        exige: ["nome_anterior", "nome_atual"],
-      },
-      instrucoes:
-        "Envie a certidão averbada (casamento ou nascimento) que comprova a alteração do seu nome. Aceitamos também outros documentos oficiais com averbação de alteração de nome.",
-    };
 
     if (reaproveitar) {
       // Cria a pendência já como APROVADO referenciando o documento original.
