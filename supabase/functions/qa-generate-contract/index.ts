@@ -487,7 +487,7 @@ Deno.serve(async (req) => {
     cliente_telefone: esc(cliente.celular || ""),
     servico_slug: esc(servicoSlugFinal),
     servico_nome: esc(servicoNomeFinal),
-    servico_preco: brl(totalCents),
+    servico_preco: brl(totalContratoCents),
     aceite_data: aceiteDataIso,
     aceite_ip: "",
     aceite_user_agent: "",
