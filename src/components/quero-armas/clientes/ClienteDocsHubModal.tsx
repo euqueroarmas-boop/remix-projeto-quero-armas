@@ -1874,8 +1874,26 @@ export function ClienteDocsHubModal({
               ) : null}
             </div>
             <div className="font-heading text-[14px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
-              {tipoAtual?.label || "Aguardando classificação"}
+              {expectedTipoMeta?.label || tipoAtual?.label || "Aguardando classificação"}
             </div>
+            {expectedTipoMeta ? (
+              <div className="font-heading text-[9px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+                Exigência do Assistente de Documentação
+              </div>
+            ) : null}
+            {tipoDivergenteExigencia ? (
+              <div className="mt-1 flex items-start gap-1.5 border border-amber-300 bg-amber-50 p-2 text-[10px] leading-snug text-amber-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Documento divergente</div>
+                  <div>
+                    A IA identificou <b>{tipoAtual?.label || form.tipo_documento}</b>, mas o
+                    slot exige <b>{expectedTipoMeta?.label}</b>. Anexe o documento correto ou
+                    corrija o Tipo do Documento antes de salvar.
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {/* Card de arquivo compacto (apenas quando há arquivo) */}
             {file ? (
