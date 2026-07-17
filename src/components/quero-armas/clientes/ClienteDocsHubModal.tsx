@@ -997,9 +997,18 @@ export function ClienteDocsHubModal({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
         tipo_documento: tipoIA,
-        // Comprovante de residência: usa o CPF extraído como identificador do titular
+        // Comprovante de residência: identificador é o CÓDIGO DE INSTALAÇÃO / UC / matrícula
+        // da concessionária — NUNCA o CPF do titular.
         numero_documento: tipoIA === "comprovante_residencia"
-          ? (campos.cpf || campos.numero_documento || prev.numero_documento)
+          ? (
+              (campos as any).codigo_instalacao ||
+              (campos as any).numero_uc ||
+              (campos as any).uc ||
+              (campos as any).numero_instalacao ||
+              (campos as any).matricula ||
+              campos.numero_documento ||
+              prev.numero_documento
+            )
           : (campos.numero_documento || prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         // Para laudos/exames, o campo "Avaliação" usa data_avaliacao.
@@ -1358,7 +1367,7 @@ export function ClienteDocsHubModal({
         // Demais tipos: bloqueia se mesmo tipo + mesmo número já existir
         let q = supabase
           .from("qa_documentos_cliente" as any)
-          .select("id, numero_documento")
+          .select("id, numero_documento, data_emissao")
           .eq("tipo_documento", form.tipo_documento)
           .neq("status", "excluido");
         q = customerId
@@ -1366,11 +1375,36 @@ export function ClienteDocsHubModal({
           : q.eq("qa_cliente_id", qaClienteId as number);
         const { data: existsNum, error: errNum } = await q;
         if (errNum) throw errNum;
-        const dup = (existsNum as any[] | null)?.find(
-          (d) => (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm,
-        );
+        // Contas de consumo (energia/água/gás/internet/telefone) usam a mesma UC
+        // por vários meses. Só bloqueia se número + mês/ano de emissão baterem.
+        const tiposComRecorrencia = new Set([
+          "comprovante_residencia",
+          "conta_luz",
+          "conta_agua",
+          "conta_gas",
+          "conta_internet",
+          "conta_telefone",
+          "iptu",
+        ]);
+        const usaMesAno = tiposComRecorrencia.has(String(form.tipo_documento));
+        const mesAnoNovo = (form.data_emissao || "").slice(0, 7); // YYYY-MM
+        const dup = (existsNum as any[] | null)?.find((d) => {
+          const mesmoNumero =
+            (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm;
+          if (!mesmoNumero) return false;
+          if (!usaMesAno) return true;
+          const mesAnoExistente = String(d.data_emissao || "").slice(0, 7);
+          // Se algum lado não tem data, cai para o bloqueio antigo (evita brechas).
+          if (!mesAnoNovo || !mesAnoExistente) return true;
+          return mesAnoNovo === mesAnoExistente;
+        });
         if (dup) {
-          toast.error(`Já existe um ${tipoLabel} com o número ${form.numero_documento} para este cliente.`);
+          const sufixo = usaMesAno && mesAnoNovo
+            ? ` (referência ${mesAnoNovo.split("-").reverse().join("/")})`
+            : "";
+          toast.error(
+            `Já existe um ${tipoLabel} com o número ${form.numero_documento}${sufixo} para este cliente.`,
+          );
           setSaving(false);
           return;
         }
