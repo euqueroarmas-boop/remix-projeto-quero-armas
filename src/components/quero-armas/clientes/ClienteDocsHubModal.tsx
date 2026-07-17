@@ -1006,8 +1006,7 @@ export function ClienteDocsHubModal({
               (campos as any).uc ||
               (campos as any).numero_instalacao ||
               (campos as any).matricula ||
-              campos.numero_documento ||
-              prev.numero_documento
+              ""
             )
           : (campos.numero_documento || prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
