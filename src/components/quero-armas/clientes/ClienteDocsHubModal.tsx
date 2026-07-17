@@ -1386,10 +1386,15 @@ export function ClienteDocsHubModal({
           "iptu",
         ]);
         const usaMesAno = tiposComRecorrencia.has(String(form.tipo_documento));
-        // Certidões (TSE, criminais, distribuidor etc.) mantêm o mesmo número
-        // de inscrição/registro a cada reemissão. Só bloqueia se a data de
-        // emissão for idêntica — nova emissão é sempre permitida.
-        const ehCertidao = String(form.tipo_documento || "").startsWith("certidao");
+        // Certidões e antecedentes (TSE, criminais, federal, estadual, militar,
+        // distribuidor, nada consta etc.) mantêm o mesmo número de inscrição/
+        // registro a cada reemissão. Só bloqueia se a data de emissão for
+        // idêntica — nova emissão é sempre permitida.
+        const tipoDoc = String(form.tipo_documento || "");
+        const ehCertidao =
+          tipoDoc.startsWith("certidao") ||
+          tipoDoc.startsWith("antecedentes") ||
+          tipoDoc.startsWith("nada_consta");
         const mesAnoNovo = (form.data_emissao || "").slice(0, 7); // YYYY-MM
         const dup = (existsNum as any[] | null)?.find((d) => {
           const mesmoNumero =
