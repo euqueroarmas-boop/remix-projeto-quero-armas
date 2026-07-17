@@ -316,6 +316,118 @@ export default function QAPilotoRealPage() {
   }, [venda, motivoArq, recarregarVenda, recarregarContrato]);
 
   /* ---------- Smoke test ---------- */
+  /* ---------- Auditoria (somente leitura) ---------- */
+  type AuditRow = {
+    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos";
+    id: string;
+    created_at: string;
+    tipo: string;
+    ator: string | null;
+    user_id: string | null;
+    ref: string;
+    dados: unknown;
+  };
+  const [auditRows, setAuditRows] = useState<AuditRow[]>([]);
+  const [carregandoAudit, setCarregandoAudit] = useState(false);
+  const [expandido, setExpandido] = useState<Record<string, boolean>>({});
+
+  const carregarAuditoria = useCallback(async () => {
+    if (!venda) return;
+    setCarregandoAudit(true);
+    try {
+      const processoIds = processos.map((p) => p.id);
+      const [ve, pa, ce, pe] = await Promise.all([
+        supabase
+          .from("qa_venda_eventos")
+          .select("id, created_at, tipo_evento, ator, user_id, dados_json, venda_id")
+          .eq("venda_id", venda.id)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("qa_pagamento_auditoria")
+          .select("id, created_at, campo, valor_anterior, valor_novo, origem, ator, contexto, venda_id")
+          .eq("venda_id", venda.id)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        contrato
+          ? supabase
+              .from("qa_contract_events")
+              .select("id, created_at, event_type, event_payload, created_by, contract_id")
+              .eq("contract_id", contrato.id)
+              .order("created_at", { ascending: false })
+              .limit(200)
+          : Promise.resolve({ data: [], error: null } as any),
+        processoIds.length > 0
+          ? supabase
+              .from("qa_processo_eventos")
+              .select("id, created_at, tipo_evento, descricao, dados_json, ator, user_id, processo_id")
+              .in("processo_id", processoIds)
+              .order("created_at", { ascending: false })
+              .limit(200)
+          : Promise.resolve({ data: [], error: null } as any),
+      ]);
+      const rows: AuditRow[] = [];
+      for (const r of (ve.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_venda_eventos",
+          id: `ve:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.ator ?? null,
+          user_id: r.user_id ?? null,
+          ref: `venda #${r.venda_id}`,
+          dados: r.dados_json,
+        });
+      }
+      for (const r of (pa.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_pagamento_auditoria",
+          id: `pa:${r.id}`,
+          created_at: r.created_at,
+          tipo: `${r.campo}: ${String(r.valor_anterior ?? "—")} → ${String(r.valor_novo ?? "—")}`,
+          ator: r.ator ?? null,
+          user_id: null,
+          ref: `venda #${r.venda_id} · origem ${r.origem ?? "—"}`,
+          dados: r.contexto,
+        });
+      }
+      for (const r of (ce.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_contract_events",
+          id: `ce:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.event_type,
+          ator: null,
+          user_id: r.created_by ?? null,
+          ref: `contrato ${String(r.contract_id).slice(0, 8)}`,
+          dados: r.event_payload,
+        });
+      }
+      for (const r of (pe.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_processo_eventos",
+          id: `pe:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.ator ?? null,
+          user_id: r.user_id ?? null,
+          ref: `processo ${String(r.processo_id).slice(0, 8)}${r.descricao ? ` · ${r.descricao}` : ""}`,
+          dados: r.dados_json,
+        });
+      }
+      rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      setAuditRows(rows);
+    } catch (e: any) {
+      toast.error(`Falha ao carregar auditoria: ${e?.message || e}`);
+    } finally {
+      setCarregandoAudit(false);
+    }
+  }, [venda, contrato, processos]);
+
+  useEffect(() => {
+    if (venda) carregarAuditoria();
+  }, [venda?.id, contrato?.id, processos.length, carregarAuditoria]);
+
   const [rodandoSmoke, setRodandoSmoke] = useState(false);
   const [smokeResult, setSmokeResult] = useState<any>(null);
   const rodarSmokeTest = useCallback(async () => {
@@ -686,6 +798,78 @@ export default function QAPilotoRealPage() {
                   </div>
                 </div>
               )}
+            </Card>
+          )}
+
+          {/* Auditoria (somente leitura) */}
+          {venda && (
+            <Card title="Auditoria do Piloto (somente leitura)" state="pending">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-neutral-600 normal-case">
+                  Eventos vinculados a esta venda
+                  {contrato ? `, contrato ${contrato.id.slice(0, 8)}` : ""}
+                  {processos.length > 0 ? ` e ${processos.length} processo(s)` : ""}.
+                  Fontes: <code>qa_venda_eventos</code>, <code>qa_pagamento_auditoria</code>,
+                  <code> qa_contract_events</code>, <code>qa_processo_eventos</code>.
+                </p>
+                <Button size="sm" variant="outline" onClick={carregarAuditoria} disabled={carregandoAudit}>
+                  {carregandoAudit ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
+                </Button>
+              </div>
+              {auditRows.length === 0 && !carregandoAudit && (
+                <p className="text-xs text-neutral-500 normal-case">Nenhum evento ainda.</p>
+              )}
+              <div className="max-h-[420px] overflow-auto border border-neutral-200 rounded">
+                <table className="w-full text-[11px] normal-case">
+                  <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
+                    <tr>
+                      <th className="text-left px-2 py-1">Data/Hora</th>
+                      <th className="text-left px-2 py-1">Fonte</th>
+                      <th className="text-left px-2 py-1">Tipo</th>
+                      <th className="text-left px-2 py-1">Ator</th>
+                      <th className="text-left px-2 py-1">Referência</th>
+                      <th className="text-left px-2 py-1">Dados</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditRows.map((r) => {
+                      const dt = new Date(r.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+                      const isOpen = !!expandido[r.id];
+                      const dadosStr = r.dados ? JSON.stringify(r.dados) : "";
+                      const preview = dadosStr.length > 80 ? dadosStr.slice(0, 80) + "…" : dadosStr;
+                      return (
+                        <tr key={r.id} className="border-t border-neutral-200 align-top">
+                          <td className="px-2 py-1 whitespace-nowrap">{dt}</td>
+                          <td className="px-2 py-1"><code className="text-[10px]">{r.fonte}</code></td>
+                          <td className="px-2 py-1 font-semibold">{r.tipo}</td>
+                          <td className="px-2 py-1">
+                            {r.ator || "—"}
+                            {r.user_id && <div className="text-[9px] text-neutral-500">{r.user_id.slice(0, 8)}</div>}
+                          </td>
+                          <td className="px-2 py-1">{r.ref}</td>
+                          <td className="px-2 py-1">
+                            {dadosStr ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpandido((p) => ({ ...p, [r.id]: !isOpen }))}
+                                className="text-left text-neutral-700 hover:text-neutral-900"
+                              >
+                                {isOpen ? (
+                                  <pre className="text-[10px] bg-neutral-50 border border-neutral-200 rounded p-2 max-w-[420px] whitespace-pre-wrap break-all">
+                                    {JSON.stringify(r.dados, null, 2)}
+                                  </pre>
+                                ) : (
+                                  <span className="text-neutral-500">{preview || "—"}</span>
+                                )}
+                              </button>
+                            ) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </Card>
           )}
         </div>
