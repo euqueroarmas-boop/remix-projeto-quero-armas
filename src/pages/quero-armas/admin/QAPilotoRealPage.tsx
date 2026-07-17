@@ -800,6 +800,78 @@ export default function QAPilotoRealPage() {
               )}
             </Card>
           )}
+
+          {/* Auditoria (somente leitura) */}
+          {venda && (
+            <Card title="Auditoria do Piloto (somente leitura)" state="pending">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-neutral-600 normal-case">
+                  Eventos vinculados a esta venda
+                  {contrato ? `, contrato ${contrato.id.slice(0, 8)}` : ""}
+                  {processos.length > 0 ? ` e ${processos.length} processo(s)` : ""}.
+                  Fontes: <code>qa_venda_eventos</code>, <code>qa_pagamento_auditoria</code>,
+                  <code> qa_contract_events</code>, <code>qa_processo_eventos</code>.
+                </p>
+                <Button size="sm" variant="outline" onClick={carregarAuditoria} disabled={carregandoAudit}>
+                  {carregandoAudit ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
+                </Button>
+              </div>
+              {auditRows.length === 0 && !carregandoAudit && (
+                <p className="text-xs text-neutral-500 normal-case">Nenhum evento ainda.</p>
+              )}
+              <div className="max-h-[420px] overflow-auto border border-neutral-200 rounded">
+                <table className="w-full text-[11px] normal-case">
+                  <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
+                    <tr>
+                      <th className="text-left px-2 py-1">Data/Hora</th>
+                      <th className="text-left px-2 py-1">Fonte</th>
+                      <th className="text-left px-2 py-1">Tipo</th>
+                      <th className="text-left px-2 py-1">Ator</th>
+                      <th className="text-left px-2 py-1">Referência</th>
+                      <th className="text-left px-2 py-1">Dados</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditRows.map((r) => {
+                      const dt = new Date(r.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+                      const isOpen = !!expandido[r.id];
+                      const dadosStr = r.dados ? JSON.stringify(r.dados) : "";
+                      const preview = dadosStr.length > 80 ? dadosStr.slice(0, 80) + "…" : dadosStr;
+                      return (
+                        <tr key={r.id} className="border-t border-neutral-200 align-top">
+                          <td className="px-2 py-1 whitespace-nowrap">{dt}</td>
+                          <td className="px-2 py-1"><code className="text-[10px]">{r.fonte}</code></td>
+                          <td className="px-2 py-1 font-semibold">{r.tipo}</td>
+                          <td className="px-2 py-1">
+                            {r.ator || "—"}
+                            {r.user_id && <div className="text-[9px] text-neutral-500">{r.user_id.slice(0, 8)}</div>}
+                          </td>
+                          <td className="px-2 py-1">{r.ref}</td>
+                          <td className="px-2 py-1">
+                            {dadosStr ? (
+                              <button
+                                type="button"
+                                onClick={() => setExpandido((p) => ({ ...p, [r.id]: !isOpen }))}
+                                className="text-left text-neutral-700 hover:text-neutral-900"
+                              >
+                                {isOpen ? (
+                                  <pre className="text-[10px] bg-neutral-50 border border-neutral-200 rounded p-2 max-w-[420px] whitespace-pre-wrap break-all">
+                                    {JSON.stringify(r.dados, null, 2)}
+                                  </pre>
+                                ) : (
+                                  <span className="text-neutral-500">{preview || "—"}</span>
+                                )}
+                              </button>
+                            ) : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar Checklist */}
