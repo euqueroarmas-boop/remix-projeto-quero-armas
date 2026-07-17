@@ -1292,12 +1292,21 @@ Deno.serve(async (req) => {
       }
     }
 
+    const tipoDocAtual = String(doc.tipo_documento ?? "").toLowerCase();
+    const validadeDiasEfetiva = [
+      "certidao_federal_trf3_regional",
+      "certidao_criminal_tjmsp",
+      "certidao_crimes_militares_stm",
+    ].includes(tipoDocAtual)
+      ? 90
+      : doc.validade_dias;
+
     // calcula data_validade quando aplicável
     let dataValidade: string | null = null;
-    if (dataEmissao && doc.validade_dias) {
+    if (dataEmissao && validadeDiasEfetiva) {
       const d = new Date(dataEmissao);
       if (!isNaN(d.getTime())) {
-        d.setDate(d.getDate() + doc.validade_dias);
+        d.setDate(d.getDate() + validadeDiasEfetiva);
         dataValidade = d.toISOString().slice(0, 10);
       }
     }
