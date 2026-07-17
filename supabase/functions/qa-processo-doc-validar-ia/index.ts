@@ -1500,11 +1500,15 @@ Deno.serve(async (req) => {
               try {
                 await supabase.from("qa_cliente_historico_atualizacoes").insert({
                   cliente_id: cliente.id,
-                  campo: "nome_completo",
-                  valor_anterior: nomeAtual,
-                  valor_novo: nomeIA,
+                  changed_fields: ["nome_completo"],
+                  snapshot_anterior: { nome_completo: nomeAtual },
+                  snapshot_novo: {
+                    nome_completo: nomeIA,
+                    documento_id,
+                    tipo_documento: doc.tipo_documento,
+                  },
                   origem: "ia_superset",
-                  documento_id,
+                  autor: "ia",
                 } as any);
               } catch (histErr) {
                 console.warn("[FASE3] historico nome superset falhou:", histErr);
