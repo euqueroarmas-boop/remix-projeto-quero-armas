@@ -46,10 +46,18 @@ interface NegociacaoInput {
   origem?: string | null; // ex.: "piloto_real_preco_negociado"
 }
 
+interface ExibicaoContratoInput {
+  modo: "itens_separados" | "pacote_fechado";
+  valor_final_pacote?: number | null;
+  ocultar_precos_individuais_no_contrato?: boolean;
+  motivo?: string | null;
+}
+
 interface Body {
   cart: CartItemInput[];
   identificacao?: IdentificacaoInput | null;
   negociacao?: NegociacaoInput | null;
+  exibicao_contrato?: ExibicaoContratoInput | null;
 }
 
 const TIPOS_AJUSTE = new Set([
@@ -499,8 +507,38 @@ Deno.serve(async (req) => {
       total: totalCents / 100,
       itens: itensSnapshot,
       cobranca_status: "nao_gerada",
+      exibicao_contrato: body.exibicao_contrato ?? null,
     },
   });
+
+  // Auditoria dedicada — modo de exibição do contrato (usada por qa-generate-contract).
+  // Sempre grava o evento quando o modo foi explicitamente enviado (mesmo itens_separados,
+  // para deixar rastro do que a Equipe escolheu no wizard).
+  if (body.exibicao_contrato && body.exibicao_contrato.modo) {
+    const exib = body.exibicao_contrato;
+    await admin.from("qa_venda_eventos").insert({
+      venda_id: vendaId,
+      qa_cliente_id: qaClienteId,
+      cliente_id: cliLegado,
+      tipo_evento: "venda_exibicao_contrato_definida",
+      descricao:
+        exib.modo === "pacote_fechado"
+          ? "Pacote fechado — contrato deve ocultar preços individuais e exibir valor final único"
+          : "Itens separados — contrato deve listar preços individuais + total",
+      ator: userEmail ? `staff:${userEmail}` : (userId ? "cliente_logado" : "cliente_publico"),
+      user_id: userId,
+      dados_json: {
+        modo_exibicao_valor_contrato: exib.modo,
+        valor_final_pacote:
+          exib.modo === "pacote_fechado" && exib.valor_final_pacote != null
+            ? Number(exib.valor_final_pacote)
+            : null,
+        ocultar_precos_individuais_no_contrato: exib.modo === "pacote_fechado",
+        motivo: exib.motivo ? String(exib.motivo).trim() : null,
+        total_snapshot: totalCents / 100,
+      },
+    });
+  }
 
   // Auditoria — preço negociado (obrigatório sempre que houver diferença).
   if (itensNegociadosAudit.length > 0 && negociacaoRecebida) {
