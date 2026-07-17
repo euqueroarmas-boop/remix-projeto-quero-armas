@@ -353,6 +353,8 @@ Deno.serve(async (req) => {
   // Lê o modo de exibição escolhido no wizard/checkout.
   let modoExibicaoContrato: "itens_separados" | "pacote_fechado" = "itens_separados";
   let valorFinalPacoteEvento: number | null = null;
+  let custosEmbutidosEvento: Array<{ descricao: string; valor: number }> = [];
+  let custosEmbutidosTotalEvento = 0;
   try {
     const { data: exibEv } = await sb
       .from("qa_venda_eventos")
@@ -367,6 +369,15 @@ Deno.serve(async (req) => {
       modoExibicaoContrato = "pacote_fechado";
       const vf = Number(dj.valor_final_pacote);
       valorFinalPacoteEvento = Number.isFinite(vf) && vf > 0 ? vf : null;
+      if (Array.isArray(dj.custos_embutidos)) {
+        custosEmbutidosEvento = dj.custos_embutidos
+          .filter((c: any) => c && typeof c.descricao === "string" && Number.isFinite(Number(c.valor)) && Number(c.valor) > 0)
+          .map((c: any) => ({
+            descricao: String(c.descricao).trim(),
+            valor: Number(Number(c.valor).toFixed(2)),
+          }));
+        custosEmbutidosTotalEvento = custosEmbutidosEvento.reduce((s, c) => s + c.valor, 0);
+      }
     }
   } catch (e) {
     console.warn("[qa-generate-contract] falha ao ler modo de exibição:", (e as any)?.message || e);
@@ -381,6 +392,21 @@ Deno.serve(async (req) => {
       const linhas = snapshot
         .map((s) => `<li><strong>${esc(s.service_name_snapshot || "")}</strong></li>`)
         .join("");
+      const embutidosBloco = custosEmbutidosEvento.length > 0
+        ? (() => {
+            const li = custosEmbutidosEvento
+              .map((c) => `<li><strong>${esc(c.descricao)}</strong> — ${brl(Math.round(c.valor * 100))}</li>`)
+              .join("");
+            return (
+              `<p>1.A.3. Integram ainda o pacote, a título de custos operacionais de terceiros ` +
+              `repassados à CONTRATANTE (sem margem para a CONTRATADA), os seguintes itens:</p>` +
+              `<ul>${li}</ul>` +
+              `<p>1.A.3.1. O total desses custos operacionais é de ` +
+              `<strong>${brl(Math.round(custosEmbutidosTotalEvento * 100))}</strong> e compõe o valor ` +
+              `contratado indicado em 1.A.2.</p>`
+            );
+          })()
+        : "";
       itensContratadosBloco =
         `<h2>CLÁUSULA PRIMEIRA-A --- DO PACOTE CONTRATADO</h2>` +
         `<p>1.A.1. A CONTRATANTE contratou, em condição comercial única de pacote fechado, ` +
@@ -389,7 +415,8 @@ Deno.serve(async (req) => {
         `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>. ` +
         `Por se tratar de condição comercial de pacote, não há discriminação de preço por serviço ` +
         `neste instrumento — a condição de pagamento (parcelamento e adquirente, quando houver) é ` +
-        `detalhada na CLÁUSULA TERCEIRA.</p>`;
+        `detalhada na CLÁUSULA TERCEIRA.</p>` +
+        embutidosBloco;
     } else {
       const linhas = snapshot
         .map((s) => {

@@ -168,6 +168,13 @@ export default function QAPilotoRealPage() {
   const [adquirentePacote, setAdquirentePacote] = useState<string>("");
   const [parcelasPacote, setParcelasPacote] = useState<number>(1);
 
+  // Custos operacionais embutidos no parcelamento (exames, GRU, taxas de terceiros).
+  // NÃO são serviços — não entram em qa_itens_venda. Somam ao "valor contratado"
+  // do pacote no contrato (Cláusula 1.A) para que 3.2.2 calcule os juros
+  // corretamente: juros = valor_bruto_parcelado − (catálogo serviços + embutidos).
+  type CustoEmbutido = { descricao: string; valorStr: string };
+  const [custosEmbutidos, setCustosEmbutidos] = useState<CustoEmbutido[]>([]);
+
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
     if (servico) {
@@ -188,6 +195,7 @@ export default function QAPilotoRealPage() {
       setTipoDiferencaPacote("ajuste_comercial");
       setAdquirentePacote("");
       setParcelasPacote(1);
+      setCustosEmbutidos([]);
     }
   }, [servico?.id]);
 
@@ -219,6 +227,15 @@ export default function QAPilotoRealPage() {
   const modoPacoteCustoFin =
     modoPacote && tipoDiferencaPacote === "custo_financeiro_adquirente";
 
+  // Custos embutidos válidos (descrição + valor > 0). Só fazem sentido no modo
+  // pacote + custo financeiro (repasses de terceiros embutidos no parcelamento).
+  const custosEmbutidosValidos = modoPacoteCustoFin
+    ? custosEmbutidos
+        .map((c) => ({ descricao: c.descricao.trim(), valor: parseMoney(c.valorStr) }))
+        .filter((c) => c.descricao.length >= 2 && Number.isFinite(c.valor) && c.valor > 0)
+    : [];
+  const custosEmbutidosTotal = custosEmbutidosValidos.reduce((s, c) => s + c.valor, 0);
+
   // Valor total dos SERVIÇOS que vai para qa_itens_venda / total da venda.
   //  - pacote + custo_fin: soma dos preços de catálogo (não muda nada nos itens).
   //  - pacote + ajuste_comercial: valor final do pacote (distribuído entre itens).
@@ -239,9 +256,16 @@ export default function QAPilotoRealPage() {
   const diferencaPacoteValor = modoPacote && Number.isFinite(valorFinalPacoteNum)
     ? Number((valorFinalPacoteNum - precoCatalogo).toFixed(2))
     : 0;
+  // Juros/tarifa da adquirente = valor final − (catálogo serviços + custos embutidos).
+  // Sem embutidos, comportamento anterior (juros = diferença total) é preservado.
   const custoFinanceiroAdquirente = modoPacoteCustoFin && temDiferencaPacote
-    ? diferencaPacoteValor
+    ? Number((diferencaPacoteValor - custosEmbutidosTotal).toFixed(2))
     : 0;
+  // "Valor contratado" exibido no contrato (Cláusula 1.A.2 e base do 3.2.2):
+  // serviços de catálogo + custos operacionais embutidos.
+  const valorContratadoPacote = modoPacoteCustoFin
+    ? Number((precoCatalogo + custosEmbutidosTotal).toFixed(2))
+    : precoCatalogo;
   const valorParcelaPacote =
     modoPacoteCustoFin && parcelasPacote > 0 && Number.isFinite(valorFinalPacoteNum)
       ? Number((valorFinalPacoteNum / parcelasPacote).toFixed(2))
@@ -386,7 +410,7 @@ export default function QAPilotoRealPage() {
             //  - custo_fin: preço dos serviços = total do catálogo
             //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
             valor_final_pacote: modoPacote && precoValido
-              ? (modoPacoteCustoFin ? precoCatalogo : precoAplicadoNum)
+              ? (modoPacoteCustoFin ? valorContratadoPacote : precoAplicadoNum)
               : null,
             ocultar_precos_individuais_no_contrato: modoPacote,
             motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
@@ -400,6 +424,15 @@ export default function QAPilotoRealPage() {
             adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
             parcelas: modoPacoteCustoFin ? parcelasPacote : null,
             valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
+            custos_embutidos: modoPacoteCustoFin && custosEmbutidosValidos.length > 0
+              ? custosEmbutidosValidos.map((c) => ({
+                  descricao: c.descricao.toUpperCase(),
+                  valor: Number(c.valor.toFixed(2)),
+                }))
+              : null,
+            custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
+              ? Number(custosEmbutidosTotal.toFixed(2))
+              : null,
           } : null,
         },
       });
@@ -412,7 +445,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
@@ -1136,6 +1169,102 @@ export default function QAPilotoRealPage() {
                                 <div><span className="text-neutral-500">Custo financeiro:</span> <span className="font-mono">{money(custoFinanceiroAdquirente)}</span></div>
                                 <div><span className="text-neutral-500">Total parcelado:</span> <span className="font-mono">{money(valorFinalPacoteNum)}</span></div>
                               </div>
+                            </div>
+                          )}
+
+                          {modoPacoteCustoFin && (
+                            <div className="rounded border border-neutral-300 bg-white/70 p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[11px] text-neutral-700 font-semibold">
+                                  Custos operacionais embutidos no parcelamento
+                                </Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[11px]"
+                                  onClick={() =>
+                                    setCustosEmbutidos((prev) => [...prev, { descricao: "", valorStr: "" }])
+                                  }
+                                >
+                                  + Adicionar custo
+                                </Button>
+                              </div>
+                              <p className="text-[10px] text-neutral-500 normal-case">
+                                Repasses de terceiros pagos pelo cliente e embutidos no parcelamento
+                                (ex.: exames psicotécnico/toxicológico, GRU, taxas de despachante). NÃO são
+                                serviços da CONTRATADA. Entram na Cláusula 1.A do contrato como custos
+                                operacionais somados ao valor contratado, e o cálculo dos juros da
+                                adquirente passa a considerar esse total.
+                              </p>
+                              {custosEmbutidos.length === 0 && (
+                                <p className="text-[10px] text-neutral-400 normal-case italic">
+                                  Nenhum custo embutido informado.
+                                </p>
+                              )}
+                              {custosEmbutidos.map((c, idx) => (
+                                <div key={idx} className="grid grid-cols-[1fr_120px_auto] gap-2 items-end">
+                                  <div>
+                                    <Label className="text-[10px] text-neutral-500">Descrição</Label>
+                                    <Input
+                                      value={c.descricao}
+                                      onChange={(e) =>
+                                        setCustosEmbutidos((prev) =>
+                                          prev.map((x, i) => (i === idx ? { ...x, descricao: e.target.value } : x)),
+                                        )
+                                      }
+                                      placeholder="Ex.: EXAMES PSICO+TOXI / GRU / DESPACHANTE"
+                                      className="bg-white border-neutral-300 h-8 mt-1 text-[11px] uppercase"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-neutral-500">Valor (R$)</Label>
+                                    <Input
+                                      value={c.valorStr}
+                                      onChange={(e) =>
+                                        setCustosEmbutidos((prev) =>
+                                          prev.map((x, i) => (i === idx ? { ...x, valorStr: e.target.value } : x)),
+                                        )
+                                      }
+                                      placeholder="0,00"
+                                      inputMode="decimal"
+                                      className="bg-white border-neutral-300 h-8 mt-1 font-mono text-[11px]"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-[11px] text-rose-600 hover:text-rose-700"
+                                    onClick={() =>
+                                      setCustosEmbutidos((prev) => prev.filter((_, i) => i !== idx))
+                                    }
+                                  >
+                                    Remover
+                                  </Button>
+                                </div>
+                              ))}
+                              {custosEmbutidosValidos.length > 0 && (
+                                <div className="grid grid-cols-3 gap-3 text-[11px] normal-case border-t border-neutral-200 pt-2">
+                                  <div>
+                                    <span className="text-neutral-500">Serviços (catálogo):</span>{" "}
+                                    <span className="font-mono">{money(precoCatalogo)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-neutral-500">Custos embutidos:</span>{" "}
+                                    <span className="font-mono">{money(custosEmbutidosTotal)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-neutral-500">Valor contratado (1.A.2):</span>{" "}
+                                    <span className="font-mono">{money(valorContratadoPacote)}</span>
+                                  </div>
+                                  <div className="col-span-3 text-[10px] text-neutral-500">
+                                    Juros/tarifa da adquirente = {money(valorFinalPacoteNum)} −{" "}
+                                    {money(valorContratadoPacote)} ={" "}
+                                    <span className="font-mono">{money(custoFinanceiroAdquirente)}</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
 
