@@ -248,6 +248,12 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     }
     return "Certidão Estadual Criminal — TJSP";
   }
+  if (tipo === "antecedentes_estadual_execucoes") {
+    return "Certidão Estadual de Execuções Criminais — TJSP";
+  }
+  if (tipo === "antecedentes_estadual_distribuicao") {
+    return "Certidão Estadual de Distribuições Criminais — TJSP";
+  }
 
   if (tipo === "antecedentes_federal") {
     if (haystack.includes("JUDICIARIA SP") || haystack.includes("SECAO JUDICIARIA") || haystack.includes("JEF") || haystack.includes("871659")) {
@@ -257,6 +263,12 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
       return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
     }
     return "Certidão de Distribuição Criminal — Justiça Federal";
+  }
+  if (tipo === "antecedentes_federal_sjsp_jef") {
+    return "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP";
+  }
+  if (tipo === "antecedentes_federal_trf3_regional") {
+    return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
   }
 
   if (tipo === "antecedentes_militar") {
