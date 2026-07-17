@@ -316,6 +316,118 @@ export default function QAPilotoRealPage() {
   }, [venda, motivoArq, recarregarVenda, recarregarContrato]);
 
   /* ---------- Smoke test ---------- */
+  /* ---------- Auditoria (somente leitura) ---------- */
+  type AuditRow = {
+    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos";
+    id: string;
+    created_at: string;
+    tipo: string;
+    ator: string | null;
+    user_id: string | null;
+    ref: string;
+    dados: unknown;
+  };
+  const [auditRows, setAuditRows] = useState<AuditRow[]>([]);
+  const [carregandoAudit, setCarregandoAudit] = useState(false);
+  const [expandido, setExpandido] = useState<Record<string, boolean>>({});
+
+  const carregarAuditoria = useCallback(async () => {
+    if (!venda) return;
+    setCarregandoAudit(true);
+    try {
+      const processoIds = processos.map((p) => p.id);
+      const [ve, pa, ce, pe] = await Promise.all([
+        supabase
+          .from("qa_venda_eventos")
+          .select("id, created_at, tipo_evento, ator, user_id, dados_json, venda_id")
+          .eq("venda_id", venda.id)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("qa_pagamento_auditoria")
+          .select("id, created_at, campo, valor_anterior, valor_novo, origem, ator, contexto, venda_id")
+          .eq("venda_id", venda.id)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        contrato
+          ? supabase
+              .from("qa_contract_events")
+              .select("id, created_at, event_type, event_payload, created_by, contract_id")
+              .eq("contract_id", contrato.id)
+              .order("created_at", { ascending: false })
+              .limit(200)
+          : Promise.resolve({ data: [], error: null } as any),
+        processoIds.length > 0
+          ? supabase
+              .from("qa_processo_eventos")
+              .select("id, created_at, tipo_evento, descricao, dados_json, ator, user_id, processo_id")
+              .in("processo_id", processoIds)
+              .order("created_at", { ascending: false })
+              .limit(200)
+          : Promise.resolve({ data: [], error: null } as any),
+      ]);
+      const rows: AuditRow[] = [];
+      for (const r of (ve.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_venda_eventos",
+          id: `ve:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.ator ?? null,
+          user_id: r.user_id ?? null,
+          ref: `venda #${r.venda_id}`,
+          dados: r.dados_json,
+        });
+      }
+      for (const r of (pa.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_pagamento_auditoria",
+          id: `pa:${r.id}`,
+          created_at: r.created_at,
+          tipo: `${r.campo}: ${String(r.valor_anterior ?? "—")} → ${String(r.valor_novo ?? "—")}`,
+          ator: r.ator ?? null,
+          user_id: null,
+          ref: `venda #${r.venda_id} · origem ${r.origem ?? "—"}`,
+          dados: r.contexto,
+        });
+      }
+      for (const r of (ce.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_contract_events",
+          id: `ce:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.event_type,
+          ator: null,
+          user_id: r.created_by ?? null,
+          ref: `contrato ${String(r.contract_id).slice(0, 8)}`,
+          dados: r.event_payload,
+        });
+      }
+      for (const r of (pe.data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_processo_eventos",
+          id: `pe:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.ator ?? null,
+          user_id: r.user_id ?? null,
+          ref: `processo ${String(r.processo_id).slice(0, 8)}${r.descricao ? ` · ${r.descricao}` : ""}`,
+          dados: r.dados_json,
+        });
+      }
+      rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      setAuditRows(rows);
+    } catch (e: any) {
+      toast.error(`Falha ao carregar auditoria: ${e?.message || e}`);
+    } finally {
+      setCarregandoAudit(false);
+    }
+  }, [venda, contrato, processos]);
+
+  useEffect(() => {
+    if (venda) carregarAuditoria();
+  }, [venda?.id, contrato?.id, processos.length, carregarAuditoria]);
+
   const [rodandoSmoke, setRodandoSmoke] = useState(false);
   const [smokeResult, setSmokeResult] = useState<any>(null);
   const rodarSmokeTest = useCallback(async () => {
