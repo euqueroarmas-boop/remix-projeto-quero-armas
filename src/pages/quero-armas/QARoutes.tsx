@@ -58,6 +58,7 @@ const QAContratarPublicoPage = lazyRetry(() => import("./QAContratarPublicoPage"
 const QAContratarSucessoPage = lazyRetry(() => import("./QAContratarSucessoPage"), "QAContratarSucessoPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
+const QAPilotoRealPage = lazyRetry(() => import("./admin/QAPilotoRealPage"), "QAPilotoRealPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
 const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QAClientesTabsPage");
 const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QAAuditoriaTabsPage");
