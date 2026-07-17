@@ -975,7 +975,22 @@ export function ClienteDocsHubModal({
       const ia = (cls || {}) as IAClass;
       setClassificacao(ia);
 
-      const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      // Refinamento de subtipo para certidões TJSP e Federal: cada uma tem seu
+      // slot próprio. A IA pode retornar o pai genérico — aqui detectamos o
+      // subtipo pelo texto extraído / campos identificados.
+      if (tipoIA === "antecedentes_estadual" || tipoIA === "antecedentes_federal") {
+        const c: any = ia.camposExtraidos || {};
+        const hay = [c.tipo_certidao, c.subtipo, c.orgao_emissor, c.numero_documento, c.titulo_documento]
+          .filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        if (tipoIA === "antecedentes_estadual") {
+          if (/EXECU|1448406/.test(hay)) tipoIA = "antecedentes_estadual_execucoes";
+          else if (/DISTRIBUI|1448405/.test(hay)) tipoIA = "antecedentes_estadual_distribuicao";
+        } else {
+          if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA/.test(hay)) tipoIA = "antecedentes_federal_sjsp_jef";
+          else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL/.test(hay)) tipoIA = "antecedentes_federal_trf3_regional";
+        }
+      }
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       setCategoriaHub(categoriaIA);
       const campos = ia.camposExtraidos || {};
