@@ -696,6 +696,11 @@ interface Props {
   clienteNomeMae?: string | null;
   /** Documentos já aprovados no hub — usados como referência de conformidade. */
   docsAprovados?: any[];
+  /** Tipos ainda pendentes no checklist do processo atual (vocabulário do Hub).
+   *  Quando o cliente anexa um documento cuja IA classificou em tipo diferente
+   *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
+   *  aceita salvar nesse outro tipo. */
+  pendingHubTipos?: string[];
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -716,6 +721,7 @@ export function ClienteDocsHubModal({
   clienteDataNascimento,
   clienteNomeMae,
   docsAprovados = [],
+  pendingHubTipos = [],
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
