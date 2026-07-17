@@ -1,0 +1,1 @@
+UPDATE public.qa_contracts SET original_pdf_path = NULL, original_sha256 = NULL WHERE original_pdf_path IS NOT NULL AND company_signed_pdf_path IS NULL AND customer_signed_pdf_path IS NULL;
