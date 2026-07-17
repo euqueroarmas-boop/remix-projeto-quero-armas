@@ -358,6 +358,11 @@ export default function QAPilotoRealPage() {
               Fluxo real do sistema, sem atalhos. Todas as ações geram evento em <code>qa_venda_eventos</code>,
               <code> qa_pagamento_auditoria</code> e <code>qa_contract_events</code>.
             </p>
+            {arquivado && (
+              <div className="mt-3 border border-rose-500/50 bg-rose-950/40 text-rose-300 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
+                <Archive className="h-4 w-4" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
+              </div>
+            )}
           </header>
 
           {/* Passo 1 */}
@@ -457,7 +462,7 @@ export default function QAPilotoRealPage() {
           {cliente && servico && (
             <Card title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
-                <Button onClick={criarVenda} disabled={criandoVenda}>
+                <Button onClick={criarVenda} disabled={criandoVenda || arquivado}>
                   {criandoVenda ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Criando…</> : <>Criar venda oficial <ArrowRight className="ml-2 h-4 w-4" /></>}
                 </Button>
               ) : (
@@ -477,7 +482,7 @@ export default function QAPilotoRealPage() {
               {venda.status_validacao_valor === "aprovado" ? (
                 <p className="text-xs text-emerald-400">Valor aprovado — evento gravado.</p>
               ) : (
-                <Button onClick={aprovarValor} disabled={aprovando}>
+                <Button onClick={aprovarValor} disabled={aprovando || arquivado}>
                   {aprovando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar valor da venda"}
                 </Button>
               )}
@@ -532,7 +537,7 @@ export default function QAPilotoRealPage() {
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
-              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={confirmarPagamento} disabled={confirmandoPag}>
+              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={confirmarPagamento} disabled={confirmandoPag || arquivado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
               <p className="text-[10px] text-neutral-500 normal-case mt-2">
