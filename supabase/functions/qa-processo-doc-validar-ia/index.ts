@@ -812,6 +812,18 @@ Deno.serve(async (req) => {
           "",
       ).trim();
       let ucDigits = ucBruto.replace(/\D+/g, "");
+      // Fallback determinístico: se a IA não devolveu UC nos campos habituais,
+      // varre TODOS os valores string de cx atrás do padrão EDP
+      // "0.000.XXX.XXX.XXX-XX" (14 dígitos com pontos/traço).
+      if (!ucDigits) {
+        const scan: string[] = [];
+        for (const v of Object.values(cx)) if (typeof v === "string") scan.push(v);
+        scan.push(String(parsed?.observacoes ?? ""));
+        const joined = scan.join(" | ");
+        const rxEdp = /\b0\.?\s*0{3}\.?\s*\d{3}\.?\s*\d{3}\.?\s*\d{3}\s*-?\s*\d{2}\b/;
+        const hit = rxEdp.exec(joined)?.[0]?.replace(/\D+/g, "") || "";
+        if (hit.length === 14) ucDigits = hit;
+      }
       // === Sanity checks anti-alucinação ===
       // 1) UC de concessionária tem >= 8 dígitos. NF típica tem 6-9 e vem "021.024.229".
       //    EDP em SP usa 14 dígitos (0.000.XXX.XXX.XXX-XX). Rejeitamos < 8.
@@ -827,9 +839,35 @@ Deno.serve(async (req) => {
         ]
           .map((v) => String(v ?? "").replace(/\D+/g, ""))
           .filter((v) => v.length >= 6);
-        const obs = String(cx.observacoes ?? cx.observacao ?? "").toUpperCase();
-        const bateNF = /NOTA\s*FISCAL[^0-9]*([0-9\.\-\/]+)/i.exec(obs)?.[1]?.replace(/\D+/g, "") || "";
-        if (camposConflito.includes(ucDigits) || (bateNF && ucDigits === bateNF)) {
+        // Varre TODOS os campos string (cx + observacoes globais) atrás de
+        // rótulos "NOTA FISCAL", "NF", "CHAVE", "PROTOCOLO", "CÓDIGO DE BARRAS",
+        // "MEDIDOR", "REF", "MÊS/ANO" seguidos de número. Se o ucDigits bate
+        // com qualquer um deles, é alucinação — rejeita.
+        const blobs: string[] = [];
+        for (const v of Object.values(cx)) {
+          if (typeof v === "string") blobs.push(v);
+        }
+        blobs.push(String(parsed?.observacoes ?? ""));
+        const blob = blobs.join(" | ").toUpperCase();
+        const labels = [
+          /NOTA\s*FISCAL[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+          /\bNF[^A-Z0-9]{0,4}N?[ºO]?\s*([0-9\.\-\/]+)/gi,
+          /CHAVE\s*(?:DE\s*)?ACESSO[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /PROTOCOLO[^0-9]{0,15}([0-9\.\-\/]+)/gi,
+          /C[ÓO]DIGO\s*DE\s*BARRAS[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /LINHA\s*DIGIT[ÁA]VEL[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /N[ºO]?\s*(?:DO\s*)?MEDIDOR[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+          /REF\.?\s*M[ÊE]S\s*\/?\s*ANO[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+        ];
+        const conflitosBlob: string[] = [];
+        for (const rx of labels) {
+          let m: RegExpExecArray | null;
+          while ((m = rx.exec(blob)) !== null) {
+            const d = (m[1] || "").replace(/\D+/g, "");
+            if (d.length >= 6) conflitosBlob.push(d);
+          }
+        }
+        if (camposConflito.includes(ucDigits) || conflitosBlob.includes(ucDigits)) {
           ucDigits = "";
         }
       }
