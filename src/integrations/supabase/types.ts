@@ -5053,6 +5053,9 @@ export type Database = {
           customer_signature_validated_at: string | null
           customer_signed_pdf_path: string | null
           customer_signed_sha256: string | null
+          customer_upload_device: Json | null
+          customer_upload_ip: string | null
+          customer_upload_user_agent: string | null
           customer_uploaded_at: string | null
           id: string
           issued_at: string | null
@@ -5088,6 +5091,9 @@ export type Database = {
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
+          customer_upload_device?: Json | null
+          customer_upload_ip?: string | null
+          customer_upload_user_agent?: string | null
           customer_uploaded_at?: string | null
           id?: string
           issued_at?: string | null
@@ -5123,6 +5129,9 @@ export type Database = {
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
+          customer_upload_device?: Json | null
+          customer_upload_ip?: string | null
+          customer_upload_user_agent?: string | null
           customer_uploaded_at?: string | null
           id?: string
           issued_at?: string | null
