@@ -126,7 +126,11 @@ type ConformidadeItem = {
 const TIPOS_CERTIDAO = new Set([
   "antecedentes_criminais",
   "antecedentes_federal",
+  "antecedentes_federal_trf3_regional",
+  "antecedentes_federal_sjsp_jef",
   "antecedentes_estadual",
+  "antecedentes_estadual_distribuicao",
+  "antecedentes_estadual_execucoes",
   "antecedentes_militar",
   "antecedentes_eleitoral",
 ]);
@@ -236,7 +240,11 @@ const DOC_TRUST_TIER: Record<string, number> = {
   gt: 2,
   antecedentes_criminais: 2,
   antecedentes_federal: 2,
+  antecedentes_federal_trf3_regional: 2,
+  antecedentes_federal_sjsp_jef: 2,
   antecedentes_estadual: 2,
+  antecedentes_estadual_distribuicao: 2,
+  antecedentes_estadual_execucoes: 2,
   antecedentes_militar: 2,
   antecedentes_eleitoral: 2,
   laudo_psicologico: 2,
@@ -975,7 +983,22 @@ export function ClienteDocsHubModal({
       const ia = (cls || {}) as IAClass;
       setClassificacao(ia);
 
-      const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      // Refinamento de subtipo para certidões TJSP e Federal: cada uma tem seu
+      // slot próprio. A IA pode retornar o pai genérico — aqui detectamos o
+      // subtipo pelo texto extraído / campos identificados.
+      if (tipoIA === "antecedentes_estadual" || tipoIA === "antecedentes_federal") {
+        const c: any = ia.camposExtraidos || {};
+        const hay = [c.tipo_certidao, c.subtipo, c.orgao_emissor, c.numero_documento, c.titulo_documento]
+          .filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        if (tipoIA === "antecedentes_estadual") {
+          if (/EXECU|1448406/.test(hay)) tipoIA = "antecedentes_estadual_execucoes";
+          else if (/DISTRIBUI|1448405/.test(hay)) tipoIA = "antecedentes_estadual_distribuicao";
+        } else {
+          if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA/.test(hay)) tipoIA = "antecedentes_federal_sjsp_jef";
+          else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL/.test(hay)) tipoIA = "antecedentes_federal_trf3_regional";
+        }
+      }
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       setCategoriaHub(categoriaIA);
       const campos = ia.camposExtraidos || {};
@@ -1311,6 +1334,41 @@ export function ClienteDocsHubModal({
     if (!form.tipo_documento) {
       toast.error("Escolha o tipo de documento.");
       return;
+    }
+    // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
+    // ser gravadas no seu subtipo específico. Nenhuma pode ser salva no
+    // lugar de outra — a IA classifica na hora da captura, mas o cliente pode
+    // ter mantido o tipo genérico "pai" via override manual.
+    if (form.tipo_documento === "antecedentes_estadual" || form.tipo_documento === "antecedentes_federal") {
+      const hay = [
+        form.nome_documento,
+        form.orgao_emissor,
+        form.numero_documento,
+        (classificacao?.camposExtraidos as any)?.tipo_certidao,
+        (classificacao?.camposExtraidos as any)?.subtipo,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+      let refinado: string | null = null;
+      if (form.tipo_documento === "antecedentes_estadual") {
+        if (/EXECU|1448406/.test(hay)) refinado = "antecedentes_estadual_execucoes";
+        else if (/DISTRIBUI|1448405/.test(hay)) refinado = "antecedentes_estadual_distribuicao";
+      } else {
+        if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA/.test(hay)) refinado = "antecedentes_federal_sjsp_jef";
+        else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL/.test(hay)) refinado = "antecedentes_federal_trf3_regional";
+      }
+      if (!refinado) {
+        toast.error(
+          form.tipo_documento === "antecedentes_estadual"
+            ? "Escolha o subtipo correto da certidão TJSP: DISTRIBUIÇÃO DE AÇÕES CRIMINAIS ou EXECUÇÕES CRIMINAIS."
+            : "Escolha o subtipo correto da certidão federal: TRF 3ª REGIÃO ou SEÇÃO JUDICIÁRIA SP/JEF.",
+        );
+        return;
+      }
+      form.tipo_documento = refinado;
     }
     if (!customerId && !qaClienteId) {
       toast.error("Não foi possível identificar seu cadastro. Recarregue a página.");
