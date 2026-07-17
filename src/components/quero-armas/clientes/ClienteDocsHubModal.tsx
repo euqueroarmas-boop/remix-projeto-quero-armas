@@ -1307,7 +1307,7 @@ export function ClienteDocsHubModal({
               // e nunca aceita a validade bruta inferida pela IA (ex.: 2028 em vez de 2026).
               (isLaudoExame && validadeLaudoExame)
                 ? validadeLaudoExame
-                : (prev.data_validade || validadeRegra || (tipoIA === "comprovante_residencia" ? "" : dataIsoFromBr(sugestao.data_validade) || sugestao.data_validade) || ""),
+                : (validadeRegra || prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : dataIsoFromBr(sugestao.data_validade) || sugestao.data_validade) || ""),
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
           arma_modelo: prev.arma_modelo || safeExtractedModel(sugestao.arma_modelo) || "",

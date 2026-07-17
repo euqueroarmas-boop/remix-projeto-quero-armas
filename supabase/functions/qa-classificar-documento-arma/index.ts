@@ -395,10 +395,10 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("CONTRATO_SOCIAL")) return "CONTRATO_SOCIAL";
   if (x.includes("BENEFICIO") || x.includes("BENEFÍCIO")) return "COMPROVANTE_BENEFICIO";
   if (x.includes("INSS")) return "EXTRATO_INSS";
-  if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
-  if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
   if ((x.includes("TRF3") || x.includes("TRF_3") || x.includes("3A_REGIAO") || x.includes("3ª_REGIAO")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
   if ((x.includes("SJSP") || x.includes("JEF")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_SJSP_JEF";
+  if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
+  if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
   if (x.includes("EXECUCOES") || x.includes("EXECUÇÕES")) return "ANTECEDENTES_ESTADUAL_EXECUCOES";
   if (x.includes("ACOES_CRIMINAIS") || x.includes("AÇÕES_CRIMINAIS") || x.includes("DISTRIBUICAO") || x.includes("DISTRIBUIÇÃO")) return "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
