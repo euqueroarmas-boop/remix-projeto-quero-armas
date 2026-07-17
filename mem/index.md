@@ -1,6 +1,8 @@
 # Project Memory
 
 ## Core
+**Fuso oficial: America/Sao_Paulo (BRT, UTC−03).** Toda auditoria, log exibido, timeline, e-mail e PDF deve converter timestamps para BRT antes de mostrar ao usuário. Nunca reportar UTC. Ver mem://tech/timezone-canonical.
+
 **🚨 REGRA-MÃE QA (BLOCO 0):** Pagamento confirmado é o gatilho-mãe → ativa serviço, libera doc, cria processo, reflete em portal+equipe instantaneamente. 5 dimensões de status obrigatórias: Financeiro · Documentação · Protocolo · Decisão · Validade. KPIs refletem SITUAÇÃO REAL, nunca contagem. PROIBIDO KPI verde com problema crítico. Padrão de cores fixo: verde=ok/deferido · azul=andamento/protocolado · amarelo=vencendo · laranja=pendência/exigência · vermelho=vencido/indeferido/inválido · cinza=sem dado. PROIBIDO usar termo "admin" — sempre "Equipe Quero Armas". Ver mem://architecture/quero-armas/regra-mae-fluxo-operacional.
 
 Toda foto de armamento no Arsenal (Quero Armas) DEVE entrar com fundo 100% transparente real. Proibido fundo branco, cinza ou padrão xadrez impresso. Aplicar máscara de limpeza (brightness>170 && saturation<25 → alpha=0) antes de subir ao bucket `qa-armamentos`. Manter todas as gravações de fábrica.
