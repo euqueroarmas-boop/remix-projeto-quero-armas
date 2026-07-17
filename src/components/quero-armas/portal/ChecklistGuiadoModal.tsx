@@ -623,14 +623,24 @@ export default function ChecklistGuiadoModal({
   const onHubDocSaved = async () => {
     setHubModalTipo(null);
     if (!carga || !docAtivo) return;
-    // Aguarda trigger propagar (BEFORE INSERT é síncrono, mas há latência de rede)
+    // Marca o doc atual como pulado ANTES de recarregar: garante que o wizard
+    // avance mesmo quando o trigger de satisfação ainda não propagou em DB.
+    // Se o trigger propagou, o slot já vem 'aprovado' no reload e sai da fila
+    // normalmente; se não propagou, pularIds impede regressão ao mesmo item.
+    const docId = docAtivo.id;
+    const novosPular = new Set(pularIds);
+    novosPular.add(docId);
+    setPularIds(novosPular);
     await new Promise((r) => setTimeout(r, 800));
     const c = await recarregarCarga(carga.processo.id);
+    // Remove do pular se o slot já está resolvido no DB (evita sumir do histórico)
+    const slotAtualizado = (c.docs ?? []).find((d: GuiaDoc) => d.id === docId);
+    const resolvido = ["aprovado","dispensado_grupo","dispensado_por_reaproveitamento",
+      "em_analise","enviado","revisao_humana"].includes(slotAtualizado?.status ?? "");
+    if (resolvido) novosPular.delete(docId);
+    setPularIds(new Set(novosPular));
     onUpdated?.();
-    // Hub já confirmou o envio — avança direto para o próximo item pendente
-    // sem mostrar tela intermédia ("Documento recebido"), pois o Hub modal
-    // já exibiu a confirmação ao cliente.
-    avancarPara(c, pularIds);
+    avancarPara(c, novosPular);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
