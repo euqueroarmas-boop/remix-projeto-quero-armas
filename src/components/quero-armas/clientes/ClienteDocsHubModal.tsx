@@ -1882,6 +1882,25 @@ export function ClienteDocsHubModal({
               </p>
             </div>
 
+            {certidaoIncorreta ? (
+              <div
+                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-red-600 bg-red-50 px-3 py-1.5 text-red-700"
+                style={{ boxShadow: "0 0 0 2px rgba(220,38,38,0.15)" }}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Certidão incorreta
+                </span>
+              </div>
+            ) : cobreOutraPendencia ? (
+              <div className="hidden sm:flex shrink-0 items-center gap-1.5 border-2 border-sky-600 bg-sky-50 px-3 py-1.5 text-sky-800">
+                <Sparkles className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Reclassificado
+                </span>
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={onClose}
