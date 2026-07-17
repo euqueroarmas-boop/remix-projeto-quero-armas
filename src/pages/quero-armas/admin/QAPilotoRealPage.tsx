@@ -90,6 +90,22 @@ export default function QAPilotoRealPage() {
   const [servicoQ, setServicoQ] = useState("");
   const [carregandoServicos, setCarregandoServicos] = useState(false);
 
+  /* ---------- Passo 2b: Itens adicionais do pacote ---------- */
+  type ItemExtra = { servico: Servico; precoStr: string };
+  const [itensExtras, setItensExtras] = useState<ItemExtra[]>([]);
+  const [extraPickerAberto, setExtraPickerAberto] = useState(false);
+  const [extraQ, setExtraQ] = useState("");
+
+  const parseMoney = (s: string): number => {
+    const v = (s || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  };
+  const fmtMoneyInput = (n: number | null | undefined): string =>
+    n != null && Number.isFinite(Number(n))
+      ? Number(n).toFixed(2).replace(".", ",")
+      : "";
+
   useEffect(() => {
     (async () => {
       setCarregandoServicos(true);
@@ -108,6 +124,14 @@ export default function QAPilotoRealPage() {
     if (!q) return servicos.slice(0, 30);
     return servicos.filter((s) => s.nome.toLowerCase().includes(q) || s.slug.includes(q)).slice(0, 30);
   }, [servicos, servicoQ]);
+
+  const servicosExtraFiltrados = useMemo(() => {
+    const usados = new Set<string>([servico?.id ?? "", ...itensExtras.map((i) => i.servico.id)]);
+    const q = extraQ.trim().toLowerCase();
+    const base = servicos.filter((s) => !usados.has(s.id));
+    if (!q) return base.slice(0, 30);
+    return base.filter((s) => s.nome.toLowerCase().includes(q) || s.slug.includes(q)).slice(0, 30);
+  }, [servicos, servico?.id, itensExtras, extraQ]);
 
   /* ---------- Passo 3: Venda ---------- */
   const [venda, setVenda] = useState<Venda | null>(null);
@@ -140,16 +164,29 @@ export default function QAPilotoRealPage() {
       setEvidenciaPath(null);
       setConfirmadoPreco(false);
       setTipoAjuste("negociacao_individual");
+      setItensExtras([]);
+      setExtraPickerAberto(false);
+      setExtraQ("");
     }
   }, [servico?.id]);
 
-  const precoCatalogo = servico?.preco != null ? Number(servico.preco) : 0;
-  const precoAplicadoNum = (() => {
-    const s = (precoAplicadoStr || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
-    const n = Number(s);
-    return Number.isFinite(n) && n >= 0 ? n : NaN;
-  })();
-  const precoValido = Number.isFinite(precoAplicadoNum);
+  // Preço do item principal
+  const precoCatalogoPrincipal = servico?.preco != null ? Number(servico.preco) : 0;
+  const precoAplicadoPrincipal = parseMoney(precoAplicadoStr);
+  // Preços dos itens extras (validação individual)
+  const extrasAvaliados = itensExtras.map((ie) => {
+    const catalogo = ie.servico.preco != null ? Number(ie.servico.preco) : 0;
+    const aplicado = parseMoney(ie.precoStr);
+    return { ie, catalogo, aplicado, valido: Number.isFinite(aplicado) };
+  });
+  const todosPrecosValidos =
+    Number.isFinite(precoAplicadoPrincipal) && extrasAvaliados.every((e) => e.valido);
+  // Totais do pacote (catálogo vs aplicado)
+  const precoCatalogo = precoCatalogoPrincipal + extrasAvaliados.reduce((s, e) => s + e.catalogo, 0);
+  const precoAplicadoNum = todosPrecosValidos
+    ? precoAplicadoPrincipal + extrasAvaliados.reduce((s, e) => s + e.aplicado, 0)
+    : NaN;
+  const precoValido = todosPrecosValidos;
   const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
   const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
   const percentualDif = precoCatalogo > 0 && precoValido
@@ -192,12 +229,20 @@ export default function QAPilotoRealPage() {
       }
       const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
         body: {
-          cart: [{
-            servico_id: servico.id,
-            slug: servico.slug,
-            quantidade: 1,
-            preco_negociado: precoAplicadoNum,
-          }],
+          cart: [
+            {
+              servico_id: servico.id,
+              slug: servico.slug,
+              quantidade: 1,
+              preco_negociado: precoAplicadoPrincipal,
+            },
+            ...extrasAvaliados.map((e) => ({
+              servico_id: e.ie.servico.id,
+              slug: e.ie.servico.slug,
+              quantidade: 1,
+              preco_negociado: e.aplicado,
+            })),
+          ],
           identificacao: {
             nome_completo: cliente.nome_completo,
             cpf: cliente.cpf || "",
@@ -222,7 +267,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoNum, motivoPreco, tipoAjuste]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
