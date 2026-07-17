@@ -5,8 +5,9 @@
  * `qa-processo-doc-validar-ia`. Apenas calcula, no momento de exibir, a
  * regra de negócio oficial da Quero Armas:
  *
- *  - Comprovante de residência → vale até o fim do mês SEGUINTE ao da
- *    emissão (ex.: emitido em qualquer dia de março → válido até 30/abr).
+ *  - Comprovante de residência → vale da emissão de uma conta até a
+ *    emissão da próxima (ciclo mensal ≈ emissão + 30 dias). Anos
+ *    anteriores continuam tratados como HISTÓRICOS (não vencem).
  *  - Demais documentos → emissão + 30 dias (ignora qualquer "90 dias" que
  *    o documento eventualmente afirme).
  *
@@ -150,12 +151,9 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
-  if (isComprovanteEndereco(tipo)) {
-    // fim do mês SEGUINTE ao da emissão
-    const fim = ultimoDiaDoMes(emi.getUTCFullYear(), emi.getUTCMonth() + 1);
-    return toISO(fim);
-  }
-  // emissão + 30 dias
+  // Regra única: emissão + 30 dias (ciclo mensal — cobre também o
+  // comprovante de residência, cuja validade vai da emissão de uma
+  // conta até a emissão da próxima).
   const v = new Date(emi.getTime());
   v.setUTCDate(v.getUTCDate() + 30);
   return toISO(v);
