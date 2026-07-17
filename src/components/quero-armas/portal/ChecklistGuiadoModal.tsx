@@ -117,8 +117,29 @@ const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   renda_qsa: "renda_cartao_cnpj",
 };
 
+// Tipos aceitos pelo constraint qa_doc_cliente_tipo_check
+const HUB_TIPOS_VALIDOS = new Set([
+  "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
+  "rg_com_cpf","cin","cnh","cpf",
+  "comprovante_residencia","declaracao_responsavel_imovel",
+  "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
+  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
+  "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
+  "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
+  "antecedentes_militar","antecedentes_eleitoral",
+  "declaracao_sem_inquerito_processo_criminal","declaracao_guarda_responsavel",
+  "declaracao_correlata","declaracao_guarda_acervo_1endereco",
+  "laudo_psicologico","laudo_capacidade_tecnica",
+  "comprovante_efetiva_necessidade","documento_complementar_caso",
+  "comprovante_habitualidade","comprovante_clube_tiro","comprovante_competicao",
+  "protocolo_processo","oficio","despacho","exigencia","indeferimento",
+  "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
+  "outro",
+]);
+
 function toHubTipo(processoTipo: string): string {
-  return PROCESSO_TO_HUB_TIPO[processoTipo] ?? processoTipo;
+  const mapped = PROCESSO_TO_HUB_TIPO[processoTipo] ?? processoTipo;
+  return HUB_TIPOS_VALIDOS.has(mapped) ? mapped : "outro";
 }
 
 const MARROM = "#7A1F2B";
@@ -583,26 +604,17 @@ export default function ChecklistGuiadoModal({
     }
     if (gateWizardPre(doc, { tipo: "anexar" })) return;
 
-    // Todos os docs permanentes sobem pelo Hub de Documentos.
-    // Exceção: certidao_alteracao_nome tem reconciliação especial de nome
-    // que só funciona via validar-ia (processo path) — nunca via Hub.
-    if (
-      doc &&
-      doc.tipo_documento !== TIPO_CERTIDAO_ALTERACAO_NOME &&
-      classificarCaixa(doc) === "permanente"
-    ) {
-      setHubModalTipo(toHubTipo(doc.tipo_documento));
+    // Todo documento sobe pelo Hub Documental — sem exceções (exceto contratos,
+    // que têm fluxo próprio fora desta função).
+    // Tipos não mapeados no constraint do Hub recebem defaultTipo='outro'.
+    if (doc) {
+      setHubModalTipo(toHubTipo(doc.tipo_documento ?? "outro"));
       return;
     }
 
-    const fmts: string[] = Array.isArray(doc?.formato_aceito)
-      ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
-      : [];
-    const accept = fmts.length
-      ? fmts.map((f) => (f === "pdf" ? "application/pdf" : `.${f}`)).join(",")
-      : "image/*,application/pdf";
+    // Fallback defensivo (docAtivo nulo — não deveria ocorrer)
     if (fileRef.current) {
-      fileRef.current.accept = accept;
+      fileRef.current.accept = "image/*,application/pdf";
       fileRef.current.value = "";
       fileRef.current.click();
     }
