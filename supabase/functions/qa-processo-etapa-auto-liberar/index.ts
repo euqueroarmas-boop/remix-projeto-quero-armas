@@ -181,6 +181,23 @@ Deno.serve(async (req) => {
       (d) => etapaDoTipo(d.tipo_documento, d.etapa) === etapaAtual && d.obrigatorio !== false,
     );
 
+    // GUARD anti-avanço fantasma: se o processo NÃO possui checklist
+    // materializado, jamais avança automaticamente. Antes desta guarda,
+    // um processo com qa_processo_documentos vazio (por falha da explosão
+    // pós-contrato) era avançado da etapa 1 até a 5 em minutos, mascarando
+    // completamente o problema. Regra: sem checklist → não libera.
+    if (lista.length === 0) {
+      await admin.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        tipo_evento: "auto_liberacao_bloqueada_checklist_vazio",
+        descricao:
+          "AUTO-LIBERAÇÃO BLOQUEADA: processo sem checklist materializado (qa_processo_documentos vazio). Rode qa_explodir_checklist_processo antes de avançar.",
+        ator: isStaff ? "sistema_auto" : "sistema_auto_cliente",
+        dados_json: { etapa_atual: etapaAtual },
+      });
+      return json({ liberada: false, motivo: "checklist_vazio", etapa_atual: etapaAtual });
+    }
+
     if (docsEtapa.length > 0) {
       for (const d of docsEtapa) {
         // Item condicional oculto → não aplicável → não bloqueia.
