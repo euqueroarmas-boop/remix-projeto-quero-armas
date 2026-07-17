@@ -73,7 +73,11 @@ const IA_TO_TIPO: Record<string, string> = {
   // Antecedentes
   ANTECEDENTES_CRIMINAIS: "antecedentes_criminais",
   ANTECEDENTES_FEDERAL: "antecedentes_federal",
+  ANTECEDENTES_FEDERAL_TRF3_REGIONAL: "antecedentes_federal_trf3_regional",
+  ANTECEDENTES_FEDERAL_SJSP_JEF: "antecedentes_federal_sjsp_jef",
   ANTECEDENTES_ESTADUAL: "antecedentes_estadual",
+  ANTECEDENTES_ESTADUAL_DISTRIBUICAO: "antecedentes_estadual_distribuicao",
+  ANTECEDENTES_ESTADUAL_EXECUCOES: "antecedentes_estadual_execucoes",
   ANTECEDENTES_MILITAR: "antecedentes_militar",
   ANTECEDENTES_ELEITORAL: "antecedentes_eleitoral",
   // Declarações
@@ -409,9 +413,59 @@ const MOTIVOS: Record<string, string> = {
 
 function dataIsoFromBr(v?: string | null): string {
   if (!v) return "";
-  const m = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const raw = String(v).trim();
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!m) return "";
   return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function addDaysIso(iso?: string | null, days = 0): string {
+  if (!iso) return "";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  if (Number.isNaN(d.getTime())) return "";
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function addCalendarMonthsIso(iso?: string | null, months = 1): string {
+  if (!iso) return "";
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const day = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(day)) return "";
+  const targetFirst = new Date(Date.UTC(y, mo - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(targetFirst.getUTCFullYear(), targetFirst.getUTCMonth() + 1, 0)).getUTCDate();
+  const venc = new Date(Date.UTC(targetFirst.getUTCFullYear(), targetFirst.getUTCMonth(), Math.min(day, lastDay)));
+  return venc.toISOString().slice(0, 10);
+}
+
+function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): string {
+  const emissao = dataIsoFromBr(dataEmissao) || String(dataEmissao || "").slice(0, 10);
+  if (!emissao) return "";
+  if (tipo === "antecedentes_federal_trf3_regional" || tipo === "antecedentes_militar") {
+    return addDaysIso(emissao, 90);
+  }
+  if (
+    [
+      "comprovante_residencia",
+      "antecedentes_criminais",
+      "antecedentes_eleitoral",
+      "antecedentes_federal",
+      "antecedentes_federal_sjsp_jef",
+      "antecedentes_estadual",
+      "antecedentes_estadual_distribuicao",
+      "antecedentes_estadual_execucoes",
+    ].includes(tipo)
+  ) {
+    return addCalendarMonthsIso(emissao, 1);
+  }
+  return "";
 }
 
 function addOneYearIso(iso?: string | null): string {
@@ -1106,34 +1160,14 @@ export function ClienteDocsHubModal({
             return prev.data_validade;
           }
           const emissao = dataIsoFromBr(campos.data_emissao);
-          // Certidões específicas: validade = 90 dias exatos após emissão.
-          if (tipoIA === "antecedentes_militar" || tipoIA === "antecedentes_federal") {
-            if (!emissao) return prev.data_validade;
-            const d = new Date(emissao);
-            d.setDate(d.getDate() + 90);
-            return d.toISOString().slice(0, 10);
-          }
+          const validadeRegra = calcularValidadeHubPorTipo(tipoIA, emissao);
+          if (validadeRegra) return validadeRegra;
           const valExplicita = dataIsoFromBr(campos.data_validade);
           if (valExplicita) return valExplicita;
           if (!emissao) return prev.data_validade;
           // Comprovante de clube: declaração válida por 90 dias da data de emissão
           if (tipoIA === "comprovante_clube_tiro") {
-            const d = new Date(emissao);
-            d.setDate(d.getDate() + 90);
-            return d.toISOString().slice(0, 10);
-          }
-          // Comprovante de residência e demais certidões de antecedentes: + 1 mês
-          const tiposValidade1mes = [
-            "comprovante_residencia",
-            "antecedentes_criminais",
-            "antecedentes_eleitoral",
-            "antecedentes_federal",
-            "antecedentes_estadual",
-          ];
-          if (tiposValidade1mes.includes(tipoIA)) {
-            const d = new Date(emissao);
-            d.setMonth(d.getMonth() + 1);
-            return d.toISOString().slice(0, 10);
+            return addDaysIso(emissao, 90);
           }
           return prev.data_validade;
         })(),
@@ -1180,6 +1214,8 @@ export function ClienteDocsHubModal({
             const avaliacao = dataIsoFromBr((campos as any).data_avaliacao) || dataIsoFromBr(campos.data_emissao);
             return addOneYearIso(avaliacao) || "";
           }
+          const validadeRegra = calcularValidadeHubPorTipo(tipoIA, dataIsoFromBr(campos.data_emissao));
+          if (validadeRegra) return validadeRegra;
           return dataIsoFromBr(campos.data_validade) || "";
         })(),
         sistema_registro: sistemaFinal,
@@ -1250,26 +1286,28 @@ export function ClienteDocsHubModal({
           const validadeLaudoExame = isLaudoExame
             ? addOneYearIso(dataAvaliacaoExtractor || sugestao.data_emissao || prev.data_emissao)
             : "";
+          const dataEmissaoFinal =
+            dataAvaliacaoExtractor ||
+            prev.data_emissao ||
+            (isLaudoExame
+              ? sugestao.data_avaliacao || sugestao.data_emissao
+              : sugestao.data_emissao) ||
+            "";
+          const validadeRegra = calcularValidadeHubPorTipo(tipoIA, dataEmissaoFinal);
           return ({
             ...prev,
             nome_documento: prev.nome_documento || sugestao.titulo_oficial || "",
             numero_documento: prev.numero_documento || sugestao.numero_documento || "",
             orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
-            data_emissao:
-              dataAvaliacaoExtractor ||
-              prev.data_emissao ||
-              (isLaudoExame
-                ? sugestao.data_avaliacao || sugestao.data_emissao
-                : sugestao.data_emissao) ||
-              "",
+            data_emissao: dataEmissaoFinal,
           // Para comprovante de residência, nunca usar data_validade da sugestão:
-          // a IA extrai o vencimento da conta (≈1 mês), não a validade do documento (90 dias).
+          // a IA pode extrair vencimento/fatura; a validade operacional é calculada pela regra canônica.
             data_validade:
               // Para laudos/exames, recalcula localmente pela data da avaliação/emissão
               // e nunca aceita a validade bruta inferida pela IA (ex.: 2028 em vez de 2026).
               (isLaudoExame && validadeLaudoExame)
                 ? validadeLaudoExame
-                : (prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || ""),
+                : (prev.data_validade || validadeRegra || (tipoIA === "comprovante_residencia" ? "" : dataIsoFromBr(sugestao.data_validade) || sugestao.data_validade) || ""),
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
           arma_modelo: prev.arma_modelo || safeExtractedModel(sugestao.arma_modelo) || "",

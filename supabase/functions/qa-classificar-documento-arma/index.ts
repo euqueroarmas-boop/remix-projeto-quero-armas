@@ -22,6 +22,8 @@
 //  - Não escreve em tabelas (decisão de salvar fica com o caller).
 //  - Modelo: google/gemini-3-flash-preview.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// @ts-ignore esm.sh fornece tipos mínimos para Deno Edge
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,7 +49,7 @@ const TIPOS = [
   "RG_COM_CPF","CIN","CNH","CPF",
   "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
   "CTPS","HOLERITE","CARTAO_CNPJ","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
-  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_ESTADUAL","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
+  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
   "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
   "COMPROVANTE_EFETIVA_NECESSIDADE","DOCUMENTO_COMPLEMENTAR",
@@ -75,7 +77,7 @@ const tool = {
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
             "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal. CONTRATO_SOCIAL=contrato ou estatuto social de empresa. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
-            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão antecedentes PF/STF/STJ/TRF. ANTECEDENTES_ESTADUAL=certidão criminal de tribunal estadual (TJ). ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
+            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
             "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
@@ -127,6 +129,9 @@ const tool = {
             situacao_cadastral: { type: "string", description: "Situação cadastral (ativa, inapta etc.)" },
             numero_beneficio: { type: "string", description: "Número do benefício INSS" },
             resultado_certidao: { type: "string", enum: ["nada_consta", "consta_apontamento"], description: "Resultado da certidão: use EXATAMENTE 'nada_consta' quando não há registros, ou 'consta_apontamento' quando há qualquer apontamento criminal/eleitoral/pendência." },
+            tipo_certidao: { type: "string", description: "Subtipo literal da certidão quando houver: tjsp_distribuicao_acoes_criminais, tjsp_execucoes_criminais, trf3_regional, sjsp_jef, tjm_sp, stm." },
+            nome_documento: { type: "string", description: "Nome oficial/finalidade do documento lido no corpo, não apenas o cabeçalho genérico." },
+            finalidade_certidao: { type: "string", description: "Finalidade objetiva pesquisada: acoes_criminais, execucoes_criminais, crimes_eleitorais, militar, federal_regional, federal_sjsp_jef." },
             nome_declarante: { type: "string", description: "Nome de quem assina a declaração" },
             cpf_declarante: { type: "string", description: "CPF de quem assina a declaração" },
             nome_profissional: { type: "string", description: "Nome do psicólogo/instrutor que assina o laudo" },
@@ -225,8 +230,12 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'Secretaria de Segurança Pública de SP'), data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_FEDERAL: certidão criminal PF, STF, STJ ou TRF.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
-  "• ANTECEDENTES_ESTADUAL: certidão criminal de Tribunal de Justiça estadual.",
-  "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao.",
+  "  Se for TRF da 3ª Região/regional, use ANTECEDENTES_FEDERAL_TRF3_REGIONAL. Se for Seção Judiciária de São Paulo/JEF-SP, use ANTECEDENTES_FEDERAL_SJSP_JEF.",
+  "• ANTECEDENTES_ESTADUAL: certidão criminal de Tribunal de Justiça estadual apenas quando o subtipo não ficar claro.",
+  "  TJSP — REGRA CRÍTICA: o cabeçalho 'CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS' é genérico e NÃO define sozinho o subtipo. Leia a frase do corpo 'pesquisando os registros de distribuições de ...'.",
+  "  Se o corpo disser 'EXECUÇÕES CRIMINAIS' ou 'feitos de Execuções Criminais', classifique como ANTECEDENTES_ESTADUAL_EXECUCOES, mesmo que o cabeçalho diga 'Distribuições Criminais'.",
+  "  Se o corpo disser 'AÇÕES CRIMINAIS', classifique como ANTECEDENTES_ESTADUAL_DISTRIBUICAO.",
+  "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao, tipo_certidao, nome_documento, finalidade_certidao.",
   "• ANTECEDENTES_MILITAR: certidão de tribunal militar (TJM, STM). Validade: 3 meses após a data de emissão.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_ELEITORAL: certidão de crimes eleitorais TSE ou TRE. NÃO classifique como quitação eleitoral quando o cabeçalho indicar crimes eleitorais.",
@@ -388,6 +397,10 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("INSS")) return "EXTRATO_INSS";
   if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
   if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
+  if ((x.includes("TRF3") || x.includes("TRF_3") || x.includes("3A_REGIAO") || x.includes("3ª_REGIAO")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
+  if ((x.includes("SJSP") || x.includes("JEF")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_SJSP_JEF";
+  if (x.includes("EXECUCOES") || x.includes("EXECUÇÕES")) return "ANTECEDENTES_ESTADUAL_EXECUCOES";
+  if (x.includes("ACOES_CRIMINAIS") || x.includes("AÇÕES_CRIMINAIS") || x.includes("DISTRIBUICAO") || x.includes("DISTRIBUIÇÃO")) return "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
   if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
@@ -412,6 +425,91 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("RECURSO")) return "RECURSO_ADMINISTRATIVO";
   if (x.includes("MANDADO") || x.includes("HABEAS")) return "MANDADO_SEGURANCA";
   return null;
+}
+
+function normalizarTexto(s: string): string {
+  return String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function decodeDataUrlBytes(dataUrl: string): { mime: string; bytes: Uint8Array } | null {
+  const m = /^data:([^;,]+);base64,(.*)$/s.exec(dataUrl || "");
+  if (!m) return null;
+  try {
+    const bin = atob(m[2]);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return { mime: m[1], bytes };
+  } catch {
+    return null;
+  }
+}
+
+async function extractPdfTextFromDataUrl(dataUrl: string): Promise<string> {
+  try {
+    const decoded = decodeDataUrlBytes(dataUrl);
+    if (!decoded || !decoded.mime.toLowerCase().includes("pdf")) return "";
+    const pdf = await getDocumentProxy(decoded.bytes);
+    const { text } = await extractText(pdf, { mergePages: true });
+    const out = Array.isArray(text) ? text.join("\n") : String(text ?? "");
+    return out.trim();
+  } catch (e) {
+    console.warn("[qa-classificar] extração textual PDF indisponível:", e);
+    return "";
+  }
+}
+
+const MESES: Record<string, string> = {
+  JANEIRO: "01", FEVEREIRO: "02", MARCO: "03", MARÇO: "03", ABRIL: "04", MAIO: "05", JUNHO: "06",
+  JULHO: "07", AGOSTO: "08", SETEMBRO: "09", OUTUBRO: "10", NOVEMBRO: "11", DEZEMBRO: "12",
+};
+
+function primeiraDataBR(texto: string): string {
+  const d = texto.match(/\b(\d{2}\/\d{2}\/\d{4})\b/);
+  if (d) return d[1];
+  const ext = texto.match(/\b(\d{1,2})\s+DE\s+(JANEIRO|FEVEREIRO|MAR[ÇC]O|ABRIL|MAIO|JUNHO|JULHO|AGOSTO|SETEMBRO|OUTUBRO|NOVEMBRO|DEZEMBRO)\s+DE\s+(\d{4})\b/i);
+  if (ext) return `${String(ext[1]).padStart(2, "0")}/${MESES[normalizarTexto(ext[2])] || ""}/${ext[3]}`;
+  return "";
+}
+
+function numeroCertidao(texto: string): string {
+  return texto.match(/CERTID[ÃA]O\s*N[ºO°.:\s]*([0-9]{4,})/i)?.[1] || "";
+}
+
+function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any {
+  const campos = parsed.camposExtraidos && typeof parsed.camposExtraidos === "object" ? parsed.camposExtraidos : {};
+  parsed.camposExtraidos = campos;
+  const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
+  const norm = normalizarTexto(combinado);
+  if (!norm) return parsed;
+
+  const isTJSP = norm.includes("TRIBUNAL DE JUSTICA DO ESTADO DE SAO PAULO") || norm.includes(" TJSP ") || norm.includes(" TJ SP ");
+  const temExecucoes = /REGISTROS DE DISTRIBUICOES DE EXECUCOES CRIMINAIS|FEITOS DE EXECUCOES CRIMINAIS|\bEXECUCOES CRIMINAIS\b/.test(norm);
+  const temAcoes = /REGISTROS DE DISTRIBUICOES DE ACOES CRIMINAIS|DISTRIBUICAO DE ACOES CRIMINAIS|\bACOES CRIMINAIS\b/.test(norm);
+  if (isTJSP && (temExecucoes || temAcoes)) {
+    const execucoes = temExecucoes;
+    parsed.tipoDetectado = execucoes ? "ANTECEDENTES_ESTADUAL_EXECUCOES" : "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.tipo_certidao = execucoes ? "tjsp_execucoes_criminais" : "tjsp_distribuicao_acoes_criminais";
+    campos.finalidade_certidao = execucoes ? "execucoes_criminais" : "acoes_criminais";
+    campos.nome_documento = execucoes
+      ? "Certidão Estadual TJSP — Execuções Criminais"
+      : "Certidão Estadual TJSP — Distribuição de Ações Criminais";
+    campos.orgao_emissor = campos.orgao_emissor || "Tribunal de Justiça do Estado de São Paulo";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
+    if (!campos.resultado_certidao && /NADA CONSTAR|NADA CONSTA/.test(norm)) campos.resultado_certidao = "nada_consta";
+    parsed.justificativa = execucoes
+      ? "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de EXECUÇÕES CRIMINAIS."
+      : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
+  }
+
+  return parsed;
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
@@ -470,6 +568,8 @@ Deno.serve(async (req) => {
       return json({ error: "imageDataUrl ou storage_path obrigatório" }, 400);
     }
 
+    const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
 
@@ -520,6 +620,7 @@ Deno.serve(async (req) => {
     try { parsed = JSON.parse(call.function.arguments); } catch (e) {
       return json({ error: "Resposta da IA inválida" }, 500);
     }
+    parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
 
     const tipoDetectado = (TIPOS as readonly string[]).includes(parsed.tipoDetectado)
       ? (parsed.tipoDetectado as Tipo)

@@ -6,10 +6,10 @@
  * regra de negócio oficial da Quero Armas:
  *
  *  - Comprovante de residência → vale da emissão de uma conta até a
- *    emissão da próxima (ciclo mensal ≈ emissão + 30 dias). Anos
+ *    emissão da próxima (ciclo mensal: mesmo dia do mês seguinte). Anos
  *    anteriores continuam tratados como HISTÓRICOS (não vencem).
  *  - Certidões específicas (Federal TRF3 regional, TJM-SP e STM) → emissão + 90 dias.
- *  - Demais documentos temporários → emissão + 30 dias.
+ *  - Demais documentos temporários → emissão + 1 mês calendário.
  *
  * A função é tolerante: prefere `data_emissao` para recalcular; se não
  * houver, cai em `data_validade_efetiva` já gravada pelo backend, e por
@@ -105,6 +105,12 @@ function ultimoDiaDoMes(year: number, monthZeroBased: number): Date {
   return new Date(Date.UTC(year, monthZeroBased + 1, 0));
 }
 
+function addCalendarMonths(d: Date, months = 1): Date {
+  const targetFirst = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, 1));
+  const lastDay = ultimoDiaDoMes(targetFirst.getUTCFullYear(), targetFirst.getUTCMonth()).getUTCDate();
+  return new Date(Date.UTC(targetFirst.getUTCFullYear(), targetFirst.getUTCMonth(), Math.min(d.getUTCDate(), lastDay)));
+}
+
 function pickAnoCompetencia(doc: DocValidadeInput): number | null {
   const r = doc.regra_validacao;
   const candidates: any[] = [
@@ -145,12 +151,11 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
   const t = String(tipo ?? "").toLowerCase();
   return [
     "certidao_federal_trf3_regional",
+    "antecedentes_federal_trf3_regional",
     "certidao_criminal_tjmsp",
     "certidao_crimes_militares_stm",
     // No Hub documental esses dois tipos militares chegam consolidados.
     "antecedentes_militar",
-    // A certidão federal regional chega no Hub como antecedentes_federal.
-    "antecedentes_federal",
   ].includes(t);
 }
 
@@ -169,12 +174,9 @@ export function calcularValidadeEfetiva(
     v.setUTCDate(v.getUTCDate() + 90);
     return toISO(v);
   }
-  // Regra única: emissão + 30 dias (ciclo mensal — cobre também o
-  // comprovante de residência, cuja validade vai da emissão de uma
-  // conta até a emissão da próxima).
-  const v = new Date(emi.getTime());
-  v.setUTCDate(v.getUTCDate() + 30);
-  return toISO(v);
+  // Regra única: emissão + 1 mês calendário — cobre também o comprovante de
+  // residência, cuja validade vai da emissão de uma conta até a próxima.
+  return toISO(addCalendarMonths(emi, 1));
 }
 
 /**
