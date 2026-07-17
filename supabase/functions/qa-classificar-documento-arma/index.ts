@@ -191,6 +191,7 @@ const SYSTEM_PROMPT = [
   "=== RESIDÊNCIA / ENDEREÇO ===",
   "• COMPROVANTE_RESIDENCIA: conta de concessionária (luz, água, gás, telefone) ou extrato bancário com endereço.",
   "  Extrair: nome_completo, cpf (se constar), endereco_completo, cep, orgao_emissor (ex.: CPFL, Sabesp, Claro), data_emissao.",
+  "  numero_documento: use o campo REF. MÊS/ANO ou mês de referência da fatura (formato YYYY-MM, ex.: '2024-07'). Se não houver campo de referência, use o número da fatura/conta (campo 'Nº da fatura', 'Número da conta', 'Código do cliente' — NÃO use o CPF como numero_documento).",
   "• DECLARACAO_RESPONSAVEL_IMOVEL: declaração assinada pelo responsável do imóvel.",
   "  Extrair: nome_declarante, cpf_declarante, endereco_completo, data_emissao.",
   "",
