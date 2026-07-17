@@ -77,6 +77,19 @@ Deno.serve(async (req) => {
     const TIPO = "certidao_alteracao_nome";
     const NOME = "Certidão averbada de alteração de nome";
 
+    // Nome oficial atual do cadastro — usado para comparar com identidades no Hub.
+    const { data: clienteNome } = await admin
+      .from("qa_clientes")
+      .select("nome_completo")
+      .eq("id", processo.cliente_id)
+      .maybeSingle();
+    const nomeCadastro = String(clienteNome?.nome_completo ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+
     // 1) Já existe pendência neste processo? → idempotente.
     const { data: existente } = await admin
       .from("qa_processo_documentos")
@@ -94,7 +107,110 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2) Existe certidão averbada já APROVADA em outro processo do MESMO cliente?
+    // 2a) Existe DOCUMENTO OFICIAL DE IDENTIDADE (CIN/RG/CNH/Passaporte/CTPS)
+    //     aprovado no Hub cujo nome bate com o cadastro atual? Juridicamente,
+    //     um documento de identidade emitido por órgão competente já comprova
+    //     a alteração de nome — a certidão averbada não é obrigatória para
+    //     este fim. Neste caso, aprovamos a pendência automaticamente.
+    const TIPOS_IDENTIDADE = [
+      "cin",
+      "rg",
+      "cnh",
+      "passaporte",
+      "ctps",
+      "identidade_militar",
+    ];
+    const { data: identidades } = await admin
+      .from("qa_documentos_cliente")
+      .select("id, tipo_documento, orgao_emissor, data_emissao, ia_dados_extraidos, arquivo_storage_path")
+      .eq("qa_cliente_id", processo.cliente_id)
+      .eq("status", "aprovado")
+      .in("tipo_documento", TIPOS_IDENTIDADE)
+      .order("data_emissao", { ascending: false, nullsFirst: false })
+      .limit(10);
+
+    const normaliza = (s: string | null | undefined) =>
+      String(s ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const identidadeMatch = (identidades ?? []).find((doc) => {
+      const campos = (doc.ia_dados_extraidos as any)?.camposExtraidos ?? {};
+      const nomeDoc = normaliza(campos.nome_completo || campos.nome);
+      return nomeDoc && nomeCadastro && nomeDoc === nomeCadastro;
+    });
+
+    if (identidadeMatch) {
+      const campos = (identidadeMatch.ia_dados_extraidos as any)?.camposExtraidos ?? {};
+      const { data: ins, error: insErr } = await admin
+        .from("qa_processo_documentos")
+        .insert({
+          ...baseRow,
+          status: "aprovado",
+          arquivo_storage_key: identidadeMatch.arquivo_storage_path ?? null,
+          dados_extraidos_json: {
+            nome_atual: campos.nome_completo || campos.nome || clienteNome?.nome_completo,
+            tipo_certidao: "documento_identidade_oficial",
+            documento_origem_tipo: identidadeMatch.tipo_documento,
+            orgao_emissor: identidadeMatch.orgao_emissor ?? null,
+            data_emissao: identidadeMatch.data_emissao ?? null,
+            justificativa:
+              "Documento oficial de identidade emitido por órgão competente comprova a alteração de nome; certidão averbada dispensada.",
+          },
+          data_validacao: new Date().toISOString(),
+          observacoes:
+            "Comprovação de alteração de nome feita por documento oficial de identidade (Hub). Certidão averbada dispensada.",
+          decisao_ia: "aprovado_auto",
+        })
+        .select("id")
+        .maybeSingle();
+      if (insErr) return json({ error: insErr.message }, 500);
+
+      const respostas =
+        (processo.respostas_questionario_json as Record<string, any> | null) ?? {};
+      respostas.alteracao_nome = {
+        aprovada: true,
+        nome_anterior: null,
+        nome_atual: clienteNome?.nome_completo ?? null,
+        tipo_documento_comprobatorio: identidadeMatch.tipo_documento,
+        documento_comprobatorio_id: ins?.id ?? null,
+        documento_origem_id: identidadeMatch.id,
+        data_validacao: new Date().toISOString(),
+        origem: "documento_identidade_oficial",
+      };
+      await admin
+        .from("qa_processos")
+        .update({ respostas_questionario_json: respostas })
+        .eq("id", processoId);
+
+      await admin.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        documento_id: ins?.id ?? null,
+        tipo_evento: "alteracao_nome_dispensada_por_identidade",
+        descricao:
+          "Alteração de nome comprovada por documento oficial de identidade aprovado no Hub. Certidão averbada dispensada.",
+        ator: "sistema",
+        dados_json: {
+          documento_origem_id: identidadeMatch.id,
+          tipo_documento: identidadeMatch.tipo_documento,
+          orgao_emissor: identidadeMatch.orgao_emissor ?? null,
+        },
+      } as any);
+
+      return json({
+        success: true,
+        document_id: ins?.id ?? null,
+        status: "aprovado",
+        reaproveitado: true,
+        ja_existia: false,
+        origem: "documento_identidade_oficial",
+      });
+    }
+
+    // 2b) Existe certidão averbada já APROVADA em outro processo do MESMO cliente?
     //    Se sim, reaproveita: copia respostas_questionario_json.alteracao_nome
     //    e cria a pendência já aprovada com referência ao documento original.
     const { data: aprovadasOutros } = await admin
