@@ -611,14 +611,14 @@ export default function ChecklistGuiadoModal({
   const onHubDocSaved = async () => {
     setHubModalTipo(null);
     if (!carga || !docAtivo) return;
-    // Aguarda o trigger propagar (BEFORE INSERT é síncrono, mas há latência de rede)
-    await new Promise((r) => setTimeout(r, 600));
+    // Aguarda trigger propagar (BEFORE INSERT é síncrono, mas há latência de rede)
+    await new Promise((r) => setTimeout(r, 800));
     const c = await recarregarCarga(carga.processo.id);
     onUpdated?.();
-    const updated = (c.docs ?? []).find((d: GuiaDoc) => d.id === docAtivo.id);
-    const st = updated?.status;
-    if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
-    else setFase("resultado_revisao");
+    // Hub já confirmou o envio — avança direto para o próximo item pendente
+    // sem mostrar tela intermédia ("Documento recebido"), pois o Hub modal
+    // já exibiu a confirmação ao cliente.
+    avancarPara(c, pularIds);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
