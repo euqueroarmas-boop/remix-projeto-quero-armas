@@ -587,6 +587,98 @@ export default function QAPilotoRealPage() {
                       </ul>
                     </div>
                   )}
+
+                  {/* Upload assistido pela equipe */}
+                  {!arquivado && !["validated","customer_signed"].includes(contrato.status) && (
+                    <div className="mt-4 border-t border-neutral-800 pt-3 space-y-2">
+                      <div className="text-xs font-semibold tracking-wide">
+                        Upload assistido pela equipe (WhatsApp / e-mail / presencial)
+                      </div>
+                      <p className="text-[11px] text-neutral-400 normal-case">
+                        Use esta opção apenas quando o cliente enviar o contrato assinado por fora do portal.
+                        O envio é marcado como <code>upload_assistido_por_staff=true</code> e cai na MESMA
+                        validação oficial (qa-validate-customer-signature). O contrato só chega em <strong>validated</strong> se
+                        a validação oficial aprovar.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Origem</Label>
+                          <select
+                            value={origemAssinado}
+                            onChange={(e) => setOrigemAssinado(e.target.value)}
+                            className="w-full mt-1 bg-neutral-900 border border-neutral-700 rounded h-9 px-2 text-xs uppercase"
+                          >
+                            <option>WhatsApp</option>
+                            <option>E-mail</option>
+                            <option>Presencial</option>
+                            <option>Outro</option>
+                          </select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">PDF assinado (máx. 25MB)</Label>
+                          <Input
+                            type="file" accept=".pdf"
+                            onChange={(e) => setAssinado(e.target.files?.[0] ?? null)}
+                            className="bg-neutral-900 border-neutral-700 normal-case"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Observação (mín. 20 caracteres — obrigatória)</Label>
+                        <Textarea
+                          value={obsAssinado}
+                          onChange={(e) => setObsAssinado(e.target.value)}
+                          placeholder="Ex.: CONTRATO ASSINADO RECEBIDO POR WHATSAPP EM 17/07 CONFIRMADO COM O CLIENTE."
+                          className="bg-neutral-900 border-neutral-700 min-h-[70px] normal-case"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={enviarContratoAssinadoStaff}
+                        disabled={enviandoAssinado || !assinado}
+                        className="bg-amber-600 hover:bg-amber-500"
+                      >
+                        {enviandoAssinado
+                          ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Enviando…</>
+                          : <><Upload className="h-4 w-4 mr-1" /> Enviar contrato assinado (staff-assistido)</>}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Arquivar Piloto */}
+          {venda && (
+            <Card title={arquivado ? "Piloto Arquivado" : "Arquivar Piloto"} state={arquivado ? "blocked" : "pending"}>
+              {arquivado ? (
+                <p className="text-xs text-rose-400 normal-case">
+                  Piloto arquivado. Novas ações do wizard estão bloqueadas — apenas visualização/auditoria.
+                </p>
+              ) : !mostrarArq ? (
+                <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-500/50 text-rose-400 hover:bg-rose-950">
+                  <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-neutral-400 normal-case">
+                    Nada será apagado. Venda/itens ficam CANCELADO, contrato recebe <code>arquivado_em</code>,
+                    processos (se existirem) ficam <code>cancelado</code>, e um evento imutável <code>venda_arquivada_piloto</code> é registrado.
+                  </p>
+                  <Label className="text-xs">Motivo (mín. 20 caracteres — obrigatório)</Label>
+                  <Textarea
+                    value={motivoArq}
+                    onChange={(e) => setMotivoArq(e.target.value)}
+                    placeholder="Ex.: TESTE ENCERRADO — CLIENTE DESISTIU E VAI RECONTRATAR NO FLUXO NORMAL."
+                    className="bg-neutral-900 border-neutral-700 min-h-[70px] normal-case"
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => { setMostrarArq(false); setMotivoArq(""); }}>Cancelar</Button>
+                    <Button size="sm" onClick={arquivarPiloto} disabled={arquivando} className="bg-rose-600 hover:bg-rose-500">
+                      {arquivando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirmar arquivamento"}
+                    </Button>
+                  </div>
                 </div>
               )}
             </Card>
@@ -609,6 +701,23 @@ export default function QAPilotoRealPage() {
             <ShieldAlert className="h-3 w-3 inline mr-1 text-amber-400" />
             Fluxo baseado em Lei 10.826/03, Dec. 11.615/23, Dec. 12.345/24 e IN 201/311.
             Nenhum passo faz UPDATE manual solto — tudo passa por RPC/Edge oficial.
+          </div>
+
+          <div className="mt-4 border-t border-neutral-800 pt-3">
+            <h3 className="text-xs font-semibold tracking-wide mb-2 flex items-center gap-1">
+              <FlaskConical className="h-3 w-3 text-emerald-400" /> Smoke Test
+            </h3>
+            <p className="text-[10px] text-neutral-500 normal-case mb-2">
+              Cria venda descartável, chama confirmação manual 2x, valida idempotência e arquiva. Rode antes de cliente real.
+            </p>
+            <Button size="sm" variant="outline" onClick={rodarSmokeTest} disabled={rodandoSmoke} className="w-full">
+              {rodandoSmoke ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Rodando…</> : "Executar smoke test"}
+            </Button>
+            {smokeResult && (
+              <pre className="mt-2 text-[9px] bg-neutral-900 border border-neutral-800 rounded p-2 max-h-64 overflow-auto normal-case">
+                {JSON.stringify(smokeResult, null, 2)}
+              </pre>
+            )}
           </div>
         </aside>
       </div>
