@@ -1445,6 +1445,76 @@ Deno.serve(async (req) => {
         }
 
         // 1) Aplica patch no cliente (somente se houve campos vazios para preencher)
+        // ---- AUTO-MERGE de nome_completo (superset) ----
+        // Regra: quando a IA extrai nome_completo de documento de identidade
+        // forte (CIN/CNH/RG) com confiança >= 0.9 (garantido por novoStatus)
+        // e o nome extraído é um SUPERSET do nome atual do cliente
+        // (mesmos tokens, em ordem, com tokens adicionais — típico de
+        // sobrenome truncado no cadastro inicial), promovemos o nome
+        // completo. Mantém auditoria em qa_cliente_historico_atualizacoes.
+        try {
+          const TIPOS_ID_FORTE = new Set(["cin", "cnh", "rg", "cpf"]);
+          if (TIPOS_ID_FORTE.has(String(doc.tipo_documento))) {
+            const nomeIA = String(cx.nome_completo ?? cx.nome ?? "").trim();
+            const nomeAtual = String((cliente as any)?.nome_completo ?? "").trim();
+            const tokenize = (s: string) =>
+              s
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9\s]/g, " ")
+                .split(/\s+/)
+                .filter(Boolean);
+            const atualTokens = tokenize(nomeAtual);
+            const iaTokens = tokenize(nomeIA);
+            // Superset: todos os tokens do atual aparecem, em ordem, dentro do IA,
+            // e o IA tem estritamente mais tokens.
+            let ehSuperset = false;
+            if (
+              atualTokens.length > 0 &&
+              iaTokens.length > atualTokens.length
+            ) {
+              let i = 0;
+              for (const t of iaTokens) {
+                if (t === atualTokens[i]) i++;
+                if (i === atualTokens.length) break;
+              }
+              ehSuperset = i === atualTokens.length;
+            }
+            if (ehSuperset) {
+              // Preserva capitalização original do documento
+              patchCliente.nome_completo = nomeIA;
+              // Remove eventual conflito registrado pelo loop anterior
+              const idxConf = conflitos.findIndex((c) => c.campo === "nome_completo");
+              if (idxConf >= 0) conflitos.splice(idxConf, 1);
+              // Marca como promovido para o evento de reconciliação
+              const jaPromovido = promovidos.some((p) => p.campo === "nome_completo");
+              if (!jaPromovido) {
+                promovidos.push({
+                  campo: "nome_completo",
+                  valor: nomeIA,
+                  fonte: `superset:${doc.tipo_documento}`,
+                });
+              }
+              // Auditoria dedicada
+              try {
+                await supabase.from("qa_cliente_historico_atualizacoes").insert({
+                  cliente_id: cliente.id,
+                  campo: "nome_completo",
+                  valor_anterior: nomeAtual,
+                  valor_novo: nomeIA,
+                  origem: "ia_superset",
+                  documento_id,
+                } as any);
+              } catch (histErr) {
+                console.warn("[FASE3] historico nome superset falhou:", histErr);
+              }
+            }
+          }
+        } catch (mergeErr) {
+          console.warn("[FASE3] auto-merge nome superset falhou:", mergeErr);
+        }
+
         if (Object.keys(patchCliente).length > 0) {
           const { error: cliErr } = await supabase
             .from("qa_clientes")
