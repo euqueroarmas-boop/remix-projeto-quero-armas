@@ -14,6 +14,7 @@ import {
   Pencil,
   ScanLine,
   ShieldCheck,
+  Sparkles,
   Upload,
   X,
 } from "lucide-react";
@@ -696,6 +697,11 @@ interface Props {
   clienteNomeMae?: string | null;
   /** Documentos já aprovados no hub — usados como referência de conformidade. */
   docsAprovados?: any[];
+  /** Tipos ainda pendentes no checklist do processo atual (vocabulário do Hub).
+   *  Quando o cliente anexa um documento cuja IA classificou em tipo diferente
+   *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
+   *  aceita salvar nesse outro tipo. */
+  pendingHubTipos?: string[];
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -716,6 +722,7 @@ export function ClienteDocsHubModal({
   clienteDataNascimento,
   clienteNomeMae,
   docsAprovados = [],
+  pendingHubTipos = [],
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
@@ -841,6 +848,23 @@ export function ClienteDocsHubModal({
     classificacao &&
     form.tipo_documento &&
     form.tipo_documento !== expectedTipoMeta.value
+  );
+  // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
+  const pendingSet = new Set((pendingHubTipos || []).map((t) => String(t)));
+  // Cliente mandou uma certidão diferente, mas ela cobre outra pendência do
+  // checklist — reaproveitar automaticamente é a decisão correta.
+  const cobreOutraPendencia = !!(
+    tipoDivergenteExigencia &&
+    form.tipo_documento &&
+    pendingSet.size > 0 &&
+    pendingSet.has(form.tipo_documento)
+  );
+  // Cliente mandou algo que não é pedido em lugar nenhum do processo.
+  const certidaoIncorreta = !!(
+    tipoDivergenteExigencia &&
+    form.tipo_documento &&
+    pendingSet.size > 0 &&
+    !pendingSet.has(form.tipo_documento)
   );
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
@@ -1358,6 +1382,14 @@ export function ClienteDocsHubModal({
       toast.error("Escolha o tipo de documento.");
       return;
     }
+    // Trava: certidão não é o que o slot pede E também não cobre nenhuma
+    // outra pendência do processo → não deixa salvar.
+    if (certidaoIncorreta) {
+      toast.error(
+        `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
+      );
+      return;
+    }
     // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
     // ser gravadas no seu subtipo específico. Nenhuma pode ser salva no
     // lugar de outra — a IA classifica na hora da captura, mas o cliente pode
@@ -1859,6 +1891,25 @@ export function ClienteDocsHubModal({
               </p>
             </div>
 
+            {certidaoIncorreta ? (
+              <div
+                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-red-600 bg-red-50 px-3 py-1.5 text-red-700"
+                style={{ boxShadow: "0 0 0 2px rgba(220,38,38,0.15)" }}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Certidão incorreta
+                </span>
+              </div>
+            ) : cobreOutraPendencia ? (
+              <div className="hidden sm:flex shrink-0 items-center gap-1.5 border-2 border-sky-600 bg-sky-50 px-3 py-1.5 text-sky-800">
+                <Sparkles className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Reclassificado
+                </span>
+              </div>
+            ) : null}
+
             <button
               type="button"
               onClick={onClose}
@@ -1893,7 +1944,33 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {tipoDivergenteExigencia ? (
+            {cobreOutraPendencia ? (
+              <div className="mt-1 flex items-start gap-1.5 border border-sky-300 bg-sky-50 p-2 text-[10px] leading-snug text-sky-900">
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Reclassificado automaticamente</div>
+                  <div>
+                    O slot pedia <b>{expectedTipoMeta?.label}</b>, mas o documento anexado é
+                    <b> {tipoAtual?.label || form.tipo_documento}</b> — e essa certidão também
+                    está pendente no seu processo. Vamos salvá-la nesse tipo correto e
+                    seguir cobrando a outra separadamente.
+                  </div>
+                </div>
+              </div>
+            ) : certidaoIncorreta ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-500 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Certidão incorreta</div>
+                  <div>
+                    O documento anexado é <b>{tipoAtual?.label || form.tipo_documento}</b>,
+                    mas o slot pedia <b>{expectedTipoMeta?.label}</b> — e a certidão enviada
+                    não é exigida em nenhuma outra pendência deste processo. Anexe o
+                    documento correto.
+                  </div>
+                </div>
+              </div>
+            ) : tipoDivergenteExigencia ? (
               <div className="mt-1 flex items-start gap-1.5 border border-amber-300 bg-amber-50 p-2 text-[10px] leading-snug text-amber-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>

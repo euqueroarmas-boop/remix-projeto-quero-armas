@@ -1925,6 +1925,17 @@ export default function ChecklistGuiadoModal({
           qaClienteId={clienteId}
           mode="portal"
           defaultTipo={hubModalTipo ?? undefined}
+          /* Todos os tipos ainda pendentes no checklist deste processo, em
+           * vocabulário do Hub. Permite ao Hub reclassificar automaticamente
+           * um documento que veio no tipo "errado" mas cobre outra pendência
+           * — em vez de rejeitar cegamente. */
+          pendingHubTipos={Array.from(
+            new Set(
+              (filaAtual ?? [])
+                .map((d: any) => toHubTipo(String(d.tipo_documento || "")))
+                .filter((t: string) => t && HUB_TIPOS_VALIDOS.has(t)),
+            ),
+          )}
           clienteCpf={null}
           clienteNome={null}
           clienteDataNascimento={null}
