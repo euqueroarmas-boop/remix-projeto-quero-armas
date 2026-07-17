@@ -1039,10 +1039,10 @@ export default function QAPilotoRealPage() {
                             </select>
                           </div>
                           <div>
-                            <Label className="text-[11px] text-neutral-500">Evidência (PDF/JPG/PNG — opcional)</Label>
+                            <Label className="text-[11px] text-neutral-500">Evidência (PDF/JPG/PNG/ZIP/RAR — opcional)</Label>
                             <Input
                               type="file"
-                              accept=".pdf,.png,.jpg,.jpeg"
+                              accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.zip,.rar,.7z,application/pdf,image/*,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed"
                               onChange={(e) => { setEvidenciaFile(e.target.files?.[0] ?? null); setEvidenciaPath(null); }}
                               className="bg-white border-neutral-300 h-9 mt-1 normal-case"
                             />
