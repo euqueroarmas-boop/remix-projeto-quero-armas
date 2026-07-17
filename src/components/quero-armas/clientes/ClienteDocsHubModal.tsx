@@ -1382,6 +1382,14 @@ export function ClienteDocsHubModal({
       toast.error("Escolha o tipo de documento.");
       return;
     }
+    // Trava: certidão não é o que o slot pede E também não cobre nenhuma
+    // outra pendência do processo → não deixa salvar.
+    if (certidaoIncorreta) {
+      toast.error(
+        `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
+      );
+      return;
+    }
     // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
     // ser gravadas no seu subtipo específico. Nenhuma pode ser salva no
     // lugar de outra — a IA classifica na hora da captura, mas o cliente pode
