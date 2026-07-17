@@ -343,6 +343,91 @@ Deno.serve(async (req) => {
       : snapshot[0]?.service_name_snapshot || "Serviço contratado";
   const servicoSlugFinal = slugsContratados.length > 0 ? slugsContratados.join(",") : "";
   const totalCents = snapshot.reduce((sum, s) => sum + Number(s.total_price_cents || 0), 0);
+
+  // ---------------------------------------------------------------------------
+  // Bloco "itens contratados" — renderizado apenas quando há 2+ itens.
+  // Torna explícito no corpo do contrato o pacote adquirido e o total efetivo,
+  // além do que já aparece nos Anexos filtrados por slug.
+  // ---------------------------------------------------------------------------
+  let itensContratadosBloco = "";
+  if (snapshot.length > 1) {
+    const linhas = snapshot
+      .map((s) => {
+        const nome = esc(s.service_name_snapshot || "");
+        const preco = brl(Number(s.total_price_cents || 0));
+        return `<li><strong>${nome}</strong> — ${preco}</li>`;
+      })
+      .join("");
+    itensContratadosBloco =
+      `<h2>CLÁUSULA PRIMEIRA-A --- DOS ITENS CONTRATADOS EM CONJUNTO</h2>` +
+      `<p>1.A.1. A CONTRATANTE contratou, em condição única de pacote, os serviços abaixo, ` +
+      `cada qual regido pelo respectivo Anexo I:</p>` +
+      `<ul>${linhas}</ul>` +
+      `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalCents)}</strong>, ` +
+      `equivalente à soma dos itens acima na condição comercial acordada no momento do aceite eletrônico.</p>`;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bloco "cláusula de pagamento" — só renderizado quando houve parcelamento
+  // com juros/tarifa da adquirente (informado pela Equipe no fluxo manual).
+  // Fonte: último evento pagamento_manual_confirmado da venda.
+  // ---------------------------------------------------------------------------
+  let clausulaPagamentoBloco = "";
+  try {
+    const { data: pagEv } = await sb
+      .from("qa_venda_eventos")
+      .select("dados_json, created_at")
+      .eq("venda_id", venda.id)
+      .eq("tipo_evento", "pagamento_manual_confirmado")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const dj = (pagEv as any)?.dados_json ?? null;
+    if (dj) {
+      const parcelas = Number(dj.parcelas || 1);
+      const adquirente = dj.adquirente ? String(dj.adquirente).trim() : "";
+      const valorBruto = Number(dj.valor_bruto_parcelado);
+      const forma = dj.forma_pagamento ? String(dj.forma_pagamento) : "";
+      const totalReais = totalCents / 100;
+      const temJuros =
+        Number.isFinite(valorBruto) && valorBruto > 0 && valorBruto - totalReais > 0.01;
+      if (parcelas > 1 && (temJuros || adquirente)) {
+        const efetivoBruto = temJuros ? valorBruto : totalReais;
+        const valorParcela = efetivoBruto / parcelas;
+        const parcelaFmt = brl(Math.round(valorParcela * 100));
+        const brutoFmt = brl(Math.round(efetivoBruto * 100));
+        const totalFmt = brl(totalCents);
+        const partes: string[] = [];
+        partes.push(
+          `3.2.1. Foi acordado o pagamento em <strong>${parcelas}x</strong> de ` +
+            `<strong>${parcelaFmt}</strong>` +
+            (forma ? ` na modalidade <strong>${esc(forma)}</strong>` : "") +
+            (adquirente ? `, processado pela adquirente <strong>${esc(adquirente)}</strong>` : "") +
+            `, totalizando <strong>${brutoFmt}</strong> debitados junto à instituição financeira ` +
+            `da CONTRATANTE.`
+        );
+        if (temJuros) {
+          partes.push(
+            `3.2.2. O valor contratado dos serviços é de <strong>${totalFmt}</strong>. ` +
+              `A diferença entre este valor e o total efetivamente debitado no cartão ` +
+              `(<strong>${brutoFmt}</strong>) corresponde a juros e/ou tarifas cobradas pela adquirente ` +
+              (adquirente ? `<strong>${esc(adquirente)}</strong>` : "instituição financeira") +
+              `, integralmente de responsabilidade da CONTRATANTE, sem qualquer participação da ` +
+              `CONTRATADA sobre esses acréscimos.`
+          );
+        } else {
+          partes.push(
+            `3.2.2. O valor contratado dos serviços de <strong>${totalFmt}</strong> corresponde ao total ` +
+              `debitado pela adquirente, sem incidência de juros ou tarifas adicionais nesta operação.`
+          );
+        }
+        clausulaPagamentoBloco = partes.map((p) => `<p>${p}</p>`).join("");
+      }
+    }
+  } catch (e) {
+    console.warn("[qa-generate-contract] falha ao ler evento de pagamento:", (e as any)?.message || e);
+  }
+
   const enderecoCliente = [
     cliente.endereco,
     cliente.numero ? `nº ${cliente.numero}` : null,
@@ -366,6 +451,8 @@ Deno.serve(async (req) => {
     aceite_ip: "",
     aceite_user_agent: "",
     aceite_hash: "",
+    itens_contratados_bloco: itensContratadosBloco,
+    clausula_pagamento_bloco: clausulaPagamentoBloco,
   });
   const aceiteHash = await sha256Text(`${conteudoRenderizado}|${aceiteDataIso}|${venda.cliente_id}`);
   const conteudoSha = await sha256Text(conteudoRenderizado);
