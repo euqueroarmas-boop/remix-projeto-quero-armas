@@ -274,6 +274,7 @@ export default function QARoutes() {
           <Route path="casos" element={<QACasosPage />} />
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
+          <Route path="admin/piloto-real" element={<QAPilotoRealPage />} />
           <Route path="operacao/contratacoes" element={<QAContratacoesTabsPage />} />
           <Route path="operacao/alertas-vencimento" element={<QAAlertasVencimentoPage />} />
           <Route path="operacao/prazos-expirados" element={<QAPrazosExpiradosPage />} />
