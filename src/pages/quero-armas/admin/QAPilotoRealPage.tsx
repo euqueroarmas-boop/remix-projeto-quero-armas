@@ -153,6 +153,12 @@ export default function QAPilotoRealPage() {
   const [evidenciaPath, setEvidenciaPath] = useState<string | null>(null);
   const [confirmadoPreco, setConfirmadoPreco] = useState<boolean>(false);
 
+  /* ---------- Passo 3c: Modo de exibição do contrato (pacote vs itens) ---------- */
+  type ModoExibicao = "itens_separados" | "pacote_fechado";
+  const [modoExibicao, setModoExibicao] = useState<ModoExibicao>("itens_separados");
+  const [valorFinalPacoteStr, setValorFinalPacoteStr] = useState<string>("");
+  const [motivoPacote, setMotivoPacote] = useState<string>("");
+
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
     if (servico) {
@@ -167,35 +173,79 @@ export default function QAPilotoRealPage() {
       setItensExtras([]);
       setExtraPickerAberto(false);
       setExtraQ("");
+      setModoExibicao("itens_separados");
+      setValorFinalPacoteStr("");
+      setMotivoPacote("");
     }
   }, [servico?.id]);
 
   // Preço do item principal
   const precoCatalogoPrincipal = servico?.preco != null ? Number(servico.preco) : 0;
-  const precoAplicadoPrincipal = parseMoney(precoAplicadoStr);
-  // Preços dos itens extras (validação individual)
-  const extrasAvaliados = itensExtras.map((ie) => {
+  const precoAplicadoPrincipalInput = parseMoney(precoAplicadoStr);
+  const temExtras = itensExtras.length > 0;
+  const modoPacote = temExtras && modoExibicao === "pacote_fechado";
+
+  // Preços dos itens extras (validação individual) — usados no modo itens_separados
+  const extrasAvaliadosBase = itensExtras.map((ie) => {
     const catalogo = ie.servico.preco != null ? Number(ie.servico.preco) : 0;
-    const aplicado = parseMoney(ie.precoStr);
-    return { ie, catalogo, aplicado, valido: Number.isFinite(aplicado) };
+    const aplicadoInput = parseMoney(ie.precoStr);
+    return { ie, catalogo, aplicadoInput };
   });
-  const todosPrecosValidos =
-    Number.isFinite(precoAplicadoPrincipal) && extrasAvaliados.every((e) => e.valido);
-  // Totais do pacote (catálogo vs aplicado)
-  const precoCatalogo = precoCatalogoPrincipal + extrasAvaliados.reduce((s, e) => s + e.catalogo, 0);
-  const precoAplicadoNum = todosPrecosValidos
-    ? precoAplicadoPrincipal + extrasAvaliados.reduce((s, e) => s + e.aplicado, 0)
+  const precoCatalogo =
+    precoCatalogoPrincipal + extrasAvaliadosBase.reduce((s, e) => s + e.catalogo, 0);
+
+  // Valor final aplicado no pacote (input do modo pacote OU soma no modo separado)
+  const valorFinalPacoteNum = parseMoney(valorFinalPacoteStr);
+  const somaSeparados = Number.isFinite(precoAplicadoPrincipalInput)
+    ? precoAplicadoPrincipalInput +
+      extrasAvaliadosBase.reduce((s, e) => s + (Number.isFinite(e.aplicadoInput) ? e.aplicadoInput : NaN), 0)
     : NaN;
-  const precoValido = todosPrecosValidos;
+
+  const precoAplicadoNum = modoPacote ? valorFinalPacoteNum : somaSeparados;
+  const precoValido = Number.isFinite(precoAplicadoNum) && precoAplicadoNum >= 0;
+
+  // Distribuição proporcional (modo pacote) — itens continuam vinculados à venda
+  // mas o contrato oculta os preços individuais. Distribuímos proporcionalmente
+  // ao catálogo; se catálogo somar 0, distribuímos igualmente. Última posição
+  // absorve o arredondamento para casar exatamente com valorFinalPacoteNum.
+  const extrasAvaliados = extrasAvaliadosBase.map((e, idx, arr) => {
+    if (!modoPacote) {
+      return { ...e, aplicado: e.aplicadoInput, valido: Number.isFinite(e.aplicadoInput) };
+    }
+    if (!precoValido) return { ...e, aplicado: NaN, valido: false };
+    const cats = [precoCatalogoPrincipal, ...arr.map((x) => x.catalogo)];
+    const somaCat = cats.reduce((s, v) => s + v, 0);
+    const n = cats.length;
+    let val: number;
+    if (somaCat > 0) {
+      val = Number(((e.catalogo / somaCat) * precoAplicadoNum).toFixed(2));
+    } else {
+      val = Number((precoAplicadoNum / n).toFixed(2));
+    }
+    return { ...e, aplicado: val, valido: true };
+  });
+  // Preço aplicado do item principal (no modo pacote é o resto para casar o total)
+  let precoAplicadoPrincipal = precoAplicadoPrincipalInput;
+  if (modoPacote && precoValido) {
+    const somaExtras = extrasAvaliados.reduce((s, e) => s + (e.aplicado || 0), 0);
+    precoAplicadoPrincipal = Number((precoAplicadoNum - somaExtras).toFixed(2));
+    if (precoAplicadoPrincipal < 0) precoAplicadoPrincipal = 0;
+  }
+
   const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
   const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
   const percentualDif = precoCatalogo > 0 && precoValido
     ? Number(((diferencaValor / precoCatalogo) * 100).toFixed(2))
     : 0;
   const motivoOk = motivoPreco.trim().length >= 20;
+  const motivoPacoteOk = motivoPacote.trim().length >= 20;
+  // No modo pacote_fechado, se o valor final diferir do catálogo, exigimos motivo_pacote
+  // (o preço "por item" foi omitido do contrato, então a justificativa é sobre o pacote).
   const podeCriarVenda =
     !!cliente && !!servico && precoValido &&
-    (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco));
+    (modoPacote
+      ? (!precoDiferente || (motivoPacoteOk /* motivo do pacote */))
+      : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
 
   const uploadEvidencia = useCallback(async () => {
     if (!evidenciaFile || !cliente || !servico) return null;
@@ -250,11 +300,19 @@ export default function QAPilotoRealPage() {
             celular: cliente.celular || "",
           },
           negociacao: precoDiferente ? {
-            motivo: motivoPreco.trim(),
-            tipo_ajuste: tipoAjuste,
+            motivo: (modoPacote ? motivoPacote.trim() : motivoPreco.trim()),
+            tipo_ajuste: modoPacote ? "negociacao_individual" : tipoAjuste,
             evidencia_path: evPath,
             confirmado: true,
-            origem: "piloto_real_preco_negociado",
+            origem: modoPacote
+              ? "piloto_real_pacote_fechado"
+              : "piloto_real_preco_negociado",
+          } : null,
+          exibicao_contrato: temExtras ? {
+            modo: modoExibicao,
+            valor_final_pacote: modoPacote && precoValido ? precoAplicadoNum : null,
+            ocultar_precos_individuais_no_contrato: modoPacote,
+            motivo: modoPacote && precoDiferente ? motivoPacote.trim() : null,
           } : null,
         },
       });
@@ -267,7 +325,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
