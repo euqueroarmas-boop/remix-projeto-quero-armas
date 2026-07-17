@@ -1312,6 +1312,41 @@ export function ClienteDocsHubModal({
       toast.error("Escolha o tipo de documento.");
       return;
     }
+    // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
+    // ser gravadas no seu subtipo específico. Nenhuma pode ser salva no
+    // lugar de outra — a IA classifica na hora da captura, mas o cliente pode
+    // ter mantido o tipo genérico "pai" via override manual.
+    if (form.tipo_documento === "antecedentes_estadual" || form.tipo_documento === "antecedentes_federal") {
+      const hay = [
+        form.nome_documento,
+        form.orgao_emissor,
+        form.numero_documento,
+        (classificacao?.camposExtraidos as any)?.tipo_certidao,
+        (classificacao?.camposExtraidos as any)?.subtipo,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase();
+      let refinado: string | null = null;
+      if (form.tipo_documento === "antecedentes_estadual") {
+        if (/EXECU|1448406/.test(hay)) refinado = "antecedentes_estadual_execucoes";
+        else if (/DISTRIBUI|1448405/.test(hay)) refinado = "antecedentes_estadual_distribuicao";
+      } else {
+        if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA/.test(hay)) refinado = "antecedentes_federal_sjsp_jef";
+        else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL/.test(hay)) refinado = "antecedentes_federal_trf3_regional";
+      }
+      if (!refinado) {
+        toast.error(
+          form.tipo_documento === "antecedentes_estadual"
+            ? "Escolha o subtipo correto da certidão TJSP: DISTRIBUIÇÃO DE AÇÕES CRIMINAIS ou EXECUÇÕES CRIMINAIS."
+            : "Escolha o subtipo correto da certidão federal: TRF 3ª REGIÃO ou SEÇÃO JUDICIÁRIA SP/JEF.",
+        );
+        return;
+      }
+      form.tipo_documento = refinado;
+    }
     if (!customerId && !qaClienteId) {
       toast.error("Não foi possível identificar seu cadastro. Recarregue a página.");
       return;
