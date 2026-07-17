@@ -848,6 +848,23 @@ export function ClienteDocsHubModal({
     form.tipo_documento &&
     form.tipo_documento !== expectedTipoMeta.value
   );
+  // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
+  const pendingSet = new Set((pendingHubTipos || []).map((t) => String(t)));
+  // Cliente mandou uma certidão diferente, mas ela cobre outra pendência do
+  // checklist — reaproveitar automaticamente é a decisão correta.
+  const cobreOutraPendencia = !!(
+    tipoDivergenteExigencia &&
+    form.tipo_documento &&
+    pendingSet.size > 0 &&
+    pendingSet.has(form.tipo_documento)
+  );
+  // Cliente mandou algo que não é pedido em lugar nenhum do processo.
+  const certidaoIncorreta = !!(
+    tipoDivergenteExigencia &&
+    form.tipo_documento &&
+    pendingSet.size > 0 &&
+    !pendingSet.has(form.tipo_documento)
+  );
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
   // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
