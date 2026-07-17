@@ -14,6 +14,7 @@ import {
   Pencil,
   ScanLine,
   ShieldCheck,
+  Sparkles,
   Upload,
   X,
 } from "lucide-react";
