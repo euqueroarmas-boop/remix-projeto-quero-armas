@@ -1080,7 +1080,9 @@ export default function QAPilotoRealPage() {
                   </Button>
                   {precoDiferente && !podeCriarVenda && (
                     <p className="text-[11px] text-rose-600 normal-case">
-                      Preencha motivo (≥20), tipo de ajuste e marque a confirmação para prosseguir.
+                      {modoPacote
+                        ? "Informe o motivo do pacote (≥20 caracteres) para prosseguir."
+                        : "Preencha motivo (≥20), tipo de ajuste e marque a confirmação para prosseguir."}
                     </p>
                   )}
                 </div>
