@@ -373,7 +373,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
           <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mb-2.5 font-semibold uppercase">
             CONTRATO PRINCIPAL · EM DESTAQUE
           </div>
-          <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} />
+          <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
         </>
       )}
 
@@ -413,11 +413,13 @@ function FeaturedContractCard({
   onAssinar,
   preparedDownload,
   preparingDownload,
+  onValidatedRefresh,
 }: {
   contract: Contract;
   onAssinar: () => void;
   preparedDownload: PreparedMinutaDownload | null;
   preparingDownload: boolean;
+  onValidatedRefresh?: () => void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -476,7 +478,14 @@ function FeaturedContractCard({
         body: fd,
       });
       const data = await resp.json().catch(() => ({}));
-      if (!resp.ok) throw new Error(data.error || `HTTP ${resp.status}`);
+      if (!resp.ok) {
+        if (resp.status === 409 && String(data.error || "").includes("validated")) {
+          toast.info("Este contrato já foi validado pela equipe. Atualizando…", { duration: 5000 });
+          onValidatedRefresh?.();
+          return;
+        }
+        throw new Error(data.error || `HTTP ${resp.status}`);
+      }
       toast.success("Contrato enviado. Validação em andamento.");
     } catch (e: any) {
       toast.error(e?.message || "Falha ao enviar contrato");
