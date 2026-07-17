@@ -114,7 +114,29 @@ function tipoCompatKey(tipo?: string | null): string {
   if (t.startsWith("comprovante_endereco") || t.startsWith("comprovante_residencia")) {
     return "comprovante_residencia";
   }
+  if (t === "certidao_antecedentes_policia_civil_sp") return "antecedentes_criminais";
+  if (t === "certidao_crimes_eleitorais_tse") return "antecedentes_eleitoral";
+  if (t === "certidao_crimes_militares_stm" || t === "certidao_criminal_tjmsp") return "antecedentes_militar";
+  if (t === "certidao_federal_trf3_regional" || t === "certidao_federal_trf3_sjsp_jef") return "antecedentes_federal";
+  if (t === "certidao_tjsp_distribuicao_criminal" || t === "certidao_tjsp_execucoes_criminais") return "antecedentes_estadual";
   return t;
+}
+
+function normTexto(v?: string | null): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+}
+
+function certidaoMilitarCompatível(row: { nome_documento?: string | null }, destinoTipo: string): boolean {
+  const destino = String(destinoTipo ?? "").trim().toLowerCase();
+  if (destino !== "certidao_criminal_tjmsp" && destino !== "certidao_crimes_militares_stm") return true;
+  const texto = normTexto(row.nome_documento);
+  if (destino === "certidao_criminal_tjmsp") {
+    return texto.includes("TJM") || texto.includes("JUSTICA MILITAR/SP") || texto.includes("JUSTICA MILITAR DO ESTADO DE SAO PAULO");
+  }
+  return texto.includes("STM") || texto.includes("JUSTICA MILITAR DA UNIAO") || texto.includes("SUPERIOR TRIBUNAL MILITAR");
 }
 
 function escopoHubParaEscopoDocumento(escopo?: string | null): EscopoDocumento | null {
@@ -282,6 +304,7 @@ export async function buscarCandidatosReaproveitamento(
   for (const row of (processoResp.data ?? []) as any[]) {
     if (excluir.has(row.id)) continue;
     if (tipoCompatKey(row.tipo_documento) !== tipoCompat) continue;
+    if (!certidaoMilitarCompatível({ nome_documento: row.nome_documento ?? row.tipo_documento }, tipo)) continue;
     if (
       documentoForaDaRegra({
         dataValidadeEfetiva: row.data_validade_efetiva ?? null,
@@ -324,6 +347,7 @@ export async function buscarCandidatosReaproveitamento(
   for (const row of (hubResp.data ?? []) as any[]) {
     if (excluir.has(row.id)) continue;
     if (tipoCompatKey(row.tipo_documento) !== tipoCompat) continue;
+    if (!certidaoMilitarCompatível({ nome_documento: row.arquivo_nome ?? row.tipo_documento }, tipo)) continue;
     const escopoOrigem = escopoHubParaEscopoDocumento(row.escopo_documental);
     if (!escopoOrigem || escopoOrigem !== escopoDestino) continue;
     if ((escopoOrigem as string) === "processo") continue;

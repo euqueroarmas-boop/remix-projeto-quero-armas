@@ -8,8 +8,8 @@
  *  - Comprovante de residência → vale da emissão de uma conta até a
  *    emissão da próxima (ciclo mensal ≈ emissão + 30 dias). Anos
  *    anteriores continuam tratados como HISTÓRICOS (não vencem).
- *  - Demais documentos → emissão + 30 dias (ignora qualquer "90 dias" que
- *    o documento eventualmente afirme).
+ *  - Certidões específicas (Federal TRF3 regional, TJM-SP e STM) → emissão + 90 dias.
+ *  - Demais documentos temporários → emissão + 30 dias.
  *
  * A função é tolerante: prefere `data_emissao` para recalcular; se não
  * houver, cai em `data_validade_efetiva` já gravada pelo backend, e por
@@ -141,6 +141,19 @@ function isResidenciaDoc(doc: DocValidadeInput): boolean {
   return tipo.startsWith("comprovante_residencia") || tipo.startsWith("comprovante_endereco");
 }
 
+export function isCertidao90Dias(tipo?: string | null): boolean {
+  const t = String(tipo ?? "").toLowerCase();
+  return [
+    "certidao_federal_trf3_regional",
+    "certidao_criminal_tjmsp",
+    "certidao_crimes_militares_stm",
+    // No Hub documental esses dois tipos militares chegam consolidados.
+    "antecedentes_militar",
+    // A certidão federal regional chega no Hub como antecedentes_federal.
+    "antecedentes_federal",
+  ].includes(t);
+}
+
 /**
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
@@ -151,6 +164,11 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  if (isCertidao90Dias(tipo)) {
+    const v = new Date(emi.getTime());
+    v.setUTCDate(v.getUTCDate() + 90);
+    return toISO(v);
+  }
   // Regra única: emissão + 30 dias (ciclo mensal — cobre também o
   // comprovante de residência, cuja validade vai da emissão de uma
   // conta até a emissão da próxima).

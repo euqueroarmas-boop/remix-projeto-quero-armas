@@ -44,6 +44,10 @@ const TIPOS_CLIENTE = new Set<string>([
   "certidao_antecedentes", "antecedentes_criminais",
   "antecedentes_federal", "antecedentes_estadual",
   "antecedentes_militar", "antecedentes_eleitoral",
+  "certidao_antecedentes_policia_civil_sp", "certidao_crimes_eleitorais_tse",
+  "certidao_crimes_militares_stm", "certidao_criminal_tjmsp",
+  "certidao_federal_trf3_regional", "certidao_federal_trf3_sjsp_jef",
+  "certidao_tjsp_distribuicao_criminal", "certidao_tjsp_execucoes_criminais",
   "certidao_casamento", "certidao_nascimento", "certidao_alteracao_nome",
 ]);
 const TIPOS_CAC_ATIVIDADE = new Set<string>([
@@ -116,7 +120,29 @@ function tipoCompatKey(tipo?: string | null): string {
   if (t.startsWith("comprovante_endereco") || t.startsWith("comprovante_residencia")) {
     return "comprovante_residencia";
   }
+  if (t === "certidao_antecedentes_policia_civil_sp") return "antecedentes_criminais";
+  if (t === "certidao_crimes_eleitorais_tse") return "antecedentes_eleitoral";
+  if (t === "certidao_crimes_militares_stm" || t === "certidao_criminal_tjmsp") return "antecedentes_militar";
+  if (t === "certidao_federal_trf3_regional" || t === "certidao_federal_trf3_sjsp_jef") return "antecedentes_federal";
+  if (t === "certidao_tjsp_distribuicao_criminal" || t === "certidao_tjsp_execucoes_criminais") return "antecedentes_estadual";
   return t;
+}
+
+function normTexto(v?: string | null): string {
+  return String(v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+}
+
+function certidaoMilitarCompativel(destinoTipo: string, origemTexto: string): boolean {
+  const destino = String(destinoTipo ?? "").trim().toLowerCase();
+  if (destino !== "certidao_criminal_tjmsp" && destino !== "certidao_crimes_militares_stm") return true;
+  const texto = normTexto(origemTexto);
+  if (destino === "certidao_criminal_tjmsp") {
+    return texto.includes("TJM") || texto.includes("JUSTICA MILITAR/SP") || texto.includes("JUSTICA MILITAR DO ESTADO DE SAO PAULO");
+  }
+  return texto.includes("STM") || texto.includes("JUSTICA MILITAR DA UNIAO") || texto.includes("SUPERIOR TRIBUNAL MILITAR");
 }
 
 function escopoHubParaEscopoDocumento(escopo?: string | null): Escopo | null {
@@ -236,7 +262,7 @@ Deno.serve(async (req) => {
         .select("id, processo_id, cliente_id, tipo_documento, etapa, status, arma_id, arquivo_storage_key, data_validade, data_validade_efetiva, data_emissao, data_validacao, validade_dias")
         .eq("id", origemTipo === "processo" ? origemId : "__skip__").maybeSingle(),
       admin.from("qa_documentos_cliente")
-        .select("id, qa_cliente_id, tipo_documento, status, arquivo_storage_path, data_validade, data_emissao, escopo_documental, reaproveitavel_global, arma_numero_serie, numero_documento, numero_cad_sinarm, numero_registro_sigma")
+        .select("id, qa_cliente_id, tipo_documento, status, arquivo_nome, arquivo_storage_path, data_validade, data_emissao, escopo_documental, reaproveitavel_global, ia_dados_extraidos, arma_numero_serie, numero_documento, numero_cad_sinarm, numero_registro_sigma")
         .eq("id", origemTipo === "hub_cliente" ? origemId : "__skip__").maybeSingle(),
     ]);
     if (dErr) return json({ error: dErr.message }, 500);
@@ -280,6 +306,14 @@ Deno.serve(async (req) => {
     const tipoD = tipoCompatKey(destino.tipo_documento);
     if (!tipoO || !tipoD || tipoO !== tipoD) {
       return json({ error: "tipo_incompativel", origem: tipoO, destino: tipoD }, 409);
+    }
+    if (tipoD === "antecedentes_militar") {
+      const origemTexto = origemTipo === "hub_cliente"
+        ? `${origem.arquivo_nome ?? ""} ${JSON.stringify(origem.ia_dados_extraidos ?? {})}`
+        : `${origem.tipo_documento ?? ""}`;
+      if (!certidaoMilitarCompativel(String(destino.tipo_documento ?? ""), origemTexto)) {
+        return json({ error: "subtipo_certidao_incompativel" }, 409);
+      }
     }
     const { data: processoDestino, error: processoDestinoErr } = await admin
       .from("qa_processos")

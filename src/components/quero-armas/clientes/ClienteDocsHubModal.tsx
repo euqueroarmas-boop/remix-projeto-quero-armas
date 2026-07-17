@@ -1035,16 +1035,17 @@ export function ClienteDocsHubModal({
             if (venc) return venc;
             return prev.data_validade;
           }
-          const valExplicita = dataIsoFromBr(campos.data_validade);
-          if (valExplicita) return valExplicita;
           const emissao = dataIsoFromBr(campos.data_emissao);
-          if (!emissao) return prev.data_validade;
-          // Certidão militar: validade = 3 meses após emissão
-          if (tipoIA === "antecedentes_militar") {
+          // Certidões específicas: validade = 90 dias exatos após emissão.
+          if (tipoIA === "antecedentes_militar" || tipoIA === "antecedentes_federal") {
+            if (!emissao) return prev.data_validade;
             const d = new Date(emissao);
-            d.setMonth(d.getMonth() + 3);
+            d.setDate(d.getDate() + 90);
             return d.toISOString().slice(0, 10);
           }
+          const valExplicita = dataIsoFromBr(campos.data_validade);
+          if (valExplicita) return valExplicita;
+          if (!emissao) return prev.data_validade;
           // Comprovante de clube: declaração válida por 90 dias da data de emissão
           if (tipoIA === "comprovante_clube_tiro") {
             const d = new Date(emissao);
