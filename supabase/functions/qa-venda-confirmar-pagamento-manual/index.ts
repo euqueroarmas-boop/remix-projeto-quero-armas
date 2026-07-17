@@ -72,7 +72,22 @@ Deno.serve(async (req) => {
 
   const nowIso = new Date().toISOString();
 
-  if (!jaPago) {
+  // Guarda extra de idempotência: se já existe evento pagamento_manual_confirmado
+  // para esta venda, NÃO gravamos update/auditoria/evento de novo — apenas
+  // reexecutamos o pipeline canônico (que já é idempotente).
+  let eventoJaExiste = false;
+  try {
+    const { data: evExist } = await admin
+      .from("qa_venda_eventos")
+      .select("id")
+      .eq("venda_id", Number((venda as any).id))
+      .eq("tipo_evento", "pagamento_manual_confirmado")
+      .limit(1)
+      .maybeSingle();
+    eventoJaExiste = !!evExist;
+  } catch { /* best effort */ }
+
+  if (!jaPago && !eventoJaExiste) {
     const updatePayload: Record<string, unknown> = {
       status: "PAGO",
       cobranca_status: "confirmada",
@@ -143,6 +158,7 @@ Deno.serve(async (req) => {
     ok: true,
     venda_id: Number((venda as any).id),
     ja_estava_pago: jaPago,
+    evento_ja_existia: eventoJaExiste,
     contrato: contrato ?? null,
   });
 });
