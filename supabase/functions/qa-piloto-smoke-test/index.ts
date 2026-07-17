@@ -50,6 +50,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // Cliente com JWT do staff chamador — necessário para RPCs que exigem auth.uid()
+  const asStaff = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } },
+  );
+
   const steps: Step[] = [];
   const record = (step: string, ok: boolean, detail?: unknown) => steps.push({ step, ok, detail });
 
@@ -125,7 +132,7 @@ Deno.serve(async (req) => {
 
   // 2) aprovar valor via RPC oficial
   try {
-    const { error } = await admin.rpc("qa_venda_aprovar_valor", { p_venda_id: venda_id });
+    const { error } = await asStaff.rpc("qa_venda_aprovar_valor", { p_venda_id: venda_id });
     record("valor_aprovado", !error, error?.message);
   } catch (e: any) {
     record("valor_aprovado", false, e?.message);
