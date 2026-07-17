@@ -829,18 +829,28 @@ export default function QAPilotoRealPage() {
               {!venda ? (
                 <div className="space-y-3">
                   <div className="rounded border border-neutral-200 bg-neutral-50 p-3 space-y-2">
-                    <div className="text-xs font-semibold tracking-wide">Preço aplicado nesta venda</div>
+                    <div className="text-xs font-semibold tracking-wide">
+                      Preço aplicado {itensExtras.length > 0 ? "no pacote" : "nesta venda"}
+                    </div>
                     <div className="grid grid-cols-3 gap-3 text-xs normal-case">
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço do catálogo</Label>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? "Total catálogo (pacote)" : "Preço do catálogo"}
+                        </Label>
                         <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço sugerido</Label>
-                        <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? "Total aplicado (pacote)" : "Preço sugerido"}
+                        </Label>
+                        <div className="font-mono text-sm mt-1">
+                          {precoValido ? money(precoAplicadoNum) : money(precoCatalogo)}
+                        </div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço aplicado (R$)</Label>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? `Preço item principal (R$)` : "Preço aplicado (R$)"}
+                        </Label>
                         <Input
                           value={precoAplicadoStr}
                           onChange={(e) => setPrecoAplicadoStr(e.target.value)}
@@ -850,6 +860,11 @@ export default function QAPilotoRealPage() {
                         />
                       </div>
                     </div>
+                    {itensExtras.length > 0 && (
+                      <p className="text-[10px] text-neutral-500 normal-case border-t border-neutral-200 pt-2">
+                        Total do pacote = item principal + itens adicionais (preços editáveis na seção acima).
+                      </p>
+                    )}
                     {precoValido && precoDiferente && (
                       <div className="text-[11px] normal-case border-t border-neutral-200 pt-2">
                         <div className={diferencaValor < 0 ? "text-emerald-600" : "text-amber-600"}>
