@@ -812,6 +812,18 @@ Deno.serve(async (req) => {
           "",
       ).trim();
       let ucDigits = ucBruto.replace(/\D+/g, "");
+      // Fallback determinístico: se a IA não devolveu UC nos campos habituais,
+      // varre TODOS os valores string de cx atrás do padrão EDP
+      // "0.000.XXX.XXX.XXX-XX" (14 dígitos com pontos/traço).
+      if (!ucDigits) {
+        const scan: string[] = [];
+        for (const v of Object.values(cx)) if (typeof v === "string") scan.push(v);
+        scan.push(String(parsed?.observacoes ?? ""));
+        const joined = scan.join(" | ");
+        const rxEdp = /\b0\.?\s*0{3}\.?\s*\d{3}\.?\s*\d{3}\.?\s*\d{3}\s*-?\s*\d{2}\b/;
+        const hit = rxEdp.exec(joined)?.[0]?.replace(/\D+/g, "") || "";
+        if (hit.length === 14) ucDigits = hit;
+      }
       // === Sanity checks anti-alucinação ===
       // 1) UC de concessionária tem >= 8 dígitos. NF típica tem 6-9 e vem "021.024.229".
       //    EDP em SP usa 14 dígitos (0.000.XXX.XXX.XXX-XX). Rejeitamos < 8.
