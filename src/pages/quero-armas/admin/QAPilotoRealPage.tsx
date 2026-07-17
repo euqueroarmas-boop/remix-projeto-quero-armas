@@ -662,7 +662,7 @@ export default function QAPilotoRealPage() {
                   Piloto arquivado. Novas ações do wizard estão bloqueadas — apenas visualização/auditoria.
                 </p>
               ) : !mostrarArq ? (
-                <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-500/50 text-rose-400 hover:bg-rose-950">
+                <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-400 text-rose-600 hover:bg-rose-50">
                   <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
                 </Button>
               ) : (
