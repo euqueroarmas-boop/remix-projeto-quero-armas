@@ -997,9 +997,18 @@ export function ClienteDocsHubModal({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
         tipo_documento: tipoIA,
-        // Comprovante de residência: usa o CPF extraído como identificador do titular
+        // Comprovante de residência: identificador é o CÓDIGO DE INSTALAÇÃO / UC / matrícula
+        // da concessionária — NUNCA o CPF do titular.
         numero_documento: tipoIA === "comprovante_residencia"
-          ? (campos.cpf || campos.numero_documento || prev.numero_documento)
+          ? (
+              (campos as any).codigo_instalacao ||
+              (campos as any).numero_uc ||
+              (campos as any).uc ||
+              (campos as any).numero_instalacao ||
+              (campos as any).matricula ||
+              campos.numero_documento ||
+              prev.numero_documento
+            )
           : (campos.numero_documento || prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         // Para laudos/exames, o campo "Avaliação" usa data_avaliacao.
