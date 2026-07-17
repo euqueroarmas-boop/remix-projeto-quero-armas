@@ -330,7 +330,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
