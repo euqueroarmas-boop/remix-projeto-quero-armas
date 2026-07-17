@@ -403,6 +403,17 @@ Deno.serve(async (req) => {
       await recordContractEvent(admin, contractId, "processo_criado_por_contrato_validado", {
         processo_id: processoId, servico_id: servicoId, slug, contract_item_id: it.id,
       });
+    } else if (existProc.status === "aguardando_assinatura") {
+      // Correção 3: processo estava aguardando assinatura (pagamento confirmado, contrato pendente).
+      // Agora o contrato chegou como validated — avança para aguardando_documentos antes de
+      // chamar a RPC para que a explosão do checklist ocorra no caminho normal.
+      await admin.from("qa_processos")
+        .update({ status: "aguardando_documentos" })
+        .eq("id", existProc.id);
+      await recordContractEvent(admin, contractId, "processo_avancado_aguardando_assinatura_para_documentos", {
+        processo_id: processoId, servico_id: servicoId, slug,
+        status_anterior: "aguardando_assinatura",
+      });
     }
 
     // 4c) Confirma pagamento + explode checklist (RPC canônica, idempotente)
@@ -424,6 +435,45 @@ Deno.serve(async (req) => {
             idempotente: inseridos === 0,
           });
         }
+
+        // Correção 2: safety net — se RPC retornou 0/0 e qa_processo_documentos está vazio,
+        // chama qa_explodir_checklist_processo diretamente para recuperação.
+        if (inseridos === 0 && jaExistentes === 0) {
+          const { count: docCount } = await admin
+            .from("qa_processo_documentos")
+            .select("id", { count: "exact", head: true })
+            .eq("processo_id", processoId);
+          if ((docCount ?? 0) === 0) {
+            try {
+              const { data: explode } = await admin.rpc("qa_explodir_checklist_processo", {
+                p_processo_id: processoId,
+              });
+              const recInseridos = Number((explode as any)?.[0]?.inseridos ?? (explode as any)?.inseridos ?? 0);
+              await recordContractEvent(admin, contractId, "checklist_recuperado_por_liberacao", {
+                processo_id: processoId, servico_id: servicoId,
+                inseridos: recInseridos,
+                motivo: "rpc_retornou_zero_sem_checklist",
+                rpc_ja_estava_confirmado: (rpc as any)?.ja_estava_confirmado ?? null,
+              });
+              if (recInseridos > 0) {
+                await recordContractEvent(admin, contractId, "checklist_criado_por_contrato_validado", {
+                  processo_id: processoId, servico_id: servicoId,
+                  inseridos: recInseridos, ja_existentes: 0,
+                  idempotente: false, recovery: true,
+                });
+              } else {
+                result.erros.push({
+                  processo_id: processoId,
+                  etapa: "checklist_recovery",
+                  erro: "qa_explodir_checklist retornou 0 inseridos — sem catalogo ou servico sem documentos obrigatorios",
+                });
+              }
+            } catch (explodeErr) {
+              result.erros.push({ processo_id: processoId, etapa: "checklist_recovery", erro: String(explodeErr) });
+            }
+          }
+        }
+
         // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
         try {
           await admin.rpc("qa_pos_pagamento_protocolar", { p_processo_id: processoId });
