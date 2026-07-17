@@ -88,6 +88,37 @@ import {
   type BuscaReaproveitamentoResultado,
   type CandidatoReaproveitamento,
 } from "@/lib/quero-armas/reaproveitamentoCandidatos";
+import ClienteDocsHubModal from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+
+// Mapa processo_tipo → hub_tipo (espelho da tabela qa_tipo_documento_aliases).
+// Usado para pré-selecionar o tipo correto no Hub ao abrir o modal.
+const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
+  rg_com_cpf: "cin",
+  comprovante_endereco_ano_2022: "comprovante_residencia",
+  comprovante_endereco_ano_2023: "comprovante_residencia",
+  comprovante_endereco_ano_2024: "comprovante_residencia",
+  comprovante_endereco_ano_2025: "comprovante_residencia",
+  comprovante_endereco_ano_2026: "comprovante_residencia",
+  comprovante_endereco_ano_2027: "comprovante_residencia",
+  certidao_antecedentes_policia_civil_sp: "antecedentes_criminais",
+  certidao_crimes_eleitorais_tse: "antecedentes_eleitoral",
+  certidao_crimes_militares_stm: "antecedentes_militar",
+  certidao_criminal_tjmsp: "antecedentes_estadual",
+  certidao_federal_trf3_regional: "antecedentes_federal",
+  certidao_federal_trf3_sjsp_jef: "antecedentes_federal",
+  certidao_tjsp_distribuicao_criminal: "antecedentes_estadual",
+  certidao_tjsp_execucoes_criminais: "antecedentes_estadual",
+  comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
+  declaracao_habitualidade_clube: "comprovante_habitualidade",
+  declaracao_compromisso_habitualidade: "comprovante_habitualidade",
+  declaracao_compromisso_treino: "declaracao_correlata",
+  renda_nf_empresa: "renda_nf_recente",
+  renda_qsa: "renda_cartao_cnpj",
+};
+
+function toHubTipo(processoTipo: string): string {
+  return PROCESSO_TO_HUB_TIPO[processoTipo] ?? processoTipo;
+}
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
@@ -176,6 +207,19 @@ export default function ChecklistGuiadoModal({
   // guardamos o id para oferecer um botão de fallback "Ir para pendência".
   const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
   const [certidaoUploadForcadoId, setCertidaoUploadForcadoId] = useState<string | null>(null);
+
+  // ----- Hub de Documentos (caminho único de upload para docs permanentes) -----
+  const [hubModalTipo, setHubModalTipo] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("qa_clientes")
+      .select("customer_id")
+      .eq("id", clienteId)
+      .maybeSingle()
+      .then(({ data }) => setCustomerId((data as any)?.customer_id ?? null));
+  }, [clienteId]);
 
   // ----- Vínculo documento ↔ arma do acervo (Bloco 10) -----
   interface ArmaCli {
@@ -537,6 +581,15 @@ export default function ChecklistGuiadoModal({
       return;
     }
     if (gateWizardPre(doc, { tipo: "anexar" })) return;
+
+    // Docs permanentes sobem pelo Hub de Documentos (fonte canônica).
+    // O trigger qa_doc_auto_aprovar_por_ia + qa_doc_hub_satisfaz_exigencias
+    // aprovam e satisfazem o slot automaticamente sem intervenção da equipe.
+    if (doc?.escopo === "permanente") {
+      setHubModalTipo(toHubTipo(doc.tipo_documento));
+      return;
+    }
+
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
       ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
       : [];
@@ -548,6 +601,19 @@ export default function ChecklistGuiadoModal({
       fileRef.current.value = "";
       fileRef.current.click();
     }
+  };
+
+  const onHubDocSaved = async () => {
+    setHubModalTipo(null);
+    if (!carga || !docAtivo) return;
+    // Aguarda o trigger propagar (BEFORE INSERT é síncrono, mas há latência de rede)
+    await new Promise((r) => setTimeout(r, 600));
+    const c = await recarregarCarga(carga.processo.id);
+    onUpdated?.();
+    const updated = (c.docs ?? []).find((d: GuiaDoc) => d.id === docAtivo.id);
+    const st = updated?.status;
+    if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
+    else setFase("resultado_revisao");
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1818,6 +1884,24 @@ export default function ChecklistGuiadoModal({
           else if (lista.length === 1) setArmaSelecionada(lista[0].arma_uid);
         }}
       />
+
+      {/* Hub de Documentos — caminho único para docs permanentes */}
+      {(customerId || clienteId) && (
+        <ClienteDocsHubModal
+          open={!!hubModalTipo}
+          onClose={() => setHubModalTipo(null)}
+          customerId={customerId}
+          qaClienteId={clienteId}
+          mode="portal"
+          defaultTipo={hubModalTipo ?? undefined}
+          clienteCpf={null}
+          clienteNome={null}
+          clienteDataNascimento={null}
+          clienteNomeMae={null}
+          docsAprovados={[]}
+          onSaved={onHubDocSaved}
+        />
+      )}
 
       <DocumentDataOnboardingWizard
         open={wizard.open}

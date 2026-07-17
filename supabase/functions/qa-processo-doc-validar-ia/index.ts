@@ -1638,60 +1638,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ===== HUB WRITE-BACK: salva docs permanentes aprovados no cofre do cliente =====
-    // Documentos permanentes aprovados via checklist são gravados em qa_documentos_cliente
-    // para que o Hub seja a fonte canônica e o doc seja reaproveitado em processos futuros.
-    if (novoStatus === "aprovado" && doc.escopo === "permanente" && processo?.cliente_id) {
-      try {
-        // Resolve tipo canônico do Hub (rg_com_cpf → cin, etc.)
-        const { data: aliasRow } = await supabase
-          .from("qa_tipo_documento_aliases")
-          .select("hub_tipo")
-          .eq("processo_tipo", doc.tipo_documento)
-          .maybeSingle();
-        const tipoHub = aliasRow?.hub_tipo ?? doc.tipo_documento;
-
-        const { data: clienteAuth } = await supabase
-          .from("qa_clientes")
-          .select("customer_id")
-          .eq("id", processo.cliente_id)
-          .maybeSingle();
-
-        const dataValidadeHub =
-          (camposExtraidosFinal as any)?.data_validade ??
-          (camposExtraidosFinal as any)?.data_vencimento ?? null;
-
-        const { error: hubErr } = await supabase
-          .from("qa_documentos_cliente")
-          .insert({
-            tipo_documento: tipoHub,
-            arquivo_storage_path: path,
-            qa_cliente_id: processo.cliente_id,
-            customer_id: clienteAuth?.customer_id ?? null,
-            status: "aprovado",
-            validado_admin: true,
-            ia_dados_extraidos: camposExtraidosFinal ?? null,
-            data_validade: dataValidadeHub,
-          });
-
-        if (hubErr) {
-          console.warn("[validar-ia] hub write-back falhou:", hubErr.message);
-        } else {
-          await supabase.from("qa_processo_eventos").insert({
-            processo_id,
-            documento_id,
-            tipo_evento: "documento_salvo_hub",
-            descricao: `${doc.nome_documento} aprovado e salvo automaticamente no Hub de Documentos.`,
-            dados_json: { tipo_documento: tipoHub, tipo_processo: doc.tipo_documento, escopo: "permanente" },
-            ator: "sistema",
-          });
-        }
-      } catch (e) {
-        // Falha no Hub NUNCA derruba a aprovação do documento
-        console.warn("[validar-ia] hub write-back exceção:", e);
-      }
-    }
-
     // Notifica granular (cobra SOMENTE este item)
     const eventoEmail =
       novoStatus === "aprovado" ? "documento_aprovado" :
