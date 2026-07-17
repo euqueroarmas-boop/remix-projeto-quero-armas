@@ -827,9 +827,35 @@ Deno.serve(async (req) => {
         ]
           .map((v) => String(v ?? "").replace(/\D+/g, ""))
           .filter((v) => v.length >= 6);
-        const obs = String(cx.observacoes ?? cx.observacao ?? "").toUpperCase();
-        const bateNF = /NOTA\s*FISCAL[^0-9]*([0-9\.\-\/]+)/i.exec(obs)?.[1]?.replace(/\D+/g, "") || "";
-        if (camposConflito.includes(ucDigits) || (bateNF && ucDigits === bateNF)) {
+        // Varre TODOS os campos string (cx + observacoes globais) atrás de
+        // rótulos "NOTA FISCAL", "NF", "CHAVE", "PROTOCOLO", "CÓDIGO DE BARRAS",
+        // "MEDIDOR", "REF", "MÊS/ANO" seguidos de número. Se o ucDigits bate
+        // com qualquer um deles, é alucinação — rejeita.
+        const blobs: string[] = [];
+        for (const v of Object.values(cx)) {
+          if (typeof v === "string") blobs.push(v);
+        }
+        blobs.push(String(parsed?.observacoes ?? ""));
+        const blob = blobs.join(" | ").toUpperCase();
+        const labels = [
+          /NOTA\s*FISCAL[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+          /\bNF[^A-Z0-9]{0,4}N?[ºO]?\s*([0-9\.\-\/]+)/gi,
+          /CHAVE\s*(?:DE\s*)?ACESSO[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /PROTOCOLO[^0-9]{0,15}([0-9\.\-\/]+)/gi,
+          /C[ÓO]DIGO\s*DE\s*BARRAS[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /LINHA\s*DIGIT[ÁA]VEL[^0-9]{0,10}([0-9\.\-\/\s]+)/gi,
+          /N[ºO]?\s*(?:DO\s*)?MEDIDOR[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+          /REF\.?\s*M[ÊE]S\s*\/?\s*ANO[^0-9]{0,10}([0-9\.\-\/]+)/gi,
+        ];
+        const conflitosBlob: string[] = [];
+        for (const rx of labels) {
+          let m: RegExpExecArray | null;
+          while ((m = rx.exec(blob)) !== null) {
+            const d = (m[1] || "").replace(/\D+/g, "");
+            if (d.length >= 6) conflitosBlob.push(d);
+          }
+        }
+        if (camposConflito.includes(ucDigits) || conflitosBlob.includes(ucDigits)) {
           ucDigits = "";
         }
       }
