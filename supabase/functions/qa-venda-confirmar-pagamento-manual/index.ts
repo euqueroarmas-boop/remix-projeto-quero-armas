@@ -48,6 +48,12 @@ Deno.serve(async (req) => {
   const observacao = String(body?.observacao || "").trim();
   const comprovante_path = body?.comprovante_path ? String(body.comprovante_path) : null;
   const parcelas = Number(body?.parcelas) > 0 ? Math.min(24, Number(body.parcelas)) : 1;
+  // Metadados opcionais de parcelamento — usados pela cláusula de pagamento do contrato.
+  // Só entram no snapshot quando informados; ausentes = null (não aparecem no contrato).
+  const adquirenteRaw = body?.adquirente == null ? "" : String(body.adquirente).trim();
+  const adquirente = adquirenteRaw.length > 0 && adquirenteRaw.length <= 60 ? adquirenteRaw : null;
+  const vbpNum = Number(body?.valor_bruto_parcelado);
+  const valor_bruto_parcelado = Number.isFinite(vbpNum) && vbpNum > 0 ? Number(vbpNum.toFixed(2)) : null;
 
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (!FORMAS.has(forma_pagamento)) return json({ error: "forma_pagamento_invalida", allowed: [...FORMAS] }, 400);
@@ -114,6 +120,8 @@ Deno.serve(async (req) => {
           observacao,
           comprovante_path,
           parcelas,
+          adquirente,
+          valor_bruto_parcelado,
           confirmado_em: nowIso,
           fluxo: "piloto_real",
         },
@@ -132,6 +140,8 @@ Deno.serve(async (req) => {
         dados_json: {
           forma_pagamento,
           parcelas,
+          adquirente,
+          valor_bruto_parcelado,
           observacao,
           comprovante_path,
           fluxo: "piloto_real",

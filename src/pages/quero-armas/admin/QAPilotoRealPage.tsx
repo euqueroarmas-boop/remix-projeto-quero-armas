@@ -90,6 +90,22 @@ export default function QAPilotoRealPage() {
   const [servicoQ, setServicoQ] = useState("");
   const [carregandoServicos, setCarregandoServicos] = useState(false);
 
+  /* ---------- Passo 2b: Itens adicionais do pacote ---------- */
+  type ItemExtra = { servico: Servico; precoStr: string };
+  const [itensExtras, setItensExtras] = useState<ItemExtra[]>([]);
+  const [extraPickerAberto, setExtraPickerAberto] = useState(false);
+  const [extraQ, setExtraQ] = useState("");
+
+  const parseMoney = (s: string): number => {
+    const v = (s || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  };
+  const fmtMoneyInput = (n: number | null | undefined): string =>
+    n != null && Number.isFinite(Number(n))
+      ? Number(n).toFixed(2).replace(".", ",")
+      : "";
+
   useEffect(() => {
     (async () => {
       setCarregandoServicos(true);
@@ -108,6 +124,14 @@ export default function QAPilotoRealPage() {
     if (!q) return servicos.slice(0, 30);
     return servicos.filter((s) => s.nome.toLowerCase().includes(q) || s.slug.includes(q)).slice(0, 30);
   }, [servicos, servicoQ]);
+
+  const servicosExtraFiltrados = useMemo(() => {
+    const usados = new Set<string>([servico?.id ?? "", ...itensExtras.map((i) => i.servico.id)]);
+    const q = extraQ.trim().toLowerCase();
+    const base = servicos.filter((s) => !usados.has(s.id));
+    if (!q) return base.slice(0, 30);
+    return base.filter((s) => s.nome.toLowerCase().includes(q) || s.slug.includes(q)).slice(0, 30);
+  }, [servicos, servico?.id, itensExtras, extraQ]);
 
   /* ---------- Passo 3: Venda ---------- */
   const [venda, setVenda] = useState<Venda | null>(null);
@@ -140,16 +164,29 @@ export default function QAPilotoRealPage() {
       setEvidenciaPath(null);
       setConfirmadoPreco(false);
       setTipoAjuste("negociacao_individual");
+      setItensExtras([]);
+      setExtraPickerAberto(false);
+      setExtraQ("");
     }
   }, [servico?.id]);
 
-  const precoCatalogo = servico?.preco != null ? Number(servico.preco) : 0;
-  const precoAplicadoNum = (() => {
-    const s = (precoAplicadoStr || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
-    const n = Number(s);
-    return Number.isFinite(n) && n >= 0 ? n : NaN;
-  })();
-  const precoValido = Number.isFinite(precoAplicadoNum);
+  // Preço do item principal
+  const precoCatalogoPrincipal = servico?.preco != null ? Number(servico.preco) : 0;
+  const precoAplicadoPrincipal = parseMoney(precoAplicadoStr);
+  // Preços dos itens extras (validação individual)
+  const extrasAvaliados = itensExtras.map((ie) => {
+    const catalogo = ie.servico.preco != null ? Number(ie.servico.preco) : 0;
+    const aplicado = parseMoney(ie.precoStr);
+    return { ie, catalogo, aplicado, valido: Number.isFinite(aplicado) };
+  });
+  const todosPrecosValidos =
+    Number.isFinite(precoAplicadoPrincipal) && extrasAvaliados.every((e) => e.valido);
+  // Totais do pacote (catálogo vs aplicado)
+  const precoCatalogo = precoCatalogoPrincipal + extrasAvaliados.reduce((s, e) => s + e.catalogo, 0);
+  const precoAplicadoNum = todosPrecosValidos
+    ? precoAplicadoPrincipal + extrasAvaliados.reduce((s, e) => s + e.aplicado, 0)
+    : NaN;
+  const precoValido = todosPrecosValidos;
   const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
   const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
   const percentualDif = precoCatalogo > 0 && precoValido
@@ -192,12 +229,20 @@ export default function QAPilotoRealPage() {
       }
       const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
         body: {
-          cart: [{
-            servico_id: servico.id,
-            slug: servico.slug,
-            quantidade: 1,
-            preco_negociado: precoAplicadoNum,
-          }],
+          cart: [
+            {
+              servico_id: servico.id,
+              slug: servico.slug,
+              quantidade: 1,
+              preco_negociado: precoAplicadoPrincipal,
+            },
+            ...extrasAvaliados.map((e) => ({
+              servico_id: e.ie.servico.id,
+              slug: e.ie.servico.slug,
+              quantidade: 1,
+              preco_negociado: e.aplicado,
+            })),
+          ],
           identificacao: {
             nome_completo: cliente.nome_completo,
             cpf: cliente.cpf || "",
@@ -222,7 +267,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoNum, motivoPreco, tipoAjuste]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
@@ -254,6 +299,8 @@ export default function QAPilotoRealPage() {
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
   const [observacao, setObservacao] = useState<string>("");
+  const [adquirente, setAdquirente] = useState<string>("");
+  const [valorBrutoStr, setValorBrutoStr] = useState<string>("");
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
@@ -292,6 +339,11 @@ export default function QAPilotoRealPage() {
           parcelas,
           observacao: observacao.trim(),
           comprovante_path: path,
+          adquirente: adquirente.trim() || null,
+          valor_bruto_parcelado: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          })(),
         },
       });
       if (error) throw error;
@@ -308,7 +360,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, uploadComprovante]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
@@ -654,14 +706,118 @@ export default function QAPilotoRealPage() {
                   </div>
                 </>
               ) : (
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <div className="font-semibold">{servico.nome}</div>
-                    <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <div className="text-[10px] text-neutral-500 tracking-wide">Item principal</div>
+                      <div className="font-semibold">{servico.nome}</div>
+                      <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setServico(null); setVenda(null); setContrato(null); setItensExtras([]); }}
+                    >
+                      Trocar
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { setServico(null); setVenda(null); setContrato(null); }}>
-                    Trocar
-                  </Button>
+
+                  {/* Itens adicionais do pacote (Piloto Real multi-item) */}
+                  {!venda && (
+                    <div className="border-t border-neutral-200 pt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-semibold tracking-wide">
+                          Itens adicionais do pacote {itensExtras.length > 0 && <span className="text-neutral-500 normal-case">({itensExtras.length})</span>}
+                        </div>
+                        {!extraPickerAberto && (
+                          <Button size="sm" variant="outline" onClick={() => setExtraPickerAberto(true)}>
+                            + Adicionar serviço
+                          </Button>
+                        )}
+                      </div>
+
+                      {itensExtras.length === 0 && !extraPickerAberto && (
+                        <p className="text-[11px] text-neutral-500 normal-case">
+                          Use quando o cliente contratou mais de um serviço em uma condição única (ex.: Concessão de CR + Curso Operador de Pistola).
+                        </p>
+                      )}
+
+                      {itensExtras.length > 0 && (
+                        <ul className="space-y-2 mb-2">
+                          {itensExtras.map((ie, idx) => (
+                            <li key={ie.servico.id} className="border border-neutral-200 rounded p-2 flex items-start gap-2">
+                              <div className="flex-1 text-xs">
+                                <div className="font-semibold">{ie.servico.nome}</div>
+                                <div className="text-neutral-500 normal-case">{ie.servico.slug} · catálogo {money(ie.servico.preco)}</div>
+                              </div>
+                              <div className="w-32">
+                                <Label className="text-[10px] text-neutral-500">Preço aplicado</Label>
+                                <Input
+                                  value={ie.precoStr}
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+                                    setItensExtras((prev) => prev.map((p, i) => i === idx ? { ...p, precoStr: v } : p));
+                                  }}
+                                  placeholder="0,00"
+                                  className="bg-white border-neutral-300 h-8 font-mono text-xs mt-1"
+                                  inputMode="decimal"
+                                />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setItensExtras((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-rose-600 hover:text-rose-700"
+                              >
+                                Remover
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {extraPickerAberto && (
+                        <div className="border border-neutral-200 rounded p-2 bg-neutral-50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Input
+                              value={extraQ}
+                              onChange={(e) => setExtraQ(e.target.value)}
+                              placeholder="Filtrar serviço para adicionar…"
+                              className="bg-white border-neutral-300 h-8 uppercase text-xs"
+                            />
+                            <Button size="sm" variant="ghost" onClick={() => { setExtraPickerAberto(false); setExtraQ(""); }}>
+                              Fechar
+                            </Button>
+                          </div>
+                          <div className="max-h-56 overflow-y-auto space-y-1">
+                            {servicosExtraFiltrados.map((s) => (
+                              <button
+                                key={s.id}
+                                onClick={() => {
+                                  setItensExtras((prev) => [
+                                    ...prev,
+                                    { servico: s, precoStr: s.preco != null ? fmtMoneyInput(Number(s.preco)) : "" },
+                                  ]);
+                                  setExtraQ("");
+                                  setExtraPickerAberto(false);
+                                }}
+                                className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-white rounded p-2 text-xs flex justify-between"
+                              >
+                                <span>
+                                  <span className="font-semibold">{s.nome}</span>
+                                  <span className="text-neutral-500 normal-case"> · {s.slug}</span>
+                                </span>
+                                <span className="text-neutral-700">{money(s.preco)}</span>
+                              </button>
+                            ))}
+                            {servicosExtraFiltrados.length === 0 && (
+                              <p className="text-[11px] text-neutral-500 normal-case">Sem serviços disponíveis para adicionar.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
@@ -673,18 +829,28 @@ export default function QAPilotoRealPage() {
               {!venda ? (
                 <div className="space-y-3">
                   <div className="rounded border border-neutral-200 bg-neutral-50 p-3 space-y-2">
-                    <div className="text-xs font-semibold tracking-wide">Preço aplicado nesta venda</div>
+                    <div className="text-xs font-semibold tracking-wide">
+                      Preço aplicado {itensExtras.length > 0 ? "no pacote" : "nesta venda"}
+                    </div>
                     <div className="grid grid-cols-3 gap-3 text-xs normal-case">
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço do catálogo</Label>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? "Total catálogo (pacote)" : "Preço do catálogo"}
+                        </Label>
                         <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço sugerido</Label>
-                        <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? "Total aplicado (pacote)" : "Preço sugerido"}
+                        </Label>
+                        <div className="font-mono text-sm mt-1">
+                          {precoValido ? money(precoAplicadoNum) : money(precoCatalogo)}
+                        </div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-neutral-500">Preço aplicado (R$)</Label>
+                        <Label className="text-[11px] text-neutral-500">
+                          {itensExtras.length > 0 ? `Preço item principal (R$)` : "Preço aplicado (R$)"}
+                        </Label>
                         <Input
                           value={precoAplicadoStr}
                           onChange={(e) => setPrecoAplicadoStr(e.target.value)}
@@ -694,6 +860,11 @@ export default function QAPilotoRealPage() {
                         />
                       </div>
                     </div>
+                    {itensExtras.length > 0 && (
+                      <p className="text-[10px] text-neutral-500 normal-case border-t border-neutral-200 pt-2">
+                        Total do pacote = item principal + itens adicionais (preços editáveis na seção acima).
+                      </p>
+                    )}
                     {precoValido && precoDiferente && (
                       <div className="text-[11px] normal-case border-t border-neutral-200 pt-2">
                         <div className={diferencaValor < 0 ? "text-emerald-600" : "text-amber-600"}>
@@ -814,6 +985,35 @@ export default function QAPilotoRealPage() {
                   />
                 </div>
               </div>
+              {parcelas > 1 && (
+                <div className="grid grid-cols-2 gap-3 mt-3 border-t border-neutral-200 pt-3">
+                  <div>
+                    <Label className="text-xs">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
+                    <Input
+                      value={adquirente}
+                      onChange={(e) => setAdquirente(e.target.value)}
+                      placeholder="Ex.: STONE"
+                      className="bg-white border-neutral-300 uppercase mt-1"
+                      maxLength={60}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">
+                      Valor bruto parcelado (com juros/tarifa) — R$
+                    </Label>
+                    <Input
+                      value={valorBrutoStr}
+                      onChange={(e) => setValorBrutoStr(e.target.value)}
+                      placeholder="Ex.: 5136,26"
+                      className="bg-white border-neutral-300 font-mono mt-1"
+                      inputMode="decimal"
+                    />
+                    <p className="text-[10px] text-neutral-500 normal-case mt-1">
+                      Total efetivamente cobrado no cartão (parcelas × valor da parcela). Só preencha se houver juros ou tarifa da adquirente — isso entra no contrato como cláusula 3.2.1/3.2.2.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="mt-3">
                 <Label className="text-xs">Observação (mín. 20 caracteres — obrigatória)</Label>
                 <Textarea
