@@ -299,6 +299,8 @@ export default function QAPilotoRealPage() {
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
   const [observacao, setObservacao] = useState<string>("");
+  const [adquirente, setAdquirente] = useState<string>("");
+  const [valorBrutoStr, setValorBrutoStr] = useState<string>("");
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
@@ -337,6 +339,11 @@ export default function QAPilotoRealPage() {
           parcelas,
           observacao: observacao.trim(),
           comprovante_path: path,
+          adquirente: adquirente.trim() || null,
+          valor_bruto_parcelado: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          })(),
         },
       });
       if (error) throw error;
@@ -353,7 +360,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, uploadComprovante]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
