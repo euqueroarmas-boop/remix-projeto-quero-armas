@@ -177,7 +177,6 @@ const META_BY_TIPO = new Map(HUB_TIPOS_DOCUMENTO.map((item) => [item.value, item
  */
 const TIPOS_LEGADOS_OCULTOS = new Set<string>([
   "antecedentes_estadual",
-  "antecedentes_federal",
 ]);
 
 const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
