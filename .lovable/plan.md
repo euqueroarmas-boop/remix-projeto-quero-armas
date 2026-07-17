@@ -1,75 +1,104 @@
-## Objetivo
 
-Sistema consulta diariamente as listas oficiais da PF (psicólogos e instrutores de tiro credenciados) e mostra ao cliente os profissionais mais próximos do CEP cadastrado, com dados sempre atualizados.
+# Piloto Real Quero Armas — Contratação Assistida pela Equipe
 
-## Fontes oficiais
+## Diagnóstico do que já existe (nada será duplicado)
 
-- Psicólogos: `https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados/{uf-slug}`
-- Instrutores: `https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados/{uf-slug}`
+Mapeei o fluxo real e ele já é 100% coberto por Edge Functions oficiais. O que falta é uma **tela admin única** que orquestre esses passos com um cliente real, sem `INSERT`/`UPDATE` manual no banco.
 
-Cada página agrupa por bairro/cidade em **negrito** e lista entradas: NOME — CRP/CR, End., Tel., E-mail, Validade.
+Peças oficiais reutilizadas (sem reescrever):
 
-## Entregáveis
+| Etapa | Função / RPC oficial | Uso |
+|---|---|---|
+| Criar venda + itens | `qa-checkout-criar-venda` | Mesma origem do checkout público |
+| Gerar cobrança Asaas (opcional) | `qa-venda-gerar-cobranca` | Se equipe quiser boleto/pix real |
+| Aprovar valor da venda | RPC `qa_venda_aprovar_valor` | Já usada em `QAVendasPendentesPage` |
+| Confirmar pagamento manual | Edge `qa-processo-confirmar-pagamento` → RPC `qa_confirmar_pagamento_processo(p_origem='manual_admin')` | Já existe e grava evento |
+| Gerar contrato | `qa-generate-contract` | Fluxo oficial |
+| Assinatura da empresa | `qa-sign-contract-company` | Oficial |
+| Upload do assinado pelo cliente | `qa-upload-signed-contract` → encadeia `qa-validate-customer-signature` | Oficial |
+| Liberação operacional | `qa-liberar-servicos-contrato` | Cria `qa_solicitacoes_servico`, `qa_processos`, checklist via `qa_explodir_checklist_processo` |
+| Processo/checklist | `qa-processo-criar` + `qa_explodir_checklist_processo` | Disparado pela liberação |
+| Hub Documental | `qa-processo-doc-upload` + `qa-processo-doc-validar-ia` | Cliente testa no portal |
 
-### 1. Banco de dados — `qa_pf_credenciados`
+**Conclusão:** não precisa criar RPC nova nem duplicar lógica. Precisa de **um wizard admin** que chame essas funções na ordem certa, exija comprovante/justificativa no passo de pagamento manual e registre auditoria.
 
-Tabela única com:
-- `tipo` enum (`psicologo` | `instrutor_tiro`)
-- `uf`, `cidade`, `bairro`
-- `nome`, `registro` (CRP/CR), `endereco`, `telefones[]`, `emails[]`, `validade`
-- `latitude`, `longitude` (geocoding Nominatim, com cache em `cep_cache`-style)
-- `source_url`, `raw_block`, `fetched_at`, `hash_conteudo` (dedup)
-- Índice GIST para busca por distância (earthdistance/`ll_to_earth`) + índice por (tipo, uf)
+## O que será construído
 
-RLS: `SELECT` aberto a `authenticated` (cliente logado lê via portal). Mutations apenas `service_role`.
+### 1. Nova rota admin `/quero-armas/admin/piloto-real`
+Wizard de 6 passos, cada passo chama a função oficial correspondente e não avança até receber sucesso. Nenhum passo grava direto na tabela; tudo passa por RPC/Edge.
 
-### 2. Edge function `qa-pf-credenciados-sync` (cron diário 03:00)
+```text
+┌─ 1. Cliente ─────────┐   busca em qa_clientes por CPF/nome/email
+├─ 2. Serviço ─────────┤   seleciona de qa_servicos_catalogo
+├─ 3. Criar venda ─────┤   invoke qa-checkout-criar-venda (identificação = cliente real)
+├─ 4. Pagamento ───────┤   escolhe: (a) gerar cobrança Asaas real  OU
+│                      │           (b) marcar manual pago + comprovante
+│                      │   caminho (b) → invoke qa-processo-confirmar-pagamento
+├─ 5. Contrato ────────┤   qa-generate-contract → qa-sign-contract-company
+│                      │   → equipe cola link para cliente assinar / faz upload
+│                      │   qa-upload-signed-contract em nome do cliente
+├─ 6. Liberação ───────┤   qa-liberar-servicos-contrato (idempotente)
+│                      │   mostra processo/checklist criados
+└──────────────────────┘
+```
 
-- Itera 27 UFs × 2 tipos = 54 páginas.
-- HTML scraping (fetch direto, User-Agent Chrome — padrão usado em outras integrações do projeto).
-- Parser extrai: cabeçalho em negrito = bairro/cidade; bloco até próximo `<strong>` = entrada.
-- Regex para nome+registro, endereço, telefones (vários), e-mails, validade.
-- Geocoding incremental: endereços novos vão a Nominatim (com `cep_cache` reaproveitado / nova tabela `qa_endereco_geocache`) — respeitando 1 req/s.
-- Upsert por hash; remove entradas que sumiram da fonte (flag `ativo=false`).
-- Log em `qa_pf_credenciados_sync_log` (totais, erros por UF).
-- Agendada via `pg_cron` + `pg_net`.
+Estados intermediários ficam persistidos: se a equipe fechar o navegador, o wizard reabre no passo correto lendo `qa_vendas.status`, `qa_contracts.status`, `qa_processos.id`.
 
-### 3. Edge function `qa-pf-credenciados-buscar` (consulta)
+### 2. Comprovante obrigatório no pagamento manual
+Novo campo no wizard (passo 4b):
+- upload de PDF/JPG → `storage.upload` no bucket `paid-contracts` sob `qa/manual-payments/<venda_id>/comprovante.<ext>`;
+- observação textual obrigatória (mín. 20 chars);
+- só depois habilita o botão que chama `qa-processo-confirmar-pagamento`;
+- evento `qa_venda_eventos.tipo_evento='pagamento_manual_confirmado'` gravado com `metadata.comprovante_path` e `metadata.observacao` (via RPC já existente `qa_venda_evento_registrar`, sem SQL solto).
 
-`POST { tipo, cep, raio_km?, limit? }` →
-- Geocoda CEP (BrasilAPI → Nominatim, com cache).
-- Retorna top N (default 20) por distância Haversine via `earth_distance`.
-- Fallback: se nenhum em raio_km, expande para estado inteiro ordenado por distância.
+Se a RPC de evento não aceitar metadados livres, adiciono uma migration pequena que só amplia a coluna JSONB (nenhuma mudança de regra).
 
-### 4. UI Cliente
+### 3. Cancelamento sem apagar histórico
+Botão "Arquivar piloto" no topo do wizard:
+- venda: RPC `qa_venda_reprovar_valor` com motivo "piloto_cancelado";
+- contrato: `qa_contracts.status='cancelled'` via função oficial `qa-generate-contract` modo cancel (já existe);
+- processo: `qa-processo-set-condicao` com condição `arquivado_piloto`.
+Nada é deletado; tudo vira evento.
 
-**(a) Modal `AgendarExameModal`** — abre a partir do botão "AGENDAR AGORA" no carrossel de pendências (`ClienteResumoKanban`):
-- Tipo (psicólogo/instrutor) inferido do item urgente.
-- Lista top 10 mais próximos do CEP do cliente: nome, registro, endereço, distância em km, telefones clicáveis (`tel:`), e-mail (`mailto:`), validade do credenciamento, link Google Maps.
-- Badge "Fonte: PF — atualizado em DD/MM".
-- Botão "Ver lista completa" → página dedicada.
+### 4. Checklist operacional impresso na tela
+Aba lateral fixa "Checklist do Piloto" com os 10 passos do enunciado marcados verde/amarelo/vermelho em tempo real conforme os estados reais das tabelas.
 
-**(b) Página `/area-do-cliente/agendar-exame`**:
-- Aba Psicólogo / Aba Instrutor.
-- Filtros: UF (default cliente), busca por nome/bairro, raio (5/10/25/50 km / Estado todo).
-- Cards com mesmas infos do modal + ordenação distância/validade/nome.
-- Estado vazio com link para o gov.br.
+## Segurança e conformidade
 
-### 5. Integração no fluxo
-
-- `ClienteResumoKanban.tsx`: botão "AGENDAR AGORA" dos itens `exame_psicologico` e `exame_tiro` abre modal em vez de navegar para Documentos.
-- Card no Hub de Exames também ganha CTA "Buscar profissional credenciado".
+- Rota protegida por `requireQAStaff` no frontend (perfil ativo em `qa_usuarios_perfis`).
+- Cada chamada Edge já valida JWT staff no backend — sem service_role no cliente.
+- Auditoria: todas as ações caem em `qa_venda_eventos`, `qa_contract_events`, `qa_processo_eventos`, `qa_logs_auditoria` (já disparados pelas funções oficiais).
+- Base normativa: o fluxo respeita Lei 10.826/03, Dec. 11.615/23, Dec. 12.345/24 e IN 201/311 porque **usa as mesmas funções do fluxo real de produção** — nenhum atalho.
 
 ## Detalhes técnicos
 
-- Reaproveita padrão `mem://tech/quero-armas/api-lookup-resilience` (timeout 6s + fallback direto).
-- Extensões Postgres: `cube`, `earthdistance` (habilitar na migration).
-- Sanitização: telefones normalizados `(DD) NNNNN-NNNN`; emails lowercased; validade parseada DD/MM/AAAA → DATE.
-- Quando validade expirada, esconder por padrão (toggle "incluir vencidos").
-- Sem alteração no Hub de Documentos atual; apenas adiciona a rota de agendamento.
+Arquivos novos:
+- `src/pages/quero-armas/admin/QAPilotoRealPage.tsx` (wizard principal)
+- `src/components/quero-armas/admin/piloto/PassoCliente.tsx`
+- `src/components/quero-armas/admin/piloto/PassoServico.tsx`
+- `src/components/quero-armas/admin/piloto/PassoVenda.tsx`
+- `src/components/quero-armas/admin/piloto/PassoPagamento.tsx` (com upload de comprovante)
+- `src/components/quero-armas/admin/piloto/PassoContrato.tsx`
+- `src/components/quero-armas/admin/piloto/PassoLiberacao.tsx`
+- `src/components/quero-armas/admin/piloto/ChecklistPilotoSidebar.tsx`
+- `src/hooks/queroArmas/usePilotoRealState.ts` (hidrata estado real das tabelas)
 
-## Fora de escopo
+Arquivos alterados:
+- `src/App.tsx` — adiciona rota `/quero-armas/admin/piloto-real` protegida.
+- `src/components/quero-armas/portal/QASidebarAdmin*.tsx` — item de menu "Piloto Real".
 
-- Agendamento online direto (PF não oferece API).
-- Notificações push de novos credenciados.
-- Mapa interativo (Leaflet) — fica como melhoria futura; v1 usa link Google Maps por item.
+Sem migrations obrigatórias. Se surgir necessidade do `metadata` de comprovante, uma migration mínima adicionando coluna JSONB em `qa_venda_eventos` (se ainda não tiver) — só coluna, sem alterar policies.
+
+Validação final: `bun run typecheck` + smoke test manual no preview navegando o wizard com um cliente real de teste.
+
+## Critérios de aceite (mapeados 1-a-1 do pedido)
+
+- [x] Cliente real escolhido em `qa_clientes` (passo 1).
+- [x] Venda criada por `qa-checkout-criar-venda` (passo 3).
+- [x] Pagamento manual exige comprovante + observação, grava evento (passo 4b).
+- [x] Contrato gerado/assinado/anexado pelas funções oficiais (passo 5).
+- [x] Liberação via `qa-liberar-servicos-contrato` só depois de contrato `validated` (passo 6).
+- [x] Processo/checklist nasce automaticamente pela cadeia oficial.
+- [x] Nenhum status crítico alterado por `UPDATE` manual solto.
+- [x] Cancelamento por arquivamento com evento, sem apagar.
+- [x] Auditoria completa em `qa_*_eventos`.
