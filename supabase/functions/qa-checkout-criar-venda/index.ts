@@ -502,6 +502,63 @@ Deno.serve(async (req) => {
     },
   });
 
+  // Auditoria — preço negociado (obrigatório sempre que houver diferença).
+  if (itensNegociadosAudit.length > 0 && negociacaoRecebida) {
+    const totalCatalogo = cartAvaliado.reduce(
+      (s, c) => s + c.precoCatalogo * c.it.quantidade,
+      0,
+    );
+    const totalAplicado = totalCents / 100;
+    const diffTotal = Number((totalAplicado - totalCatalogo).toFixed(2));
+    const pctTotal =
+      totalCatalogo > 0 ? Number(((diffTotal / totalCatalogo) * 100).toFixed(2)) : 0;
+
+    await admin.from("qa_venda_eventos").insert({
+      venda_id: vendaId,
+      qa_cliente_id: qaClienteId,
+      cliente_id: cliLegado,
+      tipo_evento: "preco_negociado_aplicado",
+      descricao: `Preço negociado aplicado (${negociacaoRecebida.tipo_ajuste}) — catálogo ${totalCatalogo.toFixed(2)} → aplicado ${totalAplicado.toFixed(2)}`,
+      ator: userEmail ? `staff:${userEmail}` : "staff",
+      user_id: userId,
+      dados_json: {
+        origem: negociacaoRecebida.origem || "piloto_real_preco_negociado",
+        tipo_ajuste_preco: negociacaoRecebida.tipo_ajuste,
+        motivo_preco_negociado: String(negociacaoRecebida.motivo).trim(),
+        staff_user_id: userId,
+        staff_email: userEmail,
+        evidencia_path: negociacaoRecebida.evidencia_path || null,
+        preco_catalogo_no_momento: totalCatalogo,
+        preco_aplicado: totalAplicado,
+        diferenca_valor: diffTotal,
+        percentual_desconto_ou_acrescimo: pctTotal,
+        itens: itensNegociadosAudit,
+      },
+    });
+
+    try {
+      await admin.from("qa_pagamento_auditoria").insert({
+        venda_id: vendaId,
+        cliente_id: cliLegado,
+        campo: "preco_negociado_aplicado",
+        valor_anterior: totalCatalogo,
+        valor_novo: totalAplicado,
+        origem: negociacaoRecebida.origem || "piloto_real_preco_negociado",
+        ator: userEmail ? `staff:${userEmail}` : "staff",
+        contexto: {
+          tipo_ajuste_preco: negociacaoRecebida.tipo_ajuste,
+          motivo_preco_negociado: String(negociacaoRecebida.motivo).trim(),
+          staff_user_id: userId,
+          staff_email: userEmail,
+          evidencia_path: negociacaoRecebida.evidencia_path || null,
+          diferenca_valor: diffTotal,
+          percentual_desconto_ou_acrescimo: pctTotal,
+          itens: itensNegociadosAudit,
+        },
+      });
+    } catch { /* best effort */ }
+  }
+
   return new Response(
     JSON.stringify({
       ok: true,
