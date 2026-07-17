@@ -16,6 +16,13 @@ interface CartItemInput {
   servico_id: string; // catalogo uuid
   slug: string;
   quantidade: number;
+  /**
+   * Piloto Real / Venda Assistida: preço efetivo negociado (em reais) para
+   * este item. Se ausente ou igual ao catálogo, usa preço do catálogo.
+   * Só é aceito quando o chamador é staff ativo (qa_usuarios_perfis) e
+   * `negociacao` está preenchido.
+   */
+  preco_negociado?: number | null;
 }
 
 interface IdentificacaoInput {
@@ -25,10 +32,34 @@ interface IdentificacaoInput {
   celular: string;
 }
 
+interface NegociacaoInput {
+  motivo: string;
+  tipo_ajuste:
+    | "promocao"
+    | "negociacao_individual"
+    | "cortesia_parcial"
+    | "complemento"
+    | "correcao"
+    | "outro";
+  evidencia_path?: string | null;
+  confirmado: boolean;
+  origem?: string | null; // ex.: "piloto_real_preco_negociado"
+}
+
 interface Body {
   cart: CartItemInput[];
   identificacao?: IdentificacaoInput | null;
+  negociacao?: NegociacaoInput | null;
 }
+
+const TIPOS_AJUSTE = new Set([
+  "promocao",
+  "negociacao_individual",
+  "cortesia_parcial",
+  "complemento",
+  "correcao",
+  "outro",
+]);
 
 function onlyDigits(s: string | null | undefined): string {
   return (s ?? "").replace(/\D+/g, "");
@@ -302,12 +333,97 @@ Deno.serve(async (req) => {
 
   // Calcula total snapshot.
   let totalCents = 0;
-  const itensSnapshot = body.cart.map((it) => {
+  // Detecta se há itens com preço negociado diferente do catálogo.
+  const negociacaoRecebida = body.negociacao ?? null;
+  const itensNegociadosAudit: Array<{
+    slug: string;
+    nome: string;
+    quantidade: number;
+    preco_catalogo: number;
+    preco_aplicado: number;
+    diferenca: number;
+    percentual: number;
+  }> = [];
+  const cartAvaliado = body.cart.map((it) => {
     const r: any = byCartId.get(String(it.servico_id)) ?? bySlug.get(it.slug);
-    const precoNum = Number(r.preco ?? 0);
+    const precoCatalogo = Number(r.preco ?? 0);
+    const rawNeg = it.preco_negociado;
+    const precoAplicado =
+      rawNeg != null && Number.isFinite(Number(rawNeg)) && Number(rawNeg) >= 0
+        ? Number(rawNeg)
+        : precoCatalogo;
+    const diferente = Math.abs(precoAplicado - precoCatalogo) > 0.0049;
+    return { it, r, precoCatalogo, precoAplicado, diferente };
+  });
+  const temNegociacao = cartAvaliado.some((c) => c.diferente);
+
+  if (temNegociacao) {
+    // Precisa de staff ativo (mesma regra de qa_usuarios_perfis).
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "staff_required_for_negotiated_price" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const { data: perfilRow } = await admin
+      .from("qa_usuarios_perfis")
+      .select("perfil, ativo")
+      .eq("user_id", userId)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (!perfilRow) {
+      return new Response(
+        JSON.stringify({ error: "staff_profile_required_for_negotiated_price" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!negociacaoRecebida) {
+      return new Response(
+        JSON.stringify({ error: "negociacao_obrigatoria" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const motivo = String(negociacaoRecebida.motivo || "").trim();
+    if (motivo.length < 20) {
+      return new Response(
+        JSON.stringify({ error: "motivo_minimo_20_chars" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (!TIPOS_AJUSTE.has(String(negociacaoRecebida.tipo_ajuste))) {
+      return new Response(
+        JSON.stringify({ error: "tipo_ajuste_invalido", allowed: [...TIPOS_AJUSTE] }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (negociacaoRecebida.confirmado !== true) {
+      return new Response(
+        JSON.stringify({ error: "confirmacao_obrigatoria" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  }
+
+  const itensSnapshot = body.cart.map((it) => {
+    const av = cartAvaliado.find((c) => c.it === it)!;
+    const r = av.r;
+    const precoNum = av.precoAplicado;
     const valorUnit = Math.round(precoNum * 100);
     const sub = valorUnit * it.quantidade;
     totalCents += sub;
+    if (av.diferente) {
+      const diff = av.precoAplicado - av.precoCatalogo;
+      const pct = av.precoCatalogo > 0 ? (diff / av.precoCatalogo) * 100 : 0;
+      itensNegociadosAudit.push({
+        slug: r.slug,
+        nome: r.nome,
+        quantidade: it.quantidade,
+        preco_catalogo: av.precoCatalogo,
+        preco_aplicado: av.precoAplicado,
+        diferenca: Number(diff.toFixed(2)),
+        percentual: Number(pct.toFixed(2)),
+      });
+    }
     return {
       servico_id_legado: r.servico_id ?? null,
       catalogo_uuid: r.id,
@@ -316,6 +432,9 @@ Deno.serve(async (req) => {
       valor_unitario: precoNum,
       quantidade: it.quantidade,
       valor_total: precoNum * it.quantidade,
+      preco_catalogo_no_momento: av.precoCatalogo,
+      preco_aplicado: av.precoAplicado,
+      preco_negociado_flag: av.diferente,
     };
   });
 
@@ -382,6 +501,63 @@ Deno.serve(async (req) => {
       cobranca_status: "nao_gerada",
     },
   });
+
+  // Auditoria — preço negociado (obrigatório sempre que houver diferença).
+  if (itensNegociadosAudit.length > 0 && negociacaoRecebida) {
+    const totalCatalogo = cartAvaliado.reduce(
+      (s, c) => s + c.precoCatalogo * c.it.quantidade,
+      0,
+    );
+    const totalAplicado = totalCents / 100;
+    const diffTotal = Number((totalAplicado - totalCatalogo).toFixed(2));
+    const pctTotal =
+      totalCatalogo > 0 ? Number(((diffTotal / totalCatalogo) * 100).toFixed(2)) : 0;
+
+    await admin.from("qa_venda_eventos").insert({
+      venda_id: vendaId,
+      qa_cliente_id: qaClienteId,
+      cliente_id: cliLegado,
+      tipo_evento: "preco_negociado_aplicado",
+      descricao: `Preço negociado aplicado (${negociacaoRecebida.tipo_ajuste}) — catálogo ${totalCatalogo.toFixed(2)} → aplicado ${totalAplicado.toFixed(2)}`,
+      ator: userEmail ? `staff:${userEmail}` : "staff",
+      user_id: userId,
+      dados_json: {
+        origem: negociacaoRecebida.origem || "piloto_real_preco_negociado",
+        tipo_ajuste_preco: negociacaoRecebida.tipo_ajuste,
+        motivo_preco_negociado: String(negociacaoRecebida.motivo).trim(),
+        staff_user_id: userId,
+        staff_email: userEmail,
+        evidencia_path: negociacaoRecebida.evidencia_path || null,
+        preco_catalogo_no_momento: totalCatalogo,
+        preco_aplicado: totalAplicado,
+        diferenca_valor: diffTotal,
+        percentual_desconto_ou_acrescimo: pctTotal,
+        itens: itensNegociadosAudit,
+      },
+    });
+
+    try {
+      await admin.from("qa_pagamento_auditoria").insert({
+        venda_id: vendaId,
+        cliente_id: cliLegado,
+        campo: "preco_negociado_aplicado",
+        valor_anterior: totalCatalogo,
+        valor_novo: totalAplicado,
+        origem: negociacaoRecebida.origem || "piloto_real_preco_negociado",
+        ator: userEmail ? `staff:${userEmail}` : "staff",
+        contexto: {
+          tipo_ajuste_preco: negociacaoRecebida.tipo_ajuste,
+          motivo_preco_negociado: String(negociacaoRecebida.motivo).trim(),
+          staff_user_id: userId,
+          staff_email: userEmail,
+          evidencia_path: negociacaoRecebida.evidencia_path || null,
+          diferenca_valor: diffTotal,
+          percentual_desconto_ou_acrescimo: pctTotal,
+          itens: itensNegociadosAudit,
+        },
+      });
+    } catch { /* best effort */ }
+  }
 
   return new Response(
     JSON.stringify({

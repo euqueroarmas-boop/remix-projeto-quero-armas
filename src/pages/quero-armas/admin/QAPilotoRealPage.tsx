@@ -113,19 +113,104 @@ export default function QAPilotoRealPage() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [criandoVenda, setCriandoVenda] = useState(false);
 
+  /* ---------- Passo 3b: Preço negociado ---------- */
+  const TIPOS_AJUSTE = [
+    { v: "promocao", l: "Promoção" },
+    { v: "negociacao_individual", l: "Negociação individual" },
+    { v: "cortesia_parcial", l: "Cortesia parcial" },
+    { v: "complemento", l: "Complemento" },
+    { v: "correcao", l: "Correção" },
+    { v: "outro", l: "Outro" },
+  ] as const;
+  const [precoAplicadoStr, setPrecoAplicadoStr] = useState<string>("");
+  const [tipoAjuste, setTipoAjuste] = useState<string>("negociacao_individual");
+  const [motivoPreco, setMotivoPreco] = useState<string>("");
+  const [evidenciaFile, setEvidenciaFile] = useState<File | null>(null);
+  const [evidenciaPath, setEvidenciaPath] = useState<string | null>(null);
+  const [confirmadoPreco, setConfirmadoPreco] = useState<boolean>(false);
+
+  // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
+  useEffect(() => {
+    if (servico) {
+      setPrecoAplicadoStr(
+        servico.preco != null ? Number(servico.preco).toFixed(2).replace(".", ",") : "",
+      );
+      setMotivoPreco("");
+      setEvidenciaFile(null);
+      setEvidenciaPath(null);
+      setConfirmadoPreco(false);
+      setTipoAjuste("negociacao_individual");
+    }
+  }, [servico?.id]);
+
+  const precoCatalogo = servico?.preco != null ? Number(servico.preco) : 0;
+  const precoAplicadoNum = (() => {
+    const s = (precoAplicadoStr || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 0 ? n : NaN;
+  })();
+  const precoValido = Number.isFinite(precoAplicadoNum);
+  const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
+  const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
+  const percentualDif = precoCatalogo > 0 && precoValido
+    ? Number(((diferencaValor / precoCatalogo) * 100).toFixed(2))
+    : 0;
+  const motivoOk = motivoPreco.trim().length >= 20;
+  const podeCriarVenda =
+    !!cliente && !!servico && precoValido &&
+    (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco));
+
+  const uploadEvidencia = useCallback(async () => {
+    if (!evidenciaFile || !cliente || !servico) return null;
+    const ext = (evidenciaFile.name.split(".").pop() || "bin").toLowerCase();
+    const path = `qa/negociacoes/${cliente.id}/${servico.slug}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("paid-contracts").upload(path, evidenciaFile, {
+      contentType: evidenciaFile.type || "application/octet-stream",
+      upsert: true,
+    });
+    if (error) throw error;
+    setEvidenciaPath(path);
+    return path;
+  }, [evidenciaFile, cliente, servico]);
+
   const criarVenda = useCallback(async () => {
     if (!cliente || !servico) return;
+    if (!precoValido) { toast.error("Preço aplicado inválido."); return; }
+    if (precoDiferente) {
+      if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+      if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+    }
     setCriandoVenda(true);
     try {
+      let evPath = evidenciaPath;
+      if (precoDiferente && evidenciaFile && !evPath) {
+        try { evPath = await uploadEvidencia(); } catch (e: any) {
+          toast.error(`Falha no upload da evidência: ${e?.message || e}`);
+          setCriandoVenda(false);
+          return;
+        }
+      }
       const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
         body: {
-          cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1 }],
+          cart: [{
+            servico_id: servico.id,
+            slug: servico.slug,
+            quantidade: 1,
+            preco_negociado: precoAplicadoNum,
+          }],
           identificacao: {
             nome_completo: cliente.nome_completo,
             cpf: cliente.cpf || "",
             email: cliente.email || "",
             celular: cliente.celular || "",
           },
+          negociacao: precoDiferente ? {
+            motivo: motivoPreco.trim(),
+            tipo_ajuste: tipoAjuste,
+            evidencia_path: evPath,
+            confirmado: true,
+            origem: "piloto_real_preco_negociado",
+          } : null,
         },
       });
       if (error) throw error;
@@ -137,7 +222,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico]);
+  }, [cliente, servico, precoValido, precoDiferente, motivoOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoNum, motivoPreco, tipoAjuste]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
@@ -586,9 +671,102 @@ export default function QAPilotoRealPage() {
           {cliente && servico && (
             <Card title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
-                <Button onClick={criarVenda} disabled={criandoVenda || arquivado}>
-                  {criandoVenda ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Criando…</> : <>Criar venda oficial <ArrowRight className="ml-2 h-4 w-4" /></>}
-                </Button>
+                <div className="space-y-3">
+                  <div className="rounded border border-neutral-200 bg-neutral-50 p-3 space-y-2">
+                    <div className="text-xs font-semibold tracking-wide">Preço aplicado nesta venda</div>
+                    <div className="grid grid-cols-3 gap-3 text-xs normal-case">
+                      <div>
+                        <Label className="text-[11px] text-neutral-500">Preço do catálogo</Label>
+                        <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-neutral-500">Preço sugerido</Label>
+                        <div className="font-mono text-sm mt-1">{money(precoCatalogo)}</div>
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-neutral-500">Preço aplicado (R$)</Label>
+                        <Input
+                          value={precoAplicadoStr}
+                          onChange={(e) => setPrecoAplicadoStr(e.target.value)}
+                          placeholder="0,00"
+                          className="bg-white border-neutral-300 h-9 mt-1 font-mono"
+                          inputMode="decimal"
+                        />
+                      </div>
+                    </div>
+                    {precoValido && precoDiferente && (
+                      <div className="text-[11px] normal-case border-t border-neutral-200 pt-2">
+                        <div className={diferencaValor < 0 ? "text-emerald-600" : "text-amber-600"}>
+                          Diferença: {money(diferencaValor)} ({percentualDif > 0 ? "+" : ""}{percentualDif}%)
+                        </div>
+                      </div>
+                    )}
+                    {precoValido && precoDiferente && (
+                      <>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                          <div>
+                            <Label className="text-[11px] text-neutral-500">Tipo de ajuste</Label>
+                            <select
+                              value={tipoAjuste}
+                              onChange={(e) => setTipoAjuste(e.target.value)}
+                              className="w-full mt-1 bg-white border border-neutral-300 rounded h-9 px-2 text-xs uppercase"
+                            >
+                              {TIPOS_AJUSTE.map((t) => (
+                                <option key={t.v} value={t.v}>{t.l}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <Label className="text-[11px] text-neutral-500">Evidência (PDF/JPG/PNG — opcional)</Label>
+                            <Input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={(e) => { setEvidenciaFile(e.target.files?.[0] ?? null); setEvidenciaPath(null); }}
+                              className="bg-white border-neutral-300 h-9 mt-1 normal-case"
+                            />
+                            {evidenciaPath && (
+                              <p className="text-[10px] text-emerald-600 normal-case mt-1">Salvo: {evidenciaPath}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-neutral-500">Motivo (mín. 20 caracteres — obrigatório)</Label>
+                          <Textarea
+                            value={motivoPreco}
+                            onChange={(e) => setMotivoPreco(e.target.value)}
+                            placeholder="Ex.: CONDIÇÃO NEGOCIADA VIA WHATSAPP EM 18/12/2025 — 18X DE R$285,35, TOTAL R$5.136,26."
+                            className="bg-white border-neutral-300 min-h-[70px] normal-case mt-1"
+                          />
+                          <div className="text-[10px] text-neutral-500 normal-case mt-1">
+                            {motivoPreco.trim().length} caracteres
+                          </div>
+                        </div>
+                        <label className="flex items-start gap-2 text-[11px] normal-case cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={confirmadoPreco}
+                            onChange={(e) => setConfirmadoPreco(e.target.checked)}
+                          />
+                          <span>
+                            Confirmo que este preço foi acordado com o cliente e que a diferença em relação
+                            ao catálogo está justificada. O catálogo NÃO será alterado — apenas esta venda.
+                          </span>
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  <Button onClick={criarVenda} disabled={criandoVenda || arquivado || !podeCriarVenda}>
+                    {criandoVenda
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Criando…</>
+                      : <>Criar venda oficial <ArrowRight className="ml-2 h-4 w-4" /></>}
+                  </Button>
+                  {precoDiferente && !podeCriarVenda && (
+                    <p className="text-[11px] text-rose-600 normal-case">
+                      Preencha motivo (≥20), tipo de ajuste e marque a confirmação para prosseguir.
+                    </p>
+                  )}
+                </div>
               ) : (
                 <div className="text-sm space-y-1">
                   <div>Venda <strong>#{venda.id}</strong> · Status: <strong>{venda.status}</strong></div>
