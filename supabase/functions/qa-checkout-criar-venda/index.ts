@@ -60,6 +60,8 @@ interface ExibicaoContratoInput {
   adquirente?: string | null;
   parcelas?: number | null;
   valor_parcela?: number | null;
+  custos_embutidos?: Array<{ descricao: string; valor: number }> | null;
+  custos_embutidos_total?: number | null;
 }
 
 interface Body {
@@ -559,6 +561,16 @@ Deno.serve(async (req) => {
         adquirente: exib.adquirente ? String(exib.adquirente).trim().toUpperCase() : null,
         parcelas: exib.parcelas != null ? Number(exib.parcelas) : null,
         valor_parcela: exib.valor_parcela != null ? Number(exib.valor_parcela) : null,
+        custos_embutidos: Array.isArray(exib.custos_embutidos)
+          ? exib.custos_embutidos
+              .filter((c) => c && typeof c.descricao === "string" && Number.isFinite(Number(c.valor)) && Number(c.valor) > 0)
+              .map((c) => ({
+                descricao: String(c.descricao).trim().toUpperCase().slice(0, 120),
+                valor: Number(Number(c.valor).toFixed(2)),
+              }))
+          : null,
+        custos_embutidos_total:
+          exib.custos_embutidos_total != null ? Number(exib.custos_embutidos_total) : null,
       },
     });
   }
