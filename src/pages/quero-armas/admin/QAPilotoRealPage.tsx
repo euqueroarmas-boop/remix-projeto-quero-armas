@@ -328,14 +328,16 @@ export default function QAPilotoRealPage() {
   const criarVenda = useCallback(async () => {
     if (!cliente || !servico) return;
     if (!precoValido) { toast.error("Preço aplicado inválido."); return; }
-    if (precoDiferente) {
-      if (modoPacote) {
-        if (!motivoPacoteOk) { toast.error("Motivo do pacote obrigatório (mín. 20 caracteres)."); return; }
-      } else {
-        if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
-        if (!tipoAjuste) { toast.error("Selecione o tipo de ajuste."); return; }
-        if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+    if (modoPacote && temDiferencaPacote) {
+      if (!motivoPacoteOk) { toast.error("Motivo do pacote obrigatório (mín. 20 caracteres)."); return; }
+      if (modoPacoteCustoFin) {
+        if (adquirentePacote.trim().length < 2) { toast.error("Informe a adquirente do custo financeiro."); return; }
+        if (parcelasPacote <= 0) { toast.error("Informe o número de parcelas."); return; }
       }
+    } else if (!modoPacote && precoDiferente) {
+      if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+      if (!tipoAjuste) { toast.error("Selecione o tipo de ajuste."); return; }
+      if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
     }
     setCriandoVenda(true);
     try {
