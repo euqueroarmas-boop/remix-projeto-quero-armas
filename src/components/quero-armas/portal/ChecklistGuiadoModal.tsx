@@ -1183,7 +1183,7 @@ export default function ChecklistGuiadoModal({
     <>
       <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
         <DialogContent
-          className="qa-scope w-[calc(100vw-1rem)] max-w-2xl sm:max-w-3xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
+          className="qa-scope w-[calc(100vw-1rem)] max-w-3xl sm:max-w-4xl lg:max-w-5xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
         >
           {/* Cabeçalho */}
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
@@ -1838,7 +1838,7 @@ export default function ChecklistGuiadoModal({
         open={documentoGerado.open}
         onOpenChange={(n) => !n && setDocumentoGerado({ open: false, blob: null, fileName: "", doc: null })}
       >
-        <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-md rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+        <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg sm:max-w-xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
