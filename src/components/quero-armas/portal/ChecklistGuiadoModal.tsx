@@ -134,6 +134,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "comprovante_habitualidade","comprovante_clube_tiro","comprovante_competicao",
   "protocolo_processo","oficio","despacho","exigencia","indeferimento",
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
+  "certidao_alteracao_nome",
   "outro",
 ]);
 
