@@ -1361,6 +1361,93 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // ===== AUTO-RESPOSTA da pergunta "comprovante está no seu nome?" =====
+    // Se aprovamos um comprovante de residência e a IA já sabe se está no
+    // nome do cliente ou de terceiro, não faz sentido perguntar isso ao
+    // cliente — auto-responde e dispensa a pergunta do checklist guiado.
+    // Também vale para docs "revisao_humana" desde que titular ≡ cliente
+    // com alta confiança (evita bloqueio bobo do assistente).
+    try {
+      const tipoBase = String(doc.tipo_documento || "").toLowerCase();
+      const ehResidencia =
+        tipoBase.startsWith("comprovante_residencia") ||
+        tipoBase.startsWith("comprovante_endereco");
+      if (ehResidencia && (novoStatus === "aprovado" || novoStatus === "revisao_humana")) {
+        // Decide o valor com base no que a IA extraiu.
+        // - endereco_em_nome_de_terceiro = true → "nao"
+        // - titular match cliente (nome OU cpf) → "sim"
+        const onlyDigits = (v: any) => String(v ?? "").replace(/\D+/g, "");
+        const norm = (v: any) =>
+          String(v ?? "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+        const cx: Record<string, any> = camposExtraidosFinal || {};
+        const cpfDoc = onlyDigits(cx.cpf_cnpj_titular ?? cx.cpf ?? cx.cpf_titular);
+        const cpfCliente = onlyDigits((cliente as any)?.cpf);
+        const nomeDoc = norm(cx.nome_titular ?? cx.titular_comprovante_nome);
+        const nomeCliente = norm((cliente as any)?.nome_completo);
+        const nomeBate =
+          !!nomeDoc && !!nomeCliente &&
+          (nomeDoc === nomeCliente ||
+            nomeDoc.startsWith(nomeCliente) ||
+            nomeCliente.startsWith(nomeDoc));
+        const cpfBate = !!cpfDoc && !!cpfCliente && cpfDoc === cpfCliente;
+
+        let resposta: "sim" | "nao" | null = null;
+        if (enderecoTerceiro) resposta = "nao";
+        else if (cpfBate || nomeBate) resposta = "sim";
+
+        if (resposta) {
+          // Marca todas as perguntas "em_nome" pendentes do processo.
+          const { data: perguntas } = await supabase
+            .from("qa_processo_documentos")
+            .select("id, status, observacoes")
+            .eq("processo_id", processo_id)
+            .eq("tipo_documento", "pergunta_comprovante_em_nome")
+            .in("status", ["pendente", "em_analise", "revisao_humana"]);
+          if (perguntas && perguntas.length > 0) {
+            const ids = perguntas.map((p: any) => p.id);
+            await supabase
+              .from("qa_processo_documentos")
+              .update({
+                status: "dispensado_grupo",
+                observacoes: `Auto-respondido pela IA (${resposta.toUpperCase()}) — titular do comprovante ${resposta === "sim" ? "coincide" : "diverge"} do cadastro (doc ${documento_id}).`,
+              })
+              .in("id", ids);
+            // Grava também em respostas_questionario_json (trigger SQL
+            // exige a chave antes de considerar o item respondido).
+            const respostasAtuais =
+              ((processo as any)?.respostas_questionario_json as Record<string, string> | null) ?? {};
+            const novasResp = { ...respostasAtuais, comprovante_em_nome_titular: resposta };
+            await supabase
+              .from("qa_processos")
+              .update({ respostas_questionario_json: novasResp })
+              .eq("id", processo_id);
+            await supabase.from("qa_processo_eventos").insert({
+              processo_id,
+              documento_id,
+              tipo_evento: "pergunta_auto_respondida",
+              descricao: `Pergunta "comprovante em seu nome?" auto-respondida pela IA: ${resposta.toUpperCase()}`,
+              ator: "ia",
+              dados_json: {
+                resposta,
+                origem: "titular_extraido",
+                cpf_bate: cpfBate,
+                nome_bate: nomeBate,
+                endereco_terceiro: enderecoTerceiro,
+                perguntas_dispensadas: ids,
+              },
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[validar-ia] auto-resposta pergunta_comprovante_em_nome falhou:", e);
+    }
+
     // ===== ALTERAÇÃO DE NOME: persiste registro auditável no processo =====
     // Quando a certidão averbada é aprovada (ou vai a revisão humana com dados
     // bons), gravamos o bloco em respostas_questionario_json.alteracao_nome.
