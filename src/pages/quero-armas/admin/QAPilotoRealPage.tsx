@@ -158,6 +158,15 @@ export default function QAPilotoRealPage() {
   const [modoExibicao, setModoExibicao] = useState<ModoExibicao>("itens_separados");
   const [valorFinalPacoteStr, setValorFinalPacoteStr] = useState<string>("");
   const [motivoPacote, setMotivoPacote] = useState<string>("");
+  // Como tratar a diferença entre catálogo e valor final do pacote:
+  //  - "ajuste_comercial": desconto/acréscimo pactuado nos serviços → distribui proporcional.
+  //  - "custo_financeiro_adquirente": diferença é juros/tarifa da máquina → NÃO distribui;
+  //    itens mantêm valores originais do catálogo e a diferença é registrada como custo
+  //    financeiro da adquirente (não vira preço dos serviços).
+  type TipoDiferenca = "ajuste_comercial" | "custo_financeiro_adquirente";
+  const [tipoDiferencaPacote, setTipoDiferencaPacote] = useState<TipoDiferenca>("ajuste_comercial");
+  const [adquirentePacote, setAdquirentePacote] = useState<string>("");
+  const [parcelasPacote, setParcelasPacote] = useState<number>(1);
 
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
@@ -176,6 +185,9 @@ export default function QAPilotoRealPage() {
       setModoExibicao("itens_separados");
       setValorFinalPacoteStr("");
       setMotivoPacote("");
+      setTipoDiferencaPacote("ajuste_comercial");
+      setAdquirentePacote("");
+      setParcelasPacote(1);
     }
   }, [servico?.id]);
 
