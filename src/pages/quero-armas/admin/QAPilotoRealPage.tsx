@@ -19,7 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, Search, User, CheckCircle2, Circle, ArrowRight, ShieldAlert,
-  Upload, FileText, Copy, ExternalLink, RefreshCw, Archive, FlaskConical,
+  Upload, FileText, Copy, Check, ExternalLink, RefreshCw, Archive, FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -430,6 +430,18 @@ export default function QAPilotoRealPage() {
 
   const [rodandoSmoke, setRodandoSmoke] = useState(false);
   const [smokeResult, setSmokeResult] = useState<any>(null);
+  const [smokeCopiado, setSmokeCopiado] = useState(false);
+  const copiarSmokeResult = useCallback(async () => {
+    if (!smokeResult) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(smokeResult, null, 2));
+      setSmokeCopiado(true);
+      toast.success("Resultado do smoke test copiado.");
+      setTimeout(() => setSmokeCopiado(false), 1500);
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  }, [smokeResult]);
   const rodarSmokeTest = useCallback(async () => {
     if (!confirm("Rodar smoke test? Cria uma venda descartável e arquiva ao final.")) return;
     setRodandoSmoke(true);
@@ -903,9 +915,23 @@ export default function QAPilotoRealPage() {
               {rodandoSmoke ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Rodando…</> : "Executar smoke test"}
             </Button>
             {smokeResult && (
-              <pre className="mt-2 text-[9px] bg-neutral-100 border border-neutral-200 rounded p-2 max-h-64 overflow-auto normal-case">
-                {JSON.stringify(smokeResult, null, 2)}
-              </pre>
+              <div className="mt-2 relative">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold text-neutral-600">Resultado</span>
+                  <button
+                    type="button"
+                    onClick={copiarSmokeResult}
+                    title="Copiar resultado"
+                    className="inline-flex items-center gap-1 text-[10px] text-neutral-600 hover:text-neutral-900 border border-neutral-200 rounded px-1.5 py-0.5 bg-white"
+                  >
+                    {smokeCopiado ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                    {smokeCopiado ? "Copiado" : "Copiar"}
+                  </button>
+                </div>
+                <pre className="text-[9px] bg-neutral-100 border border-neutral-200 rounded p-2 max-h-64 overflow-auto normal-case">
+                  {JSON.stringify(smokeResult, null, 2)}
+                </pre>
+              </div>
             )}
           </div>
         </aside>
