@@ -127,8 +127,9 @@ Deno.serve(async (req) => {
     },
   });
   const venda_id = Number(created.data?.venda_id);
+  const venda_id_legado = Number(created.data?.id_legado ?? venda_id);
   if (!venda_id) return json({ ok: false, error: "criar_venda_falhou", detail: created, steps }, 500);
-  record("venda_criada", true, { venda_id });
+  record("venda_criada", true, { venda_id, venda_id_legado });
 
   // 2) aprovar valor via RPC oficial
   try {
@@ -165,11 +166,11 @@ Deno.serve(async (req) => {
   const { count: contratosCount } = await admin
     .from("qa_contracts")
     .select("id", { count: "exact", head: true })
-    .eq("venda_id", venda_id);
+    .eq("venda_id", venda_id_legado);
   const { count: procsCount } = await admin
     .from("qa_processos")
     .select("id", { count: "exact", head: true })
-    .eq("venda_id", venda_id);
+    .eq("venda_id", venda_id_legado);
 
   const validated = {
     venda_status: vendaFinal?.status,
