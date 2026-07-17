@@ -999,14 +999,27 @@ export function ClienteDocsHubModal({
       // subtipo pelo texto extraído / campos identificados.
       if (tipoIA === "antecedentes_estadual" || tipoIA === "antecedentes_federal") {
         const c: any = ia.camposExtraidos || {};
-        const hay = [c.tipo_certidao, c.subtipo, c.orgao_emissor, c.numero_documento, c.titulo_documento]
-          .filter(Boolean).join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        // Coleta agressiva de sinais: todos os campos extraídos + justificativa
+        // da IA + observações. Sem isso, quando a IA retorna o pai genérico e
+        // não popula `tipo_certidao`, o refinamento falha e o usuário vê o
+        // tipo genérico obsoleto.
+        const parts: string[] = [];
+        for (const v of Object.values(c)) {
+          if (typeof v === "string" && v) parts.push(v);
+          else if (Array.isArray(v)) parts.push(v.map((x) => String(x || "")).join(" "));
+        }
+        if (ia.justificativa) parts.push(String(ia.justificativa));
+        if ((c as any).observacoes) parts.push(String((c as any).observacoes));
+        const hay = parts.join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
         if (tipoIA === "antecedentes_estadual") {
+          // EXECUÇÕES tem prioridade sobre DISTRIBUIÇÕES porque a certidão de
+          // execuções também usa a palavra "distribuição" no cabeçalho ("dá fé
+          // que, pesquisando os registros de distribuições de EXECUÇÕES...").
           if (/EXECU|1448406/.test(hay)) tipoIA = "antecedentes_estadual_execucoes";
-          else if (/DISTRIBUI|1448405/.test(hay)) tipoIA = "antecedentes_estadual_distribuicao";
+          else if (/DISTRIBUI|ACOES CRIMINAIS|A[CÇ][ÕO]ES CRIMINAIS|1448405/.test(hay)) tipoIA = "antecedentes_estadual_distribuicao";
         } else {
-          if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA/.test(hay)) tipoIA = "antecedentes_federal_sjsp_jef";
-          else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL/.test(hay)) tipoIA = "antecedentes_federal_trf3_regional";
+          if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SE[CÇ][AÃ]O JUDICI[AÁ]RIA/.test(hay)) tipoIA = "antecedentes_federal_sjsp_jef";
+          else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL|TRF3/.test(hay)) tipoIA = "antecedentes_federal_trf3_regional";
         }
       }
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
