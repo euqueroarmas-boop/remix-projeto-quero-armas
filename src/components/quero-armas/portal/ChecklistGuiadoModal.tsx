@@ -89,6 +89,7 @@ import {
   type CandidatoReaproveitamento,
 } from "@/lib/quero-armas/reaproveitamentoCandidatos";
 import ClienteDocsHubModal from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { classificarCaixa } from "@/lib/quero-armas/documentosCaixaClassifier";
 
 // Mapa processo_tipo → hub_tipo (espelho da tabela qa_tipo_documento_aliases).
 // Usado para pré-selecionar o tipo correto no Hub ao abrir o modal.
@@ -583,9 +584,9 @@ export default function ChecklistGuiadoModal({
     if (gateWizardPre(doc, { tipo: "anexar" })) return;
 
     // Docs permanentes sobem pelo Hub de Documentos (fonte canônica).
-    // O trigger qa_doc_auto_aprovar_por_ia + qa_doc_hub_satisfaz_exigencias
-    // aprovam e satisfazem o slot automaticamente sem intervenção da equipe.
-    if (doc?.escopo === "permanente") {
+    // Usa classificarCaixa (mesma lógica das 3 caixas) para cobrir tanto
+    // escopo='permanente' no banco quanto o fallback por tipo_documento.
+    if (doc && classificarCaixa(doc) === "permanente") {
       setHubModalTipo(toHubTipo(doc.tipo_documento));
       return;
     }
