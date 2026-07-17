@@ -257,6 +257,84 @@ export default function QAPilotoRealPage() {
     return `${window.location.origin}/area-do-cliente`;
   }, [contrato]);
 
+  /* ---------- Passo 6b: Upload assistido de contrato assinado (staff) ---------- */
+  const [assinado, setAssinado] = useState<File | null>(null);
+  const [obsAssinado, setObsAssinado] = useState<string>("");
+  const [origemAssinado, setOrigemAssinado] = useState<string>("WhatsApp");
+  const [enviandoAssinado, setEnviandoAssinado] = useState(false);
+
+  const enviarContratoAssinadoStaff = useCallback(async () => {
+    if (!contrato || !venda) return;
+    if (!assinado) { toast.error("Anexe o PDF do contrato assinado."); return; }
+    if (obsAssinado.trim().length < 20) { toast.error("Observação mínima de 20 caracteres."); return; }
+    setEnviandoAssinado(true);
+    try {
+      const fd = new FormData();
+      fd.append("contract_id", contrato.id);
+      fd.append("file", assinado);
+      fd.append("observacao", obsAssinado.trim());
+      fd.append("origem", `piloto_real_staff_assistido:${origemAssinado}`);
+      const { data, error } = await supabase.functions.invoke("qa-piloto-upload-contrato-staff", { body: fd });
+      if (error) throw error;
+      if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_upload_assistido");
+      toast.success("Contrato enviado (staff-assistido). Validação oficial acionada.");
+      setAssinado(null); setObsAssinado("");
+      await recarregarContrato(venda.id);
+    } catch (e: any) {
+      toast.error(`Falha no upload assistido: ${e?.message || e}`);
+    } finally {
+      setEnviandoAssinado(false);
+    }
+  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato]);
+
+  /* ---------- Arquivar piloto ---------- */
+  const [motivoArq, setMotivoArq] = useState("");
+  const [arquivando, setArquivando] = useState(false);
+  const [arquivado, setArquivado] = useState(false);
+  const [mostrarArq, setMostrarArq] = useState(false);
+
+  const arquivarPiloto = useCallback(async () => {
+    if (!venda) return;
+    if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+    if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
+    setArquivando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-piloto-arquivar", {
+        body: { venda_id: venda.id, motivo: motivoArq.trim() },
+      });
+      if (error) throw error;
+      if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
+      toast.success((data as any)?.ja_arquivada ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      setArquivado(true);
+      await recarregarVenda(venda.id);
+      await recarregarContrato(venda.id);
+    } catch (e: any) {
+      toast.error(`Falha ao arquivar: ${e?.message || e}`);
+    } finally {
+      setArquivando(false);
+    }
+  }, [venda, motivoArq, recarregarVenda, recarregarContrato]);
+
+  /* ---------- Smoke test ---------- */
+  const [rodandoSmoke, setRodandoSmoke] = useState(false);
+  const [smokeResult, setSmokeResult] = useState<any>(null);
+  const rodarSmokeTest = useCallback(async () => {
+    if (!confirm("Rodar smoke test? Cria uma venda descartável e arquiva ao final.")) return;
+    setRodandoSmoke(true);
+    setSmokeResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-piloto-smoke-test", { body: {} });
+      if (error) throw error;
+      setSmokeResult(data);
+      toast[(data as any)?.ok ? "success" : "error"]((data as any)?.ok ? "Smoke test OK" : "Smoke test com falhas");
+    } catch (e: any) {
+      toast.error(`Smoke test falhou: ${e?.message || e}`);
+      setSmokeResult({ ok: false, error: e?.message });
+    } finally {
+      setRodandoSmoke(false);
+    }
+  }, []);
+
   /* ---------- Estados derivados p/ checklist ---------- */
   const stepStates = useMemo(() => ({
     cliente: cliente ? "done" as const : "current" as const,
