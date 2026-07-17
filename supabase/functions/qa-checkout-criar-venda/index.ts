@@ -16,6 +16,13 @@ interface CartItemInput {
   servico_id: string; // catalogo uuid
   slug: string;
   quantidade: number;
+  /**
+   * Piloto Real / Venda Assistida: preço efetivo negociado (em reais) para
+   * este item. Se ausente ou igual ao catálogo, usa preço do catálogo.
+   * Só é aceito quando o chamador é staff ativo (qa_usuarios_perfis) e
+   * `negociacao` está preenchido.
+   */
+  preco_negociado?: number | null;
 }
 
 interface IdentificacaoInput {
@@ -25,10 +32,34 @@ interface IdentificacaoInput {
   celular: string;
 }
 
+interface NegociacaoInput {
+  motivo: string;
+  tipo_ajuste:
+    | "promocao"
+    | "negociacao_individual"
+    | "cortesia_parcial"
+    | "complemento"
+    | "correcao"
+    | "outro";
+  evidencia_path?: string | null;
+  confirmado: boolean;
+  origem?: string | null; // ex.: "piloto_real_preco_negociado"
+}
+
 interface Body {
   cart: CartItemInput[];
   identificacao?: IdentificacaoInput | null;
+  negociacao?: NegociacaoInput | null;
 }
+
+const TIPOS_AJUSTE = new Set([
+  "promocao",
+  "negociacao_individual",
+  "cortesia_parcial",
+  "complemento",
+  "correcao",
+  "outro",
+]);
 
 function onlyDigits(s: string | null | undefined): string {
   return (s ?? "").replace(/\D+/g, "");
