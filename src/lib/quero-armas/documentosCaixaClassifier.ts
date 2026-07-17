@@ -29,22 +29,45 @@ export interface DocClassificavel {
   obrigatorio?: boolean | null;
   regra_validacao?: any;
   metadados_documento_json?: any;
+  escopo?: string | null;
+  tipo_documento?: string | null;
 }
 
+// Mantido para compatibilidade com checklistAudit.ts e documentoEscopo.ts
 export const ETAPAS_PERMANENTES: ReadonlySet<string> = new Set([
-  "identificacao",
-  "endereco",
-  "antecedentes",
-  "declaracoes_gerais",
+  "identificacao", "endereco", "antecedentes", "declaracoes_gerais",
+]);
+
+// Prefixos que indicam documento permanente (fallback quando escopo não está preenchido)
+const PREFIXOS_PERMANENTES: ReadonlyArray<RegExp> = [
+  /^renda_/, /^antecedentes_/, /^certidao_/, /^laudo_/,
+  /^declaracao_/, /^comprovante_endereco_ano_/, /^comprovante_filiacao_/,
+  /^comprovante_habitualidade/, /^comprovante_clube/,
+  /^declaracao_habitualidade_/, /^declaracao_compromisso_/,
+];
+
+const TIPOS_PERMANENTES: ReadonlySet<string> = new Set([
+  "rg_com_cpf", "cin", "cnh", "cpf",
+  "comprovante_residencia", "declaracao_responsavel_imovel",
+  "laudo_psicologico", "laudo_capacidade_tecnica",
+  "comprovante_habitualidade", "comprovante_clube_tiro", "comprovante_competicao",
+  "cr",
 ]);
 
 export function classificarCaixa(doc: DocClassificavel | null | undefined): CaixaDocumento {
   if (!doc) return "processo";
+  // arma_id tem prioridade absoluta — vínculo explícito com uma arma do acervo
   if (doc.arma_id != null && String(doc.arma_id).trim() !== "") {
     return "arma";
   }
-  if (doc.etapa && ETAPAS_PERMANENTES.has(doc.etapa)) {
-    return "permanente";
+  // escopo vindo do banco é a fonte primária
+  if (doc.escopo === "permanente") return "permanente";
+  if (doc.escopo === "arma") return "arma";
+  // fallback por tipo_documento (itens de processos antigos sem escopo preenchido)
+  if (doc.tipo_documento) {
+    const td = doc.tipo_documento;
+    if (TIPOS_PERMANENTES.has(td)) return "permanente";
+    if (PREFIXOS_PERMANENTES.some((re) => re.test(td))) return "permanente";
   }
   return "processo";
 }
