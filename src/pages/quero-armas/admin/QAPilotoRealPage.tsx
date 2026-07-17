@@ -1022,7 +1022,7 @@ export default function QAPilotoRealPage() {
                       </div>
 
                       {modoPacote && (
-                        <div className="border-t border-amber-300 pt-2 space-y-2">
+                        <div className="border-t border-amber-300 pt-2 space-y-3">
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Label className="text-[11px] text-neutral-600">
@@ -1038,9 +1038,20 @@ export default function QAPilotoRealPage() {
                               <p className="text-[10px] text-neutral-500 normal-case mt-1">
                                 Total catálogo: {money(precoCatalogo)}. O catálogo NÃO será alterado.
                               </p>
+                              {temDiferencaPacote && (
+                                <p className={`text-[11px] normal-case mt-1 ${diferencaPacoteValor < 0 ? "text-emerald-600" : "text-amber-700"}`}>
+                                  Diferença: {money(diferencaPacoteValor)} ({percentualDifPacote > 0 ? "+" : ""}{percentualDifPacote}%)
+                                </p>
+                              )}
                             </div>
                             <div className="text-[11px] normal-case">
-                              <Label className="text-[11px] text-neutral-600">Distribuição interna (auditoria)</Label>
+                              <Label className="text-[11px] text-neutral-600">
+                                {modoPacoteCustoFin
+                                  ? "Serviços mantidos pelo valor de catálogo"
+                                  : temDiferencaPacote
+                                    ? "Distribuição interna do ajuste comercial"
+                                    : "Distribuição interna (auditoria)"}
+                              </Label>
                               <ul className="mt-1 space-y-0.5 font-mono text-[10px] text-neutral-600">
                                 {servico && (
                                   <li>• {servico.slug}: {money(precoAplicadoPrincipal)}</li>
@@ -1049,9 +1060,86 @@ export default function QAPilotoRealPage() {
                                   <li key={e.ie.servico.id}>• {e.ie.servico.slug}: {money(e.aplicado)}</li>
                                 ))}
                               </ul>
+                              {modoPacoteCustoFin && (
+                                <p className="text-[10px] text-neutral-500 mt-1 normal-case">
+                                  Diferença registrada como custo financeiro da adquirente.
+                                </p>
+                              )}
                             </div>
                           </div>
-                          {precoDiferente && (
+
+                          {temDiferencaPacote && (
+                            <div className="rounded border border-amber-300 bg-white/60 p-2 space-y-2">
+                              <Label className="text-[11px] text-neutral-700 font-semibold">
+                                Como tratar a diferença entre catálogo e valor final? <span className="text-rose-600">*</span>
+                              </Label>
+                              <label className="flex items-start gap-2 cursor-pointer text-[11px] normal-case">
+                                <input
+                                  type="radio"
+                                  className="mt-0.5"
+                                  name="tipo_diferenca_pacote"
+                                  checked={tipoDiferencaPacote === "ajuste_comercial"}
+                                  onChange={() => setTipoDiferencaPacote("ajuste_comercial")}
+                                />
+                                <span>
+                                  <strong>Desconto/acréscimo comercial nos serviços.</strong> A diferença
+                                  é distribuída proporcionalmente entre os itens (auditoria interna). O
+                                  contrato exibe o valor final do pacote como preço dos serviços.
+                                </span>
+                              </label>
+                              <label className="flex items-start gap-2 cursor-pointer text-[11px] normal-case">
+                                <input
+                                  type="radio"
+                                  className="mt-0.5"
+                                  name="tipo_diferenca_pacote"
+                                  checked={tipoDiferencaPacote === "custo_financeiro_adquirente"}
+                                  onChange={() => setTipoDiferencaPacote("custo_financeiro_adquirente")}
+                                />
+                                <span>
+                                  <strong>Custo financeiro / juros / taxa da adquirente.</strong> Os
+                                  serviços mantêm o preço de catálogo; a diferença é registrada como
+                                  custo financeiro da adquirente e o contrato deixa isso explícito na
+                                  cláusula de pagamento.
+                                </span>
+                              </label>
+                            </div>
+                          )}
+
+                          {modoPacoteCustoFin && temDiferencaPacote && (
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Adquirente <span className="text-rose-600">*</span></Label>
+                                <Input
+                                  value={adquirentePacote}
+                                  onChange={(e) => setAdquirentePacote(e.target.value)}
+                                  placeholder="Ex.: STONE"
+                                  className="bg-white border-neutral-300 h-9 mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Parcelas <span className="text-rose-600">*</span></Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={24}
+                                  value={parcelasPacote}
+                                  onChange={(e) => setParcelasPacote(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
+                                  className="bg-white border-neutral-300 h-9 mt-1 font-mono"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Valor da parcela</Label>
+                                <div className="font-mono text-sm mt-2">{money(valorParcelaPacote)}</div>
+                              </div>
+                              <div className="col-span-3 text-[11px] normal-case text-neutral-600 grid grid-cols-3 gap-3">
+                                <div><span className="text-neutral-500">Serviços (catálogo):</span> <span className="font-mono">{money(precoCatalogo)}</span></div>
+                                <div><span className="text-neutral-500">Custo financeiro:</span> <span className="font-mono">{money(custoFinanceiroAdquirente)}</span></div>
+                                <div><span className="text-neutral-500">Total parcelado:</span> <span className="font-mono">{money(valorFinalPacoteNum)}</span></div>
+                              </div>
+                            </div>
+                          )}
+
+                          {temDiferencaPacote && (
                             <div>
                               <Label className="text-[11px] text-neutral-600">
                                 Motivo/observação do valor do pacote (mín. 20 caracteres) <span className="text-rose-600">*</span>
@@ -1059,7 +1147,11 @@ export default function QAPilotoRealPage() {
                               <Textarea
                                 value={motivoPacote}
                                 onChange={(e) => setMotivoPacote(e.target.value)}
-                                placeholder="Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO, 18X DE R$285,35 VIA STONE."
+                                placeholder={
+                                  modoPacoteCustoFin
+                                    ? "Ex.: PARCELAMENTO EM 18X VIA STONE. DIFERENÇA É JUROS/TARIFA DA ADQUIRENTE, ITENS MANTIDOS PELO CATÁLOGO."
+                                    : "Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO COM DESCONTO COMERCIAL DE X%."
+                                }
                                 className="bg-white border-neutral-300 min-h-[70px] normal-case mt-1"
                               />
                               <div className="text-[10px] text-neutral-500 normal-case mt-1">
