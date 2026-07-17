@@ -1178,11 +1178,11 @@ export default function QAPilotoRealPage() {
                 <div className="text-xs text-neutral-500 normal-case mt-1">{observacao.trim().length} caracteres</div>
               </div>
               <div className="mt-3">
-                <Label className="text-xs">Comprovante (PDF/JPG/PNG — obrigatório)</Label>
+                <Label className="text-xs">Comprovante (PDF/JPG/PNG/ZIP/RAR — obrigatório)</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.zip,.rar,.7z,application/pdf,image/*,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed"
                     onChange={(e) => { setComprovante(e.target.files?.[0] ?? null); setComprovantePath(null); }}
                     className="bg-white border-neutral-300 normal-case"
                   />
