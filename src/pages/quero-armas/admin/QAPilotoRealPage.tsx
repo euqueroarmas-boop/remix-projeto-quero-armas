@@ -359,7 +359,7 @@ export default function QAPilotoRealPage() {
               <code> qa_pagamento_auditoria</code> e <code>qa_contract_events</code>.
             </p>
             {arquivado && (
-              <div className="mt-3 border border-rose-500/50 bg-rose-950/40 text-rose-300 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
+              <div className="mt-3 border border-rose-300 bg-rose-50 text-rose-700 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
                 <Archive className="h-4 w-4" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
               </div>
             )}
@@ -691,7 +691,7 @@ export default function QAPilotoRealPage() {
         </div>
 
         {/* Sidebar Checklist */}
-        <aside className="border border-neutral-200 rounded bg-neutral-950 p-4 h-fit sticky top-4">
+        <aside className="border border-neutral-200 rounded bg-white p-4 h-fit sticky top-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-3 tracking-wide">Checklist do Piloto</h2>
           <ol className="space-y-2 text-xs">
             <ChecklistItem state={stepStates.cliente} label="Cliente real selecionado" />
