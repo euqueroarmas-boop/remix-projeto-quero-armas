@@ -158,6 +158,15 @@ export default function QAPilotoRealPage() {
   const [modoExibicao, setModoExibicao] = useState<ModoExibicao>("itens_separados");
   const [valorFinalPacoteStr, setValorFinalPacoteStr] = useState<string>("");
   const [motivoPacote, setMotivoPacote] = useState<string>("");
+  // Como tratar a diferença entre catálogo e valor final do pacote:
+  //  - "ajuste_comercial": desconto/acréscimo pactuado nos serviços → distribui proporcional.
+  //  - "custo_financeiro_adquirente": diferença é juros/tarifa da máquina → NÃO distribui;
+  //    itens mantêm valores originais do catálogo e a diferença é registrada como custo
+  //    financeiro da adquirente (não vira preço dos serviços).
+  type TipoDiferenca = "ajuste_comercial" | "custo_financeiro_adquirente";
+  const [tipoDiferencaPacote, setTipoDiferencaPacote] = useState<TipoDiferenca>("ajuste_comercial");
+  const [adquirentePacote, setAdquirentePacote] = useState<string>("");
+  const [parcelasPacote, setParcelasPacote] = useState<number>(1);
 
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
@@ -176,6 +185,9 @@ export default function QAPilotoRealPage() {
       setModoExibicao("itens_separados");
       setValorFinalPacoteStr("");
       setMotivoPacote("");
+      setTipoDiferencaPacote("ajuste_comercial");
+      setAdquirentePacote("");
+      setParcelasPacote(1);
     }
   }, [servico?.id]);
 
@@ -194,15 +206,46 @@ export default function QAPilotoRealPage() {
   const precoCatalogo =
     precoCatalogoPrincipal + extrasAvaliadosBase.reduce((s, e) => s + e.catalogo, 0);
 
-  // Valor final aplicado no pacote (input do modo pacote OU soma no modo separado)
+  // Valor final aplicado no pacote (input do modo pacote OU soma no modo separado).
   const valorFinalPacoteNum = parseMoney(valorFinalPacoteStr);
   const somaSeparados = Number.isFinite(precoAplicadoPrincipalInput)
     ? precoAplicadoPrincipalInput +
       extrasAvaliadosBase.reduce((s, e) => s + (Number.isFinite(e.aplicadoInput) ? e.aplicadoInput : NaN), 0)
     : NaN;
 
-  const precoAplicadoNum = modoPacote ? valorFinalPacoteNum : somaSeparados;
+  // Modo pacote + custo financeiro: os SERVIÇOS mantêm valores de catálogo.
+  // O valor final digitado representa o total efetivamente cobrado no cartão
+  // (serviços + juros/tarifa da adquirente). A diferença NÃO entra em qa_itens_venda.
+  const modoPacoteCustoFin =
+    modoPacote && tipoDiferencaPacote === "custo_financeiro_adquirente";
+
+  // Valor total dos SERVIÇOS que vai para qa_itens_venda / total da venda.
+  //  - pacote + custo_fin: soma dos preços de catálogo (não muda nada nos itens).
+  //  - pacote + ajuste_comercial: valor final do pacote (distribuído entre itens).
+  //  - separados: soma dos preços aplicados por item.
+  const precoAplicadoNum = modoPacote
+    ? (modoPacoteCustoFin ? precoCatalogo : valorFinalPacoteNum)
+    : somaSeparados;
   const precoValido = Number.isFinite(precoAplicadoNum) && precoAplicadoNum >= 0;
+
+  // Métricas do "valor final pago" pelo cliente (com juros, se houver).
+  const valorFinalPagoCliente = modoPacote
+    ? valorFinalPacoteNum
+    : somaSeparados;
+  const temDiferencaPacote =
+    modoPacote &&
+    Number.isFinite(valorFinalPacoteNum) &&
+    Math.abs(valorFinalPacoteNum - precoCatalogo) > 0.0049;
+  const diferencaPacoteValor = modoPacote && Number.isFinite(valorFinalPacoteNum)
+    ? Number((valorFinalPacoteNum - precoCatalogo).toFixed(2))
+    : 0;
+  const custoFinanceiroAdquirente = modoPacoteCustoFin && temDiferencaPacote
+    ? diferencaPacoteValor
+    : 0;
+  const valorParcelaPacote =
+    modoPacoteCustoFin && parcelasPacote > 0 && Number.isFinite(valorFinalPacoteNum)
+      ? Number((valorFinalPacoteNum / parcelasPacote).toFixed(2))
+      : 0;
 
   // Distribuição proporcional (modo pacote) — itens continuam vinculados à venda
   // mas o contrato oculta os preços individuais. Distribuímos proporcionalmente
@@ -212,6 +255,11 @@ export default function QAPilotoRealPage() {
     if (!modoPacote) {
       return { ...e, aplicado: e.aplicadoInput, valido: Number.isFinite(e.aplicadoInput) };
     }
+    // Custo financeiro: mantém preço de catálogo em cada extra.
+    if (modoPacoteCustoFin) {
+      return { ...e, aplicado: e.catalogo, valido: true };
+    }
+    // Ajuste comercial: distribui proporcionalmente entre os itens.
     if (!precoValido) return { ...e, aplicado: NaN, valido: false };
     const cats = [precoCatalogoPrincipal, ...arr.map((x) => x.catalogo)];
     const somaCat = cats.reduce((s, v) => s + v, 0);
@@ -224,28 +272,45 @@ export default function QAPilotoRealPage() {
     }
     return { ...e, aplicado: val, valido: true };
   });
-  // Preço aplicado do item principal (no modo pacote é o resto para casar o total)
+  // Preço aplicado do item principal:
+  //  - custo_fin: preço de catálogo do principal (itens não são alterados).
+  //  - ajuste_comercial (pacote): resto para casar o total distribuído.
+  //  - separado: valor digitado pelo usuário.
   let precoAplicadoPrincipal = precoAplicadoPrincipalInput;
-  if (modoPacote && precoValido) {
+  if (modoPacoteCustoFin) {
+    precoAplicadoPrincipal = precoCatalogoPrincipal;
+  } else if (modoPacote && precoValido) {
     const somaExtras = extrasAvaliados.reduce((s, e) => s + (e.aplicado || 0), 0);
     precoAplicadoPrincipal = Number((precoAplicadoNum - somaExtras).toFixed(2));
     if (precoAplicadoPrincipal < 0) precoAplicadoPrincipal = 0;
   }
 
+  // "precoDiferente" mantém a semântica antiga: houve mudança no preço APLICADO
+  // aos itens em relação ao catálogo — dispara o bloco de negociação (motivo/tipo
+  // ajuste/confirmação/evidência). No modo custo_financeiro isso é FALSO, porque
+  // os itens continuam com o preço de catálogo.
   const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
   const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
   const percentualDif = precoCatalogo > 0 && precoValido
     ? Number(((diferencaValor / precoCatalogo) * 100).toFixed(2))
     : 0;
+  const percentualDifPacote = modoPacote && precoCatalogo > 0 && Number.isFinite(valorFinalPacoteNum)
+    ? Number(((diferencaPacoteValor / precoCatalogo) * 100).toFixed(2))
+    : 0;
   const motivoOk = motivoPreco.trim().length >= 20;
   const motivoPacoteOk = motivoPacote.trim().length >= 20;
-  // No modo pacote_fechado, se o valor final diferir do catálogo, exigimos motivo_pacote
-  // (o preço "por item" foi omitido do contrato, então a justificativa é sobre o pacote).
+  // No modo pacote_fechado, se o valor final diferir do catálogo, exigimos:
+  //   - motivo do pacote (≥20)
+  //   - se custo_financeiro: adquirente + parcelas > 0
+  const custoFinCamposOk =
+    !modoPacoteCustoFin ||
+    (adquirentePacote.trim().length >= 2 && parcelasPacote > 0);
   const podeCriarVenda =
     !!cliente && !!servico && precoValido &&
     (modoPacote
-      ? (!precoDiferente || (motivoPacoteOk /* motivo do pacote */))
+      ? (!temDiferencaPacote || (motivoPacoteOk && custoFinCamposOk))
       : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
+
 
   const uploadEvidencia = useCallback(async () => {
     if (!evidenciaFile || !cliente || !servico) return null;
@@ -263,14 +328,16 @@ export default function QAPilotoRealPage() {
   const criarVenda = useCallback(async () => {
     if (!cliente || !servico) return;
     if (!precoValido) { toast.error("Preço aplicado inválido."); return; }
-    if (precoDiferente) {
-      if (modoPacote) {
-        if (!motivoPacoteOk) { toast.error("Motivo do pacote obrigatório (mín. 20 caracteres)."); return; }
-      } else {
-        if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
-        if (!tipoAjuste) { toast.error("Selecione o tipo de ajuste."); return; }
-        if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
+    if (modoPacote && temDiferencaPacote) {
+      if (!motivoPacoteOk) { toast.error("Motivo do pacote obrigatório (mín. 20 caracteres)."); return; }
+      if (modoPacoteCustoFin) {
+        if (adquirentePacote.trim().length < 2) { toast.error("Informe a adquirente do custo financeiro."); return; }
+        if (parcelasPacote <= 0) { toast.error("Informe o número de parcelas."); return; }
       }
+    } else if (!modoPacote && precoDiferente) {
+      if (!motivoOk) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+      if (!tipoAjuste) { toast.error("Selecione o tipo de ajuste."); return; }
+      if (!confirmadoPreco) { toast.error("Confirme explicitamente o preço negociado."); return; }
     }
     setCriandoVenda(true);
     try {
@@ -315,9 +382,24 @@ export default function QAPilotoRealPage() {
           } : null,
           exibicao_contrato: temExtras ? {
             modo: modoExibicao,
-            valor_final_pacote: modoPacote && precoValido ? precoAplicadoNum : null,
+            // Valor final oficial do pacote no contrato:
+            //  - custo_fin: preço dos serviços = total do catálogo
+            //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
+            valor_final_pacote: modoPacote && precoValido
+              ? (modoPacoteCustoFin ? precoCatalogo : precoAplicadoNum)
+              : null,
             ocultar_precos_individuais_no_contrato: modoPacote,
-            motivo: modoPacote && precoDiferente ? motivoPacote.trim() : null,
+            motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
+            // Auditoria estendida do pacote fechado.
+            tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
+            total_catalogo_servicos: modoPacote ? precoCatalogo : null,
+            valor_total_pago_cliente:
+              modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
+            diferenca_valor: modoPacote ? diferencaPacoteValor : null,
+            custo_financeiro_adquirente: modoPacoteCustoFin ? custoFinanceiroAdquirente : null,
+            adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
+            parcelas: modoPacoteCustoFin ? parcelasPacote : null,
+            valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
           } : null,
         },
       });
@@ -330,7 +412,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, valorFinalPacoteNum, motivoPacote, temExtras]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
@@ -367,6 +449,17 @@ export default function QAPilotoRealPage() {
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
+
+  // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
+  useEffect(() => {
+    if (!modoPacoteCustoFin) return;
+    if (Number.isFinite(valorFinalPacoteNum) && valorFinalPacoteNum > 0) {
+      setValorBrutoStr(valorFinalPacoteNum.toFixed(2).replace(".", ","));
+    }
+    if (adquirentePacote.trim()) setAdquirente(adquirentePacote.trim().toUpperCase());
+    if (parcelasPacote > 0) setParcelas(parcelasPacote);
+    setForma("CARTÃO DE CRÉDITO");
+  }, [modoPacoteCustoFin, valorFinalPacoteNum, adquirentePacote, parcelasPacote]);
 
   const uploadComprovante = useCallback(async () => {
     if (!venda || !comprovante) return null;
@@ -929,7 +1022,7 @@ export default function QAPilotoRealPage() {
                       </div>
 
                       {modoPacote && (
-                        <div className="border-t border-amber-300 pt-2 space-y-2">
+                        <div className="border-t border-amber-300 pt-2 space-y-3">
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Label className="text-[11px] text-neutral-600">
@@ -945,9 +1038,20 @@ export default function QAPilotoRealPage() {
                               <p className="text-[10px] text-neutral-500 normal-case mt-1">
                                 Total catálogo: {money(precoCatalogo)}. O catálogo NÃO será alterado.
                               </p>
+                              {temDiferencaPacote && (
+                                <p className={`text-[11px] normal-case mt-1 ${diferencaPacoteValor < 0 ? "text-emerald-600" : "text-amber-700"}`}>
+                                  Diferença: {money(diferencaPacoteValor)} ({percentualDifPacote > 0 ? "+" : ""}{percentualDifPacote}%)
+                                </p>
+                              )}
                             </div>
                             <div className="text-[11px] normal-case">
-                              <Label className="text-[11px] text-neutral-600">Distribuição interna (auditoria)</Label>
+                              <Label className="text-[11px] text-neutral-600">
+                                {modoPacoteCustoFin
+                                  ? "Serviços mantidos pelo valor de catálogo"
+                                  : temDiferencaPacote
+                                    ? "Distribuição interna do ajuste comercial"
+                                    : "Distribuição interna (auditoria)"}
+                              </Label>
                               <ul className="mt-1 space-y-0.5 font-mono text-[10px] text-neutral-600">
                                 {servico && (
                                   <li>• {servico.slug}: {money(precoAplicadoPrincipal)}</li>
@@ -956,9 +1060,86 @@ export default function QAPilotoRealPage() {
                                   <li key={e.ie.servico.id}>• {e.ie.servico.slug}: {money(e.aplicado)}</li>
                                 ))}
                               </ul>
+                              {modoPacoteCustoFin && (
+                                <p className="text-[10px] text-neutral-500 mt-1 normal-case">
+                                  Diferença registrada como custo financeiro da adquirente.
+                                </p>
+                              )}
                             </div>
                           </div>
-                          {precoDiferente && (
+
+                          {temDiferencaPacote && (
+                            <div className="rounded border border-amber-300 bg-white/60 p-2 space-y-2">
+                              <Label className="text-[11px] text-neutral-700 font-semibold">
+                                Como tratar a diferença entre catálogo e valor final? <span className="text-rose-600">*</span>
+                              </Label>
+                              <label className="flex items-start gap-2 cursor-pointer text-[11px] normal-case">
+                                <input
+                                  type="radio"
+                                  className="mt-0.5"
+                                  name="tipo_diferenca_pacote"
+                                  checked={tipoDiferencaPacote === "ajuste_comercial"}
+                                  onChange={() => setTipoDiferencaPacote("ajuste_comercial")}
+                                />
+                                <span>
+                                  <strong>Desconto/acréscimo comercial nos serviços.</strong> A diferença
+                                  é distribuída proporcionalmente entre os itens (auditoria interna). O
+                                  contrato exibe o valor final do pacote como preço dos serviços.
+                                </span>
+                              </label>
+                              <label className="flex items-start gap-2 cursor-pointer text-[11px] normal-case">
+                                <input
+                                  type="radio"
+                                  className="mt-0.5"
+                                  name="tipo_diferenca_pacote"
+                                  checked={tipoDiferencaPacote === "custo_financeiro_adquirente"}
+                                  onChange={() => setTipoDiferencaPacote("custo_financeiro_adquirente")}
+                                />
+                                <span>
+                                  <strong>Custo financeiro / juros / taxa da adquirente.</strong> Os
+                                  serviços mantêm o preço de catálogo; a diferença é registrada como
+                                  custo financeiro da adquirente e o contrato deixa isso explícito na
+                                  cláusula de pagamento.
+                                </span>
+                              </label>
+                            </div>
+                          )}
+
+                          {modoPacoteCustoFin && temDiferencaPacote && (
+                            <div className="grid grid-cols-3 gap-3">
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Adquirente <span className="text-rose-600">*</span></Label>
+                                <Input
+                                  value={adquirentePacote}
+                                  onChange={(e) => setAdquirentePacote(e.target.value)}
+                                  placeholder="Ex.: STONE"
+                                  className="bg-white border-neutral-300 h-9 mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Parcelas <span className="text-rose-600">*</span></Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={24}
+                                  value={parcelasPacote}
+                                  onChange={(e) => setParcelasPacote(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
+                                  className="bg-white border-neutral-300 h-9 mt-1 font-mono"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-[11px] text-neutral-600">Valor da parcela</Label>
+                                <div className="font-mono text-sm mt-2">{money(valorParcelaPacote)}</div>
+                              </div>
+                              <div className="col-span-3 text-[11px] normal-case text-neutral-600 grid grid-cols-3 gap-3">
+                                <div><span className="text-neutral-500">Serviços (catálogo):</span> <span className="font-mono">{money(precoCatalogo)}</span></div>
+                                <div><span className="text-neutral-500">Custo financeiro:</span> <span className="font-mono">{money(custoFinanceiroAdquirente)}</span></div>
+                                <div><span className="text-neutral-500">Total parcelado:</span> <span className="font-mono">{money(valorFinalPacoteNum)}</span></div>
+                              </div>
+                            </div>
+                          )}
+
+                          {temDiferencaPacote && (
                             <div>
                               <Label className="text-[11px] text-neutral-600">
                                 Motivo/observação do valor do pacote (mín. 20 caracteres) <span className="text-rose-600">*</span>
@@ -966,7 +1147,11 @@ export default function QAPilotoRealPage() {
                               <Textarea
                                 value={motivoPacote}
                                 onChange={(e) => setMotivoPacote(e.target.value)}
-                                placeholder="Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO, 18X DE R$285,35 VIA STONE."
+                                placeholder={
+                                  modoPacoteCustoFin
+                                    ? "Ex.: PARCELAMENTO EM 18X VIA STONE. DIFERENÇA É JUROS/TARIFA DA ADQUIRENTE, ITENS MANTIDOS PELO CATÁLOGO."
+                                    : "Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO COM DESCONTO COMERCIAL DE X%."
+                                }
                                 className="bg-white border-neutral-300 min-h-[70px] normal-case mt-1"
                               />
                               <div className="text-[10px] text-neutral-500 normal-case mt-1">
