@@ -31,6 +31,7 @@ interface Props {
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   dragOver: boolean;
   extracting: boolean;
+  incorreta?: boolean;
 }
 
 export default function HubDocPreviewSlot({
@@ -45,6 +46,7 @@ export default function HubDocPreviewSlot({
   onDrop,
   dragOver,
   extracting,
+  incorreta = false,
 }: Props) {
   const slotRef = useRef<HTMLDivElement | null>(null);
   const [slotW, setSlotW] = useState<number>(0);
@@ -73,6 +75,7 @@ export default function HubDocPreviewSlot({
   const isPdf = !!file && file.type === "application/pdf";
   const displayName = fileNameDisplay || file?.name || "arquivo";
   const pct = confianca != null ? Math.round(confianca * 100) : null;
+  const RED = "#B91C1C";
 
   return (
     <div className="relative flex h-full w-full flex-col">
@@ -211,8 +214,8 @@ export default function HubDocPreviewSlot({
               </div>
             )}
 
-            {/* Carimbo 98% */}
-            {pct != null && (
+            {/* Carimbo IA · APROVADO */}
+            {pct != null && !incorreta && (
               <div
                 className="pointer-events-none absolute z-10"
                 style={{
@@ -231,6 +234,35 @@ export default function HubDocPreviewSlot({
                 <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
                 <div style={{ fontSize: 9, letterSpacing: ".3em", textAlign: "center", marginTop: 2 }}>
                   IA · APROVADO
+                </div>
+              </div>
+            )}
+
+            {/* Carimbo CERTIDÃO INCORRETA */}
+            {incorreta && (
+              <div
+                className="pointer-events-none absolute z-20"
+                style={{
+                  top: "42%",
+                  left: "50%",
+                  transform: "translate(-50%,-50%) rotate(-14deg)",
+                  border: `6px solid ${RED}`,
+                  padding: "10px 22px 6px",
+                  background: "rgba(255,255,255,.90)",
+                  borderRadius: 6,
+                  color: RED,
+                  fontFamily: "'Oswald', sans-serif",
+                  boxShadow: "0 8px 22px rgba(185,28,28,.28)",
+                }}
+              >
+                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.95, letterSpacing: ".04em", textAlign: "center" }}>
+                  CERTIDÃO
+                </div>
+                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.95, letterSpacing: ".04em", textAlign: "center" }}>
+                  INCORRETA
+                </div>
+                <div style={{ fontSize: 10, letterSpacing: ".3em", textAlign: "center", marginTop: 4 }}>
+                  NÃO PODE SER SALVA
                 </div>
               </div>
             )}

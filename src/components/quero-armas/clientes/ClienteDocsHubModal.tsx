@@ -2228,6 +2228,7 @@ export function ClienteDocsHubModal({
               onDrop={handleDrop}
               dragOver={dragOver}
               extracting={extracting}
+              incorreta={certidaoIncorreta}
             />
           </div>
 
