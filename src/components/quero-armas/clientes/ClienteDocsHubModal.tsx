@@ -1936,7 +1936,33 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {tipoDivergenteExigencia ? (
+            {cobreOutraPendencia ? (
+              <div className="mt-1 flex items-start gap-1.5 border border-sky-300 bg-sky-50 p-2 text-[10px] leading-snug text-sky-900">
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Reclassificado automaticamente</div>
+                  <div>
+                    O slot pedia <b>{expectedTipoMeta?.label}</b>, mas o documento anexado é
+                    <b> {tipoAtual?.label || form.tipo_documento}</b> — e essa certidão também
+                    está pendente no seu processo. Vamos salvá-la nesse tipo correto e
+                    seguir cobrando a outra separadamente.
+                  </div>
+                </div>
+              </div>
+            ) : certidaoIncorreta ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-500 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Certidão incorreta</div>
+                  <div>
+                    O documento anexado é <b>{tipoAtual?.label || form.tipo_documento}</b>,
+                    mas o slot pedia <b>{expectedTipoMeta?.label}</b> — e a certidão enviada
+                    não é exigida em nenhuma outra pendência deste processo. Anexe o
+                    documento correto.
+                  </div>
+                </div>
+              </div>
+            ) : tipoDivergenteExigencia ? (
               <div className="mt-1 flex items-start gap-1.5 border border-amber-300 bg-amber-50 p-2 text-[10px] leading-snug text-amber-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
