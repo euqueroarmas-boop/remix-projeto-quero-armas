@@ -141,8 +141,15 @@ Deno.serve(async (req) => {
   }
 
   // Pipeline canônico (protocolo + qa-generate-contract + notificações). Idempotente.
+  // IMPORTANTE: qa-generate-contract consulta a venda por `id_legado`, portanto
+  // o pipeline recebe o id_legado (não o id interno) para bater com o restante
+  // do fluxo (webhook Asaas e cobrança inline usam o mesmo identificador).
   try {
-    await executarPipelinePosPagamento(admin as any, Number((venda as any).id), "manual_admin");
+    await executarPipelinePosPagamento(
+      admin as any,
+      Number((venda as any).id_legado),
+      "manual_admin",
+    );
   } catch (e) {
     console.warn("[piloto-real] pipeline pos-pagamento falhou:", (e as any)?.message || e);
   }
@@ -151,7 +158,7 @@ Deno.serve(async (req) => {
   const { data: contrato } = await admin
     .from("qa_contracts")
     .select("id, status, cliente_id, venda_id")
-    .eq("venda_id", Number((venda as any).id))
+    .eq("venda_id", Number((venda as any).id_legado))
     .maybeSingle();
 
   return json({
