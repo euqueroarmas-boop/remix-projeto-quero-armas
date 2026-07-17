@@ -7771,6 +7771,7 @@ export type Database = {
           decisao_ia: string | null
           divergencias_json: Json | null
           endereco_em_nome_de_terceiro: boolean
+          escopo: string
           etapa: string
           exemplo_url: string | null
           extracao_ia_json: Json | null
@@ -7834,6 +7835,7 @@ export type Database = {
           decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
+          escopo?: string
           etapa?: string
           exemplo_url?: string | null
           extracao_ia_json?: Json | null
@@ -7897,6 +7899,7 @@ export type Database = {
           decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
+          escopo?: string
           etapa?: string
           exemplo_url?: string | null
           extracao_ia_json?: Json | null
@@ -8640,6 +8643,7 @@ export type Database = {
           condicao_profissional: string | null
           created_at: string
           emissor: string
+          escopo: string
           etapa: string
           exemplo_url: string | null
           formato_aceito: string[]
@@ -8665,6 +8669,7 @@ export type Database = {
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
+          escopo?: string
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
@@ -8690,6 +8695,7 @@ export type Database = {
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
+          escopo?: string
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
