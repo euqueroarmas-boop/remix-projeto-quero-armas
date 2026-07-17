@@ -556,18 +556,22 @@ export default function QAPilotoRealPage() {
   const [processos, setProcessos] = useState<Processo[]>([]);
 
   const recarregarContrato = useCallback(async (vendaId: number) => {
+    // qa_contracts / qa_processos usam o id_legado da venda (mesmo id que o
+    // pipeline pós-pagamento passa para qa-generate-contract). Se a venda
+    // ainda não tem id_legado, caímos para o id interno.
+    const lookupId = Number((venda as any)?.id_legado ?? vendaId) || vendaId;
     const { data: c } = await supabase
       .from("qa_contracts")
       .select("id, status, venda_id, cliente_id")
-      .eq("venda_id", vendaId)
+      .eq("venda_id", lookupId)
       .maybeSingle();
     setContrato((c as Contrato) ?? null);
     const { data: p } = await supabase
       .from("qa_processos")
       .select("id, venda_id, servico_id, status")
-      .eq("venda_id", vendaId);
+      .eq("venda_id", lookupId);
     setProcessos((p ?? []) as Processo[]);
-  }, []);
+  }, [venda]);
 
   useEffect(() => {
     if (!venda) return;
