@@ -450,6 +450,17 @@ export default function QAPilotoRealPage() {
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
 
+  // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
+  useEffect(() => {
+    if (!modoPacoteCustoFin) return;
+    if (Number.isFinite(valorFinalPacoteNum) && valorFinalPacoteNum > 0) {
+      setValorBrutoStr(valorFinalPacoteNum.toFixed(2).replace(".", ","));
+    }
+    if (adquirentePacote.trim()) setAdquirente(adquirentePacote.trim().toUpperCase());
+    if (parcelasPacote > 0) setParcelas(parcelasPacote);
+    setForma("CARTÃO DE CRÉDITO");
+  }, [modoPacoteCustoFin, valorFinalPacoteNum, adquirentePacote, parcelasPacote]);
+
   const uploadComprovante = useCallback(async () => {
     if (!venda || !comprovante) return null;
     const ext = (comprovante.name.split(".").pop() || "bin").toLowerCase();
