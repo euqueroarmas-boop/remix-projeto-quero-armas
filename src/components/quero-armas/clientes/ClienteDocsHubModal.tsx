@@ -126,7 +126,11 @@ type ConformidadeItem = {
 const TIPOS_CERTIDAO = new Set([
   "antecedentes_criminais",
   "antecedentes_federal",
+  "antecedentes_federal_trf3_regional",
+  "antecedentes_federal_sjsp_jef",
   "antecedentes_estadual",
+  "antecedentes_estadual_distribuicao",
+  "antecedentes_estadual_execucoes",
   "antecedentes_militar",
   "antecedentes_eleitoral",
 ]);
@@ -236,7 +240,11 @@ const DOC_TRUST_TIER: Record<string, number> = {
   gt: 2,
   antecedentes_criminais: 2,
   antecedentes_federal: 2,
+  antecedentes_federal_trf3_regional: 2,
+  antecedentes_federal_sjsp_jef: 2,
   antecedentes_estadual: 2,
+  antecedentes_estadual_distribuicao: 2,
+  antecedentes_estadual_execucoes: 2,
   antecedentes_militar: 2,
   antecedentes_eleitoral: 2,
   laudo_psicologico: 2,
