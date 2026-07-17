@@ -168,6 +168,13 @@ export default function QAPilotoRealPage() {
   const [adquirentePacote, setAdquirentePacote] = useState<string>("");
   const [parcelasPacote, setParcelasPacote] = useState<number>(1);
 
+  // Custos operacionais embutidos no parcelamento (exames, GRU, taxas de terceiros).
+  // NÃO são serviços — não entram em qa_itens_venda. Somam ao "valor contratado"
+  // do pacote no contrato (Cláusula 1.A) para que 3.2.2 calcule os juros
+  // corretamente: juros = valor_bruto_parcelado − (catálogo serviços + embutidos).
+  type CustoEmbutido = { descricao: string; valorStr: string };
+  const [custosEmbutidos, setCustosEmbutidos] = useState<CustoEmbutido[]>([]);
+
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
     if (servico) {
@@ -188,6 +195,7 @@ export default function QAPilotoRealPage() {
       setTipoDiferencaPacote("ajuste_comercial");
       setAdquirentePacote("");
       setParcelasPacote(1);
+      setCustosEmbutidos([]);
     }
   }, [servico?.id]);
 
@@ -219,6 +227,15 @@ export default function QAPilotoRealPage() {
   const modoPacoteCustoFin =
     modoPacote && tipoDiferencaPacote === "custo_financeiro_adquirente";
 
+  // Custos embutidos válidos (descrição + valor > 0). Só fazem sentido no modo
+  // pacote + custo financeiro (repasses de terceiros embutidos no parcelamento).
+  const custosEmbutidosValidos = modoPacoteCustoFin
+    ? custosEmbutidos
+        .map((c) => ({ descricao: c.descricao.trim(), valor: parseMoney(c.valorStr) }))
+        .filter((c) => c.descricao.length >= 2 && Number.isFinite(c.valor) && c.valor > 0)
+    : [];
+  const custosEmbutidosTotal = custosEmbutidosValidos.reduce((s, c) => s + c.valor, 0);
+
   // Valor total dos SERVIÇOS que vai para qa_itens_venda / total da venda.
   //  - pacote + custo_fin: soma dos preços de catálogo (não muda nada nos itens).
   //  - pacote + ajuste_comercial: valor final do pacote (distribuído entre itens).
@@ -239,9 +256,16 @@ export default function QAPilotoRealPage() {
   const diferencaPacoteValor = modoPacote && Number.isFinite(valorFinalPacoteNum)
     ? Number((valorFinalPacoteNum - precoCatalogo).toFixed(2))
     : 0;
+  // Juros/tarifa da adquirente = valor final − (catálogo serviços + custos embutidos).
+  // Sem embutidos, comportamento anterior (juros = diferença total) é preservado.
   const custoFinanceiroAdquirente = modoPacoteCustoFin && temDiferencaPacote
-    ? diferencaPacoteValor
+    ? Number((diferencaPacoteValor - custosEmbutidosTotal).toFixed(2))
     : 0;
+  // "Valor contratado" exibido no contrato (Cláusula 1.A.2 e base do 3.2.2):
+  // serviços de catálogo + custos operacionais embutidos.
+  const valorContratadoPacote = modoPacoteCustoFin
+    ? Number((precoCatalogo + custosEmbutidosTotal).toFixed(2))
+    : precoCatalogo;
   const valorParcelaPacote =
     modoPacoteCustoFin && parcelasPacote > 0 && Number.isFinite(valorFinalPacoteNum)
       ? Number((valorFinalPacoteNum / parcelasPacote).toFixed(2))
@@ -386,7 +410,7 @@ export default function QAPilotoRealPage() {
             //  - custo_fin: preço dos serviços = total do catálogo
             //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
             valor_final_pacote: modoPacote && precoValido
-              ? (modoPacoteCustoFin ? precoCatalogo : precoAplicadoNum)
+              ? (modoPacoteCustoFin ? valorContratadoPacote : precoAplicadoNum)
               : null,
             ocultar_precos_individuais_no_contrato: modoPacote,
             motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
@@ -400,6 +424,15 @@ export default function QAPilotoRealPage() {
             adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
             parcelas: modoPacoteCustoFin ? parcelasPacote : null,
             valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
+            custos_embutidos: modoPacoteCustoFin && custosEmbutidosValidos.length > 0
+              ? custosEmbutidosValidos.map((c) => ({
+                  descricao: c.descricao.toUpperCase(),
+                  valor: Number(c.valor.toFixed(2)),
+                }))
+              : null,
+            custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
+              ? Number(custosEmbutidosTotal.toFixed(2))
+              : null,
           } : null,
         },
       });
@@ -412,7 +445,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
