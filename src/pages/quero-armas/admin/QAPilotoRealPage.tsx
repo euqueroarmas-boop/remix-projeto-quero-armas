@@ -206,15 +206,46 @@ export default function QAPilotoRealPage() {
   const precoCatalogo =
     precoCatalogoPrincipal + extrasAvaliadosBase.reduce((s, e) => s + e.catalogo, 0);
 
-  // Valor final aplicado no pacote (input do modo pacote OU soma no modo separado)
+  // Valor final aplicado no pacote (input do modo pacote OU soma no modo separado).
   const valorFinalPacoteNum = parseMoney(valorFinalPacoteStr);
   const somaSeparados = Number.isFinite(precoAplicadoPrincipalInput)
     ? precoAplicadoPrincipalInput +
       extrasAvaliadosBase.reduce((s, e) => s + (Number.isFinite(e.aplicadoInput) ? e.aplicadoInput : NaN), 0)
     : NaN;
 
-  const precoAplicadoNum = modoPacote ? valorFinalPacoteNum : somaSeparados;
+  // Modo pacote + custo financeiro: os SERVIÇOS mantêm valores de catálogo.
+  // O valor final digitado representa o total efetivamente cobrado no cartão
+  // (serviços + juros/tarifa da adquirente). A diferença NÃO entra em qa_itens_venda.
+  const modoPacoteCustoFin =
+    modoPacote && tipoDiferencaPacote === "custo_financeiro_adquirente";
+
+  // Valor total dos SERVIÇOS que vai para qa_itens_venda / total da venda.
+  //  - pacote + custo_fin: soma dos preços de catálogo (não muda nada nos itens).
+  //  - pacote + ajuste_comercial: valor final do pacote (distribuído entre itens).
+  //  - separados: soma dos preços aplicados por item.
+  const precoAplicadoNum = modoPacote
+    ? (modoPacoteCustoFin ? precoCatalogo : valorFinalPacoteNum)
+    : somaSeparados;
   const precoValido = Number.isFinite(precoAplicadoNum) && precoAplicadoNum >= 0;
+
+  // Métricas do "valor final pago" pelo cliente (com juros, se houver).
+  const valorFinalPagoCliente = modoPacote
+    ? valorFinalPacoteNum
+    : somaSeparados;
+  const temDiferencaPacote =
+    modoPacote &&
+    Number.isFinite(valorFinalPacoteNum) &&
+    Math.abs(valorFinalPacoteNum - precoCatalogo) > 0.0049;
+  const diferencaPacoteValor = modoPacote && Number.isFinite(valorFinalPacoteNum)
+    ? Number((valorFinalPacoteNum - precoCatalogo).toFixed(2))
+    : 0;
+  const custoFinanceiroAdquirente = modoPacoteCustoFin && temDiferencaPacote
+    ? diferencaPacoteValor
+    : 0;
+  const valorParcelaPacote =
+    modoPacoteCustoFin && parcelasPacote > 0 && Number.isFinite(valorFinalPacoteNum)
+      ? Number((valorFinalPacoteNum / parcelasPacote).toFixed(2))
+      : 0;
 
   // Distribuição proporcional (modo pacote) — itens continuam vinculados à venda
   // mas o contrato oculta os preços individuais. Distribuímos proporcionalmente
@@ -224,6 +255,11 @@ export default function QAPilotoRealPage() {
     if (!modoPacote) {
       return { ...e, aplicado: e.aplicadoInput, valido: Number.isFinite(e.aplicadoInput) };
     }
+    // Custo financeiro: mantém preço de catálogo em cada extra.
+    if (modoPacoteCustoFin) {
+      return { ...e, aplicado: e.catalogo, valido: true };
+    }
+    // Ajuste comercial: distribui proporcionalmente entre os itens.
     if (!precoValido) return { ...e, aplicado: NaN, valido: false };
     const cats = [precoCatalogoPrincipal, ...arr.map((x) => x.catalogo)];
     const somaCat = cats.reduce((s, v) => s + v, 0);
@@ -236,28 +272,56 @@ export default function QAPilotoRealPage() {
     }
     return { ...e, aplicado: val, valido: true };
   });
-  // Preço aplicado do item principal (no modo pacote é o resto para casar o total)
+  // Preço aplicado do item principal:
+  //  - custo_fin: preço de catálogo do principal (itens não são alterados).
+  //  - ajuste_comercial (pacote): resto para casar o total distribuído.
+  //  - separado: valor digitado pelo usuário.
   let precoAplicadoPrincipal = precoAplicadoPrincipalInput;
-  if (modoPacote && precoValido) {
+  if (modoPacoteCustoFin) {
+    precoAplicadoPrincipal = precoCatalogoPrincipal;
+  } else if (modoPacote && precoValido) {
     const somaExtras = extrasAvaliados.reduce((s, e) => s + (e.aplicado || 0), 0);
     precoAplicadoPrincipal = Number((precoAplicadoNum - somaExtras).toFixed(2));
     if (precoAplicadoPrincipal < 0) precoAplicadoPrincipal = 0;
   }
 
+  // "precoDiferente" mantém a semântica antiga: houve mudança no preço APLICADO
+  // aos itens em relação ao catálogo — dispara o bloco de negociação (motivo/tipo
+  // ajuste/confirmação/evidência). No modo custo_financeiro isso é FALSO, porque
+  // os itens continuam com o preço de catálogo.
   const precoDiferente = precoValido && Math.abs(precoAplicadoNum - precoCatalogo) > 0.0049;
   const diferencaValor = precoValido ? Number((precoAplicadoNum - precoCatalogo).toFixed(2)) : 0;
   const percentualDif = precoCatalogo > 0 && precoValido
     ? Number(((diferencaValor / precoCatalogo) * 100).toFixed(2))
     : 0;
+  const percentualDifPacote = modoPacote && precoCatalogo > 0 && Number.isFinite(valorFinalPacoteNum)
+    ? Number(((diferencaPacoteValor / precoCatalogo) * 100).toFixed(2))
+    : 0;
   const motivoOk = motivoPreco.trim().length >= 20;
   const motivoPacoteOk = motivoPacote.trim().length >= 20;
-  // No modo pacote_fechado, se o valor final diferir do catálogo, exigimos motivo_pacote
-  // (o preço "por item" foi omitido do contrato, então a justificativa é sobre o pacote).
+  // No modo pacote_fechado, se o valor final diferir do catálogo, exigimos:
+  //   - motivo do pacote (≥20)
+  //   - se custo_financeiro: adquirente + parcelas > 0
+  const custoFinCamposOk =
+    !modoPacoteCustoFin ||
+    (adquirentePacote.trim().length >= 2 && parcelasPacote > 0);
   const podeCriarVenda =
     !!cliente && !!servico && precoValido &&
     (modoPacote
-      ? (!precoDiferente || (motivoPacoteOk /* motivo do pacote */))
+      ? (!temDiferencaPacote || (motivoPacoteOk && custoFinCamposOk))
       : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
+
+  // Quando o Passo 3 já capturou adquirente/parcelas do pacote em custo financeiro,
+  // pré-preenche o Passo 5 (pagamento manual) para o operador só confirmar.
+  useEffect(() => {
+    if (!modoPacoteCustoFin) return;
+    if (Number.isFinite(valorFinalPacoteNum) && valorFinalPacoteNum > 0) {
+      setValorBrutoStr(valorFinalPacoteNum.toFixed(2).replace(".", ","));
+    }
+    if (adquirentePacote.trim()) setAdquirente(adquirentePacote.trim().toUpperCase());
+    if (parcelasPacote > 0) setParcelas(parcelasPacote);
+    setForma("CARTÃO DE CRÉDITO");
+  }, [modoPacoteCustoFin, valorFinalPacoteNum, adquirentePacote, parcelasPacote]);
 
   const uploadEvidencia = useCallback(async () => {
     if (!evidenciaFile || !cliente || !servico) return null;
