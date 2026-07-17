@@ -74,8 +74,13 @@ Deno.serve(async (req) => {
   if (!clienteId) return jsonResp({ error: "Cliente não vinculado" }, 403);
 
   // Body: multipart (file) OU base64 JSON
+  // Captura metadados de sessão do lado do servidor (não forjáveis pelo cliente)
+  const uploadIp = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || null;
+  const uploadUserAgent = req.headers.get("user-agent") || null;
+
   let pdfBytes: Uint8Array | null = null;
   let contractId: string | null = null;
+  let uploadDeviceMeta: Record<string, unknown> | null = null;
 
   const ct = req.headers.get("content-type") || "";
   try {
@@ -86,6 +91,11 @@ Deno.serve(async (req) => {
       if (!file) return jsonResp({ error: "Arquivo obrigatório" }, 400);
       if (file.size > MAX_BYTES) return jsonResp({ error: "Arquivo > 25MB" }, 413);
       pdfBytes = new Uint8Array(await file.arrayBuffer());
+      // Metadados extras opcionais enviados pelo frontend
+      const deviceRaw = fd.get("device_meta");
+      if (deviceRaw) {
+        try { uploadDeviceMeta = JSON.parse(String(deviceRaw)); } catch { /* ignora */ }
+      }
     } else {
       const body = await req.json();
       contractId = body.contract_id;
@@ -94,6 +104,9 @@ Deno.serve(async (req) => {
       pdfBytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) pdfBytes[i] = bin.charCodeAt(i);
       if (pdfBytes.byteLength > MAX_BYTES) return jsonResp({ error: "Arquivo > 25MB" }, 413);
+      if (body.device_meta && typeof body.device_meta === "object") {
+        uploadDeviceMeta = body.device_meta;
+      }
     }
   } catch (e) {
     return jsonResp({ error: "Falha ao ler upload", detail: (e as Error).message }, 400);
@@ -135,18 +148,29 @@ Deno.serve(async (req) => {
   });
   if (upErr) return jsonResp({ error: "Falha ao gravar PDF", detail: upErr.message }, 500);
 
+  const uploadedAt = new Date().toISOString();
+
   await sb.from("qa_contracts").update({
     status: "customer_signature_uploaded",
     customer_signed_pdf_path: path,
     customer_signed_sha256: sig,
-    customer_uploaded_at: new Date().toISOString(),
+    customer_uploaded_at: uploadedAt,
     validation_status: null,
+    customer_upload_ip: uploadIp,
+    customer_upload_user_agent: uploadUserAgent,
+    customer_upload_device: uploadDeviceMeta ?? undefined,
   }).eq("id", contractId);
 
   await sb.from("qa_contract_events").insert({
     contract_id: contractId,
     event_type: "contrato_assinado_enviado",
-    event_payload: { sha256: sig, size: pdfBytes.byteLength },
+    event_payload: {
+      sha256: sig,
+      size: pdfBytes.byteLength,
+      ip: uploadIp,
+      user_agent: uploadUserAgent,
+      device: uploadDeviceMeta,
+    },
   });
 
   // Dispara validação automaticamente (best-effort, não bloqueia retorno).

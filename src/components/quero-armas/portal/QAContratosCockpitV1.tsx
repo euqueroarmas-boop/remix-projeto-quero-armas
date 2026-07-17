@@ -470,6 +470,12 @@ function FeaturedContractCard({
       const fd = new FormData();
       fd.append("contract_id", contract.id);
       fd.append("file", file);
+      fd.append("device_meta", JSON.stringify({
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        platform: navigator.platform,
+      }));
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-upload-signed-contract`;
       const resp = await fetch(url, {
         method: "POST",
