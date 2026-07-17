@@ -46,7 +46,7 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
   const map = {
     done: "bg-emerald-500",
     current: "bg-amber-400 animate-pulse",
-    pending: "bg-neutral-700",
+    pending: "bg-neutral-300",
     blocked: "bg-rose-500",
   } as const;
   return <span className={`inline-block h-2 w-2 rounded-full ${map[state]}`} />;
@@ -348,18 +348,18 @@ export default function QAPilotoRealPage() {
 
   /* ---------- Render ---------- */
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-neutral-100 p-6 uppercase">
+    <div className="min-h-screen bg-white text-neutral-900 p-6 uppercase">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         {/* Coluna principal */}
         <div className="space-y-6">
-          <header className="border-b border-neutral-800 pb-4">
+          <header className="border-b border-neutral-200 pb-4">
             <h1 className="text-xl font-bold tracking-wide">Piloto Real — Contratação Assistida</h1>
-            <p className="text-xs text-neutral-400 mt-1 normal-case">
+            <p className="text-xs text-neutral-600 mt-1 normal-case">
               Fluxo real do sistema, sem atalhos. Todas as ações geram evento em <code>qa_venda_eventos</code>,
               <code> qa_pagamento_auditoria</code> e <code>qa_contract_events</code>.
             </p>
             {arquivado && (
-              <div className="mt-3 border border-rose-500/50 bg-rose-950/40 text-rose-300 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
+              <div className="mt-3 border border-rose-300 bg-rose-50 text-rose-700 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
                 <Archive className="h-4 w-4" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
               </div>
             )}
@@ -375,7 +375,7 @@ export default function QAPilotoRealPage() {
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Buscar por nome, CPF ou e-mail…"
                     onKeyDown={(e) => e.key === "Enter" && buscarCliente()}
-                    className="bg-neutral-900 border-neutral-700 uppercase"
+                    className="bg-white border-neutral-300 uppercase"
                   />
                   <Button onClick={buscarCliente} disabled={searching}>
                     {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -386,12 +386,12 @@ export default function QAPilotoRealPage() {
                     <button
                       key={c.id}
                       onClick={() => setCliente(c)}
-                      className="w-full text-left border border-neutral-800 hover:border-emerald-500/60 hover:bg-neutral-900 rounded p-2 text-xs"
+                      className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50 rounded p-2 text-xs"
                     >
                       <div className="font-semibold flex items-center gap-2">
                         <User className="h-3 w-3" /> {c.nome_completo}
                       </div>
-                      <div className="text-neutral-400 normal-case">
+                      <div className="text-neutral-600 normal-case">
                         CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
                       </div>
                     </button>
@@ -405,7 +405,7 @@ export default function QAPilotoRealPage() {
               <div className="flex items-center justify-between">
                 <div className="text-sm">
                   <div className="font-semibold">{cliente.nome_completo}</div>
-                  <div className="text-xs text-neutral-400 normal-case">
+                  <div className="text-xs text-neutral-600 normal-case">
                     #{cliente.id} · CPF {cliente.cpf} · {cliente.email}
                   </div>
                 </div>
@@ -425,7 +425,7 @@ export default function QAPilotoRealPage() {
                     value={servicoQ}
                     onChange={(e) => setServicoQ(e.target.value)}
                     placeholder="Filtrar serviço por nome ou slug…"
-                    className="bg-neutral-900 border-neutral-700 uppercase"
+                    className="bg-white border-neutral-300 uppercase"
                   />
                   <div className="mt-3 max-h-72 overflow-y-auto space-y-1">
                     {carregandoServicos && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -433,7 +433,7 @@ export default function QAPilotoRealPage() {
                       <button
                         key={s.id}
                         onClick={() => setServico(s)}
-                        className="w-full text-left border border-neutral-800 hover:border-emerald-500/60 hover:bg-neutral-900 rounded p-2 text-xs flex justify-between"
+                        className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50 rounded p-2 text-xs flex justify-between"
                       >
                         <span>
                           <span className="font-semibold">{s.nome}</span>
@@ -448,7 +448,7 @@ export default function QAPilotoRealPage() {
                 <div className="flex items-center justify-between text-sm">
                   <div>
                     <div className="font-semibold">{servico.nome}</div>
-                    <div className="text-xs text-neutral-400 normal-case">{servico.slug} · {money(servico.preco)}</div>
+                    <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => { setServico(null); setVenda(null); setContrato(null); }}>
                     Trocar
@@ -468,7 +468,7 @@ export default function QAPilotoRealPage() {
               ) : (
                 <div className="text-sm space-y-1">
                   <div>Venda <strong>#{venda.id}</strong> · Status: <strong>{venda.status}</strong></div>
-                  <div className="text-xs text-neutral-400 normal-case">
+                  <div className="text-xs text-neutral-600 normal-case">
                     Valor: {money(venda.valor_a_pagar)} · Cobrança: {venda.cobranca_status} · Validação: {venda.status_validacao_valor || "pendente"}
                   </div>
                 </div>
@@ -498,7 +498,7 @@ export default function QAPilotoRealPage() {
                   <select
                     value={forma}
                     onChange={(e) => setForma(e.target.value)}
-                    className="w-full mt-1 bg-neutral-900 border border-neutral-700 rounded h-9 px-2 text-sm uppercase"
+                    className="w-full mt-1 bg-neutral-50 border border-neutral-300 rounded h-9 px-2 text-sm uppercase"
                   >
                     {FORMAS_MANUAL.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
@@ -508,7 +508,7 @@ export default function QAPilotoRealPage() {
                   <Input
                     type="number" min={1} max={24} value={parcelas}
                     onChange={(e) => setParcelas(Math.max(1, Number(e.target.value) || 1))}
-                    className="bg-neutral-900 border-neutral-700"
+                    className="bg-neutral-50 border-neutral-300"
                   />
                 </div>
               </div>
@@ -518,7 +518,7 @@ export default function QAPilotoRealPage() {
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
                   placeholder="Ex.: PAGAMENTO PIX RECEBIDO EM 17/07 CONFORME COMPROVANTE ANEXO."
-                  className="bg-neutral-900 border-neutral-700 min-h-[80px] normal-case"
+                  className="bg-white border-neutral-300 min-h-[80px] normal-case"
                 />
                 <div className="text-xs text-neutral-500 normal-case mt-1">{observacao.trim().length} caracteres</div>
               </div>
@@ -529,7 +529,7 @@ export default function QAPilotoRealPage() {
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
                     onChange={(e) => { setComprovante(e.target.files?.[0] ?? null); setComprovantePath(null); }}
-                    className="bg-neutral-900 border-neutral-700 normal-case"
+                    className="bg-white border-neutral-300 normal-case"
                   />
                   {comprovantePath && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                 </div>
@@ -551,7 +551,7 @@ export default function QAPilotoRealPage() {
           {venda?.cobranca_status === "confirmada" && (
             <Card title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
               {!contrato ? (
-                <div className="flex items-center gap-2 text-xs text-neutral-400 normal-case">
+                <div className="flex items-center gap-2 text-xs text-neutral-600 normal-case">
                   <Loader2 className="h-4 w-4 animate-spin" /> Aguardando geração do contrato…
                 </div>
               ) : (
@@ -559,7 +559,7 @@ export default function QAPilotoRealPage() {
                   <div>Contrato <code className="normal-case">{contrato.id.slice(0, 8)}</code> · Status: <strong>{contrato.status}</strong></div>
                   {linkContratoCliente && (
                     <div className="flex items-center gap-2 normal-case">
-                      <Input value={linkContratoCliente} readOnly className="bg-neutral-900 border-neutral-700 text-xs" />
+                      <Input value={linkContratoCliente} readOnly className="bg-white border-neutral-300 text-xs" />
                       <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(linkContratoCliente); toast.success("Link copiado"); }}>
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -568,7 +568,7 @@ export default function QAPilotoRealPage() {
                       </Button>
                     </div>
                   )}
-                  <p className="text-xs text-neutral-400 normal-case">
+                  <p className="text-xs text-neutral-600 normal-case">
                     O cliente entra no portal, assina digitalmente e faz upload do contrato assinado (qa-upload-signed-contract →
                     qa-validate-customer-signature). Quando o contrato ficar <strong>validated</strong>, o trigger
                     qa_contracts_after_validated_release aciona qa-liberar-servicos-contrato automaticamente.
@@ -578,7 +578,7 @@ export default function QAPilotoRealPage() {
                   </Button>
 
                   {processos.length > 0 && (
-                    <div className="mt-3 border-t border-neutral-800 pt-3">
+                    <div className="mt-3 border-t border-neutral-200 pt-3">
                       <div className="text-xs text-emerald-400 flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3" /> Processo(s) criados pela liberação oficial:
                       </div>
@@ -595,11 +595,11 @@ export default function QAPilotoRealPage() {
 
                   {/* Upload assistido pela equipe */}
                   {!arquivado && !["validated","customer_signed"].includes(contrato.status) && (
-                    <div className="mt-4 border-t border-neutral-800 pt-3 space-y-2">
+                    <div className="mt-4 border-t border-neutral-200 pt-3 space-y-2">
                       <div className="text-xs font-semibold tracking-wide">
                         Upload assistido pela equipe (WhatsApp / e-mail / presencial)
                       </div>
-                      <p className="text-[11px] text-neutral-400 normal-case">
+                      <p className="text-[11px] text-neutral-600 normal-case">
                         Use esta opção apenas quando o cliente enviar o contrato assinado por fora do portal.
                         O envio é marcado como <code>upload_assistido_por_staff=true</code> e cai na MESMA
                         validação oficial (qa-validate-customer-signature). O contrato só chega em <strong>validated</strong> se
@@ -611,7 +611,7 @@ export default function QAPilotoRealPage() {
                           <select
                             value={origemAssinado}
                             onChange={(e) => setOrigemAssinado(e.target.value)}
-                            className="w-full mt-1 bg-neutral-900 border border-neutral-700 rounded h-9 px-2 text-xs uppercase"
+                            className="w-full mt-1 bg-neutral-50 border border-neutral-300 rounded h-9 px-2 text-xs uppercase"
                           >
                             <option>WhatsApp</option>
                             <option>E-mail</option>
@@ -624,7 +624,7 @@ export default function QAPilotoRealPage() {
                           <Input
                             type="file" accept=".pdf"
                             onChange={(e) => setAssinado(e.target.files?.[0] ?? null)}
-                            className="bg-neutral-900 border-neutral-700 normal-case"
+                            className="bg-white border-neutral-300 normal-case"
                           />
                         </div>
                       </div>
@@ -634,7 +634,7 @@ export default function QAPilotoRealPage() {
                           value={obsAssinado}
                           onChange={(e) => setObsAssinado(e.target.value)}
                           placeholder="Ex.: CONTRATO ASSINADO RECEBIDO POR WHATSAPP EM 17/07 CONFIRMADO COM O CLIENTE."
-                          className="bg-neutral-900 border-neutral-700 min-h-[70px] normal-case"
+                          className="bg-white border-neutral-300 min-h-[70px] normal-case"
                         />
                       </div>
                       <Button
@@ -662,12 +662,12 @@ export default function QAPilotoRealPage() {
                   Piloto arquivado. Novas ações do wizard estão bloqueadas — apenas visualização/auditoria.
                 </p>
               ) : !mostrarArq ? (
-                <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-500/50 text-rose-400 hover:bg-rose-950">
+                <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-400 text-rose-600 hover:bg-rose-50">
                   <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
                 </Button>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-[11px] text-neutral-400 normal-case">
+                  <p className="text-[11px] text-neutral-600 normal-case">
                     Nada será apagado. Venda/itens ficam CANCELADO, contrato recebe <code>arquivado_em</code>,
                     processos (se existirem) ficam <code>cancelado</code>, e um evento imutável <code>venda_arquivada_piloto</code> é registrado.
                   </p>
@@ -676,7 +676,7 @@ export default function QAPilotoRealPage() {
                     value={motivoArq}
                     onChange={(e) => setMotivoArq(e.target.value)}
                     placeholder="Ex.: TESTE ENCERRADO — CLIENTE DESISTIU E VAI RECONTRATAR NO FLUXO NORMAL."
-                    className="bg-neutral-900 border-neutral-700 min-h-[70px] normal-case"
+                    className="bg-white border-neutral-300 min-h-[70px] normal-case"
                   />
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => { setMostrarArq(false); setMotivoArq(""); }}>Cancelar</Button>
@@ -691,7 +691,7 @@ export default function QAPilotoRealPage() {
         </div>
 
         {/* Sidebar Checklist */}
-        <aside className="border border-neutral-800 rounded bg-neutral-950 p-4 h-fit sticky top-4">
+        <aside className="border border-neutral-200 rounded bg-white p-4 h-fit sticky top-4 shadow-sm">
           <h2 className="text-sm font-semibold mb-3 tracking-wide">Checklist do Piloto</h2>
           <ol className="space-y-2 text-xs">
             <ChecklistItem state={stepStates.cliente} label="Cliente real selecionado" />
@@ -702,13 +702,13 @@ export default function QAPilotoRealPage() {
             <ChecklistItem state={stepStates.contrato} label="Contrato gerado / assinado / validado" />
             <ChecklistItem state={stepStates.liberacao} label="Processo + checklist liberados" />
           </ol>
-          <div className="mt-4 border-t border-neutral-800 pt-3 text-[10px] text-neutral-500 normal-case leading-relaxed">
+          <div className="mt-4 border-t border-neutral-200 pt-3 text-[10px] text-neutral-500 normal-case leading-relaxed">
             <ShieldAlert className="h-3 w-3 inline mr-1 text-amber-400" />
             Fluxo baseado em Lei 10.826/03, Dec. 11.615/23, Dec. 12.345/24 e IN 201/311.
             Nenhum passo faz UPDATE manual solto — tudo passa por RPC/Edge oficial.
           </div>
 
-          <div className="mt-4 border-t border-neutral-800 pt-3">
+          <div className="mt-4 border-t border-neutral-200 pt-3">
             <h3 className="text-xs font-semibold tracking-wide mb-2 flex items-center gap-1">
               <FlaskConical className="h-3 w-3 text-emerald-400" /> Smoke Test
             </h3>
@@ -719,7 +719,7 @@ export default function QAPilotoRealPage() {
               {rodandoSmoke ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Rodando…</> : "Executar smoke test"}
             </Button>
             {smokeResult && (
-              <pre className="mt-2 text-[9px] bg-neutral-900 border border-neutral-800 rounded p-2 max-h-64 overflow-auto normal-case">
+              <pre className="mt-2 text-[9px] bg-neutral-100 border border-neutral-200 rounded p-2 max-h-64 overflow-auto normal-case">
                 {JSON.stringify(smokeResult, null, 2)}
               </pre>
             )}
@@ -732,7 +732,7 @@ export default function QAPilotoRealPage() {
 
 function Card({ title, state, children }: { title: string; state: "done" | "pending" | "current" | "blocked"; children: React.ReactNode }) {
   return (
-    <section className="border border-neutral-800 rounded bg-neutral-950 p-4">
+    <section className="border border-neutral-200 rounded bg-white p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         {statusDot(state)}
         <h2 className="text-sm font-semibold tracking-wide">{title}</h2>
