@@ -706,14 +706,118 @@ export default function QAPilotoRealPage() {
                   </div>
                 </>
               ) : (
-                <div className="flex items-center justify-between text-sm">
-                  <div>
-                    <div className="font-semibold">{servico.nome}</div>
-                    <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <div className="text-[10px] text-neutral-500 tracking-wide">Item principal</div>
+                      <div className="font-semibold">{servico.nome}</div>
+                      <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { setServico(null); setVenda(null); setContrato(null); setItensExtras([]); }}
+                    >
+                      Trocar
+                    </Button>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { setServico(null); setVenda(null); setContrato(null); }}>
-                    Trocar
-                  </Button>
+
+                  {/* Itens adicionais do pacote (Piloto Real multi-item) */}
+                  {!venda && (
+                    <div className="border-t border-neutral-200 pt-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs font-semibold tracking-wide">
+                          Itens adicionais do pacote {itensExtras.length > 0 && <span className="text-neutral-500 normal-case">({itensExtras.length})</span>}
+                        </div>
+                        {!extraPickerAberto && (
+                          <Button size="sm" variant="outline" onClick={() => setExtraPickerAberto(true)}>
+                            + Adicionar serviço
+                          </Button>
+                        )}
+                      </div>
+
+                      {itensExtras.length === 0 && !extraPickerAberto && (
+                        <p className="text-[11px] text-neutral-500 normal-case">
+                          Use quando o cliente contratou mais de um serviço em uma condição única (ex.: Concessão de CR + Curso Operador de Pistola).
+                        </p>
+                      )}
+
+                      {itensExtras.length > 0 && (
+                        <ul className="space-y-2 mb-2">
+                          {itensExtras.map((ie, idx) => (
+                            <li key={ie.servico.id} className="border border-neutral-200 rounded p-2 flex items-start gap-2">
+                              <div className="flex-1 text-xs">
+                                <div className="font-semibold">{ie.servico.nome}</div>
+                                <div className="text-neutral-500 normal-case">{ie.servico.slug} · catálogo {money(ie.servico.preco)}</div>
+                              </div>
+                              <div className="w-32">
+                                <Label className="text-[10px] text-neutral-500">Preço aplicado</Label>
+                                <Input
+                                  value={ie.precoStr}
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+                                    setItensExtras((prev) => prev.map((p, i) => i === idx ? { ...p, precoStr: v } : p));
+                                  }}
+                                  placeholder="0,00"
+                                  className="bg-white border-neutral-300 h-8 font-mono text-xs mt-1"
+                                  inputMode="decimal"
+                                />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setItensExtras((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-rose-600 hover:text-rose-700"
+                              >
+                                Remover
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {extraPickerAberto && (
+                        <div className="border border-neutral-200 rounded p-2 bg-neutral-50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Input
+                              value={extraQ}
+                              onChange={(e) => setExtraQ(e.target.value)}
+                              placeholder="Filtrar serviço para adicionar…"
+                              className="bg-white border-neutral-300 h-8 uppercase text-xs"
+                            />
+                            <Button size="sm" variant="ghost" onClick={() => { setExtraPickerAberto(false); setExtraQ(""); }}>
+                              Fechar
+                            </Button>
+                          </div>
+                          <div className="max-h-56 overflow-y-auto space-y-1">
+                            {servicosExtraFiltrados.map((s) => (
+                              <button
+                                key={s.id}
+                                onClick={() => {
+                                  setItensExtras((prev) => [
+                                    ...prev,
+                                    { servico: s, precoStr: s.preco != null ? fmtMoneyInput(Number(s.preco)) : "" },
+                                  ]);
+                                  setExtraQ("");
+                                  setExtraPickerAberto(false);
+                                }}
+                                className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-white rounded p-2 text-xs flex justify-between"
+                              >
+                                <span>
+                                  <span className="font-semibold">{s.nome}</span>
+                                  <span className="text-neutral-500 normal-case"> · {s.slug}</span>
+                                </span>
+                                <span className="text-neutral-700">{money(s.preco)}</span>
+                              </button>
+                            ))}
+                            {servicosExtraFiltrados.length === 0 && (
+                              <p className="text-[11px] text-neutral-500 normal-case">Sem serviços disponíveis para adicionar.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
