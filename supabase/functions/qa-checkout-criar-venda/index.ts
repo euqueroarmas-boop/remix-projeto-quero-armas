@@ -51,6 +51,15 @@ interface ExibicaoContratoInput {
   valor_final_pacote?: number | null;
   ocultar_precos_individuais_no_contrato?: boolean;
   motivo?: string | null;
+  // Auditoria estendida do modo "pacote_fechado".
+  tipo_diferenca?: "ajuste_comercial" | "custo_financeiro_adquirente" | null;
+  total_catalogo_servicos?: number | null;
+  valor_total_pago_cliente?: number | null;
+  diferenca_valor?: number | null;
+  custo_financeiro_adquirente?: number | null;
+  adquirente?: string | null;
+  parcelas?: number | null;
+  valor_parcela?: number | null;
 }
 
 interface Body {
