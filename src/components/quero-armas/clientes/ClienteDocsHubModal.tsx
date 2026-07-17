@@ -2832,38 +2832,48 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
+          ) : certidaoIncorreta ? (
+            <div className="flex">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
+              >
+                Cancelar
+              </Button>
+            </div>
           ) : (
-          <div className="flex gap-2.5">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={
-                saving ||
-                extracting ||
-                (!!classificacao && pendingSensitiveKeys().length > 0) ||
-                (temApontamento && reconheceApontamento === null) ||
-                (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
-              }
-              className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
-            >
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-              {saving
-                ? "Salvando..."
-                : classificacao && pendingSensitiveKeys().length > 0
-                  ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
-                  : temApontamento && reconheceApontamento === null
-                    ? "Responda sobre o apontamento"
-                    : temApontamento && reconheceApontamento === "nao" && !homonimiaSalva
-                      ? "Assine a declaração"
-                      : "Salvar documento"}
-            </Button>
-          </div>
+            <div className="flex gap-2.5">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={
+                  saving ||
+                  extracting ||
+                  (!!classificacao && pendingSensitiveKeys().length > 0) ||
+                  (temApontamento && reconheceApontamento === null) ||
+                  (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
+                }
+                className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                {saving
+                  ? "Salvando..."
+                  : classificacao && pendingSensitiveKeys().length > 0
+                    ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
+                    : temApontamento && reconheceApontamento === null
+                      ? "Responda sobre o apontamento"
+                      : temApontamento && reconheceApontamento === "nao" && !homonimiaSalva
+                        ? "Assine a declaração"
+                        : "Salvar documento"}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>
