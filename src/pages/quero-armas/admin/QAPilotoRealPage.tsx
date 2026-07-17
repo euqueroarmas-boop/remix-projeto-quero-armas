@@ -985,6 +985,35 @@ export default function QAPilotoRealPage() {
                   />
                 </div>
               </div>
+              {parcelas > 1 && (
+                <div className="grid grid-cols-2 gap-3 mt-3 border-t border-neutral-200 pt-3">
+                  <div>
+                    <Label className="text-xs">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
+                    <Input
+                      value={adquirente}
+                      onChange={(e) => setAdquirente(e.target.value)}
+                      placeholder="Ex.: STONE"
+                      className="bg-white border-neutral-300 uppercase mt-1"
+                      maxLength={60}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">
+                      Valor bruto parcelado (com juros/tarifa) — R$
+                    </Label>
+                    <Input
+                      value={valorBrutoStr}
+                      onChange={(e) => setValorBrutoStr(e.target.value)}
+                      placeholder="Ex.: 5136,26"
+                      className="bg-white border-neutral-300 font-mono mt-1"
+                      inputMode="decimal"
+                    />
+                    <p className="text-[10px] text-neutral-500 normal-case mt-1">
+                      Total efetivamente cobrado no cartão (parcelas × valor da parcela). Só preencha se houver juros ou tarifa da adquirente — isso entra no contrato como cláusula 3.2.1/3.2.2.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="mt-3">
                 <Label className="text-xs">Observação (mín. 20 caracteres — obrigatória)</Label>
                 <Textarea
