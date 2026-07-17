@@ -583,10 +583,14 @@ export default function ChecklistGuiadoModal({
     }
     if (gateWizardPre(doc, { tipo: "anexar" })) return;
 
-    // Todos os docs permanentes (incluindo comprovante_endereco_ano_*)
-    // sobem pelo Hub de Documentos — o trigger usa data_emissao para
-    // satisfazer apenas o slot do ano correspondente.
-    if (doc && classificarCaixa(doc) === "permanente") {
+    // Todos os docs permanentes sobem pelo Hub de Documentos.
+    // Exceção: certidao_alteracao_nome tem reconciliação especial de nome
+    // que só funciona via validar-ia (processo path) — nunca via Hub.
+    if (
+      doc &&
+      doc.tipo_documento !== TIPO_CERTIDAO_ALTERACAO_NOME &&
+      classificarCaixa(doc) === "permanente"
+    ) {
       setHubModalTipo(toHubTipo(doc.tipo_documento));
       return;
     }
