@@ -2832,8 +2832,7 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : (
-          {certidaoIncorreta ? (
+          ) : certidaoIncorreta ? (
             <div className="flex">
               <Button
                 variant="outline"
@@ -2875,7 +2874,6 @@ export function ClienteDocsHubModal({
                         : "Salvar documento"}
               </Button>
             </div>
-          )}
           )}
         </div>
       </DialogContent>
