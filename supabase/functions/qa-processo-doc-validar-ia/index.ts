@@ -811,7 +811,28 @@ Deno.serve(async (req) => {
           cx.matricula ??
           "",
       ).trim();
-      const ucDigits = ucBruto.replace(/\D+/g, "");
+      let ucDigits = ucBruto.replace(/\D+/g, "");
+      // === Sanity checks anti-alucinação ===
+      // 1) UC de concessionária tem >= 8 dígitos. NF típica tem 6-9 e vem "021.024.229".
+      //    EDP em SP usa 14 dígitos (0.000.XXX.XXX.XXX-XX). Rejeitamos < 8.
+      if (ucDigits && ucDigits.length < 8) ucDigits = "";
+      // 2) Rejeita se o valor coincide com número de NF, chave de acesso, protocolo,
+      //    código de barras, CPF do titular ou algo que apareça em observações como NF.
+      if (ucDigits) {
+        const camposConflito = [
+          cx.numero_nota, cx.numero_nf, cx.nota_fiscal, cx.numero_fatura,
+          cx.chave_acesso, cx.chave_nfe, cx.protocolo_autorizacao, cx.protocolo,
+          cx.codigo_barras, cx.linha_digitavel,
+          cx.cpf_cnpj_titular, cx.cpf,
+        ]
+          .map((v) => String(v ?? "").replace(/\D+/g, ""))
+          .filter((v) => v.length >= 6);
+        const obs = String(cx.observacoes ?? cx.observacao ?? "").toUpperCase();
+        const bateNF = /NOTA\s*FISCAL[^0-9]*([0-9\.\-\/]+)/i.exec(obs)?.[1]?.replace(/\D+/g, "") || "";
+        if (camposConflito.includes(ucDigits) || (bateNF && ucDigits === bateNF)) {
+          ucDigits = "";
+        }
+      }
       if (ucDigits) {
         cx.codigo_instalacao = ucDigits;
         cx.numero_documento = ucDigits;
