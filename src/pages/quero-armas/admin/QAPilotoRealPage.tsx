@@ -886,6 +886,94 @@ export default function QAPilotoRealPage() {
             <Card title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
                 <div className="space-y-3">
+                  {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
+                  {temExtras && (
+                    <div className="rounded border border-amber-300 bg-amber-50/60 p-3 space-y-2">
+                      <div className="text-xs font-semibold tracking-wide text-amber-900">
+                        Como exibir o valor no contrato? <span className="text-rose-600">*</span>
+                      </div>
+                      <div className="space-y-2 text-[11px] normal-case">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            className="mt-0.5"
+                            name="modo_exibicao"
+                            checked={modoExibicao === "itens_separados"}
+                            onChange={() => setModoExibicao("itens_separados")}
+                          />
+                          <span>
+                            <strong>Itens separados.</strong> O contrato lista cada serviço com seu preço
+                            individual e depois o total. Preços editáveis por item na seção acima.
+                          </span>
+                        </label>
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            className="mt-0.5"
+                            name="modo_exibicao"
+                            checked={modoExibicao === "pacote_fechado"}
+                            onChange={() => setModoExibicao("pacote_fechado")}
+                          />
+                          <span>
+                            <strong>Pacote fechado / valor final único.</strong> O contrato lista os serviços
+                            contratados <em>sem</em> preço individual e exibe apenas o valor final do pacote e
+                            a condição de pagamento. Itens continuam vinculados internamente (cada um gera seu
+                            processo/entrega/checklist).
+                          </span>
+                        </label>
+                      </div>
+
+                      {modoPacote && (
+                        <div className="border-t border-amber-300 pt-2 space-y-2">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-[11px] text-neutral-600">
+                                Valor final do pacote (R$) <span className="text-rose-600">*</span>
+                              </Label>
+                              <Input
+                                value={valorFinalPacoteStr}
+                                onChange={(e) => setValorFinalPacoteStr(e.target.value)}
+                                placeholder="Ex.: 5136,26"
+                                className="bg-white border-neutral-300 h-9 mt-1 font-mono"
+                                inputMode="decimal"
+                              />
+                              <p className="text-[10px] text-neutral-500 normal-case mt-1">
+                                Total catálogo: {money(precoCatalogo)}. O catálogo NÃO será alterado.
+                              </p>
+                            </div>
+                            <div className="text-[11px] normal-case">
+                              <Label className="text-[11px] text-neutral-600">Distribuição interna (auditoria)</Label>
+                              <ul className="mt-1 space-y-0.5 font-mono text-[10px] text-neutral-600">
+                                {servico && (
+                                  <li>• {servico.slug}: {money(precoAplicadoPrincipal)}</li>
+                                )}
+                                {extrasAvaliados.map((e) => (
+                                  <li key={e.ie.servico.id}>• {e.ie.servico.slug}: {money(e.aplicado)}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                          {precoDiferente && (
+                            <div>
+                              <Label className="text-[11px] text-neutral-600">
+                                Motivo/observação do valor do pacote (mín. 20 caracteres) <span className="text-rose-600">*</span>
+                              </Label>
+                              <Textarea
+                                value={motivoPacote}
+                                onChange={(e) => setMotivoPacote(e.target.value)}
+                                placeholder="Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO, 18X DE R$285,35 VIA STONE."
+                                className="bg-white border-neutral-300 min-h-[70px] normal-case mt-1"
+                              />
+                              <div className="text-[10px] text-neutral-500 normal-case mt-1">
+                                {motivoPacote.trim().length} caracteres
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="rounded border border-neutral-200 bg-neutral-50 p-3 space-y-2">
                     <div className="text-xs font-semibold tracking-wide">
                       Preço aplicado {itensExtras.length > 0 ? "no pacote" : "nesta venda"}
