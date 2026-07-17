@@ -15,6 +15,11 @@ const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal
 function canAccessRoute(perfil: string, pathname: string): boolean {
   const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/modelos-declaracao", "/correcoes-ia", "/correcoes-ia/"];
   const blockedForAssistente = ["/configuracoes"];
+  // Piloto Real (contratação assistida) — restrito a administrador.
+  const adminOnly = ["/admin/piloto-real"];
+  if (adminOnly.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+    if (perfil !== "administrador") return false;
+  }
   if (perfil === "leitura_auditoria") {
     return !blockedForLeitura.some((p) => pathname === p || pathname.startsWith(p + "/"));
   }
