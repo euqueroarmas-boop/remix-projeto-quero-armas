@@ -162,16 +162,33 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   };
 
   // Título (contrato) sempre no topo
-  writeParagraph(contractDownloadBaseName(contract), { size: 13, bold: true, align: "center", upper: true, lineGap: 4 });
-  writeParagraph(`Nº ${contract.contract_number || contract.id} · Pedido ${contract.venda_id ?? "—"}`, { size: 9, align: "center", lineGap: 12 });
+  writeParagraph(contractDownloadBaseName(contract), { size: 13, bold: true, align: "center", upper: true, lineGap: 6 });
+  writeParagraph(`Nº ${contract.contract_number || contract.id} · Pedido ${contract.venda_id ?? "—"}`, { size: 9, align: "center", lineGap: 24 });
 
+  // Espaço extra antes de novos tópicos (h1/h2/h3) para separar visualmente as seções.
+  const TOPIC_GAP_H1 = 22;
+  const TOPIC_GAP_H2 = 18;
+  const TOPIC_GAP_H3 = 12;
+
+  let firstBlock = true;
   for (const b of blocks) {
-    if (b.kind === "h1") writeParagraph(b.text, { size: 13, bold: true, align: "center", upper: true, lineGap: 8 });
-    else if (b.kind === "h2") writeParagraph(b.text, { size: 11, bold: true, upper: true, lineGap: 6 });
-    else if (b.kind === "h3") writeParagraph(b.text, { size: 10, bold: true, upper: true, lineGap: 4 });
-    else if (b.kind === "p")  writeParagraph(b.text, { size: 10, align: "justify", lineGap: 6 });
-    else if (b.kind === "li") writeParagraph(b.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 3 });
-    else if (b.kind === "hr") { ensureSpace(12); doc.setDrawColor(180); doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y); y += 12; }
+    if (b.kind === "h1") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H1); y += TOPIC_GAP_H1; }
+      writeParagraph(b.text, { size: 13, bold: true, align: "center", upper: true, lineGap: 12 });
+    } else if (b.kind === "h2") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H2); y += TOPIC_GAP_H2; }
+      writeParagraph(b.text, { size: 11, bold: true, upper: true, lineGap: 10 });
+    } else if (b.kind === "h3") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H3); y += TOPIC_GAP_H3; }
+      writeParagraph(b.text, { size: 10, bold: true, upper: true, lineGap: 8 });
+    } else if (b.kind === "p") {
+      writeParagraph(b.text, { size: 10, align: "justify", lineGap: 8 });
+    } else if (b.kind === "li") {
+      writeParagraph(b.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 5 });
+    } else if (b.kind === "hr") {
+      ensureSpace(18); y += 6; doc.setDrawColor(180); doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y); y += 14;
+    }
+    firstBlock = false;
   }
 
   // Rodapé probatório (aceite eletrônico)
