@@ -1183,7 +1183,7 @@ export default function ChecklistGuiadoModal({
     <>
       <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
         <DialogContent
-          className="qa-scope w-[calc(100vw-1rem)] max-w-3xl sm:max-w-4xl lg:max-w-5xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
+          className="qa-scope w-[calc(100vw-1rem)] max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[96dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
         >
           {/* Cabeçalho */}
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
@@ -1633,7 +1633,7 @@ export default function ChecklistGuiadoModal({
                   <ShieldCheck className="h-8 w-8" />
                 </div>
                 <h3 className="text-lg font-extrabold text-slate-900">Documento recebido</h3>
-                <p className="max-w-sm text-sm text-slate-500">Sua parte está feita. Este documento passará por uma conferência da Equipe Quero Armas. Você pode seguir para o próximo item.</p>
+                <p className="max-w-sm text-sm text-slate-500">Sua parte está feita. O documento está sendo analisado e será processado em breve. Você pode seguir para o próximo item.</p>
                 <button onClick={() => continuarAposResultado()} className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: MARROM }}>
                   Continuar <ArrowRight className="h-4 w-4" />
                 </button>
