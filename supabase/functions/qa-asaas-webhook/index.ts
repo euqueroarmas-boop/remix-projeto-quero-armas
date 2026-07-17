@@ -201,8 +201,18 @@ Deno.serve(async (req) => {
   });
 
   // ---- payment.id vs qa_vendas.asaas_payment_id ----
+  // Correção 5: PAYMENT_CREATED de um payment diferente do registrado na venda é
+  // descartado silenciosamente. Ocorre quando qa-cliente-cobranca-inline gera uma
+  // segunda cobrança (ex: troca PIX → cartão) antes do asaas_payment_id da venda
+  // ser atualizado. Logar como mismatch (erro) neste caso poluía o log e mascarava
+  // erros reais. Eventos de confirmação/vencimento/estorno com payment divergente
+  // continuam logados como mismatch — esses indicam problema real.
   let backfilled = false;
   if (venda.asaas_payment_id && venda.asaas_payment_id !== paymentId) {
+    if (event === "PAYMENT_CREATED") {
+      await finalize("ignored", `payment_created_divergente: expected=${venda.asaas_payment_id} got=${paymentId}`);
+      return json({ ignored: "payment_created_divergente" }, 200);
+    }
     await finalize("mismatch", `expected=${venda.asaas_payment_id} got=${paymentId}`);
     await logSistemaBackend({
       tipo: "webhook", status: "error",
