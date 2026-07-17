@@ -20,11 +20,15 @@ Esta base foi validada via fluxo real (login cliente → upload storage → qa-p
 10. E-mail por pendência específica (`qa-processo-notificar`).
 11. Documentos aprovados ou `dispensado_grupo` NÃO são re-solicitados em troca de condição.
 12. Reconciliação de campos vazios: `cadVazio` trata "", "none", "null", "n/a" como vazio (sem falsa divergência).
+13. Certidão Federal TRF3 Regional, TJM-SP e STM têm validade canônica de 90 dias da emissão; se vigente no Hub, deve ser reaproveitada automaticamente por qualquer processo que a exija.
+14. Certidões granulares nunca são re-solicitadas quando há documento equivalente vigente no Hub; equivalências oficiais: TRF3→`antecedentes_federal`, TJM-SP/STM→`antecedentes_militar`, TSE→`antecedentes_eleitoral`, TJSP→`antecedentes_estadual`, Polícia Civil→`antecedentes_criminais`.
 
 ## Proibições explícitas
 - Não reescrever a Central de Documentos do zero.
 - Não trocar/renomear status (`em_analise`, `aprovado`, `invalido`, `dispensado_grupo`, etc).
 - Não voltar a agrupar certidões.
+- Não tratar TJM-SP como certidão estadual comum; TJM-SP é militar e deve mapear para `antecedentes_militar`.
+- Não pedir nova certidão enquanto houver equivalente aprovado e vigente no Hub documental.
 - Não remover `dispensado_grupo`.
 - Não alterar regras de validação IA sem autorização.
 - Não enfraquecer enforcement pré-IA (formato/tamanho).
