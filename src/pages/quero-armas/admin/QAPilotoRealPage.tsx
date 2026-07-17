@@ -1018,7 +1018,7 @@ export default function QAPilotoRealPage() {
                         </div>
                       </div>
                     )}
-                    {precoValido && precoDiferente && (
+                    {precoValido && precoDiferente && !modoPacote && (
                       <>
                         <div className="grid grid-cols-2 gap-3 mt-2">
                           <div>
