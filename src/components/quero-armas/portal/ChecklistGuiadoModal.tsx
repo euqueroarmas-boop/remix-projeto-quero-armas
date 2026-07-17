@@ -583,10 +583,14 @@ export default function ChecklistGuiadoModal({
     }
     if (gateWizardPre(doc, { tipo: "anexar" })) return;
 
-    // Docs permanentes sobem pelo Hub de Documentos (fonte canônica).
-    // Usa classificarCaixa (mesma lógica das 3 caixas) para cobrir tanto
-    // escopo='permanente' no banco quanto o fallback por tipo_documento.
-    if (doc && classificarCaixa(doc) === "permanente") {
+    // Docs permanentes sobem pelo Hub de Documentos (fonte canônica),
+    // EXCETO comprovante_endereco_ano_* — o CR exige um comprovante
+    // distinto por ano (5 documentos separados de anos diferentes).
+    // O Hub trata comprovante_residencia como slot único e bloquearia
+    // duplicatas; cada ano precisa do caminho processo para manter
+    // o slot correto independente.
+    const ehComprovAnual = /^comprovante_endereco_ano_/.test(doc?.tipo_documento ?? "");
+    if (doc && !ehComprovAnual && classificarCaixa(doc) === "permanente") {
       setHubModalTipo(toHubTipo(doc.tipo_documento));
       return;
     }
