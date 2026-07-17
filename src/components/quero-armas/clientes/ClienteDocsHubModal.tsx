@@ -832,6 +832,16 @@ export function ClienteDocsHubModal({
 
   const tiposDisponiveis = listTiposByCategoria(categoriaHub);
   const tipoAtual = getTipoDocumentoMeta(form.tipo_documento) ?? tiposDisponiveis[0] ?? null;
+  // Tipo exigido pelo Assistente de Documentação (quando o modal é aberto a partir
+  // de um slot específico do checklist). Mantemos este valor "congelado" para exibir
+  // sob o DOSSIÊ e comparar contra a classificação da IA.
+  const expectedTipoMeta = defaultTipo ? (getTipoDocumentoMeta(defaultTipo) ?? null) : null;
+  const tipoDivergenteExigencia = !!(
+    expectedTipoMeta &&
+    classificacao &&
+    form.tipo_documento &&
+    form.tipo_documento !== expectedTipoMeta.value
+  );
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
   // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
