@@ -1363,16 +1363,34 @@ export default function QAPilotoRealPage() {
                 <div className="text-xs text-neutral-500 normal-case mt-1">{observacao.trim().length} caracteres</div>
               </div>
               <div className="mt-3">
-                <Label className="text-xs">Comprovante (PDF/JPG/PNG/ZIP/RAR — obrigatório)</Label>
+                <Label className="text-xs">Comprovante (PDF/JPG/PNG — obrigatório)</Label>
                 <div className="flex items-center gap-2 mt-1">
                   <Input
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.zip,.rar,.7z,application/pdf,image/*,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed"
-                    onChange={(e) => { setComprovante(e.target.files?.[0] ?? null); setComprovantePath(null); }}
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,application/pdf,image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      if (f) {
+                        const name = f.name.toLowerCase();
+                        if (/\.(zip|rar|7z)$/i.test(name)) {
+                          toast.error("Comprovante de pagamento deve ser PDF/JPG/PNG. Use o campo Evidência (passo 3) para arquivos ZIP/RAR do WhatsApp.");
+                          e.target.value = "";
+                          setComprovante(null);
+                          setComprovantePath(null);
+                          return;
+                        }
+                      }
+                      setComprovante(f);
+                      setComprovantePath(null);
+                    }}
                     className="bg-white border-neutral-300 normal-case"
                   />
                   {comprovantePath && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                 </div>
+                <p className="text-[10px] text-neutral-500 normal-case mt-1">
+                  Arquivos ZIP/RAR (export do WhatsApp) devem ser anexados no passo 3 como
+                  <strong> Evidência de negociação</strong>, não como comprovante.
+                </p>
                 {comprovantePath && (
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
