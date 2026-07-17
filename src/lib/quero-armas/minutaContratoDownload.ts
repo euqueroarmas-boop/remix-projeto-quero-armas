@@ -8,6 +8,7 @@ type OpenMinutaArgs = {
   contractNumber?: string | null;
   vendaId?: number | string | null;
   slugs?: string[];
+  variant?: "company_signed" | "customer_signed";
 };
 
 export type PreparedMinutaDownload = {
@@ -37,7 +38,7 @@ async function sessionHeaders() {
   };
 }
 
-function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "download_url" | "html_preview") {
+function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "customer_signed" | "download_url" | "html_preview") {
   return JSON.stringify({
     contract_id: args.contractId,
     venda_id: args.vendaId ? Number(args.vendaId) : undefined,
@@ -51,12 +52,11 @@ export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Pro
   const headers = await sessionHeaders();
   const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
 
-  // Baixa direto o PDF assinado (company_signed) — a variante html_preview
-  // não é suportada pela edge function e resulta em 400 variant_desconhecida.
+  const resolvedVariant = args.variant ?? "company_signed";
   const resp = await fetch(endpoint, {
     method: "POST",
     headers,
-    body: contractRequestBody(args, "company_signed"),
+    body: contractRequestBody(args, resolvedVariant),
   });
 
   if (!resp.ok) {

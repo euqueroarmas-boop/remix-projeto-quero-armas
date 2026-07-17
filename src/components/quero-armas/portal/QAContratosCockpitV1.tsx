@@ -242,6 +242,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       contractId: featured.id,
       contractNumber: featured.contract_number,
       vendaId: featured.venda_id,
+      variant: featured.status === "validated" ? "customer_signed" : "company_signed",
     })
       .then((prepared) => {
         if (!alive) {
@@ -282,6 +283,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         contractId: featured.id,
         contractNumber: featured.contract_number,
         vendaId: featured.venda_id,
+        variant: featured.status === "validated" ? "customer_signed" : "company_signed",
       });
       toast.success("Contrato pronto para baixar.", { id: toastId });
     } catch (e) {
