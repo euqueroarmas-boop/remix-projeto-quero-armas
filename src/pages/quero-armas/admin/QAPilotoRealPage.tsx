@@ -1172,6 +1172,102 @@ export default function QAPilotoRealPage() {
                             </div>
                           )}
 
+                          {modoPacoteCustoFin && (
+                            <div className="rounded border border-neutral-300 bg-white/70 p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[11px] text-neutral-700 font-semibold">
+                                  Custos operacionais embutidos no parcelamento
+                                </Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 text-[11px]"
+                                  onClick={() =>
+                                    setCustosEmbutidos((prev) => [...prev, { descricao: "", valorStr: "" }])
+                                  }
+                                >
+                                  + Adicionar custo
+                                </Button>
+                              </div>
+                              <p className="text-[10px] text-neutral-500 normal-case">
+                                Repasses de terceiros pagos pelo cliente e embutidos no parcelamento
+                                (ex.: exames psicotécnico/toxicológico, GRU, taxas de despachante). NÃO são
+                                serviços da CONTRATADA. Entram na Cláusula 1.A do contrato como custos
+                                operacionais somados ao valor contratado, e o cálculo dos juros da
+                                adquirente passa a considerar esse total.
+                              </p>
+                              {custosEmbutidos.length === 0 && (
+                                <p className="text-[10px] text-neutral-400 normal-case italic">
+                                  Nenhum custo embutido informado.
+                                </p>
+                              )}
+                              {custosEmbutidos.map((c, idx) => (
+                                <div key={idx} className="grid grid-cols-[1fr_120px_auto] gap-2 items-end">
+                                  <div>
+                                    <Label className="text-[10px] text-neutral-500">Descrição</Label>
+                                    <Input
+                                      value={c.descricao}
+                                      onChange={(e) =>
+                                        setCustosEmbutidos((prev) =>
+                                          prev.map((x, i) => (i === idx ? { ...x, descricao: e.target.value } : x)),
+                                        )
+                                      }
+                                      placeholder="Ex.: EXAMES PSICO+TOXI / GRU / DESPACHANTE"
+                                      className="bg-white border-neutral-300 h-8 mt-1 text-[11px] uppercase"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-[10px] text-neutral-500">Valor (R$)</Label>
+                                    <Input
+                                      value={c.valorStr}
+                                      onChange={(e) =>
+                                        setCustosEmbutidos((prev) =>
+                                          prev.map((x, i) => (i === idx ? { ...x, valorStr: e.target.value } : x)),
+                                        )
+                                      }
+                                      placeholder="0,00"
+                                      inputMode="decimal"
+                                      className="bg-white border-neutral-300 h-8 mt-1 font-mono text-[11px]"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-[11px] text-rose-600 hover:text-rose-700"
+                                    onClick={() =>
+                                      setCustosEmbutidos((prev) => prev.filter((_, i) => i !== idx))
+                                    }
+                                  >
+                                    Remover
+                                  </Button>
+                                </div>
+                              ))}
+                              {custosEmbutidosValidos.length > 0 && (
+                                <div className="grid grid-cols-3 gap-3 text-[11px] normal-case border-t border-neutral-200 pt-2">
+                                  <div>
+                                    <span className="text-neutral-500">Serviços (catálogo):</span>{" "}
+                                    <span className="font-mono">{money(precoCatalogo)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-neutral-500">Custos embutidos:</span>{" "}
+                                    <span className="font-mono">{money(custosEmbutidosTotal)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-neutral-500">Valor contratado (1.A.2):</span>{" "}
+                                    <span className="font-mono">{money(valorContratadoPacote)}</span>
+                                  </div>
+                                  <div className="col-span-3 text-[10px] text-neutral-500">
+                                    Juros/tarifa da adquirente = {money(valorFinalPacoteNum)} −{" "}
+                                    {money(valorContratadoPacote)} ={" "}
+                                    <span className="font-mono">{money(custoFinanceiroAdquirente)}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {temDiferencaPacote && (
                             <div>
                               <Label className="text-[11px] text-neutral-600">
