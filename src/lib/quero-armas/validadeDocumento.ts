@@ -23,8 +23,6 @@ export interface DocValidadeInput {
   data_validade?: string | null;
   ano_competencia?: number | string | null;
   regra_validacao?: any;
-  /** Sobrescreve o prazo padrão de negócio para este documento, se informado. */
-  validade_dias?: number | null;
 }
 
 export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido" | "historico";
@@ -78,23 +76,6 @@ export function isCertidaoCivilSemVencimento(tipo?: string | null): boolean {
   if (CERTIDAO_CIVIL_TIPOS.has(t)) return true;
   // cobre variações tipo `certidao_nascimento_averbada`, `certidao_casamento_v2`
   return /^certidao_(nascimento|casamento|averbacao|alteracao_nome)(_|$)/.test(t);
-}
-
-/**
- * Certidões negativas / antecedentes (federal — inclusive abrangência
- * regional —, estadual, militar, eleitoral/TSE, distribuidor cível ou
- * criminal, nada consta) valem 90 dias da data de emissão. Enquanto
- * estiverem vigentes devem ser reaproveitadas por qualquer processo que
- * as exija — nunca pedidas novamente.
- */
-export function isCertidao90Dias(tipo?: string | null): boolean {
-  if (!tipo) return false;
-  const t = String(tipo).toLowerCase();
-  if (isCertidaoCivilSemVencimento(t)) return false;
-  if (t.startsWith("antecedentes")) return true; // criminais, federal, estadual, militar, eleitoral
-  if (t.startsWith("nada_consta")) return true;
-  if (t.startsWith("certidao_")) return true;    // criminal, distribuidor, tse, etc.
-  return false;
 }
 
 function parseISODate(s?: string | null): Date | null {
@@ -167,25 +148,14 @@ function isResidenciaDoc(doc: DocValidadeInput): boolean {
 export function calcularValidadeEfetiva(
   tipo: string | null | undefined,
   dataEmissao: string | null | undefined,
-  validadeDiasOverride?: number | null,
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
-  // Prazo por tipo:
-  //  - Certidões negativas / antecedentes (federal — inclusive abrangência
-  //    regional —, estadual, militar, eleitoral/TSE, distribuidor, nada
-  //    consta) → 90 dias.
-  //  - Comprovante de residência → 30 dias (ciclo mensal).
-  //  - Demais → 30 dias.
-  // Override explícito (regra_validacao.validade_dias) vence tudo.
-  let dias = 30;
-  if (Number.isFinite(validadeDiasOverride as number) && (validadeDiasOverride as number) > 0) {
-    dias = Number(validadeDiasOverride);
-  } else if (isCertidao90Dias(tipo)) {
-    dias = 90;
-  }
+  // Regra única: emissão + 30 dias (ciclo mensal — cobre também o
+  // comprovante de residência, cuja validade vai da emissão de uma
+  // conta até a emissão da próxima).
   const v = new Date(emi.getTime());
-  v.setUTCDate(v.getUTCDate() + dias);
+  v.setUTCDate(v.getUTCDate() + 30);
   return toISO(v);
 }
 
@@ -226,12 +196,7 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   }
 
   // 1) Preferência: recálculo a partir de data_emissao (regra oficial).
-  const override =
-    (doc.regra_validacao && typeof doc.regra_validacao === "object"
-      ? Number(doc.regra_validacao.validade_dias)
-      : null) ||
-    (Number.isFinite(doc.validade_dias as number) ? Number(doc.validade_dias) : null);
-  let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao, override);
+  let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao);
   let origem: ValidadeInfo["origem"] = iso ? "regra_negocio" : "indefinido";
 
   // 2) Fallback: valor já gravado pelo backend.
