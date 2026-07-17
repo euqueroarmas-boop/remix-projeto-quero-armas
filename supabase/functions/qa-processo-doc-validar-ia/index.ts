@@ -801,6 +801,23 @@ Deno.serve(async (req) => {
     // promovemos para flag operacional + remove divergência de nome.
     if (doc.tipo_documento === "comprovante_residencia") {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
+      // Número do documento = código de instalação/UC/matrícula da concessionária.
+      // NUNCA usar CPF como numero_documento aqui — o CPF é do titular, não da conta.
+      const ucBruto = String(
+        cx.codigo_instalacao ??
+          cx.numero_uc ??
+          cx.uc ??
+          cx.numero_instalacao ??
+          cx.matricula ??
+          "",
+      ).trim();
+      const ucDigits = ucBruto.replace(/\D+/g, "");
+      if (ucDigits) {
+        cx.codigo_instalacao = ucDigits;
+        cx.numero_documento = ucDigits;
+      } else if (!cx.numero_documento) {
+        cx.numero_documento = "";
+      }
       const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
       const nomeCadastro = String(cliente?.nome_completo ?? cliente?.nome ?? "").trim();
       const flagIA = cx.endereco_em_nome_de_terceiro === true || cx.endereco_em_nome_de_terceiro === "true";
