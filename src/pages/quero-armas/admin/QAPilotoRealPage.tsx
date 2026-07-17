@@ -311,17 +311,6 @@ export default function QAPilotoRealPage() {
       ? (!temDiferencaPacote || (motivoPacoteOk && custoFinCamposOk))
       : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
 
-  // Quando o Passo 3 já capturou adquirente/parcelas do pacote em custo financeiro,
-  // pré-preenche o Passo 5 (pagamento manual) para o operador só confirmar.
-  useEffect(() => {
-    if (!modoPacoteCustoFin) return;
-    if (Number.isFinite(valorFinalPacoteNum) && valorFinalPacoteNum > 0) {
-      setValorBrutoStr(valorFinalPacoteNum.toFixed(2).replace(".", ","));
-    }
-    if (adquirentePacote.trim()) setAdquirente(adquirentePacote.trim().toUpperCase());
-    if (parcelasPacote > 0) setParcelas(parcelasPacote);
-    setForma("CARTÃO DE CRÉDITO");
-  }, [modoPacoteCustoFin, valorFinalPacoteNum, adquirentePacote, parcelasPacote]);
 
   const uploadEvidencia = useCallback(async () => {
     if (!evidenciaFile || !cliente || !servico) return null;
