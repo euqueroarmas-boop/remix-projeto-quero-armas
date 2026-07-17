@@ -545,6 +545,20 @@ Deno.serve(async (req) => {
         ocultar_precos_individuais_no_contrato: exib.modo === "pacote_fechado",
         motivo: exib.motivo ? String(exib.motivo).trim() : null,
         total_snapshot: totalCents / 100,
+        tipo_diferenca: exib.tipo_diferenca ?? null,
+        total_catalogo_servicos:
+          exib.total_catalogo_servicos != null ? Number(exib.total_catalogo_servicos) : null,
+        valor_total_pago_cliente:
+          exib.valor_total_pago_cliente != null ? Number(exib.valor_total_pago_cliente) : null,
+        diferenca_valor:
+          exib.diferenca_valor != null ? Number(exib.diferenca_valor) : null,
+        custo_financeiro_adquirente:
+          exib.custo_financeiro_adquirente != null
+            ? Number(exib.custo_financeiro_adquirente)
+            : null,
+        adquirente: exib.adquirente ? String(exib.adquirente).trim().toUpperCase() : null,
+        parcelas: exib.parcelas != null ? Number(exib.parcelas) : null,
+        valor_parcela: exib.valor_parcela != null ? Number(exib.valor_parcela) : null,
       },
     });
   }
