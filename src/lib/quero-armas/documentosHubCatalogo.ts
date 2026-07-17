@@ -115,6 +115,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "cin", label: "CIN — Carteira de Identidade Nacional", short: "CIN", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "cnh", label: "CNH — Carteira Nacional de Habilitação", short: "CNH", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "cpf", label: "CPF", short: "CPF", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "certidao_alteracao_nome", label: "Certidão averbada de alteração de nome", short: "AVERBADA", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "comprovante_residencia", label: "Comprovante de residência", short: "END", categoria: "endereco", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "declaracao_responsavel_imovel", label: "Declaração do responsável pelo imóvel", short: "DECL. IMÓVEL", categoria: "endereco", escopo: "permanente" },
   { value: "ctps", label: "Carteira de Trabalho (CTPS)", short: "CTPS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
