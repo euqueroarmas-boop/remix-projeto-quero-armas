@@ -1386,11 +1386,21 @@ export function ClienteDocsHubModal({
           "iptu",
         ]);
         const usaMesAno = tiposComRecorrencia.has(String(form.tipo_documento));
+        // Certidões (TSE, criminais, distribuidor etc.) mantêm o mesmo número
+        // de inscrição/registro a cada reemissão. Só bloqueia se a data de
+        // emissão for idêntica — nova emissão é sempre permitida.
+        const ehCertidao = String(form.tipo_documento || "").startsWith("certidao");
         const mesAnoNovo = (form.data_emissao || "").slice(0, 7); // YYYY-MM
         const dup = (existsNum as any[] | null)?.find((d) => {
           const mesmoNumero =
             (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm;
           if (!mesmoNumero) return false;
+          if (ehCertidao) {
+            const emiNova = String(form.data_emissao || "").slice(0, 10);
+            const emiExist = String(d.data_emissao || "").slice(0, 10);
+            if (!emiNova || !emiExist) return true;
+            return emiNova === emiExist;
+          }
           if (!usaMesAno) return true;
           const mesAnoExistente = String(d.data_emissao || "").slice(0, 7);
           // Se algum lado não tem data, cai para o bloqueio antigo (evita brechas).
@@ -1398,9 +1408,11 @@ export function ClienteDocsHubModal({
           return mesAnoNovo === mesAnoExistente;
         });
         if (dup) {
-          const sufixo = usaMesAno && mesAnoNovo
-            ? ` (referência ${mesAnoNovo.split("-").reverse().join("/")})`
-            : "";
+          const sufixo = ehCertidao && form.data_emissao
+            ? ` (emitida em ${form.data_emissao.split("-").reverse().join("/")})`
+            : usaMesAno && mesAnoNovo
+              ? ` (referência ${mesAnoNovo.split("-").reverse().join("/")})`
+              : "";
           toast.error(
             `Já existe um ${tipoLabel} com o número ${form.numero_documento}${sufixo} para este cliente.`,
           );
