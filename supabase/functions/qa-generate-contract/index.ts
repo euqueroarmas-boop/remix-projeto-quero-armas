@@ -350,21 +350,62 @@ Deno.serve(async (req) => {
   // além do que já aparece nos Anexos filtrados por slug.
   // ---------------------------------------------------------------------------
   let itensContratadosBloco = "";
+  // Lê o modo de exibição escolhido no wizard/checkout.
+  let modoExibicaoContrato: "itens_separados" | "pacote_fechado" = "itens_separados";
+  let valorFinalPacoteEvento: number | null = null;
+  try {
+    const { data: exibEv } = await sb
+      .from("qa_venda_eventos")
+      .select("dados_json")
+      .eq("venda_id", venda.id)
+      .eq("tipo_evento", "venda_exibicao_contrato_definida")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const dj = (exibEv as any)?.dados_json ?? null;
+    if (dj?.modo_exibicao_valor_contrato === "pacote_fechado") {
+      modoExibicaoContrato = "pacote_fechado";
+      const vf = Number(dj.valor_final_pacote);
+      valorFinalPacoteEvento = Number.isFinite(vf) && vf > 0 ? vf : null;
+    }
+  } catch (e) {
+    console.warn("[qa-generate-contract] falha ao ler modo de exibição:", (e as any)?.message || e);
+  }
+  const totalContratoCents =
+    modoExibicaoContrato === "pacote_fechado" && valorFinalPacoteEvento != null
+      ? Math.round(valorFinalPacoteEvento * 100)
+      : totalCents;
+
   if (snapshot.length > 1) {
-    const linhas = snapshot
-      .map((s) => {
-        const nome = esc(s.service_name_snapshot || "");
-        const preco = brl(Number(s.total_price_cents || 0));
-        return `<li><strong>${nome}</strong> — ${preco}</li>`;
-      })
-      .join("");
-    itensContratadosBloco =
-      `<h2>CLÁUSULA PRIMEIRA-A --- DOS ITENS CONTRATADOS EM CONJUNTO</h2>` +
-      `<p>1.A.1. A CONTRATANTE contratou, em condição única de pacote, os serviços abaixo, ` +
-      `cada qual regido pelo respectivo Anexo I:</p>` +
-      `<ul>${linhas}</ul>` +
-      `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalCents)}</strong>, ` +
-      `equivalente à soma dos itens acima na condição comercial acordada no momento do aceite eletrônico.</p>`;
+    if (modoExibicaoContrato === "pacote_fechado") {
+      const linhas = snapshot
+        .map((s) => `<li><strong>${esc(s.service_name_snapshot || "")}</strong></li>`)
+        .join("");
+      itensContratadosBloco =
+        `<h2>CLÁUSULA PRIMEIRA-A --- DO PACOTE CONTRATADO</h2>` +
+        `<p>1.A.1. A CONTRATANTE contratou, em condição comercial única de pacote fechado, ` +
+        `os serviços listados abaixo, cada qual regido pelo respectivo Anexo I:</p>` +
+        `<ul>${linhas}</ul>` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>. ` +
+        `Por se tratar de condição comercial de pacote, não há discriminação de preço por serviço ` +
+        `neste instrumento — a condição de pagamento (parcelamento e adquirente, quando houver) é ` +
+        `detalhada na CLÁUSULA TERCEIRA.</p>`;
+    } else {
+      const linhas = snapshot
+        .map((s) => {
+          const nome = esc(s.service_name_snapshot || "");
+          const preco = brl(Number(s.total_price_cents || 0));
+          return `<li><strong>${nome}</strong> — ${preco}</li>`;
+        })
+        .join("");
+      itensContratadosBloco =
+        `<h2>CLÁUSULA PRIMEIRA-A --- DOS ITENS CONTRATADOS EM CONJUNTO</h2>` +
+        `<p>1.A.1. A CONTRATANTE contratou, em condição única de pacote, os serviços abaixo, ` +
+        `cada qual regido pelo respectivo Anexo I:</p>` +
+        `<ul>${linhas}</ul>` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>, ` +
+        `equivalente à soma dos itens acima na condição comercial acordada no momento do aceite eletrônico.</p>`;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -388,7 +429,7 @@ Deno.serve(async (req) => {
       const adquirente = dj.adquirente ? String(dj.adquirente).trim() : "";
       const valorBruto = Number(dj.valor_bruto_parcelado);
       const forma = dj.forma_pagamento ? String(dj.forma_pagamento) : "";
-      const totalReais = totalCents / 100;
+      const totalReais = totalContratoCents / 100;
       const temJuros =
         Number.isFinite(valorBruto) && valorBruto > 0 && valorBruto - totalReais > 0.01;
       if (parcelas > 1 && (temJuros || adquirente)) {
@@ -396,7 +437,7 @@ Deno.serve(async (req) => {
         const valorParcela = efetivoBruto / parcelas;
         const parcelaFmt = brl(Math.round(valorParcela * 100));
         const brutoFmt = brl(Math.round(efetivoBruto * 100));
-        const totalFmt = brl(totalCents);
+        const totalFmt = brl(totalContratoCents);
         const partes: string[] = [];
         partes.push(
           `3.2.1. Foi acordado o pagamento em <strong>${parcelas}x</strong> de ` +
