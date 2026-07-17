@@ -438,7 +438,7 @@ Deno.serve(async (req) => {
       venda_id: vendaId,
       cliente_id: venda.cliente_id,
       contract_number: contractNumber,
-      status: "generated_pending_company_signature",
+      status: "pending_customer_signature",
       template_id: (template as any).id,
       template_codigo: (template as any).codigo,
       template_versao: (template as any).versao,

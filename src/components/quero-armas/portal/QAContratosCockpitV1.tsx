@@ -37,23 +37,23 @@ interface Contract {
   validation_details?: any;
 }
 
-const STEP_LABELS = ["Gerado", "Revisado", "Assinatura", "Validação", "Vigente"] as const;
+const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
 
 function statusToStep(status: string | null): number {
   switch (status) {
-    case "generated_pending_company_signature": return 1; // gerado, aguarda revisão
-    case "pending_customer_signature":          return 2; // assinatura cliente em andamento
-    case "customer_signature_uploaded":         return 3; // validação inicial
-    case "validating":                          return 3;
-    case "pending_manual_review":               return 3;
-    case "validated":                           return 4; // vigente
-    case "rejected":                            return 2; // volta p/ assinatura
+    case "generated_pending_company_signature": return 1; // fallback legado
+    case "pending_customer_signature":          return 1;
+    case "customer_signature_uploaded":         return 2;
+    case "validating":                          return 2;
+    case "pending_manual_review":               return 2;
+    case "validated":                           return 3;
+    case "rejected":                            return 1;
     default:                                    return 0;
   }
 }
 
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  generated_pending_company_signature: { label: "AGUARDA REVISÃO", cls: "bg-[#E0EAF7] text-[#1F4D8A]" },
+  generated_pending_company_signature: { label: "AGUARDA SUA ASSINATURA", cls: "bg-[#FCEFCE] text-[#7A5A14]" },
   pending_customer_signature:          { label: "AGUARDA SUA ASSINATURA", cls: "bg-[#FCEFCE] text-[#7A5A14]" },
   customer_signature_uploaded:         { label: "EM ASSINATURA", cls: "bg-[#E0EAF7] text-[#1F4D8A]" },
   validating:                          { label: "EM VALIDAÇÃO", cls: "bg-[#E0EAF7] text-[#1F4D8A]" },
@@ -505,16 +505,15 @@ function FeaturedContractCard({
 
   const step = statusToStep(contract.status);                          // 0..4
   const stepIndex1Based = step + 1;
-  const progress = Math.round(((step + 1) / 5) * 100);
+  const progress = Math.round(((step + 1) / 4) * 100);
   const badge = STATUS_BADGE[String(contract.status)] || { label: String(contract.status || "—").toUpperCase(), cls: "bg-[#EDEDED] text-[#444]" };
   const openedDays = daysSince(contract.issued_at);
 
   const timelineEvents = useMemo(() => {
     const evs: Array<{ date: string | null; t: string; ok: boolean }> = [];
     if (contract.issued_at) evs.push({ date: contract.issued_at, t: "Contrato gerado pela equipe", ok: true });
-    if (contract.company_signed_at) evs.push({ date: contract.company_signed_at, t: "Revisão jurídica aprovada", ok: true });
-    if (contract.status === "pending_customer_signature")
-      evs.push({ date: contract.company_signed_at || contract.issued_at, t: "Aguardando assinatura via GOV.BR", ok: false });
+    if (contract.status === "pending_customer_signature" || contract.status === "generated_pending_company_signature")
+      evs.push({ date: contract.issued_at, t: "Aguardando assinatura via GOV.BR", ok: false });
     if (contract.customer_uploaded_at)
       evs.push({ date: contract.customer_uploaded_at, t: "Assinatura recebida", ok: true });
     if (contract.customer_signature_validated_at)
@@ -652,9 +651,8 @@ function FeaturedContractCard({
           const curr = !isValidated && i === step;
           const circBg = done ? "bg-[#2F8F4A] border-[#2F8F4A] text-white" : curr ? "bg-[#D6A64B] border-[#D6A64B] text-white" : "bg-[#F2F2F2] border-[#DADADA] text-[#9a9a9a]";
           const dt = i === 0 ? fmtDateShort(contract.issued_at)
-                   : i === 1 ? fmtDateShort(contract.company_signed_at)
-                   : i === 2 ? (curr ? "EM ANDAMENTO" : fmtDateShort(contract.customer_uploaded_at))
-                   : i === 3 ? (curr ? "EM VALIDAÇÃO" : fmtDateShort(contract.customer_signature_validated_at))
+                   : i === 1 ? (curr ? "EM ANDAMENTO" : fmtDateShort(contract.customer_uploaded_at))
+                   : i === 2 ? (curr ? "EM VALIDAÇÃO" : fmtDateShort(contract.customer_signature_validated_at))
                              : (isValidated ? fmtDateShort(contract.customer_signature_validated_at) : done ? "VIGENTE" : "—");
           return (
             <div key={lbl} className="flex-1 text-center">
@@ -682,12 +680,12 @@ function FeaturedContractCard({
           <div className="mt-4">
             <div className="font-['Oswald'] text-[9px] tracking-[0.2em] text-[#7A7A7A] font-semibold uppercase">ETAPA ATUAL</div>
             <div className="font-['Oswald'] text-[14px] font-semibold mt-1 tracking-[0.04em] uppercase">
-              {STEP_LABELS[step] || "—"} {step === 2 ? "GOV.BR" : ""}
+              {STEP_LABELS[step] || "—"} {step === 1 ? "GOV.BR" : ""}
             </div>
           </div>
           <div className="mt-3.5 text-[11.5px]">
             <b className="block text-[#0A0A0A] font-semibold">Prev. assinatura:</b>
-            <span className="text-[#7A7A7A]">até {fmtDateLong(contract.company_signed_at || contract.issued_at)}</span>
+            <span className="text-[#7A7A7A]">até {fmtDateLong(contract.issued_at)}</span>
           </div>
           <div className="mt-2.5 text-[11.5px]">
             <b className="block text-[#0A0A0A] font-semibold">Aberto há:</b>
@@ -998,18 +996,17 @@ function CompactContractCard({ contract }: { contract: Contract }) {
         </div>
         <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">CONTRATO {(contract.contract_number || "—").replace(/\s+/g,"")}</div>
       </div>
-      <div className="grid grid-cols-5 gap-2.5 mb-3.5">
+      <div className="grid grid-cols-4 gap-2.5 mb-3.5">
         {STEP_LABELS.map((_, i) => (
           <div key={i} className={`h-1 rounded-full ${i < step ? "bg-[#2F8F4A]" : i === step ? "bg-[#D6A64B]" : "bg-[#E5E5E5]"}`} />
         ))}
       </div>
-      <div className="grid grid-cols-5 gap-2.5 font-['Oswald'] text-[9.5px] tracking-[0.16em] text-[#7A7A7A] text-center font-semibold mb-3.5">
+      <div className="grid grid-cols-4 gap-2.5 font-['Oswald'] text-[9.5px] tracking-[0.16em] text-[#7A7A7A] text-center font-semibold mb-3.5">
         {STEP_LABELS.map((l) => <div key={l}>{l.toUpperCase()}</div>)}
       </div>
       <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
         <span><b className="text-[#0A0A0A] font-semibold">Cliente:</b> {contract.customer_uploaded_at ? `assinou em ${fmtDateShort(contract.customer_uploaded_at)}` : "—"}</span>
-        <span><b className="text-[#0A0A0A] font-semibold">Contraparte:</b> {contract.company_signed_at ? "aprovado" : "em análise"}</span>
-        <span><b className="text-[#0A0A0A] font-semibold">Prev.:</b> {fmtDateLong(contract.company_signed_at || contract.issued_at)}</span>
+        <span><b className="text-[#0A0A0A] font-semibold">Prev.:</b> {fmtDateLong(contract.issued_at)}</span>
       </div>
     </div>
   );
