@@ -815,8 +815,11 @@ Deno.serve(async (req) => {
       if (ucDigits) {
         cx.codigo_instalacao = ucDigits;
         cx.numero_documento = ucDigits;
-      } else if (!cx.numero_documento) {
+      } else {
+        // Sem UC legível: NUNCA aceitar substituto (mes_referencia, fatura, código de barras, CPF).
+        // Deixa vazio para o usuário preencher manualmente — nada de "inventar".
         cx.numero_documento = "";
+        cx.codigo_instalacao = "";
       }
       const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
       const nomeCadastro = String(cliente?.nome_completo ?? cliente?.nome ?? "").trim();
