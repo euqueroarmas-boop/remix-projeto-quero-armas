@@ -867,10 +867,22 @@ export default function QAPilotoRealPage() {
       if (cli) setCliente(cli as Cliente);
 
       // Itens da venda → montamos shims para servico + itensExtras.
-      const { data: itens } = await supabase
+      // qa_itens_venda.venda_id armazena o id_legado da venda (não o id interno).
+      const itensLookupId = Number(v.id_legado ?? v.id) || v.id;
+      let { data: itens } = await supabase
         .from("qa_itens_venda")
-        .select("servico_id, valor")
-        .eq("venda_id", v.id);
+        .select("servico_id, valor, sort_order")
+        .eq("venda_id", itensLookupId)
+        .order("sort_order", { ascending: true });
+      if (!itens || itens.length === 0) {
+        // Fallback defensivo: tenta pelo id interno caso alguma venda antiga tenha usado v.id.
+        const alt = await supabase
+          .from("qa_itens_venda")
+          .select("servico_id, valor, sort_order")
+          .eq("venda_id", v.id)
+          .order("sort_order", { ascending: true });
+        itens = alt.data ?? [];
+      }
       const servicoIds = (itens ?? []).map((r: any) => r.servico_id).filter(Boolean);
       let nomesById: Record<number, string> = {};
       if (servicoIds.length > 0) {
@@ -893,6 +905,16 @@ export default function QAPilotoRealPage() {
           servico: s,
           precoStr: s.preco != null ? Number(s.preco).toFixed(2).replace(".", ",") : "",
         })));
+      } else {
+        // Não deixa cair no catálogo aberto quando a venda existe mas os itens não foram achados.
+        setServico({
+          id: `venda-${v.id}`,
+          slug: `venda-${v.id_legado ?? v.id}`,
+          nome: `Serviços da venda #${v.id_legado ?? v.id}`,
+          preco: v.valor_a_pagar != null ? Number(v.valor_a_pagar) : null,
+          ativo: true,
+        } as Servico);
+        setItensExtras([]);
       }
 
       // Venda + contrato + processos (recarregarContrato usa id_legado).
@@ -910,6 +932,21 @@ export default function QAPilotoRealPage() {
         .select("id, venda_id, servico_id, status")
         .eq("venda_id", lookupId);
       setProcessos((p ?? []) as Processo[]);
+
+      // Detecta arquivamento: venda CANCELADO ou evento venda_arquivada_piloto.
+      const statusUp = String(v.status || "").toUpperCase();
+      let arq = statusUp === "CANCELADO";
+      if (!arq) {
+        const { data: evArq } = await supabase
+          .from("qa_venda_eventos")
+          .select("id")
+          .eq("venda_id", v.id)
+          .eq("tipo_evento", "venda_arquivada_piloto")
+          .limit(1)
+          .maybeSingle();
+        arq = !!evArq;
+      }
+      setArquivado(arq);
 
       // Snapshot do modo de exibição do contrato (evento oficial).
       const { data: evExib } = await supabase
