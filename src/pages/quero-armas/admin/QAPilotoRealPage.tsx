@@ -14,12 +14,13 @@
  *  5. Confirmar pagamento manual + comprovante (qa-venda-confirmar-pagamento-manual)
  *  6. Acompanhar contrato → assinatura cliente → liberação
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, Search, User, CheckCircle2, Circle, ArrowRight, ShieldAlert,
   Upload, FileText, Copy, Check, ExternalLink, RefreshCw, Archive, FlaskConical,
+  History, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,21 @@ type Servico = { id: string; slug: string; nome: string; preco: number | null; a
 type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
 type Processo = { id: string; venda_id: number | null; servico_id: number | null; status: string | null };
+type PilotoResumo = {
+  venda_id: number;
+  id_legado: number | null;
+  cliente_nome: string | null;
+  cliente_cpf: string | null;
+  valor_a_pagar: number | string | null;
+  status: string | null;
+  cobranca_status: string | null;
+  status_validacao_valor: string | null;
+  contrato_status: string | null;
+  ultimo_evento: string | null;
+  ultimo_evento_at: string | null;
+};
+
+const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
 
 const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
