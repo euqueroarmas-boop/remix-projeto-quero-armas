@@ -729,6 +729,48 @@ export default function QAPilotoRealPage() {
   const [confirmacaoContratoAberta, setConfirmacaoContratoAberta] = useState(false);
   const [confirmacaoVinculoMarcada, setConfirmacaoVinculoMarcada] = useState(false);
 
+  /* ---------- Reprocessar financeiro do piloto (Passada B) ---------- */
+  const [reprocOpen, setReprocOpen] = useState(false);
+  const [reprocMotivo, setReprocMotivo] = useState("");
+  const [reprocRunning, setReprocRunning] = useState(false);
+  const reprocSubmit = useCallback(async () => {
+    if (!venda) return;
+    if (reprocMotivo.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+    if (composicaoValorFinalDerivada.length === 0) { toast.error("Configure a composição no Passo 3 antes de reprocessar."); return; }
+    setReprocRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-piloto-reprocessar-financeiro", {
+        body: {
+          venda_id: venda.id,
+          motivo: reprocMotivo.trim(),
+          composicao_valor_final: composicaoValorFinalDerivada,
+          pagamento: {
+            parcelas: parcelas > 0 ? parcelas : null,
+            adquirente: adquirente.trim() || null,
+            valor_parcela: (() => {
+              const n = parseMoney(valorBrutoStr);
+              return Number.isFinite(n) && n > 0 && parcelas > 0 ? Number((n / parcelas).toFixed(2)) : null;
+            })(),
+            valor_total_parcelado: (() => {
+              const n = parseMoney(valorBrutoStr);
+              return Number.isFinite(n) && n > 0 ? n : null;
+            })(),
+          },
+        },
+      });
+      if (error) throw error;
+      if (!(data as any)?.ok) throw new Error((data as any)?.error || "reproc_falhou");
+      toast.success("Financeiro reprocessado.");
+      setReprocOpen(false);
+      setReprocMotivo("");
+      await recarregarVenda(venda.id);
+    } catch (e: any) {
+      toast.error(`Falha no reprocesso: ${e?.message || e}`);
+    } finally {
+      setReprocRunning(false);
+    }
+  }, [venda, reprocMotivo, composicaoValorFinalDerivada, parcelas, adquirente, valorBrutoStr, recarregarVenda]);
+
   // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
   useEffect(() => {
     if (!modoPacoteCustoFin) return;
