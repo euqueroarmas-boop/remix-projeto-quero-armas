@@ -1,104 +1,91 @@
 
-# Piloto Real Quero Armas — Contratação Assistida pela Equipe
+## Estado atual do wizard `/admin/piloto-real`
 
-## Diagnóstico do que já existe (nada será duplicado)
+Já existe no código (auditei `QAPilotoRealPage.tsx`, 3029 linhas):
 
-Mapeei o fluxo real e ele já é 100% coberto por Edge Functions oficiais. O que falta é uma **tela admin única** que orquestre esses passos com um cliente real, sem `INSERT`/`UPDATE` manual no banco.
+- **Passo 1 — Cliente**: busca por nome/CPF/e-mail, cartão com resumo, botão "Trocar".
+- **Passo 2 — Serviço principal + itens extras** (múltiplos serviços do pacote).
+- **Passo 3 — Modo do contrato** (`itens_separados` × `pacote_fechado`), `valor_final_pacote`, tipo de diferença (`ajuste_comercial` × `custo_financeiro_adquirente`), adquirente, parcelas, composição derivada com `servico_qa`, extras, custos embutidos e custo financeiro.
+- **Passo 5 — Pagamento manual** com forma, parcelas, adquirente, valor bruto, comprovante.
+- **Passo 6 — Contrato + upload assistido**.
+- **Arquivar / Reprocessar financeiro** com `NotificacaoPolicyPicker` já plugado nas 4 ações (pagamento, upload, arquivar, reprocessar).
+- **Retomada**: lista "Em andamento / Arquivados", botão "Continuar", "Voltar para pilotos em andamento", guarda `motivoBloqueioVinculo` quando venda/contrato pertencem ao admin.
+- **Auditoria** via `logPilotoEvento` (19 eventos em `qa_piloto_eventos`).
+- **Smoke test** já forçado a `modo_teste` + arquivar (última correção); botão isolado no topo.
 
-Peças oficiais reutilizadas (sem reescrever):
+## Gaps confirmados
 
-| Etapa | Função / RPC oficial | Uso |
-|---|---|---|
-| Criar venda + itens | `qa-checkout-criar-venda` | Mesma origem do checkout público |
-| Gerar cobrança Asaas (opcional) | `qa-venda-gerar-cobranca` | Se equipe quiser boleto/pix real |
-| Aprovar valor da venda | RPC `qa_venda_aprovar_valor` | Já usada em `QAVendasPendentesPage` |
-| Confirmar pagamento manual | Edge `qa-processo-confirmar-pagamento` → RPC `qa_confirmar_pagamento_processo(p_origem='manual_admin')` | Já existe e grava evento |
-| Gerar contrato | `qa-generate-contract` | Fluxo oficial |
-| Assinatura da empresa | `qa-sign-contract-company` | Oficial |
-| Upload do assinado pelo cliente | `qa-upload-signed-contract` → encadeia `qa-validate-customer-signature` | Oficial |
-| Liberação operacional | `qa-liberar-servicos-contrato` | Cria `qa_solicitacoes_servico`, `qa_processos`, checklist via `qa_explodir_checklist_processo` |
-| Processo/checklist | `qa-processo-criar` + `qa_explodir_checklist_processo` | Disparado pela liberação |
-| Hub Documental | `qa-processo-doc-upload` + `qa-processo-doc-validar-ia` | Cliente testa no portal |
+1. **Passo 1 não bloqueia staff/admin proativamente.** Hoje a busca lista qualquer `qa_clientes` (inclusive #190 ADMIN QUERO ARMAS / `eu@queroarmas.com.br`). O bloqueio só aparece depois da venda criada.
+2. **Ausência de "Composição do valor final" visível quando o modo é `itens_separados`** — a composição só renderiza para pacote fechado. O usuário pediu campo visível sempre.
+3. **Faltam labels/agrupamentos explícitos** para: clube/estande, deslocamento, "outro" na lista de tipos de extras (hoje o dropdown de extras usa outra taxonomia).
+4. **Passo 5 não mostra explicitamente** "valor total parcelado" e "diferença/arredondamento" derivados de `parcelas × valor da parcela`.
+5. **Política de notificação** existe, mas o motivo obrigatório quando "Não" ainda não é obrigatório por form-validation em todos os 4 pickers (algumas ações permitem seguir sem motivo).
+6. **Lista de pilotos em andamento** já filtra arquivados, mas smoke antigo (pré-correção de hoje) ainda pode aparecer como "em andamento" se não foi arquivado — precisa filtro extra por `motivo ILIKE '%SMOKE%'`.
 
-**Conclusão:** não precisa criar RPC nova nem duplicar lógica. Precisa de **um wizard admin** que chame essas funções na ordem certa, exija comprovante/justificativa no passo de pagamento manual e registre auditoria.
+## Plano de implementação
 
-## O que será construído
+### 1. Passo 1 — Bloqueio de staff antes da seleção
 
-### 1. Nova rota admin `/quero-armas/admin/piloto-real`
-Wizard de 6 passos, cada passo chama a função oficial correspondente e não avança até receber sucesso. Nenhum passo grava direto na tabela; tudo passa por RPC/Edge.
+- Carregar `qa_usuarios_perfis` ativos ao montar a página → `Set<user_id>` de staff.
+- No resultado da busca, marcar candidatos staff com badge vermelho "STAFF — NÃO SELECIONÁVEL" e desabilitar o botão.
+- Se o operador tentar setar o cliente mesmo assim, `toast.error("Staff/admin não pode ser contratante")` e não avança.
+- Excluir `eu@queroarmas.com.br` da lista de candidatos.
+
+### 2. Passo 3 — Composição sempre visível
+
+- Renderizar o bloco "Composição do valor final" também em `itens_separados`, listando: `servico_qa`, extras (com natureza atual), custos embutidos, e total derivado.
+- Adicionar taxonomia oficial na criação/edição de extras: `servico_qa`, `gru_taxa_gov`, `exame_laudo`, `clube_estande`, `despesa_operacional`, `deslocamento`, `custo_financeiro_adquirente`, `outro`. Migrar labels antigos por mapping compatível.
+- Se soma da composição ≠ `valor_total_pago_cliente` em pacote fechado, banner vermelho e botão "Criar venda" desabilitado (já parcialmente feito → reforçar tolerância de 0.01 e mensagem).
+
+### 3. Passo 5 — Resumo do parcelamento
+
+- Campos calculados abaixo do input `valor bruto`:
+  - `Parcela: R$ X × N`
+  - `Total parcelado: R$ Y`
+  - `Diferença vs. composição: R$ Z` (destacado se ≥ 0.01)
+- Adquirente vira `Select` com opções: Stone, Rede, Cielo, Asaas, Outra (input texto quando "Outra").
+
+### 4. Política de notificação — motivo obrigatório
+
+- No `NotificacaoPolicyPicker`, quando `notificar === false`, tornar `motivo` obrigatório (mínimo 10 caracteres) e validar antes de disparar cada ação (pagamento, upload, arquivar, reprocessar).
+- Passar a política escolhida para `logPilotoEvento` em cada ação.
+
+### 5. Lista de pilotos — smoke fora de "em andamento"
+
+- Na query da aba "Em andamento", adicionar filtro: `.not("motivo_arquivamento", "ilike", "%SMOKE%")` e excluir vendas com `origem_venda ILIKE 'piloto_real_smoke%'`.
+- Backfill: rodar script que arquiva vendas de smoke pendentes (opcional, apenas se o usuário confirmar).
+
+### 6. Auditoria complementar
+
+- Emitir `logPilotoEvento` em pontos hoje não instrumentados:
+  - `cliente_selecionado_bloqueado_staff` (quando tentativa é rejeitada)
+  - `composicao_editada` (cada alteração de extras)
+  - `politica_notificacao_definida` (para cada uma das 4 ações)
+
+### 7. Deliverable — mapa de campos
+
+Ao final, respondo com um mapa "onde cada campo aparece":
 
 ```text
-┌─ 1. Cliente ─────────┐   busca em qa_clientes por CPF/nome/email
-├─ 2. Serviço ─────────┤   seleciona de qa_servicos_catalogo
-├─ 3. Criar venda ─────┤   invoke qa-checkout-criar-venda (identificação = cliente real)
-├─ 4. Pagamento ───────┤   escolhe: (a) gerar cobrança Asaas real  OU
-│                      │           (b) marcar manual pago + comprovante
-│                      │   caminho (b) → invoke qa-processo-confirmar-pagamento
-├─ 5. Contrato ────────┤   qa-generate-contract → qa-sign-contract-company
-│                      │   → equipe cola link para cliente assinar / faz upload
-│                      │   qa-upload-signed-contract em nome do cliente
-├─ 6. Liberação ───────┤   qa-liberar-servicos-contrato (idempotente)
-│                      │   mostra processo/checklist criados
-└──────────────────────┘
+Passo 1 · Cliente Real            → busca + card + badge STAFF
+Passo 2 · Serviços do Pacote      → serviço principal + itens extras (tabela)
+Passo 3 · Modo do Contrato        → radio itens/pacote
+        · Valor Final Pacote      → input valor_total_pago_cliente
+        · Composição do Valor     → tabela editável (sempre visível)
+        · Tipo de Diferença       → radio ajuste × custo financeiro
+        · Custos Operacionais     → tabela GRU/exame/clube/desloc/outro
+Passo 4 · Aprovar Valor           → botão RPC
+Passo 5 · Pagamento Manual        → forma, parcelas, adquirente (select),
+                                    valor bruto, resumo parcelamento,
+                                    comprovante, NotificacaoPolicyPicker
+Passo 6 · Contrato + Upload       → link contrato, upload assinado,
+                                    NotificacaoPolicyPicker
+Ações · Arquivar / Reprocessar    → picker de notificação com motivo obrig.
+Topo   · Smoke test               → botão isolado; nunca escreve nos states do wizard
 ```
 
-Estados intermediários ficam persistidos: se a equipe fechar o navegador, o wizard reabre no passo correto lendo `qa_vendas.status`, `qa_contracts.status`, `qa_processos.id`.
+## Escopo intencionalmente fora deste plano
 
-### 2. Comprovante obrigatório no pagamento manual
-Novo campo no wizard (passo 4b):
-- upload de PDF/JPG → `storage.upload` no bucket `paid-contracts` sob `qa/manual-payments/<venda_id>/comprovante.<ext>`;
-- observação textual obrigatória (mín. 20 chars);
-- só depois habilita o botão que chama `qa-processo-confirmar-pagamento`;
-- evento `qa_venda_eventos.tipo_evento='pagamento_manual_confirmado'` gravado com `metadata.comprovante_path` e `metadata.observacao` (via RPC já existente `qa_venda_evento_registrar`, sem SQL solto).
-
-Se a RPC de evento não aceitar metadados livres, adiciono uma migration pequena que só amplia a coluna JSONB (nenhuma mudança de regra).
-
-### 3. Cancelamento sem apagar histórico
-Botão "Arquivar piloto" no topo do wizard:
-- venda: RPC `qa_venda_reprovar_valor` com motivo "piloto_cancelado";
-- contrato: `qa_contracts.status='cancelled'` via função oficial `qa-generate-contract` modo cancel (já existe);
-- processo: `qa-processo-set-condicao` com condição `arquivado_piloto`.
-Nada é deletado; tudo vira evento.
-
-### 4. Checklist operacional impresso na tela
-Aba lateral fixa "Checklist do Piloto" com os 10 passos do enunciado marcados verde/amarelo/vermelho em tempo real conforme os estados reais das tabelas.
-
-## Segurança e conformidade
-
-- Rota protegida por `requireQAStaff` no frontend (perfil ativo em `qa_usuarios_perfis`).
-- Cada chamada Edge já valida JWT staff no backend — sem service_role no cliente.
-- Auditoria: todas as ações caem em `qa_venda_eventos`, `qa_contract_events`, `qa_processo_eventos`, `qa_logs_auditoria` (já disparados pelas funções oficiais).
-- Base normativa: o fluxo respeita Lei 10.826/03, Dec. 11.615/23, Dec. 12.345/24 e IN 201/311 porque **usa as mesmas funções do fluxo real de produção** — nenhum atalho.
-
-## Detalhes técnicos
-
-Arquivos novos:
-- `src/pages/quero-armas/admin/QAPilotoRealPage.tsx` (wizard principal)
-- `src/components/quero-armas/admin/piloto/PassoCliente.tsx`
-- `src/components/quero-armas/admin/piloto/PassoServico.tsx`
-- `src/components/quero-armas/admin/piloto/PassoVenda.tsx`
-- `src/components/quero-armas/admin/piloto/PassoPagamento.tsx` (com upload de comprovante)
-- `src/components/quero-armas/admin/piloto/PassoContrato.tsx`
-- `src/components/quero-armas/admin/piloto/PassoLiberacao.tsx`
-- `src/components/quero-armas/admin/piloto/ChecklistPilotoSidebar.tsx`
-- `src/hooks/queroArmas/usePilotoRealState.ts` (hidrata estado real das tabelas)
-
-Arquivos alterados:
-- `src/App.tsx` — adiciona rota `/quero-armas/admin/piloto-real` protegida.
-- `src/components/quero-armas/portal/QASidebarAdmin*.tsx` — item de menu "Piloto Real".
-
-Sem migrations obrigatórias. Se surgir necessidade do `metadata` de comprovante, uma migration mínima adicionando coluna JSONB em `qa_venda_eventos` (se ainda não tiver) — só coluna, sem alterar policies.
-
-Validação final: `bun run typecheck` + smoke test manual no preview navegando o wizard com um cliente real de teste.
-
-## Critérios de aceite (mapeados 1-a-1 do pedido)
-
-- [x] Cliente real escolhido em `qa_clientes` (passo 1).
-- [x] Venda criada por `qa-checkout-criar-venda` (passo 3).
-- [x] Pagamento manual exige comprovante + observação, grava evento (passo 4b).
-- [x] Contrato gerado/assinado/anexado pelas funções oficiais (passo 5).
-- [x] Liberação via `qa-liberar-servicos-contrato` só depois de contrato `validated` (passo 6).
-- [x] Processo/checklist nasce automaticamente pela cadeia oficial.
-- [x] Nenhum status crítico alterado por `UPDATE` manual solto.
-- [x] Cancelamento por arquivamento com evento, sem apagar.
-- [x] Auditoria completa em `qa_*_eventos`.
+- Reescrita do `NotificacaoPolicyPicker` para suportar WhatsApp real (hoje já grava `whatsapp_preparado`).
+- Migração de dados históricos de smokes antigos (só se pedido).
+- Alterações no Edge Function `qa-checkout-criar-venda` (já corrigido na conversa anterior).
