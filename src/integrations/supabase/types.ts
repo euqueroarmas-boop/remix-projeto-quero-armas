@@ -7624,6 +7624,63 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_notificacao_eventos: {
+        Row: {
+          acao: string
+          canais: Json
+          cliente_id: number | null
+          contrato_id: string | null
+          created_at: string
+          documento_id: string | null
+          id: string
+          motivo_nao_notificar: string | null
+          notificar_cliente: boolean
+          payload_resumo: Json
+          processo_id: string | null
+          resultado: Json
+          staff_email: string | null
+          staff_user_id: string | null
+          tipo_evento: string
+          venda_id: number | null
+        }
+        Insert: {
+          acao: string
+          canais?: Json
+          cliente_id?: number | null
+          contrato_id?: string | null
+          created_at?: string
+          documento_id?: string | null
+          id?: string
+          motivo_nao_notificar?: string | null
+          notificar_cliente?: boolean
+          payload_resumo?: Json
+          processo_id?: string | null
+          resultado?: Json
+          staff_email?: string | null
+          staff_user_id?: string | null
+          tipo_evento: string
+          venda_id?: number | null
+        }
+        Update: {
+          acao?: string
+          canais?: Json
+          cliente_id?: number | null
+          contrato_id?: string | null
+          created_at?: string
+          documento_id?: string | null
+          id?: string
+          motivo_nao_notificar?: string | null
+          notificar_cliente?: boolean
+          payload_resumo?: Json
+          processo_id?: string | null
+          resultado?: Json
+          staff_email?: string | null
+          staff_user_id?: string | null
+          tipo_evento?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
       qa_pagamento_auditoria: {
         Row: {
           adquirente: string | null
