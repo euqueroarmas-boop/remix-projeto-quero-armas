@@ -2986,6 +2986,12 @@ export default function QAPilotoRealPage() {
                 className="bg-white border-neutral-300 min-h-[80px] normal-case mt-1" />
               <div className="text-[10px] text-neutral-500 mt-1">{reprocMotivo.trim().length} caracteres</div>
             </div>
+            <NotificacaoPolicyPicker
+              value={notifPolicyReproc}
+              onChange={setNotifPolicyReproc}
+              clienteEmail={cliente?.email ?? null}
+              acaoLabel="REPROCESSAR FINANCEIRO"
+            />
           </div>
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setReprocOpen(false)} disabled={reprocRunning}>Cancelar</Button>
