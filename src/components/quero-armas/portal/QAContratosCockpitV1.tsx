@@ -35,6 +35,10 @@ interface Contract {
   service_label?: string | null;
   created_at?: string | null;
   validation_details?: any;
+  arquivado_em?: string | null;
+  arquivado_motivo?: string | null;
+  venda_status?: string | null;
+  is_arquivado?: boolean;
 }
 
 const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
@@ -67,7 +71,11 @@ function fmtDateShort(d: string | null | undefined): string {
   try {
     const p = new Date(d);
     if (isNaN(p.getTime())) return "—";
-    return p.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    return p.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit", month: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
   } catch { return "—"; }
 }
 function fmtDateLong(d: string | null | undefined): string {
@@ -75,7 +83,11 @@ function fmtDateLong(d: string | null | undefined): string {
   try {
     const p = new Date(d);
     if (isNaN(p.getTime())) return "—";
-    return p.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase().replace(/\./g, "");
+    return p.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
   } catch { return "—"; }
 }
 function daysSince(d: string | null | undefined): number | null {
@@ -125,16 +137,47 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, valor, servico_slug, created_at, validation_details")
+          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, valor, servico_slug, created_at, validation_details, arquivado_em, arquivado_motivo")
           .eq("cliente_id", cliente.id)
           .order("created_at", { ascending: false });
         if (error) console.warn("[QAContratosCockpitV1] qa_contracts:", error.message);
+        const rawContracts = ((data as any) || []) as any[];
+
+        // Lookup vendas para descobrir vendas CANCELADAS/ARQUIVADAS
+        // qa_contracts.venda_id pode referenciar qa_vendas.id_legado OU qa_vendas.id
+        const vendaIds = Array.from(
+          new Set(rawContracts.map((r) => r.venda_id).filter((v) => v !== null && v !== undefined)),
+        );
+        const vendaStatusMap = new Map<number, string>();
+        if (vendaIds.length) {
+          const { data: vendas } = await supabase
+            .from("qa_vendas" as any)
+            .select("id, id_legado, status")
+            .or(
+              `id_legado.in.(${vendaIds.join(",")}),id.in.(${vendaIds.join(",")})`,
+            );
+          for (const v of ((vendas as any) || [])) {
+            if (v.id_legado != null) vendaStatusMap.set(Number(v.id_legado), String(v.status || ""));
+            if (v.id != null && !vendaStatusMap.has(Number(v.id)))
+              vendaStatusMap.set(Number(v.id), String(v.status || ""));
+          }
+        }
+
         if (!cancel) {
-          const mapped = ((data as any) || []).map((r: any) => ({
-            ...r,
-            total_amount: r.valor ?? null,
-            service_label: r.servico_slug ?? null,
-          })) as Contract[];
+          const mapped = rawContracts.map((r: any) => {
+            const vStatus = r.venda_id != null ? vendaStatusMap.get(Number(r.venda_id)) || null : null;
+            const isArquivado =
+              !!r.arquivado_em ||
+              vStatus === "CANCELADO" ||
+              vStatus === "ARQUIVADO";
+            return {
+              ...r,
+              total_amount: r.valor ?? null,
+              service_label: r.servico_slug ?? null,
+              venda_status: vStatus,
+              is_arquivado: isArquivado,
+            } as Contract;
+          });
           setContracts(mapped);
         }
       } catch (e) {
@@ -191,19 +234,29 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [cliente?.id]);
 
-  // KPIs derivados
+  // Separar ativos vs arquivados/cancelados
+  const activeContracts = useMemo(
+    () => contracts.filter((c) => !c.is_arquivado),
+    [contracts],
+  );
+  const archivedContracts = useMemo(
+    () => contracts.filter((c) => c.is_arquivado),
+    [contracts],
+  );
+
+  // KPIs derivados — apenas contratos ativos
   const kpis = useMemo(() => {
     // "Aguarda você": exige ação direta do cliente
     //   - pending_customer_signature: baixar, assinar e reenviar
     //   - rejected: assinatura recusada, precisa corrigir/reenviar
-    const aguarda = contracts.filter((c) =>
+    const aguarda = activeContracts.filter((c) =>
       c.status === "pending_customer_signature" || c.status === "rejected",
     ).length;
     // "Em assinatura / aguardando contraparte":
     //   - generated_pending_company_signature: aguarda assinatura da CONTRATADA
     //   - customer_signature_uploaded/validating/pending_manual_review: cliente já
     //     enviou o assinado e o sistema está processando
-    const emAssin = contracts.filter((c) =>
+    const emAssin = activeContracts.filter((c) =>
       [
         "generated_pending_company_signature",
         "customer_signature_uploaded",
@@ -211,11 +264,11 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         "pending_manual_review",
       ].includes(String(c.status)),
     ).length;
-    const assinados = contracts.filter((c) => c.status === "validated").length;
+    const assinados = activeContracts.filter((c) => c.status === "validated").length;
     const vigentes = assinados; // simplificação: validados = vigentes
     const valor = valorPago;
     return { aguarda, emAssin, assinados, vigentes, valor };
-  }, [contracts, valorPago]);
+  }, [activeContracts, valorPago]);
 
   // Featured: prioridade explícita
   //  1) pending_customer_signature (ação imediata do cliente)
@@ -223,17 +276,20 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   //  3) generated_pending_company_signature (aguarda contraparte)
   //  4) demais (mais recente)
   const featured = useMemo<Contract | null>(() => {
-    if (!contracts.length) return null;
+    if (!activeContracts.length) return null;
     return (
-      contracts.find((c) => c.status === "pending_customer_signature") ||
-      contracts.find((c) => c.status === "rejected") ||
-      contracts.find((c) => c.status === "generated_pending_company_signature") ||
-      contracts.find((c) => ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status))) ||
-      contracts[0]
+      activeContracts.find((c) => c.status === "pending_customer_signature") ||
+      activeContracts.find((c) => c.status === "rejected") ||
+      activeContracts.find((c) => c.status === "generated_pending_company_signature") ||
+      activeContracts.find((c) => ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status))) ||
+      activeContracts[0]
     );
-  }, [contracts]);
+  }, [activeContracts]);
 
-  const others = useMemo(() => contracts.filter((c) => c.id !== featured?.id), [contracts, featured]);
+  const others = useMemo(
+    () => activeContracts.filter((c) => c.id !== featured?.id),
+    [activeContracts, featured],
+  );
 
   const nomeCliente = String(cliente?.nome_completo || cliente?.nome || "Cliente").trim();
   const primeiroNome = (nomeCliente.split(/\s+/)[0] || "Cliente").toUpperCase();
@@ -409,6 +465,18 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
           </div>
           <div className="space-y-3">
             {others.map((c) => <CompactContractCard key={c.id} contract={c} />)}
+          </div>
+        </>
+      )}
+
+      {/* ── Arquivados / Cancelados ── */}
+      {archivedContracts.length > 0 && (
+        <>
+          <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mt-6 mb-2.5 font-semibold uppercase">
+            ARQUIVADOS · CANCELADOS
+          </div>
+          <div className="space-y-3">
+            {archivedContracts.map((c) => <ArchivedContractCard key={c.id} contract={c} />)}
           </div>
         </>
       )}
@@ -1029,6 +1097,51 @@ function CompactContractCard({ contract }: { contract: Contract }) {
       <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
         <span><b className="text-[#0A0A0A] font-semibold">Cliente:</b> {contract.customer_uploaded_at ? `assinou em ${fmtDateShort(contract.customer_uploaded_at)}` : "—"}</span>
         <span><b className="text-[#0A0A0A] font-semibold">Prev.:</b> {fmtDateLong(contract.issued_at)}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────── ARCHIVED / CANCELED ─────────────────── */
+function ArchivedContractCard({ contract }: { contract: Contract }) {
+  const cancelada = contract.venda_status === "CANCELADO";
+  const label = cancelada ? "VENDA CANCELADA" : "CONTRATO ARQUIVADO";
+  return (
+    <div className="bg-[#FAFAFA] border border-dashed border-[#D5D5D5] rounded-sm p-5 opacity-90">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#EFEFEF]">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-['Oswald'] text-[9.5px] px-2 py-1 tracking-[0.16em] rounded-sm font-bold uppercase bg-[#EDEDED] text-[#555]">
+            {label}
+          </span>
+          <h3 className="font-['Oswald'] text-[13px] font-semibold tracking-[0.06em] uppercase truncate text-[#555]">
+            {contract.contract_number || "—"}
+            {contract.service_label ? ` · ${contract.service_label}` : ""}
+          </h3>
+        </div>
+        <div className="font-['Oswald'] text-[10px] text-[#9A9A9A] tracking-[0.16em] uppercase">
+          {contract.contract_number ? `CONTRATO ${contract.contract_number.replace(/\s+/g, "")}` : "—"}
+        </div>
+      </div>
+      <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
+        <span>
+          <b className="text-[#0A0A0A] font-semibold">Gerado:</b>{" "}
+          {fmtDateLong(contract.issued_at)}
+        </span>
+        {contract.arquivado_em && (
+          <span>
+            <b className="text-[#0A0A0A] font-semibold">Arquivado:</b>{" "}
+            {fmtDateLong(contract.arquivado_em)}
+          </span>
+        )}
+        {contract.arquivado_motivo && (
+          <span className="basis-full">
+            <b className="text-[#0A0A0A] font-semibold">Motivo:</b>{" "}
+            {contract.arquivado_motivo}
+          </span>
+        )}
+      </div>
+      <div className="mt-3 text-[11px] text-[#8A8A8A] italic">
+        Este contrato não requer mais nenhuma ação. Está mantido apenas para histórico.
       </div>
     </div>
   );
