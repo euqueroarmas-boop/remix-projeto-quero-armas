@@ -758,7 +758,7 @@ export default function QAPilotoRealPage() {
       .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
       .eq("id", id)
       .maybeSingle();
-    if (data) setVenda(data as Venda);
+    if (data) setVenda(data as unknown as Venda);
   }, []);
 
   /* ---------- Passo 4: Aprovar valor ---------- */
@@ -1098,7 +1098,7 @@ export default function QAPilotoRealPage() {
           .eq("id_legado", idOuLegado)
           .maybeSingle();
       }
-      const v = vRes.data as Venda | null;
+      const v = vRes.data as unknown as Venda | null;
       if (!v) { toast.error(`Venda ${idOuLegado} não encontrada.`); return; }
 
       // Cliente
