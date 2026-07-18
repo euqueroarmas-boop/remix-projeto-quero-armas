@@ -1840,7 +1840,6 @@ export default function QAPilotoRealPage() {
                       const url = new URL(window.location.href);
                       url.searchParams.delete("venda_id");
                       url.searchParams.delete("id_legado");
-                      // Preserva localStorage do último piloto (apenas sai da visualização).
                       window.location.assign(url.pathname);
                     }}
                   >
@@ -1897,7 +1896,7 @@ export default function QAPilotoRealPage() {
                   Arquivados ({resumosArquivados.length})
                 </Button>
               </div>
-              {abaLista === "andamento" && ultimoLocal && !hidratado && !resumosArquivados.some((r) => r.venda_id === ultimoLocal) && (
+              {abaLista === "andamento" && ultimoLocal && !hidratado && resumos.some((r) => r.venda_id === ultimoLocal) && (
                 <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
                   <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
                   <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
