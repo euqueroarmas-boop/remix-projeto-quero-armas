@@ -763,6 +763,7 @@ export default function QAPilotoRealPage() {
               return Number.isFinite(n) && n > 0 ? n : null;
             })(),
           },
+          notificacao_policy: toBackendPolicy(notifPolicyReproc),
         },
       });
       if (error) throw error;
