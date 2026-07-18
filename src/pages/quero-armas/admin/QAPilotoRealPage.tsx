@@ -607,6 +607,213 @@ export default function QAPilotoRealPage() {
     return () => clearInterval(t);
   }, [venda, recarregarContrato, recarregarVenda]);
 
+  /* ---------- Retomada: hidratação por venda_id / id_legado ---------- */
+  // Persistir última venda aberta.
+  useEffect(() => {
+    if (venda?.id) {
+      try { localStorage.setItem(PILOTO_LS_KEY, String(venda.id)); } catch {}
+    }
+  }, [venda?.id]);
+
+  const hidratarPilotoPorId = useCallback(async (idOuLegado: number) => {
+    setHidratando(true);
+    try {
+      // Busca por id direto; se não achar, tenta id_legado.
+      let vRes = await supabase
+        .from("qa_vendas")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+        .eq("id", idOuLegado)
+        .maybeSingle();
+      if (!vRes.data) {
+        vRes = await supabase
+          .from("qa_vendas")
+          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+          .eq("id_legado", idOuLegado)
+          .maybeSingle();
+      }
+      const v = vRes.data as Venda | null;
+      if (!v) { toast.error(`Venda ${idOuLegado} não encontrada.`); return; }
+
+      // Cliente
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .eq("id", v.cliente_id)
+        .maybeSingle();
+      if (cli) setCliente(cli as Cliente);
+
+      // Itens da venda → montamos shims para servico + itensExtras.
+      const { data: itens } = await supabase
+        .from("qa_itens_venda")
+        .select("servico_id, valor")
+        .eq("venda_id", v.id);
+      const servicoIds = (itens ?? []).map((r: any) => r.servico_id).filter(Boolean);
+      let nomesById: Record<number, string> = {};
+      if (servicoIds.length > 0) {
+        const { data: srvs } = await supabase
+          .from("qa_servicos")
+          .select("id, nome_servico")
+          .in("id", servicoIds);
+        for (const s of (srvs ?? []) as any[]) nomesById[s.id] = s.nome_servico;
+      }
+      const shims: Servico[] = (itens ?? []).map((r: any) => ({
+        id: `srv-${r.servico_id}`,
+        slug: `qa-srv-${r.servico_id}`,
+        nome: nomesById[r.servico_id] || `Serviço #${r.servico_id}`,
+        preco: r.valor != null ? Number(r.valor) : null,
+        ativo: true,
+      }));
+      if (shims.length > 0) {
+        setServico(shims[0]);
+        setItensExtras(shims.slice(1).map((s) => ({
+          servico: s,
+          precoStr: s.preco != null ? Number(s.preco).toFixed(2).replace(".", ",") : "",
+        })));
+      }
+
+      // Venda + contrato + processos (recarregarContrato usa id_legado).
+      setVenda(v);
+      // Consulta direta em vez de depender do closure de recarregarContrato.
+      const lookupId = Number(v.id_legado ?? v.id) || v.id;
+      const { data: c } = await supabase
+        .from("qa_contracts")
+        .select("id, status, venda_id, cliente_id")
+        .eq("venda_id", lookupId)
+        .maybeSingle();
+      setContrato((c as Contrato) ?? null);
+      const { data: p } = await supabase
+        .from("qa_processos")
+        .select("id, venda_id, servico_id, status")
+        .eq("venda_id", lookupId);
+      setProcessos((p ?? []) as Processo[]);
+
+      toast.success(`Piloto da venda #${v.id} restaurado.`);
+    } catch (e: any) {
+      toast.error(`Falha ao restaurar piloto: ${e?.message || e}`);
+    } finally {
+      setHidratando(false);
+    }
+  }, []);
+
+  // Mount: URL param → hidrata direto. Sem URL → mostra "último local".
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const vid = params.get("venda_id") || params.get("id_legado");
+    if (vid) {
+      const n = Number(vid);
+      if (Number.isFinite(n) && n > 0) {
+        setHidratado({ venda_id: n, via: "url" });
+        hidratarPilotoPorId(n);
+        return;
+      }
+    }
+    try {
+      const ls = localStorage.getItem(PILOTO_LS_KEY);
+      const n = ls ? Number(ls) : NaN;
+      if (Number.isFinite(n) && n > 0) setUltimoLocal(n);
+    } catch {}
+  }, [hidratarPilotoPorId]);
+
+  // Scroll automático para o passo atual após hidratação.
+  useEffect(() => {
+    if (!hidratado || hidratando) return;
+    const key =
+      contrato && !["validated", "customer_signed"].includes(contrato.status) ? "contrato"
+      : contrato ? "contrato"
+      : venda?.cobranca_status === "confirmada" ? "contrato"
+      : venda?.status_validacao_valor === "aprovado" ? "pagamento"
+      : venda ? "valor"
+      : "cliente";
+    const el = stepRefs.current[key];
+    if (el) {
+      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    }
+  }, [hidratado, hidratando, venda?.id, venda?.status_validacao_valor, venda?.cobranca_status, contrato?.id, contrato?.status]);
+
+  // Lista de pilotos em andamento (não arquivados/cancelados/concluídos).
+  const carregarResumos = useCallback(async () => {
+    setCarregandoResumos(true);
+    try {
+      // Coleta candidatos via qa_venda_eventos (origem/tipo piloto).
+      const { data: evts } = await supabase
+        .from("qa_venda_eventos")
+        .select("venda_id, tipo_evento, created_at")
+        .or("tipo_evento.ilike.%piloto%,ator.ilike.piloto%,dados_json->>origem.ilike.piloto%")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const ultimoPorVenda = new Map<number, { tipo: string; when: string }>();
+      for (const e of ((evts ?? []) as any[])) {
+        if (!e.venda_id) continue;
+        if (!ultimoPorVenda.has(e.venda_id)) {
+          ultimoPorVenda.set(e.venda_id, { tipo: e.tipo_evento, when: e.created_at });
+        }
+      }
+      const ids = Array.from(ultimoPorVenda.keys()).slice(0, 30);
+      if (ids.length === 0) { setResumos([]); return; }
+      const { data: vendas } = await supabase
+        .from("qa_vendas")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
+        .in("id", ids);
+      const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
+      const { data: clis } = cliIds.length > 0
+        ? await supabase.from("qa_clientes").select("id, nome_completo, cpf").in("id", cliIds)
+        : { data: [] as any[] } as any;
+      const cliMap = new Map<number, { nome_completo: string | null; cpf: string | null }>();
+      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, { nome_completo: c.nome_completo, cpf: c.cpf });
+
+      // Contratos por lookup_id (id_legado ?? id).
+      const lookupIds = ((vendas ?? []) as any[]).map((v) => Number(v.id_legado ?? v.id));
+      const { data: contratos } = lookupIds.length > 0
+        ? await supabase.from("qa_contracts").select("venda_id, status").in("venda_id", lookupIds)
+        : { data: [] as any[] } as any;
+      const contratoMap = new Map<number, string>();
+      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
+
+      const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
+        .filter((v) =>
+          String(v.status || "").toUpperCase() !== "CANCELADO" &&
+          String(v.status || "").toUpperCase() !== "CONCLUIDO" &&
+          String(v.status || "").toUpperCase() !== "CONCLUÍDO",
+        )
+        .map((v) => {
+          const lookup = Number(v.id_legado ?? v.id);
+          const cli = cliMap.get(v.cliente_id);
+          const last = ultimoPorVenda.get(v.id);
+          return {
+            venda_id: v.id,
+            id_legado: v.id_legado ?? null,
+            cliente_nome: cli?.nome_completo ?? null,
+            cliente_cpf: cli?.cpf ?? null,
+            valor_a_pagar: v.valor_a_pagar,
+            status: v.status,
+            cobranca_status: v.cobranca_status,
+            status_validacao_valor: v.status_validacao_valor,
+            contrato_status: contratoMap.get(lookup) ?? null,
+            ultimo_evento: last?.tipo ?? null,
+            ultimo_evento_at: last?.when ?? null,
+          };
+        })
+        .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
+      setResumos(linhas);
+    } catch (e: any) {
+      toast.error(`Falha ao listar pilotos: ${e?.message || e}`);
+    } finally {
+      setCarregandoResumos(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!venda && !hidratando && !hidratado) carregarResumos();
+  }, [venda, hidratando, hidratado, carregarResumos]);
+
+  const abrirPiloto = useCallback((vendaId: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("venda_id", String(vendaId));
+    window.history.replaceState(null, "", url.toString());
+    setHidratado({ venda_id: vendaId, via: "url" });
+    hidratarPilotoPorId(vendaId);
+  }, [hidratarPilotoPorId]);
+
   const linkContratoCliente = useMemo(() => {
     if (!contrato) return null;
     return `${window.location.origin}/area-do-cliente`;
