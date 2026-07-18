@@ -42,6 +42,12 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { /* body opcional */ }
 
   const cliente_id_legado = body?.cliente_id_legado ? Number(body.cliente_id_legado) : null;
+  const target_qa_cliente_id = body?.target_qa_cliente_id ? Number(body.target_qa_cliente_id) : null;
+  const target_cliente_email: string | null = body?.target_cliente_email
+    ? String(body.target_cliente_email).trim().toLowerCase() : null;
+  const modo_teste: boolean = body?.modo_teste !== false && (body?.modo_teste === true || !!target_qa_cliente_id || !!target_cliente_email);
+  const arquivar_ao_final: boolean = body?.arquivar_ao_final !== false; // default true
+  const skip_notificacoes: boolean = body?.skip_notificacoes === true || modo_teste;
   const servico_id: string | null = body?.servico_id || null;
   const authHeader = req.headers.get("Authorization")!;
 
@@ -62,17 +68,33 @@ Deno.serve(async (req) => {
 
   // 0) escolher cliente
   let cliente: any = null;
-  if (cliente_id_legado) {
+  if (target_qa_cliente_id) {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .eq("id", target_qa_cliente_id)
+      .maybeSingle();
+    cliente = data;
+  } else if (target_cliente_email) {
+    const { data } = await admin
+      .from("qa_clientes")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .ilike("email", target_cliente_email)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    cliente = data;
+  } else if (cliente_id_legado) {
+    const { data } = await admin
+      .from("qa_clientes")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status")
       .eq("id_legado", cliente_id_legado)
       .maybeSingle();
     cliente = data;
   } else {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status")
       .neq("status", "excluido_lgpd")
       .not("cpf", "is", null)
       .not("email", "is", null)
@@ -82,7 +104,10 @@ Deno.serve(async (req) => {
     cliente = data;
   }
   if (!cliente) return json({ ok: false, error: "sem_cliente_para_teste", steps }, 400);
-  record("cliente_escolhido", true, { id: cliente.id, nome: cliente.nome_completo });
+  if (String(cliente.status || "").toLowerCase() === "excluido_lgpd") {
+    return json({ ok: false, error: "cliente_excluido_lgpd", cliente_id: cliente.id, steps }, 400);
+  }
+  record("cliente_escolhido", true, { id: cliente.id, id_legado: cliente.id_legado, nome: cliente.nome_completo, email: cliente.email });
 
   // 0b) escolher serviço
   let servico: any = null;
@@ -107,7 +132,11 @@ Deno.serve(async (req) => {
   const invoke = async (fn: string, payload: unknown) => {
     const r = await fetch(`${url}/functions/v1/${fn}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: authHeader },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+        ...(skip_notificacoes ? { "x-skip-notificacoes": "true" } : {}),
+      },
       body: JSON.stringify(payload),
     });
     const text = await r.text();
@@ -125,6 +154,8 @@ Deno.serve(async (req) => {
       email: cliente.email || "",
       celular: cliente.celular || "",
     },
+    modo_teste,
+    skip_notificacoes,
   });
   const venda_id = Number(created.data?.venda_id);
   const venda_id_legado = Number(created.data?.id_legado ?? venda_id);
@@ -187,24 +218,29 @@ Deno.serve(async (req) => {
     (procsCount ?? 0) === 0;
   record("idempotencia_validada", okIdempotencia, validated);
 
-  // 5) arquivar
-  const arq = await invoke("qa-piloto-arquivar", {
-    venda_id,
-    motivo: "SMOKE TEST AUTOMATIZADO — ARQUIVAMENTO SEM APAGAR HISTORICO",
-  });
-  record("arquivamento_chamado", arq.status === 200, arq.data);
+  // 5) arquivar (obrigatório em modo_teste; default = true)
+  const deveArquivar = modo_teste ? true : arquivar_ao_final;
+  let arquivadoA = false;
+  if (deveArquivar) {
+    const arq = await invoke("qa-piloto-arquivar", {
+      venda_id,
+      motivo: "SMOKE TEST AUTOMATIZADO — ARQUIVAMENTO SEM APAGAR HISTORICO",
+    });
+    record("arquivamento_chamado", arq.status === 200, arq.data);
 
-  const { data: vendaArq } = await admin
-    .from("qa_vendas").select("status").eq("id", venda_id).maybeSingle();
-  const { count: evArqCount } = await admin
-    .from("qa_venda_eventos")
-    .select("id", { count: "exact", head: true })
-    .eq("venda_id", venda_id)
-    .eq("tipo_evento", "venda_arquivada_piloto");
-  const okArq =
-    (vendaArq?.status || "").toUpperCase() === "CANCELADO" &&
-    (evArqCount ?? 0) === 1;
-  record("arquivamento_validado", okArq, { venda_status_final: vendaArq?.status, eventos_arquivamento: evArqCount });
+    const { data: vendaArq } = await admin
+      .from("qa_vendas").select("status").eq("id", venda_id).maybeSingle();
+    const { count: evArqCount } = await admin
+      .from("qa_venda_eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("venda_id", venda_id)
+      .eq("tipo_evento", "venda_arquivada_piloto");
+    const okArq =
+      (vendaArq?.status || "").toUpperCase() === "CANCELADO" &&
+      (evArqCount ?? 0) === 1;
+    arquivadoA = okArq;
+    record("arquivamento_validado", okArq, { venda_status_final: vendaArq?.status, eventos_arquivamento: evArqCount });
+  }
 
   // 6) SMOKE B — pacote fechado com composição (valor total pago != soma dos serviços)
   const precoBase = Number(servico?.preco || 100);
@@ -224,6 +260,8 @@ Deno.serve(async (req) => {
       nome_completo: cliente.nome_completo, cpf: cliente.cpf || "",
       email: cliente.email || "", celular: cliente.celular || "",
     },
+    modo_teste,
+    skip_notificacoes,
     exibicao_contrato: {
       modo: "pacote_fechado",
       valor_final_pacote: totalEsperado,
@@ -248,13 +286,45 @@ Deno.serve(async (req) => {
       && Array.isArray(vB?.composicao_valor_final)
       && (vB?.composicao_valor_final as any[]).length === composicao.length;
     record("smoke_b_composicao_persistida", okComp, vB);
-    // arquiva a venda B
-    await invoke("qa-piloto-arquivar", {
-      venda_id: vendaB,
-      motivo: "SMOKE B AUTOMATIZADO — ARQUIVAR PACOTE FECHADO COM COMPOSICAO ESTRUTURADA",
-    });
+    // arquiva a venda B (obrigatório em modo_teste)
+    if (deveArquivar) {
+      await invoke("qa-piloto-arquivar", {
+        venda_id: vendaB,
+        motivo: "SMOKE B AUTOMATIZADO — ARQUIVAR PACOTE FECHADO COM COMPOSICAO ESTRUTURADA",
+      });
+    }
   }
 
+  // Contrato gerado (id_legado)
+  const { data: contratoRow } = await admin
+    .from("qa_contracts")
+    .select("id, status")
+    .eq("venda_id", venda_id_legado)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { data: vendaStatusFinal } = await admin
+    .from("qa_vendas").select("status, cobranca_status").eq("id", venda_id).maybeSingle();
+
   const allOk = steps.every((s) => s.ok);
-  return json({ ok: allOk, venda_teste_id: venda_id, steps }, allOk ? 200 : 500);
+  return json({
+    ok: allOk,
+    cliente_usado: {
+      id: cliente.id,
+      id_legado: cliente.id_legado,
+      nome: cliente.nome_completo,
+      email: cliente.email,
+    },
+    venda_id,
+    venda_id_legado,
+    contrato_id: contratoRow?.id ?? null,
+    status_final: vendaStatusFinal?.status ?? null,
+    cobranca_status_final: vendaStatusFinal?.cobranca_status ?? null,
+    arquivado: arquivadoA,
+    modo_teste,
+    skip_notificacoes,
+    venda_teste_id: venda_id,
+    steps,
+  }, allOk ? 200 : 500);
 });
