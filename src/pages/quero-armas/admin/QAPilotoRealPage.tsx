@@ -1424,7 +1424,10 @@ export default function QAPilotoRealPage() {
                     type="button"
                     className="text-[11px] underline hover:no-underline"
                     onClick={() => {
-                      try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+                      try {
+                        localStorage.removeItem(PILOTO_LS_KEY);
+                        localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+                      } catch {}
                       const url = new URL(window.location.href);
                       url.searchParams.delete("venda_id");
                       url.searchParams.delete("id_legado");
