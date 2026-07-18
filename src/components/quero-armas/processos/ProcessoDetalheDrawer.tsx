@@ -136,6 +136,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
+  const [reaproveitandoId, setReaproveitandoId] = useState<string | null>(null);
   const [validandoAssinaturaId, setValidandoAssinaturaId] = useState<string | null>(null);
   // Bloco 14 — UX operacional: destaque temporário do próximo item pendente
   // após uma ação da equipe. O drawer NUNCA fecha sozinho; só destacamos e
@@ -143,6 +144,21 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const viewer = useDocumentoViewer();
+
+  const isDocReaproveitado = (doc: DocRow) => {
+    const meta = doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" ? doc.metadados_documento_json : {};
+    return doc.status === "dispensado_por_reaproveitamento" || meta.reutilizado_do_hub === true || meta.reaproveitado_da_central === true;
+  };
+
+  const getReaproveitamentoMeta = (doc: DocRow) => {
+    const meta = doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" ? doc.metadados_documento_json : {};
+    return {
+      hubId: meta.hub_documento_id ?? meta.documento_id ?? null,
+      motivo: meta.motivo_match ?? null,
+      arquivo: meta.arquivo_nome_origem ?? null,
+      reutilizadoEm: meta.reutilizado_em ?? null,
+    };
+  };
 
   const carregar = useCallback(async (): Promise<DocRow[]> => {
     setLoading(true);
@@ -594,6 +610,32 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
     } finally {
       setReprocessandoId(null);
+    }
+  };
+
+  const reprocessarReaproveitamento = async (doc?: DocRow) => {
+    if (!processo) return;
+    const alvoId = doc?.id ?? processo.id;
+    setReaproveitandoId(alvoId);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-reaproveitar-hub`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id, origem: "drawer_admin" }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.error || "Falha ao reprocessar reaproveitamento");
+      const total = Number(data?.reaproveitados ?? 0);
+      if (total > 0) toast.success(`${total} exigência(s) reaproveitada(s) da Central de Documentos.`);
+      else toast.message("Nenhuma nova exigência compatível encontrada na Central de Documentos.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao reaproveitar documentos: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReaproveitandoId(null);
     }
   };
 
@@ -1360,6 +1402,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </button>
                 )
               )}
+              {equipeMode && (
+                <button
+                  onClick={() => reprocessarReaproveitamento()}
+                  disabled={reaproveitandoId === processo?.id}
+                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                  title="Reprocessar reaproveitamento documental de todo o processo com a Central de Documentos"
+                >
+                  <Database className={`h-3 w-3 ${reaproveitandoId === processo?.id ? "animate-pulse" : ""}`} />
+                  {reaproveitandoId === processo?.id ? "REPROCESSANDO..." : "REPROCESSAR CENTRAL"}
+                </button>
+              )}
             </div>
             {processo.prazo_critico_data && (
               <div className="flex items-center gap-2 text-[11px]">
@@ -1508,6 +1561,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
                 const tplEscolhido = pickTemplate(doc.regra_validacao);
                 const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
+                const reaproveitado = isDocReaproveitado(doc);
+                const reapMeta = getReaproveitamentoMeta(doc);
                 // Pergunta-pivot tem ciclo próprio (PENDENTE/RESPONDIDA) — não usa
                 // o status documental do banco para a UI.
                 const perguntaBadge = pergunta
@@ -1539,6 +1594,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           {pergunta && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">PERGUNTA</span>}
                           {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
                           {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
+                          {reaproveitado && <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded"><Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL</span>}
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
@@ -1555,6 +1611,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {reaproveitado && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/70 p-2.5 text-[11px] text-emerald-900">
+                          <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                            <Database className="h-3.5 w-3.5" /> REAPROVEITADO DA CENTRAL DE DOCUMENTOS
+                          </div>
+                          <div className="mt-1 leading-relaxed">
+                            Documento original{reapMeta.hubId ? ` #${reapMeta.hubId}` : ""}
+                            {reapMeta.motivo ? ` · regra: ${String(reapMeta.motivo).toUpperCase()}` : ""}
+                            {reapMeta.arquivo ? ` · arquivo: ${String(reapMeta.arquivo).toUpperCase()}` : ""}
+                            {reapMeta.reutilizadoEm ? ` · ${formatDateTime(reapMeta.reutilizadoEm)}` : ""}.
+                          </div>
+                        </div>
+                      )}
                       {/* SELETOR DE CONDIÇÃO PROFISSIONAL — etapa 2.
                           O placeholder "renda_definir_condicao" é o item
                           do checklist que substitui o antigo card fixo. */}
@@ -2036,7 +2105,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Cliente/equipe: enviar / substituir conforme estado */}
-                        {doc.status !== "aprovado" && !pergunta && (
+                        {!isChecklistCumprido(doc.status) && !pergunta && (
                           <button
                             disabled={uploadingId === doc.id}
                             onClick={() => handleFileSelect(doc.id)}
@@ -2062,7 +2131,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Equipe Quero Armas: aprovar/rejeitar */}
-                        {equipeMode && doc.status !== "aprovado" && (
+                        {equipeMode && !isChecklistCumprido(doc.status) && (
                           <button onClick={() => abrirAprovacao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
                             <CheckCircle className="h-3 w-3" /> APROVAR
                           </button>
@@ -2080,6 +2149,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           >
                             <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
                             {reprocessandoId === doc.id ? "REPROCESSANDO..." : "REPROCESSAR IA"}
+                          </button>
+                        )}
+                        {equipeMode && !doc.arquivo_storage_key && (
+                          <button
+                            onClick={() => reprocessarReaproveitamento(doc)}
+                            disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+                            title="Tentar atender esta exigência com documento já aprovado na Central de Documentos"
+                          >
+                            <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} />
+                            {reaproveitandoId === doc.id ? "BUSCANDO..." : "REAPROVEITAR CENTRAL"}
                           </button>
                         )}
                         {equipeMode && doc.status === "aprovado" && doc.arquivo_storage_key && !doc.usado_como_modelo && (
@@ -2367,6 +2447,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <ul className="divide-y divide-slate-100">
                     {docs.map((doc) => {
                       const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
+                      const reaproveitado = isDocReaproveitado(doc);
                       return (
                         <li key={doc.id} className="py-2.5 flex flex-wrap items-center gap-2">
                           <div className="min-w-0 flex-1">
@@ -2376,6 +2457,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
                               {doc.tipo_documento} · {doc.etapa}
                             </div>
+                            {reaproveitado && (
+                              <div className="mt-0.5 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                                <Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL
+                              </div>
+                            )}
                             {doc.motivo_rejeicao && (
                               <div className="text-[10px] text-red-700 mt-0.5 leading-snug">
                                 MOTIVO: {doc.motivo_rejeicao}
@@ -2412,7 +2498,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               </button>
                             </>
                           )}
-                          {doc.status !== "aprovado" && (
+                          {!doc.arquivo_storage_key && (
+                            <button
+                              onClick={() => reprocessarReaproveitamento(doc)}
+                              disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
+                              className="h-7 px-2 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 text-[10px] uppercase tracking-wider font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                            >
+                              <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} /> CENTRAL
+                            </button>
+                          )}
+                          {!isChecklistCumprido(doc.status) && (
                             <button
                               onClick={() => abrirAprovacao(doc)}
                               className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600"

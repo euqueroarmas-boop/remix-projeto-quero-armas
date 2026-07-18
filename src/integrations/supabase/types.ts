@@ -10963,6 +10963,14 @@ export type Database = {
           validade_label: string
         }[]
       }
+      qa_reaproveitar_documentos_hub_processo: {
+        Args: { p_origem?: string; p_processo_id: string }
+        Returns: {
+          pendentes: number
+          reaproveitados: number
+          total_exigencias: number
+        }[]
+      }
       qa_recalcular_prazos_processo: {
         Args: { p_processo_id: string }
         Returns: undefined
