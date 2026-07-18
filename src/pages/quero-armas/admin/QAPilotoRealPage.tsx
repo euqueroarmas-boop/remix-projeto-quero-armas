@@ -2721,6 +2721,16 @@ export default function QAPilotoRealPage() {
                   {carregandoAudit ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
                 </Button>
               </div>
+              {profile?.perfil === "administrador" && (
+                <div className="mb-3 flex items-center justify-between rounded border border-amber-300 bg-amber-50 p-2 text-[11px] normal-case">
+                  <span className="text-amber-900">
+                    Corrigir composição/parcelamento financeiro deste piloto (auditado em <code>qa_piloto_reprocessamentos</code>).
+                  </span>
+                  <Button size="sm" variant="outline" className="h-7 text-[11px] border-amber-400 text-amber-900 hover:bg-amber-100" onClick={() => setReprocOpen(true)}>
+                    <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar financeiro
+                  </Button>
+                </div>
+              )}
               {auditRows.length === 0 && !carregandoAudit && (
                 <p className="text-xs text-neutral-500 normal-case">Nenhum evento ainda.</p>
               )}
