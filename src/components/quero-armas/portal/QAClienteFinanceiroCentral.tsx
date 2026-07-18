@@ -130,6 +130,20 @@ export interface QAVendaFinanceira {
   asaas_due_date: string | null;
   cobranca_confirmada_em: string | null;
   parcelas_cobranca?: number | null;
+  // Piloto Real 2026-07-18 — quando presente é a fonte de verdade do valor
+  // efetivamente cobrado do cliente (pacote fechado com composição).
+  valor_total_pago_cliente?: number | null;
+  pagamento_valor_total_parcelado?: number | null;
+  pagamento_parcelas?: number | null;
+  pagamento_adquirente?: string | null;
+  pagamento_valor_parcela?: number | null;
+  composicao_valor_final?: Array<{
+    tipo: string;
+    descricao: string;
+    valor: number;
+    natureza: string;
+    aparece_no_contrato: boolean;
+  }> | null;
 }
 
 export interface QAVendaItemLite {
