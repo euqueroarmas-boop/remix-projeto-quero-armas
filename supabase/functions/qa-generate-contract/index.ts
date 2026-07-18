@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
   }
 
-  let body: { venda_id?: number; force?: boolean };
+  let body: { venda_id?: number; force?: boolean; notificacao_policy?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -244,6 +244,10 @@ Deno.serve(async (req) => {
   const vendaId = Number(body.venda_id);
   const force = body.force === true;
   if (!vendaId || Number.isNaN(vendaId)) return jsonResp({ error: "venda_id obrigatório" }, 400);
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: true,
+    canais: { email: true, whatsapp: false, portal: false },
+  });
 
   const sb = svc();
 
