@@ -11,6 +11,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
+import { aplicarPolicyNotificacao, extractPolicy } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,14 @@ Deno.serve(async (req) => {
 
   const vendaId = Number(body?.venda_id);
   const motivo = String(body?.motivo || "").trim();
+  // Reprocessamento financeiro é ajuste interno — default é NÃO notificar.
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+  });
+  if (!notifPolicy.notificar_cliente && !(notifPolicy.motivo_nao_notificar || "").trim()) {
+    notifPolicy.motivo_nao_notificar = `AJUSTE FINANCEIRO INTERNO: ${motivo}`;
+  }
   const composicao = Array.isArray(body?.composicao_valor_final)
     ? body.composicao_valor_final
     : [];
@@ -183,10 +192,28 @@ Deno.serve(async (req) => {
     dados_json: { antes, depois, motivo, tags: ["piloto", "reprocessamento_financeiro"] },
   });
 
+  try {
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "piloto_financeiro_reprocessado",
+      cliente_id: (venda as any).cliente_id ?? null,
+      venda_id: vendaId,
+      staff_user_id: guard.userId,
+      staff_email: guard.email,
+      origem: "piloto_real",
+      titulo_portal: "Financeiro atualizado",
+      mensagem_portal: "Atualizamos a composição financeira do seu serviço. Consulte a área financeira.",
+      link_portal: "/area-do-cliente/financeiro",
+      payload_resumo: { motivo, valor_total: depois.valor_total_pago_cliente },
+    });
+  } catch (e) {
+    console.warn("[piloto-reprocessar-financeiro] policy falhou:", (e as Error).message);
+  }
+
   return json({
     ok: true,
     venda_id: vendaId,
     valor_total_pago_cliente: depois.valor_total_pago_cliente,
     composicao: compSanit,
+    notificacao_policy: notifPolicy,
   });
 });

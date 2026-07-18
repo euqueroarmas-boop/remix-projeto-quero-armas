@@ -744,6 +744,7 @@ export default function QAPilotoRealPage() {
     if (!venda) return;
     if (reprocMotivo.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
     if (composicaoValorFinalDerivada.length === 0) { toast.error("Configure a composição no Passo 3 antes de reprocessar."); return; }
+    if (!policyIsValid(notifPolicyReproc)) { toast.error("Preencha a política de notificação (motivo mín. 20 chars se não notificar)."); return; }
     setReprocRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-piloto-reprocessar-financeiro", {
@@ -763,6 +764,7 @@ export default function QAPilotoRealPage() {
               return Number.isFinite(n) && n > 0 ? n : null;
             })(),
           },
+          notificacao_policy: toBackendPolicy(notifPolicyReproc),
         },
       });
       if (error) throw error;
@@ -805,6 +807,17 @@ export default function QAPilotoRealPage() {
   // Política de notificação — Passo 5 (pagamento) e upload assistido do contrato
   const [notifPolicyPagamento, setNotifPolicyPagamento] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
   const [notifPolicyUpload, setNotifPolicyUpload] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+  // Arquivar/Reprocessar são ações internas — default = não notificar.
+  const [notifPolicyArquivar, setNotifPolicyArquivar] = useState<NotificacaoPolicyValue>({
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+    motivo_nao_notificar: "",
+  });
+  const [notifPolicyReproc, setNotifPolicyReproc] = useState<NotificacaoPolicyValue>({
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+    motivo_nao_notificar: "",
+  });
 
   const clienteIdsAceitosContrato = useMemo(() => {
     const ids = [cliente?.id, cliente?.id_legado]
@@ -1290,11 +1303,16 @@ export default function QAPilotoRealPage() {
     if (!venda) return;
     if (arquivado) { toast.info("Este piloto já está arquivado."); setMostrarArq(false); return; }
     if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+    if (!policyIsValid(notifPolicyArquivar)) { toast.error("Preencha a política de notificação (motivo mín. 20 chars se não notificar)."); return; }
     if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
     setArquivando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-piloto-arquivar", {
-        body: { venda_id: venda.id, motivo: motivoArq.trim() },
+        body: {
+          venda_id: venda.id,
+          motivo: motivoArq.trim(),
+          notificacao_policy: toBackendPolicy(notifPolicyArquivar),
+        },
       });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
@@ -2730,6 +2748,12 @@ export default function QAPilotoRealPage() {
                     placeholder="Ex.: TESTE ENCERRADO — CLIENTE DESISTIU E VAI RECONTRATAR NO FLUXO NORMAL."
                     className="bg-white border-neutral-300 min-h-[70px] normal-case"
                   />
+                  <NotificacaoPolicyPicker
+                    value={notifPolicyArquivar}
+                    onChange={setNotifPolicyArquivar}
+                    clienteEmail={cliente?.email ?? null}
+                    acaoLabel="ARQUIVAR PILOTO"
+                  />
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => { setMostrarArq(false); setMotivoArq(""); }}>Cancelar</Button>
                     <Button size="sm" onClick={arquivarPiloto} disabled={arquivando} className="bg-rose-600 hover:bg-rose-500">
@@ -2962,6 +2986,12 @@ export default function QAPilotoRealPage() {
                 className="bg-white border-neutral-300 min-h-[80px] normal-case mt-1" />
               <div className="text-[10px] text-neutral-500 mt-1">{reprocMotivo.trim().length} caracteres</div>
             </div>
+            <NotificacaoPolicyPicker
+              value={notifPolicyReproc}
+              onChange={setNotifPolicyReproc}
+              clienteEmail={cliente?.email ?? null}
+              acaoLabel="REPROCESSAR FINANCEIRO"
+            />
           </div>
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setReprocOpen(false)} disabled={reprocRunning}>Cancelar</Button>

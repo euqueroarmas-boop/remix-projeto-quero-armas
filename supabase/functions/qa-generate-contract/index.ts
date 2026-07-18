@@ -26,6 +26,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
+import { extractPolicy, aplicarPolicyNotificacao } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -234,7 +235,7 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
   }
 
-  let body: { venda_id?: number; force?: boolean };
+  let body: { venda_id?: number; force?: boolean; notificacao_policy?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -243,6 +244,10 @@ Deno.serve(async (req) => {
   const vendaId = Number(body.venda_id);
   const force = body.force === true;
   if (!vendaId || Number.isNaN(vendaId)) return jsonResp({ error: "venda_id obrigatório" }, 400);
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: true,
+    canais: { email: true, whatsapp: false, portal: false },
+  });
 
   const sb = svc();
 
@@ -690,6 +695,9 @@ Deno.serve(async (req) => {
   });
 
   // Lovable Emails: avisa cliente que o contrato está pronto para assinatura.
+  // Gated pela política de notificação (notificacao_policy). Se o operador
+  // marcou "não notificar", registramos a decisão em qa_notificacao_eventos
+  // e pulamos o envio de e-mail (mesmo comportamento para portal/WhatsApp).
   try {
     const { data: cliEmail } = await sb
       .from("qa_clientes")
@@ -697,7 +705,9 @@ Deno.serve(async (req) => {
       .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
       .limit(1)
       .maybeSingle();
-    if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+    const podeEnviarEmail =
+      notifPolicy.notificar_cliente && (notifPolicy.canais?.email ?? true);
+    if (podeEnviarEmail && cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
       const { sendTransactional } = await import("../_shared/sendTransactional.ts");
       await sendTransactional({
         templateName: "contrato-pronto-assinatura",
@@ -710,6 +720,22 @@ Deno.serve(async (req) => {
         },
       });
     }
+    // Registra a decisão (portal + auditoria). Não reenvia e-mail: aqui só
+    // fecha a trilha, para que quem consultar qa_notificacao_eventos veja
+    // o motivo de "não notificar" ou o canal usado.
+    try {
+      await aplicarPolicyNotificacao(notifPolicy, {
+        acao: "contrato_pronto_assinatura",
+        cliente_id: venda.cliente_id ?? null,
+        venda_id: vendaId,
+        contrato_id: contract.id,
+        origem: "qa-generate-contract",
+        titulo_portal: "Contrato pronto para assinatura",
+        mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
+        link_portal: `/area-do-cliente/contratos/${contract.id}`,
+        payload_resumo: { contract_number: contractNumber, email_ja_enviado: !!podeEnviarEmail },
+      });
+    } catch (_) { /* best effort */ }
   } catch (e) {
     console.error("[qa-generate-contract] contrato-pronto-assinatura email error:", (e as Error)?.message);
   }
