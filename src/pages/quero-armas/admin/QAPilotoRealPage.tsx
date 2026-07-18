@@ -1240,7 +1240,17 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 2 */}
           {cliente && (
-            <Card id="step-servico" title="2. Serviço" state={stepStates.servico}>
+            <Card
+              id="step-servico"
+              title={
+                servico
+                  ? (itensExtras.length > 0
+                      ? `2. Serviços contratados (${1 + itensExtras.length})`
+                      : "2. Serviço contratado")
+                  : "2. Serviço"
+              }
+              state={stepStates.servico}
+            >
               {!servico ? (
                 <>
                   <Input
@@ -1268,27 +1278,95 @@ export default function QAPilotoRealPage() {
                 </>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <div>
-                      <div className="text-[10px] text-neutral-500 tracking-wide">Item principal</div>
-                      <div className="font-semibold">{servico.nome}</div>
-                      <div className="text-xs text-neutral-600 normal-case">{servico.slug} · {money(servico.preco)}</div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setServico(null); setVenda(null); setContrato(null); setItensExtras([]); }}
-                    >
-                      Trocar
-                    </Button>
-                  </div>
+                  {(() => {
+                    // Fonte da verdade do modo de exibição:
+                    //  - venda existente: usa snapshot do evento oficial (fallback = local)
+                    //  - venda ainda não criada: usa state local (editável no Passo 3)
+                    const modoEfetivo: "itens_separados" | "pacote_fechado" =
+                      venda
+                        ? (exibicaoContratoSnap?.modo ?? (itensExtras.length > 0 ? "itens_separados" : "itens_separados"))
+                        : (modoExibicao);
+                    const ehPacote = itensExtras.length > 0 && modoEfetivo === "pacote_fechado";
+                    const valorFinal = venda
+                      ? (exibicaoContratoSnap?.valor_final_pacote ?? Number((venda as any)?.valor_a_pagar))
+                      : (Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null);
+                    const todos = [servico, ...itensExtras.map((i) => i.servico)];
+                    const totalSeparados = todos.reduce(
+                      (s, sv) => s + (sv?.preco != null ? Number(sv.preco) : 0),
+                      0,
+                    );
+
+                    return (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {itensExtras.length > 0 && (
+                              <span className="text-[10px] uppercase tracking-wide bg-neutral-900 text-white rounded-full px-2 py-0.5">
+                                {1 + itensExtras.length} serviços no pacote
+                              </span>
+                            )}
+                            <span className={`text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 border ${ehPacote ? "border-amber-400 text-amber-800 bg-amber-50" : "border-neutral-300 text-neutral-700 bg-neutral-50"}`}>
+                              Modo: {ehPacote ? "pacote fechado / valor final único" : "itens separados"}
+                            </span>
+                          </div>
+                          {!venda && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => { setServico(null); setVenda(null); setContrato(null); setItensExtras([]); }}
+                            >
+                              Trocar
+                            </Button>
+                          )}
+                        </div>
+
+                        <ol className="space-y-1 text-sm">
+                          {todos.map((sv, i) => (
+                            <li key={`${sv?.id ?? "srv"}-${i}`} className="flex items-start justify-between gap-3 border border-neutral-200 rounded px-2 py-1.5">
+                              <div className="flex-1">
+                                <div className="font-semibold">
+                                  <span className="text-neutral-500 mr-1">{i + 1}.</span>{sv?.nome}
+                                </div>
+                                <div className="text-[11px] text-neutral-500 normal-case">{sv?.slug}</div>
+                              </div>
+                              {/* Preço individual: escondido no modo pacote fechado */}
+                              {!ehPacote && (
+                                <div className="font-mono text-xs text-neutral-700 whitespace-nowrap">
+                                  {money(sv?.preco ?? null)}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ol>
+
+                        {ehPacote ? (
+                          <div className="rounded border border-amber-300 bg-amber-50/60 p-2 text-xs space-y-0.5 normal-case">
+                            <div>
+                              <span className="text-neutral-600">Valor final do pacote:</span>{" "}
+                              <strong className="font-mono">{money(valorFinal)}</strong>
+                            </div>
+                            <div className="text-neutral-600">
+                              Contrato: <strong>preços individuais ocultos</strong>. Auditoria completa no Passo 3.
+                            </div>
+                          </div>
+                        ) : (
+                          itensExtras.length > 0 && (
+                            <div className="rounded border border-neutral-200 bg-neutral-50 p-2 text-xs flex items-center justify-between normal-case">
+                              <span className="text-neutral-600">Total dos serviços:</span>
+                              <strong className="font-mono">{money(totalSeparados)}</strong>
+                            </div>
+                          )
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {/* Itens adicionais do pacote (Piloto Real multi-item) */}
                   {!venda && (
                     <div className="border-t border-neutral-200 pt-3">
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-xs font-semibold tracking-wide">
-                          Itens adicionais do pacote {itensExtras.length > 0 && <span className="text-neutral-500 normal-case">({itensExtras.length})</span>}
+                          Adicionar / editar serviços {itensExtras.length > 0 && <span className="text-neutral-500 normal-case">({itensExtras.length} extras)</span>}
                         </div>
                         {!extraPickerAberto && (
                           <Button size="sm" variant="outline" onClick={() => setExtraPickerAberto(true)}>
