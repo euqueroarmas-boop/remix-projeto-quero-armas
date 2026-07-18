@@ -1150,6 +1150,16 @@ export default function QAPilotoRealPage() {
                 </button>
               </div>
             )}
+            {venda && vinculoBloqueado && (
+              <div className="mt-3 border border-rose-300 bg-rose-50 text-rose-800 rounded px-3 py-2 text-xs normal-case">
+                <div className="font-semibold flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" /> Continuação bloqueada por divergência de contratante.
+                </div>
+                <div className="mt-1">
+                  {motivoBloqueioVinculo} Arquive este piloto e crie uma nova venda usando o cliente correto no Passo 1.
+                </div>
+              </div>
+            )}
           </header>
 
           {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
@@ -1920,6 +1930,31 @@ export default function QAPilotoRealPage() {
           {/* Passo 5 */}
           {venda && venda.status_validacao_valor === "aprovado" && venda.cobranca_status !== "confirmada" && (
             <Card id="step-pagamento" title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
+              <div className={`mb-3 rounded border p-3 text-xs normal-case ${vinculoBloqueado ? "border-rose-300 bg-rose-50 text-rose-800" : "border-neutral-200 bg-neutral-50 text-neutral-700"}`}>
+                <div className="font-semibold uppercase tracking-wide mb-2">Conferência obrigatória do contratante</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase text-neutral-500">Cliente do contrato</div>
+                    <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
+                    <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
+                    <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
+                    <div><strong>ID cliente:</strong> {cliente?.id ?? "—"}</div>
+                    <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-neutral-500">Operador/staff</div>
+                    <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
+                    <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
+                    <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
+                    <div className="mt-1 font-semibold">O operador/staff NÃO é o contratante.</div>
+                  </div>
+                </div>
+                {vinculoBloqueado && (
+                  <div className="mt-2 font-semibold">
+                    {motivoBloqueioVinculo} A geração do contrato está bloqueada.
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Forma de pagamento</Label>
@@ -2012,7 +2047,7 @@ export default function QAPilotoRealPage() {
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
-              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={confirmarPagamento} disabled={confirmandoPag || arquivado}>
+              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
               <p className="text-[10px] text-neutral-500 normal-case mt-2">
