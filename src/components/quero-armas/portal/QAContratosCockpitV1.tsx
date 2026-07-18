@@ -193,19 +193,41 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
   // KPIs derivados
   const kpis = useMemo(() => {
-    const aguarda = contracts.filter((c) => c.status === "pending_customer_signature").length;
-    const emAssin = contracts.filter((c) => ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status))).length;
+    // "Aguarda você": exige ação direta do cliente
+    //   - pending_customer_signature: baixar, assinar e reenviar
+    //   - rejected: assinatura recusada, precisa corrigir/reenviar
+    const aguarda = contracts.filter((c) =>
+      c.status === "pending_customer_signature" || c.status === "rejected",
+    ).length;
+    // "Em assinatura / aguardando contraparte":
+    //   - generated_pending_company_signature: aguarda assinatura da CONTRATADA
+    //   - customer_signature_uploaded/validating/pending_manual_review: cliente já
+    //     enviou o assinado e o sistema está processando
+    const emAssin = contracts.filter((c) =>
+      [
+        "generated_pending_company_signature",
+        "customer_signature_uploaded",
+        "validating",
+        "pending_manual_review",
+      ].includes(String(c.status)),
+    ).length;
     const assinados = contracts.filter((c) => c.status === "validated").length;
     const vigentes = assinados; // simplificação: validados = vigentes
     const valor = valorPago;
     return { aguarda, emAssin, assinados, vigentes, valor };
   }, [contracts, valorPago]);
 
-  // Featured: primeiro aguardando cliente, senão primeiro em assinatura, senão mais recente
+  // Featured: prioridade explícita
+  //  1) pending_customer_signature (ação imediata do cliente)
+  //  2) rejected (assinatura recusada — precisa reenviar)
+  //  3) generated_pending_company_signature (aguarda contraparte)
+  //  4) demais (mais recente)
   const featured = useMemo<Contract | null>(() => {
     if (!contracts.length) return null;
     return (
       contracts.find((c) => c.status === "pending_customer_signature") ||
+      contracts.find((c) => c.status === "rejected") ||
+      contracts.find((c) => c.status === "generated_pending_company_signature") ||
       contracts.find((c) => ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status))) ||
       contracts[0]
     );
