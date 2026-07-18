@@ -12,6 +12,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireQAStaff, qaAuthCors } from "../_shared/qaAuth.ts";
 import { executarPipelinePosPagamento } from "../_shared/qaPosPagamento.ts";
+import { aplicarPolicyNotificacao, extractPolicy } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = { ...qaAuthCors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
@@ -62,6 +63,12 @@ Deno.serve(async (req) => {
     : valor_bruto_parcelado;
   const daNum = Number(body?.diferenca_arredondamento);
   const diferenca_arredondamento = Number.isFinite(daNum) ? Number(daNum.toFixed(2)) : null;
+
+  // Política de notificação (default = notificar por e-mail e portal)
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: true,
+    canais: { email: true, whatsapp: false, portal: true },
+  });
 
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (!FORMAS.has(forma_pagamento)) return json({ error: "forma_pagamento_invalida", allowed: [...FORMAS] }, 400);
@@ -193,11 +200,31 @@ Deno.serve(async (req) => {
     .eq("venda_id", Number((venda as any).id_legado))
     .maybeSingle();
 
+  // Aplica política de notificação (registra trilha completa em qa_notificacao_eventos)
+  try {
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "pagamento_confirmado_manual",
+      cliente_id: (venda as any).cliente_id ?? null,
+      venda_id: Number((venda as any).id),
+      contrato_id: (contrato as any)?.id ?? null,
+      staff_user_id: guard.userId,
+      staff_email: guard.email,
+      origem: "piloto_real",
+      titulo_portal: "Pagamento confirmado",
+      mensagem_portal: `Recebemos a confirmação do seu pagamento (${forma_pagamento}). Em instantes seu contrato será gerado.`,
+      link_portal: "/area-do-cliente",
+      payload_resumo: { forma_pagamento, parcelas, adquirente },
+    });
+  } catch (e) {
+    console.warn("[confirmar-pagamento-manual] policy falhou:", (e as Error).message);
+  }
+
   return json({
     ok: true,
     venda_id: Number((venda as any).id),
     ja_estava_pago: jaPago,
     evento_ja_existia: eventoJaExiste,
     contrato: contrato ?? null,
+    notificacao_policy: notifPolicy,
   });
 });

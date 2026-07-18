@@ -28,6 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import {
+  NotificacaoPolicyPicker,
+  DEFAULT_NOTIFICACAO_POLICY,
+  toBackendPolicy,
+  policyIsValid,
+  type NotificacaoPolicyValue,
+} from "@/components/quero-armas/NotificacaoPolicyPicker";
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
@@ -795,6 +802,10 @@ export default function QAPilotoRealPage() {
     return path;
   }, [comprovante, venda]);
 
+  // Política de notificação — Passo 5 (pagamento) e upload assistido do contrato
+  const [notifPolicyPagamento, setNotifPolicyPagamento] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+  const [notifPolicyUpload, setNotifPolicyUpload] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+
   const clienteIdsAceitosContrato = useMemo(() => {
     const ids = [cliente?.id, cliente?.id_legado]
       .map((v) => Number(v))
@@ -821,6 +832,10 @@ export default function QAPilotoRealPage() {
     }
     if (!comprovante && !comprovantePath) {
       toast.error("Anexe o comprovante do pagamento.");
+      return;
+    }
+    if (!policyIsValid(notifPolicyPagamento)) {
+      toast.error("Defina a política de notificação (motivo mínimo 20 caracteres quando não notificar).");
       return;
     }
     if (vinculoBloqueado) {
@@ -874,6 +889,7 @@ export default function QAPilotoRealPage() {
             const n = parseMoney(valorBrutoStr);
             return Number.isFinite(n) && n > 0 ? n : null;
           })(),
+          notificacao_policy: toBackendPolicy(notifPolicyPagamento),
         },
       });
       if (error) throw error;
@@ -1226,6 +1242,10 @@ export default function QAPilotoRealPage() {
     if (!contrato || !venda) return;
     if (!assinado) { toast.error("Anexe o PDF do contrato assinado."); return; }
     if (obsAssinado.trim().length < 20) { toast.error("Observação mínima de 20 caracteres."); return; }
+    if (!policyIsValid(notifPolicyUpload)) {
+      toast.error("Defina a política de notificação (motivo mínimo 20 caracteres quando não notificar).");
+      return;
+    }
     setEnviandoAssinado(true);
     try {
       await logPilotoEvento("contrato_upload_assistido_iniciado", {
@@ -1239,6 +1259,7 @@ export default function QAPilotoRealPage() {
       fd.append("file", assinado);
       fd.append("observacao", obsAssinado.trim());
       fd.append("origem", `piloto_real_staff_assistido:${origemAssinado}`);
+      fd.append("notificacao_policy", JSON.stringify(toBackendPolicy(notifPolicyUpload)));
       const { data, error } = await supabase.functions.invoke("qa-piloto-upload-contrato-staff", { body: fd });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_upload_assistido");
@@ -1254,7 +1275,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setEnviandoAssinado(false);
     }
-  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato, logPilotoEvento]);
+  }, [contrato, venda, assinado, obsAssinado, origemAssinado, notifPolicyUpload, recarregarContrato, logPilotoEvento]);
 
   /* ---------- Arquivar piloto ---------- */
   const [motivoArq, setMotivoArq] = useState("");
@@ -2539,6 +2560,14 @@ export default function QAPilotoRealPage() {
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
+              <div className="mt-4">
+                <NotificacaoPolicyPicker
+                  value={notifPolicyPagamento}
+                  onChange={setNotifPolicyPagamento}
+                  clienteEmail={cliente?.email ?? null}
+                  acaoLabel="Confirmação de pagamento"
+                />
+              </div>
               <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
@@ -2644,6 +2673,12 @@ export default function QAPilotoRealPage() {
                           className="bg-white border-neutral-300 min-h-[70px] normal-case"
                         />
                       </div>
+                      <NotificacaoPolicyPicker
+                        value={notifPolicyUpload}
+                        onChange={setNotifPolicyUpload}
+                        clienteEmail={cliente?.email ?? null}
+                        acaoLabel="Contrato assinado recebido (staff)"
+                      />
                       <Button
                         size="sm"
                         onClick={enviarContratoAssinadoStaff}
