@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
   // Carrega venda
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
-    .select("id, id_legado, cliente_id, status, valor_aprovado, valor_a_pagar, data_cadastro")
+    .select("id, id_legado, cliente_id, status, valor_aprovado, valor_a_pagar, data_cadastro, valor_total_pago_cliente, composicao_valor_final, pagamento_parcelas, pagamento_adquirente, pagamento_valor_parcela, pagamento_valor_total_parcelado")
     .eq("id_legado", vendaId)
     .maybeSingle();
   if (vErr || !venda) return jsonResp({ error: "Venda não encontrada" }, 404);
@@ -387,6 +387,28 @@ Deno.serve(async (req) => {
       ? Math.round(valorFinalPacoteEvento * 100)
       : totalCents;
 
+  // -------------------------------------------------------------------------
+  // Piloto Real 2026-07-18 — se a venda tem `valor_total_pago_cliente` gravado
+  // (composição estruturada), ele é a autoridade sobre o total do contrato em
+  // modo pacote fechado. Evita divergência entre financeiro e contrato.
+  // -------------------------------------------------------------------------
+  const valorTotalPagoClienteDB = Number((venda as any)?.valor_total_pago_cliente);
+  const composicaoDB: Array<{
+    tipo: string;
+    descricao: string;
+    valor: number;
+    natureza: string;
+    aparece_no_contrato: boolean;
+  }> = Array.isArray((venda as any)?.composicao_valor_final)
+    ? (venda as any).composicao_valor_final
+    : [];
+  const totalContratoCentsFinal =
+    modoExibicaoContrato === "pacote_fechado" &&
+    Number.isFinite(valorTotalPagoClienteDB) &&
+    valorTotalPagoClienteDB > 0
+      ? Math.round(valorTotalPagoClienteDB * 100)
+      : totalContratoCents;
+
   if (snapshot.length > 1) {
     if (modoExibicaoContrato === "pacote_fechado") {
       const linhas = snapshot
@@ -412,7 +434,7 @@ Deno.serve(async (req) => {
         `<p>1.A.1. A CONTRATANTE contratou, em condição comercial única de pacote fechado, ` +
         `os serviços listados abaixo, cada qual regido pelo respectivo Anexo I:</p>` +
         `<ul>${linhas}</ul>` +
-        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>. ` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCentsFinal)}</strong>. ` +
         `Por se tratar de condição comercial de pacote, não há discriminação de preço por serviço ` +
         `neste instrumento — a condição de pagamento (parcelamento e adquirente, quando houver) é ` +
         `detalhada na CLÁUSULA TERCEIRA.</p>` +
@@ -430,7 +452,7 @@ Deno.serve(async (req) => {
         `<p>1.A.1. A CONTRATANTE contratou, em condição única de pacote, os serviços abaixo, ` +
         `cada qual regido pelo respectivo Anexo I:</p>` +
         `<ul>${linhas}</ul>` +
-        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>, ` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCentsFinal)}</strong>, ` +
         `equivalente à soma dos itens acima na condição comercial acordada no momento do aceite eletrônico.</p>`;
     }
   }
@@ -456,7 +478,7 @@ Deno.serve(async (req) => {
       const adquirente = dj.adquirente ? String(dj.adquirente).trim() : "";
       const valorBruto = Number(dj.valor_bruto_parcelado);
       const forma = dj.forma_pagamento ? String(dj.forma_pagamento) : "";
-      const totalReais = totalContratoCents / 100;
+      const totalReais = totalContratoCentsFinal / 100;
       const temJuros =
         Number.isFinite(valorBruto) && valorBruto > 0 && valorBruto - totalReais > 0.01;
       if (parcelas > 1 && (temJuros || adquirente)) {
@@ -464,7 +486,7 @@ Deno.serve(async (req) => {
         const valorParcela = efetivoBruto / parcelas;
         const parcelaFmt = brl(Math.round(valorParcela * 100));
         const brutoFmt = brl(Math.round(efetivoBruto * 100));
-        const totalFmt = brl(totalContratoCents);
+        const totalFmt = brl(totalContratoCentsFinal);
         const partes: string[] = [];
         partes.push(
           `3.2.1. Foi acordado o pagamento em <strong>${parcelas}x</strong> de ` +
@@ -514,7 +536,7 @@ Deno.serve(async (req) => {
     cliente_telefone: esc(cliente.celular || ""),
     servico_slug: esc(servicoSlugFinal),
     servico_nome: esc(servicoNomeFinal),
-    servico_preco: brl(totalContratoCents),
+    servico_preco: brl(totalContratoCentsFinal),
     aceite_data: aceiteDataIso,
     aceite_ip: "",
     aceite_user_agent: "",

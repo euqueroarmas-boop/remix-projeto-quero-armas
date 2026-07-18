@@ -814,7 +814,15 @@ export default function QAClientePortalPage() {
     const totalServicos = itens.length;
     const concluidos = itens.filter((i: any) => i.status === "CONCLUÍDO" || i.status === "DEFERIDO").length;
     const emAndamento = itens.filter((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)).length;
-    const totalVendas = vendas.reduce((a: number, v: any) => a + Number(v.valor_a_pagar || 0), 0);
+    // Piloto Real: prefere valor_total_pago_cliente (composição) sobre valor_a_pagar.
+    const totalVendas = vendas.reduce((a: number, v: any) => {
+      const vt = Number(v?.valor_total_pago_cliente);
+      const vp = Number(v?.pagamento_valor_total_parcelado);
+      const efetivo = Number.isFinite(vt) && vt > 0
+        ? vt
+        : (Number.isFinite(vp) && vp > 0 ? vp : Number(v?.valor_a_pagar || 0));
+      return a + efetivo;
+    }, 0);
 
     const expDocs: ExpiringDoc[] = [];
     if (cadastro) {
@@ -981,7 +989,14 @@ export default function QAClientePortalPage() {
   // Timeline
   const timeline = useMemo(() => {
     const events: { date: string; label: string; icon: any; color: string; sub?: string | null }[] = [];
-    vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(352 60% 30%)" }));
+    vendas.forEach((v: any) => {
+      const vt = Number(v?.valor_total_pago_cliente);
+      const vp = Number(v?.pagamento_valor_total_parcelado);
+      const efetivo = Number.isFinite(vt) && vt > 0
+        ? vt
+        : (Number.isFinite(vp) && vp > 0 ? vp : Number(v?.valor_a_pagar || 0));
+      events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(efetivo)}`, icon: CreditCard, color: "hsl(352 60% 30%)" });
+    });
     itens.forEach((it: any) => {
       const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
       if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });

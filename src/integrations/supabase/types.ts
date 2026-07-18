@@ -7626,42 +7626,60 @@ export type Database = {
       }
       qa_pagamento_auditoria: {
         Row: {
+          adquirente: string | null
           ator: string | null
           campo: string
           cliente_id: number | null
+          composicao_snapshot: Json | null
           contexto: Json | null
           created_at: string
+          diferenca_arredondamento: number | null
           id: string
           origem: string
+          parcelas: number | null
           solicitacao_id: string | null
           valor_anterior: string | null
           valor_novo: string | null
+          valor_parcela: number | null
+          valor_total_parcelado: number | null
           venda_id: number | null
         }
         Insert: {
+          adquirente?: string | null
           ator?: string | null
           campo: string
           cliente_id?: number | null
+          composicao_snapshot?: Json | null
           contexto?: Json | null
           created_at?: string
+          diferenca_arredondamento?: number | null
           id?: string
           origem: string
+          parcelas?: number | null
           solicitacao_id?: string | null
           valor_anterior?: string | null
           valor_novo?: string | null
+          valor_parcela?: number | null
+          valor_total_parcelado?: number | null
           venda_id?: number | null
         }
         Update: {
+          adquirente?: string | null
           ator?: string | null
           campo?: string
           cliente_id?: number | null
+          composicao_snapshot?: Json | null
           contexto?: Json | null
           created_at?: string
+          diferenca_arredondamento?: number | null
           id?: string
           origem?: string
+          parcelas?: number | null
           solicitacao_id?: string | null
           valor_anterior?: string | null
           valor_novo?: string | null
+          valor_parcela?: number | null
+          valor_total_parcelado?: number | null
           venda_id?: number | null
         }
         Relationships: []
@@ -7729,6 +7747,42 @@ export type Database = {
           tipo_evento?: string
           venda_id?: number | null
           venda_id_legado?: number | null
+        }
+        Relationships: []
+      }
+      qa_piloto_reprocessamentos: {
+        Row: {
+          antes: Json
+          created_at: string
+          depois: Json
+          id: string
+          motivo: string
+          staff_email: string | null
+          staff_user_id: string | null
+          venda_id: number
+          venda_id_legado: string | null
+        }
+        Insert: {
+          antes: Json
+          created_at?: string
+          depois: Json
+          id?: string
+          motivo: string
+          staff_email?: string | null
+          staff_user_id?: string | null
+          venda_id: number
+          venda_id_legado?: string | null
+        }
+        Update: {
+          antes?: Json
+          created_at?: string
+          depois?: Json
+          id?: string
+          motivo?: string
+          staff_email?: string | null
+          staff_user_id?: string | null
+          venda_id?: number
+          venda_id_legado?: string | null
         }
         Relationships: []
       }
@@ -9555,6 +9609,7 @@ export type Database = {
           cobranca_gerada_em: string | null
           cobranca_origem: string | null
           cobranca_status: string | null
+          composicao_valor_final: Json
           created_at: string
           data_cadastro: string | null
           data_deferimento: string | null
@@ -9569,6 +9624,11 @@ export type Database = {
           motivo_correcao: string | null
           numero_processo: string | null
           origem_proposta: string | null
+          pagamento_adquirente: string | null
+          pagamento_diferenca_arredondamento: number | null
+          pagamento_parcelas: number | null
+          pagamento_valor_parcela: number | null
+          pagamento_valor_total_parcelado: number | null
           parcelas_cobranca: number | null
           solicitacao_id: string | null
           status: string
@@ -9578,7 +9638,12 @@ export type Database = {
           valor_aberto: number
           valor_aprovado: number | null
           valor_cobrado: number | null
+          valor_custo_financeiro: number | null
+          valor_despesas_extras: number | null
           valor_informado_cliente: number | null
+          valor_servicos_aplicado: number | null
+          valor_servicos_catalogo: number | null
+          valor_total_pago_cliente: number | null
         }
         Insert: {
           aprovado_em?: string | null
@@ -9597,6 +9662,7 @@ export type Database = {
           cobranca_gerada_em?: string | null
           cobranca_origem?: string | null
           cobranca_status?: string | null
+          composicao_valor_final?: Json
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
@@ -9611,6 +9677,11 @@ export type Database = {
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          pagamento_adquirente?: string | null
+          pagamento_diferenca_arredondamento?: number | null
+          pagamento_parcelas?: number | null
+          pagamento_valor_parcela?: number | null
+          pagamento_valor_total_parcelado?: number | null
           parcelas_cobranca?: number | null
           solicitacao_id?: string | null
           status?: string
@@ -9620,7 +9691,12 @@ export type Database = {
           valor_aberto?: number
           valor_aprovado?: number | null
           valor_cobrado?: number | null
+          valor_custo_financeiro?: number | null
+          valor_despesas_extras?: number | null
           valor_informado_cliente?: number | null
+          valor_servicos_aplicado?: number | null
+          valor_servicos_catalogo?: number | null
+          valor_total_pago_cliente?: number | null
         }
         Update: {
           aprovado_em?: string | null
@@ -9639,6 +9715,7 @@ export type Database = {
           cobranca_gerada_em?: string | null
           cobranca_origem?: string | null
           cobranca_status?: string | null
+          composicao_valor_final?: Json
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
@@ -9653,6 +9730,11 @@ export type Database = {
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          pagamento_adquirente?: string | null
+          pagamento_diferenca_arredondamento?: number | null
+          pagamento_parcelas?: number | null
+          pagamento_valor_parcela?: number | null
+          pagamento_valor_total_parcelado?: number | null
           parcelas_cobranca?: number | null
           solicitacao_id?: string | null
           status?: string
@@ -9662,7 +9744,12 @@ export type Database = {
           valor_aberto?: number
           valor_aprovado?: number | null
           valor_cobrado?: number | null
+          valor_custo_financeiro?: number | null
+          valor_despesas_extras?: number | null
           valor_informado_cliente?: number | null
+          valor_servicos_aplicado?: number | null
+          valor_servicos_catalogo?: number | null
+          valor_total_pago_cliente?: number | null
         }
         Relationships: [
           {

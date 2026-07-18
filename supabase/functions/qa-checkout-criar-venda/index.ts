@@ -62,6 +62,29 @@ interface ExibicaoContratoInput {
   valor_parcela?: number | null;
   custos_embutidos?: Array<{ descricao: string; valor: number }> | null;
   custos_embutidos_total?: number | null;
+  /**
+   * Composição estruturada do valor final (piloto pacote fechado). Substitui,
+   * a partir de 2026-07-18, a distribuição implícita "catálogo + custos_embutidos
+   * + custo_financeiro". Cada item declara o tipo, natureza e se aparece no
+   * contrato. Fonte de verdade para o financeiro do cliente.
+   */
+  composicao_valor_final?: Array<{
+    tipo:
+      | "servico_qa"
+      | "gru_taxa_gov"
+      | "exame_laudo"
+      | "clube_estande"
+      | "despesa_operacional"
+      | "deslocamento_logistica"
+      | "custo_financeiro_adquirente"
+      | "taxa_admin_intermediacao"
+      | "outro";
+    descricao: string;
+    valor: number;
+    natureza: "receita_propria" | "repasse_despesa_externa" | "custo_financeiro";
+    aparece_no_contrato: boolean;
+    observacao?: string | null;
+  }> | null;
 }
 
 interface Body {
@@ -496,6 +519,84 @@ Deno.serve(async (req) => {
     };
   });
 
+  // -------------------------------------------------------------------------
+  // Piloto Real — Composição do valor final (pacote fechado)
+  // Quando a Equipe informa uma composição estruturada, ela é a fonte de
+  // verdade do "valor total pago pelo cliente" (financeiro + contrato).
+  // Categorias: servico_qa | gru_taxa_gov | exame_laudo | clube_estande |
+  // despesa_operacional | deslocamento_logistica | custo_financeiro_adquirente
+  // | taxa_admin_intermediacao | outro.
+  // -------------------------------------------------------------------------
+  const TIPOS_COMPOSICAO = new Set([
+    "servico_qa",
+    "gru_taxa_gov",
+    "exame_laudo",
+    "clube_estande",
+    "despesa_operacional",
+    "deslocamento_logistica",
+    "custo_financeiro_adquirente",
+    "taxa_admin_intermediacao",
+    "outro",
+  ]);
+  const NATUREZAS_COMPOSICAO = new Set([
+    "receita_propria",
+    "repasse_despesa_externa",
+    "custo_financeiro",
+  ]);
+  const composicaoRaw = Array.isArray(body.exibicao_contrato?.composicao_valor_final)
+    ? body.exibicao_contrato!.composicao_valor_final!
+    : [];
+  const composicaoSanit = composicaoRaw
+    .filter(
+      (c) =>
+        c &&
+        typeof c === "object" &&
+        TIPOS_COMPOSICAO.has(String((c as any).tipo)) &&
+        NATUREZAS_COMPOSICAO.has(String((c as any).natureza)) &&
+        typeof (c as any).descricao === "string" &&
+        (c as any).descricao.trim().length > 0 &&
+        Number.isFinite(Number((c as any).valor)) &&
+        Number((c as any).valor) > 0
+    )
+    .map((c: any) => ({
+      tipo: String(c.tipo),
+      descricao: String(c.descricao).trim().slice(0, 200),
+      valor: Number(Number(c.valor).toFixed(2)),
+      natureza: String(c.natureza),
+      aparece_no_contrato: !!c.aparece_no_contrato,
+      observacao: c.observacao ? String(c.observacao).trim().slice(0, 300) : null,
+    }));
+  const somaPorTipo = (tipos: string[]) =>
+    composicaoSanit
+      .filter((c) => tipos.includes(c.tipo))
+      .reduce((s, c) => s + c.valor, 0);
+  const somaPorNatureza = (nats: string[]) =>
+    composicaoSanit.filter((c) => nats.includes(c.natureza)).reduce((s, c) => s + c.valor, 0);
+  const isPacote = body.exibicao_contrato?.modo === "pacote_fechado";
+  const totalComposicao = composicaoSanit.reduce((s, c) => s + c.valor, 0);
+  const valorServicosCatalogo = Number((totalCents / 100).toFixed(2));
+  const valorServicosAplicadoComp =
+    composicaoSanit.length > 0 ? somaPorTipo(["servico_qa"]) : valorServicosCatalogo;
+  const valorDespesasExtras = somaPorTipo([
+    "gru_taxa_gov",
+    "exame_laudo",
+    "clube_estande",
+    "despesa_operacional",
+    "deslocamento_logistica",
+    "taxa_admin_intermediacao",
+    "outro",
+  ]);
+  const valorCustoFinanceiro = somaPorTipo(["custo_financeiro_adquirente"]);
+  const valorTotalPagoCliente = composicaoSanit.length > 0
+    ? Number(totalComposicao.toFixed(2))
+    : (isPacote && Number.isFinite(Number(body.exibicao_contrato?.valor_total_pago_cliente))
+        ? Number(body.exibicao_contrato!.valor_total_pago_cliente)
+        : valorServicosCatalogo);
+
+  // valor_a_pagar = valor efetivamente cobrado do cliente (pacote) ou
+  // soma dos itens (itens separados / sem composição).
+  const valorAPagarFinal = isPacote ? valorTotalPagoCliente : valorServicosCatalogo;
+
   // Cria qa_vendas.
   const token = await generateCheckoutToken();
   const tokenExpiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
@@ -505,13 +606,28 @@ Deno.serve(async (req) => {
       cliente_id: cliLegado,
       data_cadastro: new Date().toISOString().slice(0, 10),
       status: "À INICIAR",
-      valor_a_pagar: totalCents / 100,
-      valor_aberto: totalCents / 100,
+      valor_a_pagar: valorAPagarFinal,
+      valor_aberto: valorAPagarFinal,
       cobranca_status: "nao_gerada",
       cobranca_origem: "checkout_site",
       origem_proposta: "checkout_site",
       checkout_token_hash: token.hash,
       checkout_token_expires_at: tokenExpiresAt,
+      composicao_valor_final: composicaoSanit,
+      valor_servicos_catalogo: valorServicosCatalogo,
+      valor_servicos_aplicado: Number(valorServicosAplicadoComp.toFixed(2)),
+      valor_despesas_extras: Number(valorDespesasExtras.toFixed(2)),
+      valor_custo_financeiro: Number(valorCustoFinanceiro.toFixed(2)),
+      valor_total_pago_cliente: Number(valorTotalPagoCliente.toFixed(2)),
+      pagamento_parcelas: body.exibicao_contrato?.parcelas ?? null,
+      pagamento_adquirente: body.exibicao_contrato?.adquirente
+        ? String(body.exibicao_contrato.adquirente).trim().toUpperCase()
+        : null,
+      pagamento_valor_parcela:
+        body.exibicao_contrato?.valor_parcela != null
+          ? Number(body.exibicao_contrato.valor_parcela)
+          : null,
+      pagamento_valor_total_parcelado: isPacote ? valorTotalPagoCliente : null,
     })
     .select("id, id_legado")
     .single();
