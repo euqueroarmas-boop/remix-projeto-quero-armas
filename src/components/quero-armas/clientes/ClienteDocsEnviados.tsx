@@ -6,11 +6,18 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import {
   Loader2, FileText, CheckCircle2, AlertCircle, ExternalLink,
   Trash2, ShieldCheck, Clock, XCircle, MessageSquareWarning,
+  ChevronDown, ChevronRight, Layers, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   aprovarDocumento, reprovarDocumento, excluirDocumentoLogico, statusBadge,
 } from "./docsAprovacao";
+import {
+  agruparDocumentosPorFamilia,
+  auditoriaGrupo,
+  type GrupoDocumental,
+} from "@/lib/quero-armas/documentosAgrupamento";
+import { logSistema } from "@/lib/logSistema";
 
 interface Props {
   cliente: any;
@@ -32,6 +39,39 @@ const formatDate = (d: string | null) => {
     return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
   } catch { return d; }
 };
+
+// Auditoria: registra no máximo 1x por (cliente, grupo) a cada 24h para
+// evitar poluir `logs_sistema`. A supressão só é reportada quando o grupo
+// tem principal vigente E histórico vencido silenciado (útil de fato).
+function auditarGrupoSeUtil(clienteId: number | null, grupo: GrupoDocumental<any>) {
+  if (!clienteId) return;
+  try {
+    const dedupeKey = `qa:audit:grupo:${clienteId}:${grupo.chave}`;
+    const last = Number(localStorage.getItem(dedupeKey) || 0);
+    if (last && Date.now() - last < 24 * 60 * 60 * 1000) return;
+    const base = auditoriaGrupo(grupo);
+    const eventos: string[] = ["documento_principal_definido"];
+    if (grupo.alertaSuprimido) eventos.push("alerta_suprimido_por_documento_valido");
+    if (grupo.versoesAnteriores > 0) eventos.push("documento_empilhado_historico");
+    // Só loga quando há efetivo empilhamento ou supressão.
+    if (grupo.versoesAnteriores === 0 && !grupo.alertaSuprimido) return;
+    localStorage.setItem(dedupeKey, String(Date.now()));
+    void logSistema({
+      tipo: "admin",
+      status: "info",
+      mensagem: `Grupo documental consolidado: ${grupo.familia}`,
+      payload: {
+        cliente_id: clienteId,
+        eventos,
+        motivo: grupo.alertaSuprimido
+          ? "principal_vigente_silencia_versoes_vencidas"
+          : "empilhamento_historico",
+        timestamp: new Date().toISOString(),
+        ...base,
+      },
+    });
+  } catch {/* noop */}
+}
 
 export default function ClienteDocsEnviados({ cliente }: Props) {
   const clienteId = Number(cliente?.id) || null;
@@ -184,6 +224,18 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 
   const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
 
+  // Agrupa por família documental (Bloco: empilhamento visual).
+  const grupos = useMemo(
+    () => agruparDocumentosPorFamilia(docs as any[]),
+    [docs],
+  );
+
+  // Auditoria de supressão / empilhamento (dedupe por 24h no localStorage).
+  useEffect(() => {
+    if (!clienteId) return;
+    grupos.forEach((g) => auditarGrupoSeUtil(clienteId, g));
+  }, [clienteId, grupos]);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
@@ -191,7 +243,9 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           <ShieldCheck className="h-4 w-4 text-[#7A1F2B]" />
           <span className="font-semibold text-slate-700">Hub do Cliente</span>
           <span className="text-slate-400">·</span>
-          <span className="text-slate-500">{docs.length} documento(s)</span>
+          <span className="text-slate-500">
+            {grupos.length} família(s) · {docs.length} documento(s)
+          </span>
         </div>
         {pendentes > 0 && (
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200">
@@ -204,7 +258,126 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       </div>
 
       <div className="grid gap-2">
-        {docs.map((d: any) => {
+        {grupos.map((grupo) => (
+          <GrupoCard
+            key={grupo.chave}
+            grupo={grupo}
+            reprovandoId={reprovandoId}
+            motivoTmp={motivoTmp}
+            setReprovandoId={setReprovandoId}
+            setMotivoTmp={setMotivoTmp}
+            onAprovar={handleAprovar}
+            onReprovar={handleReprovar}
+            onDelete={handleDelete}
+            onViewFile={handleViewFile}
+          />
+        ))}
+      </div>
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
+    </div>
+  );
+}
+
+// ============================================================================
+// GrupoCard — renderiza principal + histórico recolhido
+// ============================================================================
+interface GrupoCardProps {
+  grupo: GrupoDocumental<any>;
+  reprovandoId: string | null;
+  motivoTmp: string;
+  setReprovandoId: (v: string | null) => void;
+  setMotivoTmp: (v: string) => void;
+  onAprovar: (id: string) => void;
+  onReprovar: (id: string) => void;
+  onDelete: (id: string) => void;
+  onViewFile: (path: string) => void;
+}
+
+function GrupoCard(props: GrupoCardProps) {
+  const { grupo } = props;
+  const [expandido, setExpandido] = useState(false);
+  const validade = grupo.validadePrincipal;
+
+  const consolidadoLabel: Record<GrupoDocumental["statusConsolidado"], { label: string; cls: string }> = {
+    vigente: { label: "Vigente", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    vence_em_breve: { label: "Vence em breve", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+    vencido: { label: "Vencido", cls: "bg-red-50 text-red-700 border-red-200" },
+    historico: { label: "Histórico", cls: "bg-slate-50 text-slate-600 border-slate-200" },
+    indefinido: { label: "Sem validade", cls: "bg-slate-50 text-slate-500 border-slate-200" },
+  };
+  const chip = consolidadoLabel[grupo.statusConsolidado];
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+      <div className="px-3 py-2 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Layers className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 truncate">
+            {grupo.familia.replace(/_/g, " ")}
+          </span>
+          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${chip.cls}`}>
+            {chip.label}
+            {validade.dias != null && grupo.statusConsolidado !== "historico" && (
+              <span className="opacity-75 normal-case font-medium">
+                · {validade.dias >= 0 ? `${validade.dias}d` : `${Math.abs(validade.dias)}d atrás`}
+              </span>
+            )}
+          </span>
+          {grupo.alertaSuprimido && (
+            <span
+              title="Alertas de versões vencidas silenciados pelo documento vigente"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border bg-blue-50 text-blue-700 border-blue-200 text-[9px] font-bold uppercase"
+            >
+              <ShieldAlert className="h-2.5 w-2.5" /> alerta suprimido
+            </span>
+          )}
+        </div>
+        {grupo.versoesAnteriores > 0 && (
+          <button
+            type="button"
+            onClick={() => setExpandido((v) => !v)}
+            className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-slate-600 hover:text-slate-900 font-semibold"
+          >
+            {expandido ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            + {grupo.versoesAnteriores} versão(ões) anterior(es)
+          </button>
+        )}
+      </div>
+
+      <div className="p-2">
+        <DocRow d={grupo.principal} isPrincipal {...props} />
+        {expandido && grupo.historico.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-dashed border-slate-200 space-y-2">
+            <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold px-1">
+              Histórico ({grupo.historico.length})
+            </div>
+            {grupo.historico.map((h) => (
+              <DocRow key={h.id} d={h} isPrincipal={false} {...props} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// DocRow — mesma UI de card por documento, reduzida (sem borda dupla)
+// ============================================================================
+interface DocRowProps extends GrupoCardProps {
+  d: any;
+  isPrincipal: boolean;
+}
+
+function DocRow({
+  d, isPrincipal, reprovandoId, motivoTmp, setReprovandoId, setMotivoTmp,
+  onAprovar, onReprovar, onDelete, onViewFile,
+}: DocRowProps) {
           const isPending = d.status === "pendente_aprovacao";
           const isReprovado = d.status === "reprovado";
           const isAprovado = d.status === "aprovado";
@@ -216,12 +389,16 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               : "border-amber-200 bg-amber-50/40";
           return (
             <div
-              key={d.id}
-              className={`rounded-xl border p-3 transition ${borderCls}`}
+              className={`rounded-lg border p-3 transition ${borderCls} ${isPrincipal ? "" : "opacity-80"}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
+                    {isPrincipal && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border bg-[#7A1F2B]/10 border-[#7A1F2B]/30 text-[9px] font-bold uppercase text-[#7A1F2B]">
+                        Principal
+                      </span>
+                    )}
                     <span className="text-[11px] font-bold text-slate-800 uppercase tracking-wide">
                       {TIPO_LABEL[d.tipo_documento] || d.tipo_documento}
                     </span>
@@ -286,7 +463,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                           Cancelar
                         </Button>
                         <Button size="sm" variant="destructive" className="h-6 text-[10px]"
-                          onClick={() => handleReprovar(d.id)}>
+                          onClick={() => onReprovar(d.id)}>
                           Confirmar reprovação
                         </Button>
                       </div>
@@ -299,7 +476,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleViewFile(d.arquivo_storage_path)}
+                      onClick={() => onViewFile(d.arquivo_storage_path)}
                       className="h-7 px-2 text-[10px]"
                       title="Ver arquivo"
                     >
@@ -310,7 +487,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                     <Button
                       size="sm"
                       variant="default"
-                      onClick={() => handleAprovar(d.id)}
+                      onClick={() => onAprovar(d.id)}
                       className="h-7 px-2 text-[10px] bg-emerald-600 hover:bg-emerald-700"
                       title="Aprovar documento"
                     >
@@ -331,7 +508,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleDelete(d.id)}
+                    onClick={() => onDelete(d.id)}
                     className="h-7 px-2 text-[10px] text-red-600 hover:bg-red-50"
                     title="Remover"
                   >
@@ -341,14 +518,4 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               </div>
             </div>
           );
-        })}
-      </div>
-      <DocumentoViewerModal
-        open={viewer.open}
-        onClose={viewer.fechar}
-        source={viewer.source}
-        title={viewer.title}
-      />
-    </div>
-  );
 }
