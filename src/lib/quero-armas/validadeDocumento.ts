@@ -160,6 +160,17 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
 }
 
 /**
+ * Filiação de clube de tiro: a validade real segue a anuidade
+ * (12 meses a partir da emissão da carteirinha/comprovante), não os
+ * 30 dias do fallback antigo. Se houver `data_validade` gravada
+ * futura, ela prevalece; caso contrário aplicamos emissão + 1 ano.
+ */
+export function isFiliacaoClube(tipo?: string | null): boolean {
+  const t = String(tipo ?? "").toLowerCase();
+  return t === "comprovante_clube_tiro" || t === "filiacao_clube" || t === "carteirinha_clube_tiro";
+}
+
+/**
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
  */
@@ -174,9 +185,23 @@ export function calcularValidadeEfetiva(
     v.setUTCDate(v.getUTCDate() + 90);
     return toISO(v);
   }
-  // Regra única: emissão + 1 mês calendário — cobre também o comprovante de
-  // residência, cuja validade vai da emissão de uma conta até a próxima.
-  return toISO(addCalendarMonths(emi, 1));
+  if (isFiliacaoClube(tipo)) {
+    // Anuidade: 12 meses a partir da emissão.
+    return toISO(addCalendarMonths(emi, 12));
+  }
+  // Comprovante de residência: vale de uma emissão até a próxima (1 mês).
+  const tipoStr = String(tipo || "").toLowerCase();
+  const isRes =
+    tipoStr.startsWith("comprovante_residencia") ||
+    tipoStr.startsWith("comprovante_endereco") ||
+    tipoStr === "comprovante_de_residencia" ||
+    tipoStr === "comprovante_de_endereco";
+  if (isRes) return toISO(addCalendarMonths(emi, 1));
+  // Demais documentos (CIN, CR, CNH, CRAF, GTE, laudos, etc.) NÃO devem
+  // ter validade inferida a partir da emissão — cada um tem prazo próprio
+  // que já vem gravado em `data_validade` pelo extractor/admin. Retornar
+  // null aqui força o `getValidadeInfo` a usar o backend como fonte.
+  return null;
 }
 
 /**
