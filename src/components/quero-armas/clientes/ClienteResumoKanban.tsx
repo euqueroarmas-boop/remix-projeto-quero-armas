@@ -6,6 +6,7 @@ import { getNomeDocumentoDisplay, getTipoDocumentoMeta, toTitleCasePtBR } from "
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
