@@ -2895,6 +2895,7 @@ export default function QAPilotoRealPage() {
   );
 }
 
+
 function Card({ id, title, state, children }: { id?: string; title: string; state: "done" | "pending" | "current" | "blocked"; children: React.ReactNode }) {
   return (
     <section id={id} className="border border-neutral-200 rounded bg-white p-4 shadow-sm scroll-mt-4">
