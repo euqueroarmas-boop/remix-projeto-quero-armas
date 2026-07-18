@@ -1080,6 +1080,12 @@ export default function QAPilotoRealPage() {
     if (obsAssinado.trim().length < 20) { toast.error("Observação mínima de 20 caracteres."); return; }
     setEnviandoAssinado(true);
     try {
+      await logPilotoEvento("contrato_upload_assistido_iniciado", {
+        contrato_id: contrato.id,
+        origem: origemAssinado,
+        tamanho_arquivo: assinado.size,
+        nome_arquivo: assinado.name,
+      });
       const fd = new FormData();
       fd.append("contract_id", contrato.id);
       fd.append("file", assinado);
@@ -1088,6 +1094,10 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.functions.invoke("qa-piloto-upload-contrato-staff", { body: fd });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_upload_assistido");
+      await logPilotoEvento("contrato_validacao_iniciada", {
+        contrato_id: contrato.id,
+        via: "qa-piloto-upload-contrato-staff",
+      });
       toast.success("Contrato enviado (staff-assistido). Validação oficial acionada.");
       setAssinado(null); setObsAssinado("");
       await recarregarContrato(venda.id);
@@ -1096,7 +1106,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setEnviandoAssinado(false);
     }
-  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato]);
+  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato, logPilotoEvento]);
 
   /* ---------- Arquivar piloto ---------- */
   const [motivoArq, setMotivoArq] = useState("");
@@ -1116,6 +1126,11 @@ export default function QAPilotoRealPage() {
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
       toast.success((data as any)?.ja_arquivada ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      await logPilotoEvento("piloto_arquivado", {
+        venda_id: venda.id,
+        motivo_len: motivoArq.trim().length,
+        ja_arquivada: !!(data as any)?.ja_arquivada,
+      });
       setArquivado(true);
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
@@ -1124,7 +1139,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setArquivando(false);
     }
-  }, [venda, motivoArq, recarregarVenda, recarregarContrato]);
+  }, [venda, motivoArq, recarregarVenda, recarregarContrato, logPilotoEvento]);
 
   /* ---------- Smoke test ---------- */
   /* ---------- Auditoria (somente leitura) ---------- */
