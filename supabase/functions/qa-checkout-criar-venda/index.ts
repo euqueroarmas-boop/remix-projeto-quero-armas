@@ -69,6 +69,13 @@ interface Body {
   identificacao?: IdentificacaoInput | null;
   negociacao?: NegociacaoInput | null;
   exibicao_contrato?: ExibicaoContratoInput | null;
+  /**
+   * Piloto Real / Venda Assistida: força vincular a venda ao qa_cliente indicado
+   * em vez do qa_cliente do usuário autenticado que está chamando a função.
+   * Só é honrado quando o chamador tem perfil ativo em `qa_usuarios_perfis`.
+   * Sem essa checagem, o admin que dispara o wizard vira dono da venda.
+   */
+  target_qa_cliente_id?: number | null;
 }
 
 const TIPOS_AJUSTE = new Set([
@@ -224,7 +231,39 @@ Deno.serve(async (req) => {
   // Resolve cliente.
   let qaClienteId: number | null = null;
 
-  if (userId) {
+  // Piloto Real / venda assistida: staff pode fixar o cliente-alvo explicitamente.
+  // Isso substitui a resolução baseada no user autenticado (que apontaria para
+  // o próprio staff), mantendo a auditoria correta no portal do cliente real.
+  if (userId && body.target_qa_cliente_id != null && Number.isFinite(Number(body.target_qa_cliente_id))) {
+    const { data: perfilRow } = await admin
+      .from("qa_usuarios_perfis")
+      .select("perfil, ativo")
+      .eq("user_id", userId)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (perfilRow) {
+      const alvoId = Number(body.target_qa_cliente_id);
+      const { data: alvo } = await admin
+        .from("qa_clientes")
+        .select("id, status")
+        .eq("id", alvoId)
+        .maybeSingle();
+      if (!alvo || (alvo as any).status === "excluido_lgpd") {
+        return new Response(
+          JSON.stringify({ error: "target_qa_cliente_invalido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      qaClienteId = (alvo as any).id;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "target_qa_cliente_requires_staff" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  }
+
+  if (userId && !qaClienteId) {
     // 1) Tenta via cliente_auth_links (caminho normal)
     const { data: link } = await admin
       .from("cliente_auth_links")
