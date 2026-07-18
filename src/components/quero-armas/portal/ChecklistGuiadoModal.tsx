@@ -33,6 +33,7 @@ import {
   Sparkles,
   Upload,
   X,
+  Database,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
@@ -428,6 +429,17 @@ export default function ChecklistGuiadoModal({
     () => (carga?.docs ?? []).find((d) => d.id === docAtivoId) ?? filaAtual[0] ?? null,
     [carga, docAtivoId, filaAtual],
   );
+
+  const docAtivoReaproveitado = useMemo(() => {
+    const meta = docAtivo?.metadados_documento_json && typeof docAtivo.metadados_documento_json === "object"
+      ? docAtivo.metadados_documento_json
+      : {};
+    return !!docAtivo && (
+      docAtivo.status === "dispensado_por_reaproveitamento" ||
+      meta.reutilizado_do_hub === true ||
+      meta.reaproveitado_da_central === true
+    );
+  }, [docAtivo]);
 
   // Persistência do ponto de retomada — sempre que o cliente avança/recua para
   // um documento concreto dentro de um processo, gravamos o marcador.

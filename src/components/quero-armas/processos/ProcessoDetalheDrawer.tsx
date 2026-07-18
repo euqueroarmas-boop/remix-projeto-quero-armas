@@ -136,6 +136,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
+  const [reaproveitandoId, setReaproveitandoId] = useState<string | null>(null);
   const [validandoAssinaturaId, setValidandoAssinaturaId] = useState<string | null>(null);
   // Bloco 14 — UX operacional: destaque temporário do próximo item pendente
   // após uma ação da equipe. O drawer NUNCA fecha sozinho; só destacamos e
@@ -143,6 +144,21 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const viewer = useDocumentoViewer();
+
+  const isDocReaproveitado = (doc: DocRow) => {
+    const meta = doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" ? doc.metadados_documento_json : {};
+    return doc.status === "dispensado_por_reaproveitamento" || meta.reutilizado_do_hub === true || meta.reaproveitado_da_central === true;
+  };
+
+  const getReaproveitamentoMeta = (doc: DocRow) => {
+    const meta = doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" ? doc.metadados_documento_json : {};
+    return {
+      hubId: meta.hub_documento_id ?? meta.documento_id ?? null,
+      motivo: meta.motivo_match ?? null,
+      arquivo: meta.arquivo_nome_origem ?? null,
+      reutilizadoEm: meta.reutilizado_em ?? null,
+    };
+  };
 
   const carregar = useCallback(async (): Promise<DocRow[]> => {
     setLoading(true);
@@ -594,6 +610,32 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
     } finally {
       setReprocessandoId(null);
+    }
+  };
+
+  const reprocessarReaproveitamento = async (doc?: DocRow) => {
+    if (!processo) return;
+    const alvoId = doc?.id ?? processo.id;
+    setReaproveitandoId(alvoId);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-reaproveitar-hub`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id, origem: "drawer_admin" }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.error || "Falha ao reprocessar reaproveitamento");
+      const total = Number(data?.reaproveitados ?? 0);
+      if (total > 0) toast.success(`${total} exigência(s) reaproveitada(s) da Central de Documentos.`);
+      else toast.message("Nenhuma nova exigência compatível encontrada na Central de Documentos.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao reaproveitar documentos: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReaproveitandoId(null);
     }
   };
 

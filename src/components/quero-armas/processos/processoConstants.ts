@@ -27,6 +27,7 @@ export const STATUS_DOCUMENTO = {
   divergente: { label: "DIVERGENTE", color: "#F59E0B", icon: "AlertTriangle" },
   invalido: { label: "INVÁLIDO", color: "#EF4444", icon: "XCircle" },
   aprovado: { label: "APROVADO", color: "#10B981", icon: "CheckCircle" },
+  dispensado_por_reaproveitamento: { label: "REAPROVEITADO", color: "#059669", icon: "Database" },
   dispensado_grupo: { label: "DISPENSADO (GRUPO SATISFEITO)", color: "#64748B", icon: "ShieldCheck" },
 } as const;
 
