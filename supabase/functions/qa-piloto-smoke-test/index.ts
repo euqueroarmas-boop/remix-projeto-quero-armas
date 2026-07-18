@@ -363,6 +363,7 @@ Deno.serve(async (req) => {
   const totalEsperado = Number(composicao.reduce((s, c) => s + c.valor, 0).toFixed(2));
   const createdB = await invoke("qa-checkout-criar-venda", {
     cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1 }],
+    target_qa_cliente_id: cliente.id,
     identificacao: {
       nome_completo: cliente.nome_completo, cpf: cliente.cpf || "",
       email: cliente.email || "", celular: cliente.celular || "",
