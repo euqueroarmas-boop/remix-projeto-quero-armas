@@ -62,6 +62,29 @@ interface ExibicaoContratoInput {
   valor_parcela?: number | null;
   custos_embutidos?: Array<{ descricao: string; valor: number }> | null;
   custos_embutidos_total?: number | null;
+  /**
+   * Composição estruturada do valor final (piloto pacote fechado). Substitui,
+   * a partir de 2026-07-18, a distribuição implícita "catálogo + custos_embutidos
+   * + custo_financeiro". Cada item declara o tipo, natureza e se aparece no
+   * contrato. Fonte de verdade para o financeiro do cliente.
+   */
+  composicao_valor_final?: Array<{
+    tipo:
+      | "servico_qa"
+      | "gru_taxa_gov"
+      | "exame_laudo"
+      | "clube_estande"
+      | "despesa_operacional"
+      | "deslocamento_logistica"
+      | "custo_financeiro_adquirente"
+      | "taxa_admin_intermediacao"
+      | "outro";
+    descricao: string;
+    valor: number;
+    natureza: "receita_propria" | "repasse_despesa_externa" | "custo_financeiro";
+    aparece_no_contrato: boolean;
+    observacao?: string | null;
+  }> | null;
 }
 
 interface Body {
