@@ -441,6 +441,16 @@ export default function ChecklistGuiadoModal({
     );
   }, [docAtivo]);
 
+  const docAtivoReaproveitamentoMeta = useMemo(() => {
+    const meta = docAtivo?.metadados_documento_json && typeof docAtivo.metadados_documento_json === "object"
+      ? docAtivo.metadados_documento_json
+      : {};
+    return {
+      arquivo: meta.arquivo_nome_origem ?? null,
+      motivo: meta.motivo_match ?? null,
+    };
+  }, [docAtivo]);
+
   // Persistência do ponto de retomada — sempre que o cliente avança/recua para
   // um documento concreto dentro de um processo, gravamos o marcador.
   useEffect(() => {
@@ -1447,6 +1457,8 @@ export default function ChecklistGuiadoModal({
                     Tarefa atual: <span className="font-bold text-slate-900">{docAtivo?.nome_documento ?? "Documento"}</span>
                     {docAtivo?.status === "invalido" || docAtivo?.status === "divergente" ? (
                       <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">Precisa de ajuste</span>
+                    ) : docAtivoReaproveitado ? (
+                      <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700"><Database className="h-3 w-3" /> Reaproveitado</span>
                     ) : docAtivo?.status === "aprovado" ? (
                       <span className="ml-2 inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Aprovado</span>
                     ) : docAtivo?.status === "em_analise" ? (
@@ -1529,6 +1541,21 @@ export default function ChecklistGuiadoModal({
                           Selecione a arma antes de enviar o documento.
                         </div>
                       )}
+                    </div>
+                  )}
+                  {docAtivoReaproveitado && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                      <div className="flex items-start gap-2">
+                        <Database className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                        <div>
+                          <div className="text-[12px] font-bold text-emerald-900">Documento reaproveitado da Central de Documentos</div>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-emerald-800/90">
+                            Esta exigência já foi atendida com um documento aprovado anteriormente
+                            {docAtivoReaproveitamentoMeta.motivo ? ` · regra: ${String(docAtivoReaproveitamentoMeta.motivo).toUpperCase()}` : ""}
+                            {docAtivoReaproveitamentoMeta.arquivo ? ` · arquivo: ${String(docAtivoReaproveitamentoMeta.arquivo).toUpperCase()}` : ""}.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                   <DocumentoView
