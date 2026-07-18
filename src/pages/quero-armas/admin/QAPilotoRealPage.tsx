@@ -64,6 +64,10 @@ const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
 ] as const;
 
+const ADQUIRENTES_CATALOGO = ["STONE", "REDE", "CIELO", "GETNET", "PAGSEGURO", "ASAAS", "MERCADO PAGO", "OUTRA"] as const;
+
+const EMAIL_ADMIN_BLOQUEADO = "eu@queroarmas.com.br";
+
 function money(v: unknown): string {
   const n = typeof v === "string" ? Number(v) : (v as number);
   if (!Number.isFinite(n)) return "—";
