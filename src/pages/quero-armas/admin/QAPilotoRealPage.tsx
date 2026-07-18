@@ -2891,6 +2891,51 @@ export default function QAPilotoRealPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={reprocOpen} onOpenChange={setReprocOpen}>
+        <DialogContent className="max-w-md bg-white border-neutral-200 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm uppercase tracking-wide">Reprocessar financeiro do piloto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-xs normal-case text-neutral-700">
+            <p>
+              A composição atual do Passo 3 será enviada para <code>qa-piloto-reprocessar-financeiro</code>.
+              Nada é apagado — snapshots "antes/depois" ficam em <code>qa_piloto_reprocessamentos</code>.
+            </p>
+            <div className="rounded border border-neutral-200 bg-neutral-50 p-2">
+              <div className="text-[10px] uppercase text-neutral-500 mb-1">Composição derivada</div>
+              {composicaoValorFinalDerivada.length === 0 ? (
+                <div className="text-rose-700">Nenhum item — reconfigure o Passo 3.</div>
+              ) : (
+                <ul className="space-y-0.5">
+                  {composicaoValorFinalDerivada.map((c, i) => (
+                    <li key={i} className="flex justify-between">
+                      <span>{c.tipo} · {c.descricao}</span>
+                      <span className="font-mono">{money(c.valor)}</span>
+                    </li>
+                  ))}
+                  <li className="flex justify-between border-t border-neutral-200 pt-1 font-semibold">
+                    <span>Total</span><span className="font-mono">{money(totalComposicaoDerivada)}</span>
+                  </li>
+                </ul>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Motivo do reprocesso (mín. 20 caracteres)</Label>
+              <Textarea value={reprocMotivo} onChange={(e) => setReprocMotivo(e.target.value)}
+                placeholder="EX.: CORRIGIR COMPOSIÇÃO — EXAMES/GRU EMBUTIDOS NÃO HAVIAM SIDO LANÇADOS."
+                className="bg-white border-neutral-300 min-h-[80px] normal-case mt-1" />
+              <div className="text-[10px] text-neutral-500 mt-1">{reprocMotivo.trim().length} caracteres</div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setReprocOpen(false)} disabled={reprocRunning}>Cancelar</Button>
+            <Button onClick={reprocSubmit} disabled={reprocRunning || reprocMotivo.trim().length < 20 || composicaoValorFinalDerivada.length === 0} className="bg-amber-600 hover:bg-amber-500">
+              {reprocRunning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reprocessando…</> : "Confirmar reprocesso"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
