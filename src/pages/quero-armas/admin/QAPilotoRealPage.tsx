@@ -1920,7 +1920,7 @@ export default function QAPilotoRealPage() {
               {venda.status_validacao_valor === "aprovado" ? (
                 <p className="text-xs text-emerald-400">Valor aprovado — evento gravado.</p>
               ) : (
-                <Button onClick={aprovarValor} disabled={aprovando || arquivado}>
+                <Button onClick={aprovarValor} disabled={aprovando || arquivado || vinculoBloqueado}>
                   {aprovando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar valor da venda"}
                 </Button>
               )}
@@ -2060,6 +2060,11 @@ export default function QAPilotoRealPage() {
           {/* Passo 6 */}
           {venda?.cobranca_status === "confirmada" && (
             <Card id="step-contrato" title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
+              {vinculoBloqueado && (
+                <div className="mb-3 rounded border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800 normal-case">
+                  <strong>Continuação bloqueada:</strong> {motivoBloqueioVinculo} Use apenas a opção de arquivar piloto abaixo.
+                </div>
+              )}
               {!contrato ? (
                 <div className="flex items-center gap-2 text-xs text-neutral-600 normal-case">
                   <Loader2 className="h-4 w-4 animate-spin" /> Aguardando geração do contrato…
@@ -2104,7 +2109,7 @@ export default function QAPilotoRealPage() {
                   )}
 
                   {/* Upload assistido pela equipe */}
-                  {!arquivado && !["validated","customer_signed"].includes(contrato.status) && (
+                  {!arquivado && !vinculoBloqueado && !["validated","customer_signed"].includes(contrato.status) && (
                     <div className="mt-4 border-t border-neutral-200 pt-3 space-y-2">
                       <div className="text-xs font-semibold tracking-wide">
                         Upload assistido pela equipe (WhatsApp / e-mail / presencial)
