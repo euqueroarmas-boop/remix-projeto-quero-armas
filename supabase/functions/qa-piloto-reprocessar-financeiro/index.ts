@@ -197,5 +197,6 @@ Deno.serve(async (req) => {
     venda_id: vendaId,
     valor_total_pago_cliente: depois.valor_total_pago_cliente,
     composicao: compSanit,
+    notificacao_policy: notifPolicy,
   });
 });
