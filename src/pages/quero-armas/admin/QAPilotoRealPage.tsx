@@ -26,8 +26,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
-type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null };
+type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
 type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
@@ -69,6 +71,8 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 }
 
 export default function QAPilotoRealPage() {
+  const { user, profile } = useQAAuthContext();
+
   /* ---------- Retomada de piloto (URL / localStorage) ---------- */
   const [hidratando, setHidratando] = useState(false);
   const [hidratado, setHidratado] = useState<{ venda_id: number; via: "url" | "storage" } | null>(null);
@@ -95,7 +99,7 @@ export default function QAPilotoRealPage() {
         : `nome_completo.ilike.%${q}%,email.ilike.%${q}%`;
       const { data, error } = await supabase
         .from("qa_clientes")
-        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .neq("status", "excluido_lgpd")
         .or(filtro)
         .order("id", { ascending: false })
@@ -520,6 +524,8 @@ export default function QAPilotoRealPage() {
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
+  const [confirmacaoContratoAberta, setConfirmacaoContratoAberta] = useState(false);
+  const [confirmacaoVinculoMarcada, setConfirmacaoVinculoMarcada] = useState(false);
 
   // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
   useEffect(() => {
@@ -545,7 +551,7 @@ export default function QAPilotoRealPage() {
     return path;
   }, [comprovante, venda]);
 
-  const confirmarPagamento = useCallback(async () => {
+  const confirmarPagamento = useCallback(async (forcarConfirmacao = false) => {
     if (!venda) return;
     if (observacao.trim().length < 20) {
       toast.error("Observação deve ter no mínimo 20 caracteres.");
@@ -555,6 +561,16 @@ export default function QAPilotoRealPage() {
       toast.error("Anexe o comprovante do pagamento.");
       return;
     }
+    if (vinculoBloqueado) {
+      toast.error("Vínculo do contratante bloqueado. Arquive este piloto e gere uma nova venda para o cliente correto.");
+      return;
+    }
+    if (!forcarConfirmacao) {
+      setConfirmacaoVinculoMarcada(false);
+      setConfirmacaoContratoAberta(true);
+      return;
+    }
+    setConfirmacaoContratoAberta(false);
     setConfirmandoPag(true);
     try {
       const path = comprovantePath || (await uploadComprovante());
@@ -582,12 +598,13 @@ export default function QAPilotoRealPage() {
       );
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
+      setConfirmacaoVinculoMarcada(false);
     } catch (e: any) {
       toast.error(`Falha ao confirmar pagamento: ${e?.message || e}`);
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
@@ -650,7 +667,7 @@ export default function QAPilotoRealPage() {
       // Cliente
       const { data: cli } = await supabase
         .from("qa_clientes")
-        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .eq("id", v.cliente_id)
         .maybeSingle();
       if (cli) setCliente(cli as Cliente);
