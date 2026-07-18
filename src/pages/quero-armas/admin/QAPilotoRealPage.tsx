@@ -28,6 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import {
+  NotificacaoPolicyPicker,
+  DEFAULT_NOTIFICACAO_POLICY,
+  toBackendPolicy,
+  policyIsValid,
+  type NotificacaoPolicyValue,
+} from "@/components/quero-armas/NotificacaoPolicyPicker";
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
