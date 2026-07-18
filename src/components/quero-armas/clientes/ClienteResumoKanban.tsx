@@ -286,19 +286,52 @@ export default function ClienteResumoKanban({
       return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
-    const docItems: FrontItem[] = meusDocs
-      .filter((doc: any) => {
-        // Laudos psicológicos e exames de tiro já aparecem na frente EXAMES.
-        const tipo = String(doc?.tipo_documento || "").toLowerCase();
-        return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
-      })
-      .map((doc: any) => {
-        const nomeBruto = getNomeDocumentoDisplay(doc, "Documento");
+    // ── Documentos consolidados por FAMÍLIA ────────────────────────────
+    // Empilha versões do mesmo tipo (ex.: comprovantes de residência
+    // 2022→2026) e representa cada família pelo documento PRINCIPAL
+    // (aprovado+vigente > vigente > vencido mais recente). Isso silencia
+    // alertas de versões antigas quando já existe atual válido.
+    // Laudos ficam na frente EXAMES.
+    const docsFiltrados = meusDocs.filter((doc: any) => {
+      const f = familiaDocumento(doc?.tipo_documento);
+      return f !== "laudo_psicologico" && f !== "laudo_capacidade_tecnica";
+    });
+    const gruposDocs = agruparDocumentosPorFamilia(docsFiltrados);
+    const docItems: FrontItem[] = gruposDocs
+      .map((g) => {
+        const nomeBruto = getNomeDocumentoDisplay(g.principal, "Documento");
         const nome = shortName(nomeBruto, "Documento");
-        const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
-        return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
+        const days = g.validadePrincipal.dias;
+        const tone: FrontItem["tone"] =
+          g.statusConsolidado === "vigente"
+            ? "ok"
+            : g.statusConsolidado === "vence_em_breve"
+              ? "warn"
+              : g.statusConsolidado === "vencido"
+                ? "bad"
+                : g.statusConsolidado === "historico"
+                  ? "muted"
+                  : frontStatus(days);
+        const statusStr =
+          g.statusConsolidado === "vigente" && g.versoesAnteriores > 0
+            ? `Válido · ${g.versoesAnteriores + 1}v`
+            : g.statusConsolidado === "historico"
+              ? "Histórico"
+              : compactStatus(days);
+        return { label: nome, status: statusStr, tone, stack: g.versoesAnteriores > 0 } as FrontItem;
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
+
+    // Chaves de grupos que já têm principal vigente/vence-em-breve —
+    // usadas para SUPRIMIR alertas urgentes de versões antigas vencidas.
+    const gruposVigentes = new Set(
+      gruposDocs
+        .filter((g) => g.statusConsolidado === "vigente" || g.statusConsolidado === "historico")
+        .map((g) => g.chave),
+    );
+    const idsPrincipais = new Set(
+      gruposDocs.map((g) => (g.principal as any)?.id).filter((v) => v != null),
+    );
 
     // Agrega o pior status entre os itens da frente: bad > warn > ok > muted.
     const aggregateStatus = (items: FrontItem[]): "bad" | "warn" | "ok" | "muted" => {
@@ -341,6 +374,15 @@ export default function ClienteResumoKanban({
     meusDocs.forEach((doc: any) => {
       const tipo = String(doc?.tipo_documento || "").toLowerCase();
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
+      if (!isLaudo) {
+        // Consolidado por família: só o principal do grupo pode alertar.
+        // Versões antigas do mesmo tipo (ex.: comprovantes 2022–2025) e
+        // grupos que já têm atual válido são silenciados aqui.
+        const familia = familiaDocumento(tipo);
+        const chaveGrupo = familia; // qualificadores extras (arma) já isolam o CRAF
+        if (gruposVigentes.has(chaveGrupo)) return;
+        if (doc?.id != null && !idsPrincipais.has(doc.id)) return;
+      }
       const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
       const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
       const examTipo: Urgent["examTipo"] | undefined =
