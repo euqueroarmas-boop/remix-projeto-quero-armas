@@ -2564,7 +2564,8 @@ export default function QAPilotoRealPage() {
                 <NotificacaoPolicyPicker
                   value={notifPolicyPagamento}
                   onChange={setNotifPolicyPagamento}
-                  title="Notificar cliente sobre a confirmação do pagamento?"
+                  clienteEmail={cliente?.email ?? null}
+                  acaoLabel="Confirmação de pagamento"
                 />
               </div>
               <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
