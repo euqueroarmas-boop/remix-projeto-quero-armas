@@ -168,6 +168,54 @@ export default function QAPilotoRealPage() {
   const [venda, setVenda] = useState<Venda | null>(null);
   const [criandoVenda, setCriandoVenda] = useState(false);
 
+  /* ---------- Auditoria Piloto: sessão + logger ---------- */
+  const [pilotoSessionId, setPilotoSessionId] = useState<string | null>(null);
+  useEffect(() => {
+    if (pilotoSessionId) return;
+    let sid: string | null = null;
+    try { sid = localStorage.getItem(PILOTO_SESSION_LS_KEY); } catch {}
+    if (!sid) {
+      sid = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+        ? (crypto as any).randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      try { localStorage.setItem(PILOTO_SESSION_LS_KEY, sid); } catch {}
+    }
+    setPilotoSessionId(sid);
+  }, [pilotoSessionId]);
+  const vendaRef = useRef<Venda | null>(null);
+  useEffect(() => { vendaRef.current = venda; }, [venda]);
+  const logPilotoEvento = useCallback(async (tipo: string, dados: Record<string, unknown> = {}) => {
+    try {
+      if (!pilotoSessionId) return;
+      const v = vendaRef.current;
+      await supabase.from("qa_piloto_eventos").insert({
+        piloto_session_id: pilotoSessionId,
+        venda_id: v?.id ?? null,
+        venda_id_legado: (v as any)?.id_legado ?? null,
+        tipo_evento: tipo,
+        dados_json: dados as any,
+        staff_user_id: user?.id ?? null,
+        staff_email: staffEmail,
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] insert falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId, user?.id, staffEmail]);
+  const backlinkPilotoEventos = useCallback(async (vId: number, vIdLegado: number | null) => {
+    try {
+      if (!pilotoSessionId) return;
+      await supabase
+        .from("qa_piloto_eventos")
+        .update({ venda_id: vId, venda_id_legado: vIdLegado ?? null })
+        .eq("piloto_session_id", pilotoSessionId)
+        .is("venda_id", null);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] backlink falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId]);
+
   /* ---------- Passo 3b: Preço negociado ---------- */
   const TIPOS_AJUSTE = [
     { v: "promocao", l: "Promoção" },
