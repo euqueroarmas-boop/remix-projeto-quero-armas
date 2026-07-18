@@ -1402,6 +1402,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </button>
                 )
               )}
+              {equipeMode && (
+                <button
+                  onClick={() => reprocessarReaproveitamento()}
+                  disabled={reaproveitandoId === processo?.id}
+                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                  title="Reprocessar reaproveitamento documental de todo o processo com a Central de Documentos"
+                >
+                  <Database className={`h-3 w-3 ${reaproveitandoId === processo?.id ? "animate-pulse" : ""}`} />
+                  {reaproveitandoId === processo?.id ? "REPROCESSANDO..." : "REPROCESSAR CENTRAL"}
+                </button>
+              )}
             </div>
             {processo.prazo_critico_data && (
               <div className="flex items-center gap-2 text-[11px]">
@@ -2436,6 +2447,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <ul className="divide-y divide-slate-100">
                     {docs.map((doc) => {
                       const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
+                      const reaproveitado = isDocReaproveitado(doc);
                       return (
                         <li key={doc.id} className="py-2.5 flex flex-wrap items-center gap-2">
                           <div className="min-w-0 flex-1">
@@ -2445,6 +2457,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
                               {doc.tipo_documento} · {doc.etapa}
                             </div>
+                            {reaproveitado && (
+                              <div className="mt-0.5 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                                <Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL
+                              </div>
+                            )}
                             {doc.motivo_rejeicao && (
                               <div className="text-[10px] text-red-700 mt-0.5 leading-snug">
                                 MOTIVO: {doc.motivo_rejeicao}
@@ -2480,6 +2497,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                 {reprocessandoId === doc.id ? "..." : "REPROCESSAR"}
                               </button>
                             </>
+                          )}
+                          {!doc.arquivo_storage_key && (
+                            <button
+                              onClick={() => reprocessarReaproveitamento(doc)}
+                              disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
+                              className="h-7 px-2 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 text-[10px] uppercase tracking-wider font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                            >
+                              <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} /> CENTRAL
+                            </button>
                           )}
                           {doc.status !== "aprovado" && (
                             <button
