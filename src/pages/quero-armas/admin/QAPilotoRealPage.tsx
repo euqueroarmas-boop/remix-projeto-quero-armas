@@ -1592,6 +1592,59 @@ export default function QAPilotoRealPage() {
   const [rodandoSmoke, setRodandoSmoke] = useState(false);
   const [smokeResult, setSmokeResult] = useState<any>(null);
   const [smokeCopiado, setSmokeCopiado] = useState(false);
+  const [smokeModo, setSmokeModo] = useState<"auto" | "especifico">("auto");
+  const [smokeQuery, setSmokeQuery] = useState("");
+  const [smokeSearching, setSmokeSearching] = useState(false);
+  const [smokeCandidatos, setSmokeCandidatos] = useState<Cliente[]>([]);
+  const [smokeCliente, setSmokeCliente] = useState<Cliente | null>(null);
+  const [smokeAutoPreview, setSmokeAutoPreview] = useState<Cliente | null>(null);
+  const [smokePreviewLoading, setSmokePreviewLoading] = useState(false);
+
+  const carregarSmokeAutoPreview = useCallback(async () => {
+    setSmokePreviewLoading(true);
+    try {
+      const { data } = await supabase
+        .from("qa_clientes")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
+        .neq("status", "excluido_lgpd")
+        .not("id_legado", "is", null)
+        .order("id", { ascending: false })
+        .limit(50);
+      const escolhido = ((data ?? []) as Cliente[]).find((c) => !isCandidatoStaff(c));
+      setSmokeAutoPreview(escolhido ?? null);
+    } catch {
+      setSmokeAutoPreview(null);
+    } finally {
+      setSmokePreviewLoading(false);
+    }
+  }, [isCandidatoStaff]);
+
+  useEffect(() => {
+    if (smokeModo === "auto") carregarSmokeAutoPreview();
+  }, [smokeModo, carregarSmokeAutoPreview]);
+
+  const buscarSmokeCliente = useCallback(async () => {
+    const q = smokeQuery.trim();
+    if (q.length < 3) return;
+    setSmokeSearching(true);
+    try {
+      const cpfDigits = q.replace(/\D/g, "");
+      const filtro = cpfDigits.length >= 6
+        ? `cpf.ilike.%${cpfDigits}%`
+        : `nome_completo.ilike.%${q}%,email.ilike.%${q}%`;
+      const { data } = await supabase
+        .from("qa_clientes")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
+        .neq("status", "excluido_lgpd")
+        .or(filtro)
+        .order("id", { ascending: false })
+        .limit(10);
+      setSmokeCandidatos((data ?? []) as Cliente[]);
+    } finally {
+      setSmokeSearching(false);
+    }
+  }, [smokeQuery]);
+
   const copiarSmokeResult = useCallback(async () => {
     if (!smokeResult) return;
     try {
@@ -1603,12 +1656,36 @@ export default function QAPilotoRealPage() {
       toast.error("Não foi possível copiar.");
     }
   }, [smokeResult]);
+
   const rodarSmokeTest = useCallback(async () => {
-    if (!confirm("Rodar smoke test? Cria uma venda descartável e arquiva ao final.")) return;
+    // Cliente-alvo
+    let alvo: Cliente | null = null;
+    if (smokeModo === "especifico") {
+      if (!smokeCliente) { toast.error("Selecione um cliente específico para o smoke."); return; }
+      alvo = smokeCliente;
+    } else {
+      alvo = smokeAutoPreview;
+    }
+    if (alvo && isCandidatoStaff(alvo)) {
+      toast.error("Cliente-alvo do smoke não pode ser staff/admin.");
+      return;
+    }
+    const nomeAlvo = alvo ? `${alvo.nome_completo} (#${alvo.id})` : "AUTO (servidor escolhe)";
+    if (!confirm(
+      `Rodar smoke test?\n\nCliente-alvo: ${nomeAlvo}\nNotificações ao cliente: SUPRIMIDAS\nAo final: venda arquivada.\n\nConfirma?`,
+    )) return;
     setRodandoSmoke(true);
     setSmokeResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-piloto-smoke-test", { body: {} });
+      const body: Record<string, unknown> = {
+        modo_teste: true,
+        arquivar_ao_final: true,
+        skip_notificacoes: true, // smoke padrão nunca notifica cliente real
+      };
+      if (smokeModo === "especifico" && alvo) {
+        body.target_qa_cliente_id = alvo.id;
+      }
+      const { data, error } = await supabase.functions.invoke("qa-piloto-smoke-test", { body });
       if (error) throw error;
       setSmokeResult(data);
       toast[(data as any)?.ok ? "success" : "error"]((data as any)?.ok ? "Smoke test OK" : "Smoke test com falhas");
@@ -1618,7 +1695,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setRodandoSmoke(false);
     }
-  }, []);
+  }, [smokeModo, smokeCliente, smokeAutoPreview, isCandidatoStaff]);
 
   /* ---------- Estados derivados p/ checklist ---------- */
   const stepStates = useMemo(() => ({
