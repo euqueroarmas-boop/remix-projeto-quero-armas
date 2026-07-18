@@ -822,6 +822,16 @@ export default function QAPilotoRealPage() {
             const n = parseMoney(valorBrutoStr);
             return Number.isFinite(n) && n > 0 ? n : null;
           })(),
+          valor_parcela: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 && parcelas > 0
+              ? Number((n / parcelas).toFixed(2))
+              : null;
+          })(),
+          valor_total_parcelado: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          })(),
         },
       });
       if (error) throw error;
