@@ -787,6 +787,15 @@ export default function QAPilotoRealPage() {
   const [contrato, setContrato] = useState<Contrato | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
 
+  /* ---------- Arquivar piloto ---------- */
+  const [motivoArq, setMotivoArq] = useState("");
+  const [arquivando, setArquivando] = useState(false);
+  const [arquivado, setArquivado] = useState(false);
+  const [mostrarArq, setMostrarArq] = useState(false);
+  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
+  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
+  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
+
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
   const [observacao, setObservacao] = useState<string>("");
@@ -1428,15 +1437,6 @@ export default function QAPilotoRealPage() {
       setEnviandoAssinado(false);
     }
   }, [contrato, venda, assinado, obsAssinado, origemAssinado, notifPolicyUpload, recarregarContrato, logPilotoEvento]);
-
-  /* ---------- Arquivar piloto ---------- */
-  const [motivoArq, setMotivoArq] = useState("");
-  const [arquivando, setArquivando] = useState(false);
-  const [arquivado, setArquivado] = useState(false);
-  const [mostrarArq, setMostrarArq] = useState(false);
-  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
-  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
-  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
