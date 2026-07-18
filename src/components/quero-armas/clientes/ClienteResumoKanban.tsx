@@ -661,6 +661,12 @@ export default function ClienteResumoKanban({
                 <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
                 <div className="qa-front-card__num">{front.count}</div>
               </div>
+              <div
+                className="qa-front-card__list"
+                onClick={(e) => e.stopPropagation()}
+                onWheel={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+              >
               {front.items.length === 0 && <div className="qa-front-card__item"><span title="Nenhum item monitorado">Nenhum item monitorado</span><strong title="—">—</strong></div>}
               {front.items.map((item, index) => (
                 item.onClick ? (
@@ -684,6 +690,7 @@ export default function ClienteResumoKanban({
                   </div>
                 )
               ))}
+              </div>
             </article>
           ))}
         </section>
