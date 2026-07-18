@@ -1141,6 +1141,50 @@ export default function QAPilotoRealPage() {
     }
   }, [venda, motivoArq, recarregarVenda, recarregarContrato, logPilotoEvento]);
 
+  /* ---------- Observadores de transição (contrato/processos) ---------- */
+  const contratoStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const anterior = contratoStatusRef.current;
+    const atual = contrato?.status ?? null;
+    if (atual && atual !== anterior) {
+      if (atual === "validated") {
+        logPilotoEvento("contrato_validado", { contrato_id: contrato?.id, status: atual });
+      }
+    }
+    contratoStatusRef.current = atual;
+  }, [contrato?.status, contrato?.id, logPilotoEvento]);
+
+  const processosSnapshotRef = useRef<string>("");
+  const pilotoConcluidoLogadoRef = useRef(false);
+  useEffect(() => {
+    if (!processos || processos.length === 0) return;
+    const key = processos.map((p) => `${p.id}:${p.status ?? ""}`).sort().join("|");
+    if (key === processosSnapshotRef.current) return;
+    const anterior = processosSnapshotRef.current;
+    processosSnapshotRef.current = key;
+    // Só loga transição, não estado inicial da hidratação.
+    if (!anterior) return;
+    const liberados = processos.filter((p) => {
+      const s = String(p.status || "").toLowerCase();
+      return s && !["pending", "aguardando", "bloqueado", "cancelado"].includes(s);
+    });
+    if (liberados.length > 0) {
+      logPilotoEvento("processo_checklist_liberado", {
+        total: processos.length,
+        liberados: liberados.length,
+        detalhe: processos.map((p) => ({ processo_id: p.id, status: p.status })),
+      });
+      if (!pilotoConcluidoLogadoRef.current && liberados.length === processos.length && contrato?.status === "validated") {
+        pilotoConcluidoLogadoRef.current = true;
+        logPilotoEvento("piloto_concluido", {
+          venda_id: venda?.id,
+          contrato_id: contrato?.id,
+          processos: processos.length,
+        });
+      }
+    }
+  }, [processos, contrato?.status, contrato?.id, venda?.id, logPilotoEvento]);
+
   /* ---------- Smoke test ---------- */
   /* ---------- Auditoria (somente leitura) ---------- */
   type AuditRow = {
