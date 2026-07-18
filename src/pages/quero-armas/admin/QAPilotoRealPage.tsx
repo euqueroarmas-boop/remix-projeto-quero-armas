@@ -1152,6 +1152,9 @@ export default function QAPilotoRealPage() {
   const [arquivando, setArquivando] = useState(false);
   const [arquivado, setArquivado] = useState(false);
   const [mostrarArq, setMostrarArq] = useState(false);
+  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
+  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
+  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
