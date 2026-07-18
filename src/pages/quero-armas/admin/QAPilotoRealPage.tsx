@@ -3079,6 +3079,126 @@ export default function QAPilotoRealPage() {
             <p className="text-[10px] text-neutral-500 normal-case mb-2">
               Cria venda descartável, chama confirmação manual 2x, valida idempotência e arquiva. Rode antes de cliente real.
             </p>
+
+            {/* Modo de seleção */}
+            <div className="flex gap-1 mb-2 text-[10px]">
+              <button
+                type="button"
+                onClick={() => setSmokeModo("auto")}
+                className={
+                  "flex-1 py-1 border rounded uppercase tracking-wider " +
+                  (smokeModo === "auto"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50")
+                }
+              >
+                Automático seguro
+              </button>
+              <button
+                type="button"
+                onClick={() => setSmokeModo("especifico")}
+                className={
+                  "flex-1 py-1 border rounded uppercase tracking-wider " +
+                  (smokeModo === "especifico"
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-800 font-semibold"
+                    : "border-neutral-200 text-neutral-600 hover:bg-neutral-50")
+                }
+              >
+                Cliente específico
+              </button>
+            </div>
+
+            {/* Preview do cliente-alvo */}
+            {smokeModo === "auto" ? (
+              <div className="mb-2 rounded border border-neutral-200 bg-neutral-50 p-2 text-[10px] normal-case">
+                <div className="uppercase tracking-wider text-neutral-500 text-[9px] mb-1">Cliente que será usado</div>
+                {smokePreviewLoading ? (
+                  <span className="text-neutral-500">Buscando candidato seguro…</span>
+                ) : smokeAutoPreview ? (
+                  <div>
+                    <div className="font-semibold">{smokeAutoPreview.nome_completo}</div>
+                    <div className="text-neutral-600">
+                      #{smokeAutoPreview.id} · CPF {smokeAutoPreview.cpf || "—"} · {smokeAutoPreview.email || "—"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={carregarSmokeAutoPreview}
+                      className="mt-1 text-emerald-700 hover:underline"
+                    >
+                      Recalcular
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-rose-700">Nenhum candidato externo elegível encontrado.</span>
+                )}
+              </div>
+            ) : (
+              <div className="mb-2 space-y-1">
+                {!smokeCliente ? (
+                  <>
+                    <div className="flex gap-1">
+                      <Input
+                        value={smokeQuery}
+                        onChange={(e) => setSmokeQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && buscarSmokeCliente()}
+                        placeholder="Nome, CPF, e-mail…"
+                        className="h-7 text-[10px] bg-white border-neutral-300 uppercase"
+                      />
+                      <Button size="sm" onClick={buscarSmokeCliente} disabled={smokeSearching} className="h-7 px-2">
+                        {smokeSearching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
+                      </Button>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto space-y-1">
+                      {smokeCandidatos.map((c) => {
+                        const staff = isCandidatoStaff(c);
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            disabled={staff}
+                            onClick={() => setSmokeCliente(c)}
+                            className={
+                              "w-full text-left text-[10px] border rounded p-1.5 normal-case " +
+                              (staff
+                                ? "border-rose-300 bg-rose-50 opacity-70 cursor-not-allowed"
+                                : "border-neutral-200 hover:border-emerald-500/60 hover:bg-white")
+                            }
+                          >
+                            <div className="font-semibold">
+                              {c.nome_completo}
+                              {staff && <span className="ml-1 text-[9px] text-rose-700 uppercase">· staff</span>}
+                            </div>
+                            <div className="text-neutral-600">#{c.id} · {c.cpf || "—"} · {c.email || "—"}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded border border-neutral-200 bg-neutral-50 p-2 text-[10px] normal-case">
+                    <div className="uppercase tracking-wider text-neutral-500 text-[9px] mb-1">Cliente selecionado</div>
+                    <div className="font-semibold">{smokeCliente.nome_completo}</div>
+                    <div className="text-neutral-600">
+                      #{smokeCliente.id} · {smokeCliente.cpf || "—"} · {smokeCliente.email || "—"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSmokeCliente(null)}
+                      className="mt-1 text-emerald-700 hover:underline"
+                    >
+                      Trocar
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Notificações — sempre suprimidas */}
+            <div className="mb-2 rounded border border-amber-300 bg-amber-50 p-1.5 text-[10px] normal-case text-amber-900">
+              <strong className="uppercase tracking-wider text-[9px]">Notificações:</strong>{" "}
+              suprimidas automaticamente. Smoke padrão nunca notifica cliente real (e-mail, sino, WhatsApp).
+            </div>
+
             <Button size="sm" variant="outline" onClick={rodarSmokeTest} disabled={rodandoSmoke} className="w-full">
               {rodandoSmoke ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Rodando…</> : "Executar smoke test"}
             </Button>
