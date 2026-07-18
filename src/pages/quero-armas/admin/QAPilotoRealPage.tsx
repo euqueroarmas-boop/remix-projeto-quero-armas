@@ -697,6 +697,33 @@ export default function QAPilotoRealPage() {
         .eq("venda_id", lookupId);
       setProcessos((p ?? []) as Processo[]);
 
+      // Snapshot do modo de exibição do contrato (evento oficial).
+      const { data: evExib } = await supabase
+        .from("qa_venda_eventos")
+        .select("dados_json, created_at")
+        .eq("venda_id", v.id)
+        .eq("tipo_evento", "venda_exibicao_contrato_definida")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const dj = (evExib as any)?.dados_json || null;
+      if (dj && (dj.modo_exibicao_valor_contrato === "pacote_fechado" || dj.modo_exibicao_valor_contrato === "itens_separados")) {
+        setExibicaoContratoSnap({
+          modo: dj.modo_exibicao_valor_contrato,
+          valor_final_pacote: dj.valor_final_pacote != null ? Number(dj.valor_final_pacote) : null,
+          ocultar_precos_individuais_no_contrato: !!dj.ocultar_precos_individuais_no_contrato,
+        });
+        // Reflete no state local usado pela UI/edição, se ainda editável.
+        if (dj.modo_exibicao_valor_contrato === "pacote_fechado") {
+          setModoExibicao("pacote_fechado");
+          if (dj.valor_final_pacote != null) {
+            setValorFinalPacoteStr(Number(dj.valor_final_pacote).toFixed(2).replace(".", ","));
+          }
+        }
+      } else {
+        setExibicaoContratoSnap(null);
+      }
+
       toast.success(`Piloto da venda #${v.id} restaurado.`);
     } catch (e: any) {
       toast.error(`Falha ao restaurar piloto: ${e?.message || e}`);
