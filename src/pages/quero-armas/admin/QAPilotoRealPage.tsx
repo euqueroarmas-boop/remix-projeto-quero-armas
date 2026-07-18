@@ -889,6 +889,7 @@ export default function QAPilotoRealPage() {
             const n = parseMoney(valorBrutoStr);
             return Number.isFinite(n) && n > 0 ? n : null;
           })(),
+          notificacao_policy: toBackendPolicy(notifPolicyPagamento),
         },
       });
       if (error) throw error;
