@@ -1188,7 +1188,7 @@ export default function QAPilotoRealPage() {
   /* ---------- Smoke test ---------- */
   /* ---------- Auditoria (somente leitura) ---------- */
   type AuditRow = {
-    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos";
+    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos" | "qa_piloto_eventos";
     id: string;
     created_at: string;
     tipo: string;
@@ -1206,7 +1206,7 @@ export default function QAPilotoRealPage() {
     setCarregandoAudit(true);
     try {
       const processoIds = processos.map((p) => p.id);
-      const [ve, pa, ce, pe] = await Promise.all([
+      const [ve, pa, ce, pe, pil] = await Promise.all([
         supabase
           .from("qa_venda_eventos")
           .select("id, created_at, tipo_evento, ator, user_id, dados_json, venda_id")
@@ -1235,8 +1235,37 @@ export default function QAPilotoRealPage() {
               .order("created_at", { ascending: false })
               .limit(200)
           : Promise.resolve({ data: [], error: null } as any),
+        (() => {
+          // qa_piloto_eventos: por venda_id + venda_id_legado + session_id (para eventos pré-venda).
+          const lookupLegado = Number((venda as any)?.id_legado ?? venda.id);
+          const filtros = [
+            `venda_id.eq.${venda.id}`,
+            `venda_id_legado.eq.${lookupLegado}`,
+          ];
+          if (pilotoSessionId) filtros.push(`piloto_session_id.eq.${pilotoSessionId}`);
+          return supabase
+            .from("qa_piloto_eventos")
+            .select("id, created_at, tipo_evento, dados_json, staff_user_id, staff_email, venda_id, venda_id_legado, piloto_session_id")
+            .or(filtros.join(","))
+            .order("created_at", { ascending: false })
+            .limit(400);
+        })(),
       ]);
       const rows: AuditRow[] = [];
+      for (const r of ((pil as any).data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_piloto_eventos",
+          id: `pil:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.staff_email ?? null,
+          user_id: r.staff_user_id ?? null,
+          ref: r.venda_id
+            ? `venda #${r.venda_id}`
+            : `sessão ${String(r.piloto_session_id || "").slice(0, 8)}`,
+          dados: r.dados_json,
+        });
+      }
       for (const r of (ve.data ?? []) as any[]) {
         rows.push({
           fonte: "qa_venda_eventos",
@@ -1292,7 +1321,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCarregandoAudit(false);
     }
-  }, [venda, contrato, processos]);
+  }, [venda, contrato, processos, pilotoSessionId]);
 
   useEffect(() => {
     if (venda) carregarAuditoria();
