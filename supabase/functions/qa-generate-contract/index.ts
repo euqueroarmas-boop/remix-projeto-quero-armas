@@ -734,9 +734,7 @@ Deno.serve(async (req) => {
         mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
         link_portal: `/area-do-cliente/contratos/${contract.id}`,
         payload_resumo: { contract_number: contractNumber, email_ja_enviado: !!podeEnviarEmail },
-        // não reenvia e-mail aqui: sendTransactional acima é o canal oficial
-        skip_email: true,
-      } as any);
+      });
     } catch (_) { /* best effort */ }
   } catch (e) {
     console.error("[qa-generate-contract] contrato-pronto-assinatura email error:", (e as Error)?.message);
