@@ -102,6 +102,49 @@ export default function QAPilotoRealPage() {
   const [searching, setSearching] = useState(false);
   const [candidatos, setCandidatos] = useState<Cliente[]>([]);
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [staffUserIds, setStaffUserIds] = useState<Set<string>>(new Set());
+
+  // Carrega uma vez o conjunto de user_ids que são staff/admin — usado para
+  // bloquear proativamente qualquer tentativa de selecionar um staff como
+  // contratante do piloto real.
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("qa_usuarios_perfis")
+          .select("user_id, ativo")
+          .eq("ativo", true);
+        const s = new Set<string>();
+        for (const r of ((data ?? []) as any[])) {
+          if (r.user_id) s.add(String(r.user_id));
+        }
+        setStaffUserIds(s);
+      } catch {
+        /* silencioso — bloqueio por e-mail admin permanece */
+      }
+    })();
+  }, []);
+
+  const isCandidatoStaff = useCallback(
+    (c: Cliente) => {
+      if (!c) return false;
+      if (c.email && c.email.toLowerCase() === EMAIL_ADMIN_BLOQUEADO) return true;
+      if (c.user_id && staffUserIds.has(String(c.user_id))) return true;
+      return false;
+    },
+    [staffUserIds],
+  );
+
+  const tentarSelecionarCliente = useCallback(
+    (c: Cliente) => {
+      if (isCandidatoStaff(c)) {
+        toast.error("Staff/admin não pode ser contratante do piloto. Selecione um cliente externo.");
+        return;
+      }
+      setCliente(c);
+    },
+    [isCandidatoStaff],
+  );
 
   const buscarCliente = useCallback(async () => {
     const q = query.trim();
