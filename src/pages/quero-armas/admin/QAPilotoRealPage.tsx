@@ -55,6 +55,7 @@ type PilotoResumo = {
   ultimo_evento_at: string | null;
   arquivado?: boolean;
   arquivado_em?: string | null;
+  _smoke?: boolean;
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
@@ -63,6 +64,10 @@ const PILOTO_SESSION_LS_KEY = "qa_piloto_session_id";
 const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
 ] as const;
+
+const ADQUIRENTES_CATALOGO = ["STONE", "REDE", "CIELO", "GETNET", "PAGSEGURO", "ASAAS", "MERCADO PAGO", "OUTRA"] as const;
+
+const EMAIL_ADMIN_BLOQUEADO = "eu@queroarmas.com.br";
 
 function money(v: unknown): string {
   const n = typeof v === "string" ? Number(v) : (v as number);
@@ -98,6 +103,49 @@ export default function QAPilotoRealPage() {
   const [searching, setSearching] = useState(false);
   const [candidatos, setCandidatos] = useState<Cliente[]>([]);
   const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [staffUserIds, setStaffUserIds] = useState<Set<string>>(new Set());
+
+  // Carrega uma vez o conjunto de user_ids que são staff/admin — usado para
+  // bloquear proativamente qualquer tentativa de selecionar um staff como
+  // contratante do piloto real.
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("qa_usuarios_perfis")
+          .select("user_id, ativo")
+          .eq("ativo", true);
+        const s = new Set<string>();
+        for (const r of ((data ?? []) as any[])) {
+          if (r.user_id) s.add(String(r.user_id));
+        }
+        setStaffUserIds(s);
+      } catch {
+        /* silencioso — bloqueio por e-mail admin permanece */
+      }
+    })();
+  }, []);
+
+  const isCandidatoStaff = useCallback(
+    (c: Cliente) => {
+      if (!c) return false;
+      if (c.email && c.email.toLowerCase() === EMAIL_ADMIN_BLOQUEADO) return true;
+      if (c.user_id && staffUserIds.has(String(c.user_id))) return true;
+      return false;
+    },
+    [staffUserIds],
+  );
+
+  const tentarSelecionarCliente = useCallback(
+    (c: Cliente) => {
+      if (isCandidatoStaff(c)) {
+        toast.error("Staff/admin não pode ser contratante do piloto. Selecione um cliente externo.");
+        return;
+      }
+      setCliente(c);
+    },
+    [isCandidatoStaff],
+  );
 
   const buscarCliente = useCallback(async () => {
     const q = query.trim();
@@ -1177,7 +1225,7 @@ export default function QAPilotoRealPage() {
       if (ids.length === 0) { setResumos([]); return; }
       const { data: vendas } = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor, origem_venda")
         .in("id", ids);
       const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
       const { data: clis } = cliIds.length > 0
@@ -1200,7 +1248,15 @@ export default function QAPilotoRealPage() {
           const cli = cliMap.get(v.cliente_id);
           const last = ultimoPorVenda.get(v.id);
           const statusUp = String(v.status || "").toUpperCase();
-          const arq = statusUp === "CANCELADO" || last?.tipo === "venda_arquivada_piloto";
+          const origem = String(v.origem_venda || "").toLowerCase();
+          const ultimoTipo = String(last?.tipo || "").toLowerCase();
+          const ehSmoke =
+            origem.includes("smoke") ||
+            ultimoTipo.includes("smoke");
+          const arq =
+            statusUp === "CANCELADO" ||
+            ultimoTipo === "venda_arquivada_piloto" ||
+            ehSmoke; // smoke sempre fora de "em andamento"
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1215,6 +1271,7 @@ export default function QAPilotoRealPage() {
             ultimo_evento_at: last?.when ?? null,
             arquivado: arq,
             arquivado_em: arq ? (last?.when ?? null) : null,
+            _smoke: ehSmoke,
           };
         })
         .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
@@ -1771,24 +1828,42 @@ export default function QAPilotoRealPage() {
                   </Button>
                 </div>
                 <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
-                  {candidatos.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setCliente(c)}
-                      className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50 rounded p-2 text-xs"
-                    >
-                      <div className="font-semibold flex items-center gap-2">
-                        <User className="h-3 w-3" /> {c.nome_completo}
-                      </div>
-                      <div className="text-neutral-600 normal-case">
-                        CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
-                      </div>
-                    </button>
-                  ))}
+                  {candidatos.map((c) => {
+                    const staff = isCandidatoStaff(c);
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => tentarSelecionarCliente(c)}
+                        disabled={staff}
+                        className={
+                          "w-full text-left border rounded p-2 text-xs " +
+                          (staff
+                            ? "border-rose-300 bg-rose-50 opacity-70 cursor-not-allowed"
+                            : "border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50")
+                        }
+                      >
+                        <div className="font-semibold flex items-center gap-2">
+                          <User className="h-3 w-3" /> {c.nome_completo}
+                          {staff && (
+                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-100 border border-rose-300 px-1.5 py-0.5 rounded">
+                              STAFF · NÃO SELECIONÁVEL
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-neutral-600 normal-case">
+                          CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
+                        </div>
+                      </button>
+                    );
+                  })}
                   {candidatos.length === 0 && !searching && query && (
                     <p className="text-xs text-neutral-500">Nenhum cliente encontrado.</p>
                   )}
                 </div>
+                <p className="mt-2 text-[10px] normal-case text-neutral-500">
+                  Contratantes com perfil staff/admin ou o e-mail <code>{EMAIL_ADMIN_BLOQUEADO}</code>{" "}
+                  são bloqueados automaticamente.
+                </p>
               </>
             ) : (
               <div className="flex items-center justify-between">
@@ -2034,6 +2109,45 @@ export default function QAPilotoRealPage() {
             <Card id="step-venda" title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
                 <div className="space-y-3">
+                  {/* Composição do valor final — SEMPRE visível para auditoria */}
+                  <div className="rounded border border-neutral-300 bg-white p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
+                        Composição do valor final
+                      </div>
+                      <div className="text-[11px] normal-case text-neutral-500">
+                        Fonte de verdade → <code>qa_vendas.composicao_valor_final</code>
+                      </div>
+                    </div>
+                    {composicaoValorFinalDerivada.length === 0 ? (
+                      <p className="text-[11px] normal-case text-neutral-500">
+                        Nenhum item na composição ainda. Selecione serviços no Passo 2 e defina o valor final abaixo.
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {composicaoValorFinalDerivada.map((c, i) => (
+                          <div key={i} className="flex items-center justify-between text-[11px] normal-case border-b border-dashed border-neutral-200 py-1">
+                            <span>
+                              <span className="inline-block min-w-[170px] font-mono text-[10px] uppercase text-neutral-500">{c.tipo}</span>
+                              <span>{c.descricao}</span>
+                            </span>
+                            <span className="font-mono">{money(c.valor)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between pt-1 text-xs font-semibold">
+                          <span>Total da composição</span>
+                          <span className="font-mono">{money(totalComposicaoDerivada)}</span>
+                        </div>
+                        {modoPacote && Math.abs(totalComposicaoDerivada - valorFinalPacoteNum) > 0.01 && (
+                          <div className="mt-1 rounded border border-rose-300 bg-rose-50 p-2 text-[11px] text-rose-800 normal-case">
+                            Composição ({money(totalComposicaoDerivada)}) diverge do valor final do pacote ({money(valorFinalPacoteNum)}).
+                            Ajuste os itens antes de criar a venda.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
                   {temExtras && (
                     <div className="rounded border border-amber-300 bg-amber-50/60 p-3 space-y-2">
@@ -2498,13 +2612,28 @@ export default function QAPilotoRealPage() {
                 <div className="grid grid-cols-2 gap-3 mt-3 border-t border-neutral-200 pt-3">
                   <div>
                     <Label className="text-xs">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
-                    <Input
-                      value={adquirente}
-                      onChange={(e) => setAdquirente(e.target.value)}
-                      placeholder="Ex.: STONE"
-                      className="bg-white border-neutral-300 uppercase mt-1"
-                      maxLength={60}
-                    />
+                    <select
+                      value={ADQUIRENTES_CATALOGO.includes(adquirente as any) ? adquirente : (adquirente ? "OUTRA" : "")}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAdquirente(v === "OUTRA" ? "" : v);
+                      }}
+                      className="w-full mt-1 bg-white border border-neutral-300 rounded h-9 px-2 text-sm uppercase"
+                    >
+                      <option value="">— selecione —</option>
+                      {ADQUIRENTES_CATALOGO.map((a) => (
+                        <option key={a} value={a}>{a}</option>
+                      ))}
+                    </select>
+                    {(!ADQUIRENTES_CATALOGO.includes(adquirente as any) || adquirente === "") && (
+                      <Input
+                        value={adquirente}
+                        onChange={(e) => setAdquirente(e.target.value.toUpperCase())}
+                        placeholder="ADQUIRENTE (LIVRE — SE 'OUTRA')"
+                        className="bg-white border-neutral-300 uppercase mt-2 h-9"
+                        maxLength={60}
+                      />
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs">
