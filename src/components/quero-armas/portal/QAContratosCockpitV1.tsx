@@ -1101,3 +1101,48 @@ function CompactContractCard({ contract }: { contract: Contract }) {
     </div>
   );
 }
+
+/* ─────────────────── ARCHIVED / CANCELED ─────────────────── */
+function ArchivedContractCard({ contract }: { contract: Contract }) {
+  const cancelada = contract.venda_status === "CANCELADO";
+  const label = cancelada ? "VENDA CANCELADA" : "CONTRATO ARQUIVADO";
+  return (
+    <div className="bg-[#FAFAFA] border border-dashed border-[#D5D5D5] rounded-sm p-5 opacity-90">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#EFEFEF]">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="font-['Oswald'] text-[9.5px] px-2 py-1 tracking-[0.16em] rounded-sm font-bold uppercase bg-[#EDEDED] text-[#555]">
+            {label}
+          </span>
+          <h3 className="font-['Oswald'] text-[13px] font-semibold tracking-[0.06em] uppercase truncate text-[#555]">
+            {contract.contract_number || "—"}
+            {contract.service_label ? ` · ${contract.service_label}` : ""}
+          </h3>
+        </div>
+        <div className="font-['Oswald'] text-[10px] text-[#9A9A9A] tracking-[0.16em] uppercase">
+          {contract.contract_number ? `CONTRATO ${contract.contract_number.replace(/\s+/g, "")}` : "—"}
+        </div>
+      </div>
+      <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
+        <span>
+          <b className="text-[#0A0A0A] font-semibold">Gerado:</b>{" "}
+          {fmtDateLong(contract.issued_at)}
+        </span>
+        {contract.arquivado_em && (
+          <span>
+            <b className="text-[#0A0A0A] font-semibold">Arquivado:</b>{" "}
+            {fmtDateLong(contract.arquivado_em)}
+          </span>
+        )}
+        {contract.arquivado_motivo && (
+          <span className="basis-full">
+            <b className="text-[#0A0A0A] font-semibold">Motivo:</b>{" "}
+            {contract.arquivado_motivo}
+          </span>
+        )}
+      </div>
+      <div className="mt-3 text-[11px] text-[#8A8A8A] italic">
+        Este contrato não requer mais nenhuma ação. Está mantido apenas para histórico.
+      </div>
+    </div>
+  );
+}
