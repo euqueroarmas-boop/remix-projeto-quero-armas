@@ -49,6 +49,7 @@ type PilotoResumo = {
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
+const PILOTO_SESSION_LS_KEY = "qa_piloto_session_id";
 
 const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
