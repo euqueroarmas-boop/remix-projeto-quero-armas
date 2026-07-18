@@ -457,6 +457,24 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Piloto Real B — resumo da composição do valor final (somente itens marcados
+  // com aparece_no_contrato=true e que NÃO sejam serviços do catálogo já listados
+  // e nem juros da adquirente — que já aparecem na Cláusula Terceira).
+  let composicaoResumoBloco = "";
+  try {
+    const linhasComp = composicaoDB
+      .filter((c) => c && c.aparece_no_contrato === true)
+      .filter((c) => c.tipo !== "servico_qa" && c.tipo !== "custo_financeiro_adquirente")
+      .map((c) => `<li><strong>${esc(String(c.descricao || ""))}</strong> — ${brl(Math.round(Number(c.valor) * 100))}</li>`);
+    if (linhasComp.length > 0) {
+      composicaoResumoBloco =
+        `<h2>CLÁUSULA PRIMEIRA-B --- COMPOSIÇÃO OPERACIONAL DO VALOR CONTRATADO</h2>` +
+        `<p>1.B.1. Compõem ainda o valor contratado, a título de custos operacionais e ` +
+        `repasses de terceiros, os seguintes itens (sem margem para a CONTRATADA):</p>` +
+        `<ul>${linhasComp.join("")}</ul>`;
+    }
+  } catch { /* best effort */ }
+
   // ---------------------------------------------------------------------------
   // Bloco "cláusula de pagamento" — só renderizado quando houve parcelamento
   // com juros/tarifa da adquirente (informado pela Equipe no fluxo manual).
@@ -541,7 +559,7 @@ Deno.serve(async (req) => {
     aceite_ip: "",
     aceite_user_agent: "",
     aceite_hash: "",
-    itens_contratados_bloco: itensContratadosBloco,
+    itens_contratados_bloco: itensContratadosBloco + composicaoResumoBloco,
     clausula_pagamento_bloco: clausulaPagamentoBloco,
   });
   const aceiteHash = await sha256Text(`${conteudoRenderizado}|${aceiteDataIso}|${venda.cliente_id}`);

@@ -503,6 +503,36 @@ export default function QAPilotoRealPage() {
       ? (!temDiferencaPacote || (motivoPacoteOk && custoFinCamposOk))
       : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
 
+  // Composição estruturada do valor final (Piloto Real B).
+  // Fonte de verdade para qa_vendas.composicao_valor_final. Deriva do state do
+  // wizard: serviços (servico_qa) + custos embutidos (despesa_operacional) +
+  // custo financeiro adquirente (custo_financeiro_adquirente). A soma bate
+  // com o valor final pago pelo cliente por construção.
+  const composicaoValorFinalDerivada = useMemo(() => {
+    if (!servico) return [] as Array<{ tipo: string; descricao: string; valor: number; natureza: string; aparece_no_contrato: boolean }>;
+    const rows: Array<{ tipo: string; descricao: string; valor: number; natureza: string; aparece_no_contrato: boolean }> = [];
+    const principalNome = servico.nome || `Serviço #${servico.id}`;
+    const principalValor = modoPacoteCustoFin ? precoCatalogoPrincipal : (precoAplicadoPrincipal || 0);
+    if (Number.isFinite(principalValor) && principalValor > 0) {
+      rows.push({ tipo: "servico_qa", descricao: String(principalNome).slice(0, 200), valor: Number(Number(principalValor).toFixed(2)), natureza: "receita_propria", aparece_no_contrato: true });
+    }
+    for (const e of extrasAvaliados) {
+      const val = Number(e.aplicado);
+      if (!Number.isFinite(val) || val <= 0) continue;
+      rows.push({ tipo: "servico_qa", descricao: String(e.ie.servico.nome || `Serviço #${e.ie.servico.id}`).slice(0, 200), valor: Number(val.toFixed(2)), natureza: "receita_propria", aparece_no_contrato: true });
+    }
+    for (const c of custosEmbutidosValidos) {
+      rows.push({ tipo: "despesa_operacional", descricao: String(c.descricao).toUpperCase().slice(0, 200), valor: Number(c.valor.toFixed(2)), natureza: "repasse_despesa_externa", aparece_no_contrato: true });
+    }
+    if (modoPacoteCustoFin && custoFinanceiroAdquirente > 0) {
+      rows.push({ tipo: "custo_financeiro_adquirente", descricao: `JUROS/TARIFA ${adquirentePacote.trim().toUpperCase() || "ADQUIRENTE"}`.slice(0, 200), valor: Number(custoFinanceiroAdquirente.toFixed(2)), natureza: "custo_financeiro", aparece_no_contrato: true });
+    }
+    return rows;
+  }, [servico, precoAplicadoPrincipal, precoCatalogoPrincipal, extrasAvaliados, custosEmbutidosValidos, modoPacoteCustoFin, custoFinanceiroAdquirente, adquirentePacote]);
+  const totalComposicaoDerivada = useMemo(
+    () => Number(composicaoValorFinalDerivada.reduce((s, c) => s + c.valor, 0).toFixed(2)),
+    [composicaoValorFinalDerivada],
+  );
 
   const uploadEvidencia = useCallback(async () => {
     if (!evidenciaFile || !cliente || !servico) return null;
@@ -618,6 +648,12 @@ export default function QAPilotoRealPage() {
             custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
               ? Number(custosEmbutidosTotal.toFixed(2))
               : null,
+            // Piloto Real B: envia composição estruturada quando houver.
+            composicao_valor_final: composicaoValorFinalDerivada.length > 0
+              ? composicaoValorFinalDerivada
+              : null,
+            valor_total_pago_cliente_estruturado:
+              composicaoValorFinalDerivada.length > 0 ? totalComposicaoDerivada : null,
           } : null,
         },
       });
@@ -692,6 +728,48 @@ export default function QAPilotoRealPage() {
   const [confirmandoPag, setConfirmandoPag] = useState(false);
   const [confirmacaoContratoAberta, setConfirmacaoContratoAberta] = useState(false);
   const [confirmacaoVinculoMarcada, setConfirmacaoVinculoMarcada] = useState(false);
+
+  /* ---------- Reprocessar financeiro do piloto (Passada B) ---------- */
+  const [reprocOpen, setReprocOpen] = useState(false);
+  const [reprocMotivo, setReprocMotivo] = useState("");
+  const [reprocRunning, setReprocRunning] = useState(false);
+  const reprocSubmit = useCallback(async () => {
+    if (!venda) return;
+    if (reprocMotivo.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+    if (composicaoValorFinalDerivada.length === 0) { toast.error("Configure a composição no Passo 3 antes de reprocessar."); return; }
+    setReprocRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-piloto-reprocessar-financeiro", {
+        body: {
+          venda_id: venda.id,
+          motivo: reprocMotivo.trim(),
+          composicao_valor_final: composicaoValorFinalDerivada,
+          pagamento: {
+            parcelas: parcelas > 0 ? parcelas : null,
+            adquirente: adquirente.trim() || null,
+            valor_parcela: (() => {
+              const n = parseMoney(valorBrutoStr);
+              return Number.isFinite(n) && n > 0 && parcelas > 0 ? Number((n / parcelas).toFixed(2)) : null;
+            })(),
+            valor_total_parcelado: (() => {
+              const n = parseMoney(valorBrutoStr);
+              return Number.isFinite(n) && n > 0 ? n : null;
+            })(),
+          },
+        },
+      });
+      if (error) throw error;
+      if (!(data as any)?.ok) throw new Error((data as any)?.error || "reproc_falhou");
+      toast.success("Financeiro reprocessado.");
+      setReprocOpen(false);
+      setReprocMotivo("");
+      await recarregarVenda(venda.id);
+    } catch (e: any) {
+      toast.error(`Falha no reprocesso: ${e?.message || e}`);
+    } finally {
+      setReprocRunning(false);
+    }
+  }, [venda, reprocMotivo, composicaoValorFinalDerivada, parcelas, adquirente, valorBrutoStr, recarregarVenda]);
 
   // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
   useEffect(() => {
@@ -783,6 +861,16 @@ export default function QAPilotoRealPage() {
           comprovante_path: path,
           adquirente: adquirente.trim() || null,
           valor_bruto_parcelado: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 ? n : null;
+          })(),
+          valor_parcela: (() => {
+            const n = parseMoney(valorBrutoStr);
+            return Number.isFinite(n) && n > 0 && parcelas > 0
+              ? Number((n / parcelas).toFixed(2))
+              : null;
+          })(),
+          valor_total_parcelado: (() => {
             const n = parseMoney(valorBrutoStr);
             return Number.isFinite(n) && n > 0 ? n : null;
           })(),
@@ -2396,6 +2484,18 @@ export default function QAPilotoRealPage() {
                   </div>
                 </div>
               )}
+              {parcelas > 1 && (() => {
+                const bruto = parseMoney(valorBrutoStr);
+                if (!Number.isFinite(bruto) || bruto <= 0) return null;
+                const parc = Number((bruto / parcelas).toFixed(2));
+                return (
+                  <div className="mt-2 grid grid-cols-3 gap-3 text-[11px] normal-case border-t border-neutral-100 pt-2">
+                    <div><span className="text-neutral-500">Valor da parcela:</span> <span className="font-mono">{money(parc)}</span></div>
+                    <div><span className="text-neutral-500">Total parcelado:</span> <span className="font-mono">{money(bruto)}</span></div>
+                    <div><span className="text-neutral-500">Parcelas:</span> <span className="font-mono">{parcelas}x</span></div>
+                  </div>
+                );
+              })()}
               <div className="mt-3">
                 <Label className="text-xs">Observação (mín. 20 caracteres — obrigatória)</Label>
                 <Textarea
@@ -2621,6 +2721,16 @@ export default function QAPilotoRealPage() {
                   {carregandoAudit ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
                 </Button>
               </div>
+              {profile?.perfil === "administrador" && (
+                <div className="mb-3 flex items-center justify-between rounded border border-amber-300 bg-amber-50 p-2 text-[11px] normal-case">
+                  <span className="text-amber-900">
+                    Corrigir composição/parcelamento financeiro deste piloto (auditado em <code>qa_piloto_reprocessamentos</code>).
+                  </span>
+                  <Button size="sm" variant="outline" className="h-7 text-[11px] border-amber-400 text-amber-900 hover:bg-amber-100" onClick={() => setReprocOpen(true)}>
+                    <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar financeiro
+                  </Button>
+                </div>
+              )}
               {auditRows.length === 0 && !carregandoAudit && (
                 <p className="text-xs text-neutral-500 normal-case">Nenhum evento ainda.</p>
               )}
@@ -2781,9 +2891,55 @@ export default function QAPilotoRealPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={reprocOpen} onOpenChange={setReprocOpen}>
+        <DialogContent className="max-w-md bg-white border-neutral-200 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm uppercase tracking-wide">Reprocessar financeiro do piloto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-xs normal-case text-neutral-700">
+            <p>
+              A composição atual do Passo 3 será enviada para <code>qa-piloto-reprocessar-financeiro</code>.
+              Nada é apagado — snapshots "antes/depois" ficam em <code>qa_piloto_reprocessamentos</code>.
+            </p>
+            <div className="rounded border border-neutral-200 bg-neutral-50 p-2">
+              <div className="text-[10px] uppercase text-neutral-500 mb-1">Composição derivada</div>
+              {composicaoValorFinalDerivada.length === 0 ? (
+                <div className="text-rose-700">Nenhum item — reconfigure o Passo 3.</div>
+              ) : (
+                <ul className="space-y-0.5">
+                  {composicaoValorFinalDerivada.map((c, i) => (
+                    <li key={i} className="flex justify-between">
+                      <span>{c.tipo} · {c.descricao}</span>
+                      <span className="font-mono">{money(c.valor)}</span>
+                    </li>
+                  ))}
+                  <li className="flex justify-between border-t border-neutral-200 pt-1 font-semibold">
+                    <span>Total</span><span className="font-mono">{money(totalComposicaoDerivada)}</span>
+                  </li>
+                </ul>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs">Motivo do reprocesso (mín. 20 caracteres)</Label>
+              <Textarea value={reprocMotivo} onChange={(e) => setReprocMotivo(e.target.value)}
+                placeholder="EX.: CORRIGIR COMPOSIÇÃO — EXAMES/GRU EMBUTIDOS NÃO HAVIAM SIDO LANÇADOS."
+                className="bg-white border-neutral-300 min-h-[80px] normal-case mt-1" />
+              <div className="text-[10px] text-neutral-500 mt-1">{reprocMotivo.trim().length} caracteres</div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setReprocOpen(false)} disabled={reprocRunning}>Cancelar</Button>
+            <Button onClick={reprocSubmit} disabled={reprocRunning || reprocMotivo.trim().length < 20 || composicaoValorFinalDerivada.length === 0} className="bg-amber-600 hover:bg-amber-500">
+              {reprocRunning ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reprocessando…</> : "Confirmar reprocesso"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function Card({ id, title, state, children }: { id?: string; title: string; state: "done" | "pending" | "current" | "blocked"; children: React.ReactNode }) {
   return (

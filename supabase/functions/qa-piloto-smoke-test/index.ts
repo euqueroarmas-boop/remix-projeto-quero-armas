@@ -206,6 +206,55 @@ Deno.serve(async (req) => {
     (evArqCount ?? 0) === 1;
   record("arquivamento_validado", okArq, { venda_status_final: vendaArq?.status, eventos_arquivamento: evArqCount });
 
+  // 6) SMOKE B — pacote fechado com composição (valor total pago != soma dos serviços)
+  const precoBase = Number(servico?.preco || 100);
+  const extras = [
+    { tipo: "gru_taxa_gov", descricao: "GRU EXÉRCITO PF SMOKE", valor: 100, natureza: "repasse_despesa_externa", aparece_no_contrato: true },
+    { tipo: "exame_laudo", descricao: "EXAMES PSICO+TOXI SMOKE", valor: 650, natureza: "repasse_despesa_externa", aparece_no_contrato: true },
+    { tipo: "custo_financeiro_adquirente", descricao: "JUROS/TARIFA STONE SMOKE", valor: 300, natureza: "custo_financeiro", aparece_no_contrato: true },
+  ];
+  const composicao = [
+    { tipo: "servico_qa", descricao: servico?.nome || "SERVIÇO", valor: precoBase, natureza: "receita_propria", aparece_no_contrato: true },
+    ...extras,
+  ];
+  const totalEsperado = Number(composicao.reduce((s, c) => s + c.valor, 0).toFixed(2));
+  const createdB = await invoke("qa-checkout-criar-venda", {
+    cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1 }],
+    identificacao: {
+      nome_completo: cliente.nome_completo, cpf: cliente.cpf || "",
+      email: cliente.email || "", celular: cliente.celular || "",
+    },
+    exibicao_contrato: {
+      modo: "pacote_fechado",
+      valor_final_pacote: totalEsperado,
+      ocultar_precos_individuais_no_contrato: true,
+      motivo: "SMOKE PACOTE FECHADO COM COMPOSIÇÃO ESTRUTURADA",
+      tipo_diferenca: "custo_financeiro_adquirente",
+      total_catalogo_servicos: precoBase,
+      valor_total_pago_cliente: totalEsperado,
+      adquirente: "STONE",
+      parcelas: 12,
+      composicao_valor_final: composicao,
+    },
+  });
+  const vendaB = Number(createdB.data?.venda_id);
+  record("smoke_b_venda_criada", !!vendaB, { venda_id: vendaB, total_esperado: totalEsperado });
+  if (vendaB) {
+    const { data: vB } = await admin
+      .from("qa_vendas")
+      .select("valor_total_pago_cliente, valor_a_pagar, composicao_valor_final")
+      .eq("id", vendaB).maybeSingle();
+    const okComp = Math.abs(Number(vB?.valor_total_pago_cliente || 0) - totalEsperado) < 0.01
+      && Array.isArray(vB?.composicao_valor_final)
+      && (vB?.composicao_valor_final as any[]).length === composicao.length;
+    record("smoke_b_composicao_persistida", okComp, vB);
+    // arquiva a venda B
+    await invoke("qa-piloto-arquivar", {
+      venda_id: vendaB,
+      motivo: "SMOKE B AUTOMATIZADO — ARQUIVAR PACOTE FECHADO COM COMPOSICAO ESTRUTURADA",
+    });
+  }
+
   const allOk = steps.every((s) => s.ok);
   return json({ ok: allOk, venda_teste_id: venda_id, steps }, allOk ? 200 : 500);
 });
