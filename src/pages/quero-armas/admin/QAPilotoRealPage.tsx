@@ -46,6 +46,8 @@ type PilotoResumo = {
   contrato_status: string | null;
   ultimo_evento: string | null;
   ultimo_evento_at: string | null;
+  arquivado?: boolean;
+  arquivado_em?: string | null;
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
