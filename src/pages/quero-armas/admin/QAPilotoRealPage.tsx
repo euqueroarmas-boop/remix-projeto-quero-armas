@@ -1061,8 +1061,16 @@ export default function QAPilotoRealPage() {
     const eventosRows = ((eventos ?? []) as any[]);
     const eventoArquivado = eventosRows.some((e) => eventoArquivaPiloto(e.tipo_evento));
     const eventoSmoke = eventosRows.some((e) => textoIndicaSmoke(e.tipo_evento, e.ator, JSON.stringify(e.dados_json ?? {})));
-    const clienteStaff = !!cli && isCandidatoStaff(cli);
-    const operadorComoCliente = !!cli?.user_id && !!user?.id && cli.user_id === user.id && profile?.perfil === "administrador";
+    let clienteStaff = !!cli?.email && cli.email.toLowerCase() === EMAIL_ADMIN_BLOQUEADO;
+    if (!clienteStaff && cli?.user_id) {
+      const { data: perfilCliente } = await supabase
+        .from("qa_usuarios_perfis")
+        .select("perfil")
+        .eq("user_id", cli.user_id)
+        .maybeSingle();
+      clienteStaff = ["administrador", "admin", "staff"].includes(String((perfilCliente as any)?.perfil || "").toLowerCase());
+    }
+    const operadorComoCliente = !!cli?.user_id && !!user?.id && cli.user_id === user.id && ["administrador", "admin", "staff"].includes(String(profile?.perfil || "").toLowerCase());
     const bloqueado = statusInativo || eventoArquivado || origemSmoke || eventoSmoke || clienteStaff || operadorComoCliente;
     return {
       permitido: !bloqueado,
@@ -1113,6 +1121,7 @@ export default function QAPilotoRealPage() {
       if (!elegibilidade.permitido) {
         limparPilotoAtivo(elegibilidade.motivo || "Piloto não elegível para retomada automática.");
         setResumos((prev) => prev.filter((r) => r.venda_id !== v.id));
+        setResumosArquivados((prev) => prev.filter((r) => r.venda_id !== v.id));
         try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
         const url = new URL(window.location.href);
         url.searchParams.delete("venda_id");
