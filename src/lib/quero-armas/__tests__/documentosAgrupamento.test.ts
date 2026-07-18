@@ -36,7 +36,7 @@ describe("agruparDocumentosPorFamilia — Cenário 1 (comprovantes)", () => {
       comprovante(2023, "2023-06-10"),
       comprovante(2024, "2024-06-10"),
       comprovante(2025, "2025-06-10"),
-      comprovante(2026, "2026-06-25"), // emitido 25/06 → vigente até ~25/07 no hoje 18/07
+      comprovante(2026, "2026-07-15"), // emitido 15/07 → vigente até ~15/08, hoje 18/07 = 28d
     ];
     const grupos = agruparDocumentosPorFamilia(docs, hoje);
     expect(grupos).toHaveLength(1);
