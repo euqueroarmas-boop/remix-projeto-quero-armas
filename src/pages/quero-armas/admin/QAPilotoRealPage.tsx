@@ -1275,7 +1275,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setEnviandoAssinado(false);
     }
-  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato, logPilotoEvento]);
+  }, [contrato, venda, assinado, obsAssinado, origemAssinado, notifPolicyUpload, recarregarContrato, logPilotoEvento]);
 
   /* ---------- Arquivar piloto ---------- */
   const [motivoArq, setMotivoArq] = useState("");
