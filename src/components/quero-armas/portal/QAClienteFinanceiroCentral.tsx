@@ -606,7 +606,7 @@ function CobrancaAberta({
   const stLabel = vencida
     ? `VENCIDA HÁ ${Math.abs(dias!)} ${Math.abs(dias!) === 1 ? "DIA" : "DIAS"}`
     : "AGUARDANDO PAGAMENTO";
-  const valor = Number(venda.valor_a_pagar || 0);
+  const valor = valorCobradoCliente(venda);
   const cobId = `#${venda.id_legado}`;
   const bancoDetectado = bancoEmissor(detalhe?.boleto?.identificationField, detalhe?.boleto?.barCode);
   const banco = bancoDetectado || "Asaas";
@@ -937,7 +937,7 @@ function CobrancaPaga({ venda, servico, nfeUrl }: {
         </div>
         <div style={{ marginTop: 8 }}><span className="pill paid">PAGA</span></div>
       </div>
-      <div className="val" style={{ color: "var(--ok)" }}>{fmtBRL(Number(venda.valor_a_pagar || 0))}</div>
+      <div className="val" style={{ color: "var(--ok)" }}>{fmtBRL(valorCobradoCliente(venda))}</div>
       <div className="actions" style={{ flexDirection: "column", gap: 6, minWidth: 170 }}>
         {venda.asaas_invoice_url
           ? <a className="btn" href={venda.asaas_invoice_url} target="_blank" rel="noreferrer">COMPROVANTE</a>
@@ -1013,7 +1013,7 @@ export default function QAClienteFinanceiroCentral({
     let emAbertoTotal = 0, emAbertoQtd = 0;
     let vencidasTotal = 0, vencidasQtd = 0;
     for (const v of abertas) {
-      const val = Number(v.valor_a_pagar || 0);
+      const val = valorCobradoCliente(v);
       emAbertoTotal += val; emAbertoQtd++;
       const d = diasAte(v.asaas_due_date);
       if (d !== null && d < 0) { vencidasTotal += val; vencidasQtd++; }
@@ -1022,7 +1022,7 @@ export default function QAClienteFinanceiroCentral({
     for (const v of pagas) {
       const d = (v.cobranca_confirmada_em || v.data_cadastro || "").slice(0, 4);
       if (d === String(anoAtual)) {
-        pagasAnoTotal += Number(v.valor_a_pagar || 0);
+        pagasAnoTotal += valorCobradoCliente(v);
         pagasAnoQtd++;
       }
     }
@@ -1125,7 +1125,7 @@ export default function QAClienteFinanceiroCentral({
       const d = data as any;
       if (d?.error || d?.network_error) throw new Error(d.detalhe || d.network_error || String(d.error));
       if (!d?.payment_id) throw new Error("Não foi possível criar a cobrança. Verifique os dados do cartão e tente novamente.");
-      const precoBase = Number(venda.valor_a_pagar || 0);
+      const precoBase = valorCobradoCliente(venda);
       const gu = precoBase > 0 ? calcularPrecoFinal(precoBase, "CREDIT_CARD", parcelas) : null;
       const cobrado = {
         status:       String(d.status || "PENDING"),
