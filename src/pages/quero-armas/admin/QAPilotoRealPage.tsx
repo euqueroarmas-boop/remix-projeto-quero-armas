@@ -2109,6 +2109,45 @@ export default function QAPilotoRealPage() {
             <Card id="step-venda" title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
                 <div className="space-y-3">
+                  {/* Composição do valor final — SEMPRE visível para auditoria */}
+                  <div className="rounded border border-neutral-300 bg-white p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-neutral-700">
+                        Composição do valor final
+                      </div>
+                      <div className="text-[11px] normal-case text-neutral-500">
+                        Fonte de verdade → <code>qa_vendas.composicao_valor_final</code>
+                      </div>
+                    </div>
+                    {composicaoValorFinalDerivada.length === 0 ? (
+                      <p className="text-[11px] normal-case text-neutral-500">
+                        Nenhum item na composição ainda. Selecione serviços no Passo 2 e defina o valor final abaixo.
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {composicaoValorFinalDerivada.map((c, i) => (
+                          <div key={i} className="flex items-center justify-between text-[11px] normal-case border-b border-dashed border-neutral-200 py-1">
+                            <span>
+                              <span className="inline-block min-w-[170px] font-mono text-[10px] uppercase text-neutral-500">{c.tipo}</span>
+                              <span>{c.descricao}</span>
+                            </span>
+                            <span className="font-mono">{money(c.valor)}</span>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between pt-1 text-xs font-semibold">
+                          <span>Total da composição</span>
+                          <span className="font-mono">{money(totalComposicaoDerivada)}</span>
+                        </div>
+                        {modoPacote && Math.abs(totalComposicaoDerivada - valorFinalPacoteNum) > 0.01 && (
+                          <div className="mt-1 rounded border border-rose-300 bg-rose-50 p-2 text-[11px] text-rose-800 normal-case">
+                            Composição ({money(totalComposicaoDerivada)}) diverge do valor final do pacote ({money(valorFinalPacoteNum)}).
+                            Ajuste os itens antes de criar a venda.
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
                   {temExtras && (
                     <div className="rounded border border-amber-300 bg-amber-50/60 p-3 space-y-2">
