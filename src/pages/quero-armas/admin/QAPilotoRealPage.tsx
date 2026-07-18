@@ -757,6 +757,21 @@ export default function QAPilotoRealPage() {
     try {
       const path = comprovantePath || (await uploadComprovante());
       if (!path) throw new Error("comprovante_upload_falhou");
+      const valorBrutoNum = (() => { const n = parseMoney(valorBrutoStr); return Number.isFinite(n) && n > 0 ? n : null; })();
+      await logPilotoEvento("pagamento_manual_confirmado_piloto", {
+        venda_id: venda.id,
+        forma_pagamento: forma,
+        parcelas,
+        adquirente: adquirente.trim() || null,
+        valor_bruto_parcelado: valorBrutoNum,
+        valor_parcela: valorBrutoNum && parcelas > 0 ? Number((valorBrutoNum / parcelas).toFixed(2)) : null,
+        comprovante_path: path,
+        observacao_len: observacao.trim().length,
+      });
+      await logPilotoEvento("contrato_geracao_iniciada", {
+        venda_id: venda.id,
+        via: "pipeline_pos_pagamento",
+      });
       const { data, error } = await supabase.functions.invoke("qa-venda-confirmar-pagamento-manual", {
         body: {
           venda_id: venda.id,
@@ -786,7 +801,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado, logPilotoEvento, recarregarVenda, recarregarContrato]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const recarregarContrato = useCallback(async (vendaId: number) => {
