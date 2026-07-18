@@ -1070,7 +1070,16 @@ export default function QAPilotoRealPage() {
         .maybeSingle();
       clienteStaff = ["administrador", "admin", "staff"].includes(String((perfilCliente as any)?.perfil || "").toLowerCase());
     }
-    const operadorComoCliente = !!cli?.user_id && !!user?.id && cli.user_id === user.id && ["administrador", "admin", "staff"].includes(String(profile?.perfil || "").toLowerCase());
+    const { data: authAtual } = await supabase.auth.getUser();
+    let operadorComoCliente = !!cli?.user_id && !!authAtual?.user?.id && cli.user_id === authAtual.user.id;
+    if (operadorComoCliente) {
+      const { data: perfilOperador } = await supabase
+        .from("qa_usuarios_perfis")
+        .select("perfil")
+        .eq("user_id", authAtual.user.id)
+        .maybeSingle();
+      operadorComoCliente = ["administrador", "admin", "staff"].includes(String((perfilOperador as any)?.perfil || "").toLowerCase());
+    }
     const bloqueado = statusInativo || eventoArquivado || origemSmoke || eventoSmoke || clienteStaff || operadorComoCliente;
     return {
       permitido: !bloqueado,
