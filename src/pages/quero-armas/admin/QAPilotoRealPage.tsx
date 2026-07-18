@@ -2751,7 +2751,7 @@ export default function QAPilotoRealPage() {
                   <NotificacaoPolicyPicker
                     value={notifPolicyArquivar}
                     onChange={setNotifPolicyArquivar}
-                    clienteEmail={venda?.cliente_email ?? clienteAlvo?.email ?? null}
+                    clienteEmail={cliente?.email ?? null}
                     acaoLabel="ARQUIVAR PILOTO"
                   />
                   <div className="flex gap-2">
