@@ -424,6 +424,9 @@ export default function QAPilotoRealPage() {
               preco_negociado: e.aplicado,
             })),
           ],
+          // Piloto Real: vincula a venda ao CLIENTE selecionado no Passo 1,
+          // não ao staff que está logado disparando o wizard.
+          target_qa_cliente_id: cliente.id,
           identificacao: {
             nome_completo: cliente.nome_completo,
             cpf: cliente.cpf || "",
