@@ -69,6 +69,13 @@ interface Body {
   identificacao?: IdentificacaoInput | null;
   negociacao?: NegociacaoInput | null;
   exibicao_contrato?: ExibicaoContratoInput | null;
+  /**
+   * Piloto Real / Venda Assistida: força vincular a venda ao qa_cliente indicado
+   * em vez do qa_cliente do usuário autenticado que está chamando a função.
+   * Só é honrado quando o chamador tem perfil ativo em `qa_usuarios_perfis`.
+   * Sem essa checagem, o admin que dispara o wizard vira dono da venda.
+   */
+  target_qa_cliente_id?: number | null;
 }
 
 const TIPOS_AJUSTE = new Set([
