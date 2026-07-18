@@ -1303,6 +1303,7 @@ export default function QAPilotoRealPage() {
     if (!venda) return;
     if (arquivado) { toast.info("Este piloto já está arquivado."); setMostrarArq(false); return; }
     if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
+    if (!policyIsValid(notifPolicyArquivar)) { toast.error("Preencha a política de notificação (motivo mín. 20 chars se não notificar)."); return; }
     if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
     setArquivando(true);
     try {
