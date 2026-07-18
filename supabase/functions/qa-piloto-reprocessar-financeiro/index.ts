@@ -11,6 +11,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
+import { aplicarPolicyNotificacao, extractPolicy } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,14 @@ Deno.serve(async (req) => {
 
   const vendaId = Number(body?.venda_id);
   const motivo = String(body?.motivo || "").trim();
+  // Reprocessamento financeiro é ajuste interno — default é NÃO notificar.
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+  });
+  if (!notifPolicy.notificar_cliente && !(notifPolicy.motivo_nao_notificar || "").trim()) {
+    notifPolicy.motivo_nao_notificar = `AJUSTE FINANCEIRO INTERNO: ${motivo}`;
+  }
   const composicao = Array.isArray(body?.composicao_valor_final)
     ? body.composicao_valor_final
     : [];
