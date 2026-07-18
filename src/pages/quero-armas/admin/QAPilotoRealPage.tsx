@@ -531,6 +531,20 @@ export default function QAPilotoRealPage() {
     }
     setCriandoVenda(true);
     try {
+      // Snapshot do modo de exibição do contrato ANTES de criar a venda.
+      if (temExtras) {
+        await logPilotoEvento("modo_exibicao_contrato_selecionado", {
+          modo: modoExibicao,
+          ocultar_precos_individuais: modoPacote,
+          valor_final_pacote: modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
+          motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
+          tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
+          total_catalogo: precoCatalogo,
+          custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0 ? custosEmbutidosTotal : null,
+          adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
+          parcelas: modoPacoteCustoFin ? parcelasPacote : null,
+        });
+      }
       let evPath = evidenciaPath;
       if (precoDiferente && evidenciaFile && !evPath) {
         try { evPath = await uploadEvidencia(); } catch (e: any) {
@@ -608,13 +622,28 @@ export default function QAPilotoRealPage() {
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_criar_venda");
       toast.success(`Venda #${(data as any).venda_id} criada`);
+      const novaVendaId = Number((data as any).venda_id);
+      const novaVendaIdLegado = (data as any)?.id_legado != null ? Number((data as any).id_legado) : null;
+      await backlinkPilotoEventos(novaVendaId, novaVendaIdLegado);
+      await logPilotoEvento("venda_criada_checkout_piloto", {
+        venda_id: novaVendaId,
+        id_legado: novaVendaIdLegado,
+        cliente_id: cliente.id,
+        cliente_id_legado: cliente.id_legado,
+        operador_user_id: user?.id ?? null,
+        operador_email: staffEmail,
+        itens: [
+          { servico_id: servico.id, slug: servico.slug, nome: servico.nome, preco: precoAplicadoPrincipal },
+          ...extrasAvaliados.map((e) => ({ servico_id: e.ie.servico.id, slug: e.ie.servico.slug, nome: e.ie.servico.nome, preco: e.aplicado })),
+        ],
+      });
       await recarregarVenda((data as any).venda_id);
     } catch (e: any) {
       toast.error(`Erro ao criar venda: ${e?.message || e}`);
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal, logPilotoEvento, backlinkPilotoEventos, user?.id, staffEmail]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
