@@ -83,6 +83,76 @@ export default function QAPilotoRealPage() {
   const stepRefs = useRef<Record<string, HTMLElement | null>>({});
   const setStepRef = (key: string) => (el: HTMLElement | null) => { stepRefs.current[key] = el; };
 
+  /* ---------- Auditoria: sessão do piloto + logger ---------- */
+  const [pilotoSessionId, setPilotoSessionId] = useState<string | null>(null);
+  const staffEmail = useMemo(() => {
+    return (profile as any)?.email || (user as any)?.email || null;
+  }, [profile, user]);
+  useEffect(() => {
+    if (pilotoSessionId) return;
+    let sid: string | null = null;
+    try { sid = localStorage.getItem(PILOTO_SESSION_LS_KEY); } catch {}
+    if (!sid) {
+      sid = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+        ? (crypto as any).randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      try { localStorage.setItem(PILOTO_SESSION_LS_KEY, sid); } catch {}
+    }
+    setPilotoSessionId(sid);
+  }, [pilotoSessionId]);
+
+  const vendaRef = useRef<Venda | null>(null);
+  useEffect(() => { vendaRef.current = venda; }, []); // placeholder; será redefinido após state existir
+
+  const logPilotoEvento = useCallback(async (tipo: string, dados: Record<string, unknown> = {}) => {
+    try {
+      if (!pilotoSessionId) return;
+      const v = vendaRef.current;
+      await supabase.from("qa_piloto_eventos").insert({
+        piloto_session_id: pilotoSessionId,
+        venda_id: v?.id ?? null,
+        venda_id_legado: (v as any)?.id_legado ?? null,
+        tipo_evento: tipo,
+        dados_json: dados as any,
+        staff_user_id: user?.id ?? null,
+        staff_email: staffEmail,
+      });
+    } catch (e) {
+      // Auditoria não deve bloquear o fluxo; apenas warning.
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] insert falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId, user?.id, staffEmail]);
+
+  // Backlink de eventos pré-venda quando a venda oficial for criada.
+  const backlinkPilotoEventos = useCallback(async (vendaId: number, vendaIdLegado: number | null) => {
+    try {
+      if (!pilotoSessionId) return;
+      await supabase
+        .from("qa_piloto_eventos")
+        .update({ venda_id: vendaId, venda_id_legado: vendaIdLegado ?? null })
+        .eq("piloto_session_id", pilotoSessionId)
+        .is("venda_id", null);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] backlink falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId]);
+
+  // piloto_iniciado: dispara uma única vez por sessão quando não há venda hidratada.
+  const iniciadoLogadoRef = useRef(false);
+  useEffect(() => {
+    if (iniciadoLogadoRef.current) return;
+    if (!pilotoSessionId) return;
+    if (venda) return; // Se abriu direto num piloto restaurado, não é "novo".
+    if (hidratando) return;
+    iniciadoLogadoRef.current = true;
+    logPilotoEvento("piloto_iniciado", {
+      origem: "wizard_piloto_real",
+      via: (new URLSearchParams(window.location.search)).get("venda_id") ? "url" : "novo",
+    });
+  }, [pilotoSessionId, venda, hidratando, logPilotoEvento]);
+
   /* ---------- Passo 1: Cliente ---------- */
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
