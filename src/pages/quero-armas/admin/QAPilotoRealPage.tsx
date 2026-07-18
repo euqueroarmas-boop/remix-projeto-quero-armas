@@ -1818,24 +1818,42 @@ export default function QAPilotoRealPage() {
                   </Button>
                 </div>
                 <div className="mt-3 space-y-1 max-h-64 overflow-y-auto">
-                  {candidatos.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => setCliente(c)}
-                      className="w-full text-left border border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50 rounded p-2 text-xs"
-                    >
-                      <div className="font-semibold flex items-center gap-2">
-                        <User className="h-3 w-3" /> {c.nome_completo}
-                      </div>
-                      <div className="text-neutral-600 normal-case">
-                        CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
-                      </div>
-                    </button>
-                  ))}
+                  {candidatos.map((c) => {
+                    const staff = isCandidatoStaff(c);
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => tentarSelecionarCliente(c)}
+                        disabled={staff}
+                        className={
+                          "w-full text-left border rounded p-2 text-xs " +
+                          (staff
+                            ? "border-rose-300 bg-rose-50 opacity-70 cursor-not-allowed"
+                            : "border-neutral-200 hover:border-emerald-500/60 hover:bg-neutral-50")
+                        }
+                      >
+                        <div className="font-semibold flex items-center gap-2">
+                          <User className="h-3 w-3" /> {c.nome_completo}
+                          {staff && (
+                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-rose-700 bg-rose-100 border border-rose-300 px-1.5 py-0.5 rounded">
+                              STAFF · NÃO SELECIONÁVEL
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-neutral-600 normal-case">
+                          CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
+                        </div>
+                      </button>
+                    );
+                  })}
                   {candidatos.length === 0 && !searching && query && (
                     <p className="text-xs text-neutral-500">Nenhum cliente encontrado.</p>
                   )}
                 </div>
+                <p className="mt-2 text-[10px] normal-case text-neutral-500">
+                  Contratantes com perfil staff/admin ou o e-mail <code>{EMAIL_ADMIN_BLOQUEADO}</code>{" "}
+                  são bloqueados automaticamente.
+                </p>
               </>
             ) : (
               <div className="flex items-center justify-between">
