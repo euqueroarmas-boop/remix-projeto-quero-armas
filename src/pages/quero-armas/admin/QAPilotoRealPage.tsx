@@ -515,7 +515,10 @@ export default function QAPilotoRealPage() {
     }
   }, [venda, recarregarVenda]);
 
-  /* ---------- Passo 5: Pagamento Manual ---------- */
+  /* ---------- Passo 5/6: Pagamento Manual + Contrato ---------- */
+  const [contrato, setContrato] = useState<Contrato | null>(null);
+  const [processos, setProcessos] = useState<Processo[]>([]);
+
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
   const [observacao, setObservacao] = useState<string>("");
@@ -550,6 +553,24 @@ export default function QAPilotoRealPage() {
     setComprovantePath(path);
     return path;
   }, [comprovante, venda]);
+
+  const clienteIdsAceitosContrato = useMemo(() => {
+    const ids = [cliente?.id, cliente?.id_legado]
+      .map((v) => Number(v))
+      .filter((v) => Number.isFinite(v) && v > 0);
+    return new Set(ids);
+  }, [cliente?.id, cliente?.id_legado]);
+  const vendaClienteDivergente = !!venda && !!cliente && clienteIdsAceitosContrato.size > 0 && !clienteIdsAceitosContrato.has(Number(venda.cliente_id));
+  const contratoClienteDivergente = !!contrato && !!cliente && clienteIdsAceitosContrato.size > 0 && !clienteIdsAceitosContrato.has(Number(contrato.cliente_id));
+  const operadorMesmoContratante = !!cliente?.user_id && !!user?.id && cliente.user_id === user.id && profile?.perfil === "administrador";
+  const vinculoBloqueado = vendaClienteDivergente || contratoClienteDivergente || operadorMesmoContratante;
+  const motivoBloqueioVinculo = vendaClienteDivergente
+    ? "A venda está vinculada a um ID de cliente diferente do cliente selecionado."
+    : contratoClienteDivergente
+      ? "O contrato foi gerado para um ID de cliente diferente do cliente selecionado."
+      : operadorMesmoContratante
+        ? "O contratante atual é o próprio operador/admin logado, não um cliente externo selecionado."
+        : null;
 
   const confirmarPagamento = useCallback(async (forcarConfirmacao = false) => {
     if (!venda) return;
@@ -607,9 +628,6 @@ export default function QAPilotoRealPage() {
   }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
-  const [contrato, setContrato] = useState<Contrato | null>(null);
-  const [processos, setProcessos] = useState<Processo[]>([]);
-
   const recarregarContrato = useCallback(async (vendaId: number) => {
     // qa_contracts / qa_processos usam o id_legado da venda (mesmo id que o
     // pipeline pós-pagamento passa para qa-generate-contract). Se a venda
