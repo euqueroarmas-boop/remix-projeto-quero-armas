@@ -1532,8 +1532,24 @@ export default function QAPilotoRealPage() {
 
           {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
           {!venda && !hidratando && (
-            <Card title="Retomar Piloto em Andamento" state="pending">
-              {ultimoLocal && !hidratado && (
+            <Card title={abaLista === "andamento" ? "Retomar Piloto em Andamento" : "Pilotos Arquivados"} state="pending">
+              <div className="flex items-center gap-2 mb-3">
+                <Button
+                  size="sm"
+                  variant={abaLista === "andamento" ? "default" : "outline"}
+                  onClick={() => setAbaLista("andamento")}
+                >
+                  Em andamento ({resumos.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={abaLista === "arquivados" ? "default" : "outline"}
+                  onClick={() => setAbaLista("arquivados")}
+                >
+                  Arquivados ({resumosArquivados.length})
+                </Button>
+              </div>
+              {abaLista === "andamento" && ultimoLocal && !hidratado && !resumosArquivados.some((r) => r.venda_id === ultimoLocal) && (
                 <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
                   <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
                   <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
@@ -1543,16 +1559,21 @@ export default function QAPilotoRealPage() {
               )}
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[11px] text-neutral-600 normal-case">
-                  Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou canceladas.
+                  {abaLista === "andamento"
+                    ? <>Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou arquivadas.</>
+                    : <>Pilotos <code>arquivados</code> (somente leitura). Nenhuma ação é permitida — apenas visualização de auditoria.</>}
                 </p>
                 <Button size="sm" variant="outline" onClick={carregarResumos} disabled={carregandoResumos}>
                   {carregandoResumos ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
                 </Button>
               </div>
-              {resumos.length === 0 && !carregandoResumos && (
-                <p className="text-xs text-neutral-500 normal-case">Nenhum piloto em andamento.</p>
-              )}
-              {resumos.length > 0 && (
+              {(() => {
+                const linhas = abaLista === "andamento" ? resumos : resumosArquivados;
+                if (linhas.length === 0 && !carregandoResumos) {
+                  return <p className="text-xs text-neutral-500 normal-case">{abaLista === "andamento" ? "Nenhum piloto em andamento." : "Nenhum piloto arquivado."}</p>;
+                }
+                if (linhas.length === 0) return null;
+                return (
                 <div className="max-h-80 overflow-auto border border-neutral-200 rounded">
                   <table className="w-full text-[11px] normal-case">
                     <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
@@ -1567,7 +1588,7 @@ export default function QAPilotoRealPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {resumos.map((r) => (
+                      {linhas.map((r) => (
                         <tr key={r.venda_id} className="border-t border-neutral-200">
                           <td className="px-2 py-1 whitespace-nowrap">
                             <strong>#{r.venda_id}</strong>
@@ -1591,7 +1612,9 @@ export default function QAPilotoRealPage() {
                           </td>
                           <td className="px-2 py-1 text-right">
                             <Button size="sm" variant="outline" onClick={() => abrirPiloto(r.venda_id)}>
-                              <Play className="h-3 w-3 mr-1" /> Continuar
+                              {r.arquivado
+                                ? <><History className="h-3 w-3 mr-1" /> Ver auditoria</>
+                                : <><Play className="h-3 w-3 mr-1" /> Continuar</>}
                             </Button>
                           </td>
                         </tr>
@@ -1599,7 +1622,8 @@ export default function QAPilotoRealPage() {
                     </tbody>
                   </table>
                 </div>
-              )}
+                );
+              })()}
             </Card>
           )}
 
