@@ -404,65 +404,6 @@ export default function QAPilotoRealPage() {
     : [];
   const custosEmbutidosTotal = custosEmbutidosValidos.reduce((s, c) => s + c.valor, 0);
 
-  // Composição estruturada do valor final (Piloto Real B).
-  // Fonte de verdade para qa_vendas.composicao_valor_final. Deriva do state do
-  // wizard sem exigir nova UI: serviços de catálogo (tipo=servico_qa) + custos
-  // embutidos (tipo=despesa_operacional por padrão) + custo financeiro da
-  // adquirente (tipo=custo_financeiro_adquirente). Soma bate com
-  // valor_total_pago_cliente por construção.
-  const composicaoValorFinalDerivada = useMemo(() => {
-    if (!servico) return [] as Array<{ tipo: string; descricao: string; valor: number; natureza: string; aparece_no_contrato: boolean }>;
-    const rows: Array<{ tipo: string; descricao: string; valor: number; natureza: string; aparece_no_contrato: boolean }> = [];
-    // Serviços do catálogo — sempre entram como servico_qa.
-    const principalNome = servico.nome || `Serviço #${servico.id}`;
-    const principalValor = modoPacoteCustoFin ? precoCatalogoPrincipal : (precoAplicadoPrincipal || 0);
-    if (Number.isFinite(principalValor) && principalValor > 0) {
-      rows.push({
-        tipo: "servico_qa",
-        descricao: String(principalNome).slice(0, 200),
-        valor: Number(Number(principalValor).toFixed(2)),
-        natureza: "receita_propria",
-        aparece_no_contrato: true,
-      });
-    }
-    for (const e of extrasAvaliados) {
-      const val = Number(e.aplicado);
-      if (!Number.isFinite(val) || val <= 0) continue;
-      rows.push({
-        tipo: "servico_qa",
-        descricao: String(e.ie.servico.nome || `Serviço #${e.ie.servico.id}`).slice(0, 200),
-        valor: Number(val.toFixed(2)),
-        natureza: "receita_propria",
-        aparece_no_contrato: true,
-      });
-    }
-    // Custos embutidos operacionais (repasses de terceiros).
-    for (const c of custosEmbutidosValidos) {
-      rows.push({
-        tipo: "despesa_operacional",
-        descricao: String(c.descricao).toUpperCase().slice(0, 200),
-        valor: Number(c.valor.toFixed(2)),
-        natureza: "repasse_despesa_externa",
-        aparece_no_contrato: true,
-      });
-    }
-    // Custo financeiro da adquirente.
-    if (modoPacoteCustoFin && custoFinanceiroAdquirente > 0) {
-      rows.push({
-        tipo: "custo_financeiro_adquirente",
-        descricao: `JUROS/TARIFA ${adquirentePacote.trim().toUpperCase() || "ADQUIRENTE"}`.slice(0, 200),
-        valor: Number(custoFinanceiroAdquirente.toFixed(2)),
-        natureza: "custo_financeiro",
-        aparece_no_contrato: true,
-      });
-    }
-    return rows;
-  }, [servico, precoAplicadoPrincipal, precoCatalogoPrincipal, extrasAvaliados, custosEmbutidosValidos, modoPacoteCustoFin, custoFinanceiroAdquirente, adquirentePacote]);
-  const totalComposicaoDerivada = useMemo(
-    () => Number(composicaoValorFinalDerivada.reduce((s, c) => s + c.valor, 0).toFixed(2)),
-    [composicaoValorFinalDerivada],
-  );
-
   // Valor total dos SERVIÇOS que vai para qa_itens_venda / total da venda.
   //  - pacote + custo_fin: soma dos preços de catálogo (não muda nada nos itens).
   //  - pacote + ajuste_comercial: valor final do pacote (distribuído entre itens).
