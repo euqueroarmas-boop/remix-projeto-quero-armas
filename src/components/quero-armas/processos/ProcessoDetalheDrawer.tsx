@@ -1550,6 +1550,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
                 const tplEscolhido = pickTemplate(doc.regra_validacao);
                 const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
+                const reaproveitado = isDocReaproveitado(doc);
+                const reapMeta = getReaproveitamentoMeta(doc);
                 // Pergunta-pivot tem ciclo próprio (PENDENTE/RESPONDIDA) — não usa
                 // o status documental do banco para a UI.
                 const perguntaBadge = pergunta
@@ -1581,6 +1583,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           {pergunta && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">PERGUNTA</span>}
                           {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
                           {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
+                          {reaproveitado && <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded"><Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL</span>}
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
@@ -1597,6 +1600,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {reaproveitado && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/70 p-2.5 text-[11px] text-emerald-900">
+                          <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                            <Database className="h-3.5 w-3.5" /> REAPROVEITADO DA CENTRAL DE DOCUMENTOS
+                          </div>
+                          <div className="mt-1 leading-relaxed">
+                            Documento original{reapMeta.hubId ? ` #${reapMeta.hubId}` : ""}
+                            {reapMeta.motivo ? ` · regra: ${String(reapMeta.motivo).toUpperCase()}` : ""}
+                            {reapMeta.arquivo ? ` · arquivo: ${String(reapMeta.arquivo).toUpperCase()}` : ""}
+                            {reapMeta.reutilizadoEm ? ` · ${formatDateTime(reapMeta.reutilizadoEm)}` : ""}.
+                          </div>
+                        </div>
+                      )}
                       {/* SELETOR DE CONDIÇÃO PROFISSIONAL — etapa 2.
                           O placeholder "renda_definir_condicao" é o item
                           do checklist que substitui o antigo card fixo. */}
@@ -2122,6 +2138,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           >
                             <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
                             {reprocessandoId === doc.id ? "REPROCESSANDO..." : "REPROCESSAR IA"}
+                          </button>
+                        )}
+                        {equipeMode && !doc.arquivo_storage_key && (
+                          <button
+                            onClick={() => reprocessarReaproveitamento(doc)}
+                            disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+                            title="Tentar atender esta exigência com documento já aprovado na Central de Documentos"
+                          >
+                            <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} />
+                            {reaproveitandoId === doc.id ? "BUSCANDO..." : "REAPROVEITAR CENTRAL"}
                           </button>
                         )}
                         {equipeMode && doc.status === "aprovado" && doc.arquivo_storage_key && !doc.usado_como_modelo && (
