@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
   }> = Array.isArray((venda as any)?.composicao_valor_final)
     ? (venda as any).composicao_valor_final
     : [];
-  const totalContratoCents =
+  const totalContratoCentsFinal =
     modoExibicaoContrato === "pacote_fechado" &&
     Number.isFinite(valorTotalPagoClienteDB) &&
     valorTotalPagoClienteDB > 0
