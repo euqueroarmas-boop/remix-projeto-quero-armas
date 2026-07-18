@@ -1135,19 +1135,41 @@ export default function QAPilotoRealPage() {
                   {venda.id_legado ? <> · legado <code>{String(venda.id_legado)}</code></> : null}
                   {" "}restaurado via {hidratado.via === "url" ? "URL" : "último local"}.
                 </span>
-                <button
-                  type="button"
-                  className="text-[11px] underline hover:no-underline"
-                  onClick={() => {
-                    try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
-                    const url = new URL(window.location.href);
-                    url.searchParams.delete("venda_id");
-                    url.searchParams.delete("id_legado");
-                    window.location.assign(url.pathname);
-                  }}
-                >
-                  Iniciar novo piloto
-                </button>
+                <span className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    className="text-[11px] underline hover:no-underline font-semibold"
+                    onClick={() => {
+                      const dirty =
+                        !!motivoPreco || !!evidenciaFile || !!motivoPacote ||
+                        !!comprovante || !!assinado || !!valorBrutoStr ||
+                        !!precoAplicadoStr || !!valorFinalPacoteStr;
+                      if (dirty && !window.confirm("Existem alterações não salvas. Deseja voltar para a lista de pilotos mesmo assim?")) {
+                        return;
+                      }
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("venda_id");
+                      url.searchParams.delete("id_legado");
+                      // Preserva localStorage do último piloto (apenas sai da visualização).
+                      window.location.assign(url.pathname);
+                    }}
+                  >
+                    ← Voltar para pilotos em andamento
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[11px] underline hover:no-underline"
+                    onClick={() => {
+                      try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("venda_id");
+                      url.searchParams.delete("id_legado");
+                      window.location.assign(url.pathname);
+                    }}
+                  >
+                    Iniciar novo piloto
+                  </button>
+                </span>
               </div>
             )}
             {venda && vinculoBloqueado && (
