@@ -68,6 +68,20 @@ const FORMAS_MANUAL = [
 const ADQUIRENTES_CATALOGO = ["STONE", "REDE", "CIELO", "GETNET", "PAGSEGURO", "ASAAS", "MERCADO PAGO", "OUTRA"] as const;
 
 const EMAIL_ADMIN_BLOQUEADO = "eu@queroarmas.com.br";
+const STATUS_PILOTO_INATIVO = new Set(["CANCELADO", "CANCELADA", "ARQUIVADO", "ARQUIVADA", "EXCLUIDO", "EXCLUÍDO"]);
+const EVENTOS_ARQUIVAMENTO_PILOTO = new Set(["venda_arquivada_piloto", "piloto_arquivado"]);
+
+function isStatusPilotoInativo(status: unknown): boolean {
+  return STATUS_PILOTO_INATIVO.has(String(status || "").trim().toUpperCase());
+}
+
+function eventoArquivaPiloto(tipo: unknown): boolean {
+  return EVENTOS_ARQUIVAMENTO_PILOTO.has(String(tipo || "").trim().toLowerCase());
+}
+
+function textoIndicaSmoke(...valores: unknown[]): boolean {
+  return valores.some((v) => String(v ?? "").toLowerCase().includes("smoke"));
+}
 
 function money(v: unknown): string {
   const n = typeof v === "string" ? Number(v) : (v as number);
@@ -744,7 +758,7 @@ export default function QAPilotoRealPage() {
       .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
       .eq("id", id)
       .maybeSingle();
-    if (data) setVenda(data as Venda);
+    if (data) setVenda(data as unknown as Venda);
   }, []);
 
   /* ---------- Passo 4: Aprovar valor ---------- */
@@ -772,6 +786,15 @@ export default function QAPilotoRealPage() {
   /* ---------- Passo 5/6: Pagamento Manual + Contrato ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
   const [processos, setProcessos] = useState<Processo[]>([]);
+
+  /* ---------- Arquivar piloto ---------- */
+  const [motivoArq, setMotivoArq] = useState("");
+  const [arquivando, setArquivando] = useState(false);
+  const [arquivado, setArquivado] = useState(false);
+  const [mostrarArq, setMostrarArq] = useState(false);
+  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
+  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
+  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
 
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
@@ -1001,10 +1024,80 @@ export default function QAPilotoRealPage() {
   /* ---------- Retomada: hidratação por venda_id / id_legado ---------- */
   // Persistir última venda aberta.
   useEffect(() => {
-    if (venda?.id) {
+    if (venda?.id && !arquivado && !vinculoBloqueado && !isStatusPilotoInativo(venda.status)) {
       try { localStorage.setItem(PILOTO_LS_KEY, String(venda.id)); } catch {}
     }
-  }, [venda?.id]);
+  }, [venda?.id, venda?.status, arquivado, vinculoBloqueado]);
+
+  function limparPilotoAtivo(motivo?: string) {
+    try {
+      localStorage.removeItem(PILOTO_LS_KEY);
+      localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+    } catch {}
+    setUltimoLocal(null);
+    setHidratado(null);
+    setCliente(null);
+    setServico(null);
+    setItensExtras([]);
+    setVenda(null);
+    setContrato(null);
+    setProcessos([]);
+    setArquivado(false);
+    setArquivadoInfo(null);
+    setExibicaoContratoSnap(null);
+    setAuditRows([]);
+    if (motivo) toast.info(motivo);
+  }
+
+  async function avaliarRetomadaPermitida(v: Venda, cli: Cliente | null) {
+    const statusInativo = isStatusPilotoInativo(v.status);
+    const origemSmoke = false;
+    const { data: eventos } = await supabase
+      .from("qa_venda_eventos")
+      .select("tipo_evento, ator, dados_json")
+      .eq("venda_id", v.id)
+      .order("created_at", { ascending: false })
+      .limit(80);
+    const eventosRows = ((eventos ?? []) as any[]);
+    const eventoArquivado = eventosRows.some((e) => eventoArquivaPiloto(e.tipo_evento));
+    const eventoSmoke = eventosRows.some((e) => textoIndicaSmoke(e.tipo_evento, e.ator, JSON.stringify(e.dados_json ?? {})));
+    let clienteStaff = !!cli?.email && cli.email.toLowerCase() === EMAIL_ADMIN_BLOQUEADO;
+    if (!clienteStaff && cli?.user_id) {
+      const { data: perfilCliente } = await supabase
+        .from("qa_usuarios_perfis")
+        .select("perfil")
+        .eq("user_id", cli.user_id)
+        .maybeSingle();
+      clienteStaff = ["administrador", "admin", "staff"].includes(String((perfilCliente as any)?.perfil || "").toLowerCase());
+    }
+    const { data: authAtual } = await supabase.auth.getUser();
+    let operadorComoCliente = !!cli?.user_id && !!authAtual?.user?.id && cli.user_id === authAtual.user.id;
+    if (operadorComoCliente) {
+      const { data: perfilOperador } = await supabase
+        .from("qa_usuarios_perfis")
+        .select("perfil")
+        .eq("user_id", authAtual.user.id)
+        .maybeSingle();
+      operadorComoCliente = ["administrador", "admin", "staff"].includes(String((perfilOperador as any)?.perfil || "").toLowerCase());
+    }
+    const bloqueado = statusInativo || eventoArquivado || origemSmoke || eventoSmoke || clienteStaff || operadorComoCliente;
+    return {
+      permitido: !bloqueado,
+      statusInativo,
+      eventoArquivado,
+      smoke: origemSmoke || eventoSmoke,
+      clienteStaff: clienteStaff || operadorComoCliente,
+      motivo: statusInativo
+        ? "Piloto cancelado/arquivado não é retomado como fluxo atual."
+        : eventoArquivado
+          ? "Piloto arquivado não é retomado como fluxo atual."
+          : (origemSmoke || eventoSmoke)
+            ? "Smoke test arquivado não é retomado como piloto ativo."
+            : (clienteStaff || operadorComoCliente)
+              ? "Piloto vinculado a staff/admin não é retomado como fluxo atual."
+              : null,
+    };
+  }
 
   const hidratarPilotoPorId = useCallback(async (idOuLegado: number) => {
     setHidratando(true);
@@ -1022,7 +1115,7 @@ export default function QAPilotoRealPage() {
           .eq("id_legado", idOuLegado)
           .maybeSingle();
       }
-      const v = vRes.data as Venda | null;
+      const v = vRes.data as unknown as Venda | null;
       if (!v) { toast.error(`Venda ${idOuLegado} não encontrada.`); return; }
 
       // Cliente
@@ -1031,7 +1124,22 @@ export default function QAPilotoRealPage() {
         .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .eq("id", v.cliente_id)
         .maybeSingle();
-      if (cli) setCliente(cli as Cliente);
+      const clienteVenda = (cli as Cliente | null) ?? null;
+
+      const elegibilidade = await avaliarRetomadaPermitida(v, clienteVenda);
+      if (!elegibilidade.permitido) {
+        limparPilotoAtivo(elegibilidade.motivo || "Piloto não elegível para retomada automática.");
+        setResumos((prev) => prev.filter((r) => r.venda_id !== v.id));
+        setResumosArquivados((prev) => prev.filter((r) => r.venda_id !== v.id));
+        try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+        const url = new URL(window.location.href);
+        url.searchParams.delete("venda_id");
+        url.searchParams.delete("id_legado");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+        return;
+      }
+
+      if (clienteVenda) setCliente(clienteVenda);
 
       // Itens da venda → montamos shims para servico + itensExtras.
       // qa_itens_venda.venda_id armazena o id_legado da venda (não o id interno).
@@ -1100,15 +1208,15 @@ export default function QAPilotoRealPage() {
         .eq("venda_id", lookupId);
       setProcessos((p ?? []) as Processo[]);
 
-      // Detecta arquivamento: venda CANCELADO ou evento venda_arquivada_piloto.
+      // Detecta arquivamento: venda CANCELADO/ARQUIVADO ou evento oficial de arquivamento.
       const statusUp = String(v.status || "").toUpperCase();
-      let arq = statusUp === "CANCELADO";
+      let arq = isStatusPilotoInativo(statusUp);
       if (!arq) {
         const { data: evArq } = await supabase
           .from("qa_venda_eventos")
           .select("id")
           .eq("venda_id", v.id)
-          .eq("tipo_evento", "venda_arquivada_piloto")
+          .in("tipo_evento", Array.from(EVENTOS_ARQUIVAMENTO_PILOTO))
           .limit(1)
           .maybeSingle();
         arq = !!evArq;
@@ -1121,7 +1229,7 @@ export default function QAPilotoRealPage() {
           .from("qa_venda_eventos")
           .select("created_at, ator, descricao, dados_json")
           .eq("venda_id", v.id)
-          .eq("tipo_evento", "venda_arquivada_piloto")
+          .in("tipo_evento", Array.from(EVENTOS_ARQUIVAMENTO_PILOTO))
           .order("created_at", { ascending: true })
           .limit(1)
           .maybeSingle();
@@ -1222,41 +1330,44 @@ export default function QAPilotoRealPage() {
         }
       }
       const ids = Array.from(ultimoPorVenda.keys()).slice(0, 30);
-      if (ids.length === 0) { setResumos([]); return; }
+      if (ids.length === 0) { setResumos([]); setResumosArquivados([]); return; }
       const { data: vendas } = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor, origem_venda")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
         .in("id", ids);
       const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
       const { data: clis } = cliIds.length > 0
-        ? await supabase.from("qa_clientes").select("id, nome_completo, cpf").in("id", cliIds)
+        ? await supabase.from("qa_clientes").select("id, id_legado, nome_completo, cpf, email, celular, user_id").in("id", cliIds)
         : { data: [] as any[] } as any;
-      const cliMap = new Map<number, { nome_completo: string | null; cpf: string | null }>();
-      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, { nome_completo: c.nome_completo, cpf: c.cpf });
+      const cliMap = new Map<number, Cliente>();
+      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, c as Cliente);
 
       // Contratos por lookup_id (id_legado ?? id).
       const lookupIds = ((vendas ?? []) as any[]).map((v) => Number(v.id_legado ?? v.id));
       const { data: contratos } = lookupIds.length > 0
-        ? await supabase.from("qa_contracts").select("venda_id, status").in("venda_id", lookupIds)
+        ? await supabase.from("qa_contracts").select("venda_id, status, cliente_id").in("venda_id", lookupIds)
         : { data: [] as any[] } as any;
-      const contratoMap = new Map<number, string>();
-      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
+      const contratoMap = new Map<number, { status: string | null; cliente_id: number | null }>();
+      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, { status: c.status ?? null, cliente_id: c.cliente_id ?? null });
 
       const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
         .map((v) => {
           const lookup = Number(v.id_legado ?? v.id);
           const cli = cliMap.get(v.cliente_id);
+          const contratoResumo = contratoMap.get(lookup);
           const last = ultimoPorVenda.get(v.id);
           const statusUp = String(v.status || "").toUpperCase();
-          const origem = String(v.origem_venda || "").toLowerCase();
           const ultimoTipo = String(last?.tipo || "").toLowerCase();
+          const cliIdsAceitos = new Set([cli?.id, cli?.id_legado].map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0));
+          const contratoDivergente = !!contratoResumo?.cliente_id && cliIdsAceitos.size > 0 && !cliIdsAceitos.has(Number(contratoResumo.cliente_id));
+          const vendaClienteStaff = !!cli && isCandidatoStaff(cli);
           const ehSmoke =
-            origem.includes("smoke") ||
             ultimoTipo.includes("smoke");
           const arq =
-            statusUp === "CANCELADO" ||
-            ultimoTipo === "venda_arquivada_piloto" ||
+            isStatusPilotoInativo(statusUp) ||
+            eventoArquivaPiloto(ultimoTipo) ||
             ehSmoke; // smoke sempre fora de "em andamento"
+          const bloqueadoAndamento = arq || vendaClienteStaff || contratoDivergente;
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1266,10 +1377,10 @@ export default function QAPilotoRealPage() {
             status: v.status,
             cobranca_status: v.cobranca_status,
             status_validacao_valor: v.status_validacao_valor,
-            contrato_status: contratoMap.get(lookup) ?? null,
+            contrato_status: contratoResumo?.status ?? null,
             ultimo_evento: last?.tipo ?? null,
             ultimo_evento_at: last?.when ?? null,
-            arquivado: arq,
+            arquivado: bloqueadoAndamento,
             arquivado_em: arq ? (last?.when ?? null) : null,
             _smoke: ehSmoke,
           };
@@ -1283,7 +1394,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCarregandoResumos(false);
     }
-  }, []);
+  }, [isCandidatoStaff]);
 
   useEffect(() => {
     if (!venda && !hidratando && !hidratado) carregarResumos();
@@ -1346,15 +1457,6 @@ export default function QAPilotoRealPage() {
       setEnviandoAssinado(false);
     }
   }, [contrato, venda, assinado, obsAssinado, origemAssinado, notifPolicyUpload, recarregarContrato, logPilotoEvento]);
-
-  /* ---------- Arquivar piloto ---------- */
-  const [motivoArq, setMotivoArq] = useState("");
-  const [arquivando, setArquivando] = useState(false);
-  const [arquivado, setArquivado] = useState(false);
-  const [mostrarArq, setMostrarArq] = useState(false);
-  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
-  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
-  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
@@ -1688,6 +1790,16 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.functions.invoke("qa-piloto-smoke-test", { body });
       if (error) throw error;
       setSmokeResult(data);
+      try {
+        const smokeVendaId = Number((data as any)?.venda_id ?? (data as any)?.venda?.id ?? (data as any)?.resultado?.venda_id);
+        const salvo = Number(localStorage.getItem(PILOTO_LS_KEY));
+        if (Number.isFinite(smokeVendaId) && Number.isFinite(salvo) && salvo === smokeVendaId) {
+          localStorage.removeItem(PILOTO_LS_KEY);
+          localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+          setUltimoLocal(null);
+        }
+      } catch {}
+      await carregarResumos();
       toast[(data as any)?.ok ? "success" : "error"]((data as any)?.ok ? "Smoke test OK" : "Smoke test com falhas");
     } catch (e: any) {
       toast.error(`Smoke test falhou: ${e?.message || e}`);
@@ -1695,7 +1807,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setRodandoSmoke(false);
     }
-  }, [smokeModo, smokeCliente, smokeAutoPreview, isCandidatoStaff]);
+  }, [smokeModo, smokeCliente, smokeAutoPreview, isCandidatoStaff, carregarResumos]);
 
   /* ---------- Estados derivados p/ checklist ---------- */
   const stepStates = useMemo(() => ({
@@ -1753,7 +1865,6 @@ export default function QAPilotoRealPage() {
                       const url = new URL(window.location.href);
                       url.searchParams.delete("venda_id");
                       url.searchParams.delete("id_legado");
-                      // Preserva localStorage do último piloto (apenas sai da visualização).
                       window.location.assign(url.pathname);
                     }}
                   >
@@ -1810,7 +1921,7 @@ export default function QAPilotoRealPage() {
                   Arquivados ({resumosArquivados.length})
                 </Button>
               </div>
-              {abaLista === "andamento" && ultimoLocal && !hidratado && !resumosArquivados.some((r) => r.venda_id === ultimoLocal) && (
+              {abaLista === "andamento" && ultimoLocal && !hidratado && resumos.some((r) => r.venda_id === ultimoLocal) && (
                 <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
                   <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
                   <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
