@@ -62,6 +62,25 @@ Deno.serve(async (req) => {
     jaArquivada = !!ev;
   } catch { /* ignore */ }
 
+  // Idempotência adicional: evento em qa_piloto_eventos (pré-venda ou paralelo).
+  if (!jaArquivada) {
+    try {
+      const { data: evP } = await admin
+        .from("qa_piloto_eventos")
+        .select("id")
+        .eq("venda_id", venda_id)
+        .eq("tipo_evento", "piloto_arquivado")
+        .limit(1)
+        .maybeSingle();
+      jaArquivada = !!evP;
+    } catch { /* ignore */ }
+  }
+
+  // Idempotência por status: se venda já está CANCELADO, considera arquivada.
+  if (!jaArquivada && String((venda as any).status || "").toUpperCase() === "CANCELADO") {
+    jaArquivada = true;
+  }
+
   if (jaArquivada) {
     return json({ ok: true, ja_arquivada: true, venda_id });
   }
