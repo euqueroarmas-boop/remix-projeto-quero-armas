@@ -54,6 +54,14 @@ Deno.serve(async (req) => {
   const adquirente = adquirenteRaw.length > 0 && adquirenteRaw.length <= 60 ? adquirenteRaw : null;
   const vbpNum = Number(body?.valor_bruto_parcelado);
   const valor_bruto_parcelado = Number.isFinite(vbpNum) && vbpNum > 0 ? Number(vbpNum.toFixed(2)) : null;
+  const vpNum = Number(body?.valor_parcela);
+  const valor_parcela = Number.isFinite(vpNum) && vpNum > 0 ? Number(vpNum.toFixed(2)) : null;
+  const vtpNum = Number(body?.valor_total_parcelado);
+  const valor_total_parcelado = Number.isFinite(vtpNum) && vtpNum > 0
+    ? Number(vtpNum.toFixed(2))
+    : valor_bruto_parcelado;
+  const daNum = Number(body?.diferenca_arredondamento);
+  const diferenca_arredondamento = Number.isFinite(daNum) ? Number(daNum.toFixed(2)) : null;
 
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (!FORMAS.has(forma_pagamento)) return json({ error: "forma_pagamento_invalida", allowed: [...FORMAS] }, 400);
@@ -103,6 +111,14 @@ Deno.serve(async (req) => {
       parcelas_cobranca: parcelas,
       valor_cobrado: (venda as any).valor_a_pagar,
     };
+    // Piloto Real B — persiste parcelamento detalhado em qa_vendas para o
+    // financeiro e o contrato lerem sem depender apenas de eventos.
+    if (parcelas > 0) (updatePayload as any).pagamento_parcelas = parcelas;
+    if (adquirente) (updatePayload as any).pagamento_adquirente = adquirente;
+    if (valor_parcela != null) (updatePayload as any).pagamento_valor_parcela = valor_parcela;
+    if (valor_total_parcelado != null) (updatePayload as any).pagamento_valor_total_parcelado = valor_total_parcelado;
+    if (diferenca_arredondamento != null)
+      (updatePayload as any).pagamento_diferenca_arredondamento = diferenca_arredondamento;
     const { error: upErr } = await admin.from("qa_vendas").update(updatePayload).eq("id", venda_id);
     if (upErr) return json({ error: "update_venda_failed", detail: upErr.message }, 500);
 
@@ -122,6 +138,9 @@ Deno.serve(async (req) => {
           parcelas,
           adquirente,
           valor_bruto_parcelado,
+          valor_parcela,
+          valor_total_parcelado,
+          diferenca_arredondamento,
           confirmado_em: nowIso,
           fluxo: "piloto_real",
         },
@@ -142,6 +161,9 @@ Deno.serve(async (req) => {
           parcelas,
           adquirente,
           valor_bruto_parcelado,
+          valor_parcela,
+          valor_total_parcelado,
+          diferenca_arredondamento,
           observacao,
           comprovante_path,
           fluxo: "piloto_real",
