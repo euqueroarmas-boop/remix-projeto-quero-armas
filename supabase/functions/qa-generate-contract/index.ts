@@ -695,6 +695,9 @@ Deno.serve(async (req) => {
   });
 
   // Lovable Emails: avisa cliente que o contrato está pronto para assinatura.
+  // Gated pela política de notificação (notificacao_policy). Se o operador
+  // marcou "não notificar", registramos a decisão em qa_notificacao_eventos
+  // e pulamos o envio de e-mail (mesmo comportamento para portal/WhatsApp).
   try {
     const { data: cliEmail } = await sb
       .from("qa_clientes")
@@ -702,7 +705,9 @@ Deno.serve(async (req) => {
       .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
       .limit(1)
       .maybeSingle();
-    if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+    const podeEnviarEmail =
+      notifPolicy.notificar_cliente && (notifPolicy.canais?.email ?? true);
+    if (podeEnviarEmail && cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
       const { sendTransactional } = await import("../_shared/sendTransactional.ts");
       await sendTransactional({
         templateName: "contrato-pronto-assinatura",
@@ -715,6 +720,24 @@ Deno.serve(async (req) => {
         },
       });
     }
+    // Registra a decisão (portal + auditoria). Não reenvia e-mail: aqui só
+    // fecha a trilha, para que quem consultar qa_notificacao_eventos veja
+    // o motivo de "não notificar" ou o canal usado.
+    try {
+      await aplicarPolicyNotificacao(notifPolicy, {
+        acao: "contrato_pronto_assinatura",
+        cliente_id: venda.cliente_id ?? null,
+        venda_id: vendaId,
+        contrato_id: contract.id,
+        origem: "qa-generate-contract",
+        titulo_portal: "Contrato pronto para assinatura",
+        mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
+        link_portal: `/area-do-cliente/contratos/${contract.id}`,
+        payload_resumo: { contract_number: contractNumber, email_ja_enviado: !!podeEnviarEmail },
+        // não reenvia e-mail aqui: sendTransactional acima é o canal oficial
+        skip_email: true,
+      } as any);
+    } catch (_) { /* best effort */ }
   } catch (e) {
     console.error("[qa-generate-contract] contrato-pronto-assinatura email error:", (e as Error)?.message);
   }
