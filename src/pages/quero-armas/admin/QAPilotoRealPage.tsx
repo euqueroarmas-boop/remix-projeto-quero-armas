@@ -2442,6 +2442,18 @@ export default function QAPilotoRealPage() {
                   </div>
                 </div>
               )}
+              {parcelas > 1 && (() => {
+                const bruto = parseMoney(valorBrutoStr);
+                if (!Number.isFinite(bruto) || bruto <= 0) return null;
+                const parc = Number((bruto / parcelas).toFixed(2));
+                return (
+                  <div className="mt-2 grid grid-cols-3 gap-3 text-[11px] normal-case border-t border-neutral-100 pt-2">
+                    <div><span className="text-neutral-500">Valor da parcela:</span> <span className="font-mono">{money(parc)}</span></div>
+                    <div><span className="text-neutral-500">Total parcelado:</span> <span className="font-mono">{money(bruto)}</span></div>
+                    <div><span className="text-neutral-500">Parcelas:</span> <span className="font-mono">{parcelas}x</span></div>
+                  </div>
+                );
+              })()}
               <div className="mt-3">
                 <Label className="text-xs">Observação (mín. 20 caracteres — obrigatória)</Label>
                 <Textarea
