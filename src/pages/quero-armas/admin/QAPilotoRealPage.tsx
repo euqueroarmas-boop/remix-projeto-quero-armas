@@ -216,6 +216,83 @@ export default function QAPilotoRealPage() {
     }
   }, [pilotoSessionId]);
 
+  // piloto_iniciado: dispara uma vez por sessão quando NÃO estamos em piloto restaurado.
+  const iniciadoLogadoRef = useRef(false);
+  useEffect(() => {
+    if (iniciadoLogadoRef.current) return;
+    if (!pilotoSessionId) return;
+    if (hidratando) return;
+    if (venda) return; // Piloto restaurado — não é "iniciado".
+    iniciadoLogadoRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    logPilotoEvento("piloto_iniciado", {
+      origem: "wizard_piloto_real",
+      via: params.get("venda_id") || params.get("id_legado") ? "url" : "novo",
+    });
+  }, [pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // cliente_selecionado / troca de cliente (antes da venda).
+  const clienteAnteriorRef = useRef<Cliente | null>(null);
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const prev = clienteAnteriorRef.current;
+    if (cliente && (!prev || prev.id !== cliente.id)) {
+      logPilotoEvento("cliente_selecionado", {
+        cliente_id: cliente.id,
+        cliente_id_legado: cliente.id_legado,
+        nome: cliente.nome_completo,
+        cpf: cliente.cpf,
+        email: cliente.email,
+        cliente_anterior: prev ? { cliente_id: prev.id, nome: prev.nome_completo } : null,
+      });
+    }
+    clienteAnteriorRef.current = cliente;
+  }, [cliente, pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // servico_principal_selecionado (antes da venda).
+  const servicoAnteriorRef = useRef<Servico | null>(null);
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const prev = servicoAnteriorRef.current;
+    if (servico && (!prev || prev.id !== servico.id)) {
+      logPilotoEvento("servico_principal_selecionado", {
+        servico_id: servico.id,
+        slug: servico.slug,
+        nome: servico.nome,
+        valor_catalogo: servico.preco,
+        servico_anterior: prev ? { servico_id: prev.id, slug: prev.slug, nome: prev.nome } : null,
+      });
+    }
+    servicoAnteriorRef.current = servico;
+  }, [servico, pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // servico_adicional_adicionado / removido (antes da venda).
+  const extrasIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const atual = new Set(itensExtras.map((i) => i.servico.id));
+    const anteriores = extrasIdsRef.current;
+    // adições
+    for (const it of itensExtras) {
+      if (!anteriores.has(it.servico.id)) {
+        logPilotoEvento("servico_adicional_adicionado", {
+          servico_id: it.servico.id,
+          slug: it.servico.slug,
+          nome: it.servico.nome,
+          valor_catalogo: it.servico.preco,
+          preco_aplicado_str: it.precoStr,
+        });
+      }
+    }
+    // remoções
+    for (const idAnt of anteriores) {
+      if (!atual.has(idAnt)) {
+        logPilotoEvento("servico_adicional_removido", { servico_id: idAnt });
+      }
+    }
+    extrasIdsRef.current = atual;
+  }, [itensExtras, pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
   /* ---------- Passo 3b: Preço negociado ---------- */
   const TIPOS_AJUSTE = [
     { v: "promocao", l: "Promoção" },
