@@ -663,13 +663,18 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.rpc("qa_venda_aprovar_valor", { p_venda_id: venda.id });
       if (error) throw error;
       toast.success("Valor aprovado (evento registrado)");
+      await logPilotoEvento("valor_aprovado_piloto", {
+        venda_id: venda.id,
+        valor_a_pagar: venda.valor_a_pagar,
+        origem: "piloto_real",
+      });
       await recarregarVenda(venda.id);
     } catch (e: any) {
       toast.error(`Falha ao aprovar valor: ${e?.message || e}`);
     } finally {
       setAprovando(false);
     }
-  }, [venda, recarregarVenda]);
+  }, [venda, recarregarVenda, logPilotoEvento]);
 
   /* ---------- Passo 5/6: Pagamento Manual + Contrato ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
