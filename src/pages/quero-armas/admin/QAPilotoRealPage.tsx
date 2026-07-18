@@ -950,6 +950,26 @@ export default function QAPilotoRealPage() {
       }
       setArquivado(arq);
 
+      // Metadados do arquivamento (para card "Piloto arquivado").
+      if (arq) {
+        const { data: evMeta } = await supabase
+          .from("qa_venda_eventos")
+          .select("created_at, ator, descricao, dados_json")
+          .eq("venda_id", v.id)
+          .eq("tipo_evento", "venda_arquivada_piloto")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        const dj = (evMeta as any)?.dados_json || {};
+        setArquivadoInfo({
+          arquivado_em: (evMeta as any)?.created_at ?? (dj.arquivado_em ?? null),
+          motivo: dj.motivo ?? null,
+          ator: (evMeta as any)?.ator ?? dj.staff_email ?? null,
+        });
+      } else {
+        setArquivadoInfo(null);
+      }
+
       // Snapshot do modo de exibição do contrato (evento oficial).
       const { data: evExib } = await supabase
         .from("qa_venda_eventos")
