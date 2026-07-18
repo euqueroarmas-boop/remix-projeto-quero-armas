@@ -11,6 +11,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireQAStaff, qaAuthCors } from "../_shared/qaAuth.ts";
+import { aplicarPolicyNotificacao, extractPolicy } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = { ...qaAuthCors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 
@@ -36,6 +37,16 @@ Deno.serve(async (req) => {
   const motivo = String(body?.motivo || "").trim();
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (motivo.length < 20) return json({ error: "motivo_minimo_20_chars" }, 400);
+  // Arquivar por padrão NÃO notifica o cliente (motivo interno).
+  const notifPolicy = extractPolicy(body, {
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+  });
+  // Se a equipe optou por não notificar, herda o próprio motivo do arquivamento
+  // como justificativa (garante o mínimo de 20 chars exigido pela política).
+  if (!notifPolicy.notificar_cliente && !(notifPolicy.motivo_nao_notificar || "").trim()) {
+    notifPolicy.motivo_nao_notificar = `ARQUIVAMENTO INTERNO: ${motivo}`;
+  }
 
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
