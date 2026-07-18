@@ -2748,6 +2748,12 @@ export default function QAPilotoRealPage() {
                     placeholder="Ex.: TESTE ENCERRADO — CLIENTE DESISTIU E VAI RECONTRATAR NO FLUXO NORMAL."
                     className="bg-white border-neutral-300 min-h-[70px] normal-case"
                   />
+                  <NotificacaoPolicyPicker
+                    value={notifPolicyArquivar}
+                    onChange={setNotifPolicyArquivar}
+                    clienteEmail={venda?.cliente_email ?? clienteAlvo?.email ?? null}
+                    acaoLabel="ARQUIVAR PILOTO"
+                  />
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => { setMostrarArq(false); setMotivoArq(""); }}>Cancelar</Button>
                     <Button size="sm" onClick={arquivarPiloto} disabled={arquivando} className="bg-rose-600 hover:bg-rose-500">
