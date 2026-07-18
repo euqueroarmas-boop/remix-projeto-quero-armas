@@ -744,6 +744,7 @@ export default function QAPilotoRealPage() {
     if (!venda) return;
     if (reprocMotivo.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
     if (composicaoValorFinalDerivada.length === 0) { toast.error("Configure a composição no Passo 3 antes de reprocessar."); return; }
+    if (!policyIsValid(notifPolicyReproc)) { toast.error("Preencha a política de notificação (motivo mín. 20 chars se não notificar)."); return; }
     setReprocRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-piloto-reprocessar-financeiro", {
