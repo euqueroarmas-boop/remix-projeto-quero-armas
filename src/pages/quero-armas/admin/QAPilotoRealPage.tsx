@@ -1178,6 +1178,7 @@ export default function QAPilotoRealPage() {
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
+    if (arquivado) { toast.info("Este piloto já está arquivado."); setMostrarArq(false); return; }
     if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
     if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
     setArquivando(true);
@@ -1187,21 +1188,35 @@ export default function QAPilotoRealPage() {
       });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
-      toast.success((data as any)?.ja_arquivada ? "Piloto já estava arquivado." : "Piloto arquivado.");
-      await logPilotoEvento("piloto_arquivado", {
-        venda_id: venda.id,
-        motivo_len: motivoArq.trim().length,
-        ja_arquivada: !!(data as any)?.ja_arquivada,
-      });
+      const jaArq = !!(data as any)?.ja_arquivada;
+      toast.success(jaArq ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      // Idempotência de auditoria: só registra piloto_arquivado se foi efetivo agora.
+      if (!jaArq) {
+        await logPilotoEvento("piloto_arquivado", {
+          venda_id: venda.id,
+          motivo_len: motivoArq.trim().length,
+        });
+      }
       setArquivado(true);
+      setMostrarArq(false);
+      setArquivadoInfo({
+        arquivado_em: new Date().toISOString(),
+        motivo: motivoArq.trim(),
+        ator: staffEmail ? `staff:${staffEmail}` : "staff",
+      });
+      // Limpa referência local a "último piloto em andamento".
+      try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+      setUltimoLocal(null);
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
+      // Recarrega listas para tirar da aba "andamento".
+      carregarResumos();
     } catch (e: any) {
       toast.error(`Falha ao arquivar: ${e?.message || e}`);
     } finally {
       setArquivando(false);
     }
-  }, [venda, motivoArq, recarregarVenda, recarregarContrato, logPilotoEvento]);
+  }, [venda, arquivado, motivoArq, staffEmail, recarregarVenda, recarregarContrato, logPilotoEvento, carregarResumos]);
 
   /* ---------- Observadores de transição (contrato/processos) ---------- */
   const contratoStatusRef = useRef<string | null>(null);
