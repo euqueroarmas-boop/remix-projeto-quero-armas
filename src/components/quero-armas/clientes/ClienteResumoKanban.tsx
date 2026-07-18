@@ -337,11 +337,11 @@ export default function ClienteResumoKanban({
       return "muted";
     };
     const fronts: Front[] = [
-      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", status: aggregateStatus(arsenalItems), items: arsenalItems.slice(0, 3), navTo: "arsenal" },
-      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: examesItems.slice(0, 3), navTo: "documentos" },
-      { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", status: aggregateStatus(filiacaoItems), items: filiacaoItems.slice(0, 3), navTo: "documentos" },
-      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: docItems.slice(0, 3), navTo: "documentos" },
-      { key: "processos", title: "PROCESSOS", count: activeProcessos.length || activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems.slice(0, 3), navTo: "processos" },
+      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", status: aggregateStatus(arsenalItems), items: arsenalItems, navTo: "arsenal" },
+      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: examesItems, navTo: "documentos" },
+      { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", status: aggregateStatus(filiacaoItems), items: filiacaoItems, navTo: "documentos" },
+      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: docItems, navTo: "documentos" },
+      { key: "processos", title: "PROCESSOS", count: activeProcessos.length || activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems, navTo: "processos" },
     ];
 
     const urgents: Urgent[] = [];
