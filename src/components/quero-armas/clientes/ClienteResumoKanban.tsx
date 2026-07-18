@@ -322,16 +322,12 @@ export default function ClienteResumoKanban({
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
 
-    // Chaves de grupos que já têm principal vigente/vence-em-breve —
-    // usadas para SUPRIMIR alertas urgentes de versões antigas vencidas.
-    const gruposVigentes = new Set(
-      gruposDocs
-        .filter((g) => g.statusConsolidado === "vigente" || g.statusConsolidado === "historico")
-        .map((g) => g.chave),
-    );
-    const idsPrincipais = new Set(
-      gruposDocs.map((g) => (g.principal as any)?.id).filter((v) => v != null),
-    );
+    // Map docId → grupo, para suprimir alertas urgentes de versões
+    // antigas cujo grupo já tem principal vigente ou é puramente histórico.
+    const docIdToGrupo = new Map<any, (typeof gruposDocs)[number]>();
+    for (const g of gruposDocs) {
+      for (const d of g.todos) if ((d as any)?.id != null) docIdToGrupo.set((d as any).id, g);
+    }
 
     // Agrega o pior status entre os itens da frente: bad > warn > ok > muted.
     const aggregateStatus = (items: FrontItem[]): "bad" | "warn" | "ok" | "muted" => {
@@ -375,13 +371,15 @@ export default function ClienteResumoKanban({
       const tipo = String(doc?.tipo_documento || "").toLowerCase();
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
       if (!isLaudo) {
-        // Consolidado por família: só o principal do grupo pode alertar.
-        // Versões antigas do mesmo tipo (ex.: comprovantes 2022–2025) e
-        // grupos que já têm atual válido são silenciados aqui.
-        const familia = familiaDocumento(tipo);
-        const chaveGrupo = familia; // qualificadores extras (arma) já isolam o CRAF
-        if (gruposVigentes.has(chaveGrupo)) return;
-        if (doc?.id != null && !idsPrincipais.has(doc.id)) return;
+        // Consolidado por família: só o PRINCIPAL do grupo pode alertar,
+        // e apenas quando o grupo não está vigente/histórico. Versões
+        // antigas do mesmo tipo (ex.: comprovantes 2022–2025 quando existe
+        // 2026 válido) são silenciadas aqui.
+        const grupo = doc?.id != null ? docIdToGrupo.get(doc.id) : undefined;
+        if (grupo) {
+          if (grupo.statusConsolidado === "vigente" || grupo.statusConsolidado === "historico") return;
+          if ((grupo.principal as any)?.id !== doc?.id) return;
+        }
       }
       const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
       const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
