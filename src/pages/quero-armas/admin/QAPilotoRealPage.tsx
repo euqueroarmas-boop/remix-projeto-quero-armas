@@ -38,7 +38,7 @@ import {
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
-type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null; origem_venda?: string | null };
+type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
 type Processo = { id: string; venda_id: number | null; servico_id: number | null; status: string | null };
 type PilotoResumo = {
@@ -1024,10 +1024,10 @@ export default function QAPilotoRealPage() {
   /* ---------- Retomada: hidratação por venda_id / id_legado ---------- */
   // Persistir última venda aberta.
   useEffect(() => {
-    if (venda?.id && !arquivado && !vinculoBloqueado && !isStatusPilotoInativo(venda.status) && !textoIndicaSmoke((venda as any)?.origem_venda)) {
+    if (venda?.id && !arquivado && !vinculoBloqueado && !isStatusPilotoInativo(venda.status)) {
       try { localStorage.setItem(PILOTO_LS_KEY, String(venda.id)); } catch {}
     }
-  }, [venda?.id, venda?.status, (venda as any)?.origem_venda, arquivado, vinculoBloqueado]);
+  }, [venda?.id, venda?.status, arquivado, vinculoBloqueado]);
 
   function limparPilotoAtivo(motivo?: string) {
     try {
@@ -1051,7 +1051,7 @@ export default function QAPilotoRealPage() {
 
   async function avaliarRetomadaPermitida(v: Venda, cli: Cliente | null) {
     const statusInativo = isStatusPilotoInativo(v.status);
-    const origemSmoke = textoIndicaSmoke((v as any)?.origem_venda);
+    const origemSmoke = false;
     const { data: eventos } = await supabase
       .from("qa_venda_eventos")
       .select("tipo_evento, ator, dados_json")
@@ -1127,7 +1127,6 @@ export default function QAPilotoRealPage() {
         url.searchParams.delete("venda_id");
         url.searchParams.delete("id_legado");
         window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-        carregarResumos();
         return;
       }
 
