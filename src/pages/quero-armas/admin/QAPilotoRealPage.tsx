@@ -648,6 +648,12 @@ export default function QAPilotoRealPage() {
             custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
               ? Number(custosEmbutidosTotal.toFixed(2))
               : null,
+            // Piloto Real B: envia composição estruturada quando houver.
+            composicao_valor_final: composicaoValorFinalDerivada.length > 0
+              ? composicaoValorFinalDerivada
+              : null,
+            valor_total_pago_cliente_estruturado:
+              composicaoValorFinalDerivada.length > 0 ? totalComposicaoDerivada : null,
           } : null,
         },
       });
