@@ -146,6 +146,19 @@ export interface QAVendaFinanceira {
   }> | null;
 }
 
+/**
+ * Piloto Real 2026-07-18 — fonte de verdade do valor cobrado do cliente.
+ * Prioridade: valor_total_pago_cliente (composição do pacote) →
+ * pagamento_valor_total_parcelado (fallback) → valor_a_pagar (legado).
+ */
+export function valorCobradoCliente(v: Partial<QAVendaFinanceira>): number {
+  const total = Number((v as any)?.valor_total_pago_cliente);
+  if (Number.isFinite(total) && total > 0) return total;
+  const parc = Number((v as any)?.pagamento_valor_total_parcelado);
+  if (Number.isFinite(parc) && parc > 0) return parc;
+  return Number(v?.valor_a_pagar || 0);
+}
+
 export interface QAVendaItemLite {
   venda_id: number | string;
   servico_id?: number | null;
