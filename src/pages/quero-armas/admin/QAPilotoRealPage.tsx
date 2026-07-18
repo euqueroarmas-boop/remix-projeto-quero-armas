@@ -1224,7 +1224,7 @@ export default function QAPilotoRealPage() {
       if (ids.length === 0) { setResumos([]); return; }
       const { data: vendas } = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor, origem_venda")
         .in("id", ids);
       const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
       const { data: clis } = cliIds.length > 0
@@ -1247,7 +1247,15 @@ export default function QAPilotoRealPage() {
           const cli = cliMap.get(v.cliente_id);
           const last = ultimoPorVenda.get(v.id);
           const statusUp = String(v.status || "").toUpperCase();
-          const arq = statusUp === "CANCELADO" || last?.tipo === "venda_arquivada_piloto";
+          const origem = String(v.origem_venda || "").toLowerCase();
+          const ultimoTipo = String(last?.tipo || "").toLowerCase();
+          const ehSmoke =
+            origem.includes("smoke") ||
+            ultimoTipo.includes("smoke");
+          const arq =
+            statusUp === "CANCELADO" ||
+            ultimoTipo === "venda_arquivada_piloto" ||
+            ehSmoke; // smoke sempre fora de "em andamento"
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1262,6 +1270,7 @@ export default function QAPilotoRealPage() {
             ultimo_evento_at: last?.when ?? null,
             arquivado: arq,
             arquivado_em: arq ? (last?.when ?? null) : null,
+            _smoke: ehSmoke,
           };
         })
         .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
