@@ -801,7 +801,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado, logPilotoEvento, recarregarVenda, recarregarContrato]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado, logPilotoEvento]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const recarregarContrato = useCallback(async (vendaId: number) => {
