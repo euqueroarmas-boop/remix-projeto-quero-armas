@@ -2673,6 +2673,12 @@ export default function QAPilotoRealPage() {
                           className="bg-white border-neutral-300 min-h-[70px] normal-case"
                         />
                       </div>
+                      <NotificacaoPolicyPicker
+                        value={notifPolicyUpload}
+                        onChange={setNotifPolicyUpload}
+                        clienteEmail={cliente?.email ?? null}
+                        acaoLabel="Contrato assinado recebido (staff)"
+                      />
                       <Button
                         size="sm"
                         onClick={enviarContratoAssinadoStaff}
