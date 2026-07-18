@@ -69,6 +69,15 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 }
 
 export default function QAPilotoRealPage() {
+  /* ---------- Retomada de piloto (URL / localStorage) ---------- */
+  const [hidratando, setHidratando] = useState(false);
+  const [hidratado, setHidratado] = useState<{ venda_id: number; via: "url" | "storage" } | null>(null);
+  const [resumos, setResumos] = useState<PilotoResumo[]>([]);
+  const [carregandoResumos, setCarregandoResumos] = useState(false);
+  const [ultimoLocal, setUltimoLocal] = useState<number | null>(null);
+  const stepRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setStepRef = (key: string) => (el: HTMLElement | null) => { stepRefs.current[key] = el; };
+
   /* ---------- Passo 1: Cliente ---------- */
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
