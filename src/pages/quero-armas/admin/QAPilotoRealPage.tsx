@@ -1015,10 +1015,63 @@ export default function QAPilotoRealPage() {
   /* ---------- Retomada: hidratação por venda_id / id_legado ---------- */
   // Persistir última venda aberta.
   useEffect(() => {
-    if (venda?.id) {
+    if (venda?.id && !arquivado && !vinculoBloqueado && !isStatusPilotoInativo(venda.status) && !textoIndicaSmoke((venda as any)?.origem_venda)) {
       try { localStorage.setItem(PILOTO_LS_KEY, String(venda.id)); } catch {}
     }
-  }, [venda?.id]);
+  }, [venda?.id, venda?.status, (venda as any)?.origem_venda, arquivado, vinculoBloqueado]);
+
+  function limparPilotoAtivo(motivo?: string) {
+    try {
+      localStorage.removeItem(PILOTO_LS_KEY);
+      localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+    } catch {}
+    setUltimoLocal(null);
+    setHidratado(null);
+    setCliente(null);
+    setServico(null);
+    setItensExtras([]);
+    setVenda(null);
+    setContrato(null);
+    setProcessos([]);
+    setArquivado(false);
+    setArquivadoInfo(null);
+    setExibicaoContratoSnap(null);
+    setAuditRows([]);
+    if (motivo) toast.info(motivo);
+  }
+
+  async function avaliarRetomadaPermitida(v: Venda, cli: Cliente | null) {
+    const statusInativo = isStatusPilotoInativo(v.status);
+    const origemSmoke = textoIndicaSmoke((v as any)?.origem_venda);
+    const { data: eventos } = await supabase
+      .from("qa_venda_eventos")
+      .select("tipo_evento, ator, dados_json")
+      .eq("venda_id", v.id)
+      .order("created_at", { ascending: false })
+      .limit(80);
+    const eventosRows = ((eventos ?? []) as any[]);
+    const eventoArquivado = eventosRows.some((e) => eventoArquivaPiloto(e.tipo_evento));
+    const eventoSmoke = eventosRows.some((e) => textoIndicaSmoke(e.tipo_evento, e.ator, JSON.stringify(e.dados_json ?? {})));
+    const clienteStaff = !!cli && isCandidatoStaff(cli);
+    const operadorComoCliente = !!cli?.user_id && !!user?.id && cli.user_id === user.id && profile?.perfil === "administrador";
+    const bloqueado = statusInativo || eventoArquivado || origemSmoke || eventoSmoke || clienteStaff || operadorComoCliente;
+    return {
+      permitido: !bloqueado,
+      statusInativo,
+      eventoArquivado,
+      smoke: origemSmoke || eventoSmoke,
+      clienteStaff: clienteStaff || operadorComoCliente,
+      motivo: statusInativo
+        ? "Piloto cancelado/arquivado não é retomado como fluxo atual."
+        : eventoArquivado
+          ? "Piloto arquivado não é retomado como fluxo atual."
+          : (origemSmoke || eventoSmoke)
+            ? "Smoke test arquivado não é retomado como piloto ativo."
+            : (clienteStaff || operadorComoCliente)
+              ? "Piloto vinculado a staff/admin não é retomado como fluxo atual."
+              : null,
+    };
+  }
 
   const hidratarPilotoPorId = useCallback(async (idOuLegado: number) => {
     setHidratando(true);
@@ -1045,7 +1098,22 @@ export default function QAPilotoRealPage() {
         .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .eq("id", v.cliente_id)
         .maybeSingle();
-      if (cli) setCliente(cli as Cliente);
+      const clienteVenda = (cli as Cliente | null) ?? null;
+
+      const elegibilidade = await avaliarRetomadaPermitida(v, clienteVenda);
+      if (!elegibilidade.permitido) {
+        limparPilotoAtivo(elegibilidade.motivo || "Piloto não elegível para retomada automática.");
+        setResumos((prev) => prev.filter((r) => r.venda_id !== v.id));
+        try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+        const url = new URL(window.location.href);
+        url.searchParams.delete("venda_id");
+        url.searchParams.delete("id_legado");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+        carregarResumos();
+        return;
+      }
+
+      if (clienteVenda) setCliente(clienteVenda);
 
       // Itens da venda → montamos shims para servico + itensExtras.
       // qa_itens_venda.venda_id armazena o id_legado da venda (não o id interno).
@@ -1114,15 +1182,15 @@ export default function QAPilotoRealPage() {
         .eq("venda_id", lookupId);
       setProcessos((p ?? []) as Processo[]);
 
-      // Detecta arquivamento: venda CANCELADO ou evento venda_arquivada_piloto.
+      // Detecta arquivamento: venda CANCELADO/ARQUIVADO ou evento oficial de arquivamento.
       const statusUp = String(v.status || "").toUpperCase();
-      let arq = statusUp === "CANCELADO";
+      let arq = isStatusPilotoInativo(statusUp);
       if (!arq) {
         const { data: evArq } = await supabase
           .from("qa_venda_eventos")
           .select("id")
           .eq("venda_id", v.id)
-          .eq("tipo_evento", "venda_arquivada_piloto")
+          .in("tipo_evento", Array.from(EVENTOS_ARQUIVAMENTO_PILOTO))
           .limit(1)
           .maybeSingle();
         arq = !!evArq;
@@ -1135,7 +1203,7 @@ export default function QAPilotoRealPage() {
           .from("qa_venda_eventos")
           .select("created_at, ator, descricao, dados_json")
           .eq("venda_id", v.id)
-          .eq("tipo_evento", "venda_arquivada_piloto")
+          .in("tipo_evento", Array.from(EVENTOS_ARQUIVAMENTO_PILOTO))
           .order("created_at", { ascending: true })
           .limit(1)
           .maybeSingle();
