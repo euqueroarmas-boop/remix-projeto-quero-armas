@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  Loader2, Search, User, CheckCircle2, Circle, ArrowRight, ShieldAlert,
+  Loader2, Search, User, CheckCircle2, Circle, ArrowRight, ArrowLeft, ShieldAlert,
   Upload, FileText, Copy, Check, ExternalLink, RefreshCw, Archive, FlaskConical,
   History, Play,
 } from "lucide-react";
