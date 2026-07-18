@@ -1400,9 +1400,9 @@ export default function QAPilotoRealPage() {
                   {" "}restaurado via {hidratado.via === "url" ? "URL" : "último local"}.
                 </span>
                 <span className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="text-[11px] underline hover:no-underline font-semibold"
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => {
                       const dirty =
                         !!motivoPreco || !!evidenciaFile || !!motivoPacote ||
@@ -1418,8 +1418,9 @@ export default function QAPilotoRealPage() {
                       window.location.assign(url.pathname);
                     }}
                   >
-                    ← Voltar para pilotos em andamento
-                  </button>
+                    <ArrowLeft className="h-3 w-3 mr-1" />
+                    Voltar para pilotos em andamento
+                  </Button>
                   <button
                     type="button"
                     className="text-[11px] underline hover:no-underline"
