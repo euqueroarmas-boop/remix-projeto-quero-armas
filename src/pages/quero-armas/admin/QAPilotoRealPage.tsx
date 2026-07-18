@@ -46,6 +46,8 @@ type PilotoResumo = {
   contrato_status: string | null;
   ultimo_evento: string | null;
   ultimo_evento_at: string | null;
+  arquivado?: boolean;
+  arquivado_em?: string | null;
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
@@ -948,6 +950,26 @@ export default function QAPilotoRealPage() {
       }
       setArquivado(arq);
 
+      // Metadados do arquivamento (para card "Piloto arquivado").
+      if (arq) {
+        const { data: evMeta } = await supabase
+          .from("qa_venda_eventos")
+          .select("created_at, ator, descricao, dados_json")
+          .eq("venda_id", v.id)
+          .eq("tipo_evento", "venda_arquivada_piloto")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        const dj = (evMeta as any)?.dados_json || {};
+        setArquivadoInfo({
+          arquivado_em: (evMeta as any)?.created_at ?? (dj.arquivado_em ?? null),
+          motivo: dj.motivo ?? null,
+          ator: (evMeta as any)?.ator ?? dj.staff_email ?? null,
+        });
+      } else {
+        setArquivadoInfo(null);
+      }
+
       // Snapshot do modo de exibição do contrato (evento oficial).
       const { data: evExib } = await supabase
         .from("qa_venda_eventos")
@@ -1056,15 +1078,12 @@ export default function QAPilotoRealPage() {
       for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
 
       const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
-        .filter((v) =>
-          String(v.status || "").toUpperCase() !== "CANCELADO" &&
-          String(v.status || "").toUpperCase() !== "CONCLUIDO" &&
-          String(v.status || "").toUpperCase() !== "CONCLUÍDO",
-        )
         .map((v) => {
           const lookup = Number(v.id_legado ?? v.id);
           const cli = cliMap.get(v.cliente_id);
           const last = ultimoPorVenda.get(v.id);
+          const statusUp = String(v.status || "").toUpperCase();
+          const arq = statusUp === "CANCELADO" || last?.tipo === "venda_arquivada_piloto";
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1077,10 +1096,14 @@ export default function QAPilotoRealPage() {
             contrato_status: contratoMap.get(lookup) ?? null,
             ultimo_evento: last?.tipo ?? null,
             ultimo_evento_at: last?.when ?? null,
+            arquivado: arq,
+            arquivado_em: arq ? (last?.when ?? null) : null,
           };
         })
         .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
-      setResumos(linhas);
+      const concluidoSet = new Set(["CONCLUIDO", "CONCLUÍDO"]);
+      setResumos(linhas.filter((r) => !r.arquivado && !concluidoSet.has(String(r.status || "").toUpperCase())));
+      setResumosArquivados(linhas.filter((r) => r.arquivado));
     } catch (e: any) {
       toast.error(`Falha ao listar pilotos: ${e?.message || e}`);
     } finally {
@@ -1150,9 +1173,13 @@ export default function QAPilotoRealPage() {
   const [arquivando, setArquivando] = useState(false);
   const [arquivado, setArquivado] = useState(false);
   const [mostrarArq, setMostrarArq] = useState(false);
+  const [arquivadoInfo, setArquivadoInfo] = useState<{ arquivado_em: string | null; motivo: string | null; ator: string | null } | null>(null);
+  const [resumosArquivados, setResumosArquivados] = useState<PilotoResumo[]>([]);
+  const [abaLista, setAbaLista] = useState<"andamento" | "arquivados">("andamento");
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
+    if (arquivado) { toast.info("Este piloto já está arquivado."); setMostrarArq(false); return; }
     if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
     if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
     setArquivando(true);
@@ -1162,21 +1189,35 @@ export default function QAPilotoRealPage() {
       });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
-      toast.success((data as any)?.ja_arquivada ? "Piloto já estava arquivado." : "Piloto arquivado.");
-      await logPilotoEvento("piloto_arquivado", {
-        venda_id: venda.id,
-        motivo_len: motivoArq.trim().length,
-        ja_arquivada: !!(data as any)?.ja_arquivada,
-      });
+      const jaArq = !!(data as any)?.ja_arquivada;
+      toast.success(jaArq ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      // Idempotência de auditoria: só registra piloto_arquivado se foi efetivo agora.
+      if (!jaArq) {
+        await logPilotoEvento("piloto_arquivado", {
+          venda_id: venda.id,
+          motivo_len: motivoArq.trim().length,
+        });
+      }
       setArquivado(true);
+      setMostrarArq(false);
+      setArquivadoInfo({
+        arquivado_em: new Date().toISOString(),
+        motivo: motivoArq.trim(),
+        ator: staffEmail ? `staff:${staffEmail}` : "staff",
+      });
+      // Limpa referência local a "último piloto em andamento".
+      try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+      setUltimoLocal(null);
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
+      // Recarrega listas para tirar da aba "andamento".
+      carregarResumos();
     } catch (e: any) {
       toast.error(`Falha ao arquivar: ${e?.message || e}`);
     } finally {
       setArquivando(false);
     }
-  }, [venda, motivoArq, recarregarVenda, recarregarContrato, logPilotoEvento]);
+  }, [venda, arquivado, motivoArq, staffEmail, recarregarVenda, recarregarContrato, logPilotoEvento, carregarResumos]);
 
   /* ---------- Observadores de transição (contrato/processos) ---------- */
   const contratoStatusRef = useRef<string | null>(null);
@@ -1491,8 +1532,24 @@ export default function QAPilotoRealPage() {
 
           {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
           {!venda && !hidratando && (
-            <Card title="Retomar Piloto em Andamento" state="pending">
-              {ultimoLocal && !hidratado && (
+            <Card title={abaLista === "andamento" ? "Retomar Piloto em Andamento" : "Pilotos Arquivados"} state="pending">
+              <div className="flex items-center gap-2 mb-3">
+                <Button
+                  size="sm"
+                  variant={abaLista === "andamento" ? "default" : "outline"}
+                  onClick={() => setAbaLista("andamento")}
+                >
+                  Em andamento ({resumos.length})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={abaLista === "arquivados" ? "default" : "outline"}
+                  onClick={() => setAbaLista("arquivados")}
+                >
+                  Arquivados ({resumosArquivados.length})
+                </Button>
+              </div>
+              {abaLista === "andamento" && ultimoLocal && !hidratado && !resumosArquivados.some((r) => r.venda_id === ultimoLocal) && (
                 <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
                   <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
                   <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
@@ -1502,16 +1559,21 @@ export default function QAPilotoRealPage() {
               )}
               <div className="flex items-center justify-between mb-2">
                 <p className="text-[11px] text-neutral-600 normal-case">
-                  Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou canceladas.
+                  {abaLista === "andamento"
+                    ? <>Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou arquivadas.</>
+                    : <>Pilotos <code>arquivados</code> (somente leitura). Nenhuma ação é permitida — apenas visualização de auditoria.</>}
                 </p>
                 <Button size="sm" variant="outline" onClick={carregarResumos} disabled={carregandoResumos}>
                   {carregandoResumos ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
                 </Button>
               </div>
-              {resumos.length === 0 && !carregandoResumos && (
-                <p className="text-xs text-neutral-500 normal-case">Nenhum piloto em andamento.</p>
-              )}
-              {resumos.length > 0 && (
+              {(() => {
+                const linhas = abaLista === "andamento" ? resumos : resumosArquivados;
+                if (linhas.length === 0 && !carregandoResumos) {
+                  return <p className="text-xs text-neutral-500 normal-case">{abaLista === "andamento" ? "Nenhum piloto em andamento." : "Nenhum piloto arquivado."}</p>;
+                }
+                if (linhas.length === 0) return null;
+                return (
                 <div className="max-h-80 overflow-auto border border-neutral-200 rounded">
                   <table className="w-full text-[11px] normal-case">
                     <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
@@ -1526,7 +1588,7 @@ export default function QAPilotoRealPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {resumos.map((r) => (
+                      {linhas.map((r) => (
                         <tr key={r.venda_id} className="border-t border-neutral-200">
                           <td className="px-2 py-1 whitespace-nowrap">
                             <strong>#{r.venda_id}</strong>
@@ -1550,7 +1612,9 @@ export default function QAPilotoRealPage() {
                           </td>
                           <td className="px-2 py-1 text-right">
                             <Button size="sm" variant="outline" onClick={() => abrirPiloto(r.venda_id)}>
-                              <Play className="h-3 w-3 mr-1" /> Continuar
+                              {r.arquivado
+                                ? <><History className="h-3 w-3 mr-1" /> Ver auditoria</>
+                                : <><Play className="h-3 w-3 mr-1" /> Continuar</>}
                             </Button>
                           </td>
                         </tr>
@@ -1558,7 +1622,8 @@ export default function QAPilotoRealPage() {
                     </tbody>
                   </table>
                 </div>
-              )}
+                );
+              })()}
             </Card>
           )}
 
@@ -2500,9 +2565,19 @@ export default function QAPilotoRealPage() {
           {venda && (
             <Card title={arquivado ? "Piloto Arquivado" : "Arquivar Piloto"} state={arquivado ? "blocked" : "pending"}>
               {arquivado ? (
-                <p className="text-xs text-rose-400 normal-case">
-                  Piloto arquivado. Novas ações do wizard estão bloqueadas — apenas visualização/auditoria.
-                </p>
+                <div className="text-xs text-rose-700 normal-case space-y-1">
+                  <p>
+                    Este piloto foi arquivado
+                    {arquivadoInfo?.arquivado_em
+                      ? <> em <strong>{new Date(arquivadoInfo.arquivado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</strong></>
+                      : null}
+                    {arquivadoInfo?.ator ? <> por <strong>{arquivadoInfo.ator}</strong></> : null}.
+                  </p>
+                  {arquivadoInfo?.motivo && (
+                    <p>Motivo: <em>{arquivadoInfo.motivo}</em></p>
+                  )}
+                  <p className="text-neutral-500">Ações do wizard bloqueadas — apenas visualização/auditoria.</p>
+                </div>
               ) : !mostrarArq ? (
                 <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-400 text-rose-600 hover:bg-rose-50">
                   <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
