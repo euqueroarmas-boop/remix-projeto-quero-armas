@@ -1050,7 +1050,7 @@ export default function QAPilotoRealPage() {
           </header>
 
           {/* Passo 1 */}
-          <Card title="1. Cliente Real" state={stepStates.cliente}>
+          <Card id="step-cliente" title="1. Cliente Real" state={stepStates.cliente}>
             {!cliente ? (
               <>
                 <div className="flex gap-2">
@@ -1102,7 +1102,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 2 */}
           {cliente && (
-            <Card title="2. Serviço" state={stepStates.servico}>
+            <Card id="step-servico" title="2. Serviço" state={stepStates.servico}>
               {!servico ? (
                 <>
                   <Input
@@ -1248,7 +1248,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 3 */}
           {cliente && servico && (
-            <Card title="3. Criar Venda" state={stepStates.venda}>
+            <Card id="step-venda" title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
                 <div className="space-y-3">
                   {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
@@ -1652,7 +1652,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 4 */}
           {venda && (
-            <Card title="4. Aprovar Valor" state={stepStates.valor}>
+            <Card id="step-valor" title="4. Aprovar Valor" state={stepStates.valor}>
               {venda.status_validacao_valor === "aprovado" ? (
                 <p className="text-xs text-emerald-400">Valor aprovado — evento gravado.</p>
               ) : (
@@ -1665,7 +1665,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 5 */}
           {venda && venda.status_validacao_valor === "aprovado" && venda.cobranca_status !== "confirmada" && (
-            <Card title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
+            <Card id="step-pagamento" title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Forma de pagamento</Label>
@@ -1770,7 +1770,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 6 */}
           {venda?.cobranca_status === "confirmada" && (
-            <Card title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
+            <Card id="step-contrato" title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
               {!contrato ? (
                 <div className="flex items-center gap-2 text-xs text-neutral-600 normal-case">
                   <Loader2 className="h-4 w-4 animate-spin" /> Aguardando geração do contrato…
