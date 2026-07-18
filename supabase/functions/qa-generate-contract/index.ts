@@ -387,6 +387,28 @@ Deno.serve(async (req) => {
       ? Math.round(valorFinalPacoteEvento * 100)
       : totalCents;
 
+  // -------------------------------------------------------------------------
+  // Piloto Real 2026-07-18 — se a venda tem `valor_total_pago_cliente` gravado
+  // (composição estruturada), ele é a autoridade sobre o total do contrato em
+  // modo pacote fechado. Evita divergência entre financeiro e contrato.
+  // -------------------------------------------------------------------------
+  const valorTotalPagoClienteDB = Number((venda as any)?.valor_total_pago_cliente);
+  const composicaoDB: Array<{
+    tipo: string;
+    descricao: string;
+    valor: number;
+    natureza: string;
+    aparece_no_contrato: boolean;
+  }> = Array.isArray((venda as any)?.composicao_valor_final)
+    ? (venda as any).composicao_valor_final
+    : [];
+  const totalContratoCentsFinal =
+    modoExibicaoContrato === "pacote_fechado" &&
+    Number.isFinite(valorTotalPagoClienteDB) &&
+    valorTotalPagoClienteDB > 0
+      ? Math.round(valorTotalPagoClienteDB * 100)
+      : totalContratoCents;
+
   if (snapshot.length > 1) {
     if (modoExibicaoContrato === "pacote_fechado") {
       const linhas = snapshot
