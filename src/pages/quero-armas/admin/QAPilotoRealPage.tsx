@@ -802,6 +802,10 @@ export default function QAPilotoRealPage() {
     return path;
   }, [comprovante, venda]);
 
+  // Política de notificação — Passo 5 (pagamento) e upload assistido do contrato
+  const [notifPolicyPagamento, setNotifPolicyPagamento] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+  const [notifPolicyUpload, setNotifPolicyUpload] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+
   const clienteIdsAceitosContrato = useMemo(() => {
     const ids = [cliente?.id, cliente?.id_legado]
       .map((v) => Number(v))
