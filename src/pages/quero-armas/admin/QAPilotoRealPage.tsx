@@ -2573,13 +2573,28 @@ export default function QAPilotoRealPage() {
                 <div className="grid grid-cols-2 gap-3 mt-3 border-t border-neutral-200 pt-3">
                   <div>
                     <Label className="text-xs">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
-                    <Input
-                      value={adquirente}
-                      onChange={(e) => setAdquirente(e.target.value)}
-                      placeholder="Ex.: STONE"
-                      className="bg-white border-neutral-300 uppercase mt-1"
-                      maxLength={60}
-                    />
+                    <select
+                      value={ADQUIRENTES_CATALOGO.includes(adquirente as any) ? adquirente : (adquirente ? "OUTRA" : "")}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAdquirente(v === "OUTRA" ? "" : v);
+                      }}
+                      className="w-full mt-1 bg-white border border-neutral-300 rounded h-9 px-2 text-sm uppercase"
+                    >
+                      <option value="">— selecione —</option>
+                      {ADQUIRENTES_CATALOGO.map((a) => (
+                        <option key={a} value={a}>{a}</option>
+                      ))}
+                    </select>
+                    {(!ADQUIRENTES_CATALOGO.includes(adquirente as any) || adquirente === "") && (
+                      <Input
+                        value={adquirente}
+                        onChange={(e) => setAdquirente(e.target.value.toUpperCase())}
+                        placeholder="ADQUIRENTE (LIVRE — SE 'OUTRA')"
+                        className="bg-white border-neutral-300 uppercase mt-2 h-9"
+                        maxLength={60}
+                      />
+                    )}
                   </div>
                   <div>
                     <Label className="text-xs">
