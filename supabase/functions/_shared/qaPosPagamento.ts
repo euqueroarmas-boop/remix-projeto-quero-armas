@@ -28,6 +28,7 @@ export async function executarPipelinePosPagamento(
   supabase: Supa,
   venda_id: number,
   origem: string,
+  notificacao_policy?: unknown,
 ): Promise<void> {
   // 1) Protocolo oficial (idempotente)
   try {
@@ -59,7 +60,7 @@ export async function executarPipelinePosPagamento(
     const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
     const { data: genData, error: genErr } = await supabase.functions.invoke("qa-generate-contract", {
       headers: { "x-internal-token": internalToken },
-      body: { venda_id },
+      body: { venda_id, notificacao_policy },
     });
     if (genErr) {
       await logSistemaBackend({
@@ -90,6 +91,11 @@ export async function executarPipelinePosPagamento(
   //    existentes desta venda (fluxo legado) e disparamos por eles.
   //    No novo fluxo (sem processo ainda), a notificação 'contrato_gerado'
   //    é enviada pelo próprio qa-generate-contract via send-transactional-email.
+  // Se a política pediu para NÃO notificar, não dispara o loop de
+  // qa-processo-notificar (o registro fica no qa_notificacao_eventos
+  // via aplicarPolicyNotificacao do chamador).
+  const nc = (notificacao_policy as any)?.notificar_cliente;
+  if (nc === false) return;
   try {
     const { data: procs } = await supabase
       .from("qa_processos")
