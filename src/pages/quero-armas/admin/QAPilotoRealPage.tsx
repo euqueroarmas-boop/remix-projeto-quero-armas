@@ -2560,6 +2560,13 @@ export default function QAPilotoRealPage() {
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
+              <div className="mt-4">
+                <NotificacaoPolicyPicker
+                  value={notifPolicyPagamento}
+                  onChange={setNotifPolicyPagamento}
+                  title="Notificar cliente sobre a confirmação do pagamento?"
+                />
+              </div>
               <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
