@@ -1306,7 +1306,11 @@ export default function QAPilotoRealPage() {
     setArquivando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-piloto-arquivar", {
-        body: { venda_id: venda.id, motivo: motivoArq.trim() },
+        body: {
+          venda_id: venda.id,
+          motivo: motivoArq.trim(),
+          notificacao_policy: toBackendPolicy(notifPolicyArquivar),
+        },
       });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
