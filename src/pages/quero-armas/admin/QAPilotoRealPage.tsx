@@ -1784,6 +1784,16 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.functions.invoke("qa-piloto-smoke-test", { body });
       if (error) throw error;
       setSmokeResult(data);
+      try {
+        const smokeVendaId = Number((data as any)?.venda_id ?? (data as any)?.venda?.id ?? (data as any)?.resultado?.venda_id);
+        const salvo = Number(localStorage.getItem(PILOTO_LS_KEY));
+        if (Number.isFinite(smokeVendaId) && Number.isFinite(salvo) && salvo === smokeVendaId) {
+          localStorage.removeItem(PILOTO_LS_KEY);
+          localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+          setUltimoLocal(null);
+        }
+      } catch {}
+      await carregarResumos();
       toast[(data as any)?.ok ? "success" : "error"]((data as any)?.ok ? "Smoke test OK" : "Smoke test com falhas");
     } catch (e: any) {
       toast.error(`Smoke test falhou: ${e?.message || e}`);
@@ -1791,7 +1801,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setRodandoSmoke(false);
     }
-  }, [smokeModo, smokeCliente, smokeAutoPreview, isCandidatoStaff]);
+  }, [smokeModo, smokeCliente, smokeAutoPreview, isCandidatoStaff, carregarResumos]);
 
   /* ---------- Estados derivados p/ checklist ---------- */
   const stepStates = useMemo(() => ({
