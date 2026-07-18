@@ -17,6 +17,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { requireQAStaff, qaAuthCors } from "../_shared/qaAuth.ts";
+import { aplicarPolicyNotificacao, extractPolicy, NotificacaoPolicy } from "../_shared/notificacaoPolicy.ts";
 
 const corsHeaders = { ...qaAuthCors, "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const BUCKET = "paid-contracts";
@@ -51,6 +52,11 @@ Deno.serve(async (req) => {
   let pdfBytes: Uint8Array | null = null;
   let observacao = "";
   let origem = "piloto_real_staff_assistido";
+  let notifPolicy: NotificacaoPolicy = {
+    notificar_cliente: true,
+    canais: { email: true, whatsapp: false, portal: true },
+    motivo_nao_notificar: null,
+  };
 
   try {
     if (ct.includes("multipart/form-data")) {
@@ -58,6 +64,10 @@ Deno.serve(async (req) => {
       contractId = String(fd.get("contract_id") || "");
       observacao = String(fd.get("observacao") || "").trim();
       origem = String(fd.get("origem") || origem);
+      const polRaw = fd.get("notificacao_policy");
+      if (polRaw) {
+        try { notifPolicy = extractPolicy({ notificacao_policy: JSON.parse(String(polRaw)) }); } catch { /* keep default */ }
+      }
       const file = fd.get("file") as File | null;
       if (!file) return json({ error: "arquivo_obrigatorio" }, 400);
       if (file.size > MAX_BYTES) return json({ error: "arquivo_maior_25mb" }, 413);
@@ -67,6 +77,7 @@ Deno.serve(async (req) => {
       contractId = String(body.contract_id || "");
       observacao = String(body.observacao || "").trim();
       if (body.origem) origem = String(body.origem);
+      notifPolicy = extractPolicy(body, notifPolicy);
       if (!body.file_base64) return json({ error: "file_base64_obrigatorio" }, 400);
       const bin = atob(String(body.file_base64).replace(/^data:[^;]+;base64,/, ""));
       pdfBytes = new Uint8Array(bin.length);
@@ -180,11 +191,31 @@ Deno.serve(async (req) => {
     }).catch(() => {});
   } catch { /* ignore */ }
 
+  // Aplica política de notificação para o cliente
+  try {
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "contrato_upload_assistido",
+      cliente_id: (contract as any).cliente_id ?? null,
+      venda_id: Number((contract as any).venda_id) || null,
+      contrato_id: contractId,
+      staff_user_id: guard.userId,
+      staff_email: guard.email,
+      origem: "piloto_real",
+      titulo_portal: "Contrato assinado recebido",
+      mensagem_portal: "Recebemos o contrato assinado. Estamos validando a assinatura.",
+      link_portal: "/area-do-cliente/contratos",
+      payload_resumo: { sha256: sig, origem, staff_assisted: true },
+    });
+  } catch (e) {
+    console.warn("[upload-contrato-staff] policy falhou:", (e as Error).message);
+  }
+
   return json({
     ok: true,
     contract_id: contractId,
     sha256: sig,
     status: "customer_signature_uploaded",
     staff_assisted: true,
+    notificacao_policy: notifPolicy,
   });
 });
