@@ -755,7 +755,7 @@ export default function QAPilotoRealPage() {
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
       .from("qa_vendas")
-      .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+      .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
       .eq("id", id)
       .maybeSingle();
     if (data) setVenda(data as Venda);
@@ -1088,13 +1088,13 @@ export default function QAPilotoRealPage() {
       // Busca por id direto; se não achar, tenta id_legado.
       let vRes = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
         .eq("id", idOuLegado)
         .maybeSingle();
       if (!vRes.data) {
         vRes = await supabase
           .from("qa_vendas")
-          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
           .eq("id_legado", idOuLegado)
           .maybeSingle();
       }
@@ -1313,41 +1313,46 @@ export default function QAPilotoRealPage() {
         }
       }
       const ids = Array.from(ultimoPorVenda.keys()).slice(0, 30);
-      if (ids.length === 0) { setResumos([]); return; }
+      if (ids.length === 0) { setResumos([]); setResumosArquivados([]); return; }
       const { data: vendas } = await supabase
         .from("qa_vendas")
         .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor, origem_venda")
         .in("id", ids);
       const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
       const { data: clis } = cliIds.length > 0
-        ? await supabase.from("qa_clientes").select("id, nome_completo, cpf").in("id", cliIds)
+        ? await supabase.from("qa_clientes").select("id, id_legado, nome_completo, cpf, email, celular, user_id").in("id", cliIds)
         : { data: [] as any[] } as any;
-      const cliMap = new Map<number, { nome_completo: string | null; cpf: string | null }>();
-      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, { nome_completo: c.nome_completo, cpf: c.cpf });
+      const cliMap = new Map<number, Cliente>();
+      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, c as Cliente);
 
       // Contratos por lookup_id (id_legado ?? id).
       const lookupIds = ((vendas ?? []) as any[]).map((v) => Number(v.id_legado ?? v.id));
       const { data: contratos } = lookupIds.length > 0
-        ? await supabase.from("qa_contracts").select("venda_id, status").in("venda_id", lookupIds)
+        ? await supabase.from("qa_contracts").select("venda_id, status, cliente_id").in("venda_id", lookupIds)
         : { data: [] as any[] } as any;
-      const contratoMap = new Map<number, string>();
-      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
+      const contratoMap = new Map<number, { status: string | null; cliente_id: number | null }>();
+      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, { status: c.status ?? null, cliente_id: c.cliente_id ?? null });
 
       const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
         .map((v) => {
           const lookup = Number(v.id_legado ?? v.id);
           const cli = cliMap.get(v.cliente_id);
+          const contratoResumo = contratoMap.get(lookup);
           const last = ultimoPorVenda.get(v.id);
           const statusUp = String(v.status || "").toUpperCase();
           const origem = String(v.origem_venda || "").toLowerCase();
           const ultimoTipo = String(last?.tipo || "").toLowerCase();
+          const cliIdsAceitos = new Set([cli?.id, cli?.id_legado].map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0));
+          const contratoDivergente = !!contratoResumo?.cliente_id && cliIdsAceitos.size > 0 && !cliIdsAceitos.has(Number(contratoResumo.cliente_id));
+          const vendaClienteStaff = !!cli && isCandidatoStaff(cli);
           const ehSmoke =
             origem.includes("smoke") ||
             ultimoTipo.includes("smoke");
           const arq =
-            statusUp === "CANCELADO" ||
-            ultimoTipo === "venda_arquivada_piloto" ||
+            isStatusPilotoInativo(statusUp) ||
+            eventoArquivaPiloto(ultimoTipo) ||
             ehSmoke; // smoke sempre fora de "em andamento"
+          const bloqueadoAndamento = arq || vendaClienteStaff || contratoDivergente;
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1357,10 +1362,10 @@ export default function QAPilotoRealPage() {
             status: v.status,
             cobranca_status: v.cobranca_status,
             status_validacao_valor: v.status_validacao_valor,
-            contrato_status: contratoMap.get(lookup) ?? null,
+            contrato_status: contratoResumo?.status ?? null,
             ultimo_evento: last?.tipo ?? null,
             ultimo_evento_at: last?.when ?? null,
-            arquivado: arq,
+            arquivado: bloqueadoAndamento,
             arquivado_em: arq ? (last?.when ?? null) : null,
             _smoke: ehSmoke,
           };
@@ -1374,7 +1379,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCarregandoResumos(false);
     }
-  }, []);
+  }, [isCandidatoStaff]);
 
   useEffect(() => {
     if (!venda && !hidratando && !hidratado) carregarResumos();
