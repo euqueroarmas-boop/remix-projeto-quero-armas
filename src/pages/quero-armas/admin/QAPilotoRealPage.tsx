@@ -55,6 +55,7 @@ type PilotoResumo = {
   ultimo_evento_at: string | null;
   arquivado?: boolean;
   arquivado_em?: string | null;
+  _smoke?: boolean;
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
