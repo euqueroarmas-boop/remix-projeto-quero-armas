@@ -2105,7 +2105,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Cliente/equipe: enviar / substituir conforme estado */}
-                        {doc.status !== "aprovado" && !pergunta && (
+                        {!isChecklistCumprido(doc.status) && !pergunta && (
                           <button
                             disabled={uploadingId === doc.id}
                             onClick={() => handleFileSelect(doc.id)}
@@ -2131,7 +2131,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Equipe Quero Armas: aprovar/rejeitar */}
-                        {equipeMode && doc.status !== "aprovado" && (
+                        {equipeMode && !isChecklistCumprido(doc.status) && (
                           <button onClick={() => abrirAprovacao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
                             <CheckCircle className="h-3 w-3" /> APROVAR
                           </button>
@@ -2507,7 +2507,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} /> CENTRAL
                             </button>
                           )}
-                          {doc.status !== "aprovado" && (
+                          {!isChecklistCumprido(doc.status) && (
                             <button
                               onClick={() => abrirAprovacao(doc)}
                               className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600"
