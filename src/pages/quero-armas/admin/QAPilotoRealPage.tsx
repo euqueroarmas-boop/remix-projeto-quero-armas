@@ -14,12 +14,13 @@
  *  5. Confirmar pagamento manual + comprovante (qa-venda-confirmar-pagamento-manual)
  *  6. Acompanhar contrato → assinatura cliente → liberação
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   Loader2, Search, User, CheckCircle2, Circle, ArrowRight, ShieldAlert,
   Upload, FileText, Copy, Check, ExternalLink, RefreshCw, Archive, FlaskConical,
+  History, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,21 @@ type Servico = { id: string; slug: string; nome: string; preco: number | null; a
 type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
 type Processo = { id: string; venda_id: number | null; servico_id: number | null; status: string | null };
+type PilotoResumo = {
+  venda_id: number;
+  id_legado: number | null;
+  cliente_nome: string | null;
+  cliente_cpf: string | null;
+  valor_a_pagar: number | string | null;
+  status: string | null;
+  cobranca_status: string | null;
+  status_validacao_valor: string | null;
+  contrato_status: string | null;
+  ultimo_evento: string | null;
+  ultimo_evento_at: string | null;
+};
+
+const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
 
 const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
@@ -53,6 +69,15 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 }
 
 export default function QAPilotoRealPage() {
+  /* ---------- Retomada de piloto (URL / localStorage) ---------- */
+  const [hidratando, setHidratando] = useState(false);
+  const [hidratado, setHidratado] = useState<{ venda_id: number; via: "url" | "storage" } | null>(null);
+  const [resumos, setResumos] = useState<PilotoResumo[]>([]);
+  const [carregandoResumos, setCarregandoResumos] = useState(false);
+  const [ultimoLocal, setUltimoLocal] = useState<number | null>(null);
+  const stepRefs = useRef<Record<string, HTMLElement | null>>({});
+  const setStepRef = (key: string) => (el: HTMLElement | null) => { stepRefs.current[key] = el; };
+
   /* ---------- Passo 1: Cliente ---------- */
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
@@ -582,6 +607,211 @@ export default function QAPilotoRealPage() {
     return () => clearInterval(t);
   }, [venda, recarregarContrato, recarregarVenda]);
 
+  /* ---------- Retomada: hidratação por venda_id / id_legado ---------- */
+  // Persistir última venda aberta.
+  useEffect(() => {
+    if (venda?.id) {
+      try { localStorage.setItem(PILOTO_LS_KEY, String(venda.id)); } catch {}
+    }
+  }, [venda?.id]);
+
+  const hidratarPilotoPorId = useCallback(async (idOuLegado: number) => {
+    setHidratando(true);
+    try {
+      // Busca por id direto; se não achar, tenta id_legado.
+      let vRes = await supabase
+        .from("qa_vendas")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+        .eq("id", idOuLegado)
+        .maybeSingle();
+      if (!vRes.data) {
+        vRes = await supabase
+          .from("qa_vendas")
+          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+          .eq("id_legado", idOuLegado)
+          .maybeSingle();
+      }
+      const v = vRes.data as Venda | null;
+      if (!v) { toast.error(`Venda ${idOuLegado} não encontrada.`); return; }
+
+      // Cliente
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .eq("id", v.cliente_id)
+        .maybeSingle();
+      if (cli) setCliente(cli as Cliente);
+
+      // Itens da venda → montamos shims para servico + itensExtras.
+      const { data: itens } = await supabase
+        .from("qa_itens_venda")
+        .select("servico_id, valor")
+        .eq("venda_id", v.id);
+      const servicoIds = (itens ?? []).map((r: any) => r.servico_id).filter(Boolean);
+      let nomesById: Record<number, string> = {};
+      if (servicoIds.length > 0) {
+        const { data: srvs } = await supabase
+          .from("qa_servicos")
+          .select("id, nome_servico")
+          .in("id", servicoIds);
+        for (const s of (srvs ?? []) as any[]) nomesById[s.id] = s.nome_servico;
+      }
+      const shims: Servico[] = (itens ?? []).map((r: any) => ({
+        id: `srv-${r.servico_id}`,
+        slug: `qa-srv-${r.servico_id}`,
+        nome: nomesById[r.servico_id] || `Serviço #${r.servico_id}`,
+        preco: r.valor != null ? Number(r.valor) : null,
+        ativo: true,
+      }));
+      if (shims.length > 0) {
+        setServico(shims[0]);
+        setItensExtras(shims.slice(1).map((s) => ({
+          servico: s,
+          precoStr: s.preco != null ? Number(s.preco).toFixed(2).replace(".", ",") : "",
+        })));
+      }
+
+      // Venda + contrato + processos (recarregarContrato usa id_legado).
+      setVenda(v);
+      // Consulta direta em vez de depender do closure de recarregarContrato.
+      const lookupId = Number(v.id_legado ?? v.id) || v.id;
+      const { data: c } = await supabase
+        .from("qa_contracts")
+        .select("id, status, venda_id, cliente_id")
+        .eq("venda_id", lookupId)
+        .maybeSingle();
+      setContrato((c as Contrato) ?? null);
+      const { data: p } = await supabase
+        .from("qa_processos")
+        .select("id, venda_id, servico_id, status")
+        .eq("venda_id", lookupId);
+      setProcessos((p ?? []) as Processo[]);
+
+      toast.success(`Piloto da venda #${v.id} restaurado.`);
+    } catch (e: any) {
+      toast.error(`Falha ao restaurar piloto: ${e?.message || e}`);
+    } finally {
+      setHidratando(false);
+    }
+  }, []);
+
+  // Mount: URL param → hidrata direto. Sem URL → mostra "último local".
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const vid = params.get("venda_id") || params.get("id_legado");
+    if (vid) {
+      const n = Number(vid);
+      if (Number.isFinite(n) && n > 0) {
+        setHidratado({ venda_id: n, via: "url" });
+        hidratarPilotoPorId(n);
+        return;
+      }
+    }
+    try {
+      const ls = localStorage.getItem(PILOTO_LS_KEY);
+      const n = ls ? Number(ls) : NaN;
+      if (Number.isFinite(n) && n > 0) setUltimoLocal(n);
+    } catch {}
+  }, [hidratarPilotoPorId]);
+
+  // Scroll automático para o passo atual após hidratação.
+  useEffect(() => {
+    if (!hidratado || hidratando || !venda) return;
+    const id =
+      contrato ? "step-contrato"
+      : venda.cobranca_status === "confirmada" ? "step-contrato"
+      : venda.status_validacao_valor === "aprovado" ? "step-pagamento"
+      : "step-valor";
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+  }, [hidratado, hidratando, venda?.id, venda?.status_validacao_valor, venda?.cobranca_status, contrato?.id]);
+
+  // Lista de pilotos em andamento (não arquivados/cancelados/concluídos).
+  const carregarResumos = useCallback(async () => {
+    setCarregandoResumos(true);
+    try {
+      // Coleta candidatos via qa_venda_eventos (origem/tipo piloto).
+      const { data: evts } = await supabase
+        .from("qa_venda_eventos")
+        .select("venda_id, tipo_evento, created_at")
+        .or("tipo_evento.ilike.%piloto%,ator.ilike.piloto%,dados_json->>origem.ilike.piloto%")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const ultimoPorVenda = new Map<number, { tipo: string; when: string }>();
+      for (const e of ((evts ?? []) as any[])) {
+        if (!e.venda_id) continue;
+        if (!ultimoPorVenda.has(e.venda_id)) {
+          ultimoPorVenda.set(e.venda_id, { tipo: e.tipo_evento, when: e.created_at });
+        }
+      }
+      const ids = Array.from(ultimoPorVenda.keys()).slice(0, 30);
+      if (ids.length === 0) { setResumos([]); return; }
+      const { data: vendas } = await supabase
+        .from("qa_vendas")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
+        .in("id", ids);
+      const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
+      const { data: clis } = cliIds.length > 0
+        ? await supabase.from("qa_clientes").select("id, nome_completo, cpf").in("id", cliIds)
+        : { data: [] as any[] } as any;
+      const cliMap = new Map<number, { nome_completo: string | null; cpf: string | null }>();
+      for (const c of ((clis ?? []) as any[])) cliMap.set(c.id, { nome_completo: c.nome_completo, cpf: c.cpf });
+
+      // Contratos por lookup_id (id_legado ?? id).
+      const lookupIds = ((vendas ?? []) as any[]).map((v) => Number(v.id_legado ?? v.id));
+      const { data: contratos } = lookupIds.length > 0
+        ? await supabase.from("qa_contracts").select("venda_id, status").in("venda_id", lookupIds)
+        : { data: [] as any[] } as any;
+      const contratoMap = new Map<number, string>();
+      for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
+
+      const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
+        .filter((v) =>
+          String(v.status || "").toUpperCase() !== "CANCELADO" &&
+          String(v.status || "").toUpperCase() !== "CONCLUIDO" &&
+          String(v.status || "").toUpperCase() !== "CONCLUÍDO",
+        )
+        .map((v) => {
+          const lookup = Number(v.id_legado ?? v.id);
+          const cli = cliMap.get(v.cliente_id);
+          const last = ultimoPorVenda.get(v.id);
+          return {
+            venda_id: v.id,
+            id_legado: v.id_legado ?? null,
+            cliente_nome: cli?.nome_completo ?? null,
+            cliente_cpf: cli?.cpf ?? null,
+            valor_a_pagar: v.valor_a_pagar,
+            status: v.status,
+            cobranca_status: v.cobranca_status,
+            status_validacao_valor: v.status_validacao_valor,
+            contrato_status: contratoMap.get(lookup) ?? null,
+            ultimo_evento: last?.tipo ?? null,
+            ultimo_evento_at: last?.when ?? null,
+          };
+        })
+        .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
+      setResumos(linhas);
+    } catch (e: any) {
+      toast.error(`Falha ao listar pilotos: ${e?.message || e}`);
+    } finally {
+      setCarregandoResumos(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!venda && !hidratando && !hidratado) carregarResumos();
+  }, [venda, hidratando, hidratado, carregarResumos]);
+
+  const abrirPiloto = useCallback((vendaId: number) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("venda_id", String(vendaId));
+    window.history.replaceState(null, "", url.toString());
+    setHidratado({ venda_id: vendaId, via: "url" });
+    hidratarPilotoPorId(vendaId);
+  }, [hidratarPilotoPorId]);
+
   const linkContratoCliente = useMemo(() => {
     if (!contrato) return null;
     return `${window.location.origin}/area-do-cliente`;
@@ -817,10 +1047,111 @@ export default function QAPilotoRealPage() {
                 <Archive className="h-4 w-4" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
               </div>
             )}
+            {hidratando && (
+              <div className="mt-3 border border-amber-300 bg-amber-50 text-amber-800 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
+                <Loader2 className="h-4 w-4 animate-spin" /> Restaurando piloto {hidratado ? `#${hidratado.venda_id}` : ""}…
+              </div>
+            )}
+            {venda && hidratado && !hidratando && (
+              <div className="mt-3 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded px-3 py-2 text-xs flex items-center justify-between gap-2 normal-case">
+                <span className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Piloto <strong>#{venda.id}</strong>
+                  {venda.id_legado ? <> · legado <code>{String(venda.id_legado)}</code></> : null}
+                  {" "}restaurado via {hidratado.via === "url" ? "URL" : "último local"}.
+                </span>
+                <button
+                  type="button"
+                  className="text-[11px] underline hover:no-underline"
+                  onClick={() => {
+                    try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("venda_id");
+                    url.searchParams.delete("id_legado");
+                    window.location.assign(url.pathname);
+                  }}
+                >
+                  Iniciar novo piloto
+                </button>
+              </div>
+            )}
           </header>
 
+          {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
+          {!venda && !hidratando && (
+            <Card title="Retomar Piloto em Andamento" state="pending">
+              {ultimoLocal && !hidratado && (
+                <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
+                  <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
+                  <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
+                    <Play className="h-3 w-3 mr-1" /> Retomar
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-neutral-600 normal-case">
+                  Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou canceladas.
+                </p>
+                <Button size="sm" variant="outline" onClick={carregarResumos} disabled={carregandoResumos}>
+                  {carregandoResumos ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
+                </Button>
+              </div>
+              {resumos.length === 0 && !carregandoResumos && (
+                <p className="text-xs text-neutral-500 normal-case">Nenhum piloto em andamento.</p>
+              )}
+              {resumos.length > 0 && (
+                <div className="max-h-80 overflow-auto border border-neutral-200 rounded">
+                  <table className="w-full text-[11px] normal-case">
+                    <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
+                      <tr>
+                        <th className="text-left px-2 py-1">Venda</th>
+                        <th className="text-left px-2 py-1">Cliente</th>
+                        <th className="text-left px-2 py-1">Valor</th>
+                        <th className="text-left px-2 py-1">Pagto</th>
+                        <th className="text-left px-2 py-1">Contrato</th>
+                        <th className="text-left px-2 py-1">Último evento</th>
+                        <th className="px-2 py-1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resumos.map((r) => (
+                        <tr key={r.venda_id} className="border-t border-neutral-200">
+                          <td className="px-2 py-1 whitespace-nowrap">
+                            <strong>#{r.venda_id}</strong>
+                            {r.id_legado ? <div className="text-[9px] text-neutral-500">leg {String(r.id_legado)}</div> : null}
+                          </td>
+                          <td className="px-2 py-1">
+                            <div className="font-semibold uppercase">{r.cliente_nome || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">{r.cliente_cpf || "—"}</div>
+                          </td>
+                          <td className="px-2 py-1 font-mono">{money(r.valor_a_pagar)}</td>
+                          <td className="px-2 py-1">
+                            <div>{r.cobranca_status || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">{r.status || "—"}</div>
+                          </td>
+                          <td className="px-2 py-1">{r.contrato_status || "—"}</td>
+                          <td className="px-2 py-1">
+                            <div>{r.ultimo_evento || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">
+                              {r.ultimo_evento_at ? new Date(r.ultimo_evento_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}
+                            </div>
+                          </td>
+                          <td className="px-2 py-1 text-right">
+                            <Button size="sm" variant="outline" onClick={() => abrirPiloto(r.venda_id)}>
+                              <Play className="h-3 w-3 mr-1" /> Continuar
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          )}
+
           {/* Passo 1 */}
-          <Card title="1. Cliente Real" state={stepStates.cliente}>
+          <Card id="step-cliente" title="1. Cliente Real" state={stepStates.cliente}>
             {!cliente ? (
               <>
                 <div className="flex gap-2">
@@ -872,7 +1203,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 2 */}
           {cliente && (
-            <Card title="2. Serviço" state={stepStates.servico}>
+            <Card id="step-servico" title="2. Serviço" state={stepStates.servico}>
               {!servico ? (
                 <>
                   <Input
@@ -1018,7 +1349,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 3 */}
           {cliente && servico && (
-            <Card title="3. Criar Venda" state={stepStates.venda}>
+            <Card id="step-venda" title="3. Criar Venda" state={stepStates.venda}>
               {!venda ? (
                 <div className="space-y-3">
                   {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
@@ -1422,7 +1753,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 4 */}
           {venda && (
-            <Card title="4. Aprovar Valor" state={stepStates.valor}>
+            <Card id="step-valor" title="4. Aprovar Valor" state={stepStates.valor}>
               {venda.status_validacao_valor === "aprovado" ? (
                 <p className="text-xs text-emerald-400">Valor aprovado — evento gravado.</p>
               ) : (
@@ -1435,7 +1766,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 5 */}
           {venda && venda.status_validacao_valor === "aprovado" && venda.cobranca_status !== "confirmada" && (
-            <Card title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
+            <Card id="step-pagamento" title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Forma de pagamento</Label>
@@ -1540,7 +1871,7 @@ export default function QAPilotoRealPage() {
 
           {/* Passo 6 */}
           {venda?.cobranca_status === "confirmada" && (
-            <Card title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
+            <Card id="step-contrato" title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
               {!contrato ? (
                 <div className="flex items-center gap-2 text-xs text-neutral-600 normal-case">
                   <Loader2 className="h-4 w-4 animate-spin" /> Aguardando geração do contrato…
@@ -1807,9 +2138,9 @@ export default function QAPilotoRealPage() {
   );
 }
 
-function Card({ title, state, children }: { title: string; state: "done" | "pending" | "current" | "blocked"; children: React.ReactNode }) {
+function Card({ id, title, state, children }: { id?: string; title: string; state: "done" | "pending" | "current" | "blocked"; children: React.ReactNode }) {
   return (
-    <section className="border border-neutral-200 rounded bg-white p-4 shadow-sm">
+    <section id={id} className="border border-neutral-200 rounded bg-white p-4 shadow-sm scroll-mt-4">
       <div className="flex items-center gap-2 mb-3">
         {statusDot(state)}
         <h2 className="text-sm font-semibold tracking-wide">{title}</h2>
