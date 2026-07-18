@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
   }> = Array.isArray((venda as any)?.composicao_valor_final)
     ? (venda as any).composicao_valor_final
     : [];
-  const totalContratoCentsFinal =
+  const totalContratoCents =
     modoExibicaoContrato === "pacote_fechado" &&
     Number.isFinite(valorTotalPagoClienteDB) &&
     valorTotalPagoClienteDB > 0
@@ -434,7 +434,7 @@ Deno.serve(async (req) => {
         `<p>1.A.1. A CONTRATANTE contratou, em condição comercial única de pacote fechado, ` +
         `os serviços listados abaixo, cada qual regido pelo respectivo Anexo I:</p>` +
         `<ul>${linhas}</ul>` +
-        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>. ` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCentsFinal)}</strong>. ` +
         `Por se tratar de condição comercial de pacote, não há discriminação de preço por serviço ` +
         `neste instrumento — a condição de pagamento (parcelamento e adquirente, quando houver) é ` +
         `detalhada na CLÁUSULA TERCEIRA.</p>` +
@@ -452,7 +452,7 @@ Deno.serve(async (req) => {
         `<p>1.A.1. A CONTRATANTE contratou, em condição única de pacote, os serviços abaixo, ` +
         `cada qual regido pelo respectivo Anexo I:</p>` +
         `<ul>${linhas}</ul>` +
-        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCents)}</strong>, ` +
+        `<p>1.A.2. O valor total contratado do pacote é <strong>${brl(totalContratoCentsFinal)}</strong>, ` +
         `equivalente à soma dos itens acima na condição comercial acordada no momento do aceite eletrônico.</p>`;
     }
   }
@@ -478,7 +478,7 @@ Deno.serve(async (req) => {
       const adquirente = dj.adquirente ? String(dj.adquirente).trim() : "";
       const valorBruto = Number(dj.valor_bruto_parcelado);
       const forma = dj.forma_pagamento ? String(dj.forma_pagamento) : "";
-      const totalReais = totalContratoCents / 100;
+      const totalReais = totalContratoCentsFinal / 100;
       const temJuros =
         Number.isFinite(valorBruto) && valorBruto > 0 && valorBruto - totalReais > 0.01;
       if (parcelas > 1 && (temJuros || adquirente)) {
@@ -486,7 +486,7 @@ Deno.serve(async (req) => {
         const valorParcela = efetivoBruto / parcelas;
         const parcelaFmt = brl(Math.round(valorParcela * 100));
         const brutoFmt = brl(Math.round(efetivoBruto * 100));
-        const totalFmt = brl(totalContratoCents);
+        const totalFmt = brl(totalContratoCentsFinal);
         const partes: string[] = [];
         partes.push(
           `3.2.1. Foi acordado o pagamento em <strong>${parcelas}x</strong> de ` +
@@ -536,7 +536,7 @@ Deno.serve(async (req) => {
     cliente_telefone: esc(cliente.celular || ""),
     servico_slug: esc(servicoSlugFinal),
     servico_nome: esc(servicoNomeFinal),
-    servico_preco: brl(totalContratoCents),
+    servico_preco: brl(totalContratoCentsFinal),
     aceite_data: aceiteDataIso,
     aceite_ip: "",
     aceite_user_agent: "",
