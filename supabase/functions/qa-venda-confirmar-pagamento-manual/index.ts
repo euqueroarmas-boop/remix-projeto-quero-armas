@@ -188,6 +188,7 @@ Deno.serve(async (req) => {
       admin as any,
       Number((venda as any).id_legado),
       "manual_admin",
+      notifPolicy,
     );
   } catch (e) {
     console.warn("[piloto-real] pipeline pos-pagamento falhou:", (e as any)?.message || e);
