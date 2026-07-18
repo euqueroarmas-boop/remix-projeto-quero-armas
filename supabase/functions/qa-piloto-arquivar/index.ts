@@ -191,5 +191,24 @@ Deno.serve(async (req) => {
     });
   } catch { /* ignore */ }
 
-  return json({ ok: true, venda_id, arquivado_em: nowIso, motivo, resumo });
+  // Aplica política de notificação (registra decisão + eventualmente
+  // publica aviso no portal do cliente).
+  try {
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "piloto_real_arquivado",
+      cliente_id: (venda as any).cliente_id ?? null,
+      venda_id,
+      staff_user_id: guard.userId,
+      staff_email: guard.email,
+      origem: "piloto_real",
+      titulo_portal: "Serviço cancelado",
+      mensagem_portal: "Um serviço vinculado a você foi cancelado pela nossa equipe. Fale conosco se tiver dúvidas.",
+      link_portal: "/area-do-cliente",
+      payload_resumo: { motivo, resumo },
+    });
+  } catch (e) {
+    console.warn("[piloto-arquivar] policy falhou:", (e as Error).message);
+  }
+
+  return json({ ok: true, venda_id, arquivado_em: nowIso, motivo, resumo, notificacao_policy: notifPolicy });
 });
