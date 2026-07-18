@@ -716,19 +716,17 @@ export default function QAPilotoRealPage() {
 
   // Scroll automático para o passo atual após hidratação.
   useEffect(() => {
-    if (!hidratado || hidratando) return;
-    const key =
-      contrato && !["validated", "customer_signed"].includes(contrato.status) ? "contrato"
-      : contrato ? "contrato"
-      : venda?.cobranca_status === "confirmada" ? "contrato"
-      : venda?.status_validacao_valor === "aprovado" ? "pagamento"
-      : venda ? "valor"
-      : "cliente";
-    const el = stepRefs.current[key];
-    if (el) {
-      setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
-    }
-  }, [hidratado, hidratando, venda?.id, venda?.status_validacao_valor, venda?.cobranca_status, contrato?.id, contrato?.status]);
+    if (!hidratado || hidratando || !venda) return;
+    const id =
+      contrato ? "step-contrato"
+      : venda.cobranca_status === "confirmada" ? "step-contrato"
+      : venda.status_validacao_valor === "aprovado" ? "step-pagamento"
+      : "step-valor";
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+  }, [hidratado, hidratando, venda?.id, venda?.status_validacao_valor, venda?.cobranca_status, contrato?.id]);
 
   // Lista de pilotos em andamento (não arquivados/cancelados/concluídos).
   const carregarResumos = useCallback(async () => {
