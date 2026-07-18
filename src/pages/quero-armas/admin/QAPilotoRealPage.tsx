@@ -2322,6 +2322,58 @@ export default function QAPilotoRealPage() {
           </div>
         </aside>
       </div>
+
+      <Dialog open={confirmacaoContratoAberta} onOpenChange={(open) => { setConfirmacaoContratoAberta(open); if (!open) setConfirmacaoVinculoMarcada(false); }}>
+        <DialogContent className="max-w-md bg-white border-neutral-200 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm uppercase tracking-wide">Confirmar cliente do contrato</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-xs normal-case text-neutral-700">
+            <div className="rounded border border-neutral-200 bg-neutral-50 p-3">
+              <div className="text-[10px] uppercase text-neutral-500 mb-1">Cliente do contrato</div>
+              <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
+              <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
+              <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
+              <div><strong>ID cliente:</strong> {cliente?.id ?? "—"}</div>
+              <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
+            </div>
+            <div className="rounded border border-amber-300 bg-amber-50 p-3">
+              <div className="text-[10px] uppercase text-amber-800 mb-1">Operador/staff</div>
+              <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
+              <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
+              <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
+              <div className="mt-2 font-semibold text-amber-900">O operador/staff NÃO é o contratante.</div>
+            </div>
+            {vinculoBloqueado ? (
+              <div className="rounded border border-rose-300 bg-rose-50 p-3 text-rose-800 font-semibold">
+                {motivoBloqueioVinculo} Arquive este piloto e gere uma nova venda para o cliente correto.
+              </div>
+            ) : (
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={confirmacaoVinculoMarcada}
+                  onChange={(e) => setConfirmacaoVinculoMarcada(e.target.checked)}
+                />
+                <span>
+                  Confirmo que o contrato será gerado para o cliente acima e que o operador/staff não é o contratante.
+                </span>
+              </label>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setConfirmacaoContratoAberta(false)} disabled={confirmandoPag}>Cancelar</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-500"
+              onClick={() => confirmarPagamento(true)}
+              disabled={confirmandoPag || !confirmacaoVinculoMarcada || vinculoBloqueado}
+            >
+              {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : "Confirmar e gerar contrato"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
