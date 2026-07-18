@@ -38,7 +38,7 @@ import {
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
-type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
+type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null; origem_venda?: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
 type Processo = { id: string; venda_id: number | null; servico_id: number | null; status: string | null };
 type PilotoResumo = {
@@ -68,6 +68,20 @@ const FORMAS_MANUAL = [
 const ADQUIRENTES_CATALOGO = ["STONE", "REDE", "CIELO", "GETNET", "PAGSEGURO", "ASAAS", "MERCADO PAGO", "OUTRA"] as const;
 
 const EMAIL_ADMIN_BLOQUEADO = "eu@queroarmas.com.br";
+const STATUS_PILOTO_INATIVO = new Set(["CANCELADO", "CANCELADA", "ARQUIVADO", "ARQUIVADA", "EXCLUIDO", "EXCLUÍDO"]);
+const EVENTOS_ARQUIVAMENTO_PILOTO = new Set(["venda_arquivada_piloto", "piloto_arquivado"]);
+
+function isStatusPilotoInativo(status: unknown): boolean {
+  return STATUS_PILOTO_INATIVO.has(String(status || "").trim().toUpperCase());
+}
+
+function eventoArquivaPiloto(tipo: unknown): boolean {
+  return EVENTOS_ARQUIVAMENTO_PILOTO.has(String(tipo || "").trim().toLowerCase());
+}
+
+function textoIndicaSmoke(...valores: unknown[]): boolean {
+  return valores.some((v) => String(v ?? "").toLowerCase().includes("smoke"));
+}
 
 function money(v: unknown): string {
   const n = typeof v === "string" ? Number(v) : (v as number);
