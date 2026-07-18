@@ -755,7 +755,7 @@ export default function QAPilotoRealPage() {
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
       .from("qa_vendas")
-      .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
+      .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
       .eq("id", id)
       .maybeSingle();
     if (data) setVenda(data as unknown as Venda);
@@ -1096,13 +1096,13 @@ export default function QAPilotoRealPage() {
       // Busca por id direto; se não achar, tenta id_legado.
       let vRes = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
         .eq("id", idOuLegado)
         .maybeSingle();
       if (!vRes.data) {
         vRes = await supabase
           .from("qa_vendas")
-          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento, origem_venda")
+          .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
           .eq("id_legado", idOuLegado)
           .maybeSingle();
       }
@@ -1324,7 +1324,7 @@ export default function QAPilotoRealPage() {
       if (ids.length === 0) { setResumos([]); setResumosArquivados([]); return; }
       const { data: vendas } = await supabase
         .from("qa_vendas")
-        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor, origem_venda")
+        .select("id, id_legado, cliente_id, valor_a_pagar, status, cobranca_status, status_validacao_valor")
         .in("id", ids);
       const cliIds = Array.from(new Set(((vendas ?? []) as any[]).map((v) => v.cliente_id).filter(Boolean)));
       const { data: clis } = cliIds.length > 0
@@ -1348,13 +1348,11 @@ export default function QAPilotoRealPage() {
           const contratoResumo = contratoMap.get(lookup);
           const last = ultimoPorVenda.get(v.id);
           const statusUp = String(v.status || "").toUpperCase();
-          const origem = String(v.origem_venda || "").toLowerCase();
           const ultimoTipo = String(last?.tipo || "").toLowerCase();
           const cliIdsAceitos = new Set([cli?.id, cli?.id_legado].map((x) => Number(x)).filter((x) => Number.isFinite(x) && x > 0));
           const contratoDivergente = !!contratoResumo?.cliente_id && cliIdsAceitos.size > 0 && !cliIdsAceitos.has(Number(contratoResumo.cliente_id));
           const vendaClienteStaff = !!cli && isCandidatoStaff(cli);
           const ehSmoke =
-            origem.includes("smoke") ||
             ultimoTipo.includes("smoke");
           const arq =
             isStatusPilotoInativo(statusUp) ||
