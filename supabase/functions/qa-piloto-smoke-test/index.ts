@@ -45,8 +45,10 @@ Deno.serve(async (req) => {
   const target_qa_cliente_id = body?.target_qa_cliente_id ? Number(body.target_qa_cliente_id) : null;
   const target_cliente_email: string | null = body?.target_cliente_email
     ? String(body.target_cliente_email).trim().toLowerCase() : null;
-  const modo_teste: boolean = body?.modo_teste !== false && (body?.modo_teste === true || !!target_qa_cliente_id || !!target_cliente_email);
-  const arquivar_ao_final: boolean = body?.arquivar_ao_final !== false; // default true
+  // Smoke test SEMPRE roda em modo_teste — nunca deve poluir fluxo real.
+  const modo_teste: boolean = true;
+  // Smoke test SEMPRE arquiva ao final — não pode ficar em "pilotos em andamento".
+  const arquivar_ao_final: boolean = true;
   const skip_notificacoes: boolean = body?.skip_notificacoes === true || modo_teste;
   const servico_id: string | null = body?.servico_id || null;
   const authHeader = req.headers.get("Authorization")!;
@@ -66,19 +68,45 @@ Deno.serve(async (req) => {
   const steps: Step[] = [];
   const record = (step: string, ok: boolean, detail?: unknown) => steps.push({ step, ok, detail });
 
+  // ---------- Listas de proibidos ----------
+  // Staff/admin nunca pode ser usado como "cliente final" no smoke test.
+  const FORBIDDEN_EMAILS = new Set<string>([
+    "eu@queroarmas.com.br",
+  ]);
+  const { data: staffPerfis } = await admin
+    .from("qa_usuarios_perfis")
+    .select("user_id")
+    .eq("ativo", true);
+  const forbiddenUserIds = new Set<string>(
+    (staffPerfis || []).map((r: any) => String(r.user_id)).filter(Boolean),
+  );
+  const staffExecutor = {
+    user_id: guard.userId,
+    email: guard.email,
+    perfil: guard.perfil,
+  };
+
+  const isStaffCliente = (c: any) => {
+    if (!c) return true;
+    const email = String(c.email || "").trim().toLowerCase();
+    if (email && FORBIDDEN_EMAILS.has(email)) return true;
+    if (c.user_id && forbiddenUserIds.has(String(c.user_id))) return true;
+    return false;
+  };
+
   // 0) escolher cliente
   let cliente: any = null;
   if (target_qa_cliente_id) {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status, user_id")
       .eq("id", target_qa_cliente_id)
       .maybeSingle();
     cliente = data;
   } else if (target_cliente_email) {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status, user_id")
       .ilike("email", target_cliente_email)
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -87,27 +115,50 @@ Deno.serve(async (req) => {
   } else if (cliente_id_legado) {
     const { data } = await admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status, user_id")
       .eq("id_legado", cliente_id_legado)
       .maybeSingle();
     cliente = data;
   } else {
-    const { data } = await admin
+    // Seleção automática: pega o cliente externo mais recente que:
+    //  - não é staff (não tem perfil ativo em qa_usuarios_perfis)
+    //  - não é admin institucional (eu@queroarmas.com.br)
+    //  - tem CPF/email/id_legado válidos
+    //  - não está excluído por LGPD
+    let query = admin
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, email, celular, status")
+      .select("id, id_legado, nome_completo, cpf, email, celular, status, user_id")
       .neq("status", "excluido_lgpd")
       .not("cpf", "is", null)
       .not("email", "is", null)
+      .not("id_legado", "is", null);
+    for (const em of FORBIDDEN_EMAILS) {
+      query = query.not("email", "ilike", em);
+    }
+    const { data: candidatos } = await query
       .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    cliente = data;
+      .limit(50);
+    cliente = (candidatos || []).find((c: any) => !isStaffCliente(c)) || null;
   }
   if (!cliente) return json({ ok: false, error: "sem_cliente_para_teste", steps }, 400);
   if (String(cliente.status || "").toLowerCase() === "excluido_lgpd") {
     return json({ ok: false, error: "cliente_excluido_lgpd", cliente_id: cliente.id, steps }, 400);
   }
-  record("cliente_escolhido", true, { id: cliente.id, id_legado: cliente.id_legado, nome: cliente.nome_completo, email: cliente.email });
+  if (isStaffCliente(cliente)) {
+    return json({
+      ok: false,
+      error: "cliente_alvo_e_staff",
+      detail: "Smoke test não pode usar staff/admin como cliente final.",
+      cliente_ofensor: { id: cliente.id, email: cliente.email, user_id: cliente.user_id },
+      staff_executor: staffExecutor,
+      steps,
+    }, 400);
+  }
+  record("cliente_escolhido", true, {
+    id: cliente.id, id_legado: cliente.id_legado,
+    nome: cliente.nome_completo, email: cliente.email,
+    user_id: cliente.user_id,
+  });
 
   // 0b) escolher serviço
   let servico: any = null;
@@ -145,9 +196,17 @@ Deno.serve(async (req) => {
     return { status: r.status, data };
   };
 
+  // Helper: arquiva uma venda "de emergência" quando smoke detecta contaminação.
+  const arquivarEmergencia = async (vId: number, motivo: string) => {
+    try {
+      await invoke("qa-piloto-arquivar", { venda_id: vId, motivo });
+    } catch { /* best-effort */ }
+  };
+
   // 1) criar venda
   const created = await invoke("qa-checkout-criar-venda", {
     cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1 }],
+    target_qa_cliente_id: cliente.id,
     identificacao: {
       nome_completo: cliente.nome_completo,
       cpf: cliente.cpf || "",
@@ -161,6 +220,37 @@ Deno.serve(async (req) => {
   const venda_id_legado = Number(created.data?.id_legado ?? venda_id);
   if (!venda_id) return json({ ok: false, error: "criar_venda_falhou", detail: created, steps }, 500);
   record("venda_criada", true, { venda_id, venda_id_legado });
+
+  // 1b) Guarda anti-contaminação: valida imediatamente que a venda foi criada
+  //     em nome do cliente correto (nunca do staff logado).
+  const { data: vendaCheck } = await admin
+    .from("qa_vendas")
+    .select("cliente_id")
+    .eq("id", venda_id)
+    .maybeSingle();
+  const vendaClienteId = Number((vendaCheck as any)?.cliente_id ?? 0);
+  const vendaClienteConfere = vendaClienteId === Number(cliente.id_legado);
+  if (!vendaClienteConfere) {
+    await arquivarEmergencia(venda_id, "SMOKE TEST — VENDA NASCEU EM NOME ERRADO, ARQUIVAMENTO AUTOMÁTICO");
+    record("venda_cliente_confere", false, {
+      esperado: cliente.id_legado, obtido: vendaClienteId,
+    });
+    return json({
+      ok: false,
+      error: "venda_nasceu_em_nome_errado",
+      cliente_usado: { id: cliente.id, id_legado: cliente.id_legado, nome: cliente.nome_completo, email: cliente.email },
+      staff_executor: staffExecutor,
+      venda_id,
+      venda_id_legado,
+      venda_cliente_id: vendaClienteId,
+      contrato_cliente_id: null,
+      contrato_cliente_confere: false,
+      usou_admin_como_cliente: forbiddenUserIds.has(String(cliente.user_id || "")) || FORBIDDEN_EMAILS.has(String(cliente.email || "").toLowerCase()),
+      arquivado: true,
+      steps,
+    }, 500);
+  }
+  record("venda_cliente_confere", true, { cliente_id: vendaClienteId });
 
   // 2) aprovar valor via RPC oficial
   try {
@@ -217,6 +307,23 @@ Deno.serve(async (req) => {
     (contratosCount ?? 0) === 1 &&
     (procsCount ?? 0) === 0;
   record("idempotencia_validada", okIdempotencia, validated);
+
+  // 4b) validar cliente do contrato
+  const { data: contratoCheck } = await admin
+    .from("qa_contracts")
+    .select("id, cliente_id")
+    .eq("venda_id", venda_id_legado)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const contratoClienteId = Number((contratoCheck as any)?.cliente_id ?? 0);
+  const contratoClienteConfere = contratoClienteId === Number(cliente.id_legado);
+  record("contrato_cliente_confere", contratoClienteConfere, {
+    esperado: cliente.id_legado, obtido: contratoClienteId,
+  });
+  if (!contratoClienteConfere) {
+    await arquivarEmergencia(venda_id, "SMOKE TEST — CONTRATO NASCEU EM NOME ERRADO, ARQUIVAMENTO AUTOMÁTICO");
+  }
 
   // 5) arquivar (obrigatório em modo_teste; default = true)
   const deveArquivar = modo_teste ? true : arquivar_ao_final;
@@ -307,7 +414,29 @@ Deno.serve(async (req) => {
   const { data: vendaStatusFinal } = await admin
     .from("qa_vendas").select("status, cobranca_status").eq("id", venda_id).maybeSingle();
 
-  const allOk = steps.every((s) => s.ok);
+  // Contadores de notificação (auditoria da política notificacao_policy)
+  let notificacoesEnviadasCount = 0;
+  let notificacoesSuprimidasCount = 0;
+  try {
+    const { count: envCount } = await admin
+      .from("qa_notificacao_eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("venda_id", venda_id)
+      .eq("enviado", true);
+    const { count: supCount } = await admin
+      .from("qa_notificacao_eventos")
+      .select("id", { count: "exact", head: true })
+      .eq("venda_id", venda_id)
+      .eq("enviado", false);
+    notificacoesEnviadasCount = envCount ?? 0;
+    notificacoesSuprimidasCount = supCount ?? 0;
+  } catch { /* tabela pode não ter esses filtros exatos; ignora */ }
+
+  const usouAdminComoCliente =
+    forbiddenUserIds.has(String(cliente.user_id || "")) ||
+    FORBIDDEN_EMAILS.has(String(cliente.email || "").toLowerCase());
+
+  const allOk = steps.every((s) => s.ok) && !usouAdminComoCliente && contratoClienteConfere;
   return json({
     ok: allOk,
     cliente_usado: {
@@ -315,13 +444,21 @@ Deno.serve(async (req) => {
       id_legado: cliente.id_legado,
       nome: cliente.nome_completo,
       email: cliente.email,
+      user_id: cliente.user_id,
     },
+    staff_executor: staffExecutor,
     venda_id,
     venda_id_legado,
+    venda_cliente_id: vendaClienteId,
     contrato_id: contratoRow?.id ?? null,
+    contrato_cliente_id: contratoClienteId || null,
+    contrato_cliente_confere: contratoClienteConfere,
+    usou_admin_como_cliente: usouAdminComoCliente,
     status_final: vendaStatusFinal?.status ?? null,
     cobranca_status_final: vendaStatusFinal?.cobranca_status ?? null,
     arquivado: arquivadoA,
+    notificacoes_enviadas_count: notificacoesEnviadasCount,
+    notificacoes_suprimidas_count: notificacoesSuprimidasCount,
     modo_teste,
     skip_notificacoes,
     venda_teste_id: venda_id,
