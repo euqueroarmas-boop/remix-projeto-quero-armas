@@ -192,6 +192,23 @@ Deno.serve(async (req) => {
     dados_json: { antes, depois, motivo, tags: ["piloto", "reprocessamento_financeiro"] },
   });
 
+  try {
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "piloto_financeiro_reprocessado",
+      cliente_id: (venda as any).cliente_id ?? null,
+      venda_id: vendaId,
+      staff_user_id: guard.userId,
+      staff_email: guard.email,
+      origem: "piloto_real",
+      titulo_portal: "Financeiro atualizado",
+      mensagem_portal: "Atualizamos a composição financeira do seu serviço. Consulte a área financeira.",
+      link_portal: "/area-do-cliente/financeiro",
+      payload_resumo: { motivo, valor_total: depois.valor_total_pago_cliente },
+    });
+  } catch (e) {
+    console.warn("[piloto-reprocessar-financeiro] policy falhou:", (e as Error).message);
+  }
+
   return json({
     ok: true,
     venda_id: vendaId,
