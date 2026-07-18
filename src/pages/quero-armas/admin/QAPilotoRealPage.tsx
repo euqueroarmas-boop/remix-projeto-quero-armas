@@ -2541,9 +2541,19 @@ export default function QAPilotoRealPage() {
           {venda && (
             <Card title={arquivado ? "Piloto Arquivado" : "Arquivar Piloto"} state={arquivado ? "blocked" : "pending"}>
               {arquivado ? (
-                <p className="text-xs text-rose-400 normal-case">
-                  Piloto arquivado. Novas ações do wizard estão bloqueadas — apenas visualização/auditoria.
-                </p>
+                <div className="text-xs text-rose-700 normal-case space-y-1">
+                  <p>
+                    Este piloto foi arquivado
+                    {arquivadoInfo?.arquivado_em
+                      ? <> em <strong>{new Date(arquivadoInfo.arquivado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</strong></>
+                      : null}
+                    {arquivadoInfo?.ator ? <> por <strong>{arquivadoInfo.ator}</strong></> : null}.
+                  </p>
+                  {arquivadoInfo?.motivo && (
+                    <p>Motivo: <em>{arquivadoInfo.motivo}</em></p>
+                  )}
+                  <p className="text-neutral-500">Ações do wizard bloqueadas — apenas visualização/auditoria.</p>
+                </div>
               ) : !mostrarArq ? (
                 <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-400 text-rose-600 hover:bg-rose-50">
                   <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
