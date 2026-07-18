@@ -830,6 +830,10 @@ export default function QAPilotoRealPage() {
       toast.error("Anexe o comprovante do pagamento.");
       return;
     }
+    if (!policyIsValid(notifPolicyPagamento)) {
+      toast.error("Defina a política de notificação (motivo mínimo 20 caracteres quando não notificar).");
+      return;
+    }
     if (vinculoBloqueado) {
       toast.error("Vínculo do contratante bloqueado. Arquive este piloto e gere uma nova venda para o cliente correto.");
       return;
