@@ -1047,7 +1047,108 @@ export default function QAPilotoRealPage() {
                 <Archive className="h-4 w-4" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
               </div>
             )}
+            {hidratando && (
+              <div className="mt-3 border border-amber-300 bg-amber-50 text-amber-800 rounded px-3 py-2 text-xs flex items-center gap-2 normal-case">
+                <Loader2 className="h-4 w-4 animate-spin" /> Restaurando piloto {hidratado ? `#${hidratado.venda_id}` : ""}…
+              </div>
+            )}
+            {venda && hidratado && !hidratando && (
+              <div className="mt-3 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded px-3 py-2 text-xs flex items-center justify-between gap-2 normal-case">
+                <span className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Piloto <strong>#{venda.id}</strong>
+                  {venda.id_legado ? <> · legado <code>{String(venda.id_legado)}</code></> : null}
+                  {" "}restaurado via {hidratado.via === "url" ? "URL" : "último local"}.
+                </span>
+                <button
+                  type="button"
+                  className="text-[11px] underline hover:no-underline"
+                  onClick={() => {
+                    try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete("venda_id");
+                    url.searchParams.delete("id_legado");
+                    window.location.assign(url.pathname);
+                  }}
+                >
+                  Iniciar novo piloto
+                </button>
+              </div>
+            )}
           </header>
+
+          {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
+          {!venda && !hidratando && (
+            <Card title="Retomar Piloto em Andamento" state="pending">
+              {ultimoLocal && !hidratado && (
+                <div className="mb-3 border border-neutral-200 rounded p-2 flex items-center justify-between text-xs normal-case bg-neutral-50">
+                  <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
+                  <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
+                    <Play className="h-3 w-3 mr-1" /> Retomar
+                  </Button>
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[11px] text-neutral-600 normal-case">
+                  Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou canceladas.
+                </p>
+                <Button size="sm" variant="outline" onClick={carregarResumos} disabled={carregandoResumos}>
+                  {carregandoResumos ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
+                </Button>
+              </div>
+              {resumos.length === 0 && !carregandoResumos && (
+                <p className="text-xs text-neutral-500 normal-case">Nenhum piloto em andamento.</p>
+              )}
+              {resumos.length > 0 && (
+                <div className="max-h-80 overflow-auto border border-neutral-200 rounded">
+                  <table className="w-full text-[11px] normal-case">
+                    <thead className="bg-neutral-100 text-neutral-600 sticky top-0">
+                      <tr>
+                        <th className="text-left px-2 py-1">Venda</th>
+                        <th className="text-left px-2 py-1">Cliente</th>
+                        <th className="text-left px-2 py-1">Valor</th>
+                        <th className="text-left px-2 py-1">Pagto</th>
+                        <th className="text-left px-2 py-1">Contrato</th>
+                        <th className="text-left px-2 py-1">Último evento</th>
+                        <th className="px-2 py-1"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {resumos.map((r) => (
+                        <tr key={r.venda_id} className="border-t border-neutral-200">
+                          <td className="px-2 py-1 whitespace-nowrap">
+                            <strong>#{r.venda_id}</strong>
+                            {r.id_legado ? <div className="text-[9px] text-neutral-500">leg {String(r.id_legado)}</div> : null}
+                          </td>
+                          <td className="px-2 py-1">
+                            <div className="font-semibold uppercase">{r.cliente_nome || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">{r.cliente_cpf || "—"}</div>
+                          </td>
+                          <td className="px-2 py-1 font-mono">{money(r.valor_a_pagar)}</td>
+                          <td className="px-2 py-1">
+                            <div>{r.cobranca_status || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">{r.status || "—"}</div>
+                          </td>
+                          <td className="px-2 py-1">{r.contrato_status || "—"}</td>
+                          <td className="px-2 py-1">
+                            <div>{r.ultimo_evento || "—"}</div>
+                            <div className="text-[9px] text-neutral-500">
+                              {r.ultimo_evento_at ? new Date(r.ultimo_evento_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}
+                            </div>
+                          </td>
+                          <td className="px-2 py-1 text-right">
+                            <Button size="sm" variant="outline" onClick={() => abrirPiloto(r.venda_id)}>
+                              <Play className="h-3 w-3 mr-1" /> Continuar
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          )}
 
           {/* Passo 1 */}
           <Card id="step-cliente" title="1. Cliente Real" state={stepStates.cliente}>
