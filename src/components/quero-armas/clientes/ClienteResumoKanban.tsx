@@ -6,6 +6,7 @@ import { getNomeDocumentoDisplay, getTipoDocumentoMeta, toTitleCasePtBR } from "
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -285,19 +286,48 @@ export default function ClienteResumoKanban({
       return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
     });
 
-    const docItems: FrontItem[] = meusDocs
-      .filter((doc: any) => {
-        // Laudos psicológicos e exames de tiro já aparecem na frente EXAMES.
-        const tipo = String(doc?.tipo_documento || "").toLowerCase();
-        return tipo !== "laudo_psicologico" && tipo !== "laudo_capacidade_tecnica";
-      })
-      .map((doc: any) => {
-        const nomeBruto = getNomeDocumentoDisplay(doc, "Documento");
+    // ── Documentos consolidados por FAMÍLIA ────────────────────────────
+    // Empilha versões do mesmo tipo (ex.: comprovantes de residência
+    // 2022→2026) e representa cada família pelo documento PRINCIPAL
+    // (aprovado+vigente > vigente > vencido mais recente). Isso silencia
+    // alertas de versões antigas quando já existe atual válido.
+    // Laudos ficam na frente EXAMES.
+    const docsFiltrados = meusDocs.filter((doc: any) => {
+      const f = familiaDocumento(doc?.tipo_documento);
+      return f !== "laudo_psicologico" && f !== "laudo_capacidade_tecnica";
+    });
+    const gruposDocs = agruparDocumentosPorFamilia(docsFiltrados);
+    const docItems: FrontItem[] = gruposDocs
+      .map((g) => {
+        const nomeBruto = getNomeDocumentoDisplay(g.principal, "Documento");
         const nome = shortName(nomeBruto, "Documento");
-        const days = daysUntil(doc?.data_validade_efetiva || doc?.data_validade);
-        return { label: nome, status: compactStatus(days), tone: frontStatus(days) };
+        const days = g.validadePrincipal.dias;
+        const tone: FrontItem["tone"] =
+          g.statusConsolidado === "vigente"
+            ? "ok"
+            : g.statusConsolidado === "vence_em_breve"
+              ? "warn"
+              : g.statusConsolidado === "vencido"
+                ? "bad"
+                : g.statusConsolidado === "historico"
+                  ? "muted"
+                  : frontStatus(days);
+        const statusStr =
+          g.statusConsolidado === "vigente" && g.versoesAnteriores > 0
+            ? `Válido · ${g.versoesAnteriores + 1}v`
+            : g.statusConsolidado === "historico"
+              ? "Histórico"
+              : compactStatus(days);
+        return { label: nome, status: statusStr, tone, stack: g.versoesAnteriores > 0 } as FrontItem;
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
+
+    // Map docId → grupo, para suprimir alertas urgentes de versões
+    // antigas cujo grupo já tem principal vigente ou é puramente histórico.
+    const docIdToGrupo = new Map<any, (typeof gruposDocs)[number]>();
+    for (const g of gruposDocs) {
+      for (const d of g.todos) if ((d as any)?.id != null) docIdToGrupo.set((d as any).id, g);
+    }
 
     // Agrega o pior status entre os itens da frente: bad > warn > ok > muted.
     const aggregateStatus = (items: FrontItem[]): "bad" | "warn" | "ok" | "muted" => {
@@ -340,6 +370,17 @@ export default function ClienteResumoKanban({
     meusDocs.forEach((doc: any) => {
       const tipo = String(doc?.tipo_documento || "").toLowerCase();
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
+      if (!isLaudo) {
+        // Consolidado por família: só o PRINCIPAL do grupo pode alertar,
+        // e apenas quando o grupo não está vigente/histórico. Versões
+        // antigas do mesmo tipo (ex.: comprovantes 2022–2025 quando existe
+        // 2026 válido) são silenciadas aqui.
+        const grupo = doc?.id != null ? docIdToGrupo.get(doc.id) : undefined;
+        if (grupo) {
+          if (grupo.statusConsolidado === "vigente" || grupo.statusConsolidado === "historico") return;
+          if ((grupo.principal as any)?.id !== doc?.id) return;
+        }
+      }
       const fk: Urgent["frontKey"] = isLaudo ? "exames" : "documentos";
       const cta = isLaudo ? "AGENDAR AGORA →" : "ATUALIZAR AGORA →";
       const examTipo: Urgent["examTipo"] | undefined =
