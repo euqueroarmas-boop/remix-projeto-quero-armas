@@ -26,8 +26,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 
-type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null };
+type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
 type Venda = { id: number; id_legado: number | null; cliente_id: number; status: string | null; status_validacao_valor: string | null; cobranca_status: string | null; valor_a_pagar: number | string | null; forma_pagamento: string | null };
 type Contrato = { id: string; status: string; venda_id: number; cliente_id: number };
@@ -69,6 +71,8 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 }
 
 export default function QAPilotoRealPage() {
+  const { user, profile } = useQAAuthContext();
+
   /* ---------- Retomada de piloto (URL / localStorage) ---------- */
   const [hidratando, setHidratando] = useState(false);
   const [hidratado, setHidratado] = useState<{ venda_id: number; via: "url" | "storage" } | null>(null);
@@ -95,7 +99,7 @@ export default function QAPilotoRealPage() {
         : `nome_completo.ilike.%${q}%,email.ilike.%${q}%`;
       const { data, error } = await supabase
         .from("qa_clientes")
-        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .neq("status", "excluido_lgpd")
         .or(filtro)
         .order("id", { ascending: false })
@@ -511,7 +515,10 @@ export default function QAPilotoRealPage() {
     }
   }, [venda, recarregarVenda]);
 
-  /* ---------- Passo 5: Pagamento Manual ---------- */
+  /* ---------- Passo 5/6: Pagamento Manual + Contrato ---------- */
+  const [contrato, setContrato] = useState<Contrato | null>(null);
+  const [processos, setProcessos] = useState<Processo[]>([]);
+
   const [forma, setForma] = useState<string>("PIX");
   const [parcelas, setParcelas] = useState<number>(1);
   const [observacao, setObservacao] = useState<string>("");
@@ -520,6 +527,8 @@ export default function QAPilotoRealPage() {
   const [comprovante, setComprovante] = useState<File | null>(null);
   const [comprovantePath, setComprovantePath] = useState<string | null>(null);
   const [confirmandoPag, setConfirmandoPag] = useState(false);
+  const [confirmacaoContratoAberta, setConfirmacaoContratoAberta] = useState(false);
+  const [confirmacaoVinculoMarcada, setConfirmacaoVinculoMarcada] = useState(false);
 
   // Pré-preenche o Passo 5 quando o Passo 3 configurou custo financeiro do pacote.
   useEffect(() => {
@@ -545,7 +554,25 @@ export default function QAPilotoRealPage() {
     return path;
   }, [comprovante, venda]);
 
-  const confirmarPagamento = useCallback(async () => {
+  const clienteIdsAceitosContrato = useMemo(() => {
+    const ids = [cliente?.id, cliente?.id_legado]
+      .map((v) => Number(v))
+      .filter((v) => Number.isFinite(v) && v > 0);
+    return new Set(ids);
+  }, [cliente?.id, cliente?.id_legado]);
+  const vendaClienteDivergente = !!venda && !!cliente && clienteIdsAceitosContrato.size > 0 && !clienteIdsAceitosContrato.has(Number(venda.cliente_id));
+  const contratoClienteDivergente = !!contrato && !!cliente && clienteIdsAceitosContrato.size > 0 && !clienteIdsAceitosContrato.has(Number(contrato.cliente_id));
+  const operadorMesmoContratante = !!cliente?.user_id && !!user?.id && cliente.user_id === user.id && profile?.perfil === "administrador";
+  const vinculoBloqueado = vendaClienteDivergente || contratoClienteDivergente || operadorMesmoContratante;
+  const motivoBloqueioVinculo = vendaClienteDivergente
+    ? "A venda está vinculada a um ID de cliente diferente do cliente selecionado."
+    : contratoClienteDivergente
+      ? "O contrato foi gerado para um ID de cliente diferente do cliente selecionado."
+      : operadorMesmoContratante
+        ? "O contratante atual é o próprio operador/admin logado, não um cliente externo selecionado."
+        : null;
+
+  const confirmarPagamento = useCallback(async (forcarConfirmacao = false) => {
     if (!venda) return;
     if (observacao.trim().length < 20) {
       toast.error("Observação deve ter no mínimo 20 caracteres.");
@@ -555,6 +582,16 @@ export default function QAPilotoRealPage() {
       toast.error("Anexe o comprovante do pagamento.");
       return;
     }
+    if (vinculoBloqueado) {
+      toast.error("Vínculo do contratante bloqueado. Arquive este piloto e gere uma nova venda para o cliente correto.");
+      return;
+    }
+    if (!forcarConfirmacao) {
+      setConfirmacaoVinculoMarcada(false);
+      setConfirmacaoContratoAberta(true);
+      return;
+    }
+    setConfirmacaoContratoAberta(false);
     setConfirmandoPag(true);
     try {
       const path = comprovantePath || (await uploadComprovante());
@@ -582,17 +619,15 @@ export default function QAPilotoRealPage() {
       );
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
+      setConfirmacaoVinculoMarcada(false);
     } catch (e: any) {
       toast.error(`Falha ao confirmar pagamento: ${e?.message || e}`);
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
-  const [contrato, setContrato] = useState<Contrato | null>(null);
-  const [processos, setProcessos] = useState<Processo[]>([]);
-
   const recarregarContrato = useCallback(async (vendaId: number) => {
     // qa_contracts / qa_processos usam o id_legado da venda (mesmo id que o
     // pipeline pós-pagamento passa para qa-generate-contract). Se a venda
@@ -650,7 +685,7 @@ export default function QAPilotoRealPage() {
       // Cliente
       const { data: cli } = await supabase
         .from("qa_clientes")
-        .select("id, id_legado, nome_completo, cpf, email, celular")
+        .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
         .eq("id", v.cliente_id)
         .maybeSingle();
       if (cli) setCliente(cli as Cliente);
@@ -1113,6 +1148,16 @@ export default function QAPilotoRealPage() {
                 >
                   Iniciar novo piloto
                 </button>
+              </div>
+            )}
+            {venda && vinculoBloqueado && (
+              <div className="mt-3 border border-rose-300 bg-rose-50 text-rose-800 rounded px-3 py-2 text-xs normal-case">
+                <div className="font-semibold flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" /> Continuação bloqueada por divergência de contratante.
+                </div>
+                <div className="mt-1">
+                  {motivoBloqueioVinculo} Arquive este piloto e crie uma nova venda usando o cliente correto no Passo 1.
+                </div>
               </div>
             )}
           </header>
@@ -1875,7 +1920,7 @@ export default function QAPilotoRealPage() {
               {venda.status_validacao_valor === "aprovado" ? (
                 <p className="text-xs text-emerald-400">Valor aprovado — evento gravado.</p>
               ) : (
-                <Button onClick={aprovarValor} disabled={aprovando || arquivado}>
+                <Button onClick={aprovarValor} disabled={aprovando || arquivado || vinculoBloqueado}>
                   {aprovando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar valor da venda"}
                 </Button>
               )}
@@ -1885,6 +1930,31 @@ export default function QAPilotoRealPage() {
           {/* Passo 5 */}
           {venda && venda.status_validacao_valor === "aprovado" && venda.cobranca_status !== "confirmada" && (
             <Card id="step-pagamento" title="5. Registrar Pagamento Manual" state={stepStates.pagamento}>
+              <div className={`mb-3 rounded border p-3 text-xs normal-case ${vinculoBloqueado ? "border-rose-300 bg-rose-50 text-rose-800" : "border-neutral-200 bg-neutral-50 text-neutral-700"}`}>
+                <div className="font-semibold uppercase tracking-wide mb-2">Conferência obrigatória do contratante</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-[10px] uppercase text-neutral-500">Cliente do contrato</div>
+                    <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
+                    <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
+                    <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
+                    <div><strong>ID cliente:</strong> {cliente?.id ?? "—"}</div>
+                    <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase text-neutral-500">Operador/staff</div>
+                    <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
+                    <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
+                    <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
+                    <div className="mt-1 font-semibold">O operador/staff NÃO é o contratante.</div>
+                  </div>
+                </div>
+                {vinculoBloqueado && (
+                  <div className="mt-2 font-semibold">
+                    {motivoBloqueioVinculo} A geração do contrato está bloqueada.
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Forma de pagamento</Label>
@@ -1977,7 +2047,7 @@ export default function QAPilotoRealPage() {
                   <p className="text-xs text-emerald-500 normal-case mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
-              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={confirmarPagamento} disabled={confirmandoPag || arquivado}>
+              <Button className="mt-4 bg-emerald-600 hover:bg-emerald-500" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
               <p className="text-[10px] text-neutral-500 normal-case mt-2">
@@ -1990,6 +2060,11 @@ export default function QAPilotoRealPage() {
           {/* Passo 6 */}
           {venda?.cobranca_status === "confirmada" && (
             <Card id="step-contrato" title="6. Contrato · Assinatura · Liberação" state={stepStates.contrato}>
+              {vinculoBloqueado && (
+                <div className="mb-3 rounded border border-rose-300 bg-rose-50 p-3 text-xs text-rose-800 normal-case">
+                  <strong>Continuação bloqueada:</strong> {motivoBloqueioVinculo} Use apenas a opção de arquivar piloto abaixo.
+                </div>
+              )}
               {!contrato ? (
                 <div className="flex items-center gap-2 text-xs text-neutral-600 normal-case">
                   <Loader2 className="h-4 w-4 animate-spin" /> Aguardando geração do contrato…
@@ -2034,7 +2109,7 @@ export default function QAPilotoRealPage() {
                   )}
 
                   {/* Upload assistido pela equipe */}
-                  {!arquivado && !["validated","customer_signed"].includes(contrato.status) && (
+                  {!arquivado && !vinculoBloqueado && !["validated","customer_signed"].includes(contrato.status) && (
                     <div className="mt-4 border-t border-neutral-200 pt-3 space-y-2">
                       <div className="text-xs font-semibold tracking-wide">
                         Upload assistido pela equipe (WhatsApp / e-mail / presencial)
@@ -2252,6 +2327,58 @@ export default function QAPilotoRealPage() {
           </div>
         </aside>
       </div>
+
+      <Dialog open={confirmacaoContratoAberta} onOpenChange={(open) => { setConfirmacaoContratoAberta(open); if (!open) setConfirmacaoVinculoMarcada(false); }}>
+        <DialogContent className="max-w-md bg-white border-neutral-200 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-sm uppercase tracking-wide">Confirmar cliente do contrato</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-xs normal-case text-neutral-700">
+            <div className="rounded border border-neutral-200 bg-neutral-50 p-3">
+              <div className="text-[10px] uppercase text-neutral-500 mb-1">Cliente do contrato</div>
+              <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
+              <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
+              <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
+              <div><strong>ID cliente:</strong> {cliente?.id ?? "—"}</div>
+              <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
+            </div>
+            <div className="rounded border border-amber-300 bg-amber-50 p-3">
+              <div className="text-[10px] uppercase text-amber-800 mb-1">Operador/staff</div>
+              <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
+              <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
+              <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
+              <div className="mt-2 font-semibold text-amber-900">O operador/staff NÃO é o contratante.</div>
+            </div>
+            {vinculoBloqueado ? (
+              <div className="rounded border border-rose-300 bg-rose-50 p-3 text-rose-800 font-semibold">
+                {motivoBloqueioVinculo} Arquive este piloto e gere uma nova venda para o cliente correto.
+              </div>
+            ) : (
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={confirmacaoVinculoMarcada}
+                  onChange={(e) => setConfirmacaoVinculoMarcada(e.target.checked)}
+                />
+                <span>
+                  Confirmo que o contrato será gerado para o cliente acima e que o operador/staff não é o contratante.
+                </span>
+              </label>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setConfirmacaoContratoAberta(false)} disabled={confirmandoPag}>Cancelar</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-500"
+              onClick={() => confirmarPagamento(true)}
+              disabled={confirmandoPag || !confirmacaoVinculoMarcada || vinculoBloqueado}
+            >
+              {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : "Confirmar e gerar contrato"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
