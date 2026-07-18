@@ -1078,15 +1078,12 @@ export default function QAPilotoRealPage() {
       for (const c of ((contratos ?? []) as any[])) contratoMap.set(c.venda_id, c.status);
 
       const linhas: PilotoResumo[] = ((vendas ?? []) as any[])
-        .filter((v) =>
-          String(v.status || "").toUpperCase() !== "CANCELADO" &&
-          String(v.status || "").toUpperCase() !== "CONCLUIDO" &&
-          String(v.status || "").toUpperCase() !== "CONCLUÍDO",
-        )
         .map((v) => {
           const lookup = Number(v.id_legado ?? v.id);
           const cli = cliMap.get(v.cliente_id);
           const last = ultimoPorVenda.get(v.id);
+          const statusUp = String(v.status || "").toUpperCase();
+          const arq = statusUp === "CANCELADO" || last?.tipo === "venda_arquivada_piloto";
           return {
             venda_id: v.id,
             id_legado: v.id_legado ?? null,
@@ -1099,10 +1096,14 @@ export default function QAPilotoRealPage() {
             contrato_status: contratoMap.get(lookup) ?? null,
             ultimo_evento: last?.tipo ?? null,
             ultimo_evento_at: last?.when ?? null,
+            arquivado: arq,
+            arquivado_em: arq ? (last?.when ?? null) : null,
           };
         })
         .sort((a, b) => (a.ultimo_evento_at || "") < (b.ultimo_evento_at || "") ? 1 : -1);
-      setResumos(linhas);
+      const concluidoSet = new Set(["CONCLUIDO", "CONCLUÍDO"]);
+      setResumos(linhas.filter((r) => !r.arquivado && !concluidoSet.has(String(r.status || "").toUpperCase())));
+      setResumosArquivados(linhas.filter((r) => r.arquivado));
     } catch (e: any) {
       toast.error(`Falha ao listar pilotos: ${e?.message || e}`);
     } finally {
