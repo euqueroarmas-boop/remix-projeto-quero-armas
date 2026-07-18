@@ -805,6 +805,17 @@ export default function QAPilotoRealPage() {
   // Política de notificação — Passo 5 (pagamento) e upload assistido do contrato
   const [notifPolicyPagamento, setNotifPolicyPagamento] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
   const [notifPolicyUpload, setNotifPolicyUpload] = useState<NotificacaoPolicyValue>(DEFAULT_NOTIFICACAO_POLICY);
+  // Arquivar/Reprocessar são ações internas — default = não notificar.
+  const [notifPolicyArquivar, setNotifPolicyArquivar] = useState<NotificacaoPolicyValue>({
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+    motivo_nao_notificar: "",
+  });
+  const [notifPolicyReproc, setNotifPolicyReproc] = useState<NotificacaoPolicyValue>({
+    notificar_cliente: false,
+    canais: { email: false, whatsapp: false, portal: false },
+    motivo_nao_notificar: "",
+  });
 
   const clienteIdsAceitosContrato = useMemo(() => {
     const ids = [cliente?.id, cliente?.id_legado]
