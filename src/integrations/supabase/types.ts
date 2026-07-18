@@ -7696,6 +7696,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_piloto_eventos: {
+        Row: {
+          created_at: string
+          dados_json: Json
+          id: string
+          piloto_session_id: string
+          staff_email: string | null
+          staff_user_id: string | null
+          tipo_evento: string
+          venda_id: number | null
+          venda_id_legado: number | null
+        }
+        Insert: {
+          created_at?: string
+          dados_json?: Json
+          id?: string
+          piloto_session_id: string
+          staff_email?: string | null
+          staff_user_id?: string | null
+          tipo_evento: string
+          venda_id?: number | null
+          venda_id_legado?: number | null
+        }
+        Update: {
+          created_at?: string
+          dados_json?: Json
+          id?: string
+          piloto_session_id?: string
+          staff_email?: string | null
+          staff_user_id?: string | null
+          tipo_evento?: string
+          venda_id?: number | null
+          venda_id_legado?: number | null
+        }
+        Relationships: []
+      }
       qa_prazos_procedimentos: {
         Row: {
           ativo: boolean

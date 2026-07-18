@@ -49,6 +49,7 @@ type PilotoResumo = {
 };
 
 const PILOTO_LS_KEY = "qa_piloto_ultimo_venda_id";
+const PILOTO_SESSION_LS_KEY = "qa_piloto_session_id";
 
 const FORMAS_MANUAL = [
   "PIX", "BOLETO", "CARTÃO DE CRÉDITO", "CARTÃO DE DÉBITO", "DINHEIRO", "TRANSFERÊNCIA", "OUTRO",
@@ -81,6 +82,7 @@ export default function QAPilotoRealPage() {
   const [ultimoLocal, setUltimoLocal] = useState<number | null>(null);
   const stepRefs = useRef<Record<string, HTMLElement | null>>({});
   const setStepRef = (key: string) => (el: HTMLElement | null) => { stepRefs.current[key] = el; };
+  const staffEmail = useMemo(() => (profile as any)?.email || (user as any)?.email || null, [profile, user]);
 
   /* ---------- Passo 1: Cliente ---------- */
   const [query, setQuery] = useState("");
@@ -165,6 +167,131 @@ export default function QAPilotoRealPage() {
   /* ---------- Passo 3: Venda ---------- */
   const [venda, setVenda] = useState<Venda | null>(null);
   const [criandoVenda, setCriandoVenda] = useState(false);
+
+  /* ---------- Auditoria Piloto: sessão + logger ---------- */
+  const [pilotoSessionId, setPilotoSessionId] = useState<string | null>(null);
+  useEffect(() => {
+    if (pilotoSessionId) return;
+    let sid: string | null = null;
+    try { sid = localStorage.getItem(PILOTO_SESSION_LS_KEY); } catch {}
+    if (!sid) {
+      sid = (typeof crypto !== "undefined" && (crypto as any).randomUUID)
+        ? (crypto as any).randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      try { localStorage.setItem(PILOTO_SESSION_LS_KEY, sid); } catch {}
+    }
+    setPilotoSessionId(sid);
+  }, [pilotoSessionId]);
+  const vendaRef = useRef<Venda | null>(null);
+  useEffect(() => { vendaRef.current = venda; }, [venda]);
+  const logPilotoEvento = useCallback(async (tipo: string, dados: Record<string, unknown> = {}) => {
+    try {
+      if (!pilotoSessionId) return;
+      const v = vendaRef.current;
+      await supabase.from("qa_piloto_eventos").insert({
+        piloto_session_id: pilotoSessionId,
+        venda_id: v?.id ?? null,
+        venda_id_legado: (v as any)?.id_legado ?? null,
+        tipo_evento: tipo,
+        dados_json: dados as any,
+        staff_user_id: user?.id ?? null,
+        staff_email: staffEmail,
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] insert falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId, user?.id, staffEmail]);
+  const backlinkPilotoEventos = useCallback(async (vId: number, vIdLegado: number | null) => {
+    try {
+      if (!pilotoSessionId) return;
+      await supabase
+        .from("qa_piloto_eventos")
+        .update({ venda_id: vId, venda_id_legado: vIdLegado ?? null })
+        .eq("piloto_session_id", pilotoSessionId)
+        .is("venda_id", null);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("[piloto-eventos] backlink falhou", (e as any)?.message || e);
+    }
+  }, [pilotoSessionId]);
+
+  // piloto_iniciado: dispara uma vez por sessão quando NÃO estamos em piloto restaurado.
+  const iniciadoLogadoRef = useRef(false);
+  useEffect(() => {
+    if (iniciadoLogadoRef.current) return;
+    if (!pilotoSessionId) return;
+    if (hidratando) return;
+    if (venda) return; // Piloto restaurado — não é "iniciado".
+    iniciadoLogadoRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    logPilotoEvento("piloto_iniciado", {
+      origem: "wizard_piloto_real",
+      via: params.get("venda_id") || params.get("id_legado") ? "url" : "novo",
+    });
+  }, [pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // cliente_selecionado / troca de cliente (antes da venda).
+  const clienteAnteriorRef = useRef<Cliente | null>(null);
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const prev = clienteAnteriorRef.current;
+    if (cliente && (!prev || prev.id !== cliente.id)) {
+      logPilotoEvento("cliente_selecionado", {
+        cliente_id: cliente.id,
+        cliente_id_legado: cliente.id_legado,
+        nome: cliente.nome_completo,
+        cpf: cliente.cpf,
+        email: cliente.email,
+        cliente_anterior: prev ? { cliente_id: prev.id, nome: prev.nome_completo } : null,
+      });
+    }
+    clienteAnteriorRef.current = cliente;
+  }, [cliente, pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // servico_principal_selecionado (antes da venda).
+  const servicoAnteriorRef = useRef<Servico | null>(null);
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const prev = servicoAnteriorRef.current;
+    if (servico && (!prev || prev.id !== servico.id)) {
+      logPilotoEvento("servico_principal_selecionado", {
+        servico_id: servico.id,
+        slug: servico.slug,
+        nome: servico.nome,
+        valor_catalogo: servico.preco,
+        servico_anterior: prev ? { servico_id: prev.id, slug: prev.slug, nome: prev.nome } : null,
+      });
+    }
+    servicoAnteriorRef.current = servico;
+  }, [servico, pilotoSessionId, hidratando, venda, logPilotoEvento]);
+
+  // servico_adicional_adicionado / removido (antes da venda).
+  const extrasIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!pilotoSessionId || hidratando || venda) return;
+    const atual = new Set(itensExtras.map((i) => i.servico.id));
+    const anteriores = extrasIdsRef.current;
+    // adições
+    for (const it of itensExtras) {
+      if (!anteriores.has(it.servico.id)) {
+        logPilotoEvento("servico_adicional_adicionado", {
+          servico_id: it.servico.id,
+          slug: it.servico.slug,
+          nome: it.servico.nome,
+          valor_catalogo: it.servico.preco,
+          preco_aplicado_str: it.precoStr,
+        });
+      }
+    }
+    // remoções
+    for (const idAnt of anteriores) {
+      if (!atual.has(idAnt)) {
+        logPilotoEvento("servico_adicional_removido", { servico_id: idAnt });
+      }
+    }
+    extrasIdsRef.current = atual;
+  }, [itensExtras, pilotoSessionId, hidratando, venda, logPilotoEvento]);
 
   /* ---------- Passo 3b: Preço negociado ---------- */
   const TIPOS_AJUSTE = [
@@ -404,6 +531,20 @@ export default function QAPilotoRealPage() {
     }
     setCriandoVenda(true);
     try {
+      // Snapshot do modo de exibição do contrato ANTES de criar a venda.
+      if (temExtras) {
+        await logPilotoEvento("modo_exibicao_contrato_selecionado", {
+          modo: modoExibicao,
+          ocultar_precos_individuais: modoPacote,
+          valor_final_pacote: modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
+          motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
+          tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
+          total_catalogo: precoCatalogo,
+          custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0 ? custosEmbutidosTotal : null,
+          adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
+          parcelas: modoPacoteCustoFin ? parcelasPacote : null,
+        });
+      }
       let evPath = evidenciaPath;
       if (precoDiferente && evidenciaFile && !evPath) {
         try { evPath = await uploadEvidencia(); } catch (e: any) {
@@ -481,13 +622,28 @@ export default function QAPilotoRealPage() {
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_criar_venda");
       toast.success(`Venda #${(data as any).venda_id} criada`);
+      const novaVendaId = Number((data as any).venda_id);
+      const novaVendaIdLegado = (data as any)?.id_legado != null ? Number((data as any).id_legado) : null;
+      await backlinkPilotoEventos(novaVendaId, novaVendaIdLegado);
+      await logPilotoEvento("venda_criada_checkout_piloto", {
+        venda_id: novaVendaId,
+        id_legado: novaVendaIdLegado,
+        cliente_id: cliente.id,
+        cliente_id_legado: cliente.id_legado,
+        operador_user_id: user?.id ?? null,
+        operador_email: staffEmail,
+        itens: [
+          { servico_id: servico.id, slug: servico.slug, nome: servico.nome, preco: precoAplicadoPrincipal },
+          ...extrasAvaliados.map((e) => ({ servico_id: e.ie.servico.id, slug: e.ie.servico.slug, nome: e.ie.servico.nome, preco: e.aplicado })),
+        ],
+      });
       await recarregarVenda((data as any).venda_id);
     } catch (e: any) {
       toast.error(`Erro ao criar venda: ${e?.message || e}`);
     } finally {
       setCriandoVenda(false);
     }
-  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal]);
+  }, [cliente, servico, itensExtras, precoValido, precoDiferente, motivoOk, motivoPacoteOk, confirmadoPreco, evidenciaPath, evidenciaFile, uploadEvidencia, precoAplicadoPrincipal, extrasAvaliados, motivoPreco, tipoAjuste, modoExibicao, modoPacote, modoPacoteCustoFin, valorFinalPacoteNum, motivoPacote, temExtras, temDiferencaPacote, tipoDiferencaPacote, precoCatalogo, diferencaPacoteValor, custoFinanceiroAdquirente, adquirentePacote, parcelasPacote, valorParcelaPacote, valorContratadoPacote, custosEmbutidosValidos, custosEmbutidosTotal, logPilotoEvento, backlinkPilotoEventos, user?.id, staffEmail]);
 
   const recarregarVenda = useCallback(async (id: number) => {
     const { data } = await supabase
@@ -507,13 +663,18 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.rpc("qa_venda_aprovar_valor", { p_venda_id: venda.id });
       if (error) throw error;
       toast.success("Valor aprovado (evento registrado)");
+      await logPilotoEvento("valor_aprovado_piloto", {
+        venda_id: venda.id,
+        valor_a_pagar: venda.valor_a_pagar,
+        origem: "piloto_real",
+      });
       await recarregarVenda(venda.id);
     } catch (e: any) {
       toast.error(`Falha ao aprovar valor: ${e?.message || e}`);
     } finally {
       setAprovando(false);
     }
-  }, [venda, recarregarVenda]);
+  }, [venda, recarregarVenda, logPilotoEvento]);
 
   /* ---------- Passo 5/6: Pagamento Manual + Contrato ---------- */
   const [contrato, setContrato] = useState<Contrato | null>(null);
@@ -596,6 +757,21 @@ export default function QAPilotoRealPage() {
     try {
       const path = comprovantePath || (await uploadComprovante());
       if (!path) throw new Error("comprovante_upload_falhou");
+      const valorBrutoNum = (() => { const n = parseMoney(valorBrutoStr); return Number.isFinite(n) && n > 0 ? n : null; })();
+      await logPilotoEvento("pagamento_manual_confirmado_piloto", {
+        venda_id: venda.id,
+        forma_pagamento: forma,
+        parcelas,
+        adquirente: adquirente.trim() || null,
+        valor_bruto_parcelado: valorBrutoNum,
+        valor_parcela: valorBrutoNum && parcelas > 0 ? Number((valorBrutoNum / parcelas).toFixed(2)) : null,
+        comprovante_path: path,
+        observacao_len: observacao.trim().length,
+      });
+      await logPilotoEvento("contrato_geracao_iniciada", {
+        venda_id: venda.id,
+        via: "pipeline_pos_pagamento",
+      });
       const { data, error } = await supabase.functions.invoke("qa-venda-confirmar-pagamento-manual", {
         body: {
           venda_id: venda.id,
@@ -625,7 +801,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setConfirmandoPag(false);
     }
-  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado]);
+  }, [venda, forma, parcelas, observacao, comprovante, comprovantePath, adquirente, valorBrutoStr, uploadComprovante, vinculoBloqueado, logPilotoEvento]);
 
   /* ---------- Passo 6: Contrato + Liberação ---------- */
   const recarregarContrato = useCallback(async (vendaId: number) => {
@@ -904,6 +1080,12 @@ export default function QAPilotoRealPage() {
     if (obsAssinado.trim().length < 20) { toast.error("Observação mínima de 20 caracteres."); return; }
     setEnviandoAssinado(true);
     try {
+      await logPilotoEvento("contrato_upload_assistido_iniciado", {
+        contrato_id: contrato.id,
+        origem: origemAssinado,
+        tamanho_arquivo: assinado.size,
+        nome_arquivo: assinado.name,
+      });
       const fd = new FormData();
       fd.append("contract_id", contrato.id);
       fd.append("file", assinado);
@@ -912,6 +1094,10 @@ export default function QAPilotoRealPage() {
       const { data, error } = await supabase.functions.invoke("qa-piloto-upload-contrato-staff", { body: fd });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_upload_assistido");
+      await logPilotoEvento("contrato_validacao_iniciada", {
+        contrato_id: contrato.id,
+        via: "qa-piloto-upload-contrato-staff",
+      });
       toast.success("Contrato enviado (staff-assistido). Validação oficial acionada.");
       setAssinado(null); setObsAssinado("");
       await recarregarContrato(venda.id);
@@ -920,7 +1106,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setEnviandoAssinado(false);
     }
-  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato]);
+  }, [contrato, venda, assinado, obsAssinado, origemAssinado, recarregarContrato, logPilotoEvento]);
 
   /* ---------- Arquivar piloto ---------- */
   const [motivoArq, setMotivoArq] = useState("");
@@ -940,6 +1126,11 @@ export default function QAPilotoRealPage() {
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
       toast.success((data as any)?.ja_arquivada ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      await logPilotoEvento("piloto_arquivado", {
+        venda_id: venda.id,
+        motivo_len: motivoArq.trim().length,
+        ja_arquivada: !!(data as any)?.ja_arquivada,
+      });
       setArquivado(true);
       await recarregarVenda(venda.id);
       await recarregarContrato(venda.id);
@@ -948,12 +1139,56 @@ export default function QAPilotoRealPage() {
     } finally {
       setArquivando(false);
     }
-  }, [venda, motivoArq, recarregarVenda, recarregarContrato]);
+  }, [venda, motivoArq, recarregarVenda, recarregarContrato, logPilotoEvento]);
+
+  /* ---------- Observadores de transição (contrato/processos) ---------- */
+  const contratoStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const anterior = contratoStatusRef.current;
+    const atual = contrato?.status ?? null;
+    if (atual && atual !== anterior) {
+      if (atual === "validated") {
+        logPilotoEvento("contrato_validado", { contrato_id: contrato?.id, status: atual });
+      }
+    }
+    contratoStatusRef.current = atual;
+  }, [contrato?.status, contrato?.id, logPilotoEvento]);
+
+  const processosSnapshotRef = useRef<string>("");
+  const pilotoConcluidoLogadoRef = useRef(false);
+  useEffect(() => {
+    if (!processos || processos.length === 0) return;
+    const key = processos.map((p) => `${p.id}:${p.status ?? ""}`).sort().join("|");
+    if (key === processosSnapshotRef.current) return;
+    const anterior = processosSnapshotRef.current;
+    processosSnapshotRef.current = key;
+    // Só loga transição, não estado inicial da hidratação.
+    if (!anterior) return;
+    const liberados = processos.filter((p) => {
+      const s = String(p.status || "").toLowerCase();
+      return s && !["pending", "aguardando", "bloqueado", "cancelado"].includes(s);
+    });
+    if (liberados.length > 0) {
+      logPilotoEvento("processo_checklist_liberado", {
+        total: processos.length,
+        liberados: liberados.length,
+        detalhe: processos.map((p) => ({ processo_id: p.id, status: p.status })),
+      });
+      if (!pilotoConcluidoLogadoRef.current && liberados.length === processos.length && contrato?.status === "validated") {
+        pilotoConcluidoLogadoRef.current = true;
+        logPilotoEvento("piloto_concluido", {
+          venda_id: venda?.id,
+          contrato_id: contrato?.id,
+          processos: processos.length,
+        });
+      }
+    }
+  }, [processos, contrato?.status, contrato?.id, venda?.id, logPilotoEvento]);
 
   /* ---------- Smoke test ---------- */
   /* ---------- Auditoria (somente leitura) ---------- */
   type AuditRow = {
-    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos";
+    fonte: "qa_venda_eventos" | "qa_pagamento_auditoria" | "qa_contract_events" | "qa_processo_eventos" | "qa_piloto_eventos";
     id: string;
     created_at: string;
     tipo: string;
@@ -971,7 +1206,7 @@ export default function QAPilotoRealPage() {
     setCarregandoAudit(true);
     try {
       const processoIds = processos.map((p) => p.id);
-      const [ve, pa, ce, pe] = await Promise.all([
+      const [ve, pa, ce, pe, pil] = await Promise.all([
         supabase
           .from("qa_venda_eventos")
           .select("id, created_at, tipo_evento, ator, user_id, dados_json, venda_id")
@@ -1000,8 +1235,37 @@ export default function QAPilotoRealPage() {
               .order("created_at", { ascending: false })
               .limit(200)
           : Promise.resolve({ data: [], error: null } as any),
+        (() => {
+          // qa_piloto_eventos: por venda_id + venda_id_legado + session_id (para eventos pré-venda).
+          const lookupLegado = Number((venda as any)?.id_legado ?? venda.id);
+          const filtros = [
+            `venda_id.eq.${venda.id}`,
+            `venda_id_legado.eq.${lookupLegado}`,
+          ];
+          if (pilotoSessionId) filtros.push(`piloto_session_id.eq.${pilotoSessionId}`);
+          return supabase
+            .from("qa_piloto_eventos")
+            .select("id, created_at, tipo_evento, dados_json, staff_user_id, staff_email, venda_id, venda_id_legado, piloto_session_id")
+            .or(filtros.join(","))
+            .order("created_at", { ascending: false })
+            .limit(400);
+        })(),
       ]);
       const rows: AuditRow[] = [];
+      for (const r of ((pil as any).data ?? []) as any[]) {
+        rows.push({
+          fonte: "qa_piloto_eventos",
+          id: `pil:${r.id}`,
+          created_at: r.created_at,
+          tipo: r.tipo_evento,
+          ator: r.staff_email ?? null,
+          user_id: r.staff_user_id ?? null,
+          ref: r.venda_id
+            ? `venda #${r.venda_id}`
+            : `sessão ${String(r.piloto_session_id || "").slice(0, 8)}`,
+          dados: r.dados_json,
+        });
+      }
       for (const r of (ve.data ?? []) as any[]) {
         rows.push({
           fonte: "qa_venda_eventos",
@@ -1057,7 +1321,7 @@ export default function QAPilotoRealPage() {
     } finally {
       setCarregandoAudit(false);
     }
-  }, [venda, contrato, processos]);
+  }, [venda, contrato, processos, pilotoSessionId]);
 
   useEffect(() => {
     if (venda) carregarAuditoria();
@@ -1160,7 +1424,10 @@ export default function QAPilotoRealPage() {
                     type="button"
                     className="text-[11px] underline hover:no-underline"
                     onClick={() => {
-                      try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
+                      try {
+                        localStorage.removeItem(PILOTO_LS_KEY);
+                        localStorage.removeItem(PILOTO_SESSION_LS_KEY);
+                      } catch {}
                       const url = new URL(window.location.href);
                       url.searchParams.delete("venda_id");
                       url.searchParams.delete("id_legado");
