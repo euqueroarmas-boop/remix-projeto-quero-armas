@@ -1242,6 +1242,10 @@ export default function QAPilotoRealPage() {
     if (!contrato || !venda) return;
     if (!assinado) { toast.error("Anexe o PDF do contrato assinado."); return; }
     if (obsAssinado.trim().length < 20) { toast.error("Observação mínima de 20 caracteres."); return; }
+    if (!policyIsValid(notifPolicyUpload)) {
+      toast.error("Defina a política de notificação (motivo mínimo 20 caracteres quando não notificar).");
+      return;
+    }
     setEnviandoAssinado(true);
     try {
       await logPilotoEvento("contrato_upload_assistido_iniciado", {
@@ -1255,6 +1259,7 @@ export default function QAPilotoRealPage() {
       fd.append("file", assinado);
       fd.append("observacao", obsAssinado.trim());
       fd.append("origem", `piloto_real_staff_assistido:${origemAssinado}`);
+      fd.append("notificacao_policy", JSON.stringify(toBackendPolicy(notifPolicyUpload)));
       const { data, error } = await supabase.functions.invoke("qa-piloto-upload-contrato-staff", { body: fd });
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_upload_assistido");
