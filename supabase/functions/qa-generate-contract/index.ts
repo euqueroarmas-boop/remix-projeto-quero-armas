@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
   // Carrega venda
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
-    .select("id, id_legado, cliente_id, status, valor_aprovado, valor_a_pagar, data_cadastro")
+    .select("id, id_legado, cliente_id, status, valor_aprovado, valor_a_pagar, data_cadastro, valor_total_pago_cliente, composicao_valor_final, pagamento_parcelas, pagamento_adquirente, pagamento_valor_parcela, pagamento_valor_total_parcelado")
     .eq("id_legado", vendaId)
     .maybeSingle();
   if (vErr || !venda) return jsonResp({ error: "Venda não encontrada" }, 404);
