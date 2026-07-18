@@ -200,6 +200,16 @@ export default function QAPilotoRealPage() {
   type CustoEmbutido = { descricao: string; valorStr: string };
   const [custosEmbutidos, setCustosEmbutidos] = useState<CustoEmbutido[]>([]);
 
+  // Snapshot da decisão de exibição do contrato (persistida em qa_venda_eventos).
+  // Preenchida na hidratação para que o Passo 2 continue mostrando corretamente
+  // "pacote fechado" / "itens separados" depois de fechar e reabrir a aba.
+  type ExibicaoContratoSnapshot = {
+    modo: "itens_separados" | "pacote_fechado";
+    valor_final_pacote: number | null;
+    ocultar_precos_individuais_no_contrato: boolean;
+  } | null;
+  const [exibicaoContratoSnap, setExibicaoContratoSnap] = useState<ExibicaoContratoSnapshot>(null);
+
   // Ao trocar serviço, sugerimos o preço do catálogo como padrão.
   useEffect(() => {
     if (servico) {
