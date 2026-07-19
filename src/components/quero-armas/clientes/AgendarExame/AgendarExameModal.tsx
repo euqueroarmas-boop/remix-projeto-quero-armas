@@ -10,6 +10,7 @@ type Props = {
   tipo: "psicologo" | "instrutor_tiro";
   cep?: string | null;
   uf?: string | null;
+  cidade?: string | null;
   onVerListaCompleta?: () => void;
 };
 
@@ -18,7 +19,7 @@ const TITULO = {
   instrutor_tiro: "INSTRUTORES DE TIRO CREDENCIADOS PELA PF",
 };
 
-export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaCompleta }: Props) {
+export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerListaCompleta }: Props) {
   const [raio, setRaio] = useState(50);
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
@@ -37,6 +38,9 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
   const error = isInstrutor ? iat.error : psico.error;
   const origin = isInstrutor ? iat.data?.origin || null : psico.origin;
   const ufResolved = (origin?.uf || uf || iat.data?.uf || "").toUpperCase();
+  const cidadeCadastro = String(cidade || "").trim();
+  const cidadeResolved = cidadeCadastro || origin?.cidade || "";
+  const cidadeUfLabel = cidadeResolved && ufResolved ? `${cidadeResolved.toUpperCase()}/${ufResolved}` : "";
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
   const iatMode = iat.data?.mode || null;
   const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
@@ -80,10 +84,12 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, onVerListaComp
         <header style={{ padding: "16px 20px", borderBottom: "1px solid #e3e3e1", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div>
             <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, fontWeight: 700, color: "#7A1F2B", letterSpacing: ".22em" }}>AGENDAR EXAME</div>
-            <h2 style={{ margin: "4px 0 0", fontFamily: "Oswald, sans-serif", fontSize: 16, color: "#0A0A0A", letterSpacing: ".06em" }}>{TITULO[tipo]}</h2>
+            <h2 style={{ margin: "4px 0 0", fontFamily: "Oswald, sans-serif", fontSize: 16, color: "#0A0A0A", letterSpacing: ".06em" }}>
+              {TITULO[tipo]}{cidadeUfLabel ? ` EM ${cidadeUfLabel}` : ""}
+            </h2>
             <div style={{ fontSize: 11, color: "#6A6A6A", marginTop: 6 }}>
               Fonte: <a href={tipo === "psicologo" ? "https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados" : "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados"} target="_blank" rel="noreferrer" style={{ color: "#7A1F2B" }}>gov.br/PF</a>
-              {origin?.cidade ? ` · próximos de ${origin.cidade}/${origin.uf}` : ""}
+              {cidadeUfLabel ? ` · próximos de ${cidadeUfLabel}` : ""}
             </div>
           </div>
           <button onClick={onClose} aria-label="Fechar" style={{ border: 0, background: "transparent", fontSize: 22, cursor: "pointer", color: "#6A6A6A" }}>×</button>

@@ -462,6 +462,7 @@ export default function ClienteResumoKanban({
   const navigate = useNavigate();
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
+  const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
 
   const filteredUrgents = useMemo(
     () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
@@ -711,12 +712,14 @@ export default function ClienteResumoKanban({
           tipo={exameModal.tipo}
           cep={clienteCep}
           uf={clienteUf}
+          cidade={clienteCidade}
           onClose={() => setExameModal(null)}
           onVerListaCompleta={() => {
             const qs = new URLSearchParams();
             qs.set("tipo", exameModal.tipo);
             if (clienteCep) qs.set("cep", String(clienteCep));
             if (clienteUf) qs.set("uf", String(clienteUf));
+            if (clienteCidade) qs.set("cidade", String(clienteCidade));
             navigate(`/area-do-cliente/agendar-exame?${qs.toString()}`);
             setExameModal(null);
           }}
