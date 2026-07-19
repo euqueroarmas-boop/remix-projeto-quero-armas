@@ -201,7 +201,9 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
 
     const hash = await sha256(`${uf}|${nome.toLowerCase()}|${registro}|${endereco || ""}`);
     entries.push({
-      uf, cidade, bairro,
+      // No portal da PF, o "heading" (bairro) representa o município
+      // (ex.: EMBU-GUAÇU, ITAPEVA...). Salvamos como cidade para o geocoder.
+      uf, cidade: cidade || bairro, bairro,
       nome, registro, endereco, telefones, emails,
       validade, validade_label,
       source_url: sourceUrl, raw_block: block.slice(0, 1000), hash_conteudo: hash,
