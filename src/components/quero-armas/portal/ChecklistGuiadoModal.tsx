@@ -9,6 +9,7 @@
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
@@ -29,6 +30,7 @@ import {
   Loader2,
   PartyPopper,
   RotateCcw,
+  Search,
   ShieldCheck,
   Sparkles,
   Upload,
@@ -175,6 +177,41 @@ function arquivoPareceCertidaoAlteracaoNome(file: File): boolean {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
   return /(certidao|casamento|nascimento|averbac|averbad|alteracao.*nome|nome.*alteracao)/.test(nome);
+}
+
+type GuiaCredenciadoConfig = {
+  tipo: "psicologo" | "instrutor_tiro";
+  titulo: string;
+  descricao: string;
+  cta: string;
+};
+
+function normalizarTextoBusca(valor: string | null | undefined): string {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getGuiaCredenciadoConfig(doc: Pick<GuiaDoc, "tipo_documento" | "nome_documento" | "instrucoes"> | null | undefined): GuiaCredenciadoConfig | null {
+  const texto = normalizarTextoBusca(`${doc?.tipo_documento || ""} ${doc?.nome_documento || ""} ${doc?.instrucoes || ""}`);
+  if (/psicolog|laudo psic/.test(texto)) {
+    return {
+      tipo: "psicologo",
+      titulo: "Encontre um psicólogo credenciado pela PF",
+      descricao: "Use a busca oficial já integrada para localizar profissionais próximos antes de anexar o laudo.",
+      cta: "Buscar psicólogos",
+    };
+  }
+  if (/capacidade tecnica|exame de tiro|instrutor|armamento e tiro|iat/.test(texto)) {
+    return {
+      tipo: "instrutor_tiro",
+      titulo: "Encontre um instrutor de tiro credenciado pela PF",
+      descricao: "Use a busca oficial já integrada para localizar instrutores próximos antes de anexar o atestado.",
+      cta: "Buscar instrutores",
+    };
+  }
+  return null;
 }
 
 type Fase =
@@ -2205,6 +2242,7 @@ function DocumentoView({
     regra_validacao: (doc as any).regra_validacao ?? null,
   });
   const isCertidaoAltNome = ehCertidaoAlteracaoNome(doc);
+  const credenciadoConfig = getGuiaCredenciadoConfig(doc);
 
   const [externalLinks, setExternalLinks] = useState<Array<{
     id: string; nome_botao: string; url: string; descricao: string | null;
@@ -2412,6 +2450,40 @@ function DocumentoView({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {credenciadoConfig && (
+        <div className="mt-4 rounded-2xl border border-[#D9E3F0] bg-[#F7FAFC] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#7A1F2B] shadow-sm">
+                <Search className="h-4.5 w-4.5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                  Profissionais credenciados
+                </div>
+                <div className="mt-1 text-sm font-bold text-slate-900">
+                  {credenciadoConfig.titulo}
+                </div>
+                <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
+                  {credenciadoConfig.descricao}
+                </p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Base legal: Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311.
+                </p>
+              </div>
+            </div>
+            <Link
+              to={`/area-do-cliente/agendar-exame?tipo=${credenciadoConfig.tipo}`}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-sm transition hover:brightness-95"
+              style={{ background: MARROM }}
+            >
+              {credenciadoConfig.cta}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
       )}
