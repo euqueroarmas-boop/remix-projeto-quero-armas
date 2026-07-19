@@ -20,6 +20,7 @@ export type CredenciadoIAT = {
 export type BuscarIATParams = {
   cep?: string;
   uf?: string;
+  cidade?: string;
   busca?: string;
   raio_km?: number;
   limit?: number;
@@ -50,7 +51,7 @@ export function useCredenciadosIAT(params: BuscarIATParams | null) {
       setData(null);
       return;
     }
-    const body = { ...p, cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf || undefined, busca: (p.busca || "").trim() || undefined };
+    const body = { ...p, cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf || undefined, cidade: (p.cidade || "").trim() || undefined, busca: (p.busca || "").trim() || undefined };
     setLoading(true); setError(null);
     try {
       const { data, error } = await supabase.functions.invoke("qa-iat-credenciados-buscar", { body });
@@ -65,7 +66,7 @@ export function useCredenciadosIAT(params: BuscarIATParams | null) {
   useEffect(() => {
     if (params) run(params);
     else { setLoading(false); setError(null); setData(null); }
-  }, [params?.cep, params?.uf, params?.busca, params?.raio_km, params?.limit]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [params?.cep, params?.uf, params?.cidade, params?.busca, params?.raio_km, params?.limit]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { loading, error, data, refetch: run };
 }
