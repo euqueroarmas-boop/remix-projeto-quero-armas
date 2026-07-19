@@ -13,7 +13,7 @@ const MAX_TENTATIVAS = 3;
 async function processarLote(supabase: any, batchSize: number, uf?: string) {
   let q = supabase
     .from("qa_psico_credenciados")
-    .select("id, uf, endereco, cidade, bairro, geocode_tentativas")
+    .select("id, uf, endereco, geocode_tentativas")
     .is("latitude", null)
     .or("geocode_falhou.is.null,geocode_falhou.eq.false")
     .lt("geocode_tentativas", MAX_TENTATIVAS)
@@ -31,13 +31,7 @@ async function processarLote(supabase: any, batchSize: number, uf?: string) {
   for (const r of rows) {
     const tentativas = (r.geocode_tentativas ?? 0) + 1;
     try {
-      // Compõe cidade/UF no endereço, pois a lista da PF só traz rua+bairro
-      // e sem cidade o Nominatim cai na primeira rua homônima do estado.
-      const cidadeHint = r.cidade || r.bairro || "";
-      const enderecoBusca = cidadeHint
-        ? `${r.endereco}, ${cidadeHint}/${r.uf}`
-        : r.endereco;
-      const meta = await geocodeEnderecoMeta(supabase, enderecoBusca, r.uf);
+      const meta = await geocodeEnderecoMeta(supabase, r.endereco, r.uf);
       if (meta.result) {
         await supabase.from("qa_psico_credenciados")
           .update({

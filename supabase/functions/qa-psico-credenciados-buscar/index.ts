@@ -120,14 +120,12 @@ Deno.serve(async (req) => {
     if (ufFiltro) {
       const { data: pendentes } = await supabase
         .from("qa_psico_credenciados")
-        .select("id,endereco,uf,cidade,bairro")
+        .select("id,endereco,uf")
         .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
         .is("latitude", null).not("endereco", "is", null)
         .limit(MAX_GEOCODE_PER_CALL);
       for (const e of pendentes || []) {
-        const cidadeHint = e.cidade || e.bairro || "";
-        const enderecoBusca = cidadeHint ? `${e.endereco}, ${cidadeHint}/${e.uf}` : e.endereco;
-        const g = await geocodeEndereco(supabase, enderecoBusca, e.uf);
+        const g = await geocodeEndereco(supabase, e.endereco, e.uf);
         if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
         await nominatimDelay();
       }
