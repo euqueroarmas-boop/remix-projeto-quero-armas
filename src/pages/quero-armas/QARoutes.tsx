@@ -71,6 +71,7 @@ const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"),
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
 const ResumoClienteKanbanMockPage = lazyRetry(() => import("./mocks/ResumoClienteKanbanMockPage"), "ResumoClienteKanbanMockPage");
 const ResumoClienteFocoMockPage = lazyRetry(() => import("./mocks/ResumoClienteFocoMockPage"), "ResumoClienteFocoMockPage");
+const MotorPendenciasMockPage = lazyRetry(() => import("./mocks/MotorPendenciasMockPage"), "MotorPendenciasMockPage");
 const QAEmailMockupsPage = lazyRetry(() => import("./QAEmailMockupsPage"), "QAEmailMockupsPage");
 // ============================================================================
 // DEV-ONLY: Bancada visual do Wizard KYC (DocumentDataOnboardingWizard).
@@ -170,6 +171,7 @@ export default function QARoutes() {
         <Route path="mocks/resumo-cliente-kanban.html" element={<ResumoClienteKanbanMockPage />} />
         <Route path="mocks/resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
         <Route path="mocks/resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
+        <Route path="mocks/motor-pendencias" element={<MotorPendenciasMockPage />} />
         <Route path="email-mockups" element={<QAEmailMockupsPage />} />
         <Route path="resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
         <Route path="resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
