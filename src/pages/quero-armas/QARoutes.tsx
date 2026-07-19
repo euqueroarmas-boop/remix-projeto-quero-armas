@@ -66,6 +66,7 @@ const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoe
 const QAClienteAgendarExamePage = lazyRetry(() => import("./QAClienteAgendarExamePage"), "QAClienteAgendarExamePage");
 const QAAgendarExameMockupsPage = lazyRetry(() => import("./QAAgendarExameMockupsPage"), "QAAgendarExameMockupsPage");
 const QAAgendarExameMockupsV2Page = lazyRetry(() => import("./QAAgendarExameMockupsV2Page"), "QAAgendarExameMockupsV2Page");
+const QAChecklistGuiadoMockupsPage = lazyRetry(() => import("./QAChecklistGuiadoMockupsPage"), "QAChecklistGuiadoMockupsPage");
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
 const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"), "QAPrazosExpiradosPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
@@ -247,6 +248,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/agendar-exame" element={<QAScope><QAClienteAgendarExamePage /></QAScope>} />
         <Route path="area-do-cliente/agendar-exame/mockups" element={<QAScope><QAAgendarExameMockupsPage /></QAScope>} />
         <Route path="area-do-cliente/agendar-exame/mockups-v2" element={<QAScope><QAAgendarExameMockupsV2Page /></QAScope>} />
+        <Route path="area-do-cliente/checklist-guiado/mockups" element={<QAScope><QAChecklistGuiadoMockupsPage /></QAScope>} />
         <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}
