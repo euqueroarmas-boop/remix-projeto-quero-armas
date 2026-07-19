@@ -44,6 +44,13 @@ function buscaMatch(row: any, busca: string): boolean {
   ].some((v) => normBusca(v).includes(q));
 }
 
+function cidadeMatch(row: any, cidade: string): boolean {
+  if (!cidade) return true;
+  const q = normBusca(cidade);
+  return [row?.cidade, row?.bairro, row?.endereco]
+    .some((v) => normBusca(v).includes(q));
+}
+
 function distanciaKm(a: { lat: number; lng: number } | null, b: { latitude?: number | null; longitude?: number | null }): number | null {
   if (!a || !a.lat || !a.lng || !b.latitude || !b.longitude) return null;
   const toRad = (n: number) => (n * Math.PI) / 180;
@@ -102,6 +109,7 @@ Deno.serve(async (req) => {
     const limit: number = Math.min(Number(body.limit) || 20, 100);
     const incluirVencidos: boolean = Boolean(body.incluir_vencidos);
     const busca = sanitizeBusca(body.busca || body.q || body.search);
+    const cidadeFiltro = sanitizeBusca(body.cidade);
 
     if (!tipo || !["psicologo", "instrutor_tiro"].includes(tipo)) return json({ error: "tipo inválido" }, 400);
 
@@ -121,6 +129,30 @@ Deno.serve(async (req) => {
         if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
         await nominatimDelay();
       }
+    }
+
+    if (cidadeFiltro && ufFiltro) {
+      let q = supabase
+        .from("qa_psico_credenciados")
+        .select("*")
+        .eq("tipo", tipo)
+        .eq("uf", String(ufFiltro).toUpperCase())
+        .eq("ativo", true)
+        .order("nome")
+        .limit(1000);
+      if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
+      const { data, error } = await q;
+      if (error) throw error;
+      const results = (data || [])
+        .filter((r: any) => cidadeMatch(r, cidadeFiltro))
+        .filter((r: any) => buscaMatch(r, busca))
+        .map((r: any) => ({ ...r, distancia_km: distanciaKm(origin, r) }))
+        .sort((a: any, b: any) => {
+          if (a.distancia_km != null || b.distancia_km != null) return (a.distancia_km ?? 1e9) - (b.distancia_km ?? 1e9);
+          return String(a.nome || "").localeCompare(String(b.nome || ""));
+        })
+        .slice(0, limit);
+      return json({ ok: true, origin, cidade: cidadeFiltro, fora_do_raio: false, raio_km, results, count: results.length });
     }
 
     if (busca) {

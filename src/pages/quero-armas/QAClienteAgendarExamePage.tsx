@@ -23,19 +23,21 @@ export default function QAClienteAgendarExamePage() {
   const [tipo, setTipo] = useState<"psicologo" | "instrutor_tiro">(tipoInicial);
   const [cep, setCep] = useState<string>(params.get("cep") || "");
   const [uf, setUf] = useState<string>(params.get("uf") || "");
+  const [cidade, setCidade] = useState<string>(params.get("cidade") || "");
   const [raio, setRaio] = useState<number>(50);
   const [incluirVencidos, setIncluirVencidos] = useState(false);
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    if (cep || uf) return;
+    if (cep || uf || cidade) return;
     (async () => {
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user?.user) return;
-        const { data } = await supabase.from("qa_clientes").select("cep,estado").eq("user_id", user.user.id).maybeSingle();
+        const { data } = await supabase.from("qa_clientes").select("cep,cidade,estado").eq("user_id", user.user.id).maybeSingle();
         if ((data as any)?.cep) setCep(String((data as any).cep));
-        else if ((data as any)?.estado) setUf(String((data as any).estado).toUpperCase());
+        if ((data as any)?.cidade) setCidade(String((data as any).cidade));
+        if ((data as any)?.estado) setUf(String((data as any).estado).toUpperCase());
       } catch { /* noop */ }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -44,27 +46,30 @@ export default function QAClienteAgendarExamePage() {
   const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
   const buscaTexto = busca.trim();
+  const cidadeTexto = cidade.trim();
 
   const psicoParams = useMemo(() => {
     if (isInstrutor) return null;
-    if (!cepValido && !uf && !buscaTexto) return null;
+    if (!cepValido && !uf && !cidadeTexto && !buscaTexto) return null;
     return {
       tipo: "psicologo" as const,
       cep: cepValido ? cepLimpo : undefined,
       uf: !cepValido && uf ? uf : undefined,
+      cidade: cidadeTexto || undefined,
       busca: buscaTexto || undefined,
       raio_km: raio,
       limit: buscaTexto ? 100 : 50,
       incluir_vencidos: incluirVencidos,
     };
-  }, [isInstrutor, cepValido, cepLimpo, uf, buscaTexto, raio, incluirVencidos]);
+  }, [isInstrutor, cepValido, cepLimpo, uf, cidadeTexto, buscaTexto, raio, incluirVencidos]);
   const iatParams = useMemo(() => (isInstrutor && (cepValido || uf)) ? ({
     cep: cepValido ? cepLimpo : undefined,
     uf: !cepValido && uf ? uf : undefined,
+    cidade: cidadeTexto || undefined,
     busca: buscaTexto || undefined,
     raio_km: raio,
     limit: 100,
-  }) : null, [isInstrutor, cepValido, cepLimpo, uf, buscaTexto, raio]);
+  }) : null, [isInstrutor, cepValido, cepLimpo, uf, cidadeTexto, buscaTexto, raio]);
 
   const psico = useCredenciadosPsico(psicoParams as any);
   const iat = useCredenciadosIAT(iatParams);
@@ -161,7 +166,11 @@ export default function QAClienteAgendarExamePage() {
           </label>
         </div>
 
-        {origin && <div style={{ fontSize: 11, color: "#6A6A6A", marginBottom: 10 }}>Origem: {origin.cidade}/{origin.uf}</div>}
+        {(origin || cidadeTexto) && (
+          <div style={{ fontSize: 11, color: "#6A6A6A", marginBottom: 10 }}>
+            Origem: {cidadeTexto || origin?.cidade}/{ufResolved || origin?.uf}
+          </div>
+        )}
         {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
         {foraDoRaio && (
           <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>

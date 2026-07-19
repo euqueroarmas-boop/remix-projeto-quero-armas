@@ -24,12 +24,13 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
+  const cidadeCadastro = String(cidade || "").trim();
   const psicoParams = useMemo(() => open && !isInstrutor
-    ? ({ tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined, raio_km: raio, limit: 10 })
-    : null, [open, isInstrutor, cepLimpo, uf, raio]);
+    ? ({ tipo: "psicologo" as const, cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, cidade: cidadeCadastro || undefined, raio_km: raio, limit: 10 })
+    : null, [open, isInstrutor, cepValido, cepLimpo, uf, cidadeCadastro, raio]);
   const iatParams = useMemo(() => (open && isInstrutor && (cepValido || uf))
-    ? ({ cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 20 })
-    : null, [open, isInstrutor, cepValido, cepLimpo, uf, raio]);
+    ? ({ cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, cidade: cidadeCadastro || undefined, raio_km: raio, limit: 20 })
+    : null, [open, isInstrutor, cepValido, cepLimpo, uf, cidadeCadastro, raio]);
 
   const psico = useCredenciadosPsico(psicoParams);
   const iat = useCredenciadosIAT(iatParams);
@@ -38,7 +39,6 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
   const error = isInstrutor ? iat.error : psico.error;
   const origin = isInstrutor ? iat.data?.origin || null : psico.origin;
   const ufResolved = (origin?.uf || uf || iat.data?.uf || "").toUpperCase();
-  const cidadeCadastro = String(cidade || "").trim();
   const cidadeResolved = cidadeCadastro || origin?.cidade || "";
   const cidadeUfLabel = cidadeResolved && ufResolved ? `${cidadeResolved.toUpperCase()}/${ufResolved}` : "";
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;

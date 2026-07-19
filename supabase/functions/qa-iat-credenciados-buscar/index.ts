@@ -33,6 +33,13 @@ function buscaMatch(row: any, busca: string): boolean {
     .some((v) => normBusca(v).includes(q));
 }
 
+function cidadeMatch(row: any, cidade: string): boolean {
+  if (!cidade) return true;
+  const q = normBusca(cidade);
+  return [row?.endereco, row?.clube]
+    .some((v) => normBusca(v).includes(q));
+}
+
 function distanciaKm(a: { lat: number; lng: number } | null, b: { lat?: number | null; lng?: number | null }): number | null {
   if (!a || !a.lat || !a.lng || !b.lat || !b.lng) return null;
   const toRad = (n: number) => (n * Math.PI) / 180;
@@ -102,10 +109,40 @@ Deno.serve(async (req) => {
     const raio_km: number = Number(body?.raio_km) || 50;
     const limit: number = Math.min(Number(body?.limit) || 20, 100);
     const busca = sanitizeBusca(body?.busca || body?.q || body?.search);
+    const cidadeFiltro = sanitizeBusca(body?.cidade);
 
     const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
     const uf = origin?.uf || ufBody || null;
     if (!uf) return json({ ok: true, mode: "alphabetical", uf: "", tem_enderecos: false, origin: null, results: [], count: 0 });
+
+    if (cidadeFiltro) {
+      const { data, error } = await supabase
+        .from("qa_iat_credenciados")
+        .select("id, uf, nome, telefone, email, endereco, clube, portaria, validade, lat, lng, fonte_url")
+        .eq("uf", uf)
+        .order("nome", { ascending: true })
+        .limit(1000);
+      if (error) throw error;
+      const results = (data || [])
+        .filter((r: any) => cidadeMatch(r, cidadeFiltro))
+        .filter((r: any) => buscaMatch(r, busca))
+        .map((r: any) => ({ ...r, distancia_km: distanciaKm(origin, r) }))
+        .sort((a: any, b: any) => {
+          if (a.distancia_km != null || b.distancia_km != null) return (a.distancia_km ?? 1e9) - (b.distancia_km ?? 1e9);
+          return String(a.nome || "").localeCompare(String(b.nome || ""));
+        })
+        .slice(0, limit);
+      return json({
+        ok: true,
+        mode: origin?.lat && origin?.lng ? "proximity" : "alphabetical",
+        uf,
+        cidade: cidadeFiltro,
+        tem_enderecos: results.some((r: any) => r.lat != null && r.lng != null),
+        origin,
+        results,
+        count: results.length,
+      });
+    }
 
     if (busca) {
       const { data, error } = await supabase
