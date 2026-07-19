@@ -24,6 +24,7 @@ export type BuscarParams = {
   tipo: "psicologo" | "instrutor_tiro";
   cep?: string;
   uf?: string;
+  busca?: string;
   raio_km?: number;
   limit?: number;
   incluir_vencidos?: boolean;
@@ -54,7 +55,17 @@ export function useCredenciadosPsico(params: BuscarParams | null) {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { if (params) run(params); }, [params?.tipo, params?.cep, params?.uf, params?.raio_km, params?.incluir_vencidos]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (params) run(params);
+    else {
+      setLoading(false);
+      setError(null);
+      setResults([]);
+      setOrigin(null);
+      setForaDoRaio(false);
+      setDistanciaMaisProximo(null);
+    }
+  }, [params?.tipo, params?.cep, params?.uf, params?.busca, params?.raio_km, params?.incluir_vencidos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { loading, error, results, origin, foraDoRaio, distanciaMaisProximo, refetch: run };
 }

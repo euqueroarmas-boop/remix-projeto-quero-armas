@@ -14,6 +14,48 @@ function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+function sanitizeBusca(v: unknown): string {
+  return String(v || "")
+    .trim()
+    .replace(/[%_,]/g, " ")
+    .replace(/\s+/g, " ")
+    .slice(0, 80);
+}
+
+function normBusca(v: unknown): string {
+  return String(v || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function buscaMatch(row: any, busca: string): boolean {
+  if (!busca) return true;
+  const q = normBusca(busca);
+  return [
+    row?.nome,
+    row?.registro,
+    row?.uf,
+    row?.cidade,
+    row?.bairro,
+    row?.endereco,
+    ...(Array.isArray(row?.telefones) ? row.telefones : []),
+    ...(Array.isArray(row?.emails) ? row.emails : []),
+  ].some((v) => normBusca(v).includes(q));
+}
+
+function distanciaKm(a: { lat: number; lng: number } | null, b: { latitude?: number | null; longitude?: number | null }): number | null {
+  if (!a || !a.lat || !a.lng || !b.latitude || !b.longitude) return null;
+  const toRad = (n: number) => (n * Math.PI) / 180;
+  const r = 6371;
+  const dLat = toRad(Number(b.latitude) - a.lat);
+  const dLng = toRad(Number(b.longitude) - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(Number(b.latitude));
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * r * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
 async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; lng: number; uf: string; cidade: string } | null> {
   const digits = cep.replace(/\D/g, "");
   if (digits.length !== 8) return null;
@@ -42,7 +84,8 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
   }
   // Fallback estruturado pela cidade — mesmo path do IAT
   const enderecoTxt = `${addr.street || cidade}, ${addr.neighborhood || ""}, ${cidade}/${uf}`;
-  const geo = await geocodeEndereco(supabase, enderecoTxt, uf);
+  let geo = await geocodeEndereco(supabase, enderecoTxt, uf);
+  if (!geo) geo = await geocodeEndereco(supabase, `${cidade}/${uf}, Brasil`, uf);
   if (geo) return { ...geo, uf, cidade };
   return { lat: 0, lng: 0, uf, cidade };
 }
@@ -54,14 +97,15 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const tipo: string = body.tipo; // 'psicologo' | 'instrutor_tiro'
-    const cep: string = body.cep || "";
+    const cep: string = String(body.cep || "").replace(/\D/g, "");
     const raio_km: number = Number(body.raio_km) || 50;
     const limit: number = Math.min(Number(body.limit) || 20, 100);
     const incluirVencidos: boolean = Boolean(body.incluir_vencidos);
+    const busca = sanitizeBusca(body.busca || body.q || body.search);
 
     if (!tipo || !["psicologo", "instrutor_tiro"].includes(tipo)) return json({ error: "tipo inválido" }, 400);
 
-    const origin = cep ? await geocodeCEP(supabase, cep) : null;
+    const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
     const ufFiltro: string | null = origin?.uf || body.uf || null;
 
     // Lazy geocode: pega até MAX_GEOCODE entradas sem coordenadas, da mesma UF do cliente
@@ -77,6 +121,37 @@ Deno.serve(async (req) => {
         if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
         await nominatimDelay();
       }
+    }
+
+    if (busca) {
+      let q = supabase
+        .from("qa_psico_credenciados")
+        .select("*")
+        .eq("tipo", tipo)
+        .eq("ativo", true);
+      if (ufFiltro) q = q.eq("uf", String(ufFiltro).toUpperCase());
+      if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
+      if (!ufFiltro) {
+        q = q.or([
+          `nome.ilike.%${busca}%`,
+          `registro.ilike.%${busca}%`,
+          `uf.ilike.%${busca}%`,
+          `cidade.ilike.%${busca}%`,
+          `bairro.ilike.%${busca}%`,
+          `endereco.ilike.%${busca}%`,
+        ].join(","));
+      }
+      const { data, error } = await q.order("cidade").order("nome").limit(ufFiltro ? 1000 : 300);
+      if (error) throw error;
+      const results = (data || [])
+        .filter((r: any) => buscaMatch(r, busca))
+        .map((r: any) => ({ ...r, distancia_km: distanciaKm(origin, r) }))
+        .sort((a: any, b: any) => {
+          if (a.distancia_km != null || b.distancia_km != null) return (a.distancia_km ?? 1e9) - (b.distancia_km ?? 1e9);
+          return String(a.cidade || "").localeCompare(String(b.cidade || "")) || String(a.nome || "").localeCompare(String(b.nome || ""));
+        })
+        .slice(0, limit);
+      return json({ ok: true, origin, fora_do_raio: false, raio_km, results, count: results.length });
     }
 
     if (origin && origin.lat && origin.lng) {

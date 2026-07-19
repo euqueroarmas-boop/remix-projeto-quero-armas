@@ -8,6 +8,14 @@ import { INSTRUTOR_PDF_PF } from "@/components/quero-armas/clientes/AgendarExame
 
 const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
+function normalizarBusca(valor: string) {
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 export default function QAClienteAgendarExamePage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -35,14 +43,28 @@ export default function QAClienteAgendarExamePage() {
   const cepLimpo = cep.replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
+  const buscaTexto = busca.trim();
 
-  const psicoParams = useMemo(() => isInstrutor ? null : ({
-    tipo: "psicologo" as const, cep: cepLimpo || undefined, uf: !cepLimpo && uf ? uf : undefined,
-    raio_km: raio, limit: 50, incluir_vencidos: incluirVencidos,
-  }), [isInstrutor, cepLimpo, uf, raio, incluirVencidos]);
+  const psicoParams = useMemo(() => {
+    if (isInstrutor) return null;
+    if (!cepValido && !uf && !buscaTexto) return null;
+    return {
+      tipo: "psicologo" as const,
+      cep: cepValido ? cepLimpo : undefined,
+      uf: !cepValido && uf ? uf : undefined,
+      busca: buscaTexto || undefined,
+      raio_km: raio,
+      limit: buscaTexto ? 100 : 50,
+      incluir_vencidos: incluirVencidos,
+    };
+  }, [isInstrutor, cepValido, cepLimpo, uf, buscaTexto, raio, incluirVencidos]);
   const iatParams = useMemo(() => (isInstrutor && (cepValido || uf)) ? ({
-    cep: cepValido ? cepLimpo : undefined, uf: !cepValido && uf ? uf : undefined, raio_km: raio, limit: 100,
-  }) : null, [isInstrutor, cepValido, cepLimpo, uf, raio]);
+    cep: cepValido ? cepLimpo : undefined,
+    uf: !cepValido && uf ? uf : undefined,
+    busca: buscaTexto || undefined,
+    raio_km: raio,
+    limit: 100,
+  }) : null, [isInstrutor, cepValido, cepLimpo, uf, buscaTexto, raio]);
 
   const psico = useCredenciadosPsico(psicoParams as any);
   const iat = useCredenciadosIAT(iatParams);
@@ -81,9 +103,18 @@ export default function QAClienteAgendarExamePage() {
     : psico.results;
 
   const filtered = useMemo(() => {
-    const q = busca.trim().toLowerCase();
+    const q = normalizarBusca(busca);
     if (!q) return results;
-    return results.filter((r) => [r.nome, r.bairro, r.cidade, r.endereco].some((v) => (v || "").toLowerCase().includes(q)));
+    return results.filter((r) => [
+      r.nome,
+      r.registro,
+      r.bairro,
+      r.cidade,
+      r.uf,
+      r.endereco,
+      ...(r.telefones || []),
+      ...(r.emails || []),
+    ].some((v) => normalizarBusca(v || "").includes(q)));
   }, [results, busca]);
 
   return (
@@ -123,7 +154,7 @@ export default function QAClienteAgendarExamePage() {
           </label>
           <label style={{ display: "grid", gap: 4, fontSize: 11, letterSpacing: ".12em", color: "#6A6A6A" }}>
             BUSCAR
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, bairro, cidade…" style={{ border: "1px solid #d6d6d4", padding: "7px 9px", fontFamily: "inherit", fontSize: 13 }} />
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, bairro, cidade, UF…" style={{ border: "1px solid #d6d6d4", padding: "7px 9px", fontFamily: "inherit", fontSize: 13 }} />
           </label>
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11, letterSpacing: ".08em", color: "#6A6A6A", alignSelf: "end" }}>
             <input type="checkbox" checked={incluirVencidos} onChange={(e) => setIncluirVencidos(e.target.checked)} /> Incluir vencidos
@@ -143,7 +174,7 @@ export default function QAClienteAgendarExamePage() {
           </div>
         )}
 
-        <AgendarExameList loading={loading} results={filtered} empty="Nenhum profissional encontrado. Tente ampliar o raio, escolher uma UF, ou consulte diretamente o gov.br/PF." />
+        <AgendarExameList loading={loading} results={filtered} empty="Informe o CEP cadastrado, uma UF ou um termo de busca para localizar profissionais credenciados pela PF." />
         {isInstrutor && (
           <div style={{ marginTop: 14, background: "#fff", border: "1px solid #e3e3e1", padding: 14, borderRadius: 4, fontSize: 12, color: "#303030" }}>
             <strong style={{ display: "block", fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginBottom: 6 }}>LISTA OFICIAL PF (PDF)</strong>
