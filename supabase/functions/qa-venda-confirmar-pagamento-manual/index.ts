@@ -31,6 +31,9 @@ const FORMAS = new Set([
   "DINHEIRO",
   "TRANSFERÊNCIA",
   "OUTRO",
+  // Pré-Piloto: contrato gerado antes do pagamento (cliente vai assinar primeiro).
+  // Não exige comprovante; pagamento real é confirmado depois com forma definitiva.
+  "A_COMBINAR",
 ]);
 
 Deno.serve(async (req) => {
@@ -73,7 +76,9 @@ Deno.serve(async (req) => {
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (!FORMAS.has(forma_pagamento)) return json({ error: "forma_pagamento_invalida", allowed: [...FORMAS] }, 400);
   if (observacao.length < 20) return json({ error: "observacao_minima_20_chars" }, 400);
-  if (!comprovante_path) return json({ error: "comprovante_obrigatorio" }, 400);
+  if (!comprovante_path && forma_pagamento !== "A_COMBINAR") {
+    return json({ error: "comprovante_obrigatorio" }, 400);
+  }
 
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
