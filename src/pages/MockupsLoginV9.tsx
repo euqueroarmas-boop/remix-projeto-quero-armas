@@ -189,19 +189,21 @@ export default function MockupsLoginV9() {
 
   const heroReady = customHero !== undefined;
   const heroUrl = customHero || BG_URL;
+
+  // Não renderiza nada até saber qual fundo usar — evita flash do fundo escuro padrão
+  if (!heroReady) {
+    return <div className="min-h-screen w-full bg-white" />;
+  }
+
   return (
     <div
       className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
-      style={
-        heroReady
-          ? {
-              backgroundImage: `url(${heroUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }
-          : { background: "#000" }
-      }
+      style={{
+        backgroundImage: `url(${heroUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
       {/* Overlays LEVES — a foto aparece; escurece só atrás do card (direita) e nas bordas */}
       {!customHero && (
