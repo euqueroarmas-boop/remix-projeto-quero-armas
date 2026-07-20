@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendTransactional } from "../_shared/sendTransactional.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,9 +8,10 @@ const corsHeaders = {
 };
 
 /**
- * Notificações operacionais Quero Armas — disparadas por EVENTOS REAIS do
+ * Notificações operacionais Arsenal Inteligente — disparadas por EVENTOS REAIS do
  * fluxo (nunca genéricas). Cada evento mapeia 1:1 para um e-mail com texto
- * específico para o cliente. Usa send-smtp-email já existente.
+ * específico para o cliente. Cada evento usa um template dedicado
+ * (evento-*) via send-transactional-email (Lovable Emails).
  *
  * Eventos suportados:
  *  - montando_pasta            (início do serviço)
@@ -49,53 +51,55 @@ interface Payload {
   status_novo?: string | null;
 }
 
-function buildBody(p: Payload, cliente: { nome?: string | null }, servico: string): { subject: string; html: string } {
-  const nome = (cliente.nome || "Cliente").split(" ")[0];
+const PORTAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente";
+
+function firstName(nome: string | null | undefined): string {
+  return (nome || "Cliente").split(" ")[0];
+}
+
+/** Mapeia cada evento para um template dedicado + templateData. */
+function mapEventoToTemplate(
+  p: Payload,
+  cliente: { nome?: string | null },
+  servico: string,
+): { templateName: string; templateData: Record<string, unknown> } | null {
+  const nome = firstName(cliente.nome);
   const svc = servico || "seu serviço";
+  const portalUrl = PORTAL_URL;
   switch (p.evento) {
     case "montando_pasta":
+      return { templateName: "evento-montando-pasta", templateData: { nome, servico: svc, portalUrl } };
+    case "documento_recebido":
       return {
-        subject: `Iniciamos a preparação do seu processo — ${svc}`,
-        html: `<p>Olá, ${nome}.</p><p>Demos início à preparação da sua pasta para <strong>${svc}</strong>. Em breve solicitaremos a documentação necessária.</p><p>— Equipe Quero Armas</p>`,
+        templateName: "evento-documento-recebido",
+        templateData: {
+          nome,
+          servico: svc,
+          recebidos: String(p.documentos_recebidos ?? 0),
+          total: String(p.documentos_total ?? 0),
+          portalUrl,
+        },
       };
-    case "documento_recebido": {
-      const x = p.documentos_recebidos ?? 0;
-      const y = p.documentos_total ?? 0;
-      const doc = p.documento_nome ? ` (${p.documento_nome})` : "";
-      return {
-        subject: `Documento recebido — ${x}/${y}`,
-        html: `<p>Olá, ${nome}.</p><p>Recebemos um novo documento${doc} para o serviço <strong>${svc}</strong>. Você está em <strong>${x} de ${y}</strong> documentos enviados.</p>${y && x < y ? `<p>Faltam <strong>${y - x}</strong> documento(s).</p>` : ""}<p>— Equipe Quero Armas</p>`,
-      };
-    }
     case "todos_documentos_recebidos":
-      return {
-        subject: `Documentação completa — ${svc}`,
-        html: `<p>Olá, ${nome}.</p><p>Recebemos todos os documentos necessários para <strong>${svc}</strong>. Vamos iniciar a verificação.</p><p>— Equipe Quero Armas</p>`,
-      };
+      return { templateName: "evento-todos-documentos-recebidos", templateData: { nome, servico: svc, portalUrl } };
     case "em_verificacao":
-      return {
-        subject: `Sua documentação está em verificação — ${svc}`,
-        html: `<p>Olá, ${nome}.</p><p>Sua documentação para <strong>${svc}</strong> está em análise interna pela nossa equipe técnica.</p><p>— Equipe Quero Armas</p>`,
-      };
+      return { templateName: "evento-em-verificacao", templateData: { nome, servico: svc, portalUrl } };
     case "pronto_para_protocolo":
-      return {
-        subject: `Tudo pronto para protocolar — ${svc}`,
-        html: `<p>Olá, ${nome}.</p><p>Sua pasta para <strong>${svc}</strong> foi aprovada internamente e está pronta para protocolo no órgão competente.</p><p>— Equipe Quero Armas</p>`,
-      };
+      return { templateName: "evento-pronto-protocolo", templateData: { nome, servico: svc, portalUrl } };
     case "enviado_ao_orgao":
       return {
-        subject: `Processo enviado ao órgão — ${svc}`,
-        html: `<p>Olá, ${nome}.</p><p>Seu processo de <strong>${svc}</strong> foi protocolado junto ao órgão competente. A partir de agora, acompanharemos a evolução por lá.</p><p>— Equipe Quero Armas</p>`,
+        templateName: "evento-enviado-orgao",
+        templateData: { nome, servico: svc, portalUrl, protocolo: p.observacao ?? "" },
       };
     case "status_orgao": {
-      const st = (p.status_orgao || "atualização").toUpperCase().replace(/_/g, " ");
-      const obs = p.observacao ? `<p>${p.observacao}</p>` : "";
+      const status = (p.status_orgao || "atualização").replace(/_/g, " ");
       return {
-        subject: `Atualização do órgão — ${st}`,
-        html: `<p>Olá, ${nome}.</p><p>Houve uma atualização no seu processo <strong>${svc}</strong> junto ao órgão competente: <strong>${st}</strong>.</p>${obs}<p>— Equipe Quero Armas</p>`,
+        templateName: "evento-status-orgao",
+        templateData: { nome, servico: svc, status, observacao: p.observacao ?? "", portalUrl },
       };
     }
   }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -204,22 +208,22 @@ Deno.serve(async (req) => {
     }
 
     const servicoNome = body.servico_nome ?? (sol as any).service_name ?? "seu serviço";
-    const { subject, html } = buildBody(body, { nome }, servicoNome);
+    const mapped = mapEventoToTemplate(body, { nome }, servicoNome);
+    if (!mapped) {
+      return new Response(JSON.stringify({ ok: true, email_skipped: "evento_sem_template" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-    const { error: mailErr } = await supabase.functions.invoke("send-smtp-email", {
-      headers: internalToken ? { "x-internal-token": internalToken } : undefined,
-      body: {
-        to: email,
-        subject,
-        html,
-        from_name: "Quero Armas",
-        trace_id: `qa-event-${body.evento}-${solicitacaoId}`,
-      },
+    const send = await sendTransactional({
+      templateName: mapped.templateName,
+      recipientEmail: email,
+      idempotencyKey: `qa-event-${body.evento}-${solicitacaoId}-${statusRef ?? "na"}`,
+      templateData: mapped.templateData,
     });
 
-    if (mailErr) {
-      return new Response(JSON.stringify({ ok: false, mail_error: mailErr.message }), {
+    if (!send.ok) {
+      return new Response(JSON.stringify({ ok: false, mail_error: send.error }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
