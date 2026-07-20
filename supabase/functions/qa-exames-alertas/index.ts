@@ -156,7 +156,7 @@ serve(async (req) => {
               nome,
               tipoExame: tipo,
               diasRestantes: String(c.diasRestantes),
-              dataVencimento: vencStr,
+              vencimento: vencStr,
               portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
             },
           });
