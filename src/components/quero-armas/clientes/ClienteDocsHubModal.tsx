@@ -919,15 +919,15 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, end1_cep, end1_cidade, end1_estado, end2_cep, end2_cidade, end2_estado, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
         const row = data as unknown as Record<string, string | null>;
         // Endereço: tenta os campos do cadastro em cascata
-        let cep = row.end1_cep || row.end2_cep || row.responsavel_endereco_cep || null;
-        let cidade = row.end1_cidade || row.end2_cidade || row.responsavel_endereco_cidade || null;
-        let uf = row.end1_estado || row.end2_estado || row.responsavel_endereco_estado || null;
+        let cep = row.cep || row.cep2 || row.responsavel_endereco_cep || null;
+        let cidade = row.cidade || row.cidade2 || row.responsavel_endereco_cidade || null;
+        let uf = row.estado || row.estado2 || row.responsavel_endereco_estado || null;
         // Fallback: extrai endereço de comprovante de residência aprovado
         if (!cep && !cidade) {
           const comprovante = docsEfetivos
