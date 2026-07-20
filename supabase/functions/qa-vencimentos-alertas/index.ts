@@ -255,10 +255,10 @@ serve(async (req) => {
             idempotencyKey: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}`,
             templateData: {
               nome,
-              subject,
-              resumo,
+              documento: subject.replace(/^[^\w]*\s*/, ""),
+              observacao: resumo,
               diasRestantes: String(c.dias),
-              dataVencimento: (c.data_validade || "").split("-").reverse().join("/"),
+              vencimento: (c.data_validade || "").split("-").reverse().join("/"),
               portalUrl: PORTAL_LINK,
             },
           });
