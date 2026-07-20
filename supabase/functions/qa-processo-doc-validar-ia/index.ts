@@ -1370,6 +1370,69 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // ===================================================================
+    // HOOK P5 — Notificar cliente quando IA marcar documento incompatível
+    // ===================================================================
+    // Dispara `documento-incompativel-processo` via sendTransactional
+    // quando o tipo detectado difere do tipo exigido pelo checklist E o
+    // status final é `invalido` ou `revisao_humana` por esse motivo.
+    // Dedupe em qa_doc_incompat_alertas_enviados (por documento_id + hash).
+    try {
+      const tipoDetectado = String((parsed as any)?.tipo_documento_detectado ?? "").trim().toLowerCase();
+      const tipoExigido = String(doc.tipo_documento ?? "").trim().toLowerCase();
+      const incompativel =
+        tipoDetectado &&
+        tipoExigido &&
+        tipoDetectado !== tipoExigido &&
+        (novoStatus === "invalido" || novoStatus === "revisao_humana");
+      const emailCliente = (cliente as any)?.email as string | undefined;
+      if (incompativel && emailCliente) {
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        const detalhe = {
+          tipo_exigido: tipoExigido,
+          tipo_detectado: tipoDetectado,
+          documento_id,
+          processo_id,
+        };
+        const hashRaw = JSON.stringify(detalhe);
+        const hashBuf = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(hashRaw));
+        const hashHex = Array.from(new Uint8Array(hashBuf))
+          .map((b) => b.toString(16).padStart(2, "0")).join("");
+        // checa dedupe
+        const { data: jaEnv } = await supabase
+          .from("qa_doc_incompat_alertas_enviados")
+          .select("id")
+          .eq("documento_id", documento_id)
+          .eq("template_name", "documento-incompativel-processo")
+          .eq("hash_estado", hashHex)
+          .maybeSingle();
+        if (!jaEnv) {
+          const r = await sendTransactional({
+            templateName: "documento-incompativel-processo",
+            recipientEmail: emailCliente,
+            idempotencyKey: `doc-incompat:${documento_id}:${hashHex.slice(0, 12)}`,
+            templateData: {
+              nome: (cliente as any)?.nome_completo ?? "",
+              documento: doc.nome_documento ?? tipoDetectado,
+              exigencia: tipoExigido,
+              portalUrl: "https://euqueroarmas.com.br/area-do-cliente",
+            },
+          });
+          if (r.ok) {
+            await supabase.from("qa_doc_incompat_alertas_enviados").insert({
+              cliente_id: (cliente as any)?.id ?? null,
+              processo_id,
+              documento_id,
+              template_name: "documento-incompativel-processo",
+              hash_estado: hashHex,
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[validar-ia] hook documento-incompativel-processo falhou:", e);
+    }
+
     // ===== AUTO-RESPOSTA da pergunta "comprovante está no seu nome?" =====
     // Se aprovamos um comprovante de residência e a IA já sabe se está no
     // nome do cliente ou de terceiro, não faz sentido perguntar isso ao
