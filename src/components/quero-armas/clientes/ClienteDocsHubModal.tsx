@@ -188,6 +188,24 @@ function normDate(s: string): string {
   return s.trim();
 }
 
+// Formata ISO (YYYY-MM-DD) ou DD/MM/YYYY para exibição no padrão brasileiro
+function formatDateBrDisplay(s: string): string {
+  if (!s) return s;
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return s;
+}
+
+// Detecta se o valor extraído é uma idade ("34 anos", "34", "34 anos e 5 meses")
+// e NÃO uma data de nascimento — nesses casos não há como comparar com a data do cadastro
+function isIdadeStr(s: string): boolean {
+  const trimmed = s.trim().toLowerCase();
+  if (/^(\d{1,3})\s*(anos?|years?)/.test(trimmed)) return true;
+  // Número puro sem formatação de data (sem barras nem hífens) com 1-3 dígitos
+  if (/^\d{1,3}$/.test(trimmed) && parseInt(trimmed, 10) < 130) return true;
+  return false;
+}
+
 // ── Similaridade fuzzy para nomes ────────────────────────────────────────────
 
 function levenshtein(a: string, b: string): number {
@@ -372,7 +390,11 @@ function calcularConformidade(
 
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
-  pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
+  // Se o documento trouxe a IDADE ("34 anos") em vez da data de nascimento,
+  // não há como comparar — pula o campo para evitar falsa divergência.
+  if (!isIdadeStr(campos.data_nascimento || "")) {
+    pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
+  }
   pushItem("filiacao_mae",    "Filiação materna",   campos.filiacao_mae,    fuzzyName);
   pushItem("filiacao_pai",    "Filiação paterna",   campos.filiacao_pai,    fuzzyName);
   pushItem("naturalidade",    "Naturalidade",       campos.naturalidade,    fuzzyNat);
@@ -2513,10 +2535,15 @@ export function ClienteDocsHubModal({
                     {conformidade.map((item) => (
                       <tr key={item.campo} className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
-                        <td className="py-1 pr-2 font-tactical">{item.valorCertidao}</td>
+                        <td className="py-1 pr-2 font-tactical">
+                          {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorCertidao) : item.valorCertidao}
+                        </td>
                         <td className="py-1 pr-2 opacity-70">
                           {item.valorReferencia
-                            ? <span>{item.valorReferencia}<br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span></span>
+                            ? <span>
+                                {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorReferencia) : item.valorReferencia}
+                                <br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span>
+                              </span>
                             : <span className="opacity-40">sem referência</span>}
                         </td>
                         <td className="py-1 whitespace-nowrap">
