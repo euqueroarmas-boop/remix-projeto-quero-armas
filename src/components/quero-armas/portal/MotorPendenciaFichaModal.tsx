@@ -189,8 +189,8 @@ export default function MotorPendenciaFichaModal({
   const handleFile = async (file: File | null | undefined) => {
     if (!file) return;
     if (!doc || !processo) {
-      // fallback: sem processo, delega ao legado
-      onContinuar?.();
+      // Sem contexto carregado ainda — não delega ao Assistente legado (comportamento explícito da tela de Pendências).
+      toast.error("Aguardando carregar os dados da pendência. Tente novamente em instantes.");
       return;
     }
     setErro(null);
