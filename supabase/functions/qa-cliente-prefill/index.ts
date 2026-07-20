@@ -182,6 +182,7 @@ const SYSTEM_PROMPT = [
     "14) NUNCA gere warning de 'data no futuro' a menos que tenha certeza absoluta da data atual. Datas em DD/MM/AAAA podem ser confundidas com MM/DD/AAAA — não emita esse tipo de warning.",
     "15) TEXTO LIVRE (conversas WhatsApp, e-mails, prints): LEIA linha por linha e extraia TODO dado cadastral encontrado — em especial telefone/celular (qualquer sequência com DDD, ex.: (11) 94010-4125, 11940104125, +55 11 9...), e-mail (qualquer token com @), CEP (00000-000 ou 8 dígitos), endereço, RG, CPF, data de nascimento, nome da mãe/pai, senha GOV.BR. Assinaturas de e-mail, rodapés e cabeçalhos frequentemente contêm telefone e e-mail — não ignore.",
     "16) Telefone/celular: normalize para apenas dígitos com DDD (10 ou 11 dígitos). Se houver mais de um número, use o mais mencionado ou o marcado como principal em celular, e coloque o outro em telefone_secundario.",
+    "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): trate cada nome como fonte válida de telefone. Ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650' (celulares brasileiros pré-2016 com 8 dígitos começando 6-9 devem receber '9' prefixado após o DDD).",
     "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
 ].join("\n");
 
@@ -359,11 +360,15 @@ function extractPhonesFromText(text: string): string[] {
     const ddd = m[1];
     if (!DDD_VALIDOS.has(ddd)) continue;
     const rest = (m[2] + m[3]).replace(/\D/g, "");
-    // Celular: 9 dígitos começando com 9. Fixo: 8 dígitos começando 2-5.
-    const isMobile = rest.length === 9 && rest.startsWith("9");
+    // Celular novo: 9 dígitos começando com 9.
+    // Celular legado (pré-2016): 8 dígitos começando com 6-9 → prefixamos "9".
+    // Fixo: 8 dígitos começando 2-5.
+    const isMobileNovo = rest.length === 9 && rest.startsWith("9");
+    const isMobileLegado = rest.length === 8 && /^[6-9]/.test(rest);
     const isFixo = rest.length === 8 && /^[2-5]/.test(rest);
-    if (!isMobile && !isFixo) continue;
-    const digits = ddd + rest;
+    if (!isMobileNovo && !isMobileLegado && !isFixo) continue;
+    const restNorm = isMobileLegado ? "9" + rest : rest;
+    const digits = ddd + restNorm;
     if (!seen.has(digits)) {
       seen.add(digits);
       out.push(digits);
