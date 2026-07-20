@@ -88,23 +88,19 @@ Deno.serve(async (req) => {
     // 2) notificação interna ao admin para visibilidade da tentativa
     // 3) registro em qa_arsenal_notificacoes (best-effort, ignorado se schema não existir)
     try {
-      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-      if (internalToken) {
-        admin.functions.invoke("send-smtp-email", {
-          headers: { "x-internal-token": internalToken },
-          body: {
-            to: emailNorm,
-            subject: "Você já tem Arsenal — faça login",
-            html: qaCadastroExistenteHtml({ name: nome, email: emailNorm, motivo: "cpf_ja_possui_login" }),
-            text: qaCadastroExistenteText({ name: nome, email: emailNorm, motivo: "cpf_ja_possui_login" }),
-            from_name: "Quero Armas",
-          },
-        }).catch((e) => console.warn("[cadastro_existente] e-mail falhou:", (e as Error)?.message));
-      } else {
-        console.warn("[cadastro_existente] INTERNAL_FUNCTION_TOKEN ausente — e-mail não enviado");
-      }
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      await sendTransactional({
+        templateName: "cliente-ja-tem-conta",
+        recipientEmail: emailNorm,
+        idempotencyKey: `cliente-ja-tem-conta-${emailNorm}`,
+        templateData: {
+          nome,
+          loginUrl: "https://www.euqueroarmas.com.br/area-do-cliente/login",
+          recuperarUrl: "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha",
+        },
+      });
     } catch (e) {
-      console.warn("[cadastro_existente] e-mail threw:", (e as Error)?.message);
+      console.warn("[cadastro_existente] e-mail falhou:", (e as Error)?.message);
     }
     try {
       admin.functions
