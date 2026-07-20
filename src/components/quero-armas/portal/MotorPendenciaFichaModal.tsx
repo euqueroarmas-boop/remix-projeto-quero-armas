@@ -281,6 +281,8 @@ export default function MotorPendenciaFichaModal({
   const iat = useCredenciadosIAT(iatParams);
 
   const buscaLoading = cfg.profissional === "psicologo" ? psico.loading : cfg.profissional === "instrutor_tiro" ? iat.loading : false;
+  const foraDoRaio = cfg.profissional === "psicologo" ? psico.foraDoRaio : false;
+  const distanciaMaisProximo = cfg.profissional === "psicologo" ? psico.distanciaMaisProximo : null;
   const buscaResultados = cfg.profissional === "psicologo"
     ? (psico.results || []).map((r) => ({
         id: r.id, nome: r.nome, endereco: r.endereco || `${r.cidade || ""}/${r.uf}`,
@@ -454,6 +456,11 @@ export default function MotorPendenciaFichaModal({
                       {!buscaLoading && buscaResultados.length === 0 && (
                         <div style={{ color: "#6B6B6B", fontSize: 13 }}>
                           Nenhum credenciado encontrado para este raio.
+                        </div>
+                      )}
+                      {!buscaLoading && buscaResultados.length > 0 && foraDoRaio && (
+                        <div style={{ color: "#8A5B00", fontSize: 12.5, background: "#FBEFC7", border: "1px solid #F0DFA0", padding: "8px 12px", borderRadius: 2 }}>
+                          Nenhum credenciado dentro de 25 km — exibindo os mais próximos{distanciaMaisProximo ? ` (a partir de ${distanciaMaisProximo.toFixed(0)} km)` : ""}.
                         </div>
                       )}
                       {buscaResultados.map((p) => (
