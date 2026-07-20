@@ -185,18 +185,31 @@ ${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><stro
 
     const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: ${statusRotulo}${valorInformado ? `\nValor informado: ${valorInformado}` : ""}\nOrigem: ${origemRotulo}\n\nAcesse: ${portalLink}`;
 
-    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
-    const emailRes = await supabase.functions.invoke("send-smtp-email", {
-      headers: { "x-internal-token": internalToken },
-      body: {
-        to: ADMIN_EMAIL,
-        subject: `🆕 Nova contratação: ${nome} — ${servico}`,
-        html,
-        text,
-        trace_id: traceId,
-      },
-    });
-    const emailOk = !emailRes.error && (emailRes.data as any)?.success;
+    // Notificação interna ao admin via template dedicado nova-contratacao-admin.
+    let emailOk = false;
+    try {
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      const res = await sendTransactional({
+        templateName: "nova-contratacao-admin",
+        recipientEmail: ADMIN_EMAIL,
+        idempotencyKey: `nova-contratacao-admin-${venda_id ?? processo_id ?? traceId}`,
+        templateData: {
+          nome,
+          cpf,
+          telefone: tel,
+          email,
+          servico,
+          data,
+          status: statusRotulo,
+          valorInformado: valorInformado || "",
+          origem: origemRotulo,
+          portalUrl: portalLink,
+        },
+      });
+      emailOk = res.ok;
+    } catch (e) {
+      console.error(`[qa-notificar-admin-contratacao][${traceId}] nova-contratacao-admin error:`, e);
+    }
 
     // Lovable Emails: confirma recebimento ao próprio cliente (orcamento-recebido).
     try {
