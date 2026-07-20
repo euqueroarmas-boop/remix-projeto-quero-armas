@@ -2362,104 +2362,6 @@ export function ClienteDocsHubModal({
                 </div>
               )}
 
-            {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
-            <div className="space-y-1.5 pt-1 md:flex md:flex-1 md:flex-col md:min-h-0">
-              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
-                Observações
-              </div>
-              <Textarea
-                value={form.observacoes}
-                onChange={(event) => update("observacoes", event.target.value)}
-                rows={5}
-                placeholder="Se necessário, adicione detalhes complementares."
-                className="min-h-[148px] md:flex-1 md:h-full rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
-              />
-            </div>
-          </div>
-
-          {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="flex min-h-[360px] flex-col md:h-full md:min-h-0 md:overflow-y-auto">
-            <HubDocPreviewSlot
-              file={file}
-              confianca={classificacao?.confianca ?? null}
-              fileNameDisplay={file?.name}
-              onPickFile={() => fileInputRef.current?.click()}
-              onPickCamera={() => cameraInputRef.current?.click()}
-              onRemove={() => setFile(null)}
-              onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              dragOver={dragOver}
-              extracting={extracting}
-              incorreta={certidaoIncorreta}
-            />
-          </div>
-
-          {/* ───────── COL 3 · DADOS ───────── */}
-          <div className="space-y-4 md:border-l md:border-[#EFEFEF] md:pl-4 lg:pl-5">
-          <div className="space-y-4">
-            <SectionTitle title="Dados do documento" />
-
-            {classificacao && (
-              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs leading-snug text-amber-900">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[11px] font-bold uppercase tracking-wide">
-                      Revise CAMPO A CAMPO antes de salvar
-                    </div>
-                    <p className="mt-1">
-                      A IA leu o documento e sugeriu os valores abaixo. Nenhum dado é cadastrado
-                      automaticamente. Clique em <b>Confirmar</b> em cada campo OU corrija manualmente.
-                      Pendentes:{" "}
-                      <b>{pendingSensitiveKeys().length === 0 ? "—" : pendingSensitiveKeys().join(", ").replace(/_/g, " ")}</b>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Alerta de documento expirado ── */}
-            {docExpirado && (
-              (() => {
-                const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
-                return (
-                  <div className={cn(
-                    "rounded-2xl border p-3 text-xs",
-                    isLaudoExame
-                      ? "border-amber-300 bg-amber-50 text-amber-900"
-                      : "border-red-400 bg-red-50 text-red-900"
-                  )}>
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle className={cn("h-4 w-4 shrink-0", isLaudoExame ? "text-amber-600" : "text-red-600")} />
-                      <span className="font-bold uppercase tracking-wide text-[10px]">
-                        {isLaudoExame ? "Documento vencido — mantido como histórico" : "Documento vencido"}
-                      </span>
-                      <span className={cn(
-                        "ml-auto text-[9px] font-tactical px-1.5 py-0.5 rounded",
-                        isLaudoExame ? "bg-amber-100" : "bg-red-100"
-                      )}>
-                        {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                    {isLaudoExame ? (
-                      <p className="mt-1 text-[10px]">
-                        Laudos e exames vencidos <b>são aceitos e arquivados no histórico</b>. Eles podem ser
-                        exigidos pela PF para comprovar a validade cruzada com outros exames realizados na
-                        época (ex.: exame de tiro feito enquanto o psicológico estava vigente). O sistema
-                        seleciona automaticamente os exames antigos necessários no momento do protocolo.
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-[10px]">
-                        A validade deste documento expirou. Documentos vencidos são encaminhados para revisão
-                        humana e não serão aceitos no processo sem renovação.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()
-            )}
-
             {/* ── Credenciamento PF do profissional ── */}
             {isLaudoExameTipo && classificacao && (profissionalExtraido.nome || profissionalExtraido.registro) && (
               <div className={cn(
@@ -2561,6 +2463,104 @@ export function ClienteDocsHubModal({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
+            <div className="space-y-1.5 pt-1 md:flex md:flex-1 md:flex-col md:min-h-0">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
+                Observações
+              </div>
+              <Textarea
+                value={form.observacoes}
+                onChange={(event) => update("observacoes", event.target.value)}
+                rows={5}
+                placeholder="Se necessário, adicione detalhes complementares."
+                className="min-h-[148px] md:flex-1 md:h-full rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+              />
+            </div>
+          </div>
+
+          {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
+          <div className="flex min-h-[360px] flex-col md:h-full md:min-h-0 md:overflow-y-auto">
+            <HubDocPreviewSlot
+              file={file}
+              confianca={classificacao?.confianca ?? null}
+              fileNameDisplay={file?.name}
+              onPickFile={() => fileInputRef.current?.click()}
+              onPickCamera={() => cameraInputRef.current?.click()}
+              onRemove={() => setFile(null)}
+              onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              dragOver={dragOver}
+              extracting={extracting}
+              incorreta={certidaoIncorreta}
+            />
+          </div>
+
+          {/* ───────── COL 3 · DADOS ───────── */}
+          <div className="space-y-4 md:border-l md:border-[#EFEFEF] md:pl-4 lg:pl-5">
+          <div className="space-y-4">
+            <SectionTitle title="Dados do documento" />
+
+            {classificacao && (
+              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs leading-snug text-amber-900">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-bold uppercase tracking-wide">
+                      Revise CAMPO A CAMPO antes de salvar
+                    </div>
+                    <p className="mt-1">
+                      A IA leu o documento e sugeriu os valores abaixo. Nenhum dado é cadastrado
+                      automaticamente. Clique em <b>Confirmar</b> em cada campo OU corrija manualmente.
+                      Pendentes:{" "}
+                      <b>{pendingSensitiveKeys().length === 0 ? "—" : pendingSensitiveKeys().join(", ").replace(/_/g, " ")}</b>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Alerta de documento expirado ── */}
+            {docExpirado && (
+              (() => {
+                const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
+                return (
+                  <div className={cn(
+                    "rounded-2xl border p-3 text-xs",
+                    isLaudoExame
+                      ? "border-amber-300 bg-amber-50 text-amber-900"
+                      : "border-red-400 bg-red-50 text-red-900"
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className={cn("h-4 w-4 shrink-0", isLaudoExame ? "text-amber-600" : "text-red-600")} />
+                      <span className="font-bold uppercase tracking-wide text-[10px]">
+                        {isLaudoExame ? "Documento vencido — mantido como histórico" : "Documento vencido"}
+                      </span>
+                      <span className={cn(
+                        "ml-auto text-[9px] font-tactical px-1.5 py-0.5 rounded",
+                        isLaudoExame ? "bg-amber-100" : "bg-red-100"
+                      )}>
+                        {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
+                      </span>
+                    </div>
+                    {isLaudoExame ? (
+                      <p className="mt-1 text-[10px]">
+                        Laudos e exames vencidos <b>são aceitos e arquivados no histórico</b>. Eles podem ser
+                        exigidos pela PF para comprovar a validade cruzada com outros exames realizados na
+                        época (ex.: exame de tiro feito enquanto o psicológico estava vigente). O sistema
+                        seleciona automaticamente os exames antigos necessários no momento do protocolo.
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[10px]">
+                        A validade deste documento expirou. Documentos vencidos são encaminhados para revisão
+                        humana e não serão aceitos no processo sem renovação.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()
             )}
 
             {/* ── Painel de conformidade cruzada (todos os documentos) ── */}
