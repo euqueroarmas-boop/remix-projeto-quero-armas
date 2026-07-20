@@ -8854,6 +8854,10 @@ export type Database = {
       }
       qa_servicos_catalogo: {
         Row: {
+          anexo_atualizado_em: string | null
+          anexo_corpo_html: string | null
+          anexo_titulo: string | null
+          anexo_versao: number
           ativo: boolean
           base_legal: string | null
           categoria: string
@@ -8883,6 +8887,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          anexo_atualizado_em?: string | null
+          anexo_corpo_html?: string | null
+          anexo_titulo?: string | null
+          anexo_versao?: number
           ativo?: boolean
           base_legal?: string | null
           categoria: string
@@ -8912,6 +8920,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          anexo_atualizado_em?: string | null
+          anexo_corpo_html?: string | null
+          anexo_titulo?: string | null
+          anexo_versao?: number
           ativo?: boolean
           base_legal?: string | null
           categoria?: string
