@@ -64,8 +64,15 @@ export class ErrorBoundary extends Component<Props, State> {
   handleReload = () => {
     if (this.state.isChunkError) {
       try {
+        // Limpa contadores de reload para permitir nova tentativa manual
+        // (caso o cap automático de 3 já tenha sido atingido).
+        sessionStorage.removeItem("qa_chunk_reload");
+        localStorage.removeItem("qa_chunk_reload");
+        sessionStorage.removeItem("qa_chunk_reload_count");
+        localStorage.removeItem("qa_chunk_reload_count");
         const url = new URL(window.location.href);
         url.searchParams.set("_cb", Date.now().toString());
+        url.searchParams.set("_manual_reload", "1");
         window.location.replace(url.toString());
         return;
       } catch {}
