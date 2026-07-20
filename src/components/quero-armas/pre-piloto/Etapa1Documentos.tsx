@@ -34,11 +34,13 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     const lista = Array.from(files);
     const novosNaoZip: ArquivoUpload[] = [];
     const novosDoZip: ArquivoUpload[] = [];
+    let textoAcumuladoZip = "";
 
     for (const f of lista) {
       if (f.type === "application/zip" || f.name.toLowerCase().endsWith(".zip")) {
-        const extraidos = await processarZip(f);
+        const { arquivos: extraidos, texto } = await processarZip(f);
         novosDoZip.push(...extraidos);
+        if (texto) textoAcumuladoZip += (textoAcumuladoZip ? "\n\n" : "") + texto;
         continue;
       }
       if (!TIPOS_ACEITOS.includes(f.type)) {
@@ -50,18 +52,35 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
     const combinados = [...novosNaoZip, ...novosDoZip];
     if (combinados.length > 0) setArquivos([...arquivos, ...combinados]);
+    if (textoAcumuladoZip) {
+      const merged = textoPastaColado
+        ? `${textoPastaColado}\n\n=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}`
+        : `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}`;
+      setTextoPastaColado(merged);
+      toast.success("Texto da conversa do WhatsApp adicionado para extração");
+    }
   };
 
-  const processarZip = async (zipFile: File): Promise<ArquivoUpload[]> => {
+  const processarZip = async (zipFile: File): Promise<{ arquivos: ArquivoUpload[]; texto: string }> => {
     setProcessandoZip(true);
     try {
       const JSZip = (await import("jszip")).default;
       const zip = await JSZip.loadAsync(zipFile);
       const novos: ArquivoUpload[] = [];
+      let textoConversa = "";
 
       for (const [nome, entry] of Object.entries(zip.files)) {
         if (entry.dir) continue;
         const ext = nome.split(".").pop()?.toLowerCase() ?? "";
+        if (ext === "txt") {
+          try {
+            const txt = await entry.async("string");
+            if (txt && txt.trim()) {
+              textoConversa += (textoConversa ? "\n\n" : "") + txt.slice(0, 60000);
+            }
+          } catch { /* ignore */ }
+          continue;
+        }
         if (!["jpg", "jpeg", "png", "webp", "pdf"].includes(ext)) continue;
 
         const blob = await entry.async("blob");
@@ -74,16 +93,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         });
       }
 
-      if (novos.length === 0) {
-        toast.warning("ZIP não continha imagens ou PDFs reconhecíveis.");
-        return [];
-      } else {
+      if (novos.length === 0 && !textoConversa) {
+        toast.warning("ZIP não continha imagens, PDFs ou conversa reconhecível.");
+      } else if (novos.length > 0) {
         toast.success(`${novos.length} arquivo(s) extraído(s) do ZIP`);
-        return novos;
       }
+      return { arquivos: novos, texto: textoConversa };
     } catch {
       toast.error("Erro ao processar ZIP. Verifique se o arquivo não está corrompido.");
-      return [];
+      return { arquivos: [], texto: "" };
     } finally {
       setProcessandoZip(false);
     }
