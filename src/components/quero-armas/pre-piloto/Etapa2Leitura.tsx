@@ -97,6 +97,20 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
       }
       // Aliases para bater com a lista de campos da Etapa 3
       if (campos.emissor_rg && !campos.rg_orgao_emissor) campos.rg_orgao_emissor = campos.emissor_rg;
+      // endereco (retornado pela IA) ↔ logradouro (usado na Etapa 3) — evita campo duplicado
+      if (campos.endereco && !campos.logradouro) campos.logradouro = campos.endereco;
+      if (campos.logradouro && !campos.endereco) campos.endereco = campos.logradouro;
+      if (confidenceMap.endereco != null && confidenceMap.logradouro == null) {
+        confidenceMap.logradouro = confidenceMap.endereco;
+      }
+      // Remove o duplicado da UI (logradouro fica; endereco some da revisão)
+      delete campos.endereco;
+      // Normaliza sexo (M/F → Masculino/Feminino) para exibição amigável
+      if (campos.sexo) {
+        const s = campos.sexo.trim().toUpperCase();
+        if (s === "M" || s === "MASC" || s === "MASCULINO") campos.sexo = "Masculino";
+        else if (s === "F" || s === "FEM" || s === "FEMININO") campos.sexo = "Feminino";
+      }
       if (senhaRaw) campos.senha_gov = senhaRaw;
 
       const confidencePairs = Object.entries(confidenceMap).map(([campo, confidence]) => ({
