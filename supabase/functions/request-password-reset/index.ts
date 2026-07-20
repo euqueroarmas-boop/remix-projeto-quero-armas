@@ -61,11 +61,11 @@ const BRANDS: Record<Brand, BrandConfig> = {
   },
   "quero-armas": {
     brand: "quero-armas",
-    fromName: "Quero Armas",
-    subject: "🔐 Redefinição de senha — Portal Quero Armas",
-    headerTitle: "Quero Armas",
+    fromName: "Arsenal Inteligente",
+    subject: "Redefinição de senha — Arsenal Inteligente",
+    headerTitle: "Arsenal Inteligente",
     headerColor: "#0A0A0A",
-    greetingLine: "Recebemos uma solicitação para redefinir a senha do seu acesso ao Portal Quero Armas.",
+    greetingLine: "Recebemos uma solicitação para redefinir a senha do seu acesso ao Arsenal Inteligente.",
     ctaLabel: "Redefinir minha senha",
     warningTitle: "Importante:",
     warningItems: [
@@ -73,11 +73,11 @@ const BRANDS: Record<Brand, BrandConfig> = {
       "Por segurança, o link possui validade limitada.",
     ],
     footerLines: [
-      "Quero Armas — Acesso seguro e auditado",
+      "Arsenal Inteligente — Acesso seguro e auditado",
     ],
     defaultRedirectTo: DEFAULT_REDIRECT_TO_QA,
     productionHosts: ["euqueroarmas.com.br", "www.euqueroarmas.com.br"],
-    textIntro: "Quero Armas",
+    textIntro: "Arsenal Inteligente",
   },
 };
 
