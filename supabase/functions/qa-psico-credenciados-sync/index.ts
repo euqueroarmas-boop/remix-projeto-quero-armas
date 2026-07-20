@@ -58,22 +58,18 @@ function extractContent(html: string): string {
 // e suas posições no texto plano, para associar cada credenciado ao município
 // correto. Ex.: JACAREÍ deve ir em `cidade`, não colar no nome nem virar bairro.
 function collectLocalidades(html: string): Array<{ pos: number; nome: string }> {
-  // Texto plano sem qualquer tag (para alinhar com o que parseEntries usará)
-  const plain = stripTags(html.replace(/<(strong|b)[^>]*>/gi, "\u0001").replace(/<\/(strong|b)>/gi, "\u0002"));
   const result: Array<{ pos: number; nome: string }> = [];
-  const re = /\u0001([^\u0002]{1,80})\u0002/g;
+  const re = /<(?:strong|b)[^>]*>([\s\S]{1,120}?)<\/(?:strong|b)>/gi;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(plain)) !== null) {
-    const raw = m[1].replace(/[\u0001\u0002]/g, "").replace(/\s+/g, " ").trim();
+  while ((m = re.exec(html)) !== null) {
+    const raw = stripTags(m[1]).replace(/\s+/g, " ").trim();
     if (!raw) continue;
     if (raw.length > 80) continue;
     if (/CRP|CR\s*\d|Validade|End\.?|Endere[cç]o|Tel\.?|Telefone|E-?mail|@/i.test(raw)) continue;
     const letters = raw.replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "");
     const total = raw.replace(/\s/g, "").length;
     if (letters.length < Math.max(3, Math.floor(total * 0.6))) continue;
-    // Posição no texto SEM os marcadores
-    const beforeMarkers = plain.slice(0, m.index).replace(/[\u0001\u0002]/g, "").length;
-    result.push({ pos: beforeMarkers, nome: raw });
+    result.push({ pos: stripTags(html.slice(0, m.index)).length, nome: raw });
   }
   return result;
 }
