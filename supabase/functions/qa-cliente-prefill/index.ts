@@ -336,16 +336,41 @@ function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
 function extractPhonesFromText(text: string): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  // Captura padrões (DD) 9XXXX-XXXX, DD 9XXXX XXXX, +55 DD..., ou sequências longas de dígitos.
-  const re = /(?:\+?55\s*)?(?:\(?\d{2}\)?[\s.-]*)?9?\d{4}[\s.-]?\d{4}/g;
-  const matches = text.match(re) || [];
-  for (const m of matches) {
-    const digits = m.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
-    if (digits.length >= 10 && digits.length <= 11 && !seen.has(digits)) {
+  // DDDs válidos no Brasil (ANATEL). Sem esta lista, sequências de dígitos
+  // (timestamps, protocolos, IDs de mensagem do WhatsApp) viram "telefone".
+  const DDD_VALIDOS = new Set([
+    "11","12","13","14","15","16","17","18","19",
+    "21","22","24","27","28",
+    "31","32","33","34","35","37","38",
+    "41","42","43","44","45","46","47","48","49",
+    "51","53","54","55",
+    "61","62","63","64","65","66","67","68","69",
+    "71","73","74","75","77","79",
+    "81","82","83","84","85","86","87","88","89",
+    "91","92","93","94","95","96","97","98","99",
+  ]);
+  // Só aceita padrões claramente telefônicos:
+  //   +55 (DD) 9XXXX-XXXX / (DD) 9XXXX-XXXX / DD 9XXXX XXXX
+  //   Exige separador (parênteses, espaço, hífen, ponto) OU prefixo +55
+  //   para evitar casar dentro de sequências longas (timestamps, IDs).
+  const re = /(?:\+?55[\s.-]*)?(?:\(?(\d{2})\)?[\s.-]+)(9?\d{4})[\s.-]?(\d{4})/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const ddd = m[1];
+    if (!DDD_VALIDOS.has(ddd)) continue;
+    const rest = (m[2] + m[3]).replace(/\D/g, "");
+    // Celular: 9 dígitos começando com 9. Fixo: 8 dígitos começando 2-5.
+    const isMobile = rest.length === 9 && rest.startsWith("9");
+    const isFixo = rest.length === 8 && /^[2-5]/.test(rest);
+    if (!isMobile && !isFixo) continue;
+    const digits = ddd + rest;
+    if (!seen.has(digits)) {
       seen.add(digits);
       out.push(digits);
     }
   }
+  // Prioriza celulares (11 dígitos) sobre fixos (10 dígitos)
+  out.sort((a, b) => b.length - a.length);
   return out;
 }
 
@@ -361,22 +386,43 @@ function extractEmailFromText(text: string): string | null {
 async function lookupCep(cep: string): Promise<Record<string, string> | null> {
   const clean = cep.replace(/\D/g, "");
   if (clean.length !== 8) return null;
+  // 1) BrasilAPI v2
   try {
     const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${clean}`, {
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(8000),
     });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return {
-      cep: clean,
-      endereco: String(d.street || ""),
-      bairro: String(d.neighborhood || ""),
-      cidade: String(d.city || ""),
-      estado: String(d.state || ""),
-    };
-  } catch {
-    return null;
-  }
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.street || d?.city) {
+        return {
+          cep: clean,
+          endereco: String(d.street || ""),
+          bairro: String(d.neighborhood || ""),
+          cidade: String(d.city || ""),
+          estado: String(d.state || ""),
+        };
+      }
+    }
+  } catch { /* fallback abaixo */ }
+  // 2) ViaCEP
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${clean}/json/`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      if (!d?.erro && (d?.logradouro || d?.localidade)) {
+        return {
+          cep: clean,
+          endereco: String(d.logradouro || ""),
+          bairro: String(d.bairro || ""),
+          cidade: String(d.localidade || ""),
+          estado: String(d.uf || ""),
+        };
+      }
+    }
+  } catch { /* ignore */ }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -543,10 +589,17 @@ Deno.serve(async (req) => {
       const cepData = await lookupCep(normalized.cep);
       if (cepData) {
         normalized.cep = cepData.cep;
-        for (const k of ["endereco", "bairro", "cidade", "estado"] as const) {
-          if (!normalized[k] && cepData[k]) {
+        normalized.confidence = normalized.confidence || {};
+        // Logradouro: CEP é fonte autoritativa — sempre sobrescreve.
+        if (cepData.endereco) {
+          normalized.endereco = cepData.endereco;
+          normalized.confidence.endereco = 0.95;
+        }
+        // Bairro/cidade/estado: preenche só se estiver vazio (respeita extração).
+        for (const k of ["bairro", "cidade", "estado"] as const) {
+          const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
+          if (!atual && cepData[k]) {
             normalized[k] = cepData[k];
-            normalized.confidence = normalized.confidence || {};
             normalized.confidence[k] = 0.9;
           }
         }
@@ -556,14 +609,14 @@ Deno.serve(async (req) => {
       const cepData = await lookupCep(normalized.cep_secundario);
       if (cepData) {
         normalized.cep_secundario = cepData.cep;
-        const map: Record<string, string> = {
-          endereco_secundario: cepData.endereco,
+        if (cepData.endereco) normalized.endereco_secundario = cepData.endereco;
+        for (const [k, v] of Object.entries({
           bairro_secundario: cepData.bairro,
           cidade_secundario: cepData.cidade,
           estado_secundario: cepData.estado,
-        };
-        for (const [k, v] of Object.entries(map)) {
-          if (!normalized[k] && v) normalized[k] = v;
+        })) {
+          const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
+          if (!atual && v) normalized[k] = v;
         }
       }
     }
