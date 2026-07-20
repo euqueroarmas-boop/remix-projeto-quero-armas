@@ -82,6 +82,35 @@ function plainText(html: string): string {
   return stripTags(html).replace(/\u0001|\u0002/g, "").replace(/[ \t]+/g, " ").replace(/\n{2,}/g, "\n");
 }
 
+function normKey(v: unknown): string {
+  return String(v || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Z0-9\s-]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+async function fetchMunicipiosUf(uf: string): Promise<Set<string>> {
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 12000);
+    const r = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`, {
+      headers: { "User-Agent": UA, "Accept": "application/json" },
+      signal: ctrl.signal,
+    });
+    clearTimeout(to);
+    if (!r.ok) throw new Error(`IBGE HTTP ${r.status}`);
+    const json = await r.json();
+    const nomes = Array.isArray(json) ? json.map((m: any) => normKey(m?.nome)) : [];
+    return new Set(nomes.filter(Boolean));
+  } catch (err) {
+    console.warn(`[sync] municípios IBGE indisponíveis para ${uf}`, err);
+    return new Set<string>();
+  }
+}
+
 type Entry = {
   uf: string;
   cidade: string | null;
@@ -122,7 +151,7 @@ function parseValidade(s: string): { date: string | null; label: string | null }
   return { date: null, label };
 }
 
-async function parseEntries(html: string, uf: string, sourceUrl: string): Promise<Entry[]> {
+async function parseEntries(html: string, uf: string, sourceUrl: string, municipiosUf: Set<string>): Promise<Entry[]> {
   const content = extractContent(html);
   const localidades = collectLocalidades(content);
   let text = plainText(content);
@@ -168,9 +197,20 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     const globalNamePos = m.index + last.index;
 
     // Município oficial: heading mais recente antes do nome do credenciado.
+    // Na página de SP, a PF usa headings tanto para cidades quanto para bairros
+    // dentro da capital. Validamos contra a base oficial do IBGE para não gravar
+    // "ÁGUA BRANCA" como cidade; isso vira bairro sob "SÃO PAULO".
     let cidade: string | null = null;
-    for (let i = localidadesPos.length - 1; i >= 0; i--) {
-      if (localidadesPos[i].pos <= globalNamePos) { cidade = localidadesPos[i].nome; break; }
+    let bairro: string | null = null;
+    for (const loc of localidadesPos) {
+      if (loc.pos > globalNamePos) break;
+      const isMunicipio = municipiosUf.size === 0 || municipiosUf.has(normKey(loc.nome));
+      if (isMunicipio) {
+        cidade = loc.nome;
+        bairro = null;
+      } else if (cidade) {
+        bairro = loc.nome;
+      }
     }
 
     // Remove município prefixado (heading que ficou colado ao nome)
@@ -199,8 +239,6 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     const dd = Number(m[2]), mm = Number(m[3]), yyyy = Number(m[4]);
     const validade = (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy >= 2000 && yyyy <= 2100)
       ? `${m[4]}-${m[3]}-${m[2]}` : null;
-
-    const bairro: string | null = null;
 
     const hash = await sha256(`${uf}|${nome.toLowerCase()}|${registro}|${endereco || ""}`);
     entries.push({
@@ -258,7 +296,8 @@ Deno.serve(async (req) => {
       totalPages++;
       try {
         const html = await fetchPage(url);
-        const rawEntries = await parseEntries(html, uf, url);
+        const municipiosUf = await fetchMunicipiosUf(uf);
+        const rawEntries = await parseEntries(html, uf, url, municipiosUf);
         // Dedupe por hash dentro do mesmo lote
         const seen = new Set<string>();
         const entries = rawEntries.filter((e) => {
