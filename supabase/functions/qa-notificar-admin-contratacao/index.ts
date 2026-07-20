@@ -195,15 +195,11 @@ ${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><stro
         idempotencyKey: `nova-contratacao-admin-${venda_id ?? processo_id ?? traceId}`,
         templateData: {
           nome,
-          cpf,
-          telefone: tel,
-          email,
           servico,
-          data,
-          status: statusRotulo,
-          valorInformado: valorInformado || "",
-          origem: origemRotulo,
-          portalUrl: portalLink,
+          valor: valorInformado || "A combinar",
+          vendaId: String(venda_id ?? processo_id ?? traceId),
+          adminUrl: portalLink,
+          contato: `${email} • ${tel} • CPF ${cpf} • ${statusRotulo} • ${origemRotulo} • ${data}`,
         },
       });
       emailOk = res.ok;
