@@ -75,7 +75,6 @@ function fmtDateShort(d: string | null | undefined): string {
       timeZone: "America/Sao_Paulo",
       day: "2-digit", month: "2-digit",
       hour: "2-digit", minute: "2-digit",
-      timeZone: "America/Sao_Paulo",
     });
   } catch { return "—"; }
 }
@@ -88,7 +87,6 @@ function fmtDateLong(d: string | null | undefined): string {
       timeZone: "America/Sao_Paulo",
       day: "2-digit", month: "2-digit", year: "numeric",
       hour: "2-digit", minute: "2-digit",
-      timeZone: "America/Sao_Paulo",
     });
   } catch { return "—"; }
 }
