@@ -716,7 +716,7 @@ Deno.serve(async (req) => {
         templateData: {
           nome: cliEmail.nome_completo || undefined,
           contrato: contractNumber,
-          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos`,
+          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${contract.id}`,
         },
       });
     }
@@ -732,7 +732,7 @@ Deno.serve(async (req) => {
         origem: "qa-generate-contract",
         titulo_portal: "Contrato pronto para assinatura",
         mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
-        link_portal: `/area-do-cliente/contratos`,
+        link_portal: `/area-do-cliente/contratos/${contract.id}`,
         payload_resumo: { contract_number: contractNumber, email_ja_enviado: !!podeEnviarEmail },
       });
     } catch (_) { /* best effort */ }
