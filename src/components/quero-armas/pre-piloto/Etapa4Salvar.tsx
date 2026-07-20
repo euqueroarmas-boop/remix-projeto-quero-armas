@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { ClienteSalvo } from "./PrePilotoWizard";
+import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
   dadosRevisados: Record<string, string | null>;
   senhagov: string | null;
+  arquivos: ArquivoUpload[];
   onSalvo: (c: ClienteSalvo) => void;
   onVoltar: () => void;
 }
@@ -19,10 +20,31 @@ function formatCpf(cpf: string | null): string | null {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
-export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVoltar }: Props) {
+// Mapeia o "tipo" usado na Etapa 1 para o `tipo_documento` canônico do
+// Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
+const TIPO_ETAPA1_TO_HUB: Record<string, string> = {
+  cin: "rg",
+  comprovante_residencia: "comprovante_residencia",
+  laudo_psicologico: "laudo_psicologico",
+  laudo_capacidade_tecnica: "laudo_capacidade_tecnica",
+  antecedentes_criminais: "antecedentes_criminais",
+  comprovante_renda: "comprovante_renda",
+  outro: "outro",
+};
+
+function sanitizeFileName(name: string): string {
+  return name
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .slice(-120);
+}
+
+export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSalvo, onVoltar }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [existente, setExistente] = useState<ClienteSalvo | null>(null);
   const [verificado, setVerificado] = useState(false);
+  const [statusUpload, setStatusUpload] = useState<string | null>(null);
 
   const cpfNorm = dadosRevisados.cpf?.replace(/\D/g, "") ?? null;
 
