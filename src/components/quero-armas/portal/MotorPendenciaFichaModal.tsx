@@ -374,7 +374,7 @@ function ProCard({ pro }: { pro: { id: string; nome: string; endereco: string; c
 // ---------------------------------------------------------------------------
 
 const ficha: Record<string, React.CSSProperties> = {
-  wrap: { background: "#F4F1EA", border: "1px solid #D9D3C6", borderRadius: 4, maxHeight: "92vh", overflowY: "auto", color: "#0A0A0A" },
+  wrap: { background: "#FFFFFF", border: "1px solid #E5E1D6", borderRadius: 6, maxHeight: "calc(100vh - 8rem)", overflowY: "auto", color: "#0A0A0A" },
   pad: { padding: "22px 26px" },
   eyebrow: { fontFamily: "Oswald, sans-serif", fontSize: 11, letterSpacing: "0.28em", color: "#6B6B6B", textTransform: "uppercase" },
   title: { fontFamily: "Oswald, sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: "0.02em", margin: "6px 0 4px", textTransform: "uppercase", color: "#0A0A0A" },
@@ -385,7 +385,7 @@ const ficha: Record<string, React.CSSProperties> = {
   chipGhost: { borderColor: "#D9D3C6", color: "#2A2A2A", background: "transparent" },
   divider: { height: 1, background: "#D9D3C6" },
   sectionTitle: { fontFamily: "Oswald, sans-serif", fontSize: 13, letterSpacing: "0.28em", textTransform: "uppercase", color: "#0A0A0A", marginBottom: 12 },
-  card: { border: "1px solid #D9D3C6", borderRadius: 3, padding: 20, background: "#FFFDF8" },
+  card: { border: "1px solid #E5E1D6", borderRadius: 3, padding: 20, background: "#FAFAF7" },
   equal: { display: "flex", flexDirection: "column", minHeight: 420 },
   dropzone: { flex: 1, border: "1.5px dashed #7A1F2B", background: "#F5E7EA", borderRadius: 3, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 28, gap: 10 },
   up: { width: 38, height: 38, borderRadius: "50%", background: "#7A1F2B", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Oswald, sans-serif", fontWeight: 700 },
