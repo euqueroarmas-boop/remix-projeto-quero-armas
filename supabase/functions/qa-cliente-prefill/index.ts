@@ -331,6 +331,54 @@ function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
   return compact.length > 0 && !common.has(compact) && compact.length > 8;
 }
 
+// Extração determinística de telefone/celular e e-mail a partir do texto livre.
+// Serve de fallback quando o modelo ignora dados de conversa WhatsApp/e-mail.
+function extractPhonesFromText(text: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  // Captura padrões (DD) 9XXXX-XXXX, DD 9XXXX XXXX, +55 DD..., ou sequências longas de dígitos.
+  const re = /(?:\+?55\s*)?(?:\(?\d{2}\)?[\s.-]*)?9?\d{4}[\s.-]?\d{4}/g;
+  const matches = text.match(re) || [];
+  for (const m of matches) {
+    const digits = m.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+    if (digits.length >= 10 && digits.length <= 11 && !seen.has(digits)) {
+      seen.add(digits);
+      out.push(digits);
+    }
+  }
+  return out;
+}
+
+function extractEmailFromText(text: string): string | null {
+  const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  const matches = Array.from(new Set((text.match(re) || []).map((e) => e.toLowerCase())));
+  if (matches.length === 0) return null;
+  const pessoais = ["gmail.com", "hotmail.com", "outlook.com", "icloud.com", "yahoo.com", "uol.com.br", "terra.com.br", "bol.com.br", "live.com"];
+  const pessoal = matches.find((e) => pessoais.some((d) => e.endsWith("@" + d)));
+  return pessoal || matches[0];
+}
+
+async function lookupCep(cep: string): Promise<Record<string, string> | null> {
+  const clean = cep.replace(/\D/g, "");
+  if (clean.length !== 8) return null;
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${clean}`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return {
+      cep: clean,
+      endereco: String(d.street || ""),
+      bairro: String(d.neighborhood || ""),
+      cidade: String(d.city || ""),
+      estado: String(d.state || ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -466,6 +514,58 @@ Deno.serve(async (req) => {
     // Filtra warnings falsos de "data no futuro" quando a data já passou.
     if (Array.isArray(normalized.warnings)) {
       normalized.warnings = filterFalseFutureWarnings(normalized.warnings);
+    }
+    // Fallback determinístico: telefone e e-mail a partir do texto livre.
+    if (text) {
+      if (!normalized.celular) {
+        const phones = extractPhonesFromText(text);
+        if (phones.length > 0) {
+          normalized.celular = phones[0];
+          normalized.confidence = normalized.confidence || {};
+          normalized.confidence.celular = 0.8;
+          if (phones.length > 1 && !normalized.telefone_secundario) {
+            normalized.telefone_secundario = phones[1];
+            normalized.confidence.telefone_secundario = 0.7;
+          }
+        }
+      }
+      if (!normalized.email) {
+        const email = extractEmailFromText(text);
+        if (email) {
+          normalized.email = email;
+          normalized.confidence = normalized.confidence || {};
+          normalized.confidence.email = 0.85;
+        }
+      }
+    }
+    // Resolve CEP → endereço completo (BrasilAPI). Preenche apenas campos vazios.
+    if (typeof normalized.cep === "string" && normalized.cep.replace(/\D/g, "").length === 8) {
+      const cepData = await lookupCep(normalized.cep);
+      if (cepData) {
+        normalized.cep = cepData.cep;
+        for (const k of ["endereco", "bairro", "cidade", "estado"] as const) {
+          if (!normalized[k] && cepData[k]) {
+            normalized[k] = cepData[k];
+            normalized.confidence = normalized.confidence || {};
+            normalized.confidence[k] = 0.9;
+          }
+        }
+      }
+    }
+    if (typeof normalized.cep_secundario === "string" && normalized.cep_secundario.replace(/\D/g, "").length === 8) {
+      const cepData = await lookupCep(normalized.cep_secundario);
+      if (cepData) {
+        normalized.cep_secundario = cepData.cep;
+        const map: Record<string, string> = {
+          endereco_secundario: cepData.endereco,
+          bairro_secundario: cepData.bairro,
+          cidade_secundario: cepData.cidade,
+          estado_secundario: cepData.estado,
+        };
+        for (const [k, v] of Object.entries(map)) {
+          if (!normalized[k] && v) normalized[k] = v;
+        }
+      }
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
