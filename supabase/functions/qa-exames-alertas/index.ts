@@ -147,44 +147,21 @@ serve(async (req) => {
         const nome = cliente.nome_completo || "Cliente";
         const tipo = tipoLabel[c.exame.tipo] || c.exame.tipo;
         const vencStr = c.exame.data_vencimento.split("-").reverse().join("/");
-
-        const html = `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-            <div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:20px 25px;border-radius:12px 12px 0 0;">
-              <h1 style="color:#fff;font-size:18px;margin:0;">⚠️ Alerta de Vencimento</h1>
-            </div>
-            <div style="background:#fff;padding:25px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
-              <p style="font-size:14px;color:#334155;">Olá, <strong>${nome}</strong>!</p>
-              <p style="font-size:14px;color:#334155;">
-                Seu <strong>${tipo}</strong> vence em <strong style="color:#dc2626;">${c.diasRestantes} dia(s)</strong>
-                (${vencStr}).
-              </p>
-              <p style="font-size:14px;color:#334155;">
-                Providencie a renovação para não perder prazos em seus processos.
-              </p>
-              <div style="margin-top:20px;padding:15px;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
-                <p style="margin:0;font-size:13px;color:#92400e;">
-                  <strong>📋 Importante:</strong> Exames vencem 1 ano após a realização, na mesma data do ano seguinte.
-                  Após o vencimento, será necessário novo exame.
-                </p>
-              </div>
-              <p style="font-size:12px;color:#94a3b8;margin-top:20px;">
-                Quero Armas — Assessoria Jurídica
-              </p>
-            </div>
-          </div>
-        `;
-
         try {
-          await sb.functions.invoke("send-smtp-email", {
-            body: {
-              to: cliente.email,
-              subject: `⚠️ Seu ${tipo} vence em ${c.diasRestantes} dia(s)`,
-              html,
-              trace_id: `qa-exame-alert-${c.exame.id}-${c.marco}`,
+          const res = await sendTransactional({
+            templateName: "exame-vencimento",
+            recipientEmail: cliente.email,
+            idempotencyKey: `qa-exame-alert-${c.exame.id}-${c.marco}`,
+            templateData: {
+              nome,
+              tipoExame: tipo,
+              diasRestantes: String(c.diasRestantes),
+              dataVencimento: vencStr,
+              portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
             },
           });
-          emailsSent++;
+          if (res.ok) emailsSent++;
+          else console.error(`[qa-exames-alertas] email error for ${cliente.email}:`, res.error);
         } catch (err) {
           console.error(`[qa-exames-alertas] email error for ${cliente.email}:`, err);
         }
