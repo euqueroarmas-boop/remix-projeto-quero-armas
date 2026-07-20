@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredenciadosPsico, type CredenciadoPsico } from "./AgendarExame/useCredenciadosPsico";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -815,7 +816,16 @@ export function ClienteDocsHubModal({
     cpf: string | null;
     data_nascimento: string | null;
     nome_mae: string | null;
-  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null });
+    cep: string | null;
+    cidade: string | null;
+    uf: string | null;
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, cep: null, cidade: null, uf: null });
+
+  // Dados do profissional extraídos pela IA (psicólogo ou instrutor)
+  const [profissionalExtraido, setProfissionalExtraido] = useState<{
+    nome: string | null;
+    registro: string | null;
+  }>({ nome: null, registro: null });
 
   // Reseta todo o estado do modal quando ele é fechado, para que ao abrir
   // novamente não persista arquivo, resultado de IA ou campos preenchidos.
@@ -834,6 +844,7 @@ export function ClienteDocsHubModal({
     setHomonimiaSalva(false);
     setShowDeclaracao(false);
     setExtracting(false);
+    setProfissionalExtraido({ nome: null, registro: null });
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -845,7 +856,7 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, end1_cep, end1_cidade, end1_estado")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
@@ -855,6 +866,9 @@ export function ClienteDocsHubModal({
           cpf: row.cpf || null,
           data_nascimento: row.data_nascimento || null,
           nome_mae: row.nome_mae || null,
+          cep: row.end1_cep || null,
+          cidade: row.end1_cidade || null,
+          uf: row.end1_estado || null,
         });
       } catch {
         // Silencioso — conformidade apenas degrada para "sem referência".
@@ -1028,6 +1042,64 @@ export function ClienteDocsHubModal({
   // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
   const hoje = new Date().toISOString().slice(0, 10);
   const docExpirado = !!form.data_validade && form.data_validade < hoje;
+  const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
+
+  // Busca psicólogos próximos APENAS quando laudo está vencido e temos CEP do cliente.
+  // A busca é feita por React via edge function — nenhuma IA processa estes dados.
+  const buscaPsicoParams = useMemo(() => {
+    if (!docExpirado || !isLaudoExameTipo || !classificacao) return null;
+    const tipoBusca = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" as const : "psicologo" as const;
+    if (clienteAutoFetch.cep) {
+      return { tipo: tipoBusca, cep: clienteAutoFetch.cep, raio_km: 25, limit: 5 };
+    }
+    if (clienteAutoFetch.uf && clienteAutoFetch.cidade) {
+      return { tipo: tipoBusca, uf: clienteAutoFetch.uf, cidade: clienteAutoFetch.cidade, raio_km: 25, limit: 5 };
+    }
+    return null;
+  }, [docExpirado, isLaudoExameTipo, classificacao, clienteAutoFetch.cep, clienteAutoFetch.uf, clienteAutoFetch.cidade, form.tipo_documento]);
+
+  const { loading: psicoLoading, results: psicoResults } = useCredenciadosPsico(buscaPsicoParams);
+
+  // Busca de verificação de credenciamento (independente de expiração, pelo nome/registro extraído)
+  // Usa busca textual pelo nome do profissional — UF do cliente como filtro de estado
+  const buscaVerifParams = useMemo(() => {
+    if (!isLaudoExameTipo || !classificacao) return null;
+    if (!profissionalExtraido.nome && !profissionalExtraido.registro) return null;
+    const tipoBusca = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" as const : "psicologo" as const;
+    return {
+      tipo: tipoBusca,
+      busca: profissionalExtraido.nome || profissionalExtraido.registro || "",
+      uf: clienteAutoFetch.uf || undefined,
+      incluir_vencidos: true,
+      limit: 10,
+    };
+  }, [isLaudoExameTipo, classificacao, profissionalExtraido, clienteAutoFetch.uf, form.tipo_documento]);
+
+  const { loading: verifLoading, results: verifResults } = useCredenciadosPsico(buscaVerifParams);
+
+  // Verificação de credenciamento — comparação React pura, sem IA.
+  // Normaliza registro removendo caracteres não alfanuméricos para comparar CRP/IAT.
+  const normReg = (s: string) => s.replace(/\D/g, "");
+  const normNome = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z\s]/g, "").trim();
+  const credenciadoVerificado = useMemo<CredenciadoPsico | null>(() => {
+    if (!profissionalExtraido.registro && !profissionalExtraido.nome) return null;
+    if (verifResults.length === 0) return null;
+    // Primeiro tenta bater por registro (mais confiável)
+    if (profissionalExtraido.registro) {
+      const regNorm = normReg(profissionalExtraido.registro);
+      const byReg = verifResults.find(p => p.registro && normReg(p.registro) === regNorm);
+      if (byReg) return byReg;
+    }
+    // Fallback: nome fuzzy (todas as palavras do nome extraído presentes no nome da base)
+    if (profissionalExtraido.nome) {
+      const palavras = normNome(profissionalExtraido.nome).split(/\s+/).filter(w => w.length > 2);
+      const byNome = verifResults.find(p =>
+        p.nome && palavras.every(w => normNome(p.nome).includes(w))
+      );
+      if (byNome) return byNome;
+    }
+    return null;
+  }, [profissionalExtraido, verifResults]);
 
   function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
     const extraido = (iaExtraido[key] ?? "") || null;
@@ -1196,6 +1268,17 @@ export function ClienteDocsHubModal({
             : "", // SINARM/REVISAR nunca preenche SIGMA
         sistema_registro: tipoIA === "cr" ? "SIGMA" : sistemaFinal,
       }));
+
+      // Captura profissional do laudo (psicólogo/instrutor) — exibido no painel de credenciamento
+      const isLaudoExameIA = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
+      if (isLaudoExameIA) {
+        setProfissionalExtraido({
+          nome: String((campos as any).nome_profissional || "").trim() || null,
+          registro: String((campos as any).registro_profissional || "").trim() || null,
+        });
+      } else {
+        setProfissionalExtraido({ nome: null, registro: null });
+      }
 
       // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
       // bloqueio do salvar até confirmação humana campo a campo.
@@ -2295,6 +2378,109 @@ export function ClienteDocsHubModal({
                   </div>
                 );
               })()
+            )}
+
+            {/* ── Credenciamento PF do profissional ── */}
+            {isLaudoExameTipo && classificacao && (profissionalExtraido.nome || profissionalExtraido.registro) && (
+              <div className={cn(
+                "rounded-2xl border p-3 text-xs",
+                verifLoading
+                  ? "border-gray-200 bg-gray-50 text-gray-600"
+                  : credenciadoVerificado
+                    ? "border-green-300 bg-green-50 text-green-900"
+                    : "border-amber-300 bg-amber-50 text-amber-900"
+              )}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  {verifLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-gray-400" />
+                  ) : credenciadoVerificado ? (
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                  )}
+                  <span className="font-bold uppercase tracking-wide text-[10px]">
+                    {verifLoading
+                      ? "Verificando credenciamento PF…"
+                      : credenciadoVerificado
+                        ? "Profissional credenciado PF ✓"
+                        : "Credenciamento PF não confirmado"}
+                  </span>
+                </div>
+                {!verifLoading && (
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] opacity-80">
+                      <span className="font-medium">Laudo:</span>{" "}
+                      {profissionalExtraido.nome || "—"}{profissionalExtraido.registro ? ` · ${profissionalExtraido.registro}` : ""}
+                    </p>
+                    {credenciadoVerificado ? (
+                      <p className="text-[10px] opacity-80">
+                        <span className="font-medium">Base PF:</span>{" "}
+                        {credenciadoVerificado.nome}{credenciadoVerificado.registro ? ` · ${credenciadoVerificado.registro}` : ""}
+                        {credenciadoVerificado.cidade
+                          ? ` — ${credenciadoVerificado.cidade.replace(/\b\w/g, l => l.toUpperCase()).replace(/\s+\b(\w)/g, (_, l) => ` ${l.toUpperCase()}`)}/${credenciadoVerificado.uf}`
+                          : ""}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] opacity-70">
+                        Não localizado na base de credenciados da Polícia Federal para este estado. Verifique o registro manualmente.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Psicólogos/instrutores próximos quando laudo vencido ── */}
+            {docExpirado && isLaudoExameTipo && classificacao && (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Crosshair className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                  <span className="font-bold uppercase tracking-wide text-[10px]">
+                    {/capacidade_tecnica/i.test(form.tipo_documento) ? "Instrutores de tiro" : "Psicólogos"} próximos (25 km)
+                  </span>
+                  {psicoLoading && <Loader2 className="h-3 w-3 animate-spin ml-auto text-blue-400" />}
+                </div>
+                {!psicoLoading && psicoResults.length === 0 && (
+                  <p className="text-[10px] opacity-70">
+                    {clienteAutoFetch.cep || clienteAutoFetch.cidade
+                      ? "Nenhum credenciado encontrado no raio de 25 km. Amplie a busca por estado."
+                      : "Endereço do cliente não cadastrado. Não foi possível calcular proximidade."}
+                  </p>
+                )}
+                {!psicoLoading && psicoResults.length > 0 && (
+                  <div className="space-y-2 mt-1">
+                    {psicoResults.map((p) => {
+                      const cidadeFormatada = p.cidade
+                        ? p.cidade.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") + (p.uf ? `/${p.uf}` : "")
+                        : p.uf || "";
+                      const waTel = (p.telefones || []).find(t => /\d{10,11}/.test(t.replace(/\D/g, "")));
+                      const waLink = waTel ? `https://wa.me/55${waTel.replace(/\D/g, "")}` : null;
+                      return (
+                        <div key={p.id} className="flex items-start justify-between gap-2 border-b border-blue-100 pb-1.5 last:border-0 last:pb-0">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[11px] truncate">{p.nome}</p>
+                            <p className="text-[10px] opacity-70">
+                              {p.registro ? `${p.registro} · ` : ""}{cidadeFormatada}
+                              {p.distancia_km != null ? <span className="ml-1 text-[9px] bg-blue-100 px-1 py-0.5 rounded">{p.distancia_km.toFixed(1)} km</span> : ""}
+                            </p>
+                            {p.endereco && <p className="text-[9px] opacity-50 truncate">{p.endereco}</p>}
+                          </div>
+                          {waLink && (
+                            <a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg transition-colors"
+                            >
+                              WhatsApp
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* ── Painel de conformidade cruzada (todos os documentos) ── */}
