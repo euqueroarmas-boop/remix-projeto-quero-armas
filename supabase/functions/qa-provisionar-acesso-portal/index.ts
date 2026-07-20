@@ -109,36 +109,23 @@ async function sendWelcomeEmail(admin: any, opts: {
   nome: string;
   isNewUser: boolean;
 }) {
-  const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-  if (!internalToken) {
-    console.warn("[qa-provisionar-acesso-portal] INTERNAL_FUNCTION_TOKEN ausente, e-mail não enviado");
-    return { ok: false, reason: "missing_internal_token" };
+  try {
+    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+    const res = await sendTransactional({
+      templateName: "acesso-liberado-portal",
+      recipientEmail: opts.email,
+      idempotencyKey: `acesso-liberado-${opts.email}-${opts.isNewUser ? "new" : "existing"}`,
+      templateData: {
+        nome: opts.nome,
+        isNewUser: opts.isNewUser,
+        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+      },
+    });
+    return res.ok ? { ok: true } : { ok: false, reason: "send_failed", message: res.error };
+  } catch (e) {
+    console.error("[qa-provisionar-acesso-portal] acesso-liberado-portal error:", (e as Error)?.message);
+    return { ok: false, reason: "send_threw", message: (e as Error)?.message };
   }
-
-  const subject = opts.isNewUser
-    ? "Seu acesso ao Arsenal — Quero Armas"
-    : "Pagamento confirmado — acesse seu portal Quero Armas";
-
-  const html = qaArsenalWelcomeHtml({
-    name: opts.nome,
-    email: opts.email,
-    servicoInteresse: null,
-  });
-  const text = qaArsenalWelcomeText({
-    name: opts.nome,
-    email: opts.email,
-    servicoInteresse: null,
-  });
-
-  const { data, error } = await admin.functions.invoke("send-smtp-email", {
-    headers: { "x-internal-token": internalToken },
-    body: { to: opts.email, subject, html, text, from_name: "Quero Armas" },
-  });
-  if (error) {
-    console.error("[qa-provisionar-acesso-portal] smtp error:", error.message);
-    return { ok: false, reason: "smtp_failed", message: error.message };
-  }
-  return { ok: true, smtp: data ?? null };
 }
 
 Deno.serve(async (req) => {
