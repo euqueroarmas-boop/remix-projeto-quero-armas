@@ -793,7 +793,7 @@ export default function QABaseEquipePage() {
                 if (es === "erro") return <span className="inline-flex items-center gap-1 text-red-700" title={selected.embedding_error ?? ""}><AlertCircle className="h-3 w-3" /> erro</span>;
                 return <span className="inline-flex items-center gap-1 text-amber-700"><Clock className="h-3 w-3" /> pendente</span>;
               })()}
-              {selected.embedding_updated_at && <span>· {new Date(selected.embedding_updated_at).toLocaleString("pt-BR")}</span>}
+              {selected.embedding_updated_at && <span>· {new Date(selected.embedding_updated_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>}
             </div>
             <article className="prose prose-sm md:prose-base max-w-none">
               <ReactMarkdown>{selected.body}</ReactMarkdown>
@@ -1265,7 +1265,7 @@ export default function QABaseEquipePage() {
                     <div className="min-w-0 flex-1">
                       <div className="font-semibold uppercase truncate">{art?.title ?? l.article_id}</div>
                       <div className="text-[10px] text-muted-foreground font-mono uppercase">
-                        {l.status} · {new Date(l.created_at).toLocaleString("pt-BR")}{l.modelo ? ` · ${l.modelo}` : ""}
+                        {l.status} · {new Date(l.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}{l.modelo ? ` · ${l.modelo}` : ""}
                       </div>
                       {l.error_message && (
                         <div className="text-[11px] text-red-700 mt-1 break-words">{l.error_message}</div>

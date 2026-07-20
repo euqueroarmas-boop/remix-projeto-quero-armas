@@ -47,7 +47,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 
 function fmtDate(d: string | null) {
   if (!d) return "—";
-  try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+  try { return new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return d; }
 }
 
 export default function QAAcessosPage() {
@@ -183,7 +183,7 @@ export default function QAAcessosPage() {
                 </div>
               </div>
               <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
-                {k.value.toLocaleString("pt-BR")}
+                {k.value.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
               </div>
               <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{k.label}</div>
             </button>

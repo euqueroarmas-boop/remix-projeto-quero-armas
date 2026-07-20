@@ -18,7 +18,7 @@ interface Props {
 }
 
 const fmtDateTime = (iso: string) => {
-  try { return new Date(iso).toLocaleString("pt-BR"); } catch { return iso; }
+  try { return new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return iso; }
 };
 
 const ACAO_LABEL: Record<string, { label: string; color: string }> = {

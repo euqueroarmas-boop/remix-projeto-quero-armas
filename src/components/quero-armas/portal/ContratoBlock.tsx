@@ -232,15 +232,15 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
       <ul className="mt-4 space-y-2 text-[12px] text-[#0A0A0A]">
         <li className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${contract.issued_at ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
-          Contrato emitido {contract.issued_at && <span className="text-[#6A6A6A]">· {new Date(contract.issued_at).toLocaleString("pt-BR")}</span>}
+          Contrato emitido {contract.issued_at && <span className="text-[#6A6A6A]">· {new Date(contract.issued_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>}
         </li>
         <li className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${contract.customer_uploaded_at ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
-          PDF assinado pelo cliente {contract.customer_uploaded_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_uploaded_at).toLocaleString("pt-BR")}</span>}
+          PDF assinado pelo cliente {contract.customer_uploaded_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_uploaded_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>}
         </li>
         <li className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${contract.validation_status === "valid" ? "bg-[#28C840]" : "bg-[#E4E4E4]"}`} />
-          Validação criptográfica {contract.customer_signature_validated_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_signature_validated_at).toLocaleString("pt-BR")}</span>}
+          Validação criptográfica {contract.customer_signature_validated_at && <span className="text-[#6A6A6A]">· {new Date(contract.customer_signature_validated_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>}
         </li>
       </ul>
 

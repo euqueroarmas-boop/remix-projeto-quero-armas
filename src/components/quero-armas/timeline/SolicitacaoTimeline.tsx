@@ -65,7 +65,7 @@ export function SolicitacaoTimeline({ solicitacaoId }: { solicitacaoId: string }
             <CircleDot className="h-2.5 w-2.5 text-[#7A1F2B]" />
           </span>
           <div className="text-[10px] text-slate-400 uppercase tracking-wider">
-            {new Date(e.created_at).toLocaleString("pt-BR")}
+            {new Date(e.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
             {e.ator ? <span className="ml-1 text-slate-500">· {e.ator}</span> : null}
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">

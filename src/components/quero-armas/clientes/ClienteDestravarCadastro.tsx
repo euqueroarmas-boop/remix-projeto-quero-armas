@@ -29,7 +29,7 @@ type Diag = {
 
 const fmtDT = (iso?: string | null) => {
   if (!iso) return "—";
-  try { return new Date(iso).toLocaleString("pt-BR"); } catch { return iso; }
+  try { return new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return iso; }
 };
 
 export default function ClienteDestravarCadastro({ cliente }: Props) {

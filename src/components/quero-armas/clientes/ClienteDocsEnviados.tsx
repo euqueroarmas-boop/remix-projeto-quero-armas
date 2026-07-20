@@ -441,7 +441,7 @@ function DocRow({
                   </div>
 
                   <div className="text-[9px] text-slate-400 mt-1.5">
-                    Enviado em {new Date(d.created_at).toLocaleString("pt-BR")}
+                    Enviado em {new Date(d.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                     {d.ia_status === "sucesso" && <span className="ml-2 text-[#7A1F2B]">✦ Preenchido com IA</span>}
                   </div>
                   {isReprovado && d.motivo_reprovacao && (

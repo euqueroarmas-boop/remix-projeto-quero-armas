@@ -364,7 +364,7 @@ function FilaConferencia() {
                   typeof d.validacao_ia_confianca === "number"
                     ? `${Math.round(d.validacao_ia_confianca * 100)}%`
                     : "—";
-                const enviado = d.data_envio ? new Date(d.data_envio).toLocaleString("pt-BR") : "—";
+                const enviado = d.data_envio ? new Date(d.data_envio).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
                 return (
                   <tr key={d.id} className="hover:bg-slate-50/60">
                     <td className="px-3 py-2 font-medium uppercase text-slate-800">

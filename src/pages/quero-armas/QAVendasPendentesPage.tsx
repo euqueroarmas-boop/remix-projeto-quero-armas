@@ -116,7 +116,7 @@ function fmtDate(s: string | null): string {
 
 function fmtDateTime(s: string | null): string {
   if (!s) return "—";
-  try { return new Date(s).toLocaleString("pt-BR"); } catch { return s; }
+  try { return new Date(s).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return s; }
 }
 
 function badgeForStatus(status: StatusValidacao | null, hasProc: boolean) {
