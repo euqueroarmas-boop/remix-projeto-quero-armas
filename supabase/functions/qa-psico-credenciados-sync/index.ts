@@ -59,7 +59,7 @@ function extractContent(html: string): string {
 // correto. Ex.: JACAREÍ deve ir em `cidade`, não colar no nome nem virar bairro.
 function collectLocalidades(html: string): Array<{ pos: number; nome: string }> {
   const result: Array<{ pos: number; nome: string }> = [];
-  const re = /<(?:strong|b)[^>]*>([\s\S]{1,120}?)<\/(?:strong|b)>/gi;
+  const re = /<(?:strong|b)(?:\s[^>]*)?>([\s\S]{1,120}?)<\/(?:strong|b)>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     const raw = stripTags(m[1]).replace(/\s+/g, " ").trim();
