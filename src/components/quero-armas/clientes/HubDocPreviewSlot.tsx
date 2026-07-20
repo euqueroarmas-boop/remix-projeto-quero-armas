@@ -115,7 +115,7 @@ export default function HubDocPreviewSlot({
       {/* Slot central */}
       <div
         ref={slotRef}
-        className="relative mx-auto flex w-full max-w-[640px] flex-1 flex-col md:mx-[28px] md:w-[calc(100%-56px)]"
+        className="relative mx-auto flex w-full max-w-[760px] flex-1 flex-col md:mx-[28px] md:w-[calc(100%-56px)]"
       >
         {!file ? (
           <div
@@ -124,7 +124,7 @@ export default function HubDocPreviewSlot({
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             className={cn(
-              "flex min-h-[420px] flex-1 cursor-pointer flex-col items-center justify-center gap-4 border-2 border-dashed bg-white p-8 text-center transition-all",
+              "flex min-h-[320px] flex-1 cursor-pointer flex-col items-center justify-center gap-4 border-2 border-dashed bg-[#FAFAFA] p-8 text-center transition-all",
               dragOver ? "border-[#7A1F2B] bg-[#7A1F2B]/[0.04]" : "border-[#E5E5E5] hover:border-[#7A1F2B]/60 hover:bg-[#7A1F2B]/[0.02]",
             )}
             style={{ borderRadius: 2 }}
