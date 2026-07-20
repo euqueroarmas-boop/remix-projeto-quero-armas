@@ -9,9 +9,10 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
+  Section,
   Text,
+  Hr,
 } from 'npm:@react-email/components@0.0.22'
 
 interface SignupEmailProps {
@@ -22,37 +23,32 @@ interface SignupEmailProps {
 }
 
 export const SignupEmail = ({
-  siteName,
-  siteUrl,
   recipient,
   confirmationUrl,
 }: SignupEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Preview>Confirme seu e-mail — Arsenal Inteligente</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
-        <Text style={text}>
-          Thanks for signing up for{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          !
-        </Text>
-        <Text style={text}>
-          Please confirm your email address (
-          <Link href={`mailto:${recipient}`} style={link}>
-            {recipient}
-          </Link>
-          ) by clicking the button below:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
-        <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
-        </Text>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
+        <Container style={card}>
+          <Heading style={h1}>Confirme seu e-mail</Heading>
+          <Text style={text}>Olá,</Text>
+          <Text style={text}>
+            Recebemos seu cadastro no <strong>Arsenal Inteligente</strong> com o e-mail{' '}
+            <strong>{recipient}</strong>. Para acessar o portal do cliente, confirme seu e-mail clicando no botão abaixo.
+          </Text>
+          <Section style={{ textAlign: 'center', margin: '28px 0' }}>
+            <Button style={button} href={confirmationUrl}>Confirmar e-mail</Button>
+          </Section>
+          <Text style={text}>
+            Se o botão não funcionar, copie e cole o link abaixo no seu navegador:
+          </Text>
+          <Text style={{ ...text, wordBreak: 'break-all' as const, fontSize: '12px', color: '#555' }}>{confirmationUrl}</Text>
+          <Hr style={hr} />
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
+        </Container>
       </Container>
     </Body>
   </Html>
@@ -60,27 +56,13 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+const main = { backgroundColor: '#f6f5f1', fontFamily: 'Arial, sans-serif', padding: '24px 0' }
+const container = { maxWidth: '560px', margin: '0 auto' }
+const header = { backgroundColor: '#0a0a0a', padding: '20px 24px', borderRadius: '6px 6px 0 0' }
+const brand = { color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, letterSpacing: '0.16em', margin: 0 }
+const card = { backgroundColor: '#ffffff', padding: '28px 28px 20px', border: '1px solid #e6e3dc', borderTop: 'none', borderRadius: '0 0 6px 6px' }
+const h1 = { fontSize: '20px', fontWeight: 'bold' as const, color: '#7A1F2B', margin: '0 0 16px' }
+const text = { fontSize: '14px', color: '#1a1a1a', lineHeight: '1.6', margin: '0 0 14px' }
+const button = { backgroundColor: '#7A1F2B', color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, borderRadius: '4px', padding: '12px 28px', textDecoration: 'none' }
+const hr = { borderColor: '#e6e3dc', margin: '24px 0 12px' }
+const footer = { fontSize: '11px', color: '#888', margin: 0, textAlign: 'center' as const }
