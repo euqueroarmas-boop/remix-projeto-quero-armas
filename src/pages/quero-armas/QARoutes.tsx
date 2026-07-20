@@ -279,6 +279,7 @@ export default function QARoutes() {
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
           <Route path="admin/piloto-real" element={<QAPilotoRealPage />} />
           <Route path="admin/pre-piloto" element={<QAPrePilotoPage />} />
+          <Route path="admin/central-adesao" element={<QAPrePilotoPage />} />
           <Route path="operacao/contratacoes" element={<QAContratacoesTabsPage />} />
           <Route path="operacao/alertas-vencimento" element={<QAAlertasVencimentoPage />} />
           <Route path="operacao/prazos-expirados" element={<QAPrazosExpiradosPage />} />

@@ -60,9 +60,9 @@ export default function PrePilotoWizard() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[#7B1C2E]">Pré-Piloto Assistido</h1>
+        <h1 className="text-xl font-semibold text-[#7B1C2E]">Central de Adesão</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Extração automática de documentos → cadastro do cliente → contrato → Piloto Real
+          Extração automática de documentos → cadastro do cliente → contrato → formalização da venda
         </p>
       </div>
 
