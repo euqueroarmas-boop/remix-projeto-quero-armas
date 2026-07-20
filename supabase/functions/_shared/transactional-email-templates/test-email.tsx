@@ -27,7 +27,7 @@ const TestEmail = ({ recipientName, siteUrl }: Props) => (
         <Heading style={h1}>QUERO ARMAS</Heading>
         <Text style={text}>
           Olá{recipientName ? `, ${recipientName}` : ''}! Este é um e-mail de teste
-          enviado pelo sistema através do domínio notify.notificacao.euqueroarmas.com.br.
+          enviado pelo sistema através do domínio notify.euqueroarmas.com.br.
         </Text>
         <Text style={text}>
           Se você recebeu esta mensagem, a infraestrutura de e-mails está
