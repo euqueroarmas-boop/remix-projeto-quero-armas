@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { ClipboardList, FileSearch, ClipboardCheck, UserPlus, FolderOpen, Play } from "lucide-react";
+import { ClipboardList, FileSearch, ClipboardCheck, UserPlus, Play } from "lucide-react";
 import Etapa1Documentos from "./Etapa1Documentos";
 import Etapa2Leitura from "./Etapa2Leitura";
 import Etapa3Revisao from "./Etapa3Revisao";
 import Etapa4Salvar from "./Etapa4Salvar";
-import Etapa5Arsenal from "./Etapa5Arsenal";
 import Etapa6Piloto from "./Etapa6Piloto";
 
 export type CampoExtraido = {
@@ -41,7 +40,6 @@ const ETAPAS = [
   { label: "Leitura IA", icon: FileSearch },
   { label: "Revisão", icon: ClipboardCheck },
   { label: "Salvar", icon: UserPlus },
-  { label: "Arsenal", icon: FolderOpen },
   { label: "Piloto", icon: Play },
 ];
 
@@ -138,19 +136,12 @@ export default function PrePilotoWizard() {
           <Etapa4Salvar
             dadosRevisados={dadosRevisados}
             senhagov={dadosExtraidos?.senha_gov ?? null}
+            arquivos={arquivos}
             onSalvo={(c) => { setClienteSalvo(c); avancar(); }}
             onVoltar={voltar}
           />
         )}
         {etapa === 4 && clienteSalvo && (
-          <Etapa5Arsenal
-            clienteSalvo={clienteSalvo}
-            arquivos={arquivos}
-            onAvancar={avancar}
-            onVoltar={voltar}
-          />
-        )}
-        {etapa === 5 && clienteSalvo && (
           <Etapa6Piloto clienteSalvo={clienteSalvo} onVoltar={voltar} />
         )}
       </div>
