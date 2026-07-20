@@ -103,7 +103,7 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 export default function QAPilotoRealPage() {
   const { user, profile } = useQAAuthContext();
   const location = useLocation();
-  const prePilotoState = (location.state as { clienteId?: number; clienteNome?: string } | null);
+  const prePilotoState = (location.state as { clienteId?: number; clienteNome?: string; vendaId?: number } | null);
 
   /* ---------- Retomada de piloto (URL / localStorage) ---------- */
   const [hidratando, setHidratando] = useState(false);
@@ -148,15 +148,27 @@ export default function QAPilotoRealPage() {
     if (!prePilotoState?.clienteId) return;
     (async () => {
       try {
-        const { data } = await supabase
-          .from("qa_clientes")
-          .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
-          .eq("id", prePilotoState.clienteId)
-          .maybeSingle();
-        if (data) {
-          const c = data as Cliente;
+        const [cliRes, vendaRes] = await Promise.all([
+          supabase
+            .from("qa_clientes")
+            .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
+            .eq("id", prePilotoState.clienteId)
+            .maybeSingle(),
+          prePilotoState.vendaId
+            ? supabase
+                .from("qa_vendas")
+                .select("id, id_legado, cliente_id, status, status_validacao_valor, cobranca_status, valor_a_pagar, forma_pagamento")
+                .eq("id", prePilotoState.vendaId)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
+        ]);
+        if (cliRes.data) {
+          const c = cliRes.data as Cliente;
           setCliente(c);
           setQuery(c.nome_completo || "");
+        }
+        if (vendaRes.data) {
+          setVenda(vendaRes.data as unknown as Venda);
         }
       } catch { /* silencioso */ }
     })();

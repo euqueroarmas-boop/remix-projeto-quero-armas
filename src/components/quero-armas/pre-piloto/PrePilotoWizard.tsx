@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ClipboardList, FileSearch, ClipboardCheck, UserPlus, Play } from "lucide-react";
+import { ClipboardList, FileSearch, ClipboardCheck, UserPlus, FileSignature, Play } from "lucide-react";
 import Etapa1Documentos from "./Etapa1Documentos";
 import Etapa2Leitura from "./Etapa2Leitura";
 import Etapa3Revisao from "./Etapa3Revisao";
 import Etapa4Salvar from "./Etapa4Salvar";
+import Etapa5Contrato from "./Etapa5Contrato";
 import Etapa6Piloto from "./Etapa6Piloto";
 
 export type CampoExtraido = {
@@ -40,6 +41,7 @@ const ETAPAS = [
   { label: "Leitura IA", icon: FileSearch },
   { label: "Revisão", icon: ClipboardCheck },
   { label: "Salvar", icon: UserPlus },
+  { label: "Contrato", icon: FileSignature },
   { label: "Piloto", icon: Play },
 ];
 
@@ -50,17 +52,17 @@ export default function PrePilotoWizard() {
   const [dadosExtraidos, setDadosExtraidos] = useState<DadosExtraidos | null>(null);
   const [dadosRevisados, setDadosRevisados] = useState<Record<string, string | null>>({});
   const [clienteSalvo, setClienteSalvo] = useState<ClienteSalvo | null>(null);
+  const [vendaContrato, setVendaContrato] = useState<{ id: number; legado: number | null } | null>(null);
 
   const avancar = () => setEtapa((e) => Math.min(e + 1, ETAPAS.length - 1));
   const voltar = () => setEtapa((e) => Math.max(e - 1, 0));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-[#7B1C2E]">Pré-Piloto Assistido</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Extração automática de documentos para cadastrar o cliente e iniciar o Piloto Real
+          Extração automática de documentos → cadastro do cliente → contrato → Piloto Real
         </p>
       </div>
 
@@ -94,7 +96,7 @@ export default function PrePilotoWizard() {
               </div>
               {i < ETAPAS.length - 1 && (
                 <div
-                  className={`h-px w-10 mx-1 mt-[-12px] flex-shrink-0 transition-colors ${
+                  className={`h-px w-8 mx-1 mt-[-12px] flex-shrink-0 transition-colors ${
                     concluida ? "bg-[#7B1C2E]/40" : "bg-muted"
                   }`}
                 />
@@ -142,7 +144,18 @@ export default function PrePilotoWizard() {
           />
         )}
         {etapa === 4 && clienteSalvo && (
-          <Etapa6Piloto clienteSalvo={clienteSalvo} onVoltar={voltar} />
+          <Etapa5Contrato
+            clienteSalvo={clienteSalvo}
+            onConcluido={(vendaId, legado) => { setVendaContrato({ id: vendaId, legado }); avancar(); }}
+            onVoltar={voltar}
+          />
+        )}
+        {etapa === 5 && clienteSalvo && (
+          <Etapa6Piloto
+            clienteSalvo={clienteSalvo}
+            vendaId={vendaContrato?.id ?? null}
+            onVoltar={voltar}
+          />
         )}
       </div>
     </div>
