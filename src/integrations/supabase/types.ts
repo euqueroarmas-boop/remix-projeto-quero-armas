@@ -6680,6 +6680,51 @@ export type Database = {
           },
         ]
       }
+      qa_habitualidade_alertas_enviados: {
+        Row: {
+          cliente_id: number
+          competicoes_validas: number | null
+          created_at: string
+          enviado_em: string
+          id: number
+          marco_hash: string
+          nivel_atual: string | null
+          nivel_sugerido: string | null
+          periodo_ref: string | null
+          template_name: string
+          tipo_arma_ancora: string | null
+          treinos_validos: number | null
+        }
+        Insert: {
+          cliente_id: number
+          competicoes_validas?: number | null
+          created_at?: string
+          enviado_em?: string
+          id?: number
+          marco_hash: string
+          nivel_atual?: string | null
+          nivel_sugerido?: string | null
+          periodo_ref?: string | null
+          template_name: string
+          tipo_arma_ancora?: string | null
+          treinos_validos?: number | null
+        }
+        Update: {
+          cliente_id?: number
+          competicoes_validas?: number | null
+          created_at?: string
+          enviado_em?: string
+          id?: number
+          marco_hash?: string
+          nivel_atual?: string | null
+          nivel_sugerido?: string | null
+          periodo_ref?: string | null
+          template_name?: string
+          tipo_arma_ancora?: string | null
+          treinos_validos?: number | null
+        }
+        Relationships: []
+      }
       qa_homologacao_sessoes: {
         Row: {
           cliente_id: string | null
