@@ -180,6 +180,10 @@ const SYSTEM_PROMPT = [
     "12) Emissor RG/CIN: se o emissor extraído for incomum, inconsistente ou de baixa confiança, marque emissor_rg_needs_review=true e adicione warning 'Verificar emissor do RG. Extração possivelmente incorreta.'. Exemplo: 'SSP ISP' deve gerar revisão.",
     "13) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
     "14) NUNCA gere warning de 'data no futuro' a menos que tenha certeza absoluta da data atual. Datas em DD/MM/AAAA podem ser confundidas com MM/DD/AAAA — não emita esse tipo de warning.",
+    "15) TEXTO LIVRE (conversas WhatsApp, e-mails, prints): LEIA linha por linha e extraia TODO dado cadastral encontrado — em especial telefone/celular (qualquer sequência com DDD, ex.: (11) 94010-4125, 11940104125, +55 11 9...), e-mail (qualquer token com @), CEP (00000-000 ou 8 dígitos), endereço, RG, CPF, data de nascimento, nome da mãe/pai, senha GOV.BR. Assinaturas de e-mail, rodapés e cabeçalhos frequentemente contêm telefone e e-mail — não ignore.",
+    "16) Telefone/celular: normalize para apenas dígitos com DDD (10 ou 11 dígitos). Se houver mais de um número, use o mais mencionado ou o marcado como principal em celular, e coloque o outro em telefone_secundario.",
+    "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): trate cada nome como fonte válida de telefone. Ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650' (celulares brasileiros pré-2016 com 8 dígitos começando 6-9 devem receber '9' prefixado após o DDD).",
+    "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -328,6 +332,104 @@ function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
   return compact.length > 0 && !common.has(compact) && compact.length > 8;
 }
 
+// Extração determinística de telefone/celular e e-mail a partir do texto livre.
+// Serve de fallback quando o modelo ignora dados de conversa WhatsApp/e-mail.
+function extractPhonesFromText(text: string): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  // DDDs válidos no Brasil (ANATEL). Sem esta lista, sequências de dígitos
+  // (timestamps, protocolos, IDs de mensagem do WhatsApp) viram "telefone".
+  const DDD_VALIDOS = new Set([
+    "11","12","13","14","15","16","17","18","19",
+    "21","22","24","27","28",
+    "31","32","33","34","35","37","38",
+    "41","42","43","44","45","46","47","48","49",
+    "51","53","54","55",
+    "61","62","63","64","65","66","67","68","69",
+    "71","73","74","75","77","79",
+    "81","82","83","84","85","86","87","88","89",
+    "91","92","93","94","95","96","97","98","99",
+  ]);
+  // Só aceita padrões claramente telefônicos:
+  //   +55 (DD) 9XXXX-XXXX / (DD) 9XXXX-XXXX / DD 9XXXX XXXX
+  //   Exige separador (parênteses, espaço, hífen, ponto) OU prefixo +55
+  //   para evitar casar dentro de sequências longas (timestamps, IDs).
+  const re = /(?:\+?55[\s.-]*)?(?:\(?(\d{2})\)?[\s.-]+)(9?\d{4})[\s.-]?(\d{4})/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const ddd = m[1];
+    if (!DDD_VALIDOS.has(ddd)) continue;
+    const rest = (m[2] + m[3]).replace(/\D/g, "");
+    // Celular novo: 9 dígitos começando com 9.
+    // Celular legado (pré-2016): 8 dígitos começando com 6-9 → prefixamos "9".
+    // Fixo: 8 dígitos começando 2-5.
+    const isMobileNovo = rest.length === 9 && rest.startsWith("9");
+    const isMobileLegado = rest.length === 8 && /^[6-9]/.test(rest);
+    const isFixo = rest.length === 8 && /^[2-5]/.test(rest);
+    if (!isMobileNovo && !isMobileLegado && !isFixo) continue;
+    const restNorm = isMobileLegado ? "9" + rest : rest;
+    const digits = ddd + restNorm;
+    if (!seen.has(digits)) {
+      seen.add(digits);
+      out.push(digits);
+    }
+  }
+  // Prioriza celulares (11 dígitos) sobre fixos (10 dígitos)
+  out.sort((a, b) => b.length - a.length);
+  return out;
+}
+
+function extractEmailFromText(text: string): string | null {
+  const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  const matches = Array.from(new Set((text.match(re) || []).map((e) => e.toLowerCase())));
+  if (matches.length === 0) return null;
+  const pessoais = ["gmail.com", "hotmail.com", "outlook.com", "icloud.com", "yahoo.com", "uol.com.br", "terra.com.br", "bol.com.br", "live.com"];
+  const pessoal = matches.find((e) => pessoais.some((d) => e.endsWith("@" + d)));
+  return pessoal || matches[0];
+}
+
+async function lookupCep(cep: string): Promise<Record<string, string> | null> {
+  const clean = cep.replace(/\D/g, "");
+  if (clean.length !== 8) return null;
+  // 1) BrasilAPI v2
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${clean}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.street || d?.city) {
+        return {
+          cep: clean,
+          endereco: String(d.street || ""),
+          bairro: String(d.neighborhood || ""),
+          cidade: String(d.city || ""),
+          estado: String(d.state || ""),
+        };
+      }
+    }
+  } catch { /* fallback abaixo */ }
+  // 2) ViaCEP
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${clean}/json/`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      if (!d?.erro && (d?.logradouro || d?.localidade)) {
+        return {
+          cep: clean,
+          endereco: String(d.logradouro || ""),
+          bairro: String(d.bairro || ""),
+          cidade: String(d.localidade || ""),
+          estado: String(d.uf || ""),
+        };
+      }
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -463,6 +565,65 @@ Deno.serve(async (req) => {
     // Filtra warnings falsos de "data no futuro" quando a data já passou.
     if (Array.isArray(normalized.warnings)) {
       normalized.warnings = filterFalseFutureWarnings(normalized.warnings);
+    }
+    // Fallback determinístico: telefone e e-mail a partir do texto livre.
+    if (text) {
+      if (!normalized.celular) {
+        const phones = extractPhonesFromText(text);
+        if (phones.length > 0) {
+          normalized.celular = phones[0];
+          normalized.confidence = normalized.confidence || {};
+          normalized.confidence.celular = 0.8;
+          if (phones.length > 1 && !normalized.telefone_secundario) {
+            normalized.telefone_secundario = phones[1];
+            normalized.confidence.telefone_secundario = 0.7;
+          }
+        }
+      }
+      if (!normalized.email) {
+        const email = extractEmailFromText(text);
+        if (email) {
+          normalized.email = email;
+          normalized.confidence = normalized.confidence || {};
+          normalized.confidence.email = 0.85;
+        }
+      }
+    }
+    // Resolve CEP → endereço completo (BrasilAPI). Preenche apenas campos vazios.
+    if (typeof normalized.cep === "string" && normalized.cep.replace(/\D/g, "").length === 8) {
+      const cepData = await lookupCep(normalized.cep);
+      if (cepData) {
+        normalized.cep = cepData.cep;
+        normalized.confidence = normalized.confidence || {};
+        // Logradouro: CEP é fonte autoritativa — sempre sobrescreve.
+        if (cepData.endereco) {
+          normalized.endereco = cepData.endereco;
+          normalized.confidence.endereco = 0.95;
+        }
+        // Bairro/cidade/estado: preenche só se estiver vazio (respeita extração).
+        for (const k of ["bairro", "cidade", "estado"] as const) {
+          const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
+          if (!atual && cepData[k]) {
+            normalized[k] = cepData[k];
+            normalized.confidence[k] = 0.9;
+          }
+        }
+      }
+    }
+    if (typeof normalized.cep_secundario === "string" && normalized.cep_secundario.replace(/\D/g, "").length === 8) {
+      const cepData = await lookupCep(normalized.cep_secundario);
+      if (cepData) {
+        normalized.cep_secundario = cepData.cep;
+        if (cepData.endereco) normalized.endereco_secundario = cepData.endereco;
+        for (const [k, v] of Object.entries({
+          bairro_secundario: cepData.bairro,
+          cidade_secundario: cepData.cidade,
+          estado_secundario: cepData.estado,
+        })) {
+          const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
+          if (!atual && v) normalized[k] = v;
+        }
+      }
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {

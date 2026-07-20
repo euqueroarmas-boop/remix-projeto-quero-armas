@@ -8,8 +8,7 @@ import type { ArquivoUpload } from "./PrePilotoWizard";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
 const TIPO_LABELS: Record<string, string> = {
-  cin: "CIN/RG",
-  cpf: "CPF",
+  cin: "CIN/RG/CNH",
   comprovante_residencia: "Comprovante de Residência",
   laudo_psicologico: "Laudo Psicológico",
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
@@ -33,33 +32,64 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
   const adicionarArquivos = async (files: FileList | File[]) => {
     const lista = Array.from(files);
-    const novos: ArquivoUpload[] = [];
+    const novosNaoZip: ArquivoUpload[] = [];
+    const novosDoZip: ArquivoUpload[] = [];
+    let textoAcumuladoZip = "";
+    const nomesFonteZip: string[] = [];
 
     for (const f of lista) {
       if (f.type === "application/zip" || f.name.toLowerCase().endsWith(".zip")) {
-        await processarZip(f);
+        const { arquivos: extraidos, texto } = await processarZip(f);
+        novosDoZip.push(...extraidos);
+        if (texto) textoAcumuladoZip += (textoAcumuladoZip ? "\n\n" : "") + texto;
+        nomesFonteZip.push(f.name);
         continue;
       }
       if (!TIPOS_ACEITOS.includes(f.type)) {
         toast.warning(`Arquivo ignorado: ${f.name} (tipo não suportado)`);
         continue;
       }
-      novos.push({ file: f, tipo: inferirTipo(f.name), preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
+      novosNaoZip.push({ file: f, tipo: inferirTipo(f.name), preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
     }
 
-    setArquivos([...arquivos, ...novos]);
+    const combinados = [...novosNaoZip, ...novosDoZip];
+    if (combinados.length > 0) setArquivos([...arquivos, ...combinados]);
+    if (textoAcumuladoZip || nomesFonteZip.length > 0 || combinados.length > 0) {
+      const listaNomes = [
+        ...nomesFonteZip,
+        ...combinados.map((c) => c.file.name),
+      ].filter(Boolean);
+      const blocoNomes = listaNomes.length > 0
+        ? `=== NOMES DE ARQUIVO (podem conter telefone/e-mail/nome) ===\n${listaNomes.join("\n")}`
+        : "";
+      const merged = textoPastaColado
+        ? [textoPastaColado, blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n")
+        : [blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n");
+      setTextoPastaColado(merged);
+      if (textoAcumuladoZip) toast.success("Texto da conversa do WhatsApp adicionado para extração");
+    }
   };
 
-  const processarZip = async (zipFile: File) => {
+  const processarZip = async (zipFile: File): Promise<{ arquivos: ArquivoUpload[]; texto: string }> => {
     setProcessandoZip(true);
     try {
       const JSZip = (await import("jszip")).default;
       const zip = await JSZip.loadAsync(zipFile);
       const novos: ArquivoUpload[] = [];
+      let textoConversa = "";
 
       for (const [nome, entry] of Object.entries(zip.files)) {
         if (entry.dir) continue;
         const ext = nome.split(".").pop()?.toLowerCase() ?? "";
+        if (ext === "txt") {
+          try {
+            const txt = await entry.async("string");
+            if (txt && txt.trim()) {
+              textoConversa += (textoConversa ? "\n\n" : "") + txt.slice(0, 60000);
+            }
+          } catch { /* ignore */ }
+          continue;
+        }
         if (!["jpg", "jpeg", "png", "webp", "pdf"].includes(ext)) continue;
 
         const blob = await entry.async("blob");
@@ -72,14 +102,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         });
       }
 
-      if (novos.length === 0) {
-        toast.warning("ZIP não continha imagens ou PDFs reconhecíveis.");
-      } else {
+      if (novos.length === 0 && !textoConversa) {
+        toast.warning("ZIP não continha imagens, PDFs ou conversa reconhecível.");
+      } else if (novos.length > 0) {
         toast.success(`${novos.length} arquivo(s) extraído(s) do ZIP`);
-        setArquivos([...arquivos, ...novos]);
       }
+      return { arquivos: novos, texto: textoConversa };
     } catch {
       toast.error("Erro ao processar ZIP. Verifique se o arquivo não está corrompido.");
+      return { arquivos: [], texto: "" };
     } finally {
       setProcessandoZip(false);
     }

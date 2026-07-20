@@ -17,6 +17,7 @@ import {
 import {
   dbRowToTheme,
   signHeroImagePath,
+  setPersonalThemeKey,
   type QASidebarTheme,
   type QASidebarThemeRow,
 } from "./sidebarThemes";
@@ -181,11 +182,22 @@ export default function QASidebarTemasAdmin() {
   }
 
   async function setAsGlobal(r: QASidebarThemeRow) {
+    // 1) Desmarca qualquer outro global — evita ambiguidade em resolveEffectiveTheme.
+    const { error: clearErr } = await supabase
+      .from("qa_sidebar_temas")
+      .update({ is_global_default: false })
+      .eq("is_global_default", true)
+      .neq("id", r.id);
+    if (clearErr) { toast.error("Falhou: " + clearErr.message); return; }
+    // 2) Marca o novo global.
     const { error } = await supabase
       .from("qa_sidebar_temas")
       .update({ is_global_default: true })
       .eq("id", r.id);
     if (error) { toast.error("Falhou: " + error.message); return; }
+    // 3) Limpa a preferência pessoal do próprio admin — sem isso, o localStorage
+    //    sobrescreveria o novo global e o admin não veria a mudança aplicada.
+    setPersonalThemeKey(null);
     toast.success(`"${r.label}" agora é o tema padrão de todos os clientes.`);
     await reload();
   }

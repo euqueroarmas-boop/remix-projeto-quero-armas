@@ -104,7 +104,9 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {todosOsCampos.map(({ key, label, required }) => {
+        {todosOsCampos.map((campo) => {
+          const { key, label } = campo;
+          const required = (campo as { required?: boolean }).required;
           const conf = getConfidence(dadosExtraidos.confidence_pairs, key);
           const valor = dadosRevisados[key] ?? "";
           return (

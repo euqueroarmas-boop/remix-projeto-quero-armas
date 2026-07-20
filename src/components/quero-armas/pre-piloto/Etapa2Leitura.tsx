@@ -49,33 +49,91 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
     try {
       // Passo 0: preparar conteúdo
       atualizar(0, { status: "loading" });
-      const parts: { tipo: string; mime: string; data: string; nome: string }[] = [];
+      const parts: { tipo: string; mime: string; name: string; data_url: string }[] = [];
       for (const a of arquivos) {
         const b64 = await fileToBase64(a.file);
-        parts.push({ tipo: a.tipo, mime: a.file.type, data: b64, nome: a.file.name });
+        const mime = a.file.type || "application/octet-stream";
+        parts.push({
+          tipo: a.tipo,
+          mime,
+          name: a.file.name,
+          data_url: `data:${mime};base64,${b64}`,
+        });
       }
       atualizar(0, { status: "ok" });
 
       // Passo 1: chamar qa-cliente-prefill
       atualizar(1, { status: "loading" });
-      const body: Record<string, unknown> = { arquivos: parts };
-      if (textoPastaColado.trim()) body.texto_extra = textoPastaColado.trim();
+      const body: Record<string, unknown> = { files: parts };
+      if (textoPastaColado.trim()) body.text = textoPastaColado.trim();
 
       const { data, error } = await supabase.functions.invoke("qa-cliente-prefill", { body });
       if (error) throw new Error(error.message || "Erro na edge function");
       if (!data) throw new Error("Resposta vazia da IA");
+      if (data.error) throw new Error(String(data.error));
       atualizar(1, { status: "ok" });
 
       // Passo 2: processar campos
       atualizar(2, { status: "loading" });
-      const campos: Record<string, string | null> = data.campos || {};
-      const confidencePairs: { campo: string; valor: string | null; confidence: number }[] = data.confidence_pairs || [];
-      const warnings: string[] = data.warnings || [];
+      // A edge function retorna { success, fields: { ...campos, confidence, warnings, senha_gov_raw } }
+      const fields: Record<string, any> = data.fields || {};
+      const confidenceMap: Record<string, number> = (fields.confidence && typeof fields.confidence === "object") ? fields.confidence : {};
+      const warnings: string[] = Array.isArray(fields.warnings) ? fields.warnings : [];
+      const senhaRaw: string | null = typeof fields.senha_gov_raw === "string" && fields.senha_gov_raw ? fields.senha_gov_raw : null;
+      const senhaConfidence: number = typeof fields.senha_gov_confidence === "number" ? fields.senha_gov_confidence : 0;
+      const senhaNeedsReview: boolean = fields.senha_gov_needs_review === true;
+
+      // Chaves internas que não devem virar campos do formulário
+      const IGNORAR = new Set([
+        "confidence", "confidence_pairs", "warnings",
+        "senha_gov_raw", "senha_gov_confidence", "senha_gov_needs_review",
+        "emissor_rg_needs_review",
+      ]);
+      const campos: Record<string, string | null> = {};
+      for (const [k, v] of Object.entries(fields)) {
+        if (IGNORAR.has(k)) continue;
+        if (v == null) continue;
+        campos[k] = typeof v === "string" ? v : String(v);
+      }
+      // Aliases para bater com a lista de campos da Etapa 3
+      if (campos.emissor_rg && !campos.rg_orgao_emissor) campos.rg_orgao_emissor = campos.emissor_rg;
+      // endereco (retornado pela IA) ↔ logradouro (usado na Etapa 3) — evita campo duplicado
+      if (campos.endereco && !campos.logradouro) campos.logradouro = campos.endereco;
+      if (campos.logradouro && !campos.endereco) campos.endereco = campos.logradouro;
+      if (confidenceMap.endereco != null && confidenceMap.logradouro == null) {
+        confidenceMap.logradouro = confidenceMap.endereco;
+      }
+      // Remove o duplicado da UI (logradouro fica; endereco some da revisão)
+      delete campos.endereco;
+      // Normaliza sexo (M/F → Masculino/Feminino) para exibição amigável
+      if (campos.sexo) {
+        const s = campos.sexo.trim().toUpperCase();
+        if (s === "M" || s === "MASC" || s === "MASCULINO") campos.sexo = "Masculino";
+        else if (s === "F" || s === "FEM" || s === "FEMININO") campos.sexo = "Feminino";
+      }
+      if (senhaRaw) campos.senha_gov = senhaRaw;
+
+      // Formata telefones brasileiros: "+55 (DD) 9XXXX-XXXX" ou "+55 (DD) XXXX-XXXX"
+      const formatarTelefoneBR = (raw: string): string => {
+        const d = raw.replace(/\D/g, "").replace(/^55/, "");
+        if (d.length === 11) return `+55 (${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        if (d.length === 10) return `+55 (${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+        return raw;
+      };
+      for (const campo of ["celular", "telefone_secundario", "telefone"]) {
+        if (campos[campo]) campos[campo] = formatarTelefoneBR(campos[campo]!);
+      }
+
+      const confidencePairs = Object.entries(confidenceMap).map(([campo, confidence]) => ({
+        campo,
+        valor: campos[campo] ?? null,
+        confidence: typeof confidence === "number" ? confidence : 0,
+      }));
       atualizar(2, { status: "ok", detalhe: `${Object.keys(campos).length} campos extraídos` });
 
       // Passo 3: senha GOV.BR
-      const senhaGovOk = data.senha_gov_ok === true;
-      const senhaGov = data.senha_gov || null;
+      const senhaGovOk = !!senhaRaw && !senhaNeedsReview && senhaConfidence >= 0.75;
+      const senhaGov = senhaRaw;
       atualizar(3, {
         status: senhaGov ? (senhaGovOk ? "ok" : "error") : "ok",
         detalhe: senhaGov

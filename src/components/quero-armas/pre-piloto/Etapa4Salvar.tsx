@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { ClienteSalvo } from "./PrePilotoWizard";
+import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
   dadosRevisados: Record<string, string | null>;
   senhagov: string | null;
+  arquivos: ArquivoUpload[];
   onSalvo: (c: ClienteSalvo) => void;
   onVoltar: () => void;
 }
@@ -19,10 +20,31 @@ function formatCpf(cpf: string | null): string | null {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
-export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVoltar }: Props) {
+// Mapeia o "tipo" usado na Etapa 1 para o `tipo_documento` canônico do
+// Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
+const TIPO_ETAPA1_TO_HUB: Record<string, string> = {
+  cin: "rg",
+  comprovante_residencia: "comprovante_residencia",
+  laudo_psicologico: "laudo_psicologico",
+  laudo_capacidade_tecnica: "laudo_capacidade_tecnica",
+  antecedentes_criminais: "antecedentes_criminais",
+  comprovante_renda: "comprovante_renda",
+  outro: "outro",
+};
+
+function sanitizeFileName(name: string): string {
+  return name
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .slice(-120);
+}
+
+export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSalvo, onVoltar }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [existente, setExistente] = useState<ClienteSalvo | null>(null);
   const [verificado, setVerificado] = useState(false);
+  const [statusUpload, setStatusUpload] = useState<string | null>(null);
 
   const cpfNorm = dadosRevisados.cpf?.replace(/\D/g, "") ?? null;
 
@@ -55,6 +77,16 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVolt
   async function salvar(reutilizar: boolean) {
     setSalvando(true);
     try {
+      // Normaliza data DD/MM/AAAA -> AAAA-MM-DD (Postgres date)
+      const toIsoDate = (v: unknown): string | null => {
+        if (!v) return null;
+        const s = String(v).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const m = s.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})$/);
+        if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+        return null;
+      };
+      const dataNascIso = toIsoDate(dadosRevisados.data_nascimento);
       let clienteId: number;
       let existia = false;
 
@@ -74,17 +106,17 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVolt
           cpf: formatCpf(cpfNorm),
           email: dadosRevisados.email || null,
           celular: dadosRevisados.celular || null,
-          data_nascimento: dadosRevisados.data_nascimento || null,
+          data_nascimento: dataNascIso,
           nome_mae: dadosRevisados.nome_mae || null,
           sexo: dadosRevisados.sexo || null,
           rg: dadosRevisados.rg || null,
-          end1_cep: dadosRevisados.cep || null,
-          end1_logradouro: dadosRevisados.logradouro || null,
-          end1_numero: dadosRevisados.numero || null,
-          end1_complemento: dadosRevisados.complemento || null,
-          end1_bairro: dadosRevisados.bairro || null,
-          end1_cidade: dadosRevisados.cidade || null,
-          end1_estado: dadosRevisados.estado || null,
+          cep: dadosRevisados.cep || null,
+          endereco: dadosRevisados.logradouro || dadosRevisados.endereco || null,
+          numero: dadosRevisados.numero || null,
+          complemento: dadosRevisados.complemento || null,
+          bairro: dadosRevisados.bairro || null,
+          cidade: dadosRevisados.cidade || null,
+          estado: dadosRevisados.estado || null,
           profissao: dadosRevisados.profissao || null,
         };
 
@@ -130,6 +162,55 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVolt
       };
 
       toast.success(existia ? "Cliente atualizado com sucesso" : "Cliente criado com sucesso");
+
+      // ============================================================
+      // Persistência dos documentos capturados na Etapa 1.
+      // Faz upload no bucket `qa-documentos` e insere em
+      // `qa_documentos_cliente` como se fosse o Hub Documental
+      // (staff/admin => aprovado + validado_admin). Assim eliminamos
+      // a etapa Arsenal do wizard: nenhum reupload manual necessário.
+      // ============================================================
+      const docsParaPersistir = (arquivos || []).filter((a) => a.tipo !== "gov_br");
+      if (docsParaPersistir.length > 0) {
+        setStatusUpload(`Enviando ${docsParaPersistir.length} documento(s) ao Hub Documental…`);
+        let ok = 0;
+        let falhas = 0;
+        for (const a of docsParaPersistir) {
+          try {
+            const tipoDb = TIPO_ETAPA1_TO_HUB[a.tipo] || "outro";
+            const safe = sanitizeFileName(a.file.name);
+            const path = `cliente-docs/qa-${clienteId}/${tipoDb}/${Date.now()}_${safe}`;
+            const { error: upErr } = await supabase.storage
+              .from("qa-documentos")
+              .upload(path, a.file, { upsert: false, contentType: a.file.type || undefined });
+            if (upErr) { falhas++; console.warn("[pre-piloto upload]", upErr); continue; }
+
+            const payload: Record<string, unknown> = {
+              qa_cliente_id: clienteId,
+              tipo_documento: tipoDb,
+              arquivo_storage_path: path,
+              arquivo_nome: a.file.name,
+              arquivo_mime: a.file.type || null,
+              status: "aprovado",
+              origem: "admin",
+              validado_admin: true,
+              aprovado_em: new Date().toISOString(),
+            };
+            const { error: insErr } = await supabase
+              .from("qa_documentos_cliente" as any)
+              .insert(payload);
+            if (insErr) { falhas++; console.warn("[pre-piloto insert doc]", insErr); }
+            else ok++;
+          } catch (err) {
+            falhas++;
+            console.warn("[pre-piloto doc catch]", err);
+          }
+        }
+        setStatusUpload(null);
+        if (ok > 0) toast.success(`${ok} documento(s) gravado(s) no Hub Documental`);
+        if (falhas > 0) toast.warning(`${falhas} documento(s) não puderam ser gravados — reenvie pelo Hub se necessário.`);
+      }
+
       onSalvo(cFinal);
     } catch (e: any) {
       toast.error("Erro ao salvar: " + (e?.message || "Tente novamente"));
