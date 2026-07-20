@@ -504,16 +504,17 @@ export function qaArsenalWelcomeHtml(opts: {
   const servico = (opts.servicoInteresse || "").trim();
 
   return qaWrap({
-    preheader: `Arsenal Digital ativo · acervo armado para ${firstName}.`,
-    opTag: "ARSENAL · CONTA GRATUITA ATIVADA",
-    title: "Seu Arsenal Digital está armado.",
-    subtitle: "Acervo gratuito vitalício. Armas, CRAFs, vencimentos e processos em um único cofre digital.",
+    preheader: `Arsenal Inteligente ativo · acervo armado para ${firstName}.`,
+    opTag: "ARSENAL INTELIGENTE · ACESSO ATIVADO",
+    title: "Seu Arsenal Inteligente está armado.",
+    subtitle: "Gerencie seu processo pelo Arsenal até o deferimento. Após deferido, mantenha o acervo ativo pela anuidade.",
     body: `
       ${greeting(firstName)}
       ${para("O <strong>Arsenal</strong> é o cofre digital da sua coleção: cadastra armas, sobe CRAFs, monitora vencimentos de porte e psicotécnico, e dispara alerta antes de qualquer documento expirar. Operação 100% sua, criptografada, sem pegadinha.")}
       ${diagBlock([
         { k: "Identificador", v: opts.email, mono: true },
-        { k: "Plano", v: "GRATUITO · VITALÍCIO", mono: true, tone: "success" },
+        { k: "Acesso", v: "LIBERADO DURANTE O PROCESSO", mono: true, tone: "success" },
+        { k: "Pós-deferimento", v: "ANUIDADE PARA MANTER O ACERVO", mono: true },
         { k: "Capacidade", v: "ARMAS, CRAFs, GTEs, DOCUMENTOS", mono: true },
         { k: "Endpoint", v: "/area-do-cliente", mono: true },
       ], AMBER)}
@@ -535,7 +536,7 @@ export function qaArsenalWelcomeHtml(opts: {
 
 export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoInteresse?: string | null; arsenalUrl?: string }) => {
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
-  return `QUERO ARMAS — ARSENAL DIGITAL ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nPLANO: GRATUITO · VITALÍCIO\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
+  return `QUERO ARMAS — ARSENAL INTELIGENTE ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nACESSO: LIBERADO DURANTE O PROCESSO (anuidade após deferimento)\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
 };
 
 // ════════════════════════════════════════════════════════════════════
