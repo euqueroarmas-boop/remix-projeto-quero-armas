@@ -70,18 +70,45 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
       const { data, error } = await supabase.functions.invoke("qa-cliente-prefill", { body });
       if (error) throw new Error(error.message || "Erro na edge function");
       if (!data) throw new Error("Resposta vazia da IA");
+      if (data.error) throw new Error(String(data.error));
       atualizar(1, { status: "ok" });
 
       // Passo 2: processar campos
       atualizar(2, { status: "loading" });
-      const campos: Record<string, string | null> = data.campos || {};
-      const confidencePairs: { campo: string; valor: string | null; confidence: number }[] = data.confidence_pairs || [];
-      const warnings: string[] = data.warnings || [];
+      // A edge function retorna { success, fields: { ...campos, confidence, warnings, senha_gov_raw } }
+      const fields: Record<string, any> = data.fields || {};
+      const confidenceMap: Record<string, number> = (fields.confidence && typeof fields.confidence === "object") ? fields.confidence : {};
+      const warnings: string[] = Array.isArray(fields.warnings) ? fields.warnings : [];
+      const senhaRaw: string | null = typeof fields.senha_gov_raw === "string" && fields.senha_gov_raw ? fields.senha_gov_raw : null;
+      const senhaConfidence: number = typeof fields.senha_gov_confidence === "number" ? fields.senha_gov_confidence : 0;
+      const senhaNeedsReview: boolean = fields.senha_gov_needs_review === true;
+
+      // Chaves internas que não devem virar campos do formulário
+      const IGNORAR = new Set([
+        "confidence", "confidence_pairs", "warnings",
+        "senha_gov_raw", "senha_gov_confidence", "senha_gov_needs_review",
+        "emissor_rg_needs_review",
+      ]);
+      const campos: Record<string, string | null> = {};
+      for (const [k, v] of Object.entries(fields)) {
+        if (IGNORAR.has(k)) continue;
+        if (v == null) continue;
+        campos[k] = typeof v === "string" ? v : String(v);
+      }
+      // Aliases para bater com a lista de campos da Etapa 3
+      if (campos.emissor_rg && !campos.rg_orgao_emissor) campos.rg_orgao_emissor = campos.emissor_rg;
+      if (senhaRaw) campos.senha_gov = senhaRaw;
+
+      const confidencePairs = Object.entries(confidenceMap).map(([campo, confidence]) => ({
+        campo,
+        valor: campos[campo] ?? null,
+        confidence: typeof confidence === "number" ? confidence : 0,
+      }));
       atualizar(2, { status: "ok", detalhe: `${Object.keys(campos).length} campos extraídos` });
 
       // Passo 3: senha GOV.BR
-      const senhaGovOk = data.senha_gov_ok === true;
-      const senhaGov = data.senha_gov || null;
+      const senhaGovOk = !!senhaRaw && !senhaNeedsReview && senhaConfidence >= 0.75;
+      const senhaGov = senhaRaw;
       atualizar(3, {
         status: senhaGov ? (senhaGovOk ? "ok" : "error") : "ok",
         detalhe: senhaGov
