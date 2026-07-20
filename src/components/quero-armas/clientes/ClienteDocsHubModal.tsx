@@ -305,6 +305,7 @@ function calcularConformidade(
   clienteDataNascimento: string | null | undefined,
   clienteNomeMae: string | null | undefined,
   docsAprovados: any[],
+  dataAvaliacaoDoc?: string | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -400,9 +401,15 @@ function calcularConformidade(
   // e o documento pode trazer qualquer um deles — diferença não é divergência.
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
-  // Se o documento trouxe a IDADE ("34 anos") em vez da data de nascimento,
-  // não há como comparar — pula o campo para evitar falsa divergência.
-  if (!isIdadeStr(campos.data_nascimento || "")) {
+  // Pula data_nascimento quando: é string de idade ("34 anos") OU
+  // quando dia/mês coincidem com a data de avaliação — sinal de que a IA
+  // calculou a data subtraindo a idade da data de avaliação (resultado impreciso).
+  const dataNasc = campos.data_nascimento || "";
+  const dataNascNorm = normDate(dataNasc);
+  const avaliacaoNorm = dataAvaliacaoDoc ? normDate(dataAvaliacaoDoc) : null;
+  const nascCalculadoDaAvaliacao = !!(avaliacaoNorm && dataNascNorm &&
+    avaliacaoNorm.slice(5) === dataNascNorm.slice(5)); // mesmo MM-DD
+  if (!isIdadeStr(dataNasc) && !nascCalculadoDaAvaliacao) {
     pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
   }
   pushItem("filiacao_mae",    "Filiação materna",   campos.filiacao_mae,    fuzzyName);
@@ -854,6 +861,9 @@ export function ClienteDocsHubModal({
     uf: string | null;
   }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, cep: null, cidade: null, uf: null });
 
+  // Docs aprovados carregados internamente quando o prop vier vazio
+  const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
+
   // Dados do profissional extraídos pela IA (psicólogo ou instrutor)
   const [profissionalExtraido, setProfissionalExtraido] = useState<{
     nome: string | null;
@@ -878,7 +888,26 @@ export function ClienteDocsHubModal({
     setShowDeclaracao(false);
     setExtracting(false);
     setProfissionalExtraido({ nome: null, registro: null });
+    setDocsAprovadosFetched([]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Busca docs aprovados quando o prop vier vazio (ex: abertura via ChecklistGuiado)
+  useEffect(() => {
+    if (!open || !qaClienteId || docsAprovados.length > 0) { setDocsAprovadosFetched([]); return; }
+    let cancelled = false;
+    supabase
+      .from("qa_cliente_documentos" as any)
+      .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos")
+      .eq("qa_cliente_id", qaClienteId)
+      .eq("status", "aprovado")
+      .then(({ data }) => {
+        if (!cancelled) setDocsAprovadosFetched((data as any[]) || []);
+      });
+    return () => { cancelled = true; };
+  }, [open, qaClienteId, docsAprovados.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Docs efetivos: prop tem prioridade; fallback para os buscados internamente
+  const docsEfetivos = docsAprovados.length > 0 ? docsAprovados : docsAprovadosFetched;
 
   useEffect(() => {
     let cancelled = false;
@@ -901,7 +930,7 @@ export function ClienteDocsHubModal({
         let uf = row.end1_estado || row.end2_estado || row.responsavel_endereco_estado || null;
         // Fallback: extrai endereço de comprovante de residência aprovado
         if (!cep && !cidade) {
-          const comprovante = docsAprovados
+          const comprovante = docsEfetivos
             .filter((d: any) => d.status === "aprovado" && d.tipo_documento === "comprovante_residencia")
             .sort((a: any, b: any) => (b.updated_at || b.created_at || "").localeCompare(a.updated_at || a.created_at || ""))[0];
           if (comprovante) {
@@ -1363,7 +1392,8 @@ export function ClienteDocsHubModal({
         refClienteCpf,
         refClienteDataNascimento,
         refClienteNomeMae,
-        docsAprovados,
+        docsEfetivos,
+        (campos as any).data_avaliacao || campos.data_emissao || null,
       );
       setConformidade(items);
 
