@@ -44,15 +44,13 @@ Deno.serve(async (req) => {
 
   const { data, error } = await sb
     .from("qa_contracts")
-    .select("id, contract_number, status, conteudo_renderizado, issued_at, servico_slug, venda_id, qa_vendas(nome_completo)")
+    .select("id, contract_number, status, conteudo_renderizado, issued_at, servico_slug, venda_id")
     .eq("id", contract_id)
     .maybeSingle();
 
   if (error || !data) {
     return json({ error: "Contrato não encontrado" }, 404);
   }
-
-  const nomeCliente: string = (data as any).qa_vendas?.nome_completo ?? "";
 
   return json({
     ok: true,
@@ -61,7 +59,7 @@ Deno.serve(async (req) => {
     issued_at: data.issued_at,
     servico_slug: data.servico_slug,
     venda_id: data.venda_id,
-    nome_cliente: nomeCliente,
+    nome_cliente: "",
     conteudo_html: data.conteudo_renderizado ?? "",
   });
 });
