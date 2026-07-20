@@ -310,31 +310,42 @@ Deno.serve(async (req) => {
     }
 
     const subject = cfg.subject;
-    console.info(`[request-password-reset][${traceId}] invoking_send_smtp_email`, JSON.stringify({
-      functionName: "send-smtp-email",
-      to: email,
-      subject,
-      brand: cfg.brand,
-    }));
+    let smtpOk = false;
+    let smtpResponse: any = { error: null, data: null };
+    if (cfg.brand === "quero-armas") {
+      // Template dedicado Arsenal Inteligente via Lovable Emails.
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      const res = await sendTransactional({
+        templateName: "redefinicao-senha",
+        recipientEmail: email,
+        idempotencyKey: `pwd-reset-${email}-${traceId}`,
+        templateData: {
+          nome: email.split("@")[0],
+          recoveryLink,
+          minutos: "60",
+        },
+      });
+      smtpOk = res.ok;
+      smtpResponse = { error: res.ok ? null : { message: res.error }, data: { success: res.ok } };
+    } else {
+      smtpResponse = await supabase.functions.invoke("send-smtp-email", {
+        headers: { "x-internal-token": Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "" },
+        body: {
+          to: email,
+          subject,
+          from_name: cfg.fromName,
+          html: buildRecoveryEmailHtml(recoveryLink, cfg),
+          text: buildRecoveryEmailText(recoveryLink, cfg),
+          trace_id: traceId,
+        },
+      });
+      smtpOk = !smtpResponse.error && smtpResponse.data?.success;
+    }
 
-    const smtpResponse = await supabase.functions.invoke("send-smtp-email", {
-      headers: { "x-internal-token": Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "" },
-      body: {
-        to: email,
-        subject,
-        from_name: cfg.fromName,
-        html: buildRecoveryEmailHtml(recoveryLink, cfg),
-        text: buildRecoveryEmailText(recoveryLink, cfg),
-        trace_id: traceId,
-      },
-    });
-
-    const smtpOk = !smtpResponse.error && smtpResponse.data?.success;
-
-    console.info(`[request-password-reset][${traceId}] send_smtp_email_result`, JSON.stringify({
+    console.info(`[request-password-reset][${traceId}] send_result`, JSON.stringify({
       ok: smtpOk,
+      brand: cfg.brand,
       error: smtpResponse.error?.message ?? null,
-      data: smtpResponse.data ?? null,
     }));
 
     if (!smtpOk) {
