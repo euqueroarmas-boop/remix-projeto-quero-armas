@@ -153,29 +153,31 @@ export default function HubDocPreviewSlot({
           </div>
         ) : (
           <div
-            className="relative flex min-h-[420px] flex-1 items-start justify-center overflow-hidden border border-[#E5E5E5] bg-white p-3"
+            className="relative isolate flex min-h-[360px] flex-1 items-start justify-center overflow-auto border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
             style={{ borderRadius: 2 }}
           >
-            {/* Remover */}
+            {/* Remover — botão vermelho, sempre acima da prévia */}
             <button
               type="button"
               onClick={onRemove}
-              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-              style={{ borderRadius: 2 }}
-              aria-label="Remover arquivo"
+              className="sticky top-0 z-40 ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+              style={{ borderRadius: 4, position: "absolute", right: 8, top: 8 }}
+              aria-label="Excluir arquivo"
+              title="Excluir arquivo"
             >
-              <X className="h-3.5 w-3.5" />
+              <Trash2 className="h-4 w-4" strokeWidth={2.4} />
             </button>
 
             {isImage && fileUrl && (
               <img
                 src={fileUrl}
                 alt={displayName}
-                className="max-h-[560px] w-auto max-w-full object-contain"
+                className="relative z-0 max-h-[620px] w-auto max-w-full object-contain shadow-sm"
               />
             )}
 
             {isPdf && fileUrl && (
+              <div className="relative z-0">
               <Document
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }) => setNumPages(n)}
@@ -197,13 +199,14 @@ export default function HubDocPreviewSlot({
                 {slotW > 0 && (
                   <Page
                     pageNumber={1}
-                    width={Math.min(slotW - 24, 560)}
+                    width={Math.min(slotW - 24, 640)}
                     renderAnnotationLayer={false}
                     renderTextLayer={false}
                     onRenderSuccess={() => setPageLoaded(true)}
                   />
                 )}
               </Document>
+              </div>
             )}
 
             {!isImage && !isPdf && (
@@ -217,7 +220,7 @@ export default function HubDocPreviewSlot({
             {/* Carimbo IA · APROVADO */}
             {pct != null && !incorreta && (
               <div
-                className="pointer-events-none absolute z-10"
+                className="pointer-events-none absolute z-30"
                 style={{
                   top: 18,
                   right: -10,
@@ -241,7 +244,7 @@ export default function HubDocPreviewSlot({
             {/* Carimbo CERTIDÃO INCORRETA */}
             {incorreta && (
               <div
-                className="pointer-events-none absolute z-20"
+                className="pointer-events-none absolute z-40"
                 style={{
                   top: "42%",
                   left: "50%",
@@ -268,7 +271,7 @@ export default function HubDocPreviewSlot({
             )}
 
             {extracting && (
-              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/85 backdrop-blur-sm">
+              <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-white/85 backdrop-blur-sm">
                 <Loader2 className="h-6 w-6 animate-spin text-[#7A1F2B]" />
                 <span className="font-heading text-[10px] uppercase tracking-[0.24em] text-[#0A0A0A]">
                   Lendo o documento…
@@ -278,8 +281,8 @@ export default function HubDocPreviewSlot({
 
             {/* Legenda inferior do arquivo */}
             <div
-              className="pointer-events-none absolute bottom-2 left-3 font-heading uppercase"
-              style={{ fontSize: 9, letterSpacing: ".22em", color: "#7A7A7A" }}
+              className="pointer-events-none absolute bottom-2 left-3 z-30 rounded-sm bg-white/85 px-1.5 py-0.5 font-heading uppercase backdrop-blur-sm"
+              style={{ fontSize: 9, letterSpacing: ".22em", color: "#4A4A4A" }}
             >
               {displayName} · {file ? `${(file.size / 1024).toFixed(0)} KB` : ""}
               {isPdf && numPages ? ` · pg 1/${numPages}` : ""}
