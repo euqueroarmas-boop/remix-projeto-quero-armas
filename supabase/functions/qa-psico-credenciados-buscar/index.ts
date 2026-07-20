@@ -163,7 +163,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (cidadeFiltro && ufFiltro) {
+    // Quando há CEP resolvido, a busca principal deve ser por proximidade.
+    // O frontend também envia a cidade do cadastro, mas ela não pode virar filtro textual,
+    // porque muitos credenciados oficiais vêm sem cidade normalizada ou com endereço parcial.
+    if (!origin && cidadeFiltro && ufFiltro) {
       let q = supabase
         .from("qa_psico_credenciados")
         .select("*")
