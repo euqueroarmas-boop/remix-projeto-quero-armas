@@ -51,43 +51,22 @@ Deno.serve(async (req) => {
     nome = (data?.nome_completo as string | undefined) || email.split("@")[0];
   }
 
-  const html = qaArsenalWelcomeHtml({ name: nome!, email, servicoInteresse: null });
-  const text = qaArsenalWelcomeText({ name: nome!, email, servicoInteresse: null });
-
-  const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-  if (!internalToken) return json({ ok: false, reason: "missing_internal_token" }, 500);
-
-  const { data: smtpData, error: smtpErr } = await admin.functions.invoke("send-smtp-email", {
-    headers: { "x-internal-token": internalToken },
-    body: {
-      to: email,
-      subject: "Bem-vindo ao Arsenal — Quero Armas",
-      html,
-      text,
-      from_name: "Quero Armas",
+  // Envia via Lovable Emails (remetente: Arsenal Inteligente <arsenalinteligente@notificacao.euqueroarmas.com.br>).
+  const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+  const result = await sendTransactional({
+    templateName: "boas-vindas",
+    recipientEmail: email,
+    idempotencyKey: `boas-vindas-reenvio-${email}-${Date.now()}`,
+    templateData: {
+      nome: nome ?? undefined,
+      portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
     },
   });
 
-  if (smtpErr) {
-    console.error("[reenviar-boas-vindas] send-smtp-email error:", smtpErr.message);
-    return json({ ok: false, reason: "smtp_failed", message: smtpErr.message }, 502);
+  if (!result.ok) {
+    console.error("[reenviar-boas-vindas] sendTransactional error", result.error);
+    return json({ ok: false, reason: "send_failed", error: result.error }, 502);
   }
 
-  // Lovable Emails: também enfileira via template boas-vindas.
-  try {
-    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
-    await sendTransactional({
-      templateName: "boas-vindas",
-      recipientEmail: email,
-      idempotencyKey: `boas-vindas-reenvio-${email}-${Date.now()}`,
-      templateData: {
-        nome: nome ?? undefined,
-        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
-      },
-    });
-  } catch (e) {
-    console.error("[reenviar-boas-vindas] sendTransactional error", e);
-  }
-
-  return json({ ok: true, to: email, nome, smtp: smtpData ?? null });
+  return json({ ok: true, to: email, nome, queued: result.queued });
 });
