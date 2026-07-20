@@ -41,6 +41,8 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-processo-prazo-alertas]
     verify_jwt = false
+  [functions.qa-psico-credenciados-buscar]
+    verify_jwt = false
   [functions.qa-senha-gov]
     verify_jwt = false
 

@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_GEOCODE_PER_CALL = 12; // Nominatim: 1 req/s
+const MAX_GEOCODE_PER_CALL = 8; // Nominatim: 1 req/s (roda em background)
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -66,13 +66,25 @@ function distanciaKm(a: { lat: number; lng: number } | null, b: { latitude?: num
 async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; lng: number; uf: string; cidade: string } | null> {
   const digits = cep.replace(/\D/g, "");
   if (digits.length !== 8) return null;
-  // 1. Endereço via BrasilAPI
+  // 1. Coordenadas cacheadas por CEP (evita bater no Nominatim de novo)
+  try {
+    const { data: cachedGeo } = await supabase.from("cep_cache").select("data").eq("cep", digits).maybeSingle();
+    const g = (cachedGeo as any)?.data;
+    if (g?._geo?.lat && g?._geo?.lng) {
+      return { lat: Number(g._geo.lat), lng: Number(g._geo.lng), uf: String(g.state || "").toUpperCase(), cidade: String(g.city || "") };
+    }
+  } catch { /* noop */ }
+
+  // 2. Endereço via BrasilAPI
   let addr: any = null;
   try {
     const { data: cached } = await supabase.from("cep_cache").select("data").eq("cep", digits).maybeSingle();
-    addr = cached?.data || null;
+    addr = (cached as any)?.data || null;
     if (!addr) {
-      const r = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`);
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 4000);
+      const r = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`, { signal: ctl.signal });
+      clearTimeout(t);
       if (r.ok) {
         addr = await r.json();
         supabase.from("cep_cache").upsert({ cep: digits, data: addr }).then();
@@ -83,17 +95,24 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
   const uf = String(addr.state || "").toUpperCase();
   const cidade = String(addr.city || "");
   if (addr.location?.coordinates?.latitude && addr.location?.coordinates?.longitude) {
-    return {
+    const geo = {
       lat: Number(addr.location.coordinates.latitude),
       lng: Number(addr.location.coordinates.longitude),
       uf, cidade,
     };
+    supabase.from("cep_cache").upsert({ cep: digits, data: { ...addr, _geo: { lat: geo.lat, lng: geo.lng } } }).then();
+    return geo;
   }
-  // Fallback estruturado pela cidade — mesmo path do IAT
+  // Fallback via Nominatim — com timeout global de 6s para não travar a UI.
   const enderecoTxt = `${addr.street || cidade}, ${addr.neighborhood || ""}, ${cidade}/${uf}`;
-  let geo = await geocodeEndereco(supabase, enderecoTxt, uf);
-  if (!geo) geo = await geocodeEndereco(supabase, `${cidade}/${uf}, Brasil`, uf);
-  if (geo) return { ...geo, uf, cidade };
+  const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T | null> =>
+    Promise.race<T | null>([p, new Promise<null>((res) => setTimeout(() => res(null), ms))]);
+  let geo = await withTimeout(geocodeEndereco(supabase, enderecoTxt, uf), 6000);
+  if (!geo) geo = await withTimeout(geocodeEndereco(supabase, `${cidade}/${uf}, Brasil`, uf), 4000);
+  if (geo) {
+    supabase.from("cep_cache").upsert({ cep: digits, data: { ...addr, _geo: { lat: geo.lat, lng: geo.lng } } }).then();
+    return { ...geo, uf, cidade };
+  }
   return { lat: 0, lng: 0, uf, cidade };
 }
 
@@ -116,18 +135,31 @@ Deno.serve(async (req) => {
     const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
     const ufFiltro: string | null = origin?.uf || body.uf || null;
 
-    // Lazy geocode: pega até MAX_GEOCODE entradas sem coordenadas, da mesma UF do cliente
+    // Lazy geocode em BACKGROUND (não bloqueia a resposta ao cliente).
+    // A primeira busca ainda pode não ter todos os pontos geocodificados,
+    // mas as próximas terão. Isso evita timeouts na UI.
     if (ufFiltro) {
-      const { data: pendentes } = await supabase
-        .from("qa_psico_credenciados")
-        .select("id,endereco,uf")
-        .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
-        .is("latitude", null).not("endereco", "is", null)
-        .limit(MAX_GEOCODE_PER_CALL);
-      for (const e of pendentes || []) {
-        const g = await geocodeEndereco(supabase, e.endereco, e.uf);
-        if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
-        await nominatimDelay();
+      const bgGeocode = async () => {
+        try {
+          const { data: pendentes } = await supabase
+            .from("qa_psico_credenciados")
+            .select("id,endereco,uf")
+            .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
+            .is("latitude", null).not("endereco", "is", null)
+            .limit(MAX_GEOCODE_PER_CALL);
+          for (const e of pendentes || []) {
+            const g = await geocodeEndereco(supabase, e.endereco, e.uf);
+            if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
+            await nominatimDelay();
+          }
+        } catch (err) { console.warn("[bg-geocode]", err); }
+      };
+      // @ts-ignore EdgeRuntime.waitUntil existe no runtime Supabase
+      if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+        // @ts-ignore
+        EdgeRuntime.waitUntil(bgGeocode());
+      } else {
+        bgGeocode();
       }
     }
 
