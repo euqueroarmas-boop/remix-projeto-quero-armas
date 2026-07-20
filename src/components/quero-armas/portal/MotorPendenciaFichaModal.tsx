@@ -135,14 +135,29 @@ export default function MotorPendenciaFichaModal({
             .eq("id", focusDocId)
             .maybeSingle(),
           supabase.from("qa_clientes" as any)
-            .select("id, nome_completo, cep, cidade, estado, bairro, endereco, cpf, cr_numero")
+            .select("id, nome_completo, cep, cidade, estado, bairro, endereco, cpf")
             .eq("id", clienteId)
             .maybeSingle(),
         ]);
         if (cancel) return;
         const d = (docRes as any).data;
         setDoc(d);
-        setCliente((cliRes as any).data);
+        const cli = (cliRes as any).data;
+        // Complementa com número de CR (não existe em qa_clientes) buscando no
+        // cadastro oficial ou nos itens de venda mais recentes.
+        if (cli) {
+          try {
+            const { data: cr } = await supabase
+              .from("qa_cadastro_cr" as any)
+              .select("numero_cr")
+              .eq("cliente_id", clienteId)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if ((cr as any)?.numero_cr) (cli as any).cr_numero = (cr as any).numero_cr;
+          } catch { /* opcional */ }
+        }
+        setCliente(cli);
         if (d?.processo_id) {
           const { data: p } = await supabase.from("qa_processos" as any)
             .select("id, tipo, protocolo, etapa_atual, cliente_id")
