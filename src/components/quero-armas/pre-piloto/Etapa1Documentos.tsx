@@ -33,24 +33,27 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
   const adicionarArquivos = async (files: FileList | File[]) => {
     const lista = Array.from(files);
-    const novos: ArquivoUpload[] = [];
+    const novosNaoZip: ArquivoUpload[] = [];
+    const novosDoZip: ArquivoUpload[] = [];
 
     for (const f of lista) {
       if (f.type === "application/zip" || f.name.toLowerCase().endsWith(".zip")) {
-        await processarZip(f);
+        const extraidos = await processarZip(f);
+        novosDoZip.push(...extraidos);
         continue;
       }
       if (!TIPOS_ACEITOS.includes(f.type)) {
         toast.warning(`Arquivo ignorado: ${f.name} (tipo não suportado)`);
         continue;
       }
-      novos.push({ file: f, tipo: inferirTipo(f.name), preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
+      novosNaoZip.push({ file: f, tipo: inferirTipo(f.name), preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
     }
 
-    if (novos.length > 0) setArquivos([...arquivos, ...novos]);
+    const combinados = [...novosNaoZip, ...novosDoZip];
+    if (combinados.length > 0) setArquivos([...arquivos, ...combinados]);
   };
 
-  const processarZip = async (zipFile: File) => {
+  const processarZip = async (zipFile: File): Promise<ArquivoUpload[]> => {
     setProcessandoZip(true);
     try {
       const JSZip = (await import("jszip")).default;
@@ -74,12 +77,14 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
       if (novos.length === 0) {
         toast.warning("ZIP não continha imagens ou PDFs reconhecíveis.");
+        return [];
       } else {
         toast.success(`${novos.length} arquivo(s) extraído(s) do ZIP`);
-        setArquivos([...arquivos, ...novos]);
+        return novos;
       }
     } catch {
       toast.error("Erro ao processar ZIP. Verifique se o arquivo não está corrompido.");
+      return [];
     } finally {
       setProcessandoZip(false);
     }
