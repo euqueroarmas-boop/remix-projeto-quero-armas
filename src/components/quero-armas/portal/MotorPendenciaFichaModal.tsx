@@ -135,7 +135,7 @@ export default function MotorPendenciaFichaModal({
             .eq("id", focusDocId)
             .maybeSingle(),
           supabase.from("qa_clientes" as any)
-            .select("id, nome_completo, cep, cidade, estado, bairro, endereco, cpf")
+            .select("id, nome_completo, cep, cidade, estado, bairro, endereco, numero, complemento, cpf, celular, email")
             .eq("id", clienteId)
             .maybeSingle(),
         ]);
