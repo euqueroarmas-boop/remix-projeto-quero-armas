@@ -113,6 +113,17 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
       }
       if (senhaRaw) campos.senha_gov = senhaRaw;
 
+      // Formata telefones brasileiros: "+55 (DD) 9XXXX-XXXX" ou "+55 (DD) XXXX-XXXX"
+      const formatarTelefoneBR = (raw: string): string => {
+        const d = raw.replace(/\D/g, "").replace(/^55/, "");
+        if (d.length === 11) return `+55 (${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        if (d.length === 10) return `+55 (${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+        return raw;
+      };
+      for (const campo of ["celular", "telefone_secundario", "telefone"]) {
+        if (campos[campo]) campos[campo] = formatarTelefoneBR(campos[campo]!);
+      }
+
       const confidencePairs = Object.entries(confidenceMap).map(([campo, confidence]) => ({
         campo,
         valor: campos[campo] ?? null,
