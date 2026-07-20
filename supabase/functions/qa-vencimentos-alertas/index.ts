@@ -246,24 +246,23 @@ serve(async (req) => {
       });
 
       if (!dryRun) {
-        // ENVIO REAL — bloqueado por hora pelo modo dry_run.
-        // Mantemos o esqueleto pronto para a próxima etapa.
+        // ENVIO REAL via template dedicado vencimento-documento (Arsenal Inteligente).
         try {
-          const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-            <h2 style="color:#7f1d1d;">${subject}</h2>
-            <p style="font-size:14px;color:#334155;">${resumo}</p>
-            <p style="margin:20px 0;"><a href="${PORTAL_LINK}" style="background:#1e40af;color:#fff;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:bold;">Acessar meu Arsenal</a></p>
-            <p style="font-size:12px;color:#94a3b8;">Quero Armas — ${REMETENTE}</p>
-          </div>`;
-          const { error: sendErr } = await sb.functions.invoke("send-smtp-email", {
-            body: {
-              to: cliente.email,
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          const res = await sendTransactional({
+            templateName: "vencimento-documento",
+            recipientEmail: cliente.email,
+            idempotencyKey: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}`,
+            templateData: {
+              nome,
               subject,
-              html,
-              trace_id: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}`,
+              resumo,
+              diasRestantes: String(c.dias),
+              dataVencimento: (c.data_validade || "").split("-").reverse().join("/"),
+              portalUrl: PORTAL_LINK,
             },
           });
-          if (sendErr) throw sendErr;
+          if (!res.ok) throw new Error(res.error);
           enviados++;
           inserts.push({
             cliente_id: c.cliente_id,
