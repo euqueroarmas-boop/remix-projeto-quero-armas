@@ -16,6 +16,7 @@ const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "Mo
 const MockupsHubDoc = lazyRetry(() => import("./pages/MockupsHubDoc.tsx"), "MockupsHubDoc");
 const MockupsEntradaWizardPreview = lazyRetry(() => import("./pages/MockupsEntradaWizardPreview.tsx"), "MockupsEntradaWizardPreview");
 const MockupsLoginV9 = lazyRetry(() => import("./pages/MockupsLoginV9.tsx"), "MockupsLoginV9");
+const MockupsAlertasEmails = lazyRetry(() => import("./pages/MockupsAlertasEmails.tsx"), "MockupsAlertasEmails");
 const UnsubscribePage = lazyRetry(() => import("./pages/UnsubscribePage.tsx"), "UnsubscribePage");
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
                   <Route path="/mockups-hub-doc" element={<MockupsHubDoc />} />
                   <Route path="/mockups-entrada-wizard" element={<MockupsEntradaWizardPreview />} />
                   <Route path="/mockups-login-v9" element={<MockupsLoginV9 />} />
+                  <Route path="/mockups-alertas-emails" element={<MockupsAlertasEmails />} />
 
                   {/* Unsubscribe (rodapé de e-mails) */}
                   <Route path="/unsubscribe" element={<UnsubscribePage />} />

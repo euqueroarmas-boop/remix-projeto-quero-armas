@@ -37,6 +37,24 @@ import { template as eventoEnviadoOrgao } from './evento-enviado-orgao.tsx'
 import { template as eventoStatusOrgao } from './evento-status-orgao.tsx'
 import { template as arsenalGeneric } from './arsenal-generic.tsx'
 
+// Alertas operacionais Arsenal Inteligente (mockup — sem trigger automático ainda)
+import { template as filiacaoVencida } from './filiacao-vencida.tsx'
+import { template as filiacaoVencimento } from './filiacao-vencimento.tsx'
+import { template as habitualidadeInsuficiente } from './habitualidade-insuficiente.tsx'
+import { template as habitualidadePrazoCritico } from './habitualidade-prazo-critico.tsx'
+import { template as autorizacaoCompraVencimento } from './autorizacao-compra-vencimento.tsx'
+import { template as autorizacaoCompraSemCraf } from './autorizacao-compra-sem-craf.tsx'
+import { template as crafInconsistente } from './craf-inconsistente.tsx'
+import { template as armaSemCraf } from './arma-sem-craf.tsx'
+import { template as gteInconsistente } from './gte-inconsistente.tsx'
+import { template as exigenciaPfPrazo } from './exigencia-pf-prazo.tsx'
+import { template as exigenciaPfVencida } from './exigencia-pf-vencida.tsx'
+import { template as documentoIncompativelProcesso } from './documento-incompativel-processo.tsx'
+import { template as riscoJanelaRenovacaoCr } from './risco-janela-renovacao-cr.tsx'
+import { template as municaoLimiteAlerta } from './municao-limite-alerta.tsx'
+import { template as acervoInconsistente } from './acervo-inconsistente.tsx'
+import { template as acervoConforme } from './acervo-conforme.tsx'
+
 export interface TemplateEntry {
   // deno-lint-ignore no-explicit-any
   component: (props: any) => unknown
@@ -95,4 +113,22 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'evento-status-orgao': eventoStatusOrgao,
   // Shim genérico (compatibilidade send-smtp-email)
   'arsenal-generic': arsenalGeneric,
+
+  // Alertas operacionais (mockup visual — NÃO conectados a triggers automáticos)
+  'filiacao-vencida': filiacaoVencida,
+  'filiacao-vencimento': filiacaoVencimento,
+  'habitualidade-insuficiente': habitualidadeInsuficiente,
+  'habitualidade-prazo-critico': habitualidadePrazoCritico,
+  'autorizacao-compra-vencimento': autorizacaoCompraVencimento,
+  'autorizacao-compra-sem-craf': autorizacaoCompraSemCraf,
+  'craf-inconsistente': crafInconsistente,
+  'arma-sem-craf': armaSemCraf,
+  'gte-inconsistente': gteInconsistente,
+  'exigencia-pf-prazo': exigenciaPfPrazo,
+  'exigencia-pf-vencida': exigenciaPfVencida,
+  'documento-incompativel-processo': documentoIncompativelProcesso,
+  'risco-janela-renovacao-cr': riscoJanelaRenovacaoCr,
+  'municao-limite-alerta': municaoLimiteAlerta,
+  'acervo-inconsistente': acervoInconsistente,
+  'acervo-conforme': acervoConforme,
 }
