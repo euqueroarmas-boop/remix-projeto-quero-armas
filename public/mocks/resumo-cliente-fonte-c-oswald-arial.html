@@ -44,5 +44,18 @@
   <div class="section">Próximos 30 dias</div><section class="list"><article class="item lvl-amber"><div class="when"><span class="num">12</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Laudo psicológico — validade</h2><div class="meta"><span>CR Renovação · Dr. Almeida</span><span class="dot"></span><span class="ctx">Agendar revalidação</span></div></div><button class="cta">Agendar</button></article><article class="item lvl-amber"><div class="when"><span class="num">18</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Certidão estadual criminal</h2><div class="meta"><span>Porte Trânsito · SSP/SP</span><span class="dot"></span><span class="ctx">Em revisão interna</span></div></div><button class="cta">Acompanhar</button></article><article class="item lvl-amber"><div class="when"><span class="num">25</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Comprovante Clube de Tiro (frequência)</h2><div class="meta"><span>CR Renovação · Clube Alvo</span><span class="dot"></span><span class="ctx">Solicitar ao clube</span></div></div><button class="cta">Solicitar</button></article></section>
   <div class="section">Sem prazo crítico</div><section class="list"><article class="item lvl-soft"><div class="when"><span class="num">60</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Renovação de filiação CBC</h2><div class="meta"><span>CAC · contexto secundário</span><span class="dot"></span><span class="ctx">Lembrete</span></div></div><button class="cta">Ver</button></article><article class="item lvl-ok"><div class="when"><span class="num">—</span><span class="unit">ok</span></div><div class="body"><h2 class="title">Compra autorizada — Pistola .380</h2><div class="meta"><span>Concluído · 03/06</span><span class="dot"></span><span class="ctx">Arquivado</span></div></div><button class="cta">Abrir</button></article></section>
 </main>
+
+<button id="__pngbtn" style="position:fixed;top:8px;left:8px;background:#7A1F2B;color:#fff;font-size:11px;padding:8px 12px;border:0;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;font-family:Arial,sans-serif;z-index:100;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)">Baixar PNG</button>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+document.getElementById('__pngbtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('__pngbtn');const badge=document.querySelector('body>div[style*="position:fixed"]');
+  btn.style.display='none';if(badge)badge.style.display='none';
+  const target=document.querySelector('main.wrap');
+  const canvas=await html2canvas(target,{backgroundColor:'#f6f5f1',scale:2,useCORS:true});
+  btn.style.display='';if(badge)badge.style.display='';
+  const a=document.createElement('a');a.download=(document.title||'resumo')+'.png';a.href=canvas.toDataURL('image/png');a.click();
+});
+</script>
 </body>
 </html>
