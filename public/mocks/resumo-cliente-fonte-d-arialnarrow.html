@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Resumo · Fonte D · Arial Narrow puro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<style>
+  :root{--paper:#f6f5f1;--ink:#141414;--ink-soft:#4a4a4a;--line:#e3e0d8;--bordo:#7A1F2B;--amber:#a8741a;--danger:#8a1414;--ok:#1f4d2b;--card:#fff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:'Arial Narrow', Arial, sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 20px 80px}
+  header{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--bordo);font-weight:600}
+  h1{font-family:'Arial Narrow', Arial, sans-serif;font-size:34px;line-height:1.1;font-weight:600;color:var(--ink)}
+  .sub{font-size:14px;color:var(--ink-soft);margin-top:2px}
+  .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0 28px}
+  .sumcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .sumlabel{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .sumval{font-family:'Arial Narrow', Arial, sans-serif;font-size:22px;font-weight:600;margin-top:4px;color:var(--ink)}
+  .danger{color:var(--danger)}.amber{color:var(--amber)}
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto;padding:10px 14px;font-size:13px;color:var(--ink-soft);border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+  .tab.active{color:var(--bordo);border-bottom-color:var(--bordo);font-weight:600}.tab .count{font-size:11px;color:var(--ink-soft);margin-left:6px;background:#efece4;padding:2px 6px;border-radius:8px}.tab.active .count{background:var(--bordo);color:#fff}
+  .section{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin:24px 0 10px}.section:first-of-type{margin-top:0}
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center}
+  .lvl-danger{border-left-color:var(--danger)}.lvl-amber{border-left-color:var(--amber)}.lvl-ok{border-left-color:var(--ok)}.lvl-soft{border-left-color:#cbc6b8}
+  .when{display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid var(--line);padding-right:10px;min-width:64px}.num{font-family:'Arial Narrow', Arial, sans-serif;font-size:28px;font-weight:600;line-height:1;color:var(--ink)}.unit{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-top:4px;font-weight:600}
+  .lvl-danger .num{color:var(--danger)}.lvl-amber .num{color:var(--amber)}.lvl-ok .num{color:var(--ok)}
+  .body{display:flex;flex-direction:column;gap:4px;min-width:0}.title{font-size:15px;font-weight:600;color:var(--ink);line-height:1.3}.meta{font-size:12px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:8px;align-items:center}.dot{width:3px;height:3px;border-radius:50%;background:var(--ink-soft);display:inline-block}.ctx{font-size:11px;color:var(--bordo);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+  .cta{padding:8px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:6px;white-space:nowrap}.lvl-danger .cta{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+  @media (max-width:640px){.wrap{padding:20px 14px 60px}h1{font-size:26px}.summary{grid-template-columns:repeat(3,1fr);gap:8px}.sumval{font-size:18px}.item{grid-template-columns:56px 1fr;gap:10px;padding:12px 14px}.cta{grid-column:1/-1;margin-top:6px;width:100%}.when{min-width:56px;padding-right:8px}.num{font-size:24px}}
+</style>
+</head>
+<body><div style="position:fixed;top:8px;right:8px;background:#141414;color:#fff;font-size:11px;padding:6px 10px;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;font-family:'Arial Narrow', Arial, sans-serif;z-index:99">D · Arial Narrow puro</div>
+<main class="wrap">
+  <header><span class="eyebrow">Resumo do cliente</span><h1>Foco no que vence</h1><p class="sub">Joaquim Pereira · CR 123.456 · Processos como contexto secundário</p></header>
+  <section class="summary" aria-label="Resumo"><div class="sumcard"><div class="sumlabel">Vence em ≤ 7 dias</div><div class="sumval danger">2</div></div><div class="sumcard"><div class="sumlabel">Em até 30 dias</div><div class="sumval amber">3</div></div><div class="sumcard"><div class="sumlabel">Processos ativos</div><div class="sumval">3</div></div></section>
+  <nav class="tabs" aria-label="Filtros"><span class="tab active">Todos<span class="count">7</span></span><span class="tab">Documentos<span class="count">4</span></span><span class="tab">Prazos<span class="count">2</span></span><span class="tab">Renovação<span class="count">3</span></span><span class="tab">Aquisição<span class="count">1</span></span></nav>
+  <div class="section">Vence esta semana</div><section class="list"><article class="item lvl-danger"><div class="when"><span class="num">2</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Comprovante de endereço (Pistola 9mm CAC)</h2><div class="meta"><span>Aquisição · SIGMA</span><span class="dot"></span><span class="ctx">Bloqueia protocolo</span></div></div><button class="cta">Enviar agora</button></article><article class="item lvl-danger"><div class="when"><span class="num">4</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Antecedentes Federal — validade expira</h2><div class="meta"><span>Renovação CR · PF/SP</span><span class="dot"></span><span class="ctx">Reemitir</span></div></div><button class="cta">Reemitir</button></article></section>
+  <div class="section">Próximos 30 dias</div><section class="list"><article class="item lvl-amber"><div class="when"><span class="num">12</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Laudo psicológico — validade</h2><div class="meta"><span>CR Renovação · Dr. Almeida</span><span class="dot"></span><span class="ctx">Agendar revalidação</span></div></div><button class="cta">Agendar</button></article><article class="item lvl-amber"><div class="when"><span class="num">18</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Certidão estadual criminal</h2><div class="meta"><span>Porte Trânsito · SSP/SP</span><span class="dot"></span><span class="ctx">Em revisão interna</span></div></div><button class="cta">Acompanhar</button></article><article class="item lvl-amber"><div class="when"><span class="num">25</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Comprovante Clube de Tiro (frequência)</h2><div class="meta"><span>CR Renovação · Clube Alvo</span><span class="dot"></span><span class="ctx">Solicitar ao clube</span></div></div><button class="cta">Solicitar</button></article></section>
+  <div class="section">Sem prazo crítico</div><section class="list"><article class="item lvl-soft"><div class="when"><span class="num">60</span><span class="unit">dias</span></div><div class="body"><h2 class="title">Renovação de filiação CBC</h2><div class="meta"><span>CAC · contexto secundário</span><span class="dot"></span><span class="ctx">Lembrete</span></div></div><button class="cta">Ver</button></article><article class="item lvl-ok"><div class="when"><span class="num">—</span><span class="unit">ok</span></div><div class="body"><h2 class="title">Compra autorizada — Pistola .380</h2><div class="meta"><span>Concluído · 03/06</span><span class="dot"></span><span class="ctx">Arquivado</span></div></div><button class="cta">Abrir</button></article></section>
+</main>
+</body>
+</html>
