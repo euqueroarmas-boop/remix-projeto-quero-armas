@@ -185,7 +185,7 @@ function StatusBadge({ status, decisaoIA }: { status: string; decisaoIA?: string
 function fmtDate(s: string | null | undefined) {
   if (!s) return "—";
   try {
-    return new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    return new Date(s).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
   } catch { return "—"; }
 }
 

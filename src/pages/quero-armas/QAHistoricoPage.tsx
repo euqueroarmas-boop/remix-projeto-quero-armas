@@ -242,7 +242,7 @@ export default function QAHistoricoPage() {
               <div className="flex flex-wrap items-center gap-2 text-[11px]">
                 <span className="qa-badge uppercase">{(detailItem.tipo_peca || "—").replace(/_/g, " ")}</span>
                 <span style={{ color: "hsl(220 10% 62%)" }}>
-                  {new Date(detailItem.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {new Date(detailItem.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}
                 </span>
                 {detailItem.score_confianca && (
                   <span className={`font-mono font-medium ${
