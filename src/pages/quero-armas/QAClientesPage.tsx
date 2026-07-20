@@ -4431,7 +4431,7 @@ export default function QAClientesPage() {
                     {savingCadastroPublicoStatus === `pago:${c.id}` ? "..." : (c.pago ? "PAGO" : "NÃO PAGO")}
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}
+                    {new Date(c.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}
                   </span>
                 </div>
                 {loadingCadastroPublico ? (
@@ -4482,7 +4482,7 @@ export default function QAClientesPage() {
                     REJEITADO
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
-                    {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    {new Date(c.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </span>
                 </div>
                 {loadingCadastroPublico ? (

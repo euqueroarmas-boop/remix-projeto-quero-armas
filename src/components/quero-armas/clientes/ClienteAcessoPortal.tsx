@@ -46,6 +46,7 @@ const formatDateTime = (iso?: string | null) => {
     return new Date(iso).toLocaleString("pt-BR", {
       day: "2-digit", month: "2-digit", year: "numeric",
       hour: "2-digit", minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
     });
   } catch { return iso; }
 };

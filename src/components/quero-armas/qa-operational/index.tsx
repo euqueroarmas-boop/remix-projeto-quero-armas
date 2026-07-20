@@ -321,6 +321,7 @@ function fmtDateTime(d?: string | null) {
     return dt.toLocaleString("pt-BR", {
       day: "2-digit", month: "2-digit", year: "numeric",
       hour: "2-digit", minute: "2-digit",
+      timeZone: "America/Sao_Paulo",
     });
   } catch { return d || "—"; }
 }
