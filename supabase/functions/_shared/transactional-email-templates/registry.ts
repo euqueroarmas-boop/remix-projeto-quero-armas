@@ -15,6 +15,27 @@ import { template as contratoRecusado } from './contrato-recusado.tsx'
 import { template as orcamentoRecebido } from './orcamento-recebido.tsx'
 import { template as orcamentoResposta } from './orcamento-resposta.tsx'
 import { template as ticketSuporte } from './ticket-suporte.tsx'
+import { template as redefinicaoSenha } from './redefinicao-senha.tsx'
+import { template as clienteJaTemConta } from './cliente-ja-tem-conta.tsx'
+import { template as acessoLiberadoPortal } from './acesso-liberado-portal.tsx'
+import { template as novaContratacaoAdmin } from './nova-contratacao-admin.tsx'
+import { template as documentacaoCompleta } from './documentacao-completa.tsx'
+import { template as processoProntoProtocolar } from './processo-pronto-protocolar.tsx'
+import { template as vencimentoDocumento } from './vencimento-documento.tsx'
+import { template as prazoProcessual } from './prazo-processual.tsx'
+import { template as gteAlertaCliente } from './gte-alerta-cliente.tsx'
+import { template as gteAlertaEquipe } from './gte-alerta-equipe.tsx'
+import { template as exameVencimento } from './exame-vencimento.tsx'
+import { template as arsenalPremiumRenovacao } from './arsenal-premium-renovacao.tsx'
+import { template as arsenalPremiumSuspenso } from './arsenal-premium-suspenso.tsx'
+import { template as eventoMontandoPasta } from './evento-montando-pasta.tsx'
+import { template as eventoDocumentoRecebido } from './evento-documento-recebido.tsx'
+import { template as eventoTodosDocumentosRecebidos } from './evento-todos-documentos-recebidos.tsx'
+import { template as eventoEmVerificacao } from './evento-em-verificacao.tsx'
+import { template as eventoProntoProtocolo } from './evento-pronto-protocolo.tsx'
+import { template as eventoEnviadoOrgao } from './evento-enviado-orgao.tsx'
+import { template as eventoStatusOrgao } from './evento-status-orgao.tsx'
+import { template as arsenalGeneric } from './arsenal-generic.tsx'
 
 export interface TemplateEntry {
   // deno-lint-ignore no-explicit-any
@@ -47,4 +68,31 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'orcamento-recebido': orcamentoRecebido,
   'orcamento-resposta': orcamentoResposta,
   'ticket-suporte': ticketSuporte,
+  // Acesso / conta
+  'redefinicao-senha': redefinicaoSenha,
+  'cliente-ja-tem-conta': clienteJaTemConta,
+  'acesso-liberado-portal': acessoLiberadoPortal,
+  // Internos / equipe
+  'nova-contratacao-admin': novaContratacaoAdmin,
+  'processo-pronto-protocolar': processoProntoProtocolar,
+  'gte-alerta-equipe': gteAlertaEquipe,
+  // Cliente — processo
+  'documentacao-completa': documentacaoCompleta,
+  // Alertas / vencimentos
+  'vencimento-documento': vencimentoDocumento,
+  'prazo-processual': prazoProcessual,
+  'gte-alerta-cliente': gteAlertaCliente,
+  'exame-vencimento': exameVencimento,
+  'arsenal-premium-renovacao': arsenalPremiumRenovacao,
+  'arsenal-premium-suspenso': arsenalPremiumSuspenso,
+  // Eventos de andamento (qa-notify-event)
+  'evento-montando-pasta': eventoMontandoPasta,
+  'evento-documento-recebido': eventoDocumentoRecebido,
+  'evento-todos-documentos-recebidos': eventoTodosDocumentosRecebidos,
+  'evento-em-verificacao': eventoEmVerificacao,
+  'evento-pronto-protocolo': eventoProntoProtocolo,
+  'evento-enviado-orgao': eventoEnviadoOrgao,
+  'evento-status-orgao': eventoStatusOrgao,
+  // Shim genérico (compatibilidade send-smtp-email)
+  'arsenal-generic': arsenalGeneric,
 }
