@@ -2126,7 +2126,7 @@ export function ClienteDocsHubModal({
           {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
           <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,360px)] md:gap-4 md:items-stretch lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,420px)] lg:gap-5">
           {/* ───────── COL 1 · DOSSIÊ ───────── */}
-          <div className="space-y-3 md:border-r md:border-[#EFEFEF] md:pr-4 lg:pr-5">
+          <div className="space-y-3 md:flex md:flex-col md:border-r md:border-[#EFEFEF] md:pr-4 lg:pr-5">
             <div className="flex items-baseline justify-between gap-2">
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.28em] text-[#7A7A7A]">
                 Dossiê
@@ -2363,7 +2363,7 @@ export function ClienteDocsHubModal({
               )}
 
             {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1.5 pt-1 md:flex md:flex-1 md:flex-col md:min-h-0">
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
                 Observações
               </div>
@@ -2372,7 +2372,7 @@ export function ClienteDocsHubModal({
                 onChange={(event) => update("observacoes", event.target.value)}
                 rows={5}
                 placeholder="Se necessário, adicione detalhes complementares."
-                className="min-h-[148px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+                className="min-h-[148px] md:flex-1 md:h-full rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
               />
             </div>
           </div>
