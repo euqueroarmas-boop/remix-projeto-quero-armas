@@ -2378,7 +2378,7 @@ export function ClienteDocsHubModal({
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="flex min-h-[360px] flex-col md:self-stretch">
+          <div className="flex min-h-[360px] flex-col md:self-stretch md:max-h-[calc(92dvh-200px)] md:overflow-y-auto">
             <HubDocPreviewSlot
               file={file}
               confianca={classificacao?.confianca ?? null}
