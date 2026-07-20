@@ -216,7 +216,7 @@ export default function HistoricoContratosPendentes() {
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2"
-                      onClick={() => { navigator.clipboard.writeText(c.link_assinatura!); toast.success("Link copiado"); }}
+                      onClick={() => window.open(c.link_assinatura!, "_blank")}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </Button>
