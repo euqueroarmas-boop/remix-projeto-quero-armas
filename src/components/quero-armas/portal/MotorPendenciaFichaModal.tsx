@@ -163,6 +163,9 @@ export default function MotorPendenciaFichaModal({
   const cep = String(cliente?.cep || "").replace(/\D/g, "");
   const uf = String(cliente?.estado || "").toUpperCase();
   const cidade = String(cliente?.cidade || "");
+  const titleCase = (s: string) =>
+    s.toLowerCase().replace(/(^|[\s\-'/])([a-zà-ú])/g, (_, sep, ch) => sep + ch.toUpperCase());
+  const cidadeFmt = cidade ? titleCase(cidade) : "";
   const cepFmt = cep.length === 8 ? `${cep.slice(0, 5)}-${cep.slice(5)}` : (cliente?.cep || "");
   const cpfRaw = String(cliente?.cpf || "").replace(/\D/g, "");
   const cpfFmt = cpfRaw.length === 11
@@ -175,20 +178,22 @@ export default function MotorPendenciaFichaModal({
   ].filter((v) => v && String(v).trim().length).join(", ");
   const linhaLocalidade = [
     cliente?.bairro,
-    cidade && uf ? `${cidade}/${uf}` : cidade || uf,
+    cidadeFmt && uf ? `${cidadeFmt}/${uf}` : cidadeFmt || uf,
     cepFmt,
   ].filter((v) => v && String(v).trim().length).join(" · ");
   const enderecoCompleto = [linhaLogradouro, linhaLocalidade].filter(Boolean).join(" — ") || "—";
 
   // Busca de credenciados: só ativa se este tipo exige profissional
+  // Não passamos `cidade` para o backend: com CEP/UF a busca deve ser puramente
+  // por proximidade (raio 25 km), sem restringir ao município do requerente.
   const psicoParams: BuscarPsicoParams | null =
     cfg.profissional === "psicologo" && (cep.length === 8 || uf)
-      ? { tipo: "psicologo", cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf, cidade, raio_km: 25, limit: 5 }
+      ? { tipo: "psicologo", cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf, raio_km: 25, limit: 20 }
       : null;
   const psico = useCredenciadosPsico(psicoParams);
 
   const iatParams = cfg.profissional === "instrutor_tiro" && (cep.length === 8 || uf)
-    ? { cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf, cidade, raio_km: 25, limit: 5 }
+    ? { cep: cep.length === 8 ? cep : undefined, uf: cep.length === 8 ? undefined : uf, raio_km: 25, limit: 20 }
     : null;
   const iat = useCredenciadosIAT(iatParams);
 
@@ -196,7 +201,7 @@ export default function MotorPendenciaFichaModal({
   const foraDoRaio = cfg.profissional === "psicologo" ? psico.foraDoRaio : false;
   const distanciaMaisProximo = cfg.profissional === "psicologo" ? psico.distanciaMaisProximo : null;
   const buscaResultados = cfg.profissional === "psicologo"
-    ? (psico.results || []).map((r) => ({
+      ? (psico.results || []).map((r) => ({
         id: r.id, nome: r.nome, endereco: formatEnderecoProfissional(r.endereco, r.bairro, r.cidade, r.uf),
         contato: r.telefones?.[0] || r.emails?.[0] || "—",
         telefone: r.telefones?.[0] || null,
@@ -214,7 +219,8 @@ export default function MotorPendenciaFichaModal({
     : [];
 
   function formatEnderecoProfissional(endereco?: string | null, bairro?: string | null, cidade?: string | null, ufSigla?: string | null) {
-    const localidade = [bairro, cidade && ufSigla ? `${cidade}/${ufSigla}` : cidade || ufSigla]
+    const cidadeDisp = cidade ? titleCase(cidade) : "";
+    const localidade = [bairro, cidadeDisp && ufSigla ? `${cidadeDisp}/${ufSigla}` : cidadeDisp || ufSigla]
       .filter((v) => v && String(v).trim().length)
       .join(" · ");
     return [endereco, localidade].filter((v) => v && String(v).trim().length).join(" — ") || "—";
@@ -252,7 +258,7 @@ export default function MotorPendenciaFichaModal({
                   {cpfFmt && <KV k="CPF" v={cpfFmt} />}
                   {cliente?.celular && <KV k="Celular" v={String(cliente.celular)} />}
                   {cliente?.cr_numero && <KV k="CR" v={cliente.cr_numero} />}
-                  <KV k="Endereço" v={enderecoCompleto.toUpperCase()} />
+                  <KV k="Endereço" v={enderecoCompleto} />
                   {processo && <KV k="Serviço" v={String(processo.tipo || "—").toUpperCase()} />}
                   {processo?.etapa_atual && <KV k="Etapa" v={String(processo.etapa_atual).toUpperCase()} />}
                 </div>
@@ -330,7 +336,7 @@ export default function MotorPendenciaFichaModal({
                   <div style={ficha.pad}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <div style={ficha.sectionTitle}>
-                        {cfg.profissional === "psicologo" ? "Psicólogos" : "Instrutores"} credenciados pela PF próximos de {cidade || "—"}/{uf || "—"}
+                        {cfg.profissional === "psicologo" ? "Psicólogos" : "Instrutores"} credenciados pela PF próximos de {cidadeFmt || "—"}/{uf || "—"}
                       </div>
                       <span style={ficha.chip}>Raio 25 km</span>
                     </div>
