@@ -315,47 +315,7 @@ Deno.serve(async (req) => {
     console.error("[venda_pendente] threw:", (e as Error)?.message);
   }
 
-  // 5) Dispara e-mail de boas-vindas via send-smtp-email (gateway central existente)
-  try {
-    const html = qaArsenalWelcomeHtml({
-      name: nome,
-      email: emailNorm,
-      servicoInteresse: servico_interesse ?? null,
-    });
-    const text = qaArsenalWelcomeText({
-      name: nome,
-      email: emailNorm,
-      servicoInteresse: servico_interesse ?? null,
-    });
-
-    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-    if (!internalToken) {
-      console.error("[arsenal_welcome] INTERNAL_FUNCTION_TOKEN ausente — e-mail não será enviado");
-    } else {
-      const { data: smtpData, error: smtpErr } = await admin.functions.invoke(
-        "send-smtp-email",
-        {
-          headers: { "x-internal-token": internalToken },
-          body: {
-            to: emailNorm,
-            subject: "Bem-vindo ao Arsenal — Quero Armas",
-            html,
-            text,
-            from_name: "Quero Armas",
-          },
-        },
-      );
-      if (smtpErr) {
-        console.error("[arsenal_welcome] send-smtp-email error:", smtpErr.message);
-      } else {
-        console.info("[arsenal_welcome] enviado:", JSON.stringify(smtpData));
-      }
-    }
-  } catch (e) {
-    console.error("[arsenal_welcome] envio falhou:", (e as Error)?.message);
-  }
-
-  // Lovable Emails: template boas-vindas com queue/log/unsubscribe.
+  // Lovable Emails: template dedicado boas-vindas (Arsenal Inteligente) com queue/log/unsubscribe.
   try {
     const { sendTransactional } = await import("../_shared/sendTransactional.ts");
     await sendTransactional({
@@ -364,6 +324,7 @@ Deno.serve(async (req) => {
       idempotencyKey: `boas-vindas-${emailNorm}`,
       templateData: {
         nome,
+        servicoInteresse: servico_interesse ?? null,
         portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
       },
     });
