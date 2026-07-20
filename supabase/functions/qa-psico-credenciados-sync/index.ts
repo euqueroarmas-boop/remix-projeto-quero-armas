@@ -54,9 +54,10 @@ function extractContent(html: string): string {
   return m ? m[1] : html;
 }
 
-// Coleta cabeçalhos de bairro (strong sozinho em CAIXA ALTA) e suas posições no texto plano,
-// para podermos associar cada entrada ao bairro mais próximo acima dela.
-function collectBairros(html: string): Array<{ pos: number; nome: string }> {
+// Coleta cabeçalhos oficiais da página da PF (municípios em CAIXA ALTA)
+// e suas posições no texto plano, para associar cada credenciado ao município
+// correto. Ex.: JACAREÍ deve ir em `cidade`, não colar no nome nem virar bairro.
+function collectLocalidades(html: string): Array<{ pos: number; nome: string }> {
   // Texto plano sem qualquer tag (para alinhar com o que parseEntries usará)
   const plain = stripTags(html.replace(/<(strong|b)[^>]*>/gi, "\u0001").replace(/<\/(strong|b)>/gi, "\u0002"));
   const result: Array<{ pos: number; nome: string }> = [];
@@ -66,7 +67,7 @@ function collectBairros(html: string): Array<{ pos: number; nome: string }> {
     const raw = m[1].replace(/[\u0001\u0002]/g, "").replace(/\s+/g, " ").trim();
     if (!raw) continue;
     if (raw.length > 80) continue;
-    if (/CRP|CR\s*\d|Validade|End\.|Tel\.|E-?mail|@/i.test(raw)) continue;
+    if (/CRP|CR\s*\d|Validade|End\.?|Endere[cç]o|Tel\.?|Telefone|E-?mail|@/i.test(raw)) continue;
     const letters = raw.replace(/[^A-ZÁÉÍÓÚÂÊÔÃÕÇ]/g, "");
     const total = raw.replace(/\s/g, "").length;
     if (letters.length < Math.max(3, Math.floor(total * 0.6))) continue;
@@ -123,29 +124,27 @@ function parseValidade(s: string): { date: string | null; label: string | null }
 
 async function parseEntries(html: string, uf: string, sourceUrl: string): Promise<Entry[]> {
   const content = extractContent(html);
-  const bairros = collectBairros(content);
+  const localidades = collectLocalidades(content);
   let text = plainText(content);
-  // Insere quebras de linha onde bairros aparecem para que não vazem para o nome da próxima entrada.
-  // Faz isto preservando o título do bairro como marcador (será limpo abaixo).
+  // Insere quebras de linha onde municípios aparecem para que não vazem para o nome da próxima entrada.
+  // Faz isto preservando o título como marcador (será limpo abaixo).
   // Substitui apenas a primeira ocorrência de cada bairro (a segunda+ tipicamente
   // está dentro de um endereço de outra entrada, não é heading)
-  for (const b of bairros) {
+  for (const b of localidades) {
     const safe = b.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     text = text.replace(new RegExp(`\\s*${safe}\\s*`), `\n${b.nome}\n`);
   }
-  const bairrosSet = new Set(bairros.map((b) => b.nome));
-  // Recalcula posições dos bairros no texto modificado
-  const bairrosPos: Array<{ pos: number; nome: string }> = [];
-  for (const b of bairros) {
+  const localidadesSet = new Set(localidades.map((b) => b.nome));
+  // Recalcula posições dos municípios no texto modificado
+  const localidadesPos: Array<{ pos: number; nome: string }> = [];
+  for (const b of localidades) {
     const idx = text.indexOf(`\n${b.nome}\n`);
-    if (idx >= 0) bairrosPos.push({ pos: idx, nome: b.nome });
+    if (idx >= 0) localidadesPos.push({ pos: idx, nome: b.nome });
   }
-  bairrosPos.sort((a, b) => a.pos - b.pos);
+  localidadesPos.sort((a, b) => a.pos - b.pos);
   const entries: Entry[] = [];
 
-  // Cidade = nome da UF (heading principal da página) — para SP/RJ o "bairro" será o bairro real,
-  // para interior o "bairro" tende a ser o município. O frontend mostra ambos.
-  const cidade: string | null = null;
+  // Cidade vem do heading oficial da PF imediatamente acima do registro.
 
   // Cada entrada termina em "Validade do (Credenciamento|Certificado): DD/MM/AAAA".
   // Usamos isso como delimitador para isolar cada registro.
@@ -166,10 +165,18 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     while ((nameMatch = reName.exec(block)) !== null) last = nameMatch;
     if (!last) continue;
     let nome = last[1].replace(/\s+/g, " ").trim();
-    // Remove bairro prefixado (heading que ficou colado ao nome)
-    for (const bairroNome of bairrosSet) {
-      if (nome.toUpperCase().startsWith(bairroNome.toUpperCase() + " ")) {
-        nome = nome.slice(bairroNome.length + 1).trim();
+    const globalNamePos = m.index + last.index;
+
+    // Município oficial: heading mais recente antes do nome do credenciado.
+    let cidade: string | null = null;
+    for (let i = localidadesPos.length - 1; i >= 0; i--) {
+      if (localidadesPos[i].pos <= globalNamePos) { cidade = localidadesPos[i].nome; break; }
+    }
+
+    // Remove município prefixado (heading que ficou colado ao nome)
+    for (const localidadeNome of localidadesSet) {
+      if (nome.toUpperCase().startsWith(localidadeNome.toUpperCase() + " ")) {
+        nome = nome.slice(localidadeNome.length + 1).trim();
       }
     }
     const registro = `${last[2].toUpperCase()} ${last[3]}`.trim();
@@ -178,9 +185,9 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     // Pega só do nome em diante (descarta restos do registro anterior)
     block = block.slice(last.index);
 
-    // Endereço: após "End." até próximo separador Tel./Tels./E-mail/Validade
+    // Endereço: após "End."/"Endereço" até próximo separador Tel./Telefone/E-mail/Validade
     let endereco: string | null = null;
-    const endMatch = block.match(/End\.?\s*:\s*([\s\S]+?)(?=\s*Tel\.?s?\s*:|\s*E-?mail\s*:|\s*Validade|$)/i);
+    const endMatch = block.match(/(?:End\.?|Endere[cç]o)\s*:\s*([\s\S]+?)(?=\s*(?:Tel\.?s?|Telefone)\s*:|\s*E-?mail\s*:|\s*Validade|$)/i);
     if (endMatch) endereco = endMatch[1].replace(/\s+/g, " ").trim();
 
     const telefones = normalizePhone(block);
@@ -193,11 +200,7 @@ async function parseEntries(html: string, uf: string, sourceUrl: string): Promis
     const validade = (dd >= 1 && dd <= 31 && mm >= 1 && mm <= 12 && yyyy >= 2000 && yyyy <= 2100)
       ? `${m[4]}-${m[3]}-${m[2]}` : null;
 
-    // Bairro: a heading mais recente antes do início do bloco
-    let bairro: string | null = null;
-    for (let i = bairrosPos.length - 1; i >= 0; i--) {
-      if (bairrosPos[i].pos <= m.index) { bairro = bairrosPos[i].nome; break; }
-    }
+    const bairro: string | null = null;
 
     const hash = await sha256(`${uf}|${nome.toLowerCase()}|${registro}|${endereco || ""}`);
     entries.push({

@@ -143,12 +143,15 @@ Deno.serve(async (req) => {
         try {
           const { data: pendentes } = await supabase
             .from("qa_psico_credenciados")
-            .select("id,endereco,uf")
+            .select("id,endereco,cidade,uf")
             .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
             .is("latitude", null).not("endereco", "is", null)
             .limit(MAX_GEOCODE_PER_CALL);
           for (const e of pendentes || []) {
-            const g = await geocodeEndereco(supabase, e.endereco, e.uf);
+            const enderecoCompleto = [e.endereco, e.cidade ? `${e.cidade}/${e.uf}` : null]
+              .filter(Boolean)
+              .join(", ");
+            const g = await geocodeEndereco(supabase, enderecoCompleto, e.uf);
             if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
             await nominatimDelay();
           }
@@ -227,7 +230,35 @@ Deno.serve(async (req) => {
         p_raio_km: raio_km, p_limit: limit, p_uf: ufFiltro, p_incluir_vencidos: incluirVencidos,
       });
       if (error) throw error;
-      const results = data || [];
+      let results = data || [];
+      if (cidadeFiltro && ufFiltro) {
+        let qCidade = supabase
+          .from("qa_psico_credenciados")
+          .select("*")
+          .eq("tipo", tipo)
+          .eq("uf", String(ufFiltro).toUpperCase())
+          .eq("ativo", true)
+          .limit(1000);
+        if (!incluirVencidos) qCidade = qCidade.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
+        const { data: porCidade, error: cidadeErr } = await qCidade;
+        if (cidadeErr) throw cidadeErr;
+        const cidadeResults = (porCidade || [])
+          .filter((r: any) => cidadeMatch(r, cidadeFiltro))
+          .filter((r: any) => buscaMatch(r, busca))
+          .map((r: any) => ({ ...r, distancia_km: distanciaKm(origin, r) }))
+          .sort((a: any, b: any) => {
+            if (a.distancia_km != null || b.distancia_km != null) return (a.distancia_km ?? 1e9) - (b.distancia_km ?? 1e9);
+            return String(a.nome || "").localeCompare(String(b.nome || ""));
+          });
+        const seen = new Set<string>();
+        results = [...cidadeResults, ...results]
+          .filter((r: any) => {
+            if (seen.has(r.id)) return false;
+            seen.add(r.id);
+            return true;
+          })
+          .slice(0, limit);
+      }
       if (results.length === 0 && ufFiltro) {
         const { data: d2 } = await supabase.rpc("qa_psico_credenciados_proximos", {
           p_tipo: tipo, p_lat: origin.lat, p_lng: origin.lng,
