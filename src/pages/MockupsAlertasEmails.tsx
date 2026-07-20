@@ -32,6 +32,228 @@ interface MockTemplate {
 }
 
 const TEMPLATES: MockTemplate[] = [
+  // === P3 · Habitualidade — 12 novos templates (mockup visual · sem motor) ===
+  {
+    key: "habitualidade-progresso-nivel",
+    status: "alerta",
+    assunto: "IA atualizou sua contagem de habitualidade",
+    titulo: "Sua contagem de habitualidade foi atualizada",
+    texto:
+      "A IA processou novos comprovantes e atualizou sua contagem de treinos e competições válidos. Confira o progresso no Arsenal Inteligente.",
+    cta: "VER HABITUALIDADE",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Treinos válidos", valor: "9" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Acompanhar progresso no Arsenal" },
+    ],
+    motor: "Motor de habitualidade — pendente (será acionado por processamento IA de comprovantes)",
+  },
+  {
+    key: "habitualidade-quase-nivel",
+    status: "alerta",
+    assunto: "Você está perto do próximo nível",
+    titulo: "Falta pouco para o próximo nível",
+    texto:
+      "Sua habitualidade está próxima de atingir os requisitos do próximo nível de atirador desportivo. Confira o que ainda falta para consolidar a mudança.",
+    cta: "VER O QUE FALTA",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Nível sugerido", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "11" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Completar treinos ou competições restantes" },
+    ],
+    motor: "Motor de habitualidade — pendente (janela de proximidade do próximo nível)",
+  },
+  {
+    key: "habitualidade-pronto-mudanca-nivel",
+    status: "ok",
+    assunto: "Você já pode solicitar mudança de nível",
+    titulo: "Requisitos operacionais atingidos",
+    texto:
+      "Sua habitualidade validada já atende aos requisitos operacionais para solicitar mudança de nível de atirador desportivo. Podemos iniciar o processo pelo Arsenal.",
+    cta: "SOLICITAR MUDANÇA DE NÍVEL",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Nível sugerido", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "14" },
+      { label: "Competições válidas", valor: "3" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Solicitar mudança de nível de atirador desportivo" },
+    ],
+    motor: "Motor de habitualidade — pendente (regra IN DG/PF 201/311 + Decreto 11.615/2023)",
+  },
+  {
+    key: "habitualidade-pronto-por-competicao",
+    status: "ok",
+    assunto: "Suas competições habilitam mudança de nível",
+    titulo: "Competições consolidaram o próximo nível",
+    texto:
+      "As competições registradas fortaleceram sua habitualidade e habilitam a mudança de nível de atirador desportivo. Podemos avançar com o pedido.",
+    cta: "SOLICITAR MUDANÇA DE NÍVEL",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 2" },
+      { label: "Nível sugerido", valor: "Nível 3" },
+      { label: "Treinos válidos", valor: "12" },
+      { label: "Competições válidas", valor: "6" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Solicitar mudança de nível de atirador desportivo" },
+    ],
+    motor: "Motor de habitualidade — pendente (regra de competição · IN DG/PF 311)",
+  },
+  {
+    key: "habitualidade-servico-sugerido",
+    status: "ok",
+    assunto: "Serviço recomendado: Mudança de nível de atirador desportivo",
+    titulo: "Serviço recomendado para você",
+    texto:
+      "Com base na sua habitualidade validada, o Arsenal recomenda contratar o serviço \"Mudança de nível de atirador desportivo\" para formalizar o novo nível junto ao Exército.",
+    cta: "CONTRATAR MUDANÇA DE NÍVEL",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Nível sugerido", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "14" },
+      { label: "Competições válidas", valor: "3" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Contratar o serviço de mudança de nível" },
+    ],
+    motor: "Motor de habitualidade — pendente (sugestão comercial · CTA sem checkout nesta rodada)",
+  },
+  {
+    key: "habitualidade-pendente-validacao-ia",
+    status: "alerta",
+    assunto: "Comprovantes aguardando validação",
+    titulo: "Há comprovantes aguardando revisão",
+    texto:
+      "A IA encontrou novos comprovantes de habitualidade, mas alguns campos precisam de revisão humana antes de entrar na contagem. Confira os pendentes.",
+    cta: "REVISAR COMPROVANTES",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Treinos válidos", valor: "8" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Revisar comprovantes pendentes" },
+    ],
+    motor: "Motor de habitualidade — pendente (fila de revisão humana pós-IA)",
+  },
+  {
+    key: "habitualidade-documento-rejeitado",
+    status: "critico",
+    assunto: "Comprovante não entrou na contagem",
+    titulo: "Comprovante rejeitado",
+    texto:
+      "Um comprovante enviado não pôde ser validado e não entrou na contagem de habitualidade. Substitua o documento para manter a sua evolução no Arsenal.",
+    cta: "SUBSTITUIR DOCUMENTO",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Treinos válidos", valor: "9" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Substituir o comprovante rejeitado" },
+    ],
+    motor: "Motor de habitualidade — pendente (rejeição por validação IA/documental)",
+  },
+  {
+    key: "habitualidade-risco-manter-nivel",
+    status: "alerta",
+    assunto: "Sua habitualidade pode não sustentar o nível atual",
+    titulo: "Risco de não sustentar o nível atual",
+    texto:
+      "Considerando o ritmo atual de comprovações, a contagem pode não sustentar o seu nível de atirador desportivo no próximo ciclo. Regularize antes do fechamento.",
+    cta: "REGULARIZAR HABITUALIDADE",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "10" },
+      { label: "Competições válidas", valor: "3" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Regularizar habitualidade antes do fechamento do ciclo" },
+    ],
+    motor: "Motor de habitualidade — pendente (projeção de fechamento de ciclo)",
+  },
+  {
+    key: "habitualidade-risco-rebaixamento",
+    status: "critico",
+    assunto: "Risco de rebaixamento de nível",
+    titulo: "Risco de rebaixamento de nível",
+    texto:
+      "A habitualidade validada não sustenta o seu nível atual de atirador desportivo. Regularize com urgência para evitar o rebaixamento no próximo enquadramento.",
+    cta: "REGULARIZAR HABITUALIDADE",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "6" },
+      { label: "Competições válidas", valor: "1" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Regularizar habitualidade com urgência" },
+    ],
+    motor: "Motor de habitualidade — pendente (reenquadramento IN DG/PF 311)",
+  },
+  {
+    key: "habitualidade-nivel-confirmado",
+    status: "ok",
+    assunto: "Seu nível está sustentado pela habitualidade",
+    titulo: "Nível atual sustentado",
+    texto:
+      "A habitualidade validada sustenta o seu nível atual de atirador desportivo. Continue mantendo o ritmo de treinos e competições registrados.",
+    cta: "ABRIR ARSENAL",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 2" },
+      { label: "Treinos válidos", valor: "18" },
+      { label: "Competições válidas", valor: "4" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Manter ritmo de treinos e competições" },
+    ],
+    motor: "Motor de habitualidade — pendente (confirmação de nível vigente)",
+  },
+  {
+    key: "habitualidade-por-tipo-arma-incompleta",
+    status: "alerta",
+    assunto: "Falta habitualidade por tipo de arma",
+    titulo: "Falta habitualidade para algum tipo de arma",
+    texto:
+      "Sua contagem geral avançou, mas ainda falta habitualidade específica para algum tipo de arma do seu acervo. Confira os requisitos por tipo.",
+    cta: "VER O QUE FALTA",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Treinos válidos", valor: "12" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Completar habitualidade por tipo de arma" },
+    ],
+    motor: "Motor de habitualidade — pendente (segmentação por tipo de arma do acervo)",
+  },
+  {
+    key: "habitualidade-novo-documento-processado",
+    status: "ok",
+    assunto: "Novo comprovante entrou na contagem",
+    titulo: "Novo comprovante processado",
+    texto:
+      "Um novo comprovante foi lido pela IA e entrou na sua contagem de habitualidade. Confira o novo total de treinos e competições válidos.",
+    cta: "VER HABITUALIDADE",
+    meta: [
+      { label: "Cliente", valor: "CAC" },
+      { label: "Nível atual", valor: "Nível 1" },
+      { label: "Treinos válidos", valor: "10" },
+      { label: "Competições válidas", valor: "2" },
+      { label: "Período analisado", valor: "01/01/2026 a 31/12/2026" },
+      { label: "Próxima ação", valor: "Ver contagem atualizada" },
+    ],
+    motor: "Motor de habitualidade — pendente (hook pós-processamento IA de comprovantes)",
+  },
+
   {
     key: "filiacao-vencida",
     status: "critico",
@@ -330,7 +552,7 @@ export default function MockupsAlertasEmails() {
           Alertas operacionais · Arsenal Inteligente
         </h1>
         <p style={{ fontSize: 14, color: "#333", margin: "0 0 20px", maxWidth: 720, lineHeight: 1.5 }}>
-          16 novas variações de alerta por e-mail (filiação, habitualidade, autorização, CRAF, GTE, exigências PF, munição, acervo e renovação de CR).
+          28 variações de alerta por e-mail (filiação, habitualidade — 14 no total com os 12 novos —, autorização, CRAF, GTE, exigências PF, munição, acervo e renovação de CR).
           Templates registrados no motor Lovable Emails, prontos para preview via <code>preview-transactional-email</code>.
           Nenhum trigger automático foi ativado — esta tela é apenas para revisão de copy, layout e cor de status.
         </p>

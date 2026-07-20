@@ -55,6 +55,20 @@ import { template as municaoLimiteAlerta } from './municao-limite-alerta.tsx'
 import { template as acervoInconsistente } from './acervo-inconsistente.tsx'
 import { template as acervoConforme } from './acervo-conforme.tsx'
 
+// Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
+import { template as habitualidadeProgressoNivel } from './habitualidade-progresso-nivel.tsx'
+import { template as habitualidadeQuaseNivel } from './habitualidade-quase-nivel.tsx'
+import { template as habitualidadeProntoMudancaNivel } from './habitualidade-pronto-mudanca-nivel.tsx'
+import { template as habitualidadeProntoPorCompeticao } from './habitualidade-pronto-por-competicao.tsx'
+import { template as habitualidadeServicoSugerido } from './habitualidade-servico-sugerido.tsx'
+import { template as habitualidadePendenteValidacaoIa } from './habitualidade-pendente-validacao-ia.tsx'
+import { template as habitualidadeDocumentoRejeitado } from './habitualidade-documento-rejeitado.tsx'
+import { template as habitualidadeRiscoManterNivel } from './habitualidade-risco-manter-nivel.tsx'
+import { template as habitualidadeRiscoRebaixamento } from './habitualidade-risco-rebaixamento.tsx'
+import { template as habitualidadeNivelConfirmado } from './habitualidade-nivel-confirmado.tsx'
+import { template as habitualidadePorTipoArmaIncompleta } from './habitualidade-por-tipo-arma-incompleta.tsx'
+import { template as habitualidadeNovoDocumentoProcessado } from './habitualidade-novo-documento-processado.tsx'
+
 export interface TemplateEntry {
   // deno-lint-ignore no-explicit-any
   component: (props: any) => unknown
@@ -131,4 +145,18 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'municao-limite-alerta': municaoLimiteAlerta,
   'acervo-inconsistente': acervoInconsistente,
   'acervo-conforme': acervoConforme,
+
+  // Habitualidade — 12 novos alertas (mockup — sem motor ainda)
+  'habitualidade-progresso-nivel': habitualidadeProgressoNivel,
+  'habitualidade-quase-nivel': habitualidadeQuaseNivel,
+  'habitualidade-pronto-mudanca-nivel': habitualidadeProntoMudancaNivel,
+  'habitualidade-pronto-por-competicao': habitualidadeProntoPorCompeticao,
+  'habitualidade-servico-sugerido': habitualidadeServicoSugerido,
+  'habitualidade-pendente-validacao-ia': habitualidadePendenteValidacaoIa,
+  'habitualidade-documento-rejeitado': habitualidadeDocumentoRejeitado,
+  'habitualidade-risco-manter-nivel': habitualidadeRiscoManterNivel,
+  'habitualidade-risco-rebaixamento': habitualidadeRiscoRebaixamento,
+  'habitualidade-nivel-confirmado': habitualidadeNivelConfirmado,
+  'habitualidade-por-tipo-arma-incompleta': habitualidadePorTipoArmaIncompleta,
+  'habitualidade-novo-documento-processado': habitualidadeNovoDocumentoProcessado,
 }
