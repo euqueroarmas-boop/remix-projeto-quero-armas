@@ -229,12 +229,8 @@ Deno.serve(async (req) => {
           templateData: {
             nome,
             diasRestantes: String(dias),
-            dataFim: fimBR,
-            gratuidade: Boolean(gratuidade),
-            valor: "R$ 297/ano",
-            parcelas: "12x de R$ 24,75",
-            carenciaDias: String(CARENCIA_DIAS),
-            portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+            valorRenovacao: gratuidade ? "Renovação isenta" : "R$ 297/ano",
+            linkPagamento: "https://www.euqueroarmas.com.br/area-do-cliente",
           },
         });
         if (!res.ok) throw new Error(res.error);
@@ -296,9 +292,7 @@ Deno.serve(async (req) => {
           idempotencyKey: `arsenal-premium-susp-${a.id}`,
           templateData: {
             nome,
-            dataFim: fmtBR(a.periodo_fim),
-            carenciaDias: String(CARENCIA_DIAS),
-            portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
+            linkPagamento: "https://www.euqueroarmas.com.br/area-do-cliente",
           },
         });
       } catch { /* suspensão já aplicada; e-mail tentará de novo em próxima execução */ }
