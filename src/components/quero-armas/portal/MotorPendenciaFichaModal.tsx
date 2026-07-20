@@ -83,11 +83,7 @@ interface Props {
   processoId?: string | null;
   open: boolean;
   onClose: () => void;
-  /**
-   * Legado — mantido para compatibilidade. Se informado, é chamado como
-   * fallback (ex.: pendência sem processo). O fluxo padrão faz upload aqui
-   * mesmo, reutilizando enviarDocumentoGuia + aguardarValidacaoIAGuia.
-   */
+  /** Chamado ao clicar em "Selecionar arquivo" ou "Tirar foto" — abre o Hub Documental. */
   onContinuar?: () => void;
   /** Chamado após upload+validação para o pai recarregar dados. */
   onUpdated?: () => void;
