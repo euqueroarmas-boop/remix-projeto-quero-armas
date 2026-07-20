@@ -49,17 +49,23 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
     try {
       // Passo 0: preparar conteúdo
       atualizar(0, { status: "loading" });
-      const parts: { tipo: string; mime: string; data: string; nome: string }[] = [];
+      const parts: { tipo: string; mime: string; name: string; data_url: string }[] = [];
       for (const a of arquivos) {
         const b64 = await fileToBase64(a.file);
-        parts.push({ tipo: a.tipo, mime: a.file.type, data: b64, nome: a.file.name });
+        const mime = a.file.type || "application/octet-stream";
+        parts.push({
+          tipo: a.tipo,
+          mime,
+          name: a.file.name,
+          data_url: `data:${mime};base64,${b64}`,
+        });
       }
       atualizar(0, { status: "ok" });
 
       // Passo 1: chamar qa-cliente-prefill
       atualizar(1, { status: "loading" });
-      const body: Record<string, unknown> = { arquivos: parts };
-      if (textoPastaColado.trim()) body.texto_extra = textoPastaColado.trim();
+      const body: Record<string, unknown> = { files: parts };
+      if (textoPastaColado.trim()) body.text = textoPastaColado.trim();
 
       const { data, error } = await supabase.functions.invoke("qa-cliente-prefill", { body });
       if (error) throw new Error(error.message || "Erro na edge function");
