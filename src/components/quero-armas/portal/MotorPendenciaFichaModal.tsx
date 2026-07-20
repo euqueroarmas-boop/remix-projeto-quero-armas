@@ -116,7 +116,7 @@ export default function MotorPendenciaFichaModal({
             .eq("id", focusDocId)
             .maybeSingle(),
           supabase.from("qa_clientes" as any)
-            .select("id, nome_completo, cep, endereco_cidade, endereco_uf, endereco_bairro, cpf, cr_numero")
+            .select("id, nome_completo, cep, cidade, estado, bairro, endereco, cpf, cr_numero")
             .eq("id", clienteId)
             .maybeSingle(),
         ]);
@@ -143,8 +143,8 @@ export default function MotorPendenciaFichaModal({
   );
 
   const cep = String(cliente?.cep || "").replace(/\D/g, "");
-  const uf = String(cliente?.endereco_uf || "").toUpperCase();
-  const cidade = String(cliente?.endereco_cidade || "");
+  const uf = String(cliente?.estado || "").toUpperCase();
+  const cidade = String(cliente?.cidade || "");
 
   // Busca de credenciados: só ativa se este tipo exige profissional
   const psicoParams: BuscarPsicoParams | null =
@@ -180,7 +180,7 @@ export default function MotorPendenciaFichaModal({
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
-        className="max-w-5xl p-0 overflow-hidden bg-transparent border-0 shadow-none"
+        className="p-0 overflow-hidden bg-transparent border-0 shadow-none sm:max-w-none w-[calc(100vw-8rem)] max-h-[calc(100vh-8rem)]"
         style={{ fontFamily: '"Arial Narrow", Arial, sans-serif' }}
       >
         <div style={ficha.wrap}>
