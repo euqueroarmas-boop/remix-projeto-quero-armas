@@ -254,17 +254,18 @@ Deno.serve(async (req) => {
   </td></tr>
 </table></td></tr></table></body></html>`;
         try {
-          const r = await admin.functions.invoke("send-smtp-email", {
-            headers: { "x-internal-token": internalTokenSecret },
-            body: {
-              to: (cliente as any).email,
-              subject: "Sua documentação está completa — Quero Armas",
-              html: htmlCliente,
-              text: `Olá, ${nomeCli}.\nSua documentação do processo ${servico} foi concluída e está pronta para protocolo. A equipe Quero Armas seguirá com a próxima etapa. Acompanhe em: ${portalUrl}\n\n— ${BRAND}`,
-              trace_id: `pronto-proto-cli-${processoId}`,
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          const r = await sendTransactional({
+            templateName: "documentacao-completa",
+            recipientEmail: (cliente as any).email,
+            idempotencyKey: `pronto-proto-cli-${processoId}`,
+            templateData: {
+              nome: nomeCli,
+              servico,
+              portalUrl,
             },
           });
-          emailClienteOk = !r.error && (r.data as any)?.success === true;
+          emailClienteOk = r.ok;
         } catch (e) {
           console.warn("[checar-conclusao] email cliente falhou", e);
           emailClienteOk = false;
@@ -294,17 +295,20 @@ Deno.serve(async (req) => {
     </p>
   </td></tr>
 </table></td></tr></table></body></html>`;
-        const r = await admin.functions.invoke("send-smtp-email", {
-          headers: { "x-internal-token": internalTokenSecret },
-          body: {
-            to: TEAM_EMAIL,
-            subject: `Processo pronto para protocolar: ${nomeCli} — ${servico}`,
-            html: htmlEquipe,
-            text: `Processo pronto para protocolar.\nCliente: ${nomeCli}\nCPF: ${(cliente as any)?.cpf || "—"}\nServiço: ${servico}\nID: ${processoId}\nAdmin: ${adminUrl}`,
-            trace_id: `pronto-proto-team-${processoId}`,
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        const r = await sendTransactional({
+          templateName: "processo-pronto-protocolar",
+          recipientEmail: TEAM_EMAIL,
+          idempotencyKey: `pronto-proto-team-${processoId}`,
+          templateData: {
+            nomeCliente: nomeCli,
+            cpf: (cliente as any)?.cpf || "—",
+            servico,
+            processoId,
+            adminUrl,
           },
         });
-        emailEquipeOk = !r.error && (r.data as any)?.success === true;
+        emailEquipeOk = r.ok;
       } catch (e) {
         console.warn("[checar-conclusao] email equipe falhou", e);
         emailEquipeOk = false;
