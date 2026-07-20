@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'Confirme seu e-mail — Arsenal Inteligente',
+  invite: 'Convite — Arsenal Inteligente',
+  magiclink: 'Seu link de acesso — Arsenal Inteligente',
+  recovery: 'Redefinição de senha — Arsenal Inteligente',
+  email_change: 'Confirmação de novo e-mail — Arsenal Inteligente',
+  reauthentication: 'Código de verificação — Arsenal Inteligente',
 }
 
 // Template mapping
