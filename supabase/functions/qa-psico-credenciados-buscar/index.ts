@@ -121,7 +121,9 @@ Deno.serve(async (req) => {
   const supabase: any = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
   try {
+    console.log("[psico-buscar] enter");
     const body = await req.json();
+    console.log("[psico-buscar] body", JSON.stringify(body));
     const tipo: string = body.tipo; // 'psicologo' | 'instrutor_tiro'
     const cep: string = String(body.cep || "").replace(/\D/g, "");
     const raio_km: number = Number(body.raio_km) || 50;
@@ -133,6 +135,7 @@ Deno.serve(async (req) => {
     if (!tipo || !["psicologo", "instrutor_tiro"].includes(tipo)) return json({ error: "tipo inválido" }, 400);
 
     const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
+    console.log("[psico-buscar] origin", JSON.stringify(origin));
     const ufFiltro: string | null = origin?.uf || body.uf || null;
 
     // Lazy geocode em BACKGROUND (não bloqueia a resposta ao cliente).
