@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { onAbrirChecklistGuiado, AbrirChecklistPayload } from "@/lib/quero-armas/checklistGuiadoBus";
 import { contarPendentesClienteGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import ChecklistGuiadoModal from "./ChecklistGuiadoModal";
-import MotorPendenciaFichaModal from "./MotorPendenciaFichaModal";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 
 interface Props {
   clienteId: number;
@@ -27,17 +27,46 @@ interface Props {
 
 const guardKey = (contractId: string) => `qa_checklist_guiado_auto_${contractId}`;
 
+// Mapeamento processo → hub (espelho do ChecklistGuiadoModal)
+const PROCESSO_TO_HUB: Record<string, string> = {
+  rg_com_cpf: "cin",
+  comprovante_endereco_ano_2022: "comprovante_residencia",
+  comprovante_endereco_ano_2023: "comprovante_residencia",
+  comprovante_endereco_ano_2024: "comprovante_residencia",
+  comprovante_endereco_ano_2025: "comprovante_residencia",
+  comprovante_endereco_ano_2026: "comprovante_residencia",
+  comprovante_endereco_ano_2027: "comprovante_residencia",
+  certidao_antecedentes_policia_civil_sp: "antecedentes_criminais",
+  certidao_crimes_eleitorais_tse: "antecedentes_eleitoral",
+  certidao_crimes_militares_stm: "antecedentes_militar",
+  certidao_criminal_tjmsp: "antecedentes_militar",
+  certidao_federal_trf3_regional: "antecedentes_federal_trf3_regional",
+  certidao_federal_trf3_sjsp_jef: "antecedentes_federal_sjsp_jef",
+  certidao_tjsp_distribuicao_criminal: "antecedentes_estadual_distribuicao",
+  certidao_tjsp_execucoes_criminais: "antecedentes_estadual_execucoes",
+  comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
+  declaracao_habitualidade_clube: "comprovante_habitualidade",
+  declaracao_compromisso_habitualidade: "comprovante_habitualidade",
+  declaracao_compromisso_treino: "declaracao_correlata",
+  renda_nf_empresa: "renda_nf_recente",
+  renda_qsa: "renda_cartao_cnpj",
+  atestado_capacidade_tecnica: "laudo_capacidade_tecnica",
+};
+
+function toHubTipo(processoTipo: string): string {
+  return PROCESSO_TO_HUB[processoTipo] ?? processoTipo;
+}
+
 export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [processoIdAlvo, setProcessoIdAlvo] = useState<string | null>(null);
   const [focusDocId, setFocusDocId] = useState<string | null>(null);
-  // Ficha (fachada visual "Ficha Clara v2") só é usada quando o clique veio de
-  // uma PENDÊNCIA específica (payload traz focusDocId). Nesse caso abrimos a
-  // ficha ANTES do modal legado; ao clicar em "Selecionar arquivo" a ficha
-  // fecha e delega para o ChecklistGuiadoModal legado com o mesmo focus.
-  const [fichaOpen, setFichaOpen] = useState(false);
-  const [fichaFocusDocId, setFichaFocusDocId] = useState<string | null>(null);
-  const [fichaProcessoId, setFichaProcessoId] = useState<string | null>(null);
+
+  // Hub Documental direto ao clicar em pendência específica
+  const [hubOpen, setHubOpen] = useState(false);
+  const [hubTipo, setHubTipo] = useState<string | undefined>(undefined);
+  const [hubCustomerId, setHubCustomerId] = useState<string | null>(null);
+
   const contratoIdRef = useRef<string | null>(null);
   // Garante que o auto-popup por pendências documentais aconteça UMA única vez
   // por entrada na página — se o cliente fechar o assistente, não reabre sozinho
@@ -46,12 +75,28 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
 
   // 1) abertura manual via bus (com payload opcional vindo do botão clicado)
   useEffect(() => {
-    const off = onAbrirChecklistGuiado((payload?: AbrirChecklistPayload) => {
-      // Clique em pendência específica → abre a Ficha Clara v2 primeiro
+    const off = onAbrirChecklistGuiado(async (payload?: AbrirChecklistPayload) => {
+      // Clique em pendência específica → Hub Documental direto
       if (payload?.focusDocId) {
-        setFichaFocusDocId(payload.focusDocId);
-        setFichaProcessoId(payload?.processoId ?? null);
-        setFichaOpen(true);
+        try {
+          const [docRes, cliRes] = await Promise.all([
+            supabase.from("qa_processo_documentos" as any)
+              .select("tipo_documento")
+              .eq("id", payload.focusDocId)
+              .maybeSingle(),
+            supabase.from("qa_clientes" as any)
+              .select("customer_id")
+              .eq("id", clienteId)
+              .maybeSingle(),
+          ]);
+          const tipo = (docRes as any).data?.tipo_documento ?? "outro";
+          setHubTipo(toHubTipo(tipo));
+          setHubCustomerId((cliRes as any).data?.customer_id ?? null);
+        } catch {
+          setHubTipo("outro");
+          setHubCustomerId(null);
+        }
+        setHubOpen(true);
         return;
       }
       // Abertura genérica (auto-open, botão global) → modal legado direto
@@ -60,7 +105,7 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
       setOpen(true);
     });
     return off;
-  }, []);
+  }, [clienteId]);
 
   // 1.b) AUTO-ABERTURA POR PENDÊNCIAS DOCUMENTAIS
   // Assim que o portal monta e o cliente é identificado, contamos itens
@@ -172,31 +217,24 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
 
   return (
     <>
-      {fichaOpen && fichaFocusDocId && (
-        <MotorPendenciaFichaModal
-          clienteId={clienteId}
-          focusDocId={fichaFocusDocId}
-          processoId={fichaProcessoId}
-          open={fichaOpen}
-          onClose={() => {
-            setFichaOpen(false);
-            setFichaFocusDocId(null);
-            setFichaProcessoId(null);
-          }}
-          onUpdated={onUpdated}
-          onContinuar={() => {
-            // Passa o bastão ao motor legado: mesma pendência, mesmo processo.
-            const focus = fichaFocusDocId;
-            const proc = fichaProcessoId;
-            setFichaOpen(false);
-            setFichaFocusDocId(null);
-            setFichaProcessoId(null);
-            setFocusDocId(focus);
-            setProcessoIdAlvo(proc);
-            setOpen(true);
-          }}
-        />
-      )}
+      <ClienteDocsHubModal
+        open={hubOpen}
+        onClose={() => setHubOpen(false)}
+        customerId={hubCustomerId}
+        qaClienteId={clienteId}
+        mode="portal"
+        defaultTipo={hubTipo}
+        pendingHubTipos={hubTipo ? [hubTipo] : []}
+        clienteCpf={null}
+        clienteNome={null}
+        clienteDataNascimento={null}
+        clienteNomeMae={null}
+        docsAprovados={[]}
+        onSaved={() => {
+          setHubOpen(false);
+          onUpdated?.();
+        }}
+      />
       <ChecklistGuiadoModal
         clienteId={clienteId}
         open={open}
