@@ -78,9 +78,9 @@ export default function HubDocPreviewSlot({
   const RED = "#B91C1C";
 
   return (
-    <div className="relative flex h-full w-full flex-col">
+    <div className="relative isolate flex h-full w-full flex-col">
       {/* Barra vertical esquerda */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 hidden w-5 items-center justify-center md:flex">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-30 hidden w-5 items-center justify-center md:flex">
         <div
           className="font-heading uppercase"
           style={{
@@ -97,7 +97,7 @@ export default function HubDocPreviewSlot({
       </div>
 
       {/* Barra vertical direita */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-5 items-center justify-center md:flex">
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-30 hidden w-5 items-center justify-center md:flex">
         <div
           className="font-heading uppercase"
           style={{
