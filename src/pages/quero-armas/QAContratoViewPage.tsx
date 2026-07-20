@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type ContratoData = {
   contract_number: string;
   status: string;
   issued_at: string;
   conteudo_html: string;
+  venda_id: number | null;
 };
 
 function statusLabel(s: string) {
@@ -27,9 +29,11 @@ export default function QAContratoViewPage() {
   const [contrato, setContrato] = useState<ContratoData | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [regerando, setRegerando] = useState(false);
 
-  useEffect(() => {
+  function carregar() {
     if (!id) { setErro("Link inválido."); setCarregando(false); return; }
+    setCarregando(true);
     supabase.functions.invoke("qa-contrato-view-public", { body: { contract_id: id } })
       .then(({ data, error }) => {
         if (error || !(data as any)?.ok) {
@@ -40,7 +44,26 @@ export default function QAContratoViewPage() {
       })
       .catch(() => setErro("Erro ao carregar o contrato. Tente novamente."))
       .finally(() => setCarregando(false));
-  }, [id]);
+  }
+
+  useEffect(() => { carregar(); }, [id]);
+
+  async function regerarContrato() {
+    if (!contrato) return;
+    setRegerando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
+        body: { venda_id: contrato.venda_id, force: true },
+      });
+      if (error || !(data as any)?.ok) throw new Error((data as any)?.error || "Falha ao regerar");
+      toast.success("Contrato regerado com o template atual!");
+      carregar();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao regerar contrato");
+    } finally {
+      setRegerando(false);
+    }
+  }
 
   if (carregando) {
     return (
@@ -109,6 +132,17 @@ export default function QAContratoViewPage() {
           <div className="flex gap-2">
             <Button
               size="sm"
+              variant="outline"
+              onClick={regerarContrato}
+              disabled={regerando}
+              className="gap-2 text-xs"
+              title="Regera o contrato com o template vigente atual"
+            >
+              {regerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Regerar
+            </Button>
+            <Button
+              size="sm"
               onClick={() => window.print()}
               className="gap-2 bg-[#7A1F2B] hover:bg-[#6a1827] text-white text-xs"
             >
@@ -132,16 +166,63 @@ export default function QAContratoViewPage() {
       {/* Conteúdo do contrato */}
       <div className="max-w-4xl mx-auto px-4 pb-12">
         <div
-          className="bg-white rounded-lg border shadow-sm p-8 print:shadow-none print:border-none print:rounded-none print:p-0"
-          style={{ fontFamily: "Georgia, 'Times New Roman', serif", lineHeight: 1.7 }}
+          className="bg-white rounded-lg border shadow-sm p-8 print:shadow-none print:border-none print:rounded-none print:p-0 qa-contrato-body"
           dangerouslySetInnerHTML={{ __html: contrato.conteudo_html }}
         />
       </div>
 
       <style>{`
+        .qa-contrato-body {
+          font-family: Georgia, 'Times New Roman', serif;
+          font-size: 14px;
+          line-height: 1.8;
+          color: #1a1a1a;
+        }
+        .qa-contrato-body h1 {
+          font-size: 15px;
+          font-weight: 700;
+          text-align: center;
+          margin: 24px 0 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+        .qa-contrato-body h2 {
+          font-size: 13.5px;
+          font-weight: 700;
+          margin: 20px 0 6px;
+          text-transform: uppercase;
+        }
+        .qa-contrato-body h3 {
+          font-size: 13px;
+          font-weight: 600;
+          margin: 16px 0 4px;
+        }
+        .qa-contrato-body p {
+          margin: 8px 0;
+          text-align: justify;
+        }
+        .qa-contrato-body ul, .qa-contrato-body ol {
+          padding-left: 20px;
+          margin: 8px 0;
+        }
+        .qa-contrato-body li {
+          margin: 4px 0;
+        }
+        .qa-contrato-body hr {
+          border: none;
+          border-top: 1px solid #ddd;
+          margin: 20px 0;
+        }
+        .qa-contrato-body strong {
+          font-weight: 700;
+        }
+        .qa-contrato-body section {
+          margin: 12px 0;
+        }
         @media print {
           header, .print\\:hidden { display: none !important; }
           body { background: white; }
+          .qa-contrato-body { font-size: 12px; }
         }
       `}</style>
     </div>
