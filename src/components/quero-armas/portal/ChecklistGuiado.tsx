@@ -183,6 +183,7 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
             setFichaFocusDocId(null);
             setFichaProcessoId(null);
           }}
+          onUpdated={onUpdated}
           onContinuar={() => {
             // Passa o bastão ao motor legado: mesma pendência, mesmo processo.
             const focus = fichaFocusDocId;
