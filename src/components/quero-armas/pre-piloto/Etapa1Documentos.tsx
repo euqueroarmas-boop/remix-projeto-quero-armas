@@ -9,7 +9,6 @@ import type { ArquivoUpload } from "./PrePilotoWizard";
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
 const TIPO_LABELS: Record<string, string> = {
   cin: "CIN/RG/CNH",
-  cpf: "CPF",
   comprovante_residencia: "Comprovante de Residência",
   laudo_psicologico: "Laudo Psicológico",
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
