@@ -47,7 +47,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       novos.push({ file: f, tipo: inferirTipo(f.name), preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
     }
 
-    setArquivos([...arquivos, ...novos]);
+    if (novos.length > 0) setArquivos([...arquivos, ...novos]);
   };
 
   const processarZip = async (zipFile: File) => {
