@@ -183,7 +183,7 @@ export default function QAAcessosPage() {
                 </div>
               </div>
               <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
-                {k.value.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                {k.value.toLocaleString("pt-BR")}
               </div>
               <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{k.label}</div>
             </button>
