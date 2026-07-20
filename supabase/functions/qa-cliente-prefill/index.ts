@@ -180,6 +180,9 @@ const SYSTEM_PROMPT = [
     "12) Emissor RG/CIN: se o emissor extraído for incomum, inconsistente ou de baixa confiança, marque emissor_rg_needs_review=true e adicione warning 'Verificar emissor do RG. Extração possivelmente incorreta.'. Exemplo: 'SSP ISP' deve gerar revisão.",
     "13) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
     "14) NUNCA gere warning de 'data no futuro' a menos que tenha certeza absoluta da data atual. Datas em DD/MM/AAAA podem ser confundidas com MM/DD/AAAA — não emita esse tipo de warning.",
+    "15) TEXTO LIVRE (conversas WhatsApp, e-mails, prints): LEIA linha por linha e extraia TODO dado cadastral encontrado — em especial telefone/celular (qualquer sequência com DDD, ex.: (11) 94010-4125, 11940104125, +55 11 9...), e-mail (qualquer token com @), CEP (00000-000 ou 8 dígitos), endereço, RG, CPF, data de nascimento, nome da mãe/pai, senha GOV.BR. Assinaturas de e-mail, rodapés e cabeçalhos frequentemente contêm telefone e e-mail — não ignore.",
+    "16) Telefone/celular: normalize para apenas dígitos com DDD (10 ou 11 dígitos). Se houver mais de um número, use o mais mencionado ou o marcado como principal em celular, e coloque o outro em telefone_secundario.",
+    "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
