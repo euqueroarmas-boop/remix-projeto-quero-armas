@@ -551,7 +551,15 @@ Deno.serve(async (req) => {
     cliente.cep ? `CEP ${cliente.cep}` : null,
   ].filter(Boolean).join(", ");
   const aceiteDataIso = new Date().toISOString();
-  const corpoFiltrado = filterContractAnexosBySlugs((template as any).corpo_html, slugsContratados);
+  // Motor dinâmico: monta Anexo I concatenando o `anexo_corpo_html` de cada
+  // serviço contratado (a partir do template v11). Para templates legados que
+  // ainda tenham o miolo hardcoded (sem placeholder), o filtro por slug é
+  // aplicado como fallback — assim contratos antigos continuam idempotentes.
+  const anexosDinamicos = await montarAnexosI(sb, slugsContratados);
+  const templateHtml = String((template as any).corpo_html || "");
+  const corpoFiltrado = templateHtml.includes("{{anexos_i_dinamicos}}")
+    ? aplicarAnexosDinamicos(templateHtml, anexosDinamicos)
+    : filterContractAnexosBySlugs(templateHtml, slugsContratados);
   // Os campos de aceite (ip, user_agent, hash) ainda não existem neste momento —
   // o cliente ainda não assinou. Usamos sentinelas para que qa-baixar-contrato-aceite
   // possa substituí-los pelos valores reais no momento do download, sem alterar o
