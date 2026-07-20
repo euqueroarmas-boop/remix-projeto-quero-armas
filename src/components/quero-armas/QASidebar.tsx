@@ -25,6 +25,7 @@ const NAV_GROUPS = [
     label: "Operação",
     items: [
       { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
+      { title: "Pré-Piloto Assistido", url: "/admin/pre-piloto", icon: ClipboardList },
       { title: "Piloto Real (Assistido)", url: "/admin/piloto-real", icon: FileSignature },
       { title: "Processos & Documentos", url: "/processos", icon: FileStack },
       { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },

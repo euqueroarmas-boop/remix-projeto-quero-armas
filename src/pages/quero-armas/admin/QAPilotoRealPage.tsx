@@ -15,6 +15,7 @@
  *  6. Acompanhar contrato → assinatura cliente → liberação
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -101,6 +102,8 @@ function statusDot(state: "done" | "pending" | "current" | "blocked") {
 
 export default function QAPilotoRealPage() {
   const { user, profile } = useQAAuthContext();
+  const location = useLocation();
+  const prePilotoState = (location.state as { clienteId?: number; clienteNome?: string } | null);
 
   /* ---------- Retomada de piloto (URL / localStorage) ---------- */
   const [hidratando, setHidratando] = useState(false);
@@ -139,6 +142,25 @@ export default function QAPilotoRealPage() {
       }
     })();
   }, []);
+
+  // Pré-seleção via Pré-Piloto Assistido
+  useEffect(() => {
+    if (!prePilotoState?.clienteId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("qa_clientes")
+          .select("id, id_legado, nome_completo, cpf, email, celular, user_id")
+          .eq("id", prePilotoState.clienteId)
+          .maybeSingle();
+        if (data) {
+          const c = data as Cliente;
+          setCliente(c);
+          setQuery(c.nome_completo || "");
+        }
+      } catch { /* silencioso */ }
+    })();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isCandidatoStaff = useCallback(
     (c: Cliente) => {

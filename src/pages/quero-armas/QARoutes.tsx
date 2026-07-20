@@ -59,6 +59,7 @@ const QAContratarSucessoPage = lazyRetry(() => import("./QAContratarSucessoPage"
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
 const QAPilotoRealPage = lazyRetry(() => import("./admin/QAPilotoRealPage"), "QAPilotoRealPage");
+const QAPrePilotoPage = lazyRetry(() => import("./admin/QAPrePilotoPage"), "QAPrePilotoPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
 const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QAClientesTabsPage");
 const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QAAuditoriaTabsPage");
@@ -277,6 +278,7 @@ export default function QARoutes() {
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
           <Route path="admin/piloto-real" element={<QAPilotoRealPage />} />
+          <Route path="admin/pre-piloto" element={<QAPrePilotoPage />} />
           <Route path="operacao/contratacoes" element={<QAContratacoesTabsPage />} />
           <Route path="operacao/alertas-vencimento" element={<QAAlertasVencimentoPage />} />
           <Route path="operacao/prazos-expirados" element={<QAPrazosExpiradosPage />} />
