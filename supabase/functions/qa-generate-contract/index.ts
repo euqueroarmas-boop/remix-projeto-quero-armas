@@ -551,6 +551,12 @@ Deno.serve(async (req) => {
   ].filter(Boolean).join(", ");
   const aceiteDataIso = new Date().toISOString();
   const corpoFiltrado = filterContractAnexosBySlugs((template as any).corpo_html, slugsContratados);
+  // Os campos de aceite (ip, user_agent, hash) ainda não existem neste momento —
+  // o cliente ainda não assinou. Usamos sentinelas para que qa-baixar-contrato-aceite
+  // possa substituí-los pelos valores reais no momento do download, sem alterar o
+  // snapshot canônico armazenado (que é o que foi efetivamente acordado).
+  // aceite_data recebe a data/hora da geração como fallback; será sobrescrito pelo
+  // valor real capturado em qa-contract-aceite-registrar quando o cliente assinar.
   const conteudoRenderizado = substitute(corpoFiltrado, {
     cliente_nome: esc(cliente.nome_completo || ""),
     cliente_cpf_cnpj: esc(cliente.cpf || ""),
@@ -560,10 +566,10 @@ Deno.serve(async (req) => {
     servico_slug: esc(servicoSlugFinal),
     servico_nome: esc(servicoNomeFinal),
     servico_preco: brl(totalContratoCentsFinal),
-    aceite_data: aceiteDataIso,
-    aceite_ip: "",
-    aceite_user_agent: "",
-    aceite_hash: "",
+    aceite_data: "__QA_ACEITE_DATA__",
+    aceite_ip: "__QA_ACEITE_IP__",
+    aceite_user_agent: "__QA_ACEITE_UA__",
+    aceite_hash: "__QA_ACEITE_HASH__",
     itens_contratados_bloco: itensContratadosBloco + composicaoResumoBloco,
     clausula_pagamento_bloco: clausulaPagamentoBloco,
   });

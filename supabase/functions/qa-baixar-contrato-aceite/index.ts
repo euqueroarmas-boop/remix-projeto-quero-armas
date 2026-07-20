@@ -330,8 +330,21 @@ Deno.serve(async (req) => {
     clienteNome = (clienteRow as any)?.nome_completo || null;
   }
 
+  // Substitui sentinelas de aceite pelo valores reais capturados na assinatura.
+  // O snapshot canônico (conteudo_renderizado) usa __QA_ACEITE_*__ para que
+  // o hash de integridade não precise incluir dados ainda desconhecidos no momento
+  // da geração. Os valores reais são injetados apenas na hora do download.
+  const aceiteFmtInline = contract.aceite_eletronico_data
+    ? new Date(contract.aceite_eletronico_data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : "—";
+  const snapshotComAceite = (contract.conteudo_renderizado || "")
+    .replaceAll("__QA_ACEITE_DATA__", escapeHtml(aceiteFmtInline))
+    .replaceAll("__QA_ACEITE_IP__", escapeHtml(contract.aceite_ip || "—"))
+    .replaceAll("__QA_ACEITE_UA__", escapeHtml(contract.aceite_user_agent || "—"))
+    .replaceAll("__QA_ACEITE_HASH__", escapeHtml(contract.aceite_hash || "—"));
+
   const html = buildPrintableDocument({
-    conteudo_renderizado: contract.conteudo_renderizado,
+    conteudo_renderizado: snapshotComAceite,
     contract_number: contract.contract_number,
     aceite_data: contract.aceite_eletronico_data,
     aceite_ip: contract.aceite_ip,
