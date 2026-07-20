@@ -895,10 +895,22 @@ export function ClienteDocsHubModal({
           .maybeSingle();
         if (cancelled || !data) return;
         const row = data as unknown as Record<string, string | null>;
-        // Endereço: usa o primeiro campo preenchido dentre as três possibilidades
-        const cep = row.end1_cep || row.end2_cep || row.responsavel_endereco_cep || null;
-        const cidade = row.end1_cidade || row.end2_cidade || row.responsavel_endereco_cidade || null;
-        const uf = row.end1_estado || row.end2_estado || row.responsavel_endereco_estado || null;
+        // Endereço: tenta os campos do cadastro em cascata
+        let cep = row.end1_cep || row.end2_cep || row.responsavel_endereco_cep || null;
+        let cidade = row.end1_cidade || row.end2_cidade || row.responsavel_endereco_cidade || null;
+        let uf = row.end1_estado || row.end2_estado || row.responsavel_endereco_estado || null;
+        // Fallback: extrai endereço de comprovante de residência aprovado
+        if (!cep && !cidade) {
+          const comprovante = docsAprovados
+            .filter((d: any) => d.status === "aprovado" && d.tipo_documento === "comprovante_residencia")
+            .sort((a: any, b: any) => (b.updated_at || b.created_at || "").localeCompare(a.updated_at || a.created_at || ""))[0];
+          if (comprovante) {
+            const c = (comprovante.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
+            cep = c.cep || null;
+            cidade = c.cidade || c.municipio || null;
+            uf = c.uf || c.estado || null;
+          }
+        }
         setClienteAutoFetch(prev => ({
           // Campos pessoais: só sobrescreve se não vieram como props
           nome: skipPessoais ? prev.nome : (row.nome_completo || null),
