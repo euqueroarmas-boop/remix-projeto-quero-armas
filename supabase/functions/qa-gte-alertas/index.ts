@@ -187,15 +187,19 @@ serve(async (req) => {
         let status = "enviado";
         let erro: string | null = null;
         try {
-          const { error: sendErr } = await sb.functions.invoke("send-smtp-email", {
-            body: {
-              to: cliente.email,
-              subject,
-              html,
-              trace_id: `qa-gte-alert-${c.gte.id}-${c.marco}-cliente`,
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          const res = await sendTransactional({
+            templateName: "gte-alerta-cliente",
+            recipientEmail: cliente.email,
+            idempotencyKey: `qa-gte-alert-${c.gte.id}-${c.marco}-cliente`,
+            templateData: {
+              nome,
+              numeroGte: numero,
+              validade: validadeBR,
+              diasRestantes: String(c.dias),
             },
           });
-          if (sendErr) throw sendErr;
+          if (!res.ok) throw new Error(res.error);
           emailsCliente++;
         } catch (err: any) {
           status = "erro";
@@ -234,15 +238,19 @@ serve(async (req) => {
         let status = "enviado";
         let erro: string | null = null;
         try {
-          const { error: sendErr } = await sb.functions.invoke("send-smtp-email", {
-            body: {
-              to: EMAIL_EQUIPE,
-              subject,
-              html,
-              trace_id: `qa-gte-alert-${c.gte.id}-${c.marco}-equipe`,
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          const res = await sendTransactional({
+            templateName: "gte-alerta-equipe",
+            recipientEmail: EMAIL_EQUIPE,
+            idempotencyKey: `qa-gte-alert-${c.gte.id}-${c.marco}-equipe`,
+            templateData: {
+              nomeCliente: nome,
+              numeroGte: numero,
+              validade: validadeBR,
+              diasRestantes: String(c.dias),
             },
           });
-          if (sendErr) throw sendErr;
+          if (!res.ok) throw new Error(res.error);
           emailsEquipe++;
         } catch (err: any) {
           status = "erro";

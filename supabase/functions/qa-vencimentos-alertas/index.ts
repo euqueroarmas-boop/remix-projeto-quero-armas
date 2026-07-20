@@ -246,21 +246,42 @@ serve(async (req) => {
       });
 
       if (!dryRun) {
-        // ENVIO REAL via template dedicado vencimento-documento (Arsenal Inteligente).
+        // ENVIO REAL — roteia template por fonte/marco (Arsenal Inteligente).
         try {
           const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          const vencimentoBR = (c.data_validade || "").split("-").reverse().join("/");
+          let templateName = "vencimento-documento";
+          let templateData: Record<string, unknown> = {
+            nome,
+            documento: subject.replace(/^[^\w]*\s*/, ""),
+            observacao: resumo,
+            diasRestantes: String(c.dias),
+            vencimento: vencimentoBR,
+            portalUrl: PORTAL_LINK,
+          };
+          if (c.fonte === "AUTORIZACAO") {
+            templateName = "autorizacao-compra-vencimento";
+            templateData = {
+              nome,
+              autorizacao: c.titulo,
+              vencimento: vencimentoBR,
+              portalUrl: PORTAL_LINK,
+            };
+          } else if (c.fonte === "CR" && (c.marco === 90 || c.marco === 60)) {
+            // Janela oficial de renovação PF: 30–90 dias antes do vencimento.
+            templateName = "risco-janela-renovacao-cr";
+            templateData = {
+              nome,
+              cr: c.titulo,
+              vencimento: vencimentoBR,
+              portalUrl: PORTAL_LINK,
+            };
+          }
           const res = await sendTransactional({
-            templateName: "vencimento-documento",
+            templateName,
             recipientEmail: cliente.email,
             idempotencyKey: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}`,
-            templateData: {
-              nome,
-              documento: subject.replace(/^[^\w]*\s*/, ""),
-              observacao: resumo,
-              diasRestantes: String(c.dias),
-              vencimento: (c.data_validade || "").split("-").reverse().join("/"),
-              portalUrl: PORTAL_LINK,
-            },
+            templateData,
           });
           if (!res.ok) throw new Error(res.error);
           enviados++;

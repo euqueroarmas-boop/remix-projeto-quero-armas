@@ -306,14 +306,31 @@ serve(async (req) => {
           });
         } else {
           try {
-            await sb.functions.invoke("send-smtp-email", {
-              body: {
-                to: cliente.email,
-                subject,
-                html,
-                trace_id: `qa-proc-prazo-${pid}-${c.prazo.evento}-${c.marco}-${c.prazo.dataLimite}`,
-              },
+            const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+            const isVencido = c.prazo.diasRestantes < 0;
+            const templateName = isVencido ? "exigencia-pf-vencida" : "exigencia-pf-prazo";
+            const dataLimiteBR = c.prazo.dataLimite.split("-").reverse().join("/");
+            const templateData: Record<string, unknown> = isVencido
+              ? {
+                  nome,
+                  processo: c.prazo.servicoNome || c.prazo.evento,
+                  venceuEm: dataLimiteBR,
+                  portalUrl: PORTAL_LINK,
+                }
+              : {
+                  nome,
+                  processo: c.prazo.servicoNome || c.prazo.evento,
+                  prazo: dataLimiteBR,
+                  diasRestantes: String(c.prazo.diasRestantes),
+                  portalUrl: PORTAL_LINK,
+                };
+            const res = await sendTransactional({
+              templateName,
+              recipientEmail: cliente.email,
+              idempotencyKey: `qa-proc-prazo-${pid}-${c.prazo.evento}-${c.marco}-${c.prazo.dataLimite}`,
+              templateData,
             });
+            if (!res.ok) throw new Error(res.error);
             emailsSent++;
             inserts.push({
               processo_id: pid,
