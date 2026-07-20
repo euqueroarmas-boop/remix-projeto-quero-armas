@@ -10,7 +10,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Camera, FileText, Image as ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { Camera, FileText, Image as ImageIcon, Loader2, Trash2, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Worker via CDN para evitar config Vite específica
