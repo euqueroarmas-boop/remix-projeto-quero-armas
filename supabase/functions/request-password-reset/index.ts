@@ -321,8 +321,8 @@ Deno.serve(async (req) => {
         idempotencyKey: `pwd-reset-${email}-${traceId}`,
         templateData: {
           nome: email.split("@")[0],
-          recoveryLink,
-          minutos: "60",
+          linkReset: recoveryLink,
+          validadeHoras: "1",
         },
       });
       smtpOk = res.ok;
