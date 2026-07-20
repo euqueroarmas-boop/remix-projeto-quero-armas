@@ -361,6 +361,24 @@ Deno.serve(async (req) => {
     pagamento_status: pago ? "confirmado" : (venda.cobranca_status || venda.status || null),
   });
 
+  // Registra o evento de download para fins probatórios.
+  // best-effort: falha silenciosa para não bloquear a entrega do HTML.
+  try {
+    await sb.from("qa_contract_events").insert({
+      contract_id: contract.id,
+      event_type: "contrato_baixado_cliente",
+      event_payload: {
+        venda_id,
+        cliente_id: contract.cliente_id,
+        contract_number: contract.contract_number,
+        template_versao: contract.template_versao,
+        download_ip: ip,
+        download_user_agent: userAgent,
+        pago,
+      },
+    });
+  } catch { /* best effort */ }
+
   return json({
     ok: true,
     pago,
