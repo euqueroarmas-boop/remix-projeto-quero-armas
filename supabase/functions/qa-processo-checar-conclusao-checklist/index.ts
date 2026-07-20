@@ -302,9 +302,8 @@ Deno.serve(async (req) => {
           idempotencyKey: `pronto-proto-team-${processoId}`,
           templateData: {
             nomeCliente: nomeCli,
-            cpf: (cliente as any)?.cpf || "—",
             servico,
-            processoId,
+            vendaId: String(processoId),
             adminUrl,
           },
         });
