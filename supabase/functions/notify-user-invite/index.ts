@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
-import { buildUserInviteHtml, buildUserInviteText } from "../_shared/emailTemplates.ts";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
+import { sendTransactional } from "../_shared/sendTransactional.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,30 +46,28 @@ Deno.serve(async (req) => {
       });
     }
 
-    const finalPortalUrl = portal_url || "https://wmti.com.br/area-do-cliente";
+    const finalPortalUrl = portal_url || "https://www.euqueroarmas.com.br/area-do-cliente";
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Quando há qa_client_id, é fluxo Quero Armas: usa marca/portal próprios
-    const isQA = !!qa_client_id;
-    const subject = isQA
-      ? `🔑 Seu acesso ao Portal Quero Armas foi criado`
-      : `🔑 Seu acesso ao Portal WMTi foi criado`;
-
-    const smtpRes = await supabase.functions.invoke("send-smtp-email", {
-      body: {
-        to: customer_email,
-        subject,
-        html: buildUserInviteHtml({ customerName: customer_name, email: customer_email, tempPassword: temp_password, portalUrl: finalPortalUrl }),
-        text: buildUserInviteText({ customerName: customer_name, email: customer_email, tempPassword: temp_password, portalUrl: finalPortalUrl }),
-        trace_id: traceId,
+    // Template dedicado credenciais-portal (Arsenal Inteligente).
+    const subject = "Seu acesso ao Arsenal Inteligente foi criado";
+    const sendRes = await sendTransactional({
+      templateName: "credenciais-portal",
+      recipientEmail: customer_email,
+      idempotencyKey: `user-invite-${customer_email}-${traceId}`,
+      templateData: {
+        nome: customer_name,
+        loginEmail: customer_email,
+        senhaProvisoria: temp_password,
+        portalUrl: finalPortalUrl,
       },
     });
-
-    const ok = !smtpRes.error && smtpRes.data?.success;
+    const ok = sendRes.ok;
+    const smtpRes: any = { error: sendRes.ok ? null : { message: sendRes.error }, data: { success: ok } };
     console.info(`[notify-user-invite][${traceId}]`, ok ? "sent" : "failed");
 
     if (!ok) {
