@@ -2124,7 +2124,7 @@ export function ClienteDocsHubModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-3 sm:px-6 sm:py-4 [-webkit-overflow-scrolling:touch]">
           {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
-          <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,360px)] md:gap-4 md:items-start lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,420px)] lg:gap-5">
+          <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,360px)] md:gap-4 md:items-stretch lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,420px)] lg:gap-5">
           {/* ───────── COL 1 · DOSSIÊ ───────── */}
           <div className="space-y-3 md:border-r md:border-[#EFEFEF] md:pr-4 lg:pr-5">
             <div className="flex items-baseline justify-between gap-2">
@@ -2378,7 +2378,7 @@ export function ClienteDocsHubModal({
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="flex min-h-[360px] flex-col md:self-stretch md:max-h-[calc(92dvh-200px)] md:overflow-y-auto">
+          <div className="flex min-h-[360px] flex-col md:h-full md:min-h-0 md:overflow-y-auto">
             <HubDocPreviewSlot
               file={file}
               confianca={classificacao?.confianca ?? null}
