@@ -196,6 +196,14 @@ function formatDateBrDisplay(s: string): string {
   return s;
 }
 
+// Expande abreviação de sexo para exibição legível
+function expandSexo(s: string): string {
+  const v = s.trim().toUpperCase();
+  if (v === "M" || v === "MASC" || v === "MASCULINO") return "Masculino";
+  if (v === "F" || v === "FEM" || v === "FEMININO") return "Feminino";
+  return s;
+}
+
 // Detecta se o valor extraído é uma idade ("34 anos", "34", "34 anos e 5 meses")
 // e NÃO uma data de nascimento — nesses casos não há como comparar com a data do cadastro
 function isIdadeStr(s: string): boolean {
@@ -882,11 +890,15 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, end1_cep, end1_cidade, end1_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, end1_cep, end1_cidade, end1_estado, end2_cep, end2_cidade, end2_estado, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
         const row = data as unknown as Record<string, string | null>;
+        // Endereço: usa o primeiro campo preenchido dentre as três possibilidades
+        const cep = row.end1_cep || row.end2_cep || row.responsavel_endereco_cep || null;
+        const cidade = row.end1_cidade || row.end2_cidade || row.responsavel_endereco_cidade || null;
+        const uf = row.end1_estado || row.end2_estado || row.responsavel_endereco_estado || null;
         setClienteAutoFetch(prev => ({
           // Campos pessoais: só sobrescreve se não vieram como props
           nome: skipPessoais ? prev.nome : (row.nome_completo || null),
@@ -894,9 +906,7 @@ export function ClienteDocsHubModal({
           data_nascimento: skipPessoais ? prev.data_nascimento : (row.data_nascimento || null),
           nome_mae: skipPessoais ? prev.nome_mae : (row.nome_mae || null),
           // Endereço: sempre atualiza — nunca vem como prop
-          cep: row.end1_cep || null,
-          cidade: row.end1_cidade || null,
-          uf: row.end1_estado || null,
+          cep, cidade, uf,
         }));
       } catch {
         // Silencioso — conformidade apenas degrada para "sem referência".
@@ -2542,12 +2552,12 @@ export function ClienteDocsHubModal({
                       <tr key={item.campo} className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
                         <td className="py-1 pr-2 font-tactical">
-                          {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorCertidao) : item.valorCertidao}
+                          {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorCertidao) : item.campo === "sexo" ? expandSexo(item.valorCertidao) : item.valorCertidao}
                         </td>
                         <td className="py-1 pr-2 opacity-70">
                           {item.valorReferencia
                             ? <span>
-                                {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorReferencia) : item.valorReferencia}
+                                {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorReferencia) : item.campo === "sexo" ? expandSexo(item.valorReferencia) : item.valorReferencia}
                                 <br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span>
                               </span>
                             : <span className="opacity-40">sem referência</span>}
