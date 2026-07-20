@@ -55,6 +55,16 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVolt
   async function salvar(reutilizar: boolean) {
     setSalvando(true);
     try {
+      // Normaliza data DD/MM/AAAA -> AAAA-MM-DD (Postgres date)
+      const toIsoDate = (v: unknown): string | null => {
+        if (!v) return null;
+        const s = String(v).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const m = s.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})$/);
+        if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+        return null;
+      };
+      const dataNascIso = toIsoDate(dadosRevisados.data_nascimento);
       let clienteId: number;
       let existia = false;
 
@@ -74,7 +84,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, onSalvo, onVolt
           cpf: formatCpf(cpfNorm),
           email: dadosRevisados.email || null,
           celular: dadosRevisados.celular || null,
-          data_nascimento: dadosRevisados.data_nascimento || null,
+          data_nascimento: dataNascIso,
           nome_mae: dadosRevisados.nome_mae || null,
           sexo: dadosRevisados.sexo || null,
           rg: dadosRevisados.rg || null,
