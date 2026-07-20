@@ -536,7 +536,7 @@ export function qaArsenalWelcomeHtml(opts: {
 
 export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoInteresse?: string | null; arsenalUrl?: string }) => {
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
-  return `QUERO ARMAS — ARSENAL DIGITAL ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nPLANO: GRATUITO · VITALÍCIO\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
+  return `QUERO ARMAS — ARSENAL INTELIGENTE ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nACESSO: LIBERADO DURANTE O PROCESSO (anuidade após deferimento)\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
 };
 
 // ════════════════════════════════════════════════════════════════════
