@@ -65,7 +65,10 @@ export default function HistoricoContratosPendentes() {
 
       if (!auditorias?.length) { setContratos([]); setCarregando(false); return; }
 
-      const vendaIds = (auditorias as any[]).map((a) => Number(a.entidade_id));
+      const vendaIds = (auditorias as any[])
+        .map((a) => Number(a?.detalhes_json?.venda_id ?? a?.entidade_id))
+        .filter((v) => Number.isFinite(v));
+      if (!vendaIds.length) { setContratos([]); setCarregando(false); return; }
 
       const { data: contratoRows } = await supabase
         .from("qa_contracts" as any)
@@ -84,7 +87,9 @@ export default function HistoricoContratosPendentes() {
       const clienteMap = Object.fromEntries(((clientes ?? []) as any[]).map((c) => [c.id, c]));
 
       const items: ContratoItem[] = (contratoRows as any[]).map((c) => {
-        const auditoria = (auditorias as any[]).find((a) => Number(a.entidade_id) === Number(c.venda_id));
+        const auditoria = (auditorias as any[]).find(
+          (a) => Number(a?.detalhes_json?.venda_id ?? a?.entidade_id) === Number(c.venda_id),
+        );
         const det = auditoria?.detalhes_json ?? {};
         const cli = clienteMap[c.cliente_id] ?? {};
         return {
