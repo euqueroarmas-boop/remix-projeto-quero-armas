@@ -247,6 +247,22 @@ export default function MotorPendenciaFichaModal({
   const cep = String(cliente?.cep || "").replace(/\D/g, "");
   const uf = String(cliente?.estado || "").toUpperCase();
   const cidade = String(cliente?.cidade || "");
+  const cepFmt = cep.length === 8 ? `${cep.slice(0, 5)}-${cep.slice(5)}` : (cliente?.cep || "");
+  const cpfRaw = String(cliente?.cpf || "").replace(/\D/g, "");
+  const cpfFmt = cpfRaw.length === 11
+    ? `${cpfRaw.slice(0, 3)}.${cpfRaw.slice(3, 6)}.${cpfRaw.slice(6, 9)}-${cpfRaw.slice(9)}`
+    : (cliente?.cpf || "");
+  const linhaLogradouro = [
+    cliente?.endereco,
+    cliente?.numero,
+    cliente?.complemento,
+  ].filter((v) => v && String(v).trim().length).join(", ");
+  const linhaLocalidade = [
+    cliente?.bairro,
+    cidade && uf ? `${cidade}/${uf}` : cidade || uf,
+    cepFmt,
+  ].filter((v) => v && String(v).trim().length).join(" · ");
+  const enderecoCompleto = [linhaLogradouro, linhaLocalidade].filter(Boolean).join(" — ") || "—";
 
   // Busca de credenciados: só ativa se este tipo exige profissional
   const psicoParams: BuscarPsicoParams | null =
