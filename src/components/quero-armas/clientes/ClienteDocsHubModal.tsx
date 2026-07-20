@@ -388,6 +388,8 @@ function calcularConformidade(
     return false;
   };
 
+  // Endereço NUNCA entra na conformidade: o cliente pode ter vários endereços
+  // e o documento pode trazer qualquer um deles — diferença não é divergência.
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
   // Se o documento trouxe a IDADE ("34 anos") em vez da data de nascimento,
@@ -399,6 +401,7 @@ function calcularConformidade(
   pushItem("filiacao_pai",    "Filiação paterna",   campos.filiacao_pai,    fuzzyName);
   pushItem("naturalidade",    "Naturalidade",       campos.naturalidade,    fuzzyNat);
   pushItem("sexo",            "Sexo",               campos.sexo,            (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
+  // Campos de endereço omitidos intencionalmente: endereco, logradouro, cep, cidade, bairro, uf, estado.
 
   return items;
 }
@@ -873,8 +876,9 @@ export function ClienteDocsHubModal({
     let cancelled = false;
     async function load() {
       if (!open || !qaClienteId) return;
-      // Só busca se algum campo de referência estiver ausente nas props.
-      if (clienteNome && clienteCpf && clienteDataNascimento && clienteNomeMae) return;
+      // Sempre busca: endereço (end1_cep/cidade/estado) nunca vem como prop
+      // e é necessário para busca de psicólogos próximos.
+      const skipPessoais = !!(clienteNome && clienteCpf && clienteDataNascimento && clienteNomeMae);
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
@@ -883,15 +887,17 @@ export function ClienteDocsHubModal({
           .maybeSingle();
         if (cancelled || !data) return;
         const row = data as unknown as Record<string, string | null>;
-        setClienteAutoFetch({
-          nome: row.nome_completo || null,
-          cpf: row.cpf || null,
-          data_nascimento: row.data_nascimento || null,
-          nome_mae: row.nome_mae || null,
+        setClienteAutoFetch(prev => ({
+          // Campos pessoais: só sobrescreve se não vieram como props
+          nome: skipPessoais ? prev.nome : (row.nome_completo || null),
+          cpf: skipPessoais ? prev.cpf : (row.cpf || null),
+          data_nascimento: skipPessoais ? prev.data_nascimento : (row.data_nascimento || null),
+          nome_mae: skipPessoais ? prev.nome_mae : (row.nome_mae || null),
+          // Endereço: sempre atualiza — nunca vem como prop
           cep: row.end1_cep || null,
           cidade: row.end1_cidade || null,
           uf: row.end1_estado || null,
-        });
+        }));
       } catch {
         // Silencioso — conformidade apenas degrada para "sem referência".
       }
