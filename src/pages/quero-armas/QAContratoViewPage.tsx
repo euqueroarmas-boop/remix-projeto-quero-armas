@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ type ContratoData = {
   issued_at: string;
   conteudo_html: string;
   venda_id: number | null;
+  nome_cliente: string;
 };
 
 function statusLabel(s: string) {
@@ -29,7 +30,6 @@ export default function QAContratoViewPage() {
   const [contrato, setContrato] = useState<ContratoData | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const [regerando, setRegerando] = useState(false);
 
   function carregar() {
     if (!id) { setErro("Link inválido."); setCarregando(false); return; }
@@ -48,22 +48,14 @@ export default function QAContratoViewPage() {
 
   useEffect(() => { carregar(); }, [id]);
 
-  async function regerarContrato() {
-    if (!contrato) return;
-    setRegerando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
-        body: { venda_id: contrato.venda_id, force: true },
-      });
-      if (error || !(data as any)?.ok) throw new Error((data as any)?.error || "Falha ao regerar");
-      toast.success("Contrato regerado com o template atual!");
-      carregar();
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao regerar contrato");
-    } finally {
-      setRegerando(false);
+  useEffect(() => {
+    if (contrato) {
+      const nome = contrato.nome_cliente ? ` - ${contrato.nome_cliente}` : "";
+      document.title = `${contrato.contract_number} - Contrato de Adesão${nome}`;
     }
-  }
+    return () => { document.title = "Eu Quero Armas, e você?"; };
+  }, [contrato]);
+
 
   if (carregando) {
     return (
@@ -93,7 +85,7 @@ export default function QAContratoViewPage() {
 
   const st = statusLabel(contrato.status);
   const issuedDate = contrato.issued_at
-    ? new Date(contrato.issued_at).toLocaleDateString("pt-BR")
+    ? new Date(contrato.issued_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })
     : "—";
 
   return (
@@ -130,17 +122,6 @@ export default function QAContratoViewPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={regerarContrato}
-              disabled={regerando}
-              className="gap-2 text-xs"
-              title="Regera o contrato com o template vigente atual"
-            >
-              {regerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              Regerar
-            </Button>
             <Button
               size="sm"
               onClick={() => window.print()}
