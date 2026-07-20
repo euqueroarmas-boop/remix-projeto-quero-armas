@@ -35,12 +35,14 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     const novosNaoZip: ArquivoUpload[] = [];
     const novosDoZip: ArquivoUpload[] = [];
     let textoAcumuladoZip = "";
+    const nomesFonteZip: string[] = [];
 
     for (const f of lista) {
       if (f.type === "application/zip" || f.name.toLowerCase().endsWith(".zip")) {
         const { arquivos: extraidos, texto } = await processarZip(f);
         novosDoZip.push(...extraidos);
         if (texto) textoAcumuladoZip += (textoAcumuladoZip ? "\n\n" : "") + texto;
+        nomesFonteZip.push(f.name);
         continue;
       }
       if (!TIPOS_ACEITOS.includes(f.type)) {
@@ -52,12 +54,19 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
     const combinados = [...novosNaoZip, ...novosDoZip];
     if (combinados.length > 0) setArquivos([...arquivos, ...combinados]);
-    if (textoAcumuladoZip) {
+    if (textoAcumuladoZip || nomesFonteZip.length > 0 || combinados.length > 0) {
+      const listaNomes = [
+        ...nomesFonteZip,
+        ...combinados.map((c) => c.file.name),
+      ].filter(Boolean);
+      const blocoNomes = listaNomes.length > 0
+        ? `=== NOMES DE ARQUIVO (podem conter telefone/e-mail/nome) ===\n${listaNomes.join("\n")}`
+        : "";
       const merged = textoPastaColado
-        ? `${textoPastaColado}\n\n=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}`
-        : `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}`;
+        ? [textoPastaColado, blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n")
+        : [blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n");
       setTextoPastaColado(merged);
-      toast.success("Texto da conversa do WhatsApp adicionado para extração");
+      if (textoAcumuladoZip) toast.success("Texto da conversa do WhatsApp adicionado para extração");
     }
   };
 
