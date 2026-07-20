@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1360"/>
+<title>Motor de Pendências · Ficha Clara v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F1EA; --card:#FFFFFF; --ink:#0A0A0A; --ink2:#2A2A2A; --ink3:#6B6B6B;
+    --line:#D9D3C6; --line2:#EDE7D9; --bordo:#7A1F2B; --bordoSoft:#F5E7EA;
+    --ok:#2F6B3A; --okSoft:#E7F0E8; --amber:#8A5B00; --amberSoft:#FBEFC7; --red:#B91C1C; --redSoft:#F8E1E1;
+    --wa:#128C7E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:"Arial Narrow","Arial",sans-serif;-webkit-font-smoothing:antialiased}
+  .oswald{font-family:"Oswald",sans-serif;letter-spacing:.02em}
+  .page{max-width:1320px;margin:0 auto;padding:28px 24px 60px}
+  .frame{border:1px solid var(--line);background:var(--card);border-radius:4px}
+  .frame + .frame{margin-top:18px}
+  .row{display:grid;gap:16px}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .cols-3{grid-template-columns:1.1fr 1fr 1fr}
+  .pad{padding:22px 26px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  .eyebrow{font-family:"Oswald";font-size:11px;letter-spacing:.28em;color:var(--ink3);text-transform:uppercase}
+  h1.title{font-family:"Oswald";font-weight:700;font-size:34px;letter-spacing:.02em;margin:6px 0 4px;text-transform:uppercase}
+  .sub{color:var(--ink3);font-size:13.5px}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bordo);color:var(--bordo);background:var(--bordoSoft);
+    font-family:"Oswald";font-size:11px;letter-spacing:.22em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
+  .chip.ok{border-color:var(--ok);color:var(--ok);background:var(--okSoft)}
+  .chip.amber{border-color:var(--amber);color:var(--amber);background:var(--amberSoft)}
+  .chip.red{border-color:var(--red);color:var(--red);background:var(--redSoft)}
+  .chip.ghost{border-color:var(--line);color:var(--ink2);background:transparent}
+  .divider{height:1px;background:var(--line);margin:0}
+  .kv{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dashed var(--line2);font-size:14px}
+  .kv .k{color:var(--ink3)}
+  .kv .v{color:var(--ink);font-weight:600}
+  .kv:last-child{border-bottom:0}
+  .section-title{font-family:"Oswald";font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--ink);margin:0 0 12px}
+  .card{border:1px solid var(--line);border-radius:3px;padding:20px;background:#FFFDF8}
+  .card.equal{display:flex;flex-direction:column;min-height:520px}
+  .dropzone{flex:1;border:1.5px dashed var(--bordo);background:var(--bordoSoft);border-radius:3px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;gap:10px}
+  .dropzone .up{width:38px;height:38px;border-radius:50%;background:var(--bordo);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald;font-weight:700}
+  .dz-title{font-family:Oswald;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--bordo)}
+  .dz-text{color:var(--ink2);font-size:13.5px;max-width:420px;line-height:1.5}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .btn{font-family:Oswald;font-size:12px;letter-spacing:.22em;text-transform:uppercase;padding:11px 18px;border-radius:2px;cursor:pointer;border:1px solid var(--ink)}
+  .btn.primary{background:var(--bordo);color:#fff;border-color:var(--bordo)}
+  .btn.ghost{background:#fff;color:var(--ink)}
+  .btn.wa{background:var(--wa);color:#fff;border-color:var(--wa)}
+  .btn.wa svg{width:14px;height:14px}
+  .meta{display:flex;justify-content:space-between;color:var(--ink3);font-size:12px;margin-top:12px}
+  .analysis-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .mini{border:1px solid var(--line);border-radius:2px;padding:12px}
+  .mini .lbl{font-family:Oswald;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink3)}
+  .mini .val{font-family:Oswald;font-size:26px;color:var(--ink);margin-top:6px;line-height:1}
+  .field-list .row-f{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--line2);font-size:13.5px}
+  .field-list .row-f .k{color:var(--ink2)}
+  .field-list .row-f .v{color:var(--ink3);font-weight:600}
+  .log{background:#FBF7EC;border:1px solid var(--line2);border-radius:2px;padding:12px;font-size:12.5px;line-height:1.7;color:var(--ink2);margin-top:12px}
+  .log .t{color:var(--ink3);font-family:Oswald;margin-right:8px;font-size:11px;letter-spacing:.15em}
+  .log .amber{color:var(--amber)}
+  .log .ok{color:var(--ok)}
+  .log .red{color:var(--red)}
+  .filters{display:grid;grid-template-columns:1fr 1fr 120px 100px auto;gap:8px;margin:14px 0 16px}
+  .filters input{border:1px solid var(--line);padding:11px 12px;border-radius:2px;font:14px "Arial Narrow","Arial",sans-serif;background:#fff}
+  .pro{border:1px solid var(--line);border-radius:2px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;background:#fff}
+  .pro + .pro{margin-top:10px}
+  .pro .name{font-family:Oswald;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+  .pro .credentials{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+  .pro .addr{color:var(--ink2);font-size:13px;margin-top:6px}
+  .pro .contact{color:var(--ink3);font-size:12.5px;margin-top:4px}
+  .pro .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+  .pro .dist{font-family:Oswald;color:var(--bordo);font-size:12px;letter-spacing:.18em}
+  .footer-bar{display:flex;justify-content:space-between;color:var(--ink3);font-size:11.5px;padding:12px 24px;border-top:1px solid var(--line);letter-spacing:.14em;font-family:Oswald;text-transform:uppercase}
+  .validation-banner{display:flex;align-items:center;gap:12px;background:var(--okSoft);border:1px solid var(--ok);border-radius:2px;padding:12px 14px;margin-bottom:14px}
+  .validation-banner.warn{background:var(--amberSoft);border-color:var(--amber)}
+  .validation-banner.err{background:var(--redSoft);border-color:var(--red)}
+  .validation-banner .ic{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald;font-weight:700;flex-shrink:0}
+  .validation-banner.warn .ic{background:var(--amber)}
+  .validation-banner.err .ic{background:var(--red)}
+  .validation-banner .t{font-family:Oswald;font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+  .validation-banner .d{font-size:13px;color:var(--ink2);margin-top:2px}
+  .stamp-wrap{position:relative}
+  h2.page-title{font-family:Oswald;font-size:22px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0 0 4px}
+  .page-sub{color:var(--ink3);font-size:13px;margin-bottom:22px}
+  .section-sep{margin:36px 0 18px;display:flex;align-items:center;gap:14px}
+  .section-sep .line{flex:1;height:1px;background:var(--line)}
+  .section-sep .lbl{font-family:Oswald;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--ink3)}
+</style>
+</head>
+<body>
+<div class="page">
+  <h2 class="page-title">Motor de Pendências · Ficha Clara v2</h2>
+  <div class="page-sub">Cards Documento e Análise equalizados · WhatsApp direto do examinador · Validação de credenciamento PF na leitura do arquivo.</div>
+
+  <!-- ============== EXIGÊNCIA 1: ATESTADO DE CAPACIDADE TÉCNICA ============== -->
+  <div class="frame">
+    <div class="pad head">
+      <div>
+        <div class="eyebrow">Ficha de Pendência · nº 003 / 5</div>
+        <h1 class="title">Atestado de Capacidade Técnica</h1>
+        <div class="sub">Instrutor de tiro credenciado pela Polícia Federal · Exames Técnicos</div>
+      </div>
+      <span class="chip">Aguardando arquivo</span>
+    </div>
+    <div class="divider"></div>
+    <div class="pad row cols-2">
+      <div>
+        <div class="section-title">Requerente</div>
+        <div class="kv"><span class="k">Nome</span><span class="v">WILLIAN R. S. MASSAROTO</span></div>
+        <div class="kv"><span class="k">CR</span><span class="v">000.517.855-01</span></div>
+        <div class="kv"><span class="k">Endereço</span><span class="v">Jacareí/SP · 12327-100</span></div>
+        <div class="kv"><span class="k">Serviço</span><span class="v">Aquisição / Registro / Posse</span></div>
+        <div class="kv"><span class="k">Etapa</span><span class="v">Documentação</span></div>
+      </div>
+      <div>
+        <div class="section-title">Exigência</div>
+        <div class="kv"><span class="k">Documento</span><span class="v">ATESTADO CAP. TÉCNICA</span></div>
+        <div class="kv"><span class="k">Emitido por</span><span class="v">Instrutor credenciado PF</span></div>
+        <div class="kv"><span class="k">Validade</span><span class="v">12 meses</span></div>
+        <div class="kv"><span class="k">Última análise</span><span class="v" style="color:var(--ink3);font-weight:400">—</span></div>
+        <div class="kv"><span class="k">Base legal</span><span class="v">LEI 10.826/03 · DEC. 11.615/23</span></div>
+      </div>
+    </div>
+
+    <div class="pad row cols-2" style="padding-top:0">
+      <!-- CARD DOCUMENTO (equalizado) -->
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Documento</div>
+          <span class="chip ghost">Aguardando anexo</span>
+        </div>
+        <div class="dropzone">
+          <div class="up">↑</div>
+          <div class="dz-title">Envie o atestado em PDF, JPG ou PNG</div>
+          <div class="dz-text">Arraste o arquivo aqui ou clique em <b>Selecionar arquivo</b>. A mesma IA do Hub Documental faz a leitura, valida os dados e confirma se o instrutor é credenciado pela PF.</div>
+          <div class="btns">
+            <button class="btn primary">Selecionar arquivo</button>
+            <button class="btn ghost">Tirar foto (mobile)</button>
+          </div>
+        </div>
+        <div class="meta"><span>Tamanho máximo 20 MB</span><span>Nenhum arquivo enviado anteriormente</span></div>
+      </div>
+
+      <!-- CARD ANÁLISE (mesmo tamanho) -->
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Análise · Hub Documental</div>
+          <span class="chip amber">Aguardando arquivo</span>
+        </div>
+        <div class="analysis-grid">
+          <div class="mini"><div class="lbl">Confiança IA</div><div class="val">—</div></div>
+          <div class="mini"><div class="lbl">Campos extraídos</div><div class="val">0 / 8</div></div>
+          <div class="mini"><div class="lbl">Credencial PF</div><div class="val">—</div></div>
+        </div>
+        <div class="field-list">
+          <div class="row-f"><span class="k">Nome do instrutor</span><span class="v">—</span></div>
+          <div class="row-f"><span class="k">Credenciamento PF (nº)</span><span class="v">—</span></div>
+          <div class="row-f"><span class="k">CR do aluno</span><span class="v">—</span></div>
+          <div class="row-f"><span class="k">Data de emissão</span><span class="v">—</span></div>
+          <div class="row-f"><span class="k">Validade (12 meses)</span><span class="v">—</span></div>
+        </div>
+        <div class="log">
+          <div><span class="t">10:41</span>Pendência aberta · tipo <b>atestado_capacidade_tecnica</b></div>
+          <div><span class="t">10:41</span>Nenhum arquivo elegível para reaproveitamento no Hub</div>
+          <div><span class="t">10:41</span><span class="amber">Aguardando upload do cliente</span></div>
+          <div><span class="t">10:41</span>Fluxo pronto para leitura · verificará credencial na base <b>qa_credenciados_pf</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFISSIONAIS CREDENCIADOS -->
+    <div class="divider"></div>
+    <div class="pad">
+      <div class="head">
+        <div class="section-title" style="margin:0">Instrutores credenciados pela PF próximos de Jacareí/SP</div>
+        <span class="chip">Raio 25 km · Jacareí/SP</span>
+      </div>
+      <div class="filters">
+        <input value="12327-100" />
+        <input value="Jacareí" />
+        <input value="SP" />
+        <input value="25 km" />
+        <button class="btn primary">Buscar</button>
+      </div>
+
+      <div class="pro">
+        <div>
+          <div class="name">Roberto A. Mendes</div>
+          <div class="credentials">
+            <span class="chip ok">Credenciado PF · 0421</span>
+            <span class="chip ghost">Verificado 15/07/2026</span>
+          </div>
+          <div class="addr">Av. Lucas Nogueira, 320 · Centro · Jacareí/SP</div>
+          <div class="contact">(12) 3961-0000 · rmendes@ctjacarei.com.br</div>
+        </div>
+        <div class="actions">
+          <span class="dist">2,1 km</span>
+          <button class="btn wa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5A11 11 0 0 0 3.6 18.3L2 22l3.8-1.5A11 11 0 1 0 20 3.5Zm-8 18a9 9 0 0 1-4.6-1.3l-.3-.2-2.3.9.9-2.2-.2-.4a9 9 0 1 1 6.5 3.2Zm4.9-6.7c-.3-.1-1.6-.8-1.9-.9-.2-.1-.4-.1-.6.1s-.7.9-.9 1.1c-.2.2-.3.2-.6.1-1.6-.8-2.7-1.4-3.8-3.2-.3-.5.3-.4.8-1.4.1-.2 0-.4 0-.5 0-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.4s-.9.9-.9 2.2.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.2.7 3 .6.5-.1 1.6-.7 1.8-1.3.2-.7.2-1.2.2-1.3-.1-.2-.3-.2-.6-.3Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn ghost">Abrir no mapa</button>
+        </div>
+      </div>
+
+      <div class="pro">
+        <div>
+          <div class="name">Clube de Tiro O Rancho 556</div>
+          <div class="credentials">
+            <span class="chip ok">Credenciado PF · 0187</span>
+            <span class="chip ghost">Verificado 15/07/2026</span>
+          </div>
+          <div class="addr">Instrutor: Marcos R. Freitas · Estr. dos Freitas, 1.200 · Cidade Jardim · Jacareí/SP</div>
+          <div class="contact">(12) 99855-1919 · contato@rancho556.com.br</div>
+        </div>
+        <div class="actions">
+          <span class="dist">5,6 km</span>
+          <button class="btn wa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5A11 11 0 0 0 3.6 18.3L2 22l3.8-1.5A11 11 0 1 0 20 3.5Zm-8 18a9 9 0 0 1-4.6-1.3l-.3-.2-2.3.9.9-2.2-.2-.4a9 9 0 1 1 6.5 3.2Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn ghost">Abrir no mapa</button>
+        </div>
+      </div>
+
+      <div class="pro">
+        <div>
+          <div class="name">CT Alvo Certo — João Pereira</div>
+          <div class="credentials">
+            <span class="chip ok">Credenciado PF · 0902</span>
+            <span class="chip ghost">Verificado 15/07/2026</span>
+          </div>
+          <div class="addr">Rua das Palmeiras, 45 · Jd. Emília · Jacareí/SP</div>
+          <div class="contact">(12) 3958-4400 · joao@alvocerto.com.br</div>
+        </div>
+        <div class="actions">
+          <span class="dist">7,3 km</span>
+          <button class="btn wa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5A11 11 0 0 0 3.6 18.3L2 22l3.8-1.5A11 11 0 1 0 20 3.5Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn ghost">Abrir no mapa</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>Base legal · Lei 10.826/2003 · Dec. 11.615/2023 · Dec. 12.345/2024 · IN DG/PF 201 · IN DG/PF 311</span>
+      <span>Quero Armas · Área do cliente</span>
+    </div>
+  </div>
+
+  <!-- ============== EXIGÊNCIA 2: LAUDO PSICOLÓGICO (arquivo enviado + validação de credencial) ============== -->
+  <div class="section-sep"><span class="lbl">Exigência seguinte</span><span class="line"></span></div>
+
+  <div class="frame">
+    <div class="pad head">
+      <div>
+        <div class="eyebrow">Ficha de Pendência · nº 004 / 5</div>
+        <h1 class="title">Laudo Psicológico</h1>
+        <div class="sub">Psicólogo credenciado pela Polícia Federal · Exames Técnicos</div>
+      </div>
+      <span class="chip amber">Em análise · verificando credencial</span>
+    </div>
+    <div class="divider"></div>
+    <div class="pad row cols-2">
+      <div>
+        <div class="section-title">Requerente</div>
+        <div class="kv"><span class="k">Nome</span><span class="v">WILLIAN R. S. MASSAROTO</span></div>
+        <div class="kv"><span class="k">CPF</span><span class="v">387.***.***-42</span></div>
+        <div class="kv"><span class="k">Endereço</span><span class="v">Jacareí/SP · 12327-100</span></div>
+        <div class="kv"><span class="k">Serviço</span><span class="v">Aquisição / Registro / Posse</span></div>
+      </div>
+      <div>
+        <div class="section-title">Exigência</div>
+        <div class="kv"><span class="k">Documento</span><span class="v">LAUDO PSICOLÓGICO</span></div>
+        <div class="kv"><span class="k">Emitido por</span><span class="v">Psicólogo credenciado PF</span></div>
+        <div class="kv"><span class="k">Validade</span><span class="v">12 meses</span></div>
+        <div class="kv"><span class="k">Última análise</span><span class="v">20/07/2026 · 09:12</span></div>
+        <div class="kv"><span class="k">Base legal</span><span class="v">LEI 10.826/03 · IN DG/PF 201</span></div>
+      </div>
+    </div>
+
+    <div class="pad row cols-2" style="padding-top:0">
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Documento</div>
+          <span class="chip">laudo-psico-massaroto.pdf</span>
+        </div>
+        <div style="flex:1;border:1px solid var(--line);border-radius:2px;background:#FBF7EC;display:flex;align-items:center;justify-content:center;padding:20px">
+          <div style="width:78%;background:#fff;border:1px solid var(--line);padding:22px 20px;font-size:11.5px;line-height:1.55;color:var(--ink2);box-shadow:0 4px 16px rgba(0,0,0,.05)">
+            <div style="font-family:Oswald;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink)">Laudo de Avaliação Psicológica</div>
+            <div style="font-size:10.5px;color:var(--ink3);margin-top:4px">Resolução CFP · Portaria DG/PF nº 3.633/2020</div>
+            <div style="margin-top:10px">Examinando: <b>Willian R. S. Massaroto</b> · CPF 387.xxx.xxx-42</div>
+            <div>Psicólogo(a): <b>Ana Paula Ribeiro</b> · CRP 06/98.402</div>
+            <div>Credenciamento PF: <b>PSI-SP-1187</b></div>
+            <div style="margin-top:8px">Conclusão: <b>APTO</b> para posse e porte de arma de fogo.</div>
+            <div style="margin-top:8px;color:var(--ink3)">Jacareí/SP · 18/07/2026</div>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:12px;justify-content:flex-start">
+          <button class="btn ghost">Substituir arquivo</button>
+          <button class="btn ghost">Baixar</button>
+        </div>
+        <div class="meta"><span>Enviado 20/07/2026 · 09:11</span><span>2,4 MB · PDF</span></div>
+      </div>
+
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Análise · Hub Documental</div>
+          <span class="chip ok">Aprovado</span>
+        </div>
+
+        <div class="validation-banner">
+          <div class="ic">✓</div>
+          <div>
+            <div class="t">Credencial PF validada</div>
+            <div class="d">Psicólogo <b>Ana Paula Ribeiro</b> (PSI-SP-1187) confere com a base <b>qa_credenciados_pf</b> · sincronizada em 20/07/2026 07:00.</div>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <div class="mini"><div class="lbl">Confiança IA</div><div class="val" style="color:var(--ok)">97%</div></div>
+          <div class="mini"><div class="lbl">Campos extraídos</div><div class="val">8 / 8</div></div>
+          <div class="mini"><div class="lbl">Credencial PF</div><div class="val" style="color:var(--ok);font-size:18px;line-height:1.2">Válida</div></div>
+        </div>
+        <div class="field-list">
+          <div class="row-f"><span class="k">Psicólogo</span><span class="v" style="color:var(--ink)">Ana Paula Ribeiro</span></div>
+          <div class="row-f"><span class="k">CRP</span><span class="v" style="color:var(--ink)">06/98.402</span></div>
+          <div class="row-f"><span class="k">Credenciamento PF</span><span class="v" style="color:var(--ink)">PSI-SP-1187</span></div>
+          <div class="row-f"><span class="k">Data de emissão</span><span class="v" style="color:var(--ink)">18/07/2026</span></div>
+          <div class="row-f"><span class="k">Validade</span><span class="v" style="color:var(--ink)">18/07/2027</span></div>
+        </div>
+        <div class="log">
+          <div><span class="t">09:11</span>Upload recebido · dispatch para <b>qa-processo-doc-validar-ia</b></div>
+          <div><span class="t">09:11</span>Extração OK · 8/8 campos · confiança 97%</div>
+          <div><span class="t">09:12</span>Consulta credencial PF · <b>PSI-SP-1187</b> encontrada</div>
+          <div><span class="t">09:12</span><span class="ok">Aprovado · profissional habilitado pela PF</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="pad">
+      <div class="head">
+        <div class="section-title" style="margin:0">Psicólogos credenciados pela PF próximos de Jacareí/SP</div>
+        <span class="chip">Raio 25 km · Jacareí/SP</span>
+      </div>
+      <div class="filters">
+        <input value="12327-100" />
+        <input value="Jacareí" />
+        <input value="SP" />
+        <input value="25 km" />
+        <button class="btn primary">Buscar</button>
+      </div>
+
+      <div class="pro">
+        <div>
+          <div class="name">Ana Paula Ribeiro</div>
+          <div class="credentials">
+            <span class="chip ok">Credenciado PF · PSI-SP-1187</span>
+            <span class="chip ghost">CRP 06/98.402</span>
+          </div>
+          <div class="addr">Av. Getúlio Vargas, 1.020 · sl. 704 · Centro · Jacareí/SP</div>
+          <div class="contact">(12) 3961-8100 · anapaula@clinicanovo.com.br</div>
+        </div>
+        <div class="actions">
+          <span class="dist">1,8 km</span>
+          <button class="btn wa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5A11 11 0 0 0 3.6 18.3L2 22l3.8-1.5A11 11 0 1 0 20 3.5Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn ghost">Abrir no mapa</button>
+        </div>
+      </div>
+
+      <div class="pro">
+        <div>
+          <div class="name">Fernanda C. Lopes</div>
+          <div class="credentials">
+            <span class="chip ok">Credenciado PF · PSI-SP-0942</span>
+            <span class="chip ghost">CRP 06/72.118</span>
+          </div>
+          <div class="addr">Rua Rui Barbosa, 88 · Jardim Emília · Jacareí/SP</div>
+          <div class="contact">(12) 98122-4090 · fernanda@clinicalopes.com.br</div>
+        </div>
+        <div class="actions">
+          <span class="dist">3,4 km</span>
+          <button class="btn wa">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5A11 11 0 0 0 3.6 18.3L2 22l3.8-1.5A11 11 0 1 0 20 3.5Z"/></svg>
+            WhatsApp
+          </button>
+          <button class="btn ghost">Abrir no mapa</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>Base legal · Lei 10.826/2003 · IN DG/PF 201 · Portaria DG/PF 3.633/2020</span>
+      <span>Quero Armas · Área do cliente</span>
+    </div>
+  </div>
+
+  <!-- ============== EXIGÊNCIA 3: CERTIDÃO CRIMINAL (sem busca profissional) ============== -->
+  <div class="section-sep"><span class="lbl">Exigência seguinte</span><span class="line"></span></div>
+
+  <div class="frame">
+    <div class="pad head">
+      <div>
+        <div class="eyebrow">Ficha de Pendência · nº 005 / 5</div>
+        <h1 class="title">Certidão Criminal</h1>
+        <div class="sub">Documento exigido para comprovação de antecedentes · Documentos Obrigatórios</div>
+      </div>
+      <span class="chip red">Reprovado · fora do escopo</span>
+    </div>
+    <div class="divider"></div>
+    <div class="pad row cols-2">
+      <div>
+        <div class="section-title">Requerente</div>
+        <div class="kv"><span class="k">Nome</span><span class="v">WILLIAN R. S. MASSAROTO</span></div>
+        <div class="kv"><span class="k">CPF</span><span class="v">387.***.***-42</span></div>
+        <div class="kv"><span class="k">Naturalidade</span><span class="v">Jacareí/SP</span></div>
+      </div>
+      <div>
+        <div class="section-title">Exigência</div>
+        <div class="kv"><span class="k">Documento</span><span class="v">CERTIDÃO CRIMINAL · AÇÕES</span></div>
+        <div class="kv"><span class="k">Origem</span><span class="v">Justiça Estadual + Federal + Militar</span></div>
+        <div class="kv"><span class="k">Validade</span><span class="v">90 dias</span></div>
+        <div class="kv"><span class="k">Base legal</span><span class="v">LEI 10.826/03 · IN DG/PF 201</span></div>
+      </div>
+    </div>
+
+    <div class="pad row cols-2" style="padding-top:0">
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Documento</div>
+          <span class="chip red">Documento incorreto</span>
+        </div>
+        <div style="flex:1;border:1px solid var(--line);border-radius:2px;background:#FBF7EC;display:flex;align-items:center;justify-content:center;padding:20px;position:relative">
+          <div style="width:78%;background:#fff;border:1px solid var(--line);padding:22px 20px;font-size:11.5px;line-height:1.55;color:var(--ink2);box-shadow:0 4px 16px rgba(0,0,0,.05)">
+            <div style="font-family:Oswald;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink)">Certidão de Execuções Criminais</div>
+            <div style="font-size:10.5px;color:var(--ink3);margin-top:4px">TJSP · Comarca de Jacareí</div>
+            <div style="margin-top:10px">Requerente: Willian R. S. Massaroto</div>
+            <div>Resultado: Nada consta</div>
+          </div>
+          <div style="position:absolute;top:38%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);border:5px solid var(--red);color:var(--red);
+            font-family:Oswald;font-weight:700;text-align:center;padding:10px 20px;background:rgba(255,255,255,.9);border-radius:6px;box-shadow:0 8px 22px rgba(185,28,28,.28)">
+            <div style="font-size:26px;line-height:1">CERTIDÃO INCORRETA</div>
+            <div style="font-size:9px;letter-spacing:.3em;margin-top:4px">NÃO PODE SER SALVA</div>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:12px;justify-content:flex-start">
+          <button class="btn primary">Enviar certidão correta</button>
+          <button class="btn ghost">Abrir portal e-SAJ</button>
+        </div>
+        <div class="meta"><span>Enviado 20/07/2026 · 10:41</span><span>0,9 MB · PDF</span></div>
+      </div>
+
+      <div class="card equal">
+        <div class="head" style="margin-bottom:12px">
+          <div class="section-title" style="margin:0">Análise · Hub Documental</div>
+          <span class="chip red">Reprovado</span>
+        </div>
+
+        <div class="validation-banner err">
+          <div class="ic">!</div>
+          <div>
+            <div class="t">Fora do escopo exigido</div>
+            <div class="d">A exigência é <b>Certidão de Ações Criminais (distribuição)</b>. O arquivo enviado é <b>Execuções Criminais</b>. Envie a certidão correta.</div>
+          </div>
+        </div>
+
+        <div class="analysis-grid">
+          <div class="mini"><div class="lbl">Confiança IA</div><div class="val" style="color:var(--red)">92%</div></div>
+          <div class="mini"><div class="lbl">Campos extraídos</div><div class="val">6 / 6</div></div>
+          <div class="mini"><div class="lbl">Escopo</div><div class="val" style="color:var(--red);font-size:18px;line-height:1.2">Divergente</div></div>
+        </div>
+        <div class="field-list">
+          <div class="row-f"><span class="k">Tipo detectado</span><span class="v" style="color:var(--red)">Execuções Criminais</span></div>
+          <div class="row-f"><span class="k">Tipo exigido</span><span class="v" style="color:var(--ink)">Ações Criminais (distribuição)</span></div>
+          <div class="row-f"><span class="k">Órgão</span><span class="v" style="color:var(--ink)">TJSP · Comarca Jacareí</span></div>
+          <div class="row-f"><span class="k">Data emissão</span><span class="v" style="color:var(--ink)">18/07/2026</span></div>
+          <div class="row-f"><span class="k">Validade prevista</span><span class="v" style="color:var(--ink)">16/10/2026</span></div>
+        </div>
+        <div class="log">
+          <div><span class="t">10:41</span>Upload recebido · dispatch para <b>qa-processo-doc-validar-ia</b></div>
+          <div><span class="t">10:41</span>Extração OK · classificado como <b>certidao_execucoes_criminais</b></div>
+          <div><span class="t">10:41</span><span class="red">Escopo divergente · exigência é ações criminais (distribuição)</span></div>
+          <div><span class="t">10:41</span>Bloqueado · fluxo aguarda arquivo correto</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar">
+      <span>Base legal · Lei 10.826/2003 · IN DG/PF 201</span>
+      <span>Quero Armas · Área do cliente</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
