@@ -17,17 +17,10 @@
 // verdade (zero regressão).
 // ============================================================================
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import {
-  enviarDocumentoGuia,
-  aguardarValidacaoIAGuia,
-  type GuiaProcesso,
-  type GuiaDoc,
-} from "@/lib/quero-armas/checklistGuiadoEngine";
 import {
   useCredenciadosPsico,
   type BuscarParams as BuscarPsicoParams,
@@ -117,11 +110,6 @@ export default function MotorPendenciaFichaModal({
   const [doc, setDoc] = useState<any>(null);
   const [cliente, setCliente] = useState<any>(null);
   const [processo, setProcesso] = useState<any>(null);
-  const [fase, setFase] = useState<"aguardando" | "enviando" | "validando" | "ok" | "erro">("aguardando");
-  const [erro, setErro] = useState<string | null>(null);
-  const [resultado, setResultado] = useState<any>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const camRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open || !focusDocId) return;
@@ -171,82 +159,10 @@ export default function MotorPendenciaFichaModal({
     return () => { cancel = true; };
   }, [open, focusDocId, clienteId]);
 
-  // Reset transient state on open/change
-  useEffect(() => {
-    if (open) {
-      setFase("aguardando");
-      setErro(null);
-      setResultado(null);
-    }
-  }, [open, focusDocId]);
-
   const cfg = useMemo(
     () => getConfig(doc?.tipo_documento, doc?.nome_documento),
     [doc?.tipo_documento, doc?.nome_documento],
   );
-
-  // -------- Upload direto (reusa engine do Hub Documental) --------
-  const handleFile = async (file: File | null | undefined) => {
-    if (!file) return;
-    if (!doc) {
-      toast.error("Aguardando carregar os dados da pendência. Tente novamente em instantes.");
-      return;
-    }
-    const processoId = processo?.id ?? doc?.processo_id;
-    if (!processoId) {
-      toast.error("Esta pendência não está vinculada a um processo. Contate o suporte.");
-      return;
-    }
-    setErro(null);
-    setFase("enviando");
-    const proc: GuiaProcesso = {
-      id: processoId,
-      cliente_id: processo?.cliente_id ?? clienteId,
-    } as any;
-    const dGuia: GuiaDoc = {
-      id: doc.id,
-      tipo_documento: doc.tipo_documento,
-      formato_aceito: doc.formato_aceito ?? [],
-    } as any;
-    const env = await enviarDocumentoGuia(proc, dGuia, file);
-    if (!env.ok) {
-      setErro(env.error ?? "Erro no envio.");
-      setFase("erro");
-      toast.error(env.error ?? "Erro no envio.");
-      return;
-    }
-    setFase("validando");
-    const alvoId = env.documentoId || doc.id;
-    const final = await aguardarValidacaoIAGuia(alvoId);
-    setResultado(final);
-    const st = (final as any)?.status;
-    if (st === "aprovado" || st === "dispensado_grupo") {
-      setFase("ok");
-      toast.success("Documento aprovado pela IA.");
-    } else if (st === "em_revisao_humana" || st === "revisao_humana") {
-      setFase("ok");
-      toast.message("Encaminhado para revisão humana.");
-    } else if (st === "invalido" || st === "divergente") {
-      setFase("erro");
-      setErro((final as any)?.motivo_rejeicao || "Documento não passou na análise.");
-      toast.error("Documento não aprovado. Verifique e reenvie.");
-    } else {
-      setFase("ok");
-      toast.message("Análise em andamento.");
-    }
-    onUpdated?.();
-    // Recarrega o slot do doc para refletir status/arquivo_url
-    const { data: novo } = await supabase.from("qa_processo_documentos" as any)
-      .select("id, processo_id, tipo_documento, nome_documento, instrucoes, status, arquivo_url, updated_at, formato_aceito")
-      .eq("id", alvoId).maybeSingle();
-    if (novo) setDoc(novo);
-  };
-
-  const fmts: string[] = Array.isArray(doc?.formato_aceito) ? doc.formato_aceito : [];
-  const acceptAttr = fmts.length
-    ? fmts.map((f: string) => (String(f).startsWith(".") || String(f).includes("/") ? f : "." + String(f).toLowerCase())).join(",")
-    : ".pdf,.jpg,.jpeg,.png";
-  const uploading = fase === "enviando" || fase === "validando";
 
   const cep = String(cliente?.cep || "").replace(/\D/g, "");
   const uf = String(cliente?.estado || "").toUpperCase();
@@ -372,46 +288,18 @@ export default function MotorPendenciaFichaModal({
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap", justifyContent: "center" }}>
                       <button
-                        onClick={() => fileRef.current?.click()}
-                        disabled={uploading}
-                        style={{ ...ficha.btn, ...ficha.btnPrimary, opacity: uploading ? 0.6 : 1, cursor: uploading ? "wait" : "pointer" }}
+                        onClick={() => onContinuar?.()}
+                        style={{ ...ficha.btn, ...ficha.btnPrimary }}
                       >
-                        {fase === "enviando" ? "Enviando..." : fase === "validando" ? "Analisando..." : "Selecionar arquivo"}
+                        Selecionar arquivo
                       </button>
                       <button
-                        onClick={() => camRef.current?.click()}
-                        disabled={uploading}
-                        style={{ ...ficha.btn, ...ficha.btnGhost, opacity: uploading ? 0.6 : 1, cursor: uploading ? "wait" : "pointer" }}
+                        onClick={() => onContinuar?.()}
+                        style={{ ...ficha.btn, ...ficha.btnGhost }}
                       >
                         Tirar foto (mobile)
                       </button>
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        accept={acceptAttr}
-                        style={{ display: "none" }}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          void handleFile(f);
-                        }}
-                      />
-                      <input
-                        ref={camRef}
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        style={{ display: "none" }}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          void handleFile(f);
-                        }}
-                      />
                     </div>
-                    {erro && (
-                      <div style={{ marginTop: 12, fontSize: 12.5, color: "#7A1F2B", fontWeight: 600 }}>{erro}</div>
-                    )}
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#6B6B6B", fontSize: 12, marginTop: 12 }}>
                     <span>Tamanho máximo 20 MB</span>
@@ -424,21 +312,17 @@ export default function MotorPendenciaFichaModal({
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                     <div style={ficha.sectionTitle}>Análise · Hub Documental</div>
                     <span style={{ ...ficha.chip, ...ficha.chipAmber }}>
-                      {fase === "enviando" ? "Enviando" : fase === "validando" ? "Em análise" : fase === "ok" ? "Analisado" : fase === "erro" ? "Rejeitado" : (doc?.arquivo_url ? "Em análise" : "Aguardando arquivo")}
+                      {doc?.arquivo_url ? "Em análise" : "Aguardando arquivo"}
                     </span>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
-                    <Mini label="Confiança IA" value={resultado?.confianca_ia != null ? `${Math.round(Number(resultado.confianca_ia) * 100)}%` : "—"} />
-                    <Mini label="Status" value={(resultado?.status || doc?.status || "—").toString().toUpperCase()} />
-                    <Mini label={cfg.profissional ? "Credencial PF" : "IA"} value={fase === "ok" ? "OK" : fase === "erro" ? "ERRO" : uploading ? "..." : "—"} />
+                    <Mini label="Confiança IA" value="—" />
+                    <Mini label="Status" value={(doc?.status || "—").toString().toUpperCase()} />
+                    <Mini label={cfg.profissional ? "Credencial PF" : "IA"} value="—" />
                   </div>
                   <div style={ficha.log}>
                     <div><span style={ficha.logT}>agora</span>Pendência aberta · tipo <b>{doc?.tipo_documento || "—"}</b></div>
-                    <div><span style={ficha.logT}>agora</span>Motor pronto · usará a mesma IA do Hub Documental</div>
-                    {fase === "enviando" && <div><span style={ficha.logT}>agora</span>Enviando arquivo para o cofre seguro...</div>}
-                    {fase === "validando" && <div><span style={ficha.logT}>agora</span>IA analisando o conteúdo do documento...</div>}
-                    {fase === "ok" && <div><span style={ficha.logT}>agora</span>Análise concluída · status <b>{(resultado?.status || doc?.status || "—").toString().toUpperCase()}</b></div>}
-                    {fase === "erro" && erro && <div><span style={ficha.logT}>agora</span>{erro}</div>}
+                    <div><span style={ficha.logT}>agora</span>Motor pronto · ao enviar o arquivo, a IA do Hub Documental fará a análise</div>
                   </div>
                 </div>
               </div>
