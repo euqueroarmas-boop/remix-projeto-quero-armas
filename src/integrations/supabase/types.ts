@@ -2311,6 +2311,47 @@ export type Database = {
           },
         ]
       }
+      qa_acervo_alertas_enviados: {
+        Row: {
+          cliente_id: number
+          divergencia_tipo: string
+          enviado_em: string
+          hash_estado: string
+          id: number
+          item_id: string | null
+          item_tipo: string
+          template_name: string
+        }
+        Insert: {
+          cliente_id: number
+          divergencia_tipo: string
+          enviado_em?: string
+          hash_estado: string
+          id?: never
+          item_id?: string | null
+          item_tipo: string
+          template_name: string
+        }
+        Update: {
+          cliente_id?: number
+          divergencia_tipo?: string
+          enviado_em?: string
+          hash_estado?: string
+          id?: never
+          item_id?: string | null
+          item_tipo?: string
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_acervo_alertas_enviados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_arma_gt_declaracoes: {
         Row: {
           arma_manual_id: number | null
@@ -5278,6 +5319,36 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_doc_incompat_alertas_enviados: {
+        Row: {
+          cliente_id: number | null
+          documento_id: string
+          enviado_em: string
+          hash_estado: string
+          id: number
+          processo_id: string | null
+          template_name: string
+        }
+        Insert: {
+          cliente_id?: number | null
+          documento_id: string
+          enviado_em?: string
+          hash_estado: string
+          id?: never
+          processo_id?: string | null
+          template_name?: string
+        }
+        Update: {
+          cliente_id?: number | null
+          documento_id?: string
+          enviado_em?: string
+          hash_estado?: string
+          id?: never
+          processo_id?: string | null
+          template_name?: string
+        }
+        Relationships: []
+      }
       qa_document_examples: {
         Row: {
           arquivo_url: string
@@ -6415,6 +6486,44 @@ export type Database = {
             columns: ["gte_documento_id"]
             isOneToOne: false
             referencedRelation: "qa_gte_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_gte_consistencia_alertas_enviados: {
+        Row: {
+          cliente_id: number
+          divergencia_tipo: string
+          enviado_em: string
+          gte_documento_id: string | null
+          hash_estado: string
+          id: number
+          template_name: string
+        }
+        Insert: {
+          cliente_id: number
+          divergencia_tipo: string
+          enviado_em?: string
+          gte_documento_id?: string | null
+          hash_estado: string
+          id?: never
+          template_name: string
+        }
+        Update: {
+          cliente_id?: number
+          divergencia_tipo?: string
+          enviado_em?: string
+          gte_documento_id?: string | null
+          hash_estado?: string
+          id?: never
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_gte_consistencia_alertas_enviados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
         ]
