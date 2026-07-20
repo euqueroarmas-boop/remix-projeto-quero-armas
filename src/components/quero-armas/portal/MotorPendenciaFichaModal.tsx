@@ -324,8 +324,10 @@ export default function MotorPendenciaFichaModal({
                 <div>
                   <div style={ficha.sectionTitle}>Requerente</div>
                   <KV k="Nome" v={String(cliente?.nome_completo || "—").toUpperCase()} />
+                  {cpfFmt && <KV k="CPF" v={cpfFmt} />}
+                  {cliente?.celular && <KV k="Celular" v={String(cliente.celular)} />}
                   {cliente?.cr_numero && <KV k="CR" v={cliente.cr_numero} />}
-                  <KV k="Endereço" v={`${cidade || "—"}/${uf || "—"} · ${cliente?.cep || ""}`} />
+                  <KV k="Endereço" v={enderecoCompleto.toUpperCase()} />
                   {processo && <KV k="Serviço" v={String(processo.tipo || "—").toUpperCase()} />}
                   {processo?.etapa_atual && <KV k="Etapa" v={String(processo.etapa_atual).toUpperCase()} />}
                 </div>
