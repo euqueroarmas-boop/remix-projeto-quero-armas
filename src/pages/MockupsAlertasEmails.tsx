@@ -552,7 +552,7 @@ export default function MockupsAlertasEmails() {
           Alertas operacionais · Arsenal Inteligente
         </h1>
         <p style={{ fontSize: 14, color: "#333", margin: "0 0 20px", maxWidth: 720, lineHeight: 1.5 }}>
-          16 novas variações de alerta por e-mail (filiação, habitualidade, autorização, CRAF, GTE, exigências PF, munição, acervo e renovação de CR).
+          28 variações de alerta por e-mail (filiação, habitualidade — 14 no total com os 12 novos —, autorização, CRAF, GTE, exigências PF, munição, acervo e renovação de CR).
           Templates registrados no motor Lovable Emails, prontos para preview via <code>preview-transactional-email</code>.
           Nenhum trigger automático foi ativado — esta tela é apenas para revisão de copy, layout e cor de status.
         </p>
