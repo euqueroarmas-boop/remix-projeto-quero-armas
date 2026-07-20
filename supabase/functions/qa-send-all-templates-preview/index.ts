@@ -17,27 +17,31 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
-  const results: Array<{ template: string; ok: boolean; error?: string }> = []
   const stamp = Date.now()
+  const names = Object.keys(TEMPLATES)
 
-  for (const [name, entry] of Object.entries(TEMPLATES)) {
-    const templateData = (entry as any).previewData ?? {}
-    const { data, error } = await supabase.functions.invoke('send-transactional-email', {
-      body: {
-        templateName: name,
-        recipientEmail,
-        idempotencyKey: `preview-all-${stamp}-${name}`,
-        templateData,
-      },
-    })
-    if (error) {
-      results.push({ template: name, ok: false, error: error.message })
-    } else {
-      results.push({ template: name, ok: true, ...(data as object) })
+  const work = (async () => {
+    for (const name of names) {
+      const templateData = (TEMPLATES[name] as any).previewData ?? {}
+      try {
+        const { error } = await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: name,
+            recipientEmail,
+            idempotencyKey: `preview-all-${stamp}-${name}`,
+            templateData,
+          },
+        })
+        console.log(`[preview-all] ${name}:`, error ? `ERR ${error.message}` : 'OK')
+      } catch (e) {
+        console.log(`[preview-all] ${name}: THROW ${(e as Error).message}`)
+      }
     }
-  }
+  })()
+  // @ts-ignore EdgeRuntime is available in Supabase edge runtime
+  EdgeRuntime.waitUntil(work)
 
-  return new Response(JSON.stringify({ total: results.length, results }, null, 2), {
+  return new Response(JSON.stringify({ scheduled: names.length, templates: names }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 })
