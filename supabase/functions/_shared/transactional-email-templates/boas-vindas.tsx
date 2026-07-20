@@ -12,10 +12,10 @@ interface Props {
 const Email = (props: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Bem-vindo à Quero Armas</Preview>
+    <Preview>Bem-vindo ao Arsenal Inteligente</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}><Text style={brand}>QUERO ARMAS</Text></Section>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
         <Container style={card}>
           <Heading style={h1}>Bem-vindo!</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
@@ -25,7 +25,7 @@ const Email = (props: Props) => (
             <Button style={button} href={props.portalUrl || 'https://euqueroarmas.com.br'}>Acessar portal</Button>
           </Section>
           <Hr style={hr} />
-          <Text style={footer}>Quero Armas — euqueroarmas.com.br</Text>
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
         </Container>
       </Container>
     </Body>
@@ -34,7 +34,7 @@ const Email = (props: Props) => (
 
 export const template = {
   component: Email,
-  subject: 'Bem-vindo à Quero Armas',
+  subject: 'Bem-vindo ao Arsenal Inteligente',
   displayName: 'Bem-vindo!',
   previewData: { nome: 'CAC' },
 } satisfies TemplateEntry

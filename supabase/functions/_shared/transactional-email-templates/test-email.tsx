@@ -21,10 +21,10 @@ interface Props {
 const TestEmail = ({ recipientName, siteUrl }: Props) => (
   <Html lang="pt-BR" dir="ltr">
     <Head />
-    <Preview>Teste de envio - Quero Armas</Preview>
+    <Preview>Teste de envio - Arsenal Inteligente</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>QUERO ARMAS</Heading>
+        <Heading style={h1}>ARSENAL INTELIGENTE</Heading>
         <Text style={text}>
           Olá{recipientName ? `, ${recipientName}` : ''}! Este é um e-mail de teste
           enviado pelo sistema através do domínio notify.euqueroarmas.com.br.
@@ -39,7 +39,7 @@ const TestEmail = ({ recipientName, siteUrl }: Props) => (
           </Button>
         </Section>
         <Text style={footer}>
-          Quero Armas - Soluções jurídicas para CACs.
+          Arsenal Inteligente — Soluções jurídicas para CACs.
         </Text>
       </Container>
     </Body>
@@ -48,7 +48,7 @@ const TestEmail = ({ recipientName, siteUrl }: Props) => (
 
 export const template = {
   component: TestEmail,
-  subject: 'Teste de envio - Quero Armas',
+  subject: 'Teste de envio - Arsenal Inteligente',
   displayName: 'Teste de envio',
   previewData: { recipientName: 'CAC', siteUrl: 'https://euqueroarmas.com.br' },
 } satisfies TemplateEntry
