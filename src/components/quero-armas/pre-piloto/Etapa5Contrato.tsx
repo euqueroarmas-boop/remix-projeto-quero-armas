@@ -97,8 +97,9 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         await supabase.from("qa_logs_auditoria" as any).insert({
         acao: "pre_piloto_contrato_gerado",
         entidade: "pre_piloto",
-        entidade_id: String(vendaId),
+        entidade_id: null,
         detalhes_json: {
+          venda_id: vendaId,
           cliente_id: clienteSalvo.id,
           cliente_nome: clienteSalvo.nome_completo,
           servico_id: servico.id,
@@ -106,7 +107,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           venda_id_legado: vendaLegado,
         },
         });
-      } catch { /* best effort */ }
+      } catch (e) { console.warn("[pre-piloto] audit log failed", e); }
 
       setVendaGerada({ id: vendaId, legado: vendaLegado });
       setEtapa("ok");
