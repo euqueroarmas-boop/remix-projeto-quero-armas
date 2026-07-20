@@ -646,7 +646,7 @@ Deno.serve(async (req) => {
 
     const { data: cliente } = await supabase
       .from("qa_clientes")
-      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep, estado_civil")
+      .select("id, nome_completo, email, cpf, rg, data_nascimento, endereco, cidade, estado, cep, estado_civil")
       .eq("id", processo.cliente_id).maybeSingle();
 
     // Alteração de nome em cartório (se já comprovada neste processo): usamos
