@@ -40,7 +40,7 @@ const ORIGEM_BADGE_CLASS: Record<string, string> = {
 function formatDateTime(iso: string) {
   try {
     const d = new Date(iso);
-    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium" });
+    return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "medium", timeZone: "America/Sao_Paulo" });
   } catch {
     return iso;
   }
