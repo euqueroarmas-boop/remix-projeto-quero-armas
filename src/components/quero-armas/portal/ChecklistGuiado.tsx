@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { onAbrirChecklistGuiado, AbrirChecklistPayload } from "@/lib/quero-armas/checklistGuiadoBus";
 import { contarPendentesClienteGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import ChecklistGuiadoModal from "./ChecklistGuiadoModal";
+import MotorPendenciaFichaModal from "./MotorPendenciaFichaModal";
 
 interface Props {
   clienteId: number;
@@ -30,6 +31,13 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [processoIdAlvo, setProcessoIdAlvo] = useState<string | null>(null);
   const [focusDocId, setFocusDocId] = useState<string | null>(null);
+  // Ficha (fachada visual "Ficha Clara v2") só é usada quando o clique veio de
+  // uma PENDÊNCIA específica (payload traz focusDocId). Nesse caso abrimos a
+  // ficha ANTES do modal legado; ao clicar em "Selecionar arquivo" a ficha
+  // fecha e delega para o ChecklistGuiadoModal legado com o mesmo focus.
+  const [fichaOpen, setFichaOpen] = useState(false);
+  const [fichaFocusDocId, setFichaFocusDocId] = useState<string | null>(null);
+  const [fichaProcessoId, setFichaProcessoId] = useState<string | null>(null);
   const contratoIdRef = useRef<string | null>(null);
   // Garante que o auto-popup por pendências documentais aconteça UMA única vez
   // por entrada na página — se o cliente fechar o assistente, não reabre sozinho
@@ -39,6 +47,14 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   // 1) abertura manual via bus (com payload opcional vindo do botão clicado)
   useEffect(() => {
     const off = onAbrirChecklistGuiado((payload?: AbrirChecklistPayload) => {
+      // Clique em pendência específica → abre a Ficha Clara v2 primeiro
+      if (payload?.focusDocId) {
+        setFichaFocusDocId(payload.focusDocId);
+        setFichaProcessoId(payload?.processoId ?? null);
+        setFichaOpen(true);
+        return;
+      }
+      // Abertura genérica (auto-open, botão global) → modal legado direto
       setProcessoIdAlvo(payload?.processoId ?? null);
       setFocusDocId(payload?.focusDocId ?? null);
       setOpen(true);
@@ -155,17 +171,43 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   if (!clienteId) return null;
 
   return (
-    <ChecklistGuiadoModal
-      clienteId={clienteId}
-      open={open}
-      onClose={() => {
-        setOpen(false);
-        setProcessoIdAlvo(null);
-        setFocusDocId(null);
-      }}
-      processoIdInicial={processoIdAlvo}
-      focusDocIdInicial={focusDocId}
-      onUpdated={onUpdated}
-    />
+    <>
+      {fichaOpen && fichaFocusDocId && (
+        <MotorPendenciaFichaModal
+          clienteId={clienteId}
+          focusDocId={fichaFocusDocId}
+          processoId={fichaProcessoId}
+          open={fichaOpen}
+          onClose={() => {
+            setFichaOpen(false);
+            setFichaFocusDocId(null);
+            setFichaProcessoId(null);
+          }}
+          onContinuar={() => {
+            // Passa o bastão ao motor legado: mesma pendência, mesmo processo.
+            const focus = fichaFocusDocId;
+            const proc = fichaProcessoId;
+            setFichaOpen(false);
+            setFichaFocusDocId(null);
+            setFichaProcessoId(null);
+            setFocusDocId(focus);
+            setProcessoIdAlvo(proc);
+            setOpen(true);
+          }}
+        />
+      )}
+      <ChecklistGuiadoModal
+        clienteId={clienteId}
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          setProcessoIdAlvo(null);
+          setFocusDocId(null);
+        }}
+        processoIdInicial={processoIdAlvo}
+        focusDocIdInicial={focusDocId}
+        onUpdated={onUpdated}
+      />
+    </>
   );
 }
