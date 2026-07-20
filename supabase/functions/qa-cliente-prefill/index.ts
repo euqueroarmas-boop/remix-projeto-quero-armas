@@ -359,11 +359,15 @@ function extractPhonesFromText(text: string): string[] {
     const ddd = m[1];
     if (!DDD_VALIDOS.has(ddd)) continue;
     const rest = (m[2] + m[3]).replace(/\D/g, "");
-    // Celular: 9 dígitos começando com 9. Fixo: 8 dígitos começando 2-5.
-    const isMobile = rest.length === 9 && rest.startsWith("9");
+    // Celular novo: 9 dígitos começando com 9.
+    // Celular legado (pré-2016): 8 dígitos começando com 6-9 → prefixamos "9".
+    // Fixo: 8 dígitos começando 2-5.
+    const isMobileNovo = rest.length === 9 && rest.startsWith("9");
+    const isMobileLegado = rest.length === 8 && /^[6-9]/.test(rest);
     const isFixo = rest.length === 8 && /^[2-5]/.test(rest);
-    if (!isMobile && !isFixo) continue;
-    const digits = ddd + rest;
+    if (!isMobileNovo && !isMobileLegado && !isFixo) continue;
+    const restNorm = isMobileLegado ? "9" + rest : rest;
+    const digits = ddd + restNorm;
     if (!seen.has(digits)) {
       seen.add(digits);
       out.push(digits);
