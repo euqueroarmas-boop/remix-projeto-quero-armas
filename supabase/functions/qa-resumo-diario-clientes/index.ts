@@ -5,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  *
  * Cron diário (07h BRT / 10h UTC) que envia 1 e-mail CONSOLIDADO para o
  * destinatário interno (eu@queroarmas.com.br) contendo o status de TODOS
- * os clientes / processos ativos do Quero Armas.
+ * os clientes / processos ativos do Arsenal Inteligente.
  *
  * Inclui:
  *  - Total de clientes / processos por status
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
     const html = `
       <div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:900px;margin:0 auto;padding:20px;background:#f8fafc;">
         <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);padding:24px 28px;border-radius:12px 12px 0 0;">
-          <h1 style="color:#fff;font-size:20px;margin:0;letter-spacing:.3px;">📊 RESUMO DIÁRIO — QUERO ARMAS</h1>
+          <h1 style="color:#fff;font-size:20px;margin:0;letter-spacing:.3px;">📊 RESUMO DIÁRIO — ARSENAL INTELIGENTE</h1>
           <p style="color:#cbd5e1;font-size:13px;margin:6px 0 0;">${dataHoje}</p>
         </div>
         <div style="background:#fff;padding:24px 28px;border:1px solid #e2e8f0;border-top:none;">
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
           `}
 
           <p style="font-size:11px;color:#94a3b8;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:12px;">
-            Quero Armas — Resumo diário gerado automaticamente às 07h (BRT).
+            Arsenal Inteligente — Resumo diário gerado automaticamente às 07h (BRT).
           </p>
         </div>
       </div>
@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
         const { data, error } = await sb.functions.invoke("send-smtp-email", {
           body: {
             to,
-            subject: `📊 Resumo diário Quero Armas — ${dataHoje} — ${totalAtivos} ativos / ${examesAlerta.length} alertas`,
+            subject: `📊 Resumo diário Arsenal Inteligente — ${dataHoje} — ${totalAtivos} ativos / ${examesAlerta.length} alertas`,
             html,
             trace_id: `qa-resumo-${new Date().toISOString().slice(0, 10)}`,
           },

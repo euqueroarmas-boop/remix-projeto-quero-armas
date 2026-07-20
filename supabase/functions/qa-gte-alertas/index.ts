@@ -92,11 +92,11 @@ function htmlAlerta(opts: {
         </div>
         <div style="padding:15px;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
           <p style="margin:0;font-size:12px;color:#92400e;">
-            <strong>📋 Importante:</strong> Mantenha sempre uma GTE válida. A equipe Quero Armas pode auxiliar na renovação.
+            <strong>📋 Importante:</strong> Mantenha sempre uma GTE válida. A equipe Arsenal Inteligente pode auxiliar na renovação.
           </p>
         </div>
         <p style="font-size:12px;color:#94a3b8;margin-top:20px;">
-          Quero Armas — Assessoria Jurídica · naoresponda@queroarmas.com.br
+          Arsenal Inteligente — Assessoria Jurídica · naoresponda@queroarmas.com.br
         </p>
       </div>
     </div>

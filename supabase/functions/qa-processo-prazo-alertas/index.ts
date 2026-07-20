@@ -87,7 +87,7 @@ function buildHtml(p: PrazoProcessual, nome: string, subject: string): string {
                   text-transform:uppercase;letter-spacing:0.6px;">
           ABRIR PORTAL DO CLIENTE
         </a>
-        <p style="font-size:12px;color:#94a3b8;margin-top:25px;">Quero Armas — Assessoria Especializada</p>
+        <p style="font-size:12px;color:#94a3b8;margin-top:25px;">Arsenal Inteligente — Assessoria Especializada</p>
       </div>
     </div>
   `;

@@ -1,4 +1,4 @@
-// notificacaoPolicy.ts — Política canônica de notificação ao cliente Quero Armas.
+// notificacaoPolicy.ts — Política canônica de notificação ao cliente Arsenal Inteligente.
 //
 // Cobre a decisão da equipe (notificar ou não), canais escolhidos (e-mail,
 // WhatsApp, portal), motivo obrigatório quando não notifica, e registra

@@ -10,7 +10,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
 };
 const PORTAL_BASE = "https://www.euqueroarmas.com.br/area-do-cliente";
-const BRAND = "QUERO ARMAS";
+const BRAND = "ARSENAL INTELIGENTE";
 
 type Evento =
   | "processo_criado"
@@ -43,7 +43,7 @@ const TITULOS: Record<Evento, string> = {
   documento_invalido: "Documento precisa ser reenviado",
   certidao_invalida: "Certidão precisa ser reenviada",
   divergencia_dados: "Divergência entre documento e cadastro",
-  revisao_humana: "Documento em revisão pela Equipe Quero Armas",
+  revisao_humana: "Documento em revisão pela Equipe Arsenal Inteligente",
   documento_aprovado: "Documento aprovado",
   documentacao_aprovada: "Documentação aprovada",
   processo_bloqueado: "Processo bloqueado",
@@ -93,7 +93,7 @@ function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; mot
         <p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF correto")}</p>`;
     case "revisao_humana":
       return `<p>Recebemos ${docName}, mas a leitura automática não conseguiu interpretar o arquivo com segurança. Nossa equipe fará a conferência manual.</p>
-        <p>Você não precisa fazer nada agora — avisaremos assim que a Equipe Quero Armas terminar a análise.</p>
+        <p>Você não precisa fazer nada agora — avisaremos assim que a Equipe Arsenal Inteligente terminar a análise.</p>
         <p style="text-align:center;">${btn(ctx.portalUrl, "Acompanhar processo")}</p>`;
     case "documento_aprovado":
       return `<p>${docName} foi aprovado. Continue acompanhando os itens restantes.</p>

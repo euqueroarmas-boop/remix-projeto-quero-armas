@@ -1,5 +1,5 @@
 /**
- * Templates de e-mail premium do Quero Armas — Arsenal Tactical Light.
+ * Templates de e-mail premium do Arsenal Inteligente — Arsenal Tactical Light.
  * Identidade visual baseada na UI do Arsenal (detalhes do cliente):
  *   - Fundo gelo / papel (#f6f5f1)
  *   - Card branco com bordas slate finas
@@ -9,7 +9,7 @@
  *   - Blocos técnicos KEY → VALUE estilo "diagnóstico de campo"
  *   - Copy agressiva, técnica, direta — zero gordura.
  *
- * Remetente padrão: Quero Armas <naoresponda@euqueroarmas.com.br>
+ * Remetente padrão: Arsenal Inteligente <naoresponda@euqueroarmas.com.br>
  */
 
 const LOGO_URL = "https://ogkltfqvzweeqkfmrzts.supabase.co/storage/v1/object/public/contract-assets/quero-armas-logo.png";
@@ -80,7 +80,7 @@ export function qaWrap({ preheader = "", title, body, opTag, subtitle }: QAEmail
             </td>
             <td align="right" valign="middle" style="vertical-align:middle;">
               <div style="display:inline-block;background:#ffffff;border-radius:8px;padding:6px 10px;">
-                <img src="${LOGO_URL}" alt="Quero Armas" width="36" height="36" style="display:block;width:36px;height:36px;object-fit:contain;border:0;outline:0;">
+                <img src="${LOGO_URL}" alt="Arsenal Inteligente" width="36" height="36" style="display:block;width:36px;height:36px;object-fit:contain;border:0;outline:0;">
               </div>
             </td>
           </tr>
@@ -123,7 +123,7 @@ export function qaWrap({ preheader = "", title, body, opTag, subtitle }: QAEmail
           ou fale com o time pelo seu portal.
         </p>
         <p style="margin:10px 0 0;font-size:10px;color:#94a3b8;letter-spacing:0.3px;">
-          © ${new Date().getFullYear()} QUERO ARMAS · Operação regida por LGPD e pela Lei 10.826/03.
+          © ${new Date().getFullYear()} ARSENAL INTELIGENTE · Operação regida por LGPD e pela Lei 10.826/03.
         </p>
       </td></tr>
 
@@ -231,7 +231,7 @@ export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword:
     subtitle: "Conta criada, credenciais geradas, perímetro liberado para o primeiro acesso.",
     body: `
       ${greeting(opts.name)}
-      ${para("Sua conta no <strong>Portal Quero Armas</strong> acabou de ser provisionada. Use exatamente as credenciais abaixo no <strong>primeiro login</strong> — depois disso, o sistema vai forçar a troca por uma senha pessoal e descartar a provisória.")}
+      ${para("Sua conta no <strong>Portal Arsenal Inteligente</strong> acabou de ser provisionada. Use exatamente as credenciais abaixo no <strong>primeiro login</strong> — depois disso, o sistema vai forçar a troca por uma senha pessoal e descartar a provisória.")}
       ${diagBlock([
         { k: "Identificador", v: opts.email, mono: true },
         { k: "Senha provisória", v: opts.tempPassword, mono: true, tone: "warn" },
@@ -245,7 +245,7 @@ export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword:
   });
 }
 export const qaWelcomeText = (o: { name: string; email: string; tempPassword: string; portalUrl?: string }) =>
-  `QUERO ARMAS — PROVISIONAMENTO DE ACESSO\n\n${o.name},\n\nSua conta no Portal Tático foi provisionada.\n\nIDENTIFICADOR: ${o.email}\nSENHA PROVISÓRIA: ${o.tempPassword}\nENDPOINT: ${o.portalUrl || PORTAL_URL}\n\nA senha acima é single-use. No primeiro login você será obrigado a trocá-la. Não compartilhe.`;
+  `ARSENAL INTELIGENTE — PROVISIONAMENTO DE ACESSO\n\n${o.name},\n\nSua conta no Portal Tático foi provisionada.\n\nIDENTIFICADOR: ${o.email}\nSENHA PROVISÓRIA: ${o.tempPassword}\nENDPOINT: ${o.portalUrl || PORTAL_URL}\n\nA senha acima é single-use. No primeiro login você será obrigado a trocá-la. Não compartilhe.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 2. CÓDIGO OTP DE PRIMEIRO ACESSO / ATIVAÇÃO
@@ -273,7 +273,7 @@ export function qaOtpHtml(opts: { name?: string; code: string; minutes?: number 
   });
 }
 export const qaOtpText = (o: { name?: string; code: string; minutes?: number }) =>
-  `QUERO ARMAS — TOKEN OTP\n\n${o.name ? `${o.name},\n\n` : ""}TOKEN: ${o.code}\nVALIDADE: ${o.minutes ?? 10} MIN · SINGLE-USE\n\nA equipe NUNCA pede este código. Se alguém pediu, é fraude.`;
+  `ARSENAL INTELIGENTE — TOKEN OTP\n\n${o.name ? `${o.name},\n\n` : ""}TOKEN: ${o.code}\nVALIDADE: ${o.minutes ?? 10} MIN · SINGLE-USE\n\nA equipe NUNCA pede este código. Se alguém pediu, é fraude.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 3. RECUPERAÇÃO DE SENHA
@@ -300,7 +300,7 @@ export function qaPasswordResetHtml(opts: { name?: string; resetUrl: string; min
   });
 }
 export const qaPasswordResetText = (o: { name?: string; resetUrl: string; minutes?: number }) =>
-  `QUERO ARMAS — RESET DE SENHA\n\nLink (single-use, ${o.minutes ?? 30} min):\n${o.resetUrl}\n\nSe não foi você, ignore. Sua senha atual permanece válida.`;
+  `ARSENAL INTELIGENTE — RESET DE SENHA\n\nLink (single-use, ${o.minutes ?? 30} min):\n${o.resetUrl}\n\nSe não foi você, ignore. Sua senha atual permanece válida.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 4. CONFIRMAÇÃO DE SENHA ALTERADA
@@ -325,7 +325,7 @@ export function qaPasswordChangedHtml(opts: { email: string; name?: string }) {
   });
 }
 export const qaPasswordChangedText = (o: { email: string }) =>
-  `QUERO ARMAS — SENHA ROTACIONADA\n\nConta: ${o.email}\nEvento: PASSWORD_ROTATED\n\nSe não foi você, force novo reset AGORA e nos avise.`;
+  `ARSENAL INTELIGENTE — SENHA ROTACIONADA\n\nConta: ${o.email}\nEvento: PASSWORD_ROTATED\n\nSe não foi você, force novo reset AGORA e nos avise.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 5. PAGAMENTO PENDENTE (boleto/PIX gerado)
@@ -352,7 +352,7 @@ export function qaPaymentPendingHtml(opts: { name: string; value: string; dueDat
   });
 }
 export const qaPaymentPendingText = (o: { name: string; value: string; dueDate: string; billingType: string; invoiceUrl?: string }) =>
-  `QUERO ARMAS — COBRANÇA EMITIDA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIMENTO: ${o.dueDate}\nFORMA: ${o.billingType.toUpperCase()}\nSTATUS: AGUARDANDO LIQUIDAÇÃO\n${o.invoiceUrl ? `\nPAGAR: ${o.invoiceUrl}\n` : ""}\nEnquanto não liquidar, sua operação fica em standby.`;
+  `ARSENAL INTELIGENTE — COBRANÇA EMITIDA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIMENTO: ${o.dueDate}\nFORMA: ${o.billingType.toUpperCase()}\nSTATUS: AGUARDANDO LIQUIDAÇÃO\n${o.invoiceUrl ? `\nPAGAR: ${o.invoiceUrl}\n` : ""}\nEnquanto não liquidar, sua operação fica em standby.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 6. PAGAMENTO VENCIDO
@@ -379,7 +379,7 @@ export function qaPaymentOverdueHtml(opts: { name: string; value: string; dueDat
   });
 }
 export const qaPaymentOverdueText = (o: { name: string; value: string; dueDate: string; invoiceUrl?: string }) =>
-  `QUERO ARMAS — INADIMPLÊNCIA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIDO EM: ${o.dueDate}\nSTATUS: OVERDUE · BLOQUEIO PARCIAL\n${o.invoiceUrl ? `\nREGULARIZAR: ${o.invoiceUrl}\n` : ""}\nSem liquidação, sua operação fica pausada.`;
+  `ARSENAL INTELIGENTE — INADIMPLÊNCIA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIDO EM: ${o.dueDate}\nSTATUS: OVERDUE · BLOQUEIO PARCIAL\n${o.invoiceUrl ? `\nREGULARIZAR: ${o.invoiceUrl}\n` : ""}\nSem liquidação, sua operação fica pausada.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 7. PAGAMENTO CONFIRMADO
@@ -405,7 +405,7 @@ export function qaPaymentConfirmedHtml(opts: { name: string; value: string; paid
   });
 }
 export const qaPaymentConfirmedText = (o: { name: string; value: string; paidAt: string }) =>
-  `QUERO ARMAS — LIQUIDAÇÃO CONFIRMADA\n\n${o.name},\n\nVALOR: ${o.value}\nCONFIRMADO EM: ${o.paidAt}\nSTATUS: PAID · OPERAÇÃO LIBERADA\n\nProcessos em standby foram destravados automaticamente.`;
+  `ARSENAL INTELIGENTE — LIQUIDAÇÃO CONFIRMADA\n\n${o.name},\n\nVALOR: ${o.value}\nCONFIRMADO EM: ${o.paidAt}\nSTATUS: PAID · OPERAÇÃO LIBERADA\n\nProcessos em standby foram destravados automaticamente.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 8. ATUALIZAÇÃO DE CASO/PROCESSO
@@ -438,7 +438,7 @@ export function qaCaseUpdateHtml(opts: { name: string; caseTitle: string; status
   });
 }
 export const qaCaseUpdateText = (o: { name: string; caseTitle: string; status: string; message?: string }) =>
-  `QUERO ARMAS — ATUALIZAÇÃO DE PROCESSO\n\n${o.name},\n\nPROCESSO: ${o.caseTitle.toUpperCase()}\nNOVO STATUS: ${o.status.toUpperCase()}\n${o.message ? `\nNOTA: ${o.message}\n` : ""}\nAuditoria completa no Portal.`;
+  `ARSENAL INTELIGENTE — ATUALIZAÇÃO DE PROCESSO\n\n${o.name},\n\nPROCESSO: ${o.caseTitle.toUpperCase()}\nNOVO STATUS: ${o.status.toUpperCase()}\n${o.message ? `\nNOTA: ${o.message}\n` : ""}\nAuditoria completa no Portal.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 9. DOCUMENTO PRONTO
@@ -465,7 +465,7 @@ export function qaDocumentReadyHtml(opts: { name: string; documentName: string; 
   });
 }
 export const qaDocumentReadyText = (o: { name: string; documentName: string }) =>
-  `QUERO ARMAS — DOCUMENTO PRONTO\n\n${o.name},\n\nDOCUMENTO: ${o.documentName.toUpperCase()}\nFORMATO: PDF · ICP-BRASIL · PAdES\nSTATUS: READY\n\nBaixe direto pelo Portal.`;
+  `ARSENAL INTELIGENTE — DOCUMENTO PRONTO\n\n${o.name},\n\nDOCUMENTO: ${o.documentName.toUpperCase()}\nFORMATO: PDF · ICP-BRASIL · PAdES\nSTATUS: READY\n\nBaixe direto pelo Portal.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 10. NOTIFICAÇÃO GENÉRICA (mensagem livre, mantendo identidade visual)
@@ -473,7 +473,7 @@ export const qaDocumentReadyText = (o: { name: string; documentName: string }) =
 export function qaGenericHtml(opts: { name?: string; subject: string; message: string; ctaUrl?: string; ctaLabel?: string }) {
   return qaWrap({
     preheader: opts.subject,
-    opTag: "COMUNICADO · QUERO ARMAS",
+    opTag: "COMUNICADO · ARSENAL INTELIGENTE",
     title: opts.subject,
     subtitle: "Mensagem oficial da equipe operacional.",
     body: `
@@ -484,7 +484,7 @@ export function qaGenericHtml(opts: { name?: string; subject: string; message: s
   });
 }
 export const qaGenericText = (o: { name?: string; subject: string; message: string; ctaUrl?: string; ctaLabel?: string }) =>
-  `QUERO ARMAS — ${o.subject.toUpperCase()}\n\n${o.name ? `${o.name},\n\n` : ""}${o.message.replace(/<[^>]+>/g, "")}\n${o.ctaUrl ? `\n${o.ctaLabel || "ACESSAR"}: ${o.ctaUrl}\n` : ""}`;
+  `ARSENAL INTELIGENTE — ${o.subject.toUpperCase()}\n\n${o.name ? `${o.name},\n\n` : ""}${o.message.replace(/<[^>]+>/g, "")}\n${o.ctaUrl ? `\n${o.ctaLabel || "ACESSAR"}: ${o.ctaUrl}\n` : ""}`;
 
 // ════════════════════════════════════════════════════════════════════
 // 11. BEM-VINDO AO ARSENAL (conta gratuita pública — pós-cadastro)
@@ -536,7 +536,7 @@ export function qaArsenalWelcomeHtml(opts: {
 
 export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoInteresse?: string | null; arsenalUrl?: string }) => {
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
-  return `QUERO ARMAS — ARSENAL INTELIGENTE ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nACESSO: LIBERADO DURANTE O PROCESSO (anuidade após deferimento)\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
+  return `ARSENAL INTELIGENTE — ARSENAL INTELIGENTE ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nACESSO: LIBERADO DURANTE O PROCESSO (anuidade após deferimento)\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
 };
 
 // ════════════════════════════════════════════════════════════════════
@@ -587,5 +587,5 @@ export const qaCadastroExistenteText = (o: {
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
   const loginUrl = o.loginUrl || "https://www.euqueroarmas.com.br/area-do-cliente/login";
   const recuperarUrl = o.recuperarUrl || "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha";
-  return `QUERO ARMAS — VOCÊ JÁ TEM ARSENAL\n\n${firstName},\n\nIdentificamos uma tentativa de novo cadastro com dados (${o.email}) já vinculados a um Arsenal ativo.\n\nPor segurança, não criamos uma segunda conta. Use seu acesso atual:\n\nLOGIN: ${loginUrl}\nRECUPERAR SENHA: ${recuperarUrl}\n\nSe não foi você, ignore este e-mail.`;
+  return `ARSENAL INTELIGENTE — VOCÊ JÁ TEM ARSENAL\n\n${firstName},\n\nIdentificamos uma tentativa de novo cadastro com dados (${o.email}) já vinculados a um Arsenal ativo.\n\nPor segurança, não criamos uma segunda conta. Use seu acesso atual:\n\nLOGIN: ${loginUrl}\nRECUPERAR SENHA: ${recuperarUrl}\n\nSe não foi você, ignore este e-mail.`;
 };

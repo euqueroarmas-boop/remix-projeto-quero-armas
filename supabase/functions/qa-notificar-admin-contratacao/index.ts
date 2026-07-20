@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
 
     // WhatsApp para admin
     const wppMsg = [
-      venda_id ? `🆕 *NOVA CONTRATAÇÃO (VENDA) — QUERO ARMAS*` : `🆕 *NOVA CONTRATAÇÃO — QUERO ARMAS*`,
+      venda_id ? `🆕 *NOVA CONTRATAÇÃO (VENDA) — ARSENAL INTELIGENTE*` : `🆕 *NOVA CONTRATAÇÃO — ARSENAL INTELIGENTE*`,
       ``,
       `👤 *${nome}*`,
       `CPF: ${cpf}`,
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
 <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(15,23,42,0.06);">
 <tr><td style="background:#0f172a;padding:22px 28px;color:#fff;">
-<div style="font-size:11px;letter-spacing:0.18em;color:#fbbf24;font-weight:700;">QUERO ARMAS · ADMIN</div>
+<div style="font-size:11px;letter-spacing:0.18em;color:#fbbf24;font-weight:700;">ARSENAL INTELIGENTE · ADMIN</div>
 <div style="font-size:20px;font-weight:700;margin-top:6px;">Nova contratação pelo portal</div>
 </td></tr>
 <tr><td style="padding:24px 28px;">
@@ -180,10 +180,10 @@ ${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><stro
 <a href="${portalLink}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Abrir contratações pendentes</a>
 </p>
 </td></tr>
-<tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas — notificação automática.</td></tr>
+<tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Arsenal Inteligente — notificação automática.</td></tr>
 </table></td></tr></table></body></html>`;
 
-    const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: ${statusRotulo}${valorInformado ? `\nValor informado: ${valorInformado}` : ""}\nOrigem: ${origemRotulo}\n\nAcesse: ${portalLink}`;
+    const text = `Nova contratação — Arsenal Inteligente\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: ${statusRotulo}${valorInformado ? `\nValor informado: ${valorInformado}` : ""}\nOrigem: ${origemRotulo}\n\nAcesse: ${portalLink}`;
 
     // Notificação interna ao admin via template dedicado nova-contratacao-admin.
     let emailOk = false;

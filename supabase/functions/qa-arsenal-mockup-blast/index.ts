@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
             subject,
             html: wrapped,
             text,
-            from_name: "Quero Armas",
+            from_name: "Arsenal Inteligente",
             reply_to: "contato@euqueroarmas.com.br",
             list_unsubscribe: "<mailto:contato@euqueroarmas.com.br?subject=REMOVER>",
             list_unsubscribe_post: "List-Unsubscribe=One-Click",
