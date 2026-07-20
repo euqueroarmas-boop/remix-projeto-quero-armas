@@ -188,16 +188,20 @@ export default function MotorPendenciaFichaModal({
   // -------- Upload direto (reusa engine do Hub Documental) --------
   const handleFile = async (file: File | null | undefined) => {
     if (!file) return;
-    if (!doc || !processo) {
-      // Sem contexto carregado ainda — não delega ao Assistente legado (comportamento explícito da tela de Pendências).
+    if (!doc) {
       toast.error("Aguardando carregar os dados da pendência. Tente novamente em instantes.");
+      return;
+    }
+    const processoId = processo?.id ?? doc?.processo_id;
+    if (!processoId) {
+      toast.error("Esta pendência não está vinculada a um processo. Contate o suporte.");
       return;
     }
     setErro(null);
     setFase("enviando");
     const proc: GuiaProcesso = {
-      id: processo.id,
-      cliente_id: processo.cliente_id ?? clienteId,
+      id: processoId,
+      cliente_id: processo?.cliente_id ?? clienteId,
     } as any;
     const dGuia: GuiaDoc = {
       id: doc.id,
