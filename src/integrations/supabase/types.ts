@@ -6127,6 +6127,54 @@ export type Database = {
           },
         ]
       }
+      qa_filiacao_alertas_enviados: {
+        Row: {
+          cliente_id: number
+          clube_id: number | null
+          data_referencia: string | null
+          enviado_em: string
+          filiacao_id: number | null
+          id: number
+          marco_dias: number
+          template_name: string
+        }
+        Insert: {
+          cliente_id: number
+          clube_id?: number | null
+          data_referencia?: string | null
+          enviado_em?: string
+          filiacao_id?: number | null
+          id?: never
+          marco_dias: number
+          template_name: string
+        }
+        Update: {
+          cliente_id?: number
+          clube_id?: number | null
+          data_referencia?: string | null
+          enviado_em?: string
+          filiacao_id?: number | null
+          id?: never
+          marco_dias?: number
+          template_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_filiacao_alertas_enviados_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_filiacao_alertas_enviados_filiacao_id_fkey"
+            columns: ["filiacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_filiacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_filiacoes: {
         Row: {
           cliente_id: number | null
