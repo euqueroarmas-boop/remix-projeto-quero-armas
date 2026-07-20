@@ -15,7 +15,7 @@ const Email = (props: Props) => (
     <Preview>Contrato pronto para assinatura</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}><Text style={brand}>QUERO ARMAS</Text></Section>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
         <Container style={card}>
           <Heading style={h1}>Contrato pronto para assinar</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
@@ -25,7 +25,7 @@ const Email = (props: Props) => (
             <Button style={button} href={props.linkAssinatura || 'https://euqueroarmas.com.br'}>Assinar contrato</Button>
           </Section>
           <Hr style={hr} />
-          <Text style={footer}>Quero Armas — euqueroarmas.com.br</Text>
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
         </Container>
       </Container>
     </Body>
