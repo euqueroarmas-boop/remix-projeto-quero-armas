@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
         templateData: {
           nome,
           loginUrl: "https://www.euqueroarmas.com.br/area-do-cliente/login",
-          recuperarUrl: "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha",
+          email: emailNorm,
         },
       });
     } catch (e) {
