@@ -24,6 +24,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { jsPDF } from "npm:jspdf@2.5.1";
+import { montarAnexosI, aplicarAnexosDinamicos } from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -533,7 +534,10 @@ async function rebuildRenderedContractHtml(sb: ReturnType<typeof svc>, contract:
   const valorContrato = contract.valor != null
     ? Number(contract.valor)
     : totalCents / 100;
-  const corpoFiltrado = filterContractAnexosBySlugs(String((template as any).corpo_html), slugs);
+  const templateHtml = String((template as any).corpo_html || "");
+  const corpoFiltrado = templateHtml.includes("{{anexos_i_dinamicos}}")
+    ? aplicarAnexosDinamicos(templateHtml, await montarAnexosI(sb, slugs))
+    : filterContractAnexosBySlugs(templateHtml, slugs);
   const html = substitute(corpoFiltrado, {
     cliente_nome: escapeHtml(cliente?.nome_completo || ""),
     cliente_cpf_cnpj: escapeHtml(cliente?.cpf || ""),
