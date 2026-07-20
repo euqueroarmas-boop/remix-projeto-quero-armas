@@ -285,7 +285,7 @@ export default function MotorPendenciaFichaModal({
   const distanciaMaisProximo = cfg.profissional === "psicologo" ? psico.distanciaMaisProximo : null;
   const buscaResultados = cfg.profissional === "psicologo"
     ? (psico.results || []).map((r) => ({
-        id: r.id, nome: r.nome, endereco: r.endereco || `${r.cidade || ""}/${r.uf}`,
+        id: r.id, nome: r.nome, endereco: formatEnderecoProfissional(r.endereco, r.bairro, r.cidade, r.uf),
         contato: r.telefones?.[0] || r.emails?.[0] || "—",
         telefone: r.telefones?.[0] || null,
         distancia_km: r.distancia_km ?? null,
@@ -300,6 +300,13 @@ export default function MotorPendenciaFichaModal({
         credencial: r.portaria ? `CREDENCIADO PF · ${r.portaria}` : "CREDENCIADO PF",
       }))
     : [];
+
+  function formatEnderecoProfissional(endereco?: string | null, bairro?: string | null, cidade?: string | null, ufSigla?: string | null) {
+    const localidade = [bairro, cidade && ufSigla ? `${cidade}/${ufSigla}` : cidade || ufSigla]
+      .filter((v) => v && String(v).trim().length)
+      .join(" · ");
+    return [endereco, localidade].filter((v) => v && String(v).trim().length).join(" — ") || "—";
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>

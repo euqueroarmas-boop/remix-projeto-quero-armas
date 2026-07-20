@@ -13,7 +13,7 @@ const MAX_TENTATIVAS = 3;
 async function processarLote(supabase: any, batchSize: number, uf?: string) {
   let q = supabase
     .from("qa_psico_credenciados")
-    .select("id, uf, endereco, geocode_tentativas")
+    .select("id, uf, cidade, endereco, geocode_tentativas")
     .is("latitude", null)
     .or("geocode_falhou.is.null,geocode_falhou.eq.false")
     .lt("geocode_tentativas", MAX_TENTATIVAS)
@@ -31,7 +31,10 @@ async function processarLote(supabase: any, batchSize: number, uf?: string) {
   for (const r of rows) {
     const tentativas = (r.geocode_tentativas ?? 0) + 1;
     try {
-      const meta = await geocodeEnderecoMeta(supabase, r.endereco, r.uf);
+      const enderecoCompleto = [r.endereco, r.cidade ? `${r.cidade}/${r.uf}` : null]
+        .filter(Boolean)
+        .join(", ");
+      const meta = await geocodeEnderecoMeta(supabase, enderecoCompleto, r.uf);
       if (meta.result) {
         await supabase.from("qa_psico_credenciados")
           .update({
