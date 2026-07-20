@@ -119,7 +119,7 @@ export default function Etapa5Arsenal({ clienteSalvo, arquivos, onAvancar, onVol
         onClose={() => setHubOpen(false)}
         customerId={customerId}
         qaClienteId={clienteSalvo.id}
-        mode="admin"
+        mode="arsenal"
         defaultTipo={hubTipo}
         pendingHubTipos={hubTipo ? [hubTipo] : []}
         clienteCpf={clienteSalvo.cpf}
