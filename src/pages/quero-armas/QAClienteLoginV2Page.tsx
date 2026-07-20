@@ -260,12 +260,9 @@ export default function QAClienteLoginV2Page() {
       </header>
 
       <main className="relative z-10 px-6 lg:px-12 pb-10">
-        <div className="mx-auto w-full max-w-7xl grid gap-8 lg:grid-cols-[1fr_minmax(360px,420px)] items-center min-h-[calc(100vh-140px)]">
-          {/* Sponsor showcase — esquerda */}
-          <SponsorShowcase />
-
-          {/* Login card — direita */}
-          <div className="w-full max-w-[420px] mx-auto lg:mx-0 lg:ml-auto">
+        <div className="mx-auto w-full max-w-[420px] flex items-center justify-center min-h-[calc(100vh-140px)]">
+          {/* Login card */}
+          <div className="w-full max-w-[420px] mx-auto">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] p-6 lg:p-7">
             <div className="mb-5">
               <span className="text-[9px] font-bold uppercase tracking-[0.32em]" style={{ color: "#D6A64B" }}>Área do Cliente</span>
