@@ -14,7 +14,7 @@ const Email = (props: Props) => (
     <Preview>Seu código de acesso</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}><Text style={brand}>QUERO ARMAS</Text></Section>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
         <Container style={card}>
           <Heading style={h1}>Código de acesso</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
@@ -22,7 +22,7 @@ const Email = (props: Props) => (
           <Section style={{ textAlign: 'center', backgroundColor: '#0a0a0a', padding: '18px', borderRadius: 4, margin: '12px 0 20px' }}><Text style={{ color: '#fff', fontSize: 28, letterSpacing: '0.4em', fontWeight: 'bold', margin: 0 }}>{props.codigo}</Text></Section>
           
           <Hr style={hr} />
-          <Text style={footer}>Quero Armas — euqueroarmas.com.br</Text>
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
         </Container>
       </Container>
     </Body>

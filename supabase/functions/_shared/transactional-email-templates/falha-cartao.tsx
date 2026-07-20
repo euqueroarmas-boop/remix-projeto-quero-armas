@@ -15,7 +15,7 @@ const Email = (props: Props) => (
     <Preview>Falha ao cobrar cartão</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}><Text style={brand}>QUERO ARMAS</Text></Section>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
         <Container style={card}>
           <Heading style={h1}>Não conseguimos cobrar seu cartão</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
@@ -25,7 +25,7 @@ const Email = (props: Props) => (
             <Button style={button} href={props.portalUrl || 'https://euqueroarmas.com.br'}>Atualizar cartão</Button>
           </Section>
           <Hr style={hr} />
-          <Text style={footer}>Quero Armas — euqueroarmas.com.br</Text>
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
         </Container>
       </Container>
     </Body>

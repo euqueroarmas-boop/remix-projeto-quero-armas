@@ -15,7 +15,7 @@ const Email = (props: Props) => (
     <Preview>Novo acesso detectado</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Section style={header}><Text style={brand}>QUERO ARMAS</Text></Section>
+        <Section style={header}><Text style={brand}>ARSENAL INTELIGENTE</Text></Section>
         <Container style={card}>
           <Heading style={h1}>Novo dispositivo / acesso suspeito</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
@@ -25,7 +25,7 @@ const Email = (props: Props) => (
             <Button style={button} href={props.resetUrl || 'https://euqueroarmas.com.br'}>Proteger minha conta</Button>
           </Section>
           <Hr style={hr} />
-          <Text style={footer}>Quero Armas — euqueroarmas.com.br</Text>
+          <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>
         </Container>
       </Container>
     </Body>
