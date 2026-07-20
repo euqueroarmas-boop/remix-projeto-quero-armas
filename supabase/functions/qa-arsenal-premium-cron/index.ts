@@ -221,15 +221,23 @@ Deno.serve(async (req) => {
         </p>`;
 
       try {
-        const { error: sendErr } = await sb.functions.invoke("send-smtp-email", {
-          body: {
-            to: cliente.email,
-            subject,
-            html: htmlBase(subject.replace(/^[^\w]*\s*/, ""), corpo),
-            trace_id: `arsenal-premium-${a.id}-${dias}`,
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        const res = await sendTransactional({
+          templateName: "arsenal-premium-renovacao",
+          recipientEmail: cliente.email,
+          idempotencyKey: `arsenal-premium-${a.id}-${dias}`,
+          templateData: {
+            nome,
+            diasRestantes: String(dias),
+            dataFim: fimBR,
+            gratuidade: Boolean(gratuidade),
+            valor: "R$ 297/ano",
+            parcelas: "12x de R$ 24,75",
+            carenciaDias: String(CARENCIA_DIAS),
+            portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
           },
         });
-        if (sendErr) throw sendErr;
+        if (!res.ok) throw new Error(res.error);
         await sb.from("qa_arsenal_avisos_enviados").insert({
           assinatura_id: a.id,
           periodo_fim: a.periodo_fim,
@@ -281,15 +289,19 @@ Deno.serve(async (req) => {
           documentos, renove a assinatura no painel — o acesso volta na hora.
         </p>`;
       try {
-        await sb.functions.invoke("send-smtp-email", {
-          body: {
-            to: cliente.email,
-            subject: "🔒 Arsenal Inteligente Premium suspenso por falta de pagamento",
-            html: htmlBase("Acesso Premium suspenso", corpo),
-            trace_id: `arsenal-premium-susp-${a.id}`,
+        const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+        await sendTransactional({
+          templateName: "arsenal-premium-suspenso",
+          recipientEmail: cliente.email,
+          idempotencyKey: `arsenal-premium-susp-${a.id}`,
+          templateData: {
+            nome,
+            dataFim: fmtBR(a.periodo_fim),
+            carenciaDias: String(CARENCIA_DIAS),
+            portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
           },
         });
-      } catch { /* suspensão já aplicada; e-mail tenta de novo se rodar de novo? não — ok registrar erro */ }
+      } catch { /* suspensão já aplicada; e-mail tentará de novo em próxima execução */ }
     }
   } catch (e) {
     stats.erros.push(`suspensao: ${e instanceof Error ? e.message : "unknown"}`);
