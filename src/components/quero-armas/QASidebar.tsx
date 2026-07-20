@@ -5,7 +5,7 @@ import {
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, Tags, GraduationCap,
-  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit,
+  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit, PlusCircle,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +25,7 @@ const NAV_GROUPS = [
     label: "Operação",
     items: [
       { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
+      { title: "Nova Venda", url: "/admin/piloto-real", icon: PlusCircle },
       { title: "Central de Adesão", url: "/admin/central-adesao", icon: FileSignature },
       { title: "Processos & Documentos", url: "/processos", icon: FileStack },
       { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },
