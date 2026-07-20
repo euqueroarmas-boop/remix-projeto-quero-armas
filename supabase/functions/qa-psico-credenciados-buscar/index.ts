@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAX_GEOCODE_PER_CALL = 12; // Nominatim: 1 req/s
+const MAX_GEOCODE_PER_CALL = 8; // Nominatim: 1 req/s (roda em background)
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -116,18 +116,31 @@ Deno.serve(async (req) => {
     const origin = cep.length === 8 ? await geocodeCEP(supabase, cep) : null;
     const ufFiltro: string | null = origin?.uf || body.uf || null;
 
-    // Lazy geocode: pega até MAX_GEOCODE entradas sem coordenadas, da mesma UF do cliente
+    // Lazy geocode em BACKGROUND (não bloqueia a resposta ao cliente).
+    // A primeira busca ainda pode não ter todos os pontos geocodificados,
+    // mas as próximas terão. Isso evita timeouts na UI.
     if (ufFiltro) {
-      const { data: pendentes } = await supabase
-        .from("qa_psico_credenciados")
-        .select("id,endereco,uf")
-        .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
-        .is("latitude", null).not("endereco", "is", null)
-        .limit(MAX_GEOCODE_PER_CALL);
-      for (const e of pendentes || []) {
-        const g = await geocodeEndereco(supabase, e.endereco, e.uf);
-        if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
-        await nominatimDelay();
+      const bgGeocode = async () => {
+        try {
+          const { data: pendentes } = await supabase
+            .from("qa_psico_credenciados")
+            .select("id,endereco,uf")
+            .eq("tipo", tipo).eq("uf", ufFiltro).eq("ativo", true)
+            .is("latitude", null).not("endereco", "is", null)
+            .limit(MAX_GEOCODE_PER_CALL);
+          for (const e of pendentes || []) {
+            const g = await geocodeEndereco(supabase, e.endereco, e.uf);
+            if (g) await supabase.from("qa_psico_credenciados").update({ latitude: g.lat, longitude: g.lng }).eq("id", e.id);
+            await nominatimDelay();
+          }
+        } catch (err) { console.warn("[bg-geocode]", err); }
+      };
+      // @ts-ignore EdgeRuntime.waitUntil existe no runtime Supabase
+      if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
+        // @ts-ignore
+        EdgeRuntime.waitUntil(bgGeocode());
+      } else {
+        bgGeocode();
       }
     }
 
