@@ -37,7 +37,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       .select("id, slug, nome, preco")
       .eq("ativo", true)
       .order("nome", { ascending: true })
-      .then(({ data }) => { setServicos((data ?? []) as Servico[]); setCarregando(false); });
+      .then(({ data }) => { setServicos((data ?? []) as unknown as Servico[]); setCarregando(false); });
   }, []);
 
   const servicosFiltrados = servicos.filter((s) => {
@@ -93,7 +93,8 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       }
 
       // Auditoria
-      await supabase.from("qa_logs_auditoria" as any).insert({
+      try {
+        await supabase.from("qa_logs_auditoria" as any).insert({
         acao: "pre_piloto_contrato_gerado",
         entidade: "pre_piloto",
         entidade_id: String(vendaId),
@@ -104,7 +105,8 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           servico_nome: servico.nome,
           venda_id_legado: vendaLegado,
         },
-      }).then(() => {}).catch(() => {});
+        });
+      } catch { /* best effort */ }
 
       setVendaGerada({ id: vendaId, legado: vendaLegado });
       setEtapa("ok");
