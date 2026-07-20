@@ -443,7 +443,7 @@ export default function DadosFormularioPublicoSection({
         <QAFieldGrid cols={2}>
           <QAFieldRow
             label="Enviado em"
-            value={cad.created_at ? new Date(cad.created_at).toLocaleString("pt-BR") : "—"}
+            value={cad.created_at ? new Date(cad.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—"}
           />
           <QAFieldRow label="Origem" value="Formulário público" />
           <QAFieldRow label="Serviço solicitado" value={cad.servico_interesse || "—"} />

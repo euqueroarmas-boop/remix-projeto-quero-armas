@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp, FileText } from "lucide-react";
 
 function fmt(d?: string | null) {
   if (!d) return "—";
-  try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+  try { return new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return d; }
 }
 
 export default function OrigemCadastroBloco({ cadastro }: { cadastro: any }) {

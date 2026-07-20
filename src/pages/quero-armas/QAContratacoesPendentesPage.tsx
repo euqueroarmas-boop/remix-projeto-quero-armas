@@ -26,7 +26,7 @@ interface PendingRow {
 function formatDateTime(d: string | null) {
   if (!d) return "—";
   try {
-    return new Date(d).toLocaleString("pt-BR");
+    return new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
   } catch {
     return d;
   }

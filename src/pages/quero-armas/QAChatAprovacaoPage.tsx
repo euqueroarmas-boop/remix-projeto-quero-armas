@@ -431,7 +431,7 @@ export default function QAChatAprovacaoPage() {
                 <header className="px-4 py-2.5 flex flex-wrap items-center gap-2 justify-between border-b"
                   style={{ borderColor: "hsl(220 13% 93%)", background: "hsl(220 14% 98%)" }}>
                   <div className="text-[11px] uppercase tracking-widest" style={{ color: "hsl(220 10% 55%)" }}>
-                    {row.cliente_nome ? row.cliente_nome.toUpperCase() : "Cliente"} · {new Date(row.created_at).toLocaleString("pt-BR")}
+                    {row.cliente_nome ? row.cliente_nome.toUpperCase() : "Cliente"} · {new Date(row.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </div>
                   <div className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
                     {row.aprovada_kb === true && (

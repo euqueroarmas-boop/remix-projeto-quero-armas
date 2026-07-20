@@ -47,7 +47,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 
 function fmtDate(d: string | null) {
   if (!d) return "—";
-  try { return new Date(d).toLocaleString("pt-BR"); } catch { return d; }
+  try { return new Date(d).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }); } catch { return d; }
 }
 
 export default function QAAcessosPage() {
