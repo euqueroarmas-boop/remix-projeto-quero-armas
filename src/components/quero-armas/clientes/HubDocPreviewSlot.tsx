@@ -153,7 +153,7 @@ export default function HubDocPreviewSlot({
           </div>
         ) : (
           <div
-            className="relative isolate flex min-h-[360px] flex-1 items-start justify-center overflow-auto border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
+            className="relative isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
             style={{ borderRadius: 2 }}
           >
             {/* Remover — botão vermelho, sempre acima da prévia */}
@@ -222,11 +222,11 @@ export default function HubDocPreviewSlot({
               <div
                 className="pointer-events-none absolute z-30"
                 style={{
-                  top: 18,
-                  right: -10,
+                  top: 68,
+                  right: -6,
                   transform: "rotate(-8deg)",
-                  border: `5px solid ${BORDO}`,
-                  padding: "8px 16px 4px",
+                  border: `4px solid ${BORDO}`,
+                  padding: "6px 12px 3px",
                   background: "rgba(255,255,255,.92)",
                   borderRadius: 4,
                   color: BORDO,
@@ -234,8 +234,8 @@ export default function HubDocPreviewSlot({
                   boxShadow: "0 6px 18px rgba(122,31,43,.25)",
                 }}
               >
-                <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
-                <div style={{ fontSize: 9, letterSpacing: ".3em", textAlign: "center", marginTop: 2 }}>
+                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
+                <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
                   IA · APROVADO
                 </div>
               </div>
