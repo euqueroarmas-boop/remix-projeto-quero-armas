@@ -64,95 +64,40 @@ export default function QAContratoViewPage() {
     if (!contrato || !id) return;
     setBaixando(true);
     try {
-      // Registra o download (com IP/UA/SO) e RECEBE os dados da sessão
-      // para carimbar no PDF
-      let sessao = contrato.sessao;
-      try {
-        const { data: r } = await supabase.functions.invoke(
-          "qa-contrato-view-public",
-          { body: { contract_id: id, action: "download" } },
-        );
-        if ((r as any)?.sessao) sessao = (r as any).sessao;
-      } catch (e) {
-        console.warn("[baixarPdf] log de evento falhou:", e);
-      }
+      const endpoint = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-contrato-view-public`);
+      endpoint.searchParams.set("contract_id", id);
+      endpoint.searchParams.set("action", "download");
+      endpoint.searchParams.set("format", "pdf");
+      endpoint.searchParams.set("_cb", String(Date.now()));
 
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
-
-      const alvo = document.querySelector(".qa-contrato-body") as HTMLElement | null;
-      if (!alvo) throw new Error("Conteúdo do contrato não encontrado");
-
-      // Injeta bloco de "Registro de Sessão" no final do contrato antes do render
-      const bloco = document.createElement("section");
-      bloco.className = "qa-contrato-sessao";
-      bloco.setAttribute("data-injected", "1");
-      const fmt = (v?: string | null) => v && String(v).trim() ? v : "—";
-      const registradoBR = sessao?.registrado_em
-        ? new Date(sessao.registrado_em).toLocaleString("pt-BR", {
-            timeZone: "America/Sao_Paulo",
-            dateStyle: "short",
-            timeStyle: "medium",
-          })
-        : "—";
-      bloco.innerHTML = `
-        <h2 style="margin-top:32px">REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO</h2>
-        <p style="margin:6px 0 12px;font-size:12px;color:#444">
-          Impressão técnica coletada no momento do download deste PDF pela CONTRATANTE,
-          para fins probatórios do consentimento e da autoria do ato (art. 10, MP 2.200-2/2001).
-        </p>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <tbody>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd;width:35%"><strong>Contrato</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(contrato.contract_number)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Data/Hora (America/Sao_Paulo)</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${registradoBR}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Endereço IP</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.ip)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Sistema Operacional</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.so)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Navegador</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.browser)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>País (Cloudflare)</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.country)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Idioma</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.accept_language)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Referer</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.referer)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>User-Agent</strong></td><td style="padding:4px 8px;border:1px solid #ddd;word-break:break-all">${fmt(sessao?.user_agent)}</td></tr>
-            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Ação</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.action)}</td></tr>
-          </tbody>
-        </table>
-        <p style="margin-top:10px;font-size:11px;color:#666">
-          Registro persistido em <em>qa_contract_events</em> como <strong>contrato_baixado_cliente</strong>,
-          vinculado ao UUID do contrato. Documento gerado para aceite eletrônico na plataforma da CONTRATADA.
-        </p>
-      `;
-      alvo.appendChild(bloco);
-
-      const canvas = await html2canvas(alvo, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
+      const res = await fetch(endpoint.toString(), {
+        method: "GET",
+        headers: {
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Accept: "application/pdf",
+        },
       });
-      // Remove o bloco temporário injetado — não deve permanecer na tela
-      bloco.remove();
 
-      const pdf = new jsPDF({ unit: "pt", format: "a4", compress: true });
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      if (!res.ok) {
+        const erroTexto = await res.text().catch(() => "");
+        throw new Error(erroTexto || `Falha HTTP ${res.status}`);
       }
 
-      const nome = contrato.nome_cliente ? ` - ${contrato.nome_cliente}` : "";
-      pdf.save(`${contrato.contract_number}${nome} - Contrato de Adesão.pdf`);
+      const blob = await res.blob();
+      if (!blob.size) throw new Error("PDF vazio");
+
+      const nome = `${contrato.contract_number || "CONTRATO"} - Contrato de Adesão.pdf`;
+      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = nome;
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
       toast.success("Contrato baixado");
     } catch (e: any) {
       console.error("[baixarPdf]", e);
