@@ -34,8 +34,11 @@ function fmt(iso: string) {
 function statusLabel(s: string) {
   const map: Record<string, { label: string; color: string }> = {
     generated_pending_company_signature: { label: "Aguardando assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
+    pending_customer_signature: { label: "Aguardando assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
+    pending_company_signature: { label: "Aguardando contra-assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
     signed_pending_validation: { label: "Assinado — validando", color: "text-blue-700 bg-blue-50 border-blue-200" },
     validated: { label: "Validado", color: "text-green-700 bg-green-50 border-green-200" },
+    signed: { label: "Assinado", color: "text-green-700 bg-green-50 border-green-200" },
     cancelled: { label: "Cancelado", color: "text-red-700 bg-red-50 border-red-200" },
   };
   return map[s] ?? { label: s, color: "text-muted-foreground bg-muted border-muted" };
@@ -54,27 +57,26 @@ export default function HistoricoContratosPendentes() {
   const carregar = useCallback(async () => {
     setCarregando(true);
     try {
-      // Busca contratos gerados via pré-piloto (auditoria com ação pre_piloto_contrato_gerado)
-      // junto com dados do contrato e cliente
+      // Busca todos os contratos pendentes de assinatura (independente de auditoria pré-piloto),
+      // para que contratos gerados em fluxos parciais/interrompidos também apareçam.
       const { data: auditorias } = await supabase
         .from("qa_logs_auditoria" as any)
         .select("entidade_id, detalhes_json, created_at")
         .eq("acao", "pre_piloto_contrato_gerado")
         .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (!auditorias?.length) { setContratos([]); setCarregando(false); return; }
-
-      const vendaIds = (auditorias as any[])
-        .map((a) => Number(a?.detalhes_json?.venda_id ?? a?.entidade_id))
-        .filter((v) => Number.isFinite(v));
-      if (!vendaIds.length) { setContratos([]); setCarregando(false); return; }
+        .limit(100);
 
       const { data: contratoRows } = await supabase
         .from("qa_contracts" as any)
         .select("id, status, venda_id, cliente_id, created_at")
-        .in("venda_id", vendaIds)
-        .order("created_at", { ascending: false });
+        .in("status", [
+          "generated_pending_company_signature",
+          "pending_customer_signature",
+          "pending_company_signature",
+          "signed_pending_validation",
+        ])
+        .order("created_at", { ascending: false })
+        .limit(50);
 
       if (!contratoRows?.length) { setContratos([]); setCarregando(false); return; }
 
