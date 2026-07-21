@@ -110,6 +110,13 @@ Deno.serve(async (req) => {
     const temHtml = /<\s*(h[1-6]|p|section|div|ul|ol|table)\b/i.test(corpoBruto);
     let corpoHtml = temHtml ? corpoBruto : textoParaHtml(corpoBruto);
 
+    // Remove blocos <style> e comentários HTML — servem apenas para a
+    // pré-visualização do arquivo enviado; o portal aplica o próprio estilo.
+    corpoHtml = corpoHtml
+      .replace(/<style[^>]*>[\s\S]*?<\/style>\s*/gi, "")
+      .replace(/<!--[\s\S]*?-->\s*/g, "")
+      .trim();
+
     // Extrai blocos de anexo por slug.
     const sectionRe = /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/gi;
     const anexos: Array<{ slug: string; html: string }> = [];
