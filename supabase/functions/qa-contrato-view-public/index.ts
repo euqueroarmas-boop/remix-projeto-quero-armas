@@ -115,7 +115,7 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const marginLeft = 132;   // margem esquerda larga para o carimbo
+  const marginLeft = 104;   // margem esquerda para o carimbo (com respiro até o texto)
   const marginRight = 48;
   const marginTop = 56;
   const marginBottom = 56;
@@ -194,17 +194,48 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
   ];
 
   const totalPages = doc.getNumberOfPages();
-  const stampRuleX = 30;                          // linha vertical delimitadora
+  const stampRuleX = 24;                          // linha vertical delimitadora
   const stampTop = marginTop;
   const stampBottom = pageH - marginBottom;
   const availH = stampBottom - stampTop;
 
-  // Cada "coluna" rotacionada ocupa uma faixa horizontal dentro da margem esquerda.
-  // Colunas (da linha p/ dentro do texto do contrato):
-  //  x=40 → título / paginação
-  //  x=54 → LABEL: valor  (uma linha por campo)
-  const titleX = 40;
-  const fieldX = 52;
+  // Colunas rotacionadas dentro da margem esquerda.
+  const titleX = 32;
+  const fieldStartX = 44;
+  const columnGap = 9;                            // espaço horizontal entre colunas rotacionadas
+  const textGutter = 16;                          // respiro entre o carimbo e o texto do contrato
+  const maxColumns = Math.max(1, Math.floor((marginLeft - fieldStartX - textGutter) / columnGap));
+
+  // Quebra a linha única de campos em N colunas verticais, cortando em vírgulas.
+  const fieldsLine = stampRows.map(([l, v]) => `${l}: ${v}`).join(", ");
+  const fontSize = 6.8;
+  const charAdvance = 3.1;                        // aproximação da altura visual da linha rotacionada
+  const maxCharsPerCol = Math.max(20, Math.floor(availH / charAdvance));
+  const parts = fieldsLine.split(/(, )/); // mantém separadores
+  const columns: string[] = [];
+  let current = "";
+  for (const part of parts) {
+    if ((current + part).length > maxCharsPerCol && current.length > 0) {
+      columns.push(current.replace(/,\s*$/, ""));
+      current = part.replace(/^,\s*/, "");
+    } else {
+      current += part;
+    }
+    if (columns.length >= maxColumns - 1) break;
+  }
+  // resto (respeitando o limite total de colunas)
+  const consumed = columns.join(", ").length + (columns.length ? 2 : 0);
+  const remaining = fieldsLine.slice(consumed);
+  if (remaining) {
+    if (columns.length < maxColumns) columns.push(remaining);
+    else {
+      const last = columns[columns.length - 1];
+      const truncated = (last + ", " + remaining).slice(0, maxCharsPerCol - 1) + "…";
+      columns[columns.length - 1] = truncated;
+    }
+  } else if (current) {
+    columns.push(current);
+  }
 
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
@@ -225,15 +256,14 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
       { angle: 90, baseline: "alphabetic" } as any,
     );
 
-    // Campos em UMA ÚNICA linha rotacionada, separados por vírgula,
-    // começando logo "abaixo" do título (à direita dele, já que está rotacionado 90°).
+    // Campos rotacionados, quebrando em múltiplas colunas verticais quando não couber em uma só.
     doc.setFont("times", "normal");
-    doc.setFontSize(6.8);
+    doc.setFontSize(fontSize);
     doc.setTextColor(70);
-    const oneLine = stampRows.map(([l, v]) => `${l}: ${v}`).join(", ");
-    const maxChars = Math.floor(availH / 3.2);
-    const shown = oneLine.length > maxChars ? oneLine.slice(0, maxChars - 1) + "…" : oneLine;
-    doc.text(shown, fieldX, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
+    for (let c = 0; c < columns.length; c++) {
+      const x = fieldStartX + c * columnGap;
+      doc.text(columns[c], x, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
+    }
 
     // Paginação discreta no pé da lateral
     doc.setFontSize(6.5);
