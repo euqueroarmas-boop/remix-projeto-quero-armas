@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2, FileText, Printer, AlertTriangle, CheckCircle2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -30,6 +30,7 @@ export default function QAContratoViewPage() {
   const [contrato, setContrato] = useState<ContratoData | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [baixando, setBaixando] = useState(false);
 
   function carregar() {
     if (!id) { setErro("Link inválido."); setCarregando(false); return; }
@@ -47,6 +48,59 @@ export default function QAContratoViewPage() {
   }
 
   useEffect(() => { carregar(); }, [id]);
+
+  async function baixarPdf() {
+    if (!contrato || !id) return;
+    setBaixando(true);
+    try {
+      // Registra o download (com IP/UA/SO) no motor de eventos
+      supabase.functions
+        .invoke("qa-contrato-view-public", { body: { contract_id: id, action: "download" } })
+        .catch(() => { /* log-only; nunca bloquear o download */ });
+
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
+      const alvo = document.querySelector(".qa-contrato-body") as HTMLElement | null;
+      if (!alvo) throw new Error("Conteúdo do contrato não encontrado");
+
+      const canvas = await html2canvas(alvo, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+
+      const pdf = new jsPDF({ unit: "pt", format: "a4", compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const nome = contrato.nome_cliente ? ` - ${contrato.nome_cliente}` : "";
+      pdf.save(`${contrato.contract_number}${nome} - Contrato de Adesão.pdf`);
+      toast.success("Contrato baixado");
+    } catch (e: any) {
+      console.error("[baixarPdf]", e);
+      toast.error("Não foi possível gerar o PDF. Tente novamente.");
+    } finally {
+      setBaixando(false);
+    }
+  }
 
   useEffect(() => {
     if (contrato) {
@@ -124,11 +178,25 @@ export default function QAContratoViewPage() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              onClick={() => window.print()}
+              onClick={baixarPdf}
+              disabled={baixando}
               className="gap-2 bg-[#7A1F2B] hover:bg-[#6a1827] text-white text-xs"
             >
+              {baixando ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5" />
+              )}
+              {baixando ? "Gerando PDF…" : "Baixar contrato (PDF)"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.print()}
+              className="gap-2 text-xs"
+            >
               <Printer className="w-3.5 h-3.5" />
-              Imprimir / Salvar PDF
+              Imprimir
             </Button>
           </div>
         </div>
@@ -137,7 +205,7 @@ export default function QAContratoViewPage() {
         <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 space-y-1">
           <p className="font-semibold">Como assinar seu contrato:</p>
           <ol className="list-decimal list-inside space-y-0.5">
-            <li>Clique em <strong>Imprimir / Salvar PDF</strong> e salve o arquivo no seu computador.</li>
+            <li>Clique em <strong>Baixar contrato (PDF)</strong> para salvar o arquivo no seu dispositivo.</li>
             <li>Acesse o aplicativo <strong>GOV.BR</strong> e assine o PDF eletronicamente.</li>
             <li>Envie o arquivo assinado por <strong>WhatsApp</strong> para nossa equipe.</li>
           </ol>
