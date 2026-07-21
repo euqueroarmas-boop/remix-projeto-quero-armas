@@ -115,10 +115,12 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const marginX = 48;
+  const marginLeft = 132;   // margem esquerda larga para o carimbo
+  const marginRight = 48;
   const marginTop = 56;
   const marginBottom = 56;
-  const contentW = pageW - marginX * 2;
+  const marginX = marginLeft; // usado pelas rotinas de escrita
+  const contentW = pageW - marginLeft - marginRight;
   let y = marginTop;
 
   const ensureSpace = (needed: number) => {
@@ -163,7 +165,7 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
       ensureSpace(18);
       y += 6;
       doc.setDrawColor(190);
-      doc.line(marginX, y, pageW - marginX, y);
+      doc.line(marginX, y, pageW - marginRight, y);
       y += 14;
       continue;
     }
@@ -174,52 +176,81 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
     if (block.kind === "li") write(block.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 5 });
   }
 
-  doc.addPage();
-  y = marginTop;
-  write("REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO", { size: 12, bold: true, align: "center", upper: true, lineGap: 16 });
-  write(
-    "Impressão técnica coletada no momento do download deste PDF pela CONTRATANTE, para fins probatórios do consentimento e da autoria do ato (art. 10, MP 2.200-2/2001).",
-    { size: 9, align: "justify", lineGap: 14 },
-  );
-
+  // === Carimbo lateral esquerdo em TODAS as páginas ===
   const registradoBR = sessao.registrado_em
     ? new Date(sessao.registrado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" })
     : "—";
-  const rows: [string, string][] = [
-    ["Contrato", contract.contract_number || contract.id || "—"],
-    ["Data/Hora (America/Sao_Paulo)", registradoBR],
-    ["Endereço IP", sessao.ip || "—"],
-    ["Sistema Operacional", sessao.so || "—"],
-    ["Navegador", sessao.browser || "—"],
-    ["País (Cloudflare)", sessao.country || "—"],
-    ["Idioma", sessao.accept_language || "—"],
-    ["Referer", sessao.referer || "—"],
-    ["User-Agent", sessao.user_agent || "—"],
-    ["Ação", sessao.action || "download"],
+  const stampRows: [string, string][] = [
+    ["CONTRATO", String(contract.contract_number || contract.id || "—")],
+    ["DATA/HORA (BRT)", registradoBR],
+    ["IP", sessao.ip || "—"],
+    ["SO", sessao.so || "—"],
+    ["NAVEGADOR", sessao.browser || "—"],
+    ["PAÍS", sessao.country || "—"],
+    ["IDIOMA", sessao.accept_language || "—"],
+    ["REFERER", sessao.referer || "—"],
+    ["USER-AGENT", sessao.user_agent || "—"],
+    ["AÇÃO", sessao.action || "download"],
   ];
 
-  const labelW = 190;
-  const rowH = 28;
-  doc.setFontSize(8.5);
-  rows.forEach(([label, value]) => {
-    const valueLines = doc.splitTextToSize(value, contentW - labelW - 18) as string[];
-    const h = Math.max(rowH, valueLines.length * 11 + 12);
-    ensureSpace(h);
-    doc.setDrawColor(210);
-    doc.rect(marginX, y, labelW, h);
-    doc.rect(marginX + labelW, y, contentW - labelW, h);
-    doc.setFont("times", "bold");
-    doc.text(label, marginX + 8, y + 17);
-    doc.setFont("times", "normal");
-    valueLines.forEach((line, i) => doc.text(line, marginX + labelW + 8, y + 17 + i * 11));
-    y += h;
-  });
+  const totalPages = doc.getNumberOfPages();
+  const stampRuleX = 30;                          // linha vertical delimitadora
+  const stampTop = marginTop;
+  const stampBottom = pageH - marginBottom;
+  const availH = stampBottom - stampTop;
 
-  y += 12;
-  write(
-    "Registro persistido no banco de auditoria como contrato_baixado_cliente, vinculado ao UUID do contrato. Documento gerado para aceite eletrônico na plataforma da CONTRATADA.",
-    { size: 8, align: "justify", lineGap: 0 },
-  );
+  // Cada "coluna" rotacionada ocupa uma faixa horizontal dentro da margem esquerda.
+  // Colunas (da linha p/ dentro do texto do contrato):
+  //  x=40 → título / paginação
+  //  x=54 → LABEL: valor  (uma linha por campo)
+  const titleX = 40;
+  const fieldX = 60;
+  const fieldGap = 8; // distância horizontal entre colunas de campos
+
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+
+    // Linha vertical delimitadora do carimbo
+    doc.setDrawColor(190);
+    doc.setLineWidth(0.4);
+    doc.line(stampRuleX, stampTop, stampRuleX, stampBottom);
+
+    // Título do carimbo (rotacionado, lê de baixo para cima)
+    doc.setFont("times", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90);
+    doc.text(
+      "REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO · MP 2.200-2/2001",
+      titleX,
+      stampBottom,
+      { angle: 90, baseline: "alphabetic" } as any,
+    );
+
+    // Paginação (topo da lateral)
+    doc.setFont("times", "normal");
+    doc.setFontSize(6.8);
+    doc.setTextColor(130);
+    doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 30, {
+      angle: 90,
+      baseline: "alphabetic",
+    } as any);
+
+    // Campos: cada um é uma coluna vertical própria (label + valor concatenados)
+    // Isso evita sobreposição — cada string ocupa sua própria faixa horizontal.
+    doc.setFontSize(6.8);
+    doc.setTextColor(70);
+    stampRows.forEach(([label, value], i) => {
+      const x = fieldX + i * fieldGap;
+      // trunca strings enormes (user-agent) para caber na altura útil
+      const maxChars = Math.floor(availH / 3.6);
+      const composed = `${label}: ${value}`;
+      const shown = composed.length > maxChars ? composed.slice(0, maxChars - 1) + "…" : composed;
+      doc.setFont("times", "normal");
+      doc.text(shown, x, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
+    });
+
+    doc.setTextColor(0);
+  }
 
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
