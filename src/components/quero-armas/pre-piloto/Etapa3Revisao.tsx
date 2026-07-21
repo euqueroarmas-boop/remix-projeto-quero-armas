@@ -17,6 +17,7 @@ const CAMPOS_ORDENADOS: { key: string; label: string; required?: boolean }[] = [
   { key: "cpf", label: "CPF", required: true },
   { key: "data_nascimento", label: "Data de Nascimento" },
   { key: "nome_mae", label: "Nome da Mãe" },
+  { key: "nome_pai", label: "Nome do Pai" },
   { key: "email", label: "E-mail" },
   { key: "celular", label: "Celular/WhatsApp" },
   { key: "sexo", label: "Sexo" },

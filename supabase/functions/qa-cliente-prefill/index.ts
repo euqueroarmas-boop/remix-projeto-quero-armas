@@ -184,6 +184,7 @@ const SYSTEM_PROMPT = [
     "16) Telefone/celular: normalize para apenas dígitos com DDD (10 ou 11 dígitos). Se houver mais de um número, use o mais mencionado ou o marcado como principal em celular, e coloque o outro em telefone_secundario.",
     "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): trate cada nome como fonte válida de telefone. Ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650' (celulares brasileiros pré-2016 com 8 dígitos começando 6-9 devem receber '9' prefixado após o DDD).",
     "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
+    "18) Nome completo, nome da mãe, nome do pai, profissão, estado civil, escolaridade, nacionalidade, naturalidade, emissor do RG, logradouro, complemento, bairro, cidade e país: escreva SEMPRE com a ortografia correta em português (com acentos e cedilha corretos, ex.: 'EMPRESÁRIO', 'SÃO PAULO', 'JOÃO'), mesmo que o documento original esteja sem acentuação, todo em maiúsculas ou com abreviações. Nunca altere o CONTEÚDO do dado (não troque nomes por sinônimos), apenas a grafia/acentuação. E-mail e senha GOV.BR NUNCA são alterados — preserve exatamente como estão.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -320,6 +321,46 @@ function filterFalseFutureWarnings(warnings: string[]): string[] {
     return !allPast;
   });
 }
+
+// Máscaras determinísticas aplicadas no fim da extração — a IA já normaliza
+// para "apenas dígitos", então essas funções só formatam para exibição.
+function formatCpf(v: unknown): string | null {
+  const d = String(v ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return typeof v === "string" ? v : null;
+  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+function formatCep(v: unknown): string | null {
+  const d = String(v ?? "").replace(/\D/g, "");
+  if (d.length !== 8) return typeof v === "string" ? v : null;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
+}
+function formatTelefone(v: unknown): string | null {
+  const d = String(v ?? "").replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return typeof v === "string" ? v : null;
+}
+// RG varia demais de formato entre estados — só aplica máscara padrão
+// (XX.XXX.XXX-X) quando o valor for puramente numérico com 8 ou 9 dígitos;
+// caso contrário preserva como veio (ex.: CIN com letras, formatos de outros
+// estados) para não corromper um número válido.
+function formatRg(v: unknown): string | null {
+  const raw = String(v ?? "").trim();
+  const d = raw.replace(/\D/g, "");
+  if (!/^\d+$/.test(raw.replace(/[.\-\s]/g, ""))) return typeof v === "string" ? v : null;
+  if (d.length === 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+  if (d.length === 9) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}-${d.slice(8)}`;
+  return typeof v === "string" ? v : null;
+}
+// Campos de identificação/endereço devem sair em maiúsculas (padrão de
+// documentos brasileiros); e-mail e senha nunca são tocados.
+const CAMPOS_MAIUSCULOS = [
+  "nome_completo", "nome_mae", "nome_pai", "nacionalidade", "estado_civil",
+  "profissao", "escolaridade", "emissor_rg", "naturalidade_municipio",
+  "naturalidade_pais", "endereco", "complemento", "bairro", "cidade", "pais",
+  "endereco_secundario", "complemento_secundario", "bairro_secundario",
+  "cidade_secundario", "pais_secundario",
+];
 
 function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
   const raw = String(value ?? "").trim();
@@ -626,6 +667,19 @@ Deno.serve(async (req) => {
           const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
           if (!atual && v) normalized[k] = v;
         }
+      }
+    }
+    // Máscaras de exibição — CPF/CEP/telefones/RG.
+    if (normalized.cpf) normalized.cpf = formatCpf(normalized.cpf);
+    if (normalized.cep) normalized.cep = formatCep(normalized.cep);
+    if (normalized.cep_secundario) normalized.cep_secundario = formatCep(normalized.cep_secundario);
+    if (normalized.celular) normalized.celular = formatTelefone(normalized.celular);
+    if (normalized.telefone_secundario) normalized.telefone_secundario = formatTelefone(normalized.telefone_secundario);
+    if (normalized.rg) normalized.rg = formatRg(normalized.rg);
+    // Maiúsculas para campos de identificação/endereço (padrão de documentos BR).
+    for (const k of CAMPOS_MAIUSCULOS) {
+      if (typeof normalized[k] === "string" && normalized[k].trim()) {
+        normalized[k] = normalized[k].trim().toUpperCase();
       }
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
