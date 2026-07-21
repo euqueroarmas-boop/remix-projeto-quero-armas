@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
   try {
     const { data: contratos } = await admin
       .from("qa_contracts")
-      .update({ arquivado_em: nowIso, arquivado_motivo: `piloto_real_arquivado:${motivo}` })
+      .update({ arquivado_em: nowIso, arquivado_motivo: `piloto_real_arquivado:${motivo}`, status: "rejected" })
       .eq("venda_id", venda_id)
       .is("arquivado_em", null)
       .select("id");
