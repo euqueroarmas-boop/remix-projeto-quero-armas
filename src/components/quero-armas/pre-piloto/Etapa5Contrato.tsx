@@ -25,7 +25,7 @@ function formatBRL(v: number | null) {
 export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: Props) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [q, setQ] = useState("");
-  const [servico, setServico] = useState<Servico | null>(null);
+  const [selecionados, setSelecionados] = useState<Servico[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [etapa, setEtapa] = useState<"selecionar" | "confirmar" | "ok">("selecionar");
@@ -45,8 +45,16 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
     return !t || s.nome.toLowerCase().includes(t) || s.slug.includes(t);
   }).slice(0, 20);
 
+  const totalSelecionados = selecionados.reduce((acc, s) => acc + (s.preco ?? 0), 0);
+
+  function toggleServico(s: Servico) {
+    setSelecionados((prev) =>
+      prev.some((x) => x.id === s.id) ? prev.filter((x) => x.id !== s.id) : [...prev, s]
+    );
+  }
+
   async function gerarContrato() {
-    if (!servico) return;
+    if (selecionados.length === 0) return;
     setEnviando(true);
     try {
       // 1. Criar venda
@@ -54,7 +62,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         "qa-checkout-criar-venda",
         {
           body: {
-            cart: [{ servico_id: servico.id, slug: servico.slug, quantidade: 1, preco_negociado: servico.preco }],
+            cart: selecionados.map((s) => ({ servico_id: s.id, slug: s.slug, quantidade: 1, preco_negociado: s.preco })),
             target_qa_cliente_id: clienteSalvo.id,
             identificacao: {
               nome_completo: clienteSalvo.nome_completo,
@@ -102,8 +110,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           venda_id: vendaId,
           cliente_id: clienteSalvo.id,
           cliente_nome: clienteSalvo.nome_completo,
-          servico_id: servico.id,
-          servico_nome: servico.nome,
+          servicos: selecionados.map((s) => ({ id: s.id, nome: s.nome })),
           venda_id_legado: vendaLegado,
         },
         });
@@ -129,7 +136,10 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           </div>
           <div className="text-xs text-green-700 space-y-1">
             <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
-            <p><span className="font-medium">Serviço:</span> {servico?.nome}</p>
+            <p><span className="font-medium">Serviço(s):</span></p>
+            <ul className="list-disc list-inside ml-2 space-y-0.5">
+              {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
+            </ul>
             {clienteSalvo.email && (
               <p className="flex items-center gap-1">
                 <Mail className="w-3.5 h-3.5" />
@@ -165,7 +175,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
     );
   }
 
-  if (etapa === "confirmar" && servico) {
+  if (etapa === "confirmar" && selecionados.length > 0) {
     return (
       <div className="space-y-5">
         <div>
@@ -179,8 +189,11 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
           <p><span className="font-medium">CPF:</span> {clienteSalvo.cpf || "—"}</p>
           <p><span className="font-medium">E-mail:</span> {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}</p>
-          <p><span className="font-medium">Serviço:</span> {servico.nome}</p>
-          <p><span className="font-medium">Valor:</span> {formatBRL(servico.preco)}</p>
+          <p className="font-medium">Serviço(s):</p>
+          <ul className="list-disc list-inside ml-2 space-y-0.5">
+            {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
+          </ul>
+          <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
           <p><span className="font-medium">Pagamento:</span> A combinar (registrado após assinatura)</p>
         </div>
 
@@ -237,25 +250,36 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         </div>
       ) : (
         <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-          {servicosFiltrados.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setServico(s)}
-              className={`w-full text-left px-3 py-2 rounded text-xs flex justify-between items-center transition-colors ${
-                servico?.id === s.id
-                  ? "bg-[#7B1C2E] text-white"
-                  : "bg-muted/40 hover:bg-muted"
-              }`}
-            >
-              <span className="font-medium">{s.nome}</span>
-              <span className={servico?.id === s.id ? "text-white/80" : "text-muted-foreground"}>
-                {formatBRL(s.preco)}
-              </span>
-            </button>
-          ))}
+          {servicosFiltrados.map((s) => {
+            const marcado = selecionados.some((x) => x.id === s.id);
+            return (
+              <button
+                key={s.id}
+                onClick={() => toggleServico(s)}
+                className={`w-full text-left px-3 py-2 rounded text-xs flex justify-between items-center gap-2 transition-colors ${
+                  marcado ? "bg-[#7B1C2E] text-white" : "bg-muted/40 hover:bg-muted"
+                }`}
+              >
+                <span className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center ${marcado ? "bg-white border-white" : "border-muted-foreground"}`}>
+                  {marcado && <CheckCircle2 className="w-3.5 h-3.5 text-[#7B1C2E]" />}
+                </span>
+                <span className="font-medium flex-1">{s.nome}</span>
+                <span className={marcado ? "text-white/80" : "text-muted-foreground"}>
+                  {formatBRL(s.preco)}
+                </span>
+              </button>
+            );
+          })}
           {servicosFiltrados.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-4 italic">Nenhum serviço encontrado</p>
           )}
+        </div>
+      )}
+
+      {selecionados.length > 0 && (
+        <div className="bg-muted/40 rounded p-2 text-xs flex justify-between">
+          <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
+          <span className="font-medium">{formatBRL(totalSelecionados)}</span>
         </div>
       )}
 
@@ -266,7 +290,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <Button
           size="sm"
           onClick={() => setEtapa("confirmar")}
-          disabled={!servico}
+          disabled={selecionados.length === 0}
           className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
         >
           Continuar <ChevronRight className="w-3.5 h-3.5" />
