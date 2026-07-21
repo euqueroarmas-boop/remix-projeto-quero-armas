@@ -147,6 +147,33 @@ export default function HistoricoContratosPendentes() {
     }
   }
 
+  async function excluirPermanente(contratoId: string, clienteNome: string) {
+    const confirm1 = window.confirm(
+      `Excluir permanentemente o contrato de ${clienteNome}?\n\nEsta ação é IRREVERSÍVEL — remove o contrato, assinaturas, itens, aceites e eventos vinculados.`,
+    );
+    if (!confirm1) return;
+    const confirm2 = window.prompt('Digite EXCLUIR para confirmar:');
+    if ((confirm2 || "").trim().toUpperCase() !== "EXCLUIR") {
+      toast.info("Exclusão cancelada");
+      return;
+    }
+    setExcluindo(contratoId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-contrato-excluir-permanente", {
+        body: { contrato_id: contratoId },
+      });
+      if (error || !(data as any)?.ok) {
+        throw new Error((data as any)?.error || error?.message || "Falha ao excluir");
+      }
+      toast.success("Contrato excluído permanentemente");
+      setContratos((prev) => prev.filter((x) => x.contrato_id !== contratoId));
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir contrato");
+    } finally {
+      setExcluindo(null);
+    }
+  }
+
   if (carregando) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">
@@ -267,7 +294,19 @@ export default function HistoricoContratosPendentes() {
                 )}
 
                 {/* Ir para Piloto Real */}
-                <div className="flex justify-end pt-1 border-t">
+                <div className="flex justify-between items-center pt-1 border-t gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs gap-1 h-7 text-red-700 hover:text-red-800 hover:bg-red-50"
+                    disabled={excluindo === c.contrato_id}
+                    onClick={() => excluirPermanente(c.contrato_id, c.cliente_nome)}
+                  >
+                    {excluindo === c.contrato_id
+                      ? <Loader2 className="w-3 h-3 animate-spin" />
+                      : <Trash2 className="w-3 h-3" />}
+                    Excluir permanentemente
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
