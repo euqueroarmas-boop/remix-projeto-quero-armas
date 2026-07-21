@@ -345,6 +345,11 @@ Deno.serve(async (req) => {
     return json({ error: "Contrato não encontrado" }, 404);
   }
 
+  const STATUS_BLOQUEADOS = new Set(["rejected", "arquivado_template_legado"]);
+  if (STATUS_BLOQUEADOS.has(data.status)) {
+    return json({ error: "Este link foi cancelado e não está mais disponível." }, 410);
+  }
+
   // Registra evento com dados de sessão (visualização OU download direto)
   const isPdfDownload = action === "download" || format === "pdf";
   const eventType = isPdfDownload
