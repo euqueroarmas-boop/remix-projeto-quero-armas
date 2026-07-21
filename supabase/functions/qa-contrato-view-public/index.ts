@@ -194,50 +194,60 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
   ];
 
   const totalPages = doc.getNumberOfPages();
-  const stampX = 34;                       // posição da linha vertical
-  const stampTextX = 44;                   // baseline do texto rotacionado
+  const stampRuleX = 30;                          // linha vertical delimitadora
   const stampTop = marginTop;
   const stampBottom = pageH - marginBottom;
   const availH = stampBottom - stampTop;
 
+  // Cada "coluna" rotacionada ocupa uma faixa horizontal dentro da margem esquerda.
+  // Colunas (da linha p/ dentro do texto do contrato):
+  //  x=40 → título / paginação
+  //  x=54 → LABEL: valor  (uma linha por campo)
+  const titleX = 40;
+  const fieldX = 60;
+  const fieldGap = 8; // distância horizontal entre colunas de campos
+
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
 
-    // linha vertical delimitadora do carimbo
-    doc.setDrawColor(180);
-    doc.setLineWidth(0.5);
-    doc.line(stampX, stampTop, stampX, stampBottom);
+    // Linha vertical delimitadora do carimbo
+    doc.setDrawColor(190);
+    doc.setLineWidth(0.4);
+    doc.line(stampRuleX, stampTop, stampRuleX, stampBottom);
 
-    // título do carimbo (rotacionado, lido de baixo para cima)
+    // Título do carimbo (rotacionado, lê de baixo para cima)
     doc.setFont("times", "bold");
     doc.setFontSize(7.5);
-    doc.setTextColor(80);
-    doc.text("REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO (MP 2.200-2/2001, art. 10)", stampTextX, stampBottom, {
+    doc.setTextColor(90);
+    doc.text(
+      "REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO · MP 2.200-2/2001",
+      titleX,
+      stampBottom,
+      { angle: 90, baseline: "alphabetic" } as any,
+    );
+
+    // Paginação (topo da lateral)
+    doc.setFont("times", "normal");
+    doc.setFontSize(6.8);
+    doc.setTextColor(130);
+    doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 30, {
       angle: 90,
       baseline: "alphabetic",
     } as any);
 
-    // linhas do carimbo, rotacionadas, distribuídas verticalmente
+    // Campos: cada um é uma coluna vertical própria (label + valor concatenados)
+    // Isso evita sobreposição — cada string ocupa sua própria faixa horizontal.
     doc.setFontSize(6.8);
     doc.setTextColor(70);
-    const colX = stampTextX + 10; // segunda coluna do carimbo
-    const rowGap = availH / stampRows.length;
     stampRows.forEach(([label, value], i) => {
-      const yBase = stampBottom - i * rowGap - 6;
-      doc.setFont("times", "bold");
-      doc.text(`${label}:`, colX, yBase, { angle: 90, baseline: "alphabetic" } as any);
+      const x = fieldX + i * fieldGap;
+      // trunca strings enormes (user-agent) para caber na altura útil
+      const maxChars = Math.floor(availH / 3.6);
+      const composed = `${label}: ${value}`;
+      const shown = composed.length > maxChars ? composed.slice(0, maxChars - 1) + "…" : composed;
       doc.setFont("times", "normal");
-      // trunca valores muito longos (ex.: user-agent)
-      const maxChars = Math.floor((availH - 40) / 3.4);
-      const shown = value.length > maxChars ? value.slice(0, maxChars - 1) + "…" : value;
-      doc.text(shown, colX + 8, yBase, { angle: 90, baseline: "alphabetic" } as any);
+      doc.text(shown, x, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
     });
-
-    // rodapé de paginação também dentro do carimbo (topo)
-    doc.setFont("times", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(120);
-    doc.text(`PÁG. ${p}/${totalPages}`, stampTextX, stampTop + 4, { angle: 90, baseline: "alphabetic" } as any);
 
     doc.setTextColor(0);
   }
