@@ -43,6 +43,7 @@ function sanitizeFileName(name: string): string {
 export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSalvo, onVoltar }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [existente, setExistente] = useState<ClienteSalvo | null>(null);
+  const [existenteArquivado, setExistenteArquivado] = useState(false);
   const [verificado, setVerificado] = useState(false);
   const [statusUpload, setStatusUpload] = useState<string | null>(null);
 
@@ -57,14 +58,17 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
     try {
       const { data } = await supabase
         .from("qa_clientes" as any)
-        .select("id, nome_completo, cpf, email, celular")
+        .select("id, nome_completo, cpf, email, celular, arquivado, excluido")
         .eq("cpf", formatCpf(cpfNorm))
+        .eq("excluido", false)
         .maybeSingle();
 
       if (data) {
         setExistente({ id: (data as any).id, nome_completo: (data as any).nome_completo, cpf: (data as any).cpf, email: (data as any).email, celular: (data as any).celular, existia: true });
+        setExistenteArquivado(!!(data as any).arquivado);
       } else {
         setExistente(null);
+        setExistenteArquivado(false);
       }
       setVerificado(true);
     } catch (e: any) {
@@ -93,13 +97,20 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       if (reutilizar && existente) {
         clienteId = existente.id;
         existia = true;
-        // atualiza dados que podem ter mudado
+        // atualiza dados que podem ter mudado; reativa se estava arquivado
         await supabase.from("qa_clientes" as any).update({
           nome_completo: dadosRevisados.nome_completo,
           email: dadosRevisados.email || undefined,
           celular: dadosRevisados.celular || undefined,
+          ...(existenteArquivado ? { arquivado: false } : {}),
         }).eq("id", clienteId);
       } else {
+        // Se existia um cliente arquivado com o mesmo CPF, marca como excluído
+        // para liberar o índice único antes de criar o novo registro
+        if (existente && existenteArquivado) {
+          await supabase.from("qa_clientes" as any).update({ excluido: true }).eq("id", existente.id);
+        }
+
         // Criar novo cliente
         const payload: Record<string, unknown> = {
           nome_completo: dadosRevisados.nome_completo,
@@ -262,11 +273,18 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           <div className="flex items-start gap-2">
             <UserCheck className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-xs font-semibold text-amber-800">CPF já cadastrado</p>
+              <p className="text-xs font-semibold text-amber-800">
+                {existenteArquivado ? "CPF encontrado (cliente arquivado)" : "CPF já cadastrado"}
+              </p>
               <p className="text-xs text-amber-700 mt-0.5">
                 <strong>{existente.nome_completo}</strong> (ID {existente.id})
               </p>
               {existente.email && <p className="text-xs text-amber-600">{existente.email}</p>}
+              {existenteArquivado && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Este cliente estava arquivado. Você pode reativá-lo ou criar um novo cadastro (o arquivado será excluído).
+                </p>
+              )}
             </div>
           </div>
           <p className="text-xs text-amber-700">O que deseja fazer?</p>
@@ -279,7 +297,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               className="text-xs gap-1 flex-1"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
-              Usar cadastro existente
+              {existenteArquivado ? "Reativar cadastro" : "Usar cadastro existente"}
             </Button>
             <Button
               size="sm"
