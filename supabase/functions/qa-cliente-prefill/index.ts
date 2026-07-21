@@ -595,10 +595,13 @@ Deno.serve(async (req) => {
       if (cepData) {
         normalized.cep = cepData.cep;
         normalized.confidence = normalized.confidence || {};
-        // Logradouro: CEP é fonte autoritativa — sempre sobrescreve.
-        if (cepData.endereco) {
+        // Logradouro: preenche só se a IA não extraiu nada do documento — em
+        // cidades menores um CEP cobre um range de ruas, então a resposta da
+        // API pode ser o nome "oficial" do range e divergir do comprovante real.
+        const enderecoAtual = typeof normalized.endereco === "string" ? normalized.endereco.trim() : "";
+        if (!enderecoAtual && cepData.endereco) {
           normalized.endereco = cepData.endereco;
-          normalized.confidence.endereco = 0.95;
+          normalized.confidence.endereco = 0.9;
         }
         // Bairro/cidade/estado: preenche só se estiver vazio (respeita extração).
         for (const k of ["bairro", "cidade", "estado"] as const) {
