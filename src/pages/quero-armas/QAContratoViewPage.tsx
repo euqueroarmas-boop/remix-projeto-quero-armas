@@ -88,16 +88,35 @@ export default function QAContratoViewPage() {
       if (!blob.size) throw new Error("PDF vazio");
 
       const nome = `${contrato.contract_number || "CONTRATO"} - Contrato de Adesão.pdf`;
-      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = nome;
-      link.rel = "noopener";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
+      const pdfBlob = new Blob([blob], { type: "application/pdf" });
+
+      if (isSafari) {
+        // Safari não respeita <a download> com Blob URL de forma confiável após await.
+        // Usa FileReader → data URL e navega, permitindo o "Salvar como…" nativo.
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string;
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = nome;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        };
+        reader.readAsDataURL(pdfBlob);
+      } else {
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = nome;
+        link.rel = "noopener";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      }
       toast.success("Contrato baixado");
     } catch (e: any) {
       console.error("[baixarPdf]", e);
