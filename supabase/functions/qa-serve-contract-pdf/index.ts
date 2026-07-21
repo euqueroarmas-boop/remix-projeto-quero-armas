@@ -166,10 +166,11 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   writeParagraph(contractDownloadBaseName(contract), { size: 13, bold: true, align: "center", upper: true, lineGap: 6 });
   writeParagraph(`Nº ${contract.contract_number || contract.id} · Pedido ${contract.venda_id ?? "—"}`, { size: 9, align: "center", lineGap: 24 });
 
-  // Espaço extra antes de novos tópicos (h1/h2/h3) para separar visualmente as seções.
-  const TOPIC_GAP_H1 = 22;
-  const TOPIC_GAP_H2 = 18;
-  const TOPIC_GAP_H3 = 12;
+  // Espaço extra antes de novos tópicos (h1/h2/h3) — "3 enters" de separação
+  // visual entre seções; os artigos (parágrafos) mantêm espaçamento simples.
+  const TOPIC_GAP_H1 = 40;
+  const TOPIC_GAP_H2 = 36;
+  const TOPIC_GAP_H3 = 28;
 
   let firstBlock = true;
   for (const b of blocks) {

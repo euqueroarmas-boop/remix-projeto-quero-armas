@@ -160,6 +160,13 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
 
   write(`${contract.contract_number || "CONTRATO"} - CONTRATO DE ADESÃO`, { size: 13, bold: true, align: "center", upper: true, lineGap: 22 });
 
+  // Espaço extra antes de cada tópico (h1/h2/h3) — "3 enters" de separação
+  // visual entre seções; os artigos (parágrafos) mantêm espaçamento simples.
+  const TOPIC_GAP_H1 = 40;
+  const TOPIC_GAP_H2 = 36;
+  const TOPIC_GAP_H3 = 28;
+
+  let firstBlock = true;
   for (const block of htmlToBlocks(html)) {
     if (block.kind === "hr") {
       ensureSpace(18);
@@ -167,13 +174,24 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
       doc.setDrawColor(190);
       doc.line(marginX, y, pageW - marginRight, y);
       y += 14;
+      firstBlock = false;
       continue;
     }
-    if (block.kind === "h1") write(block.text, { size: 13, bold: true, align: "center", upper: true, lineGap: 12 });
-    if (block.kind === "h2") write(block.text, { size: 11, bold: true, upper: true, lineGap: 10 });
-    if (block.kind === "h3") write(block.text, { size: 10, bold: true, upper: true, lineGap: 8 });
+    if (block.kind === "h1") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H1); y += TOPIC_GAP_H1; }
+      write(block.text, { size: 13, bold: true, align: "center", upper: true, lineGap: 12 });
+    }
+    if (block.kind === "h2") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H2); y += TOPIC_GAP_H2; }
+      write(block.text, { size: 11, bold: true, upper: true, lineGap: 10 });
+    }
+    if (block.kind === "h3") {
+      if (!firstBlock) { ensureSpace(TOPIC_GAP_H3); y += TOPIC_GAP_H3; }
+      write(block.text, { size: 10, bold: true, upper: true, lineGap: 8 });
+    }
     if (block.kind === "p") write(block.text, { size: 10, align: "justify", lineGap: 8 });
     if (block.kind === "li") write(block.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 5 });
+    firstBlock = false;
   }
 
   // === Carimbo lateral esquerdo em TODAS as páginas ===
