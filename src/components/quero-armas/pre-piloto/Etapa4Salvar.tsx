@@ -182,8 +182,12 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
             const path = `cliente-docs/qa-${clienteId}/${tipoDb}/${Date.now()}_${safe}`;
             const { error: upErr } = await supabase.storage
               .from("qa-documentos")
-              .upload(path, a.file, { upsert: false, contentType: a.file.type || undefined });
-            if (upErr) { falhas++; console.warn("[pre-piloto upload]", upErr); continue; }
+              .upload(path, a.file, { upsert: true, contentType: a.file.type || undefined });
+            if (upErr) {
+              falhas++;
+              console.error("[pre-piloto upload] arquivo:", a.file.name, "erro:", upErr.message, upErr);
+              continue;
+            }
 
             const payload: Record<string, unknown> = {
               qa_cliente_id: clienteId,
@@ -208,7 +212,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         }
         setStatusUpload(null);
         if (ok > 0) toast.success(`${ok} documento(s) gravado(s) no Hub Documental`);
-        if (falhas > 0) toast.warning(`${falhas} documento(s) não puderam ser gravados — reenvie pelo Hub se necessário.`);
+        if (falhas > 0) toast.warning(`${falhas} documento(s) não puderam ser gravados — veja o console (F12) para o erro detalhado.`);
       }
 
       onSalvo(cFinal);
