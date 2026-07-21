@@ -53,10 +53,15 @@ export default function QAContratoViewPage() {
     if (!contrato || !id) return;
     setBaixando(true);
     try {
-      // Registra o download (com IP/UA/SO) no motor de eventos
-      supabase.functions
-        .invoke("qa-contrato-view-public", { body: { contract_id: id, action: "download" } })
-        .catch(() => { /* log-only; nunca bloquear o download */ });
+      // Registra o download (com IP/UA/SO) no motor de eventos ANTES de gerar o PDF
+      // (awaited para garantir que a request não seja abortada pelo processamento pesado do canvas)
+      try {
+        await supabase.functions.invoke("qa-contrato-view-public", {
+          body: { contract_id: id, action: "download" },
+        });
+      } catch (e) {
+        console.warn("[baixarPdf] log de evento falhou:", e);
+      }
 
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
         import("html2canvas"),
@@ -193,7 +198,7 @@ export default function QAContratoViewPage() {
               size="sm"
               variant="outline"
               onClick={() => window.print()}
-              className="gap-2 text-xs"
+              className="gap-2 text-xs border-[#7A1F2B]/30 bg-white text-[#7A1F2B] hover:bg-[#7A1F2B]/5 hover:text-[#7A1F2B]"
             >
               <Printer className="w-3.5 h-3.5" />
               Imprimir
