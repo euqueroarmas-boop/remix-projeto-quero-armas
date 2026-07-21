@@ -10,6 +10,7 @@ import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/u
 import { Switch } from "@/components/ui/switch";
 import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
+import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
@@ -434,6 +435,9 @@ export default function QAConfiguracoesPage() {
           })()}
         </div>
       )}
+
+      {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
+      {isAdmin && <QAContratoPrimarioAdmin />}
 
       {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
       {isAdmin && (
