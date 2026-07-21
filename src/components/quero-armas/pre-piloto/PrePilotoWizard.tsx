@@ -45,7 +45,11 @@ const ETAPAS = [
   { label: "Piloto", icon: Play },
 ];
 
-export default function PrePilotoWizard() {
+interface PrePilotoWizardProps {
+  onContratoGerado?: () => void;
+}
+
+export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardProps = {}) {
   const [etapa, setEtapa] = useState(0);
   const [arquivos, setArquivos] = useState<ArquivoUpload[]>([]);
   const [textoPastaColado, setTextoPastaColado] = useState("");
@@ -146,7 +150,7 @@ export default function PrePilotoWizard() {
         {etapa === 4 && clienteSalvo && (
           <Etapa5Contrato
             clienteSalvo={clienteSalvo}
-            onConcluido={(vendaId, legado) => { setVendaContrato({ id: vendaId, legado }); avancar(); }}
+            onConcluido={(vendaId, legado) => { setVendaContrato({ id: vendaId, legado }); onContratoGerado?.(); avancar(); }}
             onVoltar={voltar}
           />
         )}

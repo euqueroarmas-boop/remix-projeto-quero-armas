@@ -1,11 +1,13 @@
+import { useRef } from "react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import PrePilotoWizard from "@/components/quero-armas/pre-piloto/PrePilotoWizard";
-import HistoricoContratosPendentes from "@/components/quero-armas/pre-piloto/HistoricoContratosPendentes";
+import HistoricoContratosPendentes, { HistoricoContratosPendentesHandle } from "@/components/quero-armas/pre-piloto/HistoricoContratosPendentes";
 import { ShieldAlert } from "lucide-react";
 
 export default function QAPrePilotoPage() {
   const { profile, loading } = useQAAuthContext();
   const isAdmin = profile?.perfil === "administrador";
+  const historicoRef = useRef<HistoricoContratosPendentesHandle>(null);
 
   if (loading) {
     return (
@@ -26,7 +28,7 @@ export default function QAPrePilotoPage() {
 
   return (
     <div className="space-y-8">
-      <PrePilotoWizard />
+      <PrePilotoWizard onContratoGerado={() => historicoRef.current?.carregar()} />
 
       {/* Histórico de contratos pendentes */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
@@ -35,7 +37,7 @@ export default function QAPrePilotoPage() {
           <p className="text-xs text-muted-foreground mb-4">
             Contratos gerados via Pré-Piloto. Faça upload do PDF assinado quando o cliente devolver por WhatsApp.
           </p>
-          <HistoricoContratosPendentes />
+          <HistoricoContratosPendentes ref={historicoRef} />
         </div>
       </div>
     </div>

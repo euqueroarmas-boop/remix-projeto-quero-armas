@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -44,7 +44,9 @@ function statusLabel(s: string) {
   return map[s] ?? { label: s, color: "text-muted-foreground bg-muted border-muted" };
 }
 
-export default function HistoricoContratosPendentes() {
+export type HistoricoContratosPendentesHandle = { carregar: () => void };
+
+const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle>(function HistoricoContratosPendentes(_, ref) {
   const navigate = useNavigate();
   const [contratos, setContratos] = useState<ContratoItem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -73,8 +75,8 @@ export default function HistoricoContratosPendentes() {
         .in("status", [
           "generated_pending_company_signature",
           "pending_customer_signature",
-          "pending_company_signature",
-          "signed_pending_validation",
+          "customer_signature_uploaded",
+          "validating",
         ])
         .order("created_at", { ascending: false })
         .limit(50);
@@ -118,6 +120,8 @@ export default function HistoricoContratosPendentes() {
   }, []);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  useImperativeHandle(ref, () => ({ carregar }), [carregar]);
 
   async function uploadAssinado(contratoId: string, vendaId: number) {
     if (!uploadArquivo) { toast.error("Selecione o arquivo PDF assinado"); return; }
@@ -325,4 +329,6 @@ export default function HistoricoContratosPendentes() {
       })}
     </div>
   );
-}
+});
+
+export default HistoricoContratosPendentes;
