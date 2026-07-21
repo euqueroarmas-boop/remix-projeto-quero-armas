@@ -204,8 +204,7 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
   //  x=40 → título / paginação
   //  x=54 → LABEL: valor  (uma linha por campo)
   const titleX = 40;
-  const fieldX = 60;
-  const fieldGap = 8; // distância horizontal entre colunas de campos
+  const fieldX = 52;
 
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
@@ -215,7 +214,7 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
     doc.setLineWidth(0.4);
     doc.line(stampRuleX, stampTop, stampRuleX, stampBottom);
 
-    // Título do carimbo (rotacionado, lê de baixo para cima)
+    // Título do carimbo (rotacionado, lê de baixo para cima, começando no topo)
     doc.setFont("times", "bold");
     doc.setFontSize(7.5);
     doc.setTextColor(90);
@@ -226,28 +225,23 @@ function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStam
       { angle: 90, baseline: "alphabetic" } as any,
     );
 
-    // Paginação (topo da lateral)
+    // Campos em UMA ÚNICA linha rotacionada, separados por vírgula,
+    // começando logo "abaixo" do título (à direita dele, já que está rotacionado 90°).
     doc.setFont("times", "normal");
     doc.setFontSize(6.8);
-    doc.setTextColor(130);
-    doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 30, {
+    doc.setTextColor(70);
+    const oneLine = stampRows.map(([l, v]) => `${l}: ${v}`).join(", ");
+    const maxChars = Math.floor(availH / 3.2);
+    const shown = oneLine.length > maxChars ? oneLine.slice(0, maxChars - 1) + "…" : oneLine;
+    doc.text(shown, fieldX, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
+
+    // Paginação discreta no pé da lateral
+    doc.setFontSize(6.5);
+    doc.setTextColor(140);
+    doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 26, {
       angle: 90,
       baseline: "alphabetic",
     } as any);
-
-    // Campos: cada um é uma coluna vertical própria (label + valor concatenados)
-    // Isso evita sobreposição — cada string ocupa sua própria faixa horizontal.
-    doc.setFontSize(6.8);
-    doc.setTextColor(70);
-    stampRows.forEach(([label, value], i) => {
-      const x = fieldX + i * fieldGap;
-      // trunca strings enormes (user-agent) para caber na altura útil
-      const maxChars = Math.floor(availH / 3.6);
-      const composed = `${label}: ${value}`;
-      const shown = composed.length > maxChars ? composed.slice(0, maxChars - 1) + "…" : composed;
-      doc.setFont("times", "normal");
-      doc.text(shown, x, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
-    });
 
     doc.setTextColor(0);
   }
