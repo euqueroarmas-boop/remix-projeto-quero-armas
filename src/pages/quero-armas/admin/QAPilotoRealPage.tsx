@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { SITE_URL } from "@/shared/components/SEO";
 import {
   NotificacaoPolicyPicker,
   DEFAULT_NOTIFICACAO_POLICY,
@@ -167,8 +168,48 @@ export default function QAPilotoRealPage() {
           setCliente(c);
           setQuery(c.nome_completo || "");
         }
-        if (vendaRes.data) {
-          setVenda(vendaRes.data as unknown as Venda);
+        const v = vendaRes.data as unknown as Venda | null;
+        if (v) {
+          setVenda(v);
+
+          // Carrega itens da venda para pré-selecionar serviços (igual ao fluxo de hidratação por URL)
+          const lookupId = Number((v as any).id_legado ?? v.id) || v.id;
+          let { data: itens } = await supabase
+            .from("qa_itens_venda")
+            .select("servico_id, valor, sort_order")
+            .eq("venda_id", lookupId)
+            .order("sort_order", { ascending: true });
+          if (!itens || itens.length === 0) {
+            const alt = await supabase
+              .from("qa_itens_venda")
+              .select("servico_id, valor, sort_order")
+              .eq("venda_id", v.id)
+              .order("sort_order", { ascending: true });
+            itens = alt.data ?? [];
+          }
+          const servicoIds = (itens ?? []).map((r: any) => r.servico_id).filter(Boolean);
+          let nomesById: Record<number, string> = {};
+          if (servicoIds.length > 0) {
+            const { data: srvs } = await supabase
+              .from("qa_servicos")
+              .select("id, nome_servico")
+              .in("id", servicoIds);
+            for (const s of (srvs ?? []) as any[]) nomesById[s.id] = s.nome_servico;
+          }
+          const shims: Servico[] = (itens ?? []).map((r: any) => ({
+            id: `srv-${r.servico_id}`,
+            slug: `qa-srv-${r.servico_id}`,
+            nome: nomesById[r.servico_id] || `Serviço #${r.servico_id}`,
+            preco: r.valor != null ? Number(r.valor) : null,
+            ativo: true,
+          }));
+          if (shims.length > 0) {
+            setServico(shims[0]);
+            setItensExtras(shims.slice(1).map((s) => ({
+              servico: s,
+              precoStr: s.preco != null ? Number(s.preco).toFixed(2).replace(".", ",") : "",
+            })));
+          }
         }
       } catch { /* silencioso */ }
     })();
@@ -1444,7 +1485,7 @@ export default function QAPilotoRealPage() {
 
   const linkContratoCliente = useMemo(() => {
     if (!contrato) return null;
-    return `${window.location.origin}/area-do-cliente`;
+    return `${SITE_URL}/area-do-cliente`;
   }, [contrato]);
 
   /* ---------- Passo 6b: Upload assistido de contrato assinado (staff) ---------- */
