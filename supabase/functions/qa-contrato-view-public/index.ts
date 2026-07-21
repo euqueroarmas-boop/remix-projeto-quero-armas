@@ -120,5 +120,16 @@ Deno.serve(async (req) => {
     venda_id: data.venda_id,
     nome_cliente: "",
     conteudo_html: data.conteudo_renderizado ?? "",
+    sessao: {
+      ip,
+      so,
+      browser,
+      user_agent: userAgent,
+      accept_language: acceptLanguage,
+      referer,
+      country: cfCountry,
+      registrado_em: new Date().toISOString(),
+      action: action ?? "view",
+    },
   });
 });
