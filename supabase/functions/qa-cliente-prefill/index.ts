@@ -166,6 +166,7 @@ const SYSTEM_PROMPT = [
   "5) Datas SEMPRE em DD/MM/AAAA.",
   "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
   "6.1) Se houver MAIS DE UM endereço (ex: residencial + comercial, ou principal + alternativo), preencha o primeiro em cep/endereco/... e o segundo em cep_secundario/endereco_secundario/...",
+  "6.2) ESTADO CIVIL: quando o documento oficial de identidade (CIN/RG/CNH) divergir de texto livre (WhatsApp, e-mail, observação verbal), SEMPRE use o valor do documento oficial — é a fonte legal, e texto livre pode estar desatualizado ou ser uma afirmação informal do cliente. Adicione warning descrevendo a divergência para a equipe confirmar manualmente. Esta regra é fixa: nunca escolha o texto livre em vez do documento oficial para este campo.",
     "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
@@ -352,15 +353,29 @@ function formatRg(v: unknown): string | null {
   if (d.length === 9) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}-${d.slice(8)}`;
   return typeof v === "string" ? v : null;
 }
-// Campos de identificação/endereço devem sair em maiúsculas (padrão de
-// documentos brasileiros); e-mail e senha nunca são tocados.
-const CAMPOS_MAIUSCULOS = [
-  "nome_completo", "nome_mae", "nome_pai", "nacionalidade", "estado_civil",
-  "profissao", "escolaridade", "emissor_rg", "naturalidade_municipio",
-  "naturalidade_pais", "endereco", "complemento", "bairro", "cidade", "pais",
-  "endereco_secundario", "complemento_secundario", "bairro_secundario",
-  "cidade_secundario", "pais_secundario",
-];
+// Todo campo de texto sai em maiúsculas (padrão de documentos brasileiros),
+// exceto os explicitamente listados aqui: e-mail e senha GOV.BR são
+// transcrição literal e nunca podem ser alterados; observações/warnings são
+// texto livre para a equipe, não dado cadastral.
+const CAMPOS_SEM_MAIUSCULA = new Set([
+  "email", "senha_gov_raw", "observacoes", "warnings", "confidence",
+  "confidence_pairs", "senha_gov_confidence", "senha_gov_needs_review",
+  "emissor_rg_needs_review",
+]);
+function upperDeep(value: any): any {
+  if (typeof value === "string") return value.trim() ? value.trim().toUpperCase() : value;
+  if (Array.isArray(value)) return value.map(upperDeep);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = upperFieldsExcept(k, v);
+    return out;
+  }
+  return value;
+}
+function upperFieldsExcept(key: string, value: any): any {
+  if (CAMPOS_SEM_MAIUSCULA.has(key)) return value;
+  return upperDeep(value);
+}
 
 function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
   const raw = String(value ?? "").trim();
@@ -676,11 +691,10 @@ Deno.serve(async (req) => {
     if (normalized.celular) normalized.celular = formatTelefone(normalized.celular);
     if (normalized.telefone_secundario) normalized.telefone_secundario = formatTelefone(normalized.telefone_secundario);
     if (normalized.rg) normalized.rg = formatRg(normalized.rg);
-    // Maiúsculas para campos de identificação/endereço (padrão de documentos BR).
-    for (const k of CAMPOS_MAIUSCULOS) {
-      if (typeof normalized[k] === "string" && normalized[k].trim()) {
-        normalized[k] = normalized[k].trim().toUpperCase();
-      }
+    // Maiúsculas em todo campo de texto (exceto e-mail/senha/observações/warnings) —
+    // aplicado por último, depois das máscaras acima (que não têm letras a afetar).
+    for (const k of Object.keys(normalized)) {
+      normalized[k] = upperFieldsExcept(k, normalized[k]);
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
