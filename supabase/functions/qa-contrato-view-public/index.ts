@@ -27,9 +27,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   let contract_id: string | undefined;
+  let action: string | undefined;
   try {
     const body = await req.json();
     contract_id = String(body.contract_id ?? "").trim();
+    action = typeof body.action === "string" ? body.action : undefined;
   } catch {
     return json({ error: "JSON inválido" }, 400);
   }
@@ -78,11 +80,14 @@ Deno.serve(async (req) => {
     return json({ error: "Contrato não encontrado" }, 404);
   }
 
-  // Registra visualização com dados de sessão (SO, navegador, IP, país, idioma)
+  // Registra evento com dados de sessão (visualização OU download direto)
+  const eventType = action === "download"
+    ? "contrato_baixado_cliente"
+    : "contrato_visualizado_cliente";
   try {
     await sb.from("qa_contract_events").insert({
       contract_id: data.id,
-      event_type: "contrato_visualizado_cliente",
+      event_type: eventType,
       event_payload: {
         ip,
         user_agent: userAgent,
@@ -98,7 +103,8 @@ Deno.serve(async (req) => {
         template_versao: data.template_versao,
         status: data.status,
         venda_id: data.venda_id,
-        viewed_at: new Date().toISOString(),
+        action: action ?? "view",
+        recorded_at: new Date().toISOString(),
       },
     });
   } catch (e) {
