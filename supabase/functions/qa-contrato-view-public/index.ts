@@ -43,6 +43,25 @@ Deno.serve(async (req) => {
     req.headers.get("x-real-ip") ??
     "desconhecido";
   const userAgent = req.headers.get("user-agent") ?? "desconhecido";
+  const acceptLanguage = req.headers.get("accept-language") ?? null;
+  const referer = req.headers.get("referer") ?? null;
+  const secChUa = req.headers.get("sec-ch-ua") ?? null;
+  const secChUaPlatform = req.headers.get("sec-ch-ua-platform") ?? null;
+  const secChUaMobile = req.headers.get("sec-ch-ua-mobile") ?? null;
+  const cfCountry = req.headers.get("cf-ipcountry") ?? null;
+  // Deriva SO/navegador do user-agent quando client hints não vierem
+  const uaLc = userAgent.toLowerCase();
+  const so = /windows nt/.test(uaLc) ? "Windows"
+    : /mac os x|macintosh/.test(uaLc) ? "macOS"
+    : /android/.test(uaLc) ? "Android"
+    : /iphone|ipad|ipod/.test(uaLc) ? "iOS"
+    : /linux/.test(uaLc) ? "Linux"
+    : "desconhecido";
+  const browser = /edg\//.test(uaLc) ? "Edge"
+    : /chrome\//.test(uaLc) && !/edg\//.test(uaLc) ? "Chrome"
+    : /firefox\//.test(uaLc) ? "Firefox"
+    : /safari\//.test(uaLc) && !/chrome\//.test(uaLc) ? "Safari"
+    : "desconhecido";
 
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -59,21 +78,32 @@ Deno.serve(async (req) => {
     return json({ error: "Contrato não encontrado" }, 404);
   }
 
-  // Registra visualização — falha silenciosa para não bloquear entrega
+  // Registra visualização com dados de sessão (SO, navegador, IP, país, idioma)
   try {
     await sb.from("qa_contract_events").insert({
       contract_id: data.id,
-      acao: "contrato_visualizado_cliente",
-      detalhes: {
+      event_type: "contrato_visualizado_cliente",
+      event_payload: {
         ip,
         user_agent: userAgent,
+        so,
+        browser,
+        platform: secChUaPlatform,
+        mobile: secChUaMobile,
+        client_hints: secChUa,
+        accept_language: acceptLanguage,
+        country: cfCountry,
+        referer,
         contract_number: data.contract_number,
         template_versao: data.template_versao,
         status: data.status,
         venda_id: data.venda_id,
+        viewed_at: new Date().toISOString(),
       },
     });
-  } catch (_) { /* silencioso */ }
+  } catch (e) {
+    console.error("[qa-contrato-view-public] evento falhou:", e);
+  }
 
   return json({
     ok: true,
