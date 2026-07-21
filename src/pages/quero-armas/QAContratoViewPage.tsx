@@ -12,6 +12,17 @@ type ContratoData = {
   conteudo_html: string;
   venda_id: number | null;
   nome_cliente: string;
+  sessao?: {
+    ip?: string;
+    so?: string;
+    browser?: string;
+    user_agent?: string;
+    accept_language?: string | null;
+    referer?: string | null;
+    country?: string | null;
+    registrado_em?: string;
+    action?: string;
+  };
 };
 
 function statusLabel(s: string) {
@@ -53,12 +64,15 @@ export default function QAContratoViewPage() {
     if (!contrato || !id) return;
     setBaixando(true);
     try {
-      // Registra o download (com IP/UA/SO) no motor de eventos ANTES de gerar o PDF
-      // (awaited para garantir que a request não seja abortada pelo processamento pesado do canvas)
+      // Registra o download (com IP/UA/SO) e RECEBE os dados da sessão
+      // para carimbar no PDF
+      let sessao = contrato.sessao;
       try {
-        await supabase.functions.invoke("qa-contrato-view-public", {
-          body: { contract_id: id, action: "download" },
-        });
+        const { data: r } = await supabase.functions.invoke(
+          "qa-contrato-view-public",
+          { body: { contract_id: id, action: "download" } },
+        );
+        if ((r as any)?.sessao) sessao = (r as any).sessao;
       } catch (e) {
         console.warn("[baixarPdf] log de evento falhou:", e);
       }
@@ -71,12 +85,53 @@ export default function QAContratoViewPage() {
       const alvo = document.querySelector(".qa-contrato-body") as HTMLElement | null;
       if (!alvo) throw new Error("Conteúdo do contrato não encontrado");
 
+      // Injeta bloco de "Registro de Sessão" no final do contrato antes do render
+      const bloco = document.createElement("section");
+      bloco.className = "qa-contrato-sessao";
+      bloco.setAttribute("data-injected", "1");
+      const fmt = (v?: string | null) => v && String(v).trim() ? v : "—";
+      const registradoBR = sessao?.registrado_em
+        ? new Date(sessao.registrado_em).toLocaleString("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            dateStyle: "short",
+            timeStyle: "medium",
+          })
+        : "—";
+      bloco.innerHTML = `
+        <h2 style="margin-top:32px">REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO</h2>
+        <p style="margin:6px 0 12px;font-size:12px;color:#444">
+          Impressão técnica coletada no momento do download deste PDF pela CONTRATANTE,
+          para fins probatórios do consentimento e da autoria do ato (art. 10, MP 2.200-2/2001).
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tbody>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd;width:35%"><strong>Contrato</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(contrato.contract_number)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Data/Hora (America/Sao_Paulo)</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${registradoBR}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Endereço IP</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.ip)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Sistema Operacional</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.so)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Navegador</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.browser)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>País (Cloudflare)</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.country)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Idioma</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.accept_language)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Referer</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.referer)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>User-Agent</strong></td><td style="padding:4px 8px;border:1px solid #ddd;word-break:break-all">${fmt(sessao?.user_agent)}</td></tr>
+            <tr><td style="padding:4px 8px;border:1px solid #ddd"><strong>Ação</strong></td><td style="padding:4px 8px;border:1px solid #ddd">${fmt(sessao?.action)}</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px;font-size:11px;color:#666">
+          Registro persistido em <em>qa_contract_events</em> como <strong>contrato_baixado_cliente</strong>,
+          vinculado ao UUID do contrato. Documento gerado para aceite eletrônico na plataforma da CONTRATADA.
+        </p>
+      `;
+      alvo.appendChild(bloco);
+
       const canvas = await html2canvas(alvo, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
         logging: false,
       });
+      // Remove o bloco temporário injetado — não deve permanecer na tela
+      bloco.remove();
 
       const pdf = new jsPDF({ unit: "pt", format: "a4", compress: true });
       const pageWidth = pdf.internal.pageSize.getWidth();
