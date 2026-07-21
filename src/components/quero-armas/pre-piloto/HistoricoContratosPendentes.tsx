@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, RefreshCw, Play, Loader2, FileText, CheckCircle2, Clock,
-  ChevronDown, ChevronUp, ExternalLink,
+  ChevronDown, ChevronUp, ExternalLink, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ export default function HistoricoContratosPendentes() {
   const [uploadArquivo, setUploadArquivo] = useState<File | null>(null);
   const [obs, setObs] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [excluindo, setExcluindo] = useState<string | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
