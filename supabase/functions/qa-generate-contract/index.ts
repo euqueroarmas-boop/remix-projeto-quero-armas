@@ -740,17 +740,15 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Wake the queue best-effort. The cron job (pg_cron) processes the
+      // queue every few seconds regardless, so a failure here is NOT fatal —
+      // the e-mail is already enqueued and will be sent shortly.
       try {
         emailDispatch = await processEmailQueueNow(sb);
       } catch (e) {
-        const emailError = (e as Error)?.message || "Contrato regenerado, mas a fila de e-mail não foi processada.";
-        await recordEmailDispatchFailure(sb, existing.id, contractNumber, cliEmail.email, emailError);
-        return jsonResp({
-          ok: true,
-          repaired: true,
-          contract: repaired,
-          email_dispatch: { ok: false, error: emailError },
-        });
+        const warn = (e as Error)?.message || "queue wake failed";
+        console.warn("[qa-generate-contract] processEmailQueueNow warning:", warn);
+        emailDispatch = { warning: warn, note: "enqueued; cron will process" };
       }
 
       await sb.from("qa_contract_events").insert({
