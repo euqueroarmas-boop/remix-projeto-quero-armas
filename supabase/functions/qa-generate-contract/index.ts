@@ -30,7 +30,7 @@ import { extractPolicy, aplicarPolicyNotificacao } from "../_shared/notificacaoP
 import {
   montarAnexosI,
   aplicarAnexosDinamicos,
-  renumberContractAnexoHeading,
+  renumberContractAnexoHeadings,
 } from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
@@ -222,12 +222,15 @@ function filterContractAnexosBySlugs(
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
+  let nextAnexoIndex = 1;
   const filtered = html.replace(sectionRegex, (full, s: string) => {
     foundAny = true;
     const sslug = normalizeContractSlug(s);
     if (slugSet.has(sslug)) {
       kept++;
-      return renumberContractAnexoHeading(full, kept);
+      const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+      nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+      return renumbered.html;
     }
     return "";
   });

@@ -25,4 +25,27 @@ describe("filterContractAnexosBySlugs", () => {
     expect(result).not.toContain("ANEXO I — CERTIFICADO DE REGISTRO");
     expect(result).not.toContain("PORTE DE ARMA DE FOGO");
   });
+
+  it("renumera anexos internos quando um serviço pacote contém vários blocos", () => {
+    const html = `
+      <section data-anexo-slug="aquisicao-registro-posse-de-arma-de-fogo">
+        <h3>ANEXO I — AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO</h3>
+        <p>Primeiro serviço do pacote.</p>
+        <h3>ANEXO I — CERTIFICADO DE REGISTRO DE ARMA DE FOGO (CRAF)</h3>
+        <p>Segundo serviço do pacote.</p>
+        <h3>I.19. GUIA DE TRÂNSITO (GT) --- POSSE / SINARM</h3>
+        <p>Terceiro serviço do pacote.</p>
+      </section>
+    `;
+
+    const result = filterContractAnexosBySlugs(html, [
+      "aquisicao-registro-posse-de-arma-de-fogo",
+    ]);
+
+    expect(result).toContain("ANEXO I — AUTORIZAÇÃO DE COMPRA");
+    expect(result).toContain("ANEXO II — CERTIFICADO DE REGISTRO");
+    expect(result).toContain("ANEXO III — GUIA DE TRÂNSITO");
+    expect(result).not.toContain("ANEXO I — CERTIFICADO DE REGISTRO");
+    expect(result).not.toContain("I.19.");
+  });
 });

@@ -59,13 +59,26 @@ function toRoman(value: number): string {
   return out;
 }
 
-export function renumberContractAnexoHeading(html: string, index: number): string {
-  if (!html) return html;
-  const roman = toRoman(index);
-  return html.replace(
-    /(<h[1-6]\b[^>]*>\s*)ANEXO\s+[IVXLCDM]+(\s*(?:&mdash;|&ndash;|---|--|—|-)\s*)/i,
-    `$1ANEXO ${roman}$2`,
+export function renumberContractAnexoHeadings(
+  html: string,
+  startIndex = 1,
+): { html: string; nextIndex: number; count: number } {
+  if (!html) return { html, nextIndex: startIndex, count: 0 };
+  let index = Math.max(1, Math.floor(startIndex || 1));
+  let count = 0;
+  const out = html.replace(
+    /(<h[1-6]\b[^>]*>\s*)(?:ANEXO\s+[IVXLCDM]+\s*(?:&mdash;|&ndash;|---|--|—|-)\s*|I\.\d+\.\s*)([\s\S]*?)(<\/h[1-6]>)/gi,
+    (_full, open: string, title: string, close: string) => {
+      const roman = toRoman(index++);
+      count++;
+      return `${open}ANEXO ${roman} — ${title.trim()}${close}`;
+    },
   );
+  return { html: out, nextIndex: index, count };
+}
+
+export function renumberContractAnexoHeading(html: string, index: number): string {
+  return renumberContractAnexoHeadings(html, index).html;
 }
 
 /**
@@ -109,7 +122,12 @@ export async function montarAnexosI(
     .filter((b): b is string => !!b && b.trim().length > 0);
 
   if (blocos.length === 0) return AVISO_SEM_ANEXO_DINAMICO_HTML;
-  return blocos.map((bloco, index) => renumberContractAnexoHeading(bloco, index + 1)).join("\n");
+  let nextIndex = 1;
+  return blocos.map((bloco) => {
+    const renumbered = renumberContractAnexoHeadings(bloco, nextIndex);
+    nextIndex = renumbered.nextIndex;
+    return renumbered.html;
+  }).join("\n");
 }
 
 /**

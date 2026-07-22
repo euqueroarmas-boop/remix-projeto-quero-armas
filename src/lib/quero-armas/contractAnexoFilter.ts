@@ -89,13 +89,26 @@ function toRoman(value: number): string {
   return out;
 }
 
-export function renumberContractAnexoHeading(html: string, index: number): string {
-  if (!html) return html;
-  const roman = toRoman(index);
-  return html.replace(
-    /(<h[1-6]\b[^>]*>\s*)ANEXO\s+[IVXLCDM]+(\s*(?:&mdash;|&ndash;|---|--|—|-)\s*)/i,
-    `$1ANEXO ${roman}$2`,
+export function renumberContractAnexoHeadings(
+  html: string,
+  startIndex = 1,
+): { html: string; nextIndex: number; count: number } {
+  if (!html) return { html, nextIndex: startIndex, count: 0 };
+  let index = Math.max(1, Math.floor(startIndex || 1));
+  let count = 0;
+  const out = html.replace(
+    /(<h[1-6]\b[^>]*>\s*)(?:ANEXO\s+[IVXLCDM]+\s*(?:&mdash;|&ndash;|---|--|—|-)\s*|I\.\d+\.\s*)([\s\S]*?)(<\/h[1-6]>)/gi,
+    (_full, open: string, title: string, close: string) => {
+      const roman = toRoman(index++);
+      count++;
+      return `${open}ANEXO ${roman} — ${title.trim()}${close}`;
+    },
   );
+  return { html: out, nextIndex: index, count };
+}
+
+export function renumberContractAnexoHeading(html: string, index: number): string {
+  return renumberContractAnexoHeadings(html, index).html;
 }
 
 /**
@@ -296,6 +309,7 @@ export function filterContractAnexosBySlugs(
         // sem sections — não altera, mas continua para o filtro heading-based
       } else {
       let kept = 0;
+      let nextAnexoIndex = 1;
       let firstAnexo: Element | null = null;
       for (const s of sections) {
         if (!firstAnexo) firstAnexo = s;
@@ -307,7 +321,9 @@ export function filterContractAnexosBySlugs(
         if (slugSet.has(sslug)) {
           kept++;
           if (options?.debug) options.debug.sectionsAnexoSlugKept.push(sslug);
-          s.outerHTML = renumberContractAnexoHeading(s.outerHTML, kept);
+          const renumbered = renumberContractAnexoHeadings(s.outerHTML, nextAnexoIndex);
+          nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+          s.outerHTML = renumbered.html;
         } else {
           s.remove();
         }
@@ -334,6 +350,7 @@ export function filterContractAnexosBySlugs(
       /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
     let foundAny = false;
     let kept = 0;
+    let nextAnexoIndex = 1;
     const filtered = result.replace(sectionRegex, (full, s: string) => {
       foundAny = true;
       const sslug = s.trim().toLowerCase().replace(/_/g, "-");
@@ -341,7 +358,9 @@ export function filterContractAnexosBySlugs(
       if (slugSet.has(sslug)) {
         kept++;
         if (options?.debug) options.debug.sectionsAnexoSlugKept.push(sslug);
-        return renumberContractAnexoHeading(full, kept);
+        const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+        nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+        return renumbered.html;
       }
       return "";
     });

@@ -193,6 +193,7 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
     it("reenvio manual de contrato regenerado usa template próprio e processa a fila", () => {
       const src = r("supabase/functions/qa-generate-contract/index.ts");
       const registry = r("supabase/functions/_shared/transactional-email-templates/registry.ts");
+      const sender = r("supabase/functions/send-transactional-email/index.ts");
       expect(src).toMatch(/reenviar_email/);
       expect(src).toMatch(/contrato-regenerado-assinatura/);
       expect(src).toMatch(/process-email-queue/);
@@ -200,6 +201,9 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/Contrato regenerado, mas o e-mail não foi enfileirado/);
       expect(src).toMatch(/contrato_email_reenviado/);
       expect(registry).toMatch(/contrato-regenerado-assinatura/);
+      expect(sender).toMatch(/const FROM_LOCAL_PART = "arsenalinteligente"/);
+      expect(sender).toMatch(/const FROM_DOMAIN = "notificacao\.euqueroarmas\.com\.br"/);
+      expect(sender).toMatch(/\$\{FROM_LOCAL_PART\}@\$\{FROM_DOMAIN\}/);
     });
 
     it("migration corrige Anexo I.6 para PF/SINARM-CAC no template e snapshots", () => {

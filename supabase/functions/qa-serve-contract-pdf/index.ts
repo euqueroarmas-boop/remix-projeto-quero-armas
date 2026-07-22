@@ -28,7 +28,7 @@ import { jsPDF } from "npm:jspdf@2.5.1";
 import {
   montarAnexosI,
   aplicarAnexosDinamicos,
-  renumberContractAnexoHeading,
+  renumberContractAnexoHeadings,
 } from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
@@ -429,11 +429,14 @@ function filterContractAnexosBySlugs(html: string, slugsContratados: string[]): 
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
+  let nextAnexoIndex = 1;
   const filtered = html.replace(sectionRegex, (full, slug) => {
     foundAny = true;
     if (slugSet.has(normalizeContractSlug(slug))) {
       kept++;
-      return renumberContractAnexoHeading(full, kept);
+      const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+      nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+      return renumbered.html;
     }
     return "";
   });
