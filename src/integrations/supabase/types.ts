@@ -5573,6 +5573,69 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documentos_biblioteca: {
+        Row: {
+          arquivado_em: string | null
+          arquivado_por: string | null
+          ativo: boolean
+          base_legal: string | null
+          categoria: string
+          codigo: string
+          created_at: string
+          descricao_como_enviar: string | null
+          descricao_o_que_e: string | null
+          emissor_padrao: string
+          formato_aceito: string[]
+          id: string
+          link_emissao: string | null
+          link_modelo: string | null
+          nome: string
+          observacao_cliente: string | null
+          updated_at: string
+          validade_dias: number | null
+        }
+        Insert: {
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          ativo?: boolean
+          base_legal?: string | null
+          categoria?: string
+          codigo: string
+          created_at?: string
+          descricao_como_enviar?: string | null
+          descricao_o_que_e?: string | null
+          emissor_padrao?: string
+          formato_aceito?: string[]
+          id?: string
+          link_emissao?: string | null
+          link_modelo?: string | null
+          nome: string
+          observacao_cliente?: string | null
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Update: {
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          ativo?: boolean
+          base_legal?: string | null
+          categoria?: string
+          codigo?: string
+          created_at?: string
+          descricao_como_enviar?: string | null
+          descricao_o_que_e?: string | null
+          emissor_padrao?: string
+          formato_aceito?: string[]
+          id?: string
+          link_emissao?: string | null
+          link_modelo?: string | null
+          nome?: string
+          observacao_cliente?: string | null
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Relationships: []
+      }
       qa_documentos_cliente: {
         Row: {
           aprovado_em: string | null
@@ -9037,6 +9100,7 @@ export type Database = {
       qa_servicos_documentos: {
         Row: {
           ativo: boolean
+          biblioteca_id: string | null
           condicao_profissional: string | null
           created_at: string
           emissor: string
@@ -9063,6 +9127,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          biblioteca_id?: string | null
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
@@ -9089,6 +9154,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          biblioteca_id?: string | null
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
@@ -9115,7 +9181,49 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "qa_servicos_documentos_biblioteca_id_fkey"
+            columns: ["biblioteca_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_biblioteca"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "qa_servicos_documentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_servicos_documentos_snapshots: {
+        Row: {
+          criado_em: string
+          criado_por: string | null
+          id: string
+          motivo: string | null
+          payload: Json
+          servico_id: number
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          motivo?: string | null
+          payload: Json
+          servico_id: number
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string | null
+          id?: string
+          motivo?: string | null
+          payload?: Json
+          servico_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_documentos_snapshots_servico_id_fkey"
             columns: ["servico_id"]
             isOneToOne: false
             referencedRelation: "qa_servicos"
