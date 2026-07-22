@@ -459,6 +459,7 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
+        <>
         <TabsContent value="contrato" className="mt-4">
           {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
           <QAContratoPrimarioAdmin />
@@ -473,6 +474,7 @@ export default function QAConfiguracoesPage() {
           {/* Biblioteca central alfabética de documentos — fonte única do passo a passo */}
           <QABibliotecaDocumentosAdmin />
         </TabsContent>
+        </>
       )}
 
       {isAdmin && (
