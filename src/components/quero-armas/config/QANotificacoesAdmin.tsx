@@ -68,7 +68,7 @@ export default function QANotificacoesAdmin() {
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      const rows = (data ?? []) as NotificacaoRow[];
+      const rows = (data ?? []) as unknown as NotificacaoRow[];
       const clienteIds = [...new Set(rows.map((r) => r.cliente_id))];
       const { data: clientes } = clienteIds.length
         ? await supabase.from("qa_clientes" as any).select("id, nome_completo").in("id", clienteIds)
@@ -93,7 +93,7 @@ export default function QANotificacoesAdmin() {
         .select("id, nome_completo, cpf")
         .or(`nome_completo.ilike.%${termo}%,cpf.ilike.%${termo}%`)
         .limit(8);
-      setResultadosBusca((data ?? []) as ClienteBusca[]);
+      setResultadosBusca((data ?? []) as unknown as ClienteBusca[]);
     }, 300);
     return () => clearTimeout(t);
   }, [buscaCliente]);
@@ -105,8 +105,8 @@ export default function QANotificacoesAdmin() {
         supabase.from("qa_processos" as any).select("id, servico_nome, status").eq("cliente_id", clienteSelecionado.id).limit(50),
         supabase.from("qa_documentos_cliente" as any).select("id, tipo_documento, nome_documento").eq("qa_cliente_id", clienteSelecionado.id).limit(50),
       ]);
-      setProcessos((procs ?? []) as ProcessoOpcao[]);
-      setDocumentos((docs ?? []) as DocumentoOpcao[]);
+      setProcessos((procs ?? []) as unknown as ProcessoOpcao[]);
+      setDocumentos((docs ?? []) as unknown as DocumentoOpcao[]);
     })();
   }, [clienteSelecionado]);
 
