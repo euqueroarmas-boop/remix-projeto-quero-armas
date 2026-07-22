@@ -32,6 +32,64 @@ export function normalizeAnexoSlug(value: string | null | undefined): string {
     .replace(/^-+|-+$/g, "");
 }
 
+function toRoman(value: number): string {
+  const map: Array<[number, string]> = [
+    [1000, "M"],
+    [900, "CM"],
+    [500, "D"],
+    [400, "CD"],
+    [100, "C"],
+    [90, "XC"],
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let n = Math.max(1, Math.floor(value || 1));
+  let out = "";
+  for (const [num, roman] of map) {
+    while (n >= num) {
+      out += roman;
+      n -= num;
+    }
+  }
+  return out;
+}
+
+export function renumberContractAnexoHeadings(
+  html: string,
+  startIndex = 1,
+): { html: string; nextIndex: number; count: number } {
+  if (!html) return { html, nextIndex: startIndex, count: 0 };
+  let index = Math.max(1, Math.floor(startIndex || 1));
+  let count = 0;
+  const out = html.replace(
+    /(<h[1-6]\b[^>]*>\s*)(?:ANEXO\s+[IVXLCDM]+\s*(?:&mdash;|&ndash;|---|--|—|-)\s*|I\.\d+\.\s*)([\s\S]*?)(<\/h[1-6]>)/gi,
+    (_full, open: string, title: string, close: string) => {
+      const roman = toRoman(index++);
+      count++;
+      return `${open}ANEXO ${roman} — ${title.trim()}${close}`;
+    },
+  );
+  return { html: out, nextIndex: index, count };
+}
+
+export function renumberContractAnexoHeading(html: string, index: number): string {
+  return renumberContractAnexoHeadings(html, index).html;
+}
+
+export function normalizeContractAnexoContainerHeading(html: string): string {
+  return html;
+}
+
+export function hasContractAnexoContainerHeading(html: string): boolean {
+  if (!html) return false;
+  return /<h[1-6]\b[^>]*>\s*ANEXO\s+I\s*(?:&mdash;|&ndash;|---|--|—|-)\s*DESCRIÇÃO DOS SERVIÇOS CONTRATADOS\s*<\/h[1-6]>/i.test(html);
+}
+
 /**
  * Monta o miolo do Anexo I concatenando o `anexo_corpo_html` de cada
  * serviço contratado, na ordem em que os slugs foram passados. Slugs sem
@@ -73,7 +131,12 @@ export async function montarAnexosI(
     .filter((b): b is string => !!b && b.trim().length > 0);
 
   if (blocos.length === 0) return AVISO_SEM_ANEXO_DINAMICO_HTML;
-  return blocos.join("\n");
+  let nextIndex = 1;
+  return blocos.map((bloco) => {
+    const renumbered = renumberContractAnexoHeadings(bloco, nextIndex);
+    nextIndex = renumbered.nextIndex;
+    return renumbered.html;
+  }).join("\n");
 }
 
 /**
@@ -83,6 +146,10 @@ export async function montarAnexosI(
  */
 export function aplicarAnexosDinamicos(html: string, anexosHtml: string): string {
   if (!html) return html;
-  if (html.indexOf("{{anexos_i_dinamicos}}") === -1) return html;
-  return html.replace(/\{\{\s*anexos_i_dinamicos\s*\}\}/g, anexosHtml);
+  const normalized = normalizeContractAnexoContainerHeading(html);
+  if (normalized.indexOf("{{anexos_i_dinamicos}}") === -1) return normalized;
+  const anexosNumerados = hasContractAnexoContainerHeading(normalized)
+    ? renumberContractAnexoHeadings(anexosHtml, 2).html
+    : anexosHtml;
+  return normalized.replace(/\{\{\s*anexos_i_dinamicos\s*\}\}/g, anexosNumerados);
 }

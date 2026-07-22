@@ -23,8 +23,15 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { constantTimeEqual, sha256Hex } from "../_shared/qaAsaas.ts";
 import { jsPDF } from "npm:jspdf@2.5.1";
-import { montarAnexosI, aplicarAnexosDinamicos } from "../_shared/qaAnexos.ts";
+import {
+  montarAnexosI,
+  aplicarAnexosDinamicos,
+  renumberContractAnexoHeadings,
+  normalizeContractAnexoContainerHeading,
+  hasContractAnexoContainerHeading,
+} from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -373,15 +380,13 @@ function titleCaseName(value: string): string {
     .join(" ");
 }
 
-function shortPersonName(value: string | null | undefined): string {
-  const parts = fileSafeName(value).split(/\s+/).filter(Boolean);
-  if (parts.length <= 2) return titleCaseName(parts.join(" "));
-  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+function fullPersonName(value: string | null | undefined): string {
+  return titleCaseName(fileSafeName(value || ""));
 }
 
 function contractDownloadBaseName(contract: any): string {
   const numero = fileSafeName(contract.contract_number || contract.id || "Contrato");
-  const cliente = shortPersonName(contract.cliente_nome || "");
+  const cliente = fullPersonName(contract.cliente_nome || "");
   return cliente
     ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}`
     : `${numero} - Contrato de Adesao Quero Armas`;
@@ -421,16 +426,20 @@ function normalizeContractSlug(value: string | null | undefined): string {
 }
 
 function filterContractAnexosBySlugs(html: string, slugsContratados: string[]): string {
+  const normalized = normalizeContractAnexoContainerHeading(html);
   const slugSet = new Set(slugsContratados.map(normalizeContractSlug).filter(Boolean));
   const sectionRegex =
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  const filtered = html.replace(sectionRegex, (full, slug) => {
+  let nextAnexoIndex = hasContractAnexoContainerHeading(normalized) ? 2 : 1;
+  const filtered = normalized.replace(sectionRegex, (full, slug) => {
     foundAny = true;
     if (slugSet.has(normalizeContractSlug(slug))) {
       kept++;
-      return full;
+      const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+      nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+      return renumbered.html;
     }
     return "";
   });
@@ -489,9 +498,32 @@ async function loadCliente(sb: ReturnType<typeof svc>, clienteId: number | strin
   const { data } = await sb
     .from("qa_clientes")
     .select("nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep")
-    .eq("id_legado", clienteId)
+    .or(`id_legado.eq.${clienteId},id.eq.${clienteId}`)
+    .limit(1)
     .maybeSingle();
   return data as any | null;
+}
+
+async function loadClienteNome(sb: ReturnType<typeof svc>, clienteId: number | string | null | undefined) {
+  if (clienteId == null) return null;
+  const { data } = await sb
+    .from("qa_clientes")
+    .select("nome_completo")
+    .or(`id_legado.eq.${clienteId},id.eq.${clienteId}`)
+    .limit(1)
+    .maybeSingle();
+  return (data as any)?.nome_completo || null;
+}
+
+async function loadClienteNomeByContractVenda(sb: ReturnType<typeof svc>, contractVendaId: number | string | null | undefined) {
+  if (contractVendaId == null) return null;
+  const { data: venda } = await sb
+    .from("qa_vendas")
+    .select("cliente_id")
+    .or(`id.eq.${contractVendaId},id_legado.eq.${contractVendaId}`)
+    .limit(1)
+    .maybeSingle();
+  return loadClienteNome(sb, (venda as any)?.cliente_id);
 }
 
 function formatEnderecoCliente(cliente: any): string {
@@ -610,12 +642,9 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
   }
 
   if (!contract.cliente_nome) {
-    const { data: clienteNome } = await sb
-      .from("qa_clientes")
-      .select("nome_completo")
-      .eq("id_legado", contract.cliente_id)
-      .maybeSingle();
-    contract.cliente_nome = (clienteNome as any)?.nome_completo || null;
+    contract.cliente_nome =
+      await loadClienteNome(sb, contract.cliente_id) ||
+      await loadClienteNomeByContractVenda(sb, contract.venda_id);
   }
 
   const missingAudit =
@@ -665,16 +694,107 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const user = await authUser(req);
-  if (!user) return jsonResp({ error: "Unauthorized" }, 401);
-
   const sb = svc();
 
+  let contractId: string | null = null;
+  let vendaId: number | null = null;
+  let variant = "company_signed";
+  let checkoutToken = "";
+
+  try {
+    if (req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      contractId = body.contract_id ?? null;
+      vendaId = body.venda_id ? Number(body.venda_id) : null;
+      variant = body.variant || variant;
+      checkoutToken = String(body.checkout_token || "");
+    } else {
+      const u = new URL(req.url);
+      contractId = u.searchParams.get("contract_id");
+      const v = u.searchParams.get("venda_id");
+      vendaId = v ? Number(v) : null;
+      variant = u.searchParams.get("variant") || variant;
+      checkoutToken = String(u.searchParams.get("checkout_token") || "");
+    }
+  } catch { /* ignore */ }
+
+  if (!contractId && !vendaId) return jsonResp({ error: "contract_id ou venda_id obrigatório" }, 400);
+
+  let vendaLookup: any | null = null;
+  if (vendaId) {
+    const { data } = await sb
+      .from("qa_vendas")
+      .select("id, id_legado, status, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, cliente_id")
+      .eq("id", vendaId)
+      .maybeSingle();
+    vendaLookup = data as any | null;
+  }
+
+  let q = sb.from("qa_contracts").select(
+    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_id, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash, created_at"
+  );
+  if (contractId) q = q.eq("id", contractId);
+  else {
+    const idsLookup = [vendaId!, ...((vendaLookup as any)?.id_legado ? [Number((vendaLookup as any).id_legado)] : [])];
+    q = q.in("venda_id", idsLookup).order("created_at", { ascending: false }).limit(1);
+  }
+  const { data: contract } = await q.maybeSingle();
+  if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
+
   // Resolve perfil + cliente (espelha cobranca-inline: tenta user_id direto, fallback via cliente_auth_links)
-  const { data: perfil } = await sb.from("qa_usuarios_perfis").select("perfil, ativo").eq("user_id", user.userId).eq("ativo", true).maybeSingle();
+  const { data: perfil } = user
+    ? await sb.from("qa_usuarios_perfis").select("perfil, ativo").eq("user_id", user.userId).eq("ativo", true).maybeSingle()
+    : { data: null } as any;
   const isStaff = !!perfil;
 
-  let cli: { id: unknown; id_legado: unknown } | null = null;
-  if (!isStaff) {
+  let publicCheckoutAccess = false;
+  if (!user) {
+    if (
+      !vendaLookup ||
+      !checkoutToken ||
+      checkoutToken.length < 24 ||
+      checkoutToken.length > 256 ||
+      !/^[A-Za-z0-9_\-]+$/.test(checkoutToken)
+    ) {
+      return jsonResp({ error: "acesso_negado" }, 401);
+    }
+    const contractVendaMatches =
+      Number((contract as any).venda_id) === Number((vendaLookup as any).id) ||
+      Number((contract as any).venda_id) === Number((vendaLookup as any).id_legado);
+    const submittedHash = await sha256Hex(checkoutToken);
+    const storedHash = (vendaLookup as any).checkout_token_hash || "0".repeat(64);
+    const tokenOk = constantTimeEqual(submittedHash, storedHash) && !!(vendaLookup as any).checkout_token_hash;
+    const tokenValid =
+      !!(vendaLookup as any).checkout_token_expires_at &&
+      new Date((vendaLookup as any).checkout_token_expires_at).getTime() >= Date.now();
+    publicCheckoutAccess =
+      contractVendaMatches &&
+      tokenOk &&
+      tokenValid &&
+      String((vendaLookup as any).cobranca_origem || "") === "checkout_site";
+    if (!publicCheckoutAccess) {
+      await logSistemaBackend({
+        tipo: "contrato",
+        status: "warning",
+        mensagem: "qa-serve-contract-pdf: acesso publico negado",
+        payload: {
+          venda_id: vendaId,
+          contract_id: (contract as any).id,
+          contract_venda_id: (contract as any).venda_id,
+          token_present: !!checkoutToken,
+          token_valid: tokenValid,
+          origem: (vendaLookup as any).cobranca_origem || null,
+          ip: requestIp(req),
+          user_agent: req.headers.get("user-agent"),
+        },
+      });
+      return jsonResp({ error: "acesso_negado" }, 401);
+    }
+  }
+
+  // Ownership — compara id_legado (inteiro) com id_legado do cliente autenticado
+  if (user && !isStaff) {
+    let cli: { id: unknown; id_legado: unknown } | null = null;
     const { data: cliDireto } = await sb.from("qa_clientes").select("id, id_legado").eq("user_id", user.userId).maybeSingle();
     cli = cliDireto;
     if (!cli) {
@@ -684,39 +804,6 @@ Deno.serve(async (req) => {
         cli = cliLink;
       }
     }
-  }
-
-  let contractId: string | null = null;
-  let vendaId: number | null = null;
-  let variant = "company_signed";
-
-  try {
-    if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      contractId = body.contract_id ?? null;
-      vendaId = body.venda_id ? Number(body.venda_id) : null;
-      variant = body.variant || variant;
-    } else {
-      const u = new URL(req.url);
-      contractId = u.searchParams.get("contract_id");
-      const v = u.searchParams.get("venda_id");
-      vendaId = v ? Number(v) : null;
-      variant = u.searchParams.get("variant") || variant;
-    }
-  } catch { /* ignore */ }
-
-  if (!contractId && !vendaId) return jsonResp({ error: "contract_id ou venda_id obrigatório" }, 400);
-
-  let q = sb.from("qa_contracts").select(
-    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_id, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash"
-  );
-  if (contractId) q = q.eq("id", contractId);
-  else q = q.eq("venda_id", vendaId!);
-  const { data: contract } = await q.maybeSingle();
-  if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
-
-  // Ownership — compara id_legado (inteiro) com id_legado do cliente autenticado
-  if (!isStaff) {
     if (!cli || Number((contract as any).cliente_id) !== Number((cli as any).id_legado)) {
       return jsonResp({ error: "Acesso negado" }, 403);
     }

@@ -14,6 +14,7 @@ import { formatBRL } from "@/shared/lib/formatters";
 import { isValidIdentificacao, snapshotCart } from "@/lib/quero-armas/checkoutSnapshot";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 import ContractPreviewCard from "@/pages/quero-armas/cadastro-refinado/components/ContractPreviewCard";
+import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
 
 /* ── Design tokens (idênticos ao CheckoutShell) ──────────────────────────────── */
@@ -190,31 +191,10 @@ export default function QACheckoutFinalizarPage() {
     setErroBaixarContrato(null);
     setBaixandoContrato(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-baixar-contrato-aceite", {
-        body: { venda_id: venda.venda_id, checkout_token: venda.checkout_token },
+      await openMinutaContratoQueroArmas({
+        vendaId: venda.venda_id,
+        checkoutToken: venda.checkout_token,
       });
-      if (error) {
-        const ctx: any = (error as any)?.context;
-        if (ctx?.status === 202) {
-          setErroBaixarContrato("Contrato sendo gerado. Tente novamente em instantes.");
-          return;
-        }
-        throw error;
-      }
-      if (!data?.ok || !data?.html_doc) {
-        setErroBaixarContrato(
-          data?.message || "Contrato ainda não disponível. Tente novamente em instantes.",
-        );
-        return;
-      }
-      const w = window.open("", "_blank", "width=900,height=1100");
-      if (!w) {
-        setErroBaixarContrato("Habilite pop-ups para baixar o contrato.");
-        return;
-      }
-      w.document.write(data.html_doc);
-      w.document.close();
-      setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 400);
     } catch (e: any) {
       console.error("[QACheckoutFinalizar] baixar contrato falhou:", e);
       setErroBaixarContrato("Não foi possível baixar o contrato agora. Nossa equipe foi notificada.");

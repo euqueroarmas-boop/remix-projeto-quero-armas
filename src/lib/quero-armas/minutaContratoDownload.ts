@@ -4,9 +4,10 @@ export const QA_CONTRACT_MINUTA_SOURCE = "Minuta_Contrato_Quero_Armas_v1.md";
 export const QA_CONTRACT_TEMPLATE_CODE = "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS";
 
 type OpenMinutaArgs = {
-  contractId: string;
+  contractId?: string | null;
   contractNumber?: string | null;
   vendaId?: number | string | null;
+  checkoutToken?: string | null;
   slugs?: string[];
   variant?: "company_signed" | "customer_signed";
 };
@@ -31,17 +32,19 @@ function filenameFromContentDisposition(header: string | null, fallback: string)
 
 async function sessionHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
-  return {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${session?.access_token ?? ""}`,
     apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  return headers;
 }
 
 function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "customer_signed" | "download_url" | "html_preview") {
   return JSON.stringify({
-    contract_id: args.contractId,
+    contract_id: args.contractId || undefined,
     venda_id: args.vendaId ? Number(args.vendaId) : undefined,
+    checkout_token: args.checkoutToken || undefined,
     variant,
     template_source: QA_CONTRACT_MINUTA_SOURCE,
     template_codigo: QA_CONTRACT_TEMPLATE_CODE,
@@ -69,7 +72,7 @@ export async function prepareMinutaContratoQueroArmas(args: OpenMinutaArgs): Pro
     throw new Error("Contrato retornou vazio. Fale com o suporte.");
   }
 
-  const fallback = `Contrato-${args.contractNumber || args.contractId}.pdf`;
+  const fallback = `Contrato-${args.contractNumber || args.contractId || args.vendaId || "Quero-Armas"}.pdf`;
   const filename = filenameFromContentDisposition(resp.headers.get("content-disposition"), fallback);
   const href = URL.createObjectURL(blob);
   return {

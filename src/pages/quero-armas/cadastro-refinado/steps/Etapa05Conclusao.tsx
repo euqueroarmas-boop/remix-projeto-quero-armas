@@ -2,6 +2,7 @@ import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen, Copy 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
@@ -217,33 +218,10 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
         setErroBaixar("Não conseguimos identificar sua contratação. Recarregue a página e tente novamente.");
         return;
       }
-      const { data, error } = await supabase.functions.invoke("qa-baixar-contrato-aceite", {
-        body: { venda_id: Number(r.venda_id), checkout_token: r.checkout_token },
+      await openMinutaContratoQueroArmas({
+        vendaId: Number(r.venda_id),
+        checkoutToken: r.checkout_token,
       });
-      if (error) {
-        // Edge function devolve 202 quando o contrato ainda não foi gerado.
-        const ctx: any = (error as any)?.context;
-        if (ctx?.status === 202) {
-          setErroBaixar("Contrato sendo gerado. Tente novamente em instantes.");
-          return;
-        }
-        throw error;
-      }
-      if (!data?.ok || !data?.html_doc) {
-        setErroBaixar(
-          data?.message ||
-            "Contrato ainda não disponível. Tente novamente em instantes.",
-        );
-        return;
-      }
-      const w = window.open("", "_blank", "width=900,height=1100");
-      if (!w) {
-        setErroBaixar("Habilite pop-ups para baixar o contrato.");
-        return;
-      }
-      w.document.write(data.html_doc);
-      w.document.close();
-      setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 400);
     } catch (e: any) {
       console.error("[Etapa05] baixar contrato falhou:", e);
       setErroBaixar("Não foi possível baixar o contrato agora. Nossa equipe foi notificada.");

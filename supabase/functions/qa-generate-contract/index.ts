@@ -27,7 +27,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 import { extractPolicy, aplicarPolicyNotificacao } from "../_shared/notificacaoPolicy.ts";
-import { montarAnexosI, aplicarAnexosDinamicos } from "../_shared/qaAnexos.ts";
+import {
+  montarAnexosI,
+  aplicarAnexosDinamicos,
+  renumberContractAnexoHeadings,
+  normalizeContractAnexoContainerHeading,
+  hasContractAnexoContainerHeading,
+} from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,6 +67,23 @@ function jsonResp(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function processEmailQueueNow(sb: ReturnType<typeof svc>): Promise<unknown> {
+  const { data, error } = await sb.functions.invoke("process-email-queue", {
+    body: { source: "qa-generate-contract", reason: "contrato_regenerado_reenvio_manual" },
+  });
+  if (error) {
+    throw new Error(`E-mail enfileirado, mas falhou ao processar a fila: ${error.message}`);
+  }
+  const stopped = (data as any)?.stopped;
+  if (stopped) {
+    throw new Error(`E-mail enfileirado, mas a fila parou antes do envio: ${stopped}`);
+  }
+  if (typeof (data as any)?.processed === "number" && (data as any).processed < 1) {
+    throw new Error("E-mail enfileirado, mas a fila não processou nenhum envio.");
+  }
+  return data;
 }
 
 function esc(s: string | null | undefined): string {
@@ -197,16 +220,20 @@ function filterContractAnexosBySlugs(
 ): string {
   if (!html) return html;
   const slugSet = new Set(normalizeSlugs(slugsContratados));
+  const normalized = normalizeContractAnexoContainerHeading(html);
   const sectionRegex =
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  const filtered = html.replace(sectionRegex, (full, s: string) => {
+  let nextAnexoIndex = hasContractAnexoContainerHeading(normalized) ? 2 : 1;
+  const filtered = normalized.replace(sectionRegex, (full, s: string) => {
     foundAny = true;
     const sslug = normalizeContractSlug(s);
     if (slugSet.has(sslug)) {
       kept++;
-      return full;
+      const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+      nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+      return renumbered.html;
     }
     return "";
   });
@@ -214,7 +241,7 @@ function filterContractAnexosBySlugs(
     ? kept === 0
       ? filtered + AVISO_SEM_ANEXO_HTML
       : filtered
-    : html;
+    : normalized;
   return filterAnexoIByHeadings(bySections, slugSet);
 }
 
@@ -653,38 +680,57 @@ Deno.serve(async (req) => {
     // (/area-do-cliente/contratos/{id}), sempre serve o conteúdo vigente;
     // não há necessidade de invalidar links antigos, só de avisar o
     // cliente de novo com um e-mail fresco.
+    let emailDispatch: unknown = null;
     if (reenviarEmail) {
-      try {
-        const { data: cliEmail } = await sb
-          .from("qa_clientes")
-          .select("email, nome_completo")
-          .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
-          .limit(1)
-          .maybeSingle();
-        if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
-          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
-          await sendTransactional({
-            templateName: "contrato-pronto-assinatura",
-            recipientEmail: String(cliEmail.email).toLowerCase(),
-            idempotencyKey: `contrato-pronto-${existing.id}-regen-${Date.now()}`,
-            templateData: {
-              nome: cliEmail.nome_completo || undefined,
-              contrato: contractNumber,
-              linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${existing.id}`,
-            },
-          });
-          await sb.from("qa_contract_events").insert({
-            contract_id: existing.id,
-            event_type: "contrato_email_reenviado",
-            event_payload: { contract_number: contractNumber, email: String(cliEmail.email).toLowerCase() },
-          });
-        }
-      } catch (e) {
-        console.error("[qa-generate-contract] reenvio de e-mail falhou:", (e as Error)?.message);
+      const { data: cliEmail } = await sb
+        .from("qa_clientes")
+        .select("email, nome_completo")
+        .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
+        .limit(1)
+        .maybeSingle();
+      if (!cliEmail?.email || !/^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+        return jsonResp({ error: "Contrato regenerado, mas o cliente não tem e-mail válido para reenvio." }, 422);
       }
+
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      const sendResult = await sendTransactional({
+        templateName: "contrato-regenerado-assinatura",
+        recipientEmail: String(cliEmail.email).toLowerCase(),
+        idempotencyKey: `contrato-regenerado-${existing.id}-${Date.now()}`,
+        templateData: {
+          nome: cliEmail.nome_completo || undefined,
+          contrato: contractNumber,
+          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${existing.id}`,
+        },
+      });
+      if (!sendResult.ok) {
+        return jsonResp({
+          error: "Contrato regenerado, mas o e-mail não foi enfileirado.",
+          details: sendResult.error,
+        }, 502);
+      }
+
+      try {
+        emailDispatch = await processEmailQueueNow(sb);
+      } catch (e) {
+        return jsonResp({
+          error: (e as Error)?.message || "Contrato regenerado, mas a fila de e-mail não foi processada.",
+        }, 502);
+      }
+
+      await sb.from("qa_contract_events").insert({
+        contract_id: existing.id,
+        event_type: "contrato_email_reenviado",
+        event_payload: {
+          contract_number: contractNumber,
+          email: String(cliEmail.email).toLowerCase(),
+          template: "contrato-regenerado-assinatura",
+          dispatch: emailDispatch,
+        }
+      });
     }
 
-    return jsonResp({ ok: true, repaired: true, contract: repaired });
+    return jsonResp({ ok: true, repaired: true, contract: repaired, email_dispatch: emailDispatch });
   }
 
   // Insert contract

@@ -30,7 +30,12 @@ export async function sendTransactional(args: SendTransactionalArgs): Promise<Se
       },
     });
     if (error) return { ok: false, error: error.message };
-    return { ok: Boolean(data?.success || data?.queued), queued: Boolean(data?.queued) };
+    const ok = Boolean(data?.success || data?.queued);
+    return {
+      ok,
+      queued: Boolean(data?.queued),
+      error: ok ? undefined : String(data?.error || data?.reason || "E-mail não enfileirado"),
+    };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }

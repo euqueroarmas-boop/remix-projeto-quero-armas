@@ -72,6 +72,51 @@ function normalizeContractSlug(value: string | null | undefined): string {
   return s;
 }
 
+function toRoman(value: number): string {
+  const map: Array<[number, string]> = [
+    [1000, "M"],
+    [900, "CM"],
+    [500, "D"],
+    [400, "CD"],
+    [100, "C"],
+    [90, "XC"],
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let n = Math.max(1, Math.floor(value || 1));
+  let out = "";
+  for (const [num, roman] of map) {
+    while (n >= num) {
+      out += roman;
+      n -= num;
+    }
+  }
+  return out;
+}
+
+function renumberContractAnexoHeadings(
+  html: string,
+  startIndex = 1,
+): { html: string; nextIndex: number; count: number } {
+  if (!html) return { html, nextIndex: startIndex, count: 0 };
+  let index = Math.max(1, Math.floor(startIndex || 1));
+  let count = 0;
+  const out = html.replace(
+    /(<h[1-6]\b[^>]*>\s*)(?:ANEXO\s+[IVXLCDM]+\s*(?:&mdash;|&ndash;|---|--|—|-)\s*|I\.\d+\.\s*)([\s\S]*?)(<\/h[1-6]>)/gi,
+    (_full, open: string, title: string, close: string) => {
+      const roman = toRoman(index++);
+      count++;
+      return `${open}ANEXO ${roman} — ${title.trim()}${close}`;
+    },
+  );
+  return { html: out, nextIndex: index, count };
+}
+
 function extractSlugFromAnexoBlock(segment: string): string | null {
   const rawRegexes: RegExp[] = [
     /Identificador[\s\S]{0,40}?\(\s*slug\s*\)[^A-Za-z0-9<]{0,20}(?:<[^>]+>\s*)*([^<\n\r.;]+)/i,
@@ -119,11 +164,21 @@ function inferSlugFromAnexoTitle(titulo: string): string | null {
   return null;
 }
 
+function normalizeContractAnexoContainerHeading(html: string): string {
+  return html;
+}
+
+function hasContractAnexoContainerHeading(html: string): boolean {
+  if (!html) return false;
+  return /<h[1-6]\b[^>]*>\s*ANEXO\s+I\s*(?:&mdash;|&ndash;|---|--|—|-)\s*DESCRIÇÃO DOS SERVIÇOS CONTRATADOS\s*<\/h[1-6]>/i.test(html);
+}
+
 function filterContractAnexosBySlugs(
   html: string,
   slugsContratados: string[],
 ): string {
   if (!html) return html;
+  const normalized = normalizeContractAnexoContainerHeading(html);
   const slugs = (slugsContratados || [])
     .filter((s): s is string => typeof s === "string")
     .map((s) => normalizeContractSlug(s))
@@ -133,10 +188,16 @@ function filterContractAnexosBySlugs(
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  let result = html.replace(sectionRegex, (full, s) => {
+  let nextAnexoIndex = hasContractAnexoContainerHeading(normalized) ? 2 : 1;
+  let result = normalized.replace(sectionRegex, (full, s) => {
     foundAny = true;
     const sslug = normalizeContractSlug(String(s));
-    if (slugSet.has(sslug)) { kept++; return full; }
+    if (slugSet.has(sslug)) {
+      kept++;
+      const renumbered = renumberContractAnexoHeadings(full, nextAnexoIndex);
+      nextAnexoIndex = renumbered.count > 0 ? renumbered.nextIndex : nextAnexoIndex + 1;
+      return renumbered.html;
+    }
     return "";
   });
   if (foundAny && kept === 0) result = result + AVISO_SEM_ANEXO_HTML;
