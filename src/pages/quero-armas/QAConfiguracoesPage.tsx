@@ -12,6 +12,7 @@ import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasA
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
+import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -312,6 +313,7 @@ export default function QAConfiguracoesPage() {
           {isAdmin && <TabsTrigger value="servicos" className="data-[state=active]:bg-slate-100">Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
           {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="biblioteca" className="data-[state=active]:bg-slate-100">Biblioteca de Documentos</TabsTrigger>}
           {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
           <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
@@ -465,6 +467,11 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="procuracao" className="mt-4">
           {/* Procuração — motor de stringagem + publicação do modelo vigente */}
           <QAProcuracaoPrimarioAdmin />
+        </TabsContent>
+
+        <TabsContent value="biblioteca" className="mt-4">
+          {/* Biblioteca central alfabética de documentos — fonte única do passo a passo */}
+          <QABibliotecaDocumentosAdmin />
         </TabsContent>
       )}
 
