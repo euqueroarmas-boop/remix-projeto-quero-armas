@@ -1,7 +1,8 @@
-import { ArrowLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import type { DadosExtraidos } from "./PrePilotoWizard";
 
 interface Props {
@@ -55,8 +56,29 @@ function confidenceBadge(c: number | null) {
 }
 
 export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, onAvancar, onVoltar }: Props) {
+  const { lookupCep, cepLoading } = useBrasilApiLookup();
+
   const set = (campo: string, valor: string) =>
     setDadosRevisados({ ...dadosRevisados, [campo]: valor || null });
+
+  // Edição manual do CEP nesta tela é uma correção deliberada da equipe —
+  // ao contrário da extração automática (que só preenche se vazio), aqui
+  // o resultado da API sempre sobrescreve logradouro/bairro/cidade/estado,
+  // pois é exatamente isso que a equipe está pedindo ao digitar o CEP certo.
+  const handleCepBlur = async (valorDigitado: string) => {
+    const digits = valorDigitado.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    const resultado = await lookupCep(digits);
+    if (!resultado) return;
+    setDadosRevisados({
+      ...dadosRevisados,
+      cep: valorDigitado,
+      ...(resultado.street ? { logradouro: resultado.street, endereco: resultado.street } : {}),
+      ...(resultado.neighborhood ? { bairro: resultado.neighborhood } : {}),
+      ...(resultado.city ? { cidade: resultado.city } : {}),
+      ...(resultado.state ? { estado: resultado.state } : {}),
+    });
+  };
 
   // Campos com confiança baixa
   const alertas = dadosExtraidos.confidence_pairs.filter((p) => p.confidence < 0.6 && p.valor);
@@ -117,10 +139,12 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
                   {label}{required && <span className="text-red-500 ml-0.5">*</span>}
                 </Label>
                 {confidenceBadge(conf)}
+                {key === "cep" && cepLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
               </div>
               <Input
                 value={valor || ""}
                 onChange={(e) => set(key, e.target.value)}
+                onBlur={key === "cep" ? (e) => handleCepBlur(e.target.value) : undefined}
                 className={`text-xs h-7 ${confidenceColor(conf)}`}
                 placeholder={required ? "Obrigatório" : "Não extraído"}
               />
