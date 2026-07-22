@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, RefreshCw, Play, Loader2, FileText, CheckCircle2, Clock,
-  ChevronDown, ChevronUp, ExternalLink, Trash2,
+  ChevronDown, ChevronUp, ExternalLink, Trash2, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [obs, setObs] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [excluindo, setExcluindo] = useState<string | null>(null);
+  const [regenerando, setRegenerando] = useState<string | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
@@ -178,6 +179,31 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     }
   }
 
+  // Regenera o contrato com o template/anexo vigente (útil quando o Anexo I
+  // ou o corpo do contrato principal foi atualizado em Configurações depois
+  // que este contrato já tinha sido gerado) e reenvia o e-mail ao cliente.
+  // O link é sempre o mesmo (/area-do-cliente/contratos/{id}) e passa a
+  // servir o conteúdo corrigido assim que regenerado — não há necessidade
+  // de invalidar o link antigo, só de avisar o cliente de novo.
+  async function regenerarEReenviar(contratoId: string, vendaId: number, clienteNome: string) {
+    if (!window.confirm(`Regenerar o contrato de ${clienteNome} com o template vigente e reenviar o e-mail de assinatura?`)) return;
+    setRegenerando(contratoId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
+        body: { venda_id: vendaId, force: true, reenviar_email: true },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || "Falha ao regenerar contrato");
+      }
+      toast.success("Contrato regenerado e e-mail reenviado ao cliente.");
+      await carregar();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao regenerar contrato");
+    } finally {
+      setRegenerando(null);
+    }
+  }
+
   if (carregando) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">
@@ -296,8 +322,8 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                   </div>
                 )}
 
-                {/* Ir para Piloto Real */}
-                <div className="flex justify-between items-center pt-1 border-t gap-2">
+                {/* Regenerar contrato / Excluir / Ir para Piloto Real */}
+                <div className="flex flex-wrap justify-between items-center pt-1 border-t gap-2">
                   <Button
                     size="sm"
                     variant="ghost"
@@ -310,16 +336,30 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                       : <Trash2 className="w-3 h-3" />}
                     Excluir permanentemente
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs gap-1 h-7"
-                    onClick={() => navigate("/admin/piloto-real", {
-                      state: { clienteId: c.cliente_id, clienteNome: c.cliente_nome, vendaId: c.venda_id },
-                    })}
-                  >
-                    <Play className="w-3 h-3" /> Abrir no Piloto Real
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 h-7"
+                      disabled={regenerando === c.contrato_id}
+                      onClick={() => regenerarEReenviar(c.contrato_id, c.venda_id, c.cliente_nome)}
+                    >
+                      {regenerando === c.contrato_id
+                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                        : <Mail className="w-3 h-3" />}
+                      Regenerar e reenviar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs gap-1 h-7"
+                      onClick={() => navigate("/admin/piloto-real", {
+                        state: { clienteId: c.cliente_id, clienteNome: c.cliente_nome, vendaId: c.venda_id },
+                      })}
+                    >
+                      <Play className="w-3 h-3" /> Abrir no Piloto Real
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

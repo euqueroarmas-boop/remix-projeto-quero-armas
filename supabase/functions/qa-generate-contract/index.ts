@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
   }
 
-  let body: { venda_id?: number; force?: boolean; notificacao_policy?: unknown };
+  let body: { venda_id?: number; force?: boolean; notificacao_policy?: unknown; reenviar_email?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -244,6 +244,11 @@ Deno.serve(async (req) => {
   }
   const vendaId = Number(body.venda_id);
   const force = body.force === true;
+  // Reenvio explícito de e-mail no reprocessamento — só quando pedido
+  // deliberadamente (ex.: botão "Regenerar e reenviar" no Histórico).
+  // Reprocessamentos automáticos/silenciosos (template desatualizado
+  // detectado em outros fluxos) continuam sem notificar o cliente de novo.
+  const reenviarEmail = body.reenviar_email === true;
   if (!vendaId || Number.isNaN(vendaId)) return jsonResp({ error: "venda_id obrigatório" }, 400);
   const notifPolicy = extractPolicy(body, {
     notificar_cliente: true,
@@ -640,8 +645,44 @@ Deno.serve(async (req) => {
         template_codigo: (template as any).codigo,
         slugs: slugsContratados,
         forced: force,
+        reenviou_email: reenviarEmail,
       },
     });
+
+    // Reenvio explícito de e-mail — o link é o mesmo de sempre
+    // (/area-do-cliente/contratos/{id}), sempre serve o conteúdo vigente;
+    // não há necessidade de invalidar links antigos, só de avisar o
+    // cliente de novo com um e-mail fresco.
+    if (reenviarEmail) {
+      try {
+        const { data: cliEmail } = await sb
+          .from("qa_clientes")
+          .select("email, nome_completo")
+          .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
+          .limit(1)
+          .maybeSingle();
+        if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+          await sendTransactional({
+            templateName: "contrato-pronto-assinatura",
+            recipientEmail: String(cliEmail.email).toLowerCase(),
+            idempotencyKey: `contrato-pronto-${existing.id}-regen-${Date.now()}`,
+            templateData: {
+              nome: cliEmail.nome_completo || undefined,
+              contrato: contractNumber,
+              linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${existing.id}`,
+            },
+          });
+          await sb.from("qa_contract_events").insert({
+            contract_id: existing.id,
+            event_type: "contrato_email_reenviado",
+            event_payload: { contract_number: contractNumber, email: String(cliEmail.email).toLowerCase() },
+          });
+        }
+      } catch (e) {
+        console.error("[qa-generate-contract] reenvio de e-mail falhou:", (e as Error)?.message);
+      }
+    }
 
     return jsonResp({ ok: true, repaired: true, contract: repaired });
   }
