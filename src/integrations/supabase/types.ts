@@ -4322,6 +4322,18 @@ export type Database = {
           numero_filiacao: string | null
           numero2: string | null
           observacao: string | null
+          ocupacao_licita_atividade: string | null
+          ocupacao_licita_bairro: string | null
+          ocupacao_licita_cep: string | null
+          ocupacao_licita_cidade: string | null
+          ocupacao_licita_cnpj: string | null
+          ocupacao_licita_complemento: string | null
+          ocupacao_licita_estado: string | null
+          ocupacao_licita_logradouro: string | null
+          ocupacao_licita_nome_fantasia: string | null
+          ocupacao_licita_numero: string | null
+          ocupacao_licita_razao_social: string | null
+          ocupacao_licita_telefone: string | null
           orgao_vinculado: string | null
           origem: string | null
           pais: string | null
@@ -4448,6 +4460,18 @@ export type Database = {
           numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
+          ocupacao_licita_atividade?: string | null
+          ocupacao_licita_bairro?: string | null
+          ocupacao_licita_cep?: string | null
+          ocupacao_licita_cidade?: string | null
+          ocupacao_licita_cnpj?: string | null
+          ocupacao_licita_complemento?: string | null
+          ocupacao_licita_estado?: string | null
+          ocupacao_licita_logradouro?: string | null
+          ocupacao_licita_nome_fantasia?: string | null
+          ocupacao_licita_numero?: string | null
+          ocupacao_licita_razao_social?: string | null
+          ocupacao_licita_telefone?: string | null
           orgao_vinculado?: string | null
           origem?: string | null
           pais?: string | null
@@ -4574,6 +4598,18 @@ export type Database = {
           numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
+          ocupacao_licita_atividade?: string | null
+          ocupacao_licita_bairro?: string | null
+          ocupacao_licita_cep?: string | null
+          ocupacao_licita_cidade?: string | null
+          ocupacao_licita_cnpj?: string | null
+          ocupacao_licita_complemento?: string | null
+          ocupacao_licita_estado?: string | null
+          ocupacao_licita_logradouro?: string | null
+          ocupacao_licita_nome_fantasia?: string | null
+          ocupacao_licita_numero?: string | null
+          ocupacao_licita_razao_social?: string | null
+          ocupacao_licita_telefone?: string | null
           orgao_vinculado?: string | null
           origem?: string | null
           pais?: string | null
