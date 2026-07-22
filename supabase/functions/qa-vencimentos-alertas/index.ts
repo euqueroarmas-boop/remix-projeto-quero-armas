@@ -92,8 +92,9 @@ serve(async (req) => {
   let body: any = {};
   try { body = await req.json(); } catch { /* GET ou body vazio */ }
 
-  // SEGURANÇA: dry_run é true por padrão. Para envio real, precisa explicit false.
-  const dryRun: boolean = body?.dry_run !== false;
+  // Envio real por padrão desde 2026-07-22 (antes era dry_run por padrão).
+  // Passe { dry_run: true } explicitamente para voltar ao modo simulação.
+  const dryRun: boolean = body?.dry_run === true;
 
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -317,6 +318,57 @@ serve(async (req) => {
         onConflict: "fonte,ref_id,marco_dias,canal,data_referencia",
         ignoreDuplicates: true,
       });
+    }
+
+    // Motor de notificações in-app (popup persistente no portal do cliente).
+    // Urgente para CR/CRAF/Autorização de compra dentro de 30 dias (ou já
+    // vencido). Roda mesmo em dry_run — é o popup do portal, não e-mail.
+    const categoriaPorFonte: Partial<Record<Fonte, string>> = {
+      CR: "cr", CRAF: "craf", AUTORIZACAO: "autorizacao_compra",
+    };
+    const referenciaTabelaPorFonte: Partial<Record<Fonte, string>> = {
+      CR: "qa_cadastro_cr", CRAF: "qa_crafs", AUTORIZACAO: "qa_documentos_cliente",
+    };
+    const urgentesAgora = new Set<string>();
+    const notifRows: any[] = [];
+    for (const c of candidatos) {
+      const categoria = categoriaPorFonte[c.fonte];
+      if (!categoria || c.marco > 30) continue;
+      const refTabela = referenciaTabelaPorFonte[c.fonte]!;
+      const refId = c.ref_id.split(":")[1] || c.ref_id;
+      urgentesAgora.add(`${c.cliente_id}_${categoria}_${refTabela}_${refId}`);
+      const vencStr = brDate(c.data_validade);
+      notifRows.push({
+        cliente_id: c.cliente_id,
+        categoria,
+        urgencia: "urgente",
+        titulo: c.dias < 0 ? `${c.fonte} vencida` : `${c.fonte} vencendo em ${c.dias} dia(s)`,
+        mensagem: c.dias < 0
+          ? `Sua ${c.fonte} (${c.titulo}) está vencida desde ${vencStr}. Regularize o quanto antes.`
+          : `Sua ${c.fonte} (${c.titulo}) vence em ${c.dias} dia(s) — ${vencStr}.`,
+        link: "/area-do-cliente/alertas-vencimento",
+        referencia_tabela: refTabela,
+        referencia_id: refId,
+        ativa: true,
+      });
+    }
+    if (notifRows.length > 0) {
+      await sb.from("qa_notificacoes_cliente").upsert(notifRows, {
+        onConflict: "cliente_id,categoria,referencia_tabela,referencia_id",
+      });
+    }
+    const { data: ativasVenc } = await sb
+      .from("qa_notificacoes_cliente")
+      .select("id, cliente_id, categoria, referencia_tabela, referencia_id")
+      .in("categoria", ["cr", "craf", "autorizacao_compra"])
+      .eq("ativa", true);
+    const paraResolverVenc = ((ativasVenc || []) as any[])
+      .filter((n) => !urgentesAgora.has(`${n.cliente_id}_${n.categoria}_${n.referencia_tabela}_${n.referencia_id}`))
+      .map((n) => n.id);
+    if (paraResolverVenc.length > 0) {
+      await sb.from("qa_notificacoes_cliente")
+        .update({ ativa: false, resolvida_em: new Date().toISOString() })
+        .in("id", paraResolverVenc);
     }
 
     return new Response(

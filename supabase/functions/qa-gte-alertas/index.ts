@@ -279,6 +279,50 @@ serve(async (req) => {
       });
     }
 
+    // Motor de notificações in-app (popup persistente no portal do cliente).
+    // Urgente dentro de 30 dias (ou já vencida).
+    const urgentesAgora = new Set<string>();
+    const notifRows: any[] = [];
+    for (const c of cand) {
+      if (c.marco > 30) continue;
+      const cliente = clienteMap.get(c.gte.cliente_id);
+      if (!cliente) continue;
+      const numero = c.gte.numero_gte || c.gte.id.slice(0, 8).toUpperCase();
+      urgentesAgora.add(`${c.gte.cliente_id}_gte_qa_gte_documentos_${c.gte.id}`);
+      const validadeBR = c.gte.data_validade!.split("-").reverse().join("/");
+      notifRows.push({
+        cliente_id: c.gte.cliente_id,
+        categoria: "gte",
+        urgencia: "urgente",
+        titulo: c.dias < 0 ? `GTE Nº ${numero} vencida` : `GTE Nº ${numero} vencendo em ${c.dias} dia(s)`,
+        mensagem: c.dias < 0
+          ? `Sua Guia de Tráfego Especial Nº ${numero} está vencida desde ${validadeBR}. A GTE é obrigatória para transporte legal das armas.`
+          : `Sua Guia de Tráfego Especial Nº ${numero} vence em ${c.dias} dia(s) — ${validadeBR}.`,
+        link: "/area-do-cliente/alertas-vencimento",
+        referencia_tabela: "qa_gte_documentos",
+        referencia_id: c.gte.id,
+        ativa: true,
+      });
+    }
+    if (notifRows.length > 0) {
+      await sb.from("qa_notificacoes_cliente").upsert(notifRows, {
+        onConflict: "cliente_id,categoria,referencia_tabela,referencia_id",
+      });
+    }
+    const { data: ativasGte } = await sb
+      .from("qa_notificacoes_cliente")
+      .select("id, cliente_id, categoria, referencia_id")
+      .eq("categoria", "gte")
+      .eq("ativa", true);
+    const paraResolverGte = ((ativasGte || []) as any[])
+      .filter((n) => !urgentesAgora.has(`${n.cliente_id}_gte_qa_gte_documentos_${n.referencia_id}`))
+      .map((n) => n.id);
+    if (paraResolverGte.length > 0) {
+      await sb.from("qa_notificacoes_cliente")
+        .update({ ativa: false, resolvida_em: new Date().toISOString() })
+        .in("id", paraResolverGte);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

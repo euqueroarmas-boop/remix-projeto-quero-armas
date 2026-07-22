@@ -57,6 +57,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
+import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import {
   QA_SIDEBAR_THEMES,
   getPersonalThemeKey,
@@ -2608,6 +2609,8 @@ export default function QAClientePortalPage() {
           onUpdated={() => setDocsReloadKey((k) => k + 1)}
         />
       ) : null}
+
+      <NotificacaoEngineOverlay clienteId={(cliente as any)?.id ?? null} />
 
       {showContratoPopup && pendingContracts > 0 && (
         <div

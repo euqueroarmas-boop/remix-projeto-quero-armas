@@ -190,6 +190,53 @@ serve(async (req) => {
       await sb.from("qa_exames_alertas_enviados").insert(insertAlerts);
     }
 
+    // Motor de notificações in-app (popup persistente no portal do cliente).
+    // Urgente quando faltam <= 30 dias. Upsert por (cliente, categoria,
+    // referencia) evita duplicar a cada execução do cron.
+    const tipoCategoria: Record<string, string> = { psicologico: "exame_psicologico", tiro: "exame_tiro" };
+    const urgentesAgora = new Set<string>();
+    const notifRows: any[] = [];
+    for (const c of candidates) {
+      if (c.marco > 30) continue;
+      const cliente = clienteAliasMap.get(c.exame.cliente_id);
+      if (!cliente) continue;
+      const categoria = tipoCategoria[c.exame.tipo] || "exame";
+      urgentesAgora.add(`${cliente.id}_${categoria}_qa_exames_cliente_status_${c.exame.id}`);
+      const tipo = tipoLabel[c.exame.tipo] || c.exame.tipo;
+      const vencStr = c.exame.data_vencimento.split("-").reverse().join("/");
+      notifRows.push({
+        cliente_id: cliente.id,
+        categoria,
+        urgencia: "urgente",
+        titulo: `${tipo} vencendo em ${c.diasRestantes} dia(s)`,
+        mensagem: `Seu ${tipo.toLowerCase()} vence em ${vencStr}. Providencie a renovação para não interromper seus processos.`,
+        link: "/area-do-cliente/alertas-vencimento",
+        referencia_tabela: "qa_exames_cliente_status",
+        referencia_id: c.exame.id,
+        ativa: true,
+      });
+    }
+    if (notifRows.length > 0) {
+      await sb.from("qa_notificacoes_cliente").upsert(notifRows, {
+        onConflict: "cliente_id,categoria,referencia_tabela,referencia_id",
+      });
+    }
+    // Resolve notificações cujo exame não está mais dentro do marco de 30
+    // dias (renovado ou vencido/atualizado) — evita popup fantasma.
+    const { data: ativasExame } = await sb
+      .from("qa_notificacoes_cliente")
+      .select("id, cliente_id, categoria, referencia_id")
+      .in("categoria", ["exame_psicologico", "exame_tiro"])
+      .eq("ativa", true);
+    const paraResolver = ((ativasExame || []) as any[])
+      .filter((n) => !urgentesAgora.has(`${n.cliente_id}_${n.categoria}_qa_exames_cliente_status_${n.referencia_id}`))
+      .map((n) => n.id);
+    if (paraResolver.length > 0) {
+      await sb.from("qa_notificacoes_cliente")
+        .update({ ativa: false, resolvida_em: new Date().toISOString() })
+        .in("id", paraResolver);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

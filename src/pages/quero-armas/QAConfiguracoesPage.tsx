@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
+import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
@@ -303,32 +305,47 @@ export default function QAConfiguracoesPage() {
         <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Status do sistema, serviços e pesos de ranking</p>
       </div>
 
-      {/* System Status */}
-      <div className="qa-card p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Database className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status</span>
-        </div>
-        <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
-          {[
-            { label: "Docs", value: stats?.documentos },
-            { label: "Normas", value: stats?.normas },
-            { label: "Jurisp.", value: stats?.jurisprudencias },
-            { label: "Peças", value: stats?.pecas },
-            { label: "Consultas", value: stats?.consultas },
-            { label: "Refs", value: stats?.referencias },
-            { label: "Revisões", value: stats?.revisoes },
-          ].map(s => (
-            <div key={s.label} className="text-center p-2 rounded-lg" style={{ background: "hsl(220 20% 97%)" }}>
-              <div className="text-lg font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{s.value}</div>
-              <div className="text-[9px] uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Tabs defaultValue="sistema" className="w-full">
+        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
+          <TabsTrigger value="sistema" className="data-[state=active]:bg-slate-100">Sistema</TabsTrigger>
+          {isAdmin && <TabsTrigger value="servicos" className="data-[state=active]:bg-slate-100">Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
+          <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
+          <TabsTrigger value="perfil" className="data-[state=active]:bg-slate-100">Perfil</TabsTrigger>
+          {isAdmin && <TabsTrigger value="monitoramento" className="data-[state=active]:bg-slate-100">Monitoramento</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="aparencia" className="data-[state=active]:bg-slate-100">Aparência</TabsTrigger>}
+        </TabsList>
 
-      {/* Serviços CRUD */}
+        <TabsContent value="sistema" className="mt-4">
+          {/* System Status */}
+          <div className="qa-card p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status</span>
+            </div>
+            <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
+              {[
+                { label: "Docs", value: stats?.documentos },
+                { label: "Normas", value: stats?.normas },
+                { label: "Jurisp.", value: stats?.jurisprudencias },
+                { label: "Peças", value: stats?.pecas },
+                { label: "Consultas", value: stats?.consultas },
+                { label: "Refs", value: stats?.referencias },
+                { label: "Revisões", value: stats?.revisoes },
+              ].map(s => (
+                <div key={s.label} className="text-center p-2 rounded-lg" style={{ background: "hsl(220 20% 97%)" }}>
+                  <div className="text-lg font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{s.value}</div>
+                  <div className="text-[9px] uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </TabsContent>
+
       {isAdmin && (
+        <TabsContent value="servicos" className="mt-4">
         <div className="qa-card p-5">
           {(() => {
             const servicosCatalogo = servicos.filter((s) => catalogoIds.has(s.id));
@@ -434,13 +451,19 @@ export default function QAConfiguracoesPage() {
             );
           })()}
         </div>
+        </TabsContent>
       )}
 
-      {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
-      {isAdmin && <QAContratoPrimarioAdmin />}
-
-      {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
       {isAdmin && (
+        <TabsContent value="contrato" className="mt-4">
+          {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
+          <QAContratoPrimarioAdmin />
+        </TabsContent>
+      )}
+
+      {isAdmin && (
+        <TabsContent value="status" className="mt-4">
+        {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -600,8 +623,16 @@ export default function QAConfiguracoesPage() {
             {statuses.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum status cadastrado</p>}
           </div>
         </div>
+        </TabsContent>
       )}
 
+      {isAdmin && (
+        <TabsContent value="notificacoes" className="mt-4">
+          <QANotificacoesAdmin />
+        </TabsContent>
+      )}
+
+      <TabsContent value="ranking" className="mt-4">
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Pesos de Ranking</span>
@@ -629,7 +660,9 @@ export default function QAConfiguracoesPage() {
         </div>
         {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 10% 62%)" }}>Apenas a gestão da Equipe Quero Armas pode editar.</p>}
       </div>
+      </TabsContent>
 
+      <TabsContent value="perfil" className="mt-4">
       {/* Profile */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
@@ -643,15 +676,24 @@ export default function QAConfiguracoesPage() {
           <div><span style={{ color: "hsl(220 10% 55%)" }}>Status:</span> <span className={`ml-1 font-medium ${profile?.ativo ? "text-emerald-600" : "text-red-500"}`}>{profile?.ativo ? "ATIVO" : "INATIVO"}</span></div>
         </div>
       </div>
+      </TabsContent>
 
-      {/* Configurações de Monitoramento */}
-      {isAdmin && <MonitoramentoToggles />}
+      {isAdmin && (
+        <TabsContent value="monitoramento" className="mt-4">
+          {/* Configurações de Monitoramento */}
+          <MonitoramentoToggles />
+        </TabsContent>
+      )}
 
-      {/* Temas da sidebar — administração global */}
-      {isAdmin && <QASidebarTemasAdmin />}
-
-      {/* Personalização da tela de login do cliente */}
-      {isAdmin && <QALoginBrandingAdmin />}
+      {isAdmin && (
+        <TabsContent value="aparencia" className="mt-4 space-y-5">
+          {/* Temas da sidebar — administração global */}
+          <QASidebarTemasAdmin />
+          {/* Personalização da tela de login do cliente */}
+          <QALoginBrandingAdmin />
+        </TabsContent>
+      )}
+      </Tabs>
     </div>
   );
 }
