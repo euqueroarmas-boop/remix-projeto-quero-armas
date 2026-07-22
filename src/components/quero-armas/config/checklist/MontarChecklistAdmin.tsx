@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   BookMarked, Plus, Search, Loader2, ArrowRight, Trash2, ArrowUp, ArrowDown,
-  Eye, RotateCcw, Sparkles, ChevronDown,
+  Eye, RotateCcw, Sparkles, Home, BriefcaseBusiness, GitBranch,
 } from "lucide-react";
 import PreviaClienteChecklistModal from "./PreviaClienteChecklistModal";
 import RestoreSnapshotModal from "./RestoreSnapshotModal";
@@ -36,6 +36,9 @@ type ChecklistItem = {
   obrigatorio: boolean;
   ordem: number;
   ativo: boolean;
+  regra_validacao: any | null;
+  instrucoes: string | null;
+  observacoes_cliente: string | null;
 };
 
 type Servico = { id: number; nome_servico: string; valor_servico: number };
@@ -55,6 +58,16 @@ function labelCategoria(v: string): string {
   return CATEGORIAS.find((c) => c.valor === v)?.label ?? v;
 }
 
+const FLUXO_RESIDENCIA_TERCEIRO_TIPOS = [
+  "comprovante_residencia",
+  "pergunta_comprovante_em_nome",
+  "pergunta_ainda_reside_imovel",
+  "documento_identificacao_terceiro",
+  "declaracao_responsavel_imovel",
+];
+
+const FLUXO_OCUPACAO_LICITA_TIPOS = ["renda_definir_condicao"];
+
 export default function MontarChecklistAdmin() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [servicoId, setServicoId] = useState<number | null>(null);
@@ -69,6 +82,9 @@ export default function MontarChecklistAdmin() {
   const [modeloEscolhido, setModeloEscolhido] = useState<string>("");
 
   const servicoAtual = useMemo(() => servicos.find((s) => s.id === servicoId), [servicos, servicoId]);
+  const tiposChecklist = useMemo(() => new Set(checklist.map((c) => c.tipo_documento)), [checklist]);
+  const fluxoResidenciaAtivo = FLUXO_RESIDENCIA_TERCEIRO_TIPOS.every((t) => tiposChecklist.has(t));
+  const fluxoOcupacaoAtivo = FLUXO_OCUPACAO_LICITA_TIPOS.every((t) => tiposChecklist.has(t));
 
   async function carregarBiblioteca() {
     const { data } = await supabase
@@ -87,7 +103,7 @@ export default function MontarChecklistAdmin() {
   async function carregarChecklist(id: number) {
     const { data } = await supabase
       .from("qa_servicos_documentos" as any)
-      .select("id, servico_id, biblioteca_id, tipo_documento, nome_documento, etapa, obrigatorio, ordem, ativo")
+      .select("id, servico_id, biblioteca_id, tipo_documento, nome_documento, etapa, obrigatorio, ordem, ativo, regra_validacao, instrucoes, observacoes_cliente")
       .eq("servico_id", id)
       .order("ordem");
     setChecklist(((data as any[]) ?? []) as ChecklistItem[]);
@@ -204,6 +220,207 @@ export default function MontarChecklistAdmin() {
       .update({ obrigatorio: !item.obrigatorio })
       .eq("id", item.id);
     await carregarChecklist(servicoId!);
+  }
+
+  async function salvarOuCriarDocumentoFluxo(
+    tipoDocumento: string,
+    payload: Record<string, any>,
+  ) {
+    if (!servicoId) return;
+    const { data: existente, error: findError } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .select("id")
+      .eq("servico_id", servicoId)
+      .eq("tipo_documento", tipoDocumento)
+      .is("condicao_profissional", null)
+      .maybeSingle();
+    if (findError) throw findError;
+    if ((existente as any)?.id) {
+      const { error } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .update(payload)
+        .eq("id", (existente as any).id);
+      if (error) throw error;
+      return;
+    }
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .insert({
+        servico_id: servicoId,
+        tipo_documento: tipoDocumento,
+        ...payload,
+      });
+    if (error) throw error;
+  }
+
+  async function aplicarFluxoResidenciaTerceiro() {
+    if (!servicoId) return;
+    if (!confirm(
+      `Aplicar o fluxo guiado de residência ao serviço "${servicoAtual?.nome_servico}"?\n\n` +
+      "O cliente responderá se o comprovante está em nome dele. Se estiver em nome de terceiro, o sistema exigirá documento do terceiro e declaração do responsável pelo imóvel.",
+    )) return;
+    setCarregandoAcao(true);
+    try {
+      await snapshot("aplicar_fluxo:residencia_terceiro");
+      const residenciaBib = biblioteca.find((b) => b.codigo === "comprovante_residencia");
+      const declaracaoBib = biblioteca.find((b) => b.codigo === "declaracao_responsavel_imovel");
+
+      await salvarOuCriarDocumentoFluxo("comprovante_residencia", {
+        biblioteca_id: residenciaBib?.id ?? null,
+        nome_documento: "Comprovante de residência",
+        etapa: "endereco",
+        obrigatorio: true,
+        validade_dias: residenciaBib?.validade_dias ?? 30,
+        formato_aceito: residenciaBib?.formato_aceito ?? ["pdf", "jpg", "jpeg", "png"],
+        instrucoes:
+          "Envie uma conta de água, energia, telefone, gás ou internet do imóvel. Se a conta estiver em nome de terceiro, responda as perguntas seguintes e envie também os documentos que o sistema solicitar.",
+        observacoes_cliente: "O endereço precisa ser atual e será conferido pela IA com seu documento de identificação e com as declarações do processo.",
+        regra_validacao: {
+          exige: ["endereco"],
+          cruzar_com: ["documento_identificacao_cliente"],
+          objetivo_documental: "comprovar_residencia",
+        },
+        ordem: 30,
+        ativo: true,
+      });
+
+      await salvarOuCriarDocumentoFluxo("pergunta_comprovante_em_nome", {
+        nome_documento: "O comprovante de residência está em seu nome?",
+        etapa: "endereco",
+        obrigatorio: true,
+        formato_aceito: [],
+        instrucoes: "Responda para o sistema montar o caminho correto de entrega da residência.",
+        regra_validacao: {
+          tipo: "pergunta",
+          chave: "comprovante_em_nome_titular",
+          objetivo_documental: "comprovar_residencia",
+          opcoes: [
+            { valor: "sim", label: "SIM, ESTÁ NO MEU NOME" },
+            { valor: "nao", label: "NÃO, ESTÁ NO NOME DE TERCEIRO" },
+          ],
+        },
+        ordem: 31,
+        ativo: true,
+      });
+
+      await salvarOuCriarDocumentoFluxo("pergunta_ainda_reside_imovel", {
+        nome_documento: "Você ainda reside neste imóvel de terceiro?",
+        etapa: "endereco",
+        obrigatorio: true,
+        formato_aceito: [],
+        instrucoes: "Essa resposta define qual declaração do responsável pelo imóvel será liberada para assinatura.",
+        regra_validacao: {
+          tipo: "pergunta",
+          chave: "ainda_reside_imovel",
+          objetivo_documental: "comprovar_residencia",
+          depende_de: { chave: "comprovante_em_nome_titular", valor: "nao" },
+          opcoes: [
+            { valor: "sim", label: "SIM, AINDA MORO LÁ" },
+            { valor: "nao", label: "NÃO, JÁ MUDEI" },
+          ],
+        },
+        ordem: 32,
+        ativo: true,
+      });
+
+      await salvarOuCriarDocumentoFluxo("documento_identificacao_terceiro", {
+        nome_documento: "Documento de identificação do titular do comprovante",
+        etapa: "endereco",
+        obrigatorio: true,
+        validade_dias: null,
+        formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+        instrucoes:
+          "Envie RG, CIN ou CNH da pessoa que aparece como titular no comprovante de residência. A IA vai cruzar o nome do titular com a conta e com a declaração assinada.",
+        observacoes_cliente: "Necessário somente quando o comprovante de residência não estiver em seu nome.",
+        regra_validacao: {
+          condicional: { depende_de: "comprovante_em_nome_titular", valor: "nao" },
+          exige_quando: { comprovante_em_nome_titular: "nao" },
+          exige: ["nome_titular"],
+          cruzar_com: ["comprovante_residencia", "declaracao_responsavel_imovel"],
+          objetivo_documental: "comprovar_residencia",
+        },
+        ordem: 33,
+        ativo: true,
+      });
+
+      await salvarOuCriarDocumentoFluxo("declaracao_responsavel_imovel", {
+        biblioteca_id: declaracaoBib?.id ?? null,
+        nome_documento: "Declaração do responsável pelo imóvel",
+        etapa: "endereco",
+        obrigatorio: true,
+        validade_dias: null,
+        formato_aceito: ["application/pdf", "pdf"],
+        instrucoes:
+          "1) Responda as perguntas sobre o imóvel. 2) Baixe a declaração preenchida. 3) Peça ao responsável pelo imóvel para assinar. 4) Envie o PDF assinado aqui.",
+        observacoes_cliente: "A declaração só aparece quando o comprovante está em nome de terceiro.",
+        regra_validacao: {
+          assinatura_requerida: "govbr",
+          label_botao: "ENVIAR DECLARAÇÃO ASSINADA",
+          template_condicional: true,
+          condicional: { depende_de: "comprovante_em_nome_titular", valor: "nao" },
+          exige_quando: { comprovante_em_nome_titular: "nao" },
+          objetivo_documental: "comprovar_residencia",
+          cruzar_com: ["comprovante_residencia", "documento_identificacao_terceiro", "documento_identificacao_cliente"],
+          template_quando: [
+            {
+              se: { comprovante_em_nome_titular: "nao", ainda_reside_imovel: "sim" },
+              template_key: "declaracao_responsavel_imovel_atual",
+              label: "BAIXAR DECLARAÇÃO PARA ASSINAR",
+            },
+            {
+              se: { comprovante_em_nome_titular: "nao", ainda_reside_imovel: "nao" },
+              template_key: "declaracao_responsavel_imovel_passado",
+              label: "BAIXAR DECLARAÇÃO PARA ASSINAR",
+            },
+          ],
+        },
+        ordem: 34,
+        ativo: true,
+      });
+
+      toast.success("Fluxo de residência com terceiro aplicado ao checklist.");
+      await carregarChecklist(servicoId);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao aplicar fluxo de residência.");
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
+  async function aplicarFluxoOcupacaoLicita() {
+    if (!servicoId) return;
+    if (!confirm(
+      `Aplicar o fluxo guiado de ocupação lícita ao serviço "${servicoAtual?.nome_servico}"?\n\n` +
+      "O cliente escolherá a condição profissional e o sistema criará os documentos corretos no processo, como CLT, MEI, empresário, servidor público, autônomo ou aposentado.",
+    )) return;
+    setCarregandoAcao(true);
+    try {
+      await snapshot("aplicar_fluxo:ocupacao_licita");
+      await salvarOuCriarDocumentoFluxo("renda_definir_condicao", {
+        nome_documento: "Defina sua condição profissional",
+        etapa: "condicao_profissional",
+        obrigatorio: true,
+        formato_aceito: [],
+        instrucoes:
+          "Responda qual é sua situação profissional. Depois disso, o sistema abre somente os documentos necessários para o seu caso.",
+        observacoes_cliente:
+          "Empresário e MEI exigem mais de um documento. O sistema vai separar cada item para a IA validar um por um.",
+        regra_validacao: {
+          objetivo_documental: "comprovar_ocupacao_licita",
+          tipo: "seletor_condicao_profissional",
+          cria_documentos_por_condicao: true,
+          base_legal: ["Lei 10.826/2003", "Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 201", "IN DG/PF 311"],
+        },
+        ordem: 40,
+        ativo: true,
+      });
+      toast.success("Fluxo de ocupação lícita aplicado ao checklist.");
+      await carregarChecklist(servicoId);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao aplicar fluxo de ocupação lícita.");
+    } finally {
+      setCarregandoAcao(false);
+    }
   }
 
   async function aplicarModelo() {
@@ -325,6 +542,66 @@ export default function MontarChecklistAdmin() {
           </p>
         )}
       </div>
+
+      {servicoId && (
+        <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2">
+                <GitBranch className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
+                <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "hsl(220 20% 25%)" }}>
+                  Fluxos guiados do cliente
+                </h3>
+              </div>
+              <p className="text-[11px] mt-1 leading-relaxed text-slate-500">
+                Use estes fluxos quando uma exigência pode se ramificar. O cliente responde perguntas simples,
+                o sistema pede os documentos certos, grava as respostas no processo e libera declarações quando necessário.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:min-w-[420px]">
+              <button
+                disabled={carregandoAcao}
+                onClick={aplicarFluxoResidenciaTerceiro}
+                className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
+                style={{ borderColor: fluxoResidenciaAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
+              >
+                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                  <Home className="w-3.5 h-3.5 text-[#7B1C2E]" />
+                  RESIDÊNCIA COM TERCEIRO
+                </span>
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                  fluxoResidenciaAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {fluxoResidenciaAtivo ? "APLICADO" : "CLIQUE PARA APLICAR"}
+                </span>
+                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                  Comprovante, pergunta de titularidade, documento do terceiro e declaração assinada.
+                </p>
+              </button>
+
+              <button
+                disabled={carregandoAcao}
+                onClick={aplicarFluxoOcupacaoLicita}
+                className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
+                style={{ borderColor: fluxoOcupacaoAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
+              >
+                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                  <BriefcaseBusiness className="w-3.5 h-3.5 text-[#7B1C2E]" />
+                  OCUPAÇÃO LÍCITA RAMIFICADA
+                </span>
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                  fluxoOcupacaoAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {fluxoOcupacaoAtivo ? "APLICADO" : "CLIQUE PARA APLICAR"}
+                </span>
+                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                  O cliente escolhe CLT, MEI, empresário, servidor, autônomo ou aposentado.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!servicoId ? (
         <div className="bg-white rounded-2xl border p-10 text-center" style={{ borderColor: "hsl(220 15% 90%)" }}>
