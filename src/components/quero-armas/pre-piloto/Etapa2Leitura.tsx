@@ -97,6 +97,11 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
       }
       // Aliases para bater com a lista de campos da Etapa 3
       if (campos.emissor_rg && !campos.rg_orgao_emissor) campos.rg_orgao_emissor = campos.emissor_rg;
+      if (confidenceMap.emissor_rg != null && confidenceMap.rg_orgao_emissor == null) {
+        confidenceMap.rg_orgao_emissor = confidenceMap.emissor_rg;
+      }
+      // Remove o duplicado da UI (rg_orgao_emissor fica; emissor_rg some da revisão)
+      delete campos.emissor_rg;
       // endereco (retornado pela IA) ↔ logradouro (usado na Etapa 3) — evita campo duplicado
       if (campos.endereco && !campos.logradouro) campos.logradouro = campos.endereco;
       if (campos.logradouro && !campos.endereco) campos.endereco = campos.logradouro;
