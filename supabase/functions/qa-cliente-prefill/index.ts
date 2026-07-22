@@ -486,6 +486,22 @@ async function lookupCep(cep: string): Promise<Record<string, string> | null> {
   return null;
 }
 
+// Valida o dígito verificador do CNPJ (algoritmo oficial da Receita
+// Federal). Evita consultar a API com um número que a IA leu errado do
+// documento — nesse caso é melhor avisar a equipe do que falhar em silêncio.
+function cnpjValido(cnpj: string): boolean {
+  const d = cnpj.replace(/\D/g, "");
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((acc, digito, i) => acc + Number(digito) * pesos[i], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  const dv1 = calc(d.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const dv2 = calc(d.slice(0, 12) + dv1, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d === d.slice(0, 12) + String(dv1) + String(dv2);
+}
+
 // Busca dados públicos de CNPJ (BrasilAPI). Usado quando o cliente PF
 // informa um CNPJ como comprovação de ocupação lícita — NÃO cadastra a
 // empresa como entidade própria (qa_clientes não tem colunas para isso),
@@ -725,19 +741,41 @@ Deno.serve(async (req) => {
     // (Estatuto do Desarmamento), não cadastra a empresa como entidade
     // própria. Enriquece apenas profissão (se vazia) e observações.
     if (typeof normalized.cnpj === "string" && normalized.cnpj.replace(/\D/g, "").length === 14) {
-      const cnpjData = await lookupCnpj(normalized.cnpj);
-      if (cnpjData) {
-        normalized.confidence = normalized.confidence || {};
-        const profissaoAtual = typeof normalized.profissao === "string" ? normalized.profissao.trim() : "";
-        if (!profissaoAtual && (cnpjData.razao_social || cnpjData.cnae_fiscal_descricao)) {
-          normalized.profissao = [
-            cnpjData.razao_social && `SÓCIO/PROPRIETÁRIO — ${cnpjData.razao_social}`,
-            cnpjData.cnae_fiscal_descricao,
-          ].filter(Boolean).join(" — ");
-          normalized.confidence.profissao = 0.85;
+      if (!cnpjValido(normalized.cnpj)) {
+        // Dígito verificador não bate — provável erro de leitura da IA/OCR.
+        // Avisa a equipe em vez de falhar em silêncio na consulta à API.
+        normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+        normalized.warnings.push(`CNPJ extraído (${normalized.cnpj}) é inválido (dígito verificador não confere) — confira o documento e corrija manualmente.`);
+      } else {
+        const cnpjData = await lookupCnpj(normalized.cnpj);
+        if (cnpjData) {
+          normalized.confidence = normalized.confidence || {};
+          const profissaoAtual = typeof normalized.profissao === "string" ? normalized.profissao.trim() : "";
+          if (!profissaoAtual && (cnpjData.razao_social || cnpjData.cnae_fiscal_descricao)) {
+            normalized.profissao = [
+              cnpjData.razao_social && `SÓCIO/PROPRIETÁRIO — ${cnpjData.razao_social}`,
+              cnpjData.cnae_fiscal_descricao,
+            ].filter(Boolean).join(" — ");
+            normalized.confidence.profissao = 0.85;
+          }
+          const enderecoEmpresa = [
+            cnpjData.logradouro,
+            cnpjData.numero && `nº ${cnpjData.numero}`,
+            cnpjData.complemento,
+            cnpjData.bairro,
+            cnpjData.municipio && cnpjData.uf ? `${cnpjData.municipio}/${cnpjData.uf}` : cnpjData.municipio,
+            cnpjData.cep && `CEP ${cnpjData.cep}`,
+          ].filter(Boolean).join(", ");
+          const notaCnpj = [
+            `CNPJ informado: ${normalized.cnpj}.`,
+            `Razão social: ${cnpjData.razao_social}.`,
+            cnpjData.nome_fantasia && `Nome fantasia: ${cnpjData.nome_fantasia}.`,
+            cnpjData.cnae_fiscal_descricao && `Atividade: ${cnpjData.cnae_fiscal_descricao}.`,
+            enderecoEmpresa && `Endereço: ${enderecoEmpresa}.`,
+            cnpjData.ddd_telefone_1 && `Telefone: ${cnpjData.ddd_telefone_1}.`,
+          ].filter(Boolean).join(" ");
+          normalized.observacoes = [normalized.observacoes, notaCnpj].filter(Boolean).join(" ");
         }
-        const notaCnpj = `CNPJ informado: ${normalized.cnpj} — ${cnpjData.razao_social}${cnpjData.cnae_fiscal_descricao ? ` (${cnpjData.cnae_fiscal_descricao})` : ""}.`;
-        normalized.observacoes = [normalized.observacoes, notaCnpj].filter(Boolean).join(" ");
       }
     }
     // Máscaras de exibição — CPF/CEP/telefones/RG.

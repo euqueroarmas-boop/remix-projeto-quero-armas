@@ -2,8 +2,23 @@ import { ArrowLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import type { DadosExtraidos } from "./PrePilotoWizard";
+
+// Valida o dígito verificador do CNPJ (algoritmo da Receita Federal).
+function cnpjValido(cnpj: string): boolean {
+  const d = cnpj.replace(/\D/g, "");
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((acc, digito, i) => acc + Number(digito) * pesos[i], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  const dv1 = calc(d.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const dv2 = calc(d.slice(0, 12) + dv1, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d === d.slice(0, 12) + String(dv1) + String(dv2);
+}
 
 interface Props {
   dadosExtraidos: DadosExtraidos;
@@ -166,13 +181,35 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   const handleCnpjBlur = async (valorDigitado: string) => {
     const digits = valorDigitado.replace(/\D/g, "");
     if (digits.length !== 14) return;
+    if (!cnpjValido(digits)) {
+      toast.error("CNPJ inválido — dígito verificador não confere. Confira o número digitado.");
+      return;
+    }
     const resultado = await lookupCnpj(digits);
-    if (!resultado?.razao_social) return;
+    if (!resultado?.razao_social) {
+      toast.error("CNPJ não encontrado na Receita Federal.");
+      return;
+    }
     const profissao = [
       `SÓCIO/PROPRIETÁRIO — ${resultado.razao_social}`,
       resultado.cnae_fiscal_descricao,
     ].filter(Boolean).join(" — ").toUpperCase();
-    const notaCnpj = `CNPJ INFORMADO: ${valorDigitado} — ${resultado.razao_social}${resultado.cnae_fiscal_descricao ? ` (${resultado.cnae_fiscal_descricao})` : ""}.`.toUpperCase();
+    const enderecoEmpresa = [
+      resultado.logradouro,
+      resultado.numero && `nº ${resultado.numero}`,
+      resultado.complemento,
+      resultado.bairro,
+      resultado.municipio && resultado.uf ? `${resultado.municipio}/${resultado.uf}` : resultado.municipio,
+      resultado.cep && `CEP ${resultado.cep}`,
+    ].filter(Boolean).join(", ");
+    const notaCnpj = [
+      `CNPJ informado: ${valorDigitado}.`,
+      `Razão social: ${resultado.razao_social}.`,
+      resultado.nome_fantasia && `Nome fantasia: ${resultado.nome_fantasia}.`,
+      resultado.cnae_fiscal_descricao && `Atividade: ${resultado.cnae_fiscal_descricao}.`,
+      enderecoEmpresa && `Endereço: ${enderecoEmpresa}.`,
+      resultado.ddd_telefone_1 && `Telefone: ${resultado.ddd_telefone_1}.`,
+    ].filter(Boolean).join(" ").toUpperCase();
     const observacoesAtuais = (dadosRevisados.observacoes || "").trim();
     setDadosRevisados({
       ...dadosRevisados,
@@ -180,6 +217,7 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       profissao,
       observacoes: [observacoesAtuais, notaCnpj].filter(Boolean).join(" "),
     });
+    toast.success(`Dados da empresa preenchidos: ${resultado.razao_social}`);
   };
 
   // Campos com confiança baixa
