@@ -61,18 +61,17 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   const set = (campo: string, valor: string) =>
     setDadosRevisados({ ...dadosRevisados, [campo]: valor || null });
 
-  // Em cidades menores um CEP cobre um raio de ruas, então o "logradouro
-  // oficial" que a API devolve pode não ser a rua real do comprovante
-  // (ex.: CEP 12309-000 devolve "Avenida Vale do Paraíba" para todo o
-  // bairro, mesmo quando o endereço real é outra rua no mesmo raio).
-  // Por isso o logradouro só é preenchido se ainda estiver vazio — bairro/
-  // cidade/estado são confiáveis e sempre atualizam com o CEP digitado.
+  // Digitar o CEP nesta tela é uma correção deliberada da equipe (diferente
+  // da extração automática da IA, que não deve sobrescrever o que já leu do
+  // documento sem revisão humana). Aqui a pessoa está conferindo o CEP de
+  // propósito — CEP/Correios costuma ser mais confiável que o texto digitado
+  // por um atendente de concessionária, então o resultado sempre sobrescreve
+  // logradouro/bairro/cidade/estado.
   const handleCepBlur = async (valorDigitado: string) => {
     const digits = valorDigitado.replace(/\D/g, "");
     if (digits.length !== 8) return;
     const resultado = await lookupCep(digits);
     if (!resultado) return;
-    const logradouroAtual = (dadosRevisados.logradouro || "").trim();
     const rua = resultado.street?.toUpperCase();
     const bairro = resultado.neighborhood?.toUpperCase();
     const cidade = resultado.city?.toUpperCase();
@@ -80,7 +79,7 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
     setDadosRevisados({
       ...dadosRevisados,
       cep: valorDigitado,
-      ...(!logradouroAtual && rua ? { logradouro: rua, endereco: rua } : {}),
+      ...(rua ? { logradouro: rua, endereco: rua } : {}),
       ...(bairro ? { bairro } : {}),
       ...(cidade ? { cidade } : {}),
       ...(estado ? { estado } : {}),
