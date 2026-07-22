@@ -1,0 +1,484 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  BookMarked, Plus, Search, Loader2, ArrowRight, Trash2, ArrowUp, ArrowDown,
+  Eye, RotateCcw, Sparkles, ChevronDown,
+} from "lucide-react";
+import PreviaClienteChecklistModal from "./PreviaClienteChecklistModal";
+import RestoreSnapshotModal from "./RestoreSnapshotModal";
+import { MODELOS_PRONTOS, getModeloBySlug } from "@/lib/quero-armas/modelosProntos";
+
+type BibliotecaItem = {
+  id: string;
+  codigo: string;
+  nome: string;
+  categoria: string;
+  descricao_o_que_e: string | null;
+  descricao_como_enviar: string | null;
+  observacao_cliente: string | null;
+  validade_dias: number | null;
+  formato_aceito: string[];
+  link_emissao: string | null;
+  base_legal: string | null;
+  ativo: boolean;
+};
+
+type ChecklistItem = {
+  id: string;
+  servico_id: number;
+  biblioteca_id: string | null;
+  tipo_documento: string;
+  nome_documento: string;
+  etapa: string;
+  obrigatorio: boolean;
+  ordem: number;
+  ativo: boolean;
+};
+
+type Servico = { id: number; nome_servico: string; valor_servico: number };
+
+const CATEGORIAS: Array<{ valor: string; label: string }> = [
+  { valor: "identificacao",    label: "Identificação" },
+  { valor: "residencia",       label: "Residência" },
+  { valor: "ocupacao_licita",  label: "Ocupação Lícita" },
+  { valor: "certidoes",        label: "Certidões" },
+  { valor: "laudos",           label: "Laudos" },
+  { valor: "arma_acervo",      label: "Arma / Acervo" },
+  { valor: "declaracoes",      label: "Declarações" },
+  { valor: "outros",           label: "Outros" },
+];
+
+function labelCategoria(v: string): string {
+  return CATEGORIAS.find((c) => c.valor === v)?.label ?? v;
+}
+
+export default function MontarChecklistAdmin() {
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [servicoId, setServicoId] = useState<number | null>(null);
+  const [biblioteca, setBiblioteca] = useState<BibliotecaItem[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [carregandoAcao, setCarregandoAcao] = useState(false);
+  const [buscaBib, setBuscaBib] = useState("");
+  const [catFiltro, setCatFiltro] = useState("");
+  const [previaAberta, setPreviaAberta] = useState(false);
+  const [restoreAberto, setRestoreAberto] = useState(false);
+  const [modeloEscolhido, setModeloEscolhido] = useState<string>("");
+
+  const servicoAtual = useMemo(() => servicos.find((s) => s.id === servicoId), [servicos, servicoId]);
+
+  async function carregarBiblioteca() {
+    const { data } = await supabase
+      .from("qa_documentos_biblioteca" as any)
+      .select("*")
+      .eq("ativo", true)
+      .order("nome");
+    setBiblioteca(((data as any[]) ?? []) as BibliotecaItem[]);
+  }
+
+  async function carregarServicos() {
+    const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico, valor_servico").order("nome_servico");
+    setServicos(((data as any[]) ?? []) as Servico[]);
+  }
+
+  async function carregarChecklist(id: number) {
+    const { data } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .select("id, servico_id, biblioteca_id, tipo_documento, nome_documento, etapa, obrigatorio, ordem, ativo")
+      .eq("servico_id", id)
+      .order("ordem");
+    setChecklist(((data as any[]) ?? []) as ChecklistItem[]);
+  }
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await Promise.all([carregarBiblioteca(), carregarServicos()]);
+      setLoading(false);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (servicoId) carregarChecklist(servicoId);
+    else setChecklist([]);
+  }, [servicoId]);
+
+  const bibliotecaFiltrada = useMemo(() => {
+    const idsUsados = new Set(checklist.map((c) => c.biblioteca_id).filter(Boolean));
+    const b = buscaBib.trim().toLowerCase();
+    return biblioteca
+      .filter((i) => (catFiltro ? i.categoria === catFiltro : true))
+      .filter((i) => (b ? i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b) : true))
+      .map((i) => ({ ...i, jaNoServico: idsUsados.has(i.id) }));
+  }, [biblioteca, buscaBib, catFiltro, checklist]);
+
+  const gruposBib = useMemo(() => {
+    const m = new Map<string, typeof bibliotecaFiltrada>();
+    for (const i of bibliotecaFiltrada) {
+      if (!m.has(i.categoria)) m.set(i.categoria, []);
+      m.get(i.categoria)!.push(i);
+    }
+    return Array.from(m.entries()).sort(([a], [b]) => labelCategoria(a).localeCompare(labelCategoria(b), "pt-BR"));
+  }, [bibliotecaFiltrada]);
+
+  async function snapshot(motivo: string) {
+    if (!servicoId) return;
+    const { data: linhas } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .select("*")
+      .eq("servico_id", servicoId);
+    if (linhas && (linhas as any[]).length > 0) {
+      await supabase.from("qa_servicos_documentos_snapshots" as any).insert({
+        servico_id: servicoId, motivo, payload: linhas,
+      });
+    }
+  }
+
+  async function adicionarBiblioteca(item: BibliotecaItem) {
+    if (!servicoId) { toast.error("Escolha um serviço primeiro"); return; }
+    setCarregandoAcao(true);
+    try {
+      const proxOrdem = (checklist.reduce((max, c) => Math.max(max, c.ordem), 0) + 10) || 10;
+      const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+        servico_id: servicoId,
+        biblioteca_id: item.id,
+        tipo_documento: item.codigo,
+        nome_documento: item.nome,
+        etapa: "base",
+        obrigatorio: true,
+        validade_dias: item.validade_dias,
+        formato_aceito: item.formato_aceito,
+        link_emissao: item.link_emissao,
+        instrucoes: item.descricao_como_enviar,
+        observacoes_cliente: item.observacao_cliente,
+        ordem: proxOrdem,
+        ativo: true,
+      });
+      if (error) throw error;
+      toast.success(`"${item.nome}" adicionado ao checklist`);
+      await carregarChecklist(servicoId);
+    } catch (e: any) {
+      toast.error(e.message.includes("duplicate") ? "Este documento já está no checklist" : e.message);
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
+  async function removerChecklist(item: ChecklistItem) {
+    if (!confirm(`Remover "${item.nome_documento}" do checklist deste serviço?`)) return;
+    setCarregandoAcao(true);
+    try {
+      await snapshot(`remocao_manual:${item.nome_documento}`);
+      const { error } = await supabase.from("qa_servicos_documentos" as any).delete().eq("id", item.id);
+      if (error) throw error;
+      toast.success("Removido");
+      await carregarChecklist(servicoId!);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
+  async function moverOrdem(item: ChecklistItem, direcao: "cima" | "baixo") {
+    const idx = checklist.findIndex((c) => c.id === item.id);
+    const alvo = direcao === "cima" ? idx - 1 : idx + 1;
+    if (alvo < 0 || alvo >= checklist.length) return;
+    const outro = checklist[alvo];
+    setCarregandoAcao(true);
+    try {
+      await supabase.from("qa_servicos_documentos" as any).update({ ordem: outro.ordem }).eq("id", item.id);
+      await supabase.from("qa_servicos_documentos" as any).update({ ordem: item.ordem }).eq("id", outro.id);
+      await carregarChecklist(servicoId!);
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
+  async function toggleObrigatorio(item: ChecklistItem) {
+    await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ obrigatorio: !item.obrigatorio })
+      .eq("id", item.id);
+    await carregarChecklist(servicoId!);
+  }
+
+  async function aplicarModelo() {
+    if (!servicoId) return;
+    const modelo = getModeloBySlug(modeloEscolhido);
+    if (!modelo) return;
+    if (!confirm(
+      `Aplicar modelo "${modelo.titulo}" (${modelo.exigencias.length} exigências) ao serviço "${servicoAtual?.nome_servico}"?\n\n${modelo.aviso_juridico}\n\nItens já existentes serão ignorados (não duplicam).`,
+    )) return;
+    setCarregandoAcao(true);
+    try {
+      await snapshot(`aplicar_modelo:${modelo.slug}`);
+      const codigos = modelo.exigencias.map((e) => e.codigo_biblioteca);
+      const { data: bib } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .select("id, codigo, nome, validade_dias, formato_aceito, link_emissao, descricao_como_enviar, observacao_cliente")
+        .in("codigo", codigos);
+      const bibMap = new Map<string, any>();
+      for (const b of ((bib as any[]) ?? [])) bibMap.set((b as any).codigo, b);
+      const payload = modelo.exigencias
+        .map((ex) => {
+          const b = bibMap.get(ex.codigo_biblioteca);
+          if (!b) return null;
+          return {
+            servico_id: servicoId,
+            biblioteca_id: b.id,
+            tipo_documento: b.codigo,
+            nome_documento: b.nome,
+            etapa: ex.etapa ?? "base",
+            obrigatorio: ex.obrigatorio,
+            validade_dias: b.validade_dias,
+            formato_aceito: b.formato_aceito,
+            link_emissao: b.link_emissao,
+            instrucoes: b.descricao_como_enviar,
+            observacoes_cliente: b.observacao_cliente,
+            ordem: ex.ordem ?? 10,
+            ativo: true,
+          };
+        })
+        .filter(Boolean);
+      const { error } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .upsert(payload as any[], {
+          onConflict: "servico_id,tipo_documento,condicao_profissional",
+          ignoreDuplicates: true,
+        });
+      if (error) throw error;
+      toast.success(`Modelo "${modelo.titulo}" aplicado`);
+      setModeloEscolhido("");
+      await carregarChecklist(servicoId);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border p-8 flex items-center justify-center gap-2 text-slate-400" style={{ borderColor: "hsl(220 15% 90%)" }}>
+        <Loader2 className="w-4 h-4 animate-spin" /> Carregando…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Seletor de serviço + toolbar */}
+      <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 shrink-0">Serviço:</label>
+          <select
+            value={servicoId ?? ""}
+            onChange={(e) => setServicoId(e.target.value ? Number(e.target.value) : null)}
+            className="h-8 text-xs border rounded-md px-2 flex-1 min-w-[220px]"
+            style={{ borderColor: "hsl(220 15% 88%)" }}
+          >
+            <option value="">Escolha um serviço para montar o checklist…</option>
+            {servicos.map((s) => (
+              <option key={s.id} value={s.id}>{s.nome_servico}</option>
+            ))}
+          </select>
+
+          {servicoId && (
+            <>
+              <div className="flex items-center gap-1">
+                <select
+                  value={modeloEscolhido}
+                  onChange={(e) => setModeloEscolhido(e.target.value)}
+                  className="h-8 text-xs border rounded-md px-2"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                >
+                  <option value="">Usar modelo pronto…</option>
+                  {MODELOS_PRONTOS.map((m) => (
+                    <option key={m.slug} value={m.slug}>{m.titulo}</option>
+                  ))}
+                </select>
+                <Button
+                  size="sm"
+                  disabled={!modeloEscolhido || carregandoAcao}
+                  onClick={aplicarModelo}
+                  className="h-8 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white"
+                >
+                  <Sparkles className="w-3 h-3" /> Aplicar
+                </Button>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setPreviaAberta(true)} className="h-8 text-xs gap-1">
+                <Eye className="w-3 h-3" /> Pré-via cliente
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setRestoreAberto(true)} className="h-8 text-xs gap-1">
+                <RotateCcw className="w-3 h-3" /> Snapshots
+              </Button>
+            </>
+          )}
+        </div>
+        {modeloEscolhido && (
+          <p className="text-[11px] text-amber-700 mt-2 leading-relaxed">
+            {getModeloBySlug(modeloEscolhido)?.aviso_juridico}
+          </p>
+        )}
+      </div>
+
+      {!servicoId ? (
+        <div className="bg-white rounded-2xl border p-10 text-center" style={{ borderColor: "hsl(220 15% 90%)" }}>
+          <BookMarked className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-500">Escolha um serviço acima para montar ou editar o checklist.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+          {/* COLUNA ESQUERDA — biblioteca */}
+          <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <BookMarked className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
+              <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Biblioteca</h3>
+              <span className="text-[10px] text-slate-400 ml-auto">clique em + para adicionar</span>
+            </div>
+            <div className="flex gap-1.5 mb-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                <Input
+                  value={buscaBib}
+                  onChange={(e) => setBuscaBib(e.target.value)}
+                  placeholder="Buscar…"
+                  className="pl-7 h-8 text-xs"
+                />
+              </div>
+              <select
+                value={catFiltro}
+                onChange={(e) => setCatFiltro(e.target.value)}
+                className="h-8 text-xs border rounded-md px-2"
+                style={{ borderColor: "hsl(220 15% 88%)" }}
+              >
+                <option value="">Todas</option>
+                {CATEGORIAS.map((c) => (<option key={c.valor} value={c.valor}>{c.label}</option>))}
+              </select>
+            </div>
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              {gruposBib.length === 0 && (
+                <p className="text-center py-8 text-xs italic text-slate-400">Nenhum documento encontrado.</p>
+              )}
+              {gruposBib.map(([cat, lista]) => (
+                <div key={cat}>
+                  <div className="text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase mb-1 px-1">
+                    {labelCategoria(cat)}
+                  </div>
+                  <div className="space-y-1">
+                    {lista.map((i) => (
+                      <button
+                        key={i.id}
+                        disabled={i.jaNoServico || carregandoAcao}
+                        onClick={() => adicionarBiblioteca(i)}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md border text-left text-xs transition-colors ${
+                          i.jaNoServico
+                            ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                            : "bg-white border-slate-200 hover:bg-slate-50 hover:border-[#7B1C2E]/30"
+                        }`}
+                      >
+                        <span className="flex-1 truncate">{i.nome}</span>
+                        {i.jaNoServico ? (
+                          <span className="text-[9px] px-1 rounded bg-slate-200 text-slate-500 shrink-0">já no serviço</span>
+                        ) : (
+                          <Plus className="w-3 h-3 text-[#7B1C2E] shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* COLUNA DIREITA — checklist do serviço */}
+          <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <ArrowRight className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
+              <h3 className="text-xs font-semibold truncate" style={{ color: "hsl(220 20% 25%)" }}>
+                Checklist — {servicoAtual?.nome_servico}
+              </h3>
+              <span className="text-[10px] text-slate-400 ml-auto shrink-0">
+                {checklist.length} exigência{checklist.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+            {checklist.length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-400 border border-dashed rounded-lg" style={{ borderColor: "hsl(220 15% 88%)" }}>
+                Nenhuma exigência ainda.<br />
+                Adicione da biblioteca (à esquerda) ou aplique um modelo pronto.
+              </div>
+            ) : (
+              <div className="space-y-1 max-h-[600px] overflow-y-auto pr-1">
+                {checklist.map((c, i) => (
+                  <div key={c.id} className="flex items-center gap-1.5 border border-slate-200 rounded-md px-2 py-1.5 bg-white">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        disabled={i === 0 || carregandoAcao}
+                        onClick={() => moverOrdem(c, "cima")}
+                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        disabled={i === checklist.length - 1 || carregandoAcao}
+                        onClick={() => moverOrdem(c, "baixo")}
+                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 25%)" }}>
+                        {c.nome_documento}
+                      </p>
+                      <p className="text-[10px] font-mono truncate text-slate-400">
+                        ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleObrigatorio(c)}
+                      className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold shrink-0 ${
+                        c.obrigatorio
+                          ? "text-red-700 bg-red-50 border-red-200"
+                          : "text-slate-500 bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      {c.obrigatorio ? "OBRIGATÓRIO" : "OPCIONAL"}
+                    </button>
+                    <button
+                      onClick={() => removerChecklist(c)}
+                      className="h-6 w-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modais */}
+      {previaAberta && servicoId && (
+        <PreviaClienteChecklistModal
+          servicoId={servicoId}
+          servicoNome={servicoAtual?.nome_servico}
+          onClose={() => setPreviaAberta(false)}
+        />
+      )}
+      {restoreAberto && servicoId && servicoAtual && (
+        <RestoreSnapshotModal
+          servicoId={servicoId}
+          servicoNome={servicoAtual.nome_servico}
+          onClose={() => setRestoreAberto(false)}
+          onRestored={() => carregarChecklist(servicoId)}
+        />
+      )}
+    </div>
+  );
+}

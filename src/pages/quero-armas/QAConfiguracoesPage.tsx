@@ -13,6 +13,7 @@ import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandin
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
+import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/MontarChecklistAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -403,6 +404,7 @@ export default function QAConfiguracoesPage() {
           {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
           {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
           {isAdmin && <TabsTrigger value="biblioteca" className="data-[state=active]:bg-slate-100">Biblioteca de Documentos</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="checklist" className="data-[state=active]:bg-slate-100">Montar Checklist</TabsTrigger>}
           {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
           <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
@@ -580,6 +582,11 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="biblioteca" className="mt-4">
           {/* Biblioteca central alfabética de documentos — fonte única do passo a passo */}
           <QABibliotecaDocumentosAdmin />
+        </TabsContent>
+
+        <TabsContent value="checklist" className="mt-4">
+          {/* Montar checklist do serviço a partir da biblioteca + modelos prontos + preview + snapshots */}
+          <MontarChecklistAdmin />
         </TabsContent>
         </>
       )}
