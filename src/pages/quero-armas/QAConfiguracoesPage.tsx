@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User } from "lucide-react";
+import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User, Archive, Copy, AlertTriangle } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { BLOCOS_MONITORAMENTO } from "@/components/quero-armas/monitoramento/blocosCatalogo";
 import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/useMonitoramentoConfig";
@@ -272,14 +272,103 @@ export default function QAConfiguracoesPage() {
     } catch (e: any) { toast.error(e.message); } finally { setSavingSvc(false); }
   };
 
-  const handleDeleteServico = async (id: number) => {
-    if (!confirm("Excluir este serviço?")) return;
+  /** Snapshot do checklist antes de operações destrutivas — permite restore posterior. */
+  const snapshotChecklist = async (servicoId: number, motivo: string): Promise<string | null> => {
+    const { data: linhas } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .select("*")
+      .eq("servico_id", servicoId);
+    if (!linhas || (linhas as any[]).length === 0) return null;
+    const { data: snap, error } = await supabase
+      .from("qa_servicos_documentos_snapshots" as any)
+      .insert({ servico_id: servicoId, motivo, payload: linhas })
+      .select("id")
+      .single();
+    if (error) { console.warn("[snapshot]", error); return null; }
+    return (snap as any)?.id ?? null;
+  };
+
+  /** Arquivar = esconde do catálogo público (qa_servicos_catalogo.ativo=false). Não perde nada. */
+  const handleArquivarServico = async (svc: Servico) => {
+    if (!confirm(`Arquivar "${svc.nome_servico}"? Ele deixa de aparecer para novos clientes mas nada é apagado — o checklist, contratos e processos ficam intactos e você pode reativar depois.`)) return;
     try {
-      const { error } = await supabase.from("qa_servicos" as any).delete().eq("id", id);
+      const { error } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .update({ ativo: false })
+        .eq("servico_id", svc.id);
       if (error) throw error;
-      toast.success("Serviço excluído");
+      toast.success(`"${svc.nome_servico}" arquivado`);
+      await loadCatalogoIds();
       await loadServicos();
     } catch (e: any) { toast.error(e.message); }
+  };
+
+  /** Exclusão definitiva com dupla confirmação + snapshot obrigatório. */
+  const handleDeleteServico = async (id: number) => {
+    const svc = servicos.find((s) => s.id === id);
+    if (!svc) return;
+    if (!confirm(
+      `ATENÇÃO — EXCLUSÃO PERMANENTE\n\n"${svc.nome_servico}"\n\n` +
+      `Isso apaga o serviço e o checklist associado. Se quiser apenas esconder do cliente, use ARQUIVAR.\n\n` +
+      `Vamos salvar um snapshot do checklist antes, mas o serviço em si não pode ser recuperado.\n\nContinuar?`,
+    )) return;
+    const digitou = prompt(`Para confirmar, digite EXATAMENTE o nome do serviço:\n\n${svc.nome_servico}`);
+    if (!digitou || digitou.trim() !== svc.nome_servico.trim()) {
+      toast.error("Nome digitado não confere — exclusão cancelada.");
+      return;
+    }
+    try {
+      const snapId = await snapshotChecklist(id, `exclusao_definitiva:${svc.nome_servico}`);
+      const { error } = await supabase.from("qa_servicos" as any).delete().eq("id", id);
+      if (error) throw error;
+      toast.success(
+        snapId
+          ? `Serviço excluído. Snapshot do checklist salvo (id ${snapId.slice(0, 8)}…) por 90 dias.`
+          : "Serviço excluído.",
+      );
+      await loadServicos();
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  /** Copia todo o checklist de um serviço-fonte para o serviço-destino, com snapshot. */
+  const handleCopiarChecklist = async (destino: Servico) => {
+    const opcoes = servicos.filter((s) => s.id !== destino.id);
+    if (opcoes.length === 0) { toast.error("Não há outros serviços para copiar."); return; }
+    const lista = opcoes.map((s, i) => `${i + 1}. ${s.nome_servico}`).join("\n");
+    const escolha = prompt(
+      `Copiar checklist para "${destino.nome_servico}"\n\n` +
+      `Digite o NÚMERO do serviço-fonte:\n\n${lista}`,
+    );
+    if (!escolha) return;
+    const idx = parseInt(escolha.trim(), 10) - 1;
+    const fonte = opcoes[idx];
+    if (!fonte) { toast.error("Escolha inválida"); return; }
+    if (!confirm(`Copiar TODO o checklist de:\n  "${fonte.nome_servico}"\npara:\n  "${destino.nome_servico}"?\n\nItens já existentes no destino não serão duplicados.`)) return;
+    try {
+      await snapshotChecklist(destino.id, `pre_copia_de:${fonte.nome_servico}`);
+      // Busca todas as exigências da fonte
+      const { data: linhasFonte, error: errFonte } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .select("tipo_documento, nome_documento, etapa, obrigatorio, validade_dias, formato_aceito, regra_validacao, link_emissao, condicao_profissional, ordem, ativo, instrucoes, observacoes_cliente, biblioteca_id")
+        .eq("servico_id", fonte.id)
+        .eq("ativo", true);
+      if (errFonte) throw errFonte;
+      const linhas = (linhasFonte as any[]) ?? [];
+      if (linhas.length === 0) {
+        toast.warning(`"${fonte.nome_servico}" não tem checklist para copiar.`);
+        return;
+      }
+      // Insere apontando para o servico destino; ON CONFLICT evita duplicar
+      const payload = linhas.map((l) => ({ ...l, servico_id: destino.id }));
+      const { error: errIns } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .upsert(payload, {
+          onConflict: "servico_id,tipo_documento,condicao_profissional",
+          ignoreDuplicates: true,
+        });
+      if (errIns) throw errIns;
+      toast.success(`${linhas.length} exigência(s) copiada(s) de "${fonte.nome_servico}" para "${destino.nome_servico}".`);
+    } catch (e: any) { toast.error(e.message || "Falha ao copiar checklist"); }
   };
 
   const startEdit = (svc: Servico) => {
@@ -435,10 +524,28 @@ export default function QAConfiguracoesPage() {
                   <>
                     <span className="flex-1 truncate" style={{ color: "hsl(220 20% 25%)" }}>{svc.nome_servico}</span>
                     <span className="font-mono shrink-0" style={{ color: "hsl(220 10% 55%)" }}>R$ {svc.valor_servico}</span>
-                    <button onClick={() => startEdit(svc)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleCopiarChecklist(svc)}
+                      title="Copiar checklist de outro serviço"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#7A1F2B] opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                    <button onClick={() => startEdit(svc)} title="Editar" className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="h-3 w-3" />
                     </button>
-                    <button onClick={() => handleDeleteServico(svc.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleArquivarServico(svc)}
+                      title="Arquivar (esconde do cliente, mantém tudo)"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Archive className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteServico(svc.id)}
+                      title="Excluir permanentemente (perde tudo)"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </>
