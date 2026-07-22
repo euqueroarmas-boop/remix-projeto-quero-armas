@@ -236,7 +236,6 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
             {aberto && (
               <div className="border-t bg-muted/20 px-3 py-3 space-y-3">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <p><span className="text-muted-foreground">Cliente:</span> {c.cliente_nome}</p>
                   <p><span className="text-muted-foreground">E-mail:</span> {c.cliente_email || "—"}</p>
                   <p><span className="text-muted-foreground">Venda:</span> #{c.venda_id_legado ?? c.venda_id}</p>
                   <p><span className="text-muted-foreground">Contrato:</span> {c.contrato_id.slice(0, 8)}…</p>
