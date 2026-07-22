@@ -25,7 +25,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { constantTimeEqual, sha256Hex } from "../_shared/qaAsaas.ts";
 import { jsPDF } from "npm:jspdf@2.5.1";
-import { montarAnexosI, aplicarAnexosDinamicos } from "../_shared/qaAnexos.ts";
+import {
+  montarAnexosI,
+  aplicarAnexosDinamicos,
+  renumberContractAnexoHeading,
+} from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -429,7 +433,7 @@ function filterContractAnexosBySlugs(html: string, slugsContratados: string[]): 
     foundAny = true;
     if (slugSet.has(normalizeContractSlug(slug))) {
       kept++;
-      return full;
+      return renumberContractAnexoHeading(full, kept);
     }
     return "";
   });

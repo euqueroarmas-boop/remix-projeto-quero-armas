@@ -62,6 +62,42 @@ function normalizeSlugs(slugs: string[] | null | undefined): string[] {
     .filter(Boolean);
 }
 
+function toRoman(value: number): string {
+  const map: Array<[number, string]> = [
+    [1000, "M"],
+    [900, "CM"],
+    [500, "D"],
+    [400, "CD"],
+    [100, "C"],
+    [90, "XC"],
+    [50, "L"],
+    [40, "XL"],
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let n = Math.max(1, Math.floor(value || 1));
+  let out = "";
+  for (const [num, roman] of map) {
+    while (n >= num) {
+      out += roman;
+      n -= num;
+    }
+  }
+  return out;
+}
+
+export function renumberContractAnexoHeading(html: string, index: number): string {
+  if (!html) return html;
+  const roman = toRoman(index);
+  return html.replace(
+    /(<h[1-6]\b[^>]*>\s*)ANEXO\s+[IVXLCDM]+(\s*(?:&mdash;|&ndash;|---|--|—|-)\s*)/i,
+    `$1ANEXO ${roman}$2`,
+  );
+}
+
 /**
  * Extrai slug de um bloco Anexo I tentando regex flexíveis e, depois,
  * o texto puro do segmento.
@@ -271,6 +307,7 @@ export function filterContractAnexosBySlugs(
         if (slugSet.has(sslug)) {
           kept++;
           if (options?.debug) options.debug.sectionsAnexoSlugKept.push(sslug);
+          s.outerHTML = renumberContractAnexoHeading(s.outerHTML, kept);
         } else {
           s.remove();
         }
@@ -304,7 +341,7 @@ export function filterContractAnexosBySlugs(
       if (slugSet.has(sslug)) {
         kept++;
         if (options?.debug) options.debug.sectionsAnexoSlugKept.push(sslug);
-        return full;
+        return renumberContractAnexoHeading(full, kept);
       }
       return "";
     });

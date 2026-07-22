@@ -27,7 +27,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 import { extractPolicy, aplicarPolicyNotificacao } from "../_shared/notificacaoPolicy.ts";
-import { montarAnexosI, aplicarAnexosDinamicos } from "../_shared/qaAnexos.ts";
+import {
+  montarAnexosI,
+  aplicarAnexosDinamicos,
+  renumberContractAnexoHeading,
+} from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -206,7 +210,7 @@ function filterContractAnexosBySlugs(
     const sslug = normalizeContractSlug(s);
     if (slugSet.has(sslug)) {
       kept++;
-      return full;
+      return renumberContractAnexoHeading(full, kept);
     }
     return "";
   });
