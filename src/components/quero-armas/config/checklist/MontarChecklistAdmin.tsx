@@ -68,6 +68,47 @@ const FLUXO_RESIDENCIA_TERCEIRO_TIPOS = [
 
 const FLUXO_OCUPACAO_LICITA_TIPOS = ["renda_definir_condicao"];
 
+const OCUPACAO_RAMOS: Array<{ titulo: string; itens: string[] }> = [
+  {
+    titulo: "EMPRESÁRIO / SÓCIO",
+    itens: [
+      "Cartão CNPJ emitido nos últimos 30 dias",
+      "QSA emitido nos últimos 30 dias",
+      "Nota fiscal emitida pela empresa para um cliente, em qualquer data",
+      "Contrato Social, última alteração ou Requerimento de Empresário emitido pela Junta Comercial",
+    ],
+  },
+  {
+    titulo: "SERVIDOR PÚBLICO",
+    itens: [
+      "Carteira funcional ou documento funcional",
+      "Holerite / contracheque recente emitido nos últimos 30 dias",
+    ],
+  },
+  {
+    titulo: "CLT",
+    itens: [
+      "Holerite mais recente",
+      "Carteira de Trabalho Digital",
+      "Extrato CNIS / INSS",
+    ],
+  },
+  {
+    titulo: "AUTÔNOMO / MEI",
+    itens: [
+      "Cartão CNPJ / MEI",
+      "Nota fiscal recente ou documento substituto definido pela equipe",
+    ],
+  },
+  {
+    titulo: "APOSENTADO",
+    itens: [
+      "Comprovante de benefício",
+      "Extrato CNIS / INSS, se aplicável",
+    ],
+  },
+];
+
 export default function MontarChecklistAdmin() {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [servicoId, setServicoId] = useState<number | null>(null);
@@ -600,6 +641,36 @@ export default function MontarChecklistAdmin() {
               </button>
             </div>
           </div>
+          {fluxoOcupacaoAtivo && (
+            <div className="mt-3 rounded-xl border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 88%)" }}>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                  O QUE SERÁ PEDIDO QUANDO O CLIENTE ESCOLHER A CONDIÇÃO PROFISSIONAL
+                </p>
+                <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                  VISÍVEL PARA AUDITORIA
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {OCUPACAO_RAMOS.map((ramo) => (
+                  <div key={ramo.titulo} className="rounded-lg border bg-white p-2" style={{ borderColor: "hsl(220 15% 90%)" }}>
+                    <div className="text-[10px] font-bold uppercase text-[#7B1C2E]">{ramo.titulo}</div>
+                    <ul className="mt-1 space-y-1">
+                      {ramo.itens.map((item) => (
+                        <li key={item} className="flex gap-1.5 text-[10px] leading-snug text-slate-600">
+                          <span className="mt-[5px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+                Estes documentos não aparecem todos na lista principal porque eles só nascem no processo depois que o cliente responde a condição profissional. A base legal usada é Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

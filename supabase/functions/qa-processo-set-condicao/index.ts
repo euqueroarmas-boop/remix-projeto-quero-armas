@@ -2,7 +2,7 @@
 // Permite ao cliente (ou staff) definir/alterar a condição profissional do PROCESSO.
 // - Atualiza qa_processos.condicao_profissional
 // - Remove itens antigos de renda (status pendente / dispensado_grupo / em_analise) e o placeholder renda_definir_condicao
-// - Insere os itens de renda corretos (CLT / autônomo / empresário / aposentado)
+// - Insere os itens de renda corretos (CLT / autônomo / empresário / aposentado / servidor público)
 // - Itens de renda já APROVADOS são preservados; não são recriados nem cobrados de novo.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
@@ -114,64 +114,67 @@ function rendaPara(c: Cond): Item[] {
     case "empresario": return [
       {
         tipo_documento: "renda_cartao_cnpj",
-        nome_documento: "Cartão CNPJ da empresa",
+        nome_documento: "Cartão CNPJ da empresa (emitido nos últimos 30 dias)",
         obrigatorio: true,
         link_emissao: "https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp",
         label_botao: "Emitir Cartão CNPJ",
-        instrucoes: "1) Acesse o link da Receita Federal (Consulta CNPJ).\n2) Digite o CNPJ da empresa e resolva o captcha.\n3) Clique em \"Consultar\" e baixe/imprima o Cartão CNPJ em PDF.\n4) Na MESMA tela, role até \"QSA – Quadro de Sócios e Administradores\" e baixe também (envie no item ao lado).",
-        observacoes_cliente: "ATENÇÃO: o QSA é gerado dentro da MESMA consulta. Não envie apenas o cartão CNPJ.",
+        instrucoes: "1) Acesse o link da Receita Federal (Consulta CNPJ).\n2) Digite o CNPJ da empresa e resolva o captcha.\n3) Clique em \"Consultar\" e baixe/imprima o Cartão CNPJ em PDF.\n4) Envie um PDF emitido nos últimos 30 dias.\n5) Na MESMA tela, role até \"QSA – Quadro de Sócios e Administradores\" e baixe também (envie no item ao lado).",
+        observacoes_cliente: "ATENÇÃO: o Cartão CNPJ e o QSA precisam ter sido emitidos nos últimos 30 dias. Não envie apenas o cartão CNPJ.",
         orgao_emissor: "Receita Federal",
+        prazo_recomendado_dias: 30,
         checklist_operador: [
           "Verificar situação cadastral ATIVA",
           "Conferir razão social, CNPJ e endereço",
           "Conferir CNAE principal",
+          "Conferir emissão/consulta dos últimos 30 dias",
         ],
       },
       {
         tipo_documento: "renda_qsa",
-        nome_documento: "QSA (Quadro de Sócios e Administradores)",
+        nome_documento: "QSA (Quadro de Sócios e Administradores — emitido nos últimos 30 dias)",
         obrigatorio: true,
         link_emissao: "https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp",
         label_botao: "Emitir QSA",
-        instrucoes: "1) Use a MESMA consulta do Cartão CNPJ.\n2) Clique em \"QSA – Quadro de Sócios e Administradores\".\n3) Clique em \"Imprimir\" e salve como PDF.\n4) Envie aqui o PDF do QSA.",
-        observacoes_cliente: "O QSA mostra os sócios da empresa. Sem ele, não é possível validar sua condição de sócio.",
+        instrucoes: "1) Use a MESMA consulta do Cartão CNPJ na Receita Federal.\n2) Clique em \"QSA – Quadro de Sócios e Administradores\".\n3) Clique em \"Imprimir\" e salve como PDF.\n4) Envie um PDF emitido nos últimos 30 dias.",
+        observacoes_cliente: "O QSA mostra os sócios da empresa. Sem ele, não é possível validar sua condição de sócio/administrador.",
         orgao_emissor: "Receita Federal",
+        prazo_recomendado_dias: 30,
         checklist_operador: [
           "Conferir se o titular consta como sócio/administrador",
           "Verificar percentual de participação",
           "Cruzar com o Contrato Social",
+          "Conferir emissão/consulta dos últimos 30 dias",
         ],
       },
       {
         tipo_documento: "renda_contrato_social",
-        nome_documento: "Contrato Social (última alteração) ou Ficha Cadastral Completa",
+        nome_documento: "Contrato Social ou Requerimento de Empresário",
         obrigatorio: true,
         link_emissao: "https://www.jucesponline.sp.gov.br/",
-        label_botao: "Emitir Contrato Social",
-        instrucoes: "1) Acesse o portal da Junta Comercial do seu estado (ex.: JUCESP em SP).\n2) Vá em \"Pesquisa de Empresas\".\n3) Busque por nome ou CNPJ e baixe o Contrato Social ou a última alteração consolidada.\n\nALTERNATIVA ACEITA: a Ficha Cadastral Completa emitida pela Junta Comercial também é aceita no lugar do Contrato Social.",
-        observacoes_cliente: "Se a empresa for de outro estado, use a Junta Comercial correspondente. A Ficha Cadastral Completa é igualmente aceita.",
+        label_botao: "Emitir na Junta Comercial",
+        instrucoes: "1) Acesse o portal da Junta Comercial do estado da empresa (ex.: JUCESP em SP).\n2) Busque a empresa por nome ou CNPJ.\n3) Baixe o Contrato Social, última alteração consolidada ou Requerimento de Empresário.\n4) Envie o documento completo, com todas as páginas.",
+        observacoes_cliente: "Para empresa de São Paulo, use a JUCESP. Para empresa de outro estado, use a Junta Comercial correspondente.",
         orgao_emissor: "Junta Comercial",
         checklist_operador: [
           "Documento completo (todas as páginas)",
           "Conferir dados com o QSA",
           "Verificar última alteração registrada",
-          "Aceitar Ficha Cadastral Completa como alternativa ao Contrato Social",
+          "Aceitar Requerimento de Empresário quando for empresário individual",
         ],
       },
       {
         tipo_documento: "renda_nf_empresa",
-        nome_documento: "Nota fiscal recente da empresa",
+        nome_documento: "Nota fiscal emitida pela empresa para um cliente",
         obrigatorio: true,
         link_emissao: null,
         label_botao: "Enviar Nota Fiscal",
-        instrucoes: "1) Localize uma NF emitida pela empresa nos últimos 30 dias.\n2) Baixe o DANFE/PDF oficial.\n3) Envie aqui.\n\nSe a empresa não emite notas, fale com o operador para definir documento alternativo (ex.: Pró-labore, IRPJ, DAS).",
-        observacoes_cliente: "OBRIGATÓRIO. A NF comprova movimentação real da empresa — exigência da PF/EB para CR de empresário/sócio. Se não emite NF, contate o operador para substituição formal.",
-        prazo_recomendado_dias: 30,
+        instrucoes: "1) Localize uma nota fiscal emitida pela empresa para um cliente.\n2) Pode ser nota fiscal de qualquer data, desde que seja verdadeira, legível e emitida pelo CNPJ informado.\n3) Baixe o DANFE/PDF oficial e envie aqui.\n\nSe a empresa não emite notas, fale com o operador para definir documento alternativo.",
+        observacoes_cliente: "A nota fiscal serve para comprovar atividade real da empresa vinculada ao requerente.",
         checklist_operador: [
-          "Conferir data (até 30 dias)",
           "Conferir CNPJ emissor",
+          "Conferir se a nota foi emitida para cliente da empresa",
           "Validar atividade compatível",
-          "Se empresa não emite NF, exigir Pró-labore / IRPJ / DAS substituto",
+          "Se empresa não emite NF, exigir substituto formal definido pelo operador",
         ],
       },
     ];
@@ -340,7 +343,7 @@ Deno.serve(async (req) => {
         etapa: "complementar",
         obrigatorio: d.obrigatorio,
         status: "pendente",
-        validade_dias: d.prazo_recomendado_dias ?? 30,
+        validade_dias: d.prazo_recomendado_dias ?? null,
         formato_aceito: ["pdf", "jpg", "jpeg", "png"],
         regra_validacao: {
           // Documentos de PESSOA JURÍDICA não têm "nome_titular" único —
