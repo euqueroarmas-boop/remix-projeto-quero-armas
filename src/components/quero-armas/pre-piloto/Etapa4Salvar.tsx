@@ -91,6 +91,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         return null;
       };
       const dataNascIso = toIsoDate(dadosRevisados.data_nascimento);
+      const expedicaoRgIso = toIsoDate(dadosRevisados.data_expedicao_rg);
       let clienteId: number;
       let existia = false;
 
@@ -108,7 +109,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           rg: dadosRevisados.rg || undefined,
           emissor_rg: dadosRevisados.emissor_rg || undefined,
           uf_emissor_rg: dadosRevisados.uf_emissor_rg || undefined,
-          expedicao_rg: dadosRevisados.data_expedicao_rg || undefined,
+          expedicao_rg: expedicaoRgIso || undefined,
           naturalidade_municipio: dadosRevisados.naturalidade_municipio || undefined,
           naturalidade_uf: dadosRevisados.naturalidade_uf || undefined,
           naturalidade_pais: dadosRevisados.naturalidade_pais || undefined,
@@ -160,7 +161,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           rg: dadosRevisados.rg || null,
           emissor_rg: dadosRevisados.emissor_rg || null,
           uf_emissor_rg: dadosRevisados.uf_emissor_rg || null,
-          expedicao_rg: dadosRevisados.data_expedicao_rg || null,
+          expedicao_rg: expedicaoRgIso || null,
           naturalidade_municipio: dadosRevisados.naturalidade_municipio || null,
           naturalidade_uf: dadosRevisados.naturalidade_uf || null,
           naturalidade_pais: dadosRevisados.naturalidade_pais || null,
