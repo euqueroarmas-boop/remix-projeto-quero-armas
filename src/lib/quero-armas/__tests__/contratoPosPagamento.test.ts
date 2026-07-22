@@ -150,7 +150,8 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md é o único contrato canônico/);
       expect(src).toMatch(/conteudo_renderizado/);
       expect(src).toMatch(/printableContractHtml/);
-      expect(src).toMatch(/canServeRenderedHtml/);
+      expect(src).toMatch(/buildCanonicalPdf/);
+      expect(src).toMatch(/ensureCanonicalPdf/);
       expect(src).toMatch(/ensureRenderedContractAudit/);
       expect(src).toMatch(/aceite_eletronico_data/);
       expect(src).toMatch(/aceite_ip/);
@@ -158,14 +159,14 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/aceite_hash/);
       expect(src).toMatch(/contractDownloadFilename/);
       expect(src).toMatch(/Contrato de Adesao Quero Armas/);
-      expect(src).toMatch(/shortPersonName/);
+      expect(src).toMatch(/fullPersonName/);
       expect(src).toMatch(/rebuildRenderedContractHtml/);
       expect(src).toMatch(/contrato_renderizado_indisponivel/);
       expect(src).toMatch(/logSistemaBackend/);
       expect(src).toMatch(/failContractDownload/);
       expect(src).toMatch(/contrato_canonico_indisponivel/);
       expect(src).toMatch(/download bloqueado por fallback ou contrato canonico indisponivel/);
-      expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
+      expect(src.indexOf("ensureCanonicalPdf")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
       expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
       expect(src).not.toMatch(/path = \(auditedContract as any\)\.company_signed_pdf_path \?\?/);
       expect(src).not.toMatch(/Fallback contrato de adesão/);

@@ -78,10 +78,8 @@ function titleCaseName(value: string): string {
     .join(" ");
 }
 
-function shortPersonName(value: string | null | undefined): string {
-  const parts = fileSafeName(value).split(/\s+/).filter(Boolean);
-  if (parts.length <= 2) return titleCaseName(parts.join(" "));
-  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+function fullPersonName(value: string | null | undefined): string {
+  return titleCaseName(fileSafeName(value || ""));
 }
 
 /** Mesmo padrão usado em qa-serve-contract-pdf: "{numero} - Contrato de
@@ -89,7 +87,7 @@ function shortPersonName(value: string | null | undefined): string {
  * do "Salvar como PDF" do navegador) quanto no file_name retornado. */
 function contractDownloadBaseName(contractNumber: string | null, vendaId: number, clienteNome: string | null): string {
   const numero = fileSafeName(contractNumber || `Venda${vendaId}`);
-  const cliente = shortPersonName(clienteNome || "");
+  const cliente = fullPersonName(clienteNome || "");
   return cliente
     ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}`
     : `${numero} - Contrato de Adesao Quero Armas`;
@@ -211,7 +209,7 @@ Deno.serve(async (req) => {
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
     .select(
-      "id, id_legado, status, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, valor_a_pagar, valor_cobrado",
+      "id, id_legado, cliente_id, status, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, valor_a_pagar, valor_cobrado",
     )
     .eq("id", venda_id)
     .maybeSingle();
@@ -321,11 +319,13 @@ Deno.serve(async (req) => {
     null;
 
   let clienteNome: string | null = null;
-  if (contract.cliente_id != null) {
+  const clienteIdLookup = contract.cliente_id ?? (venda as any).cliente_id ?? null;
+  if (clienteIdLookup != null) {
     const { data: clienteRow } = await sb
       .from("qa_clientes")
       .select("nome_completo")
-      .eq("id_legado", contract.cliente_id)
+      .or(`id_legado.eq.${clienteIdLookup},id.eq.${clienteIdLookup}`)
+      .limit(1)
       .maybeSingle();
     clienteNome = (clienteRow as any)?.nome_completo || null;
   }
