@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
  *
  * Cron diário que verifica GTEs próximas/vencidas e dispara alertas por
  * e-mail (cliente + equipe) usando a infraestrutura existente
- * `send-smtp-email` com remetente `naoresponda@queroarmas.com.br`.
+ * `send-smtp-email` com remetente `arsenalinteligente@notificacao.euqueroarmas.com.br`.
  *
  * Antiduplicidade via `qa_gte_alertas_enviados` (UNIQUE em
  * gte_documento_id + marco_dias + canal).
@@ -24,7 +24,7 @@ const corsHeaders = {
 // Marcos pré-vencimento + dia do vencimento + pós-vencimento controlado
 const MARCOS = [90, 60, 30, 15, 7, 1, 0, -1, -7, -30];
 const EQUIPE_MARCOS = new Set([30, 7, 0, -7]);
-const EMAIL_EQUIPE = "naoresponda@queroarmas.com.br"; // copia interna usa o mesmo remetente
+const EMAIL_EQUIPE = "arsenalinteligente@notificacao.euqueroarmas.com.br"; // copia interna usa o mesmo remetente
 
 interface GteRow {
   id: string;
@@ -96,7 +96,7 @@ function htmlAlerta(opts: {
           </p>
         </div>
         <p style="font-size:12px;color:#94a3b8;margin-top:20px;">
-          Arsenal Inteligente — Assessoria Jurídica · naoresponda@queroarmas.com.br
+          Arsenal Inteligente — Assessoria Jurídica · arsenalinteligente@notificacao.euqueroarmas.com.br
         </p>
       </div>
     </div>

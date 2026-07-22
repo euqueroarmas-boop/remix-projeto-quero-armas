@@ -70,7 +70,7 @@ function htmlBase(titulo: string, corpo: string): string {
           </a>
         </div>
         <p style="font-size:12px;color:#94a3b8;margin-top:20px;">
-          Quero Armas · Arsenal Inteligente Premium · naoresponda@queroarmas.com.br
+          Quero Armas · Arsenal Inteligente Premium · arsenalinteligente@notificacao.euqueroarmas.com.br
         </p>
       </div>
     </div>`;

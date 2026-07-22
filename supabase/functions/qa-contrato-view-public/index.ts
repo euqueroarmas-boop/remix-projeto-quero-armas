@@ -103,6 +103,34 @@ function sanitizeFilename(name: string): string {
     .slice(0, 140) || "contrato";
 }
 
+// Mesma l\u00f3gica de qa-serve-contract-pdf \u2014 motor \u00fanico: o nome do arquivo
+// baixado (aqui ou no popup do portal) deve sempre incluir o nome do cliente.
+function titleCaseName(value: string): string {
+  return value
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) =>
+      ["da", "de", "do", "das", "dos", "e"].includes(part)
+        ? part
+        : part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1)
+    )
+    .join(" ");
+}
+function shortPersonName(value: string | null | undefined): string {
+  const parts = String(value || "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length <= 2) return titleCaseName(parts.join(" "));
+  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+}
+function contractDownloadFilename(contractNumber: string | null, clienteNome: string): string {
+  const numero = String(contractNumber || "CONTRATO").replace(/[\\/:*?"<>|]+/g, " ").trim();
+  const cliente = shortPersonName(clienteNome);
+  return cliente
+    ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}.pdf`
+    : `${numero} - Contrato de Adesao Quero Armas.pdf`;
+}
+
 function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStamp): Uint8Array {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   doc.setProperties({
@@ -355,13 +383,24 @@ Deno.serve(async (req) => {
 
   const { data, error } = await sb
     .from("qa_contracts")
-    .select("id, contract_number, status, conteudo_renderizado, issued_at, servico_slug, venda_id, template_versao")
+    .select("id, contract_number, status, conteudo_renderizado, issued_at, servico_slug, venda_id, template_versao, cliente_id")
     .eq("id", contract_id)
     .maybeSingle();
 
   if (error || !data) {
     return json({ error: "Contrato não encontrado" }, 404);
   }
+
+  let nomeCliente = "";
+  try {
+    const { data: cli } = await sb
+      .from("qa_clientes")
+      .select("nome_completo")
+      .or(`id.eq.${data.cliente_id},id_legado.eq.${data.cliente_id}`)
+      .limit(1)
+      .maybeSingle();
+    nomeCliente = cli?.nome_completo || "";
+  } catch { /* segue sem nome — filename cai no fallback genérico */ }
 
   const STATUS_BLOQUEADOS = new Set(["rejected", "arquivado_template_legado"]);
   if (STATUS_BLOQUEADOS.has(data.status)) {

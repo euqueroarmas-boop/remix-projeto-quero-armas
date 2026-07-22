@@ -30,7 +30,14 @@ type Evento =
   | "em_verificacao"
   | "pronto_para_protocolo"
   | "enviado_ao_orgao"
-  | "status_orgao";
+  | "status_orgao"
+  // Verde — documento com validade cadastrado/renovado (não precisa de solicitacao_id)
+  | "documento_em_dia"
+  // Verde — exigência do processo cumprida
+  | "exigencia_cumprida";
+
+/** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
+const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida"]);
 
 interface Payload {
   evento: Evento;
@@ -49,6 +56,29 @@ interface Payload {
   servico_nome?: string | null;
   /** Status novo após mudança (para anti-dup em mudanças manuais). */
   status_novo?: string | null;
+  /** Para documento_em_dia. */
+  documento?: string;
+  numero?: string;
+  validade?: string; // YYYY-MM-DD
+  documento_evento?: "cadastrado" | "renovado";
+  referencia_tabela?: string;
+  referencia_id?: string;
+  /** Para exigencia_cumprida. */
+  processo?: string;
+  exigencia?: string;
+}
+
+function brDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const s = String(iso).slice(0, 10);
+  return s.includes("-") ? s.split("-").reverse().join("/") : s;
+}
+
+function diasAteVencer(iso?: string | null): string {
+  if (!iso) return "—";
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const v = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
+  return String(Math.floor((v.getTime() - hoje.getTime()) / 86400000));
 }
 
 const PORTAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente";
@@ -98,6 +128,30 @@ function mapEventoToTemplate(
         templateData: { nome, servico: svc, status, observacao: p.observacao ?? "", portalUrl },
       };
     }
+    case "documento_em_dia":
+      return {
+        templateName: "documento-em-dia",
+        templateData: {
+          nome,
+          documento: p.documento || "documento",
+          numero: p.numero || "—",
+          validade: brDate(p.validade),
+          diasRestantes: diasAteVencer(p.validade),
+          evento: p.documento_evento === "renovado" ? "renovado" : "cadastrado",
+          portalUrl,
+        },
+      };
+    case "exigencia_cumprida":
+      return {
+        templateName: "exigencia-cumprida",
+        templateData: {
+          nome,
+          processo: p.processo || svc,
+          exigencia: p.exigencia || "—",
+          cumpridaEm: brDate(new Date().toISOString()),
+          portalUrl,
+        },
+      };
   }
   return null;
 }
@@ -106,8 +160,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = (await req.json()) as Payload;
-    if (!body?.evento || !body?.solicitacao_id) {
-      return new Response(JSON.stringify({ error: "evento e solicitacao_id obrigatórios" }), {
+    if (!body?.evento) {
+      return new Response(JSON.stringify({ error: "evento obrigatório" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Eventos verdes (documento_em_dia / exigencia_cumprida) não exigem
+    // solicitacao_id — bastam cliente_id + dados do documento/exigência.
+    if (!EVENTOS_VERDES.has(body.evento) && !body.solicitacao_id && !body.cliente_id) {
+      return new Response(JSON.stringify({ error: "solicitacao_id ou cliente_id obrigatórios" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -117,6 +179,61 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
+
+    // Fast path para eventos verdes: envia e-mail verde + popup normal, sem
+    // depender de solicitação. Reusa sendTransactional (motor Lovable com
+    // remetente arsenalinteligente@notificacao.euqueroarmas.com.br) e a
+    // tabela qa_notificacoes_cliente já existente.
+    if (EVENTOS_VERDES.has(body.evento)) {
+      if (!body.cliente_id) {
+        return new Response(JSON.stringify({ error: "cliente_id obrigatório para evento verde" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: cli } = await supabase
+        .from("qa_clientes").select("nome_completo, email").eq("id", body.cliente_id).maybeSingle();
+      const nomeCli = (cli as any)?.nome_completo ?? null;
+      const emailCli = (cli as any)?.email ?? null;
+      const mapped = mapEventoToTemplate(body, { nome: nomeCli }, body.processo || body.documento || "");
+      let emailOk = false;
+      if (mapped && emailCli) {
+        const idem = body.evento === "documento_em_dia"
+          ? `qa-verde-doc-${body.cliente_id}-${body.referencia_tabela || "x"}-${body.referencia_id || body.documento || "x"}-${body.validade || "x"}`
+          : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
+        const send = await sendTransactional({
+          templateName: mapped.templateName,
+          recipientEmail: emailCli,
+          idempotencyKey: idem,
+          templateData: mapped.templateData,
+        });
+        emailOk = send.ok;
+      }
+      const categoria = body.evento === "documento_em_dia" ? "documento_em_dia" : "exigencia_cumprida";
+      const titulo = body.evento === "documento_em_dia"
+        ? `${body.documento || "Documento"} ${body.documento_evento === "renovado" ? "renovado" : "cadastrado"} — em dia`
+        : "Exigência cumprida";
+      const mensagem = body.evento === "documento_em_dia"
+        ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
+        : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
+      try {
+        await supabase.from("qa_notificacoes_cliente").upsert({
+          cliente_id: body.cliente_id,
+          categoria,
+          urgencia: "normal",
+          titulo,
+          mensagem,
+          link: "/area-do-cliente",
+          referencia_tabela: body.referencia_tabela || null,
+          referencia_id: body.referencia_id || null,
+          ativa: true,
+        }, { onConflict: "cliente_id,categoria,referencia_tabela,referencia_id" });
+      } catch (err) {
+        console.error("[qa-notify-event] popup verde:", err);
+      }
+      return new Response(JSON.stringify({ ok: true, verde: true, emailOk }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Resolve solicitacao_id se vier apenas cliente_id (pega a mais recente
     // não-finalizada/indeferida do cliente).

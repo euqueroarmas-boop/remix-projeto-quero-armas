@@ -54,6 +54,8 @@ import { template as riscoJanelaRenovacaoCr } from './risco-janela-renovacao-cr.
 import { template as municaoLimiteAlerta } from './municao-limite-alerta.tsx'
 import { template as acervoInconsistente } from './acervo-inconsistente.tsx'
 import { template as acervoConforme } from './acervo-conforme.tsx'
+import { template as documentoEmDia } from './documento-em-dia.tsx'
+import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
 
 // Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
 import { template as habitualidadeProgressoNivel } from './habitualidade-progresso-nivel.tsx'
@@ -145,6 +147,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'municao-limite-alerta': municaoLimiteAlerta,
   'acervo-inconsistente': acervoInconsistente,
   'acervo-conforme': acervoConforme,
+  'documento-em-dia': documentoEmDia,
+  'exigencia-cumprida': exigenciaCumprida,
 
   // Habitualidade — 12 novos alertas (mockup — sem motor ainda)
   'habitualidade-progresso-nivel': habitualidadeProgressoNivel,

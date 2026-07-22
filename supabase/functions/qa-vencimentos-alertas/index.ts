@@ -31,7 +31,7 @@ const corsHeaders = {
 
 const MARCOS = [180, 90, 60, 30, 15, 7, 0, -1];
 const PORTAL_LINK = "https://www.euqueroarmas.com.br/area-do-cliente";
-const REMETENTE = "naoresponda@queroarmas.com.br";
+const REMETENTE = "arsenalinteligente@notificacao.euqueroarmas.com.br";
 
 type Fonte = "CR" | "CRAF" | "DOCUMENTO" | "AUTORIZACAO";
 
