@@ -10,6 +10,7 @@ import { template as pagamentoAtrasado } from './pagamento-atrasado.tsx'
 import { template as assinaturaCancelada } from './assinatura-cancelada.tsx'
 import { template as falhaCartao } from './falha-cartao.tsx'
 import { template as contratoProntoAssinatura } from './contrato-pronto-assinatura.tsx'
+import { template as contratoRegeneradoAssinatura } from './contrato-regenerado-assinatura.tsx'
 import { template as contratoAssinado } from './contrato-assinado.tsx'
 import { template as contratoRecusado } from './contrato-recusado.tsx'
 import { template as orcamentoRecebido } from './orcamento-recebido.tsx'
@@ -94,6 +95,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'falha-cartao': falhaCartao,
   // Contratos
   'contrato-pronto-assinatura': contratoProntoAssinatura,
+  'contrato-regenerado-assinatura': contratoRegeneradoAssinatura,
   'contrato-assinado': contratoAssinado,
   'contrato-recusado': contratoRecusado,
   // Operacional

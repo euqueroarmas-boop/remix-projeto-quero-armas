@@ -190,6 +190,18 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(helper).not.toMatch(/corpo_html|observacoes|filterContractAnexosBySlugs/);
     });
 
+    it("reenvio manual de contrato regenerado usa template próprio e processa a fila", () => {
+      const src = r("supabase/functions/qa-generate-contract/index.ts");
+      const registry = r("supabase/functions/_shared/transactional-email-templates/registry.ts");
+      expect(src).toMatch(/reenviar_email/);
+      expect(src).toMatch(/contrato-regenerado-assinatura/);
+      expect(src).toMatch(/process-email-queue/);
+      expect(src).toMatch(/sendResult\.ok/);
+      expect(src).toMatch(/Contrato regenerado, mas o e-mail não foi enfileirado/);
+      expect(src).toMatch(/contrato_email_reenviado/);
+      expect(registry).toMatch(/contrato-regenerado-assinatura/);
+    });
+
     it("migration corrige Anexo I.6 para PF/SINARM-CAC no template e snapshots", () => {
       const src = r("supabase/migrations/20260620212500_qa_contract_anexo_16_sinarm_cac.sql");
       expect(src).toMatch(/I\.6\. CONCESSÃO DE CR/);

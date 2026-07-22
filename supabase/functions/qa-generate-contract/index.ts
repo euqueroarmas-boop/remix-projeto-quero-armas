@@ -67,6 +67,23 @@ function jsonResp(body: unknown, status = 200) {
   });
 }
 
+async function processEmailQueueNow(sb: ReturnType<typeof svc>): Promise<unknown> {
+  const { data, error } = await sb.functions.invoke("process-email-queue", {
+    body: { source: "qa-generate-contract", reason: "contrato_regenerado_reenvio_manual" },
+  });
+  if (error) {
+    throw new Error(`E-mail enfileirado, mas falhou ao processar a fila: ${error.message}`);
+  }
+  const stopped = (data as any)?.stopped;
+  if (stopped) {
+    throw new Error(`E-mail enfileirado, mas a fila parou antes do envio: ${stopped}`);
+  }
+  if (typeof (data as any)?.processed === "number" && (data as any).processed < 1) {
+    throw new Error("E-mail enfileirado, mas a fila não processou nenhum envio.");
+  }
+  return data;
+}
+
 function esc(s: string | null | undefined): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -657,38 +674,57 @@ Deno.serve(async (req) => {
     // (/area-do-cliente/contratos/{id}), sempre serve o conteúdo vigente;
     // não há necessidade de invalidar links antigos, só de avisar o
     // cliente de novo com um e-mail fresco.
+    let emailDispatch: unknown = null;
     if (reenviarEmail) {
-      try {
-        const { data: cliEmail } = await sb
-          .from("qa_clientes")
-          .select("email, nome_completo")
-          .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
-          .limit(1)
-          .maybeSingle();
-        if (cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
-          const { sendTransactional } = await import("../_shared/sendTransactional.ts");
-          await sendTransactional({
-            templateName: "contrato-pronto-assinatura",
-            recipientEmail: String(cliEmail.email).toLowerCase(),
-            idempotencyKey: `contrato-pronto-${existing.id}-regen-${Date.now()}`,
-            templateData: {
-              nome: cliEmail.nome_completo || undefined,
-              contrato: contractNumber,
-              linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${existing.id}`,
-            },
-          });
-          await sb.from("qa_contract_events").insert({
-            contract_id: existing.id,
-            event_type: "contrato_email_reenviado",
-            event_payload: { contract_number: contractNumber, email: String(cliEmail.email).toLowerCase() },
-          });
-        }
-      } catch (e) {
-        console.error("[qa-generate-contract] reenvio de e-mail falhou:", (e as Error)?.message);
+      const { data: cliEmail } = await sb
+        .from("qa_clientes")
+        .select("email, nome_completo")
+        .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
+        .limit(1)
+        .maybeSingle();
+      if (!cliEmail?.email || !/^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
+        return jsonResp({ error: "Contrato regenerado, mas o cliente não tem e-mail válido para reenvio." }, 422);
       }
+
+      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
+      const sendResult = await sendTransactional({
+        templateName: "contrato-regenerado-assinatura",
+        recipientEmail: String(cliEmail.email).toLowerCase(),
+        idempotencyKey: `contrato-regenerado-${existing.id}-${Date.now()}`,
+        templateData: {
+          nome: cliEmail.nome_completo || undefined,
+          contrato: contractNumber,
+          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${existing.id}`,
+        },
+      });
+      if (!sendResult.ok) {
+        return jsonResp({
+          error: "Contrato regenerado, mas o e-mail não foi enfileirado.",
+          details: sendResult.error,
+        }, 502);
+      }
+
+      try {
+        emailDispatch = await processEmailQueueNow(sb);
+      } catch (e) {
+        return jsonResp({
+          error: (e as Error)?.message || "Contrato regenerado, mas a fila de e-mail não foi processada.",
+        }, 502);
+      }
+
+      await sb.from("qa_contract_events").insert({
+        contract_id: existing.id,
+        event_type: "contrato_email_reenviado",
+        event_payload: {
+          contract_number: contractNumber,
+          email: String(cliEmail.email).toLowerCase(),
+          template: "contrato-regenerado-assinatura",
+          dispatch: emailDispatch,
+        }
+      });
     }
 
-    return jsonResp({ ok: true, repaired: true, contract: repaired });
+    return jsonResp({ ok: true, repaired: true, contract: repaired, email_dispatch: emailDispatch });
   }
 
   // Insert contract
