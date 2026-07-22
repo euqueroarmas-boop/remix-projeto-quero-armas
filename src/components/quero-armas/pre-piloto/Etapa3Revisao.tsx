@@ -101,8 +101,14 @@ const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[
     { key: "ocupacao_licita_razao_social", label: "Razão Social" },
     { key: "ocupacao_licita_nome_fantasia", label: "Nome Fantasia" },
     { key: "ocupacao_licita_atividade", label: "Atividade (CNAE)" },
-    { key: "ocupacao_licita_endereco", label: "Endereço da Empresa" },
     { key: "ocupacao_licita_telefone", label: "Telefone da Empresa" },
+    { key: "ocupacao_licita_cep", label: "CEP da Empresa" },
+    { key: "ocupacao_licita_logradouro", label: "Logradouro da Empresa" },
+    { key: "ocupacao_licita_numero", label: "Número da Empresa" },
+    { key: "ocupacao_licita_complemento", label: "Complemento da Empresa" },
+    { key: "ocupacao_licita_bairro", label: "Bairro da Empresa" },
+    { key: "ocupacao_licita_cidade", label: "Cidade da Empresa" },
+    { key: "ocupacao_licita_estado", label: "Estado da Empresa (UF)" },
   ],
   "Certificado de Registro (CR)": [
     { key: "cr_numero", label: "Número do CR" },
@@ -199,21 +205,19 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       toast.error("CNPJ não encontrado na Receita Federal.");
       return;
     }
-    const enderecoEmpresa = [
-      resultado.logradouro,
-      resultado.numero && `nº ${resultado.numero}`,
-      resultado.complemento,
-      resultado.bairro,
-      resultado.municipio && resultado.uf ? `${resultado.municipio}/${resultado.uf}` : resultado.municipio,
-      resultado.cep && `CEP ${resultado.cep}`,
-    ].filter(Boolean).join(", ").toUpperCase();
     setDadosRevisados({
       ...dadosRevisados,
       cnpj: valorDigitado,
       ocupacao_licita_razao_social: resultado.razao_social.toUpperCase(),
       ocupacao_licita_nome_fantasia: resultado.nome_fantasia?.toUpperCase() || null,
       ocupacao_licita_atividade: resultado.cnae_fiscal_descricao?.toUpperCase() || null,
-      ocupacao_licita_endereco: enderecoEmpresa || null,
+      ocupacao_licita_logradouro: resultado.logradouro?.toUpperCase() || null,
+      ocupacao_licita_numero: resultado.numero || null,
+      ocupacao_licita_complemento: resultado.complemento?.toUpperCase() || null,
+      ocupacao_licita_bairro: resultado.bairro?.toUpperCase() || null,
+      ocupacao_licita_cidade: resultado.municipio?.toUpperCase() || null,
+      ocupacao_licita_estado: resultado.uf?.toUpperCase() || null,
+      ocupacao_licita_cep: resultado.cep || null,
       ocupacao_licita_telefone: resultado.ddd_telefone_1 || null,
     });
     toast.success(`Dados da empresa preenchidos: ${resultado.razao_social}`);

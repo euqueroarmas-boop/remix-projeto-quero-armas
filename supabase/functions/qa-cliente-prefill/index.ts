@@ -752,19 +752,19 @@ Deno.serve(async (req) => {
           normalized.confidence = normalized.confidence || {};
           // Campos próprios de "Ocupação Lícita (CNPJ)" — nunca tocam em
           // profissão, que fica livre para o cliente/equipe preencher.
-          const enderecoEmpresa = [
-            cnpjData.logradouro,
-            cnpjData.numero && `nº ${cnpjData.numero}`,
-            cnpjData.complemento,
-            cnpjData.bairro,
-            cnpjData.municipio && cnpjData.uf ? `${cnpjData.municipio}/${cnpjData.uf}` : cnpjData.municipio,
-            cnpjData.cep && `CEP ${cnpjData.cep}`,
-          ].filter(Boolean).join(", ");
+          // Endereço da empresa em campos separados (mesmo padrão da seção
+          // Endereço principal), não uma string única concatenada.
           normalized.ocupacao_licita_cnpj = normalized.cnpj;
           normalized.ocupacao_licita_razao_social = cnpjData.razao_social || null;
           normalized.ocupacao_licita_nome_fantasia = cnpjData.nome_fantasia || null;
           normalized.ocupacao_licita_atividade = cnpjData.cnae_fiscal_descricao || null;
-          normalized.ocupacao_licita_endereco = enderecoEmpresa || null;
+          normalized.ocupacao_licita_logradouro = cnpjData.logradouro || null;
+          normalized.ocupacao_licita_numero = cnpjData.numero || null;
+          normalized.ocupacao_licita_complemento = cnpjData.complemento || null;
+          normalized.ocupacao_licita_bairro = cnpjData.bairro || null;
+          normalized.ocupacao_licita_cidade = cnpjData.municipio || null;
+          normalized.ocupacao_licita_estado = cnpjData.uf || null;
+          normalized.ocupacao_licita_cep = cnpjData.cep || null;
           normalized.ocupacao_licita_telefone = cnpjData.ddd_telefone_1 || null;
           normalized.confidence.ocupacao_licita_cnpj = 0.9;
         }
