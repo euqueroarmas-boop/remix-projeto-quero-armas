@@ -166,7 +166,7 @@ const SYSTEM_PROMPT = [
   "5) Datas SEMPRE em DD/MM/AAAA.",
   "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
   "6.1) Se houver MAIS DE UM endereço (ex: residencial + comercial, ou principal + alternativo), preencha o primeiro em cep/endereco/... e o segundo em cep_secundario/endereco_secundario/...",
-  "6.2) ESTADO CIVIL: quando o documento oficial de identidade (CIN/RG/CNH) divergir de texto livre (WhatsApp, e-mail, observação verbal), SEMPRE use o valor do documento oficial — é a fonte legal, e texto livre pode estar desatualizado ou ser uma afirmação informal do cliente. Adicione warning descrevendo a divergência para a equipe confirmar manualmente. Esta regra é fixa: nunca escolha o texto livre em vez do documento oficial para este campo.",
+  "6.2) ESTADO CIVIL: quando o documento oficial de identidade (CIN/RG/CNH) divergir de texto livre (WhatsApp, e-mail, observação verbal), NUNCA escolha automaticamente um dos dois lados — documento oficial pode estar desatualizado (ex.: cliente casou depois de emitir o CIN). Preencha com o valor do documento oficial apenas como valor de partida, mas SEMPRE com confidence <= 0.5 nesse caso (força revisão humana), e adicione warning descrevendo a divergência e os dois valores encontrados, para a equipe decidir manualmente qual está correto.",
     "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
