@@ -13,28 +13,96 @@ interface Props {
   onVoltar: () => void;
 }
 
-const CAMPOS_ORDENADOS: { key: string; label: string; required?: boolean }[] = [
-  { key: "nome_completo", label: "Nome Completo", required: true },
-  { key: "cpf", label: "CPF", required: true },
-  { key: "data_nascimento", label: "Data de Nascimento" },
-  { key: "nome_mae", label: "Nome da Mãe" },
-  { key: "nome_pai", label: "Nome do Pai" },
-  { key: "email", label: "E-mail" },
-  { key: "celular", label: "Celular/WhatsApp" },
-  { key: "sexo", label: "Sexo" },
-  { key: "rg", label: "RG" },
-  { key: "rg_orgao_emissor", label: "Órgão Emissor RG" },
-  { key: "cep", label: "CEP" },
-  { key: "logradouro", label: "Logradouro" },
-  { key: "numero", label: "Número" },
-  { key: "complemento", label: "Complemento" },
-  { key: "bairro", label: "Bairro" },
-  { key: "cidade", label: "Cidade" },
-  { key: "estado", label: "Estado (UF)" },
-  { key: "profissao", label: "Profissão" },
-  { key: "renda_mensal", label: "Renda Mensal" },
-  { key: "senha_gov", label: "Senha GOV.BR (criptografada no banco)" },
-];
+type Campo = { key: string; label: string; required?: boolean };
+
+const CATEGORIAS_ORDENADAS = [
+  "Dados Pessoais",
+  "Documentos",
+  "Contato",
+  "Endereço",
+  "Endereço Secundário",
+  "Certificado de Registro (CR)",
+  "Exames",
+  "Acesso à Plataforma",
+  "Outros",
+] as const;
+
+const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[]> = {
+  "Dados Pessoais": [
+    { key: "nome_completo", label: "Nome Completo", required: true },
+    { key: "cpf", label: "CPF", required: true },
+    { key: "data_nascimento", label: "Data de Nascimento" },
+    { key: "sexo", label: "Sexo" },
+    { key: "nome_mae", label: "Nome da Mãe" },
+    { key: "nome_pai", label: "Nome do Pai" },
+    { key: "estado_civil", label: "Estado Civil" },
+    { key: "nacionalidade", label: "Nacionalidade" },
+    { key: "naturalidade_municipio", label: "Naturalidade (Município)" },
+    { key: "naturalidade_uf", label: "Naturalidade (UF)" },
+    { key: "naturalidade_pais", label: "Naturalidade (País)" },
+    { key: "escolaridade", label: "Escolaridade" },
+    { key: "profissao", label: "Profissão" },
+    { key: "renda_mensal", label: "Renda Mensal" },
+  ],
+  "Documentos": [
+    { key: "tipo_documento_identidade", label: "Tipo de Documento (RG/CIN)" },
+    { key: "rg", label: "RG" },
+    { key: "rg_orgao_emissor", label: "Órgão Emissor RG" },
+    { key: "uf_emissor_rg", label: "UF Emissor RG" },
+    { key: "data_expedicao_rg", label: "Data de Expedição RG" },
+    { key: "cnh", label: "CNH" },
+    { key: "ctps", label: "CTPS" },
+    { key: "pis_pasep", label: "PIS/PASEP" },
+    { key: "titulo_eleitor", label: "Título de Eleitor" },
+    { key: "cnpj", label: "CNPJ" },
+  ],
+  "Contato": [
+    { key: "email", label: "E-mail" },
+    { key: "celular", label: "Celular/WhatsApp" },
+    { key: "telefone_secundario", label: "Telefone Secundário" },
+  ],
+  "Endereço": [
+    { key: "cep", label: "CEP" },
+    { key: "logradouro", label: "Logradouro" },
+    { key: "numero", label: "Número" },
+    { key: "complemento", label: "Complemento" },
+    { key: "bairro", label: "Bairro" },
+    { key: "cidade", label: "Cidade" },
+    { key: "estado", label: "Estado (UF)" },
+    { key: "pais", label: "País" },
+  ],
+  "Endereço Secundário": [
+    { key: "cep_secundario", label: "CEP Secundário" },
+    { key: "endereco_secundario", label: "Logradouro Secundário" },
+    { key: "numero_secundario", label: "Número Secundário" },
+    { key: "complemento_secundario", label: "Complemento Secundário" },
+    { key: "bairro_secundario", label: "Bairro Secundário" },
+    { key: "cidade_secundario", label: "Cidade Secundária" },
+    { key: "estado_secundario", label: "Estado Secundário" },
+    { key: "pais_secundario", label: "País Secundário" },
+  ],
+  "Certificado de Registro (CR)": [
+    { key: "cr_numero", label: "Número do CR" },
+    { key: "cr_categoria", label: "Categoria (Atirador/Caçador/Colecionador)" },
+    { key: "cr_data_emissao", label: "Data de Emissão" },
+    { key: "cr_data_validade", label: "Data de Validade" },
+    { key: "cr_orgao_emissor", label: "Órgão Emissor" },
+  ],
+  "Exames": [
+    { key: "data_realizacao_exame_psicologico", label: "Data do Exame Psicológico" },
+    { key: "data_realizacao_exame_tiro", label: "Data do Exame de Tiro" },
+    { key: "validade_laudo_psicologico", label: "Validade do Laudo Psicológico (legado)" },
+    { key: "validade_exame_tiro", label: "Validade do Exame de Tiro (legado)" },
+  ],
+  "Acesso à Plataforma": [
+    { key: "senha_gov", label: "Senha GOV.BR (criptografada no banco)" },
+  ],
+  "Outros": [
+    { key: "observacoes", label: "Observações" },
+  ],
+};
+
+const CAMPOS_ORDENADOS: Campo[] = CATEGORIAS_ORDENADAS.flatMap((cat) => CAMPOS_POR_CATEGORIA[cat]);
 
 function getConfidence(pairs: DadosExtraidos["confidence_pairs"], campo: string): number | null {
   const p = pairs.find((c) => c.campo === campo);
@@ -58,8 +126,14 @@ function confidenceBadge(c: number | null) {
 export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, onAvancar, onVoltar }: Props) {
   const { lookupCep, cepLoading } = useBrasilApiLookup();
 
+  // Todo campo sai em maiúsculas — padrão de documentos brasileiros — exceto
+  // e-mail e senha GOV.BR, que são transcrição literal (nunca alterados).
+  const CAMPOS_SEM_MAIUSCULA = new Set(["email", "senha_gov"]);
   const set = (campo: string, valor: string) =>
-    setDadosRevisados({ ...dadosRevisados, [campo]: valor || null });
+    setDadosRevisados({
+      ...dadosRevisados,
+      [campo]: CAMPOS_SEM_MAIUSCULA.has(campo) ? (valor || null) : (valor ? valor.toUpperCase() : null),
+    });
 
   // Digitar o CEP nesta tela é uma correção deliberada da equipe (diferente
   // da extração automática da IA, que não deve sobrescrever o que já leu do
@@ -90,15 +164,21 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   const alertas = dadosExtraidos.confidence_pairs.filter((p) => p.confidence < 0.6 && p.valor);
   const temObrigatorios = !!(dadosRevisados.nome_completo?.trim() && dadosRevisados.cpf?.trim());
 
-  // Inclui todos os campos extraídos que não estão na lista ordenada
+  // Campos extraídos que não têm categoria mapeada caem em "Outros",
+  // junto de observações — evita perder dado extraído sem bagunçar as
+  // seções conhecidas.
   const camposExtras = Object.keys(dadosExtraidos.campos).filter(
     (k) => !CAMPOS_ORDENADOS.some((c) => c.key === k)
   );
-
-  const todosOsCampos = [
-    ...CAMPOS_ORDENADOS,
-    ...camposExtras.map((k) => ({ key: k, label: k.replace(/_/g, " ") })),
-  ];
+  const camposPorCategoria: Record<string, Campo[]> = {
+    ...CAMPOS_POR_CATEGORIA,
+    "Outros": [
+      ...CAMPOS_POR_CATEGORIA["Outros"],
+      ...camposExtras
+        .filter((k) => k !== "acervo")
+        .map((k) => ({ key: k, label: k.replace(/_/g, " ") })),
+    ],
+  };
 
   return (
     <div className="space-y-5">
@@ -132,28 +212,45 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {todosOsCampos.map((campo) => {
-          const { key, label } = campo;
-          const required = (campo as { required?: boolean }).required;
-          const conf = getConfidence(dadosExtraidos.confidence_pairs, key);
-          const valor = dadosRevisados[key] ?? "";
+      <div className="space-y-6">
+        {CATEGORIAS_ORDENADAS.map((categoria) => {
+          const campos = camposPorCategoria[categoria];
+          const temAlgumValor = campos.some((c) => dadosRevisados[c.key] || dadosExtraidos.campos[c.key]);
+          // Seções totalmente vazias (nenhum campo extraído nem preenchido)
+          // ficam ocultas — evita mostrar "Endereço Secundário" ou "Exames"
+          // em branco quando o cliente não tem esses dados.
+          if (categoria !== "Dados Pessoais" && categoria !== "Endereço" && !temAlgumValor) return null;
           return (
-            <div key={key} className="space-y-1">
-              <div className="flex items-center gap-1.5">
-                <Label className="text-[11px] font-medium">
-                  {label}{required && <span className="text-red-500 ml-0.5">*</span>}
-                </Label>
-                {confidenceBadge(conf)}
-                {key === "cep" && cepLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+            <div key={categoria}>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 pb-1 border-b">
+                {categoria}
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {campos.map((campo) => {
+                  const { key, label } = campo;
+                  const required = (campo as { required?: boolean }).required;
+                  const conf = getConfidence(dadosExtraidos.confidence_pairs, key);
+                  const valor = dadosRevisados[key] ?? "";
+                  return (
+                    <div key={key} className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <Label className="text-[11px] font-medium">
+                          {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+                        </Label>
+                        {confidenceBadge(conf)}
+                        {key === "cep" && cepLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                      </div>
+                      <Input
+                        value={valor || ""}
+                        onChange={(e) => set(key, e.target.value)}
+                        onBlur={key === "cep" ? (e) => handleCepBlur(e.target.value) : undefined}
+                        className={`text-xs h-7 ${confidenceColor(conf)}`}
+                        placeholder={required ? "Obrigatório" : "Não extraído"}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-              <Input
-                value={valor || ""}
-                onChange={(e) => set(key, e.target.value)}
-                onBlur={key === "cep" ? (e) => handleCepBlur(e.target.value) : undefined}
-                className={`text-xs h-7 ${confidenceColor(conf)}`}
-                placeholder={required ? "Obrigatório" : "Não extraído"}
-              />
             </div>
           );
         })}
