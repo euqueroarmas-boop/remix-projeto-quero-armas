@@ -86,6 +86,25 @@ async function processEmailQueueNow(sb: ReturnType<typeof svc>): Promise<unknown
   return data;
 }
 
+async function recordEmailDispatchFailure(
+  sb: ReturnType<typeof svc>,
+  contractId: string,
+  contractNumber: string,
+  email: string | null | undefined,
+  error: string,
+) {
+  await sb.from("qa_contract_events").insert({
+    contract_id: contractId,
+    event_type: "contrato_email_reenvio_falhou",
+    event_payload: {
+      contract_number: contractNumber,
+      email: email ? String(email).toLowerCase() : null,
+      template: "contrato-regenerado-assinatura",
+      error,
+    },
+  });
+}
+
 function esc(s: string | null | undefined): string {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -689,7 +708,14 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       if (!cliEmail?.email || !/^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
-        return jsonResp({ error: "Contrato regenerado, mas o cliente não tem e-mail válido para reenvio." }, 422);
+        const emailError = "Contrato regenerado, mas o cliente não tem e-mail válido para reenvio.";
+        await recordEmailDispatchFailure(sb, existing.id, contractNumber, cliEmail?.email, emailError);
+        return jsonResp({
+          ok: true,
+          repaired: true,
+          contract: repaired,
+          email_dispatch: { ok: false, error: emailError },
+        });
       }
 
       const { sendTransactional } = await import("../_shared/sendTransactional.ts");
@@ -704,18 +730,27 @@ Deno.serve(async (req) => {
         },
       });
       if (!sendResult.ok) {
+        const emailError = `Contrato regenerado, mas o e-mail não foi enfileirado: ${sendResult.error || "erro desconhecido"}`;
+        await recordEmailDispatchFailure(sb, existing.id, contractNumber, cliEmail.email, emailError);
         return jsonResp({
-          error: "Contrato regenerado, mas o e-mail não foi enfileirado.",
-          details: sendResult.error,
-        }, 502);
+          ok: true,
+          repaired: true,
+          contract: repaired,
+          email_dispatch: { ok: false, error: emailError },
+        });
       }
 
       try {
         emailDispatch = await processEmailQueueNow(sb);
       } catch (e) {
+        const emailError = (e as Error)?.message || "Contrato regenerado, mas a fila de e-mail não foi processada.";
+        await recordEmailDispatchFailure(sb, existing.id, contractNumber, cliEmail.email, emailError);
         return jsonResp({
-          error: (e as Error)?.message || "Contrato regenerado, mas a fila de e-mail não foi processada.",
-        }, 502);
+          ok: true,
+          repaired: true,
+          contract: repaired,
+          email_dispatch: { ok: false, error: emailError },
+        });
       }
 
       await sb.from("qa_contract_events").insert({

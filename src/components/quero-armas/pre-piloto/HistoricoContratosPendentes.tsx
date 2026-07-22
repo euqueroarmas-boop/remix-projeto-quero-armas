@@ -195,7 +195,12 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       if (error || (data as any)?.error) {
         throw new Error((data as any)?.error || error?.message || "Falha ao regenerar contrato");
       }
-      toast.success("Contrato regenerado e e-mail reenviado ao cliente.");
+      const emailDispatch = (data as any)?.email_dispatch;
+      if (emailDispatch?.ok === false) {
+        toast.warning(emailDispatch.error || "Contrato regenerado, mas o e-mail não foi confirmado.");
+      } else {
+        toast.success("Contrato regenerado e e-mail reenviado ao cliente.");
+      }
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao regenerar contrato");

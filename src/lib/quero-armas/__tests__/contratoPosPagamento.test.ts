@@ -198,7 +198,7 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/contrato-regenerado-assinatura/);
       expect(src).toMatch(/process-email-queue/);
       expect(src).toMatch(/sendResult\.ok/);
-      expect(src).toMatch(/Contrato regenerado, mas o e-mail não foi enfileirado/);
+      expect(src).toMatch(/contrato_email_reenvio_falhou/);
       expect(src).toMatch(/contrato_email_reenviado/);
       expect(registry).toMatch(/contrato-regenerado-assinatura/);
       expect(sender).toMatch(/const FROM_LOCAL_PART = "arsenalinteligente"/);
