@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { ArrowLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -193,16 +194,16 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   // do Desarmamento) — preenche os campos próprios da seção "Ocupação
   // Lícita (CNPJ)", nunca profissão. Digitar aqui é correção deliberada,
   // então sempre sobrescreve.
-  const handleCnpjBlur = async (valorDigitado: string) => {
+  const buscarDadosCnpj = async (valorDigitado: string, opts?: { silencioso?: boolean }) => {
     const digits = valorDigitado.replace(/\D/g, "");
     if (digits.length !== 14) return;
     if (!cnpjValido(digits)) {
-      toast.error("CNPJ inválido — dígito verificador não confere. Confira o número digitado.");
+      if (!opts?.silencioso) toast.error("CNPJ inválido — dígito verificador não confere. Confira o número digitado.");
       return;
     }
     const resultado = await lookupCnpj(digits);
     if (!resultado?.razao_social) {
-      toast.error("CNPJ não encontrado na Receita Federal.");
+      if (!opts?.silencioso) toast.error("CNPJ não encontrado na Receita Federal.");
       return;
     }
     setDadosRevisados({
@@ -222,6 +223,23 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
     });
     toast.success(`Dados da empresa preenchidos: ${resultado.razao_social}`);
   };
+  const handleCnpjBlur = (valorDigitado: string) => buscarDadosCnpj(valorDigitado);
+
+  // O CNPJ costuma já vir preenchido pela extração da IA (Etapa 2), sem
+  // nunca passar pelo onBlur manual — por isso a busca também dispara
+  // sozinha assim que a tela carrega, se houver CNPJ válido e os campos
+  // da empresa ainda estiverem vazios. cnpjAutoBuscadoRef evita repetir a
+  // busca a cada re-render para o mesmo valor.
+  const cnpjAutoBuscadoRef = useRef<string | null>(null);
+  useEffect(() => {
+    const digits = (dadosRevisados.cnpj || "").replace(/\D/g, "");
+    if (digits.length !== 14) return;
+    if (dadosRevisados.ocupacao_licita_razao_social) return;
+    if (cnpjAutoBuscadoRef.current === digits) return;
+    cnpjAutoBuscadoRef.current = digits;
+    buscarDadosCnpj(dadosRevisados.cnpj || "", { silencioso: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dadosRevisados.cnpj]);
 
   // Campos com confiança baixa
   const alertas = dadosExtraidos.confidence_pairs.filter((p) => p.confidence < 0.6 && p.valor);
