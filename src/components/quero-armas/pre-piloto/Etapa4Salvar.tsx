@@ -126,6 +126,12 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           cidade: dadosRevisados.cidade || undefined,
           estado: dadosRevisados.estado || undefined,
           observacao: dadosRevisados.observacoes || undefined,
+          ocupacao_licita_cnpj: dadosRevisados.cnpj || undefined,
+          ocupacao_licita_razao_social: dadosRevisados.ocupacao_licita_razao_social || undefined,
+          ocupacao_licita_nome_fantasia: dadosRevisados.ocupacao_licita_nome_fantasia || undefined,
+          ocupacao_licita_atividade: dadosRevisados.ocupacao_licita_atividade || undefined,
+          ocupacao_licita_endereco: dadosRevisados.ocupacao_licita_endereco || undefined,
+          ocupacao_licita_telefone: dadosRevisados.ocupacao_licita_telefone || undefined,
           ...(existenteArquivado ? { arquivado: false } : {}),
         }).eq("id", clienteId);
       } else {
@@ -166,6 +172,12 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           estado: dadosRevisados.estado || null,
           profissao: dadosRevisados.profissao || null,
           observacao: dadosRevisados.observacoes || null,
+          ocupacao_licita_cnpj: dadosRevisados.cnpj || null,
+          ocupacao_licita_razao_social: dadosRevisados.ocupacao_licita_razao_social || null,
+          ocupacao_licita_nome_fantasia: dadosRevisados.ocupacao_licita_nome_fantasia || null,
+          ocupacao_licita_atividade: dadosRevisados.ocupacao_licita_atividade || null,
+          ocupacao_licita_endereco: dadosRevisados.ocupacao_licita_endereco || null,
+          ocupacao_licita_telefone: dadosRevisados.ocupacao_licita_telefone || null,
         };
 
         const { data: novo, error: errNovo } = await supabase

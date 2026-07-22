@@ -36,6 +36,7 @@ const CATEGORIAS_ORDENADAS = [
   "Contato",
   "Endereço",
   "Endereço Secundário",
+  "Ocupação Lícita (CNPJ)",
   "Certificado de Registro (CR)",
   "Exames",
   "Acesso à Plataforma",
@@ -69,7 +70,6 @@ const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[
     { key: "ctps", label: "CTPS" },
     { key: "pis_pasep", label: "PIS/PASEP" },
     { key: "titulo_eleitor", label: "Título de Eleitor" },
-    { key: "cnpj", label: "CNPJ (comprovação de ocupação lícita)" },
   ],
   "Contato": [
     { key: "email", label: "E-mail" },
@@ -95,6 +95,14 @@ const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[
     { key: "cidade_secundario", label: "Cidade Secundária" },
     { key: "estado_secundario", label: "Estado Secundário" },
     { key: "pais_secundario", label: "País Secundário" },
+  ],
+  "Ocupação Lícita (CNPJ)": [
+    { key: "cnpj", label: "CNPJ" },
+    { key: "ocupacao_licita_razao_social", label: "Razão Social" },
+    { key: "ocupacao_licita_nome_fantasia", label: "Nome Fantasia" },
+    { key: "ocupacao_licita_atividade", label: "Atividade (CNAE)" },
+    { key: "ocupacao_licita_endereco", label: "Endereço da Empresa" },
+    { key: "ocupacao_licita_telefone", label: "Telefone da Empresa" },
   ],
   "Certificado de Registro (CR)": [
     { key: "cr_numero", label: "Número do CR" },
@@ -176,8 +184,9 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   };
 
   // CNPJ nesta tela é evidência de ocupação lícita do cliente PF (Estatuto
-  // do Desarmamento), não cadastro de empresa — enriquece só profissão e
-  // observações. Digitar aqui é correção deliberada, então sempre sobrescreve.
+  // do Desarmamento) — preenche os campos próprios da seção "Ocupação
+  // Lícita (CNPJ)", nunca profissão. Digitar aqui é correção deliberada,
+  // então sempre sobrescreve.
   const handleCnpjBlur = async (valorDigitado: string) => {
     const digits = valorDigitado.replace(/\D/g, "");
     if (digits.length !== 14) return;
@@ -190,10 +199,6 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       toast.error("CNPJ não encontrado na Receita Federal.");
       return;
     }
-    const profissao = [
-      `SÓCIO/PROPRIETÁRIO — ${resultado.razao_social}`,
-      resultado.cnae_fiscal_descricao,
-    ].filter(Boolean).join(" — ").toUpperCase();
     const enderecoEmpresa = [
       resultado.logradouro,
       resultado.numero && `nº ${resultado.numero}`,
@@ -201,21 +206,15 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       resultado.bairro,
       resultado.municipio && resultado.uf ? `${resultado.municipio}/${resultado.uf}` : resultado.municipio,
       resultado.cep && `CEP ${resultado.cep}`,
-    ].filter(Boolean).join(", ");
-    const notaCnpj = [
-      `CNPJ informado: ${valorDigitado}.`,
-      `Razão social: ${resultado.razao_social}.`,
-      resultado.nome_fantasia && `Nome fantasia: ${resultado.nome_fantasia}.`,
-      resultado.cnae_fiscal_descricao && `Atividade: ${resultado.cnae_fiscal_descricao}.`,
-      enderecoEmpresa && `Endereço: ${enderecoEmpresa}.`,
-      resultado.ddd_telefone_1 && `Telefone: ${resultado.ddd_telefone_1}.`,
-    ].filter(Boolean).join(" ").toUpperCase();
-    const observacoesAtuais = (dadosRevisados.observacoes || "").trim();
+    ].filter(Boolean).join(", ").toUpperCase();
     setDadosRevisados({
       ...dadosRevisados,
       cnpj: valorDigitado,
-      profissao,
-      observacoes: [observacoesAtuais, notaCnpj].filter(Boolean).join(" "),
+      ocupacao_licita_razao_social: resultado.razao_social.toUpperCase(),
+      ocupacao_licita_nome_fantasia: resultado.nome_fantasia?.toUpperCase() || null,
+      ocupacao_licita_atividade: resultado.cnae_fiscal_descricao?.toUpperCase() || null,
+      ocupacao_licita_endereco: enderecoEmpresa || null,
+      ocupacao_licita_telefone: resultado.ddd_telefone_1 || null,
     });
     toast.success(`Dados da empresa preenchidos: ${resultado.razao_social}`);
   };

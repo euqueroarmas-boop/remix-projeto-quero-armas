@@ -750,14 +750,8 @@ Deno.serve(async (req) => {
         const cnpjData = await lookupCnpj(normalized.cnpj);
         if (cnpjData) {
           normalized.confidence = normalized.confidence || {};
-          const profissaoAtual = typeof normalized.profissao === "string" ? normalized.profissao.trim() : "";
-          if (!profissaoAtual && (cnpjData.razao_social || cnpjData.cnae_fiscal_descricao)) {
-            normalized.profissao = [
-              cnpjData.razao_social && `SÓCIO/PROPRIETÁRIO — ${cnpjData.razao_social}`,
-              cnpjData.cnae_fiscal_descricao,
-            ].filter(Boolean).join(" — ");
-            normalized.confidence.profissao = 0.85;
-          }
+          // Campos próprios de "Ocupação Lícita (CNPJ)" — nunca tocam em
+          // profissão, que fica livre para o cliente/equipe preencher.
           const enderecoEmpresa = [
             cnpjData.logradouro,
             cnpjData.numero && `nº ${cnpjData.numero}`,
@@ -766,15 +760,13 @@ Deno.serve(async (req) => {
             cnpjData.municipio && cnpjData.uf ? `${cnpjData.municipio}/${cnpjData.uf}` : cnpjData.municipio,
             cnpjData.cep && `CEP ${cnpjData.cep}`,
           ].filter(Boolean).join(", ");
-          const notaCnpj = [
-            `CNPJ informado: ${normalized.cnpj}.`,
-            `Razão social: ${cnpjData.razao_social}.`,
-            cnpjData.nome_fantasia && `Nome fantasia: ${cnpjData.nome_fantasia}.`,
-            cnpjData.cnae_fiscal_descricao && `Atividade: ${cnpjData.cnae_fiscal_descricao}.`,
-            enderecoEmpresa && `Endereço: ${enderecoEmpresa}.`,
-            cnpjData.ddd_telefone_1 && `Telefone: ${cnpjData.ddd_telefone_1}.`,
-          ].filter(Boolean).join(" ");
-          normalized.observacoes = [normalized.observacoes, notaCnpj].filter(Boolean).join(" ");
+          normalized.ocupacao_licita_cnpj = normalized.cnpj;
+          normalized.ocupacao_licita_razao_social = cnpjData.razao_social || null;
+          normalized.ocupacao_licita_nome_fantasia = cnpjData.nome_fantasia || null;
+          normalized.ocupacao_licita_atividade = cnpjData.cnae_fiscal_descricao || null;
+          normalized.ocupacao_licita_endereco = enderecoEmpresa || null;
+          normalized.ocupacao_licita_telefone = cnpjData.ddd_telefone_1 || null;
+          normalized.confidence.ocupacao_licita_cnpj = 0.9;
         }
       }
     }
