@@ -61,19 +61,22 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
   const set = (campo: string, valor: string) =>
     setDadosRevisados({ ...dadosRevisados, [campo]: valor || null });
 
-  // Edição manual do CEP nesta tela é uma correção deliberada da equipe —
-  // ao contrário da extração automática (que só preenche se vazio), aqui
-  // o resultado da API sempre sobrescreve logradouro/bairro/cidade/estado,
-  // pois é exatamente isso que a equipe está pedindo ao digitar o CEP certo.
+  // Em cidades menores um CEP cobre um raio de ruas, então o "logradouro
+  // oficial" que a API devolve pode não ser a rua real do comprovante
+  // (ex.: CEP 12309-000 devolve "Avenida Vale do Paraíba" para todo o
+  // bairro, mesmo quando o endereço real é outra rua no mesmo raio).
+  // Por isso o logradouro só é preenchido se ainda estiver vazio — bairro/
+  // cidade/estado são confiáveis e sempre atualizam com o CEP digitado.
   const handleCepBlur = async (valorDigitado: string) => {
     const digits = valorDigitado.replace(/\D/g, "");
     if (digits.length !== 8) return;
     const resultado = await lookupCep(digits);
     if (!resultado) return;
+    const logradouroAtual = (dadosRevisados.logradouro || "").trim();
     setDadosRevisados({
       ...dadosRevisados,
       cep: valorDigitado,
-      ...(resultado.street ? { logradouro: resultado.street, endereco: resultado.street } : {}),
+      ...(!logradouroAtual && resultado.street ? { logradouro: resultado.street, endereco: resultado.street } : {}),
       ...(resultado.neighborhood ? { bairro: resultado.neighborhood } : {}),
       ...(resultado.city ? { cidade: resultado.city } : {}),
       ...(resultado.state ? { estado: resultado.state } : {}),
