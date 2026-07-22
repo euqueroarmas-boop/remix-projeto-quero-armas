@@ -835,6 +835,7 @@ interface CadastroPublico {
   cpf: string;
   rg?: string | null;
   emissor_rg?: string | null;
+  data_expedicao_rg?: string | null;
   data_nascimento?: string | null;
   telefone_principal?: string | null;
   telefone_secundario?: string | null;
@@ -966,12 +967,15 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
   // data_nascimento na qa_clientes é DATE — precisa ISO ou null
   const dnIncomingIso = toIsoDate(cadastro.data_nascimento);
   const dnCurrentIso = toIsoDate(cur?.data_nascimento as any);
+  const expedicaoRgIncomingIso = toIsoDate(cadastro.data_expedicao_rg);
+  const expedicaoRgCurrentIso = toIsoDate(cur?.expedicao_rg as any);
   return {
     nome_completo: pickNew(cadastro.nome_completo, cur?.nome_completo) ?? "",
     cpf: normalizeDigits(cadastro.cpf) || cur?.cpf || null,
     rg: pickNew(cadastro.rg, cur?.rg),
     emissor_rg: pickNew(cadastro.emissor_rg, cur?.emissor_rg),
     uf_emissor_rg: emptyToNull((cadastro as any).uf_emissor_rg)?.toUpperCase() ?? cur?.uf_emissor_rg ?? null,
+    expedicao_rg: expedicaoRgIncomingIso ?? expedicaoRgCurrentIso ?? null,
     data_nascimento: dnIncomingIso ?? dnCurrentIso ?? null,
     nacionalidade: pickNew(cadastro.nacionalidade, cur?.nacionalidade),
     estado_civil: pickNew(cadastro.estado_civil, cur?.estado_civil),
@@ -1002,7 +1006,7 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
 /** Computes diff between previous client state and new payload, returning only changed fields. */
 const FIELD_LABELS: Record<string, string> = {
   nome_completo: "Nome completo", cpf: "CPF", rg: "RG", emissor_rg: "Emissor RG", uf_emissor_rg: "UF Emissor",
-  data_nascimento: "Data de nascimento", nacionalidade: "Nacionalidade", estado_civil: "Estado civil",
+  data_nascimento: "Data de nascimento", expedicao_rg: "Data de expedição RG", nacionalidade: "Nacionalidade", estado_civil: "Estado civil",
   profissao: "Profissão", nome_mae: "Nome da mãe", nome_pai: "Nome do pai", email: "E-mail", celular: "Celular",
   endereco: "Endereço", numero: "Número", complemento: "Complemento", bairro: "Bairro", cep: "CEP",
   cidade: "Cidade", estado: "Estado",
