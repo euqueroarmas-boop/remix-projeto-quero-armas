@@ -23,7 +23,7 @@ function formatCpf(cpf: string | null): string | null {
 // Mapeia o "tipo" usado na Etapa 1 para o `tipo_documento` canônico do
 // Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
 const TIPO_ETAPA1_TO_HUB: Record<string, string> = {
-  cin: "rg",
+  cin: "cin",
   comprovante_residencia: "comprovante_residencia",
   laudo_psicologico: "laudo_psicologico",
   laudo_capacidade_tecnica: "laudo_capacidade_tecnica",
