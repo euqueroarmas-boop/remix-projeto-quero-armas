@@ -234,6 +234,18 @@ Deno.serve(async (req) => {
   const cpfSigner = normalizeCpf(meta.cpf_signatario);
   const cpfMatch = cpfCliente && cpfSigner && cpfCliente === cpfSigner;
 
+  // Fallback GOV.BR: nem todo pacote GOV.BR retorna CPF nos metadados
+  // (cpf_signatario vem null), mas devolve o NOME. Quando o nome do
+  // signatário bate com o nome_completo do cliente e a assinatura é
+  // ICP-Brasil, aceitamos como identidade validada — a ausência de CPF
+  // no metadado é limitação do GOV.BR, não sinal de fraude.
+  const normalizeName = (s: string | null | undefined) =>
+    (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  const nomeCliente = normalizeName((cliente as any)?.nome_completo);
+  const nomeSigner = normalizeName(meta.signatario);
+  const nameMatchStrict = nomeCliente && nomeSigner && nomeCliente === nomeSigner;
+  const nameFallback = !cpfSigner && meta.icp_brasil && nameMatchStrict;
+
   let outcome: "valid" | "invalid" | "indeterminate";
   let newStatus: "validated" | "rejected" | "pending_manual_review";
   let eventType: string;
@@ -242,12 +254,17 @@ Deno.serve(async (req) => {
     outcome = "invalid";
     newStatus = "rejected";
     eventType = "customer_signature_invalid";
+  } else if (cpfMatch || nameFallback) {
+    // Match por CPF OU (fallback GOV.BR: nome exato + ICP-Brasil + CPF ausente).
+    outcome = "valid";
+    newStatus = "validated";
+    eventType = cpfMatch ? "customer_signature_valid" : "customer_signature_valid_name_fallback";
   } else if (softBindingOk && !cpfMatch) {
-    // Binding suave (GOV.BR re-linearizou): exige revisão manual, mesmo com ICP-Brasil.
+    // Binding suave (GOV.BR re-linearizou) sem CPF match e sem nome fallback: revisão manual.
     outcome = "indeterminate";
     newStatus = "pending_manual_review";
     eventType = "customer_signature_manual_review";
-  } else if (cpfMatch || meta.icp_brasil) {
+  } else if (meta.icp_brasil) {
     outcome = "valid";
     newStatus = "validated";
     eventType = "customer_signature_valid";
