@@ -15,7 +15,11 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const TEMPLATE_CODIGO = "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS";
+const TEMPLATE_CODIGO_DEFAULT = "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS";
+const CODIGOS_PERMITIDOS = new Set([
+  "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS",
+  "PROCURACAO_PADRAO_QUERO_ARMAS",
+]);
 const PLACEHOLDER = "{{anexos_i_dinamicos}}";
 
 const corsHeaders = {
@@ -99,9 +103,17 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const corpoBruto = String(body?.corpo || "").trim();
-    const titulo = String(body?.titulo || "").trim() || "Contrato de Adesão de Assessoria Técnica e Despacho Administrativo";
+    const codigoIn = String(body?.codigo || "").trim() || TEMPLATE_CODIGO_DEFAULT;
+    if (!CODIGOS_PERMITIDOS.has(codigoIn)) return json({ error: `Código de template não permitido: ${codigoIn}` }, 422);
+    const TEMPLATE_CODIGO = codigoIn;
+    const tituloDefault = codigoIn === "PROCURACAO_PADRAO_QUERO_ARMAS"
+      ? "Procuração — Quero Armas"
+      : "Contrato de Adesão de Assessoria Técnica e Despacho Administrativo";
+    const titulo = String(body?.titulo || "").trim() || tituloDefault;
     const observacoes = String(body?.observacoes || "").trim() || null;
     const dryRun = body?.dry_run === true;
+    // Procuração não tem anexos por serviço — pula toda a lógica de sections.
+    const puloAnexos = codigoIn === "PROCURACAO_PADRAO_QUERO_ARMAS";
 
     if (!corpoBruto) return json({ error: "Corpo do contrato vazio" }, 400);
     if (corpoBruto.length < 500) return json({ error: "Corpo do contrato muito curto — envie o contrato completo" }, 422);
@@ -127,7 +139,7 @@ Deno.serve(async (req) => {
     }
 
     const temPlaceholder = corpoHtml.includes(PLACEHOLDER);
-    if (!temPlaceholder && anexos.length === 0) {
+    if (!puloAnexos && !temPlaceholder && anexos.length === 0) {
       return json({
         error:
           "Nenhum ponto de inserção de anexos encontrado. Inclua o placeholder " +
@@ -176,9 +188,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 1. Upsert dos anexos no catálogo.
+    // 1. Upsert dos anexos no catálogo (só contrato — procuração não tem anexos).
     const anexosAtualizados: Array<{ slug: string; nome: string; versao: number }> = [];
-    for (const a of anexos) {
+    for (const a of (puloAnexos ? [] : anexos)) {
       const cat = catalogoMap.get(a.slug);
       if (!cat) continue;
       const versaoAnexo = cat.anexo_versao + 1;

@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
+import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -310,6 +311,7 @@ export default function QAConfiguracoesPage() {
           <TabsTrigger value="sistema" className="data-[state=active]:bg-slate-100">Sistema</TabsTrigger>
           {isAdmin && <TabsTrigger value="servicos" className="data-[state=active]:bg-slate-100">Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
           {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
           <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
@@ -458,6 +460,11 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="contrato" className="mt-4">
           {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
           <QAContratoPrimarioAdmin />
+        </TabsContent>
+
+        <TabsContent value="procuracao" className="mt-4">
+          {/* Procuração — motor de stringagem + publicação do modelo vigente */}
+          <QAProcuracaoPrimarioAdmin />
         </TabsContent>
       )}
 
