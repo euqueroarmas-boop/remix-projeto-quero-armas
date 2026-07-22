@@ -140,12 +140,15 @@ Deno.serve(async (req) => {
 
     const temPlaceholder = corpoHtml.includes(PLACEHOLDER);
     if (!puloAnexos && !temPlaceholder && anexos.length === 0) {
-      return json({
-        error:
-          "Nenhum ponto de inserção de anexos encontrado. Inclua o placeholder " +
-          PLACEHOLDER +
-          " no local do Anexo I, ou marque cada anexo com <section data-anexo-slug=\"slug-do-servico\">...</section>.",
-      }, 422);
+      // Fallback tolerante: injeta o placeholder automaticamente antes do
+      // bloco de assinaturas (ou ao final) para que o motor dinâmico monte
+      // o Anexo I em runtime a partir do catálogo de serviços.
+      const assinaturaRe = /<h[1-6][^>]*>\s*(ASSINATURAS?|FIM DO INSTRUMENTO)[\s\S]*?<\/h[1-6]>/i;
+      if (assinaturaRe.test(corpoHtml)) {
+        corpoHtml = corpoHtml.replace(assinaturaRe, (m) => `${PLACEHOLDER}\n${m}`);
+      } else {
+        corpoHtml = `${corpoHtml}\n${PLACEHOLDER}\n`;
+      }
     }
 
     // Substitui o primeiro bloco de anexo pelo placeholder e remove os demais.
