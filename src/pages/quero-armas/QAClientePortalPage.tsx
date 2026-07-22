@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, Fragment } from "react";
+import { useEffect, useState, useMemo, Fragment, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -265,6 +265,8 @@ export default function QAClientePortalPage() {
   } | null>(null);
   const [preparedPendingDownload, setPreparedPendingDownload] = useState<PreparedMinutaDownload | null>(null);
   const [downloadingPendingContract, setDownloadingPendingContract] = useState(false);
+  const [uploadingPendingContract, setUploadingPendingContract] = useState(false);
+  const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -1187,6 +1189,64 @@ export default function QAClientePortalPage() {
       toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
     } finally {
       setDownloadingPendingContract(false);
+    }
+  };
+
+  const uploadSignedPendingContractFromPopup = async (file: File) => {
+    if (!pendingContractDownload) {
+      toast.error("Contrato pendente não encontrado. Abra a aba Contratos e tente novamente.");
+      return;
+    }
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Envie apenas o contrato assinado em PDF.");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Arquivo maior que 25 MB.");
+      return;
+    }
+
+    setUploadingPendingContract(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const fd = new FormData();
+      fd.append("contract_id", pendingContractDownload.id);
+      fd.append("file", file);
+      fd.append("device_meta", JSON.stringify({
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        platform: navigator.platform,
+      }));
+
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-upload-signed-contract`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: fd,
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        if (resp.status === 409 && String(data.error || "").includes("validated")) {
+          toast.info("Este contrato já foi validado. Atualizando…", { duration: 5000 });
+          setShowContratoPopup(false);
+          setDocsReloadKey((k) => k + 1);
+          return;
+        }
+        throw new Error(data.error || `HTTP ${resp.status}`);
+      }
+
+      toast.success("Contrato assinado enviado. Validação em andamento.");
+      setShowContratoPopup(false);
+      setPendingContracts((n) => Math.max(0, n - 1));
+      setDocsReloadKey((k) => k + 1);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao enviar contrato assinado.");
+    } finally {
+      setUploadingPendingContract(false);
+      if (pendingContractUploadInputRef.current) pendingContractUploadInputRef.current.value = "";
     }
   };
 
@@ -2683,6 +2743,16 @@ export default function QAClientePortalPage() {
                   </p>
 
                   <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 pt-1">
+                    <input
+                      ref={pendingContractUploadInputRef}
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadSignedPendingContractFromPopup(file);
+                      }}
+                    />
                     {preparedPendingDownload ? (
                       <a
                         href={preparedPendingDownload.href}
@@ -2705,6 +2775,19 @@ export default function QAClientePortalPage() {
                         Preparando PDF
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => pendingContractUploadInputRef.current?.click()}
+                      disabled={uploadingPendingContract || !pendingContractDownload}
+                      className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm border border-[#8A1224] bg-white hover:bg-[#FFF7F8] text-[#8A1224] text-[11px] font-bold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 disabled:cursor-wait"
+                    >
+                      {uploadingPendingContract ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Upload className="h-3.5 w-3.5" />
+                      )}
+                      {uploadingPendingContract ? "Enviando PDF" : "Enviar contrato assinado"}
+                    </button>
                   </div>
                 </div>
               </div>
