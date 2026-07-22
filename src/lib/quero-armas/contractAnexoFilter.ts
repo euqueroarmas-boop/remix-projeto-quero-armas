@@ -111,6 +111,15 @@ export function renumberContractAnexoHeading(html: string, index: number): strin
   return renumberContractAnexoHeadings(html, index).html;
 }
 
+export function normalizeContractAnexoContainerHeading(html: string): string {
+  return html;
+}
+
+export function hasContractAnexoContainerHeading(html: string): boolean {
+  if (!html) return false;
+  return /<h[1-6]\b[^>]*>\s*ANEXO\s+I\s*(?:&mdash;|&ndash;|---|--|—|-)\s*DESCRIÇÃO DOS SERVIÇOS CONTRATADOS\s*<\/h[1-6]>/i.test(html);
+}
+
 /**
  * Extrai slug de um bloco Anexo I tentando regex flexíveis e, depois,
  * o texto puro do segmento.
@@ -289,7 +298,7 @@ export function filterContractAnexosBySlugs(
     options.debug.anexoIBlocksRemoved = [];
   }
 
-  let result = html;
+  let result = normalizeContractAnexoContainerHeading(html);
 
   // Caminho browser
   if (typeof DOMParser !== "undefined") {
@@ -309,7 +318,7 @@ export function filterContractAnexosBySlugs(
         // sem sections — não altera, mas continua para o filtro heading-based
       } else {
       let kept = 0;
-      let nextAnexoIndex = 1;
+      let nextAnexoIndex = hasContractAnexoContainerHeading(result) ? 2 : 1;
       let firstAnexo: Element | null = null;
       for (const s of sections) {
         if (!firstAnexo) firstAnexo = s;
@@ -350,7 +359,7 @@ export function filterContractAnexosBySlugs(
       /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
     let foundAny = false;
     let kept = 0;
-    let nextAnexoIndex = 1;
+    let nextAnexoIndex = hasContractAnexoContainerHeading(result) ? 2 : 1;
     const filtered = result.replace(sectionRegex, (full, s: string) => {
       foundAny = true;
       const sslug = s.trim().toLowerCase().replace(/_/g, "-");

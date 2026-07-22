@@ -31,6 +31,8 @@ import {
   montarAnexosI,
   aplicarAnexosDinamicos,
   renumberContractAnexoHeadings,
+  normalizeContractAnexoContainerHeading,
+  hasContractAnexoContainerHeading,
 } from "../_shared/qaAnexos.ts";
 
 const corsHeaders = {
@@ -218,12 +220,13 @@ function filterContractAnexosBySlugs(
 ): string {
   if (!html) return html;
   const slugSet = new Set(normalizeSlugs(slugsContratados));
+  const normalized = normalizeContractAnexoContainerHeading(html);
   const sectionRegex =
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  let nextAnexoIndex = 1;
-  const filtered = html.replace(sectionRegex, (full, s: string) => {
+  let nextAnexoIndex = hasContractAnexoContainerHeading(normalized) ? 2 : 1;
+  const filtered = normalized.replace(sectionRegex, (full, s: string) => {
     foundAny = true;
     const sslug = normalizeContractSlug(s);
     if (slugSet.has(sslug)) {
@@ -238,7 +241,7 @@ function filterContractAnexosBySlugs(
     ? kept === 0
       ? filtered + AVISO_SEM_ANEXO_HTML
       : filtered
-    : html;
+    : normalized;
   return filterAnexoIByHeadings(bySections, slugSet);
 }
 

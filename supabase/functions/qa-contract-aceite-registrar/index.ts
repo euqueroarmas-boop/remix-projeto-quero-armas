@@ -164,11 +164,21 @@ function inferSlugFromAnexoTitle(titulo: string): string | null {
   return null;
 }
 
+function normalizeContractAnexoContainerHeading(html: string): string {
+  return html;
+}
+
+function hasContractAnexoContainerHeading(html: string): boolean {
+  if (!html) return false;
+  return /<h[1-6]\b[^>]*>\s*ANEXO\s+I\s*(?:&mdash;|&ndash;|---|--|—|-)\s*DESCRIÇÃO DOS SERVIÇOS CONTRATADOS\s*<\/h[1-6]>/i.test(html);
+}
+
 function filterContractAnexosBySlugs(
   html: string,
   slugsContratados: string[],
 ): string {
   if (!html) return html;
+  const normalized = normalizeContractAnexoContainerHeading(html);
   const slugs = (slugsContratados || [])
     .filter((s): s is string => typeof s === "string")
     .map((s) => normalizeContractSlug(s))
@@ -178,8 +188,8 @@ function filterContractAnexosBySlugs(
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  let nextAnexoIndex = 1;
-  let result = html.replace(sectionRegex, (full, s) => {
+  let nextAnexoIndex = hasContractAnexoContainerHeading(normalized) ? 2 : 1;
+  let result = normalized.replace(sectionRegex, (full, s) => {
     foundAny = true;
     const sslug = normalizeContractSlug(String(s));
     if (slugSet.has(sslug)) {

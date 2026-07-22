@@ -81,6 +81,15 @@ export function renumberContractAnexoHeading(html: string, index: number): strin
   return renumberContractAnexoHeadings(html, index).html;
 }
 
+export function normalizeContractAnexoContainerHeading(html: string): string {
+  return html;
+}
+
+export function hasContractAnexoContainerHeading(html: string): boolean {
+  if (!html) return false;
+  return /<h[1-6]\b[^>]*>\s*ANEXO\s+I\s*(?:&mdash;|&ndash;|---|--|—|-)\s*DESCRIÇÃO DOS SERVIÇOS CONTRATADOS\s*<\/h[1-6]>/i.test(html);
+}
+
 /**
  * Monta o miolo do Anexo I concatenando o `anexo_corpo_html` de cada
  * serviço contratado, na ordem em que os slugs foram passados. Slugs sem
@@ -137,6 +146,10 @@ export async function montarAnexosI(
  */
 export function aplicarAnexosDinamicos(html: string, anexosHtml: string): string {
   if (!html) return html;
-  if (html.indexOf("{{anexos_i_dinamicos}}") === -1) return html;
-  return html.replace(/\{\{\s*anexos_i_dinamicos\s*\}\}/g, anexosHtml);
+  const normalized = normalizeContractAnexoContainerHeading(html);
+  if (normalized.indexOf("{{anexos_i_dinamicos}}") === -1) return normalized;
+  const anexosNumerados = hasContractAnexoContainerHeading(normalized)
+    ? renumberContractAnexoHeadings(anexosHtml, 2).html
+    : anexosHtml;
+  return normalized.replace(/\{\{\s*anexos_i_dinamicos\s*\}\}/g, anexosNumerados);
 }

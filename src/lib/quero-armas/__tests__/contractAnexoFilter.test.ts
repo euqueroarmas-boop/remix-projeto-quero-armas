@@ -48,4 +48,28 @@ describe("filterContractAnexosBySlugs", () => {
     expect(result).not.toContain("ANEXO I — CERTIFICADO DE REGISTRO");
     expect(result).not.toContain("I.19.");
   });
+
+  it("conta o cabecalho geral como anexo I e inicia os anexos reais no II", () => {
+    const html = `
+      <h2>ANEXO I --- DESCRIÇÃO DOS SERVIÇOS CONTRATADOS</h2>
+      <p>Este Anexo I integra o Contrato de Adesão de Assessoria Técnica e Despacho Administrativo.</p>
+      <section data-anexo-slug="autorizacao-compra">
+        <h3>ANEXO I — AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO</h3>
+        <p>Primeiro serviço do pacote.</p>
+      </section>
+      <section data-anexo-slug="craf">
+        <h3>ANEXO I — CERTIFICADO DE REGISTRO DE ARMA DE FOGO (CRAF)</h3>
+        <p>Segundo serviço do pacote.</p>
+      </section>
+    `;
+
+    const result = filterContractAnexosBySlugs(html, ["autorizacao-compra", "craf"]);
+
+    expect(result).toContain("ANEXO I --- DESCRIÇÃO DOS SERVIÇOS CONTRATADOS");
+    expect(result).toContain("Este Anexo I integra");
+    expect(result).toContain("ANEXO II — AUTORIZAÇÃO DE COMPRA");
+    expect(result).toContain("ANEXO III — CERTIFICADO DE REGISTRO");
+    expect(result).not.toContain("ANEXO I — AUTORIZAÇÃO DE COMPRA");
+    expect(result).not.toContain("ANEXO II — CERTIFICADO DE REGISTRO");
+  });
 });
