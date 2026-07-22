@@ -73,13 +73,17 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
     const resultado = await lookupCep(digits);
     if (!resultado) return;
     const logradouroAtual = (dadosRevisados.logradouro || "").trim();
+    const rua = resultado.street?.toUpperCase();
+    const bairro = resultado.neighborhood?.toUpperCase();
+    const cidade = resultado.city?.toUpperCase();
+    const estado = resultado.state?.toUpperCase();
     setDadosRevisados({
       ...dadosRevisados,
       cep: valorDigitado,
-      ...(!logradouroAtual && resultado.street ? { logradouro: resultado.street, endereco: resultado.street } : {}),
-      ...(resultado.neighborhood ? { bairro: resultado.neighborhood } : {}),
-      ...(resultado.city ? { cidade: resultado.city } : {}),
-      ...(resultado.state ? { estado: resultado.state } : {}),
+      ...(!logradouroAtual && rua ? { logradouro: rua, endereco: rua } : {}),
+      ...(bairro ? { bairro } : {}),
+      ...(cidade ? { cidade } : {}),
+      ...(estado ? { estado } : {}),
     });
   };
 
