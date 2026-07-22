@@ -2742,7 +2742,7 @@ export default function QAClientePortalPage() {
                     para assinar os documentos de forma segura e com validade jurídica.
                   </p>
 
-                  <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-2 pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2 pt-1">
                     <input
                       ref={pendingContractUploadInputRef}
                       type="file"
@@ -2760,18 +2760,18 @@ export default function QAClientePortalPage() {
                         target={preparedPendingDownload.openInNewTab ? "_blank" : undefined}
                         rel={preparedPendingDownload.openInNewTab ? "noreferrer" : undefined}
                         onClick={() => toast.success(preparedPendingDownload.openInNewTab ? 'Contrato aberto em nova aba — clique em "Salvar/assinar em PDF".' : "Download iniciado.")}
-                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors"
+                        className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
                       >
-                        {preparedPendingDownload.openInNewTab ? "Ver e salvar contrato" : "Baixar contrato certo"} <ChevronRight className="h-3.5 w-3.5" />
+                        {preparedPendingDownload.openInNewTab ? "Ver e salvar contrato" : "Baixar contrato certo"} <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                       </a>
                     ) : (
                       <button
                         type="button"
                         onClick={downloadPendingContractFromPopup}
                         disabled={downloadingPendingContract}
-                        className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm bg-[#0A0A0A] hover:bg-[#1a1a1a] text-white text-[11px] font-bold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 disabled:cursor-wait"
+                        className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a] disabled:cursor-wait disabled:opacity-60"
                       >
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
                         Preparando PDF
                       </button>
                     )}
@@ -2779,12 +2779,12 @@ export default function QAClientePortalPage() {
                       type="button"
                       onClick={() => pendingContractUploadInputRef.current?.click()}
                       disabled={uploadingPendingContract || !pendingContractDownload}
-                      className="inline-flex items-center justify-center gap-1.5 h-10 px-5 rounded-sm border border-[#8A1224] bg-white hover:bg-[#FFF7F8] text-[#8A1224] text-[11px] font-bold uppercase tracking-[0.18em] transition-colors disabled:opacity-60 disabled:cursor-wait"
+                      className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm border border-[#8A1224] bg-white px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] disabled:cursor-wait disabled:opacity-60"
                     >
                       {uploadingPendingContract ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
                       ) : (
-                        <Upload className="h-3.5 w-3.5" />
+                        <Upload className="h-3.5 w-3.5 shrink-0" />
                       )}
                       {uploadingPendingContract ? "Enviando PDF" : "Enviar contrato assinado"}
                     </button>
