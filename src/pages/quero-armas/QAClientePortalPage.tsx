@@ -10,7 +10,7 @@ import {
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu, X,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
-  Boxes, PackageOpen,
+  Boxes, PackageOpen, Download,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -2762,7 +2762,8 @@ export default function QAClientePortalPage() {
                         onClick={() => toast.success(preparedPendingDownload.openInNewTab ? 'Contrato aberto em nova aba — clique em "Salvar/assinar em PDF".' : "Download iniciado.")}
                         className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
                       >
-                        {preparedPendingDownload.openInNewTab ? "Ver e salvar contrato" : "Baixar contrato"} <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                        <Download className="h-3.5 w-3.5 shrink-0" />
+                        {preparedPendingDownload.openInNewTab ? "Ver e salvar contrato" : "Baixar contrato"}
                       </a>
                     ) : (
                       <button
