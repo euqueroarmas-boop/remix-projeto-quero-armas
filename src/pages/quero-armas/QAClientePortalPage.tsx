@@ -46,7 +46,6 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
-import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
 import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
 import { useArsenalPremium } from "@/hooks/useArsenalPremium";
@@ -263,8 +262,6 @@ export default function QAClientePortalPage() {
     contract_number: string | null;
     venda_id: number | null;
   } | null>(null);
-  const [preparedPendingDownload, setPreparedPendingDownload] = useState<PreparedMinutaDownload | null>(null);
-  const [downloadingPendingContract, setDownloadingPendingContract] = useState(false);
   const [uploadingPendingContract, setUploadingPendingContract] = useState(false);
   const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
@@ -1131,65 +1128,17 @@ export default function QAClientePortalPage() {
     }, 80);
   };
 
-  useEffect(() => {
-    if (!showContratoPopup || !pendingContractDownload) return;
-    let alive = true;
-    setDownloadingPendingContract(true);
-    setPreparedPendingDownload((prev) => {
-      prev?.revoke();
-      return null;
-    });
+  const pendingContractPublicUrl = pendingContractDownload?.id
+    ? `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${pendingContractDownload.id}`
+    : null;
 
-    prepareMinutaContratoQueroArmas({
-      contractId: pendingContractDownload.id,
-      contractNumber: pendingContractDownload.contract_number,
-      vendaId: pendingContractDownload.venda_id,
-    })
-      .then((prepared) => {
-        if (!alive) {
-          prepared.revoke();
-          return;
-        }
-        setPreparedPendingDownload(prepared);
-      })
-      .catch((e) => {
-        if (alive) toast.error(e instanceof Error ? e.message : "Não foi possível preparar o contrato.");
-      })
-      .finally(() => {
-        if (alive) setDownloadingPendingContract(false);
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, [showContratoPopup, pendingContractDownload?.id]);
-
-  useEffect(() => {
-    return () => preparedPendingDownload?.revoke();
-  }, [preparedPendingDownload]);
-
-  const downloadPendingContractFromPopup = async () => {
-    if (!pendingContractDownload) {
+  const openPendingContractLink = () => {
+    if (!pendingContractPublicUrl) {
       goContractsSection();
       return;
     }
-    if (downloadingPendingContract) return;
-    const toastId = toast.loading("Preparando contrato correto…");
-    setDownloadingPendingContract(true);
-    setPreparedPendingDownload((prev) => { prev?.revoke(); return null; });
-    try {
-      const prepared = await prepareMinutaContratoQueroArmas({
-        contractId: pendingContractDownload.id,
-        contractNumber: pendingContractDownload.contract_number,
-        vendaId: pendingContractDownload.venda_id,
-      });
-      setPreparedPendingDownload(prepared);
-      toast.success("Clique em 'Baixar contrato' para salvar o PDF.", { id: toastId });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
-    } finally {
-      setDownloadingPendingContract(false);
-    }
+    window.open(pendingContractPublicUrl, "_blank", "noopener,noreferrer");
+    toast.success("Contrato aberto em nova aba.");
   };
 
   const uploadSignedPendingContractFromPopup = async (file: File) => {
@@ -2753,29 +2702,15 @@ export default function QAClientePortalPage() {
                         if (file) uploadSignedPendingContractFromPopup(file);
                       }}
                     />
-                    {preparedPendingDownload ? (
-                      <a
-                        href={preparedPendingDownload.href}
-                        download={preparedPendingDownload.openInNewTab ? undefined : preparedPendingDownload.filename}
-                        target={preparedPendingDownload.openInNewTab ? "_blank" : undefined}
-                        rel={preparedPendingDownload.openInNewTab ? "noreferrer" : undefined}
-                        onClick={() => toast.success(preparedPendingDownload.openInNewTab ? 'Contrato aberto em nova aba — clique em "Salvar/assinar em PDF".' : "Download iniciado.")}
-                        className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
-                      >
-                        <Download className="h-3.5 w-3.5 shrink-0" />
-                        {preparedPendingDownload.openInNewTab ? "Ver e salvar contrato" : "Baixar contrato"}
-                      </a>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={downloadPendingContractFromPopup}
-                        disabled={downloadingPendingContract}
-                        className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a] disabled:cursor-wait disabled:opacity-60"
-                      >
-                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                        Preparando PDF
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={openPendingContractLink}
+                      disabled={!pendingContractDownload}
+                      className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Download className="h-3.5 w-3.5 shrink-0" />
+                      Baixar contrato
+                    </button>
                     <button
                       type="button"
                       onClick={() => pendingContractUploadInputRef.current?.click()}
