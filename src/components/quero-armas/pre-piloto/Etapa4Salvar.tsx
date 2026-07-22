@@ -125,6 +125,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           bairro: dadosRevisados.bairro || undefined,
           cidade: dadosRevisados.cidade || undefined,
           estado: dadosRevisados.estado || undefined,
+          observacao: dadosRevisados.observacoes || undefined,
           ...(existenteArquivado ? { arquivado: false } : {}),
         }).eq("id", clienteId);
       } else {
@@ -164,6 +165,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           cidade: dadosRevisados.cidade || null,
           estado: dadosRevisados.estado || null,
           profissao: dadosRevisados.profissao || null,
+          observacao: dadosRevisados.observacoes || null,
         };
 
         const { data: novo, error: errNovo } = await supabase

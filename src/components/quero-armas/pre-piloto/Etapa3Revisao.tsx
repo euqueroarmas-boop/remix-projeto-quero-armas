@@ -54,7 +54,7 @@ const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[
     { key: "ctps", label: "CTPS" },
     { key: "pis_pasep", label: "PIS/PASEP" },
     { key: "titulo_eleitor", label: "Título de Eleitor" },
-    { key: "cnpj", label: "CNPJ" },
+    { key: "cnpj", label: "CNPJ (comprovação de ocupação lícita)" },
   ],
   "Contato": [
     { key: "email", label: "E-mail" },
@@ -124,7 +124,7 @@ function confidenceBadge(c: number | null) {
 }
 
 export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, onAvancar, onVoltar }: Props) {
-  const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
 
   // Todo campo sai em maiúsculas — padrão de documentos brasileiros — exceto
   // e-mail e senha GOV.BR, que são transcrição literal (nunca alterados).
@@ -157,6 +157,28 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       ...(bairro ? { bairro } : {}),
       ...(cidade ? { cidade } : {}),
       ...(estado ? { estado } : {}),
+    });
+  };
+
+  // CNPJ nesta tela é evidência de ocupação lícita do cliente PF (Estatuto
+  // do Desarmamento), não cadastro de empresa — enriquece só profissão e
+  // observações. Digitar aqui é correção deliberada, então sempre sobrescreve.
+  const handleCnpjBlur = async (valorDigitado: string) => {
+    const digits = valorDigitado.replace(/\D/g, "");
+    if (digits.length !== 14) return;
+    const resultado = await lookupCnpj(digits);
+    if (!resultado?.razao_social) return;
+    const profissao = [
+      `SÓCIO/PROPRIETÁRIO — ${resultado.razao_social}`,
+      resultado.cnae_fiscal_descricao,
+    ].filter(Boolean).join(" — ").toUpperCase();
+    const notaCnpj = `CNPJ INFORMADO: ${valorDigitado} — ${resultado.razao_social}${resultado.cnae_fiscal_descricao ? ` (${resultado.cnae_fiscal_descricao})` : ""}.`.toUpperCase();
+    const observacoesAtuais = (dadosRevisados.observacoes || "").trim();
+    setDadosRevisados({
+      ...dadosRevisados,
+      cnpj: valorDigitado,
+      profissao,
+      observacoes: [observacoesAtuais, notaCnpj].filter(Boolean).join(" "),
     });
   };
 
@@ -239,11 +261,16 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
                         </Label>
                         {confidenceBadge(conf)}
                         {key === "cep" && cepLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+                        {key === "cnpj" && cnpjLoading && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
                       </div>
                       <Input
                         value={valor || ""}
                         onChange={(e) => set(key, e.target.value)}
-                        onBlur={key === "cep" ? (e) => handleCepBlur(e.target.value) : undefined}
+                        onBlur={
+                          key === "cep" ? (e) => handleCepBlur(e.target.value)
+                          : key === "cnpj" ? (e) => handleCnpjBlur(e.target.value)
+                          : undefined
+                        }
                         className={`text-xs h-7 ${confidenceColor(conf)}`}
                         placeholder={required ? "Obrigatório" : "Não extraído"}
                       />

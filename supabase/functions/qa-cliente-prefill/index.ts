@@ -486,6 +486,42 @@ async function lookupCep(cep: string): Promise<Record<string, string> | null> {
   return null;
 }
 
+// Busca dados públicos de CNPJ (BrasilAPI). Usado quando o cliente PF
+// informa um CNPJ como comprovação de ocupação lícita — NÃO cadastra a
+// empresa como entidade própria (qa_clientes não tem colunas para isso),
+// só enriquece profissão/observações do cliente pessoa física.
+async function lookupCnpj(cnpj: string): Promise<{
+  razao_social: string; nome_fantasia: string; cnae_fiscal_descricao: string;
+  logradouro: string; numero: string; complemento: string; bairro: string;
+  municipio: string; uf: string; cep: string; ddd_telefone_1: string;
+} | null> {
+  const clean = cnpj.replace(/\D/g, "");
+  if (clean.length !== 14) return null;
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d?.razao_social) return null;
+    return {
+      razao_social: String(d.razao_social || ""),
+      nome_fantasia: String(d.nome_fantasia || ""),
+      cnae_fiscal_descricao: String(d.cnae_fiscal_descricao || ""),
+      logradouro: String(d.logradouro || ""),
+      numero: String(d.numero || ""),
+      complemento: String(d.complemento || ""),
+      bairro: String(d.bairro || ""),
+      municipio: String(d.municipio || ""),
+      uf: String(d.uf || ""),
+      cep: String(d.cep || ""),
+      ddd_telefone_1: String(d.ddd_telefone_1 || ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -682,6 +718,26 @@ Deno.serve(async (req) => {
           const atual = typeof normalized[k] === "string" ? normalized[k].trim() : "";
           if (!atual && v) normalized[k] = v;
         }
+      }
+    }
+    // Resolve CNPJ → dados públicos da empresa (BrasilAPI). O cliente é
+    // pessoa física; o CNPJ aqui serve como comprovação de ocupação lícita
+    // (Estatuto do Desarmamento), não cadastra a empresa como entidade
+    // própria. Enriquece apenas profissão (se vazia) e observações.
+    if (typeof normalized.cnpj === "string" && normalized.cnpj.replace(/\D/g, "").length === 14) {
+      const cnpjData = await lookupCnpj(normalized.cnpj);
+      if (cnpjData) {
+        normalized.confidence = normalized.confidence || {};
+        const profissaoAtual = typeof normalized.profissao === "string" ? normalized.profissao.trim() : "";
+        if (!profissaoAtual && (cnpjData.razao_social || cnpjData.cnae_fiscal_descricao)) {
+          normalized.profissao = [
+            cnpjData.razao_social && `SÓCIO/PROPRIETÁRIO — ${cnpjData.razao_social}`,
+            cnpjData.cnae_fiscal_descricao,
+          ].filter(Boolean).join(" — ");
+          normalized.confidence.profissao = 0.85;
+        }
+        const notaCnpj = `CNPJ informado: ${normalized.cnpj} — ${cnpjData.razao_social}${cnpjData.cnae_fiscal_descricao ? ` (${cnpjData.cnae_fiscal_descricao})` : ""}.`;
+        normalized.observacoes = [normalized.observacoes, notaCnpj].filter(Boolean).join(" ");
       }
     }
     // Máscaras de exibição — CPF/CEP/telefones/RG.
