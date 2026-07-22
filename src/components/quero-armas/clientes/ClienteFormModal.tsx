@@ -113,6 +113,16 @@ const EMPTY_FORM = {
   end2_tipo: "", end2_observacao: "",
   geolocalizacao: "", geolocalizacao2: "",
   observacao: "", status: "ATIVO",
+  emp_cnpj: "",
+  emp_razao_social: "",
+  emp_nome_fantasia: "",
+  emp_situacao_cadastral: "",
+  emp_data_abertura: "",
+  emp_cnae_principal: "",
+  emp_natureza_juridica: "",
+  emp_endereco: "",
+  emp_telefone: "",
+  emp_email: "",
   categoria_titular: "" as CategoriaTitular | "",
   subcategoria: "",
   orgao_vinculado: "",
@@ -197,7 +207,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const isEdit = !!cliente;
   const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
-  const { lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
+  const { lookupCnpj, lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
 
   // Photo upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +225,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   // modal é fechado/reaberto — garante que nenhum arquivo, texto ou
   // resultado de extração anterior fique em memória.
   const [aiPrefillKey, setAiPrefillKey] = useState(0);
+  const lastEmpresaCnpjLookupRef = useRef("");
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -273,6 +284,57 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
     return `${d.slice(0, 2)}.${d.slice(2, 5)}-${d.slice(5)}`;
   };
+
+  const formatCnpjMask = (raw: string): string => {
+    const d = String(raw ?? "").replace(/\D/g, "").slice(0, 14);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    if (d.length <= 8) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5)}`;
+    if (d.length <= 12) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+  };
+
+  const buildEmpresaEndereco = (empresa: any) => {
+    const linha = [
+      empresa.logradouro,
+      empresa.numero ? `Nº ${empresa.numero}` : "",
+      empresa.complemento,
+      empresa.bairro,
+      [empresa.municipio, empresa.uf].filter(Boolean).join("/"),
+      empresa.cep ? `CEP ${formatCepMask(String(empresa.cep))}` : "",
+    ].filter(Boolean);
+    return linha.join(" - ");
+  };
+
+  const applyEmpresaLookup = useCallback(async (cnpjValue: string) => {
+    const digits = String(cnpjValue ?? "").replace(/\D/g, "").slice(0, 14);
+    if (digits.length !== 14) return;
+    if (lastEmpresaCnpjLookupRef.current === digits) return;
+    lastEmpresaCnpjLookupRef.current = digits;
+
+    const empresa = await lookupCnpj(digits);
+    if (!empresa) {
+      lastEmpresaCnpjLookupRef.current = "";
+      return;
+    }
+
+    const enderecoEmpresa = buildEmpresaEndereco(empresa);
+    setF(prev => ({
+      ...prev,
+      emp_cnpj: prev.emp_cnpj || formatCnpjMask(digits),
+      emp_razao_social: prev.emp_razao_social || empresa.razao_social || "",
+      emp_nome_fantasia: prev.emp_nome_fantasia || empresa.nome_fantasia || "",
+      emp_situacao_cadastral: prev.emp_situacao_cadastral || empresa.descricao_situacao_cadastral || "",
+      emp_data_abertura: prev.emp_data_abertura || empresa.data_inicio_atividade || "",
+      emp_cnae_principal: prev.emp_cnae_principal || empresa.cnae_fiscal_descricao || "",
+      emp_natureza_juridica: prev.emp_natureza_juridica || empresa.natureza_juridica || "",
+      emp_endereco: prev.emp_endereco || enderecoEmpresa,
+      emp_telefone: prev.emp_telefone || empresa.ddd_telefone_1 || "",
+      emp_email: prev.emp_email || empresa.email || "",
+      profissao: prev.profissao || empresa.cnae_fiscal_descricao || "Empresário",
+      observacao: prev.observacao || `CNPJ informado: ${digits}${empresa.razao_social ? ` — ${empresa.razao_social}` : ""}`,
+    }));
+  }, [lookupCnpj]);
 
   const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
     setF(prev => {
@@ -386,6 +448,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
+        emp_cnpj: cliente.emp_cnpj || "",
+        emp_razao_social: cliente.emp_razao_social || "",
+        emp_nome_fantasia: cliente.emp_nome_fantasia || "",
+        emp_situacao_cadastral: cliente.emp_situacao_cadastral || "",
+        emp_data_abertura: cliente.emp_data_abertura || "",
+        emp_cnae_principal: cliente.emp_cnae_principal || "",
+        emp_natureza_juridica: cliente.emp_natureza_juridica || "",
+        emp_endereco: cliente.emp_endereco || "",
+        emp_telefone: cliente.emp_telefone || "",
+        emp_email: cliente.emp_email || "",
         categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
         subcategoria: cliente.subcategoria || "",
         orgao_vinculado: cliente.orgao_vinculado || "",
@@ -473,6 +545,25 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [cliente, existingPhotoUrl, open]);
 
+  useEffect(() => {
+    if (!open) {
+      lastEmpresaCnpjLookupRef.current = "";
+      return;
+    }
+    const digits = String(f.emp_cnpj || "").replace(/\D/g, "");
+    if (digits.length !== 14) {
+      lastEmpresaCnpjLookupRef.current = "";
+      return;
+    }
+    if (f.emp_razao_social && f.emp_cnae_principal && f.emp_endereco) return;
+    const t = setTimeout(() => {
+      applyEmpresaLookup(digits).catch(() => {
+        lastEmpresaCnpjLookupRef.current = "";
+      });
+    }, 250);
+    return () => clearTimeout(t);
+  }, [open, f.emp_cnpj, f.emp_razao_social, f.emp_cnae_principal, f.emp_endereco, applyEmpresaLookup]);
+
   const set = (key: string, val: any) => {
     setF(prev => ({ ...prev, [key]: val }));
     if (val) setRequiredErrors(p => (p[key] ? { ...p, [key]: false } : p));
@@ -516,6 +607,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     let addressDivergence: string | null = null;
     let extractedCep = onlyDigits(p.cep);
     const extractedCep2 = onlyDigits((p as any).cep_secundario);
+    const extractedCnpj = onlyDigits((p as any).emp_cnpj || p.cnpj);
     const senhaGovRaw = typeof (p as any).senha_gov_raw === "string" ? (p as any).senha_gov_raw : (p as any).senha_gov;
     const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov ?? 0);
     const canFillSenhaGov = typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && senhaGovConfidence >= 0.9 && !(p as any).senha_gov_needs_review;
@@ -589,6 +681,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
         validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
         validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
+        emp_cnpj: setIfEmpty(prev.emp_cnpj, extractedCnpj ? formatCnpjMask(extractedCnpj) : ""),
+        emp_razao_social: setIfEmpty(prev.emp_razao_social, (p as any).emp_razao_social),
+        emp_nome_fantasia: setIfEmpty(prev.emp_nome_fantasia, (p as any).emp_nome_fantasia),
+        emp_situacao_cadastral: setIfEmpty(prev.emp_situacao_cadastral, (p as any).emp_situacao_cadastral),
+        emp_data_abertura: setIfEmpty(prev.emp_data_abertura, (p as any).emp_data_abertura),
+        emp_cnae_principal: setIfEmpty(prev.emp_cnae_principal, (p as any).emp_cnae_principal),
+        emp_natureza_juridica: setIfEmpty(prev.emp_natureza_juridica, (p as any).emp_natureza_juridica),
+        emp_endereco: setIfEmpty(prev.emp_endereco, (p as any).emp_endereco),
+        emp_telefone: setIfEmpty(prev.emp_telefone, (p as any).emp_telefone),
+        emp_email: setIfEmpty(prev.emp_email, (p as any).emp_email),
         senha_gov: canFillSenhaGov ? senhaGovRaw : (senhaGovShouldReview ? "" : prev.senha_gov),
         observacao: [
           prev.observacao,
@@ -604,6 +706,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         ].filter(Boolean).join("").trim(),
       };
     });
+
+    if (extractedCnpj.length === 14) {
+      await applyEmpresaLookup(extractedCnpj);
+    }
 
     // CEP lookup automático + geocode encadeado (principal)
     if (extractedCep && extractedCep.length === 8) {
@@ -674,7 +780,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         return curr;
       });
     }, 1500);
-  }, [lookupCep, autoResolveGeoloc]);
+  }, [lookupCep, autoResolveGeoloc, applyEmpresaLookup]);
 
   const save = async () => {
     // Todos os campos são obrigatórios EXCETO: cnh, ctps, complementos,
@@ -1174,6 +1280,52 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   placeholder="DD/MM/AAAA"
                   inputMode="numeric"
                   maxLength={10}
+                />
+              </div>
+            </section>
+
+            {/* ── Bloco: Ocupação Lícita (CNPJ) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={Building2} label="Ocupação Lícita (CNPJ)" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FInput
+                  label="CNPJ"
+                  value={f.emp_cnpj}
+                  onChange={v => set("emp_cnpj", formatCnpjMask(v))}
+                  placeholder="00.000.000/0000-00"
+                  inputMode="numeric"
+                  maxLength={18}
+                />
+                <FInput
+                  label="Razão Social"
+                  value={f.emp_razao_social}
+                  onChange={v => set("emp_razao_social", v)}
+                />
+                <FInput
+                  label="Nome Fantasia"
+                  value={f.emp_nome_fantasia}
+                  onChange={v => set("emp_nome_fantasia", v)}
+                />
+                <FInput
+                  label="Atividade (CNAE)"
+                  value={f.emp_cnae_principal}
+                  onChange={v => set("emp_cnae_principal", v)}
+                />
+                <FInput
+                  label="Situação Cadastral"
+                  value={f.emp_situacao_cadastral}
+                  onChange={v => set("emp_situacao_cadastral", v)}
+                />
+                <FInput
+                  label="Telefone"
+                  value={f.emp_telefone}
+                  onChange={v => set("emp_telefone", v)}
+                />
+                <FInput
+                  label="Endereço Empresarial"
+                  value={f.emp_endereco}
+                  onChange={v => set("emp_endereco", v)}
+                  span
                 />
               </div>
             </section>
