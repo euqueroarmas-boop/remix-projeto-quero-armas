@@ -75,7 +75,7 @@ const INSERTS_PROCURACAO: QAEditorInsert[] = [
   {
     label: "Data",
     title: "Inserir: Linha de cidade/estado e data de assinatura — {{data_hoje_extenso}} é substituído automaticamente",
-    html: `<p class="qa-doc__date">Jacareí/SP, {{data_hoje_extenso}}.</p>`,
+    html: `<p class="qa-doc__date">{{cliente_cidade}}/{{cliente_estado}}, {{data_hoje_extenso}}.</p>`,
   },
   {
     label: "Assn.",
