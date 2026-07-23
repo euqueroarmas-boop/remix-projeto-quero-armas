@@ -140,8 +140,8 @@ export default function QAProcuracaoPrimarioAdmin() {
   });
   const [verCodigoVigente, setVerCodigoVigente] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  const [colarHtml, setColarHtml] = useState("");
-  const [mostrarColarHtml, setMostrarColarHtml] = useState(false);
+  const [modoEditor, setModoEditor] = useState<"visual" | "html">("visual");
+  const [htmlBruto, setHtmlBruto] = useState("");
 
   // Populates editor imperatively (never during editing — cursor-safe)
   const setEditorContent = useCallback((html: string, sbs?: Substituicao[]) => {
@@ -224,7 +224,7 @@ export default function QAProcuracaoPrimarioAdmin() {
   }
 
   async function publicar() {
-    const html = editorRef.current?.innerHTML?.trim() ?? "";
+    const html = (modoEditor === "html" ? htmlBruto : editorRef.current?.innerHTML ?? "").trim();
     if (!html) { toast.error("Digite ou envie a procuração"); return; }
     if (!temPlaceholdersObrigatorios(html)) {
       toast.error("A procuração precisa conter {{cliente_nome_completo}} e {{cliente_cpf}}.");
@@ -269,12 +269,25 @@ export default function QAProcuracaoPrimarioAdmin() {
     setTimeout(() => setCopiado(false), 2000);
   }
 
-  function aplicarColarHtml() {
-    if (!colarHtml.trim()) return;
-    setEditorContent(colarHtml.trim());
-    setColarHtml("");
-    setMostrarColarHtml(false);
-    toast.success("HTML carregado no editor");
+  function alternarModo(novoModo: "visual" | "html") {
+    if (novoModo === modoEditor) return;
+    if (novoModo === "html") {
+      // Visual → HTML: captura innerHTML atual
+      const html = editorRef.current?.innerHTML ?? "";
+      setHtmlBruto(html);
+    } else {
+      // HTML → Visual: aplica o código editado no editor
+      const { saida, hits: h } = stringar(htmlBruto, subs);
+      if (editorRef.current) editorRef.current.innerHTML = saida;
+      setEditorHtml(saida);
+      setHits(h);
+    }
+    setModoEditor(novoModo);
+  }
+
+  function onHtmlBrutoChange(valor: string) {
+    setHtmlBruto(valor);
+    setEditorHtml(valor); // mantém o estado sincronizado para validações
   }
 
   // ── Editor helpers ────────────────────────────────────────────────────────
@@ -434,76 +447,71 @@ export default function QAProcuracaoPrimarioAdmin() {
                 </div>
               </div>
 
-              {/* Toolbar */}
-              <div className="flex flex-wrap items-center gap-0.5 rounded border bg-white px-1.5 py-1 mb-2" style={{ borderColor: "hsl(220 15% 88%)" }}>
-                {/* Formatação de texto */}
-                <ToolbarBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)"><Underline className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarSep />
-                {/* Alinhamento */}
-                <ToolbarBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("justifyCenter")} title="Centralizar"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("justifyRight")} title="Alinhar à direita"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("justifyFull")} title="Justificar"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarSep />
-                {/* Títulos */}
-                <ToolbarBtn onClick={() => exec("formatBlock", "h1")} title="Título principal (H1)"><Heading1 className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("formatBlock", "h2")} title="Subtítulo (H2)"><Heading2 className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("formatBlock", "p")} title="Parágrafo normal"><Type className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarSep />
-                {/* Listas */}
-                <ToolbarBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3.5 h-3.5" /></ToolbarBtn>
-                <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
-              </div>
-
-              {/* Colar HTML */}
-              <div className="mb-2">
+              {/* Toggle Visual / HTML */}
+              <div className="flex items-center gap-1 mb-2">
+                <span className="text-[10px] text-slate-400 font-semibold uppercase mr-1">Modo:</span>
                 <button
                   type="button"
-                  onClick={() => setMostrarColarHtml((v) => !v)}
-                  className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 transition-colors"
+                  onClick={() => alternarModo("visual")}
+                  className={`h-6 px-3 text-[11px] rounded-l border transition-colors font-medium
+                    ${modoEditor === "visual"
+                      ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                      : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}
                 >
-                  <Code2 className="w-3 h-3" />
-                  Colar código HTML
-                  {mostrarColarHtml ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  Visual
                 </button>
-                {mostrarColarHtml && (
-                  <div className="mt-1.5 flex flex-col gap-1.5">
-                    <textarea
-                      value={colarHtml}
-                      onChange={(e) => setColarHtml(e.target.value)}
-                      placeholder="Cole aqui o código HTML e clique em Aplicar para renderizar no editor acima."
-                      rows={6}
-                      className="w-full rounded border px-2 py-1.5 text-[11px] font-mono resize-y focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
-                      style={{ borderColor: "hsl(220 15% 82%)" }}
-                    />
-                    <div className="flex gap-1.5">
-                      <Button size="sm" onClick={aplicarColarHtml} disabled={!colarHtml.trim()}
-                        className="h-7 text-[11px] gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white">
-                        <CheckCircle2 className="w-3 h-3" /> Aplicar no editor
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => { setColarHtml(""); setMostrarColarHtml(false); }}
-                        className="h-7 text-[11px]">Cancelar</Button>
-                    </div>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => alternarModo("html")}
+                  className={`h-6 px-3 text-[11px] rounded-r border-t border-r border-b transition-colors font-medium flex items-center gap-1
+                    ${modoEditor === "html"
+                      ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                      : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"}`}
+                >
+                  <Code2 className="w-3 h-3" /> HTML
+                </button>
               </div>
 
-              {/* Trechos prontos */}
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-[10px] font-semibold uppercase text-slate-400 self-center">Inserir:</span>
-                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
-                  onClick={() => inserirHtml("<h1>TÍTULO DA PROCURAÇÃO</h1>")}>Título</Button>
-                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
-                  onClick={() => inserirHtml("<h2>SEÇÃO</h2>")}>Seção</Button>
-                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
-                  onClick={() => inserirHtml("<p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, CPF nº {{cliente_cpf}}.</p>")}>Outorgante</Button>
-                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
-                  onClick={() => inserirHtml("<p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ nº {{empresa_cnpj_completo}}.</p>")}>Outorgado</Button>
-                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
-                  onClick={() => inserirHtml('<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>')}>Assinatura</Button>
-              </div>
+              {modoEditor === "visual" && (
+                <>
+                  <div className="flex flex-wrap items-center gap-0.5 rounded border bg-white px-1.5 py-1 mb-2" style={{ borderColor: "hsl(220 15% 88%)" }}>
+                    <ToolbarBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)"><Underline className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarSep />
+                    <ToolbarBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("justifyCenter")} title="Centralizar"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("justifyRight")} title="Alinhar à direita"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("justifyFull")} title="Justificar"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarSep />
+                    <ToolbarBtn onClick={() => exec("formatBlock", "h1")} title="Título principal (H1)"><Heading1 className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("formatBlock", "h2")} title="Subtítulo (H2)"><Heading2 className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("formatBlock", "p")} title="Parágrafo normal"><Type className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarSep />
+                    <ToolbarBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3.5 h-3.5" /></ToolbarBtn>
+                    <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-[10px] font-semibold uppercase text-slate-400 self-center">Inserir:</span>
+                    <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                      onClick={() => inserirHtml("<h1>TÍTULO DA PROCURAÇÃO</h1>")}>Título</Button>
+                    <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                      onClick={() => inserirHtml("<h2>SEÇÃO</h2>")}>Seção</Button>
+                    <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                      onClick={() => inserirHtml("<p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, CPF nº {{cliente_cpf}}.</p>")}>Outorgante</Button>
+                    <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                      onClick={() => inserirHtml("<p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ nº {{empresa_cnpj_completo}}.</p>")}>Outorgado</Button>
+                    <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                      onClick={() => inserirHtml('<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>')}>Assinatura</Button>
+                  </div>
+                </>
+              )}
+
+              {modoEditor === "html" && (
+                <p className="text-[11px] text-slate-500">
+                  Cole ou edite o código HTML diretamente. Mude para <b>Visual</b> para ver e editar como texto formatado.
+                </p>
+              )}
             </div>
 
             {/* Alerta de placeholders obrigatórios */}
@@ -521,7 +529,7 @@ export default function QAProcuracaoPrimarioAdmin() {
               </div>
             )}
 
-            {/* Área de edição WYSIWYG */}
+            {/* Editor visual (contentEditable) — oculto no modo HTML mas mantido no DOM para preservar conteúdo */}
             <div
               ref={editorRef}
               contentEditable
@@ -529,6 +537,7 @@ export default function QAProcuracaoPrimarioAdmin() {
               onInput={syncHtml}
               className="w-full min-h-[360px] rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#7B1C2E]/30 bg-white"
               style={{
+                display: modoEditor === "visual" ? "block" : "none",
                 borderColor: "hsl(220 15% 82%)",
                 fontFamily: "Georgia, 'Times New Roman', serif",
                 color: "#1a1a1a",
@@ -538,6 +547,19 @@ export default function QAProcuracaoPrimarioAdmin() {
                 textAlign: "justify",
               }}
             />
+
+            {/* Editor HTML bruto */}
+            {modoEditor === "html" && (
+              <textarea
+                value={htmlBruto}
+                onChange={(e) => onHtmlBrutoChange(e.target.value)}
+                placeholder="Cole ou edite o código HTML aqui. Use o toggle 'Visual' para renderizar como texto formatado."
+                rows={18}
+                className="w-full rounded-lg border px-3 py-2.5 text-[12px] font-mono resize-y focus:outline-none focus:ring-2 focus:ring-[#7B1C2E]/30 bg-slate-950 text-green-300"
+                style={{ borderColor: "hsl(220 15% 80%)" }}
+                spellCheck={false}
+              />
+            )}
             <style>{`
               [contenteditable] h1 {
                 text-align: center;
@@ -605,7 +627,7 @@ export default function QAProcuracaoPrimarioAdmin() {
                   variant="outline"
                   disabled={!editorHtml.trim()}
                   onClick={() => {
-                    const html = editorRef.current?.innerHTML ?? "";
+                    const html = modoEditor === "html" ? htmlBruto : editorRef.current?.innerHTML ?? "";
                     baixarHtmlProcuracao(html, "Procuracao Quero Armas - Modelo", "Procuração Quero Armas - Modelo");
                     toast.success("HTML da procuração baixado");
                   }}
