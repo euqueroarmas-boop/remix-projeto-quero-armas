@@ -175,6 +175,22 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
     syncVisual();
   }
 
+  function transformarTexto(tipo: "upper" | "lower" | "sentence") {
+    contentEditableRef.current?.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const texto = range.toString();
+    if (!texto) return;
+    let transformado: string;
+    if (tipo === "upper") transformado = texto.toUpperCase();
+    else if (tipo === "lower") transformado = texto.toLowerCase();
+    else transformado = texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+    range.deleteContents();
+    range.insertNode(document.createTextNode(transformado));
+    syncVisual();
+  }
+
   function inserirHtml(html: string) {
     contentEditableRef.current?.focus();
     document.execCommand("insertHTML", false, html);
@@ -240,6 +256,22 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
             <TSep />
             <TBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3 h-3" /></TBtn>
+            <TSep />
+            <button type="button" title="MAIÚSCULAS — transforma o texto selecionado em caixa alta"
+              onMouseDown={(e) => { e.preventDefault(); transformarTexto("upper"); }}
+              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-bold tracking-wide">
+              AA
+            </button>
+            <button type="button" title="minúsculas — transforma o texto selecionado em caixa baixa"
+              onMouseDown={(e) => { e.preventDefault(); transformarTexto("lower"); }}
+              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
+              aa
+            </button>
+            <button type="button" title="Primeira letra — transforma só a primeira letra em maiúscula, restante minúscula"
+              onMouseDown={(e) => { e.preventDefault(); transformarTexto("sentence"); }}
+              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
+              Aa
+            </button>
 
             {inserts.length > 0 && (
               <>
