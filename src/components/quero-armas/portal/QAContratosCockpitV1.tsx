@@ -250,6 +250,15 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     return () => { supabase.removeChannel(ch); };
   }, [cliente?.id]);
 
+  useEffect(() => {
+    const hasContractProcessing = contracts.some((c) =>
+      ["customer_signature_uploaded", "validating", "pending_manual_review"].includes(String(c.status)),
+    );
+    if (!hasContractProcessing) return;
+    const t = window.setInterval(() => setReloadKey((k) => k + 1), 4000);
+    return () => window.clearInterval(t);
+  }, [contracts]);
+
   // Separar ativos vs arquivados/cancelados
   const activeContracts = useMemo(
     () => contracts.filter((c) => !c.is_arquivado),
@@ -531,8 +540,14 @@ function FeaturedContractCard({
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
+  const [localProcessingSince, setLocalProcessingSince] = React.useState<string | null>(null);
   const [showDone, setShowDone] = React.useState(false);
   const prevStatusRef = React.useRef<string | null>(null);
+  const refreshRef = React.useRef(onValidatedRefresh);
+
+  React.useEffect(() => {
+    refreshRef.current = onValidatedRefresh;
+  }, [onValidatedRefresh]);
 
   // Abre o modal de conclusão quando o contrato transita para "validated"
   // (ou já entra validado sem que o cliente tenha visto a comemoração).
@@ -545,8 +560,21 @@ function FeaturedContractCard({
       const t = setTimeout(() => setShowDone(true), 350);
       return () => clearTimeout(t);
     }
+    if (status === "validated") setLocalProcessingSince(null);
+    if (status === "rejected" && localProcessingSince && contract.customer_uploaded_at) {
+      const localMs = new Date(localProcessingSince).getTime();
+      const uploadedMs = new Date(contract.customer_uploaded_at).getTime();
+      if (uploadedMs >= localMs - 3000) setLocalProcessingSince(null);
+    }
     prevStatusRef.current = status;
-  }, [contract.status, contract.id]);
+  }, [contract.status, contract.id, contract.customer_uploaded_at, localProcessingSince]);
+
+  React.useEffect(() => {
+    if (!localProcessingSince) return;
+    refreshRef.current?.();
+    const t = window.setInterval(() => refreshRef.current?.(), 3500);
+    return () => window.clearInterval(t);
+  }, [localProcessingSince]);
 
   function closeDone() {
     try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
@@ -571,6 +599,7 @@ function FeaturedContractCard({
       return;
     }
     setUploading(true);
+    setLocalProcessingSince(new Date().toISOString());
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const fd = new FormData();
@@ -598,10 +627,13 @@ function FeaturedContractCard({
           onValidatedRefresh?.();
           return;
         }
+        setLocalProcessingSince(null);
         throw new Error(data.error || `HTTP ${resp.status}`);
       }
-      toast.success("Contrato enviado. Validação em andamento.");
+      toast.success("Contrato recebido. Fique nesta página: estamos validando e ela atualiza sozinha.", { duration: 7000 });
+      onValidatedRefresh?.();
     } catch (e: any) {
+      setLocalProcessingSince(null);
       toast.error(e?.message || "Falha ao enviar contrato");
     } finally {
       setUploading(false);
@@ -609,12 +641,19 @@ function FeaturedContractCard({
     }
   }
 
-  const step = statusToStep(contract.status);                          // 0..4
+  const localProcessingMs = localProcessingSince ? new Date(localProcessingSince).getTime() : null;
+  const uploadedMs = contract.customer_uploaded_at ? new Date(contract.customer_uploaded_at).getTime() : null;
+  const backendProcessedLocalUpload = !!localProcessingMs && !!uploadedMs && uploadedMs >= localProcessingMs - 3000;
+  const isLocalProcessing = !!localProcessingSince
+    && String(contract.status) !== "validated"
+    && !(String(contract.status) === "rejected" && backendProcessedLocalUpload);
+  const effectiveStatus = isLocalProcessing ? "validating" : String(contract.status || "");
+  const step = statusToStep(effectiveStatus);                          // 0..4
   const stepIndex1Based = step + 1;
   const progress = Math.round(((step + 1) / 4) * 100);
-  const badge = STATUS_BADGE[String(contract.status)] || { label: String(contract.status || "—").toUpperCase(), cls: "bg-[#EDEDED] text-[#444]" };
+  const badge = STATUS_BADGE[effectiveStatus] || { label: effectiveStatus.toUpperCase(), cls: "bg-[#EDEDED] text-[#444]" };
   const openedDays = daysSince(contract.issued_at);
-  const isRejected = contract.status === "rejected";
+  const isRejected = contract.status === "rejected" && !isLocalProcessing;
   const rejectionReason = contractRejectionReason(contract);
 
   const timelineEvents = useMemo(() => {
@@ -624,17 +663,19 @@ function FeaturedContractCard({
       evs.push({ date: contract.issued_at, t: "Aguardando assinatura via GOV.BR", ok: false });
     if (contract.customer_uploaded_at)
       evs.push({ date: contract.customer_uploaded_at, t: "Assinatura recebida", ok: true });
+    if (localProcessingSince && !contract.customer_uploaded_at)
+      evs.push({ date: localProcessingSince, t: "Assinatura recebida — validação iniciada", ok: true });
     if (contract.customer_signature_validated_at)
       evs.push({ date: contract.customer_signature_validated_at, t: "Assinatura validada ICP-Brasil", ok: true });
-    else if (contract.status === "rejected")
+    else if (isRejected)
       evs.push({ date: null, t: "Assinatura rejeitada — novo envio necessário", ok: false });
-    else if (["customer_signature_uploaded","validating","pending_manual_review"].includes(String(contract.status)))
+    else if (["customer_signature_uploaded","validating","pending_manual_review"].includes(effectiveStatus))
       evs.push({ date: null, t: "Validação ICP-Brasil", ok: false });
     return evs;
-  }, [contract]);
+  }, [contract, effectiveStatus, isRejected, localProcessingSince]);
 
-  const checklist = useMemo(() => buildChecklist(contract), [contract]);
-  const nextAuto = useMemo(() => buildNextAuto(contract), [contract]);
+  const checklist = useMemo(() => buildChecklist(contract, effectiveStatus), [contract, effectiveStatus]);
+  const nextAuto = useMemo(() => buildNextAuto(contract, effectiveStatus), [contract, effectiveStatus]);
 
   return (
     <div className={`bg-white rounded-sm p-5 ${isRejected ? "border-2 border-[#C32E26] shadow-[0_0_0_3px_rgba(195,46,38,0.08)]" : "border border-[#E5E5E5]"}`}>
@@ -703,15 +744,15 @@ function FeaturedContractCard({
               />
               <button
                 type="button"
-                disabled={uploading}
+                disabled={uploading || isLocalProcessing}
                 onClick={() => inputRef.current?.click()}
                 className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
                 title="Enviar PDF assinado (GOV.BR ou ICP-Brasil)"
               >
-                {uploading
+                {uploading || isLocalProcessing
                   ? <Loader2 className="h-3 w-3 animate-spin" />
                   : <Upload className="h-3 w-3" />}
-                ENVIAR ASSINADO
+                {uploading ? "ENVIANDO PDF" : isLocalProcessing ? "VALIDANDO AGORA" : "ENVIAR ASSINADO"}
               </button>
             </>
           )}
@@ -719,7 +760,7 @@ function FeaturedContractCard({
       </div>
 
       {/* painel SLA — acompanhamento pós-envio */}
-      <ValidationSLAPanel contract={contract} />
+      <ValidationSLAPanel contract={contract} localProcessingSince={localProcessingSince} />
 
       {/* aviso de rejeição — passo a passo claro */}
       {isRejected && (
@@ -969,10 +1010,11 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
   );
 }
 
-function buildChecklist(contract: Contract): Array<{ label: string; tag: "ok"|"pendente"|"confirmar"|"aguarda" }> {
-  const isPendingCustomer = contract.status === "pending_customer_signature";
-  const isUploaded = contract.status === "customer_signature_uploaded";
-  const isValidated = contract.status === "validated";
+function buildChecklist(contract: Contract, statusOverride?: string): Array<{ label: string; tag: "ok"|"pendente"|"confirmar"|"aguarda" }> {
+  const status = statusOverride || String(contract.status || "");
+  const isPendingCustomer = status === "pending_customer_signature";
+  const isUploaded = status === "customer_signature_uploaded" || status === "validating";
+  const isValidated = status === "validated";
   return [
     { label: "Identidade GOV.BR verificada",  tag: isPendingCustomer || isUploaded || isValidated ? "ok" : "aguarda" },
     { label: "Aceite da minuta integral",     tag: isPendingCustomer ? "pendente" : (isUploaded || isValidated ? "ok" : "aguarda") },
@@ -981,8 +1023,8 @@ function buildChecklist(contract: Contract): Array<{ label: string; tag: "ok"|"p
   ];
 }
 
-function buildNextAuto(contract: Contract): string | null {
-  switch (contract.status) {
+function buildNextAuto(contract: Contract, statusOverride?: string): string | null {
+  switch (statusOverride || contract.status) {
     case "pending_customer_signature":
       return "ao concluir GOV.BR, o sistema valida ICP-Brasil em até 2 min e libera o processo.";
     case "customer_signature_uploaded":
@@ -1007,11 +1049,17 @@ function buildNextAuto(contract: Contract): string | null {
  * - pending_manual_review: aviso de revisão manual (até 1 dia útil).
  * - validated: confirmação com data.
  */
-function ValidationSLAPanel({ contract }: { contract: Contract }) {
+function ValidationSLAPanel({ contract, localProcessingSince }: { contract: Contract; localProcessingSince?: string | null }) {
   const [now, setNow] = useState(() => Date.now());
 
   const status = String(contract.status || "");
-  const isAuto = status === "customer_signature_uploaded" || status === "validating";
+  const localProcessingMs = localProcessingSince ? new Date(localProcessingSince).getTime() : null;
+  const uploadedMs = contract.customer_uploaded_at ? new Date(contract.customer_uploaded_at).getTime() : null;
+  const backendProcessedLocalUpload = !!localProcessingMs && !!uploadedMs && uploadedMs >= localProcessingMs - 3000;
+  const isLocal = !!localProcessingSince
+    && status !== "validated"
+    && !(status === "rejected" && backendProcessedLocalUpload);
+  const isAuto = isLocal || status === "customer_signature_uploaded" || status === "validating";
   const isManual = status === "pending_manual_review";
   const isValidated = status === "validated";
   const isRelevant = isAuto || isManual || isValidated;
@@ -1024,7 +1072,8 @@ function ValidationSLAPanel({ contract }: { contract: Contract }) {
 
   if (!isRelevant) return null;
 
-  const sentAt = contract.customer_uploaded_at ? new Date(contract.customer_uploaded_at).getTime() : null;
+  const sentAtSource = contract.customer_uploaded_at || localProcessingSince || null;
+  const sentAt = sentAtSource ? new Date(sentAtSource).getTime() : null;
   const SLA_MS = 2 * 60 * 1000; // 2 min
   const deadline = sentAt ? sentAt + SLA_MS : null;
   const remainingMs = deadline ? deadline - now : null;
@@ -1075,17 +1124,22 @@ function ValidationSLAPanel({ contract }: { contract: Contract }) {
     : 0;
 
   return (
-    <div className="mb-5 border border-[#C9D9F0] bg-[#EEF4FC] rounded-sm px-4 py-3.5">
+    <div className="mb-5 border border-[#C9D9F0] bg-[#EEF4FC] rounded-sm px-4 py-3.5 shadow-[0_0_0_3px_rgba(31,77,138,0.05)]">
       <div className="flex items-start gap-3">
-        <Loader2 className="h-4 w-4 text-[#1F4D8A] mt-0.5 animate-spin" />
+        <div className="relative mt-0.5 h-6 w-6 shrink-0">
+          <span className="absolute inset-0 rounded-full bg-[#1F4D8A]/15 animate-ping" />
+          <span className="relative grid h-6 w-6 place-items-center rounded-full bg-[#1F4D8A] text-white">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          </span>
+        </div>
         <div className="flex-1 min-w-0">
           <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#1F4D8A] font-bold uppercase mb-0.5">
-            ANÁLISE DA ASSINATURA EM ANDAMENTO
+            PDF RECEBIDO · ANÁLISE DA ASSINATURA EM ANDAMENTO
           </div>
           <div className="text-[12px] text-[#0A0A0A] leading-relaxed">
-            Recebemos seu PDF{contract.customer_uploaded_at ? <> em <b>{fmtDateLong(contract.customer_uploaded_at)}</b></> : null}
+            Recebemos seu PDF{sentAtSource ? <> em <b>{fmtDateLong(sentAtSource)}</b></> : null}
             {elapsedSec !== null ? <> · há <b>{elapsedSec < 60 ? `${elapsedSec}s` : `${Math.floor(elapsedSec / 60)}m ${elapsedSec % 60}s`}</b></> : null}.
-            Validação automática ICP-Brasil conclui em até <b>2 minutos</b>.
+            Fique nesta página: ela atualiza sozinha quando a validação terminar. A validação automática ICP-Brasil conclui em até <b>2 minutos</b>.
           </div>
           <div className="mt-2.5 flex items-center gap-3">
             <div className="flex-1 h-[5px] bg-white border border-[#D6E0F0] rounded-full overflow-hidden">
