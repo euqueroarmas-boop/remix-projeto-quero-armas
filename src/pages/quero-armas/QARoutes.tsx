@@ -6,6 +6,7 @@ import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFla
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QAContratoViewPage = lazyRetry(() => import("./QAContratoViewPage"), "QAContratoViewPage");
+const QAProcuracaoViewPage = lazyRetry(() => import("./QAProcuracaoViewPage"), "QAProcuracaoViewPage");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
 const QADashboardPage = lazyRetry(() => import("./QADashboardPage"), "QADashboardPage");
 const QAMonitoramentoPage = lazyRetry(() => import("./QAMonitoramentoPage"), "QAMonitoramentoPage");
@@ -245,6 +246,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/contratar" element={<QAScope><QAContratarServicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratacoes" element={<QAScope><QAClienteContratacoesPage /></QAScope>} />
         <Route path="area-do-cliente/contratos/:id" element={<QAContratoViewPage />} />
+        <Route path="area-do-cliente/procuracoes/:id" element={<QAProcuracaoViewPage />} />
         <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><QAContratarIdentificarPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />

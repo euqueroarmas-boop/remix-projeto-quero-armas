@@ -108,6 +108,16 @@ const urgencyLabel = (d: number | null) => {
   return `${d} ${d === 1 ? "DIA RESTANTE" : "DIAS RESTANTES"}`;
 };
 
+type PendingSignatureDoc = {
+  id: string;
+  kind: "contract" | "procuration";
+  label: string;
+  status: string | null;
+  contract_number: string | null;
+  venda_id: number | null;
+  created_at: string | null;
+};
+
 const PROCESSO_PREPOSICOES = new Set([
   "a",
   "ao",
@@ -257,12 +267,8 @@ export default function QAClientePortalPage() {
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
-  const [pendingContractDownload, setPendingContractDownload] = useState<{
-    id: string;
-    contract_number: string | null;
-    venda_id: number | null;
-  } | null>(null);
-  const [uploadingPendingContract, setUploadingPendingContract] = useState(false);
+  const [pendingSignatureDocs, setPendingSignatureDocs] = useState<PendingSignatureDoc[]>([]);
+  const [uploadingPendingSignature, setUploadingPendingSignature] = useState<PendingSignatureDoc["kind"] | null>(null);
   const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
@@ -1128,26 +1134,35 @@ export default function QAClientePortalPage() {
     }, 80);
   };
 
-  const pendingContractPublicUrl = pendingContractDownload?.id
-    ? `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${pendingContractDownload.id}`
+  const activePendingSignature = pendingSignatureDocs[0] ?? null;
+  const pendingSignatureCount = pendingSignatureDocs.length;
+
+  const pendingContractPublicUrl = activePendingSignature?.kind === "contract"
+    ? `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${activePendingSignature.id}`
+    : activePendingSignature?.kind === "procuration"
+      ? `https://www.euqueroarmas.com.br/area-do-cliente/procuracoes/${activePendingSignature.id}`
     : null;
 
-  const openPendingContractLink = () => {
+  const openPendingSignatureLink = () => {
+    if (!activePendingSignature) {
+      goContractsSection();
+      return;
+    }
     if (!pendingContractPublicUrl) {
       goContractsSection();
       return;
     }
     window.open(pendingContractPublicUrl, "_blank", "noopener,noreferrer");
-    toast.success("Contrato aberto em nova aba.");
+    toast.success(activePendingSignature.kind === "contract" ? "Contrato aberto em nova aba." : "Procuração aberta em nova aba.");
   };
 
-  const uploadSignedPendingContractFromPopup = async (file: File) => {
-    if (!pendingContractDownload) {
-      toast.error("Contrato pendente não encontrado. Abra a aba Contratos e tente novamente.");
+  const uploadSignedPendingSignatureFromPopup = async (file: File) => {
+    if (!activePendingSignature) {
+      toast.error("Assinatura pendente não encontrada. Abra a aba Contratos e tente novamente.");
       return;
     }
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-      toast.error("Envie apenas o contrato assinado em PDF.");
+      toast.error("Envie apenas o documento assinado em PDF.");
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
@@ -1155,11 +1170,11 @@ export default function QAClientePortalPage() {
       return;
     }
 
-    setUploadingPendingContract(true);
+    setUploadingPendingSignature(activePendingSignature.kind);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const fd = new FormData();
-      fd.append("contract_id", pendingContractDownload.id);
+      fd.append(activePendingSignature.kind === "contract" ? "contract_id" : "procuracao_id", activePendingSignature.id);
       fd.append("file", file);
       fd.append("device_meta", JSON.stringify({
         screen: `${screen.width}x${screen.height}`,
@@ -1168,7 +1183,10 @@ export default function QAClientePortalPage() {
         platform: navigator.platform,
       }));
 
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-upload-signed-contract`, {
+      const endpoint = activePendingSignature.kind === "contract"
+        ? "qa-upload-signed-contract"
+        : "qa-upload-signed-procuracao";
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${session?.access_token ?? ""}`,
@@ -1179,7 +1197,7 @@ export default function QAClientePortalPage() {
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         if (resp.status === 409 && String(data.error || "").includes("validated")) {
-          toast.info("Este contrato já foi validado. Atualizando…", { duration: 5000 });
+          toast.info("Este documento já foi validado. Atualizando…", { duration: 5000 });
           setShowContratoPopup(false);
           setDocsReloadKey((k) => k + 1);
           return;
@@ -1187,14 +1205,21 @@ export default function QAClientePortalPage() {
         throw new Error(data.error || `HTTP ${resp.status}`);
       }
 
-      toast.success("Contrato assinado enviado. Validação em andamento.");
+      toast.success(
+        activePendingSignature.kind === "contract"
+          ? "Contrato assinado enviado. Validação em andamento."
+          : "Procuração assinada enviada. Validação em andamento.",
+      );
       setShowContratoPopup(false);
-      setPendingContracts((n) => Math.max(0, n - 1));
+      if (activePendingSignature.kind === "contract") {
+        setPendingContracts((n) => Math.max(0, n - 1));
+      }
+      setPendingSignatureDocs((docs) => docs.filter((doc) => doc.id !== activePendingSignature.id));
       setDocsReloadKey((k) => k + 1);
     } catch (e: any) {
-      toast.error(e?.message || "Falha ao enviar contrato assinado.");
+      toast.error(e?.message || "Falha ao enviar documento assinado.");
     } finally {
-      setUploadingPendingContract(false);
+      setUploadingPendingSignature(null);
       if (pendingContractUploadInputRef.current) pendingContractUploadInputRef.current.value = "";
     }
   };
@@ -1240,7 +1265,7 @@ export default function QAClientePortalPage() {
   const portalStartupAction = useMemo(() => {
     if (loading || !cliente || !pendingContractsLoaded) return null;
 
-    if (pendingContracts > 0) return { type: "contrato" as const };
+    if (pendingSignatureCount > 0) return { type: "contrato" as const };
     // Cadastro incompleto tem prioridade sobre pendências documentais:
     // sem dados básicos, o cliente não consegue resolver o resto.
     if (resumoState.cadastroIncompleto) return { type: "cadastro" as const };
@@ -1254,7 +1279,7 @@ export default function QAClientePortalPage() {
     if (respondida == null && semProcessos) return { type: "entrada_wizard" as const };
 
     return null;
-  }, [cliente, loading, pendingContracts, pendingContractsLoaded, processos, resumoState]);
+  }, [cliente, loading, pendingSignatureCount, pendingContractsLoaded, processos, resumoState]);
 
   // BLOCO 9 — Orquestrador de entrada do portal.
   // Obrigações do cliente sempre aparecem antes do assistente de compra.
@@ -1318,13 +1343,14 @@ export default function QAClientePortalPage() {
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
 
-  // Carrega contratos pós-pagamento pendentes de assinatura do cliente.
-  // A abertura do popup é feita pelo orquestrador de entrada, para não
-  // concorrer com o assistente de compra.
+  // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
+  // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
+  // com o assistente de compra/documentação.
   useEffect(() => {
     const idLegado = (cliente as any)?.id_legado as number | null | undefined;
     if (!idLegado) {
       setPendingContracts(0);
+      setPendingSignatureDocs([]);
       setPendingContractsLoaded(true);
       return;
     }
@@ -1345,23 +1371,63 @@ export default function QAClientePortalPage() {
         if (!alive) return;
         if (error) {
           setPendingContracts(0);
-          setPendingContractDownload(null);
+          setPendingSignatureDocs([]);
           setPendingContractsLoaded(true);
           return;
         }
-        const count = Array.isArray(data) ? data.length : 0;
+        const contracts = Array.isArray(data) ? (data as any[]) : [];
+        await Promise.all(
+          contracts
+            .filter((contract) => contract?.venda_id)
+            .map((contract) =>
+              supabase.functions.invoke("qa-gerar-procuracao", {
+                body: {
+                  cliente_id: idLegado,
+                  venda_id: contract.venda_id,
+                  contract_id: contract.id,
+                },
+              }).catch(() => null),
+            ),
+        );
+
+        const { data: procuracoes } = await supabase
+          .from("qa_procuracoes" as any)
+          .select("id, status, venda_id, created_at")
+          .eq("cliente_id", idLegado)
+          .in("status", [
+            "generated_pending_customer_signature",
+            "rejected",
+          ])
+          .order("created_at", { ascending: false });
+
+        const count = contracts.length;
         setPendingContracts(count);
-        const first = Array.isArray(data) ? (data[0] as any) : null;
-        setPendingContractDownload(first ? {
-          id: first.id,
-          contract_number: first.contract_number ?? null,
-          venda_id: first.venda_id ?? null,
-        } : null);
+        const assinaturaDocs: PendingSignatureDoc[] = [
+          ...contracts.map((contract) => ({
+            id: String(contract.id),
+            kind: "contract" as const,
+            label: "Contrato de adesão",
+            status: contract.status ?? null,
+            contract_number: contract.contract_number ?? null,
+            venda_id: contract.venda_id ?? null,
+            created_at: contract.created_at ?? null,
+          })),
+          ...((procuracoes ?? []) as any[]).map((procuracao) => ({
+            id: String(procuracao.id),
+            kind: "procuration" as const,
+            label: "Procuração",
+            status: procuracao.status ?? null,
+            contract_number: null,
+            venda_id: procuracao.venda_id ?? null,
+            created_at: procuracao.created_at ?? null,
+          })),
+        ];
+        setPendingSignatureDocs(assinaturaDocs);
         setPendingContractsLoaded(true);
       } catch {
         if (alive) {
           setPendingContracts(0);
-          setPendingContractDownload(null);
+          setPendingSignatureDocs([]);
           setPendingContractsLoaded(true);
         }
       }
@@ -2621,7 +2687,7 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay clienteId={(cliente as any)?.id ?? null} />
 
-      {showContratoPopup && pendingContracts > 0 && (
+      {showContratoPopup && activePendingSignature && pendingSignatureCount > 0 && (
         <div
           className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           role="dialog"
@@ -2643,9 +2709,9 @@ export default function QAClientePortalPage() {
                 <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#28C840]" />
               </div>
               <div className="text-[10px] font-bold text-[#6A6A6A] tracking-[0.1em] uppercase">
-                {pendingContractDownload?.contract_number
-                  ? `Protocolo ${pendingContractDownload.contract_number}`
-                  : "Contrato pendente"}
+                {activePendingSignature.contract_number
+                  ? `Protocolo ${activePendingSignature.contract_number}`
+                  : activePendingSignature.kind === "contract" ? "Contrato pendente" : "Procuração pendente"}
               </div>
               <div className="w-8" />
             </div>
@@ -2655,7 +2721,7 @@ export default function QAClientePortalPage() {
               {/* Sidebar: Status Column */}
               <div className="hidden md:flex w-48 bg-[#FAFAFA] border-r border-[#E4E4E4] p-8 flex-col items-center justify-center text-center shrink-0">
                 <div className="text-6xl font-light text-[#0A0A0A] leading-none tracking-tighter">
-                  {String(pendingContracts).padStart(2, '0')}
+                  {String(pendingSignatureCount).padStart(2, '0')}
                 </div>
                 <div className="text-[10px] font-bold tracking-[0.2em] text-[#6A6A6A] uppercase mt-1 mb-8">
                   Pendentes
@@ -2673,12 +2739,14 @@ export default function QAClientePortalPage() {
               <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
                 <header className="mb-6">
                   <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase mb-2">
-                    Contrato aguardando sua assinatura
+                    {activePendingSignature.kind === "contract"
+                      ? "Contrato aguardando sua assinatura"
+                      : "Procuração aguardando sua assinatura"}
                   </span>
                   <h2 className="text-xl md:text-2xl font-medium text-[#0A0A0A] leading-tight tracking-tight">
-                    {pendingContracts === 1
-                      ? "Você tem 1 contrato pendente"
-                      : `Você tem ${pendingContracts} contratos pendentes`}
+                    {pendingSignatureCount === 1
+                      ? "Você tem 1 assinatura pendente"
+                      : `Você tem ${pendingSignatureCount} assinaturas pendentes`}
                   </h2>
                 </header>
 
@@ -2691,6 +2759,26 @@ export default function QAClientePortalPage() {
                     para assinar os documentos de forma segura e com validade jurídica.
                   </p>
 
+                  <div className="space-y-2">
+                    {pendingSignatureDocs.map((doc, index) => (
+                      <div
+                        key={`${doc.kind}-${doc.id}`}
+                        className={`flex items-center justify-between rounded-sm border px-3 py-2 text-xs ${
+                          index === 0
+                            ? "border-[#8A1224] bg-[#FFF7F8] text-[#8A1224]"
+                            : "border-[#E4E4E4] bg-[#FAFAFA] text-[#6A6A6A]"
+                        }`}
+                      >
+                        <span className="font-bold uppercase tracking-[0.08em]">
+                          {index + 1}. {doc.label}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
+                          {index === 0 ? "Agora" : "Depois"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2 pt-1">
                     <input
                       ref={pendingContractUploadInputRef}
@@ -2699,30 +2787,34 @@ export default function QAClientePortalPage() {
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) uploadSignedPendingContractFromPopup(file);
+                        if (file) uploadSignedPendingSignatureFromPopup(file);
                       }}
                     />
                     <button
                       type="button"
-                      onClick={openPendingContractLink}
-                      disabled={!pendingContractDownload}
+                      onClick={openPendingSignatureLink}
+                      disabled={!activePendingSignature}
                       className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <Download className="h-3.5 w-3.5 shrink-0" />
-                      Baixar contrato
+                      {activePendingSignature.kind === "contract" ? "Baixar contrato" : "Baixar procuração"}
                     </button>
                     <button
                       type="button"
                       onClick={() => pendingContractUploadInputRef.current?.click()}
-                      disabled={uploadingPendingContract || !pendingContractDownload}
+                      disabled={!!uploadingPendingSignature || !activePendingSignature}
                       className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm border border-[#8A1224] bg-white px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] disabled:cursor-wait disabled:opacity-60"
                     >
-                      {uploadingPendingContract ? (
+                      {uploadingPendingSignature ? (
                         <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
                       ) : (
                         <Upload className="h-3.5 w-3.5 shrink-0" />
                       )}
-                      {uploadingPendingContract ? "Enviando PDF" : "Enviar contrato assinado"}
+                      {uploadingPendingSignature
+                        ? "Enviando PDF"
+                        : activePendingSignature.kind === "contract"
+                          ? "Enviar contrato assinado"
+                          : "Enviar procuração assinada"}
                     </button>
                   </div>
                 </div>

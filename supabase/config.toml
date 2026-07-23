@@ -31,6 +31,10 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-contrato-view-public]
     verify_jwt = false
+  [functions.qa-procuracao-view-public]
+    verify_jwt = false
+  [functions.qa-upload-signed-procuracao]
+    verify_jwt = true
   [functions.qa-generate-embeddings]
     verify_jwt = false
   [functions.qa-ingest-document]
