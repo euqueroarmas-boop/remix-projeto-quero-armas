@@ -244,55 +244,62 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
     }
 
     // Transforma o textContent de cada nó preservando a estrutura HTML pai
-    // Preposições e artigos que NÃO recebem maiúsculo no Title Case
-    const PREPS = new Set([
-      "a","ao","aos","à","às","e","é","o","os","as","um","uma","uns","umas",
-      "de","da","das","do","dos","no","na","nos","nas","em","por","para",
-      "com","sem","sob","sobre","ante","após","até","entre","contra","desde",
-      "perante","salvo","que","se","ou","mas","nem","porém","contudo","todavia",
-    ]);
+    if (tipo === "upper") {
+      for (const no of nos) no.textContent = (no.textContent ?? "").toUpperCase();
+    } else if (tipo === "lower") {
+      for (const no of nos) no.textContent = (no.textContent ?? "").toLowerCase();
+    } else {
+      // ── Title Case ───────────────────────────────────────────────────
+      // Regras (em ordem de prioridade):
+      // 1. {{placeholder}} → mantido intacto (o valor vem do banco)
+      // 2. Palavra ALL-CAPS com ≥2 letras → mantida (abreviação: CPF, RG, SP…)
+      // 3. Preposição/artigo (não é a 1ª palavra) → minúsculo
+      // 4. Demais → 1ª letra maiúscula, resto minúsculo
 
-    // Divide o texto total em palavras para decidir se cada uma é preposição
-    // (considera todos os nós como sequência contínua de palavras)
-    const textoTotal = nos.map(n => n.textContent ?? "").join("");
-    const palavras = textoTotal.split(/(\s+)/); // alterna palavras e espaços
+      const PREPS = new Set([
+        "a","ao","aos","à","às","e","é","o","os","as","um","uma","uns","umas",
+        "de","da","das","do","dos","no","na","nos","nas","em","por","para",
+        "com","sem","sob","sobre","ante","após","até","entre","contra","desde",
+        "perante","salvo","que","se","ou","mas","nem","porém","contudo","todavia",
+      ]);
 
-    let globalChar = 0; // posição global dentro de textoTotal
-    let palavraIdx = 0; // índice na lista de palavras
-    let posNaPalavra = 0; // onde estamos dentro da palavra atual
+      // Combina o texto de todos os nós para tokenizar por palavra completa
+      const textoTotal = nos.map(n => n.textContent ?? "").join("");
 
-    for (const no of nos) {
-      const txt = no.textContent ?? "";
-      let resultado = "";
-      for (let i = 0; i < txt.length; i++) {
-        // Avança no array de palavras se necessário
-        while (palavraIdx < palavras.length && posNaPalavra >= palavras[palavraIdx].length) {
-          posNaPalavra = 0;
-          palavraIdx++;
-        }
-        const palavraAtual = palavras[palavraIdx] ?? "";
-        const ch = txt[i];
+      // Divide em tokens: palavras e espaços (alterna)
+      const tokens = textoTotal.split(/(\s+)/);
+      let primeiraWord = true;
 
-        if (tipo === "upper") {
-          resultado += ch.toUpperCase();
-        } else if (tipo === "lower") {
-          resultado += ch.toLowerCase();
-        } else {
-          // Title Case: primeira letra de cada palavra em maiúsculo, exceto preposições
-          // (mas a 1ª palavra da seleção sempre fica maiúscula)
-          const ehPrimeiroDaSeleção = globalChar === 0;
-          const ehInicioDeWord = posNaPalavra === 0 && /\S/.test(palavraAtual);
-          const ehPrep = PREPS.has(palavraAtual.toLowerCase().replace(/[^a-záéíóúàãõâêôüç]/gi, ""));
-          if (ehInicioDeWord && (!ehPrep || ehPrimeiroDaSeleção)) {
-            resultado += ch.toUpperCase();
-          } else {
-            resultado += ch.toLowerCase();
-          }
-        }
-        posNaPalavra++;
-        globalChar++;
+      const tokensTransformados = tokens.map(tok => {
+        if (/^\s+$/.test(tok)) return tok; // espaço → inalterado
+
+        // {{placeholder}} → mantém como está
+        if (/^\{\{[^}]*\}\}$/.test(tok)) { primeiraWord = false; return tok; }
+
+        // Abreviação: token cujas LETRAS são todas maiúsculas (CPF, RG, SP, CEP…)
+        const apenasLetras = tok.replace(/[^A-Za-zÀ-ÿ]/g, "");
+        const eAbreviacao = apenasLetras.length >= 2
+          && apenasLetras === apenasLetras.toUpperCase()
+          && /[A-ZÀÁÂÃÉÊÍÓÔÕÚÜ]/.test(apenasLetras);
+        if (eAbreviacao) { primeiraWord = false; return tok; }
+
+        // Preposição/artigo (mas nunca a primeira palavra da seleção)
+        const limpo = tok.toLowerCase().replace(/[^a-záéíóúàãõâêôüç]/gi, "");
+        if (!primeiraWord && PREPS.has(limpo)) return tok.toLowerCase();
+
+        primeiraWord = false;
+        return tok.charAt(0).toUpperCase() + tok.slice(1).toLowerCase();
+      });
+
+      const textoFinal = tokensTransformados.join("");
+
+      // Distribui os caracteres de volta para cada nó de texto
+      let offset = 0;
+      for (const no of nos) {
+        const len = (no.textContent ?? "").length;
+        no.textContent = textoFinal.slice(offset, offset + len);
+        offset += len;
       }
-      no.textContent = resultado;
     }
 
     syncVisual();
