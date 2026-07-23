@@ -5,6 +5,67 @@ import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, Printer } fro
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
+import { jsPDF } from "jspdf";
+
+// ── Title Case: converte ALL-CAPS → primeira letra maiúscula ─────────────
+// Abreviações curtas (SP, RG, CPF, CEP — ≤4 letras all-caps) são preservadas.
+const PREPS_VIEW = new Set(["da","das","de","do","dos","e","a","ao","em","na","no"]);
+
+function titleWord(w: string): string {
+  if (/^[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ0-9]{1,4}$/.test(w)) return w; // abreviação
+  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+
+function titleCaseSeq(match: string): string {
+  return match.split(/\s+/).map((w, i) =>
+    (i > 0 && PREPS_VIEW.has(w.toLowerCase())) ? w.toLowerCase() : titleWord(w)
+  ).join(" ");
+}
+
+// Aplica somente em sequências de ≥2 palavras ALL-CAPS dentro de nós de texto HTML
+function normalizeHtml(html: string): string {
+  return html.replace(/>([^<]+)</g, (_, text) =>
+    ">" + text.replace(
+      /\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{3,}(?:\s+[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{2,})+)\b/g,
+      titleCaseSeq
+    ) + "<"
+  );
+}
+
+// ── Geração de PDF client-side ─────────────────────────────────────────────
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function gerarPdf(htmlNormalizado: string, nomeArquivo: string) {
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const mX = 54, mY = 56, W = 595.28 - mX * 2;
+  let y = mY;
+  const isTitle = (l: string) => /^[A-ZÀ-Ú0-9\s.,/()\-ºª]{8,}$/.test(l) && l.length <= 140;
+
+  for (const raw of htmlToText(htmlNormalizado).split(/\n+/)) {
+    const line = raw.trim();
+    if (!line) { y += 10; continue; }
+    const title = isTitle(line);
+    doc.setFont("times", title ? "bold" : "normal");
+    doc.setFontSize(title ? 12 : 11);
+    for (const piece of doc.splitTextToSize(line, W) as string[]) {
+      if (y > 785) { doc.addPage(); y = mY; }
+      doc.text(piece, title ? 595.28 / 2 : mX, y, title ? { align: "center" } : undefined);
+      y += title ? 18 : 16;
+    }
+    y += title ? 8 : 4;
+  }
+
+  doc.save(nomeArquivo);
+}
 
 type ProcuracaoData = {
   id: string;
@@ -46,7 +107,9 @@ export default function QAProcuracaoViewPage() {
         if (error || !(data as any)?.ok) {
           setErro("Procuração não encontrada ou link inválido.");
         } else {
-          setProcuracao(data as ProcuracaoData);
+          const d = data as ProcuracaoData;
+          // Normaliza ALL-CAPS → Title Case antes de renderizar/baixar
+          setProcuracao({ ...d, conteudo_html: normalizeHtml(d.conteudo_html) });
         }
       })
       .catch(() => setErro("Erro ao carregar a procuração. Tente novamente."))
@@ -61,41 +124,14 @@ export default function QAProcuracaoViewPage() {
     return () => { document.title = "Eu Quero Armas, e você?"; };
   }, [procuracao]);
 
-  async function baixarPdf() {
-    if (!procuracao || !id) return;
+  function baixarPdf() {
+    if (!procuracao) return;
     setBaixando(true);
     try {
-      const endpoint = new URL(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-procuracao-view-public`);
-      endpoint.searchParams.set("procuracao_id", id);
-      endpoint.searchParams.set("action", "download");
-      endpoint.searchParams.set("format", "pdf");
-      endpoint.searchParams.set("_cb", String(Date.now()));
-
-      const res = await fetch(endpoint.toString(), {
-        method: "GET",
-        headers: {
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          Accept: "application/pdf",
-        },
-      });
-      if (!res.ok) throw new Error(`Falha HTTP ${res.status}`);
-
-      const blob = await res.blob();
-      if (!blob.size) throw new Error("PDF vazio");
-
       const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
       const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
-      const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = nome;
-      link.rel = "noopener";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      // Gera PDF client-side com o conteúdo já normalizado (Title Case aplicado)
+      gerarPdf(procuracao.conteudo_html, nome);
       toast.success("Procuração baixada");
     } catch (e) {
       console.error("[baixarProcuracaoPdf]", e);
