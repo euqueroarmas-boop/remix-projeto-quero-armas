@@ -179,15 +179,57 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
     contentEditableRef.current?.focus();
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
     const range = sel.getRangeAt(0);
-    const texto = range.toString();
-    if (!texto) return;
-    let transformado: string;
-    if (tipo === "upper") transformado = texto.toUpperCase();
-    else if (tipo === "lower") transformado = texto.toLowerCase();
-    else transformado = texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-    range.deleteContents();
-    range.insertNode(document.createTextNode(transformado));
+
+    // Isola os nós de texto nos limites da seleção com splitText,
+    // para que cada nó percorrido esteja INTEIRAMENTE dentro do range.
+    // Faz o end antes para não invalidar os offsets do start.
+    if (
+      range.endContainer.nodeType === Node.TEXT_NODE &&
+      range.endOffset < (range.endContainer as Text).length
+    ) {
+      (range.endContainer as Text).splitText(range.endOffset);
+    }
+    if (range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset > 0) {
+      const novoInicio = (range.startContainer as Text).splitText(range.startOffset);
+      range.setStart(novoInicio, 0);
+    }
+
+    // Coleta todos os nós de texto dentro do range
+    const raiz =
+      range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+        ? range.commonAncestorContainer.parentNode!
+        : range.commonAncestorContainer;
+
+    const walker = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+    const nos: Text[] = [];
+    let n = walker.nextNode();
+    while (n) {
+      if (range.intersectsNode(n)) nos.push(n as Text);
+      n = walker.nextNode();
+    }
+
+    // Transforma o textContent de cada nó preservando a estrutura HTML pai
+    let charIndex = 0;
+    for (const no of nos) {
+      const txt = no.textContent ?? "";
+      let resultado: string;
+      if (tipo === "upper") {
+        resultado = txt.toUpperCase();
+      } else if (tipo === "lower") {
+        resultado = txt.toLowerCase();
+      } else {
+        // Sentence case: 1ª letra do texto selecionado em maiúsculo, resto minúsculo
+        resultado = txt
+          .split("")
+          .map((ch, i) => (charIndex + i === 0 ? ch.toUpperCase() : ch.toLowerCase()))
+          .join("");
+      }
+      charIndex += txt.length;
+      no.textContent = resultado;
+    }
+
     syncVisual();
   }
 
