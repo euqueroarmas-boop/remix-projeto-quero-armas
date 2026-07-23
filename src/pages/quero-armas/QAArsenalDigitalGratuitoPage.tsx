@@ -327,7 +327,7 @@ const ArsenalDigitalGratuito = () => (
             <Building2 className="size-4 text-accent" />
           </div>
           <p className="font-heading text-sm font-bold uppercase tracking-wider text-foreground">
-            Desenvolvido pela WMTi Tecnologia da Informação
+            Arsenal Inteligente · Quero Armas
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
             Sistema criado para organização documental e acompanhamento operacional — uso interno e externo da Quero Armas.

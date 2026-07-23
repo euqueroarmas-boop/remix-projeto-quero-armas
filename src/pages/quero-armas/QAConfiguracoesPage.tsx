@@ -10,6 +10,7 @@ import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/u
 import { Switch } from "@/components/ui/switch";
 import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
+import QAFaviconAdmin from "@/components/quero-armas/config/QAFaviconAdmin";
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
@@ -411,6 +412,7 @@ export default function QAConfiguracoesPage() {
           <TabsTrigger value="perfil" className="data-[state=active]:bg-slate-100">Perfil</TabsTrigger>
           {isAdmin && <TabsTrigger value="monitoramento" className="data-[state=active]:bg-slate-100">Monitoramento</TabsTrigger>}
           {isAdmin && <TabsTrigger value="aparencia" className="data-[state=active]:bg-slate-100">Aparência</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="favicon" className="data-[state=active]:bg-slate-100">Favicon</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="sistema" className="mt-4">
@@ -821,6 +823,11 @@ export default function QAConfiguracoesPage() {
           <QASidebarTemasAdmin />
           {/* Personalização da tela de login do cliente */}
           <QALoginBrandingAdmin />
+        </TabsContent>
+      )}
+      {isAdmin && (
+        <TabsContent value="favicon" className="mt-4">
+          <QAFaviconAdmin />
         </TabsContent>
       )}
       </Tabs>

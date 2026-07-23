@@ -42,7 +42,7 @@ const Email = (props: Props) => (
           <Text style={step}><strong>3.</strong> Selecione o certificado, informe a <strong>senha do certificado</strong> (PIN) e confirme.</Text>
           <Text style={step}><strong>4.</strong> O PDF assinado (padrão PAdES) ficará disponível para download imediato e também será enviado por e-mail.</Text>
 
-          <Text style={note}>Dúvidas? Responda este e-mail ou fale com a equipe pelo WhatsApp no rodapé do site. Não compartilhe sua senha gov.br nem o PIN do certificado com ninguém.</Text>
+          <Text style={note}>Precisa de ajuda? Responda este e-mail ou fale com a equipe pelo WhatsApp no rodapé do site. Não compartilhe sua senha gov.br nem o PIN do certificado com ninguém.</Text>
 
           <Hr style={hr} />
           <Text style={footer}>Arsenal Inteligente — euqueroarmas.com.br</Text>

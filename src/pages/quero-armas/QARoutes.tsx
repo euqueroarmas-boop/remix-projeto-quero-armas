@@ -108,8 +108,8 @@ const PrivacidadePage = lazyRetry(() => import("@/pages/about/AboutPages").then(
  * Envolve rotas QA standalone (fora do QALayout) com a classe `qa-scope`,
  * que sobrescreve os tokens semânticos do shadcn para Premium Light.
  * Sem isso, componentes shadcn (Button outline, Card, Dialog, Input)
- * herdam o tema Absolute Dark global do WMTi Core e renderizam pretos
- * dentro do módulo Quero Armas.
+ * herdam o tema escuro global legado e renderizam pretos dentro do módulo
+ * Quero Armas.
  */
 function QAScope({ children }: { children: React.ReactNode }) {
   return <div className="qa-scope">{children}</div>;

@@ -10,6 +10,7 @@ import { AuthProvider } from "@/shared/auth/AuthProvider";
 import { AuthDeepLinkHandler } from "@/shared/auth/AuthDeepLinkHandler";
 import { CartProvider } from "@/shared/cart/CartProvider";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
+import QAFaviconManager from "@/components/quero-armas/branding/QAFaviconManager";
 
 const QARoutes = lazyRetry(() => import("./pages/quero-armas/QARoutes.tsx"), "QARoutes");
 const MockupsPreview = lazyRetry(() => import("./pages/MockupsPreview.tsx"), "MockupsPreview");
@@ -43,8 +44,9 @@ const App = () => (
             <CartProvider>
               <Suspense fallback={<PageLoader />}>
                 <div className="overflow-x-hidden max-w-full">
-                <AuthDeepLinkHandler />
-                <Routes>
+                  <QAFaviconManager />
+                  <AuthDeepLinkHandler />
+                  <Routes>
                   {/* Legacy: redireciona /quero-armas/* → /* */}
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />
                   <Route path="/quero-armas/*" element={<LegacyRedirect />} />

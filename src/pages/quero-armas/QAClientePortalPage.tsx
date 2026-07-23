@@ -54,7 +54,6 @@ import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
 import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
 import logoColor from "@/assets/logo-color.png";
-import logoIcon from "@/assets/logo-wmti-icon.webp";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import {

@@ -19,7 +19,7 @@ const Email = (props: Props) => (
         <Container style={card}>
           <Heading style={h1}>Suas credenciais de acesso</Heading>
           <Text style={text}>Olá{props.nome ? `, ${props.nome}` : ''},</Text>
-          <Text style={text}>Seu acesso ao portal do cliente foi criado. Use as credenciais abaixo no primeiro login (você será solicitado a trocar a senha).</Text>
+          <Text style={text}>Seu acesso ao Arsenal Inteligente foi criado. Use as credenciais abaixo no primeiro login (você será solicitado a trocar a senha).</Text>
           <Section style={{ backgroundColor: '#f6f5f1', padding: '14px 18px', borderRadius: 4, margin: '8px 0 18px' }}><Text style={{ ...text, margin: '4px 0' }}><strong>E-mail:</strong> {props.loginEmail}</Text><Text style={{ ...text, margin: '4px 0' }}><strong>Senha provisória:</strong> {props.senhaProvisoria}</Text></Section>
           <Section style={{ textAlign: 'center', margin: '28px 0' }}>
             <Button style={button} href={props.portalUrl || 'https://euqueroarmas.com.br'}>Entrar no portal</Button>
