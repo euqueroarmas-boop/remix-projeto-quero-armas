@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   BookMarked, Plus, Search, Loader2, ArrowRight, Trash2, ArrowUp, ArrowDown,
-  Eye, RotateCcw, Sparkles, Home, BriefcaseBusiness, GitBranch,
+  Eye, RotateCcw, Sparkles, Home, BriefcaseBusiness, GitBranch, Landmark,
 } from "lucide-react";
 import PreviaClienteChecklistModal from "./PreviaClienteChecklistModal";
 import RestoreSnapshotModal from "./RestoreSnapshotModal";
@@ -68,6 +68,39 @@ const FLUXO_RESIDENCIA_TERCEIRO_TIPOS = [
 
 const FLUXO_OCUPACAO_LICITA_TIPOS = ["renda_definir_condicao"];
 
+const GRUPO_CERTIDOES_ESTADUAIS = [
+  {
+    codigo: "certidao_estadual_distribuicao_acoes_criminais",
+    nome: "Certidão Estadual — Distribuição de Ações Criminais",
+    descricao_o_que_e: "Certidão da Justiça Estadual que informa a existência ou inexistência de ações criminais distribuídas em nome do requerente.",
+    descricao_como_enviar: "Emita no Tribunal de Justiça do seu estado e envie o PDF original. Em São Paulo, use a certidão de Distribuição de Ações Criminais.",
+    observacao_cliente: "Uma das certidões estaduais obrigatórias. O nome deve bater com o documento de identificação.",
+  },
+  {
+    codigo: "certidao_estadual_execucoes_criminais",
+    nome: "Certidão Estadual — Execuções Criminais",
+    descricao_o_que_e: "Certidão da Justiça Estadual que informa a existência ou inexistência de execuções criminais em nome do requerente.",
+    descricao_como_enviar: "Emita no Tribunal de Justiça do seu estado e envie o PDF original. Em São Paulo, use a certidão de Execuções Criminais.",
+    observacao_cliente: "Não substitui a certidão de distribuição; são conferências diferentes.",
+  },
+  {
+    codigo: "certidao_estadual_segundo_grau_acoes_criminais",
+    nome: "Certidão Estadual — 2º Grau / Ações Criminais",
+    descricao_o_que_e: "Certidão complementar do Tribunal de Justiça em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.",
+    descricao_como_enviar: "Emita a certidão criminal de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.",
+    observacao_cliente: "Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.",
+  },
+  {
+    codigo: "certidao_estadual_segundo_grau_execucoes_criminais",
+    nome: "Certidão Estadual — 2º Grau / Execuções Criminais",
+    descricao_o_que_e: "Certidão complementar de execuções criminais em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.",
+    descricao_como_enviar: "Emita a certidão de execuções criminais de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.",
+    observacao_cliente: "Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.",
+  },
+] as const;
+
+const GRUPO_CERTIDOES_ESTADUAIS_TIPOS = GRUPO_CERTIDOES_ESTADUAIS.map((item) => item.codigo);
+
 const OCUPACAO_RAMOS: Array<{ titulo: string; itens: string[] }> = [
   {
     titulo: "EMPRESÁRIO / SÓCIO",
@@ -126,6 +159,8 @@ export default function MontarChecklistAdmin() {
   const tiposChecklist = useMemo(() => new Set(checklist.map((c) => c.tipo_documento)), [checklist]);
   const fluxoResidenciaAtivo = FLUXO_RESIDENCIA_TERCEIRO_TIPOS.every((t) => tiposChecklist.has(t));
   const fluxoOcupacaoAtivo = FLUXO_OCUPACAO_LICITA_TIPOS.every((t) => tiposChecklist.has(t));
+  const certidoesEstaduaisAplicadas = GRUPO_CERTIDOES_ESTADUAIS_TIPOS.filter((t) => tiposChecklist.has(t)).length;
+  const grupoCertidoesEstaduaisAtivo = certidoesEstaduaisAplicadas === GRUPO_CERTIDOES_ESTADUAIS_TIPOS.length;
 
   async function carregarBiblioteca() {
     const { data } = await supabase
@@ -464,6 +499,84 @@ export default function MontarChecklistAdmin() {
     }
   }
 
+  async function aplicarGrupoCertidoesEstaduais() {
+    if (!servicoId) return;
+    if (!confirm(
+      `Aplicar o grupo completo de certidões estaduais ao serviço "${servicoAtual?.nome_servico}"?\n\n` +
+      "O cliente continuará entendendo que se trata da Justiça Estadual, mas o checklist passará a ter os 4 itens internos separados para a IA validar um por um.",
+    )) return;
+    setCarregandoAcao(true);
+    try {
+      await snapshot("aplicar_grupo:certidoes_estaduais");
+      const seeds = GRUPO_CERTIDOES_ESTADUAIS.map((item) => ({
+        codigo: item.codigo,
+        nome: item.nome,
+        categoria: "certidoes",
+        descricao_o_que_e: item.descricao_o_que_e,
+        descricao_como_enviar: item.descricao_como_enviar,
+        observacao_cliente: item.observacao_cliente,
+        validade_dias: 60,
+        formato_aceito: ["pdf"],
+        link_emissao: null,
+        base_legal: "IN DG/PF 201",
+        ativo: true,
+      }));
+      const { error: upsertBibError } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .upsert(seeds as any[], { onConflict: "codigo" });
+      if (upsertBibError) throw upsertBibError;
+
+      await carregarBiblioteca();
+      const { data: bib, error: bibError } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .select("id, codigo, nome, validade_dias, formato_aceito, link_emissao, descricao_como_enviar, observacao_cliente")
+        .in("codigo", GRUPO_CERTIDOES_ESTADUAIS_TIPOS);
+      if (bibError) throw bibError;
+
+      const bibMap = new Map<string, any>();
+      for (const item of ((bib as any[]) ?? [])) bibMap.set(item.codigo, item);
+      const ordemBase = Math.max(50, checklist.reduce((max, c) => Math.max(max, c.ordem), 0) + 10);
+      const payload = GRUPO_CERTIDOES_ESTADUAIS.map((item, index) => {
+        const b = bibMap.get(item.codigo);
+        return {
+          servico_id: servicoId,
+          biblioteca_id: b?.id ?? null,
+          tipo_documento: item.codigo,
+          nome_documento: b?.nome ?? item.nome,
+          etapa: "complementar",
+          obrigatorio: true,
+          validade_dias: b?.validade_dias ?? 60,
+          formato_aceito: b?.formato_aceito ?? ["pdf"],
+          link_emissao: b?.link_emissao ?? null,
+          instrucoes: b?.descricao_como_enviar ?? item.descricao_como_enviar,
+          observacoes_cliente: b?.observacao_cliente ?? item.observacao_cliente,
+          ordem: ordemBase + index * 10,
+          ativo: true,
+          regra_validacao: {
+            grupo_documental: "certidoes_estaduais",
+            item_grupo: index + 1,
+            total_itens_grupo: GRUPO_CERTIDOES_ESTADUAIS.length,
+            cruzar_com: ["documento_identificacao_cliente"],
+            base_legal: ["Lei 10.826/2003", "Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 201", "IN DG/PF 311"],
+          },
+        };
+      });
+      const { error } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .upsert(payload as any[], {
+          onConflict: "servico_id,tipo_documento,condicao_profissional",
+          ignoreDuplicates: true,
+        });
+      if (error) throw error;
+      toast.success("Grupo de certidões estaduais aplicado com 4 exigências.");
+      await carregarChecklist(servicoId);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao aplicar grupo de certidões estaduais.");
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
   async function aplicarModelo() {
     if (!servicoId) return;
     const modelo = getModeloBySlug(modeloEscolhido);
@@ -599,7 +712,7 @@ export default function MontarChecklistAdmin() {
                 o sistema pede os documentos certos, grava as respostas no processo e libera declarações quando necessário.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:min-w-[420px]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:min-w-[640px]">
               <button
                 disabled={carregandoAcao}
                 onClick={aplicarFluxoResidenciaTerceiro}
@@ -639,8 +752,67 @@ export default function MontarChecklistAdmin() {
                   O cliente escolhe CLT, MEI, empresário, servidor, autônomo ou aposentado.
                 </p>
               </button>
+
+              <button
+                disabled={carregandoAcao}
+                onClick={aplicarGrupoCertidoesEstaduais}
+                className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
+                style={{ borderColor: grupoCertidoesEstaduaisAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
+              >
+                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                  <Landmark className="w-3.5 h-3.5 text-[#7B1C2E]" />
+                  CERTIDÕES ESTADUAIS
+                </span>
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                  grupoCertidoesEstaduaisAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {certidoesEstaduaisAplicadas}/{GRUPO_CERTIDOES_ESTADUAIS.length} ITENS
+                </span>
+                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                  Transforma Justiça Estadual em pacote auditável com 4 certidões internas.
+                </p>
+              </button>
             </div>
           </div>
+          {certidoesEstaduaisAplicadas > 0 && (
+            <div className="mt-3 rounded-xl border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 88%)" }}>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                  PACOTE DE JUSTIÇA ESTADUAL NO CHECKLIST
+                </p>
+                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                  grupoCertidoesEstaduaisAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                }`}>
+                  {grupoCertidoesEstaduaisAtivo ? "COMPLETO" : "INCOMPLETO"}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {GRUPO_CERTIDOES_ESTADUAIS.map((item, index) => {
+                  const presente = tiposChecklist.has(item.codigo);
+                  return (
+                    <div key={item.codigo} className="rounded-lg border bg-white p-2" style={{ borderColor: presente ? "hsl(145 60% 85%)" : "hsl(0 70% 88%)" }}>
+                      <div className="flex items-start gap-2">
+                        <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                          presente ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                        }`}>
+                          {index + 1}
+                        </span>
+                        <div>
+                          <div className="text-[10px] font-bold uppercase text-[#7B1C2E]">{item.nome}</div>
+                          <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                            {presente ? "Está no checklist e será validada separadamente." : "Ainda falta adicionar este item ao checklist."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+                Base legal: Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311. A IN 201 exige certidões e comprovação de idoneidade; este pacote organiza a parte estadual para reduzir erro humano.
+              </p>
+            </div>
+          )}
           {fluxoOcupacaoAtivo && (
             <div className="mt-3 rounded-xl border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 88%)" }}>
               <div className="mb-2 flex items-center justify-between gap-2">
@@ -780,11 +952,12 @@ export default function MontarChecklistAdmin() {
                       </button>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 25%)" }}>
+                      <p className={`text-xs font-medium ${GRUPO_CERTIDOES_ESTADUAIS_TIPOS.includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 25%)" }}>
                         {c.nome_documento}
                       </p>
                       <p className="text-[10px] font-mono truncate text-slate-400">
                         ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
+                        {GRUPO_CERTIDOES_ESTADUAIS_TIPOS.includes(c.tipo_documento) ? " · pacote estadual" : ""}
                       </p>
                     </div>
                     <button

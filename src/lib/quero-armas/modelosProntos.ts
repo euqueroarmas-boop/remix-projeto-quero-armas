@@ -29,6 +29,15 @@ export interface ModeloPronto {
 const AVISO_PADRAO_IN201 = "⚠️ Modelo sugerido baseado em IN DG/PF 201. Confira a instrução normativa vigente antes de publicar — a responsabilidade final é do operador.";
 const AVISO_PADRAO_LEI = "⚠️ Modelo sugerido baseado na Lei 10.826/2003 e regulamentos vigentes. Confira antes de publicar — a responsabilidade final é do operador.";
 
+function certidoesEstaduais(ordemInicial: number, etapa: "base" | "complementar" | "tecnico" | "final" = "complementar") {
+  return [
+    { codigo_biblioteca: "certidao_estadual_distribuicao_acoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial },
+    { codigo_biblioteca: "certidao_estadual_execucoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 10 },
+    { codigo_biblioteca: "certidao_estadual_segundo_grau_acoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 20 },
+    { codigo_biblioteca: "certidao_estadual_segundo_grau_execucoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 30 },
+  ];
+}
+
 export const MODELOS_PRONTOS: ModeloPronto[] = [
   {
     slug: "posse_arma_fogo",
@@ -42,11 +51,11 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
       { codigo_biblioteca: "comprovante_residencia",                     obrigatorio: true,  etapa: "base",         ordem: 30 },
       { codigo_biblioteca: "comprovante_ocupacao_licita",                obrigatorio: true,  etapa: "base",         ordem: 40 },
       { codigo_biblioteca: "certidao_antecedentes_criminais_federal",    obrigatorio: true,  etapa: "complementar", ordem: 50 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_estadual",   obrigatorio: true,  etapa: "complementar", ordem: 60 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_militar",    obrigatorio: true,  etapa: "complementar", ordem: 70 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_eleitoral",  obrigatorio: true,  etapa: "complementar", ordem: 80 },
-      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 90 },
-      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 100 },
+      ...certidoesEstaduais(60),
+      { codigo_biblioteca: "certidao_antecedentes_criminais_militar",    obrigatorio: true,  etapa: "complementar", ordem: 100 },
+      { codigo_biblioteca: "certidao_antecedentes_criminais_eleitoral",  obrigatorio: true,  etapa: "complementar", ordem: 110 },
+      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 120 },
+      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 130 },
     ],
   },
   {
@@ -59,9 +68,9 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
       { codigo_biblioteca: "cin",                                        obrigatorio: true,  etapa: "base",         ordem: 10 },
       { codigo_biblioteca: "comprovante_residencia",                     obrigatorio: true,  etapa: "base",         ordem: 20 },
       { codigo_biblioteca: "certidao_antecedentes_criminais_federal",    obrigatorio: true,  etapa: "complementar", ordem: 30 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_estadual",   obrigatorio: true,  etapa: "complementar", ordem: 40 },
-      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 50 },
-      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 60 },
+      ...certidoesEstaduais(40),
+      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 80 },
+      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 90 },
     ],
   },
   {
@@ -75,8 +84,8 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
       { codigo_biblioteca: "cpf",                                        obrigatorio: true,  etapa: "base",         ordem: 20 },
       { codigo_biblioteca: "comprovante_residencia",                     obrigatorio: true,  etapa: "base",         ordem: 30 },
       { codigo_biblioteca: "certidao_antecedentes_criminais_federal",    obrigatorio: true,  etapa: "complementar", ordem: 40 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_estadual",   obrigatorio: true,  etapa: "complementar", ordem: 50 },
-      { codigo_biblioteca: "craf",                                       obrigatorio: true,  etapa: "final",        ordem: 60 },
+      ...certidoesEstaduais(50),
+      { codigo_biblioteca: "craf",                                       obrigatorio: true,  etapa: "final",        ordem: 90 },
     ],
   },
   {
@@ -91,10 +100,10 @@ export const MODELOS_PRONTOS: ModeloPronto[] = [
       { codigo_biblioteca: "comprovante_residencia",                     obrigatorio: true,  etapa: "base",         ordem: 30 },
       { codigo_biblioteca: "comprovante_ocupacao_licita",                obrigatorio: true,  etapa: "base",         ordem: 40 },
       { codigo_biblioteca: "certidao_antecedentes_criminais_federal",    obrigatorio: true,  etapa: "complementar", ordem: 50 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_estadual",   obrigatorio: true,  etapa: "complementar", ordem: 60 },
-      { codigo_biblioteca: "certidao_antecedentes_criminais_militar",    obrigatorio: true,  etapa: "complementar", ordem: 70 },
-      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 80 },
-      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 90 },
+      ...certidoesEstaduais(60),
+      { codigo_biblioteca: "certidao_antecedentes_criminais_militar",    obrigatorio: true,  etapa: "complementar", ordem: 100 },
+      { codigo_biblioteca: "laudo_psicologico",                          obrigatorio: true,  etapa: "tecnico",      ordem: 110 },
+      { codigo_biblioteca: "laudo_capacidade_tecnica",                   obrigatorio: true,  etapa: "tecnico",      ordem: 120 },
     ],
   },
   {
