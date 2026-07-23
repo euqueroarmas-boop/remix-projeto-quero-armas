@@ -131,12 +131,37 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
     bold: false, italic: false, underline: false,
     alignLeft: false, alignCenter: false, alignRight: false, alignFull: false,
     h1: false, h2: false, p: false,
+    caseUpper: false, caseLower: false,
   });
+
+  // Feedback visual dos botões AA/aa/Aa após clique (fica aceso por 1.5s)
+  const [caseAtivo, setCaseAtivo] = useState<"upper" | "lower" | "sentence" | null>(null);
+  const caseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function ativarCaseFeedback(tipo: "upper" | "lower" | "sentence") {
+    if (caseTimerRef.current) clearTimeout(caseTimerRef.current);
+    setCaseAtivo(tipo);
+    caseTimerRef.current = setTimeout(() => setCaseAtivo(null), 1500);
+  }
 
   useEffect(() => {
     function onSelectionChange() {
       const ed = contentEditableRef.current;
-      if (!ed || !ed.contains(document.getSelection()?.anchorNode ?? null)) return;
+      const sel = document.getSelection();
+      if (!ed || !sel || !ed.contains(sel.anchorNode ?? null)) return;
+
+      // Detecta o case do texto selecionado para iluminar AA / aa automaticamente
+      let caseUpper = false;
+      let caseLower = false;
+      if (sel && !sel.isCollapsed) {
+        const txt = sel.toString().replace(/[\s\{\}_]/g, ""); // ignora espaços e placeholders
+        const letras = txt.replace(/[^A-Za-zÀ-ÿ]/g, "");
+        if (letras.length > 0) {
+          if (letras === letras.toUpperCase()) caseUpper = true;
+          else if (letras === letras.toLowerCase()) caseLower = true;
+        }
+      }
+
       setFmt({
         bold:        document.queryCommandState("bold"),
         italic:      document.queryCommandState("italic"),
@@ -148,6 +173,8 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
         h1:  document.queryCommandValue("formatBlock").toLowerCase() === "h1",
         h2:  document.queryCommandValue("formatBlock").toLowerCase() === "h2",
         p:   document.queryCommandValue("formatBlock").toLowerCase() === "p",
+        caseUpper,
+        caseLower,
       });
     }
     document.addEventListener("selectionchange", onSelectionChange);
@@ -209,6 +236,7 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
   }
 
   function transformarTexto(tipo: "upper" | "lower" | "sentence") {
+    ativarCaseFeedback(tipo);
     contentEditableRef.current?.focus();
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
@@ -371,21 +399,29 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
             <TBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3 h-3" /></TBtn>
             <TSep />
-            <button type="button" title="MAIÚSCULAS — transforma o texto selecionado em caixa alta"
-              onMouseDown={(e) => { e.preventDefault(); transformarTexto("upper"); }}
-              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-bold tracking-wide">
-              AA
-            </button>
-            <button type="button" title="minúsculas — transforma o texto selecionado em caixa baixa"
-              onMouseDown={(e) => { e.preventDefault(); transformarTexto("lower"); }}
-              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
-              aa
-            </button>
-            <button type="button" title="Title Case — primeira letra de cada palavra em maiúscula, exceto preposições (de, da, do, e, em, para, com...)"
-              onMouseDown={(e) => { e.preventDefault(); transformarTexto("sentence"); }}
-              className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
-              Aa
-            </button>
+            {(["upper", "lower", "sentence"] as const).map((tipo) => {
+              const isActive =
+                tipo === "upper"    ? (caseAtivo === "upper"    || fmt.caseUpper) :
+                tipo === "lower"    ? (caseAtivo === "lower"    || fmt.caseLower) :
+                                      (caseAtivo === "sentence");
+              const labels = { upper: "AA", lower: "aa", sentence: "Aa" };
+              const titles = {
+                upper:    "MAIÚSCULAS — transforma o texto selecionado em caixa alta",
+                lower:    "minúsculas — transforma o texto selecionado em caixa baixa",
+                sentence: "Title Case — primeira letra de cada palavra em maiúscula, exceto preposições",
+              };
+              return (
+                <button key={tipo} type="button" title={titles[tipo]}
+                  onMouseDown={(e) => { e.preventDefault(); transformarTexto(tipo); }}
+                  className={`h-6 px-1.5 text-[10px] rounded border transition-all duration-100
+                    ${tipo === "upper" ? "font-bold tracking-wide" : "font-medium"}
+                    ${isActive
+                      ? "bg-[#7B1C2E] text-white border-[#7B1C2E] shadow-inner scale-95 ring-1 ring-[#7B1C2E]/40"
+                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400"}`}>
+                  {labels[tipo]}
+                </button>
+              );
+            })}
 
             {inserts.length > 0 && (
               <>
