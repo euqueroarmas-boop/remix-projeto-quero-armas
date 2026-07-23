@@ -28,6 +28,17 @@ function json(data: unknown, status = 200) {
 
 function brDate(d: Date): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
+// Preposições minúsculas em nomes de cidades brasileiras
+const PREPS = new Set(["da", "das", "de", "do", "dos", "e"]);
+function toTitleCity(s: string): string {
+  if (!s) return s;
+  return s
+    .toLowerCase()
+    .split(" ")
+    .map((w, i) => (i > 0 && PREPS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+}
 }
 
 function addYears(d: Date, n: number): Date {
@@ -274,9 +285,9 @@ Deno.serve(async (req) => {
       cliente_numero:             (cli as any)?.numero               || "",
       cliente_complemento:        (cli as any)?.complemento          || "",
       cliente_bairro:             (cli as any)?.bairro               || "",
-      cliente_cidade:             (cli as any)?.cidade               || "",
-      cliente_estado:             (cli as any)?.estado               || "",
-      cliente_uf:                 (cli as any)?.estado               || "",
+      cliente_cidade:             toTitleCity((cli as any)?.cidade   || ""),
+      cliente_estado:             ((cli as any)?.estado              || "").toUpperCase(),
+      cliente_uf:                 ((cli as any)?.estado              || "").toUpperCase(),
       cliente_cep:                (cli as any)?.cep                  || "",
       cliente_pais:               (cli as any)?.pais                 || "",
       data_hoje_extenso:          hojeExtenso,
