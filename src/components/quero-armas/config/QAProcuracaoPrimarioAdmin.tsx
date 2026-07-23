@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import {
   FileSignature, Upload, Loader2, CheckCircle2, RefreshCw,
-  Wand2, Download, Code2, Copy, Check, ChevronDown, ChevronUp,
+  Wand2, Download, Code2, Copy, Check, ChevronDown, ChevronUp, Save,
 } from "lucide-react";
 import { QAEditorModelo, QAEditorModeloRef, QAEditorInsert } from "./QAEditorModelo";
 
@@ -15,6 +15,7 @@ type TemplateVigente = {
 };
 
 const CODIGO = "PROCURACAO_PADRAO_QUERO_ARMAS";
+const RASCUNHO_KEY = "qa_rascunho_procuracao";
 const PLACEHOLDERS_OBRIGATORIOS = ["{{cliente_nome_completo}}", "{{cliente_cpf}}"];
 
 const MODELO_HTML_PADRAO = `<article class="qa-doc qa-procuracao-template">
@@ -103,9 +104,35 @@ export default function QAProcuracaoPrimarioAdmin() {
   const [publicando, setPublicando] = useState(false);
   const [verCodigoVigente, setVerCodigoVigente] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [temRascunho, setTemRascunho] = useState(() => !!localStorage.getItem(RASCUNHO_KEY));
 
   const editorRef = useRef<QAEditorModeloRef>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
+
+  function salvarRascunho() {
+    const html = editorRef.current?.getHtml() ?? "";
+    if (!html.trim()) { toast.error("Editor vazio — nada para salvar"); return; }
+    localStorage.setItem(RASCUNHO_KEY, html);
+    setTemRascunho(true);
+    toast.success("Rascunho salvo localmente (não publicado)");
+  }
+
+  function restaurarRascunho() {
+    const rascunho = localStorage.getItem(RASCUNHO_KEY);
+    if (!rascunho) return;
+    if (editorHtml.trim() && !confirm("Substituir o conteúdo atual pelo rascunho salvo?")) return;
+    setInitialHtml(rascunho);
+    setEditorHtml(rascunho);
+    setNomeArquivo("rascunho.html");
+    toast.success("Rascunho restaurado");
+  }
+
+  function descartarRascunho() {
+    if (!confirm("Descartar o rascunho salvo?")) return;
+    localStorage.removeItem(RASCUNHO_KEY);
+    setTemRascunho(false);
+    toast.success("Rascunho descartado");
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -117,9 +144,12 @@ export default function QAProcuracaoPrimarioAdmin() {
       const template = (tpl as any) ?? null;
       setVigente(template);
       if (template?.corpo_html && !editorHtml.trim()) {
-        setInitialHtml(template.corpo_html);
-        setEditorHtml(template.corpo_html);
-        setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
+        // Prefere rascunho local se existir
+        const rascunho = localStorage.getItem(RASCUNHO_KEY);
+        const htmlParaCarregar = rascunho ?? template.corpo_html;
+        setInitialHtml(htmlParaCarregar);
+        setEditorHtml(htmlParaCarregar);
+        setNomeArquivo(rascunho ? "rascunho.html" : `procuracao-modelo-v${template.versao}.html`);
       }
     } finally {
       setCarregando(false);
@@ -289,6 +319,18 @@ export default function QAProcuracaoPrimarioAdmin() {
               placeholder="Digite ou importe a procuração. Use os botões de inserção rápida na toolbar."
             />
 
+            {/* Aviso de rascunho */}
+            {temRascunho && (
+              <div className="flex items-center gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] text-amber-800">
+                <Save className="w-3 h-3 shrink-0" />
+                <span>Há um <strong>rascunho salvo localmente</strong> carregado no editor.</span>
+                <button type="button" onClick={descartarRascunho}
+                  className="ml-auto text-amber-600 hover:text-amber-800 underline whitespace-nowrap">
+                  Descartar rascunho
+                </button>
+              </div>
+            )}
+
             {/* Rodapé */}
             <div className="flex items-center justify-end gap-2">
               <Button size="sm" variant="outline" disabled={!editorHtml.trim()}
@@ -299,6 +341,11 @@ export default function QAProcuracaoPrimarioAdmin() {
                 }}
                 className="text-xs gap-1 h-8">
                 <Download className="w-3.5 h-3.5" /> Baixar HTML
+              </Button>
+              <Button size="sm" variant="outline" disabled={!editorHtml.trim()}
+                onClick={salvarRascunho}
+                className="text-xs gap-1 h-8 border-amber-300 text-amber-700 hover:bg-amber-50">
+                <Save className="w-3.5 h-3.5" /> Salvar rascunho
               </Button>
               <Button size="sm" onClick={publicar} disabled={!editorHtml.trim() || publicando}
                 className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
