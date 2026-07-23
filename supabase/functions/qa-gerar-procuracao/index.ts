@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const cliente_id: number | null = body?.cliente_id ?? null;
     const venda_id: number | null = body?.venda_id ?? null;
+    const force_regenerate = body?.force_regenerate === true;
     if (!cliente_id) return json({ error: "cliente_id obrigatório" }, 400);
 
     // O template vigente precisa ser conhecido antes da idempotência. Assim,
@@ -173,7 +174,10 @@ Deno.serve(async (req) => {
     const podeAtualizarPendente = Boolean(
       jaExiste
       && ["generated_pending_customer_signature", "rejected"].includes(jaExiste.status)
-      && Number(jaExiste.template_versao ?? 0) < Number((tpl as any).versao ?? 0),
+      && (
+        force_regenerate
+        || Number(jaExiste.template_versao ?? 0) < Number((tpl as any).versao ?? 0)
+      ),
     );
     if (jaExiste && !podeAtualizarPendente) {
       return json({ ok: true, reused: false, existing: jaExiste });
@@ -265,6 +269,16 @@ Deno.serve(async (req) => {
       cliente_email:              (cli as any)?.email               || "",
       cliente_telefone:           (cli as any)?.celular             || "",
       cliente_endereco:           enderecoCliente((cli as any) ?? {}),
+      cliente_endereco_completo:  enderecoCliente((cli as any) ?? {}),
+      cliente_logradouro:         (cli as any)?.endereco             || "",
+      cliente_numero:             (cli as any)?.numero               || "",
+      cliente_complemento:        (cli as any)?.complemento          || "",
+      cliente_bairro:             (cli as any)?.bairro               || "",
+      cliente_cidade:             (cli as any)?.cidade               || "",
+      cliente_estado:             (cli as any)?.estado               || "",
+      cliente_uf:                 (cli as any)?.estado               || "",
+      cliente_cep:                (cli as any)?.cep                  || "",
+      cliente_pais:               (cli as any)?.pais                 || "",
       data_hoje_extenso:          hojeExtenso,
       orgaos_delegados:           "Polícia Federal, Exército Brasileiro (SIGMA), Polícia Civil e demais órgãos correlatos",
     };
