@@ -213,62 +213,13 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
         </div>
 
-        {/* Perguntas de pagamento — controlam se o pipeline pos-pagamento
-             dispara agora (checklist explode) ou fica "a_combinar". */}
-        <div className="border rounded-lg p-3 space-y-3 bg-white">
-          <div>
-            <p className="text-xs font-semibold mb-1">Cliente já pagou este serviço?</p>
-            <div className="flex gap-2">
-              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${!jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
-                <input type="radio" name="jaPagou" checked={!jaPagou} onChange={() => setJaPagou(false)} />
-                Não pagou ainda — cobrar depois (a combinar)
-              </label>
-              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
-                <input type="radio" name="jaPagou" checked={jaPagou} onChange={() => setJaPagou(true)} />
-                Sim, já pagou
-              </label>
-            </div>
-          </div>
-
-          {jaPagou && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div>
-                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Forma de pagamento</Label>
-                <select
-                  value={formaPagamento}
-                  onChange={(e) => setFormaPagamento(e.target.value as FormaPagamento)}
-                  className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
-                  style={{ borderColor: "hsl(220 15% 88%)" }}
-                >
-                  <option value="pix">PIX</option>
-                  <option value="boleto">Boleto</option>
-                  <option value="cartao_debito">Cartão de Débito</option>
-                  <option value="cartao_credito">Cartão de Crédito</option>
-                </select>
-              </div>
-              {formaPagamento === "cartao_credito" && (
-                <div>
-                  <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Parcelas</Label>
-                  <select
-                    value={parcelas}
-                    onChange={(e) => setParcelas(Number(e.target.value))}
-                    className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
-                    style={{ borderColor: "hsl(220 15% 88%)" }}
-                  >
-                    {[1,2,3,4,5,6,7,8,9,10,11,12].map((n) => (
-                      <option key={n} value={n}>{n}x {n > 1 ? `de ${formatBRL(totalSelecionados / n)}` : "à vista"}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            {jaPagou
-              ? <><b>Efeito:</b> venda entra como <b>PAGA</b>. O sistema já gera o processo, explode o checklist e o cliente vê os documentos exigidos assim que assinar o contrato e a procuração.</>
-              : <><b>Efeito:</b> venda entra como <b>a combinar</b>. Você registra o pagamento manualmente depois (botão "Confirmar Pagamento" na tela do cliente) para explodir o checklist.</>}
-          </p>
+        {/* Resumo curto do pagamento — a escolha é feita na tela anterior (seleção). */}
+        <div className="text-xs bg-muted/40 rounded p-2">
+          <span className="font-medium">Pagamento: </span>
+          {jaPagou
+            ? <>Sim — {formaPagamento === "cartao_credito" ? `Cartão de Crédito ${parcelas}x` : formaPagamento === "cartao_debito" ? "Cartão de Débito" : formaPagamento === "pix" ? "PIX" : "Boleto"}</>
+            : <>Não pagou ainda — a combinar</>}
+          <button type="button" onClick={() => setEtapa("selecionar")} className="ml-2 text-[#7B1C2E] underline">alterar</button>
         </div>
 
         {!clienteSalvo.email && (
@@ -354,6 +305,68 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <div className="bg-muted/40 rounded p-2 text-xs flex justify-between">
           <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
           <span className="font-medium">{formatBRL(totalSelecionados)}</span>
+        </div>
+      )}
+
+      {/* Perguntas de pagamento — controlam se o pipeline pos-pagamento
+           dispara agora (checklist explode assim que contrato+procuracao
+           forem assinados) ou fica "a_combinar" e voce cobra depois via
+           botao Confirmar Pagamento na tela do cliente. */}
+      {selecionados.length > 0 && (
+        <div className="border rounded-lg p-3 space-y-3 bg-white">
+          <div>
+            <p className="text-xs font-semibold mb-1">Cliente já pagou este serviço?</p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${!jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+                <input type="radio" name="jaPagou" checked={!jaPagou} onChange={() => setJaPagou(false)} />
+                Não pagou ainda — cobrar depois (a combinar)
+              </label>
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+                <input type="radio" name="jaPagou" checked={jaPagou} onChange={() => setJaPagou(true)} />
+                Sim, já pagou
+              </label>
+            </div>
+          </div>
+
+          {jaPagou && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Forma de pagamento</Label>
+                <select
+                  value={formaPagamento}
+                  onChange={(e) => setFormaPagamento(e.target.value as FormaPagamento)}
+                  className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                >
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="cartao_debito">Cartão de Débito</option>
+                  <option value="cartao_credito">Cartão de Crédito</option>
+                </select>
+              </div>
+              {formaPagamento === "cartao_credito" && (
+                <div>
+                  <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Parcelas</Label>
+                  <select
+                    value={parcelas}
+                    onChange={(e) => setParcelas(Number(e.target.value))}
+                    className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                    style={{ borderColor: "hsl(220 15% 88%)" }}
+                  >
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map((n) => (
+                      <option key={n} value={n}>{n}x {n > 1 ? `de ${formatBRL(totalSelecionados / n)}` : "à vista"}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            {jaPagou
+              ? <><b>Efeito:</b> venda entra como <b>PAGA</b>. Assim que o cliente assinar contrato + procuração, o checklist é liberado automaticamente.</>
+              : <><b>Efeito:</b> venda entra como <b>a combinar</b>. Depois use o botão <b>Confirmar Pagamento</b> na tela do cliente para liberar o checklist.</>}
+          </p>
         </div>
       )}
 
