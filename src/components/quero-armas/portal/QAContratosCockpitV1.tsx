@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
@@ -115,6 +115,22 @@ function formatBRLKpi(v: number): string {
   if (!v || v <= 0) return "R$ 0";
   if (v >= 1000) return `R$ ${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}K`;
   return `R$ ${Math.round(v)}`;
+}
+
+function contractRejectionReason(contract: Pick<Contract, "validation_details">): string {
+  const details = contract.validation_details || {};
+  const candidates = [
+    details.motivo_falha,
+    details.motivo,
+    details.reason,
+    details.error,
+    details.message,
+  ];
+  const reason = candidates
+    .map((value) => String(value || "").trim())
+    .find(Boolean);
+
+  return reason || "O PDF enviado não pôde ser validado como a assinatura correta deste contrato.";
 }
 
 interface Props {
@@ -410,7 +426,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
             </div>
             <div className="text-[13px] text-[#0A0A0A] font-medium">
               {featured?.status === "rejected"
-                ? <>O PDF enviado não é o contrato {featured?.contract_number}. Baixe o contrato deste sistema, assine no GOV.BR sem editar e reenvie.</>
+                ? <><b>Motivo:</b> {contractRejectionReason(featured)} Baixe novamente o contrato deste sistema, assine no GOV.BR sem editar e reenvie.</>
                 : <>Contrato {featured?.contract_number || ""} aguarda sua assinatura via GOV.BR</>}
             </div>
           </div>
@@ -598,6 +614,8 @@ function FeaturedContractCard({
   const progress = Math.round(((step + 1) / 4) * 100);
   const badge = STATUS_BADGE[String(contract.status)] || { label: String(contract.status || "—").toUpperCase(), cls: "bg-[#EDEDED] text-[#444]" };
   const openedDays = daysSince(contract.issued_at);
+  const isRejected = contract.status === "rejected";
+  const rejectionReason = contractRejectionReason(contract);
 
   const timelineEvents = useMemo(() => {
     const evs: Array<{ date: string | null; t: string; ok: boolean }> = [];
@@ -608,6 +626,8 @@ function FeaturedContractCard({
       evs.push({ date: contract.customer_uploaded_at, t: "Assinatura recebida", ok: true });
     if (contract.customer_signature_validated_at)
       evs.push({ date: contract.customer_signature_validated_at, t: "Assinatura validada ICP-Brasil", ok: true });
+    else if (contract.status === "rejected")
+      evs.push({ date: null, t: "Assinatura rejeitada — novo envio necessário", ok: false });
     else if (["customer_signature_uploaded","validating","pending_manual_review"].includes(String(contract.status)))
       evs.push({ date: null, t: "Validação ICP-Brasil", ok: false });
     return evs;
@@ -617,11 +637,29 @@ function FeaturedContractCard({
   const nextAuto = useMemo(() => buildNextAuto(contract), [contract]);
 
   return (
-    <div className="bg-white border border-[#E5E5E5] rounded-sm p-5">
+    <div className={`bg-white rounded-sm p-5 ${isRejected ? "border-2 border-[#C32E26] shadow-[0_0_0_3px_rgba(195,46,38,0.08)]" : "border border-[#E5E5E5]"}`}>
+      {isRejected && (
+        <div className="mb-4 border border-[#F0B8B4] bg-[#FFF1F0] px-4 py-3 rounded-sm">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-sm bg-[#C32E26] text-white">
+              <AlertTriangle className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="font-['Oswald'] text-[16px] leading-none tracking-[0.08em] font-bold text-[#8A1410] uppercase">
+                CONTRATO REJEITADO
+              </div>
+              <p className="mt-1.5 text-[12px] leading-relaxed text-[#5A1410]">
+                O contrato assinado enviado não foi aceito. Leia o motivo abaixo, baixe novamente o contrato correto e envie um novo PDF assinado.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* topo */}
-      <div className="flex items-center justify-between gap-3 pb-4 mb-5 border-b border-[#EFEFEF]">
+      <div className={`flex items-center justify-between gap-3 pb-4 mb-5 border-b ${isRejected ? "border-[#F0B8B4]" : "border-[#EFEFEF]"}`}>
         <div className="flex items-center gap-3 min-w-0">
-          <span className={`font-['Oswald'] text-[9.5px] px-2 py-1 tracking-[0.16em] rounded-sm font-bold uppercase ${badge.cls}`}>
+          <span className={`font-['Oswald'] tracking-[0.16em] rounded-sm font-bold uppercase ${isRejected ? "text-[11px] px-3 py-2 bg-[#C32E26] text-white" : `text-[9.5px] px-2 py-1 ${badge.cls}`}`}>
             {badge.label}
           </span>
           <h2 className="font-['Oswald'] text-[13px] tracking-[0.06em] font-semibold uppercase truncate">
@@ -684,14 +722,18 @@ function FeaturedContractCard({
       <ValidationSLAPanel contract={contract} />
 
       {/* aviso de rejeição — passo a passo claro */}
-      {contract.status === "rejected" && (
-        <div className="mb-5 border border-[#F4C6C2] bg-[#FDECEA] rounded-sm px-4 py-3.5">
-          <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#8A1410] font-bold uppercase mb-1.5">
+      {isRejected && (
+        <div className="mb-5 border-2 border-[#C32E26] bg-[#FFF1F0] rounded-sm px-4 py-3.5">
+          <div className="font-['Oswald'] text-[13px] tracking-[0.16em] text-[#8A1410] font-bold uppercase mb-2">
             ASSINATURA REJEITADA · PRÓXIMOS PASSOS
           </div>
-          <div className="text-[12px] text-[#5a1410] leading-relaxed mb-2.5">
-            {contract.validation_details?.motivo_falha
-              || "O PDF enviado não confere byte-a-byte com o contrato original deste sistema."}
+          <div className="mb-3 rounded-sm border border-[#E4AAA5] bg-white px-3 py-2.5">
+            <div className="font-['Oswald'] text-[10px] tracking-[0.18em] text-[#8A1410] font-bold uppercase mb-1">
+              MOTIVO DA REJEIÇÃO
+            </div>
+            <div className="text-[13px] text-[#4A0F0C] leading-relaxed font-semibold">
+              {rejectionReason}
+            </div>
           </div>
           <ol className="text-[12px] text-[#0A0A0A] space-y-1 pl-4 list-decimal mb-3">
             <li>Clique em <b>BAIXAR CONTRATO</b> aqui em cima e salve o PDF.</li>
