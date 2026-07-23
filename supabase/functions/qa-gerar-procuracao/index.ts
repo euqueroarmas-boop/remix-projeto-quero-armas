@@ -34,8 +34,90 @@ function addYears(d: Date, n: number): Date {
   const r = new Date(d); r.setFullYear(r.getFullYear() + n); return r;
 }
 
+function escHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function renderPlaceholders(html: string, ctx: Record<string, string>): string {
-  return html.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_, k) => ctx[k.toLowerCase()] ?? "");
+  return html.replace(/\{\{\s*([a-z0-9_]+)\s*\}\}/gi, (_, k) => escHtml(ctx[k.toLowerCase()] ?? ""));
+}
+
+function first(...values: Array<unknown>): string {
+  for (const value of values) {
+    const text = String(value ?? "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function onlyDigits(value: string): string {
+  return value.replace(/\D+/g, "");
+}
+
+function normalize(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function hasCurrentClientData(html: string, ctx: Record<string, string>): boolean {
+  const plain = normalize(html.replace(/<[^>]+>/g, " "));
+  const nome = normalize(ctx.cliente_nome_completo);
+  const cpf = onlyDigits(ctx.cliente_cpf);
+  const htmlDigits = onlyDigits(html);
+  return Boolean(nome && cpf && plain.includes(nome) && htmlDigits.includes(cpf));
+}
+
+function enderecoCliente(cli: Record<string, unknown>): string {
+  const linha = [
+    first(cli.endereco),
+    first(cli.numero) ? `nº ${first(cli.numero)}` : "",
+    first(cli.complemento),
+    first(cli.bairro),
+    first(cli.cidade),
+    first(cli.estado),
+    first(cli.cep) ? `CEP ${first(cli.cep)}` : "",
+    first(cli.pais) || "Brasil",
+  ].filter(Boolean);
+  return linha.join(", ");
+}
+
+function buildProcuracaoPadrao(ctx: Record<string, string>): string {
+  const h = (key: string) => escHtml(ctx[key] ?? "");
+  return `
+<article class="qa-doc qa-procuracao-template">
+  <h1>PROCURAÇÃO DESTINADA À POLÍCIA FEDERAL, FORÇAS ARMADAS E DELEGACIAS DE POLÍCIA</h1>
+
+  <p><strong>OUTORGANTE:</strong> ${h("cliente_nome_completo")}, ${h("cliente_nacionalidade") || "brasileiro(a)"}, ${h("cliente_estado_civil") || "estado civil não informado"}, ${h("cliente_profissao") || "profissão não informada"}, portador(a) do CPF nº ${h("cliente_cpf")}, RG/CIN nº ${h("cliente_rg")}${ctx.cliente_emissor_rg ? `, expedido por ${h("cliente_emissor_rg")}` : ""}${ctx.cliente_uf_emissor_rg ? `/${h("cliente_uf_emissor_rg")}` : ""}, residente e domiciliado(a) em ${h("cliente_endereco")}, e-mail ${h("cliente_email") || "não informado"}${ctx.cliente_telefone ? `, telefone ${h("cliente_telefone")}` : ""}.</p>
+
+  <p><strong>OUTORGADO:</strong> ${h("empresa_razao_social")}, pessoa jurídica inscrita no CNPJ sob nº ${h("empresa_cnpj_completo")}, com sede em ${h("empresa_endereco")}, neste ato representada por ${h("empresa_representante")}${ctx.empresa_representante_cpf ? `, CPF nº ${h("empresa_representante_cpf")}` : ""}.</p>
+
+  <h2>PODERES</h2>
+  <p>Pelo presente instrumento particular de procuração, o(a) OUTORGANTE nomeia e constitui como seu bastante procurador o OUTORGADO, a quem confere poderes para, em seu nome, praticar atos relacionados a requerimentos, protocolos, acompanhamento, cumprimento de exigências, retirada de documentos, assinatura de requerimentos, declarações e demais atos necessários perante ${h("orgaos_delegados")}.</p>
+
+  <ol>
+    <li><strong>Perante delegacias de polícia:</strong> requerer certidões, registros, cópias, informações e demais documentos necessários aos processos administrativos vinculados ao serviço contratado.</li>
+    <li><strong>Perante o Exército Brasileiro:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos perante o sistema SIGMA e demais órgãos correlatos.</li>
+    <li><strong>Perante a Polícia Federal:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos vinculados ao SINARM, autorização de compra, posse, registro, renovação e demais serviços relacionados à arma de fogo.</li>
+  </ol>
+
+  <p>Este mandato é válido pelo prazo indicado no sistema, ou até que seja expressamente revogado pelo(a) OUTORGANTE.</p>
+
+  <p class="qa-doc__date">Jacareí, ${h("data_hoje_extenso")}.</p>
+
+  <div class="qa-doc__signature">
+    <span>${h("cliente_nome_completo")}</span>
+    <small>CPF nº ${h("cliente_cpf")}</small>
+  </div>
+</article>`.trim();
 }
 
 Deno.serve(async (req) => {
@@ -116,9 +198,10 @@ Deno.serve(async (req) => {
     // Dados do cliente
     const { data: cli } = await sb
       .from("qa_clientes")
-      .select("nome_completo, cpf, rg, endereco, cidade, estado, cep")
-      .eq("id", cliente_id)
+      .select("id, id_legado, nome_completo, cpf, rg, emissor_rg, uf_emissor_rg, endereco, numero, complemento, bairro, cidade, estado, cep, pais, estado_civil, nacionalidade, profissao, email, celular")
+      .or(`id.eq.${cliente_id},id_legado.eq.${cliente_id}`)
       .maybeSingle();
+    if (!cli) return json({ error: `Cliente ${cliente_id} não encontrado para gerar procuração` }, 404);
 
     // Dados da empresa (fallbacks estáticos — admin configura em Preferências)
     const { data: cfg } = await sb
@@ -143,12 +226,22 @@ Deno.serve(async (req) => {
       cliente_nome_completo:      (cli as any)?.nome_completo       || "",
       cliente_cpf:                (cli as any)?.cpf                 || "",
       cliente_rg:                 (cli as any)?.rg                  || "",
-      cliente_endereco:           [(cli as any)?.endereco, (cli as any)?.cidade, (cli as any)?.estado, (cli as any)?.cep].filter(Boolean).join(", "),
+      cliente_emissor_rg:         (cli as any)?.emissor_rg          || "",
+      cliente_uf_emissor_rg:      (cli as any)?.uf_emissor_rg       || "",
+      cliente_estado_civil:       (cli as any)?.estado_civil        || "",
+      cliente_nacionalidade:      (cli as any)?.nacionalidade       || "",
+      cliente_profissao:          (cli as any)?.profissao           || "",
+      cliente_email:              (cli as any)?.email               || "",
+      cliente_telefone:           (cli as any)?.celular             || "",
+      cliente_endereco:           enderecoCliente((cli as any) ?? {}),
       data_hoje_extenso:          hojeExtenso,
       orgaos_delegados:           "Polícia Federal, Exército Brasileiro (SIGMA), Polícia Civil e demais órgãos correlatos",
     };
 
-    const conteudo = renderPlaceholders(tpl.corpo_html, ctx);
+    const renderizado = renderPlaceholders(tpl.corpo_html, ctx);
+    const conteudo = hasCurrentClientData(renderizado, ctx)
+      ? renderizado
+      : buildProcuracaoPadrao(ctx);
 
     const { data: novo, error } = await sb
       .from("qa_procuracoes")

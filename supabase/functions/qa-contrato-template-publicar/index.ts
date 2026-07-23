@@ -66,6 +66,19 @@ function textoParaHtml(texto: string): string {
   return out.join("\n");
 }
 
+function sanitizeHtml(html: string, preserveStyle = false): string {
+  let safe = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>\s*/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "")
+    .replace(/<!--[\s\S]*?-->\s*/g, "");
+  if (!preserveStyle) {
+    safe = safe.replace(/<style[^>]*>[\s\S]*?<\/style>\s*/gi, "");
+  }
+  return safe.trim();
+}
+
 function extrairTituloAnexo(html: string): string | null {
   const m = html.match(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/i);
   if (!m) return null;
@@ -122,12 +135,17 @@ Deno.serve(async (req) => {
     const temHtml = /<\s*(h[1-6]|p|section|div|ul|ol|table)\b/i.test(corpoBruto);
     let corpoHtml = temHtml ? corpoBruto : textoParaHtml(corpoBruto);
 
-    // Remove blocos <style> e comentários HTML — servem apenas para a
-    // pré-visualização do arquivo enviado; o portal aplica o próprio estilo.
-    corpoHtml = corpoHtml
-      .replace(/<style[^>]*>[\s\S]*?<\/style>\s*/gi, "")
-      .replace(/<!--[\s\S]*?-->\s*/g, "")
-      .trim();
+    corpoHtml = sanitizeHtml(corpoHtml, puloAnexos);
+
+    if (puloAnexos) {
+      const obrigatorios = ["{{cliente_nome_completo}}", "{{cliente_cpf}}"];
+      const faltantes = obrigatorios.filter((p) => !corpoHtml.toLowerCase().includes(p.toLowerCase()));
+      if (faltantes.length) {
+        return json({
+          error: `Procuração não publicada. O modelo precisa conter os marcadores obrigatórios do cliente: ${faltantes.join(", ")}`,
+        }, 422);
+      }
+    }
 
     // Extrai blocos de anexo por slug.
     const sectionRe = /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/gi;

@@ -49,6 +49,10 @@ function filename(partes: Array<string | null | undefined>): string {
     .trim() + ".pdf";
 }
 
+function isHeading(line: string): boolean {
+  return /^[A-ZÀ-Ú0-9\s.,/()ºª-]{8,}$/.test(line) && line.length <= 140;
+}
+
 function renderPdf(html: string): Uint8Array {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   const marginX = 54;
@@ -56,25 +60,29 @@ function renderPdf(html: string): Uint8Array {
   const width = 595.28 - marginX * 2;
   let y = marginY;
 
-  doc.setFont("times", "normal");
-  doc.setFontSize(12);
-
   for (const raw of textFromHtml(html).split(/\n+/)) {
     const line = raw.trim();
     if (!line) {
       y += 10;
       continue;
     }
+    const heading = isHeading(line);
+    doc.setFont("times", heading ? "bold" : "normal");
+    doc.setFontSize(heading ? 12 : 11);
     const wrapped = doc.splitTextToSize(line, width) as string[];
     for (const piece of wrapped) {
       if (y > 785) {
         doc.addPage();
         y = marginY;
       }
-      doc.text(piece, marginX, y);
-      y += 17;
+      if (heading) {
+        doc.text(piece, 595.28 / 2, y, { align: "center" });
+      } else {
+        doc.text(piece, marginX, y);
+      }
+      y += heading ? 18 : 16;
     }
-    y += 5;
+    y += heading ? 8 : 4;
   }
 
   return new Uint8Array(doc.output("arraybuffer"));
@@ -124,7 +132,7 @@ Deno.serve(async (req) => {
     const { data: cliente } = await sb
       .from("qa_clientes")
       .select("nome_completo")
-      .eq("id", (data as any).cliente_id)
+      .or(`id.eq.${(data as any).cliente_id},id_legado.eq.${(data as any).cliente_id}`)
       .maybeSingle();
 
     const numero = (data as any).venda_id ? `VENDA ${(data as any).venda_id}` : "PROCURAÇÃO";

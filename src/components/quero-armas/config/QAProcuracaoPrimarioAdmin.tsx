@@ -24,6 +24,32 @@ type Substituicao = {
 };
 
 const CODIGO = "PROCURACAO_PADRAO_QUERO_ARMAS";
+const PLACEHOLDERS_OBRIGATORIOS = ["{{cliente_nome_completo}}", "{{cliente_cpf}}"];
+const MODELO_HTML_PADRAO = `<article class="qa-doc qa-procuracao-template">
+  <h1>PROCURAÇÃO DESTINADA À POLÍCIA FEDERAL, FORÇAS ARMADAS E DELEGACIAS DE POLÍCIA</h1>
+
+  <p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, {{cliente_nacionalidade}}, {{cliente_estado_civil}}, {{cliente_profissao}}, portador(a) do CPF nº {{cliente_cpf}}, RG/CIN nº {{cliente_rg}}, expedido por {{cliente_emissor_rg}}/{{cliente_uf_emissor_rg}}, residente e domiciliado(a) em {{cliente_endereco}}, e-mail {{cliente_email}}, telefone {{cliente_telefone}}.</p>
+
+  <p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, pessoa jurídica inscrita no CNPJ sob nº {{empresa_cnpj_completo}}, com sede em {{empresa_endereco}}, neste ato representada por {{empresa_representante}}, CPF nº {{empresa_representante_cpf}}.</p>
+
+  <h2>PODERES</h2>
+  <p>Pelo presente instrumento particular de procuração, o(a) OUTORGANTE nomeia e constitui como seu bastante procurador o OUTORGADO, a quem confere poderes para, em seu nome, praticar atos relacionados a requerimentos, protocolos, acompanhamento, cumprimento de exigências, retirada de documentos, assinatura de requerimentos, declarações e demais atos necessários perante {{orgaos_delegados}}.</p>
+
+  <ol>
+    <li><strong>Perante delegacias de polícia:</strong> requerer certidões, registros, cópias, informações e demais documentos necessários aos processos administrativos vinculados ao serviço contratado.</li>
+    <li><strong>Perante o Exército Brasileiro:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos perante o sistema SIGMA e demais órgãos correlatos.</li>
+    <li><strong>Perante a Polícia Federal:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos vinculados ao SINARM, autorização de compra, posse, registro, renovação e demais serviços relacionados à arma de fogo.</li>
+  </ol>
+
+  <p>Este mandato é válido pelo prazo indicado no sistema, ou até que seja expressamente revogado pelo(a) OUTORGANTE.</p>
+
+  <p class="qa-doc__date">Jacareí, {{data_hoje_extenso}}.</p>
+
+  <div class="qa-doc__signature">
+    <span>{{cliente_nome_completo}}</span>
+    <small>CPF nº {{cliente_cpf}}</small>
+  </div>
+</article>`;
 
 function fmtData(iso: string | null) {
   if (!iso) return "—";
@@ -48,6 +74,11 @@ function stringar(texto: string, subs: Substituicao[]): { saida: string; hits: A
     }
   }
   return { saida, hits };
+}
+
+function temPlaceholdersObrigatorios(html: string) {
+  const lower = html.toLowerCase();
+  return PLACEHOLDERS_OBRIGATORIOS.every((p) => lower.includes(p.toLowerCase()));
 }
 
 export default function QAProcuracaoPrimarioAdmin() {
@@ -140,6 +171,10 @@ export default function QAProcuracaoPrimarioAdmin() {
 
   async function publicar() {
     if (!corpoStringado.trim()) { toast.error("Cole ou envie a procuração"); return; }
+    if (!temPlaceholdersObrigatorios(corpoStringado)) {
+      toast.error("A procuração precisa conter {{cliente_nome_completo}} e {{cliente_cpf}}. Assim ela nunca sai com dados fixos de outro cliente.");
+      return;
+    }
     const restantes: string[] = [];
     for (const s of subs.filter((x) => x.ativo)) {
       const re = new RegExp(escapeRegex(s.texto_original), "i");
@@ -162,6 +197,27 @@ export default function QAProcuracaoPrimarioAdmin() {
       toast.error(e?.message || "Erro ao publicar");
     } finally {
       setPublicando(false);
+    }
+  }
+
+  function inserirModeloPadrao() {
+    if (corpoStringado.trim() && !confirm("Substituir o conteúdo atual pelo modelo HTML padrão da procuração?")) return;
+    setCorpoOriginal(MODELO_HTML_PADRAO);
+    setCorpoStringado(MODELO_HTML_PADRAO);
+    setHits([]);
+    setNomeArquivo("modelo-html-padrao.html");
+    setModoPreview("stringado");
+    toast.success("Modelo HTML padrão carregado");
+  }
+
+  function inserirTrecho(trecho: string) {
+    const atual = modoPreview === "original" ? corpoOriginal : corpoStringado;
+    const proximo = atual ? `${atual}\n${trecho}` : trecho;
+    if (modoPreview === "original") {
+      setCorpoOriginal(proximo);
+      recalcularPreview(proximo);
+    } else {
+      setCorpoStringado(proximo);
     }
   }
 
@@ -250,6 +306,33 @@ export default function QAProcuracaoPrimarioAdmin() {
 
           {/* Upload + preview */}
           <div className="space-y-2 mb-3">
+            <div className="rounded-lg border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 90%)" }}>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div>
+                  <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Editor HTML do modelo</h3>
+                  <p className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+                    Use o modelo abaixo ou monte com trechos. Os campos do cliente entram automaticamente pelos marcadores.
+                  </p>
+                </div>
+                <Button size="sm" type="button" onClick={inserirModeloPadrao}
+                  className="h-8 text-xs bg-[#7B1C2E] hover:bg-[#6a1827] text-white gap-1">
+                  <Wand2 className="w-3.5 h-3.5" /> Usar modelo formatado
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<h1>TÍTULO DA PROCURAÇÃO</h1>")}>Título</Button>
+                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<h2>SEÇÃO</h2>")}>Seção</Button>
+                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, CPF nº {{cliente_cpf}}.</p>")}>Outorgante</Button>
+                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ nº {{empresa_cnpj_completo}}.</p>")}>Outorgado</Button>
+                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho('<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>')}>Assinatura</Button>
+              </div>
+              <div className={`mt-3 rounded border px-2 py-1.5 text-[11px] ${temPlaceholdersObrigatorios(corpoStringado) ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}>
+                {temPlaceholdersObrigatorios(corpoStringado)
+                  ? "OK: O modelo contém os marcadores obrigatórios do cliente."
+                  : "Obrigatório: inclua {{cliente_nome_completo}} e {{cliente_cpf}} antes de publicar."}
+              </div>
+            </div>
+
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => inputFileRef.current?.click()}>
                 <Upload className="w-3.5 h-3.5" />
@@ -286,6 +369,58 @@ export default function QAProcuracaoPrimarioAdmin() {
               className="w-full rounded-lg border px-3 py-2 text-xs font-mono resize-y focus:outline-none focus:ring-2"
               style={{ borderColor: modoPreview === "stringado" ? "hsl(145 55% 55%)" : "hsl(220 15% 88%)" }}
             />
+            {corpoStringado.trim() && (
+              <div className="rounded-lg border bg-[#f6f5f1] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-2" style={{ color: "hsl(220 10% 48%)" }}>
+                  Prévia formatada do cliente
+                </p>
+                <div
+                  className="bg-white rounded border p-5 text-sm leading-7 qa-procuracao-admin-preview"
+                  dangerouslySetInnerHTML={{ __html: corpoStringado }}
+                />
+                <style>{`
+                  .qa-procuracao-admin-preview {
+                    font-family: Georgia, 'Times New Roman', serif;
+                    color: #1a1a1a;
+                    text-align: justify;
+                  }
+                  .qa-procuracao-admin-preview h1 {
+                    text-align: center;
+                    font-size: 16px;
+                    line-height: 1.35;
+                    margin: 0 0 18px;
+                    text-transform: uppercase;
+                  }
+                  .qa-procuracao-admin-preview h2 {
+                    font-size: 13px;
+                    margin: 18px 0 8px;
+                    text-transform: uppercase;
+                  }
+                  .qa-procuracao-admin-preview p {
+                    margin: 0 0 12px;
+                  }
+                  .qa-procuracao-admin-preview ol {
+                    margin: 10px 0 14px 22px;
+                  }
+                  .qa-procuracao-admin-preview .qa-doc__signature {
+                    margin-top: 36px;
+                    text-align: center;
+                  }
+                  .qa-procuracao-admin-preview .qa-doc__signature:before {
+                    content: "";
+                    display: block;
+                    width: 280px;
+                    max-width: 80%;
+                    border-top: 1px solid #111;
+                    margin: 0 auto 8px;
+                  }
+                  .qa-procuracao-admin-preview .qa-doc__signature span,
+                  .qa-procuracao-admin-preview .qa-doc__signature small {
+                    display: block;
+                  }
+                `}</style>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
                 {corpoStringado.trim() ? `${Math.round(corpoStringado.length / 1024)} KB — versão stringada` : ""}

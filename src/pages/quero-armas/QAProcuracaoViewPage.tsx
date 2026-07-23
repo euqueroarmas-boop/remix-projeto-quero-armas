@@ -83,7 +83,8 @@ export default function QAProcuracaoViewPage() {
       const blob = await res.blob();
       if (!blob.size) throw new Error("PDF vazio");
 
-      const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas.pdf`;
+      const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
+      const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
       const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
       const link = document.createElement("a");
       link.href = url;
@@ -195,18 +196,65 @@ export default function QAProcuracaoViewPage() {
       <style>{`
         .qa-procuracao-body {
           font-family: Georgia, 'Times New Roman', serif;
-          font-size: 14px;
-          line-height: 1.8;
+          font-size: 15px;
+          line-height: 1.75;
           color: #1a1a1a;
+          text-align: justify;
+        }
+        .qa-procuracao-body .qa-doc,
+        .qa-procuracao-body article {
+          max-width: 720px;
+          margin: 0 auto;
+        }
+        .qa-procuracao-body p {
+          margin: 0 0 14px;
+        }
+        .qa-procuracao-body ol,
+        .qa-procuracao-body ul {
+          margin: 12px 0 16px 24px;
+          padding: 0;
+        }
+        .qa-procuracao-body li {
+          margin: 0 0 8px;
         }
         .qa-procuracao-body h1,
         .qa-procuracao-body h2,
         .qa-procuracao-body h3 {
-          font-size: 15px;
+          font-size: 16px;
           font-weight: 700;
           text-align: center;
-          margin: 24px 0 8px;
+          margin: 28px 0 18px;
           text-transform: uppercase;
+          line-height: 1.35;
+        }
+        .qa-procuracao-body h2,
+        .qa-procuracao-body h3 {
+          font-size: 14px;
+          margin-top: 22px;
+          text-align: left;
+        }
+        .qa-procuracao-body strong {
+          font-weight: 700;
+        }
+        .qa-procuracao-body .qa-doc__date {
+          margin-top: 28px;
+          text-align: left;
+        }
+        .qa-procuracao-body .qa-doc__signature {
+          margin-top: 52px;
+          text-align: center;
+        }
+        .qa-procuracao-body .qa-doc__signature::before {
+          content: "";
+          display: block;
+          width: 320px;
+          max-width: 80%;
+          border-top: 1px solid #1a1a1a;
+          margin: 0 auto 8px;
+        }
+        .qa-procuracao-body .qa-doc__signature span,
+        .qa-procuracao-body .qa-doc__signature small {
+          display: block;
         }
         @media print {
           header, button, .print\\:hidden { display: none !important; }
