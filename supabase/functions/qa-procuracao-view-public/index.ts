@@ -14,6 +14,11 @@ const corsHeaders = {
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const TEMPLATE_CODIGO = "PROCURACAO_PADRAO_QUERO_ARMAS";
+const STATUS_ATUALIZAVEIS = new Set([
+  "generated_pending_customer_signature",
+  "rejected",
+]);
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -117,14 +122,70 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data, error } = await sb
+    let { data, error } = await sb
       .from("qa_procuracoes")
-      .select("id, cliente_id, venda_id, status, conteudo_renderizado, generated_at, outorgado_ate")
+      .select("id, cliente_id, venda_id, status, template_versao, conteudo_renderizado, generated_at, outorgado_ate")
       .eq("id", procuracaoId)
       .maybeSingle();
 
     if (error) return json({ error: error.message }, 500);
     if (!data) return json({ error: "Procuração não encontrada" }, 404);
+
+    if (STATUS_ATUALIZAVEIS.has(String((data as any).status ?? ""))) {
+      const { data: templateVigente } = await sb
+        .from("qa_contract_templates")
+        .select("versao")
+        .eq("codigo", TEMPLATE_CODIGO)
+        .eq("vigente", true)
+        .maybeSingle();
+
+      const versaoSalva = Number((data as any).template_versao ?? 0);
+      const versaoVigente = Number((templateVigente as any)?.versao ?? 0);
+      if (versaoVigente > versaoSalva) {
+        const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const refreshRes = await fetch(
+          `${Deno.env.get("SUPABASE_URL")!}/functions/v1/qa-gerar-procuracao`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${serviceKey}`,
+              apikey: serviceKey,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              cliente_id: (data as any).cliente_id,
+              venda_id: (data as any).venda_id ?? null,
+            }),
+          },
+        );
+
+        if (!refreshRes.ok) {
+          console.error(
+            "Falha ao atualizar procuração para o modelo vigente",
+            refreshRes.status,
+            await refreshRes.text(),
+          );
+          return json({
+            error: "A procuração está sendo atualizada para o modelo vigente. Tente novamente em instantes.",
+          }, 503);
+        }
+
+        const refreshed = await sb
+          .from("qa_procuracoes")
+          .select("id, cliente_id, venda_id, status, template_versao, conteudo_renderizado, generated_at, outorgado_ate")
+          .eq("id", procuracaoId)
+          .maybeSingle();
+        if (refreshed.error || !refreshed.data) {
+          return json({ error: "Não foi possível carregar a procuração atualizada." }, 503);
+        }
+        if (Number((refreshed.data as any).template_versao ?? 0) < versaoVigente) {
+          return json({
+            error: "A procuração ainda não foi atualizada para o modelo vigente. Tente novamente em instantes.",
+          }, 503);
+        }
+        data = refreshed.data;
+      }
+    }
 
     const conteudo = String((data as any).conteudo_renderizado ?? "").trim();
     if (!conteudo) return json({ error: "Procuração sem conteúdo publicado" }, 422);
