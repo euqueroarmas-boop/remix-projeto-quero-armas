@@ -134,7 +134,8 @@ export default function QAProcuracaoPrimarioAdmin() {
     toast.success("Rascunho descartado");
   }
 
-  async function carregar() {
+  // aposPublicacao=true: sempre recarrega o editor com o que foi salvo (ignora edições pendentes)
+  async function carregar(aposPublicacao = false) {
     setCarregando(true);
     try {
       const { data: tpl } = await supabase
@@ -143,13 +144,20 @@ export default function QAProcuracaoPrimarioAdmin() {
         .eq("codigo", CODIGO).eq("vigente", true).maybeSingle();
       const template = (tpl as any) ?? null;
       setVigente(template);
-      if (template?.corpo_html && !editorHtml.trim()) {
-        // Prefere rascunho local se existir
-        const rascunho = localStorage.getItem(RASCUNHO_KEY);
-        const htmlParaCarregar = rascunho ?? template.corpo_html;
-        setInitialHtml(htmlParaCarregar);
-        setEditorHtml(htmlParaCarregar);
-        setNomeArquivo(rascunho ? "rascunho.html" : `procuracao-modelo-v${template.versao}.html`);
+      if (template?.corpo_html) {
+        if (aposPublicacao) {
+          // Após publicar: mostra exatamente o que foi persistido no banco
+          setInitialHtml(template.corpo_html);
+          setEditorHtml(template.corpo_html);
+          setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
+        } else if (!editorHtml.trim()) {
+          // Carga inicial: prefere rascunho local se existir
+          const rascunho = localStorage.getItem(RASCUNHO_KEY);
+          const htmlParaCarregar = rascunho ?? template.corpo_html;
+          setInitialHtml(htmlParaCarregar);
+          setEditorHtml(htmlParaCarregar);
+          setNomeArquivo(rascunho ? "rascunho.html" : `procuracao-modelo-v${template.versao}.html`);
+        }
       }
     } finally {
       setCarregando(false);
@@ -203,7 +211,9 @@ export default function QAProcuracaoPrimarioAdmin() {
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao publicar");
       toast.success(`Procuração publicada — versão ${(data as any).versao}.`);
-      await carregar();
+      localStorage.removeItem(RASCUNHO_KEY);
+      setTemRascunho(false);
+      await carregar(true);
     } catch (e: any) {
       toast.error(e?.message || "Erro ao publicar");
     } finally {
