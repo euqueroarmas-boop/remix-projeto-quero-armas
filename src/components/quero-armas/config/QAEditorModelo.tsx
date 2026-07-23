@@ -278,9 +278,9 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
           minHeight,
           fontFamily: "Georgia, 'Times New Roman', serif",
           color: "#1a1a1a",
-          fontSize: "14px",
-          lineHeight: "1.8",
-          padding: "20px 24px",
+          fontSize: "15px",
+          lineHeight: "1.75",
+          padding: "48px",
           textAlign: "justify",
         }}
       />
@@ -309,32 +309,42 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
       )}
 
       <style>{`
-        /* ── Editor visual ── */
+        /* ── Editor visual — CSS espelha PROCURACAO_CSS para WYSIWYG fiel ── */
         .qa-editor-visual:empty:before {
           content: attr(data-placeholder);
           color: #aaa; font-style: italic; pointer-events: none;
         }
-        .qa-editor-visual h1 {
-          text-align: center; font-size: 15px; line-height: 1.35;
-          margin: 0 0 18px; text-transform: uppercase; font-weight: bold;
+        /* h1/h2/h3 — iguais ao export */
+        .qa-editor-visual h1,
+        .qa-editor-visual h2,
+        .qa-editor-visual h3 {
+          font-size: 16px; font-weight: 700; text-align: center;
+          margin: 28px 0 18px; text-transform: uppercase; line-height: 1.35;
         }
-        .qa-editor-visual h2 {
-          font-size: 13px; margin: 18px 0 8px;
-          text-align: center; text-transform: uppercase; font-weight: bold;
+        .qa-editor-visual h2,
+        .qa-editor-visual h3 {
+          font-size: 14px; margin-top: 22px; text-align: left;
         }
-        .qa-editor-visual h3 { font-size: 13px; margin: 14px 0 6px; font-weight: bold; }
-        .qa-editor-visual p { margin: 0 0 12px; }
-        .qa-editor-visual ol { margin: 10px 0 14px 22px; }
-        .qa-editor-visual ul { margin: 8px 0 10px 18px; }
-        .qa-editor-visual li { margin-bottom: 8px; }
+        /* Dentro de .qa-procuracao-template, h2 permanece centralizado */
+        .qa-editor-visual .qa-procuracao-template h2 { text-align: center; }
+        .qa-editor-visual p { margin: 0 0 14px; }
+        .qa-editor-visual ol,
+        .qa-editor-visual ul { margin: 12px 0 16px 24px; padding: 0; }
+        .qa-editor-visual li { margin: 0 0 8px; }
+        .qa-editor-visual strong { font-weight: 700; }
         .qa-editor-visual .qa-procuracao__letterhead {
-          margin: 0 0 24px; font-family: Arial, sans-serif;
+          margin: 0 0 30px; font-family: Arial, sans-serif;
           font-size: 11px; line-height: 1.45; text-align: right;
         }
-        .qa-editor-visual .qa-doc__signature { margin-top: 36px; text-align: center; }
-        .qa-editor-visual .qa-doc__signature:before {
-          content: ""; display: block; width: 280px; max-width: 80%;
-          border-top: 1px solid #111; margin: 0 auto 8px;
+        .qa-editor-visual .qa-procuracao__powers { margin-left: 26px; }
+        .qa-editor-visual .qa-procuracao__powers li {
+          padding-left: 2px; margin-bottom: 14px;
+        }
+        .qa-editor-visual .qa-doc__date { margin-top: 28px; text-align: right; }
+        .qa-editor-visual .qa-doc__signature { margin-top: 52px; text-align: center; }
+        .qa-editor-visual .qa-doc__signature::before {
+          content: ""; display: block; width: 320px; max-width: 80%;
+          border-top: 1px solid #1a1a1a; margin: 0 auto 8px;
         }
         .qa-editor-visual .qa-doc__signature span,
         .qa-editor-visual .qa-doc__signature small { display: block; }
