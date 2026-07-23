@@ -85,6 +85,7 @@ const GRUPO_CERTIDOES_ESTADUAIS = [
   },
   {
     codigo: "certidao_estadual_policia_civil",
+    legacyCodigos: ["certidao_estadual_segundo_grau_acoes_criminais"],
     nome: "Certidão Estadual — Polícia Civil",
     descricao_o_que_e: "Certidão estadual emitida pela Polícia Civil, quando disponível no estado do requerente.",
     descricao_como_enviar: "Emita a certidão estadual da Polícia Civil do seu estado e envie o PDF original.",
@@ -92,6 +93,7 @@ const GRUPO_CERTIDOES_ESTADUAIS = [
   },
   {
     codigo: "certidao_estadual_justica_militar",
+    legacyCodigos: ["certidao_estadual_segundo_grau_execucoes_criminais"],
     nome: "Certidão Estadual — Tribunal de Justiça Militar",
     descricao_o_que_e: "Certidão estadual emitida pelo Tribunal de Justiça Militar, quando disponível no estado do requerente.",
     descricao_como_enviar: "Emita a certidão estadual do Tribunal de Justiça Militar do seu estado, quando disponível, e envie o PDF original.",
@@ -99,7 +101,26 @@ const GRUPO_CERTIDOES_ESTADUAIS = [
   },
 ] as const;
 
-const GRUPO_CERTIDOES_ESTADUAIS_TIPOS = GRUPO_CERTIDOES_ESTADUAIS.map((item) => item.codigo);
+const GRUPO_CERTIDOES_ESTADUAIS_TIPOS = GRUPO_CERTIDOES_ESTADUAIS.flatMap((item) => [
+  item.codigo,
+  ...("legacyCodigos" in item ? item.legacyCodigos : []),
+]);
+const CERTIDOES_ESTADUAIS_CANONICAS = new Map(GRUPO_CERTIDOES_ESTADUAIS.map((item) => [item.codigo, item]));
+const CERTIDOES_ESTADUAIS_LEGADAS = new Map(
+  GRUPO_CERTIDOES_ESTADUAIS.flatMap((item) =>
+    ("legacyCodigos" in item ? item.legacyCodigos : []).map((codigo) => [codigo, item] as const),
+  ),
+);
+
+function itemCertidaoEstadualPresente(item: (typeof GRUPO_CERTIDOES_ESTADUAIS)[number], tipos: Set<string>) {
+  return tipos.has(item.codigo) || ("legacyCodigos" in item && item.legacyCodigos.some((codigo) => tipos.has(codigo)));
+}
+
+function nomeDocumentoExibicao(item: { codigo?: string | null; tipo_documento?: string | null; nome: string } | ChecklistItem) {
+  const codigo = "codigo" in item ? item.codigo : item.tipo_documento;
+  const pacote = (codigo && (CERTIDOES_ESTADUAIS_CANONICAS.get(codigo) ?? CERTIDOES_ESTADUAIS_LEGADAS.get(codigo))) || null;
+  return pacote?.nome ?? ("nome" in item ? item.nome : item.nome_documento);
+}
 
 const OCUPACAO_RAMOS: Array<{ titulo: string; itens: string[] }> = [
   {
@@ -159,8 +180,8 @@ export default function MontarChecklistAdmin() {
   const tiposChecklist = useMemo(() => new Set(checklist.map((c) => c.tipo_documento)), [checklist]);
   const fluxoResidenciaAtivo = FLUXO_RESIDENCIA_TERCEIRO_TIPOS.every((t) => tiposChecklist.has(t));
   const fluxoOcupacaoAtivo = FLUXO_OCUPACAO_LICITA_TIPOS.every((t) => tiposChecklist.has(t));
-  const certidoesEstaduaisAplicadas = GRUPO_CERTIDOES_ESTADUAIS_TIPOS.filter((t) => tiposChecklist.has(t)).length;
-  const grupoCertidoesEstaduaisAtivo = certidoesEstaduaisAplicadas === GRUPO_CERTIDOES_ESTADUAIS_TIPOS.length;
+  const certidoesEstaduaisAplicadas = GRUPO_CERTIDOES_ESTADUAIS.filter((item) => itemCertidaoEstadualPresente(item, tiposChecklist)).length;
+  const grupoCertidoesEstaduaisAtivo = certidoesEstaduaisAplicadas === GRUPO_CERTIDOES_ESTADUAIS.length;
 
   async function carregarBiblioteca() {
     const { data } = await supabase
@@ -547,7 +568,7 @@ export default function MontarChecklistAdmin() {
       for (const item of ((bib as any[]) ?? [])) bibMap.set(item.codigo, item);
       const ordemBase = Math.max(50, checklist.reduce((max, c) => Math.max(max, c.ordem), 0) + 10);
       const tiposExistentes = new Set(checklist.map((item) => item.tipo_documento));
-      const payload = GRUPO_CERTIDOES_ESTADUAIS.filter((item) => !tiposExistentes.has(item.codigo)).map((item, index) => {
+      const payload = GRUPO_CERTIDOES_ESTADUAIS.filter((item) => !itemCertidaoEstadualPresente(item, tiposExistentes)).map((item, index) => {
         const b = bibMap.get(item.codigo);
         return {
           servico_id: servicoId,
@@ -798,7 +819,7 @@ export default function MontarChecklistAdmin() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {GRUPO_CERTIDOES_ESTADUAIS.map((item, index) => {
-                  const presente = tiposChecklist.has(item.codigo);
+                  const presente = itemCertidaoEstadualPresente(item, tiposChecklist);
                   return (
                     <div key={item.codigo} className="rounded-lg border bg-white p-2" style={{ borderColor: presente ? "hsl(145 60% 85%)" : "hsl(0 70% 88%)" }}>
                       <div className="flex items-start gap-2">
@@ -911,7 +932,7 @@ export default function MontarChecklistAdmin() {
                             : "bg-white border-slate-200 hover:bg-slate-50 hover:border-[#7B1C2E]/30"
                         }`}
                       >
-                        <span className="flex-1 truncate">{i.nome}</span>
+                        <span className="flex-1 truncate">{nomeDocumentoExibicao(i)}</span>
                         {i.jaNoServico ? (
                           <span className="text-[9px] px-1 rounded bg-slate-200 text-slate-500 shrink-0">já no serviço</span>
                         ) : (
@@ -963,7 +984,7 @@ export default function MontarChecklistAdmin() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium ${GRUPO_CERTIDOES_ESTADUAIS_TIPOS.includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 25%)" }}>
-                        {c.nome_documento}
+                        {nomeDocumentoExibicao(c)}
                       </p>
                       <p className="text-[10px] font-mono truncate text-slate-400">
                         ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
