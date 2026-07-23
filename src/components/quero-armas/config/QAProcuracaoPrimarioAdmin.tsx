@@ -93,6 +93,7 @@ export default function QAProcuracaoPrimarioAdmin() {
   const [vigente, setVigente] = useState<TemplateVigente | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [editorHtml, setEditorHtml] = useState("");
+  const [initialHtml, setInitialHtml] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState<string | null>(null);
   const [publicando, setPublicando] = useState(false);
   const [verCodigoVigente, setVerCodigoVigente] = useState(false);
@@ -111,7 +112,7 @@ export default function QAProcuracaoPrimarioAdmin() {
       const template = (tpl as any) ?? null;
       setVigente(template);
       if (template?.corpo_html && !editorHtml.trim()) {
-        editorRef.current?.setHtml(template.corpo_html);
+        setInitialHtml(template.corpo_html);
         setEditorHtml(template.corpo_html);
         setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
       }
@@ -276,6 +277,7 @@ export default function QAProcuracaoPrimarioAdmin() {
             {/* QAEditorModelo */}
             <QAEditorModelo
               ref={editorRef}
+              initialHtml={initialHtml}
               onChange={setEditorHtml}
               inserts={INSERTS_PROCURACAO}
               minHeight={380}
