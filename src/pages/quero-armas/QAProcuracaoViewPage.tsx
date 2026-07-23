@@ -206,6 +206,13 @@ export default function QAProcuracaoViewPage() {
           max-width: 720px;
           margin: 0 auto;
         }
+        .qa-procuracao-body .qa-procuracao__letterhead {
+          margin: 0 0 30px;
+          font-family: Arial, sans-serif;
+          font-size: 11px;
+          line-height: 1.45;
+          text-align: right;
+        }
         .qa-procuracao-body p {
           margin: 0 0 14px;
         }
@@ -233,12 +240,22 @@ export default function QAProcuracaoViewPage() {
           margin-top: 22px;
           text-align: left;
         }
+        .qa-procuracao-body .qa-procuracao-template h2 {
+          text-align: center;
+        }
+        .qa-procuracao-body .qa-procuracao__powers {
+          margin-left: 26px;
+        }
+        .qa-procuracao-body .qa-procuracao__powers li {
+          padding-left: 2px;
+          margin-bottom: 14px;
+        }
         .qa-procuracao-body strong {
           font-weight: 700;
         }
         .qa-procuracao-body .qa-doc__date {
           margin-top: 28px;
-          text-align: left;
+          text-align: right;
         }
         .qa-procuracao-body .qa-doc__signature {
           margin-top: 52px;

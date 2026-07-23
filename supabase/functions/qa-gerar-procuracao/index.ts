@@ -94,22 +94,38 @@ function buildProcuracaoPadrao(ctx: Record<string, string>): string {
   const h = (key: string) => escHtml(ctx[key] ?? "");
   return `
 <article class="qa-doc qa-procuracao-template">
+  <header class="qa-procuracao__letterhead">
+    <strong>${h("empresa_razao_social")}</strong><br />
+    CNPJ: ${h("empresa_cnpj_completo")}<br />
+    ${h("empresa_endereco")}
+  </header>
+
   <h1>PROCURAÇÃO DESTINADA À POLÍCIA FEDERAL, FORÇAS ARMADAS E DELEGACIAS DE POLÍCIA</h1>
 
-  <p><strong>OUTORGANTE:</strong> ${h("cliente_nome_completo")}, ${h("cliente_nacionalidade") || "brasileiro(a)"}, ${h("cliente_estado_civil") || "estado civil não informado"}, ${h("cliente_profissao") || "profissão não informada"}, portador(a) do CPF nº ${h("cliente_cpf")}, RG/CIN nº ${h("cliente_rg")}${ctx.cliente_emissor_rg ? `, expedido por ${h("cliente_emissor_rg")}` : ""}${ctx.cliente_uf_emissor_rg ? `/${h("cliente_uf_emissor_rg")}` : ""}, residente e domiciliado(a) em ${h("cliente_endereco")}, e-mail ${h("cliente_email") || "não informado"}${ctx.cliente_telefone ? `, telefone ${h("cliente_telefone")}` : ""}.</p>
+  <h2>OUTORGANTE</h2>
+  <p><strong>OUTORGANTE:</strong> ${h("cliente_nome_completo")}, ${h("cliente_estado_civil") || "estado civil não informado"}, ${h("cliente_profissao") || "profissão não informada"}, portador(a) do CPF nº ${h("cliente_cpf")}, RG/CIN nº ${h("cliente_rg")}${ctx.cliente_emissor_rg ? `, expedido por ${h("cliente_emissor_rg")}` : ""}${ctx.cliente_uf_emissor_rg ? `/${h("cliente_uf_emissor_rg")}` : ""}, residente e domiciliado(a) em ${h("cliente_endereco")}, e-mail ${h("cliente_email") || "não informado"}${ctx.cliente_telefone ? `, telefone ${h("cliente_telefone")}` : ""}.</p>
 
+  <h2>OUTORGADO(S)</h2>
   <p><strong>OUTORGADO:</strong> ${h("empresa_razao_social")}, pessoa jurídica inscrita no CNPJ sob nº ${h("empresa_cnpj_completo")}, com sede em ${h("empresa_endereco")}, neste ato representada por ${h("empresa_representante")}${ctx.empresa_representante_cpf ? `, CPF nº ${h("empresa_representante_cpf")}` : ""}.</p>
 
   <h2>PODERES</h2>
-  <p>Pelo presente instrumento particular de procuração, o(a) OUTORGANTE nomeia e constitui como seu bastante procurador o OUTORGADO, a quem confere poderes para, em seu nome, praticar atos relacionados a requerimentos, protocolos, acompanhamento, cumprimento de exigências, retirada de documentos, assinatura de requerimentos, declarações e demais atos necessários perante ${h("orgaos_delegados")}.</p>
+  <p><strong>PODERES:</strong> Pelo presente instrumento particular de procuração, o(a) OUTORGANTE nomeia e constitui como seu bastante procurador o OUTORGADO, a quem confere amplos, gerais e ilimitados poderes para, em seu nome, praticar os seguintes atos:</p>
 
-  <ol>
-    <li><strong>Perante delegacias de polícia:</strong> requerer certidões, registros, cópias, informações e demais documentos necessários aos processos administrativos vinculados ao serviço contratado.</li>
-    <li><strong>Perante o Exército Brasileiro:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos perante o sistema SIGMA e demais órgãos correlatos.</li>
-    <li><strong>Perante a Polícia Federal:</strong> requerer, protocolar, acompanhar, responder exigências e retirar documentos em procedimentos vinculados ao SINARM, autorização de compra, posse, registro, renovação e demais serviços relacionados à arma de fogo.</li>
+  <ol class="qa-procuracao__powers">
+    <li><strong>PERANTE AS DELEGACIAS DE POLÍCIA NO BRASIL:</strong> Requerer, junto a qualquer delegacia de polícia do Brasil, cópias de boletins de ocorrência e/ou quaisquer outros documentos relacionados, podendo, para tanto, assinar documentos, formular requerimentos e praticar todos os atos necessários para o fiel cumprimento deste mandato. Incluem-se, mas não se limitam a, as seguintes delegacias:
+      <ul>
+        <li>Delegacia de Polícia Civil</li><li>Delegacia de Polícia Federal</li><li>Delegacia de Polícia Rodoviária Federal</li><li>Delegacia de Polícia Militar</li><li>Delegacia de Crimes Cibernéticos</li><li>Delegacia de Crimes contra o Patrimônio</li><li>Delegacia de Crimes Ambientais</li><li>Delegacia de Narcóticos</li><li>Delegacia de Homicídios</li><li>Delegacia de Repressão ao Tráfico de Entorpecentes</li>
+      </ul>
+    </li>
+    <li><strong>PERANTE O EXÉRCITO BRASILEIRO:</strong> Requerer ou responder ao Serviço de Fiscalização de Produtos Controlados do Comando de todas as Regiões Militares do Brasil (SFPCs), assinar requerimentos, termos e declarações, protocolar e retirar processos para:
+      <ul>
+        <li>Concessão de Certificado de Registro Pessoa Física</li><li>Primeira via de CRAF</li><li>Segunda via de CRAF</li><li>Exclusão de arma do SIGMA por distrato com fornecedor</li><li>Transferência de arma de CAC para um acervo SINARM - mesmo proprietário</li><li>Transferência de arma de militar das Forças Armadas para CAC - mesmo proprietário</li><li>Transferência de arma de militar das Forças Armadas para CAC - mudança de proprietário</li><li>Transferência de arma de militar da PM/CBM para CAC - mesmo proprietário</li><li>Transferência de arma em acervo SINARM para CAC - mudança de proprietário</li><li>Transferência de arma em acervo SINARM para CAC - mesmo proprietário</li><li>Transferência de arma de entidade de tiro para CAC</li><li>Exclusão de arma do SIGMA por entrega para destruição na campanha do desarmamento</li><li>Exclusão de arma do SIGMA por duplicidade de registro em acervo SIGMA</li><li>Exclusão de arma do SIGMA por já constar em acervo SINARM ou SIGMA</li><li>Emissão de mapa de armas em acervo SIGMA</li><li>Mudança de acervo de arma para um mesmo CAC</li><li>Transferência de arma de CAC para CAC</li><li>Correção de dados da arma de fogo</li><li>Emissão de 2ª via do CRAF</li><li>Renovação do CRAF</li><li>Inclusão de registro de arma por migração do banco antigo</li><li>Inclusão de registro de arma por autorização de anistia</li><li>Transferência de arma de CAC para um acervo SINARM - mudança de proprietário</li><li>Exclusão de arma do SIGMA por transferência para outro acervo SIGMA de militar da PM/CBM</li>
+      </ul>
+    </li>
+    <li><strong>PERANTE A POLÍCIA FEDERAL:</strong> Requerer ao Núcleo de Controle de Armas - NUARM e Sistema Nacional de Armas para Caçadores, Atiradores Desportivos e Colecionares - SINARM CAC, em todo território nacional, requerimentos, termos e declarações, protocolar e retirar processos para autorização de compra de arma de fogo, registro e apostilamento de arma de fogo, guia de trânsito e tráfego especial, posse, porte e renovação de armas de fogo, entre outros serviços relacionados e correlacionados a arma de fogo de pessoa física ou jurídica, respondendo solidariamente pelos documentos apresentados.</li>
   </ol>
 
-  <p>Este mandato é válido pelo prazo indicado no sistema, ou até que seja expressamente revogado pelo(a) OUTORGANTE.</p>
+  <p>Este mandato é válido por prazo indeterminado, ou até que seja expressamente revogado pelo(a) OUTORGANTE.</p>
 
   <p class="qa-doc__date">Jacareí, ${h("data_hoje_extenso")}.</p>
 
