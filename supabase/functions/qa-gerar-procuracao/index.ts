@@ -150,39 +150,63 @@ Deno.serve(async (req) => {
     const venda_id: number | null = body?.venda_id ?? null;
     if (!cliente_id) return json({ error: "cliente_id obrigatório" }, 400);
 
-    // Já existe procuração pendente/válida para esta venda? idempotência
-    const { data: jaExiste } = await sb
-      .from("qa_procuracoes")
-      .select("id, status")
-      .eq("cliente_id", cliente_id)
-      .eq("venda_id", venda_id ?? -1)
+    // O template vigente precisa ser conhecido antes da idempotência. Assim,
+    // procurações ainda pendentes podem acompanhar uma nova versão publicada,
+    // sem alterar documentos já enviados, validados ou reaproveitados.
+    const { data: tpl } = await sb
+      .from("qa_contract_templates")
+      .select("id, versao, corpo_html")
+      .eq("codigo", TEMPLATE_CODIGO)
+      .eq("vigente", true)
       .maybeSingle();
-    if (jaExiste) return json({ ok: true, reused: false, existing: jaExiste });
+    if (!tpl) return json({ error: `Nenhum template ${TEMPLATE_CODIGO} vigente publicado` }, 422);
+
+    // Já existe procuração para esta venda?
+    let procuraExistenteQuery = sb
+      .from("qa_procuracoes")
+      .select("id, status, template_versao")
+      .eq("cliente_id", cliente_id);
+    procuraExistenteQuery = venda_id == null
+      ? procuraExistenteQuery.is("venda_id", null)
+      : procuraExistenteQuery.eq("venda_id", venda_id);
+    const { data: jaExiste } = await procuraExistenteQuery.maybeSingle();
+    const podeAtualizarPendente = Boolean(
+      jaExiste
+      && ["generated_pending_customer_signature", "rejected"].includes(jaExiste.status)
+      && Number(jaExiste.template_versao ?? 0) < Number((tpl as any).versao ?? 0),
+    );
+    if (jaExiste && !podeAtualizarPendente) {
+      return json({ ok: true, reused: false, existing: jaExiste });
+    }
 
     // 1) Reaproveitamento — procuração validada vigente do mesmo cliente
     const hoje = new Date().toISOString().slice(0, 10);
-    const { data: reapVal } = await sb
-      .from("qa_procuracoes")
-      .select("id, outorgado_ate")
-      .eq("cliente_id", cliente_id)
-      .eq("status", "validated")
-      .or(`outorgado_ate.is.null,outorgado_ate.gte.${hoje}`)
-      .order("validated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: reapVal } = jaExiste
+      ? { data: null }
+      : await sb
+        .from("qa_procuracoes")
+        .select("id, outorgado_ate")
+        .eq("cliente_id", cliente_id)
+        .eq("status", "validated")
+        .or(`outorgado_ate.is.null,outorgado_ate.gte.${hoje}`)
+        .order("validated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
     // 2) Reaproveitamento — hub documental (qa_documentos_cliente)
-    const { data: hubDoc } = await sb
-      .from("qa_documentos_cliente")
-      .select("id, data_validade, arquivo_storage_path")
-      .eq("qa_cliente_id", cliente_id)
-      .ilike("tipo_documento", "procuracao%")
-      .in("ia_status", ["sugerido", "processado"])
-      .eq("validado_admin", true)
-      .or(`data_validade.is.null,data_validade.gte.${hoje}`)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data: hubDoc } = jaExiste
+      ? { data: null }
+      : await sb
+        .from("qa_documentos_cliente")
+        .select("id, data_validade, arquivo_storage_path")
+        .eq("qa_cliente_id", cliente_id)
+        .ilike("tipo_documento", "procuracao%")
+        .in("ia_status", ["sugerido", "processado"])
+        .eq("validado_admin", true)
+        .or(`data_validade.is.null,data_validade.gte.${hoje}`)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
     if (reapVal || hubDoc) {
       const { data: novo, error } = await sb
@@ -201,15 +225,6 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 500);
       return json({ ok: true, reused: true, id: (novo as any).id });
     }
-
-    // 3) Gera a partir do template vigente
-    const { data: tpl } = await sb
-      .from("qa_contract_templates")
-      .select("id, versao, corpo_html")
-      .eq("codigo", TEMPLATE_CODIGO)
-      .eq("vigente", true)
-      .maybeSingle();
-    if (!tpl) return json({ error: `Nenhum template ${TEMPLATE_CODIGO} vigente publicado` }, 422);
 
     // Dados do cliente
     const { data: cli } = await sb
@@ -259,21 +274,36 @@ Deno.serve(async (req) => {
       ? renderizado
       : buildProcuracaoPadrao(ctx);
 
-    const { data: novo, error } = await sb
-      .from("qa_procuracoes")
-      .insert({
+    const payload = {
         cliente_id, venda_id,
         template_id: (tpl as any).id,
         template_versao: (tpl as any).versao,
         status: "generated_pending_customer_signature",
         conteudo_renderizado: conteudo,
         outorgado_ate: outorgadoAte.toISOString().slice(0, 10),
-      })
+        arquivo_assinado_path: null,
+        customer_signature_uploaded_at: null,
+        validated_at: null,
+        validated_by: null,
+        rejection_reason: null,
+        generated_at: new Date().toISOString(),
+      };
+
+    const query = jaExiste
+      ? sb.from("qa_procuracoes").update(payload).eq("id", jaExiste.id)
+      : sb.from("qa_procuracoes").insert(payload);
+    const { data: novo, error } = await query
       .select("id")
       .single();
     if (error) return json({ error: error.message }, 500);
 
-    return json({ ok: true, reused: false, id: (novo as any).id });
+    return json({
+      ok: true,
+      reused: false,
+      upgraded: Boolean(jaExiste),
+      template_versao: (tpl as any).versao,
+      id: (novo as any).id,
+    });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

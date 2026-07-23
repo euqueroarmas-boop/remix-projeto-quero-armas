@@ -12,6 +12,7 @@ type TemplateVigente = {
   id: string;
   versao: number;
   titulo: string;
+  corpo_html: string;
   data_publicacao: string | null;
   updated_at: string | null;
 };
@@ -120,14 +121,21 @@ export default function QAProcuracaoPrimarioAdmin() {
     try {
       const [{ data: tpl }, { data: sb }] = await Promise.all([
         supabase.from("qa_contract_templates" as any)
-          .select("id, versao, titulo, data_publicacao, updated_at")
+          .select("id, versao, titulo, corpo_html, data_publicacao, updated_at")
           .eq("codigo", CODIGO).eq("vigente", true).maybeSingle(),
         supabase.from("qa_config_substituicoes_pessoais" as any)
           .select("id, texto_original, placeholder, descricao, ativo")
           .order("created_at", { ascending: true }),
       ]);
-      setVigente((tpl as any) ?? null);
+      const template = (tpl as any) ?? null;
+      setVigente(template);
       setSubs(((sb as any[]) ?? []) as Substituicao[]);
+      if (template?.corpo_html && !corpoOriginal.trim() && !corpoStringado.trim()) {
+        setCorpoOriginal(template.corpo_html);
+        setCorpoStringado(template.corpo_html);
+        setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
+        setModoPreview("stringado");
+      }
     } finally {
       setCarregando(false);
     }
@@ -207,8 +215,8 @@ export default function QAProcuracaoPrimarioAdmin() {
         body: { corpo: corpoStringado, codigo: CODIGO },
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao publicar");
-      toast.success(`Procuração publicada — versão ${(data as any).versao}`);
-      setCorpoOriginal(""); setCorpoStringado(""); setHits([]); setNomeArquivo(null);
+      toast.success(`Procuração publicada — versão ${(data as any).versao}. Procurações pendentes serão atualizadas automaticamente.`);
+      setHits([]);
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao publicar");
