@@ -197,7 +197,7 @@ export default function MockupsLoginV9() {
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden bg-black font-sans text-white"
+      className="relative min-h-[100svh] w-full overflow-x-hidden overflow-y-auto bg-black font-sans text-white lg:min-h-screen lg:overflow-hidden"
       style={{
         backgroundImage: `url(${heroUrl})`,
         backgroundSize: "cover",
@@ -259,7 +259,7 @@ export default function MockupsLoginV9() {
       )}
 
       {/* DIREITA — CARD */}
-      <div className="relative z-20 mx-auto w-full max-w-[340px] px-6 pb-10 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:-translate-y-1/2 lg:px-0 lg:pb-0">
+      <div className="relative z-20 mx-auto flex min-h-[100svh] w-full max-w-[340px] -translate-y-[4svh] flex-col justify-center px-6 py-8 lg:absolute lg:right-[5vw] lg:top-1/2 lg:mx-0 lg:min-h-0 lg:translate-y-[-50%] lg:px-0 lg:py-0">
         <div className="relative rounded-2xl p-5 sm:p-6" style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(14px) saturate(1.15)", WebkitBackdropFilter: "blur(14px) saturate(1.15)", border: "1px solid rgba(180,30,45,0.65)", boxShadow: "0 24px 80px rgba(0,0,0,0.55), 0 0 28px rgba(180,30,45,0.22)" }}>
           <div className="mb-4 flex justify-center">
             <ArsenalInteligenteLogo
