@@ -117,6 +117,11 @@ export default function QAFaviconAdmin() {
         </div>
 
         <div className="flex-1 min-w-0 space-y-3">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+            <strong className="font-semibold text-slate-700">Tamanho recomendado:</strong>{" "}
+            512 x 512 px. Também aceitamos 256 x 256, 128 x 128, 64 x 64 ou 32 x 32 px.
+          </div>
+
           <input
             ref={inputRef}
             type="file"
