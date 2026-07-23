@@ -106,8 +106,12 @@ export default function QAProcuracaoPrimarioAdmin() {
   const [copiado, setCopiado] = useState(false);
   const [temRascunho, setTemRascunho] = useState(() => !!localStorage.getItem(RASCUNHO_KEY));
 
-  const [clienteIdRegen, setClienteIdRegen] = useState("");
+  const [regenBusca, setRegenBusca] = useState("");
+  const [regenResultados, setRegenResultados] = useState<{ id: number; nome: string; cpf: string }[]>([]);
+  const [regenSelecionado, setRegenSelecionado] = useState<{ id: number; nome: string } | null>(null);
+  const [regenBuscando, setRegenBuscando] = useState(false);
   const [regenerando, setRegenerando] = useState(false);
+  const regenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editorRef = useRef<QAEditorModeloRef>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -224,18 +228,39 @@ export default function QAProcuracaoPrimarioAdmin() {
     }
   }
 
+  function onRegenBuscaChange(valor: string) {
+    setRegenBusca(valor);
+    setRegenSelecionado(null);
+    if (regenTimerRef.current) clearTimeout(regenTimerRef.current);
+    if (valor.trim().length < 2) { setRegenResultados([]); return; }
+    regenTimerRef.current = setTimeout(async () => {
+      setRegenBuscando(true);
+      const { data } = await supabase
+        .from("qa_clientes" as any)
+        .select("id, nome_completo, cpf")
+        .ilike("nome_completo", `%${valor.trim()}%`)
+        .limit(8);
+      setRegenResultados(
+        ((data ?? []) as any[]).map((c) => ({ id: c.id, nome: c.nome_completo, cpf: c.cpf ?? "" }))
+      );
+      setRegenBuscando(false);
+    }, 350);
+  }
+
   async function regenerarProcuracao() {
-    const id = clienteIdRegen.trim();
-    if (!id) { toast.error("Informe o ID do cliente"); return; }
+    if (!regenSelecionado) { toast.error("Selecione um cliente na lista"); return; }
     setRegenerando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-gerar-procuracao", {
-        body: { cliente_id: Number(id), force_regenerate: true },
+        body: { cliente_id: regenSelecionado.id, force_regenerate: true },
       });
       if (error || !(data as any)?.ok) {
         toast.error((data as any)?.error || error?.message || "Erro ao regenerar");
       } else {
-        toast.success(`Procuração regenerada com sucesso (ID procuração: ${(data as any)?.id ?? "?"})`);
+        toast.success(`Procuração de ${regenSelecionado.nome} regenerada (ID: ${(data as any)?.id ?? "?"})`);
+        setRegenBusca("");
+        setRegenResultados([]);
+        setRegenSelecionado(null);
       }
     } catch (e: any) {
       toast.error(e?.message || "Erro ao regenerar");
@@ -389,30 +414,50 @@ export default function QAProcuracaoPrimarioAdmin() {
           </div>
           {/* ── Regenerar procuração por cliente ── */}
           <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-3">
-            <p className="text-[11px] font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+            <p className="text-[11px] font-semibold text-slate-600 mb-1 uppercase tracking-wide">
               Regenerar procuração de um cliente
             </p>
             <p className="text-[11px] text-slate-500 mb-2">
-              Força a regeneração da procuração com o modelo e formatação atuais, mesmo que já exista uma versão anterior.
+              Busque pelo nome e clique no cliente para regenerar com o modelo e formatação atuais.
             </p>
-            <div className="flex gap-2 items-center">
+            <div className="relative mb-2">
               <input
-                type="number"
-                placeholder="ID do cliente (numérico)"
-                value={clienteIdRegen}
-                onChange={(e) => setClienteIdRegen(e.target.value)}
-                className="h-8 flex-1 rounded border border-slate-300 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
+                type="text"
+                placeholder="Digite o nome do cliente…"
+                value={regenBusca}
+                onChange={(e) => onRegenBuscaChange(e.target.value)}
+                className="h-8 w-full rounded border border-slate-300 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
               />
-              <Button
-                size="sm"
-                onClick={regenerarProcuracao}
-                disabled={regenerando || !clienteIdRegen.trim()}
-                className="h-8 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white whitespace-nowrap"
-              >
-                {regenerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                {regenerando ? "Regenerando…" : "Regenerar"}
-              </Button>
+              {regenBuscando && (
+                <Loader2 className="absolute right-2 top-2 w-3.5 h-3.5 animate-spin text-slate-400" />
+              )}
+              {regenResultados.length > 0 && !regenSelecionado && (
+                <div className="absolute z-20 left-0 right-0 mt-0.5 rounded border border-slate-200 bg-white shadow-md overflow-hidden">
+                  {regenResultados.map((c) => (
+                    <button key={c.id} type="button"
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 border-b border-slate-100 last:border-0"
+                      onClick={() => { setRegenSelecionado(c); setRegenBusca(c.nome); setRegenResultados([]); }}>
+                      <span className="font-medium">{c.nome}</span>
+                      {c.cpf && <span className="ml-2 text-slate-400">CPF {c.cpf}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+            {regenSelecionado && (
+              <p className="text-[11px] text-green-700 mb-2">
+                ✓ Selecionado: <strong>{regenSelecionado.nome}</strong> (ID {regenSelecionado.id})
+              </p>
+            )}
+            <Button
+              size="sm"
+              onClick={regenerarProcuracao}
+              disabled={regenerando || !regenSelecionado}
+              className="h-8 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white"
+            >
+              {regenerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              {regenerando ? "Regenerando…" : "Regenerar procuração"}
+            </Button>
           </div>
         </>
       )}
