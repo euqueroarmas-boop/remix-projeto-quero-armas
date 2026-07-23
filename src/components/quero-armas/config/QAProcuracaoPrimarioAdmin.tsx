@@ -1,22 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import {
   FileSignature, Upload, Loader2, CheckCircle2, RefreshCw,
-  Plus, Trash2, Wand2, Download, Code2, Copy, Check, ChevronDown, ChevronUp,
+  Wand2, Download, Code2, Copy, Check, ChevronDown, ChevronUp,
 } from "lucide-react";
 import { QAEditorModelo, QAEditorModeloRef, QAEditorInsert } from "./QAEditorModelo";
 
 type TemplateVigente = {
   id: string; versao: number; titulo: string;
   corpo_html: string; data_publicacao: string | null; updated_at: string | null;
-};
-type Substituicao = {
-  id: string; texto_original: string; placeholder: string;
-  descricao: string | null; ativo: boolean;
 };
 
 const CODIGO = "PROCURACAO_PADRAO_QUERO_ARMAS";
@@ -56,8 +51,6 @@ const MODELO_HTML_PADRAO = `<article class="qa-doc qa-procuracao-template">
   </div>
 </article>`;
 
-// ── Trechos de inserção rápida para procuração ────────────────────────────
-
 const INSERTS_PROCURACAO: QAEditorInsert[] = [
   {
     label: "Títl.",
@@ -86,30 +79,9 @@ const INSERTS_PROCURACAO: QAEditorInsert[] = [
   },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-
 function fmtData(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
-}
-
-function escapeRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function stringar(texto: string, subs: Substituicao[]): { saida: string; hits: Array<{ de: string; para: string; count: number }> } {
-  let saida = texto;
-  const hits: Array<{ de: string; para: string; count: number }> = [];
-  for (const s of subs) {
-    if (!s.ativo || !s.texto_original.trim()) continue;
-    const re = new RegExp(escapeRegex(s.texto_original), "gi");
-    const matches = saida.match(re);
-    if (matches?.length) {
-      saida = saida.replace(re, s.placeholder);
-      hits.push({ de: s.texto_original, para: s.placeholder, count: matches.length });
-    }
-  }
-  return { saida, hits };
 }
 
 function temPlaceholdersObrigatorios(html: string) {
@@ -117,48 +89,30 @@ function temPlaceholdersObrigatorios(html: string) {
   return PLACEHOLDERS_OBRIGATORIOS.every((p) => lower.includes(p.toLowerCase()));
 }
 
-// ── Componente ────────────────────────────────────────────────────────────
-
 export default function QAProcuracaoPrimarioAdmin() {
   const [vigente, setVigente] = useState<TemplateVigente | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const [subs, setSubs] = useState<Substituicao[]>([]);
-  const [hits, setHits] = useState<Array<{ de: string; para: string; count: number }>>([]);
+  const [editorHtml, setEditorHtml] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState<string | null>(null);
   const [publicando, setPublicando] = useState(false);
   const [verCodigoVigente, setVerCodigoVigente] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  const [editorHtml, setEditorHtml] = useState("");
 
   const editorRef = useRef<QAEditorModeloRef>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
-  const [novaSub, setNovaSub] = useState({ texto: "", placeholder: "", descricao: "" });
-
-  const carregarNoEditor = useCallback((html: string, sbs: Substituicao[]) => {
-    const { saida, hits: h } = stringar(html, sbs);
-    editorRef.current?.setHtml(saida);
-    setEditorHtml(saida);
-    setHits(h);
-  }, []);
-
   async function carregar() {
     setCarregando(true);
     try {
-      const [{ data: tpl }, { data: sb }] = await Promise.all([
-        supabase.from("qa_contract_templates" as any)
-          .select("id, versao, titulo, corpo_html, data_publicacao, updated_at")
-          .eq("codigo", CODIGO).eq("vigente", true).maybeSingle(),
-        supabase.from("qa_config_substituicoes_pessoais" as any)
-          .select("id, texto_original, placeholder, descricao, ativo")
-          .order("created_at", { ascending: true }),
-      ]);
+      const { data: tpl } = await supabase
+        .from("qa_contract_templates" as any)
+        .select("id, versao, titulo, corpo_html, data_publicacao, updated_at")
+        .eq("codigo", CODIGO).eq("vigente", true).maybeSingle();
       const template = (tpl as any) ?? null;
-      const sbList = ((sb as any[]) ?? []) as Substituicao[];
       setVigente(template);
-      setSubs(sbList);
       if (template?.corpo_html && !editorHtml.trim()) {
-        carregarNoEditor(template.corpo_html, sbList);
+        editorRef.current?.setHtml(template.corpo_html);
+        setEditorHtml(template.corpo_html);
         setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
       }
     } finally {
@@ -167,34 +121,6 @@ export default function QAProcuracaoPrimarioAdmin() {
   }
 
   useEffect(() => { carregar(); }, []);
-
-  async function adicionarSub() {
-    if (!novaSub.texto.trim() || !novaSub.placeholder.trim()) {
-      toast.error("Preencha texto e placeholder");
-      return;
-    }
-    const { error } = await supabase.from("qa_config_substituicoes_pessoais" as any).insert({
-      texto_original: novaSub.texto.trim(),
-      placeholder: novaSub.placeholder.trim(),
-      descricao: novaSub.descricao.trim() || null,
-      ativo: true,
-    });
-    if (error) { toast.error(error.message); return; }
-    setNovaSub({ texto: "", placeholder: "", descricao: "" });
-    toast.success("Substituição adicionada");
-    await carregar();
-  }
-
-  async function removerSub(id: string) {
-    if (!confirm("Remover esta substituição?")) return;
-    await supabase.from("qa_config_substituicoes_pessoais" as any).delete().eq("id", id);
-    await carregar();
-  }
-
-  async function toggleSub(s: Substituicao) {
-    await supabase.from("qa_config_substituicoes_pessoais" as any).update({ ativo: !s.ativo }).eq("id", s.id);
-    await carregar();
-  }
 
   async function onArquivoSelecionado(file: File | null) {
     if (!file) return;
@@ -205,14 +131,16 @@ export default function QAProcuracaoPrimarioAdmin() {
     }
     const texto = await file.text();
     setNomeArquivo(file.name);
-    carregarNoEditor(texto, subs);
+    editorRef.current?.setHtml(texto);
+    setEditorHtml(texto);
     toast.success(`Arquivo "${file.name}" carregado (${Math.round(texto.length / 1024)} KB)`);
   }
 
   function inserirModeloPadrao() {
     const atual = editorRef.current?.getHtml() ?? "";
     if (atual.trim() && !confirm("Substituir o conteúdo atual pelo modelo padrão?")) return;
-    carregarNoEditor(MODELO_HTML_PADRAO, subs);
+    editorRef.current?.setHtml(MODELO_HTML_PADRAO);
+    setEditorHtml(MODELO_HTML_PADRAO);
     setNomeArquivo("modelo-padrao.html");
     toast.success("Modelo padrão carregado");
   }
@@ -231,12 +159,6 @@ export default function QAProcuracaoPrimarioAdmin() {
       toast.error("A procuração precisa conter {{cliente_nome_completo}} e {{cliente_cpf}}.");
       return;
     }
-    const restantes = subs.filter((x) => x.ativo).filter((s) =>
-      new RegExp(escapeRegex(s.texto_original), "i").test(html)
-    ).map((s) => s.texto_original);
-    if (restantes.length > 0) {
-      if (!confirm(`Ainda há dados pessoais não substituídos:\n\n${restantes.join("\n")}\n\nPublicar mesmo assim?`)) return;
-    }
     if (!confirm("Publicar esta procuração como VIGENTE (versão nova)?")) return;
     setPublicando(true);
     try {
@@ -245,7 +167,6 @@ export default function QAProcuracaoPrimarioAdmin() {
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao publicar");
       toast.success(`Procuração publicada — versão ${(data as any).versao}.`);
-      setHits([]);
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao publicar");
@@ -265,9 +186,9 @@ export default function QAProcuracaoPrimarioAdmin() {
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Edite a procuração no <b>QAEditorModelo</b> abaixo. Os campos do cliente entram automaticamente
-        pelos marcadores <code className="font-mono">{'{{cliente_nome_completo}}'}</code> etc.
-        O sistema substitui dados pessoais pelos placeholders da empresa antes de publicar.
+        Edite a procuração no editor abaixo. Os campos do cliente entram automaticamente pelos marcadores
+        como <code className="font-mono">{'{{cliente_nome_completo}}'}</code>. Use os botões de inserção
+        rápida na toolbar para adicionar seções prontas.
       </p>
 
       {carregando ? (
@@ -316,54 +237,10 @@ export default function QAProcuracaoPrimarioAdmin() {
                   className="w-full rounded border px-2 py-1.5 text-[11px] font-mono resize-y bg-slate-900 text-green-300 focus:outline-none"
                   style={{ borderColor: "hsl(220 15% 80%)" }} />
                 <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 60%)" }}>
-                  Somente leitura. Use "Copiar HTML" para copiar e depois cole no editor → modo HTML.
+                  Somente leitura. Use "Copiar HTML" e cole no editor → modo HTML.
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Substituições pessoais */}
-          <div className="border rounded-lg p-3 mb-5" style={{ borderColor: "hsl(220 15% 90%)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Wand2 className="w-3.5 h-3.5" style={{ color: "hsl(352 60% 30%)" }} />
-              <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>
-                Dados pessoais → placeholders da empresa ({subs.length})
-              </h3>
-            </div>
-            <p className="text-[11px] mb-2" style={{ color: "hsl(220 10% 62%)" }}>
-              Cada linha define uma substituição case-insensitive.
-              Use placeholders como <code className="mx-1 font-mono">{`{{empresa_razao_social}}`}</code>.
-            </p>
-            <div className="space-y-1 mb-2 max-h-52 overflow-y-auto pr-1">
-              {subs.map((s) => (
-                <div key={s.id}
-                  className={`grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center rounded border px-2 py-1 ${s.ativo ? "" : "opacity-50"}`}
-                  style={{ borderColor: "hsl(220 15% 92%)" }}>
-                  <span className="text-[11px] font-mono truncate" title={s.texto_original}>{s.texto_original}</span>
-                  <span className="text-[11px] font-mono truncate text-slate-600" title={s.placeholder}>{s.placeholder}</span>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5" onClick={() => toggleSub(s)}>
-                      {s.ativo ? "Ativa" : "Inativa"}
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => removerSub(s.id)}>
-                      <Trash2 className="w-3 h-3 text-red-600" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              {subs.length === 0 && (
-                <p className="text-[11px] italic text-slate-400 py-2 text-center">Nenhuma substituição cadastrada.</p>
-              )}
-            </div>
-            <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
-              <Input placeholder='texto pessoal (ex: "Willian Massaroto")' className="h-7 text-xs"
-                value={novaSub.texto} onChange={(e) => setNovaSub((s) => ({ ...s, texto: e.target.value }))} />
-              <Input placeholder="{{empresa_representante}}" className="h-7 text-xs font-mono"
-                value={novaSub.placeholder} onChange={(e) => setNovaSub((s) => ({ ...s, placeholder: e.target.value }))} />
-              <Button size="sm" className="h-7 gap-1 text-xs bg-[#7B1C2E] hover:bg-[#6a1827] text-white" onClick={adicionarSub}>
-                <Plus className="w-3 h-3" /> Adicionar
-              </Button>
-            </div>
           </div>
 
           {/* Editor */}
@@ -382,9 +259,11 @@ export default function QAProcuracaoPrimarioAdmin() {
                   <Wand2 className="w-3 h-3" /> Modelo padrão
                 </Button>
               </div>
-              <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
-                {editorHtml.trim() ? `${Math.round(editorHtml.length / 1024)} KB` : ""}
-              </p>
+              {editorHtml.trim() && (
+                <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
+                  {Math.round(editorHtml.length / 1024)} KB
+                </p>
+              )}
             </div>
 
             {/* Alerta placeholders obrigatórios */}
@@ -393,14 +272,6 @@ export default function QAProcuracaoPrimarioAdmin() {
                 ? "OK: O modelo contém os marcadores obrigatórios do cliente."
                 : "Obrigatório: inclua {{cliente_nome_completo}} e {{cliente_cpf}} antes de publicar."}
             </div>
-
-            {/* Alerta substituições */}
-            {hits.length > 0 && (
-              <div className="rounded border border-green-200 bg-green-50 px-2 py-1.5 text-[11px] text-green-800">
-                <b>{hits.reduce((a, h) => a + h.count, 0)} substituição(ões) aplicada(s):</b>{" "}
-                {hits.map((h) => `${h.de} → ${h.para} (${h.count}x)`).join(" · ")}
-              </div>
-            )}
 
             {/* QAEditorModelo */}
             <QAEditorModelo
