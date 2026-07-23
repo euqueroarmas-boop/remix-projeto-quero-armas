@@ -23,6 +23,72 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+function normText(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function extractManualOverrides(text: string): Record<string, string> {
+  const raw = text.trim();
+  const overrides: Record<string, string> = {};
+
+  const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  if (email) overrides.email = email;
+
+  const rg = raw.match(/\brg\s*(?:[:=\-]|n[ºo.]*)?\s*([0-9A-Za-z.\-]{5,18})/i)?.[1];
+  if (rg) overrides.rg = digitsOnly(rg) || rg.trim();
+
+  const cep = raw.match(/\bcep\s*(?:[:=\-]|n[ºo.]*)?\s*(\d{5}[-.\s]?\d{3})/i)?.[1];
+  if (cep) overrides.cep = digitsOnly(cep);
+
+  const cnpj = raw.match(/\bcnpj\s*(?:[:=\-]|n[ºo.]*)?\s*([0-9.\-/]{14,22})/i)?.[1];
+  if (cnpj) overrides.cnpj = digitsOnly(cnpj);
+
+  const chunks = raw.split(/[,;\n]+/).map((p) => p.trim()).filter(Boolean);
+  for (const chunk of chunks) {
+    const d = digitsOnly(chunk);
+    const n = normText(chunk);
+    if (!overrides.cnpj && d.length === 14) overrides.cnpj = d;
+    else if (!overrides.celular && (d.length === 10 || d.length === 11) && !/\brg\b/i.test(chunk)) overrides.celular = d;
+    else if (!overrides.cep && d.length === 8 && !/\brg\b/i.test(chunk)) overrides.cep = d;
+    else if (!overrides.estado_civil && /\b(casado|casada|solteiro|solteira|divorciado|divorciada|viuvo|viuva)\b/.test(n)) overrides.estado_civil = chunk;
+    else if (!overrides.escolaridade && /\b(ensino|superior|fundamental|medio|pos|graduacao)\b/.test(n)) overrides.escolaridade = chunk;
+    else if (!overrides.profissao && /\b(empresario|empresaria|mei|autonomo|autonoma|servidor|servidora|aposentado|aposentada|clt)\b/.test(n)) overrides.profissao = chunk;
+  }
+
+  if (!overrides.cnpj) {
+    const anyCnpj = raw.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/)?.[0];
+    if (anyCnpj) overrides.cnpj = digitsOnly(anyCnpj);
+  }
+
+  return overrides;
+}
+
+async function lookupCepManual(cep: string): Promise<Record<string, string> | null> {
+  const clean = digitsOnly(cep);
+  if (clean.length !== 8) return null;
+  try {
+    const res = await fetch(`https://brasilapi.com.br/api/cep/v1/${clean}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      cep: `${clean.slice(0, 5)}-${clean.slice(5)}`,
+      logradouro: data.street || "",
+      bairro: data.neighborhood || "",
+      cidade: data.city || "",
+      estado: data.state || "",
+      pais: "BRASIL",
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado, onConcluido, onVoltar }: Props) {
   const [linhas, setLinhas] = useState<StatusLinha[]>([]);
   const [erro, setErro] = useState<string | null>(null);
@@ -84,10 +150,9 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
       const senhaConfidence: number = typeof fields.senha_gov_confidence === "number" ? fields.senha_gov_confidence : 0;
       const senhaNeedsReview: boolean = fields.senha_gov_needs_review === true;
 
-      // Aplica classificação da IA sobre os arquivos (por índice/nome).
-      // Só sobrescreve se: (a) tipo atual for "outro"/"cin" (fallback do
-      // regex de nome), OU (b) confiança da IA ≥ 0.85. Preserva escolha
-      // manual explícita do admin em Etapa 1.
+      // A Central de Adesão só pode sugerir. A validação final é do Hub
+      // Documental contra a pendência esperada; por isso a IA não troca mais
+      // o tipo do arquivo sozinha, mesmo quando disser 100%.
       const arquivosClassificados: Array<{
         indice?: number;
         nome_arquivo?: string;
@@ -102,10 +167,12 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
           );
           if (!sug || !sug.tipo_sugerido) return arq;
           const tipoIA = sug.tipo_sugerido.trim();
-          if (!tipoIA || tipoIA === arq.tipo) return arq;
-          const admDefiniuManual = arq.tipo !== "outro" && (sug.confianca ?? 0) < 0.85;
-          if (admDefiniuManual) return arq;
-          return { ...arq, tipo: tipoIA, tipo_ia_confianca: sug.confianca, tipo_ia_motivo: sug.motivo } as ArquivoUpload;
+          if (!tipoIA) return arq;
+          if (tipoIA !== arq.tipo) {
+            warnings.push(`Classificação apenas sugerida: "${arq.file.name}" parece "${tipoIA}", mas o tipo não foi alterado automaticamente. O Hub Documental deve validar.`);
+            return arq;
+          }
+          return { ...arq, tipo_ia_confianca: sug.confianca, tipo_ia_motivo: sug.motivo } as ArquivoUpload;
         });
         setArquivos(atualizados);
       }
@@ -155,6 +222,34 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
       };
       for (const campo of ["celular", "telefone_secundario", "telefone"]) {
         if (campos[campo]) campos[campo] = formatarTelefoneBR(campos[campo]!);
+      }
+
+      const manualOverrides = extractManualOverrides(textoPastaColado);
+      const camposManuais = Object.keys(manualOverrides);
+      for (const [campo, valor] of Object.entries(manualOverrides)) {
+        if (!valor) continue;
+        const anterior = campos[campo];
+        campos[campo] = campo === "celular" ? formatarTelefoneBR(valor) : valor;
+        confidenceMap[campo] = 1;
+        if (anterior && digitsOnly(anterior) !== digitsOnly(valor) && anterior.trim().toLowerCase() !== valor.trim().toLowerCase()) {
+          warnings.push(`Dado manual prevaleceu sobre o documento: ${campo.toUpperCase()} informado no texto livre substituiu "${anterior}".`);
+        }
+      }
+
+      if (manualOverrides.cep) {
+        const cepData = await lookupCepManual(manualOverrides.cep);
+        if (cepData) {
+          for (const campo of ["cep", "logradouro", "bairro", "cidade", "estado", "pais"]) {
+            if (cepData[campo]) {
+              campos[campo] = cepData[campo].toUpperCase();
+              confidenceMap[campo] = 1;
+            }
+          }
+          warnings.push("CEP informado manualmente prevaleceu e o endereço foi atualizado pela consulta de CEP.");
+        }
+      }
+      if (camposManuais.length > 0) {
+        warnings.push(`Texto livre aplicado como fonte prioritária: ${camposManuais.map((c) => c.toUpperCase()).join(", ")}.`);
       }
 
       const confidencePairs = Object.entries(confidenceMap).map(([campo, confidence]) => ({

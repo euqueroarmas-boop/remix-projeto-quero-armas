@@ -345,17 +345,11 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
                   </select>
                   {isIA && (
                     <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
-                        confia! >= 0.85
-                          ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                          : confia! >= 0.6
-                          ? "text-amber-700 bg-amber-50 border-amber-200"
-                          : "text-red-700 bg-red-50 border-red-200"
-                      }`}
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border text-amber-700 bg-amber-50 border-amber-200"
                       title={arq.tipo_ia_motivo ?? undefined}
                     >
                       <Sparkles className="w-3 h-3" />
-                      IA {Math.round(confia! * 100)}%
+                      Sugestão IA
                     </span>
                   )}
                   {!isIA && arq.tipo !== "outro" && (

@@ -253,10 +253,9 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
 
       // ============================================================
       // Persistência dos documentos capturados na Etapa 1.
-      // Faz upload no bucket `qa-documentos` e insere em
-      // `qa_documentos_cliente` como se fosse o Hub Documental
-      // (staff/admin => aprovado + validado_admin). Assim eliminamos
-      // a etapa Arsenal do wizard: nenhum reupload manual necessário.
+      // A Central de Adesão só entrega o arquivo ao Hub Documental. A
+      // validação final fica no fluxo único do Hub, contra a pendência real
+      // do checklist, para evitar que a extração inicial aprove tipo errado.
       // ============================================================
       const docsParaPersistir = (arquivos || []).filter((a) => a.tipo !== "gov_br");
       if (docsParaPersistir.length > 0) {
@@ -283,10 +282,17 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               arquivo_storage_path: path,
               arquivo_nome: a.file.name,
               arquivo_mime: a.file.type || null,
-              status: "aprovado",
+              status: "pendente_aprovacao",
               origem: "admin",
-              validado_admin: true,
-              aprovado_em: new Date().toISOString(),
+              validado_admin: false,
+              aprovado_em: null,
+              ia_dados_extraidos: {
+                origem: "central_adesao",
+                tipo_sugerido: tipoDb,
+                tipo_ia_confianca: a.tipo_ia_confianca ?? null,
+                tipo_ia_motivo: a.tipo_ia_motivo ?? null,
+                validacao_final: "hub_documental",
+              },
             };
             const { error: insErr } = await supabase
               .from("qa_documentos_cliente" as any)
