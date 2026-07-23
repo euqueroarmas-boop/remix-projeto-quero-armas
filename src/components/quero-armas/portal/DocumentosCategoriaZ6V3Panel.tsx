@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } fro
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -31,22 +32,53 @@ function parseDateUTC(d: string | null | undefined): Date | null {
   return null;
 }
 
-function addOneYearISO(iso: string | null | undefined): string | null {
-  const base = parseDateUTC(iso);
-  if (!base) return null;
-  const venc = new Date(Date.UTC(base.getUTCFullYear() + 1, base.getUTCMonth(), base.getUTCDate()));
-  return `${venc.getUTCFullYear()}-${String(venc.getUTCMonth() + 1).padStart(2, "0")}-${String(venc.getUTCDate()).padStart(2, "0")}`;
+function getNestedValue(obj: any, path: string): any {
+  return path.split(".").reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
 }
 
-function isLaudoExame(doc: any): boolean {
-  return /laudo|exame|capacidade_tecnica|psicotecnico/i.test(String(doc?.tipo_documento || ""));
+function toISODateString(value: string): string | null {
+  const date = parseDateUTC(value);
+  if (!date) return null;
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function pickDocDate(doc: any, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = key.includes(".") ? getNestedValue(doc, key) : doc?.[key];
+    if (typeof value === "string") {
+      const iso = toISODateString(value);
+      if (iso) return iso;
+    }
+  }
+  return null;
+}
+
+function dataEmissaoHub(doc: any): string | null {
+  return pickDocDate(doc, [
+    "data_emissao",
+    "data_expedicao",
+    "data_expedicao_rg",
+    "ia_dados_extraidos.camposExtraidos.data_emissao",
+    "ia_dados_extraidos.camposExtraidos.data_expedicao",
+    "ia_dados_extraidos.camposExtraidos.data_expedicao_rg",
+    "ia_dados_extraidos.campos_extraidos.data_emissao",
+    "ia_dados_extraidos.campos_extraidos.data_expedicao",
+    "ia_dados_extraidos.campos_extraidos.data_expedicao_rg",
+    "ia_dados_extraidos.campos.data_emissao",
+    "ia_dados_extraidos.campos.data_expedicao",
+    "ia_dados_extraidos.campos.data_expedicao_rg",
+  ]);
 }
 
 function dataValidadeHub(doc: any): string | null {
-  if (isLaudoExame(doc)) {
-    return addOneYearISO(doc?.data_emissao) || doc?.data_validade_efetiva || doc?.data_validade || null;
-  }
-  return doc?.data_validade_efetiva || doc?.data_validade || null;
+  return getValidadeInfo({
+    tipo_documento: doc?.tipo_documento,
+    data_emissao: dataEmissaoHub(doc),
+    data_validade_efetiva: doc?.data_validade_efetiva,
+    data_validade: doc?.data_validade,
+    ano_competencia: doc?.ano_competencia,
+    regra_validacao: doc?.regra_validacao,
+  }).iso;
 }
 
 const formatDate = (d: string | null) => {
@@ -450,7 +482,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const validade = dataValidadeHub(d);
                 const dias = daysUntil(validade);
                 const cor = dotColor(dias);
-                const metaLine = [d.numero_documento, d.orgao_emissor, d.data_emissao ? `emitido ${formatDate(d.data_emissao)}` : null]
+                const dataEmissao = dataEmissaoHub(d);
+                const metaLine = [d.numero_documento, d.orgao_emissor, dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null]
                   .filter(Boolean).join(" · ") || "emitido recente";
                 const pillCls = d.status === "aprovado" ? "pill pill-aprov" : d.status === "reprovado" ? "pill pill-repr" : "pill pill-pend";
                 const pillTxt = d.status === "aprovado" ? "APROVADO" : d.status === "reprovado" ? "REPROVADO" : "EM ANÁLISE";

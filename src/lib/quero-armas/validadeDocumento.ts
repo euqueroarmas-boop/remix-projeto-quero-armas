@@ -170,6 +170,27 @@ export function isFiliacaoClube(tipo?: string | null): boolean {
   return t === "comprovante_clube_tiro" || t === "filiacao_clube" || t === "carteirinha_clube_tiro";
 }
 
+export function isDocumentoIdentificacao10Anos(tipo?: string | null): boolean {
+  const t = String(tipo ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  return [
+    "rg",
+    "rg_com_cpf",
+    "cin",
+    "cnh",
+    "passaporte",
+    "documento_identidade",
+    "documento_identificacao",
+    "identidade",
+  ].includes(t) ||
+    t.includes("carteira_de_identidade") ||
+    t.includes("carteira_identidade") ||
+    t.includes("identidade_nacional") ||
+    t.includes("passaporte");
+}
+
 /**
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
@@ -189,6 +210,9 @@ export function calcularValidadeEfetiva(
     // Anuidade: 12 meses a partir da emissão.
     return toISO(addCalendarMonths(emi, 12));
   }
+  if (isDocumentoIdentificacao10Anos(tipo)) {
+    return toISO(addCalendarMonths(emi, 120));
+  }
   // Comprovante de residência: vale de uma emissão até a próxima (1 mês).
   const tipoStr = String(tipo || "").toLowerCase();
   const isRes =
@@ -197,10 +221,10 @@ export function calcularValidadeEfetiva(
     tipoStr === "comprovante_de_residencia" ||
     tipoStr === "comprovante_de_endereco";
   if (isRes) return toISO(addCalendarMonths(emi, 1));
-  // Demais documentos (CIN, CR, CNH, CRAF, GTE, laudos, etc.) NÃO devem
-  // ter validade inferida a partir da emissão — cada um tem prazo próprio
-  // que já vem gravado em `data_validade` pelo extractor/admin. Retornar
-  // null aqui força o `getValidadeInfo` a usar o backend como fonte.
+  // Demais documentos (CR, CRAF, GTE, etc.) NÃO devem ter validade inferida
+  // a partir da emissão — cada um tem prazo próprio que já vem gravado em
+  // `data_validade` pelo extractor/admin. Retornar null aqui força o
+  // `getValidadeInfo` a usar o backend como fonte.
   return null;
 }
 
