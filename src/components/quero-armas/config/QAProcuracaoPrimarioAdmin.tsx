@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import {
-  FileSignature, Upload, Loader2, CheckCircle2, RefreshCw, Plus, Trash2, Wand2, Eye, Download,
+  FileSignature, Upload, Loader2, CheckCircle2, RefreshCw, Plus, Trash2, Wand2, Download,
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  List, ListOrdered, Heading1, Heading2, Type,
 } from "lucide-react";
 
 type TemplateVigente = {
@@ -78,7 +80,6 @@ function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Aplica todas as substituições ativas ao texto. Retorna também os hits. */
 function stringar(texto: string, subs: Substituicao[]): { saida: string; hits: Array<{ de: string; para: string; count: number }> } {
   let saida = texto;
   const hits: Array<{ de: string; para: string; count: number }> = [];
@@ -99,22 +100,53 @@ function temPlaceholdersObrigatorios(html: string) {
   return PLACEHOLDERS_OBRIGATORIOS.every((p) => lower.includes(p.toLowerCase()));
 }
 
+// ── Toolbar ─────────────────────────────────────────────────────────────────
+
+function ToolbarBtn({
+  onClick, title, active, children,
+}: { onClick: () => void; title: string; active?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+      className={`h-7 w-7 flex items-center justify-center rounded transition-colors text-[13px]
+        ${active ? "bg-[#7B1C2E] text-white" : "hover:bg-slate-100 text-slate-700"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarSep() {
+  return <div className="w-px h-5 bg-slate-200 mx-0.5 self-center" />;
+}
+
 export default function QAProcuracaoPrimarioAdmin() {
   const [vigente, setVigente] = useState<TemplateVigente | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [subs, setSubs] = useState<Substituicao[]>([]);
 
-  const [corpoOriginal, setCorpoOriginal] = useState("");
-  const [corpoStringado, setCorpoStringado] = useState("");
+  // Editor state — innerHTML kept in ref to avoid React fighting contentEditable
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [editorHtml, setEditorHtml] = useState(""); // synced from editor on input
   const [hits, setHits] = useState<Array<{ de: string; para: string; count: number }>>([]);
   const [nomeArquivo, setNomeArquivo] = useState<string | null>(null);
   const [publicando, setPublicando] = useState(false);
-  const [modoPreview, setModoPreview] = useState<"original" | "stringado">("stringado");
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const [novaSub, setNovaSub] = useState<{ texto: string; placeholder: string; descricao: string }>({
     texto: "", placeholder: "", descricao: "",
   });
+
+  // Populates editor imperatively (never during editing — cursor-safe)
+  const setEditorContent = useCallback((html: string, sbs?: Substituicao[]) => {
+    const subsToUse = sbs ?? subs;
+    const { saida, hits: h } = stringar(html, subsToUse);
+    if (editorRef.current) editorRef.current.innerHTML = saida;
+    setEditorHtml(saida);
+    setHits(h);
+  }, [subs]);
 
   async function carregar() {
     setCarregando(true);
@@ -128,13 +160,16 @@ export default function QAProcuracaoPrimarioAdmin() {
           .order("created_at", { ascending: true }),
       ]);
       const template = (tpl as any) ?? null;
+      const sbList = ((sb as any[]) ?? []) as Substituicao[];
       setVigente(template);
-      setSubs(((sb as any[]) ?? []) as Substituicao[]);
-      if (template?.corpo_html && !corpoOriginal.trim() && !corpoStringado.trim()) {
-        setCorpoOriginal(template.corpo_html);
-        setCorpoStringado(template.corpo_html);
+      setSubs(sbList);
+      // Only populate editor on first load (when editor is empty)
+      if (template?.corpo_html && !editorRef.current?.innerHTML.trim()) {
+        const { saida, hits: h } = stringar(template.corpo_html, sbList);
+        if (editorRef.current) editorRef.current.innerHTML = saida;
+        setEditorHtml(saida);
+        setHits(h);
         setNomeArquivo(`procuracao-modelo-v${template.versao}.html`);
-        setModoPreview("stringado");
       }
     } finally {
       setCarregando(false);
@@ -158,26 +193,17 @@ export default function QAProcuracaoPrimarioAdmin() {
     setNovaSub({ texto: "", placeholder: "", descricao: "" });
     toast.success("Substituição adicionada");
     await carregar();
-    if (corpoOriginal) recalcularPreview(corpoOriginal);
   }
 
   async function removerSub(id: string) {
     if (!confirm("Remover esta substituição?")) return;
     await supabase.from("qa_config_substituicoes_pessoais" as any).delete().eq("id", id);
     await carregar();
-    if (corpoOriginal) recalcularPreview(corpoOriginal);
   }
 
   async function toggleSub(s: Substituicao) {
     await supabase.from("qa_config_substituicoes_pessoais" as any).update({ ativo: !s.ativo }).eq("id", s.id);
     await carregar();
-    if (corpoOriginal) recalcularPreview(corpoOriginal);
-  }
-
-  function recalcularPreview(texto: string) {
-    const { saida, hits } = stringar(texto, subs);
-    setCorpoStringado(saida);
-    setHits(hits);
   }
 
   async function onArquivoSelecionado(file: File | null) {
@@ -188,34 +214,34 @@ export default function QAProcuracaoPrimarioAdmin() {
       return;
     }
     const texto = await file.text();
-    setCorpoOriginal(texto);
     setNomeArquivo(file.name);
-    recalcularPreview(texto);
-    toast.success(`Arquivo "${file.name}" carregado (${Math.round(texto.length / 1024)} KB) — revise a stringagem`);
+    setEditorContent(texto);
+    toast.success(`Arquivo "${file.name}" carregado (${Math.round(texto.length / 1024)} KB)`);
   }
 
   async function publicar() {
-    if (!corpoStringado.trim()) { toast.error("Cole ou envie a procuração"); return; }
-    if (!temPlaceholdersObrigatorios(corpoStringado)) {
-      toast.error("A procuração precisa conter {{cliente_nome_completo}} e {{cliente_cpf}}. Assim ela nunca sai com dados fixos de outro cliente.");
+    const html = editorRef.current?.innerHTML?.trim() ?? "";
+    if (!html) { toast.error("Digite ou envie a procuração"); return; }
+    if (!temPlaceholdersObrigatorios(html)) {
+      toast.error("A procuração precisa conter {{cliente_nome_completo}} e {{cliente_cpf}}.");
       return;
     }
     const restantes: string[] = [];
     for (const s of subs.filter((x) => x.ativo)) {
       const re = new RegExp(escapeRegex(s.texto_original), "i");
-      if (re.test(corpoStringado)) restantes.push(s.texto_original);
+      if (re.test(html)) restantes.push(s.texto_original);
     }
     if (restantes.length > 0) {
-      if (!confirm(`Ainda há ocorrências de dados pessoais não substituídas:\n\n${restantes.join("\n")}\n\nPublicar mesmo assim?`)) return;
+      if (!confirm(`Ainda há dados pessoais não substituídos:\n\n${restantes.join("\n")}\n\nPublicar mesmo assim?`)) return;
     }
-    if (!confirm(`Publicar esta procuração como VIGENTE (versão nova)?`)) return;
+    if (!confirm("Publicar esta procuração como VIGENTE (versão nova)?")) return;
     setPublicando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-contrato-template-publicar", {
-        body: { corpo: corpoStringado, codigo: CODIGO },
+        body: { corpo: html, codigo: CODIGO },
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao publicar");
-      toast.success(`Procuração publicada — versão ${(data as any).versao}. Procurações pendentes serão atualizadas automaticamente.`);
+      toast.success(`Procuração publicada — versão ${(data as any).versao}.`);
       setHits([]);
       await carregar();
     } catch (e: any) {
@@ -226,24 +252,29 @@ export default function QAProcuracaoPrimarioAdmin() {
   }
 
   function inserirModeloPadrao() {
-    if (corpoStringado.trim() && !confirm("Substituir o conteúdo atual pelo modelo HTML padrão da procuração?")) return;
-    setCorpoOriginal(MODELO_HTML_PADRAO);
-    setCorpoStringado(MODELO_HTML_PADRAO);
-    setHits([]);
+    if (editorRef.current?.innerHTML.trim() && !confirm("Substituir o conteúdo atual pelo modelo padrão?")) return;
+    setEditorContent(MODELO_HTML_PADRAO);
     setNomeArquivo("modelo-html-padrao.html");
-    setModoPreview("stringado");
-    toast.success("Modelo HTML padrão carregado");
+    toast.success("Modelo padrão carregado");
   }
 
-  function inserirTrecho(trecho: string) {
-    const atual = modoPreview === "original" ? corpoOriginal : corpoStringado;
-    const proximo = atual ? `${atual}\n${trecho}` : trecho;
-    if (modoPreview === "original") {
-      setCorpoOriginal(proximo);
-      recalcularPreview(proximo);
-    } else {
-      setCorpoStringado(proximo);
-    }
+  // ── Editor helpers ────────────────────────────────────────────────────────
+
+  function exec(command: string, value?: string) {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value ?? undefined);
+    syncHtml();
+  }
+
+  function syncHtml() {
+    const html = editorRef.current?.innerHTML ?? "";
+    setEditorHtml(html);
+  }
+
+  function inserirHtml(html: string) {
+    editorRef.current?.focus();
+    document.execCommand("insertHTML", false, html);
+    syncHtml();
   }
 
   return (
@@ -257,10 +288,9 @@ export default function QAProcuracaoPrimarioAdmin() {
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Suba a procuração <b>normal</b> (com o seu nome/CPF pessoais). O sistema substitui automaticamente
-        pelos placeholders da empresa e mostra o resultado antes de publicar. A cada novo serviço contratado,
-        o motor consulta o hub documental e reaproveita a procuração validada do cliente — se não houver,
-        gera uma nova a partir desta versão.
+        Edite a procuração diretamente no editor abaixo. Os campos do cliente entram automaticamente pelos
+        marcadores <code className="font-mono">{'{{cliente_nome_completo}}'}</code> etc. O sistema substitui
+        dados pessoais pelos placeholders da empresa antes de publicar.
       </p>
 
       {carregando ? (
@@ -329,160 +359,178 @@ export default function QAProcuracaoPrimarioAdmin() {
             </div>
           </div>
 
-          {/* Upload + preview */}
+          {/* Editor WYSIWYG */}
           <div className="space-y-2 mb-3">
+            {/* Header do editor */}
             <div className="rounded-lg border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 90%)" }}>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
                 <div>
-                  <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Editor HTML do modelo</h3>
+                  <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Editor de texto</h3>
                   <p className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
-                    Use o modelo abaixo ou monte com trechos. Os campos do cliente entram automaticamente pelos marcadores.
+                    Digite normalmente. Use a barra de formatação ou insira trechos prontos abaixo.
                   </p>
                 </div>
-                <Button size="sm" type="button" onClick={inserirModeloPadrao}
-                  className="h-8 text-xs bg-[#7B1C2E] hover:bg-[#6a1827] text-white gap-1">
-                  <Wand2 className="w-3.5 h-3.5" /> Usar modelo formatado
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => inputFileRef.current?.click()}>
+                    <Upload className="w-3.5 h-3.5" />
+                    {nomeArquivo ? nomeArquivo.slice(0, 22) + (nomeArquivo.length > 22 ? "…" : "") : "Importar arquivo"}
+                  </Button>
+                  <input ref={inputFileRef} type="file" accept=".html,.htm,.md,.txt" className="hidden"
+                    onChange={(e) => onArquivoSelecionado(e.target.files?.[0] ?? null)} />
+                  <Button size="sm" type="button" onClick={inserirModeloPadrao}
+                    className="h-8 text-xs bg-[#7B1C2E] hover:bg-[#6a1827] text-white gap-1">
+                    <Wand2 className="w-3.5 h-3.5" /> Modelo padrão
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<h1>TÍTULO DA PROCURAÇÃO</h1>")}>Título</Button>
-                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<h2>SEÇÃO</h2>")}>Seção</Button>
-                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, CPF nº {{cliente_cpf}}.</p>")}>Outorgante</Button>
-                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho("<p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ nº {{empresa_cnpj_completo}}.</p>")}>Outorgado</Button>
-                <Button size="sm" variant="outline" type="button" className="h-7 text-[11px]" onClick={() => inserirTrecho('<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>')}>Assinatura</Button>
+
+              {/* Toolbar */}
+              <div className="flex flex-wrap items-center gap-0.5 rounded border bg-white px-1.5 py-1 mb-2" style={{ borderColor: "hsl(220 15% 88%)" }}>
+                {/* Formatação de texto */}
+                <ToolbarBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)"><Underline className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarSep />
+                {/* Alinhamento */}
+                <ToolbarBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda"><AlignLeft className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("justifyCenter")} title="Centralizar"><AlignCenter className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("justifyRight")} title="Alinhar à direita"><AlignRight className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("justifyFull")} title="Justificar"><AlignJustify className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarSep />
+                {/* Títulos */}
+                <ToolbarBtn onClick={() => exec("formatBlock", "h1")} title="Título principal (H1)"><Heading1 className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("formatBlock", "h2")} title="Subtítulo (H2)"><Heading2 className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("formatBlock", "p")} title="Parágrafo normal"><Type className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarSep />
+                {/* Listas */}
+                <ToolbarBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3.5 h-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
               </div>
-              <div className={`mt-3 rounded border px-2 py-1.5 text-[11px] ${temPlaceholdersObrigatorios(corpoStringado) ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}>
-                {temPlaceholdersObrigatorios(corpoStringado)
-                  ? "OK: O modelo contém os marcadores obrigatórios do cliente."
-                  : "Obrigatório: inclua {{cliente_nome_completo}} e {{cliente_cpf}} antes de publicar."}
+
+              {/* Trechos prontos */}
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-[10px] font-semibold uppercase text-slate-400 self-center">Inserir:</span>
+                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                  onClick={() => inserirHtml("<h1>TÍTULO DA PROCURAÇÃO</h1>")}>Título</Button>
+                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                  onClick={() => inserirHtml("<h2>SEÇÃO</h2>")}>Seção</Button>
+                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                  onClick={() => inserirHtml("<p><strong>OUTORGANTE:</strong> {{cliente_nome_completo}}, CPF nº {{cliente_cpf}}.</p>")}>Outorgante</Button>
+                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                  onClick={() => inserirHtml("<p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ nº {{empresa_cnpj_completo}}.</p>")}>Outorgado</Button>
+                <Button size="sm" variant="outline" type="button" className="h-6 text-[10px]"
+                  onClick={() => inserirHtml('<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>')}>Assinatura</Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="text-xs h-8 gap-1" onClick={() => inputFileRef.current?.click()}>
-                <Upload className="w-3.5 h-3.5" />
-                {nomeArquivo ? nomeArquivo.slice(0, 30) + (nomeArquivo.length > 30 ? "…" : "") : "Enviar procuração (.html / .md / .txt)"}
-              </Button>
-              <input ref={inputFileRef} type="file" accept=".html,.htm,.md,.txt" className="hidden"
-                onChange={(e) => onArquivoSelecionado(e.target.files?.[0] ?? null)} />
-              {corpoOriginal && (
-                <div className="ml-auto flex items-center gap-1 text-[11px]">
-                  <Button size="sm" variant={modoPreview === "original" ? "default" : "outline"} className="h-7 text-[11px] px-2"
-                    onClick={() => setModoPreview("original")}>Original</Button>
-                  <Button size="sm" variant={modoPreview === "stringado" ? "default" : "outline"} className="h-7 text-[11px] px-2 gap-1"
-                    onClick={() => setModoPreview("stringado")}><Eye className="w-3 h-3" /> Stringado</Button>
-                </div>
-              )}
+            {/* Alerta de placeholders obrigatórios */}
+            <div className={`rounded border px-2 py-1.5 text-[11px] ${temPlaceholdersObrigatorios(editorHtml) ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"}`}>
+              {temPlaceholdersObrigatorios(editorHtml)
+                ? "OK: O modelo contém os marcadores obrigatórios do cliente."
+                : "Obrigatório: inclua {{cliente_nome_completo}} e {{cliente_cpf}} antes de publicar."}
             </div>
+
+            {/* Alerta de substituições aplicadas */}
             {hits.length > 0 && (
               <div className="rounded border border-green-200 bg-green-50 px-2 py-1.5 text-[11px] text-green-800">
                 <b>{hits.reduce((a, h) => a + h.count, 0)} substituição(ões) aplicada(s):</b>{" "}
                 {hits.map((h) => `${h.de} → ${h.para} (${h.count}x)`).join(" · ")}
               </div>
             )}
-            <textarea
-              value={modoPreview === "original" ? corpoOriginal : corpoStringado}
-              onChange={(e) => {
-                if (modoPreview === "original") {
-                  setCorpoOriginal(e.target.value); setNomeArquivo(null); recalcularPreview(e.target.value);
-                } else {
-                  setCorpoStringado(e.target.value);
-                }
+
+            {/* Área de edição WYSIWYG */}
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={syncHtml}
+              className="w-full min-h-[360px] rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#7B1C2E]/30 bg-white"
+              style={{
+                borderColor: "hsl(220 15% 82%)",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                color: "#1a1a1a",
+                fontSize: "14px",
+                lineHeight: "1.8",
+                padding: "24px 28px",
+                textAlign: "justify",
               }}
-              placeholder="Cole aqui a procuração (HTML ou texto)."
-              rows={12}
-              className="w-full rounded-lg border px-3 py-2 text-xs font-mono resize-y focus:outline-none focus:ring-2"
-              style={{ borderColor: modoPreview === "stringado" ? "hsl(145 55% 55%)" : "hsl(220 15% 88%)" }}
             />
-            {corpoStringado.trim() && (
-              <div className="rounded-lg border bg-[#f6f5f1] p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-2" style={{ color: "hsl(220 10% 48%)" }}>
-                  Prévia formatada do cliente
-                </p>
-                <div
-                  className="bg-white rounded border p-5 text-sm leading-7 qa-procuracao-admin-preview"
-                  dangerouslySetInnerHTML={{ __html: corpoStringado }}
-                />
-                <style>{`
-                  .qa-procuracao-admin-preview {
-                    font-family: Georgia, 'Times New Roman', serif;
-                    color: #1a1a1a;
-                    text-align: justify;
-                  }
-                  .qa-procuracao-admin-preview h1 {
-                    text-align: center;
-                    font-size: 16px;
-                    line-height: 1.35;
-                    margin: 0 0 18px;
-                    text-transform: uppercase;
-                  }
-                  .qa-procuracao-admin-preview h2 {
-                    font-size: 13px;
-                    margin: 18px 0 8px;
-                    text-align: center;
-                    text-transform: uppercase;
-                  }
-                  .qa-procuracao-admin-preview .qa-procuracao__letterhead {
-                    margin: 0 0 24px;
-                    font-family: Arial, sans-serif;
-                    font-size: 11px;
-                    line-height: 1.45;
-                    text-align: right;
-                  }
-                  .qa-procuracao-admin-preview p {
-                    margin: 0 0 12px;
-                  }
-                  .qa-procuracao-admin-preview ol {
-                    margin: 10px 0 14px 22px;
-                  }
-                  .qa-procuracao-admin-preview ul {
-                    margin: 8px 0 10px 18px;
-                  }
-                  .qa-procuracao-admin-preview .qa-procuracao__powers li {
-                    margin-bottom: 12px;
-                  }
-                  .qa-procuracao-admin-preview .qa-doc__signature {
-                    margin-top: 36px;
-                    text-align: center;
-                  }
-                  .qa-procuracao-admin-preview .qa-doc__signature:before {
-                    content: "";
-                    display: block;
-                    width: 280px;
-                    max-width: 80%;
-                    border-top: 1px solid #111;
-                    margin: 0 auto 8px;
-                  }
-                  .qa-procuracao-admin-preview .qa-doc__signature span,
-                  .qa-procuracao-admin-preview .qa-doc__signature small {
-                    display: block;
-                  }
-                `}</style>
-              </div>
-            )}
+            <style>{`
+              [contenteditable] h1 {
+                text-align: center;
+                font-size: 15px;
+                line-height: 1.35;
+                margin: 0 0 18px;
+                text-transform: uppercase;
+                font-weight: bold;
+              }
+              [contenteditable] h2 {
+                font-size: 13px;
+                margin: 18px 0 8px;
+                text-align: center;
+                text-transform: uppercase;
+                font-weight: bold;
+              }
+              [contenteditable] .qa-procuracao__letterhead {
+                margin: 0 0 24px;
+                font-family: Arial, sans-serif;
+                font-size: 11px;
+                line-height: 1.45;
+                text-align: right;
+              }
+              [contenteditable] p {
+                margin: 0 0 12px;
+              }
+              [contenteditable] ol {
+                margin: 10px 0 14px 22px;
+              }
+              [contenteditable] ul {
+                margin: 8px 0 10px 18px;
+              }
+              [contenteditable] .qa-procuracao__powers li {
+                margin-bottom: 12px;
+              }
+              [contenteditable] .qa-doc__signature {
+                margin-top: 36px;
+                text-align: center;
+              }
+              [contenteditable] .qa-doc__signature:before {
+                content: "";
+                display: block;
+                width: 280px;
+                max-width: 80%;
+                border-top: 1px solid #111;
+                margin: 0 auto 8px;
+              }
+              [contenteditable] .qa-doc__signature span,
+              [contenteditable] .qa-doc__signature small {
+                display: block;
+              }
+              [contenteditable]:focus {
+                border-color: hsl(352 60% 35%);
+              }
+            `}</style>
+
+            {/* Rodapé */}
             <div className="flex items-center justify-between">
               <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
-                {corpoStringado.trim() ? `${Math.round(corpoStringado.length / 1024)} KB — versão stringada` : ""}
+                {editorHtml.trim() ? `${Math.round(editorHtml.length / 1024)} KB` : ""}
               </p>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={!corpoStringado.trim()}
+                  disabled={!editorHtml.trim()}
                   onClick={() => {
-                    baixarHtmlProcuracao(
-                      corpoStringado,
-                      "Procuracao Quero Armas - Modelo stringado",
-                      "Procuração Quero Armas - Modelo stringado",
-                    );
+                    const html = editorRef.current?.innerHTML ?? "";
+                    baixarHtmlProcuracao(html, "Procuracao Quero Armas - Modelo", "Procuração Quero Armas - Modelo");
                     toast.success("HTML da procuração baixado");
                   }}
                   className="text-xs gap-1 h-8"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  Baixar HTML
+                  <Download className="w-3.5 h-3.5" /> Baixar HTML
                 </Button>
-                <Button size="sm" onClick={publicar} disabled={!corpoStringado.trim() || publicando}
+                <Button size="sm" onClick={publicar} disabled={!editorHtml.trim() || publicando}
                   className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
                   {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                   {publicando ? "Publicando…" : "Publicar procuração"}
