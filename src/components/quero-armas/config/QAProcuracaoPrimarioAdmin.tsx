@@ -73,6 +73,11 @@ const INSERTS_PROCURACAO: QAEditorInsert[] = [
     html: `<h2>OUTORGADO(S)</h2><p><strong>OUTORGADO:</strong> {{empresa_razao_social}}, CNPJ: {{empresa_cnpj_completo}}, com endereço comercial à Rua José Benedito Duarte, 140, Parque Itamarati, 12.307-200, Jacareí, São Paulo, com e-mail: eu@queroarmas.com.br, telefone comercial (11) 9.7848-1919.</p>`,
   },
   {
+    label: "Data",
+    title: "Inserir: Linha de cidade/estado e data de assinatura — {{data_hoje_extenso}} é substituído automaticamente",
+    html: `<p class="qa-doc__date">Jacareí/SP, {{data_hoje_extenso}}.</p>`,
+  },
+  {
     label: "Assn.",
     title: "Inserir: Bloco de assinatura do cliente (linha + nome + CPF)",
     html: `<div class="qa-doc__signature"><span>{{cliente_nome_completo}}</span><small>CPF nº {{cliente_cpf}}</small></div>`,
