@@ -36,6 +36,44 @@ function statusLabel(s: string) {
   return map[s] ?? { label: s, color: "text-muted-foreground bg-muted border-muted" };
 }
 
+function titleCaseName(value: string) {
+  return value
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) =>
+      ["da", "de", "do", "das", "dos", "e"].includes(part)
+        ? part
+        : part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1)
+    )
+    .join(" ");
+}
+
+function shortPersonName(value?: string | null) {
+  const parts = String(value || "")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return "";
+  if (parts.length <= 2) return titleCaseName(parts.join(" "));
+  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+}
+
+function contratoDownloadFilename(contrato: ContratoData) {
+  const numero = String(contrato.contract_number || "CONTRATO")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const cliente = shortPersonName(contrato.nome_cliente);
+
+  return cliente
+    ? `${numero} - Contrato de Adesão - ${cliente}.pdf`
+    : `${numero} - Contrato de Adesão.pdf`;
+}
+
 export default function QAContratoViewPage() {
   const { id } = useParams<{ id: string }>();
   const [contrato, setContrato] = useState<ContratoData | null>(null);
@@ -87,7 +125,7 @@ export default function QAContratoViewPage() {
       const blob = await res.blob();
       if (!blob.size) throw new Error("PDF vazio");
 
-      const nome = `${contrato.contract_number || "CONTRATO"} - Contrato de Adesão.pdf`;
+      const nome = contratoDownloadFilename(contrato);
       const isSafari = /^((?!chrome|android|crios|fxios|edg).)*safari/i.test(navigator.userAgent);
       const pdfBlob = new Blob([blob], { type: "application/pdf" });
 

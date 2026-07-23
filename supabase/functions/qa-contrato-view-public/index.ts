@@ -127,8 +127,8 @@ function contractDownloadFilename(contractNumber: string | null, clienteNome: st
   const numero = String(contractNumber || "CONTRATO").replace(/[\\/:*?"<>|]+/g, " ").trim();
   const cliente = shortPersonName(clienteNome);
   return cliente
-    ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}.pdf`
-    : `${numero} - Contrato de Adesao Quero Armas.pdf`;
+    ? `${numero} - Contrato de Adesão - ${cliente}.pdf`
+    : `${numero} - Contrato de Adesão.pdf`;
 }
 
 function buildSessionStampedPdf(contract: any, html: string, sessao: SessionStamp): Uint8Array {
@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
 
   if (isPdfDownload || format === "pdf") {
     const bytes = buildSessionStampedPdf(data, data.conteudo_renderizado ?? "", sessao);
-    const filename = sanitizeFilename(`${data.contract_number || "CONTRATO"} - Contrato de Adesão.pdf`);
+    const filename = sanitizeFilename(contractDownloadFilename(data.contract_number, nomeCliente));
     return new Response(bytes, {
       status: 200,
       headers: {
@@ -471,7 +471,7 @@ Deno.serve(async (req) => {
     issued_at: data.issued_at,
     servico_slug: data.servico_slug,
     venda_id: data.venda_id,
-    nome_cliente: "",
+    nome_cliente: nomeCliente,
     conteudo_html: data.conteudo_renderizado ?? "",
     sessao,
   });
