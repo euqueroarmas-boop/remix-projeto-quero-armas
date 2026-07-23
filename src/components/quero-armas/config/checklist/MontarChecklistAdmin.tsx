@@ -202,6 +202,7 @@ export default function MontarChecklistAdmin() {
       .from("qa_servicos_documentos" as any)
       .select("id, servico_id, biblioteca_id, tipo_documento, nome_documento, etapa, obrigatorio, ordem, ativo, regra_validacao, instrucoes, observacoes_cliente")
       .eq("servico_id", id)
+      .eq("ativo", true)
       .order("ordem");
     setChecklist(((data as any[]) ?? []) as ChecklistItem[]);
   }

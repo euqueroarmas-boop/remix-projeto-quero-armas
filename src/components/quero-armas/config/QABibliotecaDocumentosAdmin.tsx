@@ -99,10 +99,12 @@ export default function QABibliotecaDocumentosAdmin() {
       const { data: bib } = await supabase
         .from("qa_documentos_biblioteca" as any)
         .select("*")
+        .eq("ativo", true)
         .order("nome");
       const { data: usos } = await supabase
         .from("qa_servicos_documentos" as any)
         .select("biblioteca_id")
+        .eq("ativo", true)
         .not("biblioteca_id", "is", null);
       const contagem = new Map<string, number>();
       for (const u of ((usos as any[]) ?? [])) {
