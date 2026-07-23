@@ -93,11 +93,16 @@ function extractVisualContent(html: string): string {
 
 // ── Subcomponentes de toolbar ──────────────────────────────────────────────
 
-function TBtn({ onClick, title, children }: { onClick: () => void; title: string; children: React.ReactNode }) {
+function TBtn({
+  onClick, title, children, active = false,
+}: { onClick: () => void; title: string; children: React.ReactNode; active?: boolean }) {
   return (
     <button type="button" title={title}
       onMouseDown={(e) => { e.preventDefault(); onClick(); }}
-      className="h-6 w-6 flex items-center justify-center rounded text-slate-600 hover:bg-slate-200 transition-colors">
+      className={`h-6 w-6 flex items-center justify-center rounded transition-all duration-100
+        ${active
+          ? "bg-[#7B1C2E] text-white shadow-inner scale-95 ring-1 ring-[#7B1C2E]/40"
+          : "text-slate-600 hover:bg-slate-200"}`}>
       {children}
     </button>
   );
@@ -114,12 +119,40 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
   ref,
 ) {
   const contentEditableRef = useRef<HTMLDivElement>(null);
-  const rawHtmlRef = useRef<string>(initialHtml); // sempre o HTML bruto atual
+  const rawHtmlRef = useRef<string>(initialHtml);
   const [modo, setModo] = useState<"visual" | "html">("visual");
   const [htmlBruto, setHtmlBruto] = useState(initialHtml);
   const [highlighted, setHighlighted] = useState(() => highlightHtml(initialHtml));
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+
+  // Estado de formatação ativa (atualizado a cada mudança de seleção)
+  const [fmt, setFmt] = useState({
+    bold: false, italic: false, underline: false,
+    alignLeft: false, alignCenter: false, alignRight: false, alignFull: false,
+    h1: false, h2: false, p: false,
+  });
+
+  useEffect(() => {
+    function onSelectionChange() {
+      const ed = contentEditableRef.current;
+      if (!ed || !ed.contains(document.getSelection()?.anchorNode ?? null)) return;
+      setFmt({
+        bold:        document.queryCommandState("bold"),
+        italic:      document.queryCommandState("italic"),
+        underline:   document.queryCommandState("underline"),
+        alignLeft:   document.queryCommandState("justifyLeft"),
+        alignCenter: document.queryCommandState("justifyCenter"),
+        alignRight:  document.queryCommandState("justifyRight"),
+        alignFull:   document.queryCommandState("justifyFull"),
+        h1:  document.queryCommandValue("formatBlock").toLowerCase() === "h1",
+        h2:  document.queryCommandValue("formatBlock").toLowerCase() === "h2",
+        p:   document.queryCommandValue("formatBlock").toLowerCase() === "p",
+      });
+    }
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
+  }, []);
 
   // Popula o editor visual quando initialHtml chega (apenas uma vez, quando vazio)
   useEffect(() => {
@@ -315,18 +348,18 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
         {modo === "visual" && (
           <>
             <TSep />
-            <TBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)"><Bold className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)"><Italic className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)"><Underline className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)" active={fmt.bold}><Bold className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)" active={fmt.italic}><Italic className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)" active={fmt.underline}><Underline className="w-3 h-3" /></TBtn>
             <TSep />
-            <TBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda"><AlignLeft className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("justifyCenter")} title="Centralizar"><AlignCenter className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("justifyRight")} title="Alinhar à direita"><AlignRight className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("justifyFull")} title="Justificar"><AlignJustify className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda" active={fmt.alignLeft}><AlignLeft className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("justifyCenter")} title="Centralizar" active={fmt.alignCenter}><AlignCenter className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("justifyRight")} title="Alinhar à direita" active={fmt.alignRight}><AlignRight className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("justifyFull")} title="Justificar" active={fmt.alignFull}><AlignJustify className="w-3 h-3" /></TBtn>
             <TSep />
-            <TBtn onClick={() => exec("formatBlock", "h1")} title="Título H1"><Heading1 className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("formatBlock", "h2")} title="Subtítulo H2"><Heading2 className="w-3 h-3" /></TBtn>
-            <TBtn onClick={() => exec("formatBlock", "p")} title="Parágrafo normal"><Type className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("formatBlock", "h1")} title="Título H1" active={fmt.h1}><Heading1 className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("formatBlock", "h2")} title="Subtítulo H2" active={fmt.h2}><Heading2 className="w-3 h-3" /></TBtn>
+            <TBtn onClick={() => exec("formatBlock", "p")} title="Parágrafo normal" active={fmt.p}><Type className="w-3 h-3" /></TBtn>
             <TSep />
             <TBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3 h-3" /></TBtn>
