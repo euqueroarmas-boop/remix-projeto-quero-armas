@@ -113,49 +113,65 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       if (reutilizar && existente) {
         clienteId = existente.id;
         existia = true;
-        // atualiza dados que podem ter mudado; reativa se estava arquivado
-        await supabase.from("qa_clientes" as any).update({
+        // A Central e o portal compartilham qa_clientes como cadastro canônico.
+        // A função valida o operador, grava com service role e devolve o que
+        // realmente ficou salvo; assim uma falha de RLS nunca vira falso sucesso.
+        const camposCanonicos = {
           nome_completo: dadosRevisados.nome_completo,
-          email: dadosRevisados.email || undefined,
-          celular: dadosRevisados.celular || undefined,
-          nome_pai: dadosRevisados.nome_pai || undefined,
-          nome_mae: dadosRevisados.nome_mae || undefined,
-          sexo: dadosRevisados.sexo || undefined,
-          rg: dadosRevisados.rg || undefined,
-          emissor_rg: dadosRevisados.emissor_rg || undefined,
-          uf_emissor_rg: dadosRevisados.uf_emissor_rg || undefined,
-          expedicao_rg: expedicaoRgIso || undefined,
-          naturalidade_municipio: dadosRevisados.naturalidade_municipio || undefined,
-          naturalidade_uf: dadosRevisados.naturalidade_uf || undefined,
-          naturalidade_pais: dadosRevisados.naturalidade_pais || undefined,
-          estado_civil: dadosRevisados.estado_civil || undefined,
-          escolaridade: dadosRevisados.escolaridade || undefined,
-          titulo_eleitor: dadosRevisados.titulo_eleitor || undefined,
-          cnh: dadosRevisados.cnh || undefined,
-          ctps: dadosRevisados.ctps || undefined,
-          profissao: dadosRevisados.profissao || undefined,
-          cep: dadosRevisados.cep || undefined,
-          endereco: dadosRevisados.logradouro || dadosRevisados.endereco || undefined,
-          numero: dadosRevisados.numero || undefined,
-          complemento: dadosRevisados.complemento || undefined,
-          bairro: dadosRevisados.bairro || undefined,
-          cidade: dadosRevisados.cidade || undefined,
-          estado: dadosRevisados.estado || undefined,
-          observacao: dadosRevisados.observacoes || undefined,
-          ocupacao_licita_cnpj: dadosRevisados.cnpj || undefined,
-          ocupacao_licita_razao_social: dadosRevisados.ocupacao_licita_razao_social || undefined,
-          ocupacao_licita_nome_fantasia: dadosRevisados.ocupacao_licita_nome_fantasia || undefined,
-          ocupacao_licita_atividade: dadosRevisados.ocupacao_licita_atividade || undefined,
-          ocupacao_licita_logradouro: dadosRevisados.ocupacao_licita_logradouro || undefined,
-          ocupacao_licita_numero: dadosRevisados.ocupacao_licita_numero || undefined,
-          ocupacao_licita_complemento: dadosRevisados.ocupacao_licita_complemento || undefined,
-          ocupacao_licita_bairro: dadosRevisados.ocupacao_licita_bairro || undefined,
-          ocupacao_licita_cidade: dadosRevisados.ocupacao_licita_cidade || undefined,
-          ocupacao_licita_estado: dadosRevisados.ocupacao_licita_estado || undefined,
-          ocupacao_licita_cep: dadosRevisados.ocupacao_licita_cep || undefined,
-          ocupacao_licita_telefone: dadosRevisados.ocupacao_licita_telefone || undefined,
+          email: dadosRevisados.email || null,
+          celular: dadosRevisados.celular || null,
+          data_nascimento: dataNascIso,
+          nome_pai: dadosRevisados.nome_pai || null,
+          nome_mae: dadosRevisados.nome_mae || null,
+          sexo: dadosRevisados.sexo || null,
+          rg: dadosRevisados.rg || null,
+          emissor_rg: dadosRevisados.emissor_rg || null,
+          uf_emissor_rg: dadosRevisados.uf_emissor_rg || null,
+          expedicao_rg: expedicaoRgIso,
+          naturalidade_municipio: dadosRevisados.naturalidade_municipio || null,
+          naturalidade_uf: dadosRevisados.naturalidade_uf || null,
+          naturalidade_pais: dadosRevisados.naturalidade_pais || null,
+          estado_civil: dadosRevisados.estado_civil || null,
+          escolaridade: dadosRevisados.escolaridade || null,
+          titulo_eleitor: dadosRevisados.titulo_eleitor || null,
+          cnh: dadosRevisados.cnh || null,
+          ctps: dadosRevisados.ctps || null,
+          profissao: dadosRevisados.profissao || null,
+          cep: dadosRevisados.cep || null,
+          endereco: dadosRevisados.logradouro || dadosRevisados.endereco || null,
+          numero: dadosRevisados.numero || null,
+          complemento: dadosRevisados.complemento || null,
+          bairro: dadosRevisados.bairro || null,
+          cidade: dadosRevisados.cidade || null,
+          estado: dadosRevisados.estado || null,
+          pais: dadosRevisados.pais || "BRASIL",
+          observacao: dadosRevisados.observacoes || null,
+          ocupacao_licita_cnpj: dadosRevisados.cnpj || null,
+          ocupacao_licita_razao_social: dadosRevisados.ocupacao_licita_razao_social || null,
+          ocupacao_licita_nome_fantasia: dadosRevisados.ocupacao_licita_nome_fantasia || null,
+          ocupacao_licita_atividade: dadosRevisados.ocupacao_licita_atividade || null,
+          ocupacao_licita_logradouro: dadosRevisados.ocupacao_licita_logradouro || null,
+          ocupacao_licita_numero: dadosRevisados.ocupacao_licita_numero || null,
+          ocupacao_licita_complemento: dadosRevisados.ocupacao_licita_complemento || null,
+          ocupacao_licita_bairro: dadosRevisados.ocupacao_licita_bairro || null,
+          ocupacao_licita_cidade: dadosRevisados.ocupacao_licita_cidade || null,
+          ocupacao_licita_estado: dadosRevisados.ocupacao_licita_estado || null,
+          ocupacao_licita_cep: dadosRevisados.ocupacao_licita_cep || null,
+          ocupacao_licita_telefone: dadosRevisados.ocupacao_licita_telefone || null,
           ...(existenteArquivado ? { arquivado: false } : {}),
-        }).eq("id", clienteId);
+        };
+        const { data: saveResult, error: saveError } = await supabase.functions.invoke(
+          "qa-central-adesao-salvar-cliente",
+          { body: { cliente_id: clienteId, campos: camposCanonicos } },
+        );
+        if (saveError || !saveResult?.ok) {
+          throw new Error(saveResult?.error || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
+        }
+        const salvo = saveResult.cliente;
+        const enderecoEsperado = String(camposCanonicos.endereco || "").trim();
+        if (enderecoEsperado && !String(salvo?.endereco || "").trim()) {
+          throw new Error("O endereço não foi confirmado no cadastro único do cliente");
+        }
       } else {
         // Se existia um cliente arquivado com o mesmo CPF, marca como excluído
         // para liberar o índice único antes de criar o novo registro

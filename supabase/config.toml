@@ -27,6 +27,8 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-cliente-criar-conta-publica]
     verify_jwt = false
+  [functions.qa-central-adesao-salvar-cliente]
+    verify_jwt = true
   [functions.qa-contratar-publico]
     verify_jwt = false
   [functions.qa-contrato-view-public]
