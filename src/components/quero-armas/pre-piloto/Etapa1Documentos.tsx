@@ -119,12 +119,27 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   function inferirTipo(nome: string): string {
     const n = nome.toLowerCase();
     if (n.includes("rg") || n.includes("cin") || n.includes("identidade")) return "cin";
+    if (n.includes("cnh") || n.includes("habilitacao")) return "cnh";
     if (n.includes("cpf")) return "cpf";
-    if (n.includes("residencia") || n.includes("endereco") || n.includes("comprovante")) return "comprovante_residencia";
+    // Comprovante de residência — inclui operadoras comuns de energia, água, gás, telefone
+    if (
+      n.includes("residencia") || n.includes("endereco") || n.includes("comprovante") ||
+      n.includes("fatura") || n.includes("boleto") || n.includes("nf-e") ||
+      n.includes("edp") || n.includes("enel") || n.includes("cpfl") || n.includes("light") ||
+      n.includes("eletropaulo") || n.includes("energisa") || n.includes("eletrica") ||
+      n.includes("sabesp") || n.includes("sanasa") || n.includes("agua") || n.includes("saneamento") ||
+      n.includes("comgas") || n.includes("gasmig") ||
+      n.includes("vivo") || n.includes("claro") || n.includes("tim") || n.includes("oi") ||
+      n.includes("net") || n.includes("telefonica") || n.includes("iptu")
+    ) return "comprovante_residencia";
     if (n.includes("psico") || n.includes("laudo") || n.includes("psicolog")) return "laudo_psicologico";
     if (n.includes("tecn") || n.includes("capacidade")) return "laudo_capacidade_tecnica";
-    if (n.includes("antecedente") || n.includes("criminal")) return "antecedentes_criminais";
-    if (n.includes("renda") || n.includes("holerite") || n.includes("contracheque")) return "comprovante_renda";
+    if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta")) return "certidao_antecedentes_criminais_federal";
+    if (n.includes("renda") || n.includes("holerite") || n.includes("contracheque") || n.includes("decore")) return "comprovante_renda";
+    if (n.includes("cnpj") || n.includes("mei")) return "cartao_cnpj_mei";
+    if (n.includes("craf")) return "craf";
+    if (n.includes("gte")) return "gte";
+    if (n.includes("nota fiscal") || n.includes("nfe") || n.includes("nota_fiscal")) return "nota_fiscal_arma";
     if (n.includes("gov") || n.includes("senha") || n.includes("govbr")) return "gov_br";
     return "outro";
   }

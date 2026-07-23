@@ -1,11 +1,41 @@
 import { useEffect, useRef } from "react";
-import { ArrowLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, AlertTriangle, Loader2, Sparkles, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
-import type { DadosExtraidos } from "./PrePilotoWizard";
+import type { DadosExtraidos, ArquivoUpload } from "./PrePilotoWizard";
+
+// Tipos canônicos do hub — mesma lista usada pelo mapeamento em Etapa 4.
+const TIPOS_DOC_HUB: Array<{ valor: string; label: string }> = [
+  { valor: "cin",                                        label: "CIN — Carteira de Identidade Nacional" },
+  { valor: "rg_com_cpf",                                 label: "RG (com CPF)" },
+  { valor: "cnh",                                        label: "CNH — Carteira Nacional de Habilitação" },
+  { valor: "cpf",                                        label: "CPF" },
+  { valor: "comprovante_residencia",                     label: "Comprovante de Residência" },
+  { valor: "comprovante_renda",                          label: "Comprovante de Renda" },
+  { valor: "laudo_psicologico",                          label: "Laudo Psicológico" },
+  { valor: "laudo_capacidade_tecnica",                   label: "Laudo de Capacidade Técnica" },
+  { valor: "certidao_antecedentes_criminais_federal",    label: "Certidão Criminal — Justiça Federal" },
+  { valor: "certidao_antecedentes_criminais_estadual",   label: "Certidão Criminal — Justiça Estadual" },
+  { valor: "certidao_antecedentes_criminais_militar",    label: "Certidão Criminal — Justiça Militar" },
+  { valor: "certidao_antecedentes_criminais_eleitoral",  label: "Certidão Criminal — Justiça Eleitoral" },
+  { valor: "cartao_cnpj_mei",                            label: "Cartão CNPJ / MEI" },
+  { valor: "certidao_alteracao_nome",                    label: "Certidão de alteração de nome" },
+  { valor: "craf",                                       label: "CRAF" },
+  { valor: "sinarm",                                     label: "SINARM" },
+  { valor: "gt",                                         label: "GT" },
+  { valor: "gte",                                        label: "GTE" },
+  { valor: "autorizacao_compra",                         label: "Autorização de Compra" },
+  { valor: "nota_fiscal_arma",                           label: "Nota Fiscal da Arma" },
+  { valor: "gov_br",                                     label: "GOV.BR (senha)" },
+  { valor: "outro",                                      label: "Outro" },
+];
+
+function labelTipo(valor: string): string {
+  return TIPOS_DOC_HUB.find((t) => t.valor === valor)?.label ?? valor;
+}
 
 // Valida o dígito verificador do CNPJ (algoritmo da Receita Federal).
 function cnpjValido(cnpj: string): boolean {
@@ -25,6 +55,8 @@ interface Props {
   dadosExtraidos: DadosExtraidos;
   dadosRevisados: Record<string, string | null>;
   setDadosRevisados: (d: Record<string, string | null>) => void;
+  arquivos?: ArquivoUpload[];
+  setArquivos?: (a: ArquivoUpload[]) => void;
   onAvancar: () => void;
   onVoltar: () => void;
 }
@@ -153,7 +185,7 @@ function confidenceBadge(c: number | null) {
   return <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${color}`}>{pct}%</span>;
 }
 
-export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, onAvancar, onVoltar }: Props) {
+export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, arquivos, setArquivos, onAvancar, onVoltar }: Props) {
   const { lookupCep, lookupCnpj, cepLoading, cnpjLoading } = useBrasilApiLookup();
 
   // Todo campo sai em maiúsculas — padrão de documentos brasileiros — exceto
@@ -269,6 +301,79 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
           Confira e corrija os dados extraídos pela IA antes de salvar. As cores indicam o nível de confiança da extração.
         </p>
       </div>
+
+      {arquivos && arquivos.length > 0 && (
+        <div className="border border-slate-200 rounded-lg p-3 bg-white">
+          <div className="flex items-center gap-1.5 mb-2">
+            <FileText className="w-3.5 h-3.5 text-slate-500" />
+            <p className="text-xs font-semibold text-slate-700">
+              Documentos anexados — confirme o tipo detectado pela IA
+            </p>
+          </div>
+          <p className="text-[11px] text-slate-500 mb-2 leading-relaxed">
+            A IA classificou cada arquivo pelo <b>conteúdo</b>. Ajuste manualmente se algum estiver errado — o tipo escolhido aqui é o que vai para o Hub Documental do cliente.
+          </p>
+          <div className="space-y-1.5">
+            {arquivos.map((arq, i) => {
+              const confia = typeof arq.tipo_ia_confianca === "number" ? arq.tipo_ia_confianca : null;
+              const isIA = confia !== null;
+              const isDuvida = arq.tipo === "outro" || (isIA && confia! < 0.6);
+              return (
+                <div
+                  key={`${arq.file.name}-${i}`}
+                  className={`flex flex-wrap items-center gap-2 border rounded-md px-2 py-1.5 ${
+                    isDuvida ? "border-amber-300 bg-amber-50/40" : "border-slate-200 bg-white"
+                  }`}
+                >
+                  <FileText className="w-3 h-3 text-slate-400 shrink-0" />
+                  <span className="text-[11px] font-medium truncate flex-1 min-w-0" title={arq.file.name}>
+                    {arq.file.name}
+                  </span>
+                  <select
+                    value={arq.tipo}
+                    onChange={(e) => {
+                      if (!setArquivos) return;
+                      const novo = [...arquivos];
+                      novo[i] = { ...arq, tipo: e.target.value, tipo_ia_confianca: undefined, tipo_ia_motivo: undefined };
+                      setArquivos(novo);
+                    }}
+                    className="h-7 text-[11px] border border-slate-200 rounded-md px-1.5 min-w-[220px]"
+                  >
+                    {TIPOS_DOC_HUB.map((t) => (
+                      <option key={t.valor} value={t.valor}>{t.label}</option>
+                    ))}
+                  </select>
+                  {isIA && (
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${
+                        confia! >= 0.85
+                          ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                          : confia! >= 0.6
+                          ? "text-amber-700 bg-amber-50 border-amber-200"
+                          : "text-red-700 bg-red-50 border-red-200"
+                      }`}
+                      title={arq.tipo_ia_motivo ?? undefined}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      IA {Math.round(confia! * 100)}%
+                    </span>
+                  )}
+                  {!isIA && arq.tipo !== "outro" && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border text-slate-600 bg-slate-50 border-slate-200">
+                      Manual
+                    </span>
+                  )}
+                  {isDuvida && (
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border text-amber-700 bg-amber-50 border-amber-200">
+                      Confira
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {alertas.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded p-3 flex gap-2">

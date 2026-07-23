@@ -22,15 +22,30 @@ function formatCpf(cpf: string | null): string | null {
 
 // Mapeia o "tipo" usado na Etapa 1 para o `tipo_documento` canônico do
 // Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
+// Mapa de aliases legado → canônico. Tipos já canônicos (retornados pela IA
+// na Etapa 2 via arquivos_classificados) passam direto por identidade.
 const TIPO_ETAPA1_TO_HUB: Record<string, string> = {
-  cin: "cin",
-  comprovante_residencia: "comprovante_residencia",
-  laudo_psicologico: "laudo_psicologico",
-  laudo_capacidade_tecnica: "laudo_capacidade_tecnica",
-  antecedentes_criminais: "antecedentes_criminais",
-  comprovante_renda: "comprovante_renda",
-  outro: "outro",
+  antecedentes_criminais: "certidao_antecedentes_criminais_federal",
 };
+
+// Lista de tipos aceitos direto pelo hub (bibliografia canônica).
+const TIPOS_CANONICOS_HUB = new Set([
+  "cin", "rg_com_cpf", "cnh", "cpf",
+  "comprovante_residencia", "comprovante_renda",
+  "laudo_psicologico", "laudo_capacidade_tecnica",
+  "certidao_antecedentes_criminais_federal",
+  "certidao_antecedentes_criminais_estadual",
+  "certidao_antecedentes_criminais_militar",
+  "certidao_antecedentes_criminais_eleitoral",
+  "cartao_cnpj_mei", "certidao_alteracao_nome",
+  "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma",
+  "outro",
+]);
+
+function resolveTipoHub(tipoEtapa1: string): string {
+  if (TIPOS_CANONICOS_HUB.has(tipoEtapa1)) return tipoEtapa1;
+  return TIPO_ETAPA1_TO_HUB[tipoEtapa1] || "outro";
+}
 
 function sanitizeFileName(name: string): string {
   return name
@@ -250,7 +265,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         let falhas = 0;
         for (const a of docsParaPersistir) {
           try {
-            const tipoDb = TIPO_ETAPA1_TO_HUB[a.tipo] || "outro";
+            const tipoDb = resolveTipoHub(a.tipo);
             const safe = sanitizeFileName(a.file.name);
             const path = `cliente-docs/qa-${clienteId}/${tipoDb}/${Date.now()}_${safe}`;
             const { error: upErr } = await supabase.storage

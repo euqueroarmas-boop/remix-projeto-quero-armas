@@ -6,6 +6,7 @@ import type { ArquivoUpload, DadosExtraidos } from "./PrePilotoWizard";
 
 interface Props {
   arquivos: ArquivoUpload[];
+  setArquivos?: (a: ArquivoUpload[]) => void;
   textoPastaColado: string;
   onConcluido: (dados: DadosExtraidos) => void;
   onVoltar: () => void;
@@ -22,7 +23,7 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido, onVoltar }: Props) {
+export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado, onConcluido, onVoltar }: Props) {
   const [linhas, setLinhas] = useState<StatusLinha[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const rodouRef = useRef(false);
@@ -83,9 +84,36 @@ export default function Etapa2Leitura({ arquivos, textoPastaColado, onConcluido,
       const senhaConfidence: number = typeof fields.senha_gov_confidence === "number" ? fields.senha_gov_confidence : 0;
       const senhaNeedsReview: boolean = fields.senha_gov_needs_review === true;
 
+      // Aplica classificação da IA sobre os arquivos (por índice/nome).
+      // Só sobrescreve se: (a) tipo atual for "outro"/"cin" (fallback do
+      // regex de nome), OU (b) confiança da IA ≥ 0.85. Preserva escolha
+      // manual explícita do admin em Etapa 1.
+      const arquivosClassificados: Array<{
+        indice?: number;
+        nome_arquivo?: string;
+        tipo_sugerido?: string;
+        confianca?: number;
+        motivo?: string;
+      }> = Array.isArray((fields as any).arquivos_classificados) ? (fields as any).arquivos_classificados : [];
+      if (arquivosClassificados.length > 0 && setArquivos) {
+        const atualizados = arquivos.map((arq, i) => {
+          const sug = arquivosClassificados.find(
+            (s) => s.indice === i || s.nome_arquivo === arq.file.name,
+          );
+          if (!sug || !sug.tipo_sugerido) return arq;
+          const tipoIA = sug.tipo_sugerido.trim();
+          if (!tipoIA || tipoIA === arq.tipo) return arq;
+          const admDefiniuManual = arq.tipo !== "outro" && (sug.confianca ?? 0) < 0.85;
+          if (admDefiniuManual) return arq;
+          return { ...arq, tipo: tipoIA, tipo_ia_confianca: sug.confianca, tipo_ia_motivo: sug.motivo } as ArquivoUpload;
+        });
+        setArquivos(atualizados);
+      }
+
       // Chaves internas que não devem virar campos do formulário
       const IGNORAR = new Set([
         "confidence", "confidence_pairs", "warnings",
+        "arquivos_classificados",
         "senha_gov_raw", "senha_gov_confidence", "senha_gov_needs_review",
         "emissor_rg_needs_review",
       ]);

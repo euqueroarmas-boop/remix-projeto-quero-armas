@@ -134,6 +134,21 @@ const PREFILL_TOOL = {
             required: ["field", "score"],
           },
         },
+        arquivos_classificados: {
+          type: "array",
+          description: "Classificação do TIPO DE DOCUMENTO de cada arquivo enviado, pelo conteúdo (não pelo nome). Uma entrada por arquivo, na ordem recebida. Use os slugs canônicos: cin, rg_com_cpf, cnh, cpf, comprovante_residencia, comprovante_renda, laudo_psicologico, laudo_capacidade_tecnica, certidao_antecedentes_criminais_federal, certidao_antecedentes_criminais_estadual, certidao_antecedentes_criminais_militar, certidao_antecedentes_criminais_eleitoral, cartao_cnpj_mei, certidao_alteracao_nome, craf, sinarm, gt, gte, autorizacao_compra, nota_fiscal_arma, gov_br, outro.",
+          items: {
+            type: "object",
+            properties: {
+              indice: { type: "integer", description: "Índice 0-based do arquivo na ordem recebida." },
+              nome_arquivo: { type: "string", description: "Nome literal do arquivo recebido." },
+              tipo_sugerido: { type: "string", description: "Slug canônico do tipo. 'outro' se não conseguir classificar." },
+              confianca: { type: "number", description: "0..1. Use >=0.85 apenas quando o conteúdo do documento é claro." },
+              motivo: { type: "string", description: "Frase curta explicando por que classificou assim." },
+            },
+            required: ["indice", "nome_arquivo", "tipo_sugerido", "confianca", "motivo"],
+          },
+        },
       },
       required: [
         "nome_completo", "cpf", "cnpj", "tipo_documento_identidade", "rg", "emissor_rg",
@@ -148,7 +163,7 @@ const PREFILL_TOOL = {
         "data_realizacao_exame_psicologico", "data_realizacao_exame_tiro",
         "validade_laudo_psicologico", "validade_exame_tiro", "senha_gov",
         "senha_gov_raw", "senha_gov_confidence", "senha_gov_needs_review", "emissor_rg_needs_review",
-        "acervo", "observacoes", "warnings", "confidence_pairs",
+        "acervo", "observacoes", "warnings", "confidence_pairs", "arquivos_classificados",
       ],
     },
   },
@@ -186,6 +201,7 @@ const SYSTEM_PROMPT = [
     "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): trate cada nome como fonte válida de telefone. Ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650' (celulares brasileiros pré-2016 com 8 dígitos começando 6-9 devem receber '9' prefixado após o DDD).",
     "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
     "18) Nome completo, nome da mãe, nome do pai, profissão, estado civil, escolaridade, nacionalidade, naturalidade, emissor do RG, logradouro, complemento, bairro, cidade e país: escreva SEMPRE com a ortografia correta em português (com acentos e cedilha corretos, ex.: 'EMPRESÁRIO', 'SÃO PAULO', 'JOÃO'), mesmo que o documento original esteja sem acentuação, todo em maiúsculas ou com abreviações. Nunca altere o CONTEÚDO do dado (não troque nomes por sinônimos), apenas a grafia/acentuação. E-mail e senha GOV.BR NUNCA são alterados — preserve exatamente como estão.",
+    "19) CLASSIFICAÇÃO DE ARQUIVOS: para CADA arquivo recebido (na ordem, começando em índice 0), preencha uma entrada em arquivos_classificados com o SLUG canônico do tipo — decidido pelo CONTEÚDO visual/textual, nunca pelo nome. Exemplos: fatura de energia elétrica (EDP, ENEL, CPFL, LIGHT, ELETROPAULO), fatura de água (SABESP), fatura de gás, fatura de telefone/internet (VIVO, CLARO, TIM, OI, NET), extrato bancário, correspondência bancária → comprovante_residencia. Documento oficial com foto + Registro Geral + naturalidade → cin (se moderno com QR code gov.br) ou rg_com_cpf. CNH válida → cnh. Contracheque/holerite → comprovante_renda. Cartão CNPJ → cartao_cnpj_mei. Certidão criminal (Justiça Federal/Estadual/Militar/Eleitoral) → certidao_antecedentes_criminais_federal/estadual/militar/eleitoral. Laudo psicológico assinado por psicólogo → laudo_psicologico. Laudo de capacidade técnica/tiro assinado por instrutor → laudo_capacidade_tecnica. CRAF/GT/GTE/Autorização de compra/Nota fiscal de arma → respectivos slugs. Print de senha GOV.BR → gov_br. Se não for possível classificar com segurança (confianca<0.6), use 'outro'. NUNCA deixe arquivos_classificados vazio quando houver arquivos.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {

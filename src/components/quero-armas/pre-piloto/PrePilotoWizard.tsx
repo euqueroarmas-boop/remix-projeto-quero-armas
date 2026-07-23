@@ -25,6 +25,10 @@ export type ArquivoUpload = {
   file: File;
   tipo: string;
   preview?: string;
+  /** Confiança da IA na classificação de tipo (0..1). Preenchido em Etapa 2. */
+  tipo_ia_confianca?: number;
+  /** Motivo textual da IA para a classificação. */
+  tipo_ia_motivo?: string;
 };
 
 export type ClienteSalvo = {
@@ -124,6 +128,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
         {etapa === 1 && (
           <Etapa2Leitura
             arquivos={arquivos}
+            setArquivos={setArquivos}
             textoPastaColado={textoPastaColado}
             onConcluido={(dados) => { setDadosExtraidos(dados); setDadosRevisados(dados.campos); avancar(); }}
             onVoltar={voltar}
@@ -134,6 +139,8 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
             dadosExtraidos={dadosExtraidos}
             dadosRevisados={dadosRevisados}
             setDadosRevisados={setDadosRevisados}
+            arquivos={arquivos}
+            setArquivos={setArquivos}
             onAvancar={avancar}
             onVoltar={voltar}
           />
