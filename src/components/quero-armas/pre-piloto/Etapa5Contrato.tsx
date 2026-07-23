@@ -22,6 +22,8 @@ function formatBRL(v: number | null) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+type FormaPagamento = "a_combinar" | "pix" | "boleto" | "cartao_debito" | "cartao_credito";
+
 export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: Props) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [q, setQ] = useState("");
@@ -30,6 +32,12 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
   const [enviando, setEnviando] = useState(false);
   const [etapa, setEtapa] = useState<"selecionar" | "confirmar" | "ok">("selecionar");
   const [vendaGerada, setVendaGerada] = useState<{ id: number; legado: number | null } | null>(null);
+  // Novo: perguntas de pagamento. Se `jaPagou=false` → mantém a_combinar.
+  // Se `true` → confirma pagamento imediatamente na venda com a forma escolhida
+  // e dispara o pipeline pós-pagamento (explode checklist quando processo existir).
+  const [jaPagou, setJaPagou] = useState<boolean>(false);
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("pix");
+  const [parcelas, setParcelas] = useState<number>(1);
 
   useEffect(() => {
     supabase
@@ -79,15 +87,24 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       const vendaId = Number((vendaData as any).venda_id);
       const vendaLegado = (vendaData as any).id_legado != null ? Number((vendaData as any).id_legado) : null;
 
-      // 2. Confirmar pagamento (a combinar) — dispara pipeline: PAGO → protocolo → contrato → email
+      // 2. Confirmar pagamento — usa a forma real escolhida pelo admin.
+      //    Se admin marcou "cliente já pagou", passa a forma correspondente,
+      //    o que faz o motor pós-pagamento explodir o checklist quando o
+      //    processo existir (via qa_confirmar_pagamento_processo).
+      //    Se marcou "não pagou ainda", mantém "a_combinar" (comportamento antigo).
+      const forma = jaPagou ? formaPagamento : "a_combinar";
+      const nparcelas = jaPagou && formaPagamento === "cartao_credito" ? Math.max(1, parcelas) : 1;
+      const observacaoTexto = jaPagou
+        ? `Central de Adesão: cliente pagou via ${forma}${nparcelas > 1 ? ` em ${nparcelas}x` : ""}.`
+        : "Central de Adesão: contrato gerado antes do pagamento para assinatura do cliente.";
       const { data: pagData, error: errPag } = await supabase.functions.invoke(
         "qa-venda-confirmar-pagamento-manual",
         {
           body: {
             venda_id: vendaId,
-            forma_pagamento: "a_combinar",
-            parcelas: 1,
-            observacao: "Pré-Piloto: contrato gerado antes do pagamento para assinatura do cliente.",
+            forma_pagamento: forma,
+            parcelas: nparcelas,
+            observacao: observacaoTexto,
             notificacao_policy: {
               notificar_cliente: true,
               canais: { email: true, whatsapp: false, push: false },
@@ -194,7 +211,64 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
           </ul>
           <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
-          <p><span className="font-medium">Pagamento:</span> A combinar (registrado após assinatura)</p>
+        </div>
+
+        {/* Perguntas de pagamento — controlam se o pipeline pos-pagamento
+             dispara agora (checklist explode) ou fica "a_combinar". */}
+        <div className="border rounded-lg p-3 space-y-3 bg-white">
+          <div>
+            <p className="text-xs font-semibold mb-1">Cliente já pagou este serviço?</p>
+            <div className="flex gap-2">
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${!jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+                <input type="radio" name="jaPagou" checked={!jaPagou} onChange={() => setJaPagou(false)} />
+                Não pagou ainda — cobrar depois (a combinar)
+              </label>
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+                <input type="radio" name="jaPagou" checked={jaPagou} onChange={() => setJaPagou(true)} />
+                Sim, já pagou
+              </label>
+            </div>
+          </div>
+
+          {jaPagou && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Forma de pagamento</Label>
+                <select
+                  value={formaPagamento}
+                  onChange={(e) => setFormaPagamento(e.target.value as FormaPagamento)}
+                  className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                >
+                  <option value="pix">PIX</option>
+                  <option value="boleto">Boleto</option>
+                  <option value="cartao_debito">Cartão de Débito</option>
+                  <option value="cartao_credito">Cartão de Crédito</option>
+                </select>
+              </div>
+              {formaPagamento === "cartao_credito" && (
+                <div>
+                  <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Parcelas</Label>
+                  <select
+                    value={parcelas}
+                    onChange={(e) => setParcelas(Number(e.target.value))}
+                    className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                    style={{ borderColor: "hsl(220 15% 88%)" }}
+                  >
+                    {[1,2,3,4,5,6,7,8,9,10,11,12].map((n) => (
+                      <option key={n} value={n}>{n}x {n > 1 ? `de ${formatBRL(totalSelecionados / n)}` : "à vista"}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            {jaPagou
+              ? <><b>Efeito:</b> venda entra como <b>PAGA</b>. O sistema já gera o processo, explode o checklist e o cliente vê os documentos exigidos assim que assinar o contrato e a procuração.</>
+              : <><b>Efeito:</b> venda entra como <b>a combinar</b>. Você registra o pagamento manualmente depois (botão "Confirmar Pagamento" na tela do cliente) para explodir o checklist.</>}
+          </p>
         </div>
 
         {!clienteSalvo.email && (

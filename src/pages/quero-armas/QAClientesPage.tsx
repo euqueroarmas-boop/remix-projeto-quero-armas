@@ -42,6 +42,7 @@ import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteD
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
+import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/ConfirmarPagamentoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
@@ -3229,6 +3230,11 @@ export default function QAClientesPage() {
                                   venda={v}
                                   isCortesia={vItens.length > 0 && vItens.every((i: any) => i.cortesia)}
                                   onApproved={() => { loadSubData(selected!, { silent: true }); loadClientes(); }}
+                                />
+                                {/* Confirmar pagamento manual (dispara pipeline pós-pagamento → explode checklist) */}
+                                <ConfirmarPagamentoButton
+                                  venda={v}
+                                  onConfirmed={() => { loadSubData(selected!, { silent: true }); loadClientes(); }}
                                 />
                                 <GerarProcessoButton
                                   venda={v}
