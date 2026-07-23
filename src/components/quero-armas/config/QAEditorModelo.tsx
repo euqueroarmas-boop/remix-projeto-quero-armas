@@ -211,22 +211,54 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
     }
 
     // Transforma o textContent de cada nó preservando a estrutura HTML pai
-    let charIndex = 0;
+    // Preposições e artigos que NÃO recebem maiúsculo no Title Case
+    const PREPS = new Set([
+      "a","ao","aos","à","às","e","é","o","os","as","um","uma","uns","umas",
+      "de","da","das","do","dos","no","na","nos","nas","em","por","para",
+      "com","sem","sob","sobre","ante","após","até","entre","contra","desde",
+      "perante","salvo","que","se","ou","mas","nem","porém","contudo","todavia",
+    ]);
+
+    // Divide o texto total em palavras para decidir se cada uma é preposição
+    // (considera todos os nós como sequência contínua de palavras)
+    const textoTotal = nos.map(n => n.textContent ?? "").join("");
+    const palavras = textoTotal.split(/(\s+)/); // alterna palavras e espaços
+
+    let globalChar = 0; // posição global dentro de textoTotal
+    let palavraIdx = 0; // índice na lista de palavras
+    let posNaPalavra = 0; // onde estamos dentro da palavra atual
+
     for (const no of nos) {
       const txt = no.textContent ?? "";
-      let resultado: string;
-      if (tipo === "upper") {
-        resultado = txt.toUpperCase();
-      } else if (tipo === "lower") {
-        resultado = txt.toLowerCase();
-      } else {
-        // Sentence case: 1ª letra do texto selecionado em maiúsculo, resto minúsculo
-        resultado = txt
-          .split("")
-          .map((ch, i) => (charIndex + i === 0 ? ch.toUpperCase() : ch.toLowerCase()))
-          .join("");
+      let resultado = "";
+      for (let i = 0; i < txt.length; i++) {
+        // Avança no array de palavras se necessário
+        while (palavraIdx < palavras.length && posNaPalavra >= palavras[palavraIdx].length) {
+          posNaPalavra = 0;
+          palavraIdx++;
+        }
+        const palavraAtual = palavras[palavraIdx] ?? "";
+        const ch = txt[i];
+
+        if (tipo === "upper") {
+          resultado += ch.toUpperCase();
+        } else if (tipo === "lower") {
+          resultado += ch.toLowerCase();
+        } else {
+          // Title Case: primeira letra de cada palavra em maiúsculo, exceto preposições
+          // (mas a 1ª palavra da seleção sempre fica maiúscula)
+          const ehPrimeiroDaSeleção = globalChar === 0;
+          const ehInicioDeWord = posNaPalavra === 0 && /\S/.test(palavraAtual);
+          const ehPrep = PREPS.has(palavraAtual.toLowerCase().replace(/[^a-záéíóúàãõâêôüç]/gi, ""));
+          if (ehInicioDeWord && (!ehPrep || ehPrimeiroDaSeleção)) {
+            resultado += ch.toUpperCase();
+          } else {
+            resultado += ch.toLowerCase();
+          }
+        }
+        posNaPalavra++;
+        globalChar++;
       }
-      charIndex += txt.length;
       no.textContent = resultado;
     }
 
@@ -309,7 +341,7 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
               className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
               aa
             </button>
-            <button type="button" title="Primeira letra — transforma só a primeira letra em maiúscula, restante minúscula"
+            <button type="button" title="Title Case — primeira letra de cada palavra em maiúscula, exceto preposições (de, da, do, e, em, para, com...)"
               onMouseDown={(e) => { e.preventDefault(); transformarTexto("sentence"); }}
               className="h-6 px-1.5 text-[10px] rounded border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400 transition-colors font-medium">
               Aa
