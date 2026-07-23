@@ -39,6 +39,7 @@ const CATEGORIAS: Array<{ valor: string; label: string }> = [
 
 const VALIDADE_OPCOES: Array<{ dias: number | null; label: string }> = [
   { dias: null,  label: "Não tem validade" },
+  { dias: 15,    label: "15 dias" },
   { dias: 30,    label: "30 dias" },
   { dias: 90,    label: "90 dias" },
   { dias: 180,   label: "180 dias" },
