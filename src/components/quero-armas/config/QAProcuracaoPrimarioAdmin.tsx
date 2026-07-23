@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import {
-  FileSignature, Upload, Loader2, CheckCircle2, RefreshCw, Plus, Trash2, Wand2, Eye,
+  FileSignature, Upload, Loader2, CheckCircle2, RefreshCw, Plus, Trash2, Wand2, Eye, Download,
 } from "lucide-react";
 
 type TemplateVigente = {
@@ -455,11 +456,30 @@ export default function QAProcuracaoPrimarioAdmin() {
               <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
                 {corpoStringado.trim() ? `${Math.round(corpoStringado.length / 1024)} KB — versão stringada` : ""}
               </p>
-              <Button size="sm" onClick={publicar} disabled={!corpoStringado.trim() || publicando}
-                className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
-                {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                {publicando ? "Publicando…" : "Publicar procuração"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!corpoStringado.trim()}
+                  onClick={() => {
+                    baixarHtmlProcuracao(
+                      corpoStringado,
+                      "Procuracao Quero Armas - Modelo stringado",
+                      "Procuração Quero Armas - Modelo stringado",
+                    );
+                    toast.success("HTML da procuração baixado");
+                  }}
+                  className="text-xs gap-1 h-8"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Baixar HTML
+                </Button>
+                <Button size="sm" onClick={publicar} disabled={!corpoStringado.trim() || publicando}
+                  className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
+                  {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {publicando ? "Publicando…" : "Publicar procuração"}
+                </Button>
+              </div>
             </div>
           </div>
         </>
