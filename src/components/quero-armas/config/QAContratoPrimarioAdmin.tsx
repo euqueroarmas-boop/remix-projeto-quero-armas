@@ -75,6 +75,7 @@ export default function QAContratoPrimarioAdmin() {
   const [servicos, setServicos] = useState<ServicoAnexo[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [editorHtml, setEditorHtml] = useState("");
+  const [initialHtml, setInitialHtml] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState<string | null>(null);
   const [publicando, setPublicando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoPublicacao | null>(null);
@@ -89,7 +90,7 @@ export default function QAContratoPrimarioAdmin() {
   const [salvandoAnexo, setSalvandoAnexo] = useState(false);
   const [anexoEditorRef] = useState<Record<string, QAEditorModeloRef | null>>({});
 
-  async function carregar() {
+  async function carregar(aposPublicacao = false) {
     setCarregando(true);
     try {
       const [{ data: tpl }, { data: cat }] = await Promise.all([
@@ -101,8 +102,14 @@ export default function QAContratoPrimarioAdmin() {
           .select("id, slug, nome, ativo, anexo_titulo, anexo_versao, anexo_corpo_html, anexo_atualizado_em")
           .order("nome"),
       ]);
-      setVigente((tpl as any) ?? null);
+      const template = (tpl as any) ?? null;
+      setVigente(template);
       setServicos(((cat as any[]) ?? []) as ServicoAnexo[]);
+      if (template?.corpo_html && (aposPublicacao || !editorHtml.trim())) {
+        setInitialHtml(template.corpo_html);
+        setEditorHtml(template.corpo_html);
+        setNomeArquivo(`contrato-v${template.versao}.html`);
+      }
     } finally {
       setCarregando(false);
     }
@@ -150,11 +157,8 @@ export default function QAContratoPrimarioAdmin() {
       }
       const r = data as any as ResultadoPublicacao & { ok: boolean };
       setResultado(r);
-      editorRef.current?.setHtml("");
-      setEditorHtml("");
-      setNomeArquivo(null);
       toast.success(`Contrato primário publicado — versão ${r.versao}`);
-      await carregar();
+      await carregar(true);
     } catch (e: any) {
       toast.error(e?.message || "Erro ao publicar contrato");
     } finally {
@@ -277,6 +281,7 @@ export default function QAContratoPrimarioAdmin() {
             {/* QAEditorModelo */}
             <QAEditorModelo
               ref={editorRef}
+              initialHtml={initialHtml}
               onChange={setEditorHtml}
               inserts={INSERTS_CONTRATO}
               minHeight={320}
