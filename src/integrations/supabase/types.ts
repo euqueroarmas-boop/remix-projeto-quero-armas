@@ -4815,6 +4815,36 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_config_substituicoes_pessoais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          placeholder: string
+          texto_original: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          placeholder: string
+          texto_original: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          placeholder?: string
+          texto_original?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_consultas_ia: {
         Row: {
           caso_resumo: string | null
@@ -8587,6 +8617,90 @@ export type Database = {
             columns: ["processo_id"]
             isOneToOne: false
             referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_procuracoes: {
+        Row: {
+          arquivo_assinado_path: string | null
+          arquivo_gerado_path: string | null
+          cliente_id: number
+          conteudo_renderizado: string | null
+          created_at: string
+          customer_signature_uploaded_at: string | null
+          generated_at: string
+          id: string
+          outorgado_ate: string | null
+          reaproveitada_de: string | null
+          reaproveitada_de_hub_id: string | null
+          rejection_reason: string | null
+          servico_id: number | null
+          status: string
+          template_id: string | null
+          template_versao: number | null
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          venda_id: number | null
+        }
+        Insert: {
+          arquivo_assinado_path?: string | null
+          arquivo_gerado_path?: string | null
+          cliente_id: number
+          conteudo_renderizado?: string | null
+          created_at?: string
+          customer_signature_uploaded_at?: string | null
+          generated_at?: string
+          id?: string
+          outorgado_ate?: string | null
+          reaproveitada_de?: string | null
+          reaproveitada_de_hub_id?: string | null
+          rejection_reason?: string | null
+          servico_id?: number | null
+          status?: string
+          template_id?: string | null
+          template_versao?: number | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          venda_id?: number | null
+        }
+        Update: {
+          arquivo_assinado_path?: string | null
+          arquivo_gerado_path?: string | null
+          cliente_id?: number
+          conteudo_renderizado?: string | null
+          created_at?: string
+          customer_signature_uploaded_at?: string | null
+          generated_at?: string
+          id?: string
+          outorgado_ate?: string | null
+          reaproveitada_de?: string | null
+          reaproveitada_de_hub_id?: string | null
+          rejection_reason?: string | null
+          servico_id?: number | null
+          status?: string
+          template_id?: string | null
+          template_versao?: number | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          venda_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_procuracoes_reaproveitada_de_fkey"
+            columns: ["reaproveitada_de"]
+            isOneToOne: false
+            referencedRelation: "qa_procuracoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_procuracoes_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contract_templates"
             referencedColumns: ["id"]
           },
         ]

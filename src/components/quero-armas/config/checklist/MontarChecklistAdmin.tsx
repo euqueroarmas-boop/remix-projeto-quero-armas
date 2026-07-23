@@ -118,7 +118,7 @@ function itemCertidaoEstadualPresente(item: (typeof GRUPO_CERTIDOES_ESTADUAIS)[n
 
 function nomeDocumentoExibicao(item: { codigo?: string | null; tipo_documento?: string | null; nome: string } | ChecklistItem) {
   const codigo = "codigo" in item ? item.codigo : item.tipo_documento;
-  const pacote = (codigo && (CERTIDOES_ESTADUAIS_CANONICAS.get(codigo) ?? CERTIDOES_ESTADUAIS_LEGADAS.get(codigo))) || null;
+  const pacote = (codigo && ((CERTIDOES_ESTADUAIS_CANONICAS as Map<string, any>).get(codigo) ?? (CERTIDOES_ESTADUAIS_LEGADAS as Map<string, any>).get(codigo))) || null;
   return pacote?.nome ?? ("nome" in item ? item.nome : item.nome_documento);
 }
 
@@ -984,12 +984,12 @@ export default function MontarChecklistAdmin() {
                       </button>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${GRUPO_CERTIDOES_ESTADUAIS_TIPOS.includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 25%)" }}>
+                      <p className={`text-xs font-medium ${(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 25%)" }}>
                         {nomeDocumentoExibicao(c)}
                       </p>
                       <p className="text-[10px] font-mono truncate text-slate-400">
                         ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
-                        {GRUPO_CERTIDOES_ESTADUAIS_TIPOS.includes(c.tipo_documento) ? " · pacote estadual" : ""}
+                        {(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? " · pacote estadual" : ""}
                       </p>
                     </div>
                     <button
