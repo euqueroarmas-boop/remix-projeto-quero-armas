@@ -23,6 +23,43 @@ interface Servico { id: number; nome_servico: string; valor_servico: number; is_
 
 type ServicoTab = "catalogo" | "internos";
 
+// ── Banner de redeploy de edge functions ──────────────────────────────────────
+const REDEPLOY_KEY = "qa_redeploy_banner_dismissed_v1";
+
+function QARedeployBanner() {
+  const [visivel, setVisivel] = useState(() => localStorage.getItem(REDEPLOY_KEY) !== "1");
+
+  function dispensar() {
+    localStorage.setItem(REDEPLOY_KEY, "1");
+    setVisivel(false);
+  }
+
+  if (!visivel) return null;
+
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 mb-4 text-sm">
+      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-amber-900 mb-0.5">Redeploy necessário</p>
+        <p className="text-amber-800 leading-snug">
+          As edge functions que formatam os dados do cliente (endereço, bairro, cidade, país em Title Case)
+          precisam ser publicadas. Clique em{" "}
+          <strong className="font-semibold">Publish</strong> no Lovable para ativar as alterações.
+          Após o Publish, gere uma nova procuração de teste para confirmar.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={dispensar}
+        className="shrink-0 text-amber-500 hover:text-amber-800 transition-colors text-lg leading-none mt-0.5"
+        title="Dispensar aviso"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 export default function QAConfiguracoesPage() {
   const { profile } = useQAAuthContext();
   const [stats, setStats] = useState<any>(null);
@@ -572,11 +609,13 @@ export default function QAConfiguracoesPage() {
       {isAdmin && (
         <>
         <TabsContent value="contrato" className="mt-4">
+          <QARedeployBanner />
           {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
           <QAContratoPrimarioAdmin />
         </TabsContent>
 
         <TabsContent value="procuracao" className="mt-4">
+          <QARedeployBanner />
           {/* Procuração — motor de stringagem + publicação do modelo vigente */}
           <QAProcuracaoPrimarioAdmin />
         </TabsContent>
