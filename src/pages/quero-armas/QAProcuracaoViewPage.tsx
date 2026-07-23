@@ -8,11 +8,12 @@ import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import { jsPDF } from "jspdf";
 
 // ── Title Case: converte ALL-CAPS → primeira letra maiúscula ─────────────
-// Abreviações curtas (SP, RG, CPF, CEP — ≤4 letras all-caps) são preservadas.
-const PREPS_VIEW = new Set(["da","das","de","do","dos","e","a","ao","em","na","no"]);
+// Abreviações ≤4 letras (SP, RG, CPF, CEP…) são preservadas.
+// Nomes de pessoas (outorgante/outorgado) são protegidos via placeholder.
+const PREPS_VIEW = new Set(["da","das","de","do","dos","e","a","ao","em","na","no","por","sob","sobre","com","sem","entre","até","ante","após"]);
 
 function titleWord(w: string): string {
-  if (/^[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ0-9]{1,4}$/.test(w)) return w; // abreviação
+  if (/^[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ0-9]{1,4}$/.test(w)) return w; // abreviação curta
   return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
 }
 
@@ -22,14 +23,47 @@ function titleCaseSeq(match: string): string {
   ).join(" ");
 }
 
-// Aplica somente em sequências de ≥2 palavras ALL-CAPS dentro de nós de texto HTML
-function normalizeHtml(html: string): string {
-  return html.replace(/>([^<]+)</g, (_, text) =>
-    ">" + text.replace(
+function normalizeHtml(html: string, protectedNames: string[] = []): string {
+  // 1. Protege nomes (ALL-CAPS) substituindo por placeholders
+  const protected_html_parts: string[] = [];
+  let working = html;
+  const validNames = protectedNames.filter((n) => n && n.trim().length > 0);
+  for (let i = 0; i < validNames.length; i++) {
+    working = working.split(validNames[i]).join(`\x00N${i}\x00`);
+  }
+
+  // 2. Converte ALL-CAPS → Title Case nos nós de texto HTML
+  working = working.replace(/>([^<]+)</g, (_, text) => {
+    let t = text;
+    // sequências de ≥2 palavras ALL-CAPS (endereços, cidades compostas…)
+    t = t.replace(
       /\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{3,}(?:\s+[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{2,})+)\b/g,
       titleCaseSeq
-    ) + "<"
+    );
+    // palavras únicas ALL-CAPS com 5+ letras (JACAREÍ, BRASIL, TAUBATÉ…)
+    t = t.replace(/\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{5,})\b/g, (w) => titleWord(w));
+    return ">" + t + "<";
+  });
+
+  // 3. Corrige abreviações que o editor possa ter Title-Cased indevidamente
+  working = working
+    .replace(/\bCpf\b/g, "CPF")
+    .replace(/\bRg\b/g, "RG")
+    .replace(/\bCnpj\b/g, "CNPJ")
+    .replace(/\bCep\b/g, "CEP");
+
+  // 4. Remove linha de emissor de RG quando os campos estão vazios
+  working = working.replace(
+    /Expedido\s+(pela|pelo|por)\s+[\/\s]*(?=<|$)/gi,
+    ""
   );
+
+  // 5. Restaura nomes protegidos (mantém ALL-CAPS originais)
+  for (let i = 0; i < validNames.length; i++) {
+    working = working.split(`\x00N${i}\x00`).join(validNames[i]);
+  }
+
+  return working;
 }
 
 // ── Geração de PDF client-side ─────────────────────────────────────────────
@@ -44,24 +78,112 @@ function htmlToText(html: string): string {
     .replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-function gerarPdf(htmlNormalizado: string, nomeArquivo: string) {
+function gerarPdf(htmlNormalizado: string, nomeArquivo: string, vendaId?: number | null) {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
-  const mX = 54, mY = 56, W = 595.28 - mX * 2;
-  let y = mY;
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const mLeft = 104; // reserva margem esquerda para o carimbo
+  const mRight = 48;
+  const mTop = 56;
+  const mBottom = 56;
+  const W = pageW - mLeft - mRight;
+  let y = mTop;
   const isTitle = (l: string) => /^[A-ZÀ-Ú0-9\s.,/()\-ºª]{8,}$/.test(l) && l.length <= 140;
 
   for (const raw of htmlToText(htmlNormalizado).split(/\n+/)) {
     const line = raw.trim();
     if (!line) { y += 10; continue; }
+    if (y > pageH - mBottom) { doc.addPage(); y = mTop; }
     const title = isTitle(line);
     doc.setFont("times", title ? "bold" : "normal");
     doc.setFontSize(title ? 12 : 11);
     for (const piece of doc.splitTextToSize(line, W) as string[]) {
-      if (y > 785) { doc.addPage(); y = mY; }
-      doc.text(piece, title ? 595.28 / 2 : mX, y, title ? { align: "center" } : undefined);
+      if (y > pageH - mBottom) { doc.addPage(); y = mTop; }
+      doc.text(piece, title ? pageW / 2 : mLeft, y, title ? { align: "center" } : undefined);
       y += title ? 18 : 16;
     }
     y += title ? 8 : 4;
+  }
+
+  // === Carimbo lateral esquerdo (registro de sessão) em todas as páginas ===
+  const agora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" });
+  const ua = navigator.userAgent;
+  const lang = navigator.language || "—";
+  const ref = document.referrer || "—";
+  const numero = vendaId ? `VENDA ${vendaId}` : "PROCURAÇÃO";
+  const stampRows: [string, string][] = [
+    ["PROCURAÇÃO", numero],
+    ["DATA/HORA (BRT)", agora],
+    ["IDIOMA", lang],
+    ["REFERÊNCIA", ref],
+    ["USER-AGENT", ua],
+    ["AÇÃO", "download"],
+  ];
+
+  const totalPages = doc.getNumberOfPages();
+  const stampRuleX = 24;
+  const stampTop = mTop;
+  const stampBottom = pageH - mBottom;
+  const availH = stampBottom - stampTop;
+  const titleX = 32;
+  const fieldStartX = 44;
+  const columnGap = 9;
+  const textGutter = 16;
+  const maxColumns = Math.max(1, Math.floor((mLeft - fieldStartX - textGutter) / columnGap));
+  const fontSize = 6.8;
+  const charAdvance = 3.1;
+  const maxCharsPerCol = Math.max(20, Math.floor(availH / charAdvance));
+
+  const fieldsLine = stampRows.map(([l, v]) => `${l}: ${v}`).join(", ");
+  const parts = fieldsLine.split(/(, )/);
+  const columns: string[] = [];
+  let current = "";
+  for (const part of parts) {
+    if ((current + part).length > maxCharsPerCol && current.length > 0) {
+      columns.push(current.replace(/,\s*$/, ""));
+      current = part.replace(/^,\s*/, "");
+    } else {
+      current += part;
+    }
+    if (columns.length >= maxColumns - 1) break;
+  }
+  const consumed = columns.join(", ").length + (columns.length ? 2 : 0);
+  const remaining = fieldsLine.slice(consumed);
+  if (remaining) {
+    if (columns.length < maxColumns) columns.push(remaining);
+    else {
+      const last = columns[columns.length - 1];
+      columns[columns.length - 1] = (last + ", " + remaining).slice(0, maxCharsPerCol - 1) + "…";
+    }
+  } else if (current) {
+    columns.push(current);
+  }
+
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(190);
+    doc.setLineWidth(0.4);
+    doc.line(stampRuleX, stampTop, stampRuleX, stampBottom);
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90);
+    doc.text(
+      "REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO · MP 2.200-2/2001",
+      titleX, stampBottom,
+      { angle: 90, baseline: "alphabetic" } as any
+    );
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(fontSize);
+    doc.setTextColor(70);
+    for (let c = 0; c < columns.length; c++) {
+      doc.text(columns[c], fieldStartX + c * columnGap, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
+    }
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(140);
+    doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 26, { angle: 90, baseline: "alphabetic" } as any);
   }
 
   doc.save(nomeArquivo);
@@ -109,7 +231,8 @@ export default function QAProcuracaoViewPage() {
         } else {
           const d = data as ProcuracaoData;
           // Normaliza ALL-CAPS → Title Case antes de renderizar/baixar
-          setProcuracao({ ...d, conteudo_html: normalizeHtml(d.conteudo_html) });
+          // Nome do cliente é protegido para permanecer em ALL-CAPS
+          setProcuracao({ ...d, conteudo_html: normalizeHtml(d.conteudo_html, [d.nome_cliente]) });
         }
       })
       .catch(() => setErro("Erro ao carregar a procuração. Tente novamente."))
@@ -131,7 +254,7 @@ export default function QAProcuracaoViewPage() {
       const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
       const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
       // Gera PDF client-side com o conteúdo já normalizado (Title Case aplicado)
-      gerarPdf(procuracao.conteudo_html, nome);
+      gerarPdf(procuracao.conteudo_html, nome, procuracao.venda_id);
       toast.success("Procuração baixada");
     } catch (e) {
       console.error("[baixarProcuracaoPdf]", e);
