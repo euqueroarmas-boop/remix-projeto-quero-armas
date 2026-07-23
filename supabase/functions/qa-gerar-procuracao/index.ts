@@ -26,11 +26,8 @@ function json(data: unknown, status = 200) {
   });
 }
 
-function brDate(d: Date): string {
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-
-// Preposições minúsculas em nomes de cidades brasileiras
-const PREPS = new Set(["da", "das", "de", "do", "dos", "e"]);
+// Preposições minúsculas em nomes de cidades e logradouros brasileiros
+const PREPS = new Set(["da", "das", "de", "do", "dos", "e", "a", "ao", "em", "na", "no"]);
 function toTitleCity(s: string): string {
   if (!s) return s;
   return s
@@ -39,6 +36,9 @@ function toTitleCity(s: string): string {
     .map((w, i) => (i > 0 && PREPS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
     .join(" ");
 }
+
+function brDate(d: Date): string {
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 function addYears(d: Date, n: number): Date {
@@ -89,14 +89,14 @@ function hasCurrentClientData(html: string, ctx: Record<string, string>): boolea
 
 function enderecoCliente(cli: Record<string, unknown>): string {
   const linha = [
-    first(cli.endereco),
+    toTitleCity(first(cli.endereco)),
     first(cli.numero) ? `nº ${first(cli.numero)}` : "",
-    first(cli.complemento),
-    first(cli.bairro),
-    first(cli.cidade),
-    first(cli.estado),
+    toTitleCity(first(cli.complemento)),
+    toTitleCity(first(cli.bairro)),
+    toTitleCity(first(cli.cidade)),
+    first(cli.estado) ? String(cli.estado).toUpperCase() : "",
     first(cli.cep) ? `CEP ${first(cli.cep)}` : "",
-    first(cli.pais) || "Brasil",
+    toTitleCity(first(cli.pais) || "Brasil"),
   ].filter(Boolean);
   return linha.join(", ");
 }
