@@ -182,6 +182,7 @@ const SYSTEM_PROMPT = [
   "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
   "6.1) Se houver MAIS DE UM endereço (ex: residencial + comercial, ou principal + alternativo), preencha o primeiro em cep/endereco/... e o segundo em cep_secundario/endereco_secundario/...",
   "6.2) ESTADO CIVIL: quando o documento oficial de identidade (CIN/RG/CNH) divergir de texto livre (WhatsApp, e-mail, observação verbal), SEMPRE prevaleça o texto livre — o documento oficial pode estar desatualizado (ex.: cliente casou depois de emitir o CIN/RG). Esta regra é fixa: nunca use o valor do documento em vez do texto livre para este campo quando houver divergência. Adicione warning descrevendo a divergência e os dois valores encontrados, para a equipe ter ciência (mas o campo já vem preenchido com o valor do texto livre).",
+  "6.3) DADO DIGITADO PELO OPERADOR NO TEXTO LIVRE TEM PRIORIDADE MÁXIMA. Para RG, CEP, CNPJ, telefone, e-mail, profissão, escolaridade, estado civil e demais campos cadastrais, se o texto livre trouxer um valor explícito, use esse valor mesmo que documentos anexados indiquem outro. O documento serve como fonte secundária. Se houver divergência, mantenha o valor digitado e adicione warning.",
     "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
@@ -393,6 +394,47 @@ function upperFieldsExcept(key: string, value: any): any {
   return upperDeep(value);
 }
 
+function digitsOnly(value: unknown): string {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function normalizeLooseText(value: unknown): string {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+function normalizeEstadoCivil(value: string): string | null {
+  const norm = normalizeLooseText(value);
+  if (/\buniao\s+estavel\b/.test(norm)) return "União estável";
+  if (/\bcasad[oa]\b/.test(norm)) return "Casado(a)";
+  if (/\bsolteir[oa]\b/.test(norm)) return "Solteiro(a)";
+  if (/\bdivorciad[oa]\b/.test(norm)) return "Divorciado(a)";
+  if (/\bseparad[oa]\b/.test(norm)) return "Separado(a)";
+  if (/\bviuv[oa]\b/.test(norm)) return "Viúvo(a)";
+  return null;
+}
+
+function normalizeEscolaridade(value: string): string | null {
+  const norm = normalizeLooseText(value);
+  if (/\bensino\s+superior\b|\bsuperior\b|\bgraduad[oa]\b|\bfaculdade\b/.test(norm)) return "Ensino Superior";
+  if (/\bensino\s+medio\b|\bmedio\b|2[oº]?\s+grau/.test(norm)) return "Ensino Médio";
+  if (/\bensino\s+fundamental\b|\bfundamental\b|1[oº]?\s+grau/.test(norm)) return "Ensino Fundamental";
+  return null;
+}
+
+function normalizeProfissao(value: string): string | null {
+  const norm = normalizeLooseText(value);
+  if (/\bempresari[oa]\b|\bsocio\b|\bsocia\b/.test(norm)) return "Empresário";
+  if (/\bmei\b|\bmicroempreendedor\b/.test(norm)) return "MEI";
+  if (/\bservidor[ae]?\s+public[oa]\b|\bfuncionari[oa]\s+public[oa]\b/.test(norm)) return "Servidor público";
+  if (/\baposentad[oa]\b/.test(norm)) return "Aposentado";
+  if (/\bautonom[oa]\b/.test(norm)) return "Autônomo";
+  return null;
+}
+
 function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
   const raw = String(value ?? "").trim();
   if (!raw) return false;
@@ -406,22 +448,30 @@ function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
 
 // Extração determinística de telefone/celular e e-mail a partir do texto livre.
 // Serve de fallback quando o modelo ignora dados de conversa WhatsApp/e-mail.
+const DDD_VALIDOS = new Set([
+  "11","12","13","14","15","16","17","18","19",
+  "21","22","24","27","28",
+  "31","32","33","34","35","37","38",
+  "41","42","43","44","45","46","47","48","49",
+  "51","53","54","55",
+  "61","62","63","64","65","66","67","68","69",
+  "71","73","74","75","77","79",
+  "81","82","83","84","85","86","87","88","89",
+  "91","92","93","94","95","96","97","98","99",
+]);
+
+function isLikelyBrazilPhoneDigits(digits: string): boolean {
+  if (![10, 11].includes(digits.length)) return false;
+  const ddd = digits.slice(0, 2);
+  if (!DDD_VALIDOS.has(ddd)) return false;
+  const rest = digits.slice(2);
+  if (rest.length === 9) return rest.startsWith("9");
+  return /^[2-9]/.test(rest);
+}
+
 function extractPhonesFromText(text: string): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  // DDDs válidos no Brasil (ANATEL). Sem esta lista, sequências de dígitos
-  // (timestamps, protocolos, IDs de mensagem do WhatsApp) viram "telefone".
-  const DDD_VALIDOS = new Set([
-    "11","12","13","14","15","16","17","18","19",
-    "21","22","24","27","28",
-    "31","32","33","34","35","37","38",
-    "41","42","43","44","45","46","47","48","49",
-    "51","53","54","55",
-    "61","62","63","64","65","66","67","68","69",
-    "71","73","74","75","77","79",
-    "81","82","83","84","85","86","87","88","89",
-    "91","92","93","94","95","96","97","98","99",
-  ]);
   // Só aceita padrões claramente telefônicos:
   //   +55 (DD) 9XXXX-XXXX / (DD) 9XXXX-XXXX / DD 9XXXX XXXX
   //   Exige separador (parênteses, espaço, hífen, ponto) OU prefixo +55
@@ -449,6 +499,102 @@ function extractPhonesFromText(text: string): string[] {
   // Prioriza celulares (11 dígitos) sobre fixos (10 dígitos)
   out.sort((a, b) => b.length - a.length);
   return out;
+}
+
+function extractManualOverrides(text: string): Record<string, string> {
+  const overrides: Record<string, string> = {};
+  if (!text.trim()) return overrides;
+
+  const email = extractEmailFromText(text);
+  if (email) overrides.email = email;
+
+  const explicitPatterns: Array<{
+    field: string;
+    re: RegExp;
+    normalize: (value: string) => string | null;
+  }> = [
+    { field: "rg", re: /\brg\s*(?:[:=\-]|n[ºo.]*)?\s*([0-9A-Za-z.\-]{5,18})/i, normalize: (v) => v.replace(/[^\dA-Za-zXx]/g, "") || null },
+    { field: "cep", re: /\bcep\s*(?:[:=\-])?\s*(\d{5}[-.]?\d{3}|\d{8})\b/i, normalize: (v) => digitsOnly(v) || null },
+    { field: "cnpj", re: /\bcnpj\s*(?:[:=\-])?\s*(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{14})\b/i, normalize: (v) => digitsOnly(v) || null },
+    { field: "celular", re: /\b(?:celular|telefone|whatsapp|whats)\s*(?:[:=\-])?\s*(?:\+?55)?\s*[\(]?\d{2}[\)]?\s*9?\d{4}[-.\s]?\d{4}\b/i, normalize: (v) => {
+      const d = digitsOnly(v).replace(/^55(?=\d{10,11}$)/, "");
+      return isLikelyBrazilPhoneDigits(d) ? d : null;
+    } },
+    { field: "email", re: /\b(?:e-mail|email)\s*(?:[:=\-])?\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})\b/i, normalize: (v) => v.toLowerCase() },
+    { field: "estado_civil", re: /\bestado\s*civil\s*(?:[:=\-])?\s*([A-Za-zÀ-ú\s]+?)(?=,|;|\n|$)/i, normalize: normalizeEstadoCivil },
+    { field: "profissao", re: /\bprofiss[aã]o\s*(?:[:=\-])?\s*([A-Za-zÀ-ú\s]+?)(?=,|;|\n|$)/i, normalize: normalizeProfissao },
+    { field: "escolaridade", re: /\bescolaridade\s*(?:[:=\-])?\s*([A-Za-zÀ-ú\s]+?)(?=,|;|\n|$)/i, normalize: normalizeEscolaridade },
+  ];
+
+  for (const pattern of explicitPatterns) {
+    const match = text.match(pattern.re);
+    const candidate = match?.[1] ?? match?.[0];
+    if (candidate && !overrides[pattern.field]) {
+      const value = pattern.normalize(candidate);
+      if (value) overrides[pattern.field] = value;
+    }
+  }
+
+  const chunks = text
+    .split(/[,;\n]+/)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+
+  for (const chunk of chunks) {
+    const normalizedChunk = normalizeLooseText(chunk);
+    const d = digitsOnly(chunk);
+
+    if (!overrides.estado_civil) {
+      const estadoCivil = normalizeEstadoCivil(chunk);
+      if (estadoCivil) overrides.estado_civil = estadoCivil;
+    }
+    if (!overrides.profissao) {
+      const profissao = normalizeProfissao(chunk);
+      if (profissao) overrides.profissao = profissao;
+    }
+    if (!overrides.escolaridade) {
+      const escolaridade = normalizeEscolaridade(chunk);
+      if (escolaridade) overrides.escolaridade = escolaridade;
+    }
+    if (!overrides.cnpj && d.length === 14 && cnpjValido(d)) {
+      overrides.cnpj = d;
+    }
+    if (!overrides.cep && d.length === 8 && !/(rg|cpf|cnpj|telefone|celular|whats)/i.test(chunk)) {
+      overrides.cep = d;
+    }
+    if (!overrides.celular && isLikelyBrazilPhoneDigits(d)) {
+      overrides.celular = d;
+    }
+    if (!overrides.email && normalizedChunk.includes("@")) {
+      const found = extractEmailFromText(chunk);
+      if (found) overrides.email = found;
+    }
+  }
+
+  return overrides;
+}
+
+function sameFieldValue(field: string, a: unknown, b: unknown): boolean {
+  if (["rg", "cep", "cnpj", "celular", "telefone_secundario", "cpf"].includes(field)) {
+    return digitsOnly(a) === digitsOnly(b);
+  }
+  return normalizeLooseText(a) === normalizeLooseText(b);
+}
+
+function applyManualOverrides(normalized: any, manual: Record<string, string>) {
+  const entries = Object.entries(manual).filter(([, value]) => String(value ?? "").trim());
+  if (entries.length === 0) return;
+  normalized.confidence = normalized.confidence || {};
+  normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+  for (const [field, value] of entries) {
+    const previous = normalized[field];
+    if (previous && !sameFieldValue(field, previous, value)) {
+      const msg = `Campo ${field} informado manualmente prevaleceu sobre o valor extraído do documento.`;
+      if (!normalized.warnings.includes(msg)) normalized.warnings.push(msg);
+    }
+    normalized[field] = value;
+    normalized.confidence[field] = 0.99;
+  }
 }
 
 function extractEmailFromText(text: string): string | null {
@@ -632,6 +778,9 @@ Deno.serve(async (req) => {
       }
       normalized.confidence = conf;
       delete normalized.confidence_pairs;
+    }
+    if (text) {
+      applyManualOverrides(normalized, extractManualOverrides(text));
     }
     if (emissorRgNeedsReview(normalized.emissor_rg, normalized.confidence?.emissor_rg)) {
       normalized.emissor_rg_needs_review = true;
