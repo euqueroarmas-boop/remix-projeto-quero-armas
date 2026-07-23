@@ -7,7 +7,7 @@ import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import {
   FileSignature, Upload, Loader2, CheckCircle2, RefreshCw, Plus, Trash2, Wand2, Download,
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  List, ListOrdered, Heading1, Heading2, Type,
+  List, ListOrdered, Heading1, Heading2, Type, Code2, Copy, Check, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 type TemplateVigente = {
@@ -138,6 +138,10 @@ export default function QAProcuracaoPrimarioAdmin() {
   const [novaSub, setNovaSub] = useState<{ texto: string; placeholder: string; descricao: string }>({
     texto: "", placeholder: "", descricao: "",
   });
+  const [verCodigoVigente, setVerCodigoVigente] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [colarHtml, setColarHtml] = useState("");
+  const [mostrarColarHtml, setMostrarColarHtml] = useState(false);
 
   // Populates editor imperatively (never during editing — cursor-safe)
   const setEditorContent = useCallback((html: string, sbs?: Substituicao[]) => {
@@ -258,6 +262,21 @@ export default function QAProcuracaoPrimarioAdmin() {
     toast.success("Modelo padrão carregado");
   }
 
+  async function copiarHtmlVigente() {
+    if (!vigente?.corpo_html) return;
+    await navigator.clipboard.writeText(vigente.corpo_html);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  }
+
+  function aplicarColarHtml() {
+    if (!colarHtml.trim()) return;
+    setEditorContent(colarHtml.trim());
+    setColarHtml("");
+    setMostrarColarHtml(false);
+    toast.success("HTML carregado no editor");
+  }
+
   // ── Editor helpers ────────────────────────────────────────────────────────
 
   function exec(command: string, value?: string) {
@@ -300,21 +319,52 @@ export default function QAProcuracaoPrimarioAdmin() {
       ) : (
         <>
           {/* Vigente */}
-          <div className="rounded-lg border bg-slate-50/60 px-3 py-2.5 mb-4 flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 25%)" }}>
-                {vigente ? vigente.titulo : "Nenhuma procuração vigente"}
-              </p>
-              <p className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
-                {vigente
-                  ? `Versão ${vigente.versao} · publicada em ${fmtData(vigente.data_publicacao ?? vigente.updated_at)}`
-                  : "Publique uma procuração para ativar"}
-              </p>
+          <div className="rounded-lg border bg-slate-50/60 px-3 py-2.5 mb-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 25%)" }}>
+                  {vigente ? vigente.titulo : "Nenhuma procuração vigente"}
+                </p>
+                <p className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+                  {vigente
+                    ? `Versão ${vigente.versao} · publicada em ${fmtData(vigente.data_publicacao ?? vigente.updated_at)}`
+                    : "Publique uma procuração para ativar"}
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {vigente && (
+                  <>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1"
+                      onClick={() => setVerCodigoVigente((v) => !v)}>
+                      <Code2 className="w-3 h-3" />
+                      {verCodigoVigente ? "Fechar" : "Ver código"}
+                      {verCodigoVigente ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1"
+                      onClick={copiarHtmlVigente}>
+                      {copiado ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
+                      {copiado ? "Copiado!" : "Copiar HTML"}
+                    </Button>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium text-green-700 bg-green-50 border-green-200">
+                      Vigente
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-            {vigente && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full border font-medium text-green-700 bg-green-50 border-green-200 shrink-0">
-                Vigente
-              </span>
+            {verCodigoVigente && vigente && (
+              <div className="mt-2">
+                <textarea
+                  readOnly
+                  value={vigente.corpo_html}
+                  rows={10}
+                  className="w-full rounded border px-2 py-1.5 text-[11px] font-mono resize-y bg-slate-900 text-green-300 focus:outline-none"
+                  style={{ borderColor: "hsl(220 15% 80%)" }}
+                />
+                <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 60%)" }}>
+                  Código HTML somente leitura. Use "Copiar HTML" para copiar tudo de uma vez.
+                </p>
+              </div>
             )}
           </div>
 
@@ -405,6 +455,39 @@ export default function QAProcuracaoPrimarioAdmin() {
                 {/* Listas */}
                 <ToolbarBtn onClick={() => exec("insertUnorderedList")} title="Lista com marcadores"><List className="w-3.5 h-3.5" /></ToolbarBtn>
                 <ToolbarBtn onClick={() => exec("insertOrderedList")} title="Lista numerada"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
+              </div>
+
+              {/* Colar HTML */}
+              <div className="mb-2">
+                <button
+                  type="button"
+                  onClick={() => setMostrarColarHtml((v) => !v)}
+                  className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  <Code2 className="w-3 h-3" />
+                  Colar código HTML
+                  {mostrarColarHtml ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                {mostrarColarHtml && (
+                  <div className="mt-1.5 flex flex-col gap-1.5">
+                    <textarea
+                      value={colarHtml}
+                      onChange={(e) => setColarHtml(e.target.value)}
+                      placeholder="Cole aqui o código HTML e clique em Aplicar para renderizar no editor acima."
+                      rows={6}
+                      className="w-full rounded border px-2 py-1.5 text-[11px] font-mono resize-y focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
+                      style={{ borderColor: "hsl(220 15% 82%)" }}
+                    />
+                    <div className="flex gap-1.5">
+                      <Button size="sm" onClick={aplicarColarHtml} disabled={!colarHtml.trim()}
+                        className="h-7 text-[11px] gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white">
+                        <CheckCircle2 className="w-3 h-3" /> Aplicar no editor
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setColarHtml(""); setMostrarColarHtml(false); }}
+                        className="h-7 text-[11px]">Cancelar</Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Trechos prontos */}
