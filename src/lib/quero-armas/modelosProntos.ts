@@ -33,8 +33,8 @@ function certidoesEstaduais(ordemInicial: number, etapa: "base" | "complementar"
   return [
     { codigo_biblioteca: "certidao_estadual_distribuicao_acoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial },
     { codigo_biblioteca: "certidao_estadual_execucoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 10 },
-    { codigo_biblioteca: "certidao_estadual_segundo_grau_acoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 20 },
-    { codigo_biblioteca: "certidao_estadual_segundo_grau_execucoes_criminais", obrigatorio: true, etapa, ordem: ordemInicial + 30 },
+    { codigo_biblioteca: "certidao_estadual_policia_civil", obrigatorio: true, etapa, ordem: ordemInicial + 20 },
+    { codigo_biblioteca: "certidao_estadual_justica_militar", obrigatorio: true, etapa, ordem: ordemInicial + 30 },
   ];
 }
 

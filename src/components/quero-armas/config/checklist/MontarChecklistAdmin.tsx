@@ -84,17 +84,17 @@ const GRUPO_CERTIDOES_ESTADUAIS = [
     observacao_cliente: "Não substitui a certidão de distribuição; são conferências diferentes.",
   },
   {
-    codigo: "certidao_estadual_segundo_grau_acoes_criminais",
-    nome: "Certidão Estadual — 2º Grau / Ações Criminais",
-    descricao_o_que_e: "Certidão complementar do Tribunal de Justiça em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.",
-    descricao_como_enviar: "Emita a certidão criminal de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.",
+    codigo: "certidao_estadual_policia_civil",
+    nome: "Certidão Estadual — Polícia Civil",
+    descricao_o_que_e: "Certidão estadual emitida pela Polícia Civil, quando disponível no estado do requerente.",
+    descricao_como_enviar: "Emita a certidão estadual da Polícia Civil do seu estado e envie o PDF original.",
     observacao_cliente: "Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.",
   },
   {
-    codigo: "certidao_estadual_segundo_grau_execucoes_criminais",
-    nome: "Certidão Estadual — 2º Grau / Execuções Criminais",
-    descricao_o_que_e: "Certidão complementar de execuções criminais em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.",
-    descricao_como_enviar: "Emita a certidão de execuções criminais de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.",
+    codigo: "certidao_estadual_justica_militar",
+    nome: "Certidão Estadual — Tribunal de Justiça Militar",
+    descricao_o_que_e: "Certidão estadual emitida pelo Tribunal de Justiça Militar, quando disponível no estado do requerente.",
+    descricao_como_enviar: "Emita a certidão estadual do Tribunal de Justiça Militar do seu estado, quando disponível, e envie o PDF original.",
     observacao_cliente: "Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.",
   },
 ] as const;
@@ -508,23 +508,33 @@ export default function MontarChecklistAdmin() {
     setCarregandoAcao(true);
     try {
       await snapshot("aplicar_grupo:certidoes_estaduais");
-      const seeds = GRUPO_CERTIDOES_ESTADUAIS.map((item) => ({
-        codigo: item.codigo,
-        nome: item.nome,
-        categoria: "certidoes",
-        descricao_o_que_e: item.descricao_o_que_e,
-        descricao_como_enviar: item.descricao_como_enviar,
-        observacao_cliente: item.observacao_cliente,
-        validade_dias: 60,
-        formato_aceito: ["pdf"],
-        link_emissao: null,
-        base_legal: "IN DG/PF 201",
-        ativo: true,
-      }));
-      const { error: upsertBibError } = await supabase
+      const { data: bibExistente, error: bibExistenteError } = await supabase
         .from("qa_documentos_biblioteca" as any)
-        .upsert(seeds as any[], { onConflict: "codigo" });
-      if (upsertBibError) throw upsertBibError;
+        .select("codigo")
+        .in("codigo", GRUPO_CERTIDOES_ESTADUAIS_TIPOS);
+      if (bibExistenteError) throw bibExistenteError;
+      const codigosBibliotecaExistentes = new Set(((bibExistente as any[]) ?? []).map((item) => item.codigo));
+      const seedsFaltantes = GRUPO_CERTIDOES_ESTADUAIS
+        .filter((item) => !codigosBibliotecaExistentes.has(item.codigo))
+        .map((item) => ({
+          codigo: item.codigo,
+          nome: item.nome,
+          categoria: "certidoes",
+          descricao_o_que_e: item.descricao_o_que_e,
+          descricao_como_enviar: item.descricao_como_enviar,
+          observacao_cliente: item.observacao_cliente,
+          validade_dias: 60,
+          formato_aceito: ["pdf"],
+          link_emissao: null,
+          base_legal: "IN DG/PF 201",
+          ativo: true,
+        }));
+      if (seedsFaltantes.length > 0) {
+        const { error: insertBibError } = await supabase
+          .from("qa_documentos_biblioteca" as any)
+          .insert(seedsFaltantes as any[]);
+        if (insertBibError) throw insertBibError;
+      }
 
       await carregarBiblioteca();
       const { data: bib, error: bibError } = await supabase
@@ -536,7 +546,8 @@ export default function MontarChecklistAdmin() {
       const bibMap = new Map<string, any>();
       for (const item of ((bib as any[]) ?? [])) bibMap.set(item.codigo, item);
       const ordemBase = Math.max(50, checklist.reduce((max, c) => Math.max(max, c.ordem), 0) + 10);
-      const payload = GRUPO_CERTIDOES_ESTADUAIS.map((item, index) => {
+      const tiposExistentes = new Set(checklist.map((item) => item.tipo_documento));
+      const payload = GRUPO_CERTIDOES_ESTADUAIS.filter((item) => !tiposExistentes.has(item.codigo)).map((item, index) => {
         const b = bibMap.get(item.codigo);
         return {
           servico_id: servicoId,
@@ -561,14 +572,13 @@ export default function MontarChecklistAdmin() {
           },
         };
       });
-      const { error } = await supabase
-        .from("qa_servicos_documentos" as any)
-        .upsert(payload as any[], {
-          onConflict: "servico_id,tipo_documento,condicao_profissional",
-          ignoreDuplicates: true,
-        });
-      if (error) throw error;
-      toast.success("Grupo de certidões estaduais aplicado com 4 exigências.");
+      if (payload.length > 0) {
+        const { error } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .insert(payload as any[]);
+        if (error) throw error;
+      }
+      toast.success(payload.length > 0 ? "Grupo de certidões estaduais aplicado." : "Grupo de certidões estaduais já estava completo.");
       await carregarChecklist(servicoId);
     } catch (e: any) {
       toast.error(e?.message || "Falha ao aplicar grupo de certidões estaduais.");

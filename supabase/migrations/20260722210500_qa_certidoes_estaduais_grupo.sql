@@ -35,11 +35,11 @@ VALUES
     true
   ),
   (
-    'certidao_estadual_segundo_grau_acoes_criminais',
-    'Certidão Estadual — 2º Grau / Ações Criminais',
+    'certidao_estadual_policia_civil',
+    'Certidão Estadual — Polícia Civil',
     'certidoes',
-    'Certidão complementar do Tribunal de Justiça em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.',
-    'Emita a certidão criminal de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.',
+    'Certidão estadual emitida pela Polícia Civil, quando disponível no estado do requerente.',
+    'Emita a certidão estadual da Polícia Civil do seu estado e envie o PDF original.',
     'Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.',
     60,
     ARRAY['pdf'],
@@ -48,11 +48,11 @@ VALUES
     true
   ),
   (
-    'certidao_estadual_segundo_grau_execucoes_criminais',
-    'Certidão Estadual — 2º Grau / Execuções Criminais',
+    'certidao_estadual_justica_militar',
+    'Certidão Estadual — Tribunal de Justiça Militar',
     'certidoes',
-    'Certidão complementar de execuções criminais em segundo grau, quando disponível ou exigida para fechar a pesquisa estadual.',
-    'Emita a certidão de execuções criminais de segundo grau no Tribunal de Justiça do seu estado, quando disponível, e envie o PDF original.',
+    'Certidão estadual emitida pelo Tribunal de Justiça Militar, quando disponível no estado do requerente.',
+    'Emita a certidão estadual do Tribunal de Justiça Militar do seu estado, quando disponível, e envie o PDF original.',
     'Pode variar conforme o estado. A equipe confere se o tribunal local oferece esta consulta.',
     60,
     ARRAY['pdf'],
