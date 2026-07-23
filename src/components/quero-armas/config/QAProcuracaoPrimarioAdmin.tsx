@@ -106,6 +106,9 @@ export default function QAProcuracaoPrimarioAdmin() {
   const [copiado, setCopiado] = useState(false);
   const [temRascunho, setTemRascunho] = useState(() => !!localStorage.getItem(RASCUNHO_KEY));
 
+  const [clienteIdRegen, setClienteIdRegen] = useState("");
+  const [regenerando, setRegenerando] = useState(false);
+
   const editorRef = useRef<QAEditorModeloRef>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
@@ -218,6 +221,26 @@ export default function QAProcuracaoPrimarioAdmin() {
       toast.error(e?.message || "Erro ao publicar");
     } finally {
       setPublicando(false);
+    }
+  }
+
+  async function regenerarProcuracao() {
+    const id = clienteIdRegen.trim();
+    if (!id) { toast.error("Informe o ID do cliente"); return; }
+    setRegenerando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-gerar-procuracao", {
+        body: { cliente_id: Number(id), force_regenerate: true },
+      });
+      if (error || !(data as any)?.ok) {
+        toast.error((data as any)?.error || error?.message || "Erro ao regenerar");
+      } else {
+        toast.success(`Procuração regenerada com sucesso (ID procuração: ${(data as any)?.id ?? "?"})`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao regenerar");
+    } finally {
+      setRegenerando(false);
     }
   }
 
@@ -361,6 +384,33 @@ export default function QAProcuracaoPrimarioAdmin() {
                 className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
                 {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 {publicando ? "Publicando…" : "Publicar procuração"}
+              </Button>
+            </div>
+          </div>
+          {/* ── Regenerar procuração por cliente ── */}
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-3">
+            <p className="text-[11px] font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+              Regenerar procuração de um cliente
+            </p>
+            <p className="text-[11px] text-slate-500 mb-2">
+              Força a regeneração da procuração com o modelo e formatação atuais, mesmo que já exista uma versão anterior.
+            </p>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                placeholder="ID do cliente (numérico)"
+                value={clienteIdRegen}
+                onChange={(e) => setClienteIdRegen(e.target.value)}
+                className="h-8 flex-1 rounded border border-slate-300 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
+              />
+              <Button
+                size="sm"
+                onClick={regenerarProcuracao}
+                disabled={regenerando || !clienteIdRegen.trim()}
+                className="h-8 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white whitespace-nowrap"
+              >
+                {regenerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                {regenerando ? "Regenerando…" : "Regenerar"}
               </Button>
             </div>
           </div>

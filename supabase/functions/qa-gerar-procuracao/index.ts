@@ -182,15 +182,19 @@ Deno.serve(async (req) => {
       ? procuraExistenteQuery.is("venda_id", null)
       : procuraExistenteQuery.eq("venda_id", venda_id);
     const { data: jaExiste } = await procuraExistenteQuery.maybeSingle();
-    const podeAtualizarPendente = Boolean(
+    // force_regenerate=true (admin) regenera qualquer status; caso contrário
+    // só atualiza se ainda estiver pendente/rejeitada e com template antigo.
+    const podeAtualizar = Boolean(
       jaExiste
-      && ["generated_pending_customer_signature", "rejected"].includes(jaExiste.status)
       && (
         force_regenerate
-        || Number(jaExiste.template_versao ?? 0) < Number((tpl as any).versao ?? 0)
+        || (
+          ["generated_pending_customer_signature", "rejected"].includes(jaExiste.status)
+          && Number(jaExiste.template_versao ?? 0) < Number((tpl as any).versao ?? 0)
+        )
       ),
     );
-    if (jaExiste && !podeAtualizarPendente) {
+    if (jaExiste && !podeAtualizar) {
       return json({ ok: true, reused: false, existing: jaExiste });
     }
 
