@@ -13,10 +13,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group toast !border-[#7f2638] !bg-[#252529] !text-[#fff7f8] !shadow-[0_16px_40px_rgba(0,0,0,0.38)]",
+          title: "!font-semibold !text-[#fff7f8]",
+          description: "!text-[#d8cdd0]",
+          icon: "!text-[#c12d49]",
+          closeButton:
+            "!border-[#7f2638] !bg-[#303035] !text-[#f4e9eb] hover:!bg-[#8f1f35] hover:!text-white",
+          actionButton: "!bg-[#8f1f35] !text-white hover:!bg-[#a52841]",
+          cancelButton: "!bg-[#38383d] !text-[#f4e9eb] hover:!bg-[#48484e]",
+          success: "!border-[#7f2638] !bg-[#252529] !text-[#fff7f8]",
+          error: "!border-[#b52a45] !bg-[#252529] !text-[#fff7f8]",
+          info: "!border-[#7f2638] !bg-[#252529] !text-[#fff7f8]",
+          warning: "!border-[#9f2940] !bg-[#252529] !text-[#fff7f8]",
+          loading: "!border-[#7f2638] !bg-[#252529] !text-[#fff7f8]",
         },
       }}
       {...props}
