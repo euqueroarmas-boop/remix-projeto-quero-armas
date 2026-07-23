@@ -8012,6 +8012,68 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_notificacoes_cliente: {
+        Row: {
+          ativa: boolean
+          categoria: string
+          cliente_id: number
+          created_at: string
+          criado_por: string | null
+          id: string
+          link: string | null
+          mensagem: string
+          origem: string
+          referencia_id: string | null
+          referencia_tabela: string | null
+          resolvida_em: string | null
+          titulo: string
+          updated_at: string
+          urgencia: string
+        }
+        Insert: {
+          ativa?: boolean
+          categoria: string
+          cliente_id: number
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          link?: string | null
+          mensagem: string
+          origem?: string
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          resolvida_em?: string | null
+          titulo: string
+          updated_at?: string
+          urgencia?: string
+        }
+        Update: {
+          ativa?: boolean
+          categoria?: string
+          cliente_id?: number
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          link?: string | null
+          mensagem?: string
+          origem?: string
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          resolvida_em?: string | null
+          titulo?: string
+          updated_at?: string
+          urgencia?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_notificacoes_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_pagamento_auditoria: {
         Row: {
           adquirente: string | null
@@ -11331,6 +11393,18 @@ export type Database = {
       qa_cliente_excluir_total_v2: {
         Args: { p_cliente_id: number }
         Returns: Json
+      }
+      qa_cliente_notificacoes_ativas: {
+        Args: { p_cliente_id: number }
+        Returns: {
+          categoria: string
+          created_at: string
+          id: string
+          link: string
+          mensagem: string
+          titulo: string
+          urgencia: string
+        }[]
       }
       qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
       qa_confirmar_pagamento_processo: {
