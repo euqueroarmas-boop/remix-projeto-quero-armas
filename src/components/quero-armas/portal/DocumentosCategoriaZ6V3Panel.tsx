@@ -115,8 +115,15 @@ const formatMemberSince = (d: string | null | undefined) => {
   }
 };
 
-function dotColor(d: number | null): string {
-  if (d === null) return "#8A8A8A";
+function dotColor(d: number | null, status?: string | null): string {
+  const s = String(status || "").toLowerCase();
+  // Documentos aprovados sem data de validade (contrato, procuração, etc.)
+  // devem exibir verde — indicam exigência cumprida e não têm ciclo de expiração.
+  if (d === null) {
+    if (s === "aprovado") return "#2F8F4A";
+    if (s === "reprovado") return "#D9342B";
+    return "#8A8A8A";
+  }
   if (d < 0) return "#D9342B";
   if (d <= 7) return "#D9342B";
   if (d <= 30) return "#D6A64B";
@@ -512,7 +519,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const nome = getNomeDocumentoDisplay(d, "Documento");
                 const validade = dataValidadeHub(d);
                 const dias = daysUntil(validade);
-                const cor = dotColor(dias);
+                const cor = dotColor(dias, d.status);
                 const dataEmissao = dataEmissaoHub(d);
                 const metaLine = [d.numero_documento, d.orgao_emissor, dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null]
                   .filter(Boolean).join(" · ") || "emitido recente";

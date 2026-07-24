@@ -523,6 +523,10 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
     campos.nome_documento = campos.nome_documento || "Contrato de Adesão assinado";
     campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    // Contrato de adesão é peça privada entre CONTRATADA e CONTRATANTE — NÃO
+    // é emitido pelo Exército. Força o órgão vinculado ao fluxo administrativo
+    // (SINARM/PF) para o qual o contrato instrumentaliza a assessoria.
+    campos.orgao_emissor = "SINARM / Polícia Federal";
     parsed.justificativa =
       "Classificação determinística: cabeçalho CONTRATO DE ADESÃO com partes CONTRATADA/CONTRATANTE e vínculo à Quero Armas / Arsenal Inteligente — peça jurídica de adesão assinada.";
     return parsed;
@@ -537,6 +541,12 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
     campos.nome_documento = campos.nome_documento || "Procuração assinada";
     campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    // Procuração outorga poderes de representação perante SINARM/Polícia Federal
+    // (e subsidiariamente Exército). Não sobrescreve se o corpo do documento
+    // explicitar 'Exército' como órgão de representação exclusiva.
+    if (!campos.orgao_emissor || /EX[EÉ]RCITO/i.test(String(campos.orgao_emissor))) {
+      campos.orgao_emissor = "SINARM / Polícia Federal";
+    }
     parsed.justificativa =
       "Classificação determinística: título PROCURAÇÃO com blocos OUTORGANTE/OUTORGADO — peça jurídica assinada pelo titular.";
     return parsed;

@@ -1342,6 +1342,20 @@ export default function QAClientePortalPage() {
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
 
+  // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
+  // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
+  // pendências, deve rodar o tempo todo até a pendência ser sanada".
+  // Só reabre quando nenhum outro fluxo bloqueante está ativo (Hub Documental,
+  // Checklist Guiado, modal de cadastro).
+  useEffect(() => {
+    if (!pendingContractsLoaded) return;
+    if (pendingSignatureCount <= 0) return;
+    if (showContratoPopup) return;
+    if (showAddDoc) return;
+    if (showCadastroModal) return;
+    setShowContratoPopup(true);
+  }, [pendingSignatureCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
+
   // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
   // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
   // com o assistente de compra/documentação.
