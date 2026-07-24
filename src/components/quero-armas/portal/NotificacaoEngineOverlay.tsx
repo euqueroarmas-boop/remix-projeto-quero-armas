@@ -37,7 +37,6 @@ function seenNormalKey(id: string) {
 export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: number | null }) {
   const [todas, setTodas] = useState<NotificacaoAtiva[]>([]);
   const [visiveis, setVisiveis] = useState<NotificacaoAtiva[]>([]);
-  const [, forceTick] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
