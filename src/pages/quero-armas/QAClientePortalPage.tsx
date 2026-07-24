@@ -1427,10 +1427,55 @@ export default function QAClientePortalPage() {
           ])
           .order("created_at", { ascending: false });
 
-        const count = contracts.length;
-        setPendingContracts(count);
+        // Exigência cumprida não pode ser pedida novamente: se o cliente já
+        // enviou o contrato/procuração pelo Hub Documental, o registro fica
+        // em qa_documentos_cliente (status pendente_aprovacao ou aprovado),
+        // mesmo que qa_contracts/qa_procuracoes ainda não tenham sido
+        // sincronizados. Filtramos aqui para não pedir de novo.
+        const qaClienteUuid = (cliente as any)?.id as string | undefined;
+        let hubContracts: any[] = [];
+        let hubProcuracoes: any[] = [];
+        if (qaClienteUuid) {
+          const { data: hubDocs } = await supabase
+            .from("qa_documentos_cliente" as any)
+            .select("id, tipo_documento, numero_documento, status, metadados_documento_json")
+            .eq("qa_cliente_id", qaClienteUuid)
+            .in("tipo_documento", ["contrato_assinado", "procuracao_assinada"])
+            .in("status", ["pendente_aprovacao", "aprovado"]);
+          const docs = Array.isArray(hubDocs) ? (hubDocs as any[]) : [];
+          hubContracts = docs.filter((d) => d.tipo_documento === "contrato_assinado");
+          hubProcuracoes = docs.filter((d) => d.tipo_documento === "procuracao_assinada");
+        }
+
+        const contractFulfilled = (c: any) => {
+          return hubContracts.some((h) => {
+            const meta = h.metadados_documento_json ?? {};
+            if (meta.contract_id && String(meta.contract_id) === String(c.id)) return true;
+            const numero = String(h.numero_documento ?? "").trim().toUpperCase();
+            const cnum = String(c.contract_number ?? "").trim().toUpperCase();
+            if (numero && cnum && numero === cnum) return true;
+            return false;
+          });
+        };
+
+        const procuracoesArr = ((procuracoes ?? []) as any[]);
+        const procFulfilled = (p: any) => {
+          // 1) match direto por procuracao_id no metadata
+          if (hubProcuracoes.some((h) => String(h.metadados_documento_json?.procuracao_id ?? "") === String(p.id))) return true;
+          // 2) match por venda_id no metadata
+          if (p.venda_id && hubProcuracoes.some((h) => String(h.metadados_documento_json?.venda_id ?? "") === String(p.venda_id))) return true;
+          // 3) fallback: existe pelo menos uma procuração assinada no Hub e
+          //    apenas uma procuração pendente — trata como cumprida.
+          if (hubProcuracoes.length > 0 && procuracoesArr.length === 1) return true;
+          return false;
+        };
+
+        const contractsPendentes = contracts.filter((c) => !contractFulfilled(c));
+        const procuracoesPendentes = procuracoesArr.filter((p) => !procFulfilled(p));
+
+        setPendingContracts(contractsPendentes.length);
         const assinaturaDocs: PendingSignatureDoc[] = [
-          ...contracts.map((contract) => ({
+          ...contractsPendentes.map((contract) => ({
             id: String(contract.id),
             kind: "contract" as const,
             label: "Contrato de adesão",
@@ -1439,7 +1484,7 @@ export default function QAClientePortalPage() {
             venda_id: contract.venda_id ?? null,
             created_at: contract.created_at ?? null,
           })),
-          ...((procuracoes ?? []) as any[]).map((procuracao) => ({
+          ...procuracoesPendentes.map((procuracao) => ({
             id: String(procuracao.id),
             kind: "procuration" as const,
             label: "Procuração",
