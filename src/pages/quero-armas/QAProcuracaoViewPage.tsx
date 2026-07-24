@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, Printer } from "lucide-react";
@@ -66,46 +66,12 @@ function normalizeHtml(html: string, protectedNames: string[] = []): string {
   return working;
 }
 
-// ── Geração de PDF client-side ─────────────────────────────────────────────
-function htmlToText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
-}
-
-function gerarPdf(htmlNormalizado: string, nomeArquivo: string, vendaId?: number | null) {
-  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
-  const pageW = doc.internal.pageSize.getWidth();
+// ── Geração de PDF a partir do mesmo HTML exibido ao cliente ───────────────
+function adicionarCarimboSessao(doc: jsPDF, vendaId?: number | null) {
   const pageH = doc.internal.pageSize.getHeight();
-  const mLeft = 104; // reserva margem esquerda para o carimbo
-  const mRight = 48;
-  const mTop = 56;
-  const mBottom = 56;
-  const W = pageW - mLeft - mRight;
-  let y = mTop;
-  const isTitle = (l: string) => /^[A-ZÀ-Ú0-9\s.,/()\-ºª]{8,}$/.test(l) && l.length <= 140;
-
-  for (const raw of htmlToText(htmlNormalizado).split(/\n+/)) {
-    const line = raw.trim();
-    if (!line) { y += 10; continue; }
-    if (y > pageH - mBottom) { doc.addPage(); y = mTop; }
-    const title = isTitle(line);
-    doc.setFont("times", title ? "bold" : "normal");
-    doc.setFontSize(title ? 12 : 11);
-    for (const piece of doc.splitTextToSize(line, W) as string[]) {
-      if (y > pageH - mBottom) { doc.addPage(); y = mTop; }
-      doc.text(piece, title ? pageW / 2 : mLeft, y, title ? { align: "center" } : undefined);
-      y += title ? 18 : 16;
-    }
-    y += title ? 8 : 4;
-  }
-
-  // === Carimbo lateral esquerdo (registro de sessão) em todas as páginas ===
+  const mLeft = 76;
+  const mTop = 42;
+  const mBottom = 42;
   const agora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" });
   const ua = navigator.userAgent;
   const lang = navigator.language || "—";
@@ -185,7 +151,37 @@ function gerarPdf(htmlNormalizado: string, nomeArquivo: string, vendaId?: number
     doc.setTextColor(140);
     doc.text(`PÁG. ${p}/${totalPages}`, titleX, stampTop + 26, { angle: 90, baseline: "alphabetic" } as any);
   }
+}
 
+async function gerarPdf(
+  elemento: HTMLElement,
+  larguraHtml: number,
+  nomeArquivo: string,
+  vendaId?: number | null,
+) {
+  const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
+  const pageW = doc.internal.pageSize.getWidth();
+  const margemEsquerda = 76;
+  const margemDireita = 42;
+  const margemVertical = 42;
+  const larguraPdf = pageW - margemEsquerda - margemDireita;
+
+  await document.fonts.ready;
+  await doc.html(elemento, {
+    x: 0,
+    y: 0,
+    width: larguraPdf,
+    windowWidth: larguraHtml,
+    margin: [margemVertical, margemDireita, margemVertical, margemEsquerda],
+    autoPaging: "text",
+    html2canvas: {
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      logging: false,
+    },
+  });
+
+  adicionarCarimboSessao(doc, vendaId);
   doc.save(nomeArquivo);
 }
 
@@ -216,6 +212,7 @@ export default function QAProcuracaoViewPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [baixando, setBaixando] = useState(false);
+  const conteudoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) {
@@ -247,14 +244,29 @@ export default function QAProcuracaoViewPage() {
     return () => { document.title = "Eu Quero Armas, e você?"; };
   }, [procuracao]);
 
-  function baixarPdf() {
-    if (!procuracao) return;
+  async function baixarPdf() {
+    if (!procuracao || !conteudoRef.current) return;
     setBaixando(true);
     try {
       const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
       const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
-      // Gera PDF client-side com o conteúdo já normalizado (Title Case aplicado)
-      gerarPdf(procuracao.conteudo_html, nome, procuracao.venda_id);
+      const larguraHtml = Math.max(
+        conteudoRef.current.scrollWidth,
+        conteudoRef.current.getBoundingClientRect().width,
+      );
+      const documento = conteudoRef.current.cloneNode(true) as HTMLDivElement;
+      documento.className = "qa-procuracao-body";
+      documento.style.cssText = [
+        "width: 100%",
+        "max-width: none",
+        "margin: 0",
+        "padding: 0",
+        "border: 0",
+        "border-radius: 0",
+        "box-shadow: none",
+        "background: #fff",
+      ].join(";");
+      await gerarPdf(documento, larguraHtml, nome, procuracao.venda_id);
       toast.success("Procuração baixada");
     } catch (e) {
       console.error("[baixarProcuracaoPdf]", e);
@@ -360,6 +372,7 @@ export default function QAProcuracaoViewPage() {
 
       <div className="max-w-4xl mx-auto px-4 pb-12">
         <div
+          ref={conteudoRef}
           className="bg-white rounded-lg border shadow-sm p-8 print:shadow-none print:border-none print:rounded-none print:p-0 qa-procuracao-body"
           dangerouslySetInnerHTML={{ __html: procuracao.conteudo_html }}
         />

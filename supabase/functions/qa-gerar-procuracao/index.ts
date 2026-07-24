@@ -101,6 +101,20 @@ function enderecoCliente(cli: Record<string, unknown>): string {
   return linha.join(", ");
 }
 
+function identidadeCliente(cli: Record<string, unknown>) {
+  const tipo = normalize(first(cli.tipo_documento_identidade));
+  const isCin = tipo === "CIN" || tipo.includes("CARTEIRA DE IDENTIDADE NACIONAL");
+  const cpf = first(cli.cpf);
+
+  return {
+    tipo: isCin ? "CIN" : (first(cli.tipo_documento_identidade) || "RG"),
+    numero: isCin ? cpf : first(cli.rg, cli.numero_documento_identidade),
+    orgaoEmissor: toTitleCity(first(cli.emissor_rg)),
+    ufEmissor: first(cli.uf_emissor_rg).toUpperCase(),
+    dataExpedicao: first(cli.expedicao_rg),
+  };
+}
+
 function buildProcuracaoPadrao(ctx: Record<string, string>): string {
   const h = (key: string) => escHtml(ctx[key] ?? "");
   return `
@@ -248,7 +262,7 @@ Deno.serve(async (req) => {
     // Dados do cliente
     const { data: cli } = await sb
       .from("qa_clientes")
-      .select("id, id_legado, nome_completo, cpf, rg, emissor_rg, uf_emissor_rg, endereco, numero, complemento, bairro, cidade, estado, cep, pais, estado_civil, nacionalidade, profissao, email, celular")
+      .select("id, id_legado, nome_completo, cpf, tipo_documento_identidade, numero_documento_identidade, rg, emissor_rg, uf_emissor_rg, expedicao_rg, endereco, numero, complemento, bairro, cidade, estado, cep, pais, estado_civil, nacionalidade, profissao, email, celular")
       .or(`id.eq.${cliente_id},id_legado.eq.${cliente_id}`)
       .maybeSingle();
     if (!cli) return json({ error: `Cliente ${cliente_id} não encontrado para gerar procuração` }, 404);
@@ -266,6 +280,7 @@ Deno.serve(async (req) => {
 
     const hojeExtenso = brDate(new Date());
     const outorgadoAte = addYears(new Date(), VIGENCIA_ANOS);
+    const identidade = identidadeCliente((cli as any) ?? {});
 
     const ctx: Record<string, string> = {
       empresa_razao_social:       cfgMap.empresa_razao_social       || "QUERO ARMAS LTDA",
@@ -275,12 +290,17 @@ Deno.serve(async (req) => {
       empresa_endereco:           cfgMap.empresa_endereco           || "",
       cliente_nome_completo:      (cli as any)?.nome_completo       || "",
       cliente_cpf:                (cli as any)?.cpf                 || "",
-      cliente_rg:                 (cli as any)?.rg                  || "",
+      cliente_rg:                 identidade.numero,
+      cliente_tipo_documento_identidade: identidade.tipo,
+      cliente_numero_documento_identidade: identidade.numero,
+      cliente_expedicao_rg:       identidade.dataExpedicao,
+      cliente_data_expedicao_rg:  identidade.dataExpedicao,
+      cliente_rg_data_expedicao:  identidade.dataExpedicao,
       // Aliases para emissor/UF do RG (placeholders usados no template)
-      cliente_rg_orgao_emissor:   toTitleCity((cli as any)?.emissor_rg    || ""),
-      cliente_rg_uf_emissor:      ((cli as any)?.uf_emissor_rg            || "").toUpperCase(),
-      cliente_emissor_rg:         toTitleCity((cli as any)?.emissor_rg    || ""),
-      cliente_uf_emissor_rg:      ((cli as any)?.uf_emissor_rg            || "").toUpperCase(),
+      cliente_rg_orgao_emissor:   identidade.orgaoEmissor,
+      cliente_rg_uf_emissor:      identidade.ufEmissor,
+      cliente_emissor_rg:         identidade.orgaoEmissor,
+      cliente_uf_emissor_rg:      identidade.ufEmissor,
       cliente_estado_civil:       toTitleCity((cli as any)?.estado_civil   || ""),
       cliente_nacionalidade:      toTitleCity((cli as any)?.nacionalidade  || ""),
       cliente_profissao:          toTitleCity((cli as any)?.profissao      || ""),
