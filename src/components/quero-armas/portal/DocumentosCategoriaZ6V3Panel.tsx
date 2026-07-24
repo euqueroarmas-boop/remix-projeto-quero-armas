@@ -167,22 +167,35 @@ async function abrirArquivo(doc: any, modo: "visualizado" | "baixado") {
   }
   try {
     const bucket = doc?.metadados_documento_json?.bucket || DOC_BUCKET;
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(doc.arquivo_storage_path, 3600, modo === "baixado" ? { download: doc.arquivo_nome || true } : undefined);
-    if (error || !data?.signedUrl) {
-      toast.error("Não foi possível abrir o arquivo.");
-      return;
+    let signedUrl: string | null = null;
+    if (bucket !== DOC_BUCKET) {
+      const { data: fn, error: fnErr } = await supabase.functions.invoke("qa-hub-doc-signed-url", {
+        body: { documento_id: doc.id, download: modo === "baixado" },
+      });
+      if (fnErr || !(fn as any)?.signed_url) {
+        toast.error("Não foi possível abrir o arquivo.");
+        return;
+      }
+      signedUrl = (fn as any).signed_url;
+    } else {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(doc.arquivo_storage_path, 3600, modo === "baixado" ? { download: doc.arquivo_nome || true } : undefined);
+      if (error || !data?.signedUrl) {
+        toast.error("Não foi possível abrir o arquivo.");
+        return;
+      }
+      signedUrl = data.signedUrl;
     }
     if (modo === "baixado") {
       const a = document.createElement("a");
-      a.href = data.signedUrl;
+      a.href = signedUrl!;
       a.download = doc.arquivo_nome || "documento";
       document.body.appendChild(a);
       a.click();
       a.remove();
     } else {
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      window.open(signedUrl!, "_blank", "noopener,noreferrer");
     }
     await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, modo, { path: doc.arquivo_storage_path });
   } catch (e) {
@@ -219,13 +232,30 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       // Baixa o binário e serve via blob local — sem expor URL do Supabase
       // e sem depender do visualizador nativo do navegador (bloqueado no Edge).
       const { data: blob, error } = await supabase.storage
-        .from(doc?.metadados_documento_json?.bucket || DOC_BUCKET)
+        .from(DOC_BUCKET)
         .download(doc.arquivo_storage_path);
-      if (error || !blob) {
+      let effectiveBlob: Blob | null = blob ?? null;
+      const altBucket = doc?.metadados_documento_json?.bucket;
+      if ((error || !blob) && altBucket && altBucket !== DOC_BUCKET) {
+        const { data: fn, error: fnErr } = await supabase.functions.invoke("qa-hub-doc-signed-url", {
+          body: { documento_id: doc.id, download: false },
+        });
+        if (fnErr || !(fn as any)?.signed_url) {
+          toast.error("Não foi possível abrir o arquivo.");
+          return;
+        }
+        const resp = await fetch((fn as any).signed_url);
+        if (!resp.ok) {
+          toast.error("Não foi possível abrir o arquivo.");
+          return;
+        }
+        effectiveBlob = await resp.blob();
+      }
+      if (!effectiveBlob) {
         toast.error("Não foi possível abrir o arquivo.");
         return;
       }
-      const typed = blob.type ? blob : new Blob([blob], { type: mime });
+      const typed = effectiveBlob.type ? effectiveBlob : new Blob([effectiveBlob], { type: mime });
       const url = URL.createObjectURL(typed);
       setPreview({ url, nome, mime, blob: typed });
       await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "visualizado", { path: doc.arquivo_storage_path });
