@@ -2100,6 +2100,7 @@ export default function QAClientePortalPage() {
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
           onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+          onOpenChecklist={() => abrirChecklistGuiado()}
           onOpenDocsHub={() => setShowAddDoc(true)}
         />
         {false && (() => {
