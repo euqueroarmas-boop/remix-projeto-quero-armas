@@ -249,6 +249,9 @@ export default function QAClientePortalPage() {
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
   const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string; ordem_no_pacote: number | null }>>({});
+  // Mapa (servico_id:tipo_documento) → ordem do catálogo (qa_servicos_documentos.ordem).
+  // Usado para ordenar o PendenciasGuiadasPopup respeitando o "Montar Checklist" do admin.
+  const [catalogoDocOrdem, setCatalogoDocOrdem] = useState<Map<string, number>>(new Map());
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -615,8 +618,21 @@ export default function QAClientePortalPage() {
               }
             });
             setCatalogoByServicoId(catalogMap);
+            // Carrega ordem por documento do catálogo para ordenar o popup de exigências
+            const { data: servicoDocsData } = await supabase
+              .from("qa_servicos_documentos" as any)
+              .select("servico_id, tipo_documento, ordem")
+              .in("servico_id", servicoIds);
+            const docOrdemMap = new Map<string, number>();
+            ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
+              const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
+              const ord = Number(sd.ordem);
+              if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
+            });
+            setCatalogoDocOrdem(docOrdemMap);
           } else {
             setCatalogoByServicoId({});
+            setCatalogoDocOrdem(new Map());
           }
         }
         setItens(itensData);
@@ -1320,6 +1336,15 @@ export default function QAClientePortalPage() {
       return [ordemNorm, criacao];
     };
     const rankDoc = (d: any): number => {
+      // Prefere a ordem atual do catálogo (qa_servicos_documentos) sobre o snapshot do processo.
+      // Assim mudanças em "Montar Checklist" refletem imediatamente no popup.
+      const p = procById.get(String(d?.processo_id));
+      const servicoId = p?.servico_id;
+      const rawTipoDoc = String(d?.tipo_documento || "").toLowerCase();
+      if (servicoId != null) {
+        const catalogOrd = catalogoDocOrdem.get(`${servicoId}:${rawTipoDoc}`);
+        if (catalogOrd !== undefined) return catalogOrd;
+      }
       const ord = Number(d?.ordem);
       if (Number.isFinite(ord)) return ord;
       const et = Number(d?.etapa);
@@ -1373,7 +1398,7 @@ export default function QAClientePortalPage() {
     for (const d of pendentes) empurrar(d);
 
     return items;
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId]);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
