@@ -318,8 +318,21 @@ function calcularConformidade(
   // A verdade vem de documentos primários (RG/CIN/CNH), órgãos governamentais ou, na ausência
   // desses, do cadastro do cliente (populado pela Central de Adesão).
   const NAO_SERVEM_COMO_REFERENCIA = new Set(["contrato_assinado", "procuracao_assinada"]);
+  // Documentos primários de identidade — SEMPRE são a referência principal, mesmo
+  // que ainda estejam pendentes de aprovação (foram enviados pela Central de Adesão
+  // e servem de "verdade" inicial). Comprovantes e demais docs só entram como
+  // fallback quando o dado não existe no documento de identificação.
+  const IDENTIDADE_PRIMARIA = new Set(["cin", "rg_com_cpf", "cnh"]);
   const sorted = [...docsAprovados]
-    .filter(d => d.status === "aprovado" && !NAO_SERVEM_COMO_REFERENCIA.has(d.tipo_documento))
+    .filter(d => {
+      if (NAO_SERVEM_COMO_REFERENCIA.has(d.tipo_documento)) return false;
+      const st = String(d.status || "").toLowerCase();
+      if (st === "reprovado" || st === "substituido" || st === "excluido") return false;
+      // Aprovado sempre entra. Pendente entra somente para identidade primária
+      // (Central de Adesão) — evita usar comprovante ainda em análise.
+      if (st === "aprovado") return true;
+      return IDENTIDADE_PRIMARIA.has(d.tipo_documento);
+    })
     .sort((a, b) => {
       const tierA = docTrustTier(a.tipo_documento);
       const tierB = docTrustTier(b.tipo_documento);
