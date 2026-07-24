@@ -839,6 +839,11 @@ interface Props {
    *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
    *  aceita salvar nesse outro tipo. */
   pendingHubTipos?: string[];
+  /** Se preenchido, o documento salvo substitui este documento existente:
+   *  grava `substitui_documento_id` no novo registro e marca o antigo como
+   *  `substituido` (soft delete com trilha de auditoria). Usado pelo botão
+   *  "Renovar" do Hub Documental. */
+  substituirDocumentoId?: string | null;
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -860,6 +865,7 @@ export function ClienteDocsHubModal({
   clienteNomeMae,
   docsAprovados = [],
   pendingHubTipos = [],
+  substituirDocumentoId = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
@@ -1909,8 +1915,31 @@ export function ClienteDocsHubModal({
         payload.validado_admin = false;
       }
 
-      const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
+      if (substituirDocumentoId) {
+        payload.substitui_documento_id = substituirDocumentoId;
+      }
+      const { data: inserted, error: insertError } = await supabase
+        .from("qa_documentos_cliente" as any)
+        .insert(payload)
+        .select("id")
+        .single();
       if (insertError) throw insertError;
+      const novoDocId = (inserted as any)?.id as string | undefined;
+
+      // Substituição: marca o documento antigo como 'substituido' e vincula
+      // o novo. Assim o antigo sai das listagens e o histórico fica
+      // preservado (soft delete com trilha).
+      if (substituirDocumentoId && novoDocId) {
+        const { error: subErr } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .update({
+            status: "substituido",
+            substituido_em: new Date().toISOString(),
+            substituido_por_documento_id: novoDocId,
+          })
+          .eq("id", substituirDocumentoId);
+        if (subErr) console.warn("[hub] falha ao marcar documento anterior como substituído:", subErr);
+      }
 
       // Promoção para o Arsenal operacional (qa_crafs) quando o documento for
       // CRAF/SINARM com identificador físico da arma. Sem isso, a arma fica

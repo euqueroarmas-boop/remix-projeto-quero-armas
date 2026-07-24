@@ -258,6 +258,10 @@ export default function QAClientePortalPage() {
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
+  // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
+  // id para que o Hub Documental salve o novo como substituição (marca o
+  // antigo como `substituido`).
+  const [substituirDocId, setSubstituirDocId] = useState<string | null>(null);
   const [showArmaManual, setShowArmaManual] = useState(false);
   // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
@@ -2479,7 +2483,11 @@ export default function QAClientePortalPage() {
                 meusDocs={meusDocs}
                 customerId={customerId}
                 onReload={() => setDocsReloadKey((k) => k + 1)}
-                onOpenAdd={() => setShowAddDoc(true)}
+                onOpenAdd={(tipo, substituirId) => {
+                  if (tipo) setEditDocTipo(tipo);
+                  setSubstituirDocId(substituirId ?? null);
+                  setShowAddDoc(true);
+                }}
               />
             ) : (
               <DadosExtraidosPanel
@@ -2730,11 +2738,12 @@ export default function QAClientePortalPage() {
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
           open={showAddDoc}
-          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); }}
+          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); setSubstituirDocId(null); }}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
           mode="portal"
           defaultTipo={editDocTipo}
+          substituirDocumentoId={substituirDocId}
           clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
           clienteNome={cliente?.nome_completo || null}
           clienteDataNascimento={cliente?.data_nascimento || null}
