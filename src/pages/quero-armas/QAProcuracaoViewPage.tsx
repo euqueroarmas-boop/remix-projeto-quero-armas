@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 
 // ── Title Case: converte ALL-CAPS → primeira letra maiúscula ─────────────
 // Abreviações ≤4 letras (SP, RG, CPF, CEP…) são preservadas.
@@ -152,25 +153,73 @@ async function gerarPdf(
 ) {
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: true });
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const margemEsquerda = 76;
   const margemDireita = 42;
   const margemVertical = 42;
   const larguraPdf = pageW - margemEsquerda - margemDireita;
+  const alturaPdf = pageH - margemVertical * 2;
 
   await document.fonts.ready;
-  await (doc as any).html(elemento, {
-    x: 0,
-    y: 0,
-    width: larguraPdf,
-    windowWidth: larguraHtml,
-    margin: [margemVertical, margemDireita, margemVertical, margemEsquerda],
-    autoPaging: "text",
-    html2canvas: {
+
+  // Renderiza o DOM real (com todo o CSS aplicado) em um canvas de alta
+  // resolução e pagina a imagem no PDF. Isso preserva 100% da tipografia,
+  // negrito, alinhamento, espaçamento e hierarquia visíveis na tela.
+  const host = document.createElement("div");
+  host.style.cssText = [
+    "position: fixed",
+    "left: -10000px",
+    "top: 0",
+    `width: ${larguraHtml}px`,
+    "background: #ffffff",
+    "padding: 0",
+    "margin: 0",
+    "z-index: -1",
+  ].join(";");
+  host.appendChild(elemento);
+  document.body.appendChild(host);
+
+  try {
+    const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 2));
+    const canvas = await html2canvas(elemento, {
+      scale,
       backgroundColor: "#ffffff",
       useCORS: true,
       logging: false,
-    },
-  });
+      windowWidth: larguraHtml,
+      width: larguraHtml,
+    });
+
+    // Converte px do canvas → pt do PDF preservando a largura útil.
+    const pxPerPt = canvas.width / larguraPdf;
+    const paginaAlturaPx = Math.floor(alturaPdf * pxPerPt);
+    const totalPx = canvas.height;
+
+    let offsetPx = 0;
+    let primeira = true;
+    while (offsetPx < totalPx) {
+      const fatiaAltura = Math.min(paginaAlturaPx, totalPx - offsetPx);
+      const fatia = document.createElement("canvas");
+      fatia.width = canvas.width;
+      fatia.height = fatiaAltura;
+      const ctx = fatia.getContext("2d")!;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, fatia.width, fatia.height);
+      ctx.drawImage(
+        canvas,
+        0, offsetPx, canvas.width, fatiaAltura,
+        0, 0, fatia.width, fatia.height,
+      );
+      if (!primeira) doc.addPage();
+      primeira = false;
+      const imgData = fatia.toDataURL("image/jpeg", 0.95);
+      const alturaPt = fatiaAltura / pxPerPt;
+      doc.addImage(imgData, "JPEG", margemEsquerda, margemVertical, larguraPdf, alturaPt, undefined, "FAST");
+      offsetPx += fatiaAltura;
+    }
+  } finally {
+    host.remove();
+  }
 
   adicionarCarimboSessao(doc, vendaId);
   doc.save(nomeArquivo);
