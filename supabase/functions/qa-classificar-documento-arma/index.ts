@@ -56,6 +56,7 @@ const TIPOS = [
   "COMPROVANTE_HABITUALIDADE","COMPROVANTE_CLUBE","COMPROVANTE_COMPETICAO",
   "PROTOCOLO_PROCESSO","OFICIO","DESPACHO","EXIGENCIA","INDEFERIMENTO",
   "PROCURACAO","RECURSO_ADMINISTRATIVO","MANDADO_SEGURANCA",
+  "CONTRATO_ADESAO_ASSINADO","PROCURACAO_ASSINADA",
   "DESCONHECIDO",
 ] as const;
 type Tipo = typeof TIPOS[number];
@@ -84,6 +85,7 @@ const tool = {
             "COMPROVANTE_HABITUALIDADE=comprovante de habitualidade de clube/entidade CAC. COMPROVANTE_CLUBE=comprovante de filiação/atividade em clube de tiro. COMPROVANTE_COMPETICAO=comprovante de participação em competição esportiva. " +
             "PROTOCOLO_PROCESSO=protocolo ou número de processo administrativo. OFICIO=ofício administrativo. DESPACHO=despacho ou movimentação processual. EXIGENCIA=exigência administrativa formal. INDEFERIMENTO=decisão de indeferimento. " +
             "PROCURACAO=procuração outorgada pelo titular. RECURSO_ADMINISTRATIVO=recurso administrativo. MANDADO_SEGURANCA=mandado de segurança ou outra peça jurídica. " +
+            "CONTRATO_ADESAO_ASSINADO=contrato de adesão de assessoria técnica/jurídica assinado pelo cliente (identificar cabeçalho 'CONTRATO DE ADESÃO', partes CONTRATADA/CONTRATANTE, e/ou marca Quero Armas / Arsenal Inteligente / Senhor das Armas). PROCURACAO_ASSINADA=instrumento particular de procuração já assinado pelo outorgante (identificar título 'PROCURAÇÃO', blocos OUTORGANTE e OUTORGADO, poderes de representação perante Polícia Federal / Exército). " +
             "DESCONHECIDO=documento ilegível, baixa confiança ou sem enquadramento.",
         },
         confianca: {
@@ -424,6 +426,8 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("PROCURACAO") || x.includes("PROCURAÇÃO")) return "PROCURACAO";
   if (x.includes("RECURSO")) return "RECURSO_ADMINISTRATIVO";
   if (x.includes("MANDADO") || x.includes("HABEAS")) return "MANDADO_SEGURANCA";
+  if (x.includes("CONTRATO_ADESAO") || x.includes("CONTRATO_DE_ADESAO") || x.includes("ADESAO_ASSINADO")) return "CONTRATO_ADESAO_ASSINADO";
+  if (x.includes("PROCURACAO_ASSINADA") || x.includes("PROCURACAO_GOVBR")) return "PROCURACAO_ASSINADA";
   return null;
 }
 
