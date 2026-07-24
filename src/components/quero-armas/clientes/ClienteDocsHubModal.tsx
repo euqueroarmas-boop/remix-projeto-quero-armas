@@ -839,6 +839,11 @@ interface Props {
    *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
    *  aceita salvar nesse outro tipo. */
   pendingHubTipos?: string[];
+  /** Se preenchido, o documento salvo substitui este documento existente:
+   *  grava `substitui_documento_id` no novo registro e marca o antigo como
+   *  `substituido` (soft delete com trilha de auditoria). Usado pelo botão
+   *  "Renovar" do Hub Documental. */
+  substituirDocumentoId?: string | null;
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -860,6 +865,7 @@ export function ClienteDocsHubModal({
   clienteNomeMae,
   docsAprovados = [],
   pendingHubTipos = [],
+  substituirDocumentoId = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
