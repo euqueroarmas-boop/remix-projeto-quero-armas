@@ -2483,7 +2483,11 @@ export default function QAClientePortalPage() {
                 meusDocs={meusDocs}
                 customerId={customerId}
                 onReload={() => setDocsReloadKey((k) => k + 1)}
-                onOpenAdd={() => setShowAddDoc(true)}
+                onOpenAdd={(tipo, substituirId) => {
+                  if (tipo) setEditDocTipo(tipo);
+                  setSubstituirDocId(substituirId ?? null);
+                  setShowAddDoc(true);
+                }}
               />
             ) : (
               <DadosExtraidosPanel
