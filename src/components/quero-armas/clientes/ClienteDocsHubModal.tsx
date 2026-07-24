@@ -106,6 +106,8 @@ const IA_TO_TIPO: Record<string, string> = {
   PROCURACAO: "procuracao",
   RECURSO_ADMINISTRATIVO: "recurso_administrativo_doc",
   MANDADO_SEGURANCA: "mandado_seguranca_doc",
+  CONTRATO_ADESAO_ASSINADO: "contrato_assinado",
+  PROCURACAO_ASSINADA: "procuracao_assinada",
   // Fallback
   DESCONHECIDO: "outro",
 };

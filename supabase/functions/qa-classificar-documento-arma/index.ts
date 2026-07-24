@@ -56,6 +56,7 @@ const TIPOS = [
   "COMPROVANTE_HABITUALIDADE","COMPROVANTE_CLUBE","COMPROVANTE_COMPETICAO",
   "PROTOCOLO_PROCESSO","OFICIO","DESPACHO","EXIGENCIA","INDEFERIMENTO",
   "PROCURACAO","RECURSO_ADMINISTRATIVO","MANDADO_SEGURANCA",
+  "CONTRATO_ADESAO_ASSINADO","PROCURACAO_ASSINADA",
   "DESCONHECIDO",
 ] as const;
 type Tipo = typeof TIPOS[number];
@@ -84,6 +85,7 @@ const tool = {
             "COMPROVANTE_HABITUALIDADE=comprovante de habitualidade de clube/entidade CAC. COMPROVANTE_CLUBE=comprovante de filiação/atividade em clube de tiro. COMPROVANTE_COMPETICAO=comprovante de participação em competição esportiva. " +
             "PROTOCOLO_PROCESSO=protocolo ou número de processo administrativo. OFICIO=ofício administrativo. DESPACHO=despacho ou movimentação processual. EXIGENCIA=exigência administrativa formal. INDEFERIMENTO=decisão de indeferimento. " +
             "PROCURACAO=procuração outorgada pelo titular. RECURSO_ADMINISTRATIVO=recurso administrativo. MANDADO_SEGURANCA=mandado de segurança ou outra peça jurídica. " +
+            "CONTRATO_ADESAO_ASSINADO=contrato de adesão de assessoria técnica/jurídica assinado pelo cliente (identificar cabeçalho 'CONTRATO DE ADESÃO', partes CONTRATADA/CONTRATANTE, e/ou marca Quero Armas / Arsenal Inteligente / Senhor das Armas). PROCURACAO_ASSINADA=instrumento particular de procuração já assinado pelo outorgante (identificar título 'PROCURAÇÃO', blocos OUTORGANTE e OUTORGADO, poderes de representação perante Polícia Federal / Exército). " +
             "DESCONHECIDO=documento ilegível, baixa confiança ou sem enquadramento.",
         },
         confianca: {
@@ -424,6 +426,8 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("PROCURACAO") || x.includes("PROCURAÇÃO")) return "PROCURACAO";
   if (x.includes("RECURSO")) return "RECURSO_ADMINISTRATIVO";
   if (x.includes("MANDADO") || x.includes("HABEAS")) return "MANDADO_SEGURANCA";
+  if (x.includes("CONTRATO_ADESAO") || x.includes("CONTRATO_DE_ADESAO") || x.includes("ADESAO_ASSINADO")) return "CONTRATO_ADESAO_ASSINADO";
+  if (x.includes("PROCURACAO_ASSINADA") || x.includes("PROCURACAO_GOVBR")) return "PROCURACAO_ASSINADA";
   return null;
 }
 
@@ -507,6 +511,35 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.justificativa = execucoes
       ? "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de EXECUÇÕES CRIMINAIS."
       : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
+  }
+
+  // === Contrato de adesão assinado (Quero Armas / Arsenal Inteligente) ===
+  const isContratoAdesao =
+    /\bCONTRATO DE ADES[ÃA]O\b/.test(norm) &&
+    (/CONTRATADA/.test(norm) || /CONTRATANTE/.test(norm)) &&
+    (/QUERO ARMAS/.test(norm) || /ARSENAL INTELIGENTE/.test(norm) || /SENHOR DAS ARMAS/.test(norm) || /ASSESSORIA T[ÉE]CNICA/.test(norm));
+  if (isContratoAdesao) {
+    parsed.tipoDetectado = "CONTRATO_ADESAO_ASSINADO";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
+    campos.nome_documento = campos.nome_documento || "Contrato de Adesão assinado";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    parsed.justificativa =
+      "Classificação determinística: cabeçalho CONTRATO DE ADESÃO com partes CONTRATADA/CONTRATANTE e vínculo à Quero Armas / Arsenal Inteligente — peça jurídica de adesão assinada.";
+    return parsed;
+  }
+
+  // === Procuração assinada (instrumento particular Gov.br) ===
+  const isProcuracao =
+    /\bPROCURA[ÇC][ÃA]O\b/.test(norm) &&
+    (/OUTORGANTE/.test(norm) || /OUTORGADO/.test(norm) || /CONFIRO PODERES/.test(norm) || /CONFERE PODERES/.test(norm));
+  if (isProcuracao) {
+    parsed.tipoDetectado = "PROCURACAO_ASSINADA";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
+    campos.nome_documento = campos.nome_documento || "Procuração assinada";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    parsed.justificativa =
+      "Classificação determinística: título PROCURAÇÃO com blocos OUTORGANTE/OUTORGADO — peça jurídica assinada pelo titular.";
+    return parsed;
   }
 
   return parsed;
