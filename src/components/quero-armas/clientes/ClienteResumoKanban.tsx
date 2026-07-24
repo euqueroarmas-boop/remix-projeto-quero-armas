@@ -32,6 +32,7 @@ interface Props {
   pendingContracts?: number;
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
+  onOpenChecklist?: () => void;
   onOpenComprar?: () => void;
   onOpenDocsHub?: () => void;
 }
@@ -129,6 +130,7 @@ export default function ClienteResumoKanban({
   pendingContracts = 0,
   onNavigate,
   onOpenCadastro,
+  onOpenChecklist,
   onOpenComprar,
   onOpenDocsHub,
 }: Props) {
@@ -725,7 +727,7 @@ export default function ClienteResumoKanban({
           }}
         />
       )}
-      {(onOpenCadastro || onOpenComprar) && (
+      {(onOpenCadastro || onOpenComprar || onOpenChecklist) && (
         <div
           data-qa-atalhos-root
           style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}
@@ -799,6 +801,36 @@ export default function ClienteResumoKanban({
                 >
                   Cadastro
                 </button>
+              )}
+              {onOpenChecklist && (
+                <>
+                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '1px 0 1px auto' }} />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setAtalhosOpen(false); onOpenChecklist(); }}
+                    style={{
+                      border: 0,
+                      background: 'transparent',
+                      padding: '2px 0',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      color: '#1c1c1c',
+                      textTransform: 'none',
+                      lineHeight: 1.3,
+                      textAlign: 'right',
+                      transition: 'color 0.2s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
+                  >
+                    Rodar checklist
+                  </button>
+                </>
               )}
             </div>
           )}
