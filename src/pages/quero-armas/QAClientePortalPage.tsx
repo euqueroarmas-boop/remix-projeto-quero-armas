@@ -2738,11 +2738,12 @@ export default function QAClientePortalPage() {
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
           open={showAddDoc}
-          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); }}
+          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); setSubstituirDocId(null); }}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
           mode="portal"
           defaultTipo={editDocTipo}
+          substituirDocumentoId={substituirDocId}
           clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
           clienteNome={cliente?.nome_completo || null}
           clienteDataNascimento={cliente?.data_nascimento || null}
