@@ -162,6 +162,8 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "exigencia", label: "Exigência administrativa", short: "EXIGÊNCIA", categoria: "documentos_processo", escopo: "processo" },
   { value: "indeferimento", label: "Indeferimento", short: "INDEFER.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "procuracao_assinada", label: "Procuração assinada (Gov.br)", short: "PROC. ASSINADA", categoria: "juridico", escopo: "processo", aceitaIA: true, revisaoHumanaObrigatoria: true },
+  { value: "contrato_assinado", label: "Contrato assinado (Gov.br)", short: "CONTRATO ASSINADO", categoria: "juridico", escopo: "processo", aceitaIA: true, revisaoHumanaObrigatoria: true },
   { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "outro", label: "Outro documento", short: "OUTRO", categoria: "outros", escopo: "processo" },

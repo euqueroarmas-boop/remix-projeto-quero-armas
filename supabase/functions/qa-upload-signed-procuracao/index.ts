@@ -161,5 +161,36 @@ Deno.serve(async (req) => {
     },
   }).then(() => null, () => null);
 
+  // Espelha a procuração assinada no Hub Documental (categoria Jurídico).
+  try {
+    await sb.from("qa_documentos_cliente").insert({
+      qa_cliente_id: Number((procuracao as any).cliente_id),
+      tipo_documento: "procuracao_assinada",
+      nome_documento: "Procuração assinada (Gov.br)",
+      arquivo_storage_path: path,
+      arquivo_nome: "procuracao-assinada.pdf",
+      arquivo_mime: "application/pdf",
+      origem: "cliente",
+      status: "pendente_aprovacao",
+      ia_status: "nao_processado",
+      categoria_hub: "juridico",
+      escopo_documental: "processo",
+      reaproveitavel_global: false,
+      revisao_humana_obrigatoria: true,
+      metadados_documento_json: {
+        procuracao_id: procuracaoId,
+        venda_id: (procuracao as any).venda_id ?? null,
+        sha256: sig,
+        bucket: BUCKET,
+        origem_upload: "qa-upload-signed-procuracao",
+        uploaded_at: uploadedAt,
+        ip: uploadIp,
+        user_agent: uploadUserAgent,
+      },
+    });
+  } catch (e) {
+    console.error("[qa-upload-signed-procuracao] hub insert falhou", (e as Error).message);
+  }
+
   return jsonResp({ ok: true, procuracao_id: procuracaoId, sha256: sig, status: "customer_signature_uploaded" });
 });

@@ -173,6 +173,39 @@ Deno.serve(async (req) => {
     },
   });
 
+  // Espelha o PDF assinado no Hub Documental (categoria Jurídico).
+  // Fica em status 'pendente_aprovacao' aguardando análise da IA / equipe.
+  try {
+    await sb.from("qa_documentos_cliente").insert({
+      qa_cliente_id: clienteId,
+      tipo_documento: "contrato_assinado",
+      nome_documento: "Contrato assinado (Gov.br)",
+      arquivo_storage_path: path,
+      arquivo_nome: "contrato-assinado.pdf",
+      arquivo_mime: "application/pdf",
+      origem: "cliente",
+      status: "pendente_aprovacao",
+      ia_status: "nao_processado",
+      categoria_hub: "juridico",
+      escopo_documental: "processo",
+      reaproveitavel_global: false,
+      revisao_humana_obrigatoria: true,
+      metadados_documento_json: {
+        contract_id: contractId,
+        venda_id: (contract as any).venda_id,
+        sha256: sig,
+        bucket: BUCKET,
+        origem_upload: "qa-upload-signed-contract",
+        uploaded_at: uploadedAt,
+        ip: uploadIp,
+        user_agent: uploadUserAgent,
+        device: uploadDeviceMeta ?? null,
+      },
+    });
+  } catch (e) {
+    console.error("[qa-upload-signed-contract] hub insert falhou", (e as Error).message);
+  }
+
   // Dispara validação automaticamente (best-effort, não bloqueia retorno).
   try {
     const url = `${Deno.env.get("SUPABASE_URL")!}/functions/v1/qa-validate-customer-signature`;
