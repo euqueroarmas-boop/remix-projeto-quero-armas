@@ -25,7 +25,6 @@ function titleCaseSeq(match: string): string {
 
 function normalizeHtml(html: string, protectedNames: string[] = []): string {
   // 1. Protege nomes (ALL-CAPS) substituindo por placeholders
-  const protected_html_parts: string[] = [];
   let working = html;
   const validNames = protectedNames.filter((n) => n && n.trim().length > 0);
   for (let i = 0; i < validNames.length; i++) {
@@ -67,26 +66,13 @@ function normalizeHtml(html: string, protectedNames: string[] = []): string {
 }
 
 // ── Geração de PDF a partir do mesmo HTML exibido ao cliente ───────────────
+// Usa doc.html() + html2canvas renderizando o DOM real (com CSS aplicado),
+// garantindo fidelidade visual total em relação à tela.
 function adicionarCarimboSessao(doc: jsPDF, vendaId?: number | null) {
   const pageH = doc.internal.pageSize.getHeight();
   const mLeft = 76;
   const mTop = 42;
   const mBottom = 42;
-  const agora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" });
-  const ua = navigator.userAgent;
-  const lang = navigator.language || "—";
-  const ref = document.referrer || "—";
-  const numero = vendaId ? `VENDA ${vendaId}` : "PROCURAÇÃO";
-  const stampRows: [string, string][] = [
-    ["PROCURAÇÃO", numero],
-    ["DATA/HORA (BRT)", agora],
-    ["IDIOMA", lang],
-    ["REFERÊNCIA", ref],
-    ["USER-AGENT", ua],
-    ["AÇÃO", "download"],
-  ];
-
-  const totalPages = doc.getNumberOfPages();
   const stampRuleX = 24;
   const stampTop = mTop;
   const stampBottom = pageH - mBottom;
@@ -99,6 +85,17 @@ function adicionarCarimboSessao(doc: jsPDF, vendaId?: number | null) {
   const fontSize = 6.8;
   const charAdvance = 3.1;
   const maxCharsPerCol = Math.max(20, Math.floor(availH / charAdvance));
+
+  const agora = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" });
+  const numero = vendaId ? `VENDA ${vendaId}` : "PROCURAÇÃO";
+  const stampRows: [string, string][] = [
+    ["PROCURAÇÃO", numero],
+    ["DATA/HORA (BRT)", agora],
+    ["IDIOMA", navigator.language || "—"],
+    ["REFERÊNCIA", document.referrer || "—"],
+    ["USER-AGENT", navigator.userAgent],
+    ["AÇÃO", "download"],
+  ];
 
   const fieldsLine = stampRows.map(([l, v]) => `${l}: ${v}`).join(", ");
   const parts = fieldsLine.split(/(, )/);
@@ -117,14 +114,12 @@ function adicionarCarimboSessao(doc: jsPDF, vendaId?: number | null) {
   const remaining = fieldsLine.slice(consumed);
   if (remaining) {
     if (columns.length < maxColumns) columns.push(remaining);
-    else {
-      const last = columns[columns.length - 1];
-      columns[columns.length - 1] = (last + ", " + remaining).slice(0, maxCharsPerCol - 1) + "…";
-    }
+    else columns[columns.length - 1] = (columns[columns.length - 1] + ", " + remaining).slice(0, maxCharsPerCol - 1) + "…";
   } else if (current) {
     columns.push(current);
   }
 
+  const totalPages = doc.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
     doc.setDrawColor(190);
@@ -134,11 +129,7 @@ function adicionarCarimboSessao(doc: jsPDF, vendaId?: number | null) {
     doc.setFont("times", "bold");
     doc.setFontSize(7.5);
     doc.setTextColor(90);
-    doc.text(
-      "REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO · MP 2.200-2/2001",
-      titleX, stampBottom,
-      { angle: 90, baseline: "alphabetic" } as any
-    );
+    doc.text("REGISTRO DE SESSÃO — DOWNLOAD DO INSTRUMENTO · MP 2.200-2/2001", titleX, stampBottom, { angle: 90, baseline: "alphabetic" } as any);
 
     doc.setFont("times", "normal");
     doc.setFontSize(fontSize);
@@ -167,7 +158,7 @@ async function gerarPdf(
   const larguraPdf = pageW - margemEsquerda - margemDireita;
 
   await document.fonts.ready;
-  await doc.html(elemento, {
+  await (doc as any).html(elemento, {
     x: 0,
     y: 0,
     width: larguraPdf,
