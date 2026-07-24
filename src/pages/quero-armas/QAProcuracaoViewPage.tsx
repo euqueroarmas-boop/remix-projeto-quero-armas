@@ -8,63 +8,10 @@ import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
-// ── Title Case: converte ALL-CAPS → primeira letra maiúscula ─────────────
-// Abreviações ≤4 letras (SP, RG, CPF, CEP…) são preservadas.
-// Nomes de pessoas (outorgante/outorgado) são protegidos via placeholder.
-const PREPS_VIEW = new Set(["da","das","de","do","dos","e","a","ao","em","na","no","por","sob","sobre","com","sem","entre","até","ante","após"]);
-
-function titleWord(w: string): string {
-  if (/^[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ0-9]{1,4}$/.test(w)) return w; // abreviação curta
-  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-}
-
-function titleCaseSeq(match: string): string {
-  return match.split(/\s+/).map((w, i) =>
-    (i > 0 && PREPS_VIEW.has(w.toLowerCase())) ? w.toLowerCase() : titleWord(w)
-  ).join(" ");
-}
-
-function normalizeHtml(html: string, protectedNames: string[] = []): string {
-  // 1. Protege nomes (ALL-CAPS) substituindo por placeholders
-  let working = html;
-  const validNames = protectedNames.filter((n) => n && n.trim().length > 0);
-  for (let i = 0; i < validNames.length; i++) {
-    working = working.split(validNames[i]).join(`\x00N${i}\x00`);
-  }
-
-  // 2. Converte ALL-CAPS → Title Case nos nós de texto HTML
-  working = working.replace(/>([^<]+)</g, (_, text) => {
-    let t = text;
-    // sequências de ≥2 palavras ALL-CAPS (endereços, cidades compostas…)
-    t = t.replace(
-      /\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{3,}(?:\s+[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{2,})+)\b/g,
-      titleCaseSeq
-    );
-    // palavras únicas ALL-CAPS com 5+ letras (JACAREÍ, BRASIL, TAUBATÉ…)
-    t = t.replace(/\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{5,})\b/g, (w) => titleWord(w));
-    return ">" + t + "<";
-  });
-
-  // 3. Corrige abreviações que o editor possa ter Title-Cased indevidamente
-  working = working
-    .replace(/\bCpf\b/g, "CPF")
-    .replace(/\bRg\b/g, "RG")
-    .replace(/\bCnpj\b/g, "CNPJ")
-    .replace(/\bCep\b/g, "CEP");
-
-  // 4. Remove linha de emissor de RG quando os campos estão vazios
-  working = working.replace(
-    /Expedido\s+(pela|pelo|por)\s+[\/\s]*(?=<|$)/gi,
-    ""
-  );
-
-  // 5. Restaura nomes protegidos (mantém ALL-CAPS originais)
-  for (let i = 0; i < validNames.length; i++) {
-    working = working.split(`\x00N${i}\x00`).join(validNames[i]);
-  }
-
-  return working;
-}
+// IMPORTANTE: o HTML da procuração é servido EXATAMENTE como publicado
+// pelo editor. Não aplicar Title Case, não “proteger” nomes, não reescrever
+// caixa. Qualquer transformação aqui gera divergência entre editor, tela e
+// PDF (ex.: outorgante em MAIÚSCULO e outorgado em Minúsculo).
 
 // ── Geração de PDF a partir do mesmo HTML exibido ao cliente ───────────────
 // Usa doc.html() + html2canvas renderizando o DOM real (com CSS aplicado),
@@ -267,9 +214,8 @@ export default function QAProcuracaoViewPage() {
           setErro("Procuração não encontrada ou link inválido.");
         } else {
           const d = data as ProcuracaoData;
-          // Normaliza ALL-CAPS → Title Case antes de renderizar/baixar
-          // Nome do cliente é protegido para permanecer em ALL-CAPS
-          setProcuracao({ ...d, conteudo_html: normalizeHtml(d.conteudo_html, [d.nome_cliente]) });
+          // Renderiza literalmente o HTML publicado pelo editor.
+          setProcuracao(d);
         }
       })
       .catch(() => setErro("Erro ao carregar a procuração. Tente novamente."))

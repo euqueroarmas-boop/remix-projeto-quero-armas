@@ -16,34 +16,10 @@ const corsHeaders = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TEMPLATE_CODIGO = "PROCURACAO_PADRAO_QUERO_ARMAS";
 
-// ── Normalização de texto: ALL-CAPS → Title Case ──────────────────────────
-// Aplica apenas em sequências de ≥2 palavras em maiúsculo (endereços, cidades,
-// nomes etc.). Abreviações curtas (SP, RG, CPF, CEP, CAC…) são preservadas.
-const PREPS_TC = new Set(["da", "das", "de", "do", "dos", "e", "a", "ao", "em", "na", "no"]);
-
-function titleWord(w: string): string {
-  // Abreviação (≤4 letras, tudo maiúsculo) → mantém: SP, RG, CPF, CEP, CAC
-  if (/^[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ0-9]{1,4}$/.test(w)) return w;
-  return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
-}
-
-function titleCaseSequence(match: string): string {
-  return match.split(/\s+/).map((w, i) => {
-    const lo = w.toLowerCase();
-    return (i > 0 && PREPS_TC.has(lo)) ? lo : titleWord(w);
-  }).join(" ");
-}
-
-// Converte sequências de ≥2 palavras ALL-CAPS no interior de nós de texto HTML
-function normalizeConteudo(html: string): string {
-  return html.replace(/>([^<]+)</g, (_, text) => {
-    const norm = text.replace(
-      /\b([A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{3,}(?:\s+[A-ZÁÉÍÓÚÀÃÕÂÊÔÜ]{2,})+)\b/g,
-      titleCaseSequence,
-    );
-    return `>${norm}<`;
-  });
-}
+// IMPORTANTE: NÃO aplicar normalização de caixa (Title Case / ALL-CAPS) no
+// HTML da procuração. O conteúdo deve ser entregue LITERALMENTE como o editor
+// publicou. Qualquer transformação aqui produz divergência entre editor,
+// tela e PDF (ex.: outorgante em MAIÚSCULO e outorgado em Minúsculo).
 const STATUS_ATUALIZAVEIS = new Set([
   "generated_pending_customer_signature",
   "rejected",
@@ -216,7 +192,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const conteudo = normalizeConteudo(String((data as any).conteudo_renderizado ?? "").trim());
+    const conteudo = String((data as any).conteudo_renderizado ?? "").trim();
     if (!conteudo) return json({ error: "Procuração sem conteúdo publicado" }, 422);
 
     const { data: cliente } = await sb
