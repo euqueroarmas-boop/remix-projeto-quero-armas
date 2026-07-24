@@ -1436,18 +1436,18 @@ export default function QAClientePortalPage() {
   // Checklist Guiado, modal de cadastro).
   useEffect(() => {
     if (!pendingContractsLoaded) return;
-    if (pendingSignatureCount <= 0) return;
+    if (pendenciasGuiadasCount <= 0) return;
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
     setShowContratoPopup(true);
-  }, [pendingSignatureCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
+  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
   useEffect(() => {
     const handler = () => {
-      if (pendingSignatureCount > 0) {
+      if (pendenciasGuiadasCount > 0) {
         setShowContratoPopup(true);
       } else {
         setActiveSection("documentos");
@@ -1455,7 +1455,7 @@ export default function QAClientePortalPage() {
     };
     window.addEventListener("qa:abrir-assinaturas-pendentes", handler);
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
-  }, [pendingSignatureCount]);
+  }, [pendenciasGuiadasCount]);
 
   // Após assinaturas resolvidas, se o checklist já foi materializado com itens
   // pendentes, abre o Assistente de Documentação sozinho — sem esperar novo
