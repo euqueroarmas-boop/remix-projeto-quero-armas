@@ -248,7 +248,7 @@ export default function QAClientePortalPage() {
   const arsenalPremium = useArsenalPremium(cliente?.id ?? null);
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
-  const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string }>>({});
+  const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string; ordem_no_pacote: number | null }>>({});
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -600,13 +600,17 @@ export default function QAClientePortalPage() {
           if (servicoIds.length > 0) {
             const { data: catalogoData } = await supabase
               .from("qa_servicos_catalogo" as any)
-              .select("servico_id, slug, nome")
+              .select("servico_id, slug, nome, ordem_no_pacote")
               .in("servico_id", servicoIds)
               .eq("ativo", true);
-            const catalogMap: Record<number, { service_slug: string; nome: string }> = {};
+            const catalogMap: Record<number, { service_slug: string; nome: string; ordem_no_pacote: number | null }> = {};
             ((catalogoData as any[]) ?? []).forEach((c: any) => {
               if (Number.isFinite(Number(c.servico_id)) && !catalogMap[Number(c.servico_id)]) {
-                catalogMap[Number(c.servico_id)] = { service_slug: c.slug, nome: c.nome };
+                catalogMap[Number(c.servico_id)] = {
+                  service_slug: c.slug,
+                  nome: c.nome,
+                  ordem_no_pacote: c.ordem_no_pacote ?? null,
+                };
               }
             });
             setCatalogoByServicoId(catalogMap);
