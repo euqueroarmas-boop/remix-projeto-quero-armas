@@ -1403,22 +1403,30 @@ export default function QAClientePortalPage() {
 
     const idLegado = (cliente as any)?.id_legado ?? (cliente as any)?.id ?? "anon";
     const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
-    // Cadastro incompleto reabre em todo refresh até ser preenchido —
-    // é bloqueante para o restante do fluxo.
-    // contrato/procuração: popup deve aparecer a cada sessão até ser assinado (como cadastro).
-    // checklist_pendente/reprovado: assim que o checklist explode, o assistente
-    // deve abrir sozinho até que o cliente comece a resolver — não pode ser
-    // silenciado apenas porque a mesma aba já foi aberta antes da explosão.
+    // Cadastro incompleto reabre em todo refresh até ser preenchido — bloqueante.
+    // Contrato/procuração: reabre a cada sessão até ser assinado.
+    // Checklist pendente/reprovado: aparece 1x por dia por tipo — o cliente
+    // pode fechar e o popup não volta até o dia seguinte (ou até resolver).
     const ignorarTrava =
       portalStartupAction.type === "cadastro" ||
-      portalStartupAction.type === "contrato" ||
+      portalStartupAction.type === "contrato";
+    const usarLimiteDiario =
       portalStartupAction.type === "checklist_pendente" ||
       portalStartupAction.type === "checklist_reprovado";
-    if (!ignorarTrava && sessionStorage.getItem(key)) {
+    if (usarLimiteDiario) {
+      const lsKey = `${key}-dia`;
+      const ultimo = localStorage.getItem(lsKey);
+      const hoje = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      if (ultimo === hoje) {
+        setEntradaAutoChecked(true);
+        return;
+      }
+      localStorage.setItem(lsKey, hoje);
+    } else if (!ignorarTrava && sessionStorage.getItem(key)) {
       setEntradaAutoChecked(true);
       return;
     }
-    if (!ignorarTrava) sessionStorage.setItem(key, "1");
+    if (!ignorarTrava && !usarLimiteDiario) sessionStorage.setItem(key, "1");
     setEntradaAutoChecked(true);
 
     if (portalStartupAction.type === "contrato") {
