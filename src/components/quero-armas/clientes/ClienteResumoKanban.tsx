@@ -32,6 +32,7 @@ interface Props {
   pendingContracts?: number;
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
+  onOpenChecklist?: () => void;
   onOpenComprar?: () => void;
   onOpenDocsHub?: () => void;
 }
