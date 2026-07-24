@@ -440,11 +440,13 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
       modelo_url:             (d as any).modelo_url             || cat?.modelo_url             || null,
       exemplo_url:            (d as any).exemplo_url            || cat?.exemplo_url            || null,
       prazo_recomendado_dias: (d as any).prazo_recomendado_dias ?? cat?.prazo_recomendado_dias ?? null,
-      // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
-      // depois o catálogo (qa_servicos_documentos.ordem).
+      // Ordem efetiva: catálogo (qa_servicos_documentos.ordem) sempre tem
+      // precedência — mudanças no serviço raiz propagam imediatamente para
+      // todos os processos existentes. Só cai no snapshot do processo se o
+      // documento não existir mais no catálogo do serviço.
       _template_ordem:
-        (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
-        (ordemMap.get(key) ?? null),
+        (ordemMap.get(key) ?? null) ??
+        (typeof (d as any).ordem === "number" ? (d as any).ordem : null),
     };
   });
 
