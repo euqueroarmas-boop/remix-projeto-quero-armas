@@ -519,6 +519,21 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   if (tipo === "antecedentes_federal_trf3_regional" || tipo === "antecedentes_militar") {
     return addDaysIso(emissao, 90);
   }
+  // Documentos de identificação civil: validade = emissão + 10 anos.
+  if (
+    [
+      "rg",
+      "rg_com_cpf",
+      "cin",
+      "cnh",
+      "passaporte",
+      "documento_identidade",
+      "documento_identificacao",
+      "identidade",
+    ].includes(tipo)
+  ) {
+    return addCalendarMonthsIso(emissao, 120);
+  }
   if (
     [
       "comprovante_residencia",
