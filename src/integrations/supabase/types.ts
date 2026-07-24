@@ -9151,12 +9151,15 @@ export type Database = {
           id: string
           nome: string
           objetivo_slug: string | null
+          ordem_no_pacote: number | null
+          pacote_slug: string | null
           preco: number | null
           recorrente: boolean
           servico_id: number | null
           servico_principal_slug: string | null
           sigla_protocolo: string | null
           slug: string
+          standalone_permitido: boolean
           tipo: string
           tipo_processo: string | null
           updated_at: string
@@ -9184,12 +9187,15 @@ export type Database = {
           id?: string
           nome: string
           objetivo_slug?: string | null
+          ordem_no_pacote?: number | null
+          pacote_slug?: string | null
           preco?: number | null
           recorrente?: boolean
           servico_id?: number | null
           servico_principal_slug?: string | null
           sigla_protocolo?: string | null
           slug: string
+          standalone_permitido?: boolean
           tipo?: string
           tipo_processo?: string | null
           updated_at?: string
@@ -9217,12 +9223,15 @@ export type Database = {
           id?: string
           nome?: string
           objetivo_slug?: string | null
+          ordem_no_pacote?: number | null
+          pacote_slug?: string | null
           preco?: number | null
           recorrente?: boolean
           servico_id?: number | null
           servico_principal_slug?: string | null
           sigla_protocolo?: string | null
           slug?: string
+          standalone_permitido?: boolean
           tipo?: string
           tipo_processo?: string | null
           updated_at?: string
@@ -9404,6 +9413,54 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_servicos"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_servicos_prerequisitos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          observacao: string | null
+          prerequisito_slug: string
+          servico_slug: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          prerequisito_slug: string
+          servico_slug: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          prerequisito_slug?: string
+          servico_slug?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_prerequisitos_prerequisito_slug_fkey"
+            columns: ["prerequisito_slug"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos_catalogo"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "qa_servicos_prerequisitos_servico_slug_fkey"
+            columns: ["servico_slug"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos_catalogo"
+            referencedColumns: ["slug"]
           },
         ]
       }
