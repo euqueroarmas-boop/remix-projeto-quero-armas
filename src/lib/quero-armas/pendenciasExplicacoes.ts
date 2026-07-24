@@ -617,11 +617,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
 };
 
 export function getExplicacaoPendencia(
-  hubTipo: string,
+  rawTipo: string,
   fallbackNome?: string | null,
+  hubTipoFallback?: string | null,
 ): ExplicacaoPendencia {
-  const key = String(hubTipo || "").trim().toLowerCase();
-  const hit = REGISTRO[key];
+  const primary = String(rawTipo || "").trim().toLowerCase();
+  const secondary = String(hubTipoFallback || "").trim().toLowerCase();
+  const hit = REGISTRO[primary] || (secondary ? REGISTRO[secondary] : undefined);
   if (hit) return hit;
   const titulo = fallbackNome && fallbackNome.trim()
     ? fallbackNome.trim()
@@ -632,5 +634,6 @@ export function getExplicacaoPendencia(
       "Envie o documento solicitado no formato original (PDF ou foto legível).",
       "A IA valida integridade e assinatura antes de aprovar.",
     ],
+    observacao: "Se ficar em dúvida, abra o Hub Documental — a IA orienta o formato correto antes do envio.",
   };
 }
