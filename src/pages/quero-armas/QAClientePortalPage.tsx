@@ -1294,8 +1294,15 @@ export default function QAClientePortalPage() {
     const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
     // Cadastro incompleto reabre em todo refresh até ser preenchido —
     // é bloqueante para o restante do fluxo.
-    // contrato: popup deve aparecer a cada sessão até ser assinado (como cadastro)
-    const ignorarTrava = portalStartupAction.type === "cadastro" || portalStartupAction.type === "contrato";
+    // contrato/procuração: popup deve aparecer a cada sessão até ser assinado (como cadastro).
+    // checklist_pendente/reprovado: assim que o checklist explode, o assistente
+    // deve abrir sozinho até que o cliente comece a resolver — não pode ser
+    // silenciado apenas porque a mesma aba já foi aberta antes da explosão.
+    const ignorarTrava =
+      portalStartupAction.type === "cadastro" ||
+      portalStartupAction.type === "contrato" ||
+      portalStartupAction.type === "checklist_pendente" ||
+      portalStartupAction.type === "checklist_reprovado";
     if (!ignorarTrava && sessionStorage.getItem(key)) {
       setEntradaAutoChecked(true);
       return;
