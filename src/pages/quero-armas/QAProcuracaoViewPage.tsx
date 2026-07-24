@@ -128,6 +128,18 @@ async function gerarPdf(
 
   try {
     const scale = Math.min(3, Math.max(2, window.devicePixelRatio || 2));
+    // Neutraliza background-image, gradient, sombra ou filtro herdado que o
+    // html2canvas transformaria em faixa/marca visível no PDF.
+    elemento.querySelectorAll<HTMLElement>("*").forEach((el) => {
+      el.style.boxShadow = "none";
+      el.style.filter = "none";
+      el.style.backgroundImage = "none";
+      (el.style as any).backdropFilter = "none";
+    });
+    elemento.style.boxShadow = "none";
+    elemento.style.filter = "none";
+    elemento.style.backgroundImage = "none";
+    elemento.style.background = "#ffffff";
     const canvas = await html2canvas(elemento, {
       scale,
       backgroundColor: "#ffffff",
@@ -142,10 +154,31 @@ async function gerarPdf(
     const paginaAlturaPx = Math.floor(alturaPdf * pxPerPt);
     const totalPx = canvas.height;
 
+    // Look-back de whitespace: nunca corta sobre linha com pixels escuros
+    // (evita cortar assinatura, CPF, etc.). Tolerância p/ anti-aliasing.
+    const fullCtx = canvas.getContext("2d")!;
+    const linhaEhBranca = (y: number): boolean => {
+      if (y < 0 || y >= canvas.height) return true;
+      const { data } = fullCtx.getImageData(0, y, canvas.width, 1);
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] < 245 || data[i + 1] < 245 || data[i + 2] < 245) return false;
+      }
+      return true;
+    };
+    const maxLookBackPx = Math.floor(paginaAlturaPx * 0.18);
+
     let offsetPx = 0;
     let primeira = true;
     while (offsetPx < totalPx) {
-      const fatiaAltura = Math.min(paginaAlturaPx, totalPx - offsetPx);
+      let fatiaAltura = Math.min(paginaAlturaPx, totalPx - offsetPx);
+      if (offsetPx + fatiaAltura < totalPx) {
+        const limiteMin = Math.max(1, fatiaAltura - maxLookBackPx);
+        let novo = fatiaAltura;
+        while (novo > limiteMin && !linhaEhBranca(offsetPx + novo - 1)) {
+          novo -= 1;
+        }
+        if (novo > limiteMin) fatiaAltura = novo;
+      }
       const fatia = document.createElement("canvas");
       fatia.width = canvas.width;
       fatia.height = fatiaAltura;
