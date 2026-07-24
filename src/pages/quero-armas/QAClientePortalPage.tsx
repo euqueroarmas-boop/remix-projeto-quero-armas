@@ -258,6 +258,10 @@ export default function QAClientePortalPage() {
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
+  // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
+  // id para que o Hub Documental salve o novo como substituição (marca o
+  // antigo como `substituido`).
+  const [substituirDocId, setSubstituirDocId] = useState<string | null>(null);
   const [showArmaManual, setShowArmaManual] = useState(false);
   // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
