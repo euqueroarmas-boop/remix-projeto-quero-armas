@@ -34,7 +34,7 @@ function seenNormalKey(id: string) {
  * pendência real ser resolvida — fechar no X só esconde temporariamente.
  * Notificações normais somem até o próximo login ao serem fechadas.
  */
-export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: number | null }) {
+export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false }: { clienteId: number | null; bloqueado?: boolean }) {
   const [todas, setTodas] = useState<NotificacaoAtiva[]>([]);
   const [visiveis, setVisiveis] = useState<NotificacaoAtiva[]>([]);
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: num
     if (n.link) navigate(n.link);
   }
 
-  if (visiveis.length === 0) return null;
+  if (visiveis.length === 0 || bloqueado) return null;
 
   return (
     <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">

@@ -269,6 +269,7 @@ export default function QAClientePortalPage() {
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
   const [pendingTrilhaDestino, setPendingTrilhaDestino] = useState<string | null>(null);
   const [showCadastroModal, setShowCadastroModal] = useState(false);
+  const [checklistGuiadoAberto, setChecklistGuiadoAberto] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
@@ -2914,7 +2915,7 @@ export default function QAClientePortalPage() {
       )}
 
       {cliente?.id ? (
-        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
+        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} onOpenChange={setChecklistGuiadoAberto} />
       ) : null}
 
       {cliente?.id ? (
@@ -2926,7 +2927,10 @@ export default function QAClientePortalPage() {
         />
       ) : null}
 
-      <NotificacaoEngineOverlay clienteId={(cliente as any)?.id ?? null} />
+      <NotificacaoEngineOverlay
+        clienteId={(cliente as any)?.id ?? null}
+        bloqueado={showContratoPopup || showAddDoc || showCadastroModal || checklistGuiadoAberto}
+      />
 
       <PendenciasGuiadasPopup
         open={showContratoPopup && pendenciasGuiadasCount > 0}

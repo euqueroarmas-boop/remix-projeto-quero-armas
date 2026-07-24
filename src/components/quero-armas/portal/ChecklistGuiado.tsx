@@ -18,9 +18,11 @@ interface Props {
   clienteId: number;
   /** chamado quando o assistente altera algo (para recarregar contadores do portal) */
   onUpdated?: () => void;
+  /** chamado sempre que o modal abre ou fecha — permite o portal suprimir notificações concorrentes */
+  onOpenChange?: (open: boolean) => void;
 }
 
-export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
+export default function ChecklistGuiado({ clienteId, onUpdated, onOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const [processoIdAlvo, setProcessoIdAlvo] = useState<string | null>(null);
   const [focusDocId, setFocusDocId] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
       setProcessoIdAlvo(payload?.processoId ?? null);
       setFocusDocId(payload?.focusDocId ?? null);
       setOpen(true);
+      onOpenChange?.(true);
     });
     return off;
   }, [clienteId]);
@@ -47,6 +50,7 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
           setOpen(false);
           setProcessoIdAlvo(null);
           setFocusDocId(null);
+          onOpenChange?.(false);
         }}
         processoIdInicial={processoIdAlvo}
         focusDocIdInicial={focusDocId}
