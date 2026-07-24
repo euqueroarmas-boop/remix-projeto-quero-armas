@@ -1466,6 +1466,9 @@ export default function QAClientePortalPage() {
   useEffect(() => {
     if (!pendingContractsLoaded) return;
     if (pendingSignatureCount > 0) return;
+    // Fase 1: se o popup unificado já cobre a próxima exigência, ele
+    // conduz o cliente ao Hub; não disparamos o wizard antigo em paralelo.
+    if (pendenciasGuiadasCount > 0) return;
     if (showContratoPopup || showAddDoc || showCadastroModal) return;
     const pend = resumoState?.checklistReproc || resumoState?.checklistPend;
     if (!pend) return;
@@ -1479,6 +1482,7 @@ export default function QAClientePortalPage() {
   }, [
     pendingContractsLoaded,
     pendingSignatureCount,
+    pendenciasGuiadasCount,
     showContratoPopup,
     showAddDoc,
     showCadastroModal,
