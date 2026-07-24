@@ -1267,6 +1267,80 @@ export default function QAClientePortalPage() {
     return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
   }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
+  // ==========================================================================
+  // Fase 1 — Unificação do popup: monta a lista de pendências (assinaturas +
+  // exigências documentais) para o PendenciasGuiadasPopup. O botão "Entregar"
+  // abre o Hub Documental focado no tipo correto. O wizard antigo (Assistente
+  // Guiado) continua disponível pelo Speed Dial e pelo bus.
+  // ==========================================================================
+  const pendenciasGuiadas = useMemo<PendenciaItem[]>(() => {
+    const items: PendenciaItem[] = [];
+
+    // 1) Assinaturas pendentes primeiro (mantém prioridade atual do portal).
+    for (const sig of pendingSignatureDocs) {
+      const kindTipo = sig.kind === "contract" ? "contract" : "procuration";
+      const hubTipo = sig.kind === "contract" ? "contrato_assinado" : "procuracao_assinada";
+      items.push({
+        id: `sig:${sig.kind}:${sig.id}`,
+        kind: "signature",
+        label: sig.kind === "contract" ? "Contrato de adesão" : "Procuração",
+        tipo: kindTipo,
+        contexto: sig.contract_number ? `Protocolo ${sig.contract_number}` : null,
+        onPrimary: () => openPendingSignatureLink(),
+        onEntregar: () => {
+          setEditDocTipo(hubTipo);
+          setShowAddDoc(true);
+          setShowContratoPopup(false);
+        },
+      });
+    }
+
+    // 2) Exigências documentais do checklist (obrigatórias) — reprovadas
+    // primeiro, pendentes depois. Deduplica por hub_tipo para não repetir o
+    // mesmo tipo em processos diferentes.
+    const jaAdicionados = new Set<string>();
+    const empurrar = (doc: any) => {
+      const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
+      const hubTipo = toHubTipoCompartilhado(rawTipo);
+      if (jaAdicionados.has(hubTipo)) return;
+      jaAdicionados.add(hubTipo);
+      const nomeFallback = doc?.nome_documento
+        ? String(doc.nome_documento)
+        : rawTipo.replace(/_/g, " ").toUpperCase();
+      items.push({
+        id: `doc:${doc.id}`,
+        kind: "documento",
+        label: nomeFallback,
+        tipo: hubTipo,
+        fallbackNome: nomeFallback,
+        contexto: "Exigência do processo",
+        onPrimary: () => {},
+        onEntregar: () => {
+          setEditDocTipo(hubTipo);
+          setShowAddDoc(true);
+          setShowContratoPopup(false);
+        },
+      });
+    };
+
+    for (const d of processoDocs) {
+      if (!d?.obrigatorio) continue;
+      const st = String(d.status || "").toLowerCase();
+      if (["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st)) {
+        empurrar(d);
+      }
+    }
+    for (const d of processoDocs) {
+      if (!d?.obrigatorio) continue;
+      if (!isChecklistPendente(d.status)) continue;
+      empurrar(d);
+    }
+
+    return items;
+  }, [pendingSignatureDocs, processoDocs]);
+
+  const pendenciasGuiadasCount = pendenciasGuiadas.length;
+
   const portalStartupAction = useMemo(() => {
     if (loading || !cliente || !pendingContractsLoaded) return null;
 
