@@ -34,6 +34,16 @@ interface Props {
   placeholder?: string;
 }
 
+const FONT_FAMILIES = [
+  { label: "Arial", value: "Arial" },
+  { label: "Times New Roman", value: "Times New Roman" },
+  { label: "Calibri", value: "Calibri" },
+  { label: "Georgia", value: "Georgia" },
+  { label: "Verdana", value: "Verdana" },
+] as const;
+
+const FONT_SIZES_PT = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32] as const;
+
 // ── Syntax Highlighting ────────────────────────────────────────────────────
 
 function esc(s: string) {
@@ -125,6 +135,9 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
   const [highlighted, setHighlighted] = useState(() => highlightHtml(initialHtml));
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+  const [fontFamily, setFontFamily] = useState("Georgia");
+  const [fontSizePt, setFontSizePt] = useState("11");
 
   // Estado de formatação ativa (atualizado a cada mudança de seleção)
   const [fmt, setFmt] = useState({
@@ -149,6 +162,32 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
       const ed = contentEditableRef.current;
       const sel = document.getSelection();
       if (!ed || !sel || !ed.contains(sel.anchorNode ?? null)) return;
+
+      if (sel.rangeCount > 0) savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+
+      const anchor = sel.anchorNode;
+      const selectionElement = anchor instanceof HTMLElement ? anchor : anchor?.parentElement;
+      if (selectionElement) {
+        const style = window.getComputedStyle(selectionElement);
+        const activeFamilies = style.fontFamily
+          .replace(/["']/g, "")
+          .toLowerCase()
+          .split(",")
+          .map((item) => item.trim());
+        const matchedFamily = FONT_FAMILIES.find((font) =>
+          activeFamilies.includes(font.value.toLowerCase()),
+        );
+        if (matchedFamily) setFontFamily(matchedFamily.value);
+
+        const px = Number.parseFloat(style.fontSize);
+        if (Number.isFinite(px)) {
+          const pt = (px * 72) / 96;
+          const nearest = FONT_SIZES_PT.reduce<number>((best, size) =>
+            Math.abs(size - pt) < Math.abs(best - pt) ? size : best,
+          );
+          setFontSizePt(String(nearest));
+        }
+      }
 
       // Detecta o case do texto selecionado para iluminar AA / aa automaticamente
       let caseUpper = false;
@@ -232,6 +271,48 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
   function exec(command: string, value?: string) {
     contentEditableRef.current?.focus();
     document.execCommand(command, false, value ?? undefined);
+    syncVisual();
+  }
+
+  function saveEditorSelection() {
+    const selection = window.getSelection();
+    const editor = contentEditableRef.current;
+    if (!selection || !editor || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      savedRangeRef.current = range.cloneRange();
+    }
+  }
+
+  function restoreEditorSelection() {
+    const selection = window.getSelection();
+    const range = savedRangeRef.current;
+    if (!selection || !range) return;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function aplicarFonte(value: string) {
+    setFontFamily(value);
+    contentEditableRef.current?.focus();
+    restoreEditorSelection();
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand("fontName", false, value);
+    syncVisual();
+  }
+
+  function aplicarTamanhoFonte(value: string) {
+    setFontSizePt(value);
+    const editor = contentEditableRef.current;
+    editor?.focus();
+    restoreEditorSelection();
+    document.execCommand("styleWithCSS", false, "false");
+    document.execCommand("fontSize", false, "7");
+    editor?.querySelectorAll<HTMLElement>('font[size="7"]').forEach((node) => {
+      node.removeAttribute("size");
+      node.style.fontSize = `${value}pt`;
+    });
+    document.execCommand("styleWithCSS", false, "true");
     syncVisual();
   }
 
@@ -386,6 +467,33 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
             <TBtn onClick={() => exec("bold")} title="Negrito (Ctrl+B)" active={fmt.bold}><Bold className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("italic")} title="Itálico (Ctrl+I)" active={fmt.italic}><Italic className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("underline")} title="Sublinhado (Ctrl+U)" active={fmt.underline}><Underline className="w-3 h-3" /></TBtn>
+            <TSep />
+            <select
+              value={fontFamily}
+              onMouseDown={saveEditorSelection}
+              onChange={(event) => aplicarFonte(event.target.value)}
+              aria-label="Tipo de fonte"
+              title={`Fonte atual: ${fontFamily}`}
+              className="h-6 max-w-[132px] rounded border border-slate-300 bg-white px-1 text-[10px] text-slate-700"
+            >
+              {FONT_FAMILIES.map((font) => (
+                <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                  {font.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={fontSizePt}
+              onMouseDown={saveEditorSelection}
+              onChange={(event) => aplicarTamanhoFonte(event.target.value)}
+              aria-label="Tamanho da fonte"
+              title={`Tamanho atual: ${fontSizePt} pt`}
+              className="h-6 w-[62px] rounded border border-slate-300 bg-white px-1 text-[10px] text-slate-700"
+            >
+              {FONT_SIZES_PT.map((size) => (
+                <option key={size} value={size}>{size} pt</option>
+              ))}
+            </select>
             <TSep />
             <TBtn onClick={() => exec("justifyLeft")} title="Alinhar à esquerda" active={fmt.alignLeft}><AlignLeft className="w-3 h-3" /></TBtn>
             <TBtn onClick={() => exec("justifyCenter")} title="Centralizar" active={fmt.alignCenter}><AlignCenter className="w-3 h-3" /></TBtn>
