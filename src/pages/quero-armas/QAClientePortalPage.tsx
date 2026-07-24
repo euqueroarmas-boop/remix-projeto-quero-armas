@@ -1346,6 +1346,7 @@ export default function QAClientePortalPage() {
         kind: "documento",
         label: nomeFallback,
         tipo: hubTipo,
+        rawTipo,
         fallbackNome: nomeFallback,
         contexto: "Exigência do processo",
         onPrimary: () => {},
