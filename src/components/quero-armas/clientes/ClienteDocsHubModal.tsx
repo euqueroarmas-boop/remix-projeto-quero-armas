@@ -1915,8 +1915,31 @@ export function ClienteDocsHubModal({
         payload.validado_admin = false;
       }
 
-      const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
+      if (substituirDocumentoId) {
+        payload.substitui_documento_id = substituirDocumentoId;
+      }
+      const { data: inserted, error: insertError } = await supabase
+        .from("qa_documentos_cliente" as any)
+        .insert(payload)
+        .select("id")
+        .single();
       if (insertError) throw insertError;
+      const novoDocId = (inserted as any)?.id as string | undefined;
+
+      // Substituição: marca o documento antigo como 'substituido' e vincula
+      // o novo. Assim o antigo sai das listagens e o histórico fica
+      // preservado (soft delete com trilha).
+      if (substituirDocumentoId && novoDocId) {
+        const { error: subErr } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .update({
+            status: "substituido",
+            substituido_em: new Date().toISOString(),
+            substituido_por_documento_id: novoDocId,
+          })
+          .eq("id", substituirDocumentoId);
+        if (subErr) console.warn("[hub] falha ao marcar documento anterior como substituído:", subErr);
+      }
 
       // Promoção para o Arsenal operacional (qa_crafs) quando o documento for
       // CRAF/SINARM com identificador físico da arma. Sem isso, a arma fica
