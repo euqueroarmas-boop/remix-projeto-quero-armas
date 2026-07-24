@@ -13,9 +13,10 @@ type NotificacaoAtiva = {
   created_at: string;
 };
 
-const POLL_MS = 60_000; // busca notificações novas a cada 1 min
-const TICK_MS = 15_000; // reavalia o que deve estar visível a cada 15s
-const REAPARECER_MS = 10 * 60_000; // urgente reaparece em até 10 min
+// Consulta as pendências uma única vez a cada abertura do portal (sem
+// polling agressivo). O reaparecimento de uma notificação urgente
+// respeita 24h — o cliente vê no máximo 1x por dia até resolver.
+const REAPARECER_MS = 24 * 60 * 60_000; // 24h
 
 function hiddenUntilKey(id: string) {
   return `qa_notif_hidden_${id}`;
@@ -42,25 +43,16 @@ export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: num
   useEffect(() => {
     if (!clienteId) return;
     let cancelado = false;
-
-    async function buscar() {
+    (async () => {
       const { data, error } = await supabase.rpc("qa_cliente_notificacoes_ativas" as any, {
         p_cliente_id: clienteId,
       });
       if (!cancelado && !error && Array.isArray(data)) {
         setTodas(data as NotificacaoAtiva[]);
       }
-    }
-
-    buscar();
-    const pollId = setInterval(buscar, POLL_MS);
-    return () => { cancelado = true; clearInterval(pollId); };
+    })();
+    return () => { cancelado = true; };
   }, [clienteId]);
-
-  useEffect(() => {
-    const tickId = setInterval(() => forceTick((n) => n + 1), TICK_MS);
-    return () => clearInterval(tickId);
-  }, []);
 
   useEffect(() => {
     const agora = Date.now();
