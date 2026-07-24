@@ -313,8 +313,13 @@ function calcularConformidade(
   const ref: Record<string, Ref> = {};
 
   // Ordena docs aprovados: equipe-validado primeiro, depois por tier crescente (1 = mais confiável)
+  // Contrato de Adesão e Procuração NUNCA servem como fonte de verdade para dados pessoais —
+  // são documentos derivados do próprio cadastro (Central de Adesão) e replicariam o dado.
+  // A verdade vem de documentos primários (RG/CIN/CNH), órgãos governamentais ou, na ausência
+  // desses, do cadastro do cliente (populado pela Central de Adesão).
+  const NAO_SERVEM_COMO_REFERENCIA = new Set(["contrato_assinado", "procuracao_assinada"]);
   const sorted = [...docsAprovados]
-    .filter(d => d.status === "aprovado")
+    .filter(d => d.status === "aprovado" && !NAO_SERVEM_COMO_REFERENCIA.has(d.tipo_documento))
     .sort((a, b) => {
       const tierA = docTrustTier(a.tipo_documento);
       const tierB = docTrustTier(b.tipo_documento);
