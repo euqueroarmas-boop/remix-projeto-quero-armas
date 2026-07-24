@@ -223,6 +223,12 @@ export function toTitleCasePtBR(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^\s—\-\/()]+/g, (word, offset) => {
+      // Preserva tokens alfanuméricos (protocolos, códigos como QAPOSSE20260012,
+      // CRAF SP-12345, etc.) em UPPERCASE — nunca aplicar title case a códigos.
+      const original = value.substr(offset, word.length);
+      if (/\d/.test(original) && /[A-Za-z]/.test(original)) {
+        return original.toUpperCase();
+      }
       if (offset === 0) return word.charAt(0).toUpperCase() + word.slice(1);
       if (PREP_PT.has(word)) return word;
       return word.charAt(0).toUpperCase() + word.slice(1);
