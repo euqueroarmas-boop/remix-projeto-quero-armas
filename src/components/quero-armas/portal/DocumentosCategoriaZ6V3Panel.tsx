@@ -166,8 +166,9 @@ async function abrirArquivo(doc: any, modo: "visualizado" | "baixado") {
     return;
   }
   try {
+    const bucket = doc?.metadados_documento_json?.bucket || DOC_BUCKET;
     const { data, error } = await supabase.storage
-      .from(DOC_BUCKET)
+      .from(bucket)
       .createSignedUrl(doc.arquivo_storage_path, 3600, modo === "baixado" ? { download: doc.arquivo_nome || true } : undefined);
     if (error || !data?.signedUrl) {
       toast.error("Não foi possível abrir o arquivo.");
@@ -218,7 +219,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       // Baixa o binário e serve via blob local — sem expor URL do Supabase
       // e sem depender do visualizador nativo do navegador (bloqueado no Edge).
       const { data: blob, error } = await supabase.storage
-        .from(DOC_BUCKET)
+        .from(doc?.metadados_documento_json?.bucket || DOC_BUCKET)
         .download(doc.arquivo_storage_path);
       if (error || !blob) {
         toast.error("Não foi possível abrir o arquivo.");
