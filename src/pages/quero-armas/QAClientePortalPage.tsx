@@ -26,6 +26,8 @@ import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/Clien
 import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
+import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
+import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
