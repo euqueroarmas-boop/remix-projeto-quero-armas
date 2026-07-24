@@ -1356,6 +1356,20 @@ export default function QAClientePortalPage() {
     setShowContratoPopup(true);
   }, [pendingSignatureCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
 
+  // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
+  // "Assinatura de contrato pendente", reabre o popup de assinaturas.
+  useEffect(() => {
+    const handler = () => {
+      if (pendingSignatureCount > 0) {
+        setShowContratoPopup(true);
+      } else {
+        setActiveSection("documentos");
+      }
+    };
+    window.addEventListener("qa:abrir-assinaturas-pendentes", handler);
+    return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
+  }, [pendingSignatureCount]);
+
   // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
   // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
   // com o assistente de compra/documentação.

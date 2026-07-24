@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Info, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 type NotificacaoAtiva = {
@@ -36,6 +37,7 @@ export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: num
   const [todas, setTodas] = useState<NotificacaoAtiva[]>([]);
   const [visiveis, setVisiveis] = useState<NotificacaoAtiva[]>([]);
   const [, forceTick] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!clienteId) return;
@@ -82,6 +84,19 @@ export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: num
     setVisiveis((prev) => prev.filter((x) => x.id !== n.id));
   }
 
+  function abrirDetalhes(n: NotificacaoAtiva, e: React.MouseEvent) {
+    e.preventDefault();
+    // Categoria de contrato/procuração pendente: abre o popup de assinaturas
+    // do portal em vez de navegar (a rota /area-do-cliente/contratos não existe
+    // e caía no fallback da home).
+    const cat = String(n.categoria || "").toLowerCase();
+    if (cat.includes("contrato") || cat.includes("assinatura") || cat.includes("procuracao")) {
+      window.dispatchEvent(new CustomEvent("qa:abrir-assinaturas-pendentes"));
+      return;
+    }
+    if (n.link) navigate(n.link);
+  }
+
   if (visiveis.length === 0) return null;
 
   return (
@@ -116,6 +131,7 @@ export default function NotificacaoEngineOverlay({ clienteId }: { clienteId: num
                 {n.link && (
                   <a
                     href={n.link}
+                    onClick={(e) => abrirDetalhes(n, e)}
                     className={`text-[11px] font-medium underline mt-1 inline-block ${urgente ? "text-red-800" : "text-blue-800"}`}
                   >
                     Ver detalhes
