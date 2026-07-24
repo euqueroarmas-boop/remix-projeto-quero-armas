@@ -2779,16 +2779,6 @@ export default function QAClientePortalPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2 pt-1">
-                    <input
-                      ref={pendingContractUploadInputRef}
-                      type="file"
-                      accept="application/pdf,.pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadSignedPendingSignatureFromPopup(file);
-                      }}
-                    />
                     <button
                       type="button"
                       onClick={openPendingSignatureLink}
@@ -2800,20 +2790,24 @@ export default function QAClientePortalPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => pendingContractUploadInputRef.current?.click()}
-                      disabled={!!uploadingPendingSignature || !activePendingSignature}
+                      onClick={() => {
+                        // Abre o Hub Documental já focado no tipo correto (Jurídico).
+                        // O Hub roda a IA de integridade/assinatura e grava em qa_documentos_cliente.
+                        setEditDocTipo(
+                          activePendingSignature.kind === "contract"
+                            ? "contrato_assinado"
+                            : "procuracao_assinada",
+                        );
+                        setShowAddDoc(true);
+                        setShowContratoPopup(false);
+                      }}
+                      disabled={!activePendingSignature}
                       className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm border border-[#8A1224] bg-white px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] disabled:cursor-wait disabled:opacity-60"
                     >
-                      {uploadingPendingSignature ? (
-                        <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                      ) : (
-                        <Upload className="h-3.5 w-3.5 shrink-0" />
-                      )}
-                      {uploadingPendingSignature
-                        ? "Enviando PDF"
-                        : activePendingSignature.kind === "contract"
-                          ? "Enviar contrato assinado"
-                          : "Enviar procuração assinada"}
+                      <Upload className="h-3.5 w-3.5 shrink-0" />
+                      {activePendingSignature.kind === "contract"
+                        ? "Enviar contrato assinado"
+                        : "Enviar procuração assinada"}
                     </button>
                   </div>
                 </div>
