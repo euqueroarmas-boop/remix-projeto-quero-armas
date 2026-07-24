@@ -1302,6 +1302,36 @@ export default function QAClientePortalPage() {
     // 2) Exigências documentais do checklist (obrigatórias) — reprovadas
     // primeiro, pendentes depois. Deduplica por hub_tipo para não repetir o
     // mesmo tipo em processos diferentes.
+    // Respeita a ordem configurada em "Serviços":
+    //   (a) ordem_no_pacote do serviço (ex.: Autorização antes de CRAF+GT)
+    //   (b) data_criacao do processo (fallback quando pacote não define ordem)
+    //   (c) doc.ordem / doc.etapa dentro do processo
+    const procById = new Map<string, any>(
+      (processos || []).map((p: any) => [String(p.id), p]),
+    );
+    const rankProcesso = (pid: string): [number, number] => {
+      const p = procById.get(String(pid));
+      const servicoOrdem = Number(
+        catalogoByServicoId[Number(p?.servico_id)]?.ordem_no_pacote,
+      );
+      const ordemNorm = Number.isFinite(servicoOrdem) ? servicoOrdem : 9_999;
+      const criacao = p?.data_criacao ? new Date(p.data_criacao).getTime() : Number.MAX_SAFE_INTEGER;
+      return [ordemNorm, criacao];
+    };
+    const rankDoc = (d: any): number => {
+      const ord = Number(d?.ordem);
+      if (Number.isFinite(ord)) return ord;
+      const et = Number(d?.etapa);
+      return Number.isFinite(et) ? et * 100 : 9_999;
+    };
+    const ordenar = (arr: any[]) =>
+      [...arr].sort((a, b) => {
+        const [ao, ac] = rankProcesso(a.processo_id);
+        const [bo, bc] = rankProcesso(b.processo_id);
+        if (ao !== bo) return ao - bo;
+        if (ac !== bc) return ac - bc;
+        return rankDoc(a) - rankDoc(b);
+      });
     const jaAdicionados = new Set<string>();
     const empurrar = (doc: any) => {
       const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
@@ -1327,21 +1357,21 @@ export default function QAClientePortalPage() {
       });
     };
 
-    for (const d of processoDocs) {
-      if (!d?.obrigatorio) continue;
-      const st = String(d.status || "").toLowerCase();
-      if (["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st)) {
-        empurrar(d);
-      }
-    }
-    for (const d of processoDocs) {
-      if (!d?.obrigatorio) continue;
-      if (!isChecklistPendente(d.status)) continue;
-      empurrar(d);
-    }
+    const reprovados = ordenar(
+      processoDocs.filter((d) => {
+        if (!d?.obrigatorio) return false;
+        const st = String(d.status || "").toLowerCase();
+        return ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st);
+      }),
+    );
+    const pendentes = ordenar(
+      processoDocs.filter((d) => d?.obrigatorio && isChecklistPendente(d.status)),
+    );
+    for (const d of reprovados) empurrar(d);
+    for (const d of pendentes) empurrar(d);
 
     return items;
-  }, [pendingSignatureDocs, processoDocs]);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
