@@ -1,0 +1,1 @@
+DELETE FROM public.qa_procuracoes WHERE id = 'dda1733e-e615-410d-87b3-91cd7a91ebd7' AND venda_id IS NULL;
