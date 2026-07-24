@@ -352,7 +352,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
 
   const handleRenovar = async (doc: any) => {
     await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "renovado", { tipo: doc.tipo_documento, motivo: "iniciada renovação pelo cliente" });
-    onOpenAdd(doc.tipo_documento);
+    onOpenAdd(doc.tipo_documento, doc.id);
   };
 
   /* ------------------------------------------------------- */
