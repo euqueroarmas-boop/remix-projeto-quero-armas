@@ -178,6 +178,13 @@ async function gerarPdf(
           novo -= 1;
         }
         if (novo > limiteMin) fatiaAltura = novo;
+        // Se o restante após o corte é apenas whitespace, absorve tudo
+        // nesta página para evitar página extra em branco.
+        let restanteEhBranco = true;
+        for (let y = offsetPx + fatiaAltura; y < totalPx; y += 1) {
+          if (!linhaEhBranca(y)) { restanteEhBranco = false; break; }
+        }
+        if (restanteEhBranco) fatiaAltura = totalPx - offsetPx;
       }
       const fatia = document.createElement("canvas");
       fatia.width = canvas.width;
