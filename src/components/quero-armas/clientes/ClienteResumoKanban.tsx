@@ -130,6 +130,7 @@ export default function ClienteResumoKanban({
   pendingContracts = 0,
   onNavigate,
   onOpenCadastro,
+  onOpenChecklist,
   onOpenComprar,
   onOpenDocsHub,
 }: Props) {
