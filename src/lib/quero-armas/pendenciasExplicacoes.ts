@@ -15,6 +15,269 @@ export interface ExplicacaoPendencia {
 }
 
 const REGISTRO: Record<string, ExplicacaoPendencia> = {
+  // ────────────────────────────────────────────────────────────────────────
+  // Requerimento / formulários do processo
+  // ────────────────────────────────────────────────────────────────────────
+  requerimento_de_posse_de_arma_de_fogo: {
+    titulo: "Requerimento de Posse de Arma de Fogo",
+    passos: [
+      "Baixe o modelo do requerimento no Hub Documental (aba \"Baixar modelo\").",
+      "Preencha com sua letra ou digite, assine e escaneie em PDF.",
+      "Envie o PDF assinado — a IA confere se os dados batem com seu cadastro.",
+    ],
+    observacao: "Este é o formulário oficial que instrui o processo perante a Polícia Federal.",
+  },
+  declaracao_necessidade_efetiva: {
+    titulo: "Declaração de efetiva necessidade",
+    passos: [
+      "Baixe o modelo no Hub Documental e preencha com o motivo real da posse.",
+      "Assine (à mão ou via Gov.br) e envie o PDF.",
+    ],
+    observacao: "A justificativa precisa ser coerente com o serviço contratado.",
+  },
+  declaracao_compromisso_treino: {
+    titulo: "Declaração de compromisso de treino",
+    passos: [
+      "Baixe o modelo padrão do sistema no Hub Documental.",
+      "Assine e envie o PDF — não altere o texto do modelo.",
+    ],
+  },
+  declaracao_compromisso_habitualidade: {
+    titulo: "Declaração de compromisso de habitualidade",
+    passos: [
+      "Baixe o modelo no Hub Documental, assine e envie o PDF.",
+      "Se ainda não é filiado a clube, faça isso antes de assinar.",
+    ],
+  },
+  declaracao_habitualidade_clube: {
+    titulo: "Declaração de habitualidade emitida pelo clube",
+    passos: [
+      "Solicite a declaração ao seu clube de tiro atestando frequência mínima de treinos.",
+      "Envie o PDF assinado pelo clube (carimbo/assinatura do responsável).",
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Perguntas condicionais (o cliente responde no Hub, não é upload)
+  // ────────────────────────────────────────────────────────────────────────
+  pergunta_ainda_reside_imovel: {
+    titulo: "Confirmação: você ainda reside neste imóvel?",
+    passos: [
+      "Abra o Hub e responda Sim ou Não.",
+      "Se Sim, seguimos com o comprovante em nome de terceiro + documento do titular.",
+      "Se Não, você será orientado a enviar um comprovante em seu nome.",
+    ],
+  },
+  pergunta_comprovante_em_nome: {
+    titulo: "Confirmação: o comprovante está no seu nome?",
+    passos: [
+      "Abra o Hub e responda Sim ou Não.",
+      "Se Não, o sistema já pede a declaração do titular e o documento dele.",
+    ],
+  },
+  pergunta_responde_inquerito_criminal: {
+    titulo: "Confirmação: você responde a inquérito/processo criminal?",
+    passos: [
+      "Abra o Hub e responda Sim ou Não.",
+      "Se Não, o sistema gera a declaração automaticamente para você assinar.",
+    ],
+  },
+  renda_definir_condicao: {
+    titulo: "Defina sua condição profissional",
+    passos: [
+      "Abra o Hub e escolha entre CLT, servidor público, autônomo/MEI, empresário ou aposentado.",
+      "A partir da escolha, o sistema pede automaticamente os comprovantes certos.",
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Terceiros / imóvel
+  // ────────────────────────────────────────────────────────────────────────
+  documento_identificacao_terceiro: {
+    titulo: "Documento de identidade do titular do comprovante",
+    passos: [
+      "Se o comprovante de residência está em nome de outra pessoa, envie um documento oficial dela (RG/CNH/CIN).",
+      "Frente e verso, legível, dentro da validade.",
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Empresa / renda (variantes específicas do checklist)
+  // ────────────────────────────────────────────────────────────────────────
+  renda_nf_empresa: {
+    titulo: "Nota fiscal emitida pela sua empresa",
+    passos: [
+      "Envie uma NF emitida pela empresa para um cliente nos últimos meses.",
+      "Serve como comprovação de atividade e faturamento.",
+    ],
+  },
+  renda_qsa: {
+    titulo: "QSA — Quadro de Sócios e Administradores",
+    passos: [
+      "Emita o QSA no site da Receita Federal (últimos 30 dias) e envie o PDF.",
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Certidões — variantes do catálogo do checklist
+  // ────────────────────────────────────────────────────────────────────────
+  certidao_antecedentes_criminais_eleitoral: {
+    titulo: "Antecedentes criminais — Justiça Eleitoral (TSE)",
+    passos: [
+      "Emita a certidão no site do TSE e envie o PDF original.",
+    ],
+  },
+  certidao_antecedentes_criminais_estadual: {
+    titulo: "Antecedentes criminais — Justiça Estadual",
+    passos: [
+      "Emita a certidão no portal do Tribunal de Justiça do seu estado.",
+      "Envie o PDF original assinado digitalmente.",
+    ],
+  },
+  certidao_antecedentes_criminais_federal: {
+    titulo: "Antecedentes criminais — Justiça Federal",
+    passos: [
+      "Emita a certidão no portal da Justiça Federal da sua região.",
+      "Envie o PDF exatamente como baixado.",
+    ],
+  },
+  certidao_antecedentes_criminais_militar: {
+    titulo: "Antecedentes criminais — Justiça Militar",
+    passos: [
+      "Emita a certidão no STM (federal) ou TJM-SP (estadual), conforme solicitado.",
+      "Envie o PDF original.",
+    ],
+  },
+  certidao_antecedentes_policia_civil_sp: {
+    titulo: "Antecedentes — Polícia Civil/SP",
+    passos: [
+      "Emita a certidão no site da Polícia Civil de São Paulo.",
+      "Envie o PDF original — o sistema valida a assinatura digital.",
+    ],
+  },
+  certidao_crimes_eleitorais_tse: {
+    titulo: "Crimes eleitorais — TSE",
+    passos: [
+      "Emita a certidão no site do TSE.",
+      "Envie o PDF original assinado.",
+    ],
+  },
+  certidao_crimes_militares_stm: {
+    titulo: "Crimes militares — STM",
+    passos: [
+      "Emita a certidão no portal do Superior Tribunal Militar (STM).",
+      "Envie o PDF original.",
+    ],
+  },
+  certidao_criminal_tjmsp: {
+    titulo: "Certidão criminal — TJM-SP",
+    passos: [
+      "Emita a certidão no portal do Tribunal de Justiça Militar de SP (TJM-SP).",
+      "Envie o PDF original.",
+    ],
+  },
+  certidao_estadual_distribuicao_acoes_criminais: {
+    titulo: "Estadual — Distribuição de ações criminais",
+    passos: [
+      "Emita no portal do Tribunal de Justiça a certidão de distribuição criminal.",
+      "Não envie a de execuções — são certidões distintas.",
+    ],
+  },
+  certidao_estadual_execucoes_criminais: {
+    titulo: "Estadual — Execuções criminais",
+    passos: [
+      "Emita no portal do Tribunal de Justiça a certidão de execuções criminais.",
+      "Não envie a de distribuição — são certidões distintas.",
+    ],
+  },
+  certidao_estadual_segundo_grau_acoes_criminais: {
+    titulo: "Estadual — Segundo grau, ações criminais",
+    passos: [
+      "Emita a certidão de segundo grau (Tribunal) para ações criminais.",
+    ],
+  },
+  certidao_estadual_segundo_grau_execucoes_criminais: {
+    titulo: "Estadual — Segundo grau, execuções criminais",
+    passos: [
+      "Emita a certidão de segundo grau (Tribunal) para execuções criminais.",
+    ],
+  },
+  certidao_federal_trf3_regional: {
+    titulo: "TRF3 — Regional",
+    passos: [
+      "Emita no portal do TRF3 a certidão regional (abrangência de todo o TRF3).",
+      "Envie o PDF original assinado.",
+    ],
+  },
+  certidao_federal_trf3_sjsp_jef: {
+    titulo: "TRF3 — SJSP / JEF",
+    passos: [
+      "No portal do TRF3, emita a certidão da Seção Judiciária de SP (SJSP) e do JEF.",
+      "Envie o PDF original assinado.",
+    ],
+  },
+  certidao_tjsp_distribuicao_criminal: {
+    titulo: "TJSP — Distribuição criminal",
+    passos: [
+      "No portal do TJSP, emita a certidão de distribuição criminal.",
+    ],
+  },
+  certidao_tjsp_execucoes_criminais: {
+    titulo: "TJSP — Execuções criminais",
+    passos: [
+      "No portal do TJSP, emita a certidão de execuções criminais.",
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // Endereço por ano (comprovante_endereco_ano_XXXX)
+  // ────────────────────────────────────────────────────────────────────────
+  comprovante_endereco_ano_2022: {
+    titulo: "Comprovante de endereço — Ano 2022",
+    passos: [
+      "Envie uma conta (luz, água, gás, internet, telefone) emitida em 2022.",
+      "O documento comprova o histórico de residência exigido pela PF.",
+    ],
+  },
+  comprovante_endereco_ano_2023: {
+    titulo: "Comprovante de endereço — Ano 2023",
+    passos: [
+      "Envie uma conta (luz, água, gás, internet, telefone) emitida em 2023.",
+    ],
+  },
+  comprovante_endereco_ano_2024: {
+    titulo: "Comprovante de endereço — Ano 2024",
+    passos: [
+      "Envie uma conta (luz, água, gás, internet, telefone) emitida em 2024.",
+    ],
+  },
+  comprovante_endereco_ano_2025: {
+    titulo: "Comprovante de endereço — Ano 2025",
+    passos: [
+      "Envie uma conta (luz, água, gás, internet, telefone) emitida em 2025.",
+    ],
+  },
+  comprovante_endereco_ano_2026: {
+    titulo: "Comprovante de endereço — Ano 2026",
+    passos: [
+      "Envie uma conta (luz, água, gás, internet, telefone) emitida em 2026.",
+      "Deve ser recente — preferencialmente do mês atual.",
+    ],
+  },
+  comprovante_endereco_ano_2027: {
+    titulo: "Comprovante de endereço — Ano 2027",
+    passos: [
+      "Envie uma conta recente (luz, água, gás, internet, telefone) emitida em 2027.",
+    ],
+  },
+  comprovante_filiacao_entidade_tiro: {
+    titulo: "Comprovante de filiação ativa ao clube/entidade de tiro",
+    passos: [
+      "Envie a carteirinha, contrato ou declaração do clube atestando filiação vigente.",
+      "Deve estar dentro do prazo de validade.",
+    ],
+  },
+
   // Identidade
   cin: {
     titulo: "Documento oficial de identidade",
@@ -354,11 +617,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
 };
 
 export function getExplicacaoPendencia(
-  hubTipo: string,
+  rawTipo: string,
   fallbackNome?: string | null,
+  hubTipoFallback?: string | null,
 ): ExplicacaoPendencia {
-  const key = String(hubTipo || "").trim().toLowerCase();
-  const hit = REGISTRO[key];
+  const primary = String(rawTipo || "").trim().toLowerCase();
+  const secondary = String(hubTipoFallback || "").trim().toLowerCase();
+  const hit = REGISTRO[primary] || (secondary ? REGISTRO[secondary] : undefined);
   if (hit) return hit;
   const titulo = fallbackNome && fallbackNome.trim()
     ? fallbackNome.trim()
@@ -369,5 +634,6 @@ export function getExplicacaoPendencia(
       "Envie o documento solicitado no formato original (PDF ou foto legível).",
       "A IA valida integridade e assinatura antes de aprovar.",
     ],
+    observacao: "Se ficar em dúvida, abra o Hub Documental — a IA orienta o formato correto antes do envio.",
   };
 }
