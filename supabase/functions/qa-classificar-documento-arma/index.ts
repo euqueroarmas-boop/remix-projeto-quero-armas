@@ -513,6 +513,23 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
       : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
   }
 
+  // === Órgão competente inferido a partir do OBJETO do contrato/procuração ===
+  // Contrato de adesão e procuração são peças PRIVADAS — não têm órgão emissor
+  // público. O campo "órgão emissor" reflete, quando aplicável, o órgão
+  // competente do serviço contratado (analisado no objeto). Se não for possível
+  // inferir, deixa em branco (não força SINARM/PF nem Exército).
+  function inferirOrgaoCompetente(texto: string): string {
+    const t = texto || "";
+    const isCAC =
+      /\bCAC\b|COLECIONADOR|ATIRADOR|CACADOR|CAÇADOR|SIGMA|EX[EÉ]RCITO|CR\s+CAC|CERTIFICADO DE REGISTRO CAC/.test(t);
+    const isPF =
+      /\bSINARM\b|POL[ÍI]CIA FEDERAL|\bPOSSE\b|\bPORTE\b|DEFESA PESSOAL|REGISTRO DE ARMA DE FOGO/.test(t);
+    if (isCAC && !isPF) return "Exército Brasileiro — SIGMA";
+    if (isPF && !isCAC) return "Polícia Federal — SINARM";
+    if (isCAC && isPF) return "Polícia Federal — SINARM / Exército — SIGMA";
+    return ""; // instrumento particular, sem órgão emissor
+  }
+
   // === Contrato de adesão assinado (Quero Armas / Arsenal Inteligente) ===
   const isContratoAdesao =
     /\bCONTRATO DE ADES[ÃA]O\b/.test(norm) &&
@@ -523,12 +540,10 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
     campos.nome_documento = campos.nome_documento || "Contrato de Adesão assinado";
     campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
-    // Contrato de adesão é peça privada entre CONTRATADA e CONTRATANTE — NÃO
-    // é emitido pelo Exército. Força o órgão vinculado ao fluxo administrativo
-    // (SINARM/PF) para o qual o contrato instrumentaliza a assessoria.
-    campos.orgao_emissor = "SINARM / Polícia Federal";
+    // Peça privada — órgão emissor sai do OBJETO do contrato (serviço contratado).
+    campos.orgao_emissor = inferirOrgaoCompetente(norm);
     parsed.justificativa =
-      "Classificação determinística: cabeçalho CONTRATO DE ADESÃO com partes CONTRATADA/CONTRATANTE e vínculo à Quero Armas / Arsenal Inteligente — peça jurídica de adesão assinada.";
+      "Classificação determinística: contrato de adesão (peça privada). Órgão competente inferido pelo objeto do serviço contratado.";
     return parsed;
   }
 
@@ -541,14 +556,12 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
     campos.nome_documento = campos.nome_documento || "Procuração assinada";
     campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
-    // Procuração outorga poderes de representação perante SINARM/Polícia Federal
-    // (e subsidiariamente Exército). Não sobrescreve se o corpo do documento
-    // explicitar 'Exército' como órgão de representação exclusiva.
-    if (!campos.orgao_emissor || /EX[EÉ]RCITO/i.test(String(campos.orgao_emissor))) {
-      campos.orgao_emissor = "SINARM / Polícia Federal";
-    }
+    // Procuração é instrumento particular — órgão vem do objeto (para quem outorga poderes).
+    const inferido = inferirOrgaoCompetente(norm);
+    if (inferido) campos.orgao_emissor = inferido;
+    else if (!campos.orgao_emissor) campos.orgao_emissor = "";
     parsed.justificativa =
-      "Classificação determinística: título PROCURAÇÃO com blocos OUTORGANTE/OUTORGADO — peça jurídica assinada pelo titular.";
+      "Classificação determinística: procuração (instrumento particular). Órgão competente inferido pelo objeto.";
     return parsed;
   }
 
