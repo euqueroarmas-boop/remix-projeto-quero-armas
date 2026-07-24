@@ -93,6 +93,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
       : "Procuração aguardando sua assinatura"
     : "Documento aguardando envio";
 
+  const passoAtual = 1;
+  const passoLabel = `Passo ${passoAtual} de ${total}`;
+
   return (
     <div
       className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
@@ -125,10 +128,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
           {/* Sidebar */}
           <div className="hidden md:flex w-48 bg-[#FAFAFA] border-r border-[#E4E4E4] p-8 flex-col items-center justify-center text-center shrink-0">
             <div className="text-6xl font-light text-[#0A0A0A] leading-none tracking-tighter">
-              {String(total).padStart(2, "0")}
+              {String(passoAtual).padStart(2, "0")}
+              <span className="text-2xl text-[#6A6A6A]">/{String(total).padStart(2, "0")}</span>
             </div>
             <div className="text-[10px] font-bold tracking-[0.2em] text-[#6A6A6A] uppercase mt-1 mb-8">
-              Pendentes
+              {total > 1 ? "Passo Atual" : "Pendente"}
             </div>
             <div className="relative flex flex-col items-center">
               <div className="w-px h-10 bg-[#E4E4E4]" />
@@ -142,12 +146,22 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
           {/* Main */}
           <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
             <header className="mb-5">
-              <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase mb-2">
-                {eyebrow}
-              </span>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase">
+                  {eyebrow}
+                </span>
+                {total > 1 ? (
+                  <span className="inline-flex items-center rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+                    {passoLabel}
+                  </span>
+                ) : null}
+              </div>
               <h2 className="text-xl md:text-2xl font-medium text-[#0A0A0A] leading-tight tracking-tight">
                 {explic.titulo}
               </h2>
+              <p className="mt-2 text-xs text-[#6A6A6A] leading-relaxed">
+                {active.label}
+              </p>
             </header>
 
             <div className="space-y-5">
@@ -169,24 +183,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
               ) : null}
 
               {total > 1 ? (
-                <div className="space-y-2">
-                  {pendencias.map((doc, index) => (
-                    <div
-                      key={`${doc.kind}-${doc.id}`}
-                      className={`flex items-center justify-between rounded-sm border px-3 py-2 text-xs ${
-                        index === 0
-                          ? "border-[#8A1224] bg-[#FFF7F8] text-[#8A1224]"
-                          : "border-[#E4E4E4] bg-[#FAFAFA] text-[#6A6A6A]"
-                      }`}
-                    >
-                      <span className="font-bold uppercase tracking-[0.08em]">
-                        {index + 1}. {doc.label}
-                      </span>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
-                        {index === 0 ? "Agora" : "Depois"}
-                      </span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+                  <span>Resolva um por vez</span>
+                  <span>Faltam {total - 1} após esta</span>
                 </div>
               ) : null}
 
