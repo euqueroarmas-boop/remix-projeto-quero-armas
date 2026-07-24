@@ -201,7 +201,7 @@ export default function QAContratoPrimarioAdmin() {
         <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
           <FileSignature className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} /> Contrato Primário
         </h2>
-        <Button variant="ghost" size="sm" onClick={carregar} className="h-7 text-xs gap-1">
+        <Button variant="ghost" size="sm" onClick={() => carregar()} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
         </Button>
       </div>
