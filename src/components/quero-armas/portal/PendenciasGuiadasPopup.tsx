@@ -22,6 +22,8 @@ export interface PendenciaItem {
   label: string;
   /** Tipo canônico (para signature: "contract"|"procuration"; para documento: hub_tipo). */
   tipo: string;
+  /** Tipo cru do checklist (`tipo_documento`) — usado para buscar explicação específica antes do fallback pelo hub_tipo. */
+  rawTipo?: string | null;
   /** Nome fallback caso o tipo não tenha explicação cadastrada. */
   fallbackNome?: string | null;
   /** Protocolo/contexto exibido no header. */
@@ -61,7 +63,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
         ],
         observacao: "A IA valida a assinatura antes de destravar as próximas etapas.",
       }
-    : getExplicacaoPendencia(active.tipo, active.fallbackNome);
+    : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
   const headerContexto =
     active.contexto ||
