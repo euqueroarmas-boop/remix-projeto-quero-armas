@@ -182,8 +182,9 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
         const px = Number.parseFloat(style.fontSize);
         if (Number.isFinite(px)) {
           const pt = (px * 72) / 96;
-          const nearest = FONT_SIZES_PT.reduce<number>((best, size) =>
-            Math.abs(size - pt) < Math.abs(best - pt) ? size : best,
+          const nearest = FONT_SIZES_PT.reduce<number>(
+            (best, size) => (Math.abs(size - pt) < Math.abs(best - pt) ? size : best),
+            FONT_SIZES_PT[0],
           );
           setFontSizePt(String(nearest));
         }
