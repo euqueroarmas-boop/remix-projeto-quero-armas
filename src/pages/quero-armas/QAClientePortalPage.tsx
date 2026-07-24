@@ -252,6 +252,8 @@ export default function QAClientePortalPage() {
   // Mapa (servico_id:tipo_documento) → ordem do catálogo (qa_servicos_documentos.ordem).
   // Usado para ordenar o PendenciasGuiadasPopup respeitando o "Montar Checklist" do admin.
   const [catalogoDocOrdem, setCatalogoDocOrdem] = useState<Map<string, number>>(new Map());
+  // Mapa (servico_id:tipo_documento) → instrucoes/link_emissao/observacoes_cliente do catálogo.
+  const [catalogoDocInfo, setCatalogoDocInfo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -621,18 +623,28 @@ export default function QAClientePortalPage() {
             // Carrega ordem por documento do catálogo para ordenar o popup de exigências
             const { data: servicoDocsData } = await supabase
               .from("qa_servicos_documentos" as any)
-              .select("servico_id, tipo_documento, ordem")
+              .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente")
               .in("servico_id", servicoIds);
             const docOrdemMap = new Map<string, number>();
+            const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
             ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
               const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
               const ord = Number(sd.ordem);
               if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
+              if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente) {
+                docInfoMap.set(key, {
+                  instrucoes: sd.instrucoes ?? null,
+                  link_emissao: sd.link_emissao ?? null,
+                  observacoes_cliente: sd.observacoes_cliente ?? null,
+                });
+              }
             });
             setCatalogoDocOrdem(docOrdemMap);
+            setCatalogoDocInfo(docInfoMap);
           } else {
             setCatalogoByServicoId({});
             setCatalogoDocOrdem(new Map());
+            setCatalogoDocInfo(new Map());
           }
         }
         setItens(itensData);
@@ -1367,6 +1379,9 @@ export default function QAClientePortalPage() {
       const nomeFallback = doc?.nome_documento
         ? String(doc.nome_documento)
         : rawTipo.replace(/_/g, " ").toUpperCase();
+      const p = procById.get(String(doc?.processo_id));
+      const catKey = p?.servico_id != null ? `${p.servico_id}:${rawTipo}` : null;
+      const catInfo = catKey ? catalogoDocInfo.get(catKey) : undefined;
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
@@ -1375,6 +1390,9 @@ export default function QAClientePortalPage() {
         rawTipo,
         fallbackNome: nomeFallback,
         contexto: "Exigência do processo",
+        instrucoesCatalogo: catInfo?.instrucoes ?? null,
+        linkEmissao: catInfo?.link_emissao ?? null,
+        observacoesCatalogo: catInfo?.observacoes_cliente ?? null,
         onPrimary: () => {},
         onEntregar: () => {
           setEditDocTipo(hubTipo);
@@ -1398,7 +1416,7 @@ export default function QAClientePortalPage() {
     for (const d of pendentes) empurrar(d);
 
     return items;
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem]);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 

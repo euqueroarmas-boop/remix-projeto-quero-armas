@@ -10,7 +10,7 @@
 // como fallback e continua acessível pelo Speed Dial / bus.
 // ============================================================================
 
-import { Download, FileText, Upload } from "lucide-react";
+import { Download, ExternalLink, FileText, Upload } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 
 export type PendenciaKind = "signature" | "documento";
@@ -36,6 +36,12 @@ export interface PendenciaItem {
   primaryLabel?: string;
   /** Texto do secundário; default "Enviar assinado" (signature) ou "Entregar" (documento). */
   entregarLabel?: string;
+  /** Instruções do admin (qa_servicos_documentos.instrucoes) — exibidas no lugar do texto estático quando preenchidas. */
+  instrucoesCatalogo?: string | null;
+  /** Link de emissão do admin (qa_servicos_documentos.link_emissao). */
+  linkEmissao?: string | null;
+  /** Observações do admin (qa_servicos_documentos.observacoes_cliente). */
+  observacoesCatalogo?: string | null;
 }
 
 interface Props {
@@ -50,7 +56,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
   const total = pendencias.length;
 
   const isSignature = active.kind === "signature";
-  const explic = isSignature
+  const explicBase = isSignature
     ? {
         titulo:
           active.tipo === "contract"
@@ -64,6 +70,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
         observacao: "A IA valida a assinatura antes de destravar as próximas etapas.",
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
+
+  // Se o admin cadastrou instrucoes no catálogo, sobrescreve o texto estático.
+  const explic = (!isSignature && active.instrucoesCatalogo)
+    ? {
+        ...explicBase,
+        passos: active.instrucoesCatalogo
+          .split(/\n+/)
+          .map((l) => l.trim())
+          .filter(Boolean),
+        observacao: active.observacoesCatalogo || explicBase.observacao,
+      }
+    : { ...explicBase, observacao: (!isSignature && active.observacoesCatalogo) ? active.observacoesCatalogo : explicBase.observacao };
 
   const headerContexto =
     active.contexto ||
@@ -182,6 +200,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
                 <p className="text-xs text-[#6A6A6A] leading-relaxed border-l-2 border-[#E4E4E4] pl-3">
                   {explic.observacao}
                 </p>
+              ) : null}
+
+              {!isSignature && active.linkEmissao ? (
+                <a
+                  href={active.linkEmissao}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8A1224] underline"
+                >
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  Acessar site de emissão
+                </a>
               ) : null}
 
               {total > 1 ? (
