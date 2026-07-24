@@ -26,6 +26,8 @@ import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/Clien
 import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
+import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
+import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
@@ -1265,6 +1267,80 @@ export default function QAClientePortalPage() {
     return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
   }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
+  // ==========================================================================
+  // Fase 1 — Unificação do popup: monta a lista de pendências (assinaturas +
+  // exigências documentais) para o PendenciasGuiadasPopup. O botão "Entregar"
+  // abre o Hub Documental focado no tipo correto. O wizard antigo (Assistente
+  // Guiado) continua disponível pelo Speed Dial e pelo bus.
+  // ==========================================================================
+  const pendenciasGuiadas = useMemo<PendenciaItem[]>(() => {
+    const items: PendenciaItem[] = [];
+
+    // 1) Assinaturas pendentes primeiro (mantém prioridade atual do portal).
+    for (const sig of pendingSignatureDocs) {
+      const kindTipo = sig.kind === "contract" ? "contract" : "procuration";
+      const hubTipo = sig.kind === "contract" ? "contrato_assinado" : "procuracao_assinada";
+      items.push({
+        id: `sig:${sig.kind}:${sig.id}`,
+        kind: "signature",
+        label: sig.kind === "contract" ? "Contrato de adesão" : "Procuração",
+        tipo: kindTipo,
+        contexto: sig.contract_number ? `Protocolo ${sig.contract_number}` : null,
+        onPrimary: () => openPendingSignatureLink(),
+        onEntregar: () => {
+          setEditDocTipo(hubTipo);
+          setShowAddDoc(true);
+          setShowContratoPopup(false);
+        },
+      });
+    }
+
+    // 2) Exigências documentais do checklist (obrigatórias) — reprovadas
+    // primeiro, pendentes depois. Deduplica por hub_tipo para não repetir o
+    // mesmo tipo em processos diferentes.
+    const jaAdicionados = new Set<string>();
+    const empurrar = (doc: any) => {
+      const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
+      const hubTipo = toHubTipoCompartilhado(rawTipo);
+      if (jaAdicionados.has(hubTipo)) return;
+      jaAdicionados.add(hubTipo);
+      const nomeFallback = doc?.nome_documento
+        ? String(doc.nome_documento)
+        : rawTipo.replace(/_/g, " ").toUpperCase();
+      items.push({
+        id: `doc:${doc.id}`,
+        kind: "documento",
+        label: nomeFallback,
+        tipo: hubTipo,
+        fallbackNome: nomeFallback,
+        contexto: "Exigência do processo",
+        onPrimary: () => {},
+        onEntregar: () => {
+          setEditDocTipo(hubTipo);
+          setShowAddDoc(true);
+          setShowContratoPopup(false);
+        },
+      });
+    };
+
+    for (const d of processoDocs) {
+      if (!d?.obrigatorio) continue;
+      const st = String(d.status || "").toLowerCase();
+      if (["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st)) {
+        empurrar(d);
+      }
+    }
+    for (const d of processoDocs) {
+      if (!d?.obrigatorio) continue;
+      if (!isChecklistPendente(d.status)) continue;
+      empurrar(d);
+    }
+
+    return items;
+  }, [pendingSignatureDocs, processoDocs]);
+
+  const pendenciasGuiadasCount = pendenciasGuiadas.length;
+
   const portalStartupAction = useMemo(() => {
     if (loading || !cliente || !pendingContractsLoaded) return null;
 
@@ -1360,18 +1436,18 @@ export default function QAClientePortalPage() {
   // Checklist Guiado, modal de cadastro).
   useEffect(() => {
     if (!pendingContractsLoaded) return;
-    if (pendingSignatureCount <= 0) return;
+    if (pendenciasGuiadasCount <= 0) return;
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
     setShowContratoPopup(true);
-  }, [pendingSignatureCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
+  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
   useEffect(() => {
     const handler = () => {
-      if (pendingSignatureCount > 0) {
+      if (pendenciasGuiadasCount > 0) {
         setShowContratoPopup(true);
       } else {
         setActiveSection("documentos");
@@ -1379,7 +1455,7 @@ export default function QAClientePortalPage() {
     };
     window.addEventListener("qa:abrir-assinaturas-pendentes", handler);
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
-  }, [pendingSignatureCount]);
+  }, [pendenciasGuiadasCount]);
 
   // Após assinaturas resolvidas, se o checklist já foi materializado com itens
   // pendentes, abre o Assistente de Documentação sozinho — sem esperar novo
@@ -1390,6 +1466,9 @@ export default function QAClientePortalPage() {
   useEffect(() => {
     if (!pendingContractsLoaded) return;
     if (pendingSignatureCount > 0) return;
+    // Fase 1: se o popup unificado já cobre a próxima exigência, ele
+    // conduz o cliente ao Hub; não disparamos o wizard antigo em paralelo.
+    if (pendenciasGuiadasCount > 0) return;
     if (showContratoPopup || showAddDoc || showCadastroModal) return;
     const pend = resumoState?.checklistReproc || resumoState?.checklistPend;
     if (!pend) return;
@@ -1403,6 +1482,7 @@ export default function QAClientePortalPage() {
   }, [
     pendingContractsLoaded,
     pendingSignatureCount,
+    pendenciasGuiadasCount,
     showContratoPopup,
     showAddDoc,
     showCadastroModal,
@@ -2805,146 +2885,11 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay clienteId={(cliente as any)?.id ?? null} />
 
-      {showContratoPopup && activePendingSignature && pendingSignatureCount > 0 && (
-        <div
-          className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          role="dialog"
-          aria-modal="true"
-          data-qa-overlay
-          onClick={() => setShowContratoPopup(false)}
-          style={{ pointerEvents: "auto" }}
-        >
-          <div
-            className="w-full max-w-2xl bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-            style={{ pointerEvents: "auto" }}
-          >
-            {/* Window Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
-              <div className="flex gap-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#28C840]" />
-              </div>
-              <div className="text-[10px] font-bold text-[#6A6A6A] tracking-[0.1em] uppercase">
-                {activePendingSignature.contract_number
-                  ? `Protocolo ${activePendingSignature.contract_number}`
-                  : activePendingSignature.kind === "contract" ? "Contrato pendente" : "Procuração pendente"}
-              </div>
-              <div className="w-8" />
-            </div>
-
-            {/* Split Body */}
-            <div className="flex flex-col md:flex-row">
-              {/* Sidebar: Status Column */}
-              <div className="hidden md:flex w-48 bg-[#FAFAFA] border-r border-[#E4E4E4] p-8 flex-col items-center justify-center text-center shrink-0">
-                <div className="text-6xl font-light text-[#0A0A0A] leading-none tracking-tighter">
-                  {String(pendingSignatureCount).padStart(2, '0')}
-                </div>
-                <div className="text-[10px] font-bold tracking-[0.2em] text-[#6A6A6A] uppercase mt-1 mb-8">
-                  Pendentes
-                </div>
-                <div className="relative flex flex-col items-center">
-                  <div className="w-px h-10 bg-[#E4E4E4]" />
-                  <div className="w-9 h-9 rounded-full border border-[#E4E4E4] flex items-center justify-center bg-white my-2">
-                    <FileText className="h-4 w-4 text-[#0A0A0A]" />
-                  </div>
-                  <div className="w-px h-10 bg-[#E4E4E4]" />
-                </div>
-              </div>
-
-              {/* Main Content Area */}
-              <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
-                <header className="mb-6">
-                  <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase mb-2">
-                    {activePendingSignature.kind === "contract"
-                      ? "Contrato aguardando sua assinatura"
-                      : "Procuração aguardando sua assinatura"}
-                  </span>
-                  <h2 className="text-xl md:text-2xl font-medium text-[#0A0A0A] leading-tight tracking-tight">
-                    {pendingSignatureCount === 1
-                      ? "Você tem 1 assinatura pendente"
-                      : `Você tem ${pendingSignatureCount} assinaturas pendentes`}
-                  </h2>
-                </header>
-
-                <div className="space-y-5">
-                  <p className="text-[#6A6A6A] text-sm leading-relaxed">
-                    Utilize sua conta{" "}
-                    <span className="text-[#0A0A0A] font-semibold border-b border-[#E4E4E4]">GOV.BR</span>{" "}
-                    ou certificado{" "}
-                    <span className="text-[#0A0A0A] font-semibold border-b border-[#E4E4E4]">ICP-Brasil</span>{" "}
-                    para assinar os documentos de forma segura e com validade jurídica.
-                  </p>
-
-                  <div className="space-y-2">
-                    {pendingSignatureDocs.map((doc, index) => (
-                      <div
-                        key={`${doc.kind}-${doc.id}`}
-                        className={`flex items-center justify-between rounded-sm border px-3 py-2 text-xs ${
-                          index === 0
-                            ? "border-[#8A1224] bg-[#FFF7F8] text-[#8A1224]"
-                            : "border-[#E4E4E4] bg-[#FAFAFA] text-[#6A6A6A]"
-                        }`}
-                      >
-                        <span className="font-bold uppercase tracking-[0.08em]">
-                          {index + 1}. {doc.label}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.12em]">
-                          {index === 0 ? "Agora" : "Depois"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={openPendingSignatureLink}
-                      disabled={!activePendingSignature}
-                      className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Download className="h-3.5 w-3.5 shrink-0" />
-                      {activePendingSignature.kind === "contract" ? "Baixar contrato" : "Baixar procuração"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Abre o Hub Documental já focado no tipo correto (Jurídico).
-                        // O Hub roda a IA de integridade/assinatura e grava em qa_documentos_cliente.
-                        setEditDocTipo(
-                          activePendingSignature.kind === "contract"
-                            ? "contrato_assinado"
-                            : "procuracao_assinada",
-                        );
-                        setShowAddDoc(true);
-                        setShowContratoPopup(false);
-                      }}
-                      disabled={!activePendingSignature}
-                      className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm border border-[#8A1224] bg-white px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] disabled:cursor-wait disabled:opacity-60"
-                    >
-                      <Upload className="h-3.5 w-3.5 shrink-0" />
-                      {activePendingSignature.kind === "contract"
-                        ? "Enviar contrato assinado"
-                        : "Enviar procuração assinada"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer info */}
-            <div className="px-6 md:px-10 py-3 bg-white border-t border-[#FAFAFA] flex justify-end items-center">
-              <div className="flex items-center gap-2">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#28C840]" />
-                <span className="text-[10px] font-medium text-[#6A6A6A] uppercase tracking-wider">
-                  Ambiente seguro
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PendenciasGuiadasPopup
+        open={showContratoPopup && pendenciasGuiadasCount > 0}
+        pendencias={pendenciasGuiadas}
+        onDismiss={() => setShowContratoPopup(false)}
+      />
     </div>
     </PortalFilterProvider>
   );
