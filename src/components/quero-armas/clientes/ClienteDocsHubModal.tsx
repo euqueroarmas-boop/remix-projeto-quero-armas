@@ -359,9 +359,16 @@ function calcularConformidade(
     trySet("sexo", c.sexo);
   }
 
-  // Fallback: dados de cadastro do cliente (usados apenas se nenhum doc aprovado cobriu o campo)
+  // O cadastro é populado pela Central de Adesão a partir do próprio documento de
+  // identificação civil (CIN/RG/CNH). Por isso ele tem confiança equivalente à
+  // identidade primária (tier 1.5) — vem ANTES de comprovantes e demais docs
+  // mercantis. Só é sobrescrito por um documento primário de identidade real.
   const setFromCadastro = (key: string, val: string | null | undefined) => {
-    if (!ref[key] && val) ref[key] = { valor: val, fonte: "Cadastro (Central de Adesão)", tier: 99 };
+    if (!val) return;
+    const cur = ref[key];
+    if (!cur || cur.tier > 1.5) {
+      ref[key] = { valor: val, fonte: "Documento de identificação (Central de Adesão)", tier: 1.5 };
+    }
   };
   setFromCadastro("nome_completo", clienteNome);
   setFromCadastro("cpf", clienteCpf);
