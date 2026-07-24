@@ -513,6 +513,35 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
       : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
   }
 
+  // === Contrato de adesão assinado (Quero Armas / Arsenal Inteligente) ===
+  const isContratoAdesao =
+    /\bCONTRATO DE ADES[ÃA]O\b/.test(norm) &&
+    (/CONTRATADA/.test(norm) || /CONTRATANTE/.test(norm)) &&
+    (/QUERO ARMAS/.test(norm) || /ARSENAL INTELIGENTE/.test(norm) || /SENHOR DAS ARMAS/.test(norm) || /ASSESSORIA T[ÉE]CNICA/.test(norm));
+  if (isContratoAdesao) {
+    parsed.tipoDetectado = "CONTRATO_ADESAO_ASSINADO";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
+    campos.nome_documento = campos.nome_documento || "Contrato de Adesão assinado";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    parsed.justificativa =
+      "Classificação determinística: cabeçalho CONTRATO DE ADESÃO com partes CONTRATADA/CONTRATANTE e vínculo à Quero Armas / Arsenal Inteligente — peça jurídica de adesão assinada.";
+    return parsed;
+  }
+
+  // === Procuração assinada (instrumento particular Gov.br) ===
+  const isProcuracao =
+    /\bPROCURA[ÇC][ÃA]O\b/.test(norm) &&
+    (/OUTORGANTE/.test(norm) || /OUTORGADO/.test(norm) || /CONFIRO PODERES/.test(norm) || /CONFERE PODERES/.test(norm));
+  if (isProcuracao) {
+    parsed.tipoDetectado = "PROCURACAO_ASSINADA";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
+    campos.nome_documento = campos.nome_documento || "Procuração assinada";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    parsed.justificativa =
+      "Classificação determinística: título PROCURAÇÃO com blocos OUTORGANTE/OUTORGADO — peça jurídica assinada pelo titular.";
+    return parsed;
+  }
+
   return parsed;
 }
 
