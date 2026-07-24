@@ -280,6 +280,7 @@ export default function QAProcuracaoViewPage() {
         "max-width: none",
         "margin: 0",
         "padding: 0",
+        "padding-bottom: 64px",
         "border: 0",
         "border-radius: 0",
         "box-shadow: none",
