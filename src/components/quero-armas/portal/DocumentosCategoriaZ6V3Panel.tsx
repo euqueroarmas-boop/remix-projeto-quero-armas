@@ -215,7 +215,7 @@ interface Props {
   meusDocs: any[];
   customerId?: string | null;
   onReload: () => void;
-  onOpenAdd: (tipoDocumento?: string) => void;
+  onOpenAdd: (tipoDocumento?: string, substituirDocumentoId?: string) => void;
 }
 
 export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, customerId, onReload, onOpenAdd }: Props) {
