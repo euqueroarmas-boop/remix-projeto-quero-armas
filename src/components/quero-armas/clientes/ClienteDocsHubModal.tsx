@@ -348,7 +348,7 @@ function calcularConformidade(
 
   // Fallback: dados de cadastro do cliente (usados apenas se nenhum doc aprovado cobriu o campo)
   const setFromCadastro = (key: string, val: string | null | undefined) => {
-    if (!ref[key] && val) ref[key] = { valor: val, fonte: "Cadastro", tier: 99 };
+    if (!ref[key] && val) ref[key] = { valor: val, fonte: "Cadastro (Central de Adesão)", tier: 99 };
   };
   setFromCadastro("nome_completo", clienteNome);
   setFromCadastro("cpf", clienteCpf);
