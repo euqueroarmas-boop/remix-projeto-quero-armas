@@ -645,10 +645,36 @@ export default function QAClientePortalPage() {
             });
             setCatalogoDocOrdem(docOrdemMap);
             setCatalogoDocInfo(docInfoMap);
+            // Fallback global por tipo: pega instrucoes/link_emissao de QUALQUER
+            // servico cadastrado. Roda numa query separada porque muitos servicos
+            // do cliente atual têm as colunas vazias, mas o mesmo tipo já foi
+            // documentado em outro pacote (ex.: renda_cartao_cnpj no servico 2).
+            const { data: globalDocsData } = await supabase
+              .from("qa_servicos_documentos" as any)
+              .select("tipo_documento, instrucoes, link_emissao, observacoes_cliente")
+              .or("instrucoes.not.is.null,link_emissao.not.is.null,observacoes_cliente.not.is.null");
+            const byTipoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
+            ((globalDocsData as any[]) ?? []).forEach((sd: any) => {
+              const tipo = String(sd.tipo_documento || "").toLowerCase();
+              if (!tipo) return;
+              const existing = byTipoMap.get(tipo);
+              // Preferimos o registro mais completo (com link_emissao) sobre o parcial.
+              const scoreNew = (sd.link_emissao ? 2 : 0) + (sd.instrucoes ? 1 : 0);
+              const scoreOld = existing ? ((existing.link_emissao ? 2 : 0) + (existing.instrucoes ? 1 : 0)) : -1;
+              if (scoreNew > scoreOld) {
+                byTipoMap.set(tipo, {
+                  instrucoes: sd.instrucoes ?? null,
+                  link_emissao: sd.link_emissao ?? null,
+                  observacoes_cliente: sd.observacoes_cliente ?? null,
+                });
+              }
+            });
+            setCatalogoDocInfoByTipo(byTipoMap);
           } else {
             setCatalogoByServicoId({});
             setCatalogoDocOrdem(new Map());
             setCatalogoDocInfo(new Map());
+            setCatalogoDocInfoByTipo(new Map());
           }
         }
         setItens(itensData);
