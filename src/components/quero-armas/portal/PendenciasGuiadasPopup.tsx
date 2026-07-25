@@ -1,16 +1,16 @@
 // ============================================================================
-// PendenciasGuiadasPopup — Fase 1 da unificação
+// PendenciasGuiadasPopup — Fase 2 da unificação
 // ----------------------------------------------------------------------------
-// Reaproveita o layout "janela macOS" do antigo popup de assinaturas pendentes
-// e passa a apresentar TAMBÉM as exigências documentais do checklist como
-// passos sequenciais, cada um com uma explicação curta e um botão de entrega.
-//
-// Escopo Fase 1: apresentação. As ações (assinar, abrir Hub Documental) são
-// callbacks do portal — o wizard antigo (ChecklistGuiadoModal) segue disponível
-// como fallback e continua acessível pelo Speed Dial / bus.
+// Fila multi-passo real: as pendências (assinaturas + exigências documentais)
+// viram uma sequência navegável (Anterior / Próximo) dentro da mesma janela.
+// Substitui integralmente o wizard antigo (ChecklistGuiadoModal), que foi
+// aposentado do portal — todos os gatilhos (Speed Dial, kanban, bus) agora
+// abrem este popup e permitem saltar direto para uma pendência específica via
+// `pinnedId`.
 // ============================================================================
 
-import { Download, ExternalLink, FileText, Upload } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Upload } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 
 export type PendenciaKind = "signature" | "documento";
@@ -48,12 +48,36 @@ interface Props {
   open: boolean;
   pendencias: PendenciaItem[];
   onDismiss: () => void;
+  /** Id da pendência que deve aparecer primeiro (ex.: doc clicado pelo cliente). */
+  pinnedId?: string | null;
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: Props) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId }: Props) {
   if (!open || pendencias.length === 0) return null;
-  const active = pendencias[0];
   const total = pendencias.length;
+
+  // Índice controlado internamente para permitir navegação Anterior/Próximo.
+  // Sincroniza com `pinnedId` sempre que o portal pede foco em uma pendência
+  // específica (ex.: clique em card do kanban / botão "Enviar X").
+  const [indice, setIndice] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    if (pinnedId) {
+      const i = pendencias.findIndex((p) => p.id === pinnedId);
+      if (i >= 0) {
+        setIndice(i);
+        return;
+      }
+    }
+    setIndice((cur) => Math.min(cur, Math.max(0, pendencias.length - 1)));
+    // Reagimos a mudanças de foco/lista; abrir/fechar reseta pelo `open` guard.
+  }, [open, pinnedId, pendencias]);
+
+  const atual = Math.min(indice, total - 1);
+  const active = pendencias[atual];
+  const podeVoltar = atual > 0;
+  const podeAvancar = atual < total - 1;
 
   const isSignature = active.kind === "signature";
   const explicBase = isSignature
@@ -121,7 +145,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
       : "Procuração aguardando sua assinatura"
     : "Documento aguardando envio";
 
-  const passoAtual = 1;
+  const passoAtual = atual + 1;
   const passoLabel = `Passo ${passoAtual} de ${total}`;
 
   return (
@@ -225,7 +249,28 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
               {total > 1 ? (
                 <div className="flex items-center justify-between rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
                   <span>Resolva um por vez</span>
-                  <span>Faltam {total - 1} após esta</span>
+                  <span>Faltam {total - passoAtual} após esta</span>
+                </div>
+              ) : null}
+
+              {total > 1 ? (
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIndice((i) => Math.max(0, i - 1))}
+                    disabled={!podeVoltar}
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] transition hover:bg-[#FAFAFA] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
+                    disabled={!podeAvancar}
+                    className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] transition hover:bg-[#FAFAFA] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Próximo <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               ) : null}
 
