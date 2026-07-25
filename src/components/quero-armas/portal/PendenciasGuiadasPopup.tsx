@@ -267,8 +267,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
             {explic.titulo}
           </h2>
-          <p className="mt-1.5 text-sm text-[#6A6A6A] leading-relaxed">
-            {active.label}
+          <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A1224]">
+            {activeGrupo}
           </p>
         </div>
 
