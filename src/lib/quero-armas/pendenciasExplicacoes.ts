@@ -407,8 +407,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_cartao_cnpj: {
     titulo: "Cartão CNPJ",
     passos: [
-      "Emita o cartão CNPJ no site da Receita Federal e envie o PDF.",
+      "Abra o site da Receita Federal usando o botão \"Acessar site de emissão\" logo abaixo (link direto).",
+      "No campo \"CNPJ\", digite o CNPJ da sua empresa (apenas números, sem pontos ou barras).",
+      "Marque a caixinha \"Não sou um robô\" e clique no botão vermelho \"Consultar\".",
+      "Na página seguinte, clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
+      "Vai abrir uma página com todos os dados da empresa — clique em \"Imprimir\" (canto superior) e escolha \"Salvar como PDF\" no destino da impressão.",
+      "Salve o arquivo no seu celular ou computador e volte aqui para clicar em \"Entregar documento\" e enviar o PDF.",
     ],
+    observacao: "O cartão precisa ter sido emitido nos últimos 30 dias. Se der erro no site, tente novamente em alguns minutos — a Receita costuma ficar instável.",
   },
   renda_cnpj_autonomo: {
     titulo: "Comprovante de atividade autônoma",
