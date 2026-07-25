@@ -71,14 +71,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
-  // Se o admin cadastrou instrucoes no catálogo, sobrescreve o texto estático.
-  const explic = (!isSignature && active.instrucoesCatalogo)
+  // Regra: os passos ricos (código) SEMPRE têm precedência sobre `instrucoes`
+  // curtas do catálogo, para garantir explicação passo-a-passo para leigos.
+  // Só usamos o texto do admin quando o REGISTRO estático não tem passos
+  // detalhados (menos de 2 passos).
+  const passosCatalogo = active.instrucoesCatalogo
+    ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+    : [];
+  const estaticoRico = !isSignature && explicBase.passos && explicBase.passos.length >= 2;
+  const explic = (!isSignature && passosCatalogo.length > estaticoRico ? explicBase.passos.length : 0 && !estaticoRico)
     ? {
         ...explicBase,
-        passos: active.instrucoesCatalogo
-          .split(/\n+/)
-          .map((l) => l.trim())
-          .filter(Boolean),
+        passos: passosCatalogo,
         observacao: active.observacoesCatalogo || explicBase.observacao,
       }
     : { ...explicBase, observacao: (!isSignature && active.observacoesCatalogo) ? active.observacoesCatalogo : explicBase.observacao };
@@ -118,7 +122,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       data-qa-overlay
