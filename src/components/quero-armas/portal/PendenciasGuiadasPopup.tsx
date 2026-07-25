@@ -239,9 +239,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   href={active.linkEmissao}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#8A1224] underline"
+                  className="inline-flex items-center gap-2 rounded-sm border border-[#8A1224] bg-[#FFF7F8] px-3 py-2.5 text-[13px] font-bold uppercase tracking-[0.08em] text-[#8A1224] transition hover:bg-[#8A1224] hover:text-white"
                 >
-                  <ExternalLink className="w-3 h-3 shrink-0" />
+                  <ExternalLink className="w-4 h-4 shrink-0" />
                   Acessar site de emissão
                 </a>
               ) : null}
