@@ -9,10 +9,10 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 
-export type PendenciaKind = "signature" | "documento";
+export type PendenciaKind = "signature" | "documento" | "pergunta";
 
 export interface PendenciaItem {
   id: string;
@@ -41,6 +41,17 @@ export interface PendenciaItem {
   linkEmissao?: string | null;
   /** Observações do admin (qa_servicos_documentos.observacoes_cliente). */
   observacoesCatalogo?: string | null;
+  // ─── Campos exclusivos de `kind: "pergunta"` ───
+  /** Chave da pergunta (ex.: "ainda_reside_imovel"). */
+  perguntaChave?: string;
+  /** Opções de resposta (ex.: [{valor:"sim",label:"Sim"},{valor:"nao",label:"Não"}]). */
+  perguntaOpcoes?: { valor: string; label?: string }[];
+  /** Resposta já registrada (readonly — apenas exibida). */
+  respostaAtual?: string | null;
+  /** Callback do handler de resposta (chama edge function + refresh). */
+  onResponder?: (valor: string) => Promise<void> | void;
+  /** Frase que reforça o que acontece após responder (contexto pedagógico). */
+  perguntaAjudaPos?: string | null;
 }
 
 interface Props {
@@ -79,6 +90,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const podeAvancar = atual < total - 1;
 
   const isSignature = active.kind === "signature";
+  const isPergunta = active.kind === "pergunta";
   const explicBase = isSignature
     ? {
         titulo:
@@ -120,7 +132,23 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       ? active.tipo === "contract"
         ? "Contrato pendente"
         : "Procuração pendente"
-      : "Exigência pendente");
+      : isPergunta
+        ? "Pergunta rápida"
+        : "Exigência pendente");
+
+  const [respondendo, setRespondendo] = useState<string | null>(null);
+  useEffect(() => {
+    setRespondendo(null);
+  }, [active.id]);
+  const handleResponder = async (valor: string) => {
+    if (!active.onResponder) return;
+    setRespondendo(valor);
+    try {
+      await active.onResponder(valor);
+    } finally {
+      setRespondendo(null);
+    }
+  };
 
   const primaryLabel =
     active.primaryLabel ||
@@ -212,8 +240,46 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             </div>
           ) : null}
 
+          {/* Botões de resposta inline — perguntas pivot */}
+          {isPergunta && Array.isArray(active.perguntaOpcoes) && active.perguntaOpcoes.length > 0 ? (
+            <div className="mt-6 rounded-xl border border-[#8A1224]/20 bg-white p-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8A1224] mb-3">
+                {active.respostaAtual
+                  ? `Resposta registrada: ${String(active.respostaAtual).toUpperCase()}`
+                  : "Responda para liberar o próximo passo"}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {active.perguntaOpcoes.map((op) => {
+                  const ativo = active.respostaAtual === op.valor;
+                  const loading = respondendo === op.valor;
+                  return (
+                    <button
+                      key={op.valor}
+                      type="button"
+                      onClick={() => handleResponder(op.valor)}
+                      disabled={!!respondendo || !!active.respostaAtual}
+                      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-2 ${
+                        ativo
+                          ? "bg-[#8A1224] border-[#8A1224] text-white"
+                          : "bg-white border-[#8A1224] text-[#8A1224] hover:bg-[#FFF7F8]"
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {ativo ? <Check className="h-4 w-4" /> : null}
+                      {loading ? "..." : String(op.label || op.valor).toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+              {active.perguntaAjudaPos ? (
+                <p className="mt-3 text-[11px] leading-relaxed text-[#6A6A6A]">
+                  {active.perguntaAjudaPos}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {/* Emission site link */}
-          {!isSignature && active.linkEmissao ? (
+          {!isSignature && !isPergunta && active.linkEmissao ? (
             <a
               href={active.linkEmissao}
               target="_blank"
@@ -262,7 +328,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
 
             <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2">
-              {isSignature ? (
+              {isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
@@ -274,18 +340,20 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               ) : (
                 <div className="hidden md:block" />
               )}
-              <button
-                type="button"
-                onClick={active.onEntregar}
-                className={`inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
-                  isSignature
-                    ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
-                    : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
-                }`}
-              >
-                <Upload className="h-3.5 w-3.5 shrink-0" />
-                {entregarLabel}
-              </button>
+              {isPergunta ? null : (
+                <button
+                  type="button"
+                  onClick={active.onEntregar}
+                  className={`inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
+                    isSignature
+                      ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
+                      : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
+                  }`}
+                >
+                  <Upload className="h-3.5 w-3.5 shrink-0" />
+                  {entregarLabel}
+                </button>
+              )}
             </div>
           </div>
         </div>
