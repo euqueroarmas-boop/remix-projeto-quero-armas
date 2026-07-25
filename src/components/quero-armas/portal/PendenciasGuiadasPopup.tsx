@@ -18,6 +18,10 @@ export type PendenciaKind = "signature" | "documento" | "pergunta";
 export interface PendenciaItem {
   id: string;
   kind: PendenciaKind;
+  /** Serviço/processo que originou esta pendência (para segmentar a fila
+   *  por serviço contratado: Autorização, Posse, CRAF+GT, etc.). */
+  servicoId?: string | number | null;
+  servicoLabel?: string | null;
   /** Grupo temático (antecedentes, endereço, ocupação, etc.). Calculado no
    *  portal quando o item é montado; usado para (1) ordenar a fila e
    *  (2) exibir o chip de grupo no header do popup. */
@@ -218,6 +222,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Header */}
         <div className="px-6 pt-8 pb-4 shrink-0">
+          {active.servicoLabel ? (
+            <div className="mb-2">
+              <span className="inline-flex items-center rounded-md bg-[#0A0A0A] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white">
+                Serviço: {active.servicoLabel}
+              </span>
+            </div>
+          ) : null}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-[10px] font-bold tracking-[0.25em] text-[#8A1224] uppercase">
               {activeGrupo}
