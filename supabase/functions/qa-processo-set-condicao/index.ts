@@ -17,7 +17,13 @@ function json(body: unknown, status = 200) {
   });
 }
 
-type Cond = "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico";
+type Cond =
+  | "clt"
+  | "autonomo"
+  | "empresario"
+  | "aposentado"
+  | "funcionario_publico"
+  | "seguranca_publica";
 
 type Item = {
   tipo_documento: string;
@@ -241,10 +247,50 @@ function rendaPara(c: Cond): Item[] {
         ],
       },
     ];
+    case "seguranca_publica": return [
+      {
+        tipo_documento: "renda_funcional_seguranca_publica",
+        nome_documento: "Carteira Funcional — Segurança Pública (PM, PC, PF, PRF, Bombeiro, Guarda, Agente Penitenciário)",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Funcional",
+        instrucoes: "1) Localize sua carteira funcional emitida pelo seu órgão (PM, PC, PF, PRF, Guarda, Bombeiro, agente penitenciário etc.).\n2) Fotografe frente e verso ou escaneie em PDF.\n3) Envie o arquivo aqui — precisa estar dentro da validade e com você ATIVO na corporação.",
+        observacoes_cliente: "Servidor da segurança pública tem regra própria (Lei 10.826/03). A funcional prova o vínculo ATIVO e destrava a categoria correta.",
+        checklist_operador: [
+          "Conferir órgão emissor da segurança pública",
+          "Conferir nome e CPF",
+          "Conferir validade da funcional",
+          "Confirmar status ATIVO (não reserva/reforma)",
+        ],
+      },
+      {
+        tipo_documento: "renda_holerite_funcionario_publico",
+        nome_documento: "Holerite recente (servidor de segurança pública)",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Holerite",
+        instrucoes: "1) Acesse o portal do servidor da sua corporação (SIGRH, SIAPE, sistema interno da PM/PC/PF etc.).\n2) Baixe o contracheque/holerite mais recente (últimos 30 dias).\n3) Envie em PDF preferencialmente.",
+        observacoes_cliente: "ATENÇÃO: o holerite deve ter sido emitido nos últimos 30 dias.",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir nome completo e CPF",
+          "Conferir órgão pagador da segurança pública",
+          "Conferir data do holerite (até 30 dias)",
+          "Confirmar vínculo ATIVO",
+        ],
+      },
+    ];
   }
 }
 
-const VALID_CONDS: Cond[] = ["clt", "autonomo", "empresario", "aposentado", "funcionario_publico"];
+const VALID_CONDS: Cond[] = [
+  "clt",
+  "autonomo",
+  "empresario",
+  "aposentado",
+  "funcionario_publico",
+  "seguranca_publica",
+];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -268,7 +314,7 @@ Deno.serve(async (req) => {
     const processo_id: string | undefined = body?.processo_id;
     const condicao = String(body?.condicao_profissional || "").toLowerCase() as Cond;
     if (!processo_id || !VALID_CONDS.includes(condicao)) {
-      return json({ error: "processo_id e condicao_profissional (clt|autonomo|empresario|aposentado|funcionario_publico) obrigatórios" }, 400);
+      return json({ error: "processo_id e condicao_profissional (clt|autonomo|empresario|aposentado|funcionario_publico|seguranca_publica) obrigatórios" }, 400);
     }
 
     const { data: processo } = await supabase
