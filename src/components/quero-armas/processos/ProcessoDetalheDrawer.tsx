@@ -840,7 +840,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     }
   };
 
-  const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico") => {
+  const setCondicao = async (
+    cond:
+      | "clt"
+      | "autonomo"
+      | "empresario"
+      | "aposentado"
+      | "funcionario_publico"
+      | "seguranca_publica",
+  ) => {
     if (!processo) return;
     setSavingCond(cond);
     try {
@@ -2761,12 +2769,23 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   );
 }
 
-const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico"; label: string; hint: string }[] = [
+const CONDICAO_OPCOES: {
+  id:
+    | "clt"
+    | "autonomo"
+    | "empresario"
+    | "aposentado"
+    | "funcionario_publico"
+    | "seguranca_publica";
+  label: string;
+  hint: string;
+}[] = [
   { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
   { id: "autonomo", label: "AUTÔNOMO", hint: "Cartão CNPJ/MEI + NF recente" },
   { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social + Nota Fiscal" },
   { id: "aposentado", label: "APOSENTADO", hint: "Comprovante de benefício INSS" },
-  { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite" },
+  { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO (ÁREA GERAL)", hint: "Carteira Funcional + Holerite" },
+  { id: "seguranca_publica", label: "SERVIDOR DA SEGURANÇA PÚBLICA", hint: "PM/PC/PF/PRF/Guarda/Bombeiro/Agente Penitenciário — Funcional + Holerite" },
 ];
 
 // CondicaoProfissionalCard foi removido — a condição profissional agora é

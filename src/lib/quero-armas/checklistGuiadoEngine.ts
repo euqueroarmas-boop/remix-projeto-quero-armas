@@ -88,7 +88,13 @@ export const ETAPA_NOMES_GUIA: Record<number, string> = {
 
 // Mesmas opções do drawer (CONDICAO_OPCOES). Mantido em sincronia.
 export const CONDICAO_OPCOES_GUIA: {
-  id: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico";
+  id:
+    | "clt"
+    | "autonomo"
+    | "empresario"
+    | "aposentado"
+    | "funcionario_publico"
+    | "seguranca_publica";
   label: string;
   hint: string;
 }[] = [
@@ -96,8 +102,69 @@ export const CONDICAO_OPCOES_GUIA: {
   { id: "autonomo", label: "Autônomo", hint: "Cartão CNPJ/MEI + NF recente" },
   { id: "empresario", label: "Empresário/Sócio", hint: "Cartão CNPJ + QSA + Contrato Social + NF" },
   { id: "aposentado", label: "Aposentado", hint: "Comprovante de benefício INSS" },
-  { id: "funcionario_publico", label: "Funcionário Público", hint: "Carteira Funcional + Holerite" },
+  { id: "funcionario_publico", label: "Funcionário Público (área geral)", hint: "Carteira Funcional + Holerite" },
+  { id: "seguranca_publica", label: "Servidor da Segurança Pública", hint: "PM, PC, PF, PRF, Guarda, Bombeiro, Agente Penitenciário — Funcional + Holerite" },
 ];
+
+// ---------------------------------------------------------------------------
+// Sugestão automática da condição a partir dos dados do cadastro do cliente.
+// Prioriza `categoria_titular` (mais confiável) e cai em heurística sobre
+// `profissao` (texto livre). Retorna null quando é ambíguo — nesse caso o
+// cliente escolhe manualmente.
+// ---------------------------------------------------------------------------
+export type CondicaoGuiaId = (typeof CONDICAO_OPCOES_GUIA)[number]["id"];
+
+export function sugerirCondicaoDoCliente(cliente: {
+  categoria_titular?: string | null;
+  profissao?: string | null;
+} | null | undefined): { id: CondicaoGuiaId; motivo: string } | null {
+  if (!cliente) return null;
+  const cat = String(cliente.categoria_titular || "").toLowerCase().trim();
+  if (cat === "seguranca_publica") return { id: "seguranca_publica", motivo: "cadastro: categoria = Segurança Pública" };
+  if (cat === "militar") return { id: "seguranca_publica", motivo: "cadastro: categoria = Militar/Segurança Pública" };
+  if (cat === "magistrado_mp") return { id: "funcionario_publico", motivo: "cadastro: categoria = Magistrado/MP" };
+
+  const prof = String(cliente.profissao || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+  if (!prof) return null;
+
+  const has = (...tokens: string[]) => tokens.some((t) => prof.includes(t));
+
+  if (has("aposentad", "pensionist", "reserva remunerada", "reformad"))
+    return { id: "aposentado", motivo: `profissão: "${cliente.profissao}"` };
+  if (
+    has(
+      "policial militar", "pm ", " pm", "policia militar",
+      "policial civil", "policia civil", "pc ", " pc",
+      "policial federal", "policia federal", "pf ", " pf",
+      "policial rodoviario", "prf",
+      "bombeiro", "guarda civil", "guarda municipal",
+      "agente penitenciar", "policial penal", "penitenciario",
+      "agente federal",
+    )
+  )
+    return { id: "seguranca_publica", motivo: `profissão: "${cliente.profissao}"` };
+  if (
+    has(
+      "servidor publico", "funcionario publico", "servidora publica",
+      "professor da rede", "professora da rede", "magistrado", "promotor",
+      "procurador", "auditor fiscal", "servidor federal", "servidor estadual",
+      "servidor municipal",
+    )
+  )
+    return { id: "funcionario_publico", motivo: `profissão: "${cliente.profissao}"` };
+  if (has("empresari", "socio", "sócio", "diretor", "ceo", "administrador de empresa"))
+    return { id: "empresario", motivo: `profissão: "${cliente.profissao}"` };
+  if (has("autonom", "mei", "microempreendedor", "freelanc", "profissional liberal"))
+    return { id: "autonomo", motivo: `profissão: "${cliente.profissao}"` };
+  // "clt" é fallback fraco — só sugere quando o texto realmente indica vínculo empregatício.
+  if (has("clt", "carteira assinada", "empregado", "assalariad"))
+    return { id: "clt", motivo: `profissão: "${cliente.profissao}"` };
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // ESPELHO da função etapaDoTipo do ProcessoDetalheDrawer (ordem definitiva).
@@ -316,6 +383,8 @@ export interface CargaProcesso {
   respostas: Record<string, string>;
   etapaLiberada: number;
   clienteNome?: string | null;
+  /** Sugestão automática da condição profissional a partir do cadastro. */
+  sugestaoCondicao?: { id: CondicaoGuiaId; motivo: string } | null;
   /** Contrato pendente de assinatura do cliente. Null quando validado ou inexistente. */
   contratoPendente: ContratoPendente | null;
 }
@@ -367,7 +436,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const etapaLiberada = Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
   const { data: cli } = await supabase
     .from("qa_clientes")
-    .select("nome_completo")
+    .select("nome_completo, profissao, categoria_titular")
     .eq("id", processo.cliente_id)
     .maybeSingle();
 
@@ -501,6 +570,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     respostas,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
+    sugestaoCondicao: sugerirCondicaoDoCliente(cli as any),
     contratoPendente,
   };
 }

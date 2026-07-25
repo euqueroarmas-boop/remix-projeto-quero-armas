@@ -1520,21 +1520,46 @@ export default function ChecklistGuiadoModal({
                   <div>
                     <h3 className="text-base font-bold text-slate-900">Qual é a sua condição profissional?</h3>
                     <p className="mt-1 text-sm text-slate-500">Isso define exatamente quais comprovantes de renda você precisará enviar. Você só anexa o que realmente se aplica a você.</p>
+                    {carga?.sugestaoCondicao && !carga?.processo?.condicao_profissional && (
+                      <div className="mt-3 rounded-lg border border-[#E5C2C6] bg-[#FAF6F1] px-3 py-2 text-[12px] text-slate-700">
+                        <span className="font-bold" style={{ color: MARROM }}>Sugestão do seu cadastro:</span>{" "}
+                        {CONDICAO_OPCOES_GUIA.find((o) => o.id === carga.sugestaoCondicao!.id)?.label}
+                        <span className="ml-1 text-slate-500">({carga.sugestaoCondicao.motivo})</span>
+                      </div>
+                    )}
                     <div className="mt-3 grid grid-cols-1 gap-2">
-                      {CONDICAO_OPCOES_GUIA.map((op) => (
-                        <button
-                          key={op.id}
-                          disabled={salvando}
-                          onClick={() => handleDefinirCondicao(op.id)}
-                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-[#E5C2C6] disabled:opacity-50"
-                        >
-                          <div>
-                            <div className="text-sm font-bold text-slate-800">{op.label}</div>
-                            <div className="text-[11px] text-slate-500">{op.hint}</div>
-                          </div>
-                          {salvando ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
-                        </button>
-                      ))}
+                      {CONDICAO_OPCOES_GUIA.map((op) => {
+                        const isSug = carga?.sugestaoCondicao?.id === op.id;
+                        return (
+                          <button
+                            key={op.id}
+                            disabled={salvando}
+                            onClick={() => handleDefinirCondicao(op.id)}
+                            className={
+                              "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left disabled:opacity-50 " +
+                              (isSug
+                                ? "border-[#7A1F2B] bg-[#FAF6F1] ring-1 ring-[#7A1F2B]/40"
+                                : "border-slate-200 bg-white hover:border-[#E5C2C6]")
+                            }
+                          >
+                            <div>
+                              <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                                {op.label}
+                                {isSug && (
+                                  <span
+                                    className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                                    style={{ backgroundColor: MARROM }}
+                                  >
+                                    Sugerido
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-500">{op.hint}</div>
+                            </div>
+                            {salvando ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
