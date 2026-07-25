@@ -58,6 +58,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
+import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   QA_SIDEBAR_THEMES,
   getPersonalThemeKey,
@@ -1670,7 +1671,20 @@ export default function QAClientePortalPage() {
     for (const d of reprovados) empurrar(d);
     for (const d of pendentes) empurrar(d);
 
-    return items;
+    // ─── Ordenar por GRUPO temático ────────────────────────────────────────
+    // Anexa grupoId/grupoLabel a cada item e reordena mantendo a ordem
+    // relativa original dentro de cada grupo (stable sort). Assinaturas e
+    // perguntas mantêm prioridade natural via `ordem` do grupo.
+    const decorados = items.map((it, idx) => {
+      const g = it.kind === "signature"
+        ? { id: "assinaturas" as const, label: "Assinaturas", ordem: 10 }
+        : it.kind === "pergunta"
+          ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
+          : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
+      return { it: { ...it, grupoId: g.id, grupoLabel: g.label }, ordem: g.ordem ?? ordemGrupoHelper(g.id), idx };
+    });
+    decorados.sort((a, b) => (a.ordem - b.ordem) || (a.idx - b.idx));
+    return decorados.map((d) => d.it);
   }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
