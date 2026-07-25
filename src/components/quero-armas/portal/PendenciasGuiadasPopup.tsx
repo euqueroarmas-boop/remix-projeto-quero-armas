@@ -270,14 +270,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
             {explic.titulo}
           </h2>
-        </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 pb-2">
-          {/* Link discreto para o site oficial — aparece ANTES do passo a passo,
-              adaptado ao órgão/tribunal correspondente ao grupo. */}
+          {/* Link fixo para o site oficial — permanece abaixo do título,
+              independentemente da rolagem do conteúdo. */}
           {!isSignature && !isPergunta && linkEmissaoFinal ? (
-            <p className="mb-5 text-[13px] leading-relaxed text-[#3A3A3A]">
+            <p className="mt-3 text-[13px] leading-relaxed text-[#3A3A3A]">
               {(() => {
                 const t = explic.titulo || "";
                 const i = t.indexOf("—");
@@ -296,6 +293,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </a>
             </p>
           ) : null}
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
+
 
           {/* Step list with vertical timeline */}
           <div className="relative">
