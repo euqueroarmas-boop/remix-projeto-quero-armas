@@ -12,6 +12,10 @@ import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import {
+  resolveLinkAntecedentePorUf,
+  aplicarUfEmTexto,
+} from "@/lib/quero-armas/linksAntecedentesPorUf";
 
 export type PendenciaKind = "signature" | "documento" | "pergunta";
 
@@ -70,9 +74,17 @@ interface Props {
   onDismiss: () => void;
   /** Id da pendência que deve aparecer primeiro (ex.: doc clicado pelo cliente). */
   pinnedId?: string | null;
+  /**
+   * UF do cliente (resolvida no portal a partir do cadastro / comprovante
+   * de endereço). Quando presente, o popup troca links e textos genéricos
+   * (que hoje referenciam TJSP / Polícia Civil de SP) pelos oficiais do
+   * estado do cliente. Serve tanto para antecedentes estaduais quanto para
+   * o TRF regional correspondente.
+   */
+  ufCliente?: string | null;
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId }: Props) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente }: Props) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
