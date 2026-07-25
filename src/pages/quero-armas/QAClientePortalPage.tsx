@@ -254,6 +254,10 @@ export default function QAClientePortalPage() {
   const [catalogoDocOrdem, setCatalogoDocOrdem] = useState<Map<string, number>>(new Map());
   // Mapa (servico_id:tipo_documento) → instrucoes/link_emissao/observacoes_cliente do catálogo.
   const [catalogoDocInfo, setCatalogoDocInfo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
+  // Fallback global por tipo_documento: usado quando o servico atual não tem
+  // instrucoes/link_emissao populados, mas algum outro serviço já cadastrou
+  // no catálogo. Garante que o cliente sempre veja o passo-a-passo com URLs.
+  const [catalogoDocInfoByTipo, setCatalogoDocInfoByTipo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -641,10 +645,36 @@ export default function QAClientePortalPage() {
             });
             setCatalogoDocOrdem(docOrdemMap);
             setCatalogoDocInfo(docInfoMap);
+            // Fallback global por tipo: pega instrucoes/link_emissao de QUALQUER
+            // servico cadastrado. Roda numa query separada porque muitos servicos
+            // do cliente atual têm as colunas vazias, mas o mesmo tipo já foi
+            // documentado em outro pacote (ex.: renda_cartao_cnpj no servico 2).
+            const { data: globalDocsData } = await supabase
+              .from("qa_servicos_documentos" as any)
+              .select("tipo_documento, instrucoes, link_emissao, observacoes_cliente")
+              .or("instrucoes.not.is.null,link_emissao.not.is.null,observacoes_cliente.not.is.null");
+            const byTipoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
+            ((globalDocsData as any[]) ?? []).forEach((sd: any) => {
+              const tipo = String(sd.tipo_documento || "").toLowerCase();
+              if (!tipo) return;
+              const existing = byTipoMap.get(tipo);
+              // Preferimos o registro mais completo (com link_emissao) sobre o parcial.
+              const scoreNew = (sd.link_emissao ? 2 : 0) + (sd.instrucoes ? 1 : 0);
+              const scoreOld = existing ? ((existing.link_emissao ? 2 : 0) + (existing.instrucoes ? 1 : 0)) : -1;
+              if (scoreNew > scoreOld) {
+                byTipoMap.set(tipo, {
+                  instrucoes: sd.instrucoes ?? null,
+                  link_emissao: sd.link_emissao ?? null,
+                  observacoes_cliente: sd.observacoes_cliente ?? null,
+                });
+              }
+            });
+            setCatalogoDocInfoByTipo(byTipoMap);
           } else {
             setCatalogoByServicoId({});
             setCatalogoDocOrdem(new Map());
             setCatalogoDocInfo(new Map());
+            setCatalogoDocInfoByTipo(new Map());
           }
         }
         setItens(itensData);
@@ -1382,6 +1412,11 @@ export default function QAClientePortalPage() {
       const p = procById.get(String(doc?.processo_id));
       const catKey = p?.servico_id != null ? `${p.servico_id}:${rawTipo}` : null;
       const catInfo = catKey ? catalogoDocInfo.get(catKey) : undefined;
+      // Fallback global por tipo_documento (mesmo tipo em outro serviço).
+      const catInfoFallback = !catInfo || (!catInfo.instrucoes && !catInfo.link_emissao)
+        ? catalogoDocInfoByTipo.get(rawTipo)
+        : undefined;
+      const catFinal = catInfo && (catInfo.instrucoes || catInfo.link_emissao) ? catInfo : catInfoFallback;
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
@@ -1390,9 +1425,9 @@ export default function QAClientePortalPage() {
         rawTipo,
         fallbackNome: nomeFallback,
         contexto: "Exigência do processo",
-        instrucoesCatalogo: catInfo?.instrucoes ?? null,
-        linkEmissao: catInfo?.link_emissao ?? null,
-        observacoesCatalogo: catInfo?.observacoes_cliente ?? null,
+        instrucoesCatalogo: catFinal?.instrucoes ?? null,
+        linkEmissao: catFinal?.link_emissao ?? null,
+        observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
         onEntregar: () => {
           setEditDocTipo(hubTipo);
@@ -1416,7 +1451,7 @@ export default function QAClientePortalPage() {
     for (const d of pendentes) empurrar(d);
 
     return items;
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo]);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
