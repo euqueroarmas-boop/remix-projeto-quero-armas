@@ -171,10 +171,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   // troca hardcodes de SP (TJSP, Polícia Civil/SP, TRF3, etc.) pelos
   // equivalentes do estado do cliente. Passa a limpo apenas quando a UF
   // está mapeada em `linksAntecedentesPorUf`.
+  // Prioridade: link cadastrado no banco (qa_servicos_documentos.link_emissao)
+  // vence qualquer fallback. O resolver por UF só entra quando o admin não
+  // cadastrou nada — evita sobrescrever URL específica por link genérico.
   const linkPorUf = !isSignature && !isPergunta
     ? resolveLinkAntecedentePorUf(active.rawTipo || active.tipo, ufCliente)
     : null;
-  const linkEmissaoFinal = linkPorUf || active.linkEmissao || null;
+  const linkEmissaoFinal = active.linkEmissao || linkPorUf || null;
   if (!isSignature && !isPergunta && ufCliente) {
     explic.titulo = aplicarUfEmTexto(explic.titulo, ufCliente);
     if (explic.observacao) explic.observacao = aplicarUfEmTexto(explic.observacao, ufCliente);
