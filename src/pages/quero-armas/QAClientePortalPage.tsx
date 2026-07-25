@@ -1412,6 +1412,11 @@ export default function QAClientePortalPage() {
       const p = procById.get(String(doc?.processo_id));
       const catKey = p?.servico_id != null ? `${p.servico_id}:${rawTipo}` : null;
       const catInfo = catKey ? catalogoDocInfo.get(catKey) : undefined;
+      // Fallback global por tipo_documento (mesmo tipo em outro serviço).
+      const catInfoFallback = !catInfo || (!catInfo.instrucoes && !catInfo.link_emissao)
+        ? catalogoDocInfoByTipo.get(rawTipo)
+        : undefined;
+      const catFinal = catInfo && (catInfo.instrucoes || catInfo.link_emissao) ? catInfo : catInfoFallback;
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
@@ -1420,9 +1425,9 @@ export default function QAClientePortalPage() {
         rawTipo,
         fallbackNome: nomeFallback,
         contexto: "Exigência do processo",
-        instrucoesCatalogo: catInfo?.instrucoes ?? null,
-        linkEmissao: catInfo?.link_emissao ?? null,
-        observacoesCatalogo: catInfo?.observacoes_cliente ?? null,
+        instrucoesCatalogo: catFinal?.instrucoes ?? null,
+        linkEmissao: catFinal?.link_emissao ?? null,
+        observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
         onEntregar: () => {
           setEditDocTipo(hubTipo);
@@ -1446,7 +1451,7 @@ export default function QAClientePortalPage() {
     for (const d of pendentes) empurrar(d);
 
     return items;
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo]);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
