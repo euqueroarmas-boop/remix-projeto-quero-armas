@@ -492,14 +492,12 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_cartao_cnpj: {
     titulo: "Cartão CNPJ",
     passos: [
-      "Abra o site da Receita Federal usando o botão \"Acessar site de emissão\" logo abaixo (link direto).",
-      "No campo \"CNPJ\", digite o CNPJ da sua empresa (apenas números, sem pontos ou barras).",
-      "Marque a caixinha \"Não sou um robô\" e clique no botão vermelho \"Consultar\".",
-      "Na página seguinte, clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
-      "Vai abrir uma página com todos os dados da empresa — clique em \"Imprimir\" (canto superior) e escolha \"Salvar como PDF\" no destino da impressão.",
-      "Salve o arquivo no seu celular ou computador e volte aqui para clicar em \"Entregar documento\" e enviar o PDF.",
+      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
+      "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
+      "Na página aberta, use \"Imprimir\" → \"Salvar como PDF\".",
+      "Envie o PDF aqui em \"Entregar documento\".",
     ],
-    observacao: "O cartão precisa ter sido emitido nos últimos 30 dias. Se der erro no site, tente novamente em alguns minutos — a Receita costuma ficar instável.",
+    observacao: "Emissão dos últimos 30 dias. Se o site der erro, tente novamente em alguns minutos.",
   },
   renda_cnpj_autonomo: {
     titulo: "Comprovante de atividade autônoma",
