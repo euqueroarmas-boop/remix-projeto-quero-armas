@@ -121,14 +121,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
     passos: [
-      "Abra o site da Receita Federal no botão \"Acessar site de emissão\" logo abaixo (mesmo link do Cartão CNPJ).",
-      "Digite o CNPJ da empresa (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
-      "Na página de resultado, procure a seção \"Quadro de Sócios e Administradores (QSA)\" — vem logo abaixo dos dados cadastrais.",
-      "Clique em \"Imprimir\" no canto superior e escolha \"Salvar como PDF\" no destino da impressão.",
-      "Confira que aparece o seu nome como sócio/administrador com a participação/qualificação.",
-      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
+      "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\" (mesma página do Cartão CNPJ).",
+      "Role a página até a seção \"QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)\", que fica depois dos dados cadastrais.",
+      "Clique em \"Imprimir\" (canto superior direito) e escolha \"Salvar como PDF\".",
+      "Confira que o seu nome aparece listado como sócio/administrador e envie aqui em \"Entregar documento\".",
     ],
-    observacao: "Tem que ter sido gerado nos últimos 30 dias. É um documento diferente do Cartão CNPJ — a PF pode pedir os dois no mesmo processo.",
+    observacao: "É a mesma página do Cartão CNPJ, mas o que a PF exige aqui é o bloco QSA com o seu nome como sócio. Emissão dos últimos 30 dias.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
@@ -493,14 +492,12 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_cartao_cnpj: {
     titulo: "Cartão CNPJ",
     passos: [
-      "Abra o site da Receita Federal usando o botão \"Acessar site de emissão\" logo abaixo (link direto).",
-      "No campo \"CNPJ\", digite o CNPJ da sua empresa (apenas números, sem pontos ou barras).",
-      "Marque a caixinha \"Não sou um robô\" e clique no botão vermelho \"Consultar\".",
-      "Na página seguinte, clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
-      "Vai abrir uma página com todos os dados da empresa — clique em \"Imprimir\" (canto superior) e escolha \"Salvar como PDF\" no destino da impressão.",
-      "Salve o arquivo no seu celular ou computador e volte aqui para clicar em \"Entregar documento\" e enviar o PDF.",
+      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
+      "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
+      "Na página aberta, use \"Imprimir\" → \"Salvar como PDF\".",
+      "Envie o PDF aqui em \"Entregar documento\".",
     ],
-    observacao: "O cartão precisa ter sido emitido nos últimos 30 dias. Se der erro no site, tente novamente em alguns minutos — a Receita costuma ficar instável.",
+    observacao: "Emissão dos últimos 30 dias. Se o site der erro, tente novamente em alguns minutos.",
   },
   renda_cnpj_autonomo: {
     titulo: "Comprovante de atividade autônoma",
@@ -517,13 +514,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_contrato_social: {
     titulo: "Contrato social",
     passos: [
-      "Solicite ao seu contador o contrato social CONSOLIDADO (a versão mais recente que já reúne todas as alterações contratuais).",
-      "Se você mesmo tem, acesse o site da Junta Comercial do seu estado (JUCESP em SP, JUCERJA no RJ etc.) e emita a certidão simplificada + contrato social vigente.",
-      "Confira que aparecem: razão social, CNPJ, sócios, capital social e a última alteração registrada.",
-      "Salve como PDF e envie aqui em \"Entregar documento\".",
+      "Peça ao seu contador o Contrato Social CONSOLIDADO (versão mais recente, já com todas as alterações) ou o Requerimento de Empresário, se for EIRELI/empresário individual — ele consegue baixar direto na Junta Comercial em minutos.",
+      "Se preferir emitir você mesmo, acesse o site da Junta Comercial do seu estado no botão abaixo (JUCESP em SP, JUCERJA no RJ, JUCEMG em MG etc.) e faça login com Gov.br.",
+      "Procure por \"Requerimento Eletrônico\" ou \"Solicitar Documento\" → escolha \"Contrato/Estatuto Consolidado\" (ou \"Requerimento de Empresário\" para individual/EIRELI).",
+      "Informe o NIRE ou o CNPJ, pague a taxa quando houver e baixe o PDF já com a capa/certidão emitida pela Junta.",
+      "Confira que aparecem: razão social, CNPJ, sócios, capital social e a última alteração registrada. Envie aqui em \"Entregar documento\".",
       "Se a empresa é MEI, use a opção \"CCMEI\" no lugar — MEI não tem contrato social.",
     ],
-    observacao: "Contratos antigos sem as últimas alterações são reprovados. Sempre envie a versão consolidada mais recente registrada na Junta Comercial.",
+    observacao: "Contratos antigos sem as últimas alterações são reprovados. Envie sempre a versão consolidada mais recente registrada na Junta Comercial — em dúvida, peça ao contador.",
   },
   renda_nf_recente: {
     titulo: "Notas fiscais recentes",
