@@ -495,32 +495,58 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_cnpj_autonomo: {
     titulo: "Comprovante de atividade autônoma",
     passos: [
-      "Envie o CCMEI (MEI) ou contrato de prestação de serviço vigente.",
+      "Se você é MEI: abra o Portal do Empreendedor no botão \"Acessar site de emissão\" logo abaixo.",
+      "Clique em \"Já sou MEI\" → \"Emitir CCMEI\" (Certificado da Condição de Microempreendedor Individual).",
+      "Faça login com sua conta Gov.br e clique em \"Emitir Certificado\" — o CCMEI abre em PDF em nova aba.",
+      "Baixe pelo ícone de download e salve o arquivo.",
+      "Se você é autônomo sem MEI: envie um contrato de prestação de serviço vigente (assinado pelas duas partes) ou 3 RPAs (recibos de profissional autônomo) dos últimos meses.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
+    observacao: "CCMEI tem validade de 90 dias — emita novo se o anterior está vencido. Sem MEI e sem contrato/RPA, use a opção \"autônomo\" no cadastro para o sistema orientar alternativas.",
   },
   renda_contrato_social: {
     titulo: "Contrato social",
     passos: [
-      "Envie o contrato social vigente da empresa, com todas as alterações registradas.",
+      "Solicite ao seu contador o contrato social CONSOLIDADO (a versão mais recente que já reúne todas as alterações contratuais).",
+      "Se você mesmo tem, acesse o site da Junta Comercial do seu estado (JUCESP em SP, JUCERJA no RJ etc.) e emita a certidão simplificada + contrato social vigente.",
+      "Confira que aparecem: razão social, CNPJ, sócios, capital social e a última alteração registrada.",
+      "Salve como PDF e envie aqui em \"Entregar documento\".",
+      "Se a empresa é MEI, use a opção \"CCMEI\" no lugar — MEI não tem contrato social.",
     ],
+    observacao: "Contratos antigos sem as últimas alterações são reprovados. Sempre envie a versão consolidada mais recente registrada na Junta Comercial.",
   },
   renda_nf_recente: {
     titulo: "Notas fiscais recentes",
     passos: [
-      "Envie as notas fiscais dos últimos meses que comprovem faturamento recorrente.",
+      "Acesse o emissor de NFe da sua prefeitura (para NFS-e) ou da SEFAZ do seu estado (para NF-e de produto), com login da empresa.",
+      "Baixe as 3 últimas notas fiscais emitidas nos últimos 90 dias em PDF.",
+      "Se são muitas notas, junte tudo em um único PDF (use ilovepdf.com → \"Juntar PDF\") antes de enviar.",
+      "As notas devem comprovar faturamento recorrente da empresa.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
+    observacao: "Enviar apenas 1 nota antiga é reprovado — a ideia é comprovar atividade constante. Mínimo de 3 notas dos últimos 90 dias.",
   },
   renda_comprovante_beneficio: {
     titulo: "Comprovante de benefício",
     passos: [
-      "Envie o extrato oficial do benefício (INSS, aposentadoria, pensão) do mês atual.",
+      "Se é benefício do INSS (auxílio, pensão, BPC): entre no Meu INSS (app ou meu.inss.gov.br) com Gov.br e baixe o \"Extrato de Pagamento de Benefício\" do mês atual.",
+      "Se é pensão militar ou funcional: acesse o portal do órgão pagador (Exército, SIGEPE, portal do servidor) e baixe o contracheque do mês atual.",
+      "Confira que aparece: nome completo, CPF, número do benefício e valor líquido.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
     ],
+    observacao: "Precisa ser do mês vigente ou do anterior. Prints do app ou canhoto do banco não são aceitos — só o PDF oficial baixado do sistema.",
   },
   renda_extrato_inss: {
     titulo: "Extrato do INSS",
     passos: [
-      "Acesse Meu INSS e emita o extrato do benefício atual em PDF.",
+      "Abra o site Meu INSS no botão \"Acessar site de emissão\" logo abaixo (ou baixe o app \"Meu INSS\").",
+      "Faça login com sua conta Gov.br (mesma do TSE/Receita).",
+      "No menu, clique em \"Extrato de Pagamento de Benefício\" ou em \"Extrato Previdenciário CNIS\", conforme solicitado.",
+      "Selecione o benefício ativo e o mês vigente, clique em \"Baixar PDF\" ou no ícone de download.",
+      "Confira nome, CPF, número do benefício e valor recebido antes de enviar.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
     ],
+    observacao: "Aceito apenas o PDF baixado direto do Meu INSS, do mês vigente ou anterior. Prints de tela do app são reprovados.",
   },
 
   // Laudos
