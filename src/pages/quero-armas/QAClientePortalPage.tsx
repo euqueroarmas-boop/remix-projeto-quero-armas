@@ -2992,10 +2992,6 @@ export default function QAClientePortalPage() {
       )}
 
       {cliente?.id ? (
-        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} onOpenChange={setChecklistGuiadoAberto} />
-      ) : null}
-
-      {cliente?.id ? (
         <ClienteCadastroProgressivoModal
           open={showCadastroModal}
           onClose={() => setShowCadastroModal(false)}
@@ -3006,13 +3002,14 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay
         clienteId={(cliente as any)?.id ?? null}
-        bloqueado={showContratoPopup || showAddDoc || showCadastroModal || checklistGuiadoAberto}
+        bloqueado={showContratoPopup || showAddDoc || showCadastroModal}
       />
 
       <PendenciasGuiadasPopup
         open={showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
-        onDismiss={() => setShowContratoPopup(false)}
+        pinnedId={pinnedPendenciaId}
+        onDismiss={() => { setShowContratoPopup(false); setPinnedPendenciaId(null); }}
       />
     </div>
     </PortalFilterProvider>
