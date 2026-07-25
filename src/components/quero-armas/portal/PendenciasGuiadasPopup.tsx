@@ -11,12 +11,18 @@
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
+import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 
 export type PendenciaKind = "signature" | "documento" | "pergunta";
 
 export interface PendenciaItem {
   id: string;
   kind: PendenciaKind;
+  /** Grupo temático (antecedentes, endereço, ocupação, etc.). Calculado no
+   *  portal quando o item é montado; usado para (1) ordenar a fila e
+   *  (2) exibir o chip de grupo no header do popup. */
+  grupoId?: PendenciaGrupoId;
+  grupoLabel?: string;
   /** Rótulo curto exibido na lista de próximos passos. */
   label: string;
   /** Tipo canônico (para signature: "contract"|"procuration"; para documento: hub_tipo). */
@@ -66,6 +72,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
+  // Contagem por grupo para o header (ex.: "Antecedentes 2 de 5").
+  const gruposOrdenados: { id: PendenciaGrupoId; label: string; ids: string[] }[] = (() => {
+    const map = new Map<PendenciaGrupoId, { label: string; ids: string[] }>();
+    for (const p of pendencias) {
+      const g = p.grupoId || grupoDaPendencia(p.rawTipo, p.tipo).id;
+      const label = p.grupoLabel || grupoDaPendencia(p.rawTipo, p.tipo).label;
+      const cur = map.get(g) || { label, ids: [] };
+      cur.ids.push(p.id);
+      map.set(g, cur);
+    }
+    return [...map.entries()].map(([id, v]) => ({ id, label: v.label, ids: v.ids }));
+  })();
+
   // Índice controlado internamente para permitir navegação Anterior/Próximo.
   // Sincroniza com `pinnedId` sempre que o portal pede foco em uma pendência
   // específica (ex.: clique em card do kanban / botão "Enviar X").
@@ -86,6 +105,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const atual = Math.min(indice, total - 1);
   const active = pendencias[atual];
+  const activeGrupo = active.grupoLabel || grupoDaPendencia(active.rawTipo, active.tipo).label;
+  const activeGrupoId = active.grupoId || grupoDaPendencia(active.rawTipo, active.tipo).id;
+  const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
+  const posicaoNoGrupo = grupoInfo ? grupoInfo.ids.indexOf(active.id) + 1 : 0;
+  const totalNoGrupo = grupoInfo?.ids.length ?? 0;
   const podeVoltar = atual > 0;
   const podeAvancar = atual < total - 1;
 
@@ -196,6 +220,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div className="px-6 pt-8 pb-4 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="text-[10px] font-bold tracking-[0.25em] text-[#8A1224] uppercase">
+              {activeGrupo}
+            </span>
+            {totalNoGrupo > 1 ? (
+              <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+                {posicaoNoGrupo} de {totalNoGrupo} no grupo
+              </span>
+            ) : null}
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
             {total > 1 ? (
