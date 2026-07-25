@@ -163,7 +163,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_antecedentes_criminais_estadual: {
     titulo: "TJSP — Ações Criminais",
     passos: [
-      "Clique em \"Acessar site de emissão\" — abre a página \"Cadastro de Pedido de Certidão\" do e-SAJ (TJSP).",
+      "Clique em \"Acessar site de emissão\" — abre a página \"Certidões\" do TJSP.",
+      "Na seção \"Primeira Instância\", clique em \"Certidões SAJ\".",
+      "Na próxima tela, escolha a PRIMEIRA opção: \"Cadastro de Pedido de Certidão\".",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo criminal completo, cobre 1º grau em TODOS os foros do estado — o e-SAJ não pergunta foro nesse fluxo).",
       "Em \"Pessoa\", marque \"Física\".",
       "Preencha NOME COMPLETO em MAIÚSCULAS (igualzinho ao RG), CPF e RG. Se você só tem a CIN (não tem RG), escreva no campo RG: DECLARA NÃO POSSUIR RG — sem isso o pedido é rejeitado.",
@@ -253,7 +255,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_estadual_distribuicao_acoes_criminais: {
     titulo: "TJSP — Ações Criminais",
     passos: [
-      "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
+      "Clique em \"Acessar site de emissão\" — abre a página \"Certidões\" do TJSP.",
+      "Na seção \"Primeira Instância\", clique em \"Certidões SAJ\".",
+      "Na próxima tela, escolha a PRIMEIRA opção: \"Cadastro de Pedido de Certidão\".",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo específico de DISTRIBUIÇÃO — não escolha Execução Criminal aqui).",
       "Em \"Pessoa\", marque \"Física\".",
       "Preencha NOME COMPLETO em MAIÚSCULAS (igual ao RG), CPF e RG. Só tem CIN? escreva DECLARA NÃO POSSUIR RG no campo RG.",
@@ -268,7 +272,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_estadual_execucoes_criminais: {
     titulo: "TJSP — Execuções Criminais",
     passos: [
-      "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
+      "Clique em \"Acessar site de emissão\" — abre a página \"Certidões\" do TJSP.",
+      "Na seção \"Primeira Instância\", clique em \"Certidões SAJ\".",
+      "Na próxima tela, escolha a PRIMEIRA opção: \"Cadastro de Pedido de Certidão\".",
       "Em \"Modelo\", selecione \"CERTIDÃO DE EXECUÇÃO CRIMINAL\" (é uma opção separada — não escolha Ações Criminais aqui).",
       "Em \"Pessoa\", marque \"Física\".",
       "Preencha NOME COMPLETO em MAIÚSCULAS (igual ao RG), CPF e RG. Só tem CIN? escreva DECLARA NÃO POSSUIR RG no campo RG.",
@@ -319,7 +325,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_tjsp_distribuicao_criminal: {
     titulo: "TJSP — Ações Criminais",
     passos: [
-      "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
+      "Clique em \"Acessar site de emissão\" — abre a página \"Certidões\" do TJSP.",
+      "Na seção \"Primeira Instância\", clique em \"Certidões SAJ\".",
+      "Na próxima tela, escolha a PRIMEIRA opção: \"Cadastro de Pedido de Certidão\".",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo específico de DISTRIBUIÇÃO — não escolha Execução Criminal aqui).",
       "Em \"Pessoa\", marque \"Física\".",
       "Preencha NOME COMPLETO em MAIÚSCULAS (igual ao RG), CPF e RG. Só tem CIN? escreva DECLARA NÃO POSSUIR RG no campo RG.",
@@ -334,7 +342,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_tjsp_execucoes_criminais: {
     titulo: "TJSP — Execuções Criminais",
     passos: [
-      "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
+      "Clique em \"Acessar site de emissão\" — abre a página \"Certidões\" do TJSP.",
+      "Na seção \"Primeira Instância\", clique em \"Certidões SAJ\".",
+      "Na próxima tela, escolha a PRIMEIRA opção: \"Cadastro de Pedido de Certidão\".",
       "Em \"Modelo\", selecione \"CERTIDÃO DE EXECUÇÃO CRIMINAL\" (é uma opção separada — não escolha Ações Criminais aqui).",
       "Em \"Pessoa\", marque \"Física\".",
       "Preencha NOME COMPLETO em MAIÚSCULAS (igual ao RG), CPF e RG. Só tem CIN? escreva DECLARA NÃO POSSUIR RG no campo RG.",
