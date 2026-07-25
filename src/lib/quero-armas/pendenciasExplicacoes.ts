@@ -110,15 +110,25 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_nf_empresa: {
     titulo: "Nota fiscal emitida pela sua empresa",
     passos: [
-      "Envie uma NF emitida pela empresa para um cliente nos últimos meses.",
-      "Serve como comprovação de atividade e faturamento.",
+      "Acesse o emissor de NFe da prefeitura (NFS-e) ou da SEFAZ do estado (NF-e), com login da empresa.",
+      "Selecione uma nota emitida nos últimos 90 dias para qualquer cliente.",
+      "Baixe o DANFE ou o PDF da NFS-e — os dois formatos servem.",
+      "Confira que aparecem: razão social + CNPJ da sua empresa, valor da nota e data de emissão.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
+    observacao: "Serve como comprovação de atividade e faturamento. Se a empresa não emitiu nota nos últimos 90 dias, envie também o QSA para reforçar a comprovação.",
   },
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
     passos: [
-      "Emita o QSA no site da Receita Federal (últimos 30 dias) e envie o PDF.",
+      "Abra o site da Receita Federal no botão \"Acessar site de emissão\" logo abaixo (mesmo link do Cartão CNPJ).",
+      "Digite o CNPJ da empresa (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
+      "Na página de resultado, procure a seção \"Quadro de Sócios e Administradores (QSA)\" — vem logo abaixo dos dados cadastrais.",
+      "Clique em \"Imprimir\" no canto superior e escolha \"Salvar como PDF\" no destino da impressão.",
+      "Confira que aparece o seu nome como sócio/administrador com a participação/qualificação.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
+    observacao: "Tem que ter sido gerado nos últimos 30 dias. É um documento diferente do Cartão CNPJ — a PF pode pedir os dois no mesmo processo.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
