@@ -750,7 +750,7 @@ export default function QAClientePortalPage() {
           const procIds = procsList.map((p) => p.id);
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
-            .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at")
+            .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at, regra_validacao")
             .in("processo_id", procIds);
           setProcessoDocs((procDocsData as any[]) ?? []);
           // Eventos da linha do tempo (envios, aprovações, reprovações, etc).
