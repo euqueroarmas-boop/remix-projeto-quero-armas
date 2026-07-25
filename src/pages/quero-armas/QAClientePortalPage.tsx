@@ -1752,7 +1752,23 @@ export default function QAClientePortalPage() {
       (a.grupoOrdem - b.grupoOrdem) ||
       (a.idx - b.idx),
     );
-    return decorados.map((d) => d.it);
+    // ─── Regra de negócio: liberar UM GRUPO POR VEZ ───────────────────────
+    // O próximo grupo temático só entra na fila quando todos os itens do
+    // grupo atual (documentos) forem concluídos/aprovados — ou seja, quando
+    // não houver mais nenhum item pendente daquele grupo aparecendo aqui.
+    // Sempre mantemos assinaturas (tier 0) e perguntas-pivot (subTier 0),
+    // pois elas gate/condicionam os documentos seguintes.
+    const docs = decorados.filter((d) => d.tier === 1 && d.subTier === 1);
+    const firstDoc = docs[0];
+    const chaveGrupoAtivo = firstDoc
+      ? `${firstDoc.servicoOrdem}|${firstDoc.grupoOrdem}`
+      : null;
+    const filtrados = decorados.filter((d) => {
+      if (d.tier === 0) return true; // assinaturas sempre
+      if (d.subTier === 0) return true; // perguntas-pivot sempre
+      return chaveGrupoAtivo === `${d.servicoOrdem}|${d.grupoOrdem}`;
+    });
+    return filtrados.map((d) => d.it);
   }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
