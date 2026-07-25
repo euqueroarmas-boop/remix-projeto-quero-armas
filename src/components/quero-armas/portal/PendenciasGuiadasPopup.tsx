@@ -78,14 +78,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss }: 
   const passosCatalogo = active.instrucoesCatalogo
     ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     : [];
-  const estaticoRico = !isSignature && explicBase.passos && explicBase.passos.length >= 2;
-  const explic = (!isSignature && passosCatalogo.length > estaticoRico ? explicBase.passos.length : 0 && !estaticoRico)
+  const estaticoRico = !isSignature && explicBase.passos.length >= 2;
+  const usarCatalogo = !isSignature && !estaticoRico && passosCatalogo.length > 0;
+  const explic = usarCatalogo
     ? {
         ...explicBase,
         passos: passosCatalogo,
         observacao: active.observacoesCatalogo || explicBase.observacao,
       }
-    : { ...explicBase, observacao: (!isSignature && active.observacoesCatalogo) ? active.observacoesCatalogo : explicBase.observacao };
+    : {
+        ...explicBase,
+        observacao: (!isSignature && active.observacoesCatalogo) ? active.observacoesCatalogo : explicBase.observacao,
+      };
 
   const headerContexto =
     active.contexto ||
