@@ -514,13 +514,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_contrato_social: {
     titulo: "Contrato social",
     passos: [
-      "Solicite ao seu contador o contrato social CONSOLIDADO (a versão mais recente que já reúne todas as alterações contratuais).",
-      "Se você mesmo tem, acesse o site da Junta Comercial do seu estado (JUCESP em SP, JUCERJA no RJ etc.) e emita a certidão simplificada + contrato social vigente.",
-      "Confira que aparecem: razão social, CNPJ, sócios, capital social e a última alteração registrada.",
-      "Salve como PDF e envie aqui em \"Entregar documento\".",
+      "Peça ao seu contador o Contrato Social CONSOLIDADO (versão mais recente, já com todas as alterações) ou o Requerimento de Empresário, se for EIRELI/empresário individual — ele consegue baixar direto na Junta Comercial em minutos.",
+      "Se preferir emitir você mesmo, acesse o site da Junta Comercial do seu estado no botão abaixo (JUCESP em SP, JUCERJA no RJ, JUCEMG em MG etc.) e faça login com Gov.br.",
+      "Procure por \"Requerimento Eletrônico\" ou \"Solicitar Documento\" → escolha \"Contrato/Estatuto Consolidado\" (ou \"Requerimento de Empresário\" para individual/EIRELI).",
+      "Informe o NIRE ou o CNPJ, pague a taxa quando houver e baixe o PDF já com a capa/certidão emitida pela Junta.",
+      "Confira que aparecem: razão social, CNPJ, sócios, capital social e a última alteração registrada. Envie aqui em \"Entregar documento\".",
       "Se a empresa é MEI, use a opção \"CCMEI\" no lugar — MEI não tem contrato social.",
     ],
-    observacao: "Contratos antigos sem as últimas alterações são reprovados. Sempre envie a versão consolidada mais recente registrada na Junta Comercial.",
+    observacao: "Contratos antigos sem as últimas alterações são reprovados. Envie sempre a versão consolidada mais recente registrada na Junta Comercial — em dúvida, peça ao contador.",
   },
   renda_nf_recente: {
     titulo: "Notas fiscais recentes",
