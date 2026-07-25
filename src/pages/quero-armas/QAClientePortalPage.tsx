@@ -1405,8 +1405,13 @@ export default function QAClientePortalPage() {
     const empurrar = (doc: any) => {
       const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
       const hubTipo = toHubTipoCompartilhado(rawTipo);
-      if (jaAdicionados.has(hubTipo)) return;
-      jaAdicionados.add(hubTipo);
+      // Dedup por (processo, rawTipo). O hubTipo NÃO pode ser a chave: várias
+      // exigências distintas (ex.: 8 certidões criminais) mapeiam para o mesmo
+      // hubTipo/`outro` e desapareciam da fila. Cada exigência do checklist
+      // vira um passo próprio no popup.
+      const dedupKey = `${doc?.processo_id ?? "_"}::${rawTipo}`;
+      if (jaAdicionados.has(dedupKey)) return;
+      jaAdicionados.add(dedupKey);
       const nomeFallback = doc?.nome_documento
         ? String(doc.nome_documento)
         : rawTipo.replace(/_/g, " ").toUpperCase();
