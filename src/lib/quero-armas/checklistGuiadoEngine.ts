@@ -383,6 +383,8 @@ export interface CargaProcesso {
   respostas: Record<string, string>;
   etapaLiberada: number;
   clienteNome?: string | null;
+  /** Sugestão automática da condição profissional a partir do cadastro. */
+  sugestaoCondicao?: { id: CondicaoGuiaId; motivo: string } | null;
   /** Contrato pendente de assinatura do cliente. Null quando validado ou inexistente. */
   contratoPendente: ContratoPendente | null;
 }
@@ -434,7 +436,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const etapaLiberada = Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
   const { data: cli } = await supabase
     .from("qa_clientes")
-    .select("nome_completo")
+    .select("nome_completo, profissao, categoria_titular")
     .eq("id", processo.cliente_id)
     .maybeSingle();
 
@@ -568,6 +570,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     respostas,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
+    sugestaoCondicao: sugerirCondicaoDoCliente(cli as any),
     contratoPendente,
   };
 }
