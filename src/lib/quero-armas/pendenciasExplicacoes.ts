@@ -438,15 +438,47 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_holerite_mes_atual: {
     titulo: "Holerite atual",
     passos: [
-      "Envie o holerite do mês vigente ou do mês anterior.",
-      "Deve conter nome, CPF, empresa e valor líquido.",
+      "Acesse o portal/app do RH da sua empresa (Portal do Colaborador, Senior, TOTVS, ADP etc.) usando seu login corporativo.",
+      "Vá em \"Holerite\", \"Contracheque\" ou \"Recibo de Pagamento\" e selecione o mês vigente (ou o anterior, se o do mês ainda não saiu).",
+      "Clique em \"Baixar PDF\" ou no ícone de download — não use \"Imprimir → Salvar como PDF\" (pode remover a assinatura).",
+      "Confira que aparece seu nome completo, CPF, nome da empresa, competência (mês/ano) e o valor líquido recebido.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
     ],
+    observacao: "Aceitamos apenas holerite do mês atual ou do mês anterior. Prints de tela e fotos do holerite físico são reprovados — precisa ser o PDF baixado do sistema do RH.",
   },
   renda_holerite_funcionario_publico: {
     titulo: "Contracheque — servidor público",
     passos: [
-      "Envie o contracheque atualizado emitido pelo sistema do órgão.",
+      "Acesse o sistema de RH do seu órgão: SIGEPE (federal), SIGRH (estadual) ou o portal do servidor do seu município/estado.",
+      "Faça login com sua matrícula e senha (ou Gov.br, dependendo do órgão).",
+      "Vá em \"Contracheque\", \"Ficha Financeira\" ou \"Recibo de Pagamento\" e selecione o mês vigente.",
+      "Clique em \"Baixar PDF\" ou no ícone de download — o arquivo já vem assinado digitalmente pelo órgão.",
+      "Confira nome, CPF, matrícula, órgão/lotação e valor líquido antes de enviar.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
     ],
+    observacao: "Se você é servidor de segurança pública (PM, PC, PF, PRF, Guarda, Bombeiro, agente penitenciário), envie TAMBÉM a cópia da carteira funcional no item específico — o contracheque sozinho não substitui.",
+  },
+  renda_funcional_seguranca_publica: {
+    titulo: "Carteira funcional — servidor de segurança pública",
+    passos: [
+      "Separe sua carteira funcional oficial (PM, PC, PF, PRF, Guarda Municipal, Bombeiro Militar, Polícia Penal etc.).",
+      "Tire foto NÍTIDA da frente e do verso, com boa iluminação e sem cortes nas bordas.",
+      "Se tiver a versão digital no app oficial do seu órgão, exporte em PDF direto pelo app (dá pra encontrar em \"Compartilhar\" ou \"Exportar\").",
+      "Confira que aparece o nome completo, matrícula, cargo/patente, órgão e data de validade legíveis.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o arquivo (PDF ou foto).",
+    ],
+    observacao: "Substitui o holerite comum para servidores de segurança pública. Se a funcional estiver vencida, envie também o contracheque do mês atual até renovar. Documentos borrados ou com dados cortados são reprovados automaticamente.",
+  },
+  renda_aposentado_extrato_beneficio: {
+    titulo: "Aposentado ou pensionista — extrato do benefício",
+    passos: [
+      "Se é aposentado/pensionista do INSS: entre no Meu INSS (app ou meu.inss.gov.br) com Gov.br, vá em \"Extrato de Pagamento de Benefício\" e baixe o PDF do mês atual.",
+      "Se é aposentado do serviço público: entre no SIGEPE (federal) ou no portal do servidor do seu estado/município e baixe o contracheque de aposentadoria do mês atual.",
+      "Se é militar da reserva/reformado: acesse o portal do órgão (Exército, PM, Marinha, Aeronáutica) e baixe o contracheque do mês atual.",
+      "Confira que aparece seu nome, CPF, número do benefício/matrícula e o valor líquido recebido.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
+    ],
+    observacao: "Não envie prints do app nem fotos do canhoto do banco. Precisa ser o PDF oficial baixado direto do sistema do INSS ou do órgão pagador, do mês vigente ou do anterior.",
   },
   renda_cartao_cnpj: {
     titulo: "Cartão CNPJ",
