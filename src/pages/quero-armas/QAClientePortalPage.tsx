@@ -1674,14 +1674,13 @@ export default function QAClientePortalPage() {
     // Anexa grupoId/grupoLabel a cada item e reordena mantendo a ordem
     // relativa original dentro de cada grupo (stable sort). Assinaturas e
     // perguntas mantêm prioridade natural via `ordem` do grupo.
-    const { grupoDaPendencia, ordemGrupo } = require("@/lib/quero-armas/pendenciasGrupos");
     const decorados = items.map((it, idx) => {
       const g = it.kind === "signature"
         ? { id: "assinaturas" as const, label: "Assinaturas", ordem: 10 }
         : it.kind === "pergunta"
           ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
-          : grupoDaPendencia(it.rawTipo, it.tipo);
-      return { it: { ...it, grupoId: g.id, grupoLabel: g.label }, ordem: g.ordem ?? ordemGrupo(g.id), idx };
+          : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
+      return { it: { ...it, grupoId: g.id, grupoLabel: g.label }, ordem: g.ordem ?? ordemGrupoHelper(g.id), idx };
     });
     decorados.sort((a, b) => (a.ordem - b.ordem) || (a.idx - b.idx));
     return decorados.map((d) => d.it);
