@@ -1578,38 +1578,19 @@ export default function QAClientePortalPage() {
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
   }, [pendenciasGuiadasCount]);
 
-  // Após assinaturas resolvidas, se o checklist já foi materializado com itens
-  // pendentes, abre o Assistente de Documentação sozinho — sem esperar novo
-  // refresh. Cobre o caso: cliente assina contrato/procuração, ponte Hub→canonical
-  // dispara a explosão do checklist e o portal precisa apresentar as próximas
-  // exigências imediatamente.
-  const checklistAutoOpenRef = useRef<string | null>(null);
+  // Fase 2 — o wizard antigo (ChecklistGuiadoModal) foi aposentado. Todos os
+  // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
+  // agora abrem o PendenciasGuiadasPopup unificado. Ao receber um `focusDocId`,
+  // marcamos a pendência correspondente (`doc:<id>`) como pinada para o popup
+  // saltar direto para ela.
   useEffect(() => {
-    if (!pendingContractsLoaded) return;
-    if (pendingSignatureCount > 0) return;
-    // Fase 1: se o popup unificado já cobre a próxima exigência, ele
-    // conduz o cliente ao Hub; não disparamos o wizard antigo em paralelo.
-    if (pendenciasGuiadasCount > 0) return;
-    if (showContratoPopup || showAddDoc || showCadastroModal) return;
-    const pend = resumoState?.checklistReproc || resumoState?.checklistPend;
-    if (!pend) return;
-    const key = `${pend.processo_id}:${pend.id}`;
-    if (checklistAutoOpenRef.current === key) return;
-    checklistAutoOpenRef.current = key;
-    window.setTimeout(() => abrirChecklistGuiado({
-      processoId: pend.processo_id,
-      focusDocId: pend.id,
-    }), 200);
-  }, [
-    pendingContractsLoaded,
-    pendingSignatureCount,
-    pendenciasGuiadasCount,
-    showContratoPopup,
-    showAddDoc,
-    showCadastroModal,
-    resumoState?.checklistReproc,
-    resumoState?.checklistPend,
-  ]);
+    const off = onAbrirChecklistGuiado((payload) => {
+      const focus = payload?.focusDocId ? `doc:${payload.focusDocId}` : null;
+      setPinnedPendenciaId(focus);
+      setShowContratoPopup(true);
+    });
+    return off;
+  }, []);
 
   // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
   // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
