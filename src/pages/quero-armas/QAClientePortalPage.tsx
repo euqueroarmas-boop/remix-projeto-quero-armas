@@ -1411,6 +1411,13 @@ export default function QAClientePortalPage() {
         ? String(doc.nome_documento)
         : rawTipo.replace(/_/g, " ").toUpperCase();
       const p = procById.get(String(doc?.processo_id));
+      const servicoLabel = p
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(p.servico_id)],
+            servico_id: p.servico_id,
+            servico_nome: p.servico_nome,
+          }) || p.servico_nome || null)
+        : null;
       const catKey = p?.servico_id != null ? `${p.servico_id}:${rawTipo}` : null;
       const catInfo = catKey ? catalogoDocInfo.get(catKey) : undefined;
       // Fallback global por tipo_documento (mesmo tipo em outro serviço).
@@ -1421,6 +1428,8 @@ export default function QAClientePortalPage() {
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
+        servicoId: p?.servico_id ?? null,
+        servicoLabel,
         label: nomeFallback,
         tipo: hubTipo,
         rawTipo,
@@ -1516,9 +1525,19 @@ export default function QAClientePortalPage() {
       const nomeFallback = doc.nome_documento
         ? String(doc.nome_documento)
         : rawTipo.replace(/_/g, " ").toUpperCase();
+      const pProc = procById.get(String(doc.processo_id));
+      const servicoLabel = pProc
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(pProc.servico_id)],
+            servico_id: pProc.servico_id,
+            servico_nome: pProc.servico_nome,
+          }) || pProc.servico_nome || null)
+        : null;
       items.push({
         id: `pergunta:${doc.id}`,
         kind: "pergunta",
+        servicoId: pProc?.servico_id ?? null,
+        servicoLabel,
         label: nomeFallback,
         tipo: rawTipo,
         rawTipo,
@@ -1595,6 +1614,13 @@ export default function QAClientePortalPage() {
       const respostas = respondidas(p);
       const respostaTitular = String(respostas["comprovante_em_nome_titular"] || "").toLowerCase();
       if (respostaTitular !== "nao") continue;
+      const servicoLabelTit = p
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(p.servico_id)],
+            servico_id: p.servico_id,
+            servico_nome: p.servico_nome,
+          }) || p.servico_nome || null)
+        : null;
       const jaEstadoCivil = respostas["titular_comprovante_estado_civil"];
       const jaProfissao = respostas["titular_comprovante_profissao"];
       const pushSintetica = (opts: {
@@ -1606,6 +1632,8 @@ export default function QAClientePortalPage() {
         items.push({
           id: `pergunta-sintetica:${opts.chave}:${pivot.id}`,
           kind: "pergunta",
+          servicoId: p?.servico_id ?? null,
+          servicoLabel: servicoLabelTit,
           label: opts.label,
           tipo: opts.rawTipoLabel,
           rawTipo: opts.rawTipoLabel,
@@ -1675,15 +1703,44 @@ export default function QAClientePortalPage() {
     // Anexa grupoId/grupoLabel a cada item e reordena mantendo a ordem
     // relativa original dentro de cada grupo (stable sort). Assinaturas e
     // perguntas mantêm prioridade natural via `ordem` do grupo.
+    // Ordenação final:
+    //   1) Assinaturas primeiro (sem serviço).
+    //   2) Depois, agrupado POR SERVIÇO CONTRATADO (ordem_no_pacote →
+    //      data_criacao), para o cliente resolver um serviço por vez.
+    //   3) Dentro do serviço, perguntas-pivot antes das exigências.
+    //   4) Dentro disso, GRUPO temático (identificação → endereço →
+    //      antecedentes → ocupação → habitualidade → saúde → arma →
+    //      declarações → outros).
+    //   5) Estável no idx original como desempate.
     const decorados = items.map((it, idx) => {
       const g = it.kind === "signature"
         ? { id: "assinaturas" as const, label: "Assinaturas", ordem: 10 }
         : it.kind === "pergunta"
           ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
           : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
-      return { it: { ...it, grupoId: g.id, grupoLabel: g.label }, ordem: g.ordem ?? ordemGrupoHelper(g.id), idx };
+      const tier = it.kind === "signature" ? 0 : 1;
+      const [servicoOrdem, servicoCriacao] =
+        it.kind === "signature"
+          ? [-1, -1]
+          : rankProcesso(String((it as any).__processoId || ""));
+      return {
+        it: { ...it, grupoId: g.id, grupoLabel: g.label },
+        tier,
+        servicoOrdem,
+        servicoCriacao,
+        grupoOrdem: (g as any).ordem ?? ordemGrupoHelper(g.id),
+        subTier: it.kind === "pergunta" ? 0 : 1,
+        idx,
+      };
     });
-    decorados.sort((a, b) => (a.ordem - b.ordem) || (a.idx - b.idx));
+    decorados.sort((a, b) =>
+      (a.tier - b.tier) ||
+      (a.servicoOrdem - b.servicoOrdem) ||
+      (a.servicoCriacao - b.servicoCriacao) ||
+      (a.subTier - b.subTier) ||
+      (a.grupoOrdem - b.grupoOrdem) ||
+      (a.idx - b.idx),
+    );
     return decorados.map((d) => d.it);
   }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
 
