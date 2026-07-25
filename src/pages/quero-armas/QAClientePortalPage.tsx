@@ -3376,6 +3376,7 @@ export default function QAClientePortalPage() {
         open={showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
         pinnedId={pinnedPendenciaId}
+        ufCliente={(cliente as any)?.estado ?? null}
         onDismiss={() => { setShowContratoPopup(false); setPinnedPendenciaId(null); }}
       />
     </div>

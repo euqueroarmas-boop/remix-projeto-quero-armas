@@ -24,7 +24,10 @@ export default function QAClienteAgendarExamePage() {
   const [cep, setCep] = useState<string>(params.get("cep") || "");
   const [uf, setUf] = useState<string>(params.get("uf") || "");
   const [cidade, setCidade] = useState<string>(params.get("cidade") || "");
-  const [raio, setRaio] = useState<number>(50);
+  // Default 25 km: apenas RECOMENDAÇÃO baseada no endereço do cliente.
+  // O cliente tem liberdade total para ampliar o raio ou escolher qualquer
+  // UF — os profissionais credenciados pela PF valem em todo o país.
+  const [raio, setRaio] = useState<number>(25);
   const [incluirVencidos, setIncluirVencidos] = useState(false);
   const [busca, setBusca] = useState("");
 
@@ -171,6 +174,13 @@ export default function QAClienteAgendarExamePage() {
             Origem: {cidadeTexto || origin?.cidade}/{ufResolved || origin?.uf}
           </div>
         )}
+        <div style={{ background: "#F5F1EA", border: "1px solid #E1D9C9", padding: 10, borderRadius: 4, fontSize: 11, color: "#4A4030", marginBottom: 10, letterSpacing: ".02em" }}>
+          <strong style={{ fontFamily: "Oswald, sans-serif", letterSpacing: ".14em" }}>RECOMENDAÇÃO:</strong>{" "}
+          exibimos os profissionais dentro de {raio} km do seu endereço. Você
+          tem liberdade para escolher qualquer psicólogo ou instrutor credenciado
+          pela Polícia Federal — de qualquer UF. Amplie o raio ou altere a UF
+          acima para ver outras opções.
+        </div>
         {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
         {foraDoRaio && (
           <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
