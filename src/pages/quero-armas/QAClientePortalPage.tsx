@@ -254,6 +254,10 @@ export default function QAClientePortalPage() {
   const [catalogoDocOrdem, setCatalogoDocOrdem] = useState<Map<string, number>>(new Map());
   // Mapa (servico_id:tipo_documento) → instrucoes/link_emissao/observacoes_cliente do catálogo.
   const [catalogoDocInfo, setCatalogoDocInfo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
+  // Fallback global por tipo_documento: usado quando o servico atual não tem
+  // instrucoes/link_emissao populados, mas algum outro serviço já cadastrou
+  // no catálogo. Garante que o cliente sempre veja o passo-a-passo com URLs.
+  const [catalogoDocInfoByTipo, setCatalogoDocInfoByTipo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
