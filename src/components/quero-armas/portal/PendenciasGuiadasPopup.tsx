@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import {
@@ -250,9 +250,6 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         {/* Header */}
         <div className="px-6 pt-8 pb-4 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-[10px] font-bold tracking-[0.25em] text-[#8A1224] uppercase">
-              {activeGrupo}
-            </span>
             {totalNoGrupo > 1 ? (
               <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
                 {posicaoNoGrupo} de {totalNoGrupo} no grupo
@@ -277,6 +274,27 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-6 pb-2">
+          {/* Link discreto para o site oficial — aparece ANTES do passo a passo,
+              adaptado ao órgão/tribunal correspondente ao grupo. */}
+          {!isSignature && !isPergunta && linkEmissaoFinal ? (
+            <p className="mb-5 text-[13px] leading-relaxed text-[#3A3A3A]">
+              Acesse o site oficial{(() => {
+                const t = explic.titulo || "";
+                const i = t.indexOf("—");
+                const nome = i >= 0 ? t.slice(i + 1).trim() : activeGrupo;
+                return nome ? ` (${nome})` : "";
+              })()} para baixar:{" "}
+              <a
+                href={linkEmissaoFinal}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
+              >
+                {linkEmissaoFinal}
+              </a>
+            </p>
+          ) : null}
+
           {/* Step list with vertical timeline */}
           <div className="relative">
             <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
@@ -341,18 +359,6 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             </div>
           ) : null}
 
-          {/* Emission site link */}
-          {!isSignature && !isPergunta && linkEmissaoFinal ? (
-            <a
-              href={linkEmissaoFinal}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 mb-2 w-full py-4 border-2 border-[#3A3A3A] bg-[#3A3A3A] text-white rounded-xl font-bold text-xs tracking-wider flex items-center justify-center gap-2 hover:bg-[#2A2A2A] hover:border-[#2A2A2A] transition-colors uppercase"
-            >
-              <ExternalLink className="w-4 h-4 shrink-0" />
-              Acessar site de emissão{linkPorUf && ufCliente ? ` (${String(ufCliente).toUpperCase()})` : ""}
-            </a>
-          ) : null}
         </div>
 
         {/* Footer */}
