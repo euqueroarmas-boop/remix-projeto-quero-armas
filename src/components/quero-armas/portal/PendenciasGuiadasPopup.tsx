@@ -295,7 +295,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           </div>
 
           {/* Observation */}
-          {explic.observacao ? (
+          {explic.observacao && activeGrupoId !== "antecedentes" ? (
             <div className="mt-6 p-4 bg-[#FFF7F8] rounded-xl border border-[#8A1224]/10">
               <p className="text-xs leading-relaxed text-[#8A1224]">
                 {explic.observacao}
