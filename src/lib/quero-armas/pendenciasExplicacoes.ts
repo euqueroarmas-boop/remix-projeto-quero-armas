@@ -158,7 +158,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Confira que aparece seu nome completo, CPF e o resultado \"NADA CONSTA\".",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias a partir da emissão. Não altere o PDF — a IA valida a assinatura digital do TSE e reprova arquivos escaneados ou reimpressos.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não altere o PDF — a IA valida a assinatura digital do TSE e reprova arquivos escaneados ou reimpressos.",
   },
   certidao_antecedentes_criminais_estadual: {
     titulo: "Antecedentes criminais — Justiça Estadual",
@@ -175,7 +175,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Baixe o PDF pelo link do e-mail. Não use \"Imprimir → Salvar como PDF\" — quebra a assinatura digital.",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias. O e-SAJ TJSP não pergunta foro nesse fluxo — o modelo \"Distribuição de Ações Criminais\" já cobre todos os foros do estado. Se aparecer o campo Foro, você entrou no fluxo antigo/errado — volte e escolha o Modelo correto. Não escaneie o PDF: envie o original com a assinatura digital.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O e-SAJ TJSP não pergunta foro nesse fluxo — o modelo \"Distribuição de Ações Criminais\" já cobre todos os foros do estado. Se aparecer o campo Foro, você entrou no fluxo antigo/errado — volte e escolha o Modelo correto. Não escaneie o PDF: envie o original com a assinatura digital.",
   },
   certidao_antecedentes_criminais_federal: {
     titulo: "Antecedentes criminais — Justiça Federal",
@@ -213,7 +213,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "O atestado abre em nova aba em PDF — clique no ícone de download (seta pra baixo) e salve o arquivo.",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias a partir da emissão. Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
   },
   certidao_crimes_eleitorais_tse: {
     titulo: "Crimes eleitorais — TSE",
@@ -224,7 +224,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "A certidão abre em PDF em nova aba — clique no ícone de download e salve o arquivo.",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF sem alterações.",
     ],
-    observacao: "Validade de 90 dias. O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
   certidao_crimes_militares_stm: {
     titulo: "Crimes militares — STM",
@@ -313,7 +313,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Baixe o PDF pelo link do e-mail — não use \"Imprimir → PDF\", quebra a assinatura digital.",
       "Volte aqui e clique em \"Entregar documento\".",
     ],
-    observacao: "Validade de 90 dias. É a certidão de DISTRIBUIÇÃO — no e-SAJ o campo que diferencia é o \"Modelo\": aqui use \"Certidão de Distribuição de Ações Criminais\". Não existe campo \"Foro\" nesse fluxo — o modelo já cobre todos os foros do estado. Se enviar o modelo de Execução, a IA reprova.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). É a certidão de DISTRIBUIÇÃO — no e-SAJ o campo que diferencia é o \"Modelo\": aqui use \"Certidão de Distribuição de Ações Criminais\". Não existe campo \"Foro\" nesse fluxo — o modelo já cobre todos os foros do estado. Se enviar o modelo de Execução, a IA reprova.",
   },
   certidao_tjsp_execucoes_criminais: {
     titulo: "TJSP — Execuções criminais",
@@ -328,7 +328,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Baixe pelo link do e-mail — nunca via \"Imprimir → PDF\", quebra a assinatura.",
       "Volte aqui e clique em \"Entregar documento\".",
     ],
-    observacao: "Validade de 90 dias. Diferente da certidão de Distribuição — o que muda no e-SAJ é o campo \"Modelo\": aqui use \"Certidão de Execução Criminal\". Não existe campo \"Foro\" nesse fluxo. Se enviar o modelo errado, a IA reprova.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Diferente da certidão de Distribuição — o que muda no e-SAJ é o campo \"Modelo\": aqui use \"Certidão de Execução Criminal\". Não existe campo \"Foro\" nesse fluxo. Se enviar o modelo errado, a IA reprova.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
@@ -438,7 +438,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "O atestado abre em PDF em nova aba — clique no ícone de download (seta pra baixo) e salve o arquivo.",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias. Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
   },
   antecedentes_federal: {
     titulo: "Antecedentes federais — Justiça Federal",
@@ -486,7 +486,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Confira que aparece seu nome, CPF, comarca e o resultado \"NADA CONSTA\".",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias. Envie o PDF original — não imprima e escaneie.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Envie o PDF original — não imprima e escaneie.",
   },
   antecedentes_estadual_distribuicao: {
     titulo: "TJSP — Distribuição criminal",
@@ -534,7 +534,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Confira que aparece seu nome, CPF e o resultado \"NADA CONSTA\".",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias. O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
+    observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
 
   // Renda
