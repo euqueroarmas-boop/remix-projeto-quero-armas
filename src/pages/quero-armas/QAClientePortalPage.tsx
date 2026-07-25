@@ -1439,15 +1439,97 @@ export default function QAClientePortalPage() {
     const reprovados = ordenar(
       processoDocs.filter((d) => {
         if (!d?.obrigatorio) return false;
+        // Perguntas-pivot têm ciclo próprio (Sim/Não) e são tratadas no bloco
+        // dedicado abaixo — não entram na fila de "reprovados/pendentes" comuns.
+        const rv = (d as any)?.regra_validacao;
+        if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
         const st = String(d.status || "").toLowerCase();
         return ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st);
       }),
     );
     const pendentes = ordenar(
-      processoDocs.filter((d) => d?.obrigatorio && isChecklistPendente(d.status)),
+      processoDocs.filter((d) => {
+        if (!d?.obrigatorio) return false;
+        const rv = (d as any)?.regra_validacao;
+        if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
+        return isChecklistPendente(d.status);
+      }),
     );
     for (const d of reprovados) empurrar(d);
     for (const d of pendentes) empurrar(d);
+
+    // ─── Perguntas-pivot: respondidas INLINE no popup (Sim/Não) ───
+    // Regra: quem "emite" as declarações é o sistema — o cliente só responde
+    // a pergunta, o backend registra em qa_processos.respostas_questionario_json
+    // e libera / oculta os itens dependentes automaticamente.
+    const respondidas = (processo: any) =>
+      (processo?.respostas_questionario_json as Record<string, string> | null) ?? {};
+    const perguntasPendentes = ordenar(
+      processoDocs.filter((d) => {
+        if (!d?.obrigatorio) return false;
+        const rv = (d as any)?.regra_validacao;
+        if (!rv || typeof rv !== "object" || rv.tipo !== "pergunta") return false;
+        const p = procById.get(String(d.processo_id));
+        const chave = String(rv.chave || "");
+        const jaRespondida = chave && !!respondidas(p)[chave];
+        return !jaRespondida;
+      }),
+    );
+    for (const doc of perguntasPendentes) {
+      const rv = (doc as any).regra_validacao as any;
+      const chave = String(rv?.chave || "");
+      const opcoes = Array.isArray(rv?.opcoes) ? rv.opcoes : [];
+      if (!chave || opcoes.length === 0) continue;
+      const rawTipo = String(doc.tipo_documento || "").toLowerCase();
+      const nomeFallback = doc.nome_documento
+        ? String(doc.nome_documento)
+        : rawTipo.replace(/_/g, " ").toUpperCase();
+      items.push({
+        id: `pergunta:${doc.id}`,
+        kind: "pergunta",
+        label: nomeFallback,
+        tipo: rawTipo,
+        rawTipo,
+        fallbackNome: nomeFallback,
+        contexto: "Pergunta rápida",
+        perguntaChave: chave,
+        perguntaOpcoes: opcoes.map((op: any) => ({ valor: String(op.valor), label: op.label ? String(op.label) : undefined })),
+        respostaAtual: null,
+        perguntaAjudaPos:
+          "Assim que você responder, o sistema atualiza o checklist automaticamente. Nós geramos as declarações necessárias — você não precisa inventar nenhum documento.",
+        onPrimary: () => {},
+        onEntregar: () => {},
+        onResponder: async (valor: string) => {
+          try {
+            const { data: sess } = await supabase.auth.getSession();
+            if (!sess?.session) {
+              toast.error("Sessão expirada. Faça login novamente.");
+              return;
+            }
+            const { data, error } = await supabase.functions.invoke(
+              "qa-processo-responder-pergunta",
+              {
+                body: {
+                  processo_id: doc.processo_id,
+                  documento_id: doc.id,
+                  chave,
+                  valor,
+                },
+              },
+            );
+            if (error || (data as any)?.error) {
+              toast.error("Não foi possível registrar a resposta. Tente novamente.");
+              return;
+            }
+            toast.success("Resposta registrada. Próximo passo liberado.");
+            setDocsReloadKey((k) => k + 1);
+          } catch (e) {
+            console.error("[portal] responder-pergunta:", e);
+            toast.error("Erro ao registrar resposta.");
+          }
+        },
+      });
+    }
 
     return items;
   }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
