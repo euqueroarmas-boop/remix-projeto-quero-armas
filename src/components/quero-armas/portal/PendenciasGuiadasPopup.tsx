@@ -18,6 +18,10 @@ export type PendenciaKind = "signature" | "documento" | "pergunta";
 export interface PendenciaItem {
   id: string;
   kind: PendenciaKind;
+  /** Serviço/processo que originou esta pendência (para segmentar a fila
+   *  por serviço contratado: Autorização, Posse, CRAF+GT, etc.). */
+  servicoId?: string | number | null;
+  servicoLabel?: string | null;
   /** Grupo temático (antecedentes, endereço, ocupação, etc.). Calculado no
    *  portal quando o item é montado; usado para (1) ordenar a fila e
    *  (2) exibir o chip de grupo no header do popup. */
