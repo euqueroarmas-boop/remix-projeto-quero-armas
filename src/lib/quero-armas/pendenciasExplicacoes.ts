@@ -63,7 +63,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   pergunta_ainda_reside_imovel: {
     titulo: "Confirmação: você ainda reside neste imóvel?",
     passos: [
-      "Abra o Hub e responda Sim ou Não.",
+      "Responda Sim ou Não direto neste passo, nos botões abaixo.",
       "Se Sim, seguimos com o comprovante em nome de terceiro + documento do titular.",
       "Se Não, você será orientado a enviar um comprovante em seu nome.",
     ],
@@ -93,14 +93,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   pergunta_responde_inquerito_criminal: {
     titulo: "Confirmação: você responde a inquérito/processo criminal?",
     passos: [
-      "Abra o Hub e responda Sim ou Não.",
+      "Responda Sim ou Não direto neste passo, nos botões abaixo.",
       "Se Não, o sistema gera a declaração automaticamente para você assinar.",
     ],
   },
   renda_definir_condicao: {
     titulo: "Defina sua condição profissional",
     passos: [
-      "Abra o Hub e escolha uma das opções: CLT, servidor público (área geral), servidor de segurança pública (PM, PC, PF, PRF, Guarda, Bombeiro, agente penitenciário), autônomo/MEI, empresário/sócio ou aposentado/pensionista.",
+      "Escolha aqui mesmo uma das opções: CLT, servidor público (área geral), servidor de segurança pública (PM, PC, PF, PRF, Guarda, Bombeiro, agente penitenciário), autônomo/MEI, empresário/sócio ou aposentado/pensionista.",
       "Se já preencheu sua profissão no cadastro, a opção correta vem pré-selecionada — só confirme.",
       "A partir da escolha, o sistema pede automaticamente os comprovantes certos (holerite, funcional, cartão CNPJ, extrato INSS etc.).",
       "Em dúvida entre duas opções? Escolha a que mais se aproxima — a equipe revisa e ajusta se necessário.",
