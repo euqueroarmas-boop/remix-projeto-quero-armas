@@ -166,6 +166,21 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         observacao: (!isSignature && active.observacoesCatalogo) ? active.observacoesCatalogo : explicBase.observacao,
       };
 
+  // ─── State-aware: reescreve links/textos genéricos usando a UF do cliente ───
+  // Regra: o cérebro do sistema resolve a UF pelo cadastro/comprovante e
+  // troca hardcodes de SP (TJSP, Polícia Civil/SP, TRF3, etc.) pelos
+  // equivalentes do estado do cliente. Passa a limpo apenas quando a UF
+  // está mapeada em `linksAntecedentesPorUf`.
+  const linkPorUf = !isSignature && !isPergunta
+    ? resolveLinkAntecedentePorUf(active.rawTipo || active.tipo, ufCliente)
+    : null;
+  const linkEmissaoFinal = linkPorUf || active.linkEmissao || null;
+  if (!isSignature && !isPergunta && ufCliente) {
+    explic.titulo = aplicarUfEmTexto(explic.titulo, ufCliente);
+    if (explic.observacao) explic.observacao = aplicarUfEmTexto(explic.observacao, ufCliente);
+    explic.passos = explic.passos.map((p) => aplicarUfEmTexto(p, ufCliente));
+  }
+
   const headerContexto =
     active.contexto ||
     (isSignature
@@ -334,15 +349,15 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           ) : null}
 
           {/* Emission site link */}
-          {!isSignature && !isPergunta && active.linkEmissao ? (
+          {!isSignature && !isPergunta && linkEmissaoFinal ? (
             <a
-              href={active.linkEmissao}
+              href={linkEmissaoFinal}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 mb-2 w-full py-4 border-2 border-[#3A3A3A] bg-[#3A3A3A] text-white rounded-xl font-bold text-xs tracking-wider flex items-center justify-center gap-2 hover:bg-[#2A2A2A] hover:border-[#2A2A2A] transition-colors uppercase"
             >
               <ExternalLink className="w-4 h-4 shrink-0" />
-              Acessar site de emissão
+              Acessar site de emissão{linkPorUf && ufCliente ? ` (${String(ufCliente).toUpperCase()})` : ""}
             </a>
           ) : null}
         </div>
