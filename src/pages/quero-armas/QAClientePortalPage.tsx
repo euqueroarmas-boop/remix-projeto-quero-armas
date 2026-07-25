@@ -1430,6 +1430,8 @@ export default function QAClientePortalPage() {
         kind: "documento",
         servicoId: p?.servico_id ?? null,
         servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: doc.processo_id ?? null,
         label: nomeFallback,
         tipo: hubTipo,
         rawTipo,
@@ -1538,6 +1540,8 @@ export default function QAClientePortalPage() {
         kind: "pergunta",
         servicoId: pProc?.servico_id ?? null,
         servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: doc.processo_id ?? null,
         label: nomeFallback,
         tipo: rawTipo,
         rawTipo,
@@ -1634,6 +1638,8 @@ export default function QAClientePortalPage() {
           kind: "pergunta",
           servicoId: p?.servico_id ?? null,
           servicoLabel: servicoLabelTit,
+          // @ts-expect-error usado apenas para ordenação por processo
+          __processoId: pivot.processo_id ?? null,
           label: opts.label,
           tipo: opts.rawTipoLabel,
           rawTipo: opts.rawTipoLabel,
