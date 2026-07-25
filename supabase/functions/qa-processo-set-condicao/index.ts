@@ -381,12 +381,17 @@ Deno.serve(async (req) => {
     const novos = rendaPara(condicao).filter((it) => !presentesSet.has(it.tipo_documento));
     console.log("[set-condicao] presentes pós-delete:", Array.from(presentesSet), "novos a inserir:", novos.map(n => n.tipo_documento));
     if (novos.length > 0) {
-      const rows = novos.map((d) => ({
+      const rows = novos.map((d, idx) => ({
         processo_id,
         cliente_id: processo.cliente_id,
         tipo_documento: d.tipo_documento,
         nome_documento: d.nome_documento,
         etapa: "complementar",
+        // Ordem explícita — garante que o popup de pendências apresente os
+        // documentos na sequência natural (ex.: Cartão CNPJ → QSA → Contrato
+        // Social → NF da empresa). Sem `ordem` explícito, a fila cai no rank
+        // fallback (9999) e a UI reordena de forma imprevisível.
+        ordem: 100 + idx,
         obrigatorio: d.obrigatorio,
         status: "pendente",
         validade_dias: d.prazo_recomendado_dias ?? null,
