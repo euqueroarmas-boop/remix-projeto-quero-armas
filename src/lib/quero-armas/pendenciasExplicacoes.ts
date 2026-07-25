@@ -85,9 +85,12 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_definir_condicao: {
     titulo: "Defina sua condição profissional",
     passos: [
-      "Abra o Hub e escolha entre CLT, servidor público, autônomo/MEI, empresário ou aposentado.",
-      "A partir da escolha, o sistema pede automaticamente os comprovantes certos.",
+      "Abra o Hub e escolha uma das opções: CLT, servidor público (área geral), servidor de segurança pública (PM, PC, PF, PRF, Guarda, Bombeiro, agente penitenciário), autônomo/MEI, empresário/sócio ou aposentado/pensionista.",
+      "Se já preencheu sua profissão no cadastro, a opção correta vem pré-selecionada — só confirme.",
+      "A partir da escolha, o sistema pede automaticamente os comprovantes certos (holerite, funcional, cartão CNPJ, extrato INSS etc.).",
+      "Em dúvida entre duas opções? Escolha a que mais se aproxima — a equipe revisa e ajusta se necessário.",
     ],
+    observacao: "Servidor de segurança pública é uma categoria própria e substitui o holerite pela cópia da carteira funcional. Aposentado envia o extrato do benefício no lugar do holerite.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
