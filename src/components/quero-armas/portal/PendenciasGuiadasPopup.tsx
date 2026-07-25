@@ -284,7 +284,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               href={active.linkEmissao}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 mb-2 w-full py-4 border-2 border-[#8A1224] text-[#8A1224] rounded-xl font-bold text-xs tracking-wider flex items-center justify-center gap-2 hover:bg-[#FFF7F8] transition-colors uppercase"
+              className="mt-6 mb-2 w-full py-4 border-2 border-[#3A3A3A] bg-[#3A3A3A] text-white rounded-xl font-bold text-xs tracking-wider flex items-center justify-center gap-2 hover:bg-[#2A2A2A] hover:border-[#2A2A2A] transition-colors uppercase"
             >
               <ExternalLink className="w-4 h-4 shrink-0" />
               Acessar site de emissão
