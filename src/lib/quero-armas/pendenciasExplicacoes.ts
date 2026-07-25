@@ -121,14 +121,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
     passos: [
-      "Abra o site da Receita Federal no botão \"Acessar site de emissão\" logo abaixo (mesmo link do Cartão CNPJ).",
-      "Digite o CNPJ da empresa (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
-      "Na página de resultado, procure a seção \"Quadro de Sócios e Administradores (QSA)\" — vem logo abaixo dos dados cadastrais.",
-      "Clique em \"Imprimir\" no canto superior e escolha \"Salvar como PDF\" no destino da impressão.",
-      "Confira que aparece o seu nome como sócio/administrador com a participação/qualificação.",
-      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
+      "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\" (mesma página do Cartão CNPJ).",
+      "Role a página até a seção \"QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)\", que fica depois dos dados cadastrais.",
+      "Clique em \"Imprimir\" (canto superior direito) e escolha \"Salvar como PDF\".",
+      "Confira que o seu nome aparece listado como sócio/administrador e envie aqui em \"Entregar documento\".",
     ],
-    observacao: "Tem que ter sido gerado nos últimos 30 dias. É um documento diferente do Cartão CNPJ — a PF pode pedir os dois no mesmo processo.",
+    observacao: "É a mesma página do Cartão CNPJ, mas o que a PF exige aqui é o bloco QSA com o seu nome como sócio. Emissão dos últimos 30 dias.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
