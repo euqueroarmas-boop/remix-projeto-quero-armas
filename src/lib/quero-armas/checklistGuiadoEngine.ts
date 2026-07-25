@@ -445,7 +445,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
       // todos os processos existentes. Só cai no snapshot do processo se o
       // documento não existir mais no catálogo do serviço.
       _template_ordem:
-        (ordemMap.get(key) ?? null) ??
+        ordemMap.get(key) ??
         (typeof (d as any).ordem === "number" ? (d as any).ordem : null),
     };
   });
