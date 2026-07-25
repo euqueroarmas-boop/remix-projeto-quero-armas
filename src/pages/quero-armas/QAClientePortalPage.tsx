@@ -28,6 +28,7 @@ import { ClienteProcessosSection } from "@/components/quero-armas/processos/Clie
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
+import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
