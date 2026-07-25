@@ -58,6 +58,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
+import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   QA_SIDEBAR_THEMES,
   getPersonalThemeKey,
