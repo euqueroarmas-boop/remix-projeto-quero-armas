@@ -1,16 +1,15 @@
 // ============================================================================
-// PendenciasGuiadasPopup — Fase 2 da unificação
+// PendenciasGuiadasPopup — Fase 2 da unificação (refino visual v1)
 // ----------------------------------------------------------------------------
 // Fila multi-passo real: as pendências (assinaturas + exigências documentais)
 // viram uma sequência navegável (Anterior / Próximo) dentro da mesma janela.
-// Substitui integralmente o wizard antigo (ChecklistGuiadoModal), que foi
-// aposentado do portal — todos os gatilhos (Speed Dial, kanban, bus) agora
-// abrem este popup e permitem saltar direto para uma pendência específica via
-// `pinnedId`.
+// Versão visual mobile-first inspirada no "Refinamento institucional":
+// header limpo, lista de passos com linha vertical, callout em destaque,
+// link de emissão em botão bordô e ações fixadas no rodapé.
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, ExternalLink, FileText, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, ExternalLink, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 
 export type PendenciaKind = "signature" | "documento";
@@ -139,178 +138,155 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         : "Enviar procuração assinada"
       : "Entregar documento");
 
-  const eyebrow = isSignature
-    ? active.tipo === "contract"
-      ? "Contrato aguardando sua assinatura"
-      : "Procuração aguardando sua assinatura"
-    : "Documento aguardando envio";
-
   const passoAtual = atual + 1;
   const passoLabel = `Passo ${passoAtual} de ${total}`;
+  const faltam = total - passoAtual;
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto"
+      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       data-qa-overlay
       onClick={onDismiss}
-      style={{ pointerEvents: "auto" }}
     >
       <div
-        className="w-full max-w-2xl bg-white rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
+        className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
-        style={{ pointerEvents: "auto" }}
       >
-        {/* Window Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#E4E4E4] bg-[#FAFAFA]">
-          <div className="flex gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FF5F57]" />
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#FEBC2E]" />
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#28C840]" />
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute top-3 right-3 z-20 p-2 rounded-full text-[#6A6A6A] hover:bg-black/5 transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Header */}
+        <div className="px-6 pt-8 pb-4 shrink-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-[10px] font-bold tracking-[0.25em] text-[#8A1224] uppercase">
+              {headerContexto}
+            </span>
+            {total > 1 ? (
+              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+                {passoLabel}
+              </span>
+            ) : null}
           </div>
-          <div className="text-[10px] font-bold text-[#6A6A6A] tracking-[0.1em] uppercase">
-            {headerContexto}
-          </div>
-          <div className="w-8" />
+          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
+            {explic.titulo}
+          </h2>
+          <p className="mt-1.5 text-sm text-[#6A6A6A] leading-relaxed">
+            {active.label}
+          </p>
         </div>
 
-        {/* Split Body */}
-        <div className="flex flex-col md:flex-row">
-          {/* Sidebar */}
-          <div className="hidden md:flex w-48 bg-[#FAFAFA] border-r border-[#E4E4E4] p-8 flex-col items-center justify-center text-center shrink-0">
-            <div className="text-6xl font-light text-[#0A0A0A] leading-none tracking-tighter">
-              {String(passoAtual).padStart(2, "0")}
-              <span className="text-2xl text-[#6A6A6A]">/{String(total).padStart(2, "0")}</span>
-            </div>
-            <div className="text-[10px] font-bold tracking-[0.2em] text-[#6A6A6A] uppercase mt-1 mb-8">
-              {total > 1 ? "Passo Atual" : "Pendente"}
-            </div>
-            <div className="relative flex flex-col items-center">
-              <div className="w-px h-10 bg-[#E4E4E4]" />
-              <div className="w-9 h-9 rounded-full border border-[#E4E4E4] flex items-center justify-center bg-white my-2">
-                <FileText className="h-4 w-4 text-[#0A0A0A]" />
-              </div>
-              <div className="w-px h-10 bg-[#E4E4E4]" />
-            </div>
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
+          {/* Step list with vertical timeline */}
+          <div className="relative">
+            <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
+            <ul className="space-y-5 relative">
+              {explic.passos.map((p, i) => (
+                <li key={i} className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                    {i + 1}
+                  </span>
+                  <p className="text-[14px] leading-relaxed text-[#3A3A3A] pt-1">
+                    {p}
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          {/* Main */}
-          <div className="flex-1 p-6 md:p-10 flex flex-col justify-center">
-            <header className="mb-5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block text-[10px] font-bold tracking-[0.25em] text-[#6A6A6A] uppercase">
-                  {eyebrow}
-                </span>
-                {total > 1 ? (
-                  <span className="inline-flex items-center rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
-                    {passoLabel}
-                  </span>
-                ) : null}
-              </div>
-              <h2 className="text-xl md:text-2xl font-medium text-[#0A0A0A] leading-tight tracking-tight">
-                {explic.titulo}
-              </h2>
-              <p className="mt-2 text-xs text-[#6A6A6A] leading-relaxed">
-                {active.label}
+          {/* Observation */}
+          {explic.observacao ? (
+            <div className="mt-6 p-4 bg-[#FFF7F8] rounded-xl border border-[#8A1224]/10">
+              <p className="text-xs leading-relaxed text-[#8A1224]">
+                {explic.observacao}
               </p>
-            </header>
+            </div>
+          ) : null}
 
-            <div className="space-y-5">
-              <ol className="space-y-2 text-sm text-[#3A3A3A] leading-relaxed">
-                {explic.passos.map((p, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="mt-[2px] inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#E4E4E4] bg-white text-[10px] font-bold text-[#0A0A0A]">
-                      {i + 1}
-                    </span>
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ol>
+          {/* Emission site link */}
+          {!isSignature && active.linkEmissao ? (
+            <a
+              href={active.linkEmissao}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 mb-2 w-full py-4 border-2 border-[#8A1224] text-[#8A1224] rounded-xl font-bold text-xs tracking-wider flex items-center justify-center gap-2 hover:bg-[#FFF7F8] transition-colors uppercase"
+            >
+              <ExternalLink className="w-4 h-4 shrink-0" />
+              Acessar site de emissão
+            </a>
+          ) : null}
+        </div>
 
-              {explic.observacao ? (
-                <p className="text-xs text-[#6A6A6A] leading-relaxed border-l-2 border-[#E4E4E4] pl-3">
-                  {explic.observacao}
-                </p>
-              ) : null}
+        {/* Footer */}
+        <div className="mt-auto border-t border-[#E4E4E4] bg-white shrink-0">
+          {total > 1 ? (
+            <div className="px-6 py-3 flex justify-between items-center">
+              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                Resolva um por vez
+              </span>
+              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                Faltam {faltam} após esta
+              </span>
+            </div>
+          ) : null}
 
-              {!isSignature && active.linkEmissao ? (
-                <a
-                  href={active.linkEmissao}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-sm border border-[#8A1224] bg-[#FFF7F8] px-3 py-2.5 text-[13px] font-bold uppercase tracking-[0.08em] text-[#8A1224] transition hover:bg-[#8A1224] hover:text-white"
-                >
-                  <ExternalLink className="w-4 h-4 shrink-0" />
-                  Acessar site de emissão
-                </a>
-              ) : null}
-
-              {total > 1 ? (
-                <div className="flex items-center justify-between rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
-                  <span>Resolva um por vez</span>
-                  <span>Faltam {total - passoAtual} após esta</span>
-                </div>
-              ) : null}
-
-              {total > 1 ? (
-                <div className="flex items-center justify-between gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setIndice((i) => Math.max(0, i - 1))}
-                    disabled={!podeVoltar}
-                    className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] transition hover:bg-[#FAFAFA] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <ChevronLeft className="h-3.5 w-3.5" /> Anterior
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
-                    disabled={!podeAvancar}
-                    className="inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] transition hover:bg-[#FAFAFA] disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Próximo <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : null}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2 pt-1">
-                {isSignature ? (
-                  <button
-                    type="button"
-                    onClick={active.onPrimary}
-                    className="inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
-                  >
-                    <Download className="h-3.5 w-3.5 shrink-0" />
-                    {primaryLabel}
-                  </button>
-                ) : (
-                  <div className="hidden md:block" />
-                )}
+          <div className="px-6 py-4 flex flex-col gap-3">
+            {total > 1 ? (
+              <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={active.onEntregar}
-                  className={`inline-flex h-14 w-full min-w-0 items-center justify-center gap-2 rounded-sm px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
-                    isSignature
-                      ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
-                      : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
-                  }`}
+                  onClick={() => setIndice((i) => Math.max(0, i - 1))}
+                  disabled={!podeVoltar}
+                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <Upload className="h-3.5 w-3.5 shrink-0" />
-                  {entregarLabel}
+                  <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
+                  disabled={!podeAvancar}
+                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                >
+                  Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
+            ) : null}
 
-        {/* Footer info */}
-        <div className="px-6 md:px-10 py-3 bg-white border-t border-[#FAFAFA] flex justify-end items-center">
-          <div className="flex items-center gap-2">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#28C840]" />
-            <span className="text-[10px] font-medium text-[#6A6A6A] uppercase tracking-wider">
-              Ambiente seguro
-            </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2">
+              {isSignature ? (
+                <button
+                  type="button"
+                  onClick={active.onPrimary}
+                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
+                >
+                  <Download className="h-3.5 w-3.5 shrink-0" />
+                  {primaryLabel}
+                </button>
+              ) : (
+                <div className="hidden md:block" />
+              )}
+              <button
+                type="button"
+                onClick={active.onEntregar}
+                className={`inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
+                  isSignature
+                    ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
+                    : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
+                }`}
+              >
+                <Upload className="h-3.5 w-3.5 shrink-0" />
+                {entregarLabel}
+              </button>
+            </div>
           </div>
         </div>
       </div>
