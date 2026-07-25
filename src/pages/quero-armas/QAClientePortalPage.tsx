@@ -1436,6 +1436,33 @@ export default function QAClientePortalPage() {
       });
     };
 
+    // ─── Gating "comprovante em nome de terceiro" ───
+    // Regra: NÃO pedir documento do titular / declaração / questionário do
+    // titular antes de o cliente confirmar que o comprovante NÃO está em seu
+    // nome. Enquanto a pergunta-pivot `comprovante_em_nome_titular` estiver
+    // sem resposta OU respondida como "sim", esses itens ficam ocultos.
+    const respostaTitularPorProcesso = new Map<string, string | null>();
+    for (const p of processos || []) {
+      const respostas = (p?.respostas_questionario_json as Record<string, string> | null) ?? {};
+      respostaTitularPorProcesso.set(String(p.id), respostas["comprovante_em_nome_titular"] ?? null);
+    }
+    const ehDocDeTitularTerceiro = (rawTipo: string) => {
+      const t = rawTipo.toLowerCase();
+      return (
+        t === "documento_identificacao_terceiro" ||
+        t.startsWith("declaracao_titular") ||
+        t.startsWith("titular_comprovante") ||
+        t === "declaracao_residencia_titular"
+      );
+    };
+    const bloquearPorTitular = (d: any) => {
+      const rawTipo = String(d?.tipo_documento || "").toLowerCase();
+      if (!ehDocDeTitularTerceiro(rawTipo)) return false;
+      const resp = respostaTitularPorProcesso.get(String(d?.processo_id));
+      // Sem resposta ou respondeu "sim" (está no meu nome) → esconder.
+      return !resp || String(resp).toLowerCase() === "sim";
+    };
+
     const reprovados = ordenar(
       processoDocs.filter((d) => {
         if (!d?.obrigatorio) return false;
@@ -1443,6 +1470,7 @@ export default function QAClientePortalPage() {
         // dedicado abaixo — não entram na fila de "reprovados/pendentes" comuns.
         const rv = (d as any)?.regra_validacao;
         if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
+        if (bloquearPorTitular(d)) return false;
         const st = String(d.status || "").toLowerCase();
         return ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st);
       }),
@@ -1452,11 +1480,10 @@ export default function QAClientePortalPage() {
         if (!d?.obrigatorio) return false;
         const rv = (d as any)?.regra_validacao;
         if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
+        if (bloquearPorTitular(d)) return false;
         return isChecklistPendente(d.status);
       }),
     );
-    for (const d of reprovados) empurrar(d);
-    for (const d of pendentes) empurrar(d);
 
     // ─── Perguntas-pivot: respondidas INLINE no popup (Sim/Não) ───
     // Regra: quem "emite" as declarações é o sistema — o cliente só responde
@@ -1475,6 +1502,9 @@ export default function QAClientePortalPage() {
         return !jaRespondida;
       }),
     );
+    // Perguntas-pivot vêm ANTES das exigências documentais para gatilhar o
+    // fluxo correto (ex.: confirmar titular do comprovante antes de pedir
+    // documento de terceiro).
     for (const doc of perguntasPendentes) {
       const rv = (doc as any).regra_validacao as any;
       const chave = String(rv?.chave || "");
@@ -1530,6 +1560,114 @@ export default function QAClientePortalPage() {
         },
       });
     }
+
+    // ─── Mini-questionário do titular (só quando comprovante NÃO está no
+    // nome do requerente). Roda antes de pedir o documento do titular. ───
+    // Usa o mesmo docId da pergunta-pivot como âncora (o responder aceita
+    // gravar chaves extras em respostas_questionario_json).
+    const perguntasTitularPivotPorProcesso = new Map<string, any>();
+    for (const d of processoDocs || []) {
+      const rv = (d as any)?.regra_validacao;
+      if (rv && typeof rv === "object" && rv.tipo === "pergunta" && String(rv.chave || "") === "comprovante_em_nome_titular") {
+        perguntasTitularPivotPorProcesso.set(String(d.processo_id), d);
+      }
+    }
+    const OPCOES_ESTADO_CIVIL = [
+      { valor: "solteiro", label: "Solteiro(a)" },
+      { valor: "casado", label: "Casado(a)" },
+      { valor: "uniao_estavel", label: "União estável" },
+      { valor: "divorciado", label: "Divorciado(a)" },
+      { valor: "viuvo", label: "Viúvo(a)" },
+    ];
+    const OPCOES_PROFISSAO = [
+      { valor: "clt", label: "CLT (assalariado)" },
+      { valor: "servidor_publico", label: "Servidor público" },
+      { valor: "autonomo_mei", label: "Autônomo / MEI" },
+      { valor: "empresario", label: "Empresário / sócio" },
+      { valor: "aposentado", label: "Aposentado(a) / pensionista" },
+      { valor: "do_lar", label: "Do lar / sem renda formal" },
+      { valor: "outra", label: "Outra" },
+    ];
+    for (const [pid, pivot] of perguntasTitularPivotPorProcesso.entries()) {
+      const p = procById.get(pid);
+      const respostas = respondidas(p);
+      const respostaTitular = String(respostas["comprovante_em_nome_titular"] || "").toLowerCase();
+      if (respostaTitular !== "nao") continue;
+      const jaEstadoCivil = respostas["titular_comprovante_estado_civil"];
+      const jaProfissao = respostas["titular_comprovante_profissao"];
+      const pushSintetica = (opts: {
+        chave: string;
+        rawTipoLabel: string;
+        opcoes: { valor: string; label: string }[];
+        label: string;
+      }) => {
+        items.push({
+          id: `pergunta-sintetica:${opts.chave}:${pivot.id}`,
+          kind: "pergunta",
+          label: opts.label,
+          tipo: opts.rawTipoLabel,
+          rawTipo: opts.rawTipoLabel,
+          fallbackNome: opts.label,
+          contexto: "Sobre o titular",
+          perguntaChave: opts.chave,
+          perguntaOpcoes: opts.opcoes,
+          respostaAtual: null,
+          perguntaAjudaPos:
+            "Usamos essa informação para gerar a declaração de residência que o titular assina — você não precisa redigir nada.",
+          onPrimary: () => {},
+          onEntregar: () => {},
+          onResponder: async (valor: string) => {
+            try {
+              const { data: sess } = await supabase.auth.getSession();
+              if (!sess?.session) {
+                toast.error("Sessão expirada. Faça login novamente.");
+                return;
+              }
+              const { data, error } = await supabase.functions.invoke(
+                "qa-processo-responder-pergunta",
+                {
+                  body: {
+                    processo_id: pivot.processo_id,
+                    documento_id: pivot.id,
+                    chave: opts.chave,
+                    valor,
+                  },
+                },
+              );
+              if (error || (data as any)?.error) {
+                toast.error("Não foi possível registrar a resposta. Tente novamente.");
+                return;
+              }
+              toast.success("Resposta registrada.");
+              setDocsReloadKey((k) => k + 1);
+            } catch (e) {
+              console.error("[portal] responder-pergunta sintetica:", e);
+              toast.error("Erro ao registrar resposta.");
+            }
+          },
+        });
+      };
+      if (!jaEstadoCivil) {
+        pushSintetica({
+          chave: "titular_comprovante_estado_civil",
+          rawTipoLabel: "pergunta_titular_estado_civil",
+          opcoes: OPCOES_ESTADO_CIVIL,
+          label: "Estado civil do titular",
+        });
+      }
+      if (!jaProfissao) {
+        pushSintetica({
+          chave: "titular_comprovante_profissao",
+          rawTipoLabel: "pergunta_titular_profissao",
+          opcoes: OPCOES_PROFISSAO,
+          label: "Profissão do titular",
+        });
+      }
+    }
+
+    // Depois das perguntas vêm as exigências documentais (reprovados primeiro).
+    for (const d of reprovados) empurrar(d);
+    for (const d of pendentes) empurrar(d);
 
     return items;
   }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);

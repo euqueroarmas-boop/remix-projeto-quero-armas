@@ -71,8 +71,23 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   pergunta_comprovante_em_nome: {
     titulo: "Confirmação: o comprovante está no seu nome?",
     passos: [
-      "Abra o Hub e responda Sim ou Não.",
-      "Se Não, o sistema já pede a declaração do titular e o documento dele.",
+      "Responda Sim ou Não direto neste passo.",
+      "Se Não, seguimos com um pequeno questionário sobre o titular (estado civil e profissão) e o documento de identidade dele.",
+    ],
+  },
+  pergunta_titular_estado_civil: {
+    titulo: "Estado civil do titular do comprovante",
+    passos: [
+      "Escolha o estado civil da pessoa em cujo nome está o comprovante de residência.",
+      "O sistema usa essa informação para emitir a declaração de residência que ele(a) vai assinar.",
+    ],
+    observacao: "Nós geramos a declaração pronta — o titular só assina. Você não precisa redigir nada.",
+  },
+  pergunta_titular_profissao: {
+    titulo: "Profissão do titular do comprovante",
+    passos: [
+      "Escolha a categoria profissional que mais se aproxima da ocupação do titular.",
+      "Essa informação entra na declaração de residência que emitiremos para ele(a) assinar.",
     ],
   },
   pergunta_responde_inquerito_criminal: {
