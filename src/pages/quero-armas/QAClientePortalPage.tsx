@@ -1675,6 +1675,89 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  // ==========================================================================
+  // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
+  // ---------------------------------------------------------------------------
+  // Regra do usuário: "não faça a pergunta se o comprovante já foi enviado e
+  // dá pra cruzar com o cadastro do cliente". Quando existe um comprovante
+  // de residência com `titular_comprovante_nome` extraído (ou o boolean
+  // `endereco_em_nome_de_terceiro`), comparamos com `cliente.nome_completo`
+  // e respondemos automaticamente via `qa-processo-responder-pergunta`,
+  // sem incomodar o cliente. Só perguntamos quando não há sinal ou o match
+  // é ambíguo (`"unknown"`).
+  // ==========================================================================
+  const autoRespondidasRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!cliente?.nome_completo || !processoDocs?.length) return;
+    const nomeCliente = String(cliente.nome_completo);
+
+    const perguntasTitular = processoDocs.filter((d: any) => {
+      const rv = d?.regra_validacao;
+      if (!rv || typeof rv !== "object" || rv.tipo !== "pergunta") return false;
+      if (String(rv.chave || "") !== "comprovante_em_nome_titular") return false;
+      const p = (processos || []).find((x: any) => String(x.id) === String(d.processo_id));
+      const resp = (p?.respostas_questionario_json ?? {}) as Record<string, string>;
+      if (resp["comprovante_em_nome_titular"]) return false;
+      return !autoRespondidasRef.current.has(String(d.id));
+    });
+    if (perguntasTitular.length === 0) return;
+
+    const comprovantesPorProcesso = new Map<string, any>();
+    for (const d of processoDocs as any[]) {
+      const tipo = String(d?.tipo_documento || "").toLowerCase();
+      if (!tipo.startsWith("comprovante_endereco") && tipo !== "comprovante_residencia") continue;
+      const nomeExtraido =
+        d?.titular_comprovante_nome ||
+        (d?.dados_extraidos_json && (d.dados_extraidos_json.nome_titular || d.dados_extraidos_json.titular_comprovante_nome)) ||
+        null;
+      const flagTerceiro = d?.endereco_em_nome_de_terceiro;
+      if (!nomeExtraido && flagTerceiro == null) continue;
+      const atual = comprovantesPorProcesso.get(String(d.processo_id));
+      const atualTs = atual?.updated_at ? new Date(atual.updated_at).getTime() : 0;
+      const novoTs = d?.updated_at ? new Date(d.updated_at).getTime() : 0;
+      if (!atual || novoTs >= atualTs) comprovantesPorProcesso.set(String(d.processo_id), d);
+    }
+    if (comprovantesPorProcesso.size === 0) return;
+
+    (async () => {
+      for (const pivot of perguntasTitular) {
+        const comp = comprovantesPorProcesso.get(String(pivot.processo_id));
+        if (!comp) continue;
+        const nomeDoc =
+          comp.titular_comprovante_nome ||
+          comp.dados_extraidos_json?.nome_titular ||
+          comp.dados_extraidos_json?.titular_comprovante_nome ||
+          null;
+        let valor: "sim" | "nao" | null = null;
+        if (nomeDoc) {
+          const veredito = comparePersonNames(nomeDoc, nomeCliente);
+          if (veredito === "match") valor = "sim";
+          else if (veredito === "mismatch") valor = "nao";
+        } else if (typeof comp.endereco_em_nome_de_terceiro === "boolean") {
+          valor = comp.endereco_em_nome_de_terceiro ? "nao" : "sim";
+        }
+        if (!valor) continue;
+        autoRespondidasRef.current.add(String(pivot.id));
+        try {
+          const { error } = await supabase.functions.invoke("qa-processo-responder-pergunta", {
+            body: {
+              processo_id: pivot.processo_id,
+              documento_id: pivot.id,
+              chave: "comprovante_em_nome_titular",
+              valor,
+            },
+          });
+          if (error) throw error;
+          setDocsReloadKey((k) => k + 1);
+        } catch (e) {
+          // Silencioso: se falhar, o UI segue exibindo a pergunta para o cliente.
+          console.warn("[portal] auto-responder pergunta comprovante:", e);
+          autoRespondidasRef.current.delete(String(pivot.id));
+        }
+      }
+    })();
+  }, [cliente?.nome_completo, processoDocs, processos]);
+
   const portalStartupAction = useMemo(() => {
     if (loading || !cliente || !pendingContractsLoaded) return null;
 
