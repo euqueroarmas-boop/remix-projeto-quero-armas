@@ -123,6 +123,53 @@ Deno.serve(async (req) => {
       },
     });
 
+    // 3.1) Reconcilia docs condicionais: se a resposta mudou o gatilho, dispensa
+    // (ou reabre) automaticamente os documentos com `regra_validacao.exige_quando`
+    // ou `regra_validacao.condicional` que dependem desta chave. Evita órfãos como
+    // "Declaração do titular do imóvel" quando o cliente troca de "não" para "sim".
+    try {
+      const { data: condicionais } = await admin
+        .from("qa_processo_documentos")
+        .select("id, status, regra_validacao")
+        .eq("processo_id", processo_id);
+      for (const cd of (condicionais ?? []) as any[]) {
+        const rv = cd?.regra_validacao;
+        if (!rv || typeof rv !== "object") continue;
+        // Suporta dois formatos legados: `exige_quando: {chave: valor}` e
+        // `condicional: {depende_de: chave, valor: X}`.
+        let dependeChave: string | null = null;
+        let dependeValor: string | null = null;
+        if (rv.exige_quando && typeof rv.exige_quando === "object") {
+          const keys = Object.keys(rv.exige_quando);
+          if (keys.length === 1) {
+            dependeChave = keys[0];
+            dependeValor = String(rv.exige_quando[keys[0]] ?? "");
+          }
+        } else if (rv.condicional && typeof rv.condicional === "object" && rv.condicional.depende_de) {
+          dependeChave = String(rv.condicional.depende_de);
+          dependeValor = String(rv.condicional.valor ?? "");
+        }
+        if (!dependeChave || dependeChave !== chave) continue;
+        const bate = dependeValor === valor;
+        if (!bate && cd.status === "pendente") {
+          await admin
+            .from("qa_processo_documentos")
+            .update({
+              status: "dispensado_grupo",
+              observacoes: `Dispensado automaticamente: resposta "${chave}"=${valor.toUpperCase()} não aciona esta exigência.`,
+            })
+            .eq("id", cd.id);
+        } else if (bate && cd.status === "dispensado_grupo") {
+          await admin
+            .from("qa_processo_documentos")
+            .update({ status: "pendente" })
+            .eq("id", cd.id);
+        }
+      }
+    } catch (e) {
+      console.warn("[responder-pergunta] reconciliação condicional falhou", e);
+    }
+
     // Checa se o processo virou pronto_para_protocolar (idempotente).
     try {
       const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
