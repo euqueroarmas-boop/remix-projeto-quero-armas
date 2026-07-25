@@ -23,6 +23,17 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   certidao_federal_trf3_sjsp_jef: "antecedentes_federal_sjsp_jef",
   certidao_tjsp_distribuicao_criminal: "antecedentes_estadual_distribuicao",
   certidao_tjsp_execucoes_criminais: "antecedentes_estadual_execucoes",
+  // Variantes canônicas usadas pelo qa_explodir_checklist_processo:
+  certidao_antecedentes_criminais_eleitoral: "antecedentes_eleitoral",
+  certidao_antecedentes_criminais_estadual: "antecedentes_estadual",
+  certidao_antecedentes_criminais_federal: "antecedentes_federal",
+  certidao_antecedentes_criminais_militar: "antecedentes_militar",
+  certidao_estadual_distribuicao_acoes_criminais: "antecedentes_estadual_distribuicao",
+  certidao_estadual_execucoes_criminais: "antecedentes_estadual_execucoes",
+  // 2º grau ainda não tem slot próprio no Hub — mapeia para o equivalente de 1º grau
+  // (o cliente envia como "distribuição/execuções"; a instrução do popup explica o 2º grau).
+  certidao_estadual_segundo_grau_acoes_criminais: "antecedentes_estadual_distribuicao",
+  certidao_estadual_segundo_grau_execucoes_criminais: "antecedentes_estadual_execucoes",
   comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
   declaracao_habitualidade_clube: "comprovante_habitualidade",
   declaracao_compromisso_habitualidade: "comprovante_habitualidade",
