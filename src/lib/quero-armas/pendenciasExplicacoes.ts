@@ -161,7 +161,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não altere o PDF — a IA valida a assinatura digital do TSE e reprova arquivos escaneados ou reimpressos.",
   },
   certidao_antecedentes_criminais_estadual: {
-    titulo: "Antecedentes criminais — Justiça Estadual",
+    titulo: "TJSP — Ações Criminais",
     passos: [
       "Clique em \"Acessar site de emissão\" — abre a página \"Cadastro de Pedido de Certidão\" do e-SAJ (TJSP).",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo criminal completo, cobre 1º grau em TODOS os foros do estado — o e-SAJ não pergunta foro nesse fluxo).",
@@ -251,7 +251,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 90 dias. Só é exigida para clientes em SP — se não é seu caso, avise seu consultor.",
   },
   certidao_estadual_distribuicao_acoes_criminais: {
-    titulo: "TJSP — Distribuição criminal",
+    titulo: "TJSP — Ações Criminais",
     passos: [
       "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo específico de DISTRIBUIÇÃO — não escolha Execução Criminal aqui).",
@@ -266,7 +266,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). É a certidão de DISTRIBUIÇÃO — no e-SAJ o campo que diferencia é o \"Modelo\": aqui use \"Certidão de Distribuição de Ações Criminais\". Não existe campo \"Foro\" nesse fluxo — o modelo já cobre todos os foros do estado. Se enviar o modelo de Execução, a IA reprova.",
   },
   certidao_estadual_execucoes_criminais: {
-    titulo: "TJSP — Execuções criminais",
+    titulo: "TJSP — Execuções Criminais",
     passos: [
       "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
       "Em \"Modelo\", selecione \"CERTIDÃO DE EXECUÇÃO CRIMINAL\" (é uma opção separada — não escolha Ações Criminais aqui).",
@@ -317,7 +317,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 90 dias. É COMPLEMENTAR à certidão Regional do TRF3 — não substitui, a PF exige as duas.",
   },
   certidao_tjsp_distribuicao_criminal: {
-    titulo: "TJSP — Distribuição criminal",
+    titulo: "TJSP — Ações Criminais",
     passos: [
       "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
       "Em \"Modelo\", selecione \"CERTIDÃO DE DISTRIBUIÇÃO DE AÇÕES CRIMINAIS\" (é o modelo específico de DISTRIBUIÇÃO — não escolha Execução Criminal aqui).",
@@ -332,7 +332,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). É a certidão de DISTRIBUIÇÃO — no e-SAJ o campo que diferencia é o \"Modelo\": aqui use \"Certidão de Distribuição de Ações Criminais\". Não existe campo \"Foro\" nesse fluxo — o modelo já cobre todos os foros do estado. Se enviar o modelo de Execução, a IA reprova.",
   },
   certidao_tjsp_execucoes_criminais: {
-    titulo: "TJSP — Execuções criminais",
+    titulo: "TJSP — Execuções Criminais",
     passos: [
       "Clique em \"Acessar site de emissão\" — abre o \"Cadastro de Pedido de Certidão\" do e-SAJ TJSP.",
       "Em \"Modelo\", selecione \"CERTIDÃO DE EXECUÇÃO CRIMINAL\" (é uma opção separada — não escolha Ações Criminais aqui).",
@@ -505,7 +505,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Envie o PDF original — não imprima e escaneie.",
   },
   antecedentes_estadual_distribuicao: {
-    titulo: "TJSP — Distribuição criminal",
+    titulo: "TJSP — Ações Criminais",
     passos: [
       "Abra o portal e-SAJ do TJSP pelo botão \"Acessar site de emissão\".",
       "Vá em \"Certidões\" → \"Certidão de Distribuição Criminal\".",
@@ -517,7 +517,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Cuidado: no TJSP existem duas certidões parecidas — esta é a de DISTRIBUIÇÃO. Não envie a de EXECUÇÕES aqui, é outro passo.",
   },
   antecedentes_estadual_execucoes: {
-    titulo: "TJSP — Execuções criminais",
+    titulo: "TJSP — Execuções Criminais",
     passos: [
       "Abra o portal e-SAJ do TJSP pelo botão \"Acessar site de emissão\".",
       "Vá em \"Certidões\" → \"Certidão de Execuções Criminais\".",
