@@ -270,9 +270,6 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
             {explic.titulo}
           </h2>
-          <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-[#8A1224]">
-            {activeGrupo}
-          </p>
         </div>
 
         {/* Scrollable body */}
@@ -281,12 +278,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               adaptado ao órgão/tribunal correspondente ao grupo. */}
           {!isSignature && !isPergunta && linkEmissaoFinal ? (
             <p className="mb-5 text-[13px] leading-relaxed text-[#3A3A3A]">
-              Acesse o site oficial{(() => {
+              {(() => {
                 const t = explic.titulo || "";
                 const i = t.indexOf("—");
                 const nome = i >= 0 ? t.slice(i + 1).trim() : activeGrupo;
-                return nome ? ` (${nome})` : "";
-              })()} para baixar:{" "}
+                return nome
+                  ? `Acesse o site oficial da ${nome} para baixar: `
+                  : `Acesse o site oficial para baixar: `;
+              })()}
               <a
                 href={linkEmissaoFinal}
                 target="_blank"
