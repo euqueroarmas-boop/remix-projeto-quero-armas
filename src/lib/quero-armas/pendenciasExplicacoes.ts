@@ -229,16 +229,17 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
   certidao_crimes_militares_stm: {
-    titulo: "Crimes militares — STM",
+    titulo: "Justiça Militar da União — STM",
     passos: [
-      "Abra o portal do STM no botão \"Acessar site de emissão\" logo abaixo.",
-      "Clique em \"Certidão Negativa\" no menu do topo.",
-      "Preencha CPF, nome completo, nome da mãe e data de nascimento exatamente como no RG.",
+      "Clique em \"Acessar site de emissão\" (abre https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao) ou copie o endereço no navegador.",
+      "Na página do STM, clique em \"Emitir Certidão Negativa\".",
+      "Selecione \"Pessoa Física\".",
+      "Preencha CPF, NOME COMPLETO em MAIÚSCULAS (igualzinho ao RG), nome da mãe e data de nascimento (DD/MM/AAAA).",
       "Marque \"Não sou robô\" e clique em \"Emitir Certidão\".",
-      "A certidão abre em PDF — baixe pelo ícone de download e salve no seu dispositivo.",
+      "A certidão abre em PDF assinado — baixe pelo ícone de download (não use \"Imprimir → PDF\", quebra a assinatura).",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
-    observacao: "Validade de 90 dias. Cuidado: qualquer letra errada no nome da mãe reprova a emissão — copie do RG.",
+    observacao: "Certidão Negativa da Justiça Militar da União (STM) — cobre crimes militares federais em todo o Brasil. Validade de 90 dias. Nome da mãe precisa bater exatamente com o RG, senão o sistema recusa.",
   },
   certidao_criminal_tjmsp: {
     titulo: "Certidão criminal — TJM-SP",
