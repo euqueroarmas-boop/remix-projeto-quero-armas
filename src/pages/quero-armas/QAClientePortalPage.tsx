@@ -30,9 +30,8 @@ import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-a
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
-import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
-import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { abrirChecklistGuiado, onAbrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
 import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
@@ -278,7 +277,7 @@ export default function QAClientePortalPage() {
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
   const [pendingTrilhaDestino, setPendingTrilhaDestino] = useState<string | null>(null);
   const [showCadastroModal, setShowCadastroModal] = useState(false);
-  const [checklistGuiadoAberto, setChecklistGuiadoAberto] = useState(false);
+  const [pinnedPendenciaId, setPinnedPendenciaId] = useState<string | null>(null);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
@@ -1579,38 +1578,19 @@ export default function QAClientePortalPage() {
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
   }, [pendenciasGuiadasCount]);
 
-  // Após assinaturas resolvidas, se o checklist já foi materializado com itens
-  // pendentes, abre o Assistente de Documentação sozinho — sem esperar novo
-  // refresh. Cobre o caso: cliente assina contrato/procuração, ponte Hub→canonical
-  // dispara a explosão do checklist e o portal precisa apresentar as próximas
-  // exigências imediatamente.
-  const checklistAutoOpenRef = useRef<string | null>(null);
+  // Fase 2 — o wizard antigo (ChecklistGuiadoModal) foi aposentado. Todos os
+  // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
+  // agora abrem o PendenciasGuiadasPopup unificado. Ao receber um `focusDocId`,
+  // marcamos a pendência correspondente (`doc:<id>`) como pinada para o popup
+  // saltar direto para ela.
   useEffect(() => {
-    if (!pendingContractsLoaded) return;
-    if (pendingSignatureCount > 0) return;
-    // Fase 1: se o popup unificado já cobre a próxima exigência, ele
-    // conduz o cliente ao Hub; não disparamos o wizard antigo em paralelo.
-    if (pendenciasGuiadasCount > 0) return;
-    if (showContratoPopup || showAddDoc || showCadastroModal) return;
-    const pend = resumoState?.checklistReproc || resumoState?.checklistPend;
-    if (!pend) return;
-    const key = `${pend.processo_id}:${pend.id}`;
-    if (checklistAutoOpenRef.current === key) return;
-    checklistAutoOpenRef.current = key;
-    window.setTimeout(() => abrirChecklistGuiado({
-      processoId: pend.processo_id,
-      focusDocId: pend.id,
-    }), 200);
-  }, [
-    pendingContractsLoaded,
-    pendingSignatureCount,
-    pendenciasGuiadasCount,
-    showContratoPopup,
-    showAddDoc,
-    showCadastroModal,
-    resumoState?.checklistReproc,
-    resumoState?.checklistPend,
-  ]);
+    const off = onAbrirChecklistGuiado((payload) => {
+      const focus = payload?.focusDocId ? `doc:${payload.focusDocId}` : null;
+      setPinnedPendenciaId(focus);
+      setShowContratoPopup(true);
+    });
+    return off;
+  }, []);
 
   // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
   // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
@@ -2993,10 +2973,6 @@ export default function QAClientePortalPage() {
       )}
 
       {cliente?.id ? (
-        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} onOpenChange={setChecklistGuiadoAberto} />
-      ) : null}
-
-      {cliente?.id ? (
         <ClienteCadastroProgressivoModal
           open={showCadastroModal}
           onClose={() => setShowCadastroModal(false)}
@@ -3007,13 +2983,14 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay
         clienteId={(cliente as any)?.id ?? null}
-        bloqueado={showContratoPopup || showAddDoc || showCadastroModal || checklistGuiadoAberto}
+        bloqueado={showContratoPopup || showAddDoc || showCadastroModal}
       />
 
       <PendenciasGuiadasPopup
         open={showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
-        onDismiss={() => setShowContratoPopup(false)}
+        pinnedId={pinnedPendenciaId}
+        onDismiss={() => { setShowContratoPopup(false); setPinnedPendenciaId(null); }}
       />
     </div>
     </PortalFilterProvider>
