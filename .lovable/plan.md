@@ -1,91 +1,82 @@
 
-## Estado atual do wizard `/admin/piloto-real`
+## Objetivo
 
-Já existe no código (auditei `QAPilotoRealPage.tsx`, 3029 linhas):
+Fazer o cérebro do Quero Armas ler o comprovante de endereço do cliente e, a partir do estado (UF) e da geolocalização, entregar automaticamente:
 
-- **Passo 1 — Cliente**: busca por nome/CPF/e-mail, cartão com resumo, botão "Trocar".
-- **Passo 2 — Serviço principal + itens extras** (múltiplos serviços do pacote).
-- **Passo 3 — Modo do contrato** (`itens_separados` × `pacote_fechado`), `valor_final_pacote`, tipo de diferença (`ajuste_comercial` × `custo_financeiro_adquirente`), adquirente, parcelas, composição derivada com `servico_qa`, extras, custos embutidos e custo financeiro.
-- **Passo 5 — Pagamento manual** com forma, parcelas, adquirente, valor bruto, comprovante.
-- **Passo 6 — Contrato + upload assistido**.
-- **Arquivar / Reprocessar financeiro** com `NotificacaoPolicyPicker` já plugado nas 4 ações (pagamento, upload, arquivar, reprocessar).
-- **Retomada**: lista "Em andamento / Arquivados", botão "Continuar", "Voltar para pilotos em andamento", guarda `motivoBloqueioVinculo` quando venda/contrato pertencem ao admin.
-- **Auditoria** via `logPilotoEvento` (19 eventos em `qa_piloto_eventos`).
-- **Smoke test** já forçado a `modo_teste` + arquivar (última correção); botão isolado no topo.
+1. Os **links e explicações corretos** de antecedentes **estaduais** (Polícia Civil, TJ, TJM, TRF regional) — nunca mais links fixos de SP para clientes de outros estados.
+2. **Psicólogos e instrutores credenciados num raio de 25 km** do endereço, apenas como **recomendação** — o cliente continua livre para escolher qualquer credenciado do Brasil.
+3. A **circunscrição da PF** que deverá receber o pedido (já resolvida por `qa_circunscricoes_pf`, só falta amarrar ao fluxo).
 
-## Gaps confirmados
+## O que muda
 
-1. **Passo 1 não bloqueia staff/admin proativamente.** Hoje a busca lista qualquer `qa_clientes` (inclusive #190 ADMIN QUERO ARMAS / `eu@queroarmas.com.br`). O bloqueio só aparece depois da venda criada.
-2. **Ausência de "Composição do valor final" visível quando o modo é `itens_separados`** — a composição só renderiza para pacote fechado. O usuário pediu campo visível sempre.
-3. **Faltam labels/agrupamentos explícitos** para: clube/estande, deslocamento, "outro" na lista de tipos de extras (hoje o dropdown de extras usa outra taxonomia).
-4. **Passo 5 não mostra explicitamente** "valor total parcelado" e "diferença/arredondamento" derivados de `parcelas × valor da parcela`.
-5. **Política de notificação** existe, mas o motivo obrigatório quando "Não" ainda não é obrigatório por form-validation em todos os 4 pickers (algumas ações permitem seguir sem motivo).
-6. **Lista de pilotos em andamento** já filtra arquivados, mas smoke antigo (pré-correção de hoje) ainda pode aparecer como "em andamento" se não foi arquivado — precisa filtro extra por `motivo ILIKE '%SMOKE%'`.
+### 1. Motor "endereço → estado" (nova função util)
 
-## Plano de implementação
+Arquivo novo: `src/lib/quero-armas/localizacaoCliente.ts`
 
-### 1. Passo 1 — Bloqueio de staff antes da seleção
+- Lê, em ordem: `cliente.estado` → endereço do comprovante mais recente aprovado → CEP.
+- Retorna `{ uf, municipio, lat, lng, origem }`, com `origem = "cadastro" | "comprovante" | "cep"`.
+- Cai para `null` só se nenhuma das fontes existir.
 
-- Carregar `qa_usuarios_perfis` ativos ao montar a página → `Set<user_id>` de staff.
-- No resultado da busca, marcar candidatos staff com badge vermelho "STAFF — NÃO SELECIONÁVEL" e desabilitar o botão.
-- Se o operador tentar setar o cliente mesmo assim, `toast.error("Staff/admin não pode ser contratante")` e não avança.
-- Excluir `eu@queroarmas.com.br` da lista de candidatos.
+### 2. Catálogo de links por estado (novo)
 
-### 2. Passo 3 — Composição sempre visível
+Arquivo novo: `src/lib/quero-armas/linksAntecedentesPorUf.ts`
 
-- Renderizar o bloco "Composição do valor final" também em `itens_separados`, listando: `servico_qa`, extras (com natureza atual), custos embutidos, e total derivado.
-- Adicionar taxonomia oficial na criação/edição de extras: `servico_qa`, `gru_taxa_gov`, `exame_laudo`, `clube_estande`, `despesa_operacional`, `deslocamento`, `custo_financeiro_adquirente`, `outro`. Migrar labels antigos por mapping compatível.
-- Se soma da composição ≠ `valor_total_pago_cliente` em pacote fechado, banner vermelho e botão "Criar venda" desabilitado (já parcialmente feito → reforçar tolerância de 0.01 e mensagem).
+Tabela em memória com, para cada UF:
 
-### 3. Passo 5 — Resumo do parcelamento
+- `policiaCivil` (URL do atestado de antecedentes da PC)
+- `tj` (portal de certidões do Tribunal de Justiça)
+- `tjm` (quando existir — hoje só SP, MG, RS)
+- `trfRegional` (TRF1..TRF6 conforme UF)
 
-- Campos calculados abaixo do input `valor bruto`:
-  - `Parcela: R$ X × N`
-  - `Total parcelado: R$ Y`
-  - `Diferença vs. composição: R$ Z` (destacado se ≥ 0.01)
-- Adquirente vira `Select` com opções: Stone, Rede, Cielo, Asaas, Outra (input texto quando "Outra").
+Fallback nacional para UFs sem entrada específica: STM / TSE / JF (federais são iguais em todo o Brasil).
 
-### 4. Política de notificação — motivo obrigatório
+### 3. `pendenciasExplicacoes.ts` — passa a receber contexto
 
-- No `NotificacaoPolicyPicker`, quando `notificar === false`, tornar `motivo` obrigatório (mínimo 10 caracteres) e validar antes de disparar cada ação (pagamento, upload, arquivar, reprocessar).
-- Passar a política escolhida para `logPilotoEvento` em cada ação.
+Cada entrada de antecedente estadual (`certidao_antecedentes_criminais_estadual`, `certidao_antecedentes_policia_civil_sp`, `certidao_tjsp_distribuicao_criminal`, `certidao_tjsp_execucoes_criminais`, `certidao_federal_trf3_regional`, `certidao_federal_trf3_sjsp_jef`, `certidao_criminal_tjmsp`) vira uma função `(ctx: { uf, municipio }) => Explicacao` que:
 
-### 5. Lista de pilotos — smoke fora de "em andamento"
+- Reescreve o `titulo` com o estado ("Antecedentes criminais — TJ<UF>").
+- Substitui o passo do portal pelo TJ/PC correto da UF do cliente.
+- Devolve `linkEmissao` sobrescrito com o link do catálogo por UF.
 
-- Na query da aba "Em andamento", adicionar filtro: `.not("motivo_arquivamento", "ilike", "%SMOKE%")` e excluir vendas com `origem_venda ILIKE 'piloto_real_smoke%'`.
-- Backfill: rodar script que arquiva vendas de smoke pendentes (opcional, apenas se o usuário confirmar).
+`QAClientePortalPage.tsx` passa a passar `ctx` ao montar cada item do popup guiado; se o UF não existir, mantém o texto genérico atual (nada quebra).
 
-### 6. Auditoria complementar
+### 4. Recomendação por raio de 25 km (psicólogos e instrutores)
 
-- Emitir `logPilotoEvento` em pontos hoje não instrumentados:
-  - `cliente_selecionado_bloqueado_staff` (quando tentativa é rejeitada)
-  - `composicao_editada` (cada alteração de extras)
-  - `politica_notificacao_definida` (para cada uma das 4 ações)
+Arquivo novo: `src/lib/quero-armas/credenciadosProximos.ts`
 
-### 7. Deliverable — mapa de campos
+- Função `buscarCredenciadosProximos({ lat, lng, raioKm = 25 })`.
+- Query em `qa_psico_credenciados` e `qa_iat_credenciados`: filtra `lat/lng` não nulos, calcula distância Haversine no cliente (as tabelas já têm as colunas), ordena por distância e devolve top 10 de cada com `{ id, nome, uf, cidade, endereco, telefone, distancia_km }`.
+- **Não filtra por UF** — o raio pode cruzar fronteiras estaduais e o cliente pode escolher qualquer um.
 
-Ao final, respondo com um mapa "onde cada campo aparece":
+### 5. UI — modal "Agendar exame" / seleção de credenciados
 
-```text
-Passo 1 · Cliente Real            → busca + card + badge STAFF
-Passo 2 · Serviços do Pacote      → serviço principal + itens extras (tabela)
-Passo 3 · Modo do Contrato        → radio itens/pacote
-        · Valor Final Pacote      → input valor_total_pago_cliente
-        · Composição do Valor     → tabela editável (sempre visível)
-        · Tipo de Diferença       → radio ajuste × custo financeiro
-        · Custos Operacionais     → tabela GRU/exame/clube/desloc/outro
-Passo 4 · Aprovar Valor           → botão RPC
-Passo 5 · Pagamento Manual        → forma, parcelas, adquirente (select),
-                                    valor bruto, resumo parcelamento,
-                                    comprovante, NotificacaoPolicyPicker
-Passo 6 · Contrato + Upload       → link contrato, upload assinado,
-                                    NotificacaoPolicyPicker
-Ações · Arquivar / Reprocessar    → picker de notificação com motivo obrig.
-Topo   · Smoke test               → botão isolado; nunca escreve nos states do wizard
-```
+`src/pages/quero-armas/` (página existente `/area-do-cliente/agendar-exame`):
 
-## Escopo intencionalmente fora deste plano
+- Passa a abrir já com o resultado de `buscarCredenciadosProximos` do endereço do cliente.
+- Cabeçalho: banner discreto "Recomendados até 25 km do seu endereço — você pode escolher qualquer credenciado do Brasil".
+- Aba/toggle "Ver todos do Brasil" ou busca por CEP/cidade para trocar o centro do raio.
+- Cada card mostra distância ("12 km"). Sem bloqueio por UF.
 
-- Reescrita do `NotificacaoPolicyPicker` para suportar WhatsApp real (hoje já grava `whatsapp_preparado`).
-- Migração de dados históricos de smokes antigos (só se pedido).
-- Alterações no Edge Function `qa-checkout-criar-venda` (já corrigido na conversa anterior).
+### 6. Circunscrição PF explícita no portal
+
+`ClienteResumoKanban.tsx` (ou card equivalente do dossiê) ganha uma linha "Delegacia responsável: **DELEMAF/SP** — resolvida via `qa_circunscricoes_pf` a partir do município do comprovante". Só leitura, sem interação.
+
+### 7. Registro em memória (`mem://`)
+
+Nova memória `mem://features/quero-armas/localizacao-motor-endereco.md` documentando:
+- Prioridade de fonte (cadastro > comprovante > CEP).
+- Que links estaduais são derivados da UF, nunca hardcoded para SP.
+- Raio de 25 km é sugestão, não trava.
+
+## Detalhes técnicos
+
+- Nenhuma migration: `qa_psico_credenciados` e `qa_iat_credenciados` já têm `lat/lng`; `qa_circunscricoes_pf` já mapeia UF/município → unidade.
+- Haversine roda no cliente (poucas centenas de linhas). Se virar gargalo, migramos para RPC PostGIS depois — fora deste escopo.
+- Nenhum comportamento existente quebra: se o UF do cliente for desconhecido, o popup guiado mantém o texto atual (SP como fallback dos que hoje já são SP-específicos vira "genérico com placeholder do estado").
+- Sem mudança em RLS, edge functions ou schema.
+
+## Fora do escopo
+
+- Sincronizar credenciados novos (job de sync já existe).
+- Agendamento automático com os credenciados.
+- Cálculo de distância server-side (fica em backlog).
