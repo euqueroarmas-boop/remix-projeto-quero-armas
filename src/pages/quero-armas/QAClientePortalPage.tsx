@@ -2493,13 +2493,13 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2 text-[14px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2.5 text-[16px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}00 100%)`,
                   borderLeftColor: sidebarTheme.accent,
                 } : undefined}
               >
-                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
+                <Icon className="h-6 w-6 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
