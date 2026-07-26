@@ -287,6 +287,7 @@ export default function QAClientePortalPage() {
   const [uploadingPendingSignature, setUploadingPendingSignature] = useState<PendingSignatureDoc["kind"] | null>(null);
   const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
+  const [pendenciasGuiadasDismissed, setPendenciasGuiadasDismissed] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
     | "resumo"
