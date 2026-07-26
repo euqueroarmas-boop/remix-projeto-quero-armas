@@ -2406,13 +2406,13 @@ export default function QAClientePortalPage() {
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div
-                    className="text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
+                    className="text-[16px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
                     style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[11px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
+                    className="text-[14px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
                     style={{ fontFamily: "Rajdhani, Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
