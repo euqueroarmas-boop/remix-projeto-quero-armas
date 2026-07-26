@@ -1,0 +1,3 @@
+INSERT INTO qa_servicos_documentos (servico_id, tipo_documento, nome_documento, etapa, obrigatorio, validade_dias, formato_aceito, link_emissao, ordem, ativo, escopo, emissor, instrucoes)
+VALUES (60, 'certidao_crimes_militares_stm', 'Certidão de Crimes Militares — STM (Justiça Militar da União)', 'base', true, 90, ARRAY['pdf','jpg','jpeg','png'], 'https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao-negativa', 55, true, 'processo', 'cliente', 'Emita a certidão no site do STM (Superior Tribunal Militar). Selecione Pessoa Física, informe CPF e nome da mãe exatamente como no documento, e baixe o PDF sem alterar a assinatura digital.')
+ON CONFLICT DO NOTHING;
