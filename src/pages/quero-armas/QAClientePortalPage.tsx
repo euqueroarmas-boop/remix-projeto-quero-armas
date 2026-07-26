@@ -2329,7 +2329,7 @@ export default function QAClientePortalPage() {
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
             aria-hidden
-            className="relative w-full h-[120px] overflow-hidden shrink-0"
+            className="relative w-full h-[100px] overflow-hidden shrink-0"
             style={
               sidebarTheme.heroEmpty
                 ? { background: "transparent" }
@@ -2369,8 +2369,8 @@ export default function QAClientePortalPage() {
                   aria-label="Atalhos rápidos da Quero Armas"
                   className={
                     (isHero
-                      ? "relative flex items-center px-4 pt-2 pb-2 gap-2.5 mt-1"
-                      : `flex items-center px-4 py-3 ${effectiveCollapsed ? "justify-center" : "gap-2.5"} mt-2`) +
+                      ? "relative flex items-center px-4 pt-2 pb-1.5 gap-2.5 -mt-2"
+                      : `flex items-center px-4 py-2 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
                     " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
                     (brandMenuOpen ? " translate-y-[3px]" : "")
                   }
@@ -2483,7 +2483,7 @@ export default function QAClientePortalPage() {
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");

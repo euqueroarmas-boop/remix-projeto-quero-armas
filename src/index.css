@@ -231,3 +231,12 @@
 .qa-inline-contract-prose li {
   margin: 5px 0;
 }
+
+/* Scrollbar invisível em containers que precisam de scroll sem barra visual */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
