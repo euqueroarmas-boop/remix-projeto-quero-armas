@@ -248,7 +248,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_criminal_tjmsp: {
     titulo: "Tribunal de Justiça Militar — TJMSP",
     passos: [
-      "Clique em \"Acessar site de emissão\" logo abaixo — abre o portal do TJMSP (www.tjmsp.jus.br).",
+      "Clique em \"Acessar site de emissão\" logo abaixo — abre o portal direto de certidão criminal do TJMSP (https://certidaocriminal.tjmsp.jus.br/)."
       "No menu superior, clique em \"Serviços\" e depois em \"Certidões\".",
       "Escolha \"Certidão Negativa Criminal\" (também aparece como \"Nada Consta\").",
       "Em \"Tipo de pessoa\", marque \"Física\".",
