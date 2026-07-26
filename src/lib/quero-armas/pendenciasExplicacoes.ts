@@ -233,7 +233,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
   certidao_crimes_militares_stm: {
-    titulo: "Justiça Militar da União — STM",
+    titulo: "Superior Tribunal Militar — STM",
     passos: [
       "Clique em \"Acessar site de emissão\" (abre https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao) ou copie o endereço no navegador.",
       "Na página do STM, clique em \"Emitir Certidão Negativa\".",
