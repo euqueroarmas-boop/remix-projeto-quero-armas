@@ -468,7 +468,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
   },
   antecedentes_federal: {
-    titulo: "Antecedentes federais — Justiça Federal",
+    titulo: "Antecedentes federais — Tribunal Regional Federal",
     passos: [
       "Abra o portal da Justiça Federal da sua região (em SP, é o TRF3) pelo botão \"Acessar site de emissão\".",
       "Clique em \"Serviços\" → \"Certidões\" → \"Certidão de Distribuição Criminal\".",
