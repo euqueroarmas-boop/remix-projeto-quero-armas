@@ -2483,7 +2483,7 @@ export default function QAClientePortalPage() {
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
