@@ -2493,13 +2493,13 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2 text-[14px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
+                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2.5 text-[16px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
                 style={active ? {
                   background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}00 100%)`,
                   borderLeftColor: sidebarTheme.accent,
                 } : undefined}
               >
-                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
+                <Icon className="h-6 w-6 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
@@ -2516,7 +2516,7 @@ export default function QAClientePortalPage() {
               title="WhatsApp +55 11 97848-1919"
               className="w-10 h-10 rounded-md flex items-center justify-center bg-[#1CC355] hover:bg-[#19B14C] text-white transition"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-5 w-5" />
             </a>
             <button
               type="button"
@@ -2524,20 +2524,20 @@ export default function QAClientePortalPage() {
               title="Sair"
               className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
         ) : (
           <div className="mx-3.5 mb-2.5 pt-2.5 border-t border-white/15">
             <div className="mb-1.5">
               <div
-                className="text-[12px] font-bold text-white"
+                className="text-[13px] font-bold text-white"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
               >
                 Precisa de ajuda?
               </div>
               <div
-                className="text-[10.5px] text-[#E6DFCE]"
+                className="text-[11.5px] text-[#E6DFCE]"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
               >
                 Atendimento direto pelo WhatsApp
@@ -2547,17 +2547,17 @@ export default function QAClientePortalPage() {
               href="https://wa.me/5511978481919"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[11.5px] font-semibold transition"
+              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[13px] font-semibold transition"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-4 w-4" />
               +55 11 97848-1919
             </a>
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
+              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[11px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
             >
-              <LogOut className="h-3 w-3" /> Sair
+              <LogOut className="h-3.5 w-3.5" /> Sair
             </button>
           </div>
         )}
