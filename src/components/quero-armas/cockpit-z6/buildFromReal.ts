@@ -139,18 +139,23 @@ function buildProcessoCard(args: {
   detalhado: boolean;
 }): CockpitZ6Process {
   const { proc, docs, eventos, detalhado } = args;
+  const bloqueado = proc?._bloqueadoPrerequisito === true;
   const docsObrig = docs.filter((d) => d.obrigatorio !== false);
   const docsAprov = docsObrig.filter((d) => String(d.status || "").toLowerCase() === "aprovado");
   const totalObrig = docsObrig.length || 1;
   const progressoPct = Math.round((docsAprov.length / totalObrig) * 100);
 
-  const { badge, tone } = badgeForStatus(proc.status);
+  const { badge, tone } = bloqueado
+    ? { badge: "AGUARDANDO PRÉ-REQUISITO", tone: "gray" as CockpitZ6Process["badgeTone"] }
+    : badgeForStatus(proc.status);
 
   // Etapa atual: a etapa do primeiro doc pendente/em_analise; fallback para o status
   const docsAbertos = docs.filter((d) => !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
   const etapasAbertas = Array.from(new Set(docsAbertos.map((d) => String(d.etapa || "").trim()).filter(Boolean)));
   let etapaAtual = (etapasAbertas[0] || "").toUpperCase();
-  if (!etapaAtual) {
+  if (bloqueado) {
+    etapaAtual = "AGUARDANDO PRÉ-REQUISITO";
+  } else if (!etapaAtual) {
     const s = String(proc.status || "").toLowerCase();
     etapaAtual = s === "protocolado" ? "ANÁLISE PF"
       : s === "pronto_para_protocolar" ? "PROTOCOLO"
@@ -186,9 +191,11 @@ function buildProcessoCard(args: {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
       checklist: checklistFromDocs(docs),
-      proximoPasso: docsAbertos.length
-        ? `${docsAbertos.length} documento(s) pendente(s). Conclua a etapa atual para liberar a próxima.`
-        : "Aguardando ação da equipe Quero Armas.",
+      proximoPasso: bloqueado
+        ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
+        : docsAbertos.length
+          ? `${docsAbertos.length} documento(s) pendente(s). Conclua a etapa atual para liberar a próxima.`
+          : "Aguardando ação da equipe Quero Armas.",
     };
   } else {
     base.compacto = {
@@ -228,7 +235,7 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   });
 
   // 2) KPIs humanos derivados do estado real
-  const comVoce = processos.filter((p) => ["aguardando_pagamento", "aguardando_assinatura", "aguardando_documentos"].includes(String(p.status || "").toLowerCase())).length;
+  const comVoce = processos.filter((p) => !p?._bloqueadoPrerequisito && ["aguardando_pagamento", "aguardando_assinatura", "aguardando_documentos"].includes(String(p.status || "").toLowerCase())).length;
   const comEquipe = processos.filter((p) => ["pronto_para_protocolar"].includes(String(p.status || "").toLowerCase())).length;
   const naPF = processos.filter((p) => String(p.status || "").toLowerCase() === "protocolado").length;
   const concluidos = processos.filter((p) => ["concluido","deferido","finalizado"].includes(String(p.status || "").toLowerCase())).length;
@@ -288,9 +295,12 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
 
   // 3) Foco do dia: prioriza pagamento → assinatura → documento pendente
   let focoDoDia: CockpitZ6FocoDoDia | null = null;
-  const procPagamento = processos.find((p) => String(p.status).toLowerCase() === "aguardando_pagamento");
-  const procAssinatura = processos.find((p) => String(p.status).toLowerCase() === "aguardando_assinatura");
-  const procDocs = processos.find((p) => String(p.status).toLowerCase() === "aguardando_documentos");
+  // Foco do dia respeita a ordem operacional do pacote e ignora processos
+  // bloqueados por pré-requisito.
+  const focoCandidates = processos.filter((p) => !p?._bloqueadoPrerequisito);
+  const procPagamento = focoCandidates.find((p) => String(p.status).toLowerCase() === "aguardando_pagamento");
+  const procAssinatura = focoCandidates.find((p) => String(p.status).toLowerCase() === "aguardando_assinatura");
+  const procDocs = focoCandidates.find((p) => String(p.status).toLowerCase() === "aguardando_documentos");
   if (procPagamento) {
     focoDoDia = {
       titulo: `Pagamento pendente — ${formatServicoNome(procPagamento.servico_nome || "Processo")}`,
