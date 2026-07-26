@@ -1931,7 +1931,7 @@ export default function QAClientePortalPage() {
     setEntradaAutoChecked(true);
 
     if (portalStartupAction.type === "contrato") {
-      setShowContratoPopup(true);
+      abrirPendenciasGuiadas();
       return;
     }
 
@@ -1977,22 +1977,24 @@ export default function QAClientePortalPage() {
   // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
   // pendências, deve rodar o tempo todo até a pendência ser sanada".
   // Só reabre quando nenhum outro fluxo bloqueante está ativo (Hub Documental,
-  // Checklist Guiado, modal de cadastro).
+  // Checklist Guiado, modal de cadastro) e quando o usuário não dispensou o
+  // popup na sessão atual (clicou no X ou fora da janela).
   useEffect(() => {
     if (!pendingContractsLoaded) return;
     if (pendenciasGuiadasCount <= 0) return;
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
-    setShowContratoPopup(true);
-  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal]);
+    if (pendenciasGuiadasDismissed) return;
+    abrirPendenciasGuiadas();
+  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, pendenciasGuiadasDismissed]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
   useEffect(() => {
     const handler = () => {
       if (pendenciasGuiadasCount > 0) {
-        setShowContratoPopup(true);
+        abrirPendenciasGuiadas();
       } else {
         setActiveSection("documentos");
       }
@@ -2005,12 +2007,11 @@ export default function QAClientePortalPage() {
   // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
   // agora abrem o PendenciasGuiadasPopup unificado. Ao receber um `focusDocId`,
   // marcamos a pendência correspondente (`doc:<id>`) como pinada para o popup
-  // saltar direto para ela.
+  // saltar direto para ela. Reabrir por ação manual limpa o status de dispensado.
   useEffect(() => {
     const off = onAbrirChecklistGuiado((payload) => {
       const focus = payload?.focusDocId ? `doc:${payload.focusDocId}` : null;
-      setPinnedPendenciaId(focus);
-      setShowContratoPopup(true);
+      abrirPendenciasGuiadas({ pinnedId: focus });
     });
     return off;
   }, []);
@@ -3414,7 +3415,7 @@ export default function QAClientePortalPage() {
         pendencias={pendenciasGuiadas}
         pinnedId={pinnedPendenciaId}
         ufCliente={(cliente as any)?.estado ?? null}
-        onDismiss={() => { setShowContratoPopup(false); setPinnedPendenciaId(null); }}
+        onDismiss={dismissPendenciasGuiadas}
       />
     </div>
     </PortalFilterProvider>
