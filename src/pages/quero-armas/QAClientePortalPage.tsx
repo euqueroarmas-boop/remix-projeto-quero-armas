@@ -1293,6 +1293,10 @@ export default function QAClientePortalPage() {
       console.log("[PortalNav] section click", key);
     }
     setActiveSection(key);
+    // No mobile (< lg), fecha o menu automaticamente após escolher uma opção
+    if (isBelowLg) {
+      setSidebarCollapsed(true);
+    }
     // Não usar navigate(): rotas internas como /area-do-cliente/arsenal não existem
     // e o catch-all do router devolveria para "/". Mantemos a URL em /area-do-cliente.
   };
