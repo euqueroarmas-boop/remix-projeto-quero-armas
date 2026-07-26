@@ -192,6 +192,16 @@ export function isDocumentoIdentificacao10Anos(tipo?: string | null): boolean {
 }
 
 /**
+ * Procuração (assinada ou não): validade padrão de 12 meses a partir da
+ * emissão. Regra oficial Quero Armas — permite reaproveitamento entre
+ * processos enquanto vigente no Hub Documental.
+ */
+export function isProcuracao(tipo?: string | null): boolean {
+  const t = String(tipo ?? "").toLowerCase();
+  return t === "procuracao" || t === "procuracao_assinada";
+}
+
+/**
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
  */
@@ -212,6 +222,10 @@ export function calcularValidadeEfetiva(
   }
   if (isDocumentoIdentificacao10Anos(tipo)) {
     return toISO(addCalendarMonths(emi, 120));
+  }
+  if (isProcuracao(tipo)) {
+    // Procuração: 12 meses a partir da emissão (padrão parametrizável).
+    return toISO(addCalendarMonths(emi, 12));
   }
   // Comprovante de residência: vale de uma emissão até a próxima (1 mês).
   const tipoStr = String(tipo || "").toLowerCase();

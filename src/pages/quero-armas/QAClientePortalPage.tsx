@@ -2084,7 +2084,7 @@ export default function QAClientePortalPage() {
         if (qaClienteUuid) {
           const { data: hubDocs } = await supabase
             .from("qa_documentos_cliente" as any)
-            .select("id, tipo_documento, numero_documento, status, metadados_documento_json")
+            .select("id, tipo_documento, numero_documento, status, metadados_documento_json, data_emissao, data_validade_efetiva, data_validade")
             .eq("qa_cliente_id", qaClienteUuid)
             .in("tipo_documento", ["contrato_assinado", "procuracao_assinada"])
             .in("status", ["pendente_aprovacao", "aprovado"]);
@@ -2105,12 +2105,33 @@ export default function QAClientePortalPage() {
         };
 
         const procuracoesArr = ((procuracoes ?? []) as any[]);
+        // Reaproveitamento: procuração aprovada e VIGENTE no Hub cobre
+        // novas exigências de procuração de qualquer processo do cliente.
+        // Regra oficial: procuração vale 12 meses a partir da emissão
+        // (ver src/lib/quero-armas/validadeDocumento.ts → isProcuracao).
+        const temProcuracaoVigenteNoHub = hubProcuracoes.some((h) => {
+          try {
+            const info = getValidadeInfo({
+              tipo_documento: "procuracao_assinada",
+              data_emissao: h.data_emissao ?? null,
+              data_validade_efetiva: h.data_validade_efetiva ?? null,
+              data_validade: h.data_validade ?? null,
+            });
+            // Aprovada + vigente OU aprovada sem data (fallback conservador).
+            if (h.status !== "aprovado") return false;
+            if (info.status === "vencido") return false;
+            return true;
+          } catch { return false; }
+        });
         const procFulfilled = (p: any) => {
           // 1) match direto por procuracao_id no metadata
           if (hubProcuracoes.some((h) => String(h.metadados_documento_json?.procuracao_id ?? "") === String(p.id))) return true;
           // 2) match por venda_id no metadata
           if (p.venda_id && hubProcuracoes.some((h) => String(h.metadados_documento_json?.venda_id ?? "") === String(p.venda_id))) return true;
-          // 3) fallback: existe pelo menos uma procuração assinada no Hub e
+          // 3) Reaproveitamento: procuração aprovada e vigente no Hub cobre
+          //    novas exigências, mesmo entre processos distintos.
+          if (temProcuracaoVigenteNoHub) return true;
+          // 4) Fallback histórico: existe procuração assinada no Hub e
           //    apenas uma procuração pendente — trata como cumprida.
           if (hubProcuracoes.length > 0 && procuracoesArr.length === 1) return true;
           return false;
