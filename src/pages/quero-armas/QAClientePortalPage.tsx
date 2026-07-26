@@ -2531,13 +2531,13 @@ export default function QAClientePortalPage() {
           <div className="mx-3.5 mb-2.5 pt-2.5 border-t border-white/15">
             <div className="mb-1.5">
               <div
-                className="text-[12px] font-bold text-white"
+                className="text-[13px] font-bold text-white"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
               >
                 Precisa de ajuda?
               </div>
               <div
-                className="text-[10.5px] text-[#E6DFCE]"
+                className="text-[11.5px] text-[#E6DFCE]"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
               >
                 Atendimento direto pelo WhatsApp
@@ -2547,17 +2547,17 @@ export default function QAClientePortalPage() {
               href="https://wa.me/5511978481919"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[11.5px] font-semibold transition"
+              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[13px] font-semibold transition"
             >
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-4 w-4" />
               +55 11 97848-1919
             </a>
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
+              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[11px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
             >
-              <LogOut className="h-3 w-3" /> Sair
+              <LogOut className="h-3.5 w-3.5" /> Sair
             </button>
           </div>
         )}
