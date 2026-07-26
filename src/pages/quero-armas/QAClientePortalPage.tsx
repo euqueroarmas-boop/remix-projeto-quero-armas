@@ -374,14 +374,33 @@ export default function QAClientePortalPage() {
   // Em tablet/celular (<lg), quando o menu está recolhido, ele some 100%
   // e fica apenas uma seta colada no canto esquerdo da tela.
   const mobileHidden = sidebarCollapsed && isBelowLg;
-  // Lock body scroll on mobile when drawer is open — evita barra de rolagem
-  // visível atrás da sidebar em mobile.
+  // Lock total do viewport no mobile quando drawer está aberto — evita rolagem
+  // do body/html e qualquer “bounce” visual em smartphone.
   useEffect(() => {
     if (!isBelowLg) return;
     if (!mobileHidden) {
+      const scrollY = window.scrollY;
+      const html = document.documentElement;
       const prev = document.body.style.overflow;
+      const prevHtmlOverflow = html.style.overflow;
+      const prevBodyPosition = document.body.style.position;
+      const prevBodyTop = document.body.style.top;
+      const prevBodyWidth = document.body.style.width;
+      html.classList.add("qa-mobile-drawer-open");
+      html.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = prev; };
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      return () => {
+        html.classList.remove("qa-mobile-drawer-open");
+        html.style.overflow = prevHtmlOverflow;
+        document.body.style.overflow = prev;
+        document.body.style.position = prevBodyPosition;
+        document.body.style.top = prevBodyTop;
+        document.body.style.width = prevBodyWidth;
+        window.scrollTo(0, scrollY);
+      };
     }
   }, [mobileHidden, isBelowLg]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
@@ -2314,8 +2333,8 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
-        className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[260px] lg:max-w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
-        style={{ background: sidebarTheme.bg, overscrollBehavior: "contain" }}
+        className={`qa-client-mobile-drawer flex fixed inset-0 lg:inset-y-0 lg:right-auto left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 overflow-hidden ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[260px] lg:max-w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
+        style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Botão X — fechar drawer, visível apenas <lg quando aberto */}
@@ -2493,7 +2512,7 @@ export default function QAClientePortalPage() {
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14 lg:mt-0" style={{ overscrollBehavior: "contain", touchAction: "pan-y" }}>
+        <nav className="qa-client-mobile-nav flex-1 overflow-hidden lg:overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14 lg:mt-0" style={{ overscrollBehavior: "none", touchAction: isBelowLg ? "none" : "pan-y" }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
