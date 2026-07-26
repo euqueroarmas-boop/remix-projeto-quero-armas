@@ -2369,9 +2369,9 @@ export default function QAClientePortalPage() {
                   aria-label="Atalhos rápidos da Quero Armas"
                   className={
                     (isHero
-                      ? "relative flex items-center px-4 pt-3 pb-2.5 gap-2.5"
-                      : `flex items-center px-4 py-5 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
-                    " mt-24 group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
+                      ? "relative flex items-center px-4 pt-2 pb-2 gap-2.5 mt-1"
+                      : `flex items-center px-4 py-3 ${effectiveCollapsed ? "justify-center" : "gap-2.5"} mt-2`) +
+                    " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
                     (brandMenuOpen ? " translate-y-[3px]" : "")
                   }
                 >
