@@ -11463,6 +11463,7 @@ export type Database = {
           categoria: string
           created_at: string
           id: string
+          is_teste: boolean
           link: string
           mensagem: string
           titulo: string
