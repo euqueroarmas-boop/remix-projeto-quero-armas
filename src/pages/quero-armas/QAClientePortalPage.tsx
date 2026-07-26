@@ -2315,7 +2315,7 @@ export default function QAClientePortalPage() {
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
         className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[260px] lg:max-w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
-        style={{ background: sidebarTheme.bg }}
+        style={{ background: sidebarTheme.bg, overscrollBehavior: "contain" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Botão X — fechar drawer, visível apenas <lg quando aberto */}
