@@ -361,11 +361,17 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         .z6-root .z6-item .z6-d{font-size:9px;color:#7A7A7A;margin-top:1px}
         .z6-root .z6-step-row .z6-seg{flex:1;height:2px;margin:0 -8px}
         @media (max-width: 900px){ .z6-root .z6-proc-grid{grid-template-columns:1fr} .z6-root .z6-proc-left{border-right:0;border-bottom:1px solid #ECECEC;padding-right:0;padding-bottom:16px} }
+        /* Em mobile, o botão hambúrguer flutua no topo-esquerdo do layout.
+           Damos folga no h1 e no título do FOCO DO DIA para não sobrepor. */
+        @media (max-width: 640px){
+          .z6-root .z6-title{padding-left:44px}
+          .z6-root .z6-foco-body{padding-left:36px}
+        }
       `}</style>
 
       {/* HEADER cliente-centric */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+        <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
         <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
@@ -379,7 +385,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
       {focoDoDia && (
         <Card style={{ marginBottom: 16, borderLeft: "3px solid #D9342B" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ minWidth: 0 }}>
+            <div className="z6-foco-body" style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
               <div style={{ fontFamily: "Georgia,'Times New Roman',serif", fontSize: 26, lineHeight: 1.1, marginTop: 10, fontWeight: 700, letterSpacing: "-.015em", color: "#0c0c0c" }}>{focoDoDia.titulo}</div>
               <div style={{ fontFamily: "Arial,sans-serif", fontSize: 13, color: "#5a5a5a", marginTop: 6 }}>{focoDoDia.descricao}</div>

@@ -165,7 +165,22 @@ function buildProcessoCard(args: {
   }
 
   const previsao = proc.prazo_critico_data || proc.etapa_liberada_ate;
-  const diasEmAndamento = daysBetween(proc.data_criacao || proc.created_at);
+  // Contagem só começa quando o processo efetivamente inicia.
+  // Processos bloqueados por pré-requisito, aguardando pagamento ou
+  // aguardando assinatura ainda NÃO começaram — mostram 0 dias.
+  // Quando iniciam, contamos a partir do primeiro doc aprovado
+  // (fallback: liberado_em / data_criacao).
+  const statusLower = String(proc.status || "").toLowerCase();
+  const naoIniciado =
+    bloqueado ||
+    statusLower === "aguardando_pagamento" ||
+    statusLower === "aguardando_assinatura";
+  const inicioReal =
+    proc.primeiro_doc_aprovado_em ||
+    proc.liberado_em ||
+    proc.data_criacao ||
+    proc.created_at;
+  const diasEmAndamento = naoIniciado ? 0 : daysBetween(inicioReal);
 
   const servicoSlug = formatServicoNome(proc.servico_nome || "PROCESSO");
   const protocoloShort = String(proc.id || "").split("-")[0].toUpperCase();
