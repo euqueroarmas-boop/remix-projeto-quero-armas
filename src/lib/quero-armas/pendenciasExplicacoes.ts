@@ -193,7 +193,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 90 dias. Envie o PDF assinado digitalmente — reimpressões escaneadas são reprovadas pela IA.",
   },
   certidao_antecedentes_criminais_militar: {
-    titulo: "Antecedentes criminais — Justiça Militar",
+    titulo: "Superior Tribunal Militar — STM",
     passos: [
       "Abra o portal do STM (federal) ou TJM-SP (estadual) pelo botão \"Acessar site de emissão\", conforme o que a PF solicitou.",
       "Clique em \"Certidão Negativa\" no menu do topo.",
