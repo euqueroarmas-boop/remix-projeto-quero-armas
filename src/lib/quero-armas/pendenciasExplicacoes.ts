@@ -193,7 +193,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 90 dias. Envie o PDF assinado digitalmente — reimpressões escaneadas são reprovadas pela IA.",
   },
   certidao_antecedentes_criminais_militar: {
-    titulo: "Antecedentes criminais — Justiça Militar",
+    titulo: "Superior Tribunal Militar — STM",
     passos: [
       "Abra o portal do STM (federal) ou TJM-SP (estadual) pelo botão \"Acessar site de emissão\", conforme o que a PF solicitou.",
       "Clique em \"Certidão Negativa\" no menu do topo.",
@@ -233,7 +233,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
   certidao_crimes_militares_stm: {
-    titulo: "Justiça Militar da União — STM",
+    titulo: "Superior Tribunal Militar — STM",
     passos: [
       "Clique em \"Acessar site de emissão\" (abre https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao) ou copie o endereço no navegador.",
       "Na página do STM, clique em \"Emitir Certidão Negativa\".",
