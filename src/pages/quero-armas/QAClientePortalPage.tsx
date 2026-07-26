@@ -2315,7 +2315,7 @@ export default function QAClientePortalPage() {
       {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
       <aside
         className={`flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[260px] lg:max-w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
-        style={{ background: sidebarTheme.bg }}
+        style={{ background: sidebarTheme.bg, overscrollBehavior: "contain" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Botão X — fechar drawer, visível apenas <lg quando aberto */}
@@ -2493,7 +2493,7 @@ export default function QAClientePortalPage() {
             {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
 
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14 lg:mt-0" style={{ overscrollBehavior: "contain", touchAction: "pan-y" }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
