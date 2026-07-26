@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-  Bell, Loader2, CheckCircle2, Search, Plus, AlertTriangle, Info, RefreshCw,
+  Bell, Loader2, CheckCircle2, Search, Plus, AlertTriangle, Info, RefreshCw, Trash2,
 } from "lucide-react";
 
 type NotificacaoRow = {
@@ -19,6 +19,7 @@ type NotificacaoRow = {
   origem: "auto" | "manual";
   ativa: boolean;
   created_at: string;
+  expira_em: string | null;
   cliente_nome?: string;
 };
 
@@ -56,14 +57,19 @@ export default function QANotificacoesAdmin() {
   const [referenciaTipo, setReferenciaTipo] = useState<"nenhuma" | "processo" | "documento">("nenhuma");
   const [referenciaId, setReferenciaId] = useState<string>("");
   const [form, setForm] = useState({ titulo: "", mensagem: "", link: "", urgencia: "normal" as "urgente" | "normal" });
+  // Prazo de exibição: até que a exigência seja cumprida (padrão) ou por
+  // um período determinado (24h, 7d, 30d, data específica).
+  const [prazoTipo, setPrazoTipo] = useState<"ate_resolver" | "24h" | "7d" | "30d" | "data">("ate_resolver");
+  const [prazoData, setPrazoData] = useState<string>("");
   const [criando, setCriando] = useState(false);
+  const [excluindo, setExcluindo] = useState<string | null>(null);
 
   async function carregar() {
     setCarregando(true);
     try {
       const { data, error } = await supabase
         .from("qa_notificacoes_cliente" as any)
-        .select("id, cliente_id, categoria, urgencia, titulo, mensagem, link, origem, ativa, created_at")
+        .select("id, cliente_id, categoria, urgencia, titulo, mensagem, link, origem, ativa, created_at, expira_em")
         .eq("ativa", true)
         .order("created_at", { ascending: false })
         .limit(200);
@@ -127,6 +133,24 @@ export default function QANotificacoesAdmin() {
     }
   }
 
+  async function excluirNotificacao(id: string) {
+    if (!confirm("Excluir esta notificação de forma definitiva? Ela deixará de aparecer para o cliente imediatamente.")) return;
+    setExcluindo(id);
+    try {
+      const { error } = await supabase
+        .from("qa_notificacoes_cliente" as any)
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Notificação excluída");
+      setNotificacoes((prev) => prev.filter((n) => n.id !== id));
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir");
+    } finally {
+      setExcluindo(null);
+    }
+  }
+
   async function criarNotificacaoManual() {
     if (!clienteSelecionado) { toast.error("Selecione um cliente"); return; }
     if (!form.titulo.trim() || !form.mensagem.trim()) { toast.error("Título e mensagem são obrigatórios"); return; }
@@ -135,6 +159,15 @@ export default function QANotificacoesAdmin() {
       const refTabela = referenciaTipo === "processo" ? "qa_processos" : referenciaTipo === "documento" ? "qa_documentos_cliente" : null;
       const refId = referenciaTipo === "nenhuma" ? crypto.randomUUID() : referenciaId;
       if (referenciaTipo !== "nenhuma" && !referenciaId) { toast.error("Selecione o processo/documento de referência"); setCriando(false); return; }
+      let expira_em: string | null = null;
+      const agora = Date.now();
+      if (prazoTipo === "24h") expira_em = new Date(agora + 24 * 60 * 60 * 1000).toISOString();
+      else if (prazoTipo === "7d") expira_em = new Date(agora + 7 * 24 * 60 * 60 * 1000).toISOString();
+      else if (prazoTipo === "30d") expira_em = new Date(agora + 30 * 24 * 60 * 60 * 1000).toISOString();
+      else if (prazoTipo === "data") {
+        if (!prazoData) { toast.error("Escolha a data limite de exibição"); setCriando(false); return; }
+        expira_em = new Date(prazoData + "T23:59:59-03:00").toISOString();
+      }
       const { error } = await supabase.from("qa_notificacoes_cliente" as any).insert({
         cliente_id: clienteSelecionado.id,
         categoria: "custom",
@@ -146,6 +179,7 @@ export default function QANotificacoesAdmin() {
         referencia_id: refId,
         origem: "manual",
         ativa: true,
+        expira_em,
       });
       if (error) throw error;
       toast.success("Notificação criada — já aparece no portal do cliente");
@@ -154,6 +188,8 @@ export default function QANotificacoesAdmin() {
       setForm({ titulo: "", mensagem: "", link: "", urgencia: "normal" });
       setReferenciaTipo("nenhuma");
       setReferenciaId("");
+      setPrazoTipo("ate_resolver");
+      setPrazoData("");
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao criar notificação");
@@ -216,17 +252,31 @@ export default function QANotificacoesAdmin() {
                   </div>
                   <p className="text-[12px] font-medium mt-0.5" style={{ color: "hsl(220 20% 25%)" }}>{n.titulo}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{n.mensagem}</p>
-                  <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 70%)" }}>{fmt(n.created_at)}</p>
+                  <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 70%)" }}>
+                    Criada: {fmt(n.created_at)}
+                    {n.expira_em ? ` · Expira: ${fmt(n.expira_em)}` : " · Sem prazo (até resolver)"}
+                  </p>
                 </div>
-                <Button
-                  size="sm" variant="ghost"
-                  disabled={resolvendo === n.id}
-                  onClick={() => resolverManualmente(n.id)}
-                  className="text-[11px] gap-1 h-7 shrink-0 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
-                >
-                  {resolvendo === n.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                  Resolver
-                </Button>
+                <div className="flex flex-col gap-1 shrink-0">
+                  <Button
+                    size="sm" variant="ghost"
+                    disabled={resolvendo === n.id}
+                    onClick={() => resolverManualmente(n.id)}
+                    className="text-[11px] gap-1 h-7 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
+                  >
+                    {resolvendo === n.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                    Resolver
+                  </Button>
+                  <Button
+                    size="sm" variant="ghost"
+                    disabled={excluindo === n.id}
+                    onClick={() => excluirNotificacao(n.id)}
+                    className="text-[11px] gap-1 h-7 text-red-700 hover:text-red-800 hover:bg-red-50"
+                  >
+                    {excluindo === n.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                    Excluir
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -346,6 +396,38 @@ export default function QANotificacoesAdmin() {
               className="w-full rounded-lg border px-3 py-2 text-xs resize-y"
               style={{ borderColor: "hsl(220 13% 91%)" }}
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase">Prazo de exibição</Label>
+              <select
+                value={prazoTipo}
+                onChange={(e) => setPrazoTipo(e.target.value as any)}
+                className="h-9 w-full text-xs rounded-md border px-2 bg-white"
+                style={{ borderColor: "hsl(220 13% 91%)" }}
+              >
+                <option value="ate_resolver">Até que a exigência seja cumprida (padrão)</option>
+                <option value="24h">Por 24 horas</option>
+                <option value="7d">Por 7 dias</option>
+                <option value="30d">Por 30 dias</option>
+                <option value="data">Até data específica</option>
+              </select>
+              <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 62%)" }}>
+                Após o prazo, a notificação some do portal do cliente automaticamente.
+              </p>
+            </div>
+            {prazoTipo === "data" && (
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase">Data limite</Label>
+                <Input
+                  type="date"
+                  value={prazoData}
+                  onChange={(e) => setPrazoData(e.target.value)}
+                  className="h-9 text-xs"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end">
