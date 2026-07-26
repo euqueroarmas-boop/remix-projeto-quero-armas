@@ -92,7 +92,7 @@ const CATALOGO: Record<string, LinksAntecedentesUf> = {
   RO: { uf: "RO", tj: "https://webapp.tjro.jus.br/certidao/pages/certidao/emissaoCertidao.xhtml", policiaCivil: "https://www.pc.ro.gov.br/" },
   RR: { uf: "RR", tj: "https://certidao.tjrr.jus.br/", policiaCivil: "https://www.pc.rr.gov.br/" },
   SC: { uf: "SC", tj: "https://esaj.tjsc.jus.br/sco/abrirCadastro.do", policiaCivil: "https://www.pc.sc.gov.br/servicos/atestado-de-antecedentes" },
-  SP: { uf: "SP", tj: "https://esaj.tjsp.jus.br/sco/abrirCadastro.do", policiaCivil: "https://www.ssp.sp.gov.br/servicos/atestado-de-antecedentes-criminais", tjm: "https://www.tjmsp.jus.br/portal/" },
+  SP: { uf: "SP", tj: "https://esaj.tjsp.jus.br/sco/abrirCadastro.do", policiaCivil: "https://www.ssp.sp.gov.br/servicos/atestado-de-antecedentes-criminais", tjm: "https://certidaocriminal.tjmsp.jus.br/" },
   SE: { uf: "SE", tj: "https://www.tjse.jus.br/portal/servicos/certidoes-1", policiaCivil: "https://www.ssp.se.gov.br/" },
   TO: { uf: "TO", tj: "https://wwa.tjto.jus.br/certidaonada/", policiaCivil: "https://www.policiacivil.to.gov.br/" },
 };
