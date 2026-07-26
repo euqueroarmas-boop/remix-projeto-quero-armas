@@ -2360,7 +2360,7 @@ export default function QAClientePortalPage() {
         {/* ── Brand: avatar + ARSENAL INTELIGENTE / ÁREA DO CLIENTE ── */}
         {(() => {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
-          const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
+          const avatarSizeCls = isHero ? "w-16 h-16" : "w-14 h-14";
           return (
             <DropdownMenu open={brandMenuOpen} onOpenChange={setBrandMenuOpen}>
               <DropdownMenuTrigger asChild>
