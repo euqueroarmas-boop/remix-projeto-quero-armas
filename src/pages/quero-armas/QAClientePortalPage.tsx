@@ -2324,9 +2324,9 @@ export default function QAClientePortalPage() {
             type="button"
             onClick={() => setSidebarCollapsed(true)}
             aria-label="Fechar menu"
-            className="lg:hidden absolute top-3 right-3 z-[60] w-10 h-10 rounded-full bg-white text-black shadow-lg hover:bg-slate-100 flex items-center justify-center"
+            className="lg:hidden absolute top-3 right-3 z-[60] w-[30px] h-[30px] rounded-full bg-white text-black shadow-lg hover:bg-slate-100 flex items-center justify-center"
           >
-            <X className="h-5 w-5" strokeWidth={2.5} />
+            <X className="h-4 w-4" strokeWidth={2.5} />
           </button>
         )}
         {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
