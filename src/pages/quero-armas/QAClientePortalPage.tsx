@@ -2329,7 +2329,7 @@ export default function QAClientePortalPage() {
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
             aria-hidden
-            className="relative w-full h-[160px] overflow-hidden shrink-0"
+            className="relative w-full h-[120px] overflow-hidden shrink-0"
             style={
               sidebarTheme.heroEmpty
                 ? { background: "transparent" }
@@ -2360,7 +2360,7 @@ export default function QAClientePortalPage() {
         {/* ── Brand: avatar + ARSENAL INTELIGENTE / ÁREA DO CLIENTE ── */}
         {(() => {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
-          const avatarSizeCls = isHero ? "w-16 h-16" : "w-12 h-12";
+          const avatarSizeCls = isHero ? "w-16 h-16" : "w-14 h-14";
           return (
             <DropdownMenu open={brandMenuOpen} onOpenChange={setBrandMenuOpen}>
               <DropdownMenuTrigger asChild>
@@ -2369,9 +2369,9 @@ export default function QAClientePortalPage() {
                   aria-label="Atalhos rápidos da Quero Armas"
                   className={
                     (isHero
-                      ? "relative flex items-center px-4 pt-3 pb-2.5 gap-2.5"
-                      : `flex items-center px-4 py-5 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
-                    " mt-24 group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
+                      ? "relative flex items-center px-4 pt-2 pb-2 gap-2.5 mt-1"
+                      : `flex items-center px-4 py-3 ${effectiveCollapsed ? "justify-center" : "gap-2.5"} mt-2`) +
+                    " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
                     (brandMenuOpen ? " translate-y-[3px]" : "")
                   }
                 >
@@ -2395,7 +2395,7 @@ export default function QAClientePortalPage() {
                     <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
                   ) : (
                     <span
-                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]"
+                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[16px] tracking-[0.04em]"
                       style={{ fontFamily: "Oswald, sans-serif" }}
                     >
                       QA
@@ -2406,13 +2406,13 @@ export default function QAClientePortalPage() {
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div
-                    className="text-[12.5px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
+                    className="text-[16px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
                     style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[11px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
+                    className="text-[14px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
                     style={{ fontFamily: "Rajdhani, Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
