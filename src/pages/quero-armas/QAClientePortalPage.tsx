@@ -2329,7 +2329,7 @@ export default function QAClientePortalPage() {
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
             aria-hidden
-            className="relative w-full h-[160px] overflow-hidden shrink-0"
+            className="relative w-full h-[120px] overflow-hidden shrink-0"
             style={
               sidebarTheme.heroEmpty
                 ? { background: "transparent" }
