@@ -768,7 +768,62 @@ export default function QAClientePortalPage() {
           .not("status", "in", "(cancelado,arquivado)")
           .order("data_criacao", { ascending: false });
         const procsList = (procsData as any[]) ?? [];
-        setProcessos(procsList);
+        // Enriquece cada processo com metadados do catálogo (ordem_no_pacote,
+        // pacote_slug, slug do serviço) e marca aqueles bloqueados por pré-requisito
+        // — regra-mãe do fluxo operacional (ex.: CRAF/GT só libera depois da
+        // Autorização de Compra ser deferida).
+        let procsEnriched = procsList;
+        try {
+          const servicoIds = Array.from(new Set(procsList.map((p: any) => p.servico_id).filter(Boolean)));
+          if (servicoIds.length) {
+            const { data: catData } = await supabase
+              .from("qa_servicos_catalogo" as any)
+              .select("servico_id, slug, ordem_no_pacote, pacote_slug")
+              .in("servico_id", servicoIds);
+            const catBySid = new Map<number, any>();
+            (catData as any[] ?? []).forEach((c) => catBySid.set(Number(c.servico_id), c));
+            const slugs = Array.from(new Set((catData as any[] ?? []).map((c) => c.slug).filter(Boolean)));
+            let prereqs: any[] = [];
+            if (slugs.length) {
+              const { data: prereqData } = await supabase
+                .from("qa_servicos_prerequisitos" as any)
+                .select("servico_slug, prerequisito_slug, tipo, ativo")
+                .in("servico_slug", slugs)
+                .eq("ativo", true);
+              prereqs = (prereqData as any[]) ?? [];
+            }
+            const concluidoStatuses = new Set(["concluido","deferido","finalizado"]);
+            procsEnriched = procsList.map((p: any) => {
+              const cat = catBySid.get(Number(p.servico_id));
+              const slug = cat?.slug ?? null;
+              const ordem = Number(cat?.ordem_no_pacote ?? 9999);
+              const pacote = cat?.pacote_slug ?? null;
+              // bloqueado se existe algum pré-requisito ativo do meu slug que ainda
+              // não está concluído em outro processo do mesmo cliente.
+              const meusPrereqs = prereqs.filter((r) => r.servico_slug === slug);
+              const bloqueadoPrerequisito = meusPrereqs.some((r) => {
+                const outroProc = procsList.find((op: any) => {
+                  const oc = catBySid.get(Number(op.servico_id));
+                  return oc?.slug === r.prerequisito_slug;
+                });
+                if (!outroProc) return false; // pré-req não contratado → não bloqueia
+                return !concluidoStatuses.has(String(outroProc.status || "").toLowerCase());
+              });
+              return {
+                ...p,
+                _ordem_no_pacote: ordem,
+                _pacote_slug: pacote,
+                _servico_slug: slug,
+                _bloqueadoPrerequisito: bloqueadoPrerequisito,
+              };
+            });
+            // Ordena: menor ordem_no_pacote primeiro (Autorização antes de CRAF/GT).
+            procsEnriched.sort((a: any, b: any) => (a._ordem_no_pacote ?? 9999) - (b._ordem_no_pacote ?? 9999));
+          }
+        } catch (e) {
+          console.warn("[Portal] falha ao enriquecer processos com catálogo/pré-requisitos:", e);
+        }
+        setProcessos(procsEnriched);
         if (procsList.length > 0) {
           const procIds = procsList.map((p) => p.id);
           const { data: procDocsData } = await supabase
