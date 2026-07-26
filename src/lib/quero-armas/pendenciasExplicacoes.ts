@@ -149,7 +149,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   // Certidões — variantes do catálogo do checklist
   // ────────────────────────────────────────────────────────────────────────
   certidao_antecedentes_criminais_eleitoral: {
-    titulo: "Antecedentes criminais — Justiça Eleitoral (TSE)",
+    titulo: "Superior Tribunal Eleitoral — TSE",
     passos: [
       "Abra o site do TSE no botão \"Acessar site de emissão\" logo abaixo.",
       "No formulário, escolha \"Pessoa Física\" e informe seu CPF, nome completo, nome da mãe e data de nascimento — exatamente como estão no título de eleitor.",
@@ -180,7 +180,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O e-SAJ TJSP não pergunta foro nesse fluxo — o modelo \"Distribuição de Ações Criminais\" já cobre todos os foros do estado. Se aparecer o campo Foro, você entrou no fluxo antigo/errado — volte e escolha o Modelo correto. Não escaneie o PDF: envie o original com a assinatura digital.",
   },
   certidao_antecedentes_criminais_federal: {
-    titulo: "Tribunal Regional Federal - TRF",
+    titulo: "Tribunal Regional Federal — TRF",
     passos: [
       "Abra o portal da Justiça Federal da sua região (em SP, é o TRF3) pelo botão \"Acessar site de emissão\".",
       "Clique em \"Serviços\" → \"Certidões\" → \"Certidão de Distribuição Criminal\".",
@@ -468,7 +468,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Não imprima e escaneie — envie o PDF original, senão a assinatura digital quebra e a IA reprova.",
   },
   antecedentes_federal: {
-    titulo: "Tribunal Regional Federal - TRF",
+    titulo: "Tribunal Regional Federal — TRF",
     passos: [
       "Abra o portal da Justiça Federal da sua região (em SP, é o TRF3) pelo botão \"Acessar site de emissão\".",
       "Clique em \"Serviços\" → \"Certidões\" → \"Certidão de Distribuição Criminal\".",
