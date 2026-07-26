@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, ChevronLeft, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu, X,
+  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
   Boxes, PackageOpen, Download,
@@ -2341,17 +2341,6 @@ export default function QAClientePortalPage() {
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        {/* Botão X — fechar drawer, visível apenas <lg quando aberto */}
-        {!mobileHidden && isBelowLg && (
-          <button
-            type="button"
-            onClick={() => setSidebarCollapsed(true)}
-            aria-label="Fechar menu"
-            className="lg:hidden absolute top-3 right-3 z-[60] w-[30px] h-[30px] rounded-full bg-white text-black shadow-lg hover:bg-slate-100 flex items-center justify-center"
-          >
-            <X className="h-4 w-4" strokeWidth={2.5} />
-          </button>
-        )}
         {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
         <div
           aria-hidden
