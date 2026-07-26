@@ -240,3 +240,30 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+@media (max-width: 1023px) {
+  html.qa-mobile-drawer-open,
+  html.qa-mobile-drawer-open body {
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  html.qa-mobile-drawer-open::-webkit-scrollbar,
+  html.qa-mobile-drawer-open body::-webkit-scrollbar,
+  .qa-client-mobile-drawer::-webkit-scrollbar,
+  .qa-client-mobile-nav::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .qa-client-mobile-drawer,
+  .qa-client-mobile-nav {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    overscroll-behavior: none !important;
+  }
+}
