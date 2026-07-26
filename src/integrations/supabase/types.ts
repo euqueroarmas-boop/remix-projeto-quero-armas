@@ -8019,6 +8019,7 @@ export type Database = {
           cliente_id: number
           created_at: string
           criado_por: string | null
+          expira_em: string | null
           id: string
           link: string | null
           mensagem: string
@@ -8036,6 +8037,7 @@ export type Database = {
           cliente_id: number
           created_at?: string
           criado_por?: string | null
+          expira_em?: string | null
           id?: string
           link?: string | null
           mensagem: string
@@ -8053,6 +8055,7 @@ export type Database = {
           cliente_id?: number
           created_at?: string
           criado_por?: string | null
+          expira_em?: string | null
           id?: string
           link?: string | null
           mensagem?: string
