@@ -338,6 +338,26 @@ export default function QAClientePortalPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Restaura, ao carregar o portal, se o usuário dispensou o popup de
+  // pendências guiadas na sessão atual. Isso permite fechar o popup para
+  // fazer outras atividades sem que ele reabra automaticamente.
+  useEffect(() => {
+    setPendenciasGuiadasDismissed(sessionStorage.getItem("qa:pendencias-dismissed") === "1");
+  }, []);
+
+  const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null }) => {
+    sessionStorage.removeItem("qa:pendencias-dismissed");
+    setPendenciasGuiadasDismissed(false);
+    if (opts?.pinnedId !== undefined) setPinnedPendenciaId(opts.pinnedId);
+    setShowContratoPopup(true);
+  };
+  const dismissPendenciasGuiadas = () => {
+    sessionStorage.setItem("qa:pendencias-dismissed", "1");
+    setPendenciasGuiadasDismissed(true);
+    setShowContratoPopup(false);
+    setPinnedPendenciaId(null);
+  };
   // Em telas < lg (1024px) o sidebar inicia colapsado (mini-rail), mas o
   // usuário pode expandir/recolher usando a mesma seta do desktop.
   const [isBelowLg, setIsBelowLg] = useState<boolean>(() =>
