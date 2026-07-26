@@ -374,6 +374,16 @@ export default function QAClientePortalPage() {
   // Em tablet/celular (<lg), quando o menu está recolhido, ele some 100%
   // e fica apenas uma seta colada no canto esquerdo da tela.
   const mobileHidden = sidebarCollapsed && isBelowLg;
+  // Lock body scroll on mobile when drawer is open — evita barra de rolagem
+  // visível atrás da sidebar em mobile.
+  useEffect(() => {
+    if (!isBelowLg) return;
+    if (!mobileHidden) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [mobileHidden, isBelowLg]);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -2329,7 +2339,7 @@ export default function QAClientePortalPage() {
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
             aria-hidden
-            className="relative w-full h-[100px] overflow-hidden shrink-0"
+            className="relative w-full h-[36px] lg:h-[100px] overflow-hidden shrink-0"
             style={
               sidebarTheme.heroEmpty
                 ? { background: "transparent" }
