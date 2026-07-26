@@ -125,11 +125,27 @@ function timelineFromEventos(eventos: any[]): CockpitZ6TimelineEvent[] {
   // os eventos vêm DESC; queremos exibir ASC e marcar o mais recente como 'current'
   const ordered = [...eventos].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   const tail = ordered.slice(-5);
-  return tail.map((ev, i) => ({
-    title: String(ev.descricao || ev.tipo_evento || "Evento").trim(),
-    sub: [fmtDayMonth(ev.created_at) ? `${fmtDayMonth(ev.created_at)}/${new Date(ev.created_at).getFullYear()}` : null, ev.ator].filter(Boolean).join(" · "),
-    status: i === tail.length - 1 ? "current" : "done",
-  }));
+  return tail.map((ev) => {
+    const rawDesc = String(ev.descricao || ev.tipo_evento || "Evento").trim();
+    // Estado semântico: verde = concluído; âmbar = em análise; cinza = pendente/faltando.
+    const low = (rawDesc + " " + String(ev.tipo_evento || "")).toLowerCase();
+    let status: CockpitZ6TimelineEvent["status"] = "done";
+    const hasConcluido = /(dispensad|aprovad|cumprid|recebid|conclu[ií]d|deferid)/.test(low);
+    const hasPendente = /(pendente|faltando|aguardando|solicit)/.test(low);
+    const hasAnalise = /(em[_ ]?an[aá]lise|em curso|processando)/.test(low);
+    if (hasPendente && !hasConcluido) status = "pending";
+    else if (hasAnalise && !hasConcluido) status = "current";
+    // Humaniza jargão técnico exposto ao cliente.
+    const title = rawDesc
+      .replace(/dispensado_grupo/gi, "dispensado automaticamente")
+      .replace(/pronto_para_protocolar/gi, "pronto para protocolar")
+      .replace(/aguardando_([a-z_]+)/gi, (_m, s) => "aguardando " + String(s).replace(/_/g, " "));
+    return {
+      title,
+      sub: [fmtDayMonth(ev.created_at) ? `${fmtDayMonth(ev.created_at)}/${new Date(ev.created_at).getFullYear()}` : null, ev.ator].filter(Boolean).join(" · "),
+      status,
+    };
+  });
 }
 
 function buildProcessoCard(args: {
