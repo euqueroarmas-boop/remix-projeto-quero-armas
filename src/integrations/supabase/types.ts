@@ -11471,6 +11471,10 @@ export type Database = {
         }[]
       }
       qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
+      qa_conceder_arsenal_premium_gratuito: {
+        Args: { p_cliente_id: number; p_dias?: number; p_origem?: string }
+        Returns: string
+      }
       qa_confirmar_pagamento_processo: {
         Args: {
           p_bypass_contrato_validado?: boolean
