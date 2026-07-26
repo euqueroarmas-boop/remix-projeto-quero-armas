@@ -2395,7 +2395,7 @@ export default function QAClientePortalPage() {
                     <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
                   ) : (
                     <span
-                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px] tracking-[0.04em]"
+                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[16px] tracking-[0.04em]"
                       style={{ fontFamily: "Oswald, sans-serif" }}
                     >
                       QA
