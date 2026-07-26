@@ -57,6 +57,7 @@ export default function QANotificacoesAdmin() {
   const [referenciaTipo, setReferenciaTipo] = useState<"nenhuma" | "processo" | "documento">("nenhuma");
   const [referenciaId, setReferenciaId] = useState<string>("");
   const [form, setForm] = useState({ titulo: "", mensagem: "", link: "", urgencia: "normal" as "urgente" | "normal" });
+  const [isTeste, setIsTeste] = useState(false);
   // Prazo de exibição: até que a exigência seja cumprida (padrão) ou por
   // um período determinado (24h, 7d, 30d, data específica).
   const [prazoTipo, setPrazoTipo] = useState<"ate_resolver" | "24h" | "7d" | "30d" | "data">("ate_resolver");
@@ -180,9 +181,14 @@ export default function QANotificacoesAdmin() {
         origem: "manual",
         ativa: true,
         expira_em,
+        is_teste: isTeste,
       });
       if (error) throw error;
-      toast.success("Notificação criada — já aparece no portal do cliente");
+      toast.success(
+        isTeste
+          ? "Notificação de TESTE criada — aparece apenas 1x no portal do cliente"
+          : "Notificação criada — já aparece no portal do cliente"
+      );
       setClienteSelecionado(null);
       setBuscaCliente("");
       setForm({ titulo: "", mensagem: "", link: "", urgencia: "normal" });
@@ -190,6 +196,7 @@ export default function QANotificacoesAdmin() {
       setReferenciaId("");
       setPrazoTipo("ate_resolver");
       setPrazoData("");
+      setIsTeste(false);
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao criar notificação");
@@ -428,6 +435,24 @@ export default function QANotificacoesAdmin() {
                 />
               </div>
             )}
+          </div>
+
+          <div
+            className="rounded-lg border px-3 py-2.5 flex items-start gap-2"
+            style={{ borderColor: isTeste ? "hsl(38 92% 50%)" : "hsl(220 13% 91%)", background: isTeste ? "hsl(48 100% 96%)" : "white" }}
+          >
+            <input
+              id="notif-teste"
+              type="checkbox"
+              checked={isTeste}
+              onChange={(e) => setIsTeste(e.target.checked)}
+              className="mt-0.5"
+            />
+            <label htmlFor="notif-teste" className="text-[11px] leading-relaxed cursor-pointer" style={{ color: "hsl(220 20% 25%)" }}>
+              <span className="font-semibold uppercase">Notificação de teste</span> — aparece <strong>apenas 1 vez</strong> no
+              portal do cliente e é desativada automaticamente após a primeira exibição. Use para validar template e envio sem
+              deixar aviso residual na tela do cliente.
+            </label>
           </div>
 
           <div className="flex justify-end">

@@ -11,6 +11,7 @@ type NotificacaoAtiva = {
   mensagem: string;
   link: string | null;
   created_at: string;
+  is_teste?: boolean;
 };
 
 // Consulta as pendências uma única vez a cada abertura do portal (sem
@@ -48,6 +49,12 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       });
       if (!cancelado && !error && Array.isArray(data)) {
         setTodas(data as NotificacaoAtiva[]);
+        // Notificações de teste aparecem 1x apenas: assim que a lista chega,
+        // dispara o desligamento server-side (função marca ativa=false).
+        const testes = (data as NotificacaoAtiva[]).filter((n) => n.is_teste);
+        for (const n of testes) {
+          supabase.rpc("qa_notificacao_marcar_vista" as any, { p_id: n.id }).then(() => {});
+        }
       }
     })();
     return () => { cancelado = true; };

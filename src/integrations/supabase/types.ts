@@ -8021,6 +8021,7 @@ export type Database = {
           criado_por: string | null
           expira_em: string | null
           id: string
+          is_teste: boolean
           link: string | null
           mensagem: string
           origem: string
@@ -8039,6 +8040,7 @@ export type Database = {
           criado_por?: string | null
           expira_em?: string | null
           id?: string
+          is_teste?: boolean
           link?: string | null
           mensagem: string
           origem?: string
@@ -8057,6 +8059,7 @@ export type Database = {
           criado_por?: string | null
           expira_em?: string | null
           id?: string
+          is_teste?: boolean
           link?: string | null
           mensagem?: string
           origem?: string
@@ -11460,6 +11463,7 @@ export type Database = {
           categoria: string
           created_at: string
           id: string
+          is_teste: boolean
           link: string
           mensagem: string
           titulo: string
@@ -11662,6 +11666,10 @@ export type Database = {
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
       qa_norm_nome: { Args: { p_nome: string }; Returns: string }
+      qa_notificacao_marcar_vista: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       qa_parse_date_safe: { Args: { v: string }; Returns: string }
       qa_pos_pagamento_protocolar: {
         Args: { p_processo_id: string }
