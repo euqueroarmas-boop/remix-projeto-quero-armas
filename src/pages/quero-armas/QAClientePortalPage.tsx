@@ -2499,7 +2499,7 @@ export default function QAClientePortalPage() {
                   borderLeftColor: sidebarTheme.accent,
                 } : undefined}
               >
-                <Icon className="h-4 w-4 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
+                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
                 {!effectiveCollapsed && <span className="flex-1 text-left">{item.label}</span>}
               </button>
             );
