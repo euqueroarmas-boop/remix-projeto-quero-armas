@@ -2516,7 +2516,7 @@ export default function QAClientePortalPage() {
               title="WhatsApp +55 11 97848-1919"
               className="w-10 h-10 rounded-md flex items-center justify-center bg-[#1CC355] hover:bg-[#19B14C] text-white transition"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-5 w-5" />
             </a>
             <button
               type="button"
@@ -2524,7 +2524,7 @@ export default function QAClientePortalPage() {
               title="Sair"
               className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
         ) : (
