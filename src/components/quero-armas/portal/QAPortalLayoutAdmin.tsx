@@ -59,7 +59,8 @@ export default function QAPortalLayoutAdmin() {
         .eq("key", RAIL_COLOR_KEY)
         .maybeSingle();
       setLoading(false);
-      if (data?.accent) setCurrentColor(data.accent);
+      const row = data as { accent?: string } | null;
+      if (row?.accent) setCurrentColor(row.accent);
     }
     load();
   }, []);
