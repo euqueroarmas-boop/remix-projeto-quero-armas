@@ -107,6 +107,8 @@ function BadgeConfianca({ confianca, classifying }: { confianca?: number; classi
 
 export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaColado, setTextoPastaColado, onAvancar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // Ref de cancelamento: incrementado a cada nova classificação; a função verifica se ainda é válido
+  const classificacaoTokenRef = useRef(0);
   const [processandoZip, setProcessandoZip] = useState(false);
   const [classificando, setClassificando] = useState(false);
   const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
@@ -132,6 +134,12 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   async function classificarComIA(novos: ArquivoUpload[], offsetIdx: number) {
     if (novos.length === 0) return;
 
+    // Token desta sessão de classificação — se o usuário excluir arquivos durante o processo,
+    // cancelRef será incrementado e este token ficará obsoleto, abortando a atualização.
+    classificacaoTokenRef.current += 1;
+    const meuToken = classificacaoTokenRef.current;
+    const cancelado = () => classificacaoTokenRef.current !== meuToken;
+
     const idxSet = new Set(novos.map((_, i) => offsetIdx + i));
     setClassificandoIdx((prev) => new Set([...prev, ...idxSet]));
     setClassificando(true);
@@ -141,6 +149,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
     try {
       for (let i = 0; i < novos.length; i += LOTE) {
+        if (cancelado()) return; // abortado pelo usuário
+
         const fatia = novos.slice(i, i + LOTE);
 
         const payload = await Promise.all(
@@ -149,7 +159,6 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
             return {
               nome: a.file.name,
               mime: isPdf ? "application/pdf" : "image/jpeg",
-              // PDFs não podem ser desenhados em canvas — usar base64 direto
               data_url: isPdf
                 ? await fileToDataUrl(a.file)
                 : await resizeImageToDataUrl(a.file),
@@ -157,9 +166,13 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           })
         );
 
+        if (cancelado()) return; // abortado enquanto preparava payload
+
         const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
           body: { mode: "classify", arquivos: payload },
         });
+
+        if (cancelado()) return; // abortado enquanto aguardava resposta da IA
 
         if (error) throw error;
 
@@ -167,10 +180,16 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         loteResultados.forEach((r, j) => { todosResultados[i + j] = r; });
       }
 
-      setArquivos(
-        [...arquivos, ...novos].map((a, globalIdx) => {
-          const localIdx = globalIdx - offsetIdx;
-          if (localIdx < 0 || localIdx >= todosResultados.length) return a;
+      if (cancelado()) return; // abortado após último lote
+
+      // Usa forma funcional para ler o estado atual (não o snapshot capturado no início)
+      // e só atualiza arquivos que ainda existem na lista
+      setArquivos((prev) => {
+        const nomeNovos = new Set(novos.map((a) => a.file.name));
+        return prev.map((a) => {
+          if (!nomeNovos.has(a.file.name)) return a; // não era um dos arquivos desta sessão
+          const localIdx = novos.findIndex((n) => n.file.name === a.file.name);
+          if (localIdx < 0) return a;
           const r = todosResultados[localIdx];
           if (!r || r.erro) return a;
           return {
@@ -179,8 +198,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
             tipo_ia_confianca: r.confianca,
             tipo_ia_motivo: r.motivo,
           };
-        })
-      );
+        });
+      });
 
       const altaConfianca = todosResultados.filter((r) => r?.confianca >= 0.85).length;
       const baixaConfianca = todosResultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
@@ -188,12 +207,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       if (altaConfianca > 0) toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
       if (baixaConfianca > 0) toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
     } catch (e: any) {
+      if (cancelado()) return;
       const msg = e?.message || e?.error_description || JSON.stringify(e) || "erro desconhecido";
       console.error("[classificarComIA]", e);
       toast.error(`IA: ${msg.slice(0, 120)}`);
     } finally {
-      setClassificandoIdx(new Set());
-      setClassificando(false);
+      if (!cancelado()) {
+        setClassificandoIdx(new Set());
+        setClassificando(false);
+      }
     }
   }
 
@@ -356,6 +378,10 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   }
 
   const remover = (i: number) => {
+    // Cancela qualquer classificação em andamento — token muda, função detecta e para
+    classificacaoTokenRef.current += 1;
+    setClassificando(false);
+    setClassificandoIdx(new Set());
     const copia = [...arquivos];
     if (copia[i].preview) URL.revokeObjectURL(copia[i].preview!);
     copia.splice(i, 1);
