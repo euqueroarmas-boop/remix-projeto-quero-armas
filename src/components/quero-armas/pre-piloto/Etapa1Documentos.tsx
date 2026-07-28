@@ -29,6 +29,12 @@ interface Props {
 export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaColado, setTextoPastaColado, onAvancar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [processandoZip, setProcessandoZip] = useState(false);
+  const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
+
+  function abrirPreview(a: ArquivoUpload) {
+    const url = a.preview ?? URL.createObjectURL(a.file);
+    setPreviewItem({ url, tipo: a.file.type, nome: a.file.name });
+  }
 
   const adicionarArquivos = async (files: FileList | File[]) => {
     const lista = Array.from(files);
@@ -201,11 +207,13 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
             {arquivos.map((a, i) => (
               <div key={i} className="flex items-center gap-2 bg-muted/40 rounded px-2 py-1.5">
-                {a.preview ? (
-                  <img src={a.preview} alt="" className="w-8 h-8 object-cover rounded flex-shrink-0" />
-                ) : (
-                  <FileText className="w-6 h-6 text-muted-foreground flex-shrink-0" />
-                )}
+                <button type="button" onClick={() => abrirPreview(a)} title="Ver arquivo" className="flex-shrink-0 focus:outline-none">
+                  {a.preview ? (
+                    <img src={a.preview} alt="" className="w-8 h-8 object-cover rounded hover:opacity-80 transition" />
+                  ) : (
+                    <FileText className="w-6 h-6 text-muted-foreground hover:text-slate-700 transition" />
+                  )}
+                </button>
                 <span className="text-xs flex-1 truncate min-w-0">{a.file.name}</span>
                 <select
                   value={a.tipo}
@@ -248,6 +256,42 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           Extrair com IA <ChevronRight className="w-3.5 h-3.5" />
         </Button>
       </div>
+
+      {/* Modal de preview do arquivo */}
+      {previewItem && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70"
+          onClick={() => setPreviewItem(null)}
+        >
+          <div
+            className="relative bg-white rounded-xl shadow-2xl overflow-hidden max-w-[90vw] max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b bg-slate-50">
+              <span className="text-[11px] font-semibold text-slate-700 truncate max-w-[60vw]">{previewItem.nome}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewItem(null)}
+                className="text-slate-400 hover:text-slate-700 text-lg leading-none font-bold"
+              >✕</button>
+            </div>
+            {/* Conteúdo */}
+            <div className="flex-1 overflow-auto">
+              {previewItem.tipo.startsWith("image/") ? (
+                <img src={previewItem.url} alt={previewItem.nome} className="max-w-full max-h-[80vh] object-contain" />
+              ) : previewItem.tipo === "application/pdf" ? (
+                <iframe src={previewItem.url} title={previewItem.nome} className="w-[80vw] h-[80vh]" />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-3 p-12 text-slate-500">
+                  <FileText className="w-12 h-12" />
+                  <span className="text-sm">Preview não disponível para este tipo de arquivo.</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
