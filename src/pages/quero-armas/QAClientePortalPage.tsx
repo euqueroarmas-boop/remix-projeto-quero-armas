@@ -2296,7 +2296,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 pt-14 lg:pt-0 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[260px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 pt-14 lg:pt-0 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
       {/* Botão hambúrguer — visível apenas <lg quando o menu está escondido */}
       {mobileHidden && (
         <button
@@ -2335,9 +2335,9 @@ export default function QAClientePortalPage() {
           setDocsReloadKey((k) => k + 1);
         }}
       />
-      {/* ═══ SIDEBAR Z6 DARK — sempre visível (mobile/tablet em mini-rail) ═══ */}
+      {/* ═══ SIDEBAR ESQUERDO — branding apenas em desktop; nav completo em mobile ═══ */}
       <aside
-        className={`qa-client-mobile-drawer flex fixed inset-0 lg:inset-y-0 lg:right-auto left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 overflow-hidden ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[260px] lg:max-w-[260px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
+        className={`qa-client-mobile-drawer flex fixed inset-0 lg:inset-y-0 lg:right-auto left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 overflow-hidden ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[190px] lg:max-w-[190px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
         data-qa-sb-theme={sidebarTheme.key}
       >
@@ -2493,19 +2493,8 @@ export default function QAClientePortalPage() {
           );
         })()}
 
-        {/* Botão moderno: regredir/expandir menu — em todas as larguras */}
-        <button
-            type="button"
-            onClick={() => setSidebarCollapsed(v => !v)}
-            aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            className="hidden lg:flex absolute -right-3 top-16 z-10 w-6 h-6 rounded-full bg-[#141414] border border-[#2a2a2a] hover:bg-[#1a1a1a] text-[#9a9a9a] items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.6)] transition"
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = sidebarTheme.accent; e.currentTarget.style.color = sidebarTheme.accent; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
-          >
-            {sidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-          </button>
-
-        <nav className="qa-client-mobile-nav flex-1 overflow-hidden lg:overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14 lg:mt-0" style={{ overscrollBehavior: "none", touchAction: isBelowLg ? "none" : "pan-y" }}>
+        {/* Nav mobile — só aparece abaixo de lg; em desktop a nav vai para o rail direito */}
+        <nav className="qa-client-mobile-nav lg:hidden flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14" style={{ overscrollBehavior: "none", touchAction: "none" }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
@@ -2513,20 +2502,19 @@ export default function QAClientePortalPage() {
               <button
                 key={item.key}
                 type="button"
-                onClick={() => goSection(item.key)}
-                title={effectiveCollapsed ? item.label : undefined}
-                className={`flex items-center ${effectiveCollapsed ? "w-full justify-center px-0" : "w-full gap-3 px-4"} py-2.5 text-[16px] font-bold border-l-2 ${sidebarTheme.heroImage ? "drop-shadow-[0_1px_2px_rgba(0,0,0,1)]" : ""} ${active ? "text-white" : `${sidebarTheme.heroImage ? "text-[#FBF8EF]" : "text-[#c9c2b3] hover:bg-white/5"} border-transparent hover:text-white`}`}
-                style={active ? {
-                  background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, ${sidebarTheme.accent}00 100%)`,
-                  borderLeftColor: sidebarTheme.accent,
-                } : undefined}
+                onClick={() => { goSection(item.key); setSidebarCollapsed(true); }}
+                className={`flex items-center w-full gap-3 px-4 py-2.5 text-[16px] font-bold border-l-2 ${active ? "text-white" : "text-[#c9c2b3] border-transparent hover:text-white hover:bg-white/5"}`}
+                style={active ? { background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, transparent 100%)`, borderLeftColor: sidebarTheme.accent } : undefined}
               >
-                <Icon className="h-5 w-5 shrink-0 lg:h-4 lg:w-4" style={active ? { color: sidebarTheme.accent } : undefined} />
-                {!effectiveCollapsed && <span className="flex-1 text-left text-[16px] lg:text-[12px]">{item.label}</span>}
+                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
+                <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
           })}
         </nav>
+
+        {/* Espaçador desktop — empurra rodapé para baixo */}
+        <div className="hidden lg:flex flex-1" />
 
         {/* Rodapé: WhatsApp + Sair */}
         {effectiveCollapsed ? (
@@ -2585,9 +2573,38 @@ export default function QAClientePortalPage() {
         )}
       </aside>
 
+      {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
+      <aside
+        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center py-3 gap-1 overflow-y-auto no-scrollbar"
+        style={{ background: sidebarTheme.bg }}
+        data-qa-sb-theme={sidebarTheme.key}
+      >
+        <div className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none" aria-hidden style={{ background: sidebarTheme.stripe }} />
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => goSection(item.key)}
+              title={item.label}
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+              style={active
+                ? { background: `${sidebarTheme.accent}33`, color: sidebarTheme.accent }
+                : { color: "#9a9a9a" }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
+              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#9a9a9a"; }}
+            >
+              <Icon className="h-[18px] w-[18px] shrink-0" />
+            </button>
+          );
+        })}
+      </aside>
+
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden lg:mr-[56px]">
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
