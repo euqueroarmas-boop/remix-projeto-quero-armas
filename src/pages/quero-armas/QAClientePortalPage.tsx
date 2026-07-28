@@ -312,18 +312,22 @@ export default function QAClientePortalPage() {
   const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
+  const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
 
-  // Carrega temas do banco (inclui temas com imagem do bucket qa-temas) e o
-  // tema global padrão definido pela equipe.
+  // Carrega temas do banco e cor do rail direito
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { themes: dbThemes, globalDefaultKey: gk } = await fetchSidebarThemesFromDb();
+      const [{ themes: dbThemes, globalDefaultKey: gk }, railRow] = await Promise.all([
+        fetchSidebarThemesFromDb(),
+        supabase.from("qa_sidebar_temas" as any).select("accent").eq("key", "__rail_icon_color__").maybeSingle(),
+      ]);
       if (!alive) return;
       const merged = mergeThemes(QA_SIDEBAR_THEMES, dbThemes);
       setThemeCatalog(merged);
       setGlobalDefaultKey(gk);
       setSidebarTheme(resolveEffectiveTheme(merged, getPersonalThemeKey(), gk));
+      if (railRow.data?.accent) setRailIconColor(railRow.data.accent);
     })();
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
@@ -2473,10 +2477,10 @@ export default function QAClientePortalPage() {
               title={item.label}
               className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
               style={active
-                ? { background: `${sidebarTheme.accent}33`, color: sidebarTheme.accent }
-                : { color: "#9a9a9a" }}
-              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "#ffffff"; }}
-              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = "#9a9a9a"; }}
+                ? { background: `${railIconColor}33`, color: railIconColor }
+                : { color: `${railIconColor}88` }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
             </button>

@@ -10,6 +10,7 @@ import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/u
 import { Switch } from "@/components/ui/switch";
 import QASidebarTemasAdmin from "@/components/quero-armas/portal/QASidebarTemasAdmin";
 import QALoginBrandingAdmin from "@/components/quero-armas/portal/QALoginBrandingAdmin";
+import QAPortalLayoutAdmin from "@/components/quero-armas/portal/QAPortalLayoutAdmin";
 import QAFaviconAdmin from "@/components/quero-armas/config/QAFaviconAdmin";
 import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoPrimarioAdmin";
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
@@ -860,6 +861,8 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="aparencia" className="mt-4 space-y-5">
           {/* Temas da sidebar — administração global */}
           <QASidebarTemasAdmin />
+          {/* Dimensões das colunas e cor do rail direito */}
+          <QAPortalLayoutAdmin />
           {/* Personalização da tela de login do cliente */}
           <QALoginBrandingAdmin />
         </TabsContent>
