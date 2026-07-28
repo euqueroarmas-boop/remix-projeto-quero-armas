@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Upload, FileText, Trash2, Package, ChevronRight, Image, FileImage } from "lucide-react";
+import { Upload, FileText, Trash2, ChevronRight, Sparkles, Loader2, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import type { ArquivoUpload } from "./PrePilotoWizard";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
@@ -13,7 +14,12 @@ const TIPO_LABELS: Record<string, string> = {
   laudo_psicologico: "Laudo Psicológico",
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
   antecedentes_criminais: "Antecedentes Criminais",
+  certidao_antecedentes_criminais_federal: "Antecedentes Federais",
   comprovante_renda: "Comprovante de Renda",
+  cartao_cnpj_mei: "CNPJ / MEI",
+  craf: "CRAF / SINARM",
+  gte: "GTE / GT",
+  nota_fiscal_arma: "Nota Fiscal de Arma",
   gov_br: "Print/Foto GOV.BR (senha)",
   outro: "Outro",
 };
@@ -26,10 +32,55 @@ interface Props {
   onAvancar: () => void;
 }
 
+function fileToDataUrl(f: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(f);
+  });
+}
+
+function BadgeConfianca({ confianca, classifying }: { confianca?: number; classifying?: boolean }) {
+  if (classifying) {
+    return (
+      <span className="flex items-center gap-0.5 text-[10px] text-slate-400 flex-shrink-0">
+        <Loader2 className="w-3 h-3 animate-spin" />
+      </span>
+    );
+  }
+  if (confianca == null) return null;
+  if (confianca >= 0.85) {
+    return (
+      <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 flex-shrink-0" title={`IA: ${Math.round(confianca * 100)}% de confiança`}>
+        <CheckCircle2 className="w-3 h-3" />
+        <span className="hidden sm:inline">{Math.round(confianca * 100)}%</span>
+      </span>
+    );
+  }
+  if (confianca >= 0.60) {
+    return (
+      <span className="flex items-center gap-0.5 text-[10px] text-amber-500 flex-shrink-0" title={`IA: ${Math.round(confianca * 100)}% de confiança — verifique o tipo`}>
+        <AlertTriangle className="w-3 h-3" />
+        <span className="hidden sm:inline">{Math.round(confianca * 100)}%</span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-0.5 text-[10px] text-slate-400 flex-shrink-0" title={`IA com baixa confiança (${Math.round(confianca * 100)}%) — classifique manualmente`}>
+      <HelpCircle className="w-3 h-3" />
+      <span className="hidden sm:inline">{Math.round(confianca * 100)}%</span>
+    </span>
+  );
+}
+
 export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaColado, setTextoPastaColado, onAvancar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [processandoZip, setProcessandoZip] = useState(false);
+  const [classificando, setClassificando] = useState(false);
   const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
+  // Índices dos arquivos que ainda estão sendo classificados pela IA
+  const [classificandoIdx, setClassificandoIdx] = useState<Set<number>>(new Set());
 
   function abrirPreview(a: ArquivoUpload) {
     if (a.file.type === "application/pdf") {
@@ -42,6 +93,64 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     } else {
       const url = a.preview ?? URL.createObjectURL(a.file);
       setPreviewItem({ url, tipo: a.file.type, nome: a.file.name });
+    }
+  }
+
+  // Chama a edge function para classificar os arquivos com IA
+  async function classificarComIA(novos: ArquivoUpload[], offsetIdx: number) {
+    if (novos.length === 0) return;
+
+    const idxSet = new Set(novos.map((_, i) => offsetIdx + i));
+    setClassificandoIdx((prev) => new Set([...prev, ...idxSet]));
+    setClassificando(true);
+
+    try {
+      // Converte todos para data URL em paralelo
+      const payload = await Promise.all(
+        novos.map(async (a) => ({
+          nome: a.file.name,
+          mime: a.file.type || "application/octet-stream",
+          data_url: await fileToDataUrl(a.file),
+        }))
+      );
+
+      const { data, error } = await supabase.functions.invoke("qa-adesao-classificar-docs", {
+        body: { arquivos: payload },
+      });
+
+      if (error) throw error;
+
+      const resultados: any[] = data?.resultados ?? [];
+
+      setArquivos(
+        [...arquivos, ...novos].map((a, globalIdx) => {
+          const localIdx = globalIdx - offsetIdx;
+          if (localIdx < 0 || localIdx >= resultados.length) return a;
+          const r = resultados[localIdx];
+          if (!r || r.erro) return a;
+          return {
+            ...a,
+            tipo: r.tipo_detectado ?? a.tipo,
+            tipo_ia_confianca: r.confianca,
+            tipo_ia_motivo: r.motivo,
+          };
+        })
+      );
+
+      const altaConfianca = resultados.filter((r) => r?.confianca >= 0.85).length;
+      const baixaConfianca = resultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
+
+      if (altaConfianca > 0) {
+        toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
+      }
+      if (baixaConfianca > 0) {
+        toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
+      }
+    } catch (e: any) {
+      toast.error("Não foi possível classificar com IA. Os tipos foram inferidos pelo nome do arquivo.");
+    } finally {
+      setClassificandoIdx(new Set());
+      setClassificando(false);
     }
   }
 
@@ -68,7 +177,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
 
     const combinados = [...novosNaoZip, ...novosDoZip];
-    if (combinados.length > 0) setArquivos([...arquivos, ...combinados]);
+
+    if (combinados.length > 0) {
+      // Adiciona imediatamente com classificação por nome (feedback visual rápido)
+      setArquivos([...arquivos, ...combinados]);
+
+      // Em seguida classifica com IA em background
+      classificarComIA(combinados, arquivos.length);
+    }
+
     if (textoAcumuladoZip || nomesFonteZip.length > 0 || combinados.length > 0) {
       const listaNomes = [
         ...nomesFonteZip,
@@ -134,9 +251,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   function inferirTipo(nome: string): string {
     const n = nome.toLowerCase();
     if (n.includes("rg") || n.includes("cin") || n.includes("identidade")) return "cin";
-    if (n.includes("cnh") || n.includes("habilitacao")) return "cnh";
-    if (n.includes("cpf")) return "cpf";
-    // Comprovante de residência — inclui operadoras comuns de energia, água, gás, telefone
+    if (n.includes("cnh") || n.includes("habilitacao")) return "cin";
+    if (n.includes("cpf")) return "cin";
     if (
       n.includes("residencia") || n.includes("endereco") || n.includes("comprovante") ||
       n.includes("fatura") || n.includes("boleto") || n.includes("nf-e") ||
@@ -168,11 +284,12 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
   const alterarTipo = (i: number, tipo: string) => {
     const copia = [...arquivos];
-    copia[i] = { ...copia[i], tipo };
+    // Ao corrigir manualmente, zera a confiança da IA (indicando intervenção humana)
+    copia[i] = { ...copia[i], tipo, tipo_ia_confianca: undefined, tipo_ia_motivo: undefined };
     setArquivos(copia);
   };
 
-  const podeProsseguir = arquivos.length > 0 || textoPastaColado.trim().length > 50;
+  const podeProsseguir = (arquivos.length > 0 || textoPastaColado.trim().length > 50) && !classificando;
 
   return (
     <div className="space-y-5">
@@ -180,7 +297,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         <h2 className="text-sm font-semibold mb-1">Etapa 1 — Envio de Documentos</h2>
         <p className="text-xs text-muted-foreground">
           Faça upload das fotos/PDFs dos documentos do cliente. Você também pode importar um ZIP de conversa do WhatsApp
-          (exportação padrão do app) — as imagens serão extraídas automaticamente. Dados processados localmente, nada enviado antes de confirmar.
+          (exportação padrão do app) — as imagens serão extraídas e <strong>classificadas automaticamente pela IA</strong>.
         </p>
       </div>
 
@@ -199,6 +316,11 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           JPG, PNG, WEBP, PDF, ou ZIP do WhatsApp
         </p>
         {processandoZip && <p className="text-xs text-[#7B1C2E] mt-2 animate-pulse">Extraindo ZIP...</p>}
+        {classificando && !processandoZip && (
+          <p className="text-xs text-[#7B1C2E] mt-2 animate-pulse flex items-center justify-center gap-1">
+            <Sparkles className="w-3 h-3" /> IA classificando documentos...
+          </p>
+        )}
       </div>
       <input
         ref={inputRef}
@@ -212,10 +334,18 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       {/* Lista de arquivos */}
       {arquivos.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-xs font-semibold">Arquivos selecionados ({arquivos.length})</Label>
-          <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs font-semibold">Arquivos selecionados ({arquivos.length})</Label>
+            {classificando && (
+              <span className="text-[10px] text-[#7B1C2E] flex items-center gap-1">
+                <Sparkles className="w-3 h-3 animate-pulse" /> Classificando com IA...
+              </span>
+            )}
+          </div>
+          <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
             {arquivos.map((a, i) => (
               <div key={i} className="flex items-center gap-2 bg-muted/40 rounded px-2 py-1.5">
+                {/* Thumbnail / ícone clicável */}
                 <button type="button" onClick={() => abrirPreview(a)} title="Ver arquivo" className="flex-shrink-0 focus:outline-none">
                   {a.preview ? (
                     <img src={a.preview} alt="" className="w-8 h-8 object-cover rounded hover:opacity-80 transition" />
@@ -223,22 +353,50 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
                     <FileText className="w-6 h-6 text-muted-foreground hover:text-slate-700 transition" />
                   )}
                 </button>
-                <span className="text-xs flex-1 truncate min-w-0">{a.file.name}</span>
+
+                {/* Nome do arquivo */}
+                <span className="text-xs flex-1 truncate min-w-0" title={a.file.name}>{a.file.name}</span>
+
+                {/* Badge de confiança da IA */}
+                <BadgeConfianca
+                  confianca={a.tipo_ia_confianca}
+                  classifying={classificandoIdx.has(i)}
+                />
+
+                {/* Dropdown de tipo — pré-preenchido pela IA, editável */}
                 <select
                   value={a.tipo}
                   onChange={(e) => alterarTipo(i, e.target.value)}
-                  className="text-xs border rounded px-1 py-0.5 bg-background max-w-[130px] flex-shrink-0"
+                  title={a.tipo_ia_motivo || undefined}
+                  className={`text-xs border rounded px-1 py-0.5 bg-background max-w-[130px] flex-shrink-0 ${
+                    a.tipo_ia_confianca != null && a.tipo_ia_confianca < 0.60
+                      ? "border-amber-400"
+                      : a.tipo_ia_confianca != null && a.tipo_ia_confianca >= 0.85
+                      ? "border-emerald-400"
+                      : ""
+                  }`}
                 >
                   {Object.entries(TIPO_LABELS).map(([v, l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>
+
+                {/* Botão remover */}
                 <button onClick={() => remover(i)} className="text-muted-foreground hover:text-red-500 flex-shrink-0">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}
           </div>
+
+          {/* Legenda dos badges */}
+          {arquivos.some((a) => a.tipo_ia_confianca != null) && (
+            <div className="flex items-center gap-3 text-[10px] text-muted-foreground px-1">
+              <span className="flex items-center gap-0.5 text-emerald-600"><CheckCircle2 className="w-3 h-3" /> Alta confiança</span>
+              <span className="flex items-center gap-0.5 text-amber-500"><AlertTriangle className="w-3 h-3" /> Verifique</span>
+              <span className="flex items-center gap-0.5"><HelpCircle className="w-3 h-3" /> Classifique manualmente</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -262,7 +420,11 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           disabled={!podeProsseguir}
           className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
         >
-          Extrair com IA <ChevronRight className="w-3.5 h-3.5" />
+          {classificando ? (
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Aguardando IA...</>
+          ) : (
+            <>Extrair com IA <ChevronRight className="w-3.5 h-3.5" /></>
+          )}
         </Button>
       </div>
 
@@ -276,7 +438,6 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
             className="relative bg-white rounded-xl shadow-2xl overflow-hidden max-w-[90vw] max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between gap-4 px-4 py-2.5 border-b bg-slate-50">
               <span className="text-[11px] font-semibold text-slate-700 truncate max-w-[60vw]">{previewItem.nome}</span>
               <button
@@ -285,7 +446,6 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
                 className="text-slate-400 hover:text-slate-700 text-lg leading-none font-bold"
               >✕</button>
             </div>
-            {/* Conteúdo */}
             <div className="flex-1 overflow-auto">
               {previewItem.tipo.startsWith("image/") ? (
                 <img src={previewItem.url} alt={previewItem.nome} className="max-w-full max-h-[80vh] object-contain" />
