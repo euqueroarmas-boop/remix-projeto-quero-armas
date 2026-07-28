@@ -213,6 +213,9 @@ const SYSTEM_PROMPT = [
     "24) CEP — ORIGEM OBRIGATÓRIA: o campo cep DEVE vir do comprovante de residência ou de um endereço escrito por extenso na conversa. É PROIBIDO montar CEP a partir de sequência numérica de nome de arquivo, número de protocolo, código de documento ou qualquer número solto. Um CEP brasileiro válido nunca começa com '00000'. Se o CEP extraído começar com '0000' ou não puder ser confirmado no comprovante, deixe o campo vazio e adicione warning 'CEP não confirmado no comprovante de residência — preencher manualmente'.",
     "25) NATURALIDADE E NACIONALIDADE: leia obrigatoriamente do documento de identidade (CIN/RG/CNH), onde aparecem como 'NATURALIDADE' ou 'LOCAL DE NASCIMENTO' (ex.: 'SÃO PAULO/SP' ou 'FERRAZ DE VASCONCELOS - SP'). Separe em naturalidade_municipio (só o município) e naturalidade_uf (2 letras). Se o documento for brasileiro e a naturalidade for uma cidade brasileira, preencha nacionalidade='BRASILEIRA' e naturalidade_pais='BRASIL'. Nunca deixe esses campos vazios quando houver um RG/CIN/CNH legível entre os arquivos.",
     "26) DATA DE EXPEDIÇÃO DO RG: procure ativamente no documento de identidade (rótulos 'DATA DE EXPEDIÇÃO', 'EXPEDIÇÃO', 'EMISSÃO', 'DATA DE EMISSÃO') e também em texto livre da conversa. Preencha data_expedicao_rg em DD/MM/AAAA. Não confunda com data de nascimento nem com validade da CNH.",
+    "27) A CONVERSA DO WHATSAPP É FONTE OBRIGATÓRIA. O bloco '=== CONVERSA WHATSAPP (ZIP) ===' contém o atendimento inteiro com o cliente. Percorra TODAS as mensagens, do início ao fim, antes de responder. O cliente costuma informar por lá, em linguagem natural, dados que não aparecem em nenhum documento: telefone de contato, e-mail, data de expedição do RG, estado civil, profissão, escolaridade, naturalidade e renda. Extraia cada um deles isolando só o valor (ver regra 23). Um campo só pode ficar vazio se o dado realmente não existir nem nos documentos nem na conversa.",
+    "28) TELEFONE DO CLIENTE NA CONVERSA: em exportação de WhatsApp o número do cliente frequentemente NÃO aparece (o contato está salvo na agenda e o app mostra o nome). Nesse caso deixe celular VAZIO. Só preencha celular quando o número estiver escrito de forma explícita e legível na conversa ou num documento. NUNCA monte um telefone a partir de data, protocolo, código ou qualquer sequência numérica solta.",
+    "29) VARREDURA FINAL OBRIGATÓRIA: antes de responder, releia a lista de campos ainda vazios e procure cada um deles uma segunda vez nos documentos E na conversa. Campos que costumam existir e passam despercebidos: data_expedicao_rg, naturalidade_municipio, naturalidade_uf, nacionalidade, escolaridade, profissao, estado_civil, email, cep. Só deixe vazio depois dessa segunda passagem.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -511,6 +514,31 @@ function extractPhonesFromText(text: string): string[] {
   return out;
 }
 
+// Devolve apenas o trecho que o operador realmente digitou, removendo os blocos
+// que o front-end injeta automaticamente (nomes de arquivo e conversa do ZIP).
+// Esses blocos são contexto para a IA, nunca "dado informado manualmente".
+function soTextoDigitado(text: string): string {
+  const marcadores = /^===\s*(NOMES DE ARQUIVO|CONVERSA WHATSAPP|TELEFONES EXTRA)/i;
+  const linhas = text.split("\n");
+  const out: string[] = [];
+  let dentroDeBlocoAutomatico = false;
+  for (const linha of linhas) {
+    if (marcadores.test(linha.trim())) { dentroDeBlocoAutomatico = true; continue; }
+    if (!dentroDeBlocoAutomatico) out.push(linha);
+  }
+  return out.join("\n").trim();
+}
+
+// Remove o cabeçalho de linha de conversa: "[26/07/2026 16:24:29] Fulano: mensagem"
+// → "mensagem". Sem isso o timestamp e o nome do remetente vazam para os campos.
+function semCabecalhoDeChat(linha: string): string {
+  return linha
+    .replace(/^\s*\[?\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]*\d{1,2}:\d{2}(:\d{2})?\]?\s*/, "")
+    .replace(/^\s*\d{1,2}:\d{2}(:\d{2})?\]?\s*/, "")
+    .replace(/^[^:]{1,60}:\s*/, "")
+    .trim();
+}
+
 function extractManualOverrides(text: string): Record<string, string> {
   const overrides: Record<string, string> = {};
   if (!text.trim()) return overrides;
@@ -547,13 +575,15 @@ function extractManualOverrides(text: string): Record<string, string> {
 
   const chunks = text
     .split(/[,;\n]+/)
-    .map((chunk) => chunk.trim())
+    .map((chunk) => semCabecalhoDeChat(chunk))
     .filter(Boolean);
 
   for (const chunk of chunks) {
     const normalizedChunk = normalizeLooseText(chunk);
-    const d = digitsOnly(chunk);
 
+    // Só campos de texto normalizáveis saem de trecho sem rótulo — eles têm
+    // vocabulário fechado (normalizeProfissao/Escolaridade/EstadoCivil só
+    // devolvem valor quando reconhecem o termo).
     if (!overrides.estado_civil) {
       const estadoCivil = normalizeEstadoCivil(chunk);
       if (estadoCivil) overrides.estado_civil = estadoCivil;
@@ -566,19 +596,13 @@ function extractManualOverrides(text: string): Record<string, string> {
       const escolaridade = normalizeEscolaridade(chunk);
       if (escolaridade) overrides.escolaridade = escolaridade;
     }
-    if (!overrides.cnpj && d.length === 14 && cnpjValido(d)) {
-      overrides.cnpj = d;
-    }
-    if (!overrides.cep && d.length === 8 && !/(rg|cpf|cnpj|telefone|celular|whats)/i.test(chunk)) {
-      overrides.cep = d;
-    }
-    if (!overrides.celular && isLikelyBrazilPhoneDigits(d)) {
-      overrides.celular = d;
-    }
     if (!overrides.email && normalizedChunk.includes("@")) {
       const found = extractEmailFromText(chunk);
       if (found) overrides.email = found;
     }
+    // NÃO extrair CEP/CNPJ/telefone de dígitos soltos: qualquer data de foto
+    // ("PHOTO-2026-07-20-17-57-13") vira CEP 20072026 ou CNPJ 20260720175713.
+    // Esses campos só vêm dos explicitPatterns acima, que exigem o rótulo.
   }
 
   return overrides;
@@ -790,7 +814,11 @@ Deno.serve(async (req) => {
       delete normalized.confidence_pairs;
     }
     if (text) {
-      applyManualOverrides(normalized, extractManualOverrides(text));
+      // extractManualOverrides foi feito para texto DIGITADO pelo operador
+      // ("CEP: 12345-678, profissão: pedreiro"). Rodá-lo sobre uma conversa
+      // inteira do WhatsApp ou sobre nomes de arquivo produz lixo (data de
+      // foto virando CEP/CNPJ). Só o trecho digitado é tratado como manual.
+      applyManualOverrides(normalized, extractManualOverrides(soTextoDigitado(text)));
     }
     if (emissorRgNeedsReview(normalized.emissor_rg, normalized.confidence?.emissor_rg)) {
       normalized.emissor_rg_needs_review = true;
@@ -920,7 +948,8 @@ Deno.serve(async (req) => {
         // Dígito verificador não bate — provável erro de leitura da IA/OCR.
         // Avisa a equipe em vez de falhar em silêncio na consulta à API.
         normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
-        normalized.warnings.push(`CNPJ extraído (${normalized.cnpj}) é inválido (dígito verificador não confere) — confira o documento e corrija manualmente.`);
+        normalized.warnings.push(`CNPJ extraído (${normalized.cnpj}) é inválido (dígito verificador não confere) — provável leitura errada ou número de arquivo. Campo deixado em branco para preenchimento manual.`);
+        delete normalized.cnpj;
       } else {
         const cnpjData = await lookupCnpj(normalized.cnpj);
         if (cnpjData) {

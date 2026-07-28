@@ -9,7 +9,8 @@ import type { ArquivoUpload } from "./PrePilotoWizard";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
 const TIPO_LABELS: Record<string, string> = {
-  cin: "CIN/RG/CNH",
+  cin: "CIN / RG",
+  cnh: "CNH",
   comprovante_residencia: "Comprovante de Residência",
   laudo_psicologico: "Laudo Psicológico",
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
@@ -246,16 +247,10 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
 
     if (textoAcumuladoZip || nomesFonteZip.length > 0 || combinados.length > 0) {
-      // Remove o prefixo de sequência que o WhatsApp adiciona ao exportar (ex: "00000211-rdd.pdf" → "rdd.pdf").
-      // Sem isso a IA lê esses dígitos como CEP/telefone e polui o cadastro.
-      const limparPrefixo = (n: string) => n.replace(/^\d{5,}-/, "");
-      const listaNomes = [
-        ...nomesFonteZip,
-        ...combinados.map((c) => limparPrefixo(c.file.name)),
-      ].filter(Boolean);
-      const blocoNomes = listaNomes.length > 0
-        ? `=== NOMES DE ARQUIVO (NÃO são dados cadastrais — use apenas para identificar o tipo de documento) ===\n${listaNomes.join("\n")}`
-        : "";
+      // Nomes de arquivo NÃO vão mais para o texto de extração: datas e códigos
+      // embutidos ("PHOTO-2026-07-20-17-57-13.jpg") viravam CEP e CNPJ no cadastro.
+      // A IA já recebe os próprios arquivos — o nome não acrescenta dado cadastral.
+      const blocoNomes = "";
       const merged = textoPastaColado
         ? [textoPastaColado, blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n")
         : [blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n");
@@ -313,7 +308,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   function inferirTipo(nome: string): string {
     const n = nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
     // Identidade
-    if (n.includes("cnh") || n.includes("habilitacao") || n.includes("motorista")) return "cin";
+    if (n.includes("cnh") || n.includes("habilitacao") || n.includes("motorista")) return "cnh";
     if (n.includes("cin") || n.includes("identidade") || n.includes("passaporte")) return "cin";
     if (n.match(/\brg\b/) || n.includes("registro geral")) return "cin";
     // Antecedentes

@@ -168,7 +168,7 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
 
 // ─── MODO CLASSIFY (Central de Adesão) ──────────────────────────────────────
 const CLASSIFY_TIPOS = [
-  "cin","comprovante_residencia","laudo_psicologico","laudo_capacidade_tecnica",
+  "cin","cnh","comprovante_residencia","laudo_psicologico","laudo_capacidade_tecnica",
   "certidao_antecedentes_criminais_estadual","certidao_antecedentes_criminais_federal",
   "comprovante_pagamento","ocupacao_licita","comprovante_renda","cartao_cnpj_mei",
   "craf","gte","nota_fiscal_arma","gov_br","outro",
@@ -208,7 +208,8 @@ const CLASSIFY_TOOL = {
 };
 
 const CLASSIFY_SYSTEM = `Classifique o documento entre os tipos:
-- cin: RG, CNH, CIN, passaporte — documento de identidade com foto
+- cin: RG, CIN ou passaporte — documento de identidade com foto (NÃO é CNH)
+- cnh: Carteira Nacional de Habilitação — traz "PERMISSÃO PARA DIRIGIR"/"HABILITAÇÃO", número de registro, categoria (A/B/AB) e validade
 - comprovante_residencia: conta de luz, água, gás, telefone, IPTU, correspondência bancária com endereço
 - laudo_psicologico: laudo de psicólogo com CRP, resultado APTO/INAPTO
 - laudo_capacidade_tecnica: laudo de capacidade técnica de atirador/instrutor de tiro
