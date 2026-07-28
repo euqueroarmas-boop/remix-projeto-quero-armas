@@ -166,11 +166,108 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
   }
 }
 
+// ─── MODO CLASSIFY (Central de Adesão) ──────────────────────────────────────
+const CLASSIFY_TIPOS = [
+  "cin","comprovante_residencia","laudo_psicologico","laudo_capacidade_tecnica",
+  "antecedentes_criminais","certidao_antecedentes_criminais_federal",
+  "comprovante_renda","cartao_cnpj_mei","craf","gte","nota_fiscal_arma","gov_br","outro",
+];
+
+const CLASSIFY_TOOL = {
+  type: "function",
+  function: {
+    name: "classificar_documento",
+    description: "Classifica o tipo do documento e extrai campos principais.",
+    parameters: {
+      type: "object",
+      properties: {
+        tipo_detectado: { type: "string", enum: CLASSIFY_TIPOS },
+        confianca: { type: "number" },
+        motivo: { type: "string" },
+        legivel: { type: "boolean" },
+        campos_extraidos: {
+          type: "object",
+          properties: {
+            nome_titular: { type: "string" },
+            cpf: { type: "string" },
+            numero_documento: { type: "string" },
+            data_emissao: { type: "string" },
+            data_validade: { type: "string" },
+            orgao_emissor: { type: "string" },
+            resultado: { type: "string" },
+            endereco: { type: "string" },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["tipo_detectado","confianca","motivo","legivel","campos_extraidos"],
+      additionalProperties: false,
+    },
+  },
+};
+
+const CLASSIFY_SYSTEM = `Classifique o documento entre os tipos: cin (RG/CNH/CIN/passaporte), comprovante_residencia (conta de luz/água/gás/telefone/IPTU), laudo_psicologico (laudo de psicólogo com CRP), laudo_capacidade_tecnica (laudo de tiro/instrutor), antecedentes_criminais (certidão estadual), certidao_antecedentes_criminais_federal (certidão federal/DPF/TSE), comprovante_renda (holerite/DECORE), cartao_cnpj_mei (cartão CNPJ/MEI), craf (CRAF/SINARM), gte (GTE/GT Exército), nota_fiscal_arma (NF de arma), gov_br (print GOV.BR senha), outro. Extraia só dados visíveis.`;
+
+async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
+  const model = mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+  const resp = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: CLASSIFY_SYSTEM },
+        { role: "user", content: [
+          { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ]},
+      ],
+      tools: [CLASSIFY_TOOL],
+      tool_choice: { type: "function", function: { name: "classificar_documento" } },
+      max_tokens: 512,
+    }),
+  });
+  if (!resp.ok) throw new Error(`gateway_${resp.status}`);
+  const data = await resp.json();
+  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
+  if (!call?.function?.arguments) return { tipo_detectado: "outro", confianca: 0, motivo: "", legivel: false, campos_extraidos: {} };
+  const parsed = JSON.parse(call.function.arguments);
+  return {
+    tipo_detectado: CLASSIFY_TIPOS.includes(parsed.tipo_detectado) ? parsed.tipo_detectado : "outro",
+    confianca: typeof parsed.confianca === "number" ? Math.min(1, Math.max(0, parsed.confianca)) : 0.5,
+    motivo: parsed.motivo || "",
+    legivel: parsed.legivel !== false,
+    campos_extraidos: parsed.campos_extraidos || {},
+  };
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const body = await req.json();
+
+    // Modo classify: chamado pela Central de Adesão
+    if (body?.mode === "classify" && Array.isArray(body?.arquivos)) {
+      const apiKey = Deno.env.get("LOVABLE_API_KEY");
+      if (!apiKey) return json({ error: "LOVABLE_API_KEY ausente" }, 500);
+      const arquivos: Array<{ nome: string; mime: string; data_url: string }> = body.arquivos;
+      const resultados: any[] = new Array(arquivos.length).fill(null);
+      const CONC = 4;
+      for (let i = 0; i < arquivos.length; i += CONC) {
+        const lote = arquivos.slice(i, i + CONC);
+        const loteRes = await Promise.all(
+          lote.map((a) =>
+            classificarUmArquivo(a.data_url, a.mime, a.nome, apiKey)
+              .catch((e: any) => ({ tipo_detectado: "outro", confianca: 0, motivo: "", legivel: false, campos_extraidos: {}, erro: String(e?.message || e) }))
+          )
+        );
+        loteRes.forEach((r, j) => { resultados[i + j] = { nome: arquivos[i + j].nome, ...r }; });
+      }
+      return json({ success: true, resultados });
+    }
+
     let { identity_image, address_image } = body || {};
     const {
       identity_storage_path,

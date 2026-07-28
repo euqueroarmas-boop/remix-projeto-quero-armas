@@ -150,8 +150,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           }))
         );
 
-        const { data, error } = await supabase.functions.invoke("qa-adesao-classificar-docs", {
-          body: { arquivos: payload },
+        const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
+          body: { mode: "classify", arquivos: payload },
         });
 
         if (error) throw error;
