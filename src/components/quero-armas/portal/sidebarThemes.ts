@@ -195,16 +195,7 @@ export type QASidebarThemeRow = {
 };
 
 function buildBgWithImage(imageUrl: string, fallback: string): string {
-  // A arte enviada é o background do bloco hero (topo). O restante (menu/footer)
-  // recebe escurecimento contínuo para garantir legibilidade do texto branco.
-  return (
-    `linear-gradient(180deg, ` +
-      `rgba(0,0,0,0) 0px, ` +
-      `rgba(0,0,0,0) 80px, ` +
-      `rgba(0,0,0,0.55) 130px, ` +
-      `rgba(0,0,0,0.55) 100%), ` +
-    `url("${imageUrl}") top center / cover no-repeat, ${fallback || "#0A0A0A"}`
-  );
+  return `url("${imageUrl}") top center / cover no-repeat, ${fallback || "#0A0A0A"}`;
 }
 
 export async function signHeroImagePath(path: string | null | undefined): Promise<string | null> {
