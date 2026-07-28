@@ -2356,7 +2356,7 @@ export default function QAClientePortalPage() {
                 ? { background: "transparent" }
                 : sidebarTheme.heroImage
                 ? {
-                    backgroundImage: `linear-gradient(transparent 40%, rgba(0,0,0,0.85)), url("${sidebarTheme.heroImage}")`,
+                    backgroundImage: `url("${sidebarTheme.heroImage}")`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     backgroundRepeat: "no-repeat",
@@ -2420,7 +2420,7 @@ export default function QAClientePortalPage() {
       {/* FUTURO: exibir banners/cards de lojas parceiras assinantes. Mecanismo de venda a ser implementado. */}
       <aside
         className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-center gap-2 overflow-hidden no-scrollbar"
-        style={{ background: sidebarTheme.bg, backgroundSize: "cover", backgroundPosition: "top center", backgroundRepeat: "no-repeat" }}
+        style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         <div className="flex flex-col items-center gap-1.5 opacity-30 select-none pointer-events-none">
