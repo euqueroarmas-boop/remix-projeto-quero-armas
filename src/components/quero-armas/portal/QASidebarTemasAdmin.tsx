@@ -326,7 +326,7 @@ export default function QASidebarTemasAdmin() {
         // Preview da sidebar em tempo real
         const previewImageUrl = formImageUrl;
         const sidebarBg = previewImageUrl
-          ? `linear-gradient(180deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 80px, rgba(0,0,0,0.6) 140px, rgba(0,0,0,0.6) 100%), url("${previewImageUrl}") top center / cover no-repeat, ${form.bg}`
+          ? `url("${previewImageUrl}") top center / cover no-repeat, ${form.bg}`
           : form.bg;
         const accentColor = form.accent || "#D6A64B";
         const navItems = [
@@ -515,28 +515,13 @@ export default function QASidebarTemasAdmin() {
                         flexDirection: "column",
                       }}
                     >
-                      {/* Hero block */}
-                      {form.top_mode === "hero" && (
-                        <div
-                          className="w-full shrink-0"
-                          style={{
-                            height: 100,
-                            background: previewImageUrl
-                              ? `linear-gradient(transparent 40%, rgba(0,0,0,0.85)), url("${previewImageUrl}") top center / cover no-repeat`
-                              : "transparent",
-                          }}
-                        >
-                          {!previewImageUrl && form.emblem && (
-                            <div className="w-full h-full flex flex-col items-center justify-center">
-                              <span style={{ fontSize: 36 }}>{form.emblem}</span>
-                            </div>
-                          )}
-                          {!previewImageUrl && !form.emblem && (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-1 opacity-30">
-                              <ImageIcon className="h-6 w-6 text-white" />
-                              <span className="text-[9px] text-white font-bold tracking-wider">SEM IMAGEM</span>
-                            </div>
-                          )}
+                      {/* Hero block — sem imagem (já renderizada no bg do container) */}
+                      {form.top_mode === "hero" && !previewImageUrl && (
+                        <div className="w-full shrink-0 flex flex-col items-center justify-center" style={{ height: 100 }}>
+                          {form.emblem
+                            ? <span style={{ fontSize: 36 }}>{form.emblem}</span>
+                            : <div className="flex flex-col items-center gap-1 opacity-30"><ImageIcon className="h-6 w-6 text-white" /><span className="text-[9px] text-white font-bold tracking-wider">SEM IMAGEM</span></div>
+                          }
                         </div>
                       )}
                       {/* área de conteúdo — sem nav items nem footer */}
