@@ -2442,30 +2442,56 @@ export default function QAClientePortalPage() {
 
       {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-end pb-[88px] gap-1 overflow-y-auto no-scrollbar"
+        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
         style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => goSection(item.key)}
-              title={item.label}
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-              style={active
-                ? { background: `${railIconColor}33`, color: railIconColor }
-                : { color: `${railIconColor}88` }}
-              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
-              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
-            >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
-            </button>
-          );
-        })}
+        {/* Ícones principais — topo */}
+        <div className="flex flex-col items-center gap-1">
+          {navItems.filter((i) => i.key !== "mensagens" && i.key !== "configuracoes").map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                title={item.label}
+                className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                style={active ? { background: `${railIconColor}33`, color: railIconColor } : { color: `${railIconColor}88` }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Espaçador */}
+        <div className="flex-1" />
+
+        {/* Suporte e Configurações — fundo, acima do balão flutuante */}
+        <div className="flex flex-col items-center gap-1 pb-[88px]">
+          {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                title={item.label}
+                className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                style={active ? { background: `${railIconColor}33`, color: railIconColor } : { color: `${railIconColor}88` }}
+                onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+                onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
+              >
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+              </button>
+            );
+          })}
+        </div>
       </aside>
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
