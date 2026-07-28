@@ -3,6 +3,8 @@ project_id = "ogkltfqvzweeqkfmrzts"
 [functions]
   [functions.qa-adesao-classificar-docs]
     verify_jwt = false
+  [functions.qa-extract-documents]
+    verify_jwt = false
   [functions.auth-email-hook]
     verify_jwt = false
   [functions.customer-lookup-email]
