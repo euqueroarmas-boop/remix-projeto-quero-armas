@@ -501,31 +501,22 @@ export default function QASidebarTemasAdmin() {
                   <div className="px-3 py-2 border-b border-slate-200 bg-slate-50">
                     <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Preview — sidebar esquerda (190 px)</span>
                   </div>
-                  <div className="flex-1 flex items-stretch justify-center p-3">
-                    {/* Mini-sidebar fiel: 190px wide, escala para caber */}
+                  <div className="flex-1 flex items-start justify-center p-3">
+                    {/* Preview: imagem completa sem corte */}
                     <div
                       className="relative rounded-lg overflow-hidden shadow-xl"
-                      style={{
-                        width: 190,
-                        minHeight: 420,
-                        background: sidebarBg,
-                        backgroundSize: "cover",
-                        backgroundPosition: "top center",
-                        display: "flex",
-                        flexDirection: "column",
-                      }}
+                      style={{ width: 190, background: form.bg || "#0A0A0A" }}
                     >
-                      {/* Hero block — sem imagem (já renderizada no bg do container) */}
-                      {form.top_mode === "hero" && !previewImageUrl && (
-                        <div className="w-full shrink-0 flex flex-col items-center justify-center" style={{ height: 100 }}>
-                          {form.emblem
-                            ? <span style={{ fontSize: 36 }}>{form.emblem}</span>
-                            : <div className="flex flex-col items-center gap-1 opacity-30"><ImageIcon className="h-6 w-6 text-white" /><span className="text-[9px] text-white font-bold tracking-wider">SEM IMAGEM</span></div>
-                          }
-                        </div>
-                      )}
-                      {/* área de conteúdo — sem nav items nem footer */}
-                      <div className="flex-1" />
+                      {previewImageUrl
+                        ? <img src={previewImageUrl} alt="Preview tema" style={{ width: "100%", height: "auto", display: "block" }} />
+                        : (
+                          <div style={{ minHeight: 320, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, opacity: 0.3 }}>
+                            <ImageIcon className="h-8 w-8 text-white" />
+                            <span className="text-[9px] text-white font-bold tracking-wider">SEM IMAGEM</span>
+                            {form.emblem && <span style={{ fontSize: 48 }}>{form.emblem}</span>}
+                          </div>
+                        )
+                      }
                     </div>
                   </div>
                   {/* Legenda */}
