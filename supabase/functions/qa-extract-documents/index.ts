@@ -170,7 +170,8 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
 const CLASSIFY_TIPOS = [
   "cin","comprovante_residencia","laudo_psicologico","laudo_capacidade_tecnica",
   "antecedentes_criminais","certidao_antecedentes_criminais_federal",
-  "comprovante_renda","cartao_cnpj_mei","craf","gte","nota_fiscal_arma","gov_br","outro",
+  "ocupacao_licita","comprovante_renda","cartao_cnpj_mei",
+  "craf","gte","nota_fiscal_arma","gov_br","outro",
 ];
 
 const CLASSIFY_TOOL = {
@@ -181,7 +182,7 @@ const CLASSIFY_TOOL = {
     parameters: {
       type: "object",
       properties: {
-        tipo_detectado: { type: "string", enum: CLASSIFY_TIPOS },
+        tipo_detectado: { type: "string", enum: CLASSIFY_TIPOS, description: "Tipo do documento. Prefira ocupacao_licita para documentos de renda/trabalho/empresa." },
         confianca: { type: "number" },
         motivo: { type: "string" },
         legivel: { type: "boolean" },
@@ -206,7 +207,22 @@ const CLASSIFY_TOOL = {
   },
 };
 
-const CLASSIFY_SYSTEM = `Classifique o documento entre os tipos: cin (RG/CNH/CIN/passaporte), comprovante_residencia (conta de luz/água/gás/telefone/IPTU), laudo_psicologico (laudo de psicólogo com CRP), laudo_capacidade_tecnica (laudo de tiro/instrutor), antecedentes_criminais (certidão estadual), certidao_antecedentes_criminais_federal (certidão federal/DPF/TSE), comprovante_renda (holerite/DECORE), cartao_cnpj_mei (cartão CNPJ/MEI), craf (CRAF/SINARM), gte (GTE/GT Exército), nota_fiscal_arma (NF de arma), gov_br (print GOV.BR senha), outro. Extraia só dados visíveis.`;
+const CLASSIFY_SYSTEM = `Classifique o documento entre os tipos:
+- cin: RG, CNH, CIN, passaporte — documento de identidade com foto
+- comprovante_residencia: conta de luz, água, gás, telefone, IPTU, correspondência bancária com endereço
+- laudo_psicologico: laudo de psicólogo com CRP, resultado APTO/INAPTO
+- laudo_capacidade_tecnica: laudo de capacidade técnica de atirador/instrutor de tiro
+- antecedentes_criminais: certidão estadual de antecedentes (SSP, TJ estadual)
+- certidao_antecedentes_criminais_federal: certidão federal (Justiça Federal, DPF, TSE)
+- ocupacao_licita: QUALQUER documento que comprove ocupação lícita ou fonte de renda — inclui: holerite, contracheque, carteira de trabalho (CTPS), extrato CNIS, histórico de crédito, contrato social, requerimento de empresário, cartão CNPJ, certificado MEI (CCMEI), QSA (Quadro de Sócios e Administradores), nota fiscal de serviço/produto (exceto de arma), DECORE, declaração de renda
+- comprovante_renda: use SOMENTE se for um documento genérico de renda que não se encaixe em ocupacao_licita
+- cartao_cnpj_mei: use SOMENTE se for cartão CNPJ/MEI sem outros elementos de ocupacao_licita
+- craf: Certificado de Registro de Acervo de Armas (CRAF) ou SINARM
+- gte: Guia de Tráfego do Exército (GTE) ou Guia de Transferência (GT)
+- nota_fiscal_arma: nota fiscal de COMPRA DE ARMA DE FOGO especificamente
+- gov_br: print de tela do portal GOV.BR mostrando login/senha
+- outro: não se encaixa em nenhuma categoria acima
+REGRA: Prefira sempre ocupacao_licita para documentos de renda/trabalho/empresa. Extraia só dados visíveis.`;
 
 async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
   const model = mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";

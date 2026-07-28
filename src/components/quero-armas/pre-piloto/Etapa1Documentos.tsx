@@ -15,6 +15,7 @@ const TIPO_LABELS: Record<string, string> = {
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
   antecedentes_criminais: "Antecedentes Criminais",
   certidao_antecedentes_criminais_federal: "Antecedentes Federais",
+  ocupacao_licita: "Ocupação Lícita",
   comprovante_renda: "Comprovante de Renda",
   cartao_cnpj_mei: "CNPJ / MEI",
   craf: "CRAF / SINARM",
@@ -302,8 +303,13 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.includes("psico") || n.includes("laudo") || n.includes("psicolog")) return "laudo_psicologico";
     if (n.includes("tecn") || n.includes("capacidade")) return "laudo_capacidade_tecnica";
     if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta")) return "certidao_antecedentes_criminais_federal";
-    if (n.includes("renda") || n.includes("holerite") || n.includes("contracheque") || n.includes("decore")) return "comprovante_renda";
-    if (n.includes("cnpj") || n.includes("mei")) return "cartao_cnpj_mei";
+    if (
+      n.includes("holerite") || n.includes("contracheque") || n.includes("decore") ||
+      n.includes("carteira de trabalho") || n.includes("ctps") || n.includes("cnis") ||
+      n.includes("credito") || n.includes("contrato social") || n.includes("requerimento") ||
+      n.includes("qsa") || n.includes("ccmei") || n.includes("cnpj") || n.includes("mei")
+    ) return "ocupacao_licita";
+    if (n.includes("renda")) return "comprovante_renda";
     if (n.includes("craf")) return "craf";
     if (n.includes("gte")) return "gte";
     if (n.includes("nota fiscal") || n.includes("nfe") || n.includes("nota_fiscal")) return "nota_fiscal_arma";
