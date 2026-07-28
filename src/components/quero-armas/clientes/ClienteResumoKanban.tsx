@@ -165,7 +165,7 @@ export default function ClienteResumoKanban({
 
   const ARSENAL_SPAN = <span style={{ color: "#7A1F2B" }}>ARSENAL INTELIGENTE</span>;
   const greetingNode = isReturning
-    ? <span>BEM-VINDO DE VOLTA AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}! ESTE É O SEU RESUMO DE TUDO</span>
+    ? <span>BEM-VINDO DE VOLTA AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}!<br />ESTE É O SEU RESUMO DE TUDO</span>
     : <span>BEM-VINDO AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}!</span>;
 
   const URG_SUB: Record<string, string> = {
