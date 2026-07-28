@@ -453,8 +453,27 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
+      {/* Banner WhatsApp */}
+      <a
+        href="https://wa.me/5511978481919"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between gap-3 px-4 md:px-8 py-2.5 transition hover:opacity-90"
+        style={{ background: "#1CC355", textDecoration: "none" }}
+      >
+        <div className="flex items-center gap-2">
+          <MessageCircle className="h-4 w-4 text-white shrink-0" />
+          <span className="text-white text-[12px] font-bold uppercase tracking-[0.14em]" style={{ fontFamily: OSWALD }}>
+            Precisa de ajuda? Fale com a equipe pelo WhatsApp
+          </span>
+        </div>
+        <span className="text-white text-[12px] font-black tracking-[0.08em] whitespace-nowrap" style={{ fontFamily: OSWALD }}>
+          +55 11 97848-1919
+        </span>
+      </a>
+
       {/* Header */}
-      <div className="px-4 md:px-8 pt-6 pb-4 border-b" style={{ borderColor: CARD_BORDER }}>
+      <div className="px-4 md:px-8 pt-5 pb-4 border-b" style={{ borderColor: CARD_BORDER }}>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div className="min-w-0">
             <h1 className="uppercase text-[20px] md:text-[26px] break-words" style={{ fontFamily: OSWALD, fontWeight: 600, letterSpacing: "0.06em", color: INK, lineHeight: 1.05 }}>

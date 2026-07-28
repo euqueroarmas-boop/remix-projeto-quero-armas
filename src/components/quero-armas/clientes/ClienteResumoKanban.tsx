@@ -35,6 +35,8 @@ interface Props {
   onOpenChecklist?: () => void;
   onOpenComprar?: () => void;
   onOpenDocsHub?: () => void;
+  onOpenKlal?: () => void;
+  onLogout?: () => void;
   avatarUrl?: string | null;
   avatarInitials?: string;
 }
@@ -135,6 +137,8 @@ export default function ClienteResumoKanban({
   onOpenChecklist,
   onOpenComprar,
   onOpenDocsHub,
+  onOpenKlal,
+  onLogout,
   avatarUrl,
   avatarInitials = "QA",
 }: Props) {
@@ -156,6 +160,9 @@ export default function ClienteResumoKanban({
     } catch { /* ignore */ }
     // Não muda isReturning nesta sessão: só ficará true no próximo login.
   }, [welcomeKey]);
+
+  const [avatarDropOpen, setAvatarDropOpen] = useState(false);
+
   const ARSENAL_SPAN = <span style={{ color: "#7A1F2B" }}>ARSENAL INTELIGENTE</span>;
   const greetingNode = isReturning
     ? <span>BEM-VINDO DE VOLTA AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}! ESTE É O SEU RESUMO DE TUDO</span>
@@ -577,13 +584,42 @@ export default function ClienteResumoKanban({
             <h1>{greetingNode}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="shrink-0" style={{ alignSelf: "center" }}>
-            <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white">
+          <div className="shrink-0 relative" style={{ alignSelf: "center" }}>
+            <button
+              type="button"
+              onClick={() => setAvatarDropOpen((v) => !v)}
+              className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white focus:outline-none focus:ring-[#7A1F2B]"
+              title="Opções de conta"
+            >
               {avatarUrl
                 ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[18px]" style={{ fontFamily: "Oswald, sans-serif" }}>{avatarInitials}</span>
               }
-            </div>
+            </button>
+            {avatarDropOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setAvatarDropOpen(false)} />
+                <div className="absolute right-0 top-[72px] z-50 w-52 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => { setAvatarDropOpen(false); onOpenKlal?.(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50 uppercase tracking-wide transition"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-[#7A1F2B]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Atualizar cadastro com o Klal
+                  </button>
+                  <div className="h-px bg-slate-100 mx-3" />
+                  <button
+                    type="button"
+                    onClick={() => { setAvatarDropOpen(false); onLogout?.(); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700 uppercase tracking-wide transition"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sair
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </header>
 

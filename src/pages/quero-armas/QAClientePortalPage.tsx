@@ -2403,89 +2403,34 @@ export default function QAClientePortalPage() {
         {/* Espaçador desktop — empurra rodapé para baixo */}
         <div className="hidden lg:flex flex-1" />
 
-        {/* Rodapé: WhatsApp + Sair */}
-        {effectiveCollapsed ? (
-          <div className="mb-2.5 pt-2.5 mx-2 border-t border-[#1a1a1a] flex flex-col items-center gap-1.5">
-            <a
-              href="https://wa.me/5511978481919"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="WhatsApp +55 11 97848-1919"
-              className="w-10 h-10 rounded-md flex items-center justify-center bg-[#1CC355] hover:bg-[#19B14C] text-white transition"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              title="Sair"
-              className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
-        ) : (
-          <div className="mx-3.5 mb-2.5 pt-2.5 border-t border-white/15">
-            <div className="mb-1.5">
-              <div
-                className="text-[12px] font-bold text-white"
-                style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
-              >
-                Precisa de ajuda?
-              </div>
-              <div
-                className="text-[11px] text-[#E6DFCE]"
-                style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
-              >
-                Atendimento direto pelo WhatsApp
-              </div>
-            </div>
-            <a
-              href="https://wa.me/5511978481919"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 bg-[#1CC355] hover:bg-[#19B14C] text-white px-2 py-1.5 rounded text-[11px] font-semibold transition whitespace-nowrap"
-            >
-              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-              +55 11 97848-1919
-            </a>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
-            >
-              <LogOut className="h-3.5 w-3.5" /> Sair
-            </button>
-          </div>
-        )}
+        {/* Rodapé: apenas Sair (WhatsApp movido para o Klal) */}
+        <div className={`mb-3 pt-2.5 border-t border-white/15 flex ${effectiveCollapsed ? "justify-center mx-2" : "justify-center mx-3.5"}`}>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sair"
+            className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
+          >
+            <LogOut className="h-4.5 w-4.5" />
+          </button>
+        </div>
       </aside>
 
-      {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
+      {/* ═══ RAIL DIREITO — espaço reservado para propaganda de parceiros (lojas de armas) ═══ */}
+      {/* FUTURO: exibir banners/cards de lojas parceiras assinantes. Mecanismo de venda a ser implementado. */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-start pt-6 gap-1 overflow-y-auto no-scrollbar"
+        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-center gap-2 overflow-hidden no-scrollbar"
         style={{ background: sidebarTheme.bg, backgroundSize: "cover", backgroundPosition: "top center", backgroundRepeat: "no-repeat" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => goSection(item.key)}
-              title={item.label}
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-              style={active
-                ? { background: `${railIconColor}33`, color: railIconColor }
-                : { color: `${railIconColor}88` }}
-              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
-              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
-            >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
-            </button>
-          );
-        })}
+        <div className="flex flex-col items-center gap-1.5 opacity-30 select-none pointer-events-none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+          </svg>
+          <span style={{ writingMode: "vertical-rl", fontSize: "8px", letterSpacing: "0.12em", fontWeight: 700, color: "white", textTransform: "uppercase" }}>
+            EM BREVE
+          </span>
+        </div>
       </aside>
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
@@ -2709,6 +2654,8 @@ export default function QAClientePortalPage() {
           onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
           onOpenChecklist={() => abrirChecklistGuiado()}
           onOpenDocsHub={() => setShowAddDoc(true)}
+          onLogout={handleLogout}
+          onOpenKlal={() => setActiveSection("mensagens" as any)}
           avatarUrl={avatarUrl}
           avatarInitials={userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
         />
