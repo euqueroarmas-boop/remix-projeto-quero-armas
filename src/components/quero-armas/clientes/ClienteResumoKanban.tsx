@@ -706,7 +706,7 @@ export default function ClienteResumoKanban({
           );
         })()}
 
-        <div className="qa-client-summary-print__label" style={{ marginTop: 24 }}>SUAS CINCO FRENTES</div>
+        <div style={{ marginTop: 24 }} />
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
           {snapshot.fronts.map((front) => (
             <article className={`qa-front-card qa-front-card--${front.key} s-${front.status}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
