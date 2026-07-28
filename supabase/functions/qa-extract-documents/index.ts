@@ -247,7 +247,11 @@ async function classificarUmArquivo(dataUrl: string, mime: string, nome: string,
   if (!resp.ok) throw new Error(`gateway_${resp.status}`);
   const data = await resp.json();
   const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) return { tipo_detectado: "outro", confianca: 0, motivo: "", legivel: false, campos_extraidos: {} };
+  // Sem tool call = a IA não conseguiu ler o documento. É FALHA, não classificação
+  // "outro" — marca com erro para o frontend preservar o tipo já inferido pelo nome.
+  if (!call?.function?.arguments) {
+    return { tipo_detectado: "outro", confianca: 0, motivo: "", legivel: false, campos_extraidos: {}, erro: "sem_resposta_ia" };
+  }
   const parsed = JSON.parse(call.function.arguments);
   return {
     tipo_detectado: CLASSIFY_TIPOS.includes(parsed.tipo_detectado) ? parsed.tipo_detectado : "outro",

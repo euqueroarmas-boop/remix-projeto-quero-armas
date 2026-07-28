@@ -174,20 +174,27 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         });
       }
 
-      // Aplica somente nos arquivos que ainda estão na lista e não foram deletados
+      // Aplica somente nos arquivos que ainda estão na lista e não foram deletados.
+      // A IA NUNCA rebaixa uma classificação já correta: se ela devolver "outro"
+      // (ou falhar), o tipo inferido pelo nome do arquivo é mantido.
       setArquivos((prev) => prev.map((a) => {
         if (!nomesNovos.includes(a.file.name)) return a;
         if (deletadosRef.current.has(a.file.name)) return a;
         const r = resultadosPorNome.get(a.file.name);
-        if (!r || r.erro) return a;
-        return { ...a, tipo: r.tipo_detectado ?? a.tipo, tipo_ia_confianca: r.confianca, tipo_ia_motivo: r.motivo };
+        if (!r || r.erro) return a;                       // falha da IA → preserva
+        if (!r.tipo_detectado || r.tipo_detectado === "outro") return a; // sem veredito → preserva
+        if (a.tipo !== "outro" && r.confianca < 0.60) return a; // heurística boa vence palpite fraco
+        return { ...a, tipo: r.tipo_detectado, tipo_ia_confianca: r.confianca, tipo_ia_motivo: r.motivo };
       }));
 
-      const resultados = [...resultadosPorNome.values()];
-      const alta = resultados.filter((r) => r?.confianca >= 0.85).length;
-      const baixa = resultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
+      // Conta só os resultados que a IA realmente conseguiu produzir
+      const uteis = [...resultadosPorNome.values()].filter((r) => r && !r.erro && r.tipo_detectado !== "outro");
+      const alta = uteis.filter((r) => r.confianca >= 0.85).length;
+      const baixa = uteis.filter((r) => r.confianca < 0.60).length;
+      const semLeitura = [...resultadosPorNome.values()].filter((r) => r?.erro || r?.tipo_detectado === "outro").length;
       if (alta > 0) toast.success(`IA classificou ${alta} documento(s) automaticamente`);
       if (baixa > 0) toast.warning(`${baixa} documento(s) com baixa confiança — verifique manualmente`);
+      if (semLeitura > 0) toast.warning(`${semLeitura} documento(s) a IA não conseguiu ler — classifique manualmente`);
     } catch (e: any) {
       const msg = e?.message || e?.error_description || JSON.stringify(e) || "erro desconhecido";
       console.error("[classificarComIA]", e);
