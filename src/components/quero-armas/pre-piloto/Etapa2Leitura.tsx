@@ -31,38 +31,73 @@ function normText(value: string): string {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
+// Valida o dígito verificador do CNPJ (algoritmo oficial da Receita Federal).
+function cnpjValido(cnpj: string): boolean {
+  const d = digitsOnly(cnpj);
+  if (d.length !== 14 || /^(\d)\1{13}$/.test(d)) return false;
+  const calc = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((acc, dig, i) => acc + Number(dig) * pesos[i], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  const dv1 = calc(d.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const dv2 = calc(d.slice(0, 12) + dv1, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d === d.slice(0, 12) + String(dv1) + String(dv2);
+}
+
+// Devolve só o trecho realmente digitado pelo operador, descartando os blocos
+// que a Etapa 1 injeta automaticamente (conversa do ZIP, nomes de arquivo).
+// Sem isso a conversa inteira do WhatsApp é tratada como "dado informado
+// manualmente" e sobrescreve, com confiança 1, o que a IA leu dos documentos.
+function soTextoDigitado(text: string): string {
+  const marcador = /^===\s*(NOMES DE ARQUIVO|CONVERSA WHATSAPP|TELEFONES EXTRA)/i;
+  const out: string[] = [];
+  let emBlocoAutomatico = false;
+  for (const linha of text.split("\n")) {
+    if (marcador.test(linha.trim())) { emBlocoAutomatico = true; continue; }
+    if (!emBlocoAutomatico) out.push(linha);
+  }
+  return out.join("\n").trim();
+}
+
+// Extrai dados que o OPERADOR digitou no campo de texto livre.
+// Regra central: só aceita valor com RÓTULO explícito ("CEP: 12345-678").
+// Dígitos soltos nunca viram cadastro — uma data como 2026-07-20-17-57-13
+// tem 8 e 14 dígitos e viraria CEP e CNPJ.
 function extractManualOverrides(text: string): Record<string, string> {
-  const raw = text.trim();
+  const raw = soTextoDigitado(text);
   const overrides: Record<string, string> = {};
+  if (!raw) return overrides;
 
   const email = raw.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   if (email) overrides.email = email;
 
-  const rg = raw.match(/\brg\s*(?:[:=\-]|n[ºo.]*)?\s*([0-9A-Za-z.\-]{5,18})/i)?.[1];
-  if (rg) overrides.rg = digitsOnly(rg) || rg.trim();
+  // RG exige dígitos — "rg completo" não pode virar rg = "completo"
+  const rg = raw.match(/\brg\s*(?:[:=\-]|n[ºo.]*)?\s*(\d[\d.\-]{4,17}[\dXx]?)/i)?.[1];
+  if (rg && digitsOnly(rg).length >= 5) overrides.rg = digitsOnly(rg);
 
   const cep = raw.match(/\bcep\s*(?:[:=\-]|n[ºo.]*)?\s*(\d{5}[-.\s]?\d{3})/i)?.[1];
-  if (cep) overrides.cep = digitsOnly(cep);
+  if (cep && !digitsOnly(cep).startsWith("0000")) overrides.cep = digitsOnly(cep);
 
+  // CNPJ só entra se o dígito verificador conferir
   const cnpj = raw.match(/\bcnpj\s*(?:[:=\-]|n[ºo.]*)?\s*([0-9.\-/]{14,22})/i)?.[1];
-  if (cnpj) overrides.cnpj = digitsOnly(cnpj);
+  if (cnpj && cnpjValido(cnpj)) overrides.cnpj = digitsOnly(cnpj);
 
-  const chunks = raw.split(/[,;\n]+/).map((p) => p.trim()).filter(Boolean);
-  for (const chunk of chunks) {
-    const d = digitsOnly(chunk);
-    const n = normText(chunk);
-    if (!overrides.cnpj && d.length === 14) overrides.cnpj = d;
-    else if (!overrides.celular && (d.length === 10 || d.length === 11) && !/\brg\b/i.test(chunk)) overrides.celular = d;
-    else if (!overrides.cep && d.length === 8 && !/\brg\b/i.test(chunk)) overrides.cep = d;
-    else if (!overrides.estado_civil && /\b(casado|casada|solteiro|solteira|divorciado|divorciada|viuvo|viuva)\b/.test(n)) overrides.estado_civil = chunk;
-    else if (!overrides.escolaridade && /\b(ensino|superior|fundamental|medio|pos|graduacao)\b/.test(n)) overrides.escolaridade = chunk;
-    else if (!overrides.profissao && /\b(empresario|empresaria|mei|autonomo|autonoma|servidor|servidora|aposentado|aposentada|clt)\b/.test(n)) overrides.profissao = chunk;
+  const cel = raw.match(/\b(?:celular|telefone|whatsapp|whats|fone)\s*(?:[:=\-])?\s*((?:\+?55\s*)?\(?\d{2}\)?\s*9?\d{4}[-.\s]?\d{4})/i)?.[1];
+  if (cel) {
+    const d = digitsOnly(cel).replace(/^55(?=\d{10,11}$)/, "");
+    if ((d.length === 10 || d.length === 11) && Number(d.slice(0, 2)) >= 11) overrides.celular = d;
   }
 
-  if (!overrides.cnpj) {
-    const anyCnpj = raw.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/)?.[0];
-    if (anyCnpj) overrides.cnpj = digitsOnly(anyCnpj);
-  }
+  // Campos de vocabulário fechado: grava o TERMO reconhecido, nunca a linha inteira
+  const n = normText(raw);
+  const acha = (re: RegExp) => n.match(re)?.[0]?.toUpperCase() ?? null;
+  const estadoCivil = acha(/\b(casado|casada|solteiro|solteira|divorciado|divorciada|viuvo|viuva|uniao estavel)\b/);
+  if (estadoCivil) overrides.estado_civil = estadoCivil;
+  const escolaridade = acha(/\b(ensino medio completo|ensino medio incompleto|ensino medio|superior completo|superior incompleto|superior|fundamental completo|fundamental incompleto|fundamental|pos-?graduacao)\b/);
+  if (escolaridade) overrides.escolaridade = escolaridade;
+  const profissao = acha(/\b(empresario|empresaria|mei|autonomo|autonoma|servidor publico|servidor|servidora|aposentado|aposentada|clt)\b/);
+  if (profissao) overrides.profissao = profissao;
 
   return overrides;
 }
