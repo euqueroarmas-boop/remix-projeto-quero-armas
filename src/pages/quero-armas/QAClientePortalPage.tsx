@@ -2403,34 +2403,34 @@ export default function QAClientePortalPage() {
         {/* Espaçador desktop — empurra rodapé para baixo */}
         <div className="hidden lg:flex flex-1" />
 
-        {/* Rodapé: apenas Sair (WhatsApp movido para o Klal) */}
-        <div className={`mb-3 pt-2.5 border-t border-white/15 flex ${effectiveCollapsed ? "justify-center mx-2" : "justify-center mx-3.5"}`}>
-          <button
-            type="button"
-            onClick={handleLogout}
-            title="Sair"
-            className="w-10 h-10 rounded-md flex items-center justify-center text-[#C8C8C8] hover:text-white hover:bg-[#141414] transition"
-          >
-            <LogOut className="h-4.5 w-4.5" />
-          </button>
-        </div>
       </aside>
 
-      {/* ═══ RAIL DIREITO — espaço reservado para propaganda de parceiros (lojas de armas) ═══ */}
-      {/* FUTURO: exibir banners/cards de lojas parceiras assinantes. Mecanismo de venda a ser implementado. */}
+      {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-center gap-2 overflow-hidden no-scrollbar"
+        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-start pt-6 gap-1 overflow-y-auto no-scrollbar"
         style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        <div className="flex flex-col items-center gap-1.5 opacity-30 select-none pointer-events-none">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white">
-            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-          </svg>
-          <span style={{ writingMode: "vertical-rl", fontSize: "8px", letterSpacing: "0.12em", fontWeight: 700, color: "white", textTransform: "uppercase" }}>
-            EM BREVE
-          </span>
-        </div>
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => goSection(item.key)}
+              title={item.label}
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+              style={active
+                ? { background: `${railIconColor}33`, color: railIconColor }
+                : { color: `${railIconColor}88` }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+              onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
+            >
+              <Icon className="h-[18px] w-[18px] shrink-0" />
+            </button>
+          );
+        })}
       </aside>
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
