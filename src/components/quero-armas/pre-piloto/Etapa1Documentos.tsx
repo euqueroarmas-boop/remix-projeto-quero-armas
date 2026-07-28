@@ -13,7 +13,7 @@ const TIPO_LABELS: Record<string, string> = {
   comprovante_residencia: "Comprovante de Residência",
   laudo_psicologico: "Laudo Psicológico",
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
-  antecedentes_criminais: "Antecedentes Criminais",
+  certidao_antecedentes_criminais_estadual: "Antecedentes Criminais (Estadual)",
   certidao_antecedentes_criminais_federal: "Antecedentes Federais",
   comprovante_pagamento: "Comprovante de Pagamento",
   ocupacao_licita: "Ocupação Lícita",
@@ -318,7 +318,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.match(/\brg\b/) || n.includes("registro geral")) return "cin";
     // Antecedentes
     if (n.includes("crimes-eleitorais") || n.includes("eleitoral") || n.includes("tse") || n.includes("federal")) return "certidao_antecedentes_criminais_federal";
-    if (n.includes("antecedente") || n.includes("criminal") || n.includes("certidaocriminal") || n.includes("nada consta") || n.includes("tjsp") || n.includes("tjmsp") || n.includes("tjrj")) return "antecedentes_criminais";
+    if (n.includes("antecedente") || n.includes("criminal") || n.includes("certidaocriminal") || n.includes("nada consta") || n.includes("tjsp") || n.includes("tjmsp") || n.includes("tjrj")) return "certidao_antecedentes_criminais_estadual";
     // Laudos
     if (n.includes("psico") || n.includes("psicolog")) return "laudo_psicologico";
     if (n.includes("tecn") || n.includes("capacidade") || n.includes("tiro")) return "laudo_capacidade_tecnica";

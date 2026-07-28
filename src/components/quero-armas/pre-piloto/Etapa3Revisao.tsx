@@ -14,6 +14,8 @@ const TIPOS_DOC_HUB: Array<{ valor: string; label: string }> = [
   { valor: "cnh",                                        label: "CNH — Carteira Nacional de Habilitação" },
   { valor: "cpf",                                        label: "CPF" },
   { valor: "comprovante_residencia",                     label: "Comprovante de Residência" },
+  { valor: "comprovante_pagamento",                      label: "Comprovante de Pagamento" },
+  { valor: "ocupacao_licita",                            label: "Ocupação Lícita" },
   { valor: "comprovante_renda",                          label: "Comprovante de Renda" },
   { valor: "laudo_psicologico",                          label: "Laudo Psicológico" },
   { valor: "laudo_capacidade_tecnica",                   label: "Laudo de Capacidade Técnica" },
@@ -339,6 +341,11 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
                     }}
                     className="h-7 text-[11px] border border-slate-200 rounded-md px-1.5 min-w-[220px]"
                   >
+                    {/* Slug desconhecido nesta lista: renderiza opção própria para o select
+                        não cair silenciosamente na primeira (que virava sempre CIN). */}
+                    {arq.tipo && !TIPOS_DOC_HUB.some((t) => t.valor === arq.tipo) && (
+                      <option value={arq.tipo}>{arq.tipo}</option>
+                    )}
                     {TIPOS_DOC_HUB.map((t) => (
                       <option key={t.valor} value={t.valor}>{t.label}</option>
                     ))}
