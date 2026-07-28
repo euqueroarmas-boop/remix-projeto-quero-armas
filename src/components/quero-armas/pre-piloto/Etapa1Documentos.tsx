@@ -281,11 +281,29 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
               {previewItem.tipo.startsWith("image/") ? (
                 <img src={previewItem.url} alt={previewItem.nome} className="max-w-full max-h-[80vh] object-contain" />
               ) : previewItem.tipo === "application/pdf" ? (
-                <iframe src={previewItem.url} title={previewItem.nome} className="w-[80vw] h-[80vh]" />
+                <div className="flex flex-col items-center w-[80vw] h-[80vh]">
+                  <embed src={previewItem.url} type="application/pdf" className="w-full flex-1" />
+                  <div className="py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => window.open(previewItem.url, "_blank")}
+                      className="text-[11px] font-semibold text-[#7A1F2B] underline hover:opacity-80"
+                    >
+                      Não carregou? Abrir em nova aba →
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-3 p-12 text-slate-500">
                   <FileText className="w-12 h-12" />
                   <span className="text-sm">Preview não disponível para este tipo de arquivo.</span>
+                  <button
+                    type="button"
+                    onClick={() => window.open(previewItem.url, "_blank")}
+                    className="text-[11px] font-semibold text-[#7A1F2B] underline hover:opacity-80"
+                  >
+                    Abrir em nova aba →
+                  </button>
                 </div>
               )}
             </div>
