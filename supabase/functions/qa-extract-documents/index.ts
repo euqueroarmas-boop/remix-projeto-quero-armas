@@ -249,10 +249,14 @@ Deno.serve(async (req) => {
     const body = await req.json();
 
     // Modo classify: chamado pela Central de Adesão
-    if (body?.mode === "classify" && Array.isArray(body?.arquivos)) {
+    if (body?.mode === "classify") {
       const apiKey = Deno.env.get("LOVABLE_API_KEY");
       if (!apiKey) return json({ error: "LOVABLE_API_KEY ausente" }, 500);
-      const arquivos: Array<{ nome: string; mime: string; data_url: string }> = body.arquivos;
+      const arquivos: Array<{ nome: string; mime: string; data_url: string }> =
+        Array.isArray(body?.arquivos) ? body.arquivos : [];
+      if (arquivos.length === 0) {
+        return json({ success: true, resultados: [] });
+      }
       const resultados: any[] = new Array(arquivos.length).fill(null);
       const CONC = 4;
       for (let i = 0; i < arquivos.length; i += CONC) {
