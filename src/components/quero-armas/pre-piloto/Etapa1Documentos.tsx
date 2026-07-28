@@ -32,8 +32,17 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
 
   function abrirPreview(a: ArquivoUpload) {
-    const url = a.preview ?? URL.createObjectURL(a.file);
-    setPreviewItem({ url, tipo: a.file.type, nome: a.file.name });
+    if (a.file.type === "application/pdf") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setPreviewItem({ url: dataUrl, tipo: a.file.type, nome: a.file.name });
+      };
+      reader.readAsDataURL(a.file);
+    } else {
+      const url = a.preview ?? URL.createObjectURL(a.file);
+      setPreviewItem({ url, tipo: a.file.type, nome: a.file.name });
+    }
   }
 
   const adicionarArquivos = async (files: FileList | File[]) => {
@@ -281,19 +290,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
               {previewItem.tipo.startsWith("image/") ? (
                 <img src={previewItem.url} alt={previewItem.nome} className="max-w-full max-h-[80vh] object-contain" />
               ) : previewItem.tipo === "application/pdf" ? (
-                <div className="flex flex-col items-center justify-center gap-4 p-12">
-                  <FileText className="w-16 h-16 text-slate-300" />
-                  <span className="text-sm font-semibold text-slate-600 text-center max-w-[50vw]">{previewItem.nome}</span>
-                  <button
-                    type="button"
-                    onClick={() => window.open(previewItem.url, "_blank")}
-                    className="px-5 py-2.5 rounded-lg text-white text-[12px] font-bold tracking-wide hover:opacity-90 transition"
-                    style={{ background: "#7A1F2B" }}
-                  >
-                    Abrir PDF em nova aba →
-                  </button>
-                  <span className="text-[10px] text-slate-400">O Safari não permite visualizar PDFs locais inline.</span>
-                </div>
+                <embed src={previewItem.url} type="application/pdf" style={{ width: "80vw", height: "80vh" }} />
               ) : (
                 <div className="flex flex-col items-center justify-center gap-3 p-12 text-slate-500">
                   <FileText className="w-12 h-12" />
