@@ -2341,12 +2341,7 @@ export default function QAClientePortalPage() {
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        {/* Faixa decorativa do tema — 3px no topo, não interfere com texto */}
-        <div
-          aria-hidden
-          className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none"
-          style={{ background: sidebarTheme.stripe }}
-        />
+        {/* stripe removida conforme solicitado */}
         {/* ── BLOCO DE TOPO (hero) — apenas temas com topMode "hero" expandidos ── */}
         {sidebarTheme.topMode === "hero" && !effectiveCollapsed && (
           <div
@@ -2428,13 +2423,13 @@ export default function QAClientePortalPage() {
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div
-                    className="text-[14px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
+                    className="text-[11px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
                     style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[12px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
+                    className="text-[10px] text-[#D8D2C2] tracking-[0.06em] mt-0.5 uppercase font-semibold"
                     style={{ fontFamily: "Rajdhani, Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
@@ -2575,11 +2570,10 @@ export default function QAClientePortalPage() {
 
       {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center py-3 gap-1 overflow-y-auto no-scrollbar"
+        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center justify-center gap-1 overflow-y-auto no-scrollbar"
         style={{ background: sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
-        <div className="absolute top-0 left-0 right-0 h-[3px] pointer-events-none" aria-hidden style={{ background: sidebarTheme.stripe }} />
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
@@ -2823,6 +2817,8 @@ export default function QAClientePortalPage() {
           onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
           onOpenChecklist={() => abrirChecklistGuiado()}
           onOpenDocsHub={() => setShowAddDoc(true)}
+          avatarUrl={avatarUrl}
+          avatarInitials={userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
         />
         {false && (() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);

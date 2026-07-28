@@ -35,6 +35,8 @@ interface Props {
   onOpenChecklist?: () => void;
   onOpenComprar?: () => void;
   onOpenDocsHub?: () => void;
+  avatarUrl?: string | null;
+  avatarInitials?: string;
 }
 
 type FrontTone = "bordo" | "amber" | "green";
@@ -133,6 +135,8 @@ export default function ClienteResumoKanban({
   onOpenChecklist,
   onOpenComprar,
   onOpenDocsHub,
+  avatarUrl,
+  avatarInitials = "QA",
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
@@ -572,8 +576,11 @@ export default function ClienteResumoKanban({
             <h1>{greetingTitle}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="qa-client-summary-print__updated">
-            <span className="qa-client-summary-print__updated-text"><small>ATUALIZADO</small>{updated} · {updatedTime}</span>
+          <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden ring-2 ring-[#2a2a2a]" style={{ alignSelf: "flex-start" }}>
+            {avatarUrl
+              ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px]" style={{ fontFamily: "Oswald, sans-serif" }}>{avatarInitials}</span>
+            }
           </div>
         </header>
 
