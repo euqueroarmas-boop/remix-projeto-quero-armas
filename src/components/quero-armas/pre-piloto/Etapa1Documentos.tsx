@@ -107,13 +107,13 @@ function BadgeConfianca({ confianca, classifying }: { confianca?: number; classi
 
 export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaColado, setTextoPastaColado, onAvancar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  // Ref de cancelamento: incrementado a cada nova classificação; a função verifica se ainda é válido
-  const classificacaoTokenRef = useRef(0);
+  // Nomes de arquivos excluídos pelo usuário durante a classificação — a IA ignora esses ao aplicar resultados
+  const deletadosRef = useRef<Set<string>>(new Set());
   const [processandoZip, setProcessandoZip] = useState(false);
   const [classificando, setClassificando] = useState(false);
   const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
-  // Índices dos arquivos que ainda estão sendo classificados pela IA
-  const [classificandoIdx, setClassificandoIdx] = useState<Set<number>>(new Set());
+  // Nomes dos arquivos que ainda estão sendo classificados pela IA
+  const [classificandoNomes, setClassificandoNomes] = useState<Set<string>>(new Set());
 
   function abrirPreview(a: ArquivoUpload) {
     if (a.file.type === "application/pdf") {
@@ -129,29 +129,22 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
   }
 
-  // Chama a edge function para classificar os arquivos com IA.
-  // Processa em lotes de 5 para não ultrapassar o limite de ~5MB da edge function.
   async function classificarComIA(novos: ArquivoUpload[], offsetIdx: number) {
     if (novos.length === 0) return;
 
-    // Token desta sessão de classificação — se o usuário excluir arquivos durante o processo,
-    // cancelRef será incrementado e este token ficará obsoleto, abortando a atualização.
-    classificacaoTokenRef.current += 1;
-    const meuToken = classificacaoTokenRef.current;
-    const cancelado = () => classificacaoTokenRef.current !== meuToken;
-
-    const idxSet = new Set(novos.map((_, i) => offsetIdx + i));
-    setClassificandoIdx((prev) => new Set([...prev, ...idxSet]));
+    const nomesNovos = novos.map((a) => a.file.name);
+    setClassificandoNomes((prev) => new Set([...prev, ...nomesNovos]));
     setClassificando(true);
 
     const LOTE = 5;
-    const todosResultados: any[] = new Array(novos.length).fill(null);
+    // mapa nome → resultado da IA
+    const resultadosPorNome = new Map<string, any>();
 
     try {
       for (let i = 0; i < novos.length; i += LOTE) {
-        if (cancelado()) return; // abortado pelo usuário
-
-        const fatia = novos.slice(i, i + LOTE);
+        // Filtra do lote apenas os que ainda não foram deletados
+        const fatia = novos.slice(i, i + LOTE).filter((a) => !deletadosRef.current.has(a.file.name));
+        if (fatia.length === 0) continue;
 
         const payload = await Promise.all(
           fatia.map(async (a) => {
@@ -159,63 +152,57 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
             return {
               nome: a.file.name,
               mime: isPdf ? "application/pdf" : "image/jpeg",
-              data_url: isPdf
-                ? await fileToDataUrl(a.file)
-                : await resizeImageToDataUrl(a.file),
+              data_url: isPdf ? await fileToDataUrl(a.file) : await resizeImageToDataUrl(a.file),
             };
           })
         );
 
-        if (cancelado()) return; // abortado enquanto preparava payload
+        // Filtra novamente após await (usuário pode ter deletado enquanto preparava)
+        const fatiaSemDeletados = fatia.filter((a) => !deletadosRef.current.has(a.file.name));
+        const payloadFiltrado = payload.filter((_, j) => !deletadosRef.current.has(fatia[j].file.name));
+        if (payloadFiltrado.length === 0) continue;
 
         const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
-          body: { mode: "classify", arquivos: payload },
+          body: { mode: "classify", arquivos: payloadFiltrado },
         });
-
-        if (cancelado()) return; // abortado enquanto aguardava resposta da IA
 
         if (error) throw error;
 
         const loteResultados: any[] = data?.resultados ?? [];
-        loteResultados.forEach((r, j) => { todosResultados[i + j] = r; });
+        loteResultados.forEach((r, j) => {
+          if (fatiaSemDeletados[j]) resultadosPorNome.set(fatiaSemDeletados[j].file.name, r);
+        });
       }
 
-      if (cancelado()) return; // abortado após último lote
+      // Aplica somente nos arquivos que ainda estão na lista e não foram deletados
+      setArquivos((prev) => prev.map((a) => {
+        if (!nomesNovos.includes(a.file.name)) return a;
+        if (deletadosRef.current.has(a.file.name)) return a;
+        const r = resultadosPorNome.get(a.file.name);
+        if (!r || r.erro) return a;
+        return { ...a, tipo: r.tipo_detectado ?? a.tipo, tipo_ia_confianca: r.confianca, tipo_ia_motivo: r.motivo };
+      }));
 
-      // Usa forma funcional para ler o estado atual (não o snapshot capturado no início)
-      // e só atualiza arquivos que ainda existem na lista
-      setArquivos((prev) => {
-        const nomeNovos = new Set(novos.map((a) => a.file.name));
-        return prev.map((a) => {
-          if (!nomeNovos.has(a.file.name)) return a; // não era um dos arquivos desta sessão
-          const localIdx = novos.findIndex((n) => n.file.name === a.file.name);
-          if (localIdx < 0) return a;
-          const r = todosResultados[localIdx];
-          if (!r || r.erro) return a;
-          return {
-            ...a,
-            tipo: r.tipo_detectado ?? a.tipo,
-            tipo_ia_confianca: r.confianca,
-            tipo_ia_motivo: r.motivo,
-          };
-        });
-      });
-
-      const altaConfianca = todosResultados.filter((r) => r?.confianca >= 0.85).length;
-      const baixaConfianca = todosResultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
-
-      if (altaConfianca > 0) toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
-      if (baixaConfianca > 0) toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
+      const resultados = [...resultadosPorNome.values()];
+      const alta = resultados.filter((r) => r?.confianca >= 0.85).length;
+      const baixa = resultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
+      if (alta > 0) toast.success(`IA classificou ${alta} documento(s) automaticamente`);
+      if (baixa > 0) toast.warning(`${baixa} documento(s) com baixa confiança — verifique manualmente`);
     } catch (e: any) {
-      if (cancelado()) return;
       const msg = e?.message || e?.error_description || JSON.stringify(e) || "erro desconhecido";
       console.error("[classificarComIA]", e);
       toast.error(`IA: ${msg.slice(0, 120)}`);
     } finally {
-      if (!cancelado()) {
-        setClassificandoIdx(new Set());
-        setClassificando(false);
-      }
+      setClassificandoNomes((prev) => {
+        const next = new Set(prev);
+        nomesNovos.forEach((n) => next.delete(n));
+        return next;
+      });
+      setClassificando((prev) => {
+        // Só desliga o spinner global quando não houver mais nenhum arquivo sendo classificado
+        const restantes = new Set([...classificandoNomes].filter((n) => !nomesNovos.includes(n)));
+        return restantes.size > 0;
+      });
     }
   }
 
@@ -352,14 +339,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   }
 
   const remover = (i: number) => {
-    // Cancela qualquer classificação em andamento — token muda, função detecta e para
-    classificacaoTokenRef.current += 1;
-    setClassificando(false);
-    setClassificandoIdx(new Set());
+    const nome = arquivos[i].file.name;
+    // Marca este arquivo como deletado — classificarComIA ignora resultados para ele
+    deletadosRef.current.add(nome);
+    setClassificandoNomes((prev) => { const next = new Set(prev); next.delete(nome); return next; });
     const copia = [...arquivos];
     if (copia[i].preview) URL.revokeObjectURL(copia[i].preview!);
     copia.splice(i, 1);
     setArquivos(copia);
+    if (copia.length === 0) setClassificando(false);
   };
 
   const alterarTipo = (i: number, tipo: string) => {
@@ -440,7 +428,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
                 {/* Badge de confiança da IA */}
                 <BadgeConfianca
                   confianca={a.tipo_ia_confianca}
-                  classifying={classificandoIdx.has(i)}
+                  classifying={classificandoNomes.has(a.file.name)}
                 />
 
                 {/* Dropdown de tipo — pré-preenchido pela IA, editável */}
