@@ -3244,58 +3244,6 @@ export default function QAClientePortalPage() {
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
 
-            {/* ── Tema do menu lateral ─────────────────────────────────────── */}
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/60">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <div className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Tema do menu lateral</div>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Personalize a aparência do menu preto à esquerda. O texto permanece sempre legível.
-                  </p>
-                </div>
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Atual: {sidebarTheme.label}
-                </div>
-              </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] items-start">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-                    Escolha o tema
-                  </label>
-                  <select
-                    value={sidebarTheme.key}
-                    onChange={(e) => {
-                      const key = e.target.value;
-                      const next = themeCatalog.find((t) => t.key === key);
-                      if (!next) return;
-                      setSidebarTheme(next);
-                      setPersonalThemeKey(key);
-                    }}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-[12px] font-semibold text-slate-900 outline-none focus:border-slate-500"
-                  >
-                    {themeCatalog.map((t) => (
-                      <option key={t.key} value={t.key}>
-                        {t.label}{globalDefaultKey === t.key ? "  •  padrão da equipe" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[10.5px] text-slate-500 leading-relaxed">
-                    Os temas com arte e o tema padrão são definidos pela equipe. Você pode alternar entre os disponíveis e voltar para o padrão a qualquer momento.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPersonalThemeKey(null);
-                      const next = resolveEffectiveTheme(themeCatalog, null, globalDefaultKey);
-                      setSidebarTheme(next);
-                    }}
-                    className="mt-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
-                  >
-                    Usar o tema padrão da equipe
-                  </button>
-                </div>
-              </div>
-            </div>
           </SectionCard>
         )}
 
