@@ -328,7 +328,8 @@ export default function QAClientePortalPage() {
       setThemeCatalog(merged);
       setGlobalDefaultKey(gk);
       setSidebarTheme(resolveEffectiveTheme(merged, getPersonalThemeKey(), gk));
-      if (railRow.data?.accent) setRailIconColor(railRow.data.accent);
+      const railData = railRow.data as { accent?: string } | null;
+      if (railData?.accent) setRailIconColor(railData.accent);
     })();
     const onChange = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
