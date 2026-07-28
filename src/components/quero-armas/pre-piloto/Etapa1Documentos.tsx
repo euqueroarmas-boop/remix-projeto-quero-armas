@@ -181,7 +181,9 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       if (altaConfianca > 0) toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
       if (baixaConfianca > 0) toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
     } catch (e: any) {
-      toast.error("Não foi possível classificar com IA. Os tipos foram inferidos pelo nome do arquivo.");
+      const msg = e?.message || e?.error_description || JSON.stringify(e) || "erro desconhecido";
+      console.error("[classificarComIA]", e);
+      toast.error(`IA: ${msg.slice(0, 120)}`);
     } finally {
       setClassificandoIdx(new Set());
       setClassificando(false);
