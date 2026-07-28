@@ -403,9 +403,18 @@ export default function ClienteResumoKanban({
           : undefined;
       const docLabel = shortName(getNomeDocumentoDisplay(doc, "Documento"), "Documento");
       const isFiliacaoDoc = /filia[cç][aã]o/i.test(docLabel);
+      const titularDoc: string | null =
+        doc?.dados_json?.nome_titular ||
+        doc?.dados_json?.titular_comprovante_nome ||
+        null;
+      const subDoc = isLaudo
+        ? URG_SUB.psicologico
+        : titularDoc
+          ? `__TITULAR__${titularDoc}`
+          : URG_SUB.documento;
       pushUrgent(
         isFiliacaoDoc ? titleCaseServico(docLabel, "Documento") : docLabel,
-        isLaudo ? URG_SUB.psicologico : URG_SUB.documento,
+        subDoc,
         doc?.data_validade_efetiva || doc?.data_validade,
         "documentos",
         cta,
@@ -621,8 +630,17 @@ export default function ClienteResumoKanban({
                 : ".";
               return `Filiação vigente é exigida para CAC ativo${sufFil}`;
             }
+            // Sub com titular extraído pela IA ("__TITULAR__Nome Completo")
+            if ((activeUrgent.sub || "").startsWith("__TITULAR__")) {
+              const titular = activeUrgent.sub.replace("__TITULAR__", "").trim();
+              const primeiroNome = titular.split(" ")[0] || titular;
+              if (isVencido) {
+                return `Comprovante em nome de ${primeiroNome} — vencido há ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}.`;
+              }
+              return `Comprovante em nome de ${primeiroNome} — vence em ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}.`;
+            }
             return isVencido
-              ? (activeUrgent.sub || "").replace(/próxima do vencimento/gi, "vencida").replace(/próximo do vencimento/gi, "vencido")
+              ? `${(activeUrgent.sub || "").replace(/próxima do vencimento/gi, "vencida").replace(/próximo do vencimento/gi, "vencido")} Vencido há ${diasVenc} ${diasVenc === 1 ? "dia" : "dias"}.`
               : activeUrgent.sub;
           };
           const subFallback = buildSub();
