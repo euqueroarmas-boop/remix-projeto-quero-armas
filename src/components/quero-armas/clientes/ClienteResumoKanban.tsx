@@ -584,47 +584,6 @@ export default function ClienteResumoKanban({
             <h1>{greetingNode}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="shrink-0 relative" style={{ alignSelf: "center" }}>
-            <button
-              type="button"
-              onClick={() => setAvatarDropOpen((v) => !v)}
-              className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white focus:outline-none focus:ring-[#7A1F2B]"
-              title="Opções de conta"
-            >
-              {avatarUrl
-                ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[18px]" style={{ fontFamily: "Oswald, sans-serif" }}>{avatarInitials}</span>
-              }
-            </button>
-            {avatarDropOpen && (
-              <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setAvatarDropOpen(false)} />
-                <div role="menu" style={{ position: 'absolute', top: 72, right: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0 }}>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => { setAvatarDropOpen(false); onOpenCadastro?.(); }}
-                    style={{ border: 0, background: 'transparent', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#1c1c1c', textTransform: 'none', lineHeight: 1.3, textAlign: 'right', transition: 'color 0.2s ease', whiteSpace: 'nowrap' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
-                  >
-                    Atualizar cadastro
-                  </button>
-                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '1px 0 1px auto' }} />
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => { setAvatarDropOpen(false); onLogout?.(); }}
-                    style={{ border: 0, background: 'transparent', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#1c1c1c', textTransform: 'none', lineHeight: 1.3, textAlign: 'right', transition: 'color 0.2s ease', whiteSpace: 'nowrap' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
-                  >
-                    Sair
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </header>
 
         <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">

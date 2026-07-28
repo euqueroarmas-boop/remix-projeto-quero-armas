@@ -313,6 +313,7 @@ export default function QAClientePortalPage() {
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
   const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
+  const [avatarDropOpen, setAvatarDropOpen] = useState(false);
 
   // Carrega temas do banco e cor do rail direito
   useEffect(() => {
@@ -2312,6 +2313,40 @@ export default function QAClientePortalPage() {
           <Menu className="h-5 w-5" />
         </button>
       )}
+      {/* Avatar global — fixo no topo direito em todas as seções */}
+      <div style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
+        <button
+          type="button"
+          onClick={() => setAvatarDropOpen((v) => !v)}
+          className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white focus:outline-none"
+          title="Opções de conta"
+        >
+          {avatarUrl
+            ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[18px]" style={{ fontFamily: "Oswald, sans-serif" }}>
+                {userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
+              </span>
+          }
+        </button>
+        {avatarDropOpen && (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setAvatarDropOpen(false)} />
+            <div role="menu" style={{ position: 'absolute', top: 60, right: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0 }}>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setAvatarDropOpen(false); handleLogout(); }}
+                style={{ border: 0, background: 'transparent', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#1c1c1c', lineHeight: 1.3, textAlign: 'right', transition: 'color 0.2s ease', whiteSpace: 'nowrap' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
+              >
+                Sair
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
       {/* Backdrop — visível apenas <lg quando o drawer está aberto */}
       {!mobileHidden && isBelowLg && (
         <div
