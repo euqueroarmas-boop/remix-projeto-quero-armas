@@ -539,44 +539,8 @@ export default function QASidebarTemasAdmin() {
                           )}
                         </div>
                       )}
-                      {/* Nav items */}
-                      <div className="flex-1 flex flex-col py-2 gap-0.5">
-                        {navItems.map(({ Icon, label, active }) => (
-                          <div
-                            key={label}
-                            className="flex items-center gap-2 px-3 py-1.5 mx-2 rounded"
-                            style={active
-                              ? { background: `${accentColor}33`, borderLeft: `2px solid ${accentColor}` }
-                              : { borderLeft: "2px solid transparent" }
-                            }
-                          >
-                            <Icon
-                              style={{ width: 13, height: 13, color: active ? accentColor : "#9a9a9a", flexShrink: 0 }}
-                            />
-                            <span
-                              className="text-[10px] font-semibold truncate"
-                              style={{ color: active ? "#ffffff" : "#c9c2b3" }}
-                            >
-                              {label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Footer */}
-                      <div className="mx-3 mb-2 pt-2 border-t" style={{ borderColor: "rgba(255,255,255,0.12)" }}>
-                        <div className="text-[9px] text-white font-bold mb-1 opacity-80">Precisa de ajuda?</div>
-                        <div
-                          className="flex items-center gap-1 rounded px-2 py-1 mb-1"
-                          style={{ background: "#1CC355" }}
-                        >
-                          <MessageCircle style={{ width: 10, height: 10, color: "#fff" }} />
-                          <span className="text-[9px] text-white font-bold">+55 11 97848-1919</span>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-60">
-                          <LogOut style={{ width: 10, height: 10, color: "#C8C8C8" }} />
-                          <span className="text-[9px] text-[#C8C8C8] font-bold">Sair</span>
-                        </div>
-                      </div>
+                      {/* área de conteúdo — sem nav items nem footer */}
+                      <div className="flex-1" />
                     </div>
                   </div>
                   {/* Legenda */}
