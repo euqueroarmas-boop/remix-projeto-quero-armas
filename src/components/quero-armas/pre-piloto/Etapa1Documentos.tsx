@@ -41,6 +41,35 @@ function fileToDataUrl(f: File): Promise<string> {
   });
 }
 
+// Redimensiona imagens para no máximo 1024px e qualidade 0.75
+// para manter o payload dentro do limite de 5MB da edge function.
+function resizeImageToDataUrl(f: File, maxPx = 1024, quality = 0.75): Promise<string> {
+  return new Promise((resolve) => {
+    if (!f.type.startsWith("image/")) {
+      fileToDataUrl(f).then(resolve);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) { resolve(String(e.target?.result || "")); return; }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = () => resolve(String(e.target?.result || ""));
+      img.src = String(e.target?.result || "");
+    };
+    reader.onerror = () => fileToDataUrl(f).then(resolve);
+    reader.readAsDataURL(f);
+  });
+}
+
 function BadgeConfianca({ confianca, classifying }: { confianca?: number; classifying?: boolean }) {
   if (classifying) {
     return (
@@ -96,7 +125,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
   }
 
-  // Chama a edge function para classificar os arquivos com IA
+  // Chama a edge function para classificar os arquivos com IA.
+  // Processa em lotes de 5 para não ultrapassar o limite de ~5MB da edge function.
   async function classificarComIA(novos: ArquivoUpload[], offsetIdx: number) {
     if (novos.length === 0) return;
 
@@ -104,29 +134,37 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     setClassificandoIdx((prev) => new Set([...prev, ...idxSet]));
     setClassificando(true);
 
+    const LOTE = 5;
+    const todosResultados: any[] = new Array(novos.length).fill(null);
+
     try {
-      // Converte todos para data URL em paralelo
-      const payload = await Promise.all(
-        novos.map(async (a) => ({
-          nome: a.file.name,
-          mime: a.file.type || "application/octet-stream",
-          data_url: await fileToDataUrl(a.file),
-        }))
-      );
+      for (let i = 0; i < novos.length; i += LOTE) {
+        const fatia = novos.slice(i, i + LOTE);
 
-      const { data, error } = await supabase.functions.invoke("qa-adesao-classificar-docs", {
-        body: { arquivos: payload },
-      });
+        // Redimensiona imagens (max 1024px) antes de converter para reduzir payload
+        const payload = await Promise.all(
+          fatia.map(async (a) => ({
+            nome: a.file.name,
+            mime: a.file.type.startsWith("image/") ? "image/jpeg" : a.file.type,
+            data_url: await resizeImageToDataUrl(a.file),
+          }))
+        );
 
-      if (error) throw error;
+        const { data, error } = await supabase.functions.invoke("qa-adesao-classificar-docs", {
+          body: { arquivos: payload },
+        });
 
-      const resultados: any[] = data?.resultados ?? [];
+        if (error) throw error;
+
+        const loteResultados: any[] = data?.resultados ?? [];
+        loteResultados.forEach((r, j) => { todosResultados[i + j] = r; });
+      }
 
       setArquivos(
         [...arquivos, ...novos].map((a, globalIdx) => {
           const localIdx = globalIdx - offsetIdx;
-          if (localIdx < 0 || localIdx >= resultados.length) return a;
-          const r = resultados[localIdx];
+          if (localIdx < 0 || localIdx >= todosResultados.length) return a;
+          const r = todosResultados[localIdx];
           if (!r || r.erro) return a;
           return {
             ...a,
@@ -137,15 +175,11 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         })
       );
 
-      const altaConfianca = resultados.filter((r) => r?.confianca >= 0.85).length;
-      const baixaConfianca = resultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
+      const altaConfianca = todosResultados.filter((r) => r?.confianca >= 0.85).length;
+      const baixaConfianca = todosResultados.filter((r) => r && !r.erro && r.confianca < 0.60).length;
 
-      if (altaConfianca > 0) {
-        toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
-      }
-      if (baixaConfianca > 0) {
-        toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
-      }
+      if (altaConfianca > 0) toast.success(`IA classificou ${altaConfianca} documento(s) automaticamente`);
+      if (baixaConfianca > 0) toast.warning(`${baixaConfianca} documento(s) com baixa confiança — verifique o tipo manualmente`);
     } catch (e: any) {
       toast.error("Não foi possível classificar com IA. Os tipos foram inferidos pelo nome do arquivo.");
     } finally {
