@@ -2379,29 +2379,19 @@ export default function QAClientePortalPage() {
           const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
           const avatarSizeCls = isHero ? "w-16 h-16" : "w-14 h-14";
           return (
-            <DropdownMenu open={brandMenuOpen} onOpenChange={setBrandMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Atalhos rápidos da Quero Armas"
-                  className={
-                    (isHero
-                      ? "relative flex items-center px-4 pt-2 pb-1.5 gap-2.5 -mt-2"
-                      : `flex items-center px-4 py-2 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`) +
-                    " group w-full text-left rounded-md transition-transform duration-300 hover:bg-white/[0.04] hover:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]/70" +
-                    (brandMenuOpen ? " translate-y-[3px]" : "")
-                  }
-                >
-              {/* Wrapper do avatar — inline na linha do brand, no lugar do logo */}
+            <div
+              className={
+                isHero
+                  ? "relative flex items-center px-4 pt-2 pb-1.5 gap-2.5 -mt-2"
+                  : `flex items-center px-4 py-2 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`
+              }
+            >
               <div className="relative shrink-0">
                 {isHero && (
                   <span
                     aria-hidden
                     className="absolute inset-0 -m-3 rounded-full pointer-events-none"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(0,0,0,0.55) 40%, transparent 75%)",
-                    }}
+                    style={{ background: "radial-gradient(circle, rgba(0,0,0,0.55) 40%, transparent 75%)" }}
                   />
                 )}
                 <div
@@ -2436,55 +2426,7 @@ export default function QAClientePortalPage() {
                   </div>
                 </div>
               )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="bottom" className="w-72">
-                <DropdownMenuLabel className="text-[11px] uppercase tracking-[0.12em] text-slate-500">
-                  Atalhos rápidos
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    // Fecha o menu E o CADASTRO explicitamente, depois abre COMPRAR
-                    // depois que o Radix desmontou os overlays (evita Dialog "engolido").
-                    setBrandMenuOpen(false);
-                    setShowCadastroModal(false);
-                    setTimeout(() => setEntradaWizardOpen(true), 120);
-                  }}
-                  className="flex items-start gap-3 py-2.5 cursor-pointer"
-                >
-                  <ShoppingCart className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-slate-900">
-                      Checklist COMPRAR <span className="text-[10px] font-bold tracking-[0.14em] text-[#7A1F2B] ml-1">· NOVO SERVIÇO</span>
-                    </div>
-                    <div className="text-[11.5px] text-slate-500 leading-snug">
-                      Descubra qual serviço contratar e reaproveite os documentos do seu Arsenal.
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    setBrandMenuOpen(false);
-                    setEntradaWizardOpen(false);
-                    setTimeout(() => setShowCadastroModal(true), 120);
-                  }}
-                  className="flex items-start gap-3 py-2.5 cursor-pointer"
-                >
-                  <UserCog className="h-4 w-4 mt-0.5 text-[#7A1F2B] shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-slate-900">
-                      Checklist CADASTRO <span className="text-[10px] font-bold tracking-[0.14em] text-[#7A1F2B] ml-1">· MEUS DADOS</span>
-                    </div>
-                    <div className="text-[11.5px] text-slate-500 leading-snug">
-                      Preencha os dados que ainda estão faltando.
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </div>
           );
         })()}
 

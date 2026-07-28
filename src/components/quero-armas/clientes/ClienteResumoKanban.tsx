@@ -576,11 +576,16 @@ export default function ClienteResumoKanban({
             <h1>{greetingTitle}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="shrink-0 w-12 h-12 rounded-full overflow-hidden ring-2 ring-[#2a2a2a]" style={{ alignSelf: "flex-start" }}>
-            {avatarUrl
-              ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[14px]" style={{ fontFamily: "Oswald, sans-serif" }}>{avatarInitials}</span>
-            }
+          <div className="shrink-0 flex flex-col items-center gap-1" style={{ alignSelf: "flex-start" }}>
+            <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white">
+              {avatarUrl
+                ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[18px]" style={{ fontFamily: "Oswald, sans-serif" }}>{avatarInitials}</span>
+              }
+            </div>
+            <div className="text-center text-[8px] font-black tracking-[0.18em] text-[#1a1a1a] uppercase leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>
+              Arsenal<br />Inteligente
+            </div>
           </div>
         </header>
 
