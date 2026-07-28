@@ -2374,61 +2374,7 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
-        {/* ── Brand: avatar + ARSENAL INTELIGENTE / ÁREA DO CLIENTE ── */}
-        {(() => {
-          const isHero = sidebarTheme.topMode === "hero" && !effectiveCollapsed;
-          const avatarSizeCls = isHero ? "w-16 h-16" : "w-14 h-14";
-          return (
-            <div
-              className={
-                isHero
-                  ? "relative flex items-center px-4 pt-2 pb-1.5 gap-2.5 -mt-2"
-                  : `flex items-center px-4 py-2 ${effectiveCollapsed ? "justify-center" : "gap-2.5"}`
-              }
-            >
-              <div className="relative shrink-0">
-                {isHero && (
-                  <span
-                    aria-hidden
-                    className="absolute inset-0 -m-3 rounded-full pointer-events-none"
-                    style={{ background: "radial-gradient(circle, rgba(0,0,0,0.55) 40%, transparent 75%)" }}
-                  />
-                )}
-                <div
-                  className={`relative ${avatarSizeCls} rounded-full overflow-hidden shrink-0 ring-1 ring-[#2a2a2a]`}
-                  aria-label={userName || "Foto do cliente"}
-                >
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt={userName || "Foto do cliente"} className="w-full h-full object-cover" />
-                  ) : (
-                    <span
-                      className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[16px] tracking-[0.04em]"
-                      style={{ fontFamily: "Oswald, sans-serif" }}
-                    >
-                      QA
-                    </span>
-                  )}
-                </div>
-              </div>
-              {!effectiveCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <div
-                    className="text-[11px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
-                    style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
-                  >
-                    Arsenal Inteligente
-                  </div>
-                  <div
-                    className="text-[10px] text-[#D8D2C2] tracking-[0.06em] mt-0.5 uppercase font-semibold"
-                    style={{ fontFamily: "Rajdhani, Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
-                  >
-                    Área do Cliente
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()}
+        {/* Brand removido da sidebar conforme solicitado */}
 
         {/* Nav mobile — só aparece abaixo de lg; em desktop a nav vai para o rail direito */}
         <nav className="qa-client-mobile-nav lg:hidden flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14" style={{ overscrollBehavior: "none", touchAction: "none" }}>
@@ -2494,9 +2440,9 @@ export default function QAClientePortalPage() {
               href="https://wa.me/5511978481919"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-[#1CC355] hover:bg-[#19B14C] text-white px-3 py-1.5 rounded text-[13px] font-semibold transition"
+              className="flex items-center justify-center gap-1.5 bg-[#1CC355] hover:bg-[#19B14C] text-white px-2 py-1.5 rounded text-[11px] font-semibold transition whitespace-nowrap"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-3.5 w-3.5 shrink-0" />
               +55 11 97848-1919
             </a>
             <button
