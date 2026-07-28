@@ -143,13 +143,18 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       for (let i = 0; i < novos.length; i += LOTE) {
         const fatia = novos.slice(i, i + LOTE);
 
-        // Redimensiona imagens (max 1024px) antes de converter para reduzir payload
         const payload = await Promise.all(
-          fatia.map(async (a) => ({
-            nome: a.file.name,
-            mime: a.file.type.startsWith("image/") ? "image/jpeg" : a.file.type,
-            data_url: await resizeImageToDataUrl(a.file),
-          }))
+          fatia.map(async (a) => {
+            const isPdf = a.file.type === "application/pdf";
+            return {
+              nome: a.file.name,
+              mime: isPdf ? "application/pdf" : "image/jpeg",
+              // PDFs não podem ser desenhados em canvas — usar base64 direto
+              data_url: isPdf
+                ? await fileToDataUrl(a.file)
+                : await resizeImageToDataUrl(a.file),
+            };
+          })
         );
 
         const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
@@ -287,35 +292,37 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   };
 
   function inferirTipo(nome: string): string {
-    const n = nome.toLowerCase();
-    if (n.includes("rg") || n.includes("cin") || n.includes("identidade")) return "cin";
-    if (n.includes("cnh") || n.includes("habilitacao")) return "cin";
-    if (n.includes("cpf")) return "cin";
+    const n = nome.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    // Identidade
+    if (n.includes("cnh") || n.includes("habilitacao") || n.includes("motorista")) return "cin";
+    if (n.includes("cin") || n.includes("identidade") || n.includes("passaporte")) return "cin";
+    if (n.match(/\brg\b/) || n.includes("registro geral")) return "cin";
+    // Antecedentes
+    if (n.includes("crimes-eleitorais") || n.includes("eleitoral") || n.includes("tse") || n.includes("federal")) return "certidao_antecedentes_criminais_federal";
+    if (n.includes("antecedente") || n.includes("criminal") || n.includes("certidaocriminal") || n.includes("nada consta") || n.includes("tjsp") || n.includes("tjmsp") || n.includes("tjrj")) return "antecedentes_criminais";
+    // Laudos
+    if (n.includes("psico") || n.includes("psicolog")) return "laudo_psicologico";
+    if (n.includes("tecn") || n.includes("capacidade") || n.includes("tiro")) return "laudo_capacidade_tecnica";
+    // Comprovante de pagamento
+    if (n.includes("pix") || n.includes("transferencia") || n.includes("ted") || n.includes("doc") || n.includes("recibo")) return "comprovante_pagamento";
+    // Ocupação lícita
     if (
-      n.includes("residencia") || n.includes("endereco") || n.includes("comprovante") ||
-      n.includes("fatura") || n.includes("boleto") || n.includes("nf-e") ||
+      n.includes("holerite") || n.includes("contracheque") || n.includes("decore") ||
+      n.includes("ctps") || n.includes("cnis") || n.includes("contrato social") ||
+      n.includes("requerimento") || n.includes("qsa") || n.includes("ccmei") ||
+      n.includes("cnpj") || n.includes("mei") || n.includes("servico") || n.includes("servicos")
+    ) return "ocupacao_licita";
+    // Comprovante de residência — "comprovante" e "fatura" genéricos só depois das anteriores
+    if (
+      n.includes("residencia") || n.includes("endereco") ||
       n.includes("edp") || n.includes("enel") || n.includes("cpfl") || n.includes("light") ||
-      n.includes("eletropaulo") || n.includes("energisa") || n.includes("eletrica") ||
-      n.includes("sabesp") || n.includes("sanasa") || n.includes("agua") || n.includes("saneamento") ||
-      n.includes("comgas") || n.includes("gasmig") ||
+      n.includes("eletropaulo") || n.includes("energisa") || n.includes("sabesp") ||
+      n.includes("sanasa") || n.includes("saneamento") || n.includes("comgas") || n.includes("gasmig") ||
       n.includes("vivo") || n.includes("claro") || n.includes("tim") || n.includes("oi") ||
       n.includes("net") || n.includes("telefonica") || n.includes("iptu")
     ) return "comprovante_residencia";
-    if (n.includes("psico") || n.includes("laudo") || n.includes("psicolog")) return "laudo_psicologico";
-    if (n.includes("tecn") || n.includes("capacidade")) return "laudo_capacidade_tecnica";
-    if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta")) return "certidao_antecedentes_criminais_federal";
-    if (
-      n.includes("comprovante pix") || n.includes("pix") || n.includes("transferencia") ||
-      n.includes("pagamento") || n.includes("recibo")
-    ) return "comprovante_pagamento";
-    if (
-      n.includes("holerite") || n.includes("contracheque") || n.includes("decore") ||
-      n.includes("carteira de trabalho") || n.includes("ctps") || n.includes("cnis") ||
-      n.includes("credito") || n.includes("contrato social") || n.includes("requerimento") ||
-      n.includes("qsa") || n.includes("ccmei") || n.includes("cnpj") || n.includes("mei")
-    ) return "ocupacao_licita";
     if (n.includes("renda")) return "comprovante_renda";
-    if (n.includes("craf")) return "craf";
+    if (n.includes("craf") || n.includes("sinarm")) return "craf";
     if (n.includes("gte")) return "gte";
     if (n.includes("nota fiscal") || n.includes("nfe") || n.includes("nota_fiscal")) return "nota_fiscal_arma";
     if (n.includes("gov") || n.includes("senha") || n.includes("govbr")) return "gov_br";
