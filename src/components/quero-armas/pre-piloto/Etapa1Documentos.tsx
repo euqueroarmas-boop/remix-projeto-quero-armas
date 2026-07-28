@@ -245,6 +245,21 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
   };
 
+  // Extrai todos os números de telefone brasileiros de um texto
+  function extrairTelefonesBR(texto: string): string[] {
+    // Padrões: +55 (11) 99999-9999 | (11) 9 9999-9999 | 11999999999 | +5511999999999
+    const re = /(?:\+?55\s?)?(?:\(?\d{2}\)?\s?)(?:9\s?)?\d{4}[-\s]?\d{4}/g;
+    const encontrados = new Set<string>();
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(texto)) !== null) {
+      const digitos = m[0].replace(/\D/g, "");
+      // Aceita só 10 ou 11 dígitos (com ou sem 55 na frente)
+      const sem55 = digitos.startsWith("55") && digitos.length > 11 ? digitos.slice(2) : digitos;
+      if (sem55.length === 10 || sem55.length === 11) encontrados.add(sem55);
+    }
+    return [...encontrados];
+  }
+
   const processarZip = async (zipFile: File): Promise<{ arquivos: ArquivoUpload[]; texto: string }> => {
     setProcessandoZip(true);
     try {
@@ -252,6 +267,9 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       const zip = await JSZip.loadAsync(zipFile);
       const novos: ArquivoUpload[] = [];
       let textoConversa = "";
+
+      // Tenta extrair telefone do nome do próprio ZIP (Android exporta como "WhatsApp Chat - +5511999999999.zip")
+      const telefonesZipNome = extrairTelefonesBR(zipFile.name);
 
       for (const [nome, entry] of Object.entries(zip.files)) {
         if (entry.dir) continue;
@@ -275,6 +293,14 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           tipo: inferirTipo(file.name),
           preview: mime.startsWith("image/") ? URL.createObjectURL(blob) : undefined,
         });
+      }
+
+      // Busca telefones no texto da conversa + nome do ZIP e antepõe bloco explícito
+      const telefonesTexto = textoConversa ? extrairTelefonesBR(textoConversa) : [];
+      const todosTelefones = [...new Set([...telefonesZipNome, ...telefonesTexto])];
+      if (todosTelefones.length > 0) {
+        const blocoTel = `=== TELEFONES EXTRAÍDOS DO WHATSAPP ===\n${todosTelefones.map(t => `celular: ${t}`).join("\n")}`;
+        textoConversa = blocoTel + (textoConversa ? "\n\n" + textoConversa : "");
       }
 
       if (novos.length === 0 && !textoConversa) {
