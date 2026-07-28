@@ -598,23 +598,27 @@ export default function ClienteResumoKanban({
             </button>
             {avatarDropOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setAvatarDropOpen(false)} />
-                <div className="absolute right-0 top-[72px] z-50 w-52 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setAvatarDropOpen(false)} />
+                <div role="menu" style={{ position: 'absolute', top: 72, right: 0, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0 }}>
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => { setAvatarDropOpen(false); onOpenCadastro?.(); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50 uppercase tracking-wide transition"
+                    style={{ border: 0, background: 'transparent', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#1c1c1c', textTransform: 'none', lineHeight: 1.3, textAlign: 'right', transition: 'color 0.2s ease', whiteSpace: 'nowrap' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
                   >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-[#7A1F2B]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     Atualizar cadastro
                   </button>
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div style={{ width: 40, height: 1, background: 'rgba(0,0,0,0.08)', margin: '1px 0 1px auto' }} />
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={() => { setAvatarDropOpen(false); onLogout?.(); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-slate-600 hover:bg-red-50 hover:text-red-700 uppercase tracking-wide transition"
+                    style={{ border: 0, background: 'transparent', padding: '2px 0', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700, letterSpacing: '0.02em', color: '#1c1c1c', textTransform: 'none', lineHeight: 1.3, textAlign: 'right', transition: 'color 0.2s ease', whiteSpace: 'nowrap' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#7A1F2B'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = '#1c1c1c'; }}
                   >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Sair
                   </button>
                 </div>
