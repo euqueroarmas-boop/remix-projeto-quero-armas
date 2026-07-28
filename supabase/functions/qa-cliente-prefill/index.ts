@@ -199,13 +199,20 @@ const SYSTEM_PROMPT = [
     "14) NUNCA gere warning de 'data no futuro' a menos que tenha certeza absoluta da data atual. Datas em DD/MM/AAAA podem ser confundidas com MM/DD/AAAA — não emita esse tipo de warning.",
     "15) TEXTO LIVRE (conversas WhatsApp, e-mails, prints): LEIA linha por linha e extraia TODO dado cadastral encontrado — em especial telefone/celular (qualquer sequência com DDD, ex.: (11) 94010-4125, 11940104125, +55 11 9...), e-mail (qualquer token com @), CEP (00000-000 ou 8 dígitos), endereço, RG, CPF, data de nascimento, nome da mãe/pai, senha GOV.BR. Assinaturas de e-mail, rodapés e cabeçalhos frequentemente contêm telefone e e-mail — não ignore.",
     "16) Telefone/celular: normalize para apenas dígitos com DDD (10 ou 11 dígitos). Se houver mais de um número, use o mais mencionado ou o marcado como principal em celular, e coloque o outro em telefone_secundario.",
-    "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): trate cada nome como fonte válida de telefone. Ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650' (celulares brasileiros pré-2016 com 8 dígitos começando 6-9 devem receber '9' prefixado após o DDD).",
+    "16.1) NOMES DE ARQUIVO (bloco '=== NOMES DE ARQUIVO ==='): esse bloco NÃO é fonte de dados cadastrais. Use-o APENAS para identificar o tipo de documento. PROIBIDO extrair CEP, telefone, RG, CPF ou qualquer número cadastral de um nome de arquivo. Única exceção: se um nome de arquivo contiver um telefone em formato inequívoco de contato humano (ex.: 'Conversa do WhatsApp com Rubens 17 8455-6650.zip' → celular '17984556650'), pode usá-lo; sequências numéricas soltas, códigos, hashes, sufixos de exportação e nomes como 'rdd.pdf', 'about_blank.pdf', 'Certidao (2).pdf' NUNCA geram dado cadastral.",
     "17) E-mail: extraia qualquer endereço válido (contém '@' e domínio). Prefira o de uso pessoal (gmail, hotmail, outlook, icloud, yahoo, uol, terra) ao corporativo se houver conflito.",
     "18) Nome completo, nome da mãe, nome do pai, profissão, estado civil, escolaridade, nacionalidade, naturalidade, emissor do RG, logradouro, complemento, bairro, cidade e país: escreva SEMPRE com a ortografia correta em português (com acentos e cedilha corretos, ex.: 'EMPRESÁRIO', 'SÃO PAULO', 'JOÃO'), mesmo que o documento original esteja sem acentuação, todo em maiúsculas ou com abreviações. Nunca altere o CONTEÚDO do dado (não troque nomes por sinônimos), apenas a grafia/acentuação. E-mail e senha GOV.BR NUNCA são alterados — preserve exatamente como estão.",
     "19) CLASSIFICAÇÃO DE ARQUIVOS: para CADA arquivo recebido (na ordem, começando em índice 0), preencha uma entrada em arquivos_classificados com o SLUG canônico do tipo — decidido pelo CONTEÚDO visual/textual, nunca pelo nome. Exemplos: fatura de energia elétrica (EDP, ENEL, CPFL, LIGHT, ELETROPAULO), fatura de água (SABESP), fatura de gás, fatura de telefone/internet (VIVO, CLARO, TIM, OI, NET), extrato bancário, correspondência bancária → comprovante_residencia. Documento oficial com foto + Registro Geral + naturalidade → cin (se moderno com QR code gov.br) ou rg_com_cpf. CNH válida → cnh. Contracheque/holerite → comprovante_renda. Cartão CNPJ → cartao_cnpj_mei. Certidão criminal (Justiça Federal/Estadual/Militar/Eleitoral) → certidao_antecedentes_criminais_federal/estadual/militar/eleitoral. Laudo psicológico assinado por psicólogo → laudo_psicologico. Laudo de capacidade técnica/tiro assinado por instrutor → laudo_capacidade_tecnica. CRAF/GT/GTE/Autorização de compra/Nota fiscal de arma → respectivos slugs. Print de senha GOV.BR → gov_br. Se não for possível classificar com segurança (confianca<0.6), use 'outro'. NUNCA deixe arquivos_classificados vazio quando houver arquivos.",
     "20) CNPJ — LEITURA DE ALTA PRECISÃO: O CNPJ tem EXATAMENTE 14 dígitos numéricos (formato XX.XXX.XXX/XXXX-XX). REGRAS CRÍTICAS: (a) Leia cada dígito individualmente — nunca adivinhe ou complete. (b) ATENÇÃO MEI/CCMEI: o Governo Federal forma a razão social do MEI concatenando o nome completo do titular com seu CPF, ex: 'GILSON DO NASCIMENTO 29934113813'. Isso é CORRETO e esperado — transcreva exatamente assim, incluindo o CPF no final da razão social. NÃO separe nem remova o CPF da razão social de MEI. (c) No CCMEI, o CNPJ (14 dígitos) aparece em campo próprio separado da razão social — leia somente esse campo para preencher cnpj, nunca use os 11 dígitos do CPF embutido na razão social. (d) CROSS-CHECK com nome de arquivo: se no bloco '=== NOMES DE ARQUIVO ===' houver um nome de arquivo com 14 dígitos consecutivos que pareça ser o CNPJ (ex: CCMEI-31837713000138.pdf), use esses dígitos como candidato e compare com o que você leu do documento. Se diferirem, prefira o do nome de arquivo E adicione warning 'CNPJ do OCR diverge do nome do arquivo — usando nome do arquivo. Confirmar manualmente.' (e) Se mesmo assim não tiver certeza absoluta, deixe o campo cnpj vazio e adicione warning 'CNPJ não extraído com segurança — conferir manualmente no documento CCMEI/Cartão CNPJ'.",
     "21) CEP — LEITURA DE ALTA PRECISÃO: CEP tem EXATAMENTE 8 dígitos (formato NNNNN-NNN). Leia cada dígito individualmente. NUNCA confunda '0' com 'O' nem '1' com 'I'. Se o CEP do comprovante de residência e o CEP do documento de ocupação (CCMEI/empresa) forem diferentes, use o comprovante de residência como fonte primária (campo cep) e o CEP da empresa apenas nos campos cep_secundario ou ocupacao_licita_cep. Nunca sobrescreva o endereço residencial com endereço comercial.",
-    "22) TELEFONE — LEITURA DE ALTA PRECISÃO: Celular brasileiro tem 11 dígitos (2 DDD + 9 dígitos, começa com 9). Fixo tem 10 dígitos. NUNCA invente ou complete dígitos faltantes. Se houver múltiplos números no documento, escolha o de celular (11 dígitos) para o campo celular. Não extraia números de protocolo, CNPJ, CPF, RG ou código de barras como telefone.",
+    "22) TELEFONE — LEITURA DE ALTA PRECISÃO: Celular brasileiro tem 11 dígitos (2 DDD + 9 dígitos, começa com 9). Fixo tem 10 dígitos. NUNCA invente ou complete dígitos faltantes. Um telefone válido NUNCA tem DDD '00' nem começa com zeros. Se o número resultante tiver DDD 00, ou menos de 10 dígitos, ou vier de sequência de nome de arquivo, NÃO preencha o campo — deixe vazio para anotação manual. Não extraia números de protocolo, CNPJ, CPF, RG ou código de barras como telefone.",
+    "23) NUNCA COPIE TEXTO BRUTO DE CONVERSA PARA UM CAMPO. Toda linha de chat vem no formato '[data hora] Nome: mensagem'. Você deve extrair APENAS O VALOR SEMÂNTICO, nunca a linha inteira, nunca o timestamp, nunca o nome do remetente. Exemplos obrigatórios: linha '[26/07/2026 16:24:29] QA POSSE Gilson do Nascimento: Sou mei' → profissao = 'MEI' (jamais o texto da linha). Linha '[26/07/2026 19:54:28] QA POSSE Gilson: Ensino médio completo' → escolaridade = 'ENSINO MÉDIO COMPLETO'. Linha 'meu rg é 12.345.678-9' → rg = '123456789'. Se o campo resultante contiver ':', '[', ']', horário (HH:MM:SS) ou o nome do remetente, está ERRADO — refaça a extração isolando só o dado.",
+    "23.1) PROFISSÃO: preencha com o cargo/ocupação normalizado em maiúsculas, uma expressão curta. 'Sou mei' → 'MEI'. 'trabalho como pedreiro' → 'PEDREIRO'. 'sou autônomo' → 'AUTÔNOMO'. Nunca frases completas, nunca verbos, nunca texto de conversa.",
+    "23.2) ESCOLARIDADE: normalize para um dos valores canônicos em maiúsculas: 'FUNDAMENTAL INCOMPLETO', 'FUNDAMENTAL COMPLETO', 'ENSINO MÉDIO INCOMPLETO', 'ENSINO MÉDIO COMPLETO', 'SUPERIOR INCOMPLETO', 'SUPERIOR COMPLETO', 'PÓS-GRADUAÇÃO'. Nunca texto de conversa.",
+    "23.3) RG: o campo rg recebe SOMENTE dígitos (e X final quando houver). Palavras como 'completo', 'não tenho', 'depois mando' NUNCA são um RG — nesse caso deixe rg vazio.",
+    "24) CEP — ORIGEM OBRIGATÓRIA: o campo cep DEVE vir do comprovante de residência ou de um endereço escrito por extenso na conversa. É PROIBIDO montar CEP a partir de sequência numérica de nome de arquivo, número de protocolo, código de documento ou qualquer número solto. Um CEP brasileiro válido nunca começa com '00000'. Se o CEP extraído começar com '0000' ou não puder ser confirmado no comprovante, deixe o campo vazio e adicione warning 'CEP não confirmado no comprovante de residência — preencher manualmente'.",
+    "25) NATURALIDADE E NACIONALIDADE: leia obrigatoriamente do documento de identidade (CIN/RG/CNH), onde aparecem como 'NATURALIDADE' ou 'LOCAL DE NASCIMENTO' (ex.: 'SÃO PAULO/SP' ou 'FERRAZ DE VASCONCELOS - SP'). Separe em naturalidade_municipio (só o município) e naturalidade_uf (2 letras). Se o documento for brasileiro e a naturalidade for uma cidade brasileira, preencha nacionalidade='BRASILEIRA' e naturalidade_pais='BRASIL'. Nunca deixe esses campos vazios quando houver um RG/CIN/CNH legível entre os arquivos.",
+    "26) DATA DE EXPEDIÇÃO DO RG: procure ativamente no documento de identidade (rótulos 'DATA DE EXPEDIÇÃO', 'EXPEDIÇÃO', 'EMISSÃO', 'DATA DE EMISSÃO') e também em texto livre da conversa. Preencha data_expedicao_rg em DD/MM/AAAA. Não confunda com data de nascimento nem com validade da CNH.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -938,6 +945,49 @@ Deno.serve(async (req) => {
         }
       }
     }
+    // ─── Guarda anti-lixo ────────────────────────────────────────────────
+    // A IA às vezes copia linha de conversa ('[16:24:29] Fulano: Sou mei') ou
+    // monta número a partir de sequência de nome de arquivo ('00000211-rdd.pdf').
+    // Estes valores são impossíveis por formato — descarta e avisa a equipe.
+    normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+
+    // Texto de conversa vazado para campos curtos
+    const pareceLinhaDeChat = (v: unknown) =>
+      typeof v === "string" && (/\d{1,2}:\d{2}(:\d{2})?/.test(v) || /[\[\]]/.test(v) || /:\s/.test(v));
+    for (const campo of ["profissao", "escolaridade", "estado_civil", "nome_completo", "nome_mae", "nome_pai", "naturalidade_municipio"]) {
+      if (pareceLinhaDeChat(normalized[campo])) {
+        normalized.warnings.push(`${campo.toUpperCase()} descartado: a IA copiou texto de conversa em vez do valor. Preencher manualmente.`);
+        delete normalized[campo];
+      }
+    }
+
+    // RG só pode conter dígitos (e X final)
+    if (typeof normalized.rg === "string" && !/\d/.test(normalized.rg)) {
+      normalized.warnings.push(`RG descartado (valor "${normalized.rg}" não é um número de RG). Preencher manualmente.`);
+      delete normalized.rg;
+    }
+
+    // CEP: 8 dígitos e nunca iniciando em 0000
+    for (const campo of ["cep", "cep_secundario"]) {
+      const d = typeof normalized[campo] === "string" ? normalized[campo].replace(/\D/g, "") : "";
+      if (d && (d.length !== 8 || d.startsWith("0000"))) {
+        normalized.warnings.push(`${campo.toUpperCase()} descartado (valor "${normalized[campo]}" inválido — provável número de arquivo/protocolo). Confirmar no comprovante de residência.`);
+        delete normalized[campo];
+      }
+    }
+
+    // Telefone: 10 ou 11 dígitos, DDD de 11 a 99
+    for (const campo of ["celular", "telefone_secundario"]) {
+      const d = typeof normalized[campo] === "string" ? normalized[campo].replace(/\D/g, "") : "";
+      const semDdi = d.startsWith("55") && d.length > 11 ? d.slice(2) : d;
+      const dddOk = Number(semDdi.slice(0, 2)) >= 11;
+      if (semDdi && (![10, 11].includes(semDdi.length) || !dddOk)) {
+        normalized.warnings.push(`${campo.toUpperCase()} descartado (valor "${normalized[campo]}" não é um telefone válido). Anotar manualmente.`);
+        delete normalized[campo];
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     // Máscaras de exibição — CPF/CEP/telefones/RG.
     if (normalized.cpf) normalized.cpf = formatCpf(normalized.cpf);
     if (normalized.cep) normalized.cep = formatCep(normalized.cep);

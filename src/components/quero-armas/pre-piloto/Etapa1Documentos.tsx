@@ -239,12 +239,15 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
 
     if (textoAcumuladoZip || nomesFonteZip.length > 0 || combinados.length > 0) {
+      // Remove o prefixo de sequência que o WhatsApp adiciona ao exportar (ex: "00000211-rdd.pdf" → "rdd.pdf").
+      // Sem isso a IA lê esses dígitos como CEP/telefone e polui o cadastro.
+      const limparPrefixo = (n: string) => n.replace(/^\d{5,}-/, "");
       const listaNomes = [
         ...nomesFonteZip,
-        ...combinados.map((c) => c.file.name),
+        ...combinados.map((c) => limparPrefixo(c.file.name)),
       ].filter(Boolean);
       const blocoNomes = listaNomes.length > 0
-        ? `=== NOMES DE ARQUIVO (podem conter telefone/e-mail/nome) ===\n${listaNomes.join("\n")}`
+        ? `=== NOMES DE ARQUIVO (NÃO são dados cadastrais — use apenas para identificar o tipo de documento) ===\n${listaNomes.join("\n")}`
         : "";
       const merged = textoPastaColado
         ? [textoPastaColado, blocoNomes, textoAcumuladoZip ? `=== CONVERSA WHATSAPP (ZIP) ===\n${textoAcumuladoZip}` : ""].filter(Boolean).join("\n\n")
