@@ -15,6 +15,7 @@ const TIPO_LABELS: Record<string, string> = {
   laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
   antecedentes_criminais: "Antecedentes Criminais",
   certidao_antecedentes_criminais_federal: "Antecedentes Federais",
+  comprovante_pagamento: "Comprovante de Pagamento",
   ocupacao_licita: "Ocupação Lícita",
   comprovante_renda: "Comprovante de Renda",
   cartao_cnpj_mei: "CNPJ / MEI",
@@ -303,6 +304,10 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.includes("psico") || n.includes("laudo") || n.includes("psicolog")) return "laudo_psicologico";
     if (n.includes("tecn") || n.includes("capacidade")) return "laudo_capacidade_tecnica";
     if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta")) return "certidao_antecedentes_criminais_federal";
+    if (
+      n.includes("comprovante pix") || n.includes("pix") || n.includes("transferencia") ||
+      n.includes("pagamento") || n.includes("recibo")
+    ) return "comprovante_pagamento";
     if (
       n.includes("holerite") || n.includes("contracheque") || n.includes("decore") ||
       n.includes("carteira de trabalho") || n.includes("ctps") || n.includes("cnis") ||
