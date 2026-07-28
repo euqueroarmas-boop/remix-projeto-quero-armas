@@ -602,11 +602,11 @@ export default function ClienteResumoKanban({
                 <div className="absolute right-0 top-[72px] z-50 w-52 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => { setAvatarDropOpen(false); onOpenKlal?.(); }}
+                    onClick={() => { setAvatarDropOpen(false); onOpenCadastro?.(); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-[12px] font-semibold text-slate-700 hover:bg-slate-50 uppercase tracking-wide transition"
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-[#7A1F2B]"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Atualizar cadastro com o Klal
+                    Atualizar cadastro
                   </button>
                   <div className="h-px bg-slate-100 mx-3" />
                   <button
