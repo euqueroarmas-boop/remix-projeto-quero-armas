@@ -453,21 +453,21 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
-      {/* Banner WhatsApp */}
+      {/* Banner WhatsApp — discreto */}
       <a
         href="https://wa.me/5511978481919"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-between gap-3 px-4 md:px-8 py-2.5 transition hover:opacity-90"
-        style={{ background: "#1CC355", textDecoration: "none" }}
+        className="flex items-center justify-between gap-2 px-4 md:px-8 py-1.5 transition hover:opacity-80"
+        style={{ background: "#f4f4f4", borderBottom: "1px solid #e5e5e5", textDecoration: "none" }}
       >
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-white shrink-0" />
-          <span className="text-white text-[12px] font-bold uppercase tracking-[0.14em]" style={{ fontFamily: OSWALD }}>
+        <div className="flex items-center gap-1.5">
+          <MessageCircle className="h-3 w-3 shrink-0" style={{ color: "#1CC355" }} />
+          <span className="text-[10px] tracking-[0.10em] uppercase" style={{ fontFamily: OSWALD, color: "#555", fontWeight: 600 }}>
             Precisa de ajuda? Fale com a equipe pelo WhatsApp
           </span>
         </div>
-        <span className="text-white text-[12px] font-black tracking-[0.08em] whitespace-nowrap" style={{ fontFamily: OSWALD }}>
+        <span className="text-[10px] tracking-[0.06em] whitespace-nowrap" style={{ fontFamily: OSWALD, color: "#555", fontWeight: 600 }}>
           +55 11 97848-1919
         </span>
       </a>
