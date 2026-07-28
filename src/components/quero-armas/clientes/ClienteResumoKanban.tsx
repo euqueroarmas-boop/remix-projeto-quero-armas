@@ -156,9 +156,10 @@ export default function ClienteResumoKanban({
     } catch { /* ignore */ }
     // Não muda isReturning nesta sessão: só ficará true no próximo login.
   }, [welcomeKey]);
-  const greetingTitle = isReturning
-    ? `BEM-VINDO DE VOLTA, ${firstName(cliente)}! ESTE É O SEU RESUMO DE TUDO`
-    : `BEM-VINDO, ${firstName(cliente)}! ESTE É O RESUMO DE TUDO`;
+  const ARSENAL_SPAN = <span style={{ color: "#7A1F2B" }}>ARSENAL INTELIGENTE</span>;
+  const greetingNode = isReturning
+    ? <span>BEM-VINDO DE VOLTA AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}! ESTE É O SEU RESUMO DE TUDO</span>
+    : <span>BEM-VINDO AO {ARSENAL_SPAN}, {firstName(cliente).toUpperCase()}!</span>;
 
   const URG_SUB: Record<string, string> = {
     cr: "Certificado de Registro · sem ele toda atividade na PF trava",
@@ -573,13 +574,10 @@ export default function ClienteResumoKanban({
       <div className="qa-client-summary-print__wrap">
         <header className="qa-client-summary-print__top">
           <div>
-            <h1>{greetingTitle}</h1>
+            <h1>{greetingNode}</h1>
             <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
           </div>
-          <div className="shrink-0 flex flex-col items-center gap-1.5" style={{ alignSelf: "flex-start" }}>
-            <div className="text-center text-[9px] font-black tracking-[0.2em] text-[#1a1a1a] uppercase leading-tight" style={{ fontFamily: "Oswald, sans-serif" }}>
-              Arsenal<br />Inteligente
-            </div>
+          <div className="shrink-0" style={{ alignSelf: "center" }}>
             <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-[#e0e0e0] bg-white">
               {avatarUrl
                 ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
