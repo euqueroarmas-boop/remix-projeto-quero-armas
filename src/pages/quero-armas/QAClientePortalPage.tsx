@@ -2428,13 +2428,13 @@ export default function QAClientePortalPage() {
               {!effectiveCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div
-                    className="text-[16px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
+                    className="text-[14px] font-bold text-white leading-tight tracking-[0.06em] uppercase"
                     style={{ fontFamily: "Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
                   >
                     Arsenal Inteligente
                   </div>
                   <div
-                    className="text-[14px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
+                    className="text-[12px] text-[#D8D2C2] tracking-[0.08em] mt-0.5 uppercase font-semibold"
                     style={{ fontFamily: "Rajdhani, Oswald, sans-serif", textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
                   >
                     Área do Cliente
@@ -2503,11 +2503,11 @@ export default function QAClientePortalPage() {
                 key={item.key}
                 type="button"
                 onClick={() => { goSection(item.key); setSidebarCollapsed(true); }}
-                className={`flex items-center w-full gap-3 px-4 py-2.5 text-[16px] font-bold border-l-2 ${active ? "text-white" : "text-[#c9c2b3] border-transparent hover:text-white hover:bg-white/5"}`}
+                className={`flex items-center justify-between w-full gap-3 px-4 py-2.5 text-[14px] font-bold border-l-2 ${active ? "text-white" : "text-[#c9c2b3] border-transparent hover:text-white hover:bg-white/5"}`}
                 style={active ? { background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, transparent 100%)`, borderLeftColor: sidebarTheme.accent } : undefined}
               >
+                <span className="text-left">{item.label}</span>
                 <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
-                <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
           })}
@@ -2541,13 +2541,13 @@ export default function QAClientePortalPage() {
           <div className="mx-3.5 mb-2.5 pt-2.5 border-t border-white/15">
             <div className="mb-1.5">
               <div
-                className="text-[13px] font-bold text-white"
+                className="text-[12px] font-bold text-white"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.85)" : undefined }}
               >
                 Precisa de ajuda?
               </div>
               <div
-                className="text-[11.5px] text-[#E6DFCE]"
+                className="text-[11px] text-[#E6DFCE]"
                 style={{ textShadow: sidebarTheme.heroImage ? "0 1px 2px rgba(0,0,0,0.95), 0 0 5px rgba(0,0,0,0.8)" : undefined }}
               >
                 Atendimento direto pelo WhatsApp
@@ -2565,7 +2565,7 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[11px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
+              className="mt-1.5 w-full flex items-center justify-center gap-2 text-[10px] tracking-[0.18em] uppercase font-semibold text-[#C8C8C8] hover:text-white py-1.5 transition"
             >
               <LogOut className="h-3.5 w-3.5" /> Sair
             </button>
