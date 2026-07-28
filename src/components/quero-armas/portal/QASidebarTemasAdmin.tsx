@@ -181,9 +181,9 @@ export default function QASidebarTemasAdmin() {
         if (error) throw error;
         toast.success("Tema atualizado.");
       } else {
-        const { error } = await supabase.from("qa_sidebar_temas").insert(payload);
+        const { error } = await supabase.from("qa_sidebar_temas").upsert(payload, { onConflict: "key" });
         if (error) throw error;
-        toast.success("Tema criado.");
+        toast.success("Tema salvo.");
       }
       setShowForm(false);
       setForm(EMPTY);
