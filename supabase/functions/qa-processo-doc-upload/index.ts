@@ -336,6 +336,45 @@ Deno.serve(async (req) => {
       );
     } catch (_) {}
 
+    // Notifica admin (eu@queroarmas.com.br) de todo upload de documento pelo cliente.
+    try {
+      // @ts-ignore EdgeRuntime
+      (globalThis as any).EdgeRuntime?.waitUntil(
+        (async () => {
+          const { data: cli } = await supabase
+            .from("qa_clientes")
+            .select("nome_completo, email, cpf")
+            .or(`id.eq.${processo.cliente_id},id_legado.eq.${processo.cliente_id}`)
+            .limit(1)
+            .maybeSingle();
+          const { data: proc } = await supabase
+            .from("qa_processos")
+            .select("servico_nome")
+            .eq("id", processo_id)
+            .maybeSingle();
+          const exigencia = (docUpload?.nome_documento as string | undefined)
+            || (docUpload?.tipo_documento as string | undefined)
+            || "Item do checklist";
+          const { notifyAdminUpload } = await import("../_shared/notifyAdminUpload.ts");
+          await notifyAdminUpload({
+            tipo: "documento_processo",
+            cliente_nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? null,
+            cliente_email: (cli as { email?: string } | null)?.email ?? null,
+            cliente_cpf: (cli as { cpf?: string } | null)?.cpf ?? null,
+            documento_nome: nome_arquivo_original || exigencia,
+            exigencia,
+            servico: (proc as { servico_nome?: string } | null)?.servico_nome ?? null,
+            processo_id,
+            extras: {
+              "Tipo de documento": String(docUpload?.tipo_documento ?? "—"),
+              "Tamanho (bytes)": String(realSize),
+              "Formato": ext.toUpperCase(),
+            },
+          });
+        })().catch((e: unknown) => console.warn("[upload] admin notify falhou:", (e as Error)?.message ?? e)),
+      );
+    } catch (_) {}
+
     return json({
       success: true,
       documento: docRow,
