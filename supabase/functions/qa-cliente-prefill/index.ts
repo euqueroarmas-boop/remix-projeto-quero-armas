@@ -759,9 +759,18 @@ Deno.serve(async (req) => {
     });
 
     if (text) {
+      // Conversas de WhatsApp reais passam de 25 mil caracteres. O limite antigo
+      // de 12 mil descartava metade do atendimento em silêncio — dados ditos pelo
+      // cliente no fim da conversa nunca chegavam ao modelo. Gemini 2.5 comporta
+      // folgadamente esse volume; quando ainda assim estourar, avisamos a equipe.
+      const LIMITE_TEXTO = 120000;
+      const textoParaIA = text.slice(0, LIMITE_TEXTO);
+      if (text.length > LIMITE_TEXTO) {
+        console.warn(`[qa-cliente-prefill] texto truncado: ${text.length} → ${LIMITE_TEXTO} chars`);
+      }
       content.push({
         type: "text",
-        text: `\n\n=== TEXTO LIVRE / OBSERVAÇÕES ===\n${text.slice(0, 12000)}`,
+        text: `\n\n=== TEXTO LIVRE / OBSERVAÇÕES ===\n${textoParaIA}`,
       });
     }
 
@@ -979,6 +988,12 @@ Deno.serve(async (req) => {
     // monta número a partir de sequência de nome de arquivo ('00000211-rdd.pdf').
     // Estes valores são impossíveis por formato — descarta e avisa a equipe.
     normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+
+    // Truncamento nunca pode ser silencioso: se parte da conversa não chegou à
+    // IA, a equipe precisa saber que os campos podem estar incompletos.
+    if (text && text.length > 120000) {
+      normalized.warnings.push(`Conversa muito longa (${text.length} caracteres): apenas os primeiros 120.000 foram analisados. Conferir manualmente dados citados no fim do atendimento.`);
+    }
 
     // Texto de conversa vazado para campos curtos
     const pareceLinhaDeChat = (v: unknown) =>

@@ -19,7 +19,7 @@ function json(body: Record<string, unknown>, status = 200) {
 const CAMPOS_PERMITIDOS = new Set([
   "nome_completo", "email", "celular", "data_nascimento", "nome_mae", "nome_pai",
   "sexo", "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
-  "naturalidade_municipio", "naturalidade_uf", "naturalidade_pais",
+  "nacionalidade", "naturalidade_municipio", "naturalidade_uf", "naturalidade_pais",
   "estado_civil", "escolaridade", "titulo_eleitor", "cnh", "ctps", "profissao",
   "cep", "endereco", "numero", "complemento", "bairro", "cidade", "estado", "pais",
   "observacao", "ocupacao_licita_cnpj", "ocupacao_licita_razao_social",
