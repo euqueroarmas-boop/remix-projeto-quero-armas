@@ -10,6 +10,11 @@
 -- fiscal. Faltando no catálogo, o slot renda_qsa do processo só era cumprido
 -- por um apelido que aceitava o Cartão CNPJ — dois documentos distintos, e um
 -- fechava a exigência do outro.
+--
+-- declaracao_compromisso_habitualidade: no CAC são três documentos distintos —
+-- filiação à entidade de tiro, declaração de habitualidade do clube e
+-- declaração de compromisso. O Hub só tinha tipo para os dois primeiros, então
+-- um único "comprovante de habitualidade" fechava os três slots do processo.
 
 ALTER TABLE public.qa_documentos_cliente
   DROP CONSTRAINT IF EXISTS qa_doc_cliente_tipo_check;
@@ -30,7 +35,8 @@ ALTER TABLE public.qa_documentos_cliente
     'declaracao_correlata','declaracao_guarda_acervo_1endereco',
     'laudo_psicologico','laudo_capacidade_tecnica',
     'comprovante_efetiva_necessidade','documento_complementar_caso',
-    'comprovante_habitualidade','comprovante_clube_tiro','comprovante_competicao',
+    'comprovante_habitualidade','declaracao_compromisso_habitualidade',
+    'comprovante_clube_tiro','comprovante_competicao',
     'comprovante_pagamento',
     'protocolo_processo','oficio','despacho','exigencia','indeferimento',
     'procuracao','procuracao_assinada','contrato_assinado',

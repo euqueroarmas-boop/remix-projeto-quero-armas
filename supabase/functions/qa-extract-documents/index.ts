@@ -182,6 +182,7 @@ const CLASSIFY_TIPOS = [
   "antecedentes_estadual_execucoes","antecedentes_militar","antecedentes_eleitoral",
   "laudo_psicologico","laudo_capacidade_tecnica",
   "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
+  "comprovante_habitualidade","comprovante_clube_tiro","declaracao_compromisso_habitualidade",
   "comprovante_pagamento","documento_complementar_caso",
   "gov_br","outro",
 ];
@@ -259,6 +260,12 @@ ANTECEDENTES (distinga o órgão emissor — cada um cumpre uma exigência difer
 LAUDOS
 - laudo_psicologico: laudo de psicólogo com CRP e resultado APTO/INAPTO
 - laudo_capacidade_tecnica: atestado de capacidade técnica de manuseio, assinado por instrutor de tiro
+
+CAC / ATIVIDADE (três documentos DISTINTOS — cada um cumpre uma exigência própria, nunca use um no lugar do outro)
+- comprovante_clube_tiro: comprovante de FILIAÇÃO a clube ou entidade de tiro — vincula o cliente à entidade (matrícula, carteirinha, declaração de filiação)
+- comprovante_habitualidade: declaração de HABITUALIDADE emitida pelo clube — atesta as sessões de treino já realizadas, com datas e quantidade
+- declaracao_compromisso_habitualidade: declaração de COMPROMISSO firmada pelo cliente — ele se compromete a cumprir a habitualidade daqui para frente. É promessa, não registro de treino já feito
+- comprovante_competicao: comprovante de participação em competição ou evento de tiro
 
 ARMA E ACERVO
 - cr: CR — Certificado de Registro de colecionador/atirador/caçador (Exército)

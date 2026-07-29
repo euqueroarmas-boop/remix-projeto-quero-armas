@@ -155,6 +155,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "autorizacao_compra", label: "Autorização de compra", short: "AC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "nota_fiscal_arma", label: "Nota fiscal da arma", short: "NF ARMA", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true },
   { value: "comprovante_habitualidade", label: "Comprovante de habitualidade", short: "HABITUALIDADE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  { value: "declaracao_compromisso_habitualidade", label: "Declaração de compromisso de habitualidade", short: "COMPROMISSO HAB.", categoria: "cac_atividade", escopo: "cac_atividade", aceitaIA: true },
   { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "comprovante_pagamento", label: "Comprovante de pagamento", short: "PAGAMENTO", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },

@@ -40,12 +40,27 @@ DELETE FROM public.qa_tipo_documento_aliases
 WHERE processo_tipo IN ('certidao_tjsp_distribuicao_criminal', 'certidao_tjsp_execucoes_criminais')
   AND hub_tipo = 'antecedentes_estadual';
 
--- Reaponta cada uma para o seu tipo granular próprio.
+-- CAC: filiação à entidade, declaração de habitualidade do clube e declaração
+-- de compromisso são TRÊS documentos com finalidades distintas. Um único
+-- "comprovante de habitualidade" fechava os três slots de uma vez.
+-- A filiação já tem tipo próprio no Hub (comprovante_clube_tiro).
+DELETE FROM public.qa_tipo_documento_aliases
+WHERE processo_tipo = 'comprovante_filiacao_entidade_tiro'
+  AND hub_tipo = 'comprovante_habitualidade';
+
+-- A declaração de compromisso ganha tipo próprio (criado na migration anterior)
+-- em vez de ser cumprida pelo comprovante de habitualidade.
+DELETE FROM public.qa_tipo_documento_aliases
+WHERE processo_tipo = 'declaracao_compromisso_habitualidade'
+  AND hub_tipo = 'comprovante_habitualidade';
+
+-- Reaponta cada exigência para o seu tipo granular próprio.
 INSERT INTO public.qa_tipo_documento_aliases (processo_tipo, hub_tipo) VALUES
   ('certidao_federal_trf3_regional',       'antecedentes_federal_trf3_regional'),
   ('certidao_federal_trf3_sjsp_jef',       'antecedentes_federal_sjsp_jef'),
   ('certidao_tjsp_distribuicao_criminal',  'antecedentes_estadual_distribuicao'),
-  ('certidao_tjsp_execucoes_criminais',    'antecedentes_estadual_execucoes')
+  ('certidao_tjsp_execucoes_criminais',    'antecedentes_estadual_execucoes'),
+  ('declaracao_compromisso_habitualidade', 'declaracao_compromisso_habitualidade')
 ON CONFLICT DO NOTHING;
 
 -- ─────────────────────────────────────────────────────────────────────────
