@@ -48,7 +48,7 @@ const TIPOS = [
   "CR","CRAF","SINARM","GT","GTE","GUIA_TRANSITO","AUTORIZACAO_COMPRA","NOTA_FISCAL_ARMA",
   "RG_COM_CPF","CIN","CNH","CPF",
   "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
-  "CTPS","HOLERITE","CARTAO_CNPJ","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
+  "CTPS","HOLERITE","CARTAO_CNPJ","QSA","CCMEI","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
   "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
   "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
@@ -77,7 +77,7 @@ const tool = {
             "CR=Certificado de Registro CAC (Exército). CRAF=Certificado de Registro de Arma de Fogo. SINARM=Registro/Posse/Porte PF. GT=Guia de Tráfego. GTE=Guia de Tráfego Especial. GUIA_TRANSITO=Guia de Trânsito SINARM/PF. AUTORIZACAO_COMPRA=Autorização de Compra arma/munição. NOTA_FISCAL_ARMA=NF-e de arma/munição. " +
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
-            "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal. CONTRATO_SOCIAL=contrato ou estatuto social de empresa. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
+            "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal (Comprovante de Inscrição e Situação Cadastral). QSA=Quadro de Sócios e Administradores da Receita Federal — lista sócios e participação; é documento PRÓPRIO, não confundir com cartão CNPJ nem com contrato social. CCMEI=Certificado da Condição de Microempreendedor Individual, emitido pelo Portal do Empreendedor. CONTRATO_SOCIAL=contrato ou estatuto social de empresa, ou requerimento de empresário. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
             "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
@@ -215,7 +215,9 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, empregador_nome, empregador_cnpj, competencia (MM/AAAA), salario_bruto, salario_liquido.",
   "• CARTAO_CNPJ: comprovante de inscrição CNPJ — Receita Federal.",
   "  Extrair: razao_social, cnpj, situacao_cadastral, data_emissao, orgao_emissor ('Receita Federal').",
-  "• CONTRATO_SOCIAL: contrato ou estatuto social.",
+  "• QSA: Quadro de Sócios e Administradores (Receita Federal). Traz \"QUADRO DE SOCIOS E ADMINISTRADORES\" ou lista de sócios com qualificação e participação. NÃO é o cartão CNPJ.",
+  "• CCMEI: Certificado da Condição de Microempreendedor Individual. Traz \"CERTIFICADO DA CONDIÇÃO DE MICROEMPREENDEDOR INDIVIDUAL\" e o nome do empresário seguido do CPF.",
+  "• CONTRATO_SOCIAL: contrato ou estatuto social, ou requerimento de empresário.",
   "  Extrair: razao_social, cnpj, nome_completo (sócio principal), data_emissao.",
   "• NOTA_FISCAL_AUTONOMO: NF de prestação de serviço emitida por autônomo/MEI.",
   "  Extrair: nome_completo, cpf, cnpj, data_emissao, nf_valor.",
@@ -395,6 +397,8 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x === "CTPS" || x.includes("CARTEIRA_DE_TRABALHO")) return "CTPS";
   if (x === "HOLERITE" || x.includes("HOLERITE") || x.includes("CONTRACHEQUE")) return "HOLERITE";
   if (x === "CARTAO_CNPJ" || x.includes("CNPJ")) return "CARTAO_CNPJ";
+  if (x.includes("QSA") || x.includes("QUADRO_DE_SOCIOS")) return "QSA";
+  if (x.includes("CCMEI") || x.includes("MICROEMPREENDEDOR")) return "CCMEI";
   if (x.includes("CONTRATO_SOCIAL")) return "CONTRATO_SOCIAL";
   if (x.includes("BENEFICIO") || x.includes("BENEFÍCIO")) return "COMPROVANTE_BENEFICIO";
   if (x.includes("INSS")) return "EXTRATO_INSS";

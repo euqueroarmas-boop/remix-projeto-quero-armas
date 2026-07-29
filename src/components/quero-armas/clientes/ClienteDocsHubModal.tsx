@@ -73,6 +73,7 @@ const IA_TO_TIPO: Record<string, string> = {
   HOLERITE: "renda_holerite_mes_atual",
   CARTAO_CNPJ: "renda_cartao_cnpj",
   CONTRATO_SOCIAL: "renda_contrato_social",
+  QSA: "renda_qsa",
   CCMEI: "renda_ccmei",
   NOTA_FISCAL_AUTONOMO: "renda_nf_recente",
   COMPROVANTE_BENEFICIO: "renda_comprovante_beneficio",
