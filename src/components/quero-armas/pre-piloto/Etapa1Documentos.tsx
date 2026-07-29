@@ -178,7 +178,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       // Aplica somente nos arquivos que ainda estão na lista e não foram deletados.
       // A IA NUNCA rebaixa uma classificação já correta: se ela devolver "outro"
       // (ou falhar), o tipo inferido pelo nome do arquivo é mantido.
-      setArquivos((prev) => prev.map((a) => {
+      setArquivos(arquivos.map((a) => {
         if (!nomesNovos.includes(a.file.name)) return a;
         if (deletadosRef.current.has(a.file.name)) return a;
         const r = resultadosPorNome.get(a.file.name);
