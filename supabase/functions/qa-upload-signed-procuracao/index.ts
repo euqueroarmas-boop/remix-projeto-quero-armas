@@ -192,5 +192,29 @@ Deno.serve(async (req) => {
     console.error("[qa-upload-signed-procuracao] hub insert falhou", (e as Error).message);
   }
 
+  // Notifica admin (eu@queroarmas.com.br) que o cliente subiu a procuração assinada.
+  try {
+    const clienteIdProc = Number((procuracao as { cliente_id?: number | string }).cliente_id);
+    const { data: cli } = await sb
+      .from("qa_clientes")
+      .select("nome_completo, email, cpf")
+      .or(`id.eq.${clienteIdProc},id_legado.eq.${clienteIdProc}`)
+      .limit(1)
+      .maybeSingle();
+    const { notifyAdminUpload } = await import("../_shared/notifyAdminUpload.ts");
+    await notifyAdminUpload({
+      tipo: "procuracao",
+      cliente_nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? null,
+      cliente_email: (cli as { email?: string } | null)?.email ?? null,
+      cliente_cpf: (cli as { cpf?: string } | null)?.cpf ?? null,
+      documento_nome: "Procuração assinada (Gov.br/ICP-Brasil)",
+      exigencia: "Procuração para representação junto à PF/SIGMA",
+      procuracao_id: procuracaoId,
+      extras: { SHA256: sig },
+    });
+  } catch (e) {
+    console.error("[qa-upload-signed-procuracao] admin notify falhou", (e as Error).message);
+  }
+
   return jsonResp({ ok: true, procuracao_id: procuracaoId, sha256: sig, status: "customer_signature_uploaded" });
 });
