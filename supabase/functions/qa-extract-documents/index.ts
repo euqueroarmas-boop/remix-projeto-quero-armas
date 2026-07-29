@@ -175,7 +175,7 @@ const CLASSIFY_TIPOS = [
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
-  "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
+  "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss","renda_qsa",
   "antecedentes_criminais","antecedentes_federal",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
   "antecedentes_estadual","antecedentes_estadual_distribuicao",
@@ -239,7 +239,8 @@ OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genéric
 - renda_holerite_funcionario_publico: holerite de servidor público
 - renda_cartao_cnpj: Cartão CNPJ da Receita Federal (empresa comum)
 - renda_cnpj_autonomo: CCMEI (Certificado da Condição de Microempreendedor Individual) ou cartão CNPJ de MEI/autônomo
-- renda_contrato_social: contrato social, requerimento de empresário, alteração contratual ou QSA
+- renda_contrato_social: contrato social, requerimento de empresário ou alteração contratual (NÃO é o QSA)
+- renda_qsa: QSA — Quadro de Sócios e Administradores, emitido pela Receita Federal. Lista os sócios e sua participação. É documento PRÓPRIO, distinto do contrato social e do cartão CNPJ: no grupo "empresário" os quatro (contrato social, cartão CNPJ, QSA e nota fiscal) são exigidos separadamente
 - renda_nf_recente: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma)
 - renda_comprovante_beneficio: comprovante de benefício (INSS, BPC, aposentadoria, pensão)
 - renda_extrato_inss: extrato CNIS ou extrato de contribuições do INSS

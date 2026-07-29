@@ -1,8 +1,15 @@
--- Adiciona 'comprovante_pagamento' ao catálogo de tipos do Hub Documental.
--- Motivo: a Central de Adesão passa a classificar comprovantes de transação
--- bancária (PIX, TED, cartão) pagos à Quero Armas. Sem o tipo no CHECK, o
--- INSERT era rejeitado e o documento se perdia — ou caía como 'outro' e
--- nenhuma exigência era cumprida.
+-- Adiciona 'comprovante_pagamento' e 'renda_qsa' ao catálogo do Hub Documental.
+--
+-- comprovante_pagamento: a Central de Adesão passa a classificar comprovantes
+-- de transação bancária (PIX, TED, cartão) pagos à Quero Armas. Sem o tipo no
+-- CHECK, o INSERT era rejeitado e o documento se perdia — ou caía como 'outro'
+-- e nenhuma exigência era cumprida.
+--
+-- renda_qsa: o QSA (Quadro de Sócios e Administradores) é documento próprio do
+-- grupo "empresário", ao lado do contrato social, do cartão CNPJ e da nota
+-- fiscal. Faltando no catálogo, o slot renda_qsa do processo só era cumprido
+-- por um apelido que aceitava o Cartão CNPJ — dois documentos distintos, e um
+-- fechava a exigência do outro.
 
 ALTER TABLE public.qa_documentos_cliente
   DROP CONSTRAINT IF EXISTS qa_doc_cliente_tipo_check;
@@ -14,7 +21,7 @@ ALTER TABLE public.qa_documentos_cliente
     'comprovante_residencia','declaracao_responsavel_imovel',
     'ctps','renda_holerite_mes_atual','renda_holerite_funcionario_publico',
     'renda_cartao_cnpj','renda_cnpj_autonomo','renda_contrato_social',
-    'renda_nf_recente','renda_comprovante_beneficio','renda_extrato_inss',
+    'renda_nf_recente','renda_comprovante_beneficio','renda_extrato_inss','renda_qsa',
     'antecedentes_criminais','antecedentes_federal',
     'antecedentes_federal_trf3_regional','antecedentes_federal_sjsp_jef',
     'antecedentes_estadual','antecedentes_estadual_distribuicao',

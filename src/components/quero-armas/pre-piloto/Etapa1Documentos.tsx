@@ -21,7 +21,7 @@ const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
   { grupo: "Ocupação Lícita / Renda", tipos: [
     "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
     "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
-    "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
+    "renda_qsa", "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
   ] },
   { grupo: "Antecedentes e Regularidade", tipos: [
     "antecedentes_criminais", "antecedentes_federal",
@@ -343,7 +343,8 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.includes("pix") || n.includes("transferencia") || n.includes("ted") || n.includes("recibo")) return "comprovante_pagamento";
     // Ocupação lícita / renda — slugs granulares do Hub
     if (n.includes("ccmei") || n.includes("mei")) return "renda_cnpj_autonomo";
-    if (n.includes("contrato social") || n.includes("requerimento") || n.includes("qsa")) return "renda_contrato_social";
+    if (n.includes("qsa") || n.includes("quadro de socios")) return "renda_qsa";
+    if (n.includes("contrato social") || n.includes("requerimento")) return "renda_contrato_social";
     if (n.includes("cnpj")) return "renda_cartao_cnpj";
     if (n.includes("holerite") || n.includes("contracheque")) return "renda_holerite_mes_atual";
     if (n.includes("ctps") || n.includes("carteira de trabalho")) return "ctps";
