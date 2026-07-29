@@ -13,6 +13,32 @@ function json(data: unknown, status = 200) {
   });
 }
 
+// Espelha o CHECK de qa_documentos_cliente. Validar aqui evita que um tipo
+// inválido chegue ao banco e derrube o UPDATE com erro de constraint.
+const TIPOS_DOC_VALIDOS = new Set([
+  "cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma",
+  "rg_com_cpf", "cin", "cnh", "cpf",
+  "comprovante_residencia", "declaracao_responsavel_imovel",
+  "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
+  "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
+  "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
+  "antecedentes_criminais", "antecedentes_federal",
+  "antecedentes_federal_trf3_regional", "antecedentes_federal_sjsp_jef",
+  "antecedentes_estadual", "antecedentes_estadual_distribuicao",
+  "antecedentes_estadual_execucoes", "antecedentes_militar", "antecedentes_eleitoral",
+  "declaracao_sem_inquerito_processo_criminal", "declaracao_guarda_responsavel",
+  "declaracao_correlata", "declaracao_guarda_acervo_1endereco",
+  "laudo_psicologico", "laudo_capacidade_tecnica",
+  "comprovante_efetiva_necessidade", "documento_complementar_caso",
+  "comprovante_habitualidade", "comprovante_clube_tiro", "comprovante_competicao",
+  "comprovante_pagamento",
+  "protocolo_processo", "oficio", "despacho", "exigencia", "indeferimento",
+  "procuracao", "procuracao_assinada", "contrato_assinado",
+  "recurso_administrativo_doc", "mandado_seguranca_doc",
+  "certidao_alteracao_nome",
+  "outro",
+]);
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -56,6 +82,69 @@ Deno.serve(async (req) => {
   if (!cliente) return json({ error: "cliente_nao_encontrado" }, 404);
 
   try {
+    // ── RECLASSIFICAR DOCUMENTO DO HUB ──────────────────────────
+    // Corrige o tipo de um documento já salvo. Necessário porque a Central de
+    // Adesão gravou documentos com slug divergente (ou como "outro"), e a
+    // exigência do processo casa por tipo_documento — sem isso o sistema pede
+    // ao cliente um documento que ele já enviou.
+    // Não exige `motivo`: é correção de classificação, não ação destrutiva.
+    // A auditoria registra tipo anterior e novo, que é o que importa revisar.
+    if (action === "reclassificar_documento") {
+      const documentoId = String(body.documento_id || "").trim();
+      const novoTipo = String(body.novo_tipo || "").trim();
+      if (!documentoId) return json({ error: "documento_id_required" }, 400);
+      if (!TIPOS_DOC_VALIDOS.has(novoTipo)) {
+        return json({ error: "tipo_invalido", message: `Tipo "${novoTipo}" não existe no catálogo do Hub Documental.` }, 400);
+      }
+
+      const { data: doc, error: docErr } = await admin
+        .from("qa_documentos_cliente")
+        .select("id, qa_cliente_id, tipo_documento, status, arquivo_nome")
+        .eq("id", documentoId)
+        .maybeSingle();
+      if (docErr) return json({ error: "db_error", message: docErr.message }, 500);
+      if (!doc) return json({ error: "documento_nao_encontrado" }, 404);
+      if (Number(doc.qa_cliente_id) !== clienteId) {
+        return json({ error: "documento_de_outro_cliente" }, 403);
+      }
+      if (doc.tipo_documento === novoTipo) {
+        return json({ ok: true, inalterado: true, tipo_documento: novoTipo });
+      }
+
+      const tipoAnterior = doc.tipo_documento;
+      // Só o tipo muda. O status (aprovado/pendente/etc.) é preservado de
+      // propósito: reclassificar corrige a etiqueta, não revalida o documento.
+      const { error: updErr } = await admin
+        .from("qa_documentos_cliente")
+        .update({ tipo_documento: novoTipo, updated_at: new Date().toISOString() })
+        .eq("id", documentoId);
+      if (updErr) return json({ error: "update_falhou", message: updErr.message }, 500);
+
+      await admin.from("qa_logs_auditoria").insert({
+        tipo: "admin_reclassificar_documento",
+        acao: "reclassificar_documento",
+        ator_id: userData.user.id,
+        ator_email: userData.user.email,
+        cliente_id: clienteId,
+        detalhes: {
+          documento_id: documentoId,
+          arquivo_nome: doc.arquivo_nome,
+          tipo_anterior: tipoAnterior,
+          tipo_novo: novoTipo,
+          status_preservado: doc.status,
+          motivo: motivo || null,
+        },
+      } as any).catch(() => {});
+
+      return json({
+        ok: true,
+        documento_id: documentoId,
+        tipo_anterior: tipoAnterior,
+        tipo_documento: novoTipo,
+        status: doc.status,
+      });
+    }
+
     // ── DIAGNOSE ────────────────────────────────────────────────
     if (action === "diagnose") {
       const [{ data: vendas }, { data: contratos }, { data: link }, { data: cadastroPub }] = await Promise.all([

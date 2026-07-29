@@ -6,7 +6,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import {
   Loader2, FileText, CheckCircle2, AlertCircle, ExternalLink,
   Trash2, ShieldCheck, Clock, XCircle, MessageSquareWarning,
-  ChevronDown, ChevronRight, Layers, ShieldAlert,
+  ChevronDown, ChevronRight, Layers, ShieldAlert, Tags,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -18,6 +18,7 @@ import {
   type GrupoDocumental,
 } from "@/lib/quero-armas/documentosAgrupamento";
 import { logSistema } from "@/lib/logSistema";
+import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/documentosHubCatalogo";
 
 interface Props {
   cliente: any;
@@ -79,6 +80,9 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [reprovandoId, setReprovandoId] = useState<string | null>(null);
   const [motivoTmp, setMotivoTmp] = useState("");
+  const [reclassificandoId, setReclassificandoId] = useState<string | null>(null);
+  const [novoTipoTmp, setNovoTipoTmp] = useState("");
+  const [salvandoTipo, setSalvandoTipo] = useState(false);
   const viewer = useDocumentoViewer();
 
   // Resolve customerId (UUID) via email/CPF — uma única vez por cliente
@@ -179,6 +183,42 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     } catch (err: any) { toast.error(err?.message || "Falha ao reprovar."); }
   };
 
+  // Corrige o tipo de um documento já salvo. A exigência do processo casa por
+  // tipo_documento — um documento gravado com o tipo errado (ou como "outro")
+  // faz o sistema pedir ao cliente algo que ele já enviou.
+  const handleReclassificar = async (docId: string) => {
+    if (!novoTipoTmp) { toast.error("Escolha o novo tipo."); return; }
+    if (!clienteId) { toast.error("Cliente sem ID interno — não é possível reclassificar."); return; }
+    setSalvandoTipo(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-admin-destravar-cadastro", {
+        body: {
+          action: "reclassificar_documento",
+          cliente_id: clienteId,
+          documento_id: docId,
+          novo_tipo: novoTipoTmp,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
+
+      const de = TIPO_LABEL[(data as any).tipo_anterior] || (data as any).tipo_anterior;
+      const para = TIPO_LABEL[novoTipoTmp] || novoTipoTmp;
+      toast.success(`Tipo alterado: ${de} → ${para}. A exigência do processo foi recalculada.`);
+      setReclassificandoId(null);
+      setNovoTipoTmp("");
+      // Invalidação ampla de propósito: mudar o tipo altera quais exigências o
+      // processo considera cumpridas, e isso é lido por checklist, kanban e
+      // pendências — telas com queryKeys próprias. Reclassificar é ação rara,
+      // então o custo de refetch geral compensa a garantia de consistência.
+      queryClient.invalidateQueries();
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reclassificar o documento.");
+    } finally {
+      setSalvandoTipo(false);
+    }
+  };
+
   const handleViewFile = (path: string) => {
     const fileName = path.split("/").pop() || "documento";
     viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
@@ -270,6 +310,12 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             onReprovar={handleReprovar}
             onDelete={handleDelete}
             onViewFile={handleViewFile}
+            reclassificandoId={reclassificandoId}
+            novoTipoTmp={novoTipoTmp}
+            salvandoTipo={salvandoTipo}
+            setReclassificandoId={setReclassificandoId}
+            setNovoTipoTmp={setNovoTipoTmp}
+            onReclassificar={handleReclassificar}
           />
         ))}
       </div>
@@ -296,6 +342,12 @@ interface GrupoCardProps {
   onReprovar: (id: string) => void;
   onDelete: (id: string) => void;
   onViewFile: (path: string) => void;
+  reclassificandoId: string | null;
+  novoTipoTmp: string;
+  salvandoTipo: boolean;
+  setReclassificandoId: (v: string | null) => void;
+  setNovoTipoTmp: (v: string) => void;
+  onReclassificar: (id: string) => void;
 }
 
 function GrupoCard(props: GrupoCardProps) {
@@ -377,6 +429,8 @@ interface DocRowProps extends GrupoCardProps {
 function DocRow({
   d, isPrincipal, reprovandoId, motivoTmp, setReprovandoId, setMotivoTmp,
   onAprovar, onReprovar, onDelete, onViewFile,
+  reclassificandoId, novoTipoTmp, salvandoTipo,
+  setReclassificandoId, setNovoTipoTmp, onReclassificar,
 }: DocRowProps) {
           const isPending = d.status === "pendente_aprovacao";
           const isReprovado = d.status === "reprovado";
@@ -449,6 +503,47 @@ function DocRow({
                       <span className="font-bold uppercase">Motivo da reprovação:</span> {d.motivo_reprovacao}
                     </div>
                   )}
+                  {reclassificandoId === d.id && (
+                    <div className="mt-2 rounded-md border border-[#7A1F2B]/30 bg-white p-2 space-y-1.5">
+                      <div className="text-[10px] text-slate-500">
+                        Tipo atual: <span className="font-semibold text-slate-700">{TIPO_LABEL[d.tipo_documento] || d.tipo_documento}</span>
+                      </div>
+                      <select
+                        value={novoTipoTmp}
+                        onChange={(e) => setNovoTipoTmp(e.target.value)}
+                        className="w-full text-[11px] border border-slate-200 rounded p-1.5 bg-white"
+                      >
+                        <option value="">— escolha o tipo correto —</option>
+                        {HUB_CATEGORIAS.map((cat) => {
+                          const tipos = listTiposByCategoria(cat.value);
+                          if (tipos.length === 0) return null;
+                          return (
+                            <optgroup key={cat.value} label={cat.label}>
+                              {tipos.map((t) => (
+                                <option key={t.value} value={t.value}>{t.label}</option>
+                              ))}
+                            </optgroup>
+                          );
+                        })}
+                      </select>
+                      <p className="text-[9px] text-slate-500 leading-snug">
+                        O status do documento é preservado — reclassificar corrige a etiqueta,
+                        não revalida o arquivo. A alteração fica registrada em auditoria.
+                      </p>
+                      <div className="flex justify-end gap-1.5">
+                        <Button size="sm" variant="ghost" className="h-6 text-[10px]"
+                          disabled={salvandoTipo}
+                          onClick={() => { setReclassificandoId(null); setNovoTipoTmp(""); }}>
+                          Cancelar
+                        </Button>
+                        <Button size="sm" className="h-6 text-[10px] bg-[#7A1F2B] hover:bg-[#63161f]"
+                          disabled={salvandoTipo || !novoTipoTmp}
+                          onClick={() => onReclassificar(d.id)}>
+                          {salvandoTipo ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar novo tipo"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   {reprovandoId === d.id && (
                     <div className="mt-2 rounded-md border border-red-300 bg-white p-2 space-y-1.5">
                       <textarea
@@ -505,6 +600,18 @@ function DocRow({
                       <MessageSquareWarning className="h-3 w-3" />
                     </Button>
                   )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setReclassificandoId(reclassificandoId === d.id ? null : d.id);
+                      setNovoTipoTmp("");
+                    }}
+                    className="h-7 px-2 text-[10px] text-[#7A1F2B] border-[#7A1F2B]/30 hover:bg-[#7A1F2B]/5"
+                    title="Alterar tipo do documento (corrige a exigência do processo)"
+                  >
+                    <Tags className="h-3 w-3" />
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
