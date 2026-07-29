@@ -49,6 +49,9 @@ const TIPOS_CLIENTE = new Set<string>([
   "certidao_federal_trf3_regional", "certidao_federal_trf3_sjsp_jef",
   "certidao_tjsp_distribuicao_criminal", "certidao_tjsp_execucoes_criminais",
   "certidao_casamento", "certidao_nascimento", "certidao_alteracao_nome",
+  "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
+  "renda_ccmei", "renda_nf_recente", "renda_comprovante_beneficio",
+  "renda_extrato_inss", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
 ]);
 const TIPOS_CAC_ATIVIDADE = new Set<string>([
   "comprovante_habitualidade",
@@ -125,6 +128,7 @@ function tipoCompatKey(tipo?: string | null): string {
   if (t === "certidao_crimes_militares_stm" || t === "certidao_criminal_tjmsp") return "antecedentes_militar";
   if (t === "certidao_federal_trf3_regional" || t === "certidao_federal_trf3_sjsp_jef") return "antecedentes_federal";
   if (t === "certidao_tjsp_distribuicao_criminal" || t === "certidao_tjsp_execucoes_criminais") return "antecedentes_estadual";
+  if (t === "renda_ccmei") return "renda_contrato_social";
   return t;
 }
 

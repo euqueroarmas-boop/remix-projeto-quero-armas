@@ -25,10 +25,14 @@ export type ArquivoUpload = {
   file: File;
   tipo: string;
   preview?: string;
+  /** Tipo inicial inferido antes da classificação multimodal. */
+  tipo_original?: string;
   /** Confiança da IA na classificação de tipo (0..1). Preenchido em Etapa 2. */
   tipo_ia_confianca?: number;
   /** Motivo textual da IA para a classificação. */
   tipo_ia_motivo?: string;
+  /** Indica que a Central aplicou o tipo sugerido pela IA antes de gravar no Hub. */
+  tipo_aplicado_por_ia?: boolean;
 };
 
 export type ClienteSalvo = {

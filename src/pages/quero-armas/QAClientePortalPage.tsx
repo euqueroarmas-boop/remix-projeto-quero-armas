@@ -12,7 +12,7 @@ import {
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
   Boxes, PackageOpen, Download,
 } from "lucide-react";
-import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/Forc
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
+import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
@@ -87,6 +88,8 @@ const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try { const p = new Date(d); return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000); } catch { return null; }
 };
+const docDateFromHub = (doc: any): string | null =>
+  getDataEmissaoDocumentoHub(doc) || doc?.created_at || null;
 const urgencyColor = (d: number | null) =>
   d === null ? "text-slate-400" :
   d < 0     ? "text-red-700" :
@@ -1035,21 +1038,28 @@ export default function QAClientePortalPage() {
     });
     // Documentos enviados pelo próprio cliente (hub pessoal)
     meusDocs.forEach((d: any) => {
-      if (!d.data_validade) return;
       const tipoRaw = (d.tipo_documento || "outro").toLowerCase();
       // Evita duplicar o CR já presente em qa_cadastro_cr (validade_cr)
       if (tipoRaw === "cr" && cadastro?.validade_cr) return;
+      const validade = getValidadeInfo({
+        tipo_documento: tipoRaw,
+        data_emissao: docDateFromHub(d),
+        data_validade_efetiva: d.data_validade_efetiva,
+        data_validade: d.data_validade,
+        ano_competencia: d.ano_competencia,
+        regra_validacao: d.regra_validacao,
+      });
+      if (!validade.iso) return;
+      const tipoLabel = getNomeDocumentoDisplay(d, tipoRaw.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase()));
       const tipoMeta = getTipoDocumentoMeta(tipoRaw);
-      const tipoLabel = tipoMeta?.short || tipoMeta?.label
-        || tipoRaw.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
       const catLabel = getHubCategoriaMeta(tipoMeta?.categoria || "outros").label;
       const armaInfo = d.arma_modelo
         ? ` — ${d.arma_modelo}${d.arma_calibre ? ` ${d.arma_calibre}` : ""}`
         : "";
       expDocs.push({
         label: `${tipoLabel}${armaInfo}`,
-        date: d.data_validade,
-        days: daysUntil(d.data_validade),
+        date: validade.iso,
+        days: validade.dias,
         category: catLabel,
       });
     });
@@ -1266,6 +1276,17 @@ export default function QAClientePortalPage() {
     });
     return [{ id: "todos", label: "Todos os processos", type: "todos" as const }, ...items];
   }, [processos, catalogoByServicoId, SERVICO_MAP]);
+
+  const processosComNomeDisplay = useMemo(() => (
+    processos.map((p: any) => ({
+      ...p,
+      servico_nome: getQAServiceDisplayName({
+        ...catalogoByServicoId[Number(p.servico_id)],
+        servico_id: p.servico_id,
+        servico_nome: p.servico_nome || SERVICO_MAP[p.servico_id],
+      }) || p.servico_nome || "Processo",
+    }))
+  ), [processos, catalogoByServicoId, SERVICO_MAP]);
 
   // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
   useEffect(() => {
@@ -2030,20 +2051,10 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "checklist_reprovado" && resumoState.checklistReproc) {
-      setActiveSection("pendencias");
-      window.setTimeout(() => abrirChecklistGuiado({
-        processoId: resumoState.checklistReproc.processo_id,
-        focusDocId: resumoState.checklistReproc.id,
-      }), 150);
       return;
     }
 
     if (portalStartupAction.type === "checklist_pendente" && resumoState.checklistPend) {
-      setActiveSection("pendencias");
-      window.setTimeout(() => abrirChecklistGuiado({
-        processoId: resumoState.checklistPend.processo_id,
-        focusDocId: resumoState.checklistPend.id,
-      }), 150);
       return;
     }
 
@@ -2058,7 +2069,6 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "prazo") {
-      setActiveSection("processos");
       return;
     }
 
@@ -2972,7 +2982,13 @@ export default function QAClientePortalPage() {
                         const sKey = String(p.status || "").toLowerCase();
                         const done = ["concluido", "deferido", "finalizado"].includes(sKey);
                         const bad = ["indeferido", "cancelado"].includes(sKey);
-                        const nomeProcesso = formatProcessoNome(p.servico_nome);
+                        const nomeProcesso = formatProcessoNome(
+                          getQAServiceDisplayName({
+                            ...catalogoByServicoId[Number(p.servico_id)],
+                            servico_id: p.servico_id,
+                            servico_nome: p.servico_nome || SERVICO_MAP[p.servico_id],
+                          }) || p.servico_nome,
+                        );
                         const statusLabel = sKey.replace(/_/g, " ") || "ativo";
                         return (
                           <button key={p.id} type="button" onClick={() => setActiveSection("processos")}
@@ -3097,7 +3113,7 @@ export default function QAClientePortalPage() {
             nomeCliente: firstName,
             cpfMascarado,
             membroDesde,
-            processos,
+            processos: processosComNomeDisplay,
             processoDocs,
             processoEventos,
             vendas,

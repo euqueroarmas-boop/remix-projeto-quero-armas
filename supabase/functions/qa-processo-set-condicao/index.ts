@@ -97,7 +97,7 @@ function rendaPara(c: Cond): Item[] {
         orgao_emissor: "Receita Federal",
         checklist_operador: [
           "Verificar situação ATIVA",
-          "Conferir CPF do titular = sócio único / MEI",
+          "Conferir CPF do titular = sócio único / MEI quando constar",
           "Verificar CNAE compatível com a atividade declarada",
         ],
       },
@@ -154,11 +154,11 @@ function rendaPara(c: Cond): Item[] {
       },
       {
         tipo_documento: "renda_contrato_social",
-        nome_documento: "Contrato Social ou Requerimento de Empresário",
+        nome_documento: "Contrato Social, Requerimento de Empresário ou CCMEI",
         obrigatorio: true,
         link_emissao: "https://www.jucesponline.sp.gov.br/",
-        label_botao: "Emitir na Junta Comercial",
-        instrucoes: "1) Acesse o portal da Junta Comercial do estado da empresa (ex.: JUCESP em SP).\n2) Busque a empresa por nome ou CNPJ.\n3) Baixe o Contrato Social, última alteração consolidada ou Requerimento de Empresário.\n4) Envie o documento completo, com todas as páginas.",
+        label_botao: "Enviar contrato / requerimento / CCMEI",
+        instrucoes: "1) Se for sociedade/empresário individual, acesse a Junta Comercial do estado e baixe o Contrato Social, última alteração consolidada ou Requerimento de Empresário.\n2) Se for MEI, emita o CCMEI no Portal do Empreendedor.\n3) Envie o documento completo em PDF, com todas as páginas.",
         observacoes_cliente: "Para empresa de São Paulo, use a JUCESP. Para empresa de outro estado, use a Junta Comercial correspondente.",
         orgao_emissor: "Junta Comercial",
         checklist_operador: [
@@ -166,6 +166,7 @@ function rendaPara(c: Cond): Item[] {
           "Conferir dados com o QSA",
           "Verificar última alteração registrada",
           "Aceitar Requerimento de Empresário quando for empresário individual",
+          "Aceitar CCMEI quando for MEI",
         ],
       },
       {
@@ -402,7 +403,7 @@ Deno.serve(async (req) => {
           // Exigimos identificação empresarial ao invés de nome_titular,
           // evitando bloqueio indevido na validação IA.
           exige:
-            ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
+            ["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
               ? ["razao_social"]
               : ["nome_titular"],
           label_botao: d.label_botao,

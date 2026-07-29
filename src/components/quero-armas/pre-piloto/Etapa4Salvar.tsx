@@ -330,7 +330,15 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       // validação final fica no fluxo único do Hub, contra a pendência real
       // do checklist, para evitar que a extração inicial aprove tipo errado.
       // ============================================================
-      const docsParaPersistir = (arquivos || []).filter((a) => a.tipo !== "gov_br");
+      const vistosNoPacote = new Set<string>();
+      const docsParaPersistir = (arquivos || []).filter((a) => {
+        if (a.tipo === "gov_br") return false;
+        const tipoDb = resolveTipoHub(a.tipo);
+        const key = `${tipoDb}::${a.file.name.toLowerCase()}::${a.file.size}`;
+        if (vistosNoPacote.has(key)) return false;
+        vistosNoPacote.add(key);
+        return true;
+      });
       if (docsParaPersistir.length > 0) {
         setStatusUpload(`Enviando ${docsParaPersistir.length} documento(s) ao Hub Documental…`);
         let ok = 0;
@@ -338,6 +346,18 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         for (const a of docsParaPersistir) {
           try {
             const tipoDb = resolveTipoHub(a.tipo);
+            const jaExiste = await supabase
+              .from("qa_documentos_cliente" as any)
+              .select("id")
+              .eq("qa_cliente_id", clienteId)
+              .eq("tipo_documento", tipoDb)
+              .eq("arquivo_nome", a.file.name)
+              .not("status", "in", "(substituido,excluido)")
+              .limit(1);
+            if (!jaExiste.error && Array.isArray(jaExiste.data) && jaExiste.data.length > 0) {
+              ok++;
+              continue;
+            }
             const safe = sanitizeFileName(a.file.name);
             const path = `cliente-docs/qa-${clienteId}/${tipoDb}/${Date.now()}_${safe}`;
             const { error: upErr } = await supabase.storage
@@ -368,6 +388,8 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               ia_dados_extraidos: {
                 origem: "central_adesao",
                 tipo_sugerido: tipoDb,
+                tipo_original: a.tipo_original ?? null,
+                tipo_aplicado_por_ia: a.tipo_aplicado_por_ia === true,
                 tipo_ia_confianca: a.tipo_ia_confianca ?? null,
                 tipo_ia_motivo: a.tipo_ia_motivo ?? null,
                 validacao_final: "hub_documental",

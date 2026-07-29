@@ -99,8 +99,8 @@ export const CONDICAO_OPCOES_GUIA: {
   hint: string;
 }[] = [
   { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
-  { id: "autonomo", label: "Autônomo", hint: "Cartão CNPJ/MEI + NF recente" },
-  { id: "empresario", label: "Empresário/Sócio", hint: "Cartão CNPJ + QSA + Contrato Social + NF" },
+  { id: "autonomo", label: "Autônomo / MEI", hint: "Cartão CNPJ + NF recente" },
+  { id: "empresario", label: "Empresário/Sócio", hint: "Cartão CNPJ + QSA + Contrato Social/Requerimento/CCMEI + NF" },
   { id: "aposentado", label: "Aposentado", hint: "Comprovante de benefício INSS" },
   { id: "funcionario_publico", label: "Funcionário Público (área geral)", hint: "Carteira Funcional + Holerite" },
   { id: "seguranca_publica", label: "Servidor da Segurança Pública", hint: "PM, PC, PF, PRF, Guarda, Bombeiro, Agente Penitenciário — Funcional + Holerite" },

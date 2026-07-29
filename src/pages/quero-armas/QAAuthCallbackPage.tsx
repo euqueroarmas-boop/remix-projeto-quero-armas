@@ -2,13 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-const DEFAULT_NEXT = "/area-do-cliente";
-
-function safeNext(raw: string | null | undefined) {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return DEFAULT_NEXT;
-  return raw;
-}
+import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
 
 export default function QAAuthCallbackPage() {
   const navigate = useNavigate();
@@ -23,7 +17,7 @@ export default function QAAuthCallbackPage() {
         const url = new URL(window.location.href);
         const search = url.searchParams;
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
-        const next = safeNext(search.get("next") || localStorage.getItem("qa_oauth_next"));
+        const next = sanitizeClientPortalNext(search.get("next") || localStorage.getItem("qa_oauth_next"));
         const error = search.get("error_description") || hash.get("error_description") || search.get("error") || hash.get("error");
         const code = search.get("code");
         const accessToken = hash.get("access_token");

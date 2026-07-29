@@ -33,6 +33,8 @@ import { excluirDocumentoLogico } from "@/components/quero-armas/clientes/docsAp
 import { AlertasDrillDownModal, type AlertaItem } from "./AlertasDrillDownModal";
 import { useArsenalGruposLayout, type ArsenalGroupId } from "./useArsenalGruposLayout";
 import { ArsenalGruposToolbar } from "./ArsenalGruposToolbar";
+import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
 import { ArsenalGroupItem } from "./ArsenalGroupItem";
 import {
   DndContext,
@@ -121,6 +123,9 @@ const daysUntil = (d: string | null): number | null => {
     return null;
   }
 };
+
+const docDateFromHub = (doc: any): string | null =>
+  getDataEmissaoDocumentoHub(doc) || doc?.created_at || null;
 
 const normWeaponKey = (s: string | null | undefined) =>
   String(s || "").replace(/\s+/g, "").toUpperCase().trim();
@@ -824,14 +829,22 @@ export function ArsenalView({
         titulo = "MODELO PENDENTE DE CONFERÊNCIA";
       } else {
         // Documento administrativo genuíno (sem vínculo de arma)
-        titulo = (d.numero_documento || "DOCUMENTO").toUpperCase();
+        titulo = getNomeDocumentoDisplay(d);
       }
+      const validade = getValidadeInfo({
+        tipo_documento: tipo,
+        data_emissao: docDateFromHub(d),
+        data_validade_efetiva: d.data_validade_efetiva,
+        data_validade: d.data_validade,
+        ano_competencia: d.ano_competencia,
+        regra_validacao: d.regra_validacao,
+      });
       list.push({
         id: `doc-${d.id}`,
         category: (d.tipo_documento || "DOC").toUpperCase(),
         title: titulo,
-        date: d.data_validade,
-        daysToExpire: daysUntil(d.data_validade),
+        date: validade.iso,
+        daysToExpire: validade.dias,
         onDelete: () => askDelete(
           "Excluir documento",
           `Excluir o documento "${titulo}"? Esta ação não pode ser desfeita.`,

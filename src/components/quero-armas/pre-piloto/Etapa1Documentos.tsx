@@ -20,7 +20,7 @@ const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
   { grupo: "Endereço", tipos: ["comprovante_residencia", "declaracao_responsavel_imovel"] },
   { grupo: "Ocupação Lícita / Renda", tipos: [
     "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
-    "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
+    "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social", "renda_ccmei",
     "renda_qsa", "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
   ] },
   { grupo: "Antecedentes e Regularidade", tipos: [
@@ -367,6 +367,19 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.match(/\bgt\b/)) return "gt";
     if (n.includes("\bcr\b") || n.includes("certificado de registro")) return "cr";
     if (n.includes("nota_fiscal") || n.includes("nota fiscal arma")) return "nota_fiscal_arma";
+    if (n.includes("psico") || n.includes("laudo") || n.includes("psicolog")) return "laudo_psicologico";
+    if (n.includes("tecn") || n.includes("capacidade")) return "laudo_capacidade_tecnica";
+    if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta")) return "antecedentes_federal";
+    if (n.includes("ccmei") || n.includes("microempreendedor")) return "renda_ccmei";
+    if (n.includes("contrato social") || n.includes("requerimento empresario") || n.includes("requerimento de empresario")) return "renda_contrato_social";
+    if (n.includes("cnpj") || n.includes("mei")) return "renda_cartao_cnpj";
+    if (n.includes("sinarm")) return "sinarm";
+    if (n.includes("craf")) return "craf";
+    if (n.includes("gte")) return "gte";
+    if (n.match(/\bgt\b/)) return "gt";
+    if (n.includes("\bcr\b") || n.includes("certificado de registro")) return "cr";
+    if (n.includes("nota fiscal") || n.includes("nfe") || n.includes("nota_fiscal")) return "nota_fiscal_arma";
+    if (n.includes("procuracao") || n.includes("procuração") || /proc[\s._-]*assinad/.test(n)) return "procuracao";
     if (n.includes("gov") || n.includes("senha") || n.includes("govbr")) return "gov_br";
     return "outro";
   }

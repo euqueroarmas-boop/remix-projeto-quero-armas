@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } fro
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -32,42 +32,8 @@ function parseDateUTC(d: string | null | undefined): Date | null {
   return null;
 }
 
-function getNestedValue(obj: any, path: string): any {
-  return path.split(".").reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
-}
-
-function toISODateString(value: string): string | null {
-  const date = parseDateUTC(value);
-  if (!date) return null;
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
-}
-
-function pickDocDate(doc: any, keys: string[]): string | null {
-  for (const key of keys) {
-    const value = key.includes(".") ? getNestedValue(doc, key) : doc?.[key];
-    if (typeof value === "string") {
-      const iso = toISODateString(value);
-      if (iso) return iso;
-    }
-  }
-  return null;
-}
-
 function dataEmissaoHub(doc: any): string | null {
-  return pickDocDate(doc, [
-    "data_emissao",
-    "data_expedicao",
-    "data_expedicao_rg",
-    "ia_dados_extraidos.camposExtraidos.data_emissao",
-    "ia_dados_extraidos.camposExtraidos.data_expedicao",
-    "ia_dados_extraidos.camposExtraidos.data_expedicao_rg",
-    "ia_dados_extraidos.campos_extraidos.data_emissao",
-    "ia_dados_extraidos.campos_extraidos.data_expedicao",
-    "ia_dados_extraidos.campos_extraidos.data_expedicao_rg",
-    "ia_dados_extraidos.campos.data_emissao",
-    "ia_dados_extraidos.campos.data_expedicao",
-    "ia_dados_extraidos.campos.data_expedicao_rg",
-  ]);
+  return getDataEmissaoDocumentoHub(doc);
 }
 
 function dataValidadeHub(doc: any): string | null {

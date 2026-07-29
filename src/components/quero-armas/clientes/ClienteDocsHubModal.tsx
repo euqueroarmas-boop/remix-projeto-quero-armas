@@ -68,6 +68,7 @@ const IA_TO_TIPO: Record<string, string> = {
   HOLERITE: "renda_holerite_mes_atual",
   CARTAO_CNPJ: "renda_cartao_cnpj",
   CONTRATO_SOCIAL: "renda_contrato_social",
+  CCMEI: "renda_ccmei",
   NOTA_FISCAL_AUTONOMO: "renda_nf_recente",
   COMPROVANTE_BENEFICIO: "renda_comprovante_beneficio",
   EXTRATO_INSS: "renda_extrato_inss",
@@ -293,6 +294,7 @@ const DOC_TRUST_TIER: Record<string, number> = {
   renda_nf_recente: 3,
   renda_cartao_cnpj: 3,
   renda_contrato_social: 3,
+  renda_ccmei: 3,
   ctps: 3,
 };
 

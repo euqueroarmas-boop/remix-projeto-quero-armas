@@ -127,7 +127,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "rg_com_cpf","cin","cnh","cpf",
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
-  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
+  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social","renda_ccmei",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
   "antecedentes_militar","antecedentes_eleitoral",

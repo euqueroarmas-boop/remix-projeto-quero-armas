@@ -129,7 +129,7 @@ const OCUPACAO_RAMOS: Array<{ titulo: string; itens: string[] }> = [
       "Cartão CNPJ emitido nos últimos 30 dias",
       "QSA emitido nos últimos 30 dias",
       "Nota fiscal emitida pela empresa para um cliente, em qualquer data",
-      "Contrato Social, última alteração ou Requerimento de Empresário emitido pela Junta Comercial",
+      "Contrato Social, última alteração, Requerimento de Empresário ou CCMEI",
     ],
   },
   {

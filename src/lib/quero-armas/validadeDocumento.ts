@@ -88,6 +88,63 @@ function parseISODate(s?: string | null): Date | null {
   return isNaN(dt.getTime()) ? null : dt;
 }
 
+function pickNestedValue(obj: any, path: string): any {
+  return path.split(".").reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
+}
+
+function parseFlexibleDate(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return parseISODate(`${iso[1]}-${iso[2]}-${iso[3]}`);
+  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return parseISODate(`${br[3]}-${br[2]}-${br[1]}`);
+  const ym = raw.match(/^(\d{4})-(\d{2})$/);
+  if (ym) return parseISODate(`${ym[1]}-${ym[2]}-01`);
+  const my = raw.match(/^(\d{2})\/(\d{4})$/);
+  if (my) return parseISODate(`${my[2]}-${my[1]}-01`);
+  return null;
+}
+
+export function getDataEmissaoDocumentoHub(doc: any): string | null {
+  const paths = [
+    "data_emissao",
+    "data_expedicao",
+    "data_expedicao_rg",
+    "data_documento",
+    "data_referencia",
+    "mes_referencia",
+    "periodo_referencia",
+    "ia_dados_extraidos.camposExtraidos.data_emissao",
+    "ia_dados_extraidos.camposExtraidos.data_expedicao",
+    "ia_dados_extraidos.camposExtraidos.data_expedicao_rg",
+    "ia_dados_extraidos.camposExtraidos.data_documento",
+    "ia_dados_extraidos.camposExtraidos.data_referencia",
+    "ia_dados_extraidos.camposExtraidos.mes_referencia",
+    "ia_dados_extraidos.camposExtraidos.periodo_referencia",
+    "ia_dados_extraidos.campos_extraidos.data_emissao",
+    "ia_dados_extraidos.campos_extraidos.data_expedicao",
+    "ia_dados_extraidos.campos_extraidos.data_expedicao_rg",
+    "ia_dados_extraidos.campos_extraidos.data_documento",
+    "ia_dados_extraidos.campos_extraidos.data_referencia",
+    "ia_dados_extraidos.campos_extraidos.mes_referencia",
+    "ia_dados_extraidos.campos_extraidos.periodo_referencia",
+    "ia_dados_extraidos.campos.data_emissao",
+    "ia_dados_extraidos.campos.data_expedicao",
+    "ia_dados_extraidos.campos.data_expedicao_rg",
+    "ia_dados_extraidos.campos.data_documento",
+    "ia_dados_extraidos.campos.data_referencia",
+    "ia_dados_extraidos.campos.mes_referencia",
+    "ia_dados_extraidos.campos.periodo_referencia",
+  ];
+  for (const path of paths) {
+    const date = parseFlexibleDate(path.includes(".") ? pickNestedValue(doc, path) : doc?.[path]);
+    if (date) return toISO(date);
+  }
+  return null;
+}
+
 function toISO(d: Date): string {
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -191,6 +248,11 @@ export function isDocumentoIdentificacao10Anos(tipo?: string | null): boolean {
     t.includes("passaporte");
 }
 
+export function isProcuracao365Dias(tipo?: string | null): boolean {
+  const t = String(tipo ?? "").toLowerCase();
+  return t === "procuracao" || t.startsWith("procuracao_");
+}
+
 /**
  * Procuração (assinada ou não): validade padrão de 12 meses a partir da
  * emissão. Regra oficial Quero Armas — permite reaproveitamento entre
@@ -278,8 +340,8 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
     }
   }
 
-  // 1) Preferência: recálculo a partir de data_emissao (regra oficial).
-  let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao);
+  // 1) Preferência: recálculo a partir da data de emissão/referência (regra oficial).
+  let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao || getDataEmissaoDocumentoHub(doc));
   let origem: ValidadeInfo["origem"] = iso ? "regra_negocio" : "indefinido";
 
   // 2) Fallback: valor já gravado pelo backend.

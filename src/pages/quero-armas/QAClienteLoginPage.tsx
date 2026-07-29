@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
 
 const RESET_COOLDOWN_MS = 60_000;
 
@@ -204,7 +205,7 @@ export default function QAClienteLoginPage() {
 
       toast.success("Bem-vindo!");
       const next = searchParams.get("next");
-      navigate(next && next.startsWith("/") ? next : "/area-do-cliente", { replace: true });
+      navigate(sanitizeClientPortalNext(next), { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Erro ao autenticar");
     } finally {

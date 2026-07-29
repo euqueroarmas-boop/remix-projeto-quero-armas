@@ -14,6 +14,23 @@ interface Props {
 
 type StatusLinha = { label: string; status: "pending" | "loading" | "ok" | "error"; detalhe?: string };
 
+const TIPOS_CANONICOS_HUB = new Set([
+  "cin", "rg_com_cpf", "cnh", "cpf",
+  "comprovante_residencia", "comprovante_renda",
+  "laudo_psicologico", "laudo_capacidade_tecnica",
+  "certidao_antecedentes_criminais_federal",
+  "certidao_antecedentes_criminais_estadual",
+  "certidao_antecedentes_criminais_militar",
+  "certidao_antecedentes_criminais_eleitoral",
+  "cartao_cnpj_mei", "renda_contrato_social", "renda_ccmei", "certidao_alteracao_nome",
+  "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma",
+  "procuracao", "recurso_administrativo_doc", "mandado_seguranca_doc",
+  "gov_br", "outro",
+]);
+
+const CONFIANCA_MINIMA_TIPO_IA = 0.75;
+const CONFIANCA_MINIMA_TIPO_IA_OUTRO = 0.6;
+
 async function fileToBase64(file: File): Promise<string> {
   return new Promise((res, rej) => {
     const reader = new FileReader();
@@ -185,9 +202,9 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
       const senhaConfidence: number = typeof fields.senha_gov_confidence === "number" ? fields.senha_gov_confidence : 0;
       const senhaNeedsReview: boolean = fields.senha_gov_needs_review === true;
 
-      // A Central de Adesão só pode sugerir. A validação final é do Hub
-      // Documental contra a pendência esperada; por isso a IA não troca mais
-      // o tipo do arquivo sozinha, mesmo quando disser 100%.
+      // A IA classifica o conteúdo visual/textual. Quando vier em tipo canônico
+      // e com confiança suficiente, aplicamos antes de gravar no Hub; a aprovação
+      // final continua sendo do Hub/Equipe.
       const arquivosClassificados: Array<{
         indice?: number;
         nome_arquivo?: string;
@@ -201,13 +218,32 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
             (s) => s.indice === i || s.nome_arquivo === arq.file.name,
           );
           if (!sug || !sug.tipo_sugerido) return arq;
-          const tipoIA = sug.tipo_sugerido.trim();
+          const tipoIA = sug.tipo_sugerido.trim().toLowerCase();
           if (!tipoIA) return arq;
-          if (tipoIA !== arq.tipo) {
-            warnings.push(`Classificação apenas sugerida: "${arq.file.name}" parece "${tipoIA}", mas o tipo não foi alterado automaticamente. O Hub Documental deve validar.`);
-            return arq;
+          const confianca = typeof sug.confianca === "number" ? sug.confianca : 0;
+          const meta = {
+            tipo_ia_confianca: sug.confianca,
+            tipo_ia_motivo: sug.motivo,
+          };
+          if (!TIPOS_CANONICOS_HUB.has(tipoIA)) {
+            warnings.push(`Classificação ignorada: "${arq.file.name}" retornou tipo não canônico "${tipoIA}".`);
+            return { ...arq, ...meta } as ArquivoUpload;
           }
-          return { ...arq, tipo_ia_confianca: sug.confianca, tipo_ia_motivo: sug.motivo } as ArquivoUpload;
+          if (tipoIA !== arq.tipo) {
+            if (confianca >= CONFIANCA_MINIMA_TIPO_IA || (arq.tipo === "outro" && confianca >= CONFIANCA_MINIMA_TIPO_IA_OUTRO)) {
+              warnings.push(`Classificação aplicada: "${arq.file.name}" foi ajustado de "${arq.tipo}" para "${tipoIA}" antes de gravar no Hub Documental.`);
+              return {
+                ...arq,
+                ...meta,
+                tipo_original: arq.tipo_original ?? arq.tipo,
+                tipo: tipoIA,
+                tipo_aplicado_por_ia: true,
+              } as ArquivoUpload;
+            }
+            warnings.push(`Classificação apenas sugerida: "${arq.file.name}" parece "${tipoIA}", mas ficou como "${arq.tipo}" por baixa confiança.`);
+            return { ...arq, ...meta } as ArquivoUpload;
+          }
+          return { ...arq, ...meta } as ArquivoUpload;
         });
         setArquivos(atualizados);
       }
@@ -259,7 +295,7 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
         if (campos[campo]) campos[campo] = formatarTelefoneBR(campos[campo]!);
       }
 
-      const manualOverrides = extractManualOverrides(textoPastaColado);
+      const manualOverrides = extractManualOverrides(soTextoDigitado(textoPastaColado));
       const camposManuais = Object.keys(manualOverrides);
       for (const [campo, valor] of Object.entries(manualOverrides)) {
         if (!valor) continue;

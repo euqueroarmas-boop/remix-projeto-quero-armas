@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
 
 type Tab = "email" | "telefone";
 type PhoneStep = "input" | "code";
@@ -50,7 +51,7 @@ export default function QAClienteLoginV2Page() {
 
   const nextPath = (() => {
     const n = searchParams.get("next");
-    return n && n.startsWith("/") ? n : "/area-do-cliente";
+    return sanitizeClientPortalNext(n);
   })();
 
   /** Garante que o usuário autenticado tem vínculo com qa_cliente.

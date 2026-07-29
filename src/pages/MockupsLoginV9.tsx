@@ -18,6 +18,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 import { ArsenalInteligenteLogo } from "@/components/branding/ArsenalInteligenteLogo";
+import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
 
 const BG_URL = bgAsset.url;
 
@@ -79,7 +80,7 @@ export default function MockupsLoginV9() {
 
   const nextPath = (() => {
     const n = searchParams.get("next");
-    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/area-do-cliente";
+    return sanitizeClientPortalNext(n);
   })();
 
   async function ensureLinkedOrPromptCpf(): Promise<boolean> {
