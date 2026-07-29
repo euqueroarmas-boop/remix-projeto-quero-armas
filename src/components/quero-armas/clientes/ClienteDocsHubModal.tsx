@@ -1728,7 +1728,7 @@ export function ClienteDocsHubModal({
         // Demais tipos: bloqueia se mesmo tipo + mesmo número já existir
         let q = supabase
           .from("qa_documentos_cliente" as any)
-          .select("id, numero_documento, data_emissao")
+          .select("id, numero_documento, data_emissao, status")
           .eq("tipo_documento", form.tipo_documento)
           .neq("status", "excluido");
         q = customerId
@@ -1775,14 +1775,33 @@ export function ClienteDocsHubModal({
           return mesAnoNovo === mesAnoExistente;
         });
         if (dup) {
-          const sufixo = ehCertidao && form.data_emissao
-            ? ` (emitida em ${form.data_emissao.split("-").reverse().join("/")})`
-            : usaMesAno && mesAnoNovo
-              ? ` (referência ${mesAnoNovo.split("-").reverse().join("/")})`
-              : "";
-          toast.error(
-            `Já existe um ${tipoLabel} com o número ${form.numero_documento}${sufixo} para este cliente.`,
-          );
+          // O documento JÁ está no Hub. Antes isso era erro duro e travava o
+          // cliente: o checklist pedia o documento, a trava impedia o reenvio,
+          // e não havia saída. Agora aproveitamos o que já existe — garantimos
+          // que ele esteja aprovado e mandamos revalidar as exigências, que é
+          // exatamente o que o cliente queria conseguir ao reenviar.
+          try {
+            if (dup.status !== "aprovado") {
+              await supabase
+                .from("qa_documentos_cliente" as any)
+                .update({ status: "aprovado", validado_admin: true, aprovado_em: new Date().toISOString() })
+                .eq("id", dup.id);
+            }
+            if (qaClienteId) {
+              await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
+            }
+            toast.success(
+              `Você já havia enviado este ${tipoLabel}. Aproveitamos o documento que está no seu Hub e a exigência foi marcada como cumprida.`,
+            );
+            onSaved();
+          } catch (e: any) {
+            // Se a revalidação falhar, o documento existe do mesmo jeito —
+            // o cliente não pode ficar preso por causa disso.
+            console.error("[hub-dup] falha ao reaproveitar documento existente", e);
+            toast.warning(
+              `Este ${tipoLabel} já está no seu Hub. Nossa equipe foi avisada para liberar a exigência.`,
+            );
+          }
           setSaving(false);
           return;
         }

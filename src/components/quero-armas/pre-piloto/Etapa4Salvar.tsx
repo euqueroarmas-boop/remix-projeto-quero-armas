@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { HUB_TIPOS_DOCUMENTO } from "@/lib/quero-armas/documentosHubCatalogo";
+import { HUB_TIPOS_DOCUMENTO, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
@@ -49,6 +49,57 @@ function resolveTipoHub(tipoEtapa1: string): string {
   if (alias && TIPOS_CANONICOS_HUB.has(alias)) return alias;
   console.warn(`[Etapa4Salvar] tipo sem correspondência no Hub: "${tipoEtapa1}" → salvo como "outro"`);
   return "outro";
+}
+
+/**
+ * Apura quais exigências do checklist foram cumpridas pelos documentos que
+ * acabaram de entrar e avisa o cliente com UM e-mail resumo por processo.
+ *
+ * A trigger do banco já fez o casamento documento → exigência. Aqui apenas
+ * lemos o resultado e notificamos: um cadastro completo fecha várias exigências
+ * de uma vez, e um e-mail por exigência viraria uma enxurrada na caixa do
+ * cliente logo no primeiro contato.
+ */
+async function notificarExigenciasCumpridas(clienteId: number) {
+  // Rede de segurança: a trigger roda por linha inserida, mas se o processo
+  // foi aberto depois do documento, o slot ficou sem casar. Esta RPC reavalia
+  // todas as exigências pendentes contra o Hub.
+  await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: clienteId });
+
+  // Exigências validadas nos últimos 2 minutos — a janela desta gravação.
+  const desde = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const { data: cumpridas } = await supabase
+    .from("qa_processo_documentos" as any)
+    .select("processo_id, tipo_documento, nome_documento, data_validacao")
+    .eq("cliente_id", clienteId)
+    .eq("status", "aprovado")
+    .gte("data_validacao", desde);
+
+  const lista = (cumpridas as any[]) || [];
+  if (lista.length === 0) return;
+
+  // Um resumo por processo: o cliente pode ter mais de um processo aberto.
+  const porProcesso = new Map<string, string[]>();
+  for (const d of lista) {
+    const chave = String(d.processo_id ?? "sem_processo");
+    const nome = d.nome_documento || getTipoDocumentoMeta(d.tipo_documento)?.label || d.tipo_documento;
+    const atual = porProcesso.get(chave) ?? [];
+    if (!atual.includes(nome)) atual.push(nome);
+    porProcesso.set(chave, atual);
+  }
+
+  for (const [processoId, nomes] of porProcesso) {
+    await supabase.functions.invoke("qa-notify-event", {
+      body: {
+        evento: "exigencia_cumprida",
+        cliente_id: clienteId,
+        processo: processoId === "sem_processo" ? undefined : processoId,
+        exigencia: nomes.length === 1
+          ? nomes[0]
+          : `${nomes.length} exigências: ${nomes.join(", ")}`,
+      },
+    });
+  }
 }
 
 function sanitizeFileName(name: string): string {
@@ -304,10 +355,16 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               arquivo_storage_path: path,
               arquivo_nome: a.file.name,
               arquivo_mime: a.file.type || null,
-              status: "pendente_aprovacao",
+              // Nasce APROVADO: o documento foi conferido e classificado pela
+              // equipe durante o cadastro. É essa flag que a trigger
+              // qa_doc_hub_satisfaz_exigencias_processo() exige para marcar a
+              // exigência do checklist como cumprida — com "pendente_aprovacao"
+              // ela nunca disparava, e o cliente era cobrado de novo por um
+              // documento que já havia entregue.
+              status: "aprovado",
               origem: "admin",
-              validado_admin: false,
-              aprovado_em: null,
+              validado_admin: true,
+              aprovado_em: new Date().toISOString(),
               ia_dados_extraidos: {
                 origem: "central_adesao",
                 tipo_sugerido: tipoDb,
@@ -329,6 +386,20 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         setStatusUpload(null);
         if (ok > 0) toast.success(`${ok} documento(s) gravado(s) no Hub Documental`);
         if (falhas > 0) toast.warning(`${falhas} documento(s) não puderam ser gravados — veja o console (F12) para o erro detalhado.`);
+
+        // Os documentos entram como aprovados, então a trigger
+        // qa_doc_hub_satisfaz_exigencias_processo() já casou cada um com os
+        // slots do processo. Aqui só conferimos o que fechou e avisamos o
+        // cliente — um e-mail resumo por processo, não um por exigência.
+        if (ok > 0 && clienteId) {
+          try {
+            await notificarExigenciasCumpridas(clienteId);
+          } catch (err) {
+            // Falha de notificação nunca pode derrubar o cadastro: o documento
+            // já está salvo e a exigência já foi cumprida no banco.
+            console.warn("[pre-piloto notificar exigências]", err);
+          }
+        }
       }
 
       onSalvo(cFinal);
