@@ -156,6 +156,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "comprovante_habitualidade", label: "Comprovante de habitualidade", short: "HABITUALIDADE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  { value: "comprovante_pagamento", label: "Comprovante de pagamento", short: "PAGAMENTO", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
   { value: "protocolo_processo", label: "Protocolo do processo", short: "PROTOCOLO", categoria: "documentos_processo", escopo: "processo" },
   { value: "oficio", label: "Ofício", short: "OFÍCIO", categoria: "documentos_processo", escopo: "processo" },
   { value: "despacho", label: "Despacho / movimentação", short: "DESPACHO", categoria: "documentos_processo", escopo: "processo" },

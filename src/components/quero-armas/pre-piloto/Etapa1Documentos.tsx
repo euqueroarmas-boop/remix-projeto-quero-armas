@@ -5,26 +5,41 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { ArquivoUpload } from "./PrePilotoWizard";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
+
+// Os tipos da Central de Adesão são EXATAMENTE os do Hub Documental
+// (documentosHubCatalogo.ts / CHECK de qa_documentos_cliente). Qualquer slug
+// próprio faria o documento chegar ao Hub como "outro" — ou ser rejeitado pelo
+// banco — e a exigência correspondente nunca seria cumprida.
+// "gov_br" é a única exceção: não é documento, vira senha do cliente.
+const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
+  { grupo: "Identificação", tipos: ["cin", "rg_com_cpf", "cnh", "cpf", "certidao_alteracao_nome"] },
+  { grupo: "Endereço", tipos: ["comprovante_residencia", "declaracao_responsavel_imovel"] },
+  { grupo: "Ocupação Lícita / Renda", tipos: [
+    "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
+    "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
+    "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
+  ] },
+  { grupo: "Antecedentes e Regularidade", tipos: [
+    "antecedentes_criminais", "antecedentes_federal",
+    "antecedentes_federal_trf3_regional", "antecedentes_federal_sjsp_jef",
+    "antecedentes_estadual", "antecedentes_estadual_distribuicao",
+    "antecedentes_estadual_execucoes", "antecedentes_militar", "antecedentes_eleitoral",
+  ] },
+  { grupo: "Laudos e Exames", tipos: ["laudo_psicologico", "laudo_capacidade_tecnica"] },
+  { grupo: "Arma e Acervo", tipos: ["cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma"] },
+  { grupo: "Processo", tipos: ["comprovante_pagamento", "procuracao_assinada", "contrato_assinado", "documento_complementar_caso"] },
+  { grupo: "Outros", tipos: ["gov_br", "outro"] },
+];
+
 const TIPO_LABELS: Record<string, string> = {
-  cin: "CIN / RG",
-  cnh: "CNH",
-  comprovante_residencia: "Comprovante de Residência",
-  laudo_psicologico: "Laudo Psicológico",
-  laudo_capacidade_tecnica: "Laudo de Capacidade Técnica",
-  certidao_antecedentes_criminais_estadual: "Antecedentes Criminais (Estadual)",
-  certidao_antecedentes_criminais_federal: "Antecedentes Federais",
-  comprovante_pagamento: "Comprovante de Pagamento",
-  ocupacao_licita: "Ocupação Lícita",
-  comprovante_renda: "Comprovante de Renda",
-  cartao_cnpj_mei: "CNPJ / MEI",
-  craf: "CRAF / SINARM",
-  gte: "GTE / GT",
-  nota_fiscal_arma: "Nota Fiscal de Arma",
+  ...Object.fromEntries(
+    GRUPOS_TIPOS.flatMap((g) => g.tipos).map((t) => [t, getTipoDocumentoMeta(t)?.label ?? t])
+  ),
   gov_br: "Print/Foto GOV.BR (senha)",
-  outro: "Outro",
 };
 
 interface Props {
@@ -311,21 +326,30 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.includes("cnh") || n.includes("habilitacao") || n.includes("motorista")) return "cnh";
     if (n.includes("cin") || n.includes("identidade") || n.includes("passaporte")) return "cin";
     if (n.match(/\brg\b/) || n.includes("registro geral")) return "cin";
-    // Antecedentes
-    if (n.includes("crimes-eleitorais") || n.includes("eleitoral") || n.includes("tse") || n.includes("federal")) return "certidao_antecedentes_criminais_federal";
-    if (n.includes("antecedente") || n.includes("criminal") || n.includes("certidaocriminal") || n.includes("nada consta") || n.includes("tjsp") || n.includes("tjmsp") || n.includes("tjrj")) return "certidao_antecedentes_criminais_estadual";
+    // Antecedentes — slugs granulares do Hub
+    if (n.includes("crimes-eleitorais") || n.includes("eleitoral") || n.includes("tse")) return "antecedentes_eleitoral";
+    if (n.includes("militar") || n.includes("stm")) return "antecedentes_militar";
+    if (n.includes("trf") || n.includes("regiao") || n.includes("regional")) return "antecedentes_federal_trf3_regional";
+    if (n.includes("jef") || n.includes("secao judiciaria")) return "antecedentes_federal_sjsp_jef";
+    if (n.includes("federal") || n.includes("justica federal")) return "antecedentes_federal";
+    if (n.includes("execucoes")) return "antecedentes_estadual_execucoes";
+    if (n.includes("distribuicao")) return "antecedentes_estadual_distribuicao";
+    if (n.includes("tjsp") || n.includes("tjmsp") || n.includes("tjrj") || n.includes("certidaocriminal")) return "antecedentes_estadual";
+    if (n.includes("antecedente") || n.includes("criminal") || n.includes("nada consta") || n.includes("iirgd")) return "antecedentes_criminais";
     // Laudos
     if (n.includes("psico") || n.includes("psicolog")) return "laudo_psicologico";
     if (n.includes("tecn") || n.includes("capacidade") || n.includes("tiro")) return "laudo_capacidade_tecnica";
     // Comprovante de pagamento
-    if (n.includes("pix") || n.includes("transferencia") || n.includes("ted") || n.includes("doc") || n.includes("recibo")) return "comprovante_pagamento";
-    // Ocupação lícita
-    if (
-      n.includes("holerite") || n.includes("contracheque") || n.includes("decore") ||
-      n.includes("ctps") || n.includes("cnis") || n.includes("contrato social") ||
-      n.includes("requerimento") || n.includes("qsa") || n.includes("ccmei") ||
-      n.includes("cnpj") || n.includes("mei") || n.includes("servico") || n.includes("servicos")
-    ) return "ocupacao_licita";
+    if (n.includes("pix") || n.includes("transferencia") || n.includes("ted") || n.includes("recibo")) return "comprovante_pagamento";
+    // Ocupação lícita / renda — slugs granulares do Hub
+    if (n.includes("ccmei") || n.includes("mei")) return "renda_cnpj_autonomo";
+    if (n.includes("contrato social") || n.includes("requerimento") || n.includes("qsa")) return "renda_contrato_social";
+    if (n.includes("cnpj")) return "renda_cartao_cnpj";
+    if (n.includes("holerite") || n.includes("contracheque")) return "renda_holerite_mes_atual";
+    if (n.includes("ctps") || n.includes("carteira de trabalho")) return "ctps";
+    if (n.includes("cnis") || n.includes("inss")) return "renda_extrato_inss";
+    if (n.includes("beneficio")) return "renda_comprovante_beneficio";
+    if (n.includes("decore") || n.includes("nota fiscal") || n.includes("nfe")) return "renda_nf_recente";
     // Comprovante de residência — "comprovante" e "fatura" genéricos só depois das anteriores
     if (
       n.includes("residencia") || n.includes("endereco") ||
@@ -335,10 +359,12 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       n.includes("vivo") || n.includes("claro") || n.includes("tim") || n.includes("oi") ||
       n.includes("net") || n.includes("telefonica") || n.includes("iptu")
     ) return "comprovante_residencia";
-    if (n.includes("renda")) return "comprovante_renda";
-    if (n.includes("craf") || n.includes("sinarm")) return "craf";
+    if (n.includes("sinarm")) return "sinarm";
+    if (n.includes("craf")) return "craf";
     if (n.includes("gte")) return "gte";
-    if (n.includes("nota fiscal") || n.includes("nfe") || n.includes("nota_fiscal")) return "nota_fiscal_arma";
+    if (n.match(/\bgt\b/)) return "gt";
+    if (n.includes("\bcr\b") || n.includes("certificado de registro")) return "cr";
+    if (n.includes("nota_fiscal") || n.includes("nota fiscal arma")) return "nota_fiscal_arma";
     if (n.includes("gov") || n.includes("senha") || n.includes("govbr")) return "gov_br";
     return "outro";
   }
@@ -449,8 +475,17 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
                       : ""
                   }`}
                 >
-                  {Object.entries(TIPO_LABELS).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
+                  {/* Slug fora do catálogo vira opção própria: o select nunca
+                      pode cair silenciosamente na primeira opção da lista. */}
+                  {a.tipo && !TIPO_LABELS[a.tipo] && (
+                    <option value={a.tipo}>{a.tipo}</option>
+                  )}
+                  {GRUPOS_TIPOS.map((g) => (
+                    <optgroup key={g.grupo} label={g.grupo}>
+                      {g.tipos.map((v) => (
+                        <option key={v} value={v}>{TIPO_LABELS[v] ?? v}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
 

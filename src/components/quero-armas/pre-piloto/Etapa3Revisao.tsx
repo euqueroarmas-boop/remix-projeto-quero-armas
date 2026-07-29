@@ -5,34 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
+import { HUB_TIPOS_DOCUMENTO } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { DadosExtraidos, ArquivoUpload } from "./PrePilotoWizard";
 
 // Tipos canônicos do hub — mesma lista usada pelo mapeamento em Etapa 4.
+// Fonte única: o catálogo do Hub Documental (espelha o CHECK de
+// qa_documentos_cliente). Manter uma lista própria aqui já causou bug — slugs
+// que não batiam faziam o <select> cair silenciosamente na primeira opção.
 const TIPOS_DOC_HUB: Array<{ valor: string; label: string }> = [
-  { valor: "cin",                                        label: "CIN — Carteira de Identidade Nacional" },
-  { valor: "rg_com_cpf",                                 label: "RG (com CPF)" },
-  { valor: "cnh",                                        label: "CNH — Carteira Nacional de Habilitação" },
-  { valor: "cpf",                                        label: "CPF" },
-  { valor: "comprovante_residencia",                     label: "Comprovante de Residência" },
-  { valor: "comprovante_pagamento",                      label: "Comprovante de Pagamento" },
-  { valor: "ocupacao_licita",                            label: "Ocupação Lícita" },
-  { valor: "comprovante_renda",                          label: "Comprovante de Renda" },
-  { valor: "laudo_psicologico",                          label: "Laudo Psicológico" },
-  { valor: "laudo_capacidade_tecnica",                   label: "Laudo de Capacidade Técnica" },
-  { valor: "certidao_antecedentes_criminais_federal",    label: "Certidão Criminal — Justiça Federal" },
-  { valor: "certidao_antecedentes_criminais_estadual",   label: "Certidão Criminal — Justiça Estadual" },
-  { valor: "certidao_antecedentes_criminais_militar",    label: "Certidão Criminal — Justiça Militar" },
-  { valor: "certidao_antecedentes_criminais_eleitoral",  label: "Certidão Criminal — Justiça Eleitoral" },
-  { valor: "cartao_cnpj_mei",                            label: "Cartão CNPJ / MEI" },
-  { valor: "certidao_alteracao_nome",                    label: "Certidão de alteração de nome" },
-  { valor: "craf",                                       label: "CRAF" },
-  { valor: "sinarm",                                     label: "SINARM" },
-  { valor: "gt",                                         label: "GT" },
-  { valor: "gte",                                        label: "GTE" },
-  { valor: "autorizacao_compra",                         label: "Autorização de Compra" },
-  { valor: "nota_fiscal_arma",                           label: "Nota Fiscal da Arma" },
-  { valor: "gov_br",                                     label: "GOV.BR (senha)" },
-  { valor: "outro",                                      label: "Outro" },
+  ...HUB_TIPOS_DOCUMENTO.map((t) => ({ valor: t.value, label: t.label })),
+  { valor: "gov_br", label: "GOV.BR (senha)" },
 ];
 
 function labelTipo(valor: string): string {

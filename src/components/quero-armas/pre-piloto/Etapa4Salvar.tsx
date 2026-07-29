@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { HUB_TIPOS_DOCUMENTO } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
@@ -24,27 +25,30 @@ function formatCpf(cpf: string | null): string | null {
 // Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
 // Mapa de aliases legado → canônico. Tipos já canônicos (retornados pela IA
 // na Etapa 2 via arquivos_classificados) passam direto por identidade.
+// Aliases legado → canônico. Cadastros antigos e classificações da IA feitas
+// antes da unificação usavam slugs próprios que o CHECK do banco rejeita —
+// o INSERT falhava e o documento se perdia sem que ninguém percebesse.
 const TIPO_ETAPA1_TO_HUB: Record<string, string> = {
-  antecedentes_criminais: "certidao_antecedentes_criminais_federal",
+  certidao_antecedentes_criminais_federal: "antecedentes_federal",
+  certidao_antecedentes_criminais_estadual: "antecedentes_estadual",
+  certidao_antecedentes_criminais_militar: "antecedentes_militar",
+  certidao_antecedentes_criminais_eleitoral: "antecedentes_eleitoral",
+  cartao_cnpj_mei: "renda_cartao_cnpj",
+  comprovante_renda: "renda_holerite_mes_atual",
+  ocupacao_licita: "renda_cnpj_autonomo",
+  rg: "rg_com_cpf",
 };
 
-// Lista de tipos aceitos direto pelo hub (bibliografia canônica).
-const TIPOS_CANONICOS_HUB = new Set([
-  "cin", "rg_com_cpf", "cnh", "cpf",
-  "comprovante_residencia", "comprovante_renda",
-  "laudo_psicologico", "laudo_capacidade_tecnica",
-  "certidao_antecedentes_criminais_federal",
-  "certidao_antecedentes_criminais_estadual",
-  "certidao_antecedentes_criminais_militar",
-  "certidao_antecedentes_criminais_eleitoral",
-  "cartao_cnpj_mei", "certidao_alteracao_nome",
-  "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma",
-  "outro",
-]);
+// Fonte única da verdade: o catálogo do Hub (espelha o CHECK de
+// qa_documentos_cliente). Nunca redeclarar essa lista aqui.
+const TIPOS_CANONICOS_HUB = new Set(HUB_TIPOS_DOCUMENTO.map((t) => t.value));
 
 function resolveTipoHub(tipoEtapa1: string): string {
   if (TIPOS_CANONICOS_HUB.has(tipoEtapa1)) return tipoEtapa1;
-  return TIPO_ETAPA1_TO_HUB[tipoEtapa1] || "outro";
+  const alias = TIPO_ETAPA1_TO_HUB[tipoEtapa1];
+  if (alias && TIPOS_CANONICOS_HUB.has(alias)) return alias;
+  console.warn(`[Etapa4Salvar] tipo sem correspondência no Hub: "${tipoEtapa1}" → salvo como "outro"`);
+  return "outro";
 }
 
 function sanitizeFileName(name: string): string {

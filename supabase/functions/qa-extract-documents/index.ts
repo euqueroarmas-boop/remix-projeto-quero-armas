@@ -167,11 +167,23 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
 }
 
 // ─── MODO CLASSIFY (Central de Adesão) ──────────────────────────────────────
+// Slugs IDÊNTICOS aos do Hub Documental (CHECK de qa_documentos_cliente).
+// Qualquer slug próprio faria o documento chegar ao Hub sem identidade e a
+// exigência correspondente nunca seria cumprida.
 const CLASSIFY_TIPOS = [
-  "cin","cnh","comprovante_residencia","laudo_psicologico","laudo_capacidade_tecnica",
-  "certidao_antecedentes_criminais_estadual","certidao_antecedentes_criminais_federal",
-  "comprovante_pagamento","ocupacao_licita","comprovante_renda","cartao_cnpj_mei",
-  "craf","gte","nota_fiscal_arma","gov_br","outro",
+  "cin","rg_com_cpf","cnh","cpf","certidao_alteracao_nome",
+  "comprovante_residencia","declaracao_responsavel_imovel",
+  "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
+  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
+  "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
+  "antecedentes_criminais","antecedentes_federal",
+  "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
+  "antecedentes_estadual","antecedentes_estadual_distribuicao",
+  "antecedentes_estadual_execucoes","antecedentes_militar","antecedentes_eleitoral",
+  "laudo_psicologico","laudo_capacidade_tecnica",
+  "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
+  "comprovante_pagamento","documento_complementar_caso",
+  "gov_br","outro",
 ];
 
 const CLASSIFY_TOOL = {
@@ -207,24 +219,64 @@ const CLASSIFY_TOOL = {
   },
 };
 
-const CLASSIFY_SYSTEM = `Classifique o documento entre os tipos:
-- cin: RG, CIN ou passaporte — documento de identidade com foto (NÃO é CNH)
-- cnh: Carteira Nacional de Habilitação — traz "PERMISSÃO PARA DIRIGIR"/"HABILITAÇÃO", número de registro, categoria (A/B/AB) e validade
-- comprovante_residencia: conta de luz, água, gás, telefone, IPTU, correspondência bancária com endereço
-- laudo_psicologico: laudo de psicólogo com CRP, resultado APTO/INAPTO
-- laudo_capacidade_tecnica: laudo de capacidade técnica de atirador/instrutor de tiro
-- certidao_antecedentes_criminais_estadual: certidão estadual de antecedentes (SSP, TJ estadual)
-- certidao_antecedentes_criminais_federal: certidão federal (Justiça Federal, DPF, TSE)
-- comprovante_pagamento: comprovante de transação bancária — PIX, TED, DOC, comprovante de pagamento com cartão de débito/crédito. Para ser comprovante_pagamento o destinatário/beneficiário deve ser "Willian Rodrigues da Silva Massaroto" OU "Senhor das Armas Comercio de Armas e Municoes Ltda" (ou variações). ATENÇÃO: fatura de cartão de crédito NÃO é comprovante_pagamento nem comprovante_residencia — classificar como outro. Extrato bancário genérico sem destinatário identificado = outro.
-- ocupacao_licita: QUALQUER documento que comprove ocupação lícita ou fonte de renda — inclui: holerite, contracheque, carteira de trabalho (CTPS), extrato CNIS, histórico de crédito, contrato social, requerimento de empresário, cartão CNPJ, certificado MEI (CCMEI), QSA (Quadro de Sócios e Administradores), nota fiscal de serviço/produto (exceto de arma), DECORE, declaração de renda
-- comprovante_renda: use SOMENTE se for um documento genérico de renda que não se encaixe em ocupacao_licita
-- cartao_cnpj_mei: use SOMENTE se for cartão CNPJ/MEI sem outros elementos de ocupacao_licita
-- craf: Certificado de Registro de Acervo de Armas (CRAF) ou SINARM
-- gte: Guia de Tráfego do Exército (GTE) ou Guia de Transferência (GT)
+const CLASSIFY_SYSTEM = `Você classifica documentos do processo de aquisição de arma de fogo (CAC) no Brasil.
+O slug escolhido é o MESMO usado pelo Hub Documental do cliente: acertar o tipo exato faz a exigência do processo ser cumprida automaticamente; errar faz o sistema pedir o documento de novo ao cliente. Seja específico — só use um tipo genérico quando o documento realmente não permitir distinguir.
+
+IDENTIFICAÇÃO
+- cin: CIN (Carteira de Identidade Nacional, layout gov.br com QR code) ou RG antigo sem CPF impresso
+- rg_com_cpf: RG que traz o CPF impresso no próprio documento
+- cnh: Carteira Nacional de Habilitação — "PERMISSÃO PARA DIRIGIR"/"HABILITAÇÃO", nº de registro, categoria (A/B/AB), validade
+- cpf: cartão ou comprovante de inscrição no CPF isolado
+- certidao_alteracao_nome: certidão averbada de alteração/retificação de nome
+
+ENDEREÇO
+- comprovante_residencia: conta de luz, água, gás, telefone, internet, IPTU ou correspondência bancária com endereço
+- declaracao_responsavel_imovel: declaração assinada pelo responsável/proprietário do imóvel
+
+OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genérico)
+- ctps: Carteira de Trabalho (CTPS), física ou digital
+- renda_holerite_mes_atual: holerite/contracheque de empresa privada
+- renda_holerite_funcionario_publico: holerite de servidor público
+- renda_cartao_cnpj: Cartão CNPJ da Receita Federal (empresa comum)
+- renda_cnpj_autonomo: CCMEI (Certificado da Condição de Microempreendedor Individual) ou cartão CNPJ de MEI/autônomo
+- renda_contrato_social: contrato social, requerimento de empresário, alteração contratual ou QSA
+- renda_nf_recente: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma)
+- renda_comprovante_beneficio: comprovante de benefício (INSS, BPC, aposentadoria, pensão)
+- renda_extrato_inss: extrato CNIS ou extrato de contribuições do INSS
+
+ANTECEDENTES (distinga o órgão emissor — cada um cumpre uma exigência diferente)
+- antecedentes_criminais: Atestado de Antecedentes da Polícia Civil / SSP / IIRGD
+- antecedentes_federal: Certidão de Distribuição Criminal da Justiça Federal (genérica, sem indicação de região ou seção)
+- antecedentes_federal_trf3_regional: certidão do TRF (Tribunal Regional Federal) — abrangência REGIONAL. Traz "TRIBUNAL REGIONAL FEDERAL DA Xª REGIÃO"
+- antecedentes_federal_sjsp_jef: certidão da Seção Judiciária (SJ) e/ou Juizado Especial Federal (JEF)
+- antecedentes_estadual: certidão criminal do Tribunal de Justiça estadual (TJSP, TJRJ, etc.)
+- antecedentes_estadual_distribuicao: certidão do TJ especificamente de DISTRIBUIÇÃO de ações criminais
+- antecedentes_estadual_execucoes: certidão do TJ especificamente de EXECUÇÕES criminais
+- antecedentes_militar: Certidão da Justiça Militar (STM — Superior Tribunal Militar, Justiça Militar da União, ou Justiça Militar estadual)
+- antecedentes_eleitoral: Certidão de Crimes Eleitorais (TSE ou TRE)
+
+LAUDOS
+- laudo_psicologico: laudo de psicólogo com CRP e resultado APTO/INAPTO
+- laudo_capacidade_tecnica: atestado de capacidade técnica de manuseio, assinado por instrutor de tiro
+
+ARMA E ACERVO
+- cr: CR — Certificado de Registro de colecionador/atirador/caçador (Exército)
+- craf: CRAF — Certificado de Registro de Arma de Fogo (Exército)
+- sinarm: Certificado de Registro de Arma de Fogo emitido pela Polícia Federal (SINARM)
+- gt: Guia de Tráfego (GT)
+- gte: Guia de Tráfego Eventual (GTE)
+- autorizacao_compra: autorização de compra de arma de fogo
 - nota_fiscal_arma: nota fiscal de COMPRA DE ARMA DE FOGO especificamente
+
+PROCESSO
+- comprovante_pagamento: comprovante de transação bancária — PIX, TED, DOC ou pagamento com cartão. Só use quando o BENEFICIÁRIO for "Willian Rodrigues da Silva Massaroto" ou "Senhor das Armas Comercio de Armas e Municoes Ltda" (ou variações). Fatura de cartão de crédito NÃO é comprovante_pagamento nem comprovante_residencia — use outro. Extrato bancário sem beneficiário identificado = outro.
+- documento_complementar_caso: documento do processo que não se encaixa nos anteriores
+
+OUTROS
 - gov_br: print de tela do portal GOV.BR mostrando login/senha
-- outro: não se encaixa em nenhuma categoria acima
-REGRA: Prefira sempre ocupacao_licita para documentos de renda/trabalho/empresa. Extraia só dados visíveis.`;
+- outro: não foi possível determinar o tipo
+
+REGRAS: Decida pelo CONTEÚDO do documento, não pelo nome do arquivo. Leia o cabeçalho e o órgão emissor antes de escolher entre variantes. Extraia apenas dados visíveis.`;
 
 async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
   const model = mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
