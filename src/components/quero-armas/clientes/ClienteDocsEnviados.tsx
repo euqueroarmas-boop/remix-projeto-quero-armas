@@ -133,6 +133,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     },
   });
 
+  const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
+
+  // Agrupa por família documental (Bloco: empilhamento visual).
+  const grupos = useMemo(
+    () => agruparDocumentosPorFamilia(docs as any[]),
+    [docs],
+  );
+
   // Realtime: invalida cache quando documentos deste cliente mudam
   useEffect(() => {
     if (!clienteId && !customerId) return;
@@ -187,6 +195,12 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     }
   };
 
+  // Auditoria de supressão / empilhamento (dedupe por 24h no localStorage).
+  useEffect(() => {
+    if (!clienteId || grupos.length === 0) return;
+    grupos.forEach((g) => auditarGrupoSeUtil(clienteId, g));
+  }, [clienteId, grupos]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10 gap-2 text-slate-400">
@@ -221,20 +235,6 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       </div>
     );
   }
-
-  const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
-
-  // Agrupa por família documental (Bloco: empilhamento visual).
-  const grupos = useMemo(
-    () => agruparDocumentosPorFamilia(docs as any[]),
-    [docs],
-  );
-
-  // Auditoria de supressão / empilhamento (dedupe por 24h no localStorage).
-  useEffect(() => {
-    if (!clienteId) return;
-    grupos.forEach((g) => auditarGrupoSeUtil(clienteId, g));
-  }, [clienteId, grupos]);
 
   return (
     <div className="space-y-3">
