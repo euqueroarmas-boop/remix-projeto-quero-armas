@@ -443,7 +443,11 @@ export function getNomeDocumentoDisplay(doc: Record<string, unknown> | null | un
   // Isso garante o mesmo padrão visual em todos os documentos do hub.
   if (inferred) return inferred;
   if (explicit && !shouldReplaceNomeCertidao(explicit, tipo)) return explicit;
-  return inferred || explicit || meta?.short || meta?.label || cleanDocumentoName(doc?.arquivo_nome) || fallback;
+  // `short` é a sigla para chips e badges ("CNPJ", "QSA", "END"), nunca o nome
+  // do documento. Usá-lo antes do label fazia a lista do cliente exibir "Cnpj",
+  // "Qsa" e "Outro" no lugar de "Cartão CNPJ", "QSA — Quadro de Sócios e
+  // Administradores" e "Outro documento".
+  return inferred || explicit || meta?.label || meta?.short || cleanDocumentoName(doc?.arquivo_nome) || fallback;
 }
 
 export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefined): HubCategoria {
