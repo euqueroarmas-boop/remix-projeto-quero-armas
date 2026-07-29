@@ -50,11 +50,26 @@ Deno.serve(async (req) => {
   // Auth admin
   const token = (req.headers.get("Authorization") || "").replace("Bearer ", "").trim();
   if (!token) return json({ error: "missing_token" }, 401);
-  const userClient = createClient(url, anonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userData, error: userErr } = await userClient.auth.getUser();
-  if (userErr || !userData?.user) return json({ error: "unauthenticated" }, 401);
+  // Valida o JWT direto no endpoint /auth/v1/user (sistema de signing keys:
+  // supabase-js exige sessão local e falha com "Auth session missing!").
+  let authUserId = "";
+  let authUserEmail: string | null = null;
+  try {
+    const resp = await fetch(`${url}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      return json({ error: "unauthenticated", message: detail || `status ${resp.status}` }, 401);
+    }
+    const u = await resp.json();
+    authUserId = u?.id || "";
+    authUserEmail = u?.email ?? null;
+  } catch (e) {
+    return json({ error: "unauthenticated", message: (e as Error).message }, 401);
+  }
+  if (!authUserId) return json({ error: "unauthenticated" }, 401);
+  const userData = { user: { id: authUserId, email: authUserEmail } };
 
   const admin = createClient(url, serviceKey);
   const { data: roleData } = await admin
@@ -63,7 +78,18 @@ Deno.serve(async (req) => {
     .eq("user_id", userData.user.id)
     .eq("role", "admin")
     .maybeSingle();
-  if (!roleData) return json({ error: "forbidden" }, 403);
+  let isAdmin = !!roleData;
+  if (!isAdmin) {
+    // Fallback: perfil interno Quero Armas
+    const { data: perfilRow } = await admin
+      .from("qa_usuarios_perfis")
+      .select("perfil, ativo")
+      .eq("user_id", userData.user.id)
+      .eq("ativo", true)
+      .maybeSingle();
+    isAdmin = String((perfilRow as any)?.perfil || "") === "administrador";
+  }
+  if (!isAdmin) return json({ error: "forbidden" }, 403);
 
   let body: any = {};
   try { body = await req.json(); } catch { body = {}; }
@@ -121,7 +147,8 @@ Deno.serve(async (req) => {
         .eq("id", documentoId);
       if (updErr) return json({ error: "update_falhou", message: updErr.message }, 500);
 
-      await admin.from("qa_logs_auditoria").insert({
+      try {
+        await admin.from("qa_logs_auditoria").insert({
         tipo: "admin_reclassificar_documento",
         acao: "reclassificar_documento",
         ator_id: userData.user.id,
@@ -135,7 +162,8 @@ Deno.serve(async (req) => {
           status_preservado: doc.status,
           motivo: motivo || null,
         },
-      } as any).catch(() => {});
+        } as any);
+      } catch { /* auditoria não bloqueia a ação */ }
 
       return json({
         ok: true,
@@ -205,14 +233,16 @@ Deno.serve(async (req) => {
     }
 
     const audit = async (acao: string, detalhes: any) => {
-      await admin.from("qa_logs_auditoria").insert({
+      try {
+        await admin.from("qa_logs_auditoria").insert({
         tipo: "admin_destravar_cadastro",
         acao,
         ator_id: userData.user.id,
         ator_email: userData.user.email,
         cliente_id: clienteId,
         detalhes: { motivo, ...detalhes },
-      } as any).catch(() => {});
+        } as any);
+      } catch { /* auditoria não bloqueia a ação */ }
     };
 
     // ── CANCELAR VENDA PENDENTE ─────────────────────────────────
