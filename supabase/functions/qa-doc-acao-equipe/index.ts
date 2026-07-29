@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
 
     const { data: doc, error: docErr } = await supabase
       .from("qa_processo_documentos")
-      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, status, arquivo_storage_key, usado_como_modelo, campos_complementares_json")
+      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, status, motivo_rejeicao, arquivo_storage_key, usado_como_modelo, campos_complementares_json")
       .eq("id", documento_id)
       .maybeSingle();
     if (docErr || !doc) return json({ error: "Documento não encontrado" }, 404);
@@ -128,6 +128,24 @@ Deno.serve(async (req) => {
       }
     };
 
+    const notificarCliente = async (
+      eventoEmail: "documento_aprovado" | "documento_invalido",
+      motivoTxt?: string | null,
+    ) => {
+      try {
+        await supabase.functions.invoke("qa-processo-notificar", {
+          body: {
+            processo_id: doc.processo_id,
+            documento_id,
+            evento: eventoEmail,
+            motivo: motivoTxt ?? undefined,
+          },
+        });
+      } catch (e) {
+        console.warn("[qa-doc-acao-equipe] notificação do cliente falhou:", e);
+      }
+    };
+
     switch (acao) {
       case "signed_url": {
         if (!doc.arquivo_storage_key) return json({ error: "Documento sem arquivo." }, 404);
@@ -139,6 +157,7 @@ Deno.serve(async (req) => {
       }
 
       case "aprovar": {
+        const mudouStatus = doc.status !== "aprovado";
         await supabase.from("qa_processo_documentos").update({
           status: "aprovado",
           motivo_rejeicao: null,
@@ -147,6 +166,7 @@ Deno.serve(async (req) => {
         }).eq("id", documento_id);
         await evento("aprovacao_manual", `Equipe aprovou manualmente "${doc.nome_documento}".`);
         await auditarStatus("aprovado", null, "aprovar");
+        if (mudouStatus) await notificarCliente("documento_aprovado");
         await fecharCicloAlteracaoNomeSeAplicavel();
         try {
           const { popularArsenalAposAprovacao } = await import("../_shared/popularArsenalAprovado.ts");
@@ -160,6 +180,8 @@ Deno.serve(async (req) => {
       case "rejeitar": {
         const m = (motivo || "").toString().trim();
         if (m.length < 5) return json({ error: "Motivo de rejeição obrigatório (mín. 5 caracteres)." }, 400);
+        const mudouStatusOuMotivo =
+          doc.status !== "invalido" || String(doc.motivo_rejeicao || "").trim() !== m;
         await supabase.from("qa_processo_documentos").update({
           status: "invalido",
           motivo_rejeicao: m,
@@ -168,6 +190,7 @@ Deno.serve(async (req) => {
         }).eq("id", documento_id);
         await evento("rejeicao_manual", `Equipe rejeitou "${doc.nome_documento}".`, { motivo: m });
         await auditarStatus("invalido", m, "rejeitar");
+        if (mudouStatusOuMotivo) await notificarCliente("documento_invalido", m);
         return json({ ok: true });
       }
 
@@ -201,6 +224,7 @@ Deno.serve(async (req) => {
           }).eq("id", documento_id);
           await evento("aprovacao_manual", `Equipe aprovou "${doc.nome_documento}" (encadeado a modelo).`);
           await auditarStatus("aprovado", observacoes ?? null, "aprovar_e_modelar");
+          await notificarCliente("documento_aprovado", observacoes ?? null);
         }
         await fecharCicloAlteracaoNomeSeAplicavel();
         try {

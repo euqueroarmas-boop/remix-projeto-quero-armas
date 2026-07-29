@@ -60,7 +60,8 @@ function btn(href: string, label: string, color = "#0ea5e9") {
 
 function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; motivo?: string; portalUrl: string; uploadUrl: string; linkEmissao?: string | null; labelBotao?: string | null; }) {
   const docName = ctx.documento ? `<strong>${escapeHtml(ctx.documento)}</strong>` : "documento";
-  const motivo = ctx.motivo ? `<p style="margin:8px 0;color:#b91c1c;"><em>Motivo: ${escapeHtml(ctx.motivo)}</em></p>` : "";
+  const motivoCor = ev === "documento_aprovado" ? "#166534" : "#b91c1c";
+  const motivo = ctx.motivo ? `<p style="margin:8px 0;color:${motivoCor};"><em>Motivo: ${escapeHtml(ctx.motivo)}</em></p>` : "";
   const labelEmitir = ctx.labelBotao || "Emitir documento";
   const labelEmitirCert = ctx.labelBotao || "Emitir certidão";
 
@@ -96,7 +97,7 @@ function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; mot
         <p>Você não precisa fazer nada agora — avisaremos assim que a Equipe Arsenal Inteligente terminar a análise.</p>
         <p style="text-align:center;">${btn(ctx.portalUrl, "Acompanhar processo")}</p>`;
     case "documento_aprovado":
-      return `<p>${docName} foi aprovado. Continue acompanhando os itens restantes.</p>
+      return `<p>${docName} foi aprovado.</p>${motivo}<p>Continue acompanhando os itens restantes.</p>
         <p style="text-align:center;">${btn(ctx.portalUrl, "Acompanhar processo", "#16a34a")}</p>`;
     case "documentacao_aprovada":
       return `<p>Toda a documentação do processo de <strong>${escapeHtml(ctx.servico)}</strong> foi aprovada. Vamos para a próxima etapa.</p>
@@ -174,6 +175,9 @@ Deno.serve(async (req) => {
       const reg = (doc?.regra_validacao ?? null) as Record<string, unknown> | null;
       labelBotao = (reg && typeof reg["label_botao"] === "string") ? reg["label_botao"] as string : null;
       if (!body.motivo && doc?.motivo_rejeicao) body.motivo = doc.motivo_rejeicao;
+    }
+    if (body.evento === "documento_aprovado" && !body.motivo) {
+      body.motivo = "Documento conferido pela equipe e aprovado para uso neste processo.";
     }
 
     const portalUrl = `${PORTAL_BASE}?processo=${proc.id}`;

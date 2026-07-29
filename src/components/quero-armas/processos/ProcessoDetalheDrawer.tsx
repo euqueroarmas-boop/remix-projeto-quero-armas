@@ -433,7 +433,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       const eventoEmail =
         novoStatus === "aprovado" ? "documento_aprovado" :
         novoStatus === "invalido" ? "documento_invalido" :
-        novoStatus === "divergente" ? "documento_divergente" :
+        novoStatus === "divergente" ? "divergencia_dados" :
         novoStatus === "revisao_humana" ? "revisao_humana" : null;
       // Notifica apenas em mudança real de status (evita reenviar e-mail)
       if (eventoEmail && !statusIgual) {

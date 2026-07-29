@@ -24,19 +24,21 @@ async function snapshotDoc(docId: string): Promise<{
   status: string | null;
   cliente_id: number | null;
   tipo_documento: string | null;
+  motivo_reprovacao: string | null;
 } | null> {
   try {
     const { data, error } = await supabase
       .from("qa_documentos_cliente" as any)
-      .select("status, cliente_id, tipo_documento")
+      .select("status, qa_cliente_id, tipo_documento, motivo_reprovacao")
       .eq("id", docId)
       .maybeSingle();
     if (error || !data) return null;
     const d = data as any;
     return {
       status: d.status ?? null,
-      cliente_id: d.cliente_id ?? null,
+      cliente_id: d.qa_cliente_id ?? null,
       tipo_documento: d.tipo_documento ?? null,
+      motivo_reprovacao: d.motivo_reprovacao ?? null,
     };
   } catch {
     return null;
@@ -84,6 +86,14 @@ async function auditarStatusDoc(opts: {
   });
 }
 
+function notificarStatusDocCliente(docId: string, status: "aprovado" | "reprovado", motivo?: string | null) {
+  void supabase.functions.invoke("qa-documento-cliente-notificar", {
+    body: { documento_id: docId, status, motivo: motivo ?? undefined },
+  }).then(({ error }) => {
+    if (error) console.warn("Falha ao notificar cliente sobre documento:", error);
+  }).catch((e) => console.warn("Falha ao notificar cliente sobre documento:", e));
+}
+
 /** Verifica se o usuário logado é membro da Equipe Quero Armas — usado para definir status/origem default. */
 export async function isCurrentUserStaff(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -113,6 +123,9 @@ export async function aprovarDocumento(docId: string) {
     .eq("id", docId);
   if (error) throw error;
   void auditarStatusDoc({ docId, prev, novo: "aprovado", origem: "equipe", contexto: "aprovarDocumento" });
+  if (prev?.status !== "aprovado") {
+    notificarStatusDocCliente(docId, "aprovado");
+  }
 }
 
 /** Reprova com motivo obrigatório. Apenas Equipe Quero Armas. */
@@ -132,6 +145,9 @@ export async function reprovarDocumento(docId: string, motivo: string) {
     .eq("id", docId);
   if (error) throw error;
   void auditarStatusDoc({ docId, prev, novo: "reprovado", origem: "equipe", motivo: m, contexto: "reprovarDocumento" });
+  if (prev?.status !== "reprovado" || (prev?.motivo_reprovacao ?? "").trim() !== m) {
+    notificarStatusDocCliente(docId, "reprovado", m);
+  }
 }
 
 /** Marca como excluído (soft delete) para sumir do portal mas preservar auditoria. */

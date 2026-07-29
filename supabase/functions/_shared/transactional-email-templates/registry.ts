@@ -57,6 +57,7 @@ import { template as acervoInconsistente } from './acervo-inconsistente.tsx'
 import { template as acervoConforme } from './acervo-conforme.tsx'
 import { template as documentoEmDia } from './documento-em-dia.tsx'
 import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
+import { template as documentoStatusCliente } from './documento-status-cliente.tsx'
 
 // Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
 import { template as habitualidadeProgressoNivel } from './habitualidade-progresso-nivel.tsx'
@@ -151,6 +152,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'acervo-conforme': acervoConforme,
   'documento-em-dia': documentoEmDia,
   'exigencia-cumprida': exigenciaCumprida,
+  'documento-status-cliente': documentoStatusCliente,
 
   // Habitualidade — 12 novos alertas (mockup — sem motor ainda)
   'habitualidade-progresso-nivel': habitualidadeProgressoNivel,

@@ -39,9 +39,14 @@ import {
   type EscopoDocumental,
   type HubCategoria,
 } from "@/lib/quero-armas/documentosHubCatalogo";
-// Notificações e auto-avanço são 100% backend-driven via triggers
-// (qa_doc_cliente_recalcular -> qa_recalcular_status_servico ->
-//  qa_dispatch_notify_event). Nada de notify aqui.
+function notificarDocumentoHubAprovado(documentoId?: string | null) {
+  if (!documentoId) return;
+  void supabase.functions.invoke("qa-documento-cliente-notificar", {
+    body: { documento_id: documentoId, status: "aprovado" },
+  }).then(({ error }) => {
+    if (error) console.warn("Falha ao notificar aprovação do documento do Hub:", error);
+  }).catch((e) => console.warn("Falha ao notificar aprovação do documento do Hub:", e));
+}
 
 // Mapeia o `tipoDetectado` retornado pela edge `qa-classificar-documento-arma`
 // para o `tipo_documento` salvo em `qa_documentos_cliente`.
@@ -1788,6 +1793,7 @@ export function ClienteDocsHubModal({
                 .from("qa_documentos_cliente" as any)
                 .update({ status: "aprovado", validado_admin: true, aprovado_em: new Date().toISOString() })
                 .eq("id", dup.id);
+              notificarDocumentoHubAprovado(dup.id);
             }
             if (qaClienteId) {
               await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
@@ -1946,6 +1952,9 @@ export function ClienteDocsHubModal({
         .single();
       if (insertError) throw insertError;
       const novoDocId = (inserted as any)?.id as string | undefined;
+      if (isStaff && novoDocId) {
+        notificarDocumentoHubAprovado(novoDocId);
+      }
 
       // Substituição: marca o documento antigo como 'substituido' e vincula
       // o novo. Assim o antigo sai das listagens e o histórico fica
