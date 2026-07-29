@@ -206,6 +206,29 @@ Deno.serve(async (req) => {
     console.error("[qa-upload-signed-contract] hub insert falhou", (e as Error).message);
   }
 
+  // Notifica admin (eu@queroarmas.com.br) que o cliente subiu o contrato assinado.
+  try {
+    const { data: cli } = await sb
+      .from("qa_clientes")
+      .select("nome_completo, email, cpf")
+      .or(`id.eq.${clienteId},id_legado.eq.${clienteId}`)
+      .limit(1)
+      .maybeSingle();
+    const { notifyAdminUpload } = await import("../_shared/notifyAdminUpload.ts");
+    await notifyAdminUpload({
+      tipo: "contrato",
+      cliente_nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? null,
+      cliente_email: (cli as { email?: string } | null)?.email ?? null,
+      cliente_cpf: (cli as { cpf?: string } | null)?.cpf ?? null,
+      documento_nome: "Contrato assinado (Gov.br/ICP-Brasil)",
+      exigencia: "Assinatura do contrato de prestação de serviços",
+      contract_id: contractId,
+      extras: { Venda: String((contract as { venda_id?: number | string }).venda_id ?? "—"), SHA256: sig },
+    });
+  } catch (e) {
+    console.error("[qa-upload-signed-contract] admin notify falhou", (e as Error).message);
+  }
+
   // Dispara validação automaticamente (best-effort, não bloqueia retorno).
   try {
     const url = `${Deno.env.get("SUPABASE_URL")!}/functions/v1/qa-validate-customer-signature`;
