@@ -203,6 +203,25 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  // Abas do formulário — os mesmos grupos dos KPIs do topo. O formulário
+  // inteiro num scroll só escondia campo obrigatório abaixo da dobra.
+  // Campos obrigatórios para o cadastro contar como CUMPRIDO. Configurações
+  // (categoria, status, observações) e Endereço Secundário ficam de fora —
+  // decisão do usuário. Sem esses campos não se gera documento do cliente.
+  const OBRIGATORIOS_IDENTIFICACAO = [
+    "nome_completo", "cpf", "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
+    "data_nascimento", "sexo", "naturalidade_municipio", "naturalidade_uf",
+    "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
+  ] as const;
+  const OBRIGATORIOS_CONTATO = ["nome_mae", "nome_pai", "celular", "email"] as const;
+  const OBRIGATORIOS_ENDERECO = ["cep", "endereco", "numero", "bairro", "cidade", "estado"] as const;
+  const contarVazios = (campos: readonly string[]) =>
+    campos.filter((k) => !String((f as Record<string, unknown>)[k] ?? "").trim()).length;
+  const pendIdentificacao = contarVazios(OBRIGATORIOS_IDENTIFICACAO);
+  const pendContato = contarVazios(OBRIGATORIOS_CONTATO);
+  const pendEndereco = contarVazios(OBRIGATORIOS_ENDERECO);
+
+  const [aba, setAba] = useState<"identificacao" | "contato" | "endereco" | "config">("identificacao");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [requiredErrors, setRequiredErrors] = useState<Record<string, boolean>>({});
   const [aiSenhaGovFromAI, setAiSenhaGovFromAI] = useState(false);
@@ -1008,6 +1027,37 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <KpiCard icon={Shield} label="Categoria" value={f.categoria_titular ? "OK" : "Pendente"} tone={f.categoria_titular ? "ok" : "warn"} />
                 <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone={isEdit ? "ok" : "info"} />
               </div>
+
+              {/* Abas — mesmos grupos dos KPIs acima */}
+              <div className="relative mt-5 flex gap-1 border-b border-zinc-200 -mb-5 overflow-x-auto">
+                {([
+                  { id: "identificacao", label: "Identificação", pend: pendIdentificacao },
+                  { id: "contato",       label: "Contato",       pend: pendContato },
+                  { id: "endereco",      label: "Endereço",      pend: pendEndereco },
+                  { id: "config",        label: "Configurações", pend: 0 },
+                ] as const).map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setAba(t.id)}
+                    className={`relative px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] whitespace-nowrap transition-colors ${
+                      aba === t.id
+                        ? "text-[#7A1F2B] border-b-2 border-[#7A1F2B] -mb-px"
+                        : "text-zinc-400 hover:text-zinc-600 border-b-2 border-transparent -mb-px"
+                    }`}
+                  >
+                    {t.label}
+                    {t.pend > 0 && (
+                      <span
+                        className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white"
+                        title={`${t.pend} campo(s) obrigatório(s) em branco`}
+                      >
+                        {t.pend}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </section>
 
             {/* IA — bloco destacado, mesmo padrão dos cards */}
@@ -1033,6 +1083,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             )}
 
             <div className="space-y-5">
+            {aba === "identificacao" && (<>
             {/* ── Bloco: Identificação ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={User} label="Identificação" />
@@ -1178,6 +1229,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
             </section>
 
+            </>)}
+
+            {aba === "contato" && (<>
             {/* ── Bloco: Filiação & Contato ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Users} label="Filiação & Contato" />
@@ -1191,6 +1245,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
             </section>
 
+            </>)}
+
+            {aba === "endereco" && (<>
             {/* ── Bloco: Endereço Principal ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={MapPin} label="Endereço Principal" />
@@ -1384,6 +1441,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 </div>
             </section>
 
+            </>)}
+
+            {aba === "config" && (<>
             {/* ── Bloco: Configurações ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-5 shadow-sm">
               <SectionTitle icon={Settings} label="Configurações" />
@@ -1462,6 +1522,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 />
               </Field>
             </section>
+            </>)}
             </div>
           </div>
         </div>
