@@ -211,8 +211,12 @@ async function propagarParaPortal(
 
   // -------- 2) qa_documentos_cliente: insert idempotente --------
   const docsParaInserir: Array<{ tipo: string; item: DocItem }> = [];
-  if (docs?.doc_identidade?.storagePath) docsParaInserir.push({ tipo: "RG", item: docs.doc_identidade });
-  if (docs?.doc_endereco?.storagePath) docsParaInserir.push({ tipo: "COMPROVANTE_RESIDENCIA", item: docs.doc_endereco });
+  // Slugs canônicos do CHECK de qa_documentos_cliente. Estavam em MAIÚSCULAS
+  // ("RG", "COMPROVANTE_RESIDENCIA"), que a constraint rejeita — e como o
+  // erro do INSERT só era logado (fluxo best-effort, não pode travar o
+  // checkout), TODO documento do cadastro refinado se perdia em silêncio.
+  if (docs?.doc_identidade?.storagePath) docsParaInserir.push({ tipo: "rg_com_cpf", item: docs.doc_identidade });
+  if (docs?.doc_endereco?.storagePath) docsParaInserir.push({ tipo: "comprovante_residencia", item: docs.doc_endereco });
 
   for (const d of docsParaInserir) {
     const path = d.item.storagePath!;
