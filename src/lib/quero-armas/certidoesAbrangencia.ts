@@ -13,11 +13,23 @@
  *     • Crimes eleitorais (TSE)
  *     • Crimes militares contra a União (STM)
  *
- * Esta camada é PURAMENTE DESCRITIVA: só declara o que cada certidão cobre e
- * onde emitir. Não decide checklist, não grava nada. Quem monta a exigência
- * consulta aqui antes de escolher a variante.
+ * NÃO EXISTEM certidões de "segundo grau" neste sistema. Os códigos
+ * `certidao_estadual_segundo_grau_*` foram criados por premissa errada e o
+ * usuário já os eliminou em 22/07/2026 — ver as migrations
+ * `20260722211500_qa_corrige_certidoes_estaduais_sem_segundo_grau.sql` e
+ * `20260722212200_qa_remove_legado_segundo_grau_certidoes_estaduais.sql`,
+ * que renomearam os dois para Polícia Civil e Justiça Militar e arquivaram
+ * os registros legados. Eles sobrevivem apenas como apelido de compatibilidade
+ * para checklists antigos; nunca devem voltar a ser exigência visível.
  *
- * IMPORTANTE — por que os links de outras UFs estão `null`:
+ * Esta camada é PURAMENTE DESCRITIVA: só declara o que cada certidão cobre e
+ * onde emitir. Não decide checklist, não grava nada.
+ *
+ * Os slugs abaixo são os CANÔNICOS da CHECK constraint de
+ * `qa_documentos_cliente` (migration `20260730010000_fecha_catalogo_e_apelidos`),
+ * família `antecedentes_*`. Os códigos `certidao_*` são apelidos de biblioteca.
+ *
+ * IMPORTANTE — por que os links estão `null`:
  * cada tribunal estadual tem portal próprio, com caminho próprio. Chutar URL
  * faz o cliente perder a viagem e voltar achando que o sistema errou. UF sem
  * link mapeado devolve `null` e a UI deve pedir emissão manual, não inventar.
@@ -31,10 +43,11 @@
 export type AbrangenciaCertidao = "uniao" | "federal_trf" | "estadual";
 
 export interface CertidaoAbrangencia {
+  /** Slug canônico da CHECK constraint (família `antecedentes_*`). */
   tipo: string;
   titulo: string;
   abrangencia: AbrangenciaCertidao;
-  /** UF a que a variante pertence. `null` quando a abrangência é nacional. */
+  /** UF a que a variante mapeada pertence. `null` quando é nacional. */
   uf: string | null;
   /** Link oficial de emissão, quando confirmado. `null` = emitir manualmente. */
   link: string | null;
@@ -45,7 +58,7 @@ export interface CertidaoAbrangencia {
 
 export const CERTIDOES_UNIAO: CertidaoAbrangencia[] = [
   {
-    tipo: "certidao_crimes_eleitorais_tse",
+    tipo: "antecedentes_eleitoral",
     titulo: "Crimes eleitorais — TSE",
     abrangencia: "uniao",
     uf: null,
@@ -53,12 +66,15 @@ export const CERTIDOES_UNIAO: CertidaoAbrangencia[] = [
     nota: "Traz o número do título de eleitor impresso — serve para preencher o cadastro.",
   },
   {
-    tipo: "certidao_crimes_militares_stm",
+    tipo: "antecedentes_militar",
     titulo: "Crimes militares contra a União — STM",
     abrangencia: "uniao",
     uf: null,
     link: "https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao",
-    nota: "Justiça Militar da União. Não confundir com o TJM estadual.",
+    nota:
+      "Justiça Militar da UNIÃO. Atenção: hoje o apelido " +
+      "`certidao_estadual_justica_militar` (TJM estadual) também aponta para " +
+      "este mesmo slug canônico — são certidões diferentes disputando um slot só.",
   },
 ];
 
@@ -66,16 +82,24 @@ export const CERTIDOES_UNIAO: CertidaoAbrangencia[] = [
 
 export const CERTIDOES_FEDERAIS_TRF: CertidaoAbrangencia[] = [
   {
-    tipo: "certidao_federal_trf3_regional",
-    titulo: "TRF3 — Regional",
+    tipo: "antecedentes_federal",
+    titulo: "Justiça Federal — certidão criminal",
+    abrangencia: "federal_trf",
+    uf: null,
+    link: null,
+    nota: "Item genérico. As variantes regional e de seção judiciária são as que o cliente emite.",
+  },
+  {
+    tipo: "antecedentes_federal_trf3_regional",
+    titulo: "TRF — Regional",
     abrangencia: "federal_trf",
     uf: "SP",
     link: null,
     nota: "TRF3 cobre SP e MS. Cliente de outra UF emite no TRF da região dele (TRF1, TRF2, TRF4, TRF5, TRF6).",
   },
   {
-    tipo: "certidao_federal_trf3_sjsp_jef",
-    titulo: "TRF3 — SJSP / JEF",
+    tipo: "antecedentes_federal_sjsp_jef",
+    titulo: "Justiça Federal — Seção Judiciária / JEF",
     abrangencia: "federal_trf",
     uf: "SP",
     link: null,
@@ -83,63 +107,69 @@ export const CERTIDOES_FEDERAIS_TRF: CertidaoAbrangencia[] = [
   },
 ];
 
-/* ── Estaduais — hoje só SP mapeado ────────────────────────────────────── */
+/* ── Estaduais — as 4 do pacote "Justiça Estadual" ─────────────────────── */
 
 export const CERTIDOES_ESTADUAIS: CertidaoAbrangencia[] = [
   {
-    tipo: "certidao_antecedentes_policia_civil_sp",
-    titulo: "Antecedentes criminais — SSP/Polícia Civil",
+    tipo: "antecedentes_estadual_distribuicao",
+    titulo: "Distribuição de ações criminais — TJ",
     abrangencia: "estadual",
-    uf: "SP",
+    uf: null,
+    link: null,
+    nota: "Emitida no Tribunal de Justiça do estado de residência.",
+  },
+  {
+    tipo: "antecedentes_estadual_execucoes",
+    titulo: "Execuções criminais — TJ",
+    abrangencia: "estadual",
+    uf: null,
+    link: null,
+    nota: "Não substitui a de distribuição — são conferências diferentes.",
+  },
+  {
+    tipo: "antecedentes_criminais",
+    titulo: "Antecedentes criminais — Polícia Civil",
+    abrangencia: "estadual",
+    uf: null,
     link: null,
     nota: "Emitida pela Secretaria de Segurança Pública do estado de residência.",
   },
   {
-    tipo: "certidao_tjsp_distribuicao_criminal",
-    titulo: "Distribuição de ações criminais — TJ",
+    tipo: "antecedentes_militar",
+    titulo: "Justiça Militar estadual — TJM",
     abrangencia: "estadual",
-    uf: "SP",
+    uf: null,
     link: null,
-  },
-  {
-    tipo: "certidao_tjsp_execucoes_criminais",
-    titulo: "Execuções criminais — TJ",
-    abrangencia: "estadual",
-    uf: "SP",
-    link: null,
-  },
-  {
-    tipo: "certidao_estadual_segundo_grau_acoes_criminais",
-    titulo: "Segundo grau — ações criminais",
-    abrangencia: "estadual",
-    uf: "SP",
-    link: null,
-  },
-  {
-    tipo: "certidao_estadual_segundo_grau_execucoes_criminais",
-    titulo: "Segundo grau — execuções criminais",
-    abrangencia: "estadual",
-    uf: "SP",
-    link: null,
-  },
-  {
-    tipo: "certidao_criminal_tjmsp",
-    titulo: "Justiça Militar estadual — TJM/SP",
-    abrangencia: "estadual",
-    uf: "SP",
-    link: "https://certidaocriminal.tjmsp.jus.br/",
     nota:
-      "6ª certidão estadual. Tribunal de Justiça Militar ESTADUAL só existe em " +
-      "SP, MG e RS. Cliente de UF sem TJM não tem essa exigência — ela some do " +
-      "checklist, não vira substituta (regra definida pelo usuário, 30/07/2026).",
+      "Só existe em SP, MG e RS — ver UFS_COM_TJM_ESTADUAL. Cliente de UF sem " +
+      "TJM não recebe esta exigência e nada entra no lugar.",
   },
 ];
+
+/**
+ * Item pai do pacote estadual. É agrupador conceitual: o cliente não baixa
+ * nada dele, entrega as filhas. Fica fora dos mapas de emissão de propósito.
+ */
+export const CERTIDAO_ESTADUAL_AGRUPADOR = "antecedentes_estadual";
 
 export const CERTIDOES_ABRANGENCIA: CertidaoAbrangencia[] = [
   ...CERTIDOES_UNIAO,
   ...CERTIDOES_FEDERAIS_TRF,
   ...CERTIDOES_ESTADUAIS,
 ];
+
+/**
+ * Slugs que nunca devem voltar como exigência. Existem só como apelido de
+ * compatibilidade para checklists montados antes de 22/07/2026.
+ */
+export const CERTIDOES_DESCONTINUADAS = new Set([
+  "certidao_estadual_segundo_grau_acoes_criminais",
+  "certidao_estadual_segundo_grau_execucoes_criminais",
+]);
+
+export function isCertidaoDescontinuada(tipo: string | null | undefined): boolean {
+  return CERTIDOES_DESCONTINUADAS.has(String(tipo ?? "").trim().toLowerCase());
+}
 
 const POR_TIPO = new Map(CERTIDOES_ABRANGENCIA.map((c) => [c.tipo, c]));
 
@@ -153,39 +183,14 @@ export function isCertidaoNacional(tipo: string | null | undefined): boolean {
   return getAbrangenciaCertidao(tipo)?.abrangencia === "uniao";
 }
 
-/**
- * A certidão `tipo` serve para quem mora em `ufCliente`?
- *
- * Nacional → sempre serve. Estadual/regional → só se a UF bater. UF do cliente
- * desconhecida devolve `null` (indefinido), nunca `true`: sem saber onde ele
- * mora não dá para afirmar que a certidão de SP vale.
- */
-export function certidaoServeParaUF(
-  tipo: string | null | undefined,
-  ufCliente: string | null | undefined,
-): boolean | null {
-  const meta = getAbrangenciaCertidao(tipo);
-  if (!meta) return null;
-  if (meta.abrangencia === "uniao") return true;
-  const uf = String(ufCliente ?? "").trim().toUpperCase();
-  if (uf.length !== 2) return null;
-  return meta.uf === uf;
-}
-
-/** Link de emissão confirmado, ou `null` quando ainda não mapeado para a UF. */
-export function getLinkEmissaoCertidao(tipo: string | null | undefined): string | null {
-  return getAbrangenciaCertidao(tipo)?.link ?? null;
-}
-
 /* ── Justiça Militar estadual — só três estados a possuem ──────────────── */
 
 /**
  * UFs que mantêm Tribunal de Justiça Militar estadual próprio.
  *
- * Os demais estados não têm esse tribunal. Regra do usuário: para cliente de
- * UF fora desta lista a certidão simplesmente NÃO é exigida — não existe
- * substituta e nada entra no lugar. Continuam valendo, para ele, só as duas
- * contra a União (TSE e STM).
+ * Regra do usuário: para cliente de UF fora desta lista a certidão NÃO é
+ * exigida — não existe substituta e nada entra no lugar. Continuam valendo,
+ * para ele, as duas contra a União (TSE e STM).
  */
 export const UFS_COM_TJM_ESTADUAL = new Set(["SP", "MG", "RS"]);
 
