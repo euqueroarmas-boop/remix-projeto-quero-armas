@@ -162,34 +162,68 @@ Deno.serve(async (req) => {
   }).then(() => null, () => null);
 
   // Espelha a procuração assinada no Hub Documental (categoria Jurídico).
+  //
+  // IDEMPOTENTE POR PROCURAÇÃO: reenviar é legítimo — o cliente pode ter
+  // mandado o arquivo errado, e `allowed` inclui customer_signature_uploaded
+  // justamente para permitir a correção. O storage usa upsert e a linha de
+  // qa_procuracoes é a mesma, mas este espelho fazia INSERT cego: cada reenvio
+  // criava um documento novo no Hub. Um cliente que reenviou três vezes ficou
+  // com três "Procuração assinada" em análise, todas apontando para o mesmo
+  // arquivo. Agora atualizamos o documento existente daquela procuração.
+  const metadados = {
+    procuracao_id: procuracaoId,
+    venda_id: (procuracao as any).venda_id ?? null,
+    sha256: sig,
+    bucket: BUCKET,
+    origem_upload: "qa-upload-signed-procuracao",
+    uploaded_at: uploadedAt,
+    ip: uploadIp,
+    user_agent: uploadUserAgent,
+  };
   try {
-    await sb.from("qa_documentos_cliente").insert({
-      qa_cliente_id: Number((procuracao as any).cliente_id),
-      tipo_documento: "procuracao_assinada",
-      nome_documento: "Procuração assinada (Gov.br)",
-      arquivo_storage_path: path,
-      arquivo_nome: "procuracao-assinada.pdf",
-      arquivo_mime: "application/pdf",
-      origem: "cliente",
-      status: "pendente_aprovacao",
-      ia_status: "nao_processado",
-      categoria_hub: "juridico",
-      escopo_documental: "processo",
-      reaproveitavel_global: false,
-      revisao_humana_obrigatoria: true,
-      metadados_documento_json: {
-        procuracao_id: procuracaoId,
-        venda_id: (procuracao as any).venda_id ?? null,
-        sha256: sig,
-        bucket: BUCKET,
-        origem_upload: "qa-upload-signed-procuracao",
-        uploaded_at: uploadedAt,
-        ip: uploadIp,
-        user_agent: uploadUserAgent,
-      },
-    });
+    const { data: existente } = await sb
+      .from("qa_documentos_cliente")
+      .select("id")
+      .eq("tipo_documento", "procuracao_assinada")
+      .eq("metadados_documento_json->>procuracao_id", String(procuracaoId))
+      .neq("status", "excluido")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existente?.id) {
+      // Reenvio: atualiza o mesmo documento e devolve para análise.
+      await sb.from("qa_documentos_cliente")
+        .update({
+          arquivo_storage_path: path,
+          arquivo_nome: "procuracao-assinada.pdf",
+          arquivo_mime: "application/pdf",
+          status: "pendente_aprovacao",
+          motivo_reprovacao: null,
+          metadados_documento_json: metadados,
+          updated_at: uploadedAt,
+        })
+        .eq("id", existente.id);
+    } else {
+      await sb.from("qa_documentos_cliente").insert({
+        qa_cliente_id: Number((procuracao as any).cliente_id),
+        tipo_documento: "procuracao_assinada",
+        nome_documento: "Procuração assinada (Gov.br)",
+        arquivo_storage_path: path,
+        arquivo_nome: "procuracao-assinada.pdf",
+        arquivo_mime: "application/pdf",
+        origem: "cliente",
+        status: "pendente_aprovacao",
+        ia_status: "nao_processado",
+        categoria_hub: "juridico",
+        escopo_documental: "processo",
+        reaproveitavel_global: false,
+        revisao_humana_obrigatoria: true,
+        metadados_documento_json: metadados,
+      });
+    }
   } catch (e) {
-    console.error("[qa-upload-signed-procuracao] hub insert falhou", (e as Error).message);
+    console.error("[qa-upload-signed-procuracao] hub upsert falhou", (e as Error).message);
   }
 
   // Notifica admin (eu@queroarmas.com.br) que o cliente subiu a procuração assinada.

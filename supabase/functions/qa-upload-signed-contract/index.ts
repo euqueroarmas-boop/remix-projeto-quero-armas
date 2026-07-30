@@ -175,35 +175,67 @@ Deno.serve(async (req) => {
 
   // Espelha o PDF assinado no Hub Documental (categoria Jurídico).
   // Fica em status 'pendente_aprovacao' aguardando análise da IA / equipe.
+  //
+  // IDEMPOTENTE POR CONTRATO: `allowed` inclui customer_signature_uploaded, ou
+  // seja, reenviar é permitido de propósito (o cliente pode ter mandado o PDF
+  // errado). O storage usa upsert e a linha de qa_contracts é a mesma — mas
+  // este espelho fazia INSERT cego, criando um documento novo no Hub a cada
+  // reenvio. Mesmo defeito que duplicou procurações. Agora atualizamos o
+  // documento existente daquele contrato.
+  const metadadosContrato = {
+    contract_id: contractId,
+    venda_id: (contract as any).venda_id,
+    sha256: sig,
+    bucket: BUCKET,
+    origem_upload: "qa-upload-signed-contract",
+    uploaded_at: uploadedAt,
+    ip: uploadIp,
+    user_agent: uploadUserAgent,
+    device: uploadDeviceMeta ?? null,
+  };
   try {
-    await sb.from("qa_documentos_cliente").insert({
-      qa_cliente_id: clienteId,
-      tipo_documento: "contrato_assinado",
-      nome_documento: "Contrato assinado (Gov.br)",
-      arquivo_storage_path: path,
-      arquivo_nome: "contrato-assinado.pdf",
-      arquivo_mime: "application/pdf",
-      origem: "cliente",
-      status: "pendente_aprovacao",
-      ia_status: "nao_processado",
-      categoria_hub: "juridico",
-      escopo_documental: "processo",
-      reaproveitavel_global: false,
-      revisao_humana_obrigatoria: true,
-      metadados_documento_json: {
-        contract_id: contractId,
-        venda_id: (contract as any).venda_id,
-        sha256: sig,
-        bucket: BUCKET,
-        origem_upload: "qa-upload-signed-contract",
-        uploaded_at: uploadedAt,
-        ip: uploadIp,
-        user_agent: uploadUserAgent,
-        device: uploadDeviceMeta ?? null,
-      },
-    });
+    const { data: existente } = await sb
+      .from("qa_documentos_cliente")
+      .select("id")
+      .eq("tipo_documento", "contrato_assinado")
+      .eq("metadados_documento_json->>contract_id", String(contractId))
+      .neq("status", "excluido")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existente?.id) {
+      await sb.from("qa_documentos_cliente")
+        .update({
+          arquivo_storage_path: path,
+          arquivo_nome: "contrato-assinado.pdf",
+          arquivo_mime: "application/pdf",
+          status: "pendente_aprovacao",
+          motivo_reprovacao: null,
+          metadados_documento_json: metadadosContrato,
+          updated_at: uploadedAt,
+        })
+        .eq("id", existente.id);
+    } else {
+      await sb.from("qa_documentos_cliente").insert({
+        qa_cliente_id: clienteId,
+        tipo_documento: "contrato_assinado",
+        nome_documento: "Contrato assinado (Gov.br)",
+        arquivo_storage_path: path,
+        arquivo_nome: "contrato-assinado.pdf",
+        arquivo_mime: "application/pdf",
+        origem: "cliente",
+        status: "pendente_aprovacao",
+        ia_status: "nao_processado",
+        categoria_hub: "juridico",
+        escopo_documental: "processo",
+        reaproveitavel_global: false,
+        revisao_humana_obrigatoria: true,
+        metadados_documento_json: metadadosContrato,
+      });
+    }
   } catch (e) {
-    console.error("[qa-upload-signed-contract] hub insert falhou", (e as Error).message);
+    console.error("[qa-upload-signed-contract] hub upsert falhou", (e as Error).message);
   }
 
   // Notifica admin (eu@queroarmas.com.br) que o cliente subiu o contrato assinado.
