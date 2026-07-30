@@ -89,15 +89,18 @@ const chaveCidade = (v: unknown) =>
  * como obrigatórios por decisão do usuário: certidão sem eles é reemitida,
  * porque a qualificação incompleta é motivo de exigência na PF.
  *
- * Os demais órgãos ainda estão com a lista mínima — o usuário vai enviar as
- * exigências de emissão da União e dos tribunais de SP, e cada um passa a ter
- * a sua lista real. Até lá, não invento requisito que não conferi.
+ * REGRA GERAL (usuário, 30/07/2026): TODO campo do formulário conta, com duas
+ * exceções — E-MAIL e ENDEREÇO, que são opcionais e não são conferidos.
+ *
+ * A lista de cada órgão abaixo é, portanto, tudo o que aquela certidão
+ * imprime, menos e-mail e endereço. O que o documento NÃO imprime não entra:
+ * não dá para conferir o que não está escrito (ver nota sobre Gênero).
  */
 const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
   stm: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
   // TSE e IIRGD não trazem CPF por natureza — identificam por título e RG.
-  tse: ["nome_titular", "data_nascimento", "data_emissao", "resultado"],
-  iirgd: ["nome_titular", "rg", "data_nascimento", "data_emissao", "resultado"],
+  tse: ["nome_titular", "titulo_eleitor", "data_nascimento", "filiacao", "data_emissao", "resultado"],
+  iirgd: ["nome_titular", "rg", "data_nascimento", "filiacao", "data_emissao", "resultado"],
   tjsp_distribuicao: [
     "nome_titular", "cpf", "rg", "data_nascimento",
     "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
@@ -107,7 +110,12 @@ const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
     "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
   ],
   trf_regional: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
-  tjm_sp: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "naturalidade", "data_emissao", "resultado"],
+  // O TJM/SP também imprime Endereço, mas endereço é opcional por regra do
+  // usuário — não é exigido nem comparado.
+  tjm_sp: [
+    "nome_titular", "cpf", "data_nascimento", "nome_mae", "nome_pai",
+    "naturalidade", "data_emissao", "resultado",
+  ],
 };
 
 /**
@@ -136,6 +144,19 @@ const LABEL: Record<string, string> = {
   data_emissao: "Data de emissão",
   resultado: "Resultado da consulta",
   filiacao: "Filiação",
+  titulo_eleitor: "Título de eleitor",
+};
+
+/**
+ * Campos que o formulário exige mas a certidão NÃO imprime — logo, não há como
+ * conferir. Ficam registrados para não parecerem esquecimento.
+ *
+ * "Gênero" é obrigatório no e-SAJ (asterisco), mas não sai no documento
+ * emitido. Preenchido errado, não deixa rastro que eu possa checar.
+ */
+export const CAMPOS_NAO_VERIFICAVEIS: Partial<Record<OrgaoCertidao, string[]>> = {
+  tjsp_distribuicao: ["Gênero"],
+  tjsp_execucoes: ["Gênero"],
 };
 
 export function conferirCertidao(
