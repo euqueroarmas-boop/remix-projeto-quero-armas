@@ -18,6 +18,14 @@ export interface CampoCadastro {
   pergunta?: string;
   /** Explicação curta de por que o dado é pedido. */
   ajuda?: string;
+  /**
+   * Links oficiais para o cliente obter o dado sem sair procurando.
+   *
+   * Só entram URLs de órgão oficial que eu confirmei existir. Link quebrado
+   * ou inventado é pior do que link nenhum: o cliente perde a viagem e volta
+   * achando que o sistema está errado.
+   */
+  links?: Array<{ label: string; url: string }>;
   /** Tipo de input para a UI. */
   tipo?: "text" | "date" | "select" | "tel" | "cep" | "uf";
   /** Opções para select. */
@@ -55,10 +63,15 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
   { key: "celular", label: "Celular (com DDD)", grupo: "contato", crucial: true, pergunta: "Qual é o seu celular com WhatsApp?", ajuda: "É por onde vamos te avisar do andamento.", tipo: "tel", placeholder: "(11) 99999-9999", colSpan: 2 },
 
   { key: "email", label: "E-mail", grupo: "contato", crucial: true, tipo: "text", placeholder: "voce@email.com", colSpan: 2, pergunta: "Qual é o seu e-mail?", ajuda: "Usamos para enviar contrato, procuração e avisos do processo." },
-  { key: "titulo_eleitor", label: "Título de eleitor", grupo: "identidade", crucial: true, tipo: "text", colSpan: 1, pergunta: "Qual é o número do seu título de eleitor?", ajuda: "Está no título ou no app e-Título." },
+  { key: "titulo_eleitor", label: "Título de eleitor", grupo: "identidade", crucial: true, tipo: "text", colSpan: 1, pergunta: "Qual é o número do seu título de eleitor?", ajuda: "Está no seu título, no app e-Título ou na Certidão de Crimes Eleitorais emitida pelo TSE — nela o número do título vem impresso.", links: [
+    { label: "Consultar título no autoatendimento do TSE", url: "https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral" },
+    { label: "Emitir Certidão de Crimes Eleitorais (TSE)", url: "https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais" },
+  ] },
 
   // Endereço
-  { key: "cep", label: "CEP", grupo: "endereco", crucial: true, pergunta: "Qual é o CEP do seu endereço?", ajuda: "O resto do endereço é preenchido automaticamente.", tipo: "cep", placeholder: "00000-000", colSpan: 1 },
+  { key: "cep", label: "CEP", grupo: "endereco", crucial: true, pergunta: "Qual é o CEP do seu endereço?", ajuda: "O resto do endereço é preenchido automaticamente.", links: [
+    { label: "Buscar meu CEP nos Correios", url: "https://buscacepinter.correios.com.br/app/endereco/index.php" },
+  ], tipo: "cep", placeholder: "00000-000", colSpan: 1 },
   { key: "endereco", label: "Logradouro", grupo: "endereco", crucial: true, pergunta: "Qual é o nome da sua rua ou avenida?", tipo: "text", colSpan: 2 },
   { key: "numero", label: "Número", grupo: "endereco", crucial: true, pergunta: "Qual é o número do seu imóvel?", tipo: "text", colSpan: 1 },
   { key: "complemento", label: "Complemento", grupo: "endereco", crucial: false, pergunta: "Tem complemento? (apartamento, bloco, casa)", ajuda: "Pode deixar em branco se não tiver.", tipo: "text", colSpan: 1 },

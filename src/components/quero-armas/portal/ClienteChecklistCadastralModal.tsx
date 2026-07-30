@@ -15,7 +15,7 @@
 // ============================================================================
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, ArrowRight, Check, X } from "lucide-react";
+import { Loader2, ArrowRight, Check, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CAMPOS_CADASTRO, type CampoCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 
@@ -192,6 +192,26 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
             {atual.pergunta ?? atual.label}
           </h2>
           {atual.ajuda && <p className="mt-1.5 text-[12px] leading-relaxed text-zinc-500">{atual.ajuda}</p>}
+
+          {/* Onde conseguir o dado. Abre em aba nova para não perder o que já
+              foi digitado — o wizard salva por pergunta, mas o campo atual
+              ainda está só na tela. */}
+          {atual.links?.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {atual.links.map((l) => (
+                <a
+                  key={l.url}
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#7A1F2B]/25 bg-[#7A1F2B]/5 px-3 py-1.5 text-[11px] font-semibold text-[#7A1F2B] transition-colors hover:bg-[#7A1F2B]/10"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          ) : null}
 
           <div className="mt-5">
             {atual.tipo === "select" && atual.opcoes ? (
