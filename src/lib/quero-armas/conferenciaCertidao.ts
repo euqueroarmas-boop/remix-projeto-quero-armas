@@ -74,48 +74,36 @@ const chaveCidade = (v: unknown) =>
     .toUpperCase();
 
 /**
- * Campos que CADA órgão é obrigado a trazer na certidão emitida.
+ * Campos EXIGIDOS para a certidão ser aceita.
  *
- * A lista NÃO é "o que costuma aparecer" — é o que o formulário de emissão do
- * órgão exige. Campo em branco na certidão significa que quem pediu deixou o
- * formulário incompleto, e o documento não serve: a PF confere a qualificação
- * inteira contra o cadastro.
+ * Regra do usuário (30/07/2026, corrigindo a versão anterior): exigir SOMENTE
+ * o que o formulário do órgão marca com asterisco. Campo opcional em branco
+ * não reprova o documento — mas, se o cliente preencheu, o valor TEM de bater
+ * com o cadastro, porque a PF indefere por qualquer divergência.
  *
- * TJSP (e-SAJ) — conferido no formulário em 30/07/2026, ambos os modelos
- * ("Certidão de Distribuição de Ações Criminais" e "Certidão de Execução
- * Criminal") pedem os mesmos campos, marcados com asterisco:
- *   Nome Completo*, CPF*, RG*, Gênero*, Nome da mãe*, Data de nascimento*
- * Nome do pai e Naturalidade aparecem SEM asterisco no site, mas entram aqui
- * como obrigatórios por decisão do usuário: certidão sem eles é reemitida,
- * porque a qualificação incompleta é motivo de exigência na PF.
+ * Isso está implementado em duas camadas:
+ *   - esta lista → o que, faltando, REPROVA
+ *   - `comparar()` e os blocos de naturalidade/filiação → só agem quando o
+ *     campo veio preenchido. Ausente e opcional, passa batido.
  *
- * REGRA GERAL (usuário, 30/07/2026): TODO campo do formulário conta, com duas
- * exceções — E-MAIL e ENDEREÇO, que são opcionais e não são conferidos.
+ * TJSP (e-SAJ), conferido no formulário: os campos com asterisco são
+ * Nome Completo*, CPF*, RG*, Gênero*, Nome da mãe* e Data de nascimento*.
+ * Nome do pai e Naturalidade NÃO têm asterisco — são opcionais.
  *
- * A lista de cada órgão abaixo é, portanto, tudo o que aquela certidão
- * imprime, menos e-mail e endereço. O que o documento NÃO imprime não entra:
- * não dá para conferir o que não está escrito (ver nota sobre Gênero).
+ * Para os demais órgãos ainda não vi o formulário de emissão. Até o usuário
+ * enviar, exijo apenas o mínimo que prova identidade e validade: quem é o
+ * titular, o identificador que aquele documento carrega, a data de emissão e o
+ * resultado. Tudo o mais é comparado quando presente, nunca exigido no escuro.
  */
 const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
-  stm: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
-  // TSE e IIRGD não trazem CPF por natureza — identificam por título e RG.
-  tse: ["nome_titular", "titulo_eleitor", "data_nascimento", "filiacao", "data_emissao", "resultado"],
-  iirgd: ["nome_titular", "rg", "data_nascimento", "filiacao", "data_emissao", "resultado"],
-  tjsp_distribuicao: [
-    "nome_titular", "cpf", "rg", "data_nascimento",
-    "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
-  ],
-  tjsp_execucoes: [
-    "nome_titular", "cpf", "rg", "data_nascimento",
-    "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
-  ],
-  trf_regional: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
-  // O TJM/SP também imprime Endereço, mas endereço é opcional por regra do
-  // usuário — não é exigido nem comparado.
-  tjm_sp: [
-    "nome_titular", "cpf", "data_nascimento", "nome_mae", "nome_pai",
-    "naturalidade", "data_emissao", "resultado",
-  ],
+  stm: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+  // TSE e IIRGD não trazem CPF: identificam por título de eleitor e por RG.
+  tse: ["nome_titular", "titulo_eleitor", "data_nascimento", "data_emissao", "resultado"],
+  iirgd: ["nome_titular", "rg", "data_nascimento", "data_emissao", "resultado"],
+  tjsp_distribuicao: ["nome_titular", "cpf", "rg", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
+  tjsp_execucoes: ["nome_titular", "cpf", "rg", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
+  trf_regional: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+  tjm_sp: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
 };
 
 /**
