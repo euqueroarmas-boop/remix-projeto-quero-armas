@@ -215,12 +215,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   ] as const;
   const OBRIGATORIOS_CONTATO = ["nome_mae", "nome_pai", "celular", "email"] as const;
   const OBRIGATORIOS_ENDERECO = ["cep", "endereco", "numero", "bairro", "cidade", "estado"] as const;
-  const contarVazios = (campos: readonly string[]) =>
-    campos.filter((k) => !String((f as Record<string, unknown>)[k] ?? "").trim()).length;
-  const pendIdentificacao = contarVazios(OBRIGATORIOS_IDENTIFICACAO);
-  const pendContato = contarVazios(OBRIGATORIOS_CONTATO);
-  const pendEndereco = contarVazios(OBRIGATORIOS_ENDERECO);
-
   const [aba, setAba] = useState<"identificacao" | "contato" | "endereco" | "config">("identificacao");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [requiredErrors, setRequiredErrors] = useState<Record<string, boolean>>({});
@@ -336,6 +330,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [lookupGeocode]);
 
   const [f, setF] = useState(EMPTY_FORM);
+
+  const contarVazios = (campos: readonly string[]) =>
+    campos.filter((k) => !String((f as Record<string, unknown>)[k] ?? "").trim()).length;
+  const pendIdentificacao = contarVazios(OBRIGATORIOS_IDENTIFICACAO);
+  const pendContato = contarVazios(OBRIGATORIOS_CONTATO);
+  const pendEndereco = contarVazios(OBRIGATORIOS_ENDERECO);
 
   // Auto-resolve geolocalização sempre que endereço completo mudar (principal e secundário).
   // Debounce simples para não chamar a API a cada tecla.
