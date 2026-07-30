@@ -330,12 +330,12 @@ export default function ClienteResumoKanban({
                 : g.statusConsolidado === "historico"
                   ? "muted"
                   : frontStatus(days);
+        // O prazo restante é sempre a informação principal — é o que diz ao
+        // cliente se precisa agir. A existência de versões anteriores já é
+        // sinalizada pelo indicador `stack`; mostrar "4v" no lugar dos dias
+        // escondia o vencimento atrás da contagem de histórico.
         const statusStr =
-          g.statusConsolidado === "vigente" && g.versoesAnteriores > 0
-            ? `Válido · ${g.versoesAnteriores + 1}v`
-            : g.statusConsolidado === "historico"
-              ? "Histórico"
-              : compactStatus(days);
+          g.statusConsolidado === "historico" ? "Histórico" : compactStatus(days);
         return { label: nome, status: statusStr, tone, stack: g.versoesAnteriores > 0 } as FrontItem;
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));

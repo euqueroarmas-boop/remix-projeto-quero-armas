@@ -427,6 +427,8 @@ export default function QAClientePortalPage() {
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
   const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
+  // Reconciliação silenciosa na entrada — roda uma vez por carregamento.
+  const reconciliouRef = useRef(false);
   // Estado controlado do dropdown "Atalhos rápidos" da marca (avatar + Arsenal).
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
@@ -2086,6 +2088,54 @@ export default function QAClientePortalPage() {
       setEntradaWizardOpen(true);
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
+
+  // ── Reconciliação automática na entrada do cliente ────────────────────────
+  // Antes, nada rodava ao abrir/atualizar o portal: o cadastro só era
+  // completado quando o modal progressivo abria, e as exigências do checklist
+  // só eram reavaliadas em pontos específicos. Resultado: documento já enviado
+  // e classificado no Hub continuava sendo pedido no checklist.
+  //
+  // Agora, a cada carregamento, rodamos os dois utilitários em sequência:
+  //   1) qa-cliente-auto-prefill — completa o cadastro a partir dos documentos
+  //      que o cliente já enviou (reusa ia_dados_extraidos, não chama IA).
+  //   2) qa_processo_rever_exigencias — casa os documentos válidos do Hub com
+  //      os slots pendentes do processo, respeitando ano_competencia.
+  //
+  // Rodamos SEMPRE os dois, não um ou outro: ambos são idempotentes e baratos,
+  // e o checklist precisa ser reconciliado mesmo quando ainda falta dado no
+  // cadastro — senão uma pendência cadastral impediria o cliente de ver que a
+  // exigência documental já foi cumprida.
+  useEffect(() => {
+    const clienteId = Number((cliente as any)?.id) || null;
+    if (!clienteId || reconciliouRef.current) return;
+    reconciliouRef.current = true;
+
+    (async () => {
+      // 1) Cadastro — silencioso; falha aqui não pode travar o portal.
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (token) {
+          await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-cliente-auto-prefill`,
+            { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: "{}" },
+          );
+        }
+      } catch (e) {
+        console.warn("[portal] auto-prefill do cadastro falhou", e);
+      }
+
+      // 2) Checklist — reavalia exigências contra o Hub Documental.
+      try {
+        await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: clienteId });
+      } catch (e) {
+        console.warn("[portal] revisão de exigências falhou", e);
+      }
+
+      // Recarrega a tela com o estado já reconciliado.
+      setDocsReloadKey((k) => k + 1);
+    })();
+  }, [cliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
   // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
