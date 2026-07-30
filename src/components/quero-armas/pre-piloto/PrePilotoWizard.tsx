@@ -33,6 +33,13 @@ export type ArquivoUpload = {
   tipo_ia_motivo?: string;
   /** Indica que a Central aplicou o tipo sugerido pela IA antes de gravar no Hub. */
   tipo_aplicado_por_ia?: boolean;
+  /**
+   * Data de emissão lida pela IA na classificação (ISO AAAA-MM-DD).
+   * A Etapa 4 grava esse valor e calcula a validade pela regra do tipo — sem
+   * ele, todo documento da Central de Adesão entrava no Hub "SEM DATA" e os
+   * alertas de vencimento nunca disparavam.
+   */
+  data_emissao?: string;
 };
 
 export type ClienteSalvo = {

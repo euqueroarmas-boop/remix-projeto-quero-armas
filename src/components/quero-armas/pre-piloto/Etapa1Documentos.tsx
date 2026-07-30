@@ -89,6 +89,15 @@ function resizeImageToDataUrl(f: File, maxPx = 1024, quality = 0.75): Promise<st
   });
 }
 
+// A IA devolve a emissão em DD/MM/AAAA ou AAAA-MM-DD. O banco só aceita ISO.
+function normalizarDataIso(v: unknown): string | null {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{2})[\/\-.](\d{2})[\/\-.](\d{4})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+
 function BadgeConfianca({ confianca, classifying }: { confianca?: number; classifying?: boolean }) {
   if (classifying) {
     return (
@@ -201,7 +210,17 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         if (!r || r.erro) return a;                       // falha da IA → preserva
         if (!r.tipo_detectado || r.tipo_detectado === "outro") return a; // sem veredito → preserva
         if (a.tipo !== "outro" && r.confianca < 0.60) return a; // heurística boa vence palpite fraco
-        return { ...a, tipo: r.tipo_detectado, tipo_ia_confianca: r.confianca, tipo_ia_motivo: r.motivo };
+        // A data de emissão vem junto da classificação. Guardamos aqui para a
+        // Etapa 4 gravar e calcular a validade — sem isso o documento chega ao
+        // Hub "SEM DATA" e nenhum alerta de vencimento funciona.
+        const emissao = normalizarDataIso(r.campos_extraidos?.data_emissao);
+        return {
+          ...a,
+          tipo: r.tipo_detectado,
+          tipo_ia_confianca: r.confianca,
+          tipo_ia_motivo: r.motivo,
+          ...(emissao ? { data_emissao: emissao } : {}),
+        };
       }));
 
       // Conta só os resultados que a IA realmente conseguiu produzir

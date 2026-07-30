@@ -4,6 +4,7 @@ import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } fr
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { HUB_TIPOS_DOCUMENTO, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { calcularValidadeEfetiva } from "@/lib/quero-armas/validadeDocumento";
 import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
@@ -339,6 +340,13 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         vistosNoPacote.add(key);
         return true;
       });
+      // O QSA é emitido junto com o cartão CNPJ e não traz data própria.
+      // Sem emissão não há validade — e o documento entraria no Hub "SEM DATA".
+      // Herda a data do cartão enviado no mesmo lote, e com ela os 30 dias.
+      const emissaoCartaoCnpj = docsParaPersistir.find((a) =>
+        ["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei"].includes(resolveTipoHub(a.tipo)) && a.data_emissao,
+      )?.data_emissao ?? null;
+
       if (docsParaPersistir.length > 0) {
         setStatusUpload(`Enviando ${docsParaPersistir.length} documento(s) ao Hub Documental…`);
         let ok = 0;
@@ -369,9 +377,16 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               continue;
             }
 
+            // Emissão lida pela IA; QSA herda a do cartão CNPJ do mesmo lote.
+            const emissao = a.data_emissao
+              ?? (tipoDb === "renda_qsa" ? emissaoCartaoCnpj : null);
+            const validade = calcularValidadeEfetiva(tipoDb, emissao);
+
             const payload: Record<string, unknown> = {
               qa_cliente_id: clienteId,
               tipo_documento: tipoDb,
+              data_emissao: emissao,
+              data_validade: validade,
               arquivo_storage_path: path,
               arquivo_nome: a.file.name,
               arquivo_mime: a.file.type || null,

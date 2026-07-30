@@ -267,6 +267,22 @@ export function isProcuracao(tipo?: string | null): boolean {
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
  */
+/**
+ * Documentos societários emitidos pela Receita Federal: cartão CNPJ, CCMEI e
+ * QSA. Valem 30 dias da emissão — o órgão exige extrato recente.
+ * O QSA é emitido junto com o cartão CNPJ e acompanha a data dele.
+ */
+export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return (
+    t === "renda_cartao_cnpj" ||
+    t === "renda_cnpj_autonomo" ||
+    t === "renda_ccmei" ||
+    t === "renda_qsa" ||
+    t === "cartao_cnpj_mei" // alias legado
+  );
+}
+
 export function calcularValidadeEfetiva(
   tipo: string | null | undefined,
   dataEmissao: string | null | undefined,
@@ -288,6 +304,16 @@ export function calcularValidadeEfetiva(
   if (isProcuracao(tipo)) {
     // Procuração: 12 meses a partir da emissão (padrão parametrizável).
     return toISO(addCalendarMonths(emi, 12));
+  }
+  // Documentos de empresa (cartão CNPJ, CCMEI, QSA): 30 dias da emissão.
+  // O órgão exige documento recente da Receita Federal. O QSA herda a data de
+  // emissão do cartão CNPJ quando não traz data própria — a resolução dessa
+  // herança acontece em quem grava (Central de Adesão / Hub), aqui só
+  // aplicamos o prazo sobre a data que chegou.
+  if (isDocumentoEmpresa30Dias(tipo)) {
+    const v = new Date(emi.getTime());
+    v.setUTCDate(v.getUTCDate() + 30);
+    return toISO(v);
   }
   // Comprovante de residência: vale de uma emissão até a próxima (1 mês).
   const tipoStr = String(tipo || "").toLowerCase();

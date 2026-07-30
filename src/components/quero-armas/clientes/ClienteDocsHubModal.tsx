@@ -1903,7 +1903,19 @@ export function ClienteDocsHubModal({
                 valor_referencia: i.valorReferencia,
                 fonte_referencia: i.fonteReferencia,
               })),
-              tem_divergencia: conformidade.some(i => i.status === "divergente"),
+              // Só nome e CPF bloqueiam a aprovação automática: são o que define
+              // se o documento é DO CLIENTE. Naturalidade, filiação e sexo variam
+              // legitimamente entre emissores (a certidão do TSE traz domicílio
+              // eleitoral, a CNH traz o município de nascimento) — bloquear por
+              // eles reprovaria documento correto e o checklist voltaria a pedir
+              // algo que o cliente já entregou. As demais divergências continuam
+              // gravadas em conformidade_cruzada para a equipe revisar.
+              tem_divergencia: conformidade.some(
+                (i) => i.status === "divergente" && (i.campo === "nome_completo" || i.campo === "cpf"),
+              ),
+              divergencias_secundarias: conformidade
+                .filter((i) => i.status === "divergente" && i.campo !== "nome_completo" && i.campo !== "cpf")
+                .map((i) => i.campo),
               // Específicos de certidão
               ...(TIPOS_CERTIDAO.has(form.tipo_documento) ? {
                 resultado_certidao: classificacao.camposExtraidos?.resultado_certidao || null,
