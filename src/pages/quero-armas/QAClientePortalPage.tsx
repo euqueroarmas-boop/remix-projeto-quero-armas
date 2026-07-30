@@ -373,8 +373,13 @@ export default function QAClientePortalPage() {
    * A exceção é assinatura pendente: contrato e procuração vêm antes de tudo,
    * porque os dados para elaborá-los já vieram do fechamento da venda.
    */
-  const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null }) => {
+  const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null; pularGateCadastral?: boolean }) => {
+    // `pularGateCadastral` existe para o retorno do wizard cadastral: ele acabou
+    // de gravar os campos pela edge function, mas o `cliente` em memória ainda é
+    // o de antes do save. Reavaliar aqui reabriria o cadastral — que, sem
+    // pendências, não renderiza nada. O checklist nunca abria.
     const faltaCadastro =
+      !opts?.pularGateCadastral &&
       pendingSignatureCount === 0 &&
       CAMPOS_CADASTRO.some(
         (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
@@ -3495,6 +3500,8 @@ export default function QAClientePortalPage() {
             // deste ponto que realimentava o efeito de abertura e derrubava a
             // página. O checklist do processo abre pelo efeito próprio dele.
             setShowChecklistCadastral(false);
+            // Cadastro completo: emenda direto no checklist do processo.
+            abrirPendenciasGuiadas({ pularGateCadastral: true });
           }}
         />
       ) : null}

@@ -285,7 +285,7 @@ export default function ClienteResumoKanban({
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
         return {
           label: nomeProcesso,
-          status: "Te aguardando",
+          status: "Clique aqui",
           tone: "warn" as const,
           onClick: () => {
             // Abre SEMPRE o assistente de documentação já focado neste
