@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import {
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
-  ShoppingCart, RefreshCw, Landmark,
+  ShoppingCart, RefreshCw, Landmark, LayoutDashboard, Files, FolderKanban, BellDot,
+  ScrollText, CreditCard, Headphones, SlidersHorizontal, Target, PackageOpen,
   Database, Briefcase, Wrench,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
@@ -29,7 +30,6 @@ import { toast } from "sonner";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
-import OrigemClienteCadastroPublico from "@/components/quero-armas/clientes/OrigemClienteCadastroPublico";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
@@ -45,6 +45,19 @@ import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarVa
 import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/ConfirmarPagamentoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
+import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
+import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
+import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/ClienteRecargaMunicoesSection";
+import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/ClienteArmasMunicoesSection";
+import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
+import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
+import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
+import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
+import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
+import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
+import { isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { QA_SIDEBAR_THEMES } from "@/components/quero-armas/portal/sidebarThemes";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
@@ -1115,6 +1128,406 @@ function CircunscricaoKpi({ cidade, uf }: { cidade: string | null | undefined; u
   );
 }
 
+type PortalMirrorSection =
+  | "resumo"
+  | "arsenal"
+  | "documentos"
+  | "processos"
+  | "pendencias"
+  | "contratos"
+  | "financeiro"
+  | "mensagens"
+  | "configuracoes"
+  | "armas_municoes"
+  | "analise_alvo"
+  | "recarga_municoes";
+
+function ClientePortalMirrorAdmin({
+  cliente,
+  vendas,
+  itens,
+  crafs,
+  gtes,
+  filiacoes,
+  cadastro,
+  examesAtuais,
+  armasManual,
+  docsCliente,
+  processos,
+  processoDocs,
+  processoEventos,
+  servicos,
+  onReload,
+  onOpenAddDoc,
+}: {
+  cliente: Cliente;
+  vendas: any[];
+  itens: any[];
+  crafs: any[];
+  gtes: any[];
+  filiacoes: any[];
+  cadastro: any;
+  examesAtuais: any[];
+  armasManual: any[];
+  docsCliente: any[];
+  processos: any[];
+  processoDocs: any[];
+  processoEventos: any[];
+  servicos: any[];
+  onReload: () => void;
+  onOpenAddDoc: (tipo?: string, substituirDocumentoId?: string) => void;
+}) {
+  const [activeSection, setActiveSection] = useState<PortalMirrorSection>("resumo");
+  const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
+  const railIconColor = QA_SIDEBAR_THEMES[0]?.accent || "#9a9a9a";
+  const customerId = docsCliente.find((d: any) => d.customer_id)?.customer_id ?? null;
+  const userName = cliente.nome_completo || "Cliente";
+
+  const navItems = useMemo(() => [
+    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard },
+    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: Crosshair },
+    { key: "contratos" as const, label: "Contratos", icon: ScrollText },
+    { key: "documentos" as const, label: "Documentos", icon: Files },
+    { key: "processos" as const, label: "Meus Processos", icon: FolderKanban },
+    { key: "pendencias" as const, label: "Pendências", icon: BellDot },
+    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target },
+    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen },
+    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard },
+    { key: "mensagens" as const, label: "Suporte", icon: Headphones },
+    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal },
+  ], []);
+
+  const servicoNomePorId = useMemo(() => {
+    const map: Record<number, string> = {};
+    servicos.forEach((s: any) => {
+      if (s?.id && s?.nome_servico) map[Number(s.id)] = String(s.nome_servico);
+    });
+    itens.forEach((it: any) => {
+      if (it?.servico_id && it?.servico_nome) map[Number(it.servico_id)] = String(it.servico_nome);
+    });
+    processos.forEach((p: any) => {
+      if (p?.servico_id && p?.servico_nome) map[Number(p.servico_id)] = String(p.servico_nome);
+    });
+    return map;
+  }, [itens, processos, servicos]);
+
+  const processosComNomeDisplay = useMemo(() => (
+    processos.map((p: any) => ({
+      ...p,
+      servico_nome: getQAServiceDisplayName({
+        servico_id: p.servico_id,
+        servico_nome: p.servico_nome || servicoNomePorId[Number(p.servico_id)],
+      } as any) || p.servico_nome || servicoNomePorId[Number(p.servico_id)] || "Processo",
+    }))
+  ), [processos, servicoNomePorId]);
+
+  const analysis = useMemo(() => {
+    const expDocs = [
+      ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
+      ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
+      ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
+    ];
+    return {
+      expDocs,
+      alerts: expDocs.filter((d) => d.days !== null && d.days <= 90),
+    };
+  }, [cadastro, crafs, gtes]);
+
+  const renderPlaceholder = (title: string, text: string) => (
+    <div className="rounded-sm border border-[#E5E5E5] bg-white p-8 text-center">
+      <div className="text-[12px] font-black uppercase tracking-[0.16em] text-slate-900">{title}</div>
+      <p className="mt-2 text-[12px] text-slate-500">{text}</p>
+    </div>
+  );
+
+  const renderContent = () => {
+    if (activeSection === "resumo") {
+      return (
+        <ClienteResumoKanban
+          cliente={cliente}
+          vendas={vendas}
+          itens={itens}
+          crafs={crafs}
+          gtes={gtes}
+          filiacoes={filiacoes}
+          cadastro={cadastro}
+          examesAtuais={examesAtuais}
+          armasManual={armasManual}
+          meusDocs={docsCliente}
+          processos={processosComNomeDisplay}
+          processoDocs={processoDocs}
+          onNavigate={(tab) => {
+            const next = String(tab);
+            if (next === "arsenal") {
+              setActiveSection("armas_municoes");
+              return;
+            }
+            if (next === "armas_municoes" || next === "documentos" || next === "processos") {
+              setActiveSection(next);
+              return;
+            }
+            setActiveSection("resumo");
+          }}
+          onOpenDocsHub={() => setActiveSection("documentos")}
+          onOpenChecklist={() => abrirChecklistGuiado()}
+        />
+      );
+    }
+
+    if (activeSection === "arsenal") {
+      return (
+        <ArsenalView
+          clienteId={cliente.id}
+          clienteNome={cliente.nome_completo}
+          clienteCidade={cliente.cidade}
+          clienteUf={cliente.estado}
+          crafs={crafs}
+          gtes={gtes}
+          cadastroCr={cadastro}
+          meusDocs={docsCliente}
+          isAdmin
+          expDocs={analysis.expDocs}
+          alerts={analysis.alerts}
+          onOpenAddDoc={() => setActiveSection("documentos")}
+          onArsenalChanged={onReload}
+        />
+      );
+    }
+
+    if (activeSection === "armas_municoes") {
+      return (
+        <ClienteArmasMunicoesSection
+          clienteId={cliente.id}
+          meusDocs={docsCliente}
+          crafs={crafs}
+          onOpenDocumentos={() => setActiveSection("documentos")}
+        />
+      );
+    }
+
+    if (activeSection === "analise_alvo") {
+      return <ClienteAnaliseAlvoSection />;
+    }
+
+    if (activeSection === "recarga_municoes") {
+      return <ClienteRecargaMunicoesSection />;
+    }
+
+    if (activeSection === "documentos") {
+      return (
+        <div>
+          <div className="no-print mb-3 flex items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
+            {(["lista", "extraidos"] as const).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setDocsSubview(k)}
+                className="px-3 py-1.5 text-[10px] font-black uppercase rounded-sm transition-colors"
+                style={{
+                  background: docsSubview === k ? "#7A1F2B" : "transparent",
+                  color: docsSubview === k ? "#fff" : "#7A7A7A",
+                }}
+              >
+                {k === "lista" ? "Lista" : "Dados extraídos"}
+              </button>
+            ))}
+          </div>
+          {docsSubview === "lista" ? (
+            <DocumentosCategoriaZ6V3Panel
+              cliente={cliente}
+              meusDocs={docsCliente}
+              customerId={customerId}
+              onReload={onReload}
+              onOpenAdd={onOpenAddDoc}
+            />
+          ) : (
+            <DadosExtraidosPanel
+              cliente={cliente}
+              meusDocs={docsCliente}
+              onEditDoc={(d) => onOpenAddDoc(d?.tipo_documento || undefined)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    if (activeSection === "processos") {
+      if (processosComNomeDisplay.length === 0) {
+        return renderPlaceholder("Meus Processos", "Este cliente ainda não possui processos ativos.");
+      }
+      const firstName = String(userName).trim().split(/\s+/)[0] || "Cliente";
+      const cpfRaw = String(cliente.cpf || "").replace(/\D/g, "");
+      const cpfMascarado = cpfRaw.length === 11
+        ? `${cpfRaw.slice(0, 3)}.${cpfRaw.slice(3, 6)}.${cpfRaw.slice(6, 9)}-${cpfRaw.slice(9)}`
+        : "—";
+      const membroDate = cliente.created_at ? new Date(cliente.created_at) : null;
+      const mesesPt = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
+      const membroDesde = membroDate ? `${mesesPt[membroDate.getMonth()]}/${membroDate.getFullYear()}` : "—";
+      const cockpitProps = buildCockpitZ6FromReal({
+        nomeCliente: firstName,
+        cpfMascarado,
+        membroDesde,
+        processos: processosComNomeDisplay,
+        processoDocs,
+        processoEventos,
+        vendas,
+        crafs,
+        gtes,
+        examesCliente: examesAtuais,
+        onFocoCta: () => setActiveSection("contratos"),
+      });
+      return <CockpitZ6MeusProcessos {...cockpitProps} />;
+    }
+
+    if (activeSection === "pendencias") {
+      const pendentes = processoDocs.filter((d: any) =>
+        d.obrigatorio &&
+        (isChecklistPendente(d.status) ||
+          ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())),
+      );
+      if (pendentes.length === 0) {
+        return renderPlaceholder("Pendências", "Este cliente não possui pendências obrigatórias agora.");
+      }
+      const byProc = new Map<string, any[]>();
+      pendentes.forEach((d: any) => {
+        const key = String(d.processo_id);
+        if (!byProc.has(key)) byProc.set(key, []);
+        byProc.get(key)!.push(d);
+      });
+      return (
+        <div className="space-y-4">
+          {Array.from(byProc.entries()).map(([procId, lista]) => {
+            const proc = processosComNomeDisplay.find((p: any) => String(p.id) === procId);
+            return (
+              <div key={procId} className="rounded-xl border border-slate-200 bg-white">
+                <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                  {proc?.servico_nome || "Processo"} <span className="ml-1 text-slate-400">· {lista.length} pendência(s)</span>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {lista.map((d: any) => {
+                    const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-semibold text-slate-800 truncate">
+                            {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                          </div>
+                          <div className="text-[10px] text-slate-500">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                          {reprov ? "Reenviar" : "Pendente"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (activeSection === "contratos") {
+      return <QAContratosCockpitV1 cliente={cliente} />;
+    }
+
+    if (activeSection === "financeiro") {
+      return (
+        <QAClienteFinanceiroCentral
+          vendas={vendas as any}
+          itens={itens as any}
+          servicoNomePorId={servicoNomePorId}
+          premium={null}
+          onNavigateContratos={() => setActiveSection("contratos")}
+          clienteNome={cliente.nome_completo}
+        />
+      );
+    }
+
+    if (activeSection === "mensagens") {
+      return <CentralAjudaCliente cliente={cliente} />;
+    }
+
+    return renderPlaceholder("Configurações", "Configurações pessoais dependem da sessão do cliente e não são editadas pelo espelho admin.");
+  };
+
+  return (
+    <div className="relative -mx-0.5 bg-[#f3f3f2] overflow-visible">
+      <div className="flex min-h-[640px]">
+        <div className="min-w-0 flex-1 px-4 lg:px-8 py-6">
+          {renderContent()}
+        </div>
+        <aside className="hidden lg:flex sticky top-3 h-[calc(100vh-1.5rem)] w-[56px] shrink-0 flex-col items-center py-4 overflow-y-auto no-scrollbar bg-[#0A0A0A]">
+          <div className="flex flex-col items-center gap-1">
+            {navItems.filter((i) => i.key !== "mensagens" && i.key !== "configuracoes").map((item) => {
+              const Icon = item.icon;
+              const active = activeSection === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setActiveSection(item.key)}
+                  title={item.label}
+                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                  style={active ? { background: `${railIconColor}33`, color: railIconColor } : { color: `${railIconColor}88` }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
+                >
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex-1" />
+          <div className="flex flex-col items-center gap-1 pb-[88px]">
+            {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
+              const Icon = item.icon;
+              const active = activeSection === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setActiveSection(item.key)}
+                  title={item.label}
+                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                  style={active ? { background: `${railIconColor}33`, color: railIconColor } : { color: `${railIconColor}88` }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = railIconColor; }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${railIconColor}88`; }}
+                >
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+      </div>
+      <div className="lg:hidden border-t border-slate-200 bg-white px-2 py-2 overflow-x-auto">
+        <div className="flex gap-1 min-w-max">
+          {navItems.map((item) => {
+            const active = activeSection === item.key;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setActiveSection(item.key)}
+                className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${active ? "bg-[#7A1F2B] text-white" : "bg-slate-50 text-slate-600"}`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
@@ -1134,6 +1547,9 @@ export default function QAClientesPage() {
   // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
   // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
   const [processosVenda, setProcessosVenda] = useState<any[]>([]);
+  const [processosCliente, setProcessosCliente] = useState<any[]>([]);
+  const [processoDocs, setProcessoDocs] = useState<any[]>([]);
+  const [processoEventos, setProcessoEventos] = useState<any[]>([]);
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   // FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR).
@@ -2319,6 +2735,41 @@ export default function QAClientesPage() {
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
       setDocsCliente((dRes.data as any[]) ?? []);
+      try {
+        const { data: procsData } = await supabase
+          .from("qa_processos" as any)
+          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
+          .in("cliente_id", cidsCliente)
+          .not("status", "in", "(cancelado,arquivado)")
+          .order("data_criacao", { ascending: false });
+        const procsList = (procsData as any[]) ?? [];
+        setProcessosCliente(procsList);
+        if (procsList.length > 0) {
+          const procIds = procsList.map((p: any) => p.id);
+          const [{ data: procDocsData }, { data: eventosData }] = await Promise.all([
+            supabase
+              .from("qa_processo_documentos" as any)
+              .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at, regra_validacao, titular_comprovante_nome, endereco_em_nome_de_terceiro, dados_extraidos_json")
+              .in("processo_id", procIds),
+            supabase
+              .from("qa_processo_eventos" as any)
+              .select("id, processo_id, tipo_evento, descricao, ator, created_at, documento_id")
+              .in("processo_id", procIds)
+              .order("created_at", { ascending: false })
+              .limit(200),
+          ]);
+          setProcessoDocs((procDocsData as any[]) ?? []);
+          setProcessoEventos((eventosData as any[]) ?? []);
+        } else {
+          setProcessoDocs([]);
+          setProcessoEventos([]);
+        }
+      } catch (e) {
+        console.warn("[loadSubData] processosCliente falhou", e);
+        setProcessosCliente([]);
+        setProcessoDocs([]);
+        setProcessoEventos([]);
+      }
       // FASE 4 — carrega armas manuais/IA em paralelo (não-bloqueante; falha silenciosa).
       try {
         const { data: amRes } = await supabase
@@ -2732,26 +3183,29 @@ export default function QAClientesPage() {
               </TabsContent>
 
               {/* VISÃO GERAL */}
-              <TabsContent value="resumo" className="mt-3 space-y-3">
-                <OrigemClienteCadastroPublico
+              <TabsContent value="resumo" className="mt-3">
+                <ClientePortalMirrorAdmin
                   cliente={c}
-                  onAbrirCadastroPublico={(id) => {
-                    setSelected(null);
-                    openCadastroPublico(String(id));
+                  vendas={vendas}
+                  itens={itens}
+                  crafs={crafs}
+                  gtes={gtes}
+                  filiacoes={filiacoes}
+                  cadastro={cadastro}
+                  examesAtuais={examesAtuais}
+                  armasManual={armasManual}
+                  docsCliente={docsCliente}
+                  processos={processosCliente}
+                  processoDocs={processoDocs}
+                  processoEventos={processoEventos}
+                  servicos={servicos}
+                  onReload={() => loadSubData(c, { silent: true })}
+                  onOpenAddDoc={(tipo, substituirId) => {
+                    setTab("hub");
+                    if (tipo || substituirId) {
+                      toast.message("Abra o Hub Cliente para adicionar ou substituir este documento.");
+                    }
                   }}
-                />
-                <ClienteResumoKanban
-                    cliente={c}
-                    vendas={vendas}
-                    itens={itens}
-                    crafs={crafs}
-                    gtes={gtes}
-                    filiacoes={filiacoes}
-                    cadastro={cadastro}
-                    examesAtuais={examesAtuais}
-                    armasManual={armasManual}
-                    meusDocs={docsCliente}
-                    onNavigate={setTab}
                 />
               </TabsContent>
 
