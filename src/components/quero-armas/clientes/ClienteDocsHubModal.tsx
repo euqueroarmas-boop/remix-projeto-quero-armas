@@ -325,7 +325,15 @@ function calcularConformidade(
   // são documentos derivados do próprio cadastro (Central de Adesão) e replicariam o dado.
   // A verdade vem de documentos primários (RG/CIN/CNH), órgãos governamentais ou, na ausência
   // desses, do cadastro do cliente (populado pela Central de Adesão).
-  const NAO_SERVEM_COMO_REFERENCIA = new Set(["contrato_assinado", "procuracao_assinada"]);
+  // documento_identificacao_terceiro é o RG/CNH do DONO DO IMÓVEL quando o
+  // comprovante de residência está em nome de outra pessoa. Usá-lo como fonte
+  // de verdade faria o cruzamento comparar o cliente com um terceiro e acusar
+  // divergência de nome e CPF em todo documento seguinte.
+  const NAO_SERVEM_COMO_REFERENCIA = new Set([
+    "contrato_assinado",
+    "procuracao_assinada",
+    "documento_identificacao_terceiro",
+  ]);
   // Documentos primários de identidade — SEMPRE são a referência principal, mesmo
   // que ainda estejam pendentes de aprovação (foram enviados pela Central de Adesão
   // e servem de "verdade" inicial). Comprovantes e demais docs só entram como

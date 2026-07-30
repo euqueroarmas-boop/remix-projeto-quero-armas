@@ -172,7 +172,7 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
 // exigência correspondente nunca seria cumprida.
 const CLASSIFY_TIPOS = [
   "cin","rg_com_cpf","cnh","cpf","certidao_alteracao_nome",
-  "comprovante_residencia","declaracao_responsavel_imovel",
+  "comprovante_residencia","declaracao_responsavel_imovel","documento_identificacao_terceiro",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico","renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss","renda_qsa",
@@ -183,7 +183,8 @@ const CLASSIFY_TIPOS = [
   "laudo_psicologico","laudo_capacidade_tecnica",
   "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
   "comprovante_habitualidade","comprovante_clube_tiro","declaracao_compromisso_habitualidade",
-  "comprovante_pagamento","documento_complementar_caso",
+  "habilitacao_cacador_ibama","declaracao_nao_possuir_segundo_endereco",
+  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento","documento_complementar_caso",
   "gov_br","outro",
 ];
 
@@ -233,6 +234,7 @@ IDENTIFICAÇÃO
 ENDEREÇO
 - comprovante_residencia: conta de luz, água, gás, telefone, internet, IPTU ou correspondência bancária com endereço
 - declaracao_responsavel_imovel: declaração assinada pelo responsável/proprietário do imóvel
+- documento_identificacao_terceiro: RG, CIN ou CNH do DONO DO IMÓVEL — usado quando o comprovante de residência está em nome de terceiro. O nome NÃO é o do cliente, e isso é esperado: não trate como divergência
 
 OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genérico)
 - ctps: Carteira de Trabalho (CTPS), física ou digital
@@ -278,6 +280,9 @@ ARMA E ACERVO
 - nota_fiscal_arma: nota fiscal de COMPRA DE ARMA DE FOGO especificamente
 
 PROCESSO
+- requerimento_de_posse_de_arma_de_fogo: requerimento gerado no site da Polícia Federal, com os dados completos do requerente e o calibre da arma pretendida
+- habilitacao_cacador_ibama: certificado de registro do IBAMA/IBRAM que autoriza o cliente a caçar. Documento oficial do órgão, com validade
+- declaracao_nao_possuir_segundo_endereco: declaração do próprio cliente, assinada via gov.br, de que não possui segundo endereço de guarda de acervo
 - comprovante_pagamento: comprovante de transação bancária — PIX, TED, DOC ou pagamento com cartão. Só use quando o BENEFICIÁRIO for "Willian Rodrigues da Silva Massaroto" ou "Senhor das Armas Comercio de Armas e Municoes Ltda" (ou variações). Fatura de cartão de crédito NÃO é comprovante_pagamento nem comprovante_residencia — use outro. Extrato bancário sem beneficiário identificado = outro.
 - documento_complementar_caso: documento do processo que não se encaixa nos anteriores
 

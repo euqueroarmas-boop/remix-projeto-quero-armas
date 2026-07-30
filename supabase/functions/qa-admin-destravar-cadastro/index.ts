@@ -18,7 +18,7 @@ function json(data: unknown, status = 200) {
 const TIPOS_DOC_VALIDOS = new Set([
   "cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma",
   "rg_com_cpf", "cin", "cnh", "cpf",
-  "comprovante_residencia", "declaracao_responsavel_imovel",
+  "comprovante_residencia", "declaracao_responsavel_imovel", "documento_identificacao_terceiro",
   "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico", "renda_carteira_funcional",
   "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social", "renda_ccmei",
   "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss", "renda_qsa",
@@ -34,7 +34,8 @@ const TIPOS_DOC_VALIDOS = new Set([
   "comprovante_efetiva_necessidade", "documento_complementar_caso",
   "comprovante_habitualidade", "declaracao_compromisso_habitualidade",
   "comprovante_clube_tiro", "comprovante_competicao",
-  "comprovante_pagamento",
+  "habilitacao_cacador_ibama", "declaracao_nao_possuir_segundo_endereco",
+  "requerimento_de_posse_de_arma_de_fogo", "comprovante_pagamento",
   "protocolo_processo", "oficio", "despacho", "exigencia", "indeferimento",
   "procuracao", "procuracao_assinada", "contrato_assinado",
   "recurso_administrativo_doc", "mandado_seguranca_doc",
