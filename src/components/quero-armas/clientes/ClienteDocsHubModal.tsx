@@ -1888,16 +1888,20 @@ export function ClienteDocsHubModal({
               })() : {}),
               revisao_humana: true,
               documento_expirado: docExpirado,
-              // Dados de conformidade cruzada para certidões
+              // Conformidade cruzada para TODOS os tipos — não só certidões.
+              // A trigger qa_doc_auto_aprovar_por_ia lê `tem_divergencia` para
+              // decidir se pode aprovar sozinha: sem isso ela aprovaria pela
+              // qualidade da leitura, sem saber se o documento é do cliente.
+              conformidade_cruzada: conformidade.map(i => ({
+                campo: i.campo,
+                status: i.status,
+                valor_certidao: i.valorCertidao,
+                valor_referencia: i.valorReferencia,
+                fonte_referencia: i.fonteReferencia,
+              })),
+              tem_divergencia: conformidade.some(i => i.status === "divergente"),
+              // Específicos de certidão
               ...(TIPOS_CERTIDAO.has(form.tipo_documento) ? {
-                conformidade_cruzada: conformidade.map(i => ({
-                  campo: i.campo,
-                  status: i.status,
-                  valor_certidao: i.valorCertidao,
-                  valor_referencia: i.valorReferencia,
-                  fonte_referencia: i.fonteReferencia,
-                })),
-                tem_divergencia: conformidade.some(i => i.status === "divergente"),
                 resultado_certidao: classificacao.camposExtraidos?.resultado_certidao || null,
                 // Certidão com apontamento criminal
                 ...(temApontamento ? {
