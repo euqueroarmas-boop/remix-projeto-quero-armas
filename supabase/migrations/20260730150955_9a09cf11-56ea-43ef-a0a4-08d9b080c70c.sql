@@ -1,0 +1,1 @@
+SELECT public.qa_processo_rever_exigencias(NULL);
