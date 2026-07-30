@@ -183,6 +183,59 @@ export function isCertidaoNacional(tipo: string | null | undefined): boolean {
   return getAbrangenciaCertidao(tipo)?.abrangencia === "uniao";
 }
 
+/* ── Justiça Federal — mapa de regiões ─────────────────────────────────── */
+
+/**
+ * TRF competente por UF.
+ *
+ * A Justiça Federal não é organizada por estado nem é única para o país: são
+ * 6 regiões, cada uma cobrindo um conjunto fixo de UFs. Consequência prática
+ * para a exigência: a certidão do TRF3 serve para quem mora em SP **e em MS**
+ * (mesma região), mas NÃO serve para quem mora na Bahia — esse é TRF1, e os
+ * processos federais dele não aparecem na certidão do TRF3.
+ *
+ * O TRF6 foi criado em 2022, desmembrando Minas Gerais do TRF1.
+ */
+export const TRF_POR_UF: Record<string, number> = {
+  // TRF1
+  AC: 1, AM: 1, AP: 1, BA: 1, DF: 1, GO: 1, MA: 1,
+  MT: 1, PA: 1, PI: 1, RO: 1, RR: 1, TO: 1,
+  // TRF2
+  RJ: 2, ES: 2,
+  // TRF3
+  SP: 3, MS: 3,
+  // TRF4
+  RS: 4, SC: 4, PR: 4,
+  // TRF5
+  AL: 5, CE: 5, PB: 5, PE: 5, RN: 5, SE: 5,
+  // TRF6
+  MG: 6,
+};
+
+/** Número do TRF competente para a UF de residência, ou `null` se UF inválida. */
+export function getTrfDaUF(ufCliente: string | null | undefined): number | null {
+  const uf = String(ufCliente ?? "").trim().toUpperCase();
+  if (uf.length !== 2) return null;
+  return TRF_POR_UF[uf] ?? null;
+}
+
+/**
+ * Uma certidão emitida no TRF de `ufOrigem` cobre quem mora em `ufCliente`?
+ *
+ * Verdadeiro só quando as duas UFs caem na MESMA região. É o que torna a
+ * certidão do TRF3 válida para o cliente de MS e inválida para o da Bahia.
+ * Devolve `null` quando alguma UF é desconhecida — nunca `true` no escuro.
+ */
+export function trfCobreUF(
+  ufOrigem: string | null | undefined,
+  ufCliente: string | null | undefined,
+): boolean | null {
+  const a = getTrfDaUF(ufOrigem);
+  const b = getTrfDaUF(ufCliente);
+  if (a === null || b === null) return null;
+  return a === b;
+}
+
 /* ── Justiça Militar estadual — só três estados a possuem ──────────────── */
 
 /**
