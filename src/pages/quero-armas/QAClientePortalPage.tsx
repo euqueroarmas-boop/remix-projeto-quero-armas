@@ -436,6 +436,8 @@ export default function QAClientePortalPage() {
   // documento é gerado antes de o cadastro estar completo.
   const [showChecklistCadastral, setShowChecklistCadastral] = useState(false);
   const [reconciliouCadastro, setReconciliouCadastro] = useState(false);
+  // Abre no máximo uma vez por carregamento — reabrir em laço derrubava a página.
+  const checklistCadastralAbertoRef = useRef(false);
   // Estado controlado do dropdown "Atalhos rápidos" da marca (avatar + Arsenal).
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
@@ -2083,7 +2085,10 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "cadastro") {
-      setShowCadastroModal(true);
+      // O checklist cadastral (uma pergunta por vez) substitui o modal
+      // progressivo na abertura automática — os dois abertos ao mesmo tempo
+      // empilhavam popup sobre popup. O modal antigo segue disponível pelo
+      // botão "Atualizar agora", para quem prefere o formulário completo.
       return;
     }
 
@@ -2155,11 +2160,14 @@ export default function QAClientePortalPage() {
     if (!pendingContractsLoaded) return;
     if (pendingSignatureCount > 0) return;   // assinaturas primeiro
     if (showContratoPopup || showAddDoc || showCadastroModal) return;
-    if (showChecklistCadastral) return;
+    if (showChecklistCadastral || checklistCadastralAbertoRef.current) return;
     const faltando = CAMPOS_CADASTRO.some(
       (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
     );
-    if (faltando) setShowChecklistCadastral(true);
+    if (faltando) {
+      checklistCadastralAbertoRef.current = true;
+      setShowChecklistCadastral(true);
+    }
   }, [reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cliente]);
 
   // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
@@ -3469,9 +3477,10 @@ export default function QAClientePortalPage() {
           cliente={cliente as Record<string, unknown>}
           onClose={() => setShowChecklistCadastral(false)}
           onConcluido={() => {
-            // Cadastro completo: fecha e passa a bola para o processual.
+            // Só fecha. NÃO recarrega o portal aqui: era o setDocsReloadKey
+            // deste ponto que realimentava o efeito de abertura e derrubava a
+            // página. O checklist do processo abre pelo efeito próprio dele.
             setShowChecklistCadastral(false);
-            setDocsReloadKey((k) => k + 1);
           }}
         />
       ) : null}

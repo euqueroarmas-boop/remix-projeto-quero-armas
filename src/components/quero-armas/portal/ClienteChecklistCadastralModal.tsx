@@ -13,7 +13,7 @@
 // qa_clientes É a resposta. Campo vazio = pergunta pendente. Isso torna o
 // fluxo idempotente e imune a perda de sessão.
 // ============================================================================
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, ArrowRight, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,9 +102,19 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
   useEffect(() => { setValor(""); setErro(null); }, [atual?.key]);
 
   // Sem pendências: o cadastro está completo, segue para o processual.
+  //
+  // O ref é essencial: `onConcluido` é uma arrow inline do pai, ou seja, uma
+  // referência nova a cada render, e `cliente` é objeto. Sem a trava, o efeito
+  // redisparava a cada render — e como onConcluido recarrega o portal, o
+  // cliente voltava como objeto novo e o ciclo se repetia, derrubando a página.
+  const concluiuRef = useRef(false);
   useEffect(() => {
-    if (open && cliente && pendentes.length === 0) onConcluido();
-  }, [open, cliente, pendentes.length, onConcluido]);
+    if (!open) { concluiuRef.current = false; return; }
+    if (concluiuRef.current || !cliente || pendentes.length > 0) return;
+    concluiuRef.current = true;
+    onConcluido();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pendentes.length]);
 
   if (!open || !atual) return null;
 
