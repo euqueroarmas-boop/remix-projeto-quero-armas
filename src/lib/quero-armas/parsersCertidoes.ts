@@ -76,6 +76,28 @@ function resultado(t: string): "NADA_CONSTA" | "CONSTA" | undefined {
   return undefined;
 }
 
+const MESES_PT: Record<string, string> = {
+  janeiro: "01", fevereiro: "02", marco: "03", abril: "04", maio: "05", junho: "06",
+  julho: "07", agosto: "08", setembro: "09", outubro: "10", novembro: "11", dezembro: "12",
+};
+
+/**
+ * Data por extenso: "São Paulo, 23 de julho de 2026."
+ *
+ * O TJM/SP fecha a certidão assim, e é a ÚNICA data de emissão no documento —
+ * o "10/06/2026" que aparece no exemplar de outro cliente é o cabeçalho do
+ * navegador, não faz parte da certidão. Procurar só por dd/mm/aaaa dava o
+ * documento como sem data e o rejeitava indevidamente.
+ */
+function dataPorExtenso(t: string): string | undefined {
+  const m = norm(t).match(/(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/i);
+  if (!m) return undefined;
+  const mes = MESES_PT[m[2].toLowerCase()];
+  if (!mes) return undefined;
+  const s = `${m[3]}-${mes}-${m[1].padStart(2, "0")}`;
+  return Number.isNaN(new Date(`${s}T00:00:00Z`).getTime()) ? undefined : s;
+}
+
 /* ── Identificação do órgão pelo cabeçalho ─────────────────────────────── */
 
 export function identificarOrgao(texto: string): OrgaoCertidao | null {
@@ -253,7 +275,10 @@ function parseTjmSp(texto: string): CamposCertidao {
     // divergindo, a certidão é REJEITADA (ver conferenciaCertidao.ts).
     naturalidade: naturalidadeTjm(t),
     validade_dias: numOrUndef(g(/PRAZO DE\s*(\d{1,3})\s*\(/i)),
-    data_emissao: iso(g(/^\s*(\d{2}\/\d{2}\/\d{4}),/m)),
+    // Prioriza a data POR EXTENSO, que é a da própria certidão. O dd/mm/aaaa
+    // do topo é cabeçalho do navegador e some quando o cliente salva o PDF
+    // com essa opção desligada.
+    data_emissao: dataPorExtenso(t) ?? iso(g(/^\s*(\d{2}\/\d{2}\/\d{4}),/m)),
     resultado: resultado(t),
   };
 }

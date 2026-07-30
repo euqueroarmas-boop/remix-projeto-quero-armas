@@ -58,6 +58,7 @@ import { template as acervoConforme } from './acervo-conforme.tsx'
 import { template as documentoEmDia } from './documento-em-dia.tsx'
 import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
 import { template as cadastroAtualizado } from './cadastro-atualizado.tsx'
+import { template as certidaoRejeitada } from './certidao-rejeitada.tsx'
 import { template as documentoStatusCliente } from './documento-status-cliente.tsx'
 
 // Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
@@ -154,6 +155,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'documento-em-dia': documentoEmDia,
   'exigencia-cumprida': exigenciaCumprida,
   'cadastro-atualizado': cadastroAtualizado,
+  'certidao-rejeitada': certidaoRejeitada,
   'documento-status-cliente': documentoStatusCliente,
 
   // Habitualidade — 12 novos alertas (mockup — sem motor ainda)

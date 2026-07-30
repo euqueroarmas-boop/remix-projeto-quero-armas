@@ -36,10 +36,12 @@ type Evento =
   // Verde — exigência do processo cumprida
   | "exigencia_cumprida"
   // Verde — cadastro alterado (pelo cliente ou pela equipe)
-  | "cadastro_atualizado";
+  | "cadastro_atualizado"
+  // Alerta — certidão recusada na conferência automática
+  | "certidao_rejeitada";
 
 /** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
-const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado"]);
+const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada"]);
 
 interface Payload {
   evento: Evento;
@@ -71,6 +73,11 @@ interface Payload {
   /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
   campos_alterados?: Array<{ label: string; valor: string }>;
   alterado_por?: string;
+  /** Para certidao_rejeitada. */
+  certidao?: string;
+  orgao?: string;
+  link_emissao?: string;
+  problemas?: Array<{ label: string; noDocumento?: string; noCadastro?: string; mensagem: string }>;
 }
 
 function brDate(iso?: string | null): string {
@@ -143,6 +150,18 @@ function mapEventoToTemplate(
           validade: brDate(p.validade),
           diasRestantes: diasAteVencer(p.validade),
           evento: p.documento_evento === "renovado" ? "renovado" : "cadastrado",
+          portalUrl,
+        },
+      };
+    case "certidao_rejeitada":
+      return {
+        templateName: "certidao-rejeitada",
+        templateData: {
+          nome,
+          certidao: p.certidao ?? "A certidão enviada",
+          orgao: p.orgao ?? "",
+          problemas: Array.isArray(p.problemas) ? p.problemas : [],
+          linkEmissao: p.link_emissao ?? "",
           portalUrl,
         },
       };
@@ -222,7 +241,9 @@ Deno.serve(async (req) => {
           ? `qa-verde-doc-${body.cliente_id}-${body.referencia_tabela || "x"}-${body.referencia_id || body.documento || "x"}-${body.validade || "x"}`
           : body.evento === "cadastro_atualizado"
             ? `qa-verde-cad-${body.cliente_id}-${(body.campos_alterados || []).map((c) => c.label).join("|") || "x"}-${Date.now()}`
-            : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
+            : body.evento === "certidao_rejeitada"
+              ? `qa-cert-rej-${body.cliente_id}-${body.referencia_id || body.certidao || "x"}-${(body.problemas || []).map((x) => x.label).join("|")}`
+              : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
         const send = await sendTransactional({
           templateName: mapped.templateName,
           recipientEmail: emailCli,
@@ -236,24 +257,30 @@ Deno.serve(async (req) => {
         ? "documento_em_dia"
         : body.evento === "cadastro_atualizado"
           ? "cadastro_atualizado"
-          : "exigencia_cumprida";
+          : body.evento === "certidao_rejeitada"
+            ? "certidao_rejeitada"
+            : "exigencia_cumprida";
       const titulo = body.evento === "documento_em_dia"
         ? `${body.documento || "Documento"} ${body.documento_evento === "renovado" ? "renovado" : "cadastrado"} — em dia`
         : body.evento === "cadastro_atualizado"
           ? "Cadastro atualizado"
-          : "Exigência cumprida";
+          : body.evento === "certidao_rejeitada"
+            ? `${body.certidao || "Certidão"} precisa ser reenviada`
+            : "Exigência cumprida";
       const mensagem = body.evento === "documento_em_dia"
         ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
         : body.evento === "cadastro_atualizado"
           ? (nCampos
               ? `${nCampos === 1 ? "1 informação foi atualizada" : `${nCampos} informações foram atualizadas`}: ${(body.campos_alterados || []).map((c) => c.label).join(", ")}.`
               : "Seu cadastro foi atualizado.")
-          : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
+          : body.evento === "certidao_rejeitada"
+            ? `Divergência em: ${(body.problemas || []).map((x) => x.label).join(", ") || "dados do documento"}. Emita novamente e reenvie.`
+            : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,
           categoria,
-          urgencia: "normal",
+          urgencia: body.evento === "certidao_rejeitada" ? "alta" : "normal",
           titulo,
           mensagem,
           link: "/area-do-cliente",

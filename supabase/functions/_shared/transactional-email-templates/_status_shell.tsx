@@ -14,6 +14,13 @@ export interface StatusEmailProps {
   meta?: StatusMeta[]
   cta?: { label: string; url: string }
   rodape?: string
+  /**
+   * Conteúdo extra entre o bloco de meta e o botão. Opcional e retrocompatível:
+   * template que não passa nada renderiza exatamente como antes. Existe para
+   * avisos que precisam explicar um procedimento — rejeição de certidão, por
+   * exemplo, onde só o par label/valor não basta.
+   */
+  children?: React.ReactNode
 }
 
 const CORES: Record<StatusTipo, { cor: string; badgeBg: string; badgeFg: string; label: string }> = {
@@ -65,6 +72,8 @@ export const StatusEmail = (p: StatusEmailProps) => {
                   ))}
                 </Section>
               ) : null}
+              {p.children ? <Section style={{ padding: '0 0 4px' }}>{p.children}</Section> : null}
+
               {p.cta ? (
                 <Section style={ctaWrap}>
                   <Button style={btn(c.cor, c.badgeFg)} href={p.cta.url}>{p.cta.label}</Button>
