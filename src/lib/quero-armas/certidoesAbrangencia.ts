@@ -129,9 +129,9 @@ export const CERTIDOES_ESTADUAIS: CertidaoAbrangencia[] = [
     uf: "SP",
     link: "https://certidaocriminal.tjmsp.jus.br/",
     nota:
-      "ATENÇÃO: Tribunal de Justiça Militar ESTADUAL só existe em SP, MG e RS. " +
-      "Cliente de outra UF não tem esse tribunal — a competência militar estadual " +
-      "cai no próprio TJ local. Confirmar com o usuário antes de exigir.",
+      "6ª certidão estadual. Tribunal de Justiça Militar ESTADUAL só existe em " +
+      "SP, MG e RS. Cliente de UF sem TJM não tem essa exigência — ela some do " +
+      "checklist, não vira substituta (regra definida pelo usuário, 30/07/2026).",
   },
 ];
 
@@ -175,4 +175,23 @@ export function certidaoServeParaUF(
 /** Link de emissão confirmado, ou `null` quando ainda não mapeado para a UF. */
 export function getLinkEmissaoCertidao(tipo: string | null | undefined): string | null {
   return getAbrangenciaCertidao(tipo)?.link ?? null;
+}
+
+/* ── Justiça Militar estadual — só três estados a possuem ──────────────── */
+
+/**
+ * UFs que mantêm Tribunal de Justiça Militar estadual próprio.
+ *
+ * Os demais estados não têm esse tribunal. Regra do usuário: para cliente de
+ * UF fora desta lista a certidão simplesmente NÃO é exigida — não existe
+ * substituta e nada entra no lugar. Continuam valendo, para ele, só as duas
+ * contra a União (TSE e STM).
+ */
+export const UFS_COM_TJM_ESTADUAL = new Set(["SP", "MG", "RS"]);
+
+/** A certidão de Justiça Militar estadual deve ser exigida deste cliente? */
+export function exigeCertidaoTjmEstadual(ufCliente: string | null | undefined): boolean {
+  const uf = String(ufCliente ?? "").trim().toUpperCase();
+  if (uf.length !== 2) return false;
+  return UFS_COM_TJM_ESTADUAL.has(uf);
 }

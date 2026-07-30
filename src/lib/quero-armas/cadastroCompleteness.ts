@@ -54,8 +54,8 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
   { key: "nome_pai", label: "Nome do pai", grupo: "pessoais", crucial: true, pergunta: "Qual é o nome completo do seu pai?", ajuda: "Se não constar no seu documento, escreva como você souber.", tipo: "text", colSpan: 2 },
 
   // Identidade
-  { key: "rg", label: "RG / CIN", grupo: "identidade", crucial: true, pergunta: "Qual é o número do seu RG ou CIN?", ajuda: "Se for CNH ou CIN, você baixa o documento digital na Carteira de Documentos do Gov.br.", links: [
-    { label: "Carteira de Documentos do Gov.br", url: "https://www.gov.br/pt-br/apps/carteira-de-documentos" },
+  { key: "rg", label: "RG / CIN", grupo: "identidade", crucial: true, pergunta: "Qual é o número do seu RG ou CIN?", ajuda: "Se for CNH ou CIN: entre no Gov.br, vá em Atalhos Gov \u2192 Carteira de Documentos e escolha CIN ou CNH.", links: [
+    { label: "Entrar no Gov.br", url: "https://sso.acesso.gov.br/login?client_id=www.gov.br" },
   ], tipo: "text", colSpan: 1 },
   { key: "emissor_rg", label: "Órgão emissor", grupo: "identidade", crucial: true, pergunta: "Qual órgão emitiu o seu RG?", ajuda: "Costuma aparecer como SSP, DETRAN ou IIRGD.", tipo: "text", placeholder: "SSP", colSpan: 1 },
   { key: "uf_emissor_rg", label: "UF do emissor", grupo: "identidade", crucial: true, pergunta: "Em qual estado o seu RG foi emitido?", tipo: "uf", colSpan: 1 },
