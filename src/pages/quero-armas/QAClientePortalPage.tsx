@@ -2107,36 +2107,30 @@ export default function QAClientePortalPage() {
   // só eram reavaliadas em pontos específicos. Resultado: documento já enviado
   // e classificado no Hub continuava sendo pedido no checklist.
   //
-  // Agora, a cada carregamento, rodamos os dois utilitários em sequência:
-  //   1) qa-cliente-auto-prefill — completa o cadastro a partir dos documentos
-  //      que o cliente já enviou (reusa ia_dados_extraidos, não chama IA).
-  //   2) qa_processo_rever_exigencias — casa os documentos válidos do Hub com
-  //      os slots pendentes do processo, respeitando ano_competencia.
+  // Roda apenas qa_processo_rever_exigencias, que casa os documentos válidos
+  // do Hub com os slots pendentes do processo. Só lê documento e escreve em
+  // qa_processo_documentos — não encosta no cadastro do cliente.
   //
-  // Rodamos SEMPRE os dois, não um ou outro: ambos são idempotentes e baratos,
-  // e o checklist precisa ser reconciliado mesmo quando ainda falta dado no
-  // cadastro — senão uma pendência cadastral impediria o cliente de ver que a
-  // exigência documental já foi cumprida.
+  // O auto-prefill do cadastro foi retirado daqui: ele reescreve cpf e
+  // nome_completo a partir dos documentos, e rodar isso sem supervisão a cada
+  // acesso pode trocar a identidade do cadastro por dado de terceiro.
   useEffect(() => {
     const clienteId = Number((cliente as any)?.id) || null;
     if (!clienteId || reconciliouRef.current) return;
     reconciliouRef.current = true;
 
     (async () => {
-      // 1) Cadastro — silencioso; falha aqui não pode travar o portal.
-      try {
-        const { data: sess } = await supabase.auth.getSession();
-        const token = sess?.session?.access_token;
-        if (token) {
-          await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-cliente-auto-prefill`,
-            { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: "{}" },
-          );
-        }
-      } catch (e) {
-        console.warn("[portal] auto-prefill do cadastro falhou", e);
-      }
-
+      // 1) Cadastro — DESLIGADO de propósito.
+      //
+      // qa-cliente-auto-prefill escreve cpf e nome_completo, e sua regra
+      // sobrescreve valor digitado quando um documento traz outro. Rodá-lo a
+      // cada entrada no portal — como eu havia feito — expõe o cadastro a ser
+      // reescrito com dado de terceiro: no acervo do cliente há cartão CNPJ da
+      // esposa e comprovante de pagamento do filho. Se o CPF for trocado, o
+      // login deixa de localizar o cadastro.
+      //
+      // O prefill continua disponível sob demanda, pelo modal progressivo, onde
+      // a pessoa vê e confirma o que será aplicado. Automático, não.
       // 2) Checklist — reavalia exigências contra o Hub Documental.
       try {
         await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: clienteId });
