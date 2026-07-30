@@ -53,6 +53,8 @@ import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumo
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import ClienteChecklistCadastralModal from "@/components/quero-armas/portal/ClienteChecklistCadastralModal";
+import { CAMPOS_CADASTRO } from "@/lib/quero-armas/cadastroCompleteness";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
@@ -429,6 +431,10 @@ export default function QAClientePortalPage() {
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // Reconciliação silenciosa na entrada — roda uma vez por carregamento.
   const reconciliouRef = useRef(false);
+  // Checklist cadastral — abre sozinho quando há campo obrigatório em branco.
+  // Só depois que o cadastro fecha é que o checklist processual entra: nenhum
+  // documento é gerado antes de o cadastro estar completo.
+  const [showChecklistCadastral, setShowChecklistCadastral] = useState(false);
   // Estado controlado do dropdown "Atalhos rápidos" da marca (avatar + Arsenal).
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
@@ -2134,6 +2140,12 @@ export default function QAClientePortalPage() {
 
       // Recarrega a tela com o estado já reconciliado.
       setDocsReloadKey((k) => k + 1);
+      // O cadastro vem primeiro — mas só abre se houver pendência de verdade.
+      // Abrir e fechar no mesmo tick faria o modal piscar na cara do cliente.
+      const faltando = CAMPOS_CADASTRO.some(
+        (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+      );
+      if (faltando) setShowChecklistCadastral(true);
     })();
   }, [cliente]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2149,9 +2161,10 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
+    if (showChecklistCadastral) return; // cadastro primeiro, sempre
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
-  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, pendenciasGuiadasDismissed]);
+  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, pendenciasGuiadasDismissed]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
@@ -3434,6 +3447,19 @@ export default function QAClientePortalPage() {
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
+
+      {cliente?.id ? (
+        <ClienteChecklistCadastralModal
+          open={showChecklistCadastral}
+          cliente={cliente as Record<string, unknown>}
+          onClose={() => setShowChecklistCadastral(false)}
+          onConcluido={() => {
+            // Cadastro completo: fecha e passa a bola para o processual.
+            setShowChecklistCadastral(false);
+            setDocsReloadKey((k) => k + 1);
+          }}
+        />
+      ) : null}
 
       {cliente?.id ? (
         <ClienteCadastroProgressivoModal
