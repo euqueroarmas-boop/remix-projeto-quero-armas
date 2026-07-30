@@ -204,8 +204,14 @@ function parseTjsp(texto: string, orgao: "tjsp_distribuicao" | "tjsp_execucoes")
   // "NOME, RG: x, CPF: y, nascido em dd/mm/aaaa, natural de Cidade - UF,
   //  filho de PAI e MAE, conforme indicação..."
   const corrido = flat(t);
+  //
+  // "natural de" é OPCIONAL: a certidão de Distribuições do primeiro cliente
+  // simplesmente não traz esse trecho, enquanto as outras três trazem. Com o
+  // segmento obrigatório o regex falhava inteiro e o documento era rejeitado
+  // por "não traz nome/CPF/nascimento" — falso negativo que só apareceu no
+  // quarto exemplar.
   const qualificacao = corrido.match(
-    /CONSTAR contra:\s*\**\s*(.+?),\s*RG:\s*([^,]+),\s*CPF:\s*([\d.\-]+),\s*nascido em\s*([\d/]+),\s*natural de\s*(.+?),\s*filho de\s*(.+?),?\s*conforme/i,
+    /CONSTAR contra:\s*\**\s*(.+?),\s*RG:\s*([^,]+),\s*CPF:\s*([\d.\-]+),\s*nascido em\s*([\d/]+),\s*(?:natural de\s*(.+?),\s*)?filho de\s*(.+?),?\s*conforme/i,
   );
   // Aqui o documento DIZ "filho de X e Y" — pai e mãe nessa ordem, pela
   // própria redação. Ainda assim devolvo também o conjunto, para a

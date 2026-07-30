@@ -27,6 +27,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
+import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
+import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -306,6 +310,25 @@ const DOC_TRUST_TIER: Record<string, number> = {
 
 function docTrustTier(tipo: string): number {
   return DOC_TRUST_TIER[tipo] ?? 3;
+}
+
+/** Rótulo do órgão emissor, para preencher o campo do formulário. */
+const ORGAO_LABEL: Record<string, string> = {
+  stm: "Superior Tribunal Militar (STM)",
+  tse: "Tribunal Superior Eleitoral (TSE)",
+  iirgd: "SSP/SP — IIRGD",
+  tjsp_distribuicao: "Tribunal de Justiça de São Paulo",
+  tjsp_execucoes: "Tribunal de Justiça de São Paulo",
+  trf_regional: "Tribunal Regional Federal da 3ª Região",
+  tjm_sp: "Tribunal de Justiça Militar de São Paulo",
+};
+
+/** Soma dias a uma data ISO, em UTC, sem depender do fuso da máquina. */
+function somarDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return "";
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
 }
 
 function calcularConformidade(
@@ -915,15 +938,23 @@ export function ClienteDocsHubModal({
    * cruzada. Resolve cenários (ex.: Bancada/Arsenal) onde o componente
    * pai não passa explicitamente clienteCpf/clienteNome/etc.
    */
+  // Resultado da leitura local. Quando existe, é ele que manda: substitui a
+  // classificação por IA e é a fonte do painel de conferência.
+  const [conferenciaLocal, setConferenciaLocal] = useState<{
+    doc: ReturnType<typeof parseCertidao>;
+    conf: ReturnType<typeof conferirCertidao>;
+  } | null>(null);
+
   const [clienteAutoFetch, setClienteAutoFetch] = useState<{
     nome: string | null;
     cpf: string | null;
     data_nascimento: string | null;
     nome_mae: string | null;
+    naturalidade_municipio: string | null;
     cep: string | null;
     cidade: string | null;
     uf: string | null;
-  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, cep: null, cidade: null, uf: null });
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, cep: null, cidade: null, uf: null });
 
   // Docs aprovados carregados internamente quando o prop vier vazio
   const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
@@ -983,7 +1014,7 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
@@ -1010,6 +1041,9 @@ export function ClienteDocsHubModal({
           cpf: skipPessoais ? prev.cpf : (row.cpf || null),
           data_nascimento: skipPessoais ? prev.data_nascimento : (row.data_nascimento || null),
           nome_mae: skipPessoais ? prev.nome_mae : (row.nome_mae || null),
+          // Naturalidade entra para a conferência local de certidões: vários
+          // portais deixam o próprio cliente digitá-la, e a PF confere.
+          naturalidade_municipio: row.naturalidade_municipio || null,
           // Endereço: sempre atualiza — nunca vem como prop
           cep, cidade, uf,
         }));
@@ -1643,17 +1677,122 @@ export function ClienteDocsHubModal({
     }
   }
 
-  async function handleFileChange(f: File | null) {
-    setFile(f);
-    setClassificacao(null);
-    setShowTipoOverride(false);
-    if (f) {
-      // Dispara IA imediatamente — cliente não precisa escolher tipo antes.
-      await classifyAndExtract(f);
+  /**
+   * Leitura LOCAL da certidão, antes de qualquer chamada de IA.
+   *
+   * Regra do usuário (30/07/2026): não usamos mais IA para ler e comparar
+   * documentos de processo. Certidão de órgão público é PDF gerado, com camada
+   * de texto exata — o pdf.js lê e o parser extrai sem margem de erro. Modelo
+   * probabilístico que acerta 99% dos nomes erra 1 processo em 100, e a PF
+   * indefere por uma letra.
+   *
+   * Devolve `true` quando resolveu o documento (aprovando ou rejeitando). Só
+   * quando devolve `false` — layout não reconhecido — é que o fluxo antigo
+   * segue.
+   */
+  /**
+   * Avisa o cliente por e-mail que a certidão foi recusada, com o motivo e o
+   * passo a passo para reemitir. Best-effort: falha de e-mail não pode travar
+   * a tela nem esconder o motivo, que já está no painel.
+   */
+  async function notificarCertidaoRejeitada(
+    doc: NonNullable<ReturnType<typeof parseCertidao>>,
+    conf: ReturnType<typeof conferirCertidao>,
+  ) {
+    if (!qaClienteId) return;
+    try {
+      await supabase.functions.invoke("qa-notify-event", {
+        body: {
+          evento: "certidao_rejeitada",
+          cliente_id: qaClienteId,
+          certidao: getNomeDocumentoDisplay({ tipo_documento: doc.tipoDocumento }, "Certidão"),
+          orgao: ORGAO_LABEL[doc.orgao] ?? "",
+          link_emissao: getLinkEmissaoCertidao(doc.tipoDocumento) ?? "",
+          referencia_id: doc.numero_documento ?? null,
+          problemas: conf.achados
+            .filter((a) => a.problema !== "ausente_no_cadastro")
+            .map((a) => ({
+              label: a.label,
+              noDocumento: a.noDocumento,
+              noCadastro: a.noCadastro,
+              mensagem: a.mensagem,
+            })),
+        },
+      });
+    } catch (e) {
+      console.error("[certidao rejeitada] aviso falhou:", e);
     }
   }
 
+  async function tentarLeituraLocal(f: File): Promise<boolean> {
+    if (f.type !== "application/pdf") return false;
+    let texto = "";
+    try {
+      texto = await extrairTextoPdf(f);
+    } catch (e) {
+      console.warn("[leitura local] pdf.js falhou:", e);
+      return false;
+    }
+    const doc = parseCertidao(texto);
+    if (!doc) return false;
+
+    const conf = conferirCertidao(doc, {
+      nome_completo: refClienteNome,
+      cpf: refClienteCpf,
+      data_nascimento: refClienteDataNascimento,
+      nome_mae: refClienteNomeMae,
+      naturalidade_municipio: clienteAutoFetch.naturalidade_municipio,
+    });
+    setConferenciaLocal({ doc, conf });
+
+    // Preenche o formulário com o que foi LIDO do documento, não inferido.
+    setForm((prev) => ({
+      ...prev,
+      tipo_documento: doc.tipoDocumento,
+      numero_documento: doc.numero_documento ?? prev.numero_documento,
+      data_emissao: doc.data_emissao ?? prev.data_emissao,
+      orgao_emissor: ORGAO_LABEL[doc.orgao] ?? prev.orgao_emissor,
+      data_validade:
+        doc.data_emissao && doc.validade_dias
+          ? somarDias(doc.data_emissao, doc.validade_dias)
+          : prev.data_validade,
+    }));
+    setCategoriaHub(inferHubCategoriaFromTipo(doc.tipoDocumento));
+
+    if (conf.veredicto === "rejeitado") {
+      toast.error("Certidão recusada na conferência. Veja o motivo no painel.");
+      void notificarCertidaoRejeitada(doc, conf);
+    } else {
+      toast.success("Certidão lida e conferida com o seu cadastro.");
+    }
+    return true;
+  }
+
+  async function handleFileChange(f: File | null) {
+    setFile(f);
+    setClassificacao(null);
+    setConferenciaLocal(null);
+    setShowTipoOverride(false);
+    if (!f) return;
+    setExtracting(true);
+    try {
+      // Parse-first: a IA só entra se o layout não for reconhecido.
+      const resolvido = await tentarLeituraLocal(f);
+      if (resolvido) return;
+    } finally {
+      setExtracting(false);
+    }
+    await classifyAndExtract(f);
+  }
+
   async function handleSave() {
+    // Certidão recusada na conferência local NÃO entra no acervo. Salvar
+    // significaria dar a exigência por cumprida com um documento que a PF vai
+    // recusar — o cliente descobriria só no indeferimento.
+    if (conferenciaLocal?.conf.veredicto === "rejeitado") {
+      toast.error("Esta certidão foi recusada na conferência e não pode ser salva. O cliente já foi avisado por e-mail com o motivo.");
+      return;
+    }
     if (!form.tipo_documento) {
       toast.error("Escolha o tipo de documento.");
       return;
@@ -2705,7 +2844,66 @@ export function ClienteDocsHubModal({
             )}
 
             {/* ── Painel de conformidade cruzada (todos os documentos) ── */}
-            {conformidade.length > 0 && (
+            {/* Conferência LOCAL — leitura do PDF sem IA. Quando existe, é ela
+                que vale; o painel de conformidade da IA fica para os tipos que
+                ainda não têm parser. */}
+            {conferenciaLocal && (
+              <div
+                className={
+                  conferenciaLocal.conf.veredicto === "rejeitado"
+                    ? "rounded-md border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04] p-3"
+                    : conferenciaLocal.conf.veredicto === "cadastro_pendente"
+                      ? "rounded-md border border-amber-300 bg-amber-50 p-3"
+                      : "rounded-md border border-emerald-300 bg-emerald-50 p-3"
+                }
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7A7A7A]">
+                  Conferência com o cadastro · leitura local
+                </p>
+                <p
+                  className={
+                    "mt-1 text-[13px] font-semibold " +
+                    (conferenciaLocal.conf.veredicto === "rejeitado"
+                      ? "text-[#7A1F2B]"
+                      : conferenciaLocal.conf.veredicto === "cadastro_pendente"
+                        ? "text-amber-800"
+                        : "text-emerald-800")
+                  }
+                >
+                  {conferenciaLocal.conf.veredicto === "rejeitado"
+                    ? "Certidão recusada — não pode ser salva"
+                    : conferenciaLocal.conf.veredicto === "cadastro_pendente"
+                      ? "Certidão correta — falta dado no cadastro"
+                      : "Certidão conferida — todos os dados batem"}
+                </p>
+                {conferenciaLocal.conf.achados.length > 0 && (
+                  <ul className="mt-2 space-y-2">
+                    {conferenciaLocal.conf.achados.map((a, i) => (
+                      <li key={i} className="text-[12px] leading-relaxed text-[#3a3a3a]">
+                        <span className="font-semibold">{a.label}: </span>
+                        {a.noDocumento ? (
+                          <>
+                            na certidão <strong>{a.noDocumento}</strong>
+                            {a.noCadastro ? (
+                              <> · no cadastro <strong>{a.noCadastro}</strong></>
+                            ) : null}
+                            {". "}
+                          </>
+                        ) : null}
+                        {a.mensagem}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {conferenciaLocal.conf.veredicto === "rejeitado" && (
+                  <p className="mt-2 text-[11px] text-[#7A7A7A]">
+                    O cliente foi avisado por e-mail com o motivo e o passo a passo para emitir novamente.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!conferenciaLocal && conformidade.length > 0 && (
               <div className={cn(
                 "rounded-2xl border p-3 text-xs",
                 conformidade.some(i => i.status === "divergente")

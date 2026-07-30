@@ -271,3 +271,21 @@ export function exigeCertidaoSecaoJudiciaria(ufCliente: string | null | undefine
   if (uf.length !== 2) return false;
   return !UFS_SEM_EXIGENCIA_SECAO_JUDICIARIA.has(uf);
 }
+
+/**
+ * Link oficial de emissão para o slug da exigência, quando confirmado.
+ *
+ * `null` quando ainda não mapeamos a URL daquele órgão/UF — a UI deve pedir
+ * emissão manual em vez de mandar o cliente para um link chutado.
+ */
+export function getLinkEmissaoCertidao(tipo: string | null | undefined): string | null {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  const direto = getAbrangenciaCertidao(t)?.link ?? null;
+  if (direto) return direto;
+  // Slugs que não estão nas listas de abrangência mas têm portal conhecido.
+  const EXTRAS: Record<string, string> = {
+    antecedentes_militar_estadual: "https://certidaocriminal.tjmsp.jus.br/",
+    antecedentes_criminais: "https://www.ssp.sp.gov.br/servicos/atestado-de-antecedentes",
+  };
+  return EXTRAS[t] ?? null;
+}
