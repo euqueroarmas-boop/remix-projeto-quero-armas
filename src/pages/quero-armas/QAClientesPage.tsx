@@ -2657,7 +2657,7 @@ export default function QAClientesPage() {
       "responsavel_endereco_residiu_ate",
     ].some((k) => (c as any)?.[k]);
     return (
-      <div className="space-y-3 md:space-y-4 px-0.5">
+      <div className="space-y-3 md:space-y-4 px-0.5 pb-16 md:pb-24">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
         <ClienteHeaderCard
           cliente={c}

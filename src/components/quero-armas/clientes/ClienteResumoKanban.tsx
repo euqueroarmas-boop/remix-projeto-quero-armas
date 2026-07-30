@@ -39,6 +39,7 @@ interface Props {
   onLogout?: () => void;
   avatarUrl?: string | null;
   avatarInitials?: string;
+  lockPageScroll?: boolean;
 }
 
 type FrontTone = "bordo" | "amber" | "green";
@@ -141,6 +142,7 @@ export default function ClienteResumoKanban({
   onLogout,
   avatarUrl,
   avatarInitials = "QA",
+  lockPageScroll = false,
 }: Props) {
   const { map: SERVICO_MAP } = useQAServicosMap();
 
@@ -504,9 +506,11 @@ export default function ClienteResumoKanban({
     return () => window.clearInterval(id);
   }, [filteredUrgents.length, autoPaused]);
 
-  // Trava o scroll da página apenas no desktop (>=1024px).
-  // No mobile/tablet o conteúdo precisa rolar para acessar os cards e o rodapé.
+  // O portal do cliente usa o resumo como tela principal e pode optar por
+  // travar o body. No painel admin o componente fica embutido em uma página
+  // maior; bloquear html/body ali impede a rolagem do cadastro do cliente.
   useEffect(() => {
+    if (!lockPageScroll) return;
     if (typeof window === "undefined") return;
     const mq = window.matchMedia("(min-width: 1024px)");
     const { body, documentElement: html } = document;
@@ -535,7 +539,7 @@ export default function ClienteResumoKanban({
       html.style.overflow = prevHtml;
       body.style.overscrollBehavior = prevOverscroll;
     };
-  }, []);
+  }, [lockPageScroll]);
 
   const activeUrgent = filteredUrgents[focusIndex] || null;
   const memberSince = (() => {

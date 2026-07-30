@@ -2792,6 +2792,7 @@ export default function QAClientePortalPage() {
           onOpenKlal={() => setActiveSection("mensagens" as any)}
           avatarUrl={avatarUrl}
           avatarInitials={userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
+          lockPageScroll
         />
         {false && (() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);
