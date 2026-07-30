@@ -43,6 +43,28 @@ const TIPOS_DOC_VALIDOS = new Set([
   "outro",
 ]);
 
+// Validade por tipo — mesmas regras de calcularValidadeEfetiva no front.
+// Mantidas aqui porque a edge function não importa do bundle do React.
+function validadePorTipo(tipo: string, emissaoIso: string): string | null {
+  const d = new Date(`${emissaoIso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  const addDias = (n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const addMeses = (n: number) => { const x = new Date(d); x.setUTCMonth(x.getUTCMonth() + n); return x.toISOString().slice(0, 10); };
+
+  // Documentos societários da Receita: 30 dias
+  if (["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei", "renda_qsa"].includes(tipo)) return addDias(30);
+  // Certidões de 90 dias
+  if (["antecedentes_federal_trf3_regional", "antecedentes_militar"].includes(tipo)) return addDias(90);
+  // Identificação civil: 10 anos
+  if (["rg_com_cpf", "cin", "cnh"].includes(tipo)) return addMeses(120);
+  // Procuração e filiação a clube: 12 meses
+  if (["procuracao", "procuracao_assinada", "comprovante_clube_tiro"].includes(tipo)) return addMeses(12);
+  // Comprovante de residência e demais certidões: 1 mês
+  if (tipo === "comprovante_residencia" || tipo.startsWith("antecedentes_")) return addMeses(1);
+  // Recibo de pagamento e contratos não vencem
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -122,14 +144,25 @@ Deno.serve(async (req) => {
     if (action === "reclassificar_documento") {
       const documentoId = String(body.documento_id || "").trim();
       const novoTipo = String(body.novo_tipo || "").trim();
+      // Data de emissão digitada pela equipe. Opcional: quando vem sozinha,
+      // corrige só a data e mantém o tipo. Documentos gravados pela Central
+      // antes da correção não têm emissão em lugar nenhum do banco — o dado
+      // foi descartado na gravação e só pode voltar por digitação.
+      const novaEmissao = String(body.data_emissao || "").trim();
       if (!documentoId) return json({ error: "documento_id_required" }, 400);
-      if (!TIPOS_DOC_VALIDOS.has(novoTipo)) {
+      if (novaEmissao && !/^\d{4}-\d{2}-\d{2}$/.test(novaEmissao)) {
+        return json({ error: "data_invalida", message: "Data de emissão deve estar no formato AAAA-MM-DD." }, 400);
+      }
+      if (!novoTipo && !novaEmissao) {
+        return json({ error: "nada_a_alterar", message: "Informe um novo tipo, uma data de emissão, ou ambos." }, 400);
+      }
+      if (novoTipo && !TIPOS_DOC_VALIDOS.has(novoTipo)) {
         return json({ error: "tipo_invalido", message: `Tipo "${novoTipo}" não existe no catálogo do Hub Documental.` }, 400);
       }
 
       const { data: doc, error: docErr } = await admin
         .from("qa_documentos_cliente")
-        .select("id, qa_cliente_id, tipo_documento, status, arquivo_nome")
+        .select("id, qa_cliente_id, tipo_documento, status, arquivo_nome, data_emissao, data_validade")
         .eq("id", documentoId)
         .maybeSingle();
       if (docErr) return json({ error: "db_error", message: docErr.message }, 500);
@@ -137,18 +170,57 @@ Deno.serve(async (req) => {
       if (Number(doc.qa_cliente_id) !== clienteId) {
         return json({ error: "documento_de_outro_cliente" }, 403);
       }
-      if (doc.tipo_documento === novoTipo) {
-        return json({ ok: true, inalterado: true, tipo_documento: novoTipo });
+      const tipoAnterior = doc.tipo_documento;
+      const tipoFinal = novoTipo || tipoAnterior;
+      const emissaoAnterior = doc.data_emissao;
+      const emissaoFinal = novaEmissao || doc.data_emissao || null;
+
+      if (tipoFinal === tipoAnterior && emissaoFinal === emissaoAnterior) {
+        return json({ ok: true, inalterado: true, tipo_documento: tipoFinal });
       }
 
-      const tipoAnterior = doc.tipo_documento;
-      // Só o tipo muda. O status (aprovado/pendente/etc.) é preservado de
-      // propósito: reclassificar corrige a etiqueta, não revalida o documento.
+      // Validade recalculada sempre que tipo ou emissão mudam — as duas coisas
+      // determinam o prazo. Recibo de pagamento e contrato devolvem null: não vencem.
+      const validadeFinal = emissaoFinal ? validadePorTipo(tipoFinal, emissaoFinal) : null;
+
+      // O status (aprovado/pendente) é preservado de propósito: corrigir a
+      // etiqueta ou a data não revalida o arquivo.
+      const patch: Record<string, unknown> = {
+        tipo_documento: tipoFinal,
+        updated_at: new Date().toISOString(),
+      };
+      if (emissaoFinal !== emissaoAnterior) {
+        patch.data_emissao = emissaoFinal;
+        patch.data_validade = validadeFinal;
+      }
       const { error: updErr } = await admin
         .from("qa_documentos_cliente")
-        .update({ tipo_documento: novoTipo, updated_at: new Date().toISOString() })
+        .update(patch)
         .eq("id", documentoId);
       if (updErr) return json({ error: "update_falhou", message: updErr.message }, 500);
+
+      // O QSA é emitido junto com o cartão CNPJ e não traz data própria.
+      // Ao datar o cartão, propaga para os QSA do mesmo cliente que estão sem data.
+      let qsaAtualizados = 0;
+      if (novaEmissao && ["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei"].includes(tipoFinal)) {
+        const { data: qsas } = await admin
+          .from("qa_documentos_cliente")
+          .select("id")
+          .eq("qa_cliente_id", clienteId)
+          .eq("tipo_documento", "renda_qsa")
+          .is("data_emissao", null)
+          .neq("status", "excluido");
+        for (const q of (qsas ?? [])) {
+          await admin.from("qa_documentos_cliente")
+            .update({
+              data_emissao: novaEmissao,
+              data_validade: validadePorTipo("renda_qsa", novaEmissao),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", (q as { id: string }).id);
+          qsaAtualizados++;
+        }
+      }
 
       try {
         await admin.from("qa_logs_auditoria").insert({
@@ -161,7 +233,11 @@ Deno.serve(async (req) => {
           documento_id: documentoId,
           arquivo_nome: doc.arquivo_nome,
           tipo_anterior: tipoAnterior,
-          tipo_novo: novoTipo,
+          tipo_novo: tipoFinal,
+          emissao_anterior: emissaoAnterior,
+          emissao_nova: emissaoFinal,
+          validade_calculada: validadeFinal,
+          qsa_propagados: qsaAtualizados,
           status_preservado: doc.status,
           motivo: motivo || null,
         },
@@ -172,7 +248,10 @@ Deno.serve(async (req) => {
         ok: true,
         documento_id: documentoId,
         tipo_anterior: tipoAnterior,
-        tipo_documento: novoTipo,
+        tipo_documento: tipoFinal,
+        data_emissao: emissaoFinal,
+        data_validade: validadeFinal,
+        qsa_propagados: qsaAtualizados,
         status: doc.status,
       });
     }

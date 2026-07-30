@@ -82,6 +82,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   const [motivoTmp, setMotivoTmp] = useState("");
   const [reclassificandoId, setReclassificandoId] = useState<string | null>(null);
   const [novoTipoTmp, setNovoTipoTmp] = useState("");
+  const [novaEmissaoTmp, setNovaEmissaoTmp] = useState("");
   const [salvandoTipo, setSalvandoTipo] = useState(false);
   const viewer = useDocumentoViewer();
 
@@ -187,7 +188,10 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   // tipo_documento — um documento gravado com o tipo errado (ou como "outro")
   // faz o sistema pedir ao cliente algo que ele já enviou.
   const handleReclassificar = async (docId: string) => {
-    if (!novoTipoTmp) { toast.error("Escolha o novo tipo."); return; }
+    if (!novoTipoTmp && !novaEmissaoTmp) {
+      toast.error("Escolha o novo tipo, informe a data de emissão, ou ambos.");
+      return;
+    }
     if (!clienteId) { toast.error("Cliente sem ID interno — não é possível reclassificar."); return; }
     setSalvandoTipo(true);
     try {
@@ -196,17 +200,31 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           action: "reclassificar_documento",
           cliente_id: clienteId,
           documento_id: docId,
-          novo_tipo: novoTipoTmp,
+          novo_tipo: novoTipoTmp || undefined,
+          data_emissao: novaEmissaoTmp || undefined,
         },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).message || (data as any).error);
 
-      const de = TIPO_LABEL[(data as any).tipo_anterior] || (data as any).tipo_anterior;
-      const para = TIPO_LABEL[novoTipoTmp] || novoTipoTmp;
-      toast.success(`Tipo alterado: ${de} → ${para}. A exigência do processo foi recalculada.`);
+      const r = data as any;
+      const partes: string[] = [];
+      if (novoTipoTmp && r.tipo_anterior !== r.tipo_documento) {
+        partes.push(`tipo: ${TIPO_LABEL[r.tipo_anterior] || r.tipo_anterior} → ${TIPO_LABEL[novoTipoTmp] || novoTipoTmp}`);
+      }
+      if (novaEmissaoTmp) {
+        const venc = r.data_validade
+          ? ` (vence em ${new Date(r.data_validade + "T00:00:00").toLocaleDateString("pt-BR")})`
+          : " (documento sem prazo de validade)";
+        partes.push(`emissão: ${new Date(novaEmissaoTmp + "T00:00:00").toLocaleDateString("pt-BR")}${venc}`);
+      }
+      if (r.qsa_propagados > 0) {
+        partes.push(`${r.qsa_propagados} QSA receberam a mesma data`);
+      }
+      toast.success(`Documento corrigido — ${partes.join(" · ")}.`);
       setReclassificandoId(null);
       setNovoTipoTmp("");
+      setNovaEmissaoTmp("");
       // Invalidação ampla de propósito: mudar o tipo altera quais exigências o
       // processo considera cumpridas, e isso é lido por checklist, kanban e
       // pendências — telas com queryKeys próprias. Reclassificar é ação rara,
@@ -312,9 +330,11 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             onViewFile={handleViewFile}
             reclassificandoId={reclassificandoId}
             novoTipoTmp={novoTipoTmp}
+            novaEmissaoTmp={novaEmissaoTmp}
             salvandoTipo={salvandoTipo}
             setReclassificandoId={setReclassificandoId}
             setNovoTipoTmp={setNovoTipoTmp}
+            setNovaEmissaoTmp={setNovaEmissaoTmp}
             onReclassificar={handleReclassificar}
           />
         ))}
@@ -344,9 +364,11 @@ interface GrupoCardProps {
   onViewFile: (path: string) => void;
   reclassificandoId: string | null;
   novoTipoTmp: string;
+  novaEmissaoTmp: string;
   salvandoTipo: boolean;
   setReclassificandoId: (v: string | null) => void;
   setNovoTipoTmp: (v: string) => void;
+  setNovaEmissaoTmp: (v: string) => void;
   onReclassificar: (id: string) => void;
 }
 
@@ -429,8 +451,8 @@ interface DocRowProps extends GrupoCardProps {
 function DocRow({
   d, isPrincipal, reprovandoId, motivoTmp, setReprovandoId, setMotivoTmp,
   onAprovar, onReprovar, onDelete, onViewFile,
-  reclassificandoId, novoTipoTmp, salvandoTipo,
-  setReclassificandoId, setNovoTipoTmp, onReclassificar,
+  reclassificandoId, novoTipoTmp, novaEmissaoTmp, salvandoTipo,
+  setReclassificandoId, setNovoTipoTmp, setNovaEmissaoTmp, onReclassificar,
 }: DocRowProps) {
           const isPending = d.status === "pendente_aprovacao";
           const isReprovado = d.status === "reprovado";
@@ -526,20 +548,35 @@ function DocRow({
                           );
                         })}
                       </select>
+                      <div>
+                        <label className="text-[10px] text-slate-500 block mb-0.5">
+                          Data de emissão {d.data_emissao ? "" : "(em branco — a validade não é calculada sem ela)"}
+                        </label>
+                        <input
+                          type="date"
+                          value={novaEmissaoTmp}
+                          onChange={(e) => setNovaEmissaoTmp(e.target.value)}
+                          className="w-full text-[11px] border border-slate-200 rounded p-1.5 bg-white"
+                        />
+                        <p className="text-[9px] text-slate-500 leading-snug mt-0.5">
+                          A validade é calculada pela regra do tipo. No cartão CNPJ, a data
+                          também é aplicada aos QSA do cliente que estiverem sem data.
+                        </p>
+                      </div>
                       <p className="text-[9px] text-slate-500 leading-snug">
-                        O status do documento é preservado — reclassificar corrige a etiqueta,
-                        não revalida o arquivo. A alteração fica registrada em auditoria.
+                        O status do documento é preservado — corrigir tipo ou data não revalida
+                        o arquivo. A alteração fica registrada em auditoria.
                       </p>
                       <div className="flex justify-end gap-1.5">
                         <Button size="sm" variant="ghost" className="h-6 text-[10px]"
                           disabled={salvandoTipo}
-                          onClick={() => { setReclassificandoId(null); setNovoTipoTmp(""); }}>
+                          onClick={() => { setReclassificandoId(null); setNovoTipoTmp(""); setNovaEmissaoTmp(""); }}>
                           Cancelar
                         </Button>
                         <Button size="sm" className="h-6 text-[10px] bg-[#7A1F2B] hover:bg-[#63161f]"
-                          disabled={salvandoTipo || !novoTipoTmp}
+                          disabled={salvandoTipo || (!novoTipoTmp && !novaEmissaoTmp)}
                           onClick={() => onReclassificar(d.id)}>
-                          {salvandoTipo ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar novo tipo"}
+                          {salvandoTipo ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar correção"}
                         </Button>
                       </div>
                     </div>
@@ -606,6 +643,7 @@ function DocRow({
                     onClick={() => {
                       setReclassificandoId(reclassificandoId === d.id ? null : d.id);
                       setNovoTipoTmp("");
+                      setNovaEmissaoTmp(d.data_emissao || "");
                     }}
                     className="h-7 px-2 text-[10px] text-[#7A1F2B] border-[#7A1F2B]/30 hover:bg-[#7A1F2B]/5"
                     title="Alterar tipo do documento (corrige a exigência do processo)"
