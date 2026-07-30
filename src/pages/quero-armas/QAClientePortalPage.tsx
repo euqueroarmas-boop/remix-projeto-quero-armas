@@ -435,6 +435,7 @@ export default function QAClientePortalPage() {
   // Só depois que o cadastro fecha é que o checklist processual entra: nenhum
   // documento é gerado antes de o cadastro estar completo.
   const [showChecklistCadastral, setShowChecklistCadastral] = useState(false);
+  const [reconciliouCadastro, setReconciliouCadastro] = useState(false);
   // Estado controlado do dropdown "Atalhos rápidos" da marca (avatar + Arsenal).
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
@@ -2140,14 +2141,26 @@ export default function QAClientePortalPage() {
 
       // Recarrega a tela com o estado já reconciliado.
       setDocsReloadKey((k) => k + 1);
-      // O cadastro vem primeiro — mas só abre se houver pendência de verdade.
-      // Abrir e fechar no mesmo tick faria o modal piscar na cara do cliente.
-      const faltando = CAMPOS_CADASTRO.some(
-        (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
-      );
-      if (faltando) setShowChecklistCadastral(true);
+      setReconciliouCadastro(true);
     })();
   }, [cliente]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Ordem do portal: assinaturas → cadastro → checklist do processo ───────
+  // Contrato e procuração aparecem juntos na fila e o cliente resolve um a um.
+  // O cadastro só entra depois das duas: os dados para elaborar contrato e
+  // procuração já vieram do fechamento da venda, então não há por que travar
+  // a assinatura esperando cadastro completo.
+  useEffect(() => {
+    if (!reconciliouCadastro) return;
+    if (!pendingContractsLoaded) return;
+    if (pendingSignatureCount > 0) return;   // assinaturas primeiro
+    if (showContratoPopup || showAddDoc || showCadastroModal) return;
+    if (showChecklistCadastral) return;
+    const faltando = CAMPOS_CADASTRO.some(
+      (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+    );
+    if (faltando) setShowChecklistCadastral(true);
+  }, [reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cliente]);
 
   // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
   // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
@@ -2161,7 +2174,9 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
-    if (showChecklistCadastral) return; // cadastro primeiro, sempre
+    // Assinatura pendente passa na frente; sem assinatura, o cadastro é que
+    // precisa estar fechado antes de cobrar documento do processo.
+    if (showChecklistCadastral && pendingSignatureCount === 0) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
   }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, pendenciasGuiadasDismissed]);
