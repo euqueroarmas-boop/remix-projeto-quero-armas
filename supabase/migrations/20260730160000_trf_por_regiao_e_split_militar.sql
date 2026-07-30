@@ -230,7 +230,12 @@ WHERE sd.tipo_documento = 'antecedentes_federal_trf3_regional'
        AND COALESCE(x.condicao_profissional,'') = COALESCE(sd.condicao_profissional,'')
   );
 
--- 4.2 Seção judiciária: replica a linha SJSP/JEF para as 27 UFs
+-- 4.2 Seção judiciária: replica a linha SJSP/JEF para as demais UFs.
+--
+-- SÃO PAULO FICA DE FORA (regra do usuário, 30/07/2026): a PF de SP exige
+-- apenas a certidão REGIONAL do TRF3. Pedir também a da Seção Judiciária é
+-- cobrar do cliente uma emissão que ninguém vai conferir. A regra vale, por
+-- ora, só para SP — nas outras UFs a exigência continua existindo.
 INSERT INTO public.qa_servicos_documentos (
   servico_id, tipo_documento, nome_documento, etapa, ordem, obrigatorio,
   obrigatorio_etapa02, emissor, escopo, formato_aceito, validade_dias,
@@ -251,6 +256,7 @@ SELECT
 FROM public.qa_servicos_documentos sd
 CROSS JOIN public.qa_trf_regioes r
 WHERE sd.tipo_documento = 'antecedentes_federal_sjsp_jef'
+  AND r.uf <> 'SP'
   AND NOT EXISTS (
     SELECT 1 FROM public.qa_servicos_documentos x
      WHERE x.servico_id = sd.servico_id

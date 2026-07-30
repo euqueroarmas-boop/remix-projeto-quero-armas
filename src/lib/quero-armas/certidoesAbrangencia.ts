@@ -103,7 +103,10 @@ export const CERTIDOES_FEDERAIS_TRF: CertidaoAbrangencia[] = [
     abrangencia: "federal_trf",
     uf: "SP",
     link: null,
-    nota: "Seção Judiciária de São Paulo. Equivalente em outra UF é a Seção Judiciária local.",
+    nota:
+      "NÃO se aplica a São Paulo: a PF de SP exige apenas a certidão regional " +
+      "do TRF3 (regra do usuário, 30/07/2026). Nas demais UFs a exigência da " +
+      "Seção Judiciária local continua valendo.",
   },
 ];
 
@@ -252,4 +255,19 @@ export function exigeCertidaoTjmEstadual(ufCliente: string | null | undefined): 
   const uf = String(ufCliente ?? "").trim().toUpperCase();
   if (uf.length !== 2) return false;
   return UFS_COM_TJM_ESTADUAL.has(uf);
+}
+
+/**
+ * A certidão da Seção Judiciária deve ser exigida deste cliente?
+ *
+ * Em São Paulo, não: a PF de SP confere só a regional do TRF3. Fora de SP a
+ * exigência permanece. Regra restrita a SP por enquanto — se outras delegacias
+ * adotarem o mesmo entendimento, esta lista cresce.
+ */
+const UFS_SEM_EXIGENCIA_SECAO_JUDICIARIA = new Set(["SP"]);
+
+export function exigeCertidaoSecaoJudiciaria(ufCliente: string | null | undefined): boolean {
+  const uf = String(ufCliente ?? "").trim().toUpperCase();
+  if (uf.length !== 2) return false;
+  return !UFS_SEM_EXIGENCIA_SECAO_JUDICIARIA.has(uf);
 }
