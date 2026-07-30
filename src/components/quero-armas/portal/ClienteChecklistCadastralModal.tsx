@@ -99,12 +99,12 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
   const pendentes = useMemo<CampoCadastro[]>(() => {
     if (!cliente) return [];
     return CAMPOS_CADASTRO.filter(
-      (c) => c.crucial && vazio(cliente[c.key]) && !respondidos.has(c.key),
+      (c) => c.crucial && !c.somenteEquipe && vazio(cliente[c.key]) && !respondidos.has(c.key),
     );
   }, [cliente, respondidos]);
 
   const atual = pendentes[0] ?? null;
-  const totalObrigatorios = CAMPOS_CADASTRO.filter((c) => c.crucial).length;
+  const totalObrigatorios = CAMPOS_CADASTRO.filter((c) => c.crucial && !c.somenteEquipe).length;
   const jaPreenchidos = totalObrigatorios - pendentes.length;
 
   useEffect(() => { setValor(""); setErro(null); }, [atual?.key]);

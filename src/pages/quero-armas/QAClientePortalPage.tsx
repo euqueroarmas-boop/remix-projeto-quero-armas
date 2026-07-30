@@ -382,7 +382,12 @@ export default function QAClientePortalPage() {
       !opts?.pularGateCadastral &&
       pendingSignatureCount === 0 &&
       CAMPOS_CADASTRO.some(
-        (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+        (c) =>
+          c.crucial &&
+          // Campo de equipe não conta: o cliente não tem como resolvê-lo, e o
+          // gate ficaria travado abrindo um wizard sem pergunta nenhuma.
+          !c.somenteEquipe &&
+          String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
       );
     if (faltaCadastro) {
       setShowChecklistCadastral(true);
@@ -2181,7 +2186,10 @@ export default function QAClientePortalPage() {
     if (showContratoPopup || showAddDoc || showCadastroModal) return;
     if (showChecklistCadastral || checklistCadastralAbertoRef.current) return;
     const faltando = CAMPOS_CADASTRO.some(
-      (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+      (c) =>
+        c.crucial &&
+        !c.somenteEquipe &&
+        String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
     );
     if (faltando) {
       checklistCadastralAbertoRef.current = true;

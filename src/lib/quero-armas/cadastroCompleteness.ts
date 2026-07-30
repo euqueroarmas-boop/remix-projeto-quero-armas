@@ -19,6 +19,16 @@ export interface CampoCadastro {
   /** Explicação curta de por que o dado é pedido. */
   ajuda?: string;
   /**
+   * Campo que só a equipe altera — o cliente nunca é perguntado sobre ele.
+   *
+   * E-mail e CPF são a identidade do cliente: chegam pela compra no site, pela
+   * Central de Adesão ou pelo cadastro interno, e tudo se amarra neles. Por
+   * isso a edge function `qa-cliente-atualizar-cadastro` os recusa. Se o
+   * checklist perguntasse, o cliente responderia, a função rejeitaria e a
+   * pergunta voltaria para sempre. Continuam editáveis no /admin.
+   */
+  somenteEquipe?: boolean;
+  /**
    * Links oficiais para o cliente obter o dado sem sair procurando.
    *
    * Só entram URLs de órgão oficial que eu confirmei existir. Link quebrado
@@ -64,7 +74,7 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
   // Contato
   { key: "celular", label: "Celular (com DDD)", grupo: "contato", crucial: true, pergunta: "Qual é o seu celular com WhatsApp?", ajuda: "É por onde vamos te avisar do andamento.", tipo: "tel", placeholder: "(11) 99999-9999", colSpan: 2 },
 
-  { key: "email", label: "E-mail", grupo: "contato", crucial: true, tipo: "text", placeholder: "voce@email.com", colSpan: 2, pergunta: "Qual é o seu e-mail?", ajuda: "Usamos para enviar contrato, procuração e avisos do processo." },
+  { key: "email", label: "E-mail", grupo: "contato", crucial: true, somenteEquipe: true, tipo: "text", placeholder: "voce@email.com", colSpan: 2, pergunta: "Qual é o seu e-mail?", ajuda: "Identidade de acesso do cliente — alterável apenas pela equipe." },
   { key: "titulo_eleitor", label: "Título de eleitor", grupo: "identidade", crucial: true, tipo: "text", colSpan: 1, pergunta: "Qual é o número do seu título de eleitor?", ajuda: "Está no seu título, no app e-Título ou na Certidão de Crimes Eleitorais emitida pelo TSE — nela o número do título vem impresso.", links: [
     { label: "Consultar título no autoatendimento do TSE", url: "https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral" },
     { label: "Emitir Certidão de Crimes Eleitorais (TSE)", url: "https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais" },
