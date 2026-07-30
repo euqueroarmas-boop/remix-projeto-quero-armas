@@ -60,14 +60,28 @@ export default function QAClienteLoginV2Page() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data: link } = await supabase
-      .from("cliente_auth_links" as any)
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
+    // O vínculo cliente↔login existe em DOIS lugares e ambos valem:
+    //   • cliente_auth_links (legado)
+    //   • qa_clientes.user_id (fluxo QA-puro, usado pelo próprio portal)
+    // Checar só o primeiro fazia o login pedir CPF a cada acesso mesmo com o
+    // cadastro já vinculado — o vincular gravava em qa_clientes.user_id e a
+    // verificação seguinte olhava para cliente_auth_links, que estava vazia.
+    const [{ data: link }, { data: clienteDireto }] = await Promise.all([
+      supabase
+        .from("cliente_auth_links" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle(),
+      supabase
+        .from("qa_clientes" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("excluido", false)
+        .maybeSingle(),
+    ]);
 
-    if (link) return true;
+    if (link || clienteDireto) return true;
 
     // Trigger não conseguiu vincular automaticamente → pede CPF
     setNeedCpf(true);
