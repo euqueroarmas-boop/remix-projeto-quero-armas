@@ -124,10 +124,21 @@ function daysUntil(dateStr: string | null | undefined): number | null {
   return Math.floor((parsed.getTime() - today.getTime()) / 86400000);
 }
 
+/**
+ * Faixas de prazo, iguais para QUALQUER documento (definidas pelo usuário,
+ * 30/07/2026):
+ *
+ *   vencido ou até 10 dias → vermelho, crítico
+ *   11 a 30 dias           → amarelo, precisa se programar
+ *   acima de 30 dias       → verde, tranquilo
+ */
+const PRAZO_CRITICO_DIAS = 10;
+const PRAZO_ATENCAO_DIAS = 30;
+
 function frontStatus(days: number | null): FrontItem["tone"] {
   if (days === null) return "muted";
-  if (days < 0 || days <= 7) return "bad";
-  if (days <= 45) return "warn";
+  if (days < 0 || days <= PRAZO_CRITICO_DIAS) return "bad";
+  if (days <= PRAZO_ATENCAO_DIAS) return "warn";
   return "ok";
 }
 
@@ -446,7 +457,10 @@ export default function ClienteResumoKanban({
       detalhe?: string,
     ) => {
       const days = daysUntil(date);
-      if (days === null || days > 7) return;
+      // O banner de ação imediata acompanha a faixa vermelha: se o documento
+      // já está crítico, ele aparece aqui. Antes a janela era de 7 dias e
+      // ficava fora de sincronia com a cor do card.
+      if (days === null || days > PRAZO_CRITICO_DIAS) return;
       urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo, detalhe });
     };
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
