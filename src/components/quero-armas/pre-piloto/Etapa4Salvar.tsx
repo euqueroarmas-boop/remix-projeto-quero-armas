@@ -408,6 +408,13 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
                 tipo_ia_confianca: a.tipo_ia_confianca ?? null,
                 tipo_ia_motivo: a.tipo_ia_motivo ?? null,
                 validacao_final: "hub_documental",
+                // Tudo que a IA leu do documento. Antes era descartado: só
+                // tipo e confiança eram gravados, e o documento chegava ao Hub
+                // sem data de emissão (logo, sem validade e sem alerta de
+                // vencimento) e sem nada para a validação cruzada comparar.
+                // Usa a mesma chave `camposExtraidos` do fluxo do Hub, para
+                // que backfill e conformidade leiam de um só lugar.
+                ...(a.campos_extraidos ? { camposExtraidos: a.campos_extraidos } : {}),
               },
             };
             const { error: insErr } = await supabase

@@ -40,6 +40,13 @@ export type ArquivoUpload = {
    * alertas de vencimento nunca disparavam.
    */
   data_emissao?: string;
+  /**
+   * Todos os campos que a IA extraiu do documento (nome, CPF, número, órgão,
+   * datas...). A Central descartava tudo isso e gravava só tipo e confiança —
+   * por isso os documentos dela chegavam ao Hub sem data e sem nada para a
+   * validação cruzada comparar depois.
+   */
+  campos_extraidos?: Record<string, unknown>;
 };
 
 export type ClienteSalvo = {

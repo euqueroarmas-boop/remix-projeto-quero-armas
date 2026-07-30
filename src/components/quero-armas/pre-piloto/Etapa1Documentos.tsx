@@ -220,6 +220,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           tipo_ia_confianca: r.confianca,
           tipo_ia_motivo: r.motivo,
           ...(emissao ? { data_emissao: emissao } : {}),
+          ...(r.campos_extraidos ? { campos_extraidos: r.campos_extraidos } : {}),
         };
       }));
 
