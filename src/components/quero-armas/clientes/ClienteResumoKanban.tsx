@@ -383,16 +383,14 @@ export default function ClienteResumoKanban({
         const nomeBruto = getNomeDocumentoDisplay(g.principal, "Documento");
         const nome = shortName(nomeBruto, "Documento");
         const days = g.validadePrincipal.dias;
+        // A cor sai SEMPRE da faixa de dias (frontStatus: <=7 vermelho,
+        // <=45 amarelo, >45 verde). Antes ela vinha de `statusConsolidado`,
+        // cujo "vigente" pintava de verde qualquer documento não vencido —
+        // por isso 22 e 24 dias apareciam verdes, e não amarelos.
+        // Só "histórico" continua vindo do consolidado: versão antiga não tem
+        // prazo a cobrar, é registro.
         const tone: FrontItem["tone"] =
-          g.statusConsolidado === "vigente"
-            ? "ok"
-            : g.statusConsolidado === "vence_em_breve"
-              ? "warn"
-              : g.statusConsolidado === "vencido"
-                ? "bad"
-                : g.statusConsolidado === "historico"
-                  ? "muted"
-                  : frontStatus(days);
+          g.statusConsolidado === "historico" ? "muted" : frontStatus(days);
         // O prazo restante é sempre a informação principal — é o que diz ao
         // cliente se precisa agir. A existência de versões anteriores já é
         // sinalizada pelo indicador `stack`; mostrar "4v" no lugar dos dias
