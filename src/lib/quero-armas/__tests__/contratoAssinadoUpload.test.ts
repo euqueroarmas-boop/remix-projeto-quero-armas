@@ -45,6 +45,13 @@ describe("FASE 2C-6 — Upload do contrato assinado", () => {
     expect(src).toMatch(/customer_signed_sha256/);
   });
 
+  it("não espelha contrato assinado no Hub documental monitorado", () => {
+    const src = r("supabase/functions/qa-upload-signed-contract/index.ts");
+    expect(src).not.toMatch(/from\(["']qa_documentos_cliente["']\)\.insert/);
+    expect(src).toMatch(/qa_contracts/);
+    expect(src).toMatch(/qa_contract_events/);
+  });
+
   it("encadeia validação automaticamente após upload", () => {
     const src = r("supabase/functions/qa-upload-signed-contract/index.ts");
     expect(src).toMatch(/qa-validate-customer-signature/);
@@ -74,7 +81,8 @@ describe("FASE 2C-6 — Validação criptográfica", () => {
     const src = r("supabase/functions/qa-validate-customer-signature/index.ts");
     expect(src).toMatch(/pending_manual_review/);
     expect(src).toMatch(/indeterminate/);
-    expect(src).toMatch(/cpfMatch\s*\|\|\s*meta\.icp_brasil/);
+    expect(src).toMatch(/cpfMatch\s*\|\|\s*nameFallback/);
+    expect(src).toMatch(/else if \(meta\.icp_brasil\)/);
   });
 
   it("sem assinatura interpretada → invalid/rejected", () => {
@@ -99,7 +107,7 @@ describe("FASE 2C-6 — Validação criptográfica", () => {
 describe("FASE 2C-6 — UI do portal", () => {
   it("ContratosPosPagamentoCard expõe botão de upload e estados de validação", () => {
     const src = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
-    expect(src).toMatch(/ENVIAR CONTRATO ASSINADO/);
+    expect(src).toMatch(/Enviar contrato assinado/i);
     expect(src).toMatch(/qa-upload-signed-contract/);
     expect(src).toMatch(/customer_signature_uploaded/);
     expect(src).toMatch(/validated/);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
-import { getNomeDocumentoDisplay, getTipoDocumentoMeta, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
+import { getNomeDocumentoDisplay, getTipoDocumentoMeta, isTipoDocumentoMonitoravelNoHub, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
@@ -308,7 +308,11 @@ export default function ClienteResumoKanban({
     // Laudos ficam na frente EXAMES.
     const docsFiltrados = meusDocs.filter((doc: any) => {
       const f = familiaDocumento(doc?.tipo_documento);
-      return f !== "laudo_psicologico" && f !== "laudo_capacidade_tecnica";
+      return (
+        isTipoDocumentoMonitoravelNoHub(doc?.tipo_documento) &&
+        f !== "laudo_psicologico" &&
+        f !== "laudo_capacidade_tecnica"
+      );
     });
     const gruposDocs = agruparDocumentosPorFamilia(docsFiltrados);
     const docItems: FrontItem[] = gruposDocs
@@ -383,6 +387,7 @@ export default function ClienteResumoKanban({
     // duplicado para a fila de urgentes.
     meusDocs.forEach((doc: any) => {
       const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      if (!isTipoDocumentoMonitoravelNoHub(tipo)) return;
       const isLaudo = tipo === "laudo_psicologico" || tipo === "laudo_capacidade_tecnica";
       if (!isLaudo) {
         // Consolidado por família: só o PRINCIPAL do grupo pode alertar,

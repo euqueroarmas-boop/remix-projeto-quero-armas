@@ -41,7 +41,13 @@ import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/Forc
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
-import { getNomeDocumentoDisplay } from "@/lib/quero-armas/documentosHubCatalogo";
+import {
+  getHubCategoriaMeta,
+  getNomeDocumentoDisplay,
+  getTipoDocumentoMeta,
+  inferEscopoDocumental,
+  isTipoDocumentoMonitoravelNoHub,
+} from "@/lib/quero-armas/documentosHubCatalogo";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
@@ -53,7 +59,6 @@ import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClient
 import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
 import { useArsenalPremium } from "@/hooks/useArsenalPremium";
 
-import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import DocumentosCategoriaZ6V3Panel from "@/components/quero-armas/portal/DocumentosCategoriaZ6V3Panel";
 import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosPanel";
 import logoColor from "@/assets/logo-color.png";
@@ -791,7 +796,9 @@ export default function QAClientePortalPage() {
             .or(docFilters)
             .neq("status", "excluido")
             .order("created_at", { ascending: false });
-          setMeusDocs((docsData as any[]) ?? []);
+          setMeusDocs(((docsData as any[]) ?? []).filter((doc: any) =>
+            isTipoDocumentoMonitoravelNoHub(doc?.tipo_documento),
+          ));
         }
 
         // Processos canônicos do cliente (fonte real de progresso/etapa/checklist).
@@ -1479,7 +1486,6 @@ export default function QAClientePortalPage() {
     // 1) Assinaturas pendentes primeiro (mantém prioridade atual do portal).
     for (const sig of pendingSignatureDocs) {
       const kindTipo = sig.kind === "contract" ? "contract" : "procuration";
-      const hubTipo = sig.kind === "contract" ? "contrato_assinado" : "procuracao_assinada";
       items.push({
         id: `sig:${sig.kind}:${sig.id}`,
         kind: "signature",
@@ -1488,7 +1494,11 @@ export default function QAClientePortalPage() {
         contexto: sig.contract_number ? `Protocolo ${sig.contract_number}` : null,
         onPrimary: () => openPendingSignatureLink(),
         onEntregar: () => {
-          setEditDocTipo(hubTipo);
+          if (sig.kind === "contract") {
+            openPendingSignatureLink();
+            return;
+          }
+          setEditDocTipo("procuracao_assinada");
           setShowAddDoc(true);
           setShowContratoPopup(false);
         },
@@ -2623,7 +2633,9 @@ export default function QAClientePortalPage() {
               setCadastro(Array.isArray(crRes.data) ? ((crRes.data as any[])[0] ?? null) : (crRes.data as any));
               setCrafs((cfRes.data as any[]) ?? []);
               setGtes((gtRes.data as any[]) ?? []);
-              setMeusDocs((dRes.data as any[]) ?? []);
+              setMeusDocs(((dRes.data as any[]) ?? []).filter((doc: any) =>
+                isTipoDocumentoMonitoravelNoHub(doc?.tipo_documento),
+              ));
             }}
           />
           <div className="mt-3 flex justify-end">

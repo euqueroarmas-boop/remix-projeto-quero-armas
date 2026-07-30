@@ -33,6 +33,7 @@ import {
 import { getStatusTone, piorTone } from "@/lib/quero-armas/statusColors";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
 import { calcularPrazosProcessuais, type PrazoProcessual } from "@/lib/quero-armas/prazosProcessuais";
+import { isTipoDocumentoMonitoravelNoHub } from "@/lib/quero-armas/documentosHubCatalogo";
 
 // ─────────── Tipos públicos ────────────────────────────────────────────────
 
@@ -221,7 +222,9 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       const gtes: any[] = gteResp?.data ?? [];
       const gteDocs: any[] = gteDocResp?.data ?? [];
       const exames: any[] = examesResp?.data ?? [];
-      const docs: any[] = docsResp?.data ?? [];
+      const docs: any[] = (docsResp?.data ?? []).filter((doc: any) =>
+        isTipoDocumentoMonitoravelNoHub(doc?.tipo_documento),
+      );
       const procDocs: any[] = procDocResp?.data ?? [];
       const procs: any[] = procResp?.data ?? [];
       const municoes: any[] = municoesResp?.data ?? [];

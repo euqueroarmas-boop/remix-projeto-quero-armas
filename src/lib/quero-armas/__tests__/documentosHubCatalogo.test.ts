@@ -6,6 +6,7 @@ import {
   inferHubCategoriaFromTipo,
   isCategoriaArmaAcervo,
   isCategoriaPermanente,
+  isTipoDocumentoMonitoravelNoHub,
   listTiposByCategoria,
 } from "../documentosHubCatalogo";
 
@@ -61,5 +62,13 @@ describe("documentosHubCatalogo", () => {
     expect(craf?.categoria).toBe("arma_acervo");
     expect(craf?.escopo).toBe("arma");
     expect(craf?.aceitaVinculoArma).toBe(true);
+  });
+
+  it("mantém contrato assinado fora do Hub monitorável", () => {
+    const docsJuridicos = listTiposByCategoria("juridico").map((item) => item.value);
+
+    expect(getTipoDocumentoMeta("contrato_assinado")?.label).toBe("Contrato assinado (Gov.br)");
+    expect(isTipoDocumentoMonitoravelNoHub("contrato_assinado")).toBe(false);
+    expect(docsJuridicos).not.toContain("contrato_assinado");
   });
 });

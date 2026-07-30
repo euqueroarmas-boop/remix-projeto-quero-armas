@@ -35,6 +35,7 @@ import {
   inferEscopoDocumental,
   inferHubCategoriaFromTipo,
   isCategoriaArmaAcervo,
+  isTipoDocumentoMonitoravelNoHub,
   listTiposByCategoria,
   type EscopoDocumental,
   type HubCategoria,
@@ -113,7 +114,6 @@ const IA_TO_TIPO: Record<string, string> = {
   PROCURACAO: "procuracao",
   RECURSO_ADMINISTRATIVO: "recurso_administrativo_doc",
   MANDADO_SEGURANCA: "mandado_seguranca_doc",
-  CONTRATO_ADESAO_ASSINADO: "contrato_assinado",
   PROCURACAO_ASSINADA: "procuracao_assinada",
   // Fallback
   DESCONHECIDO: "outro",
@@ -1637,6 +1637,10 @@ export function ClienteDocsHubModal({
   async function handleSave() {
     if (!form.tipo_documento) {
       toast.error("Escolha o tipo de documento.");
+      return;
+    }
+    if (!isTipoDocumentoMonitoravelNoHub(form.tipo_documento)) {
+      toast.error("Contrato assinado deve ficar no processo/contratos, não no Hub documental monitorado.");
       return;
     }
     // Trava: certidão não é o que o slot pede E também não cobre nenhuma

@@ -185,6 +185,24 @@ const TIPOS_LEGADOS_OCULTOS = new Set<string>([
   "antecedentes_estadual",
 ]);
 
+/**
+ * Tipos que podem existir por compatibilidade/auditoria, mas não pertencem ao
+ * Hub monitorável do cliente. Contrato assinado é artefato do processo/venda:
+ * deve ficar disponível no fluxo de contratos/processos, sem prazo documental.
+ */
+const TIPOS_NAO_MONITORAVEIS_HUB = new Set<string>([
+  "contrato_assinado",
+]);
+
+function normalizeTipoDocumento(value: string | null | undefined): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+export function isTipoDocumentoMonitoravelNoHub(tipoDocumento: string | null | undefined): boolean {
+  const tipo = normalizeTipoDocumento(tipoDocumento);
+  return !!tipo && !TIPOS_NAO_MONITORAVEIS_HUB.has(tipo);
+}
+
 const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
   [/^renda_/, "renda_ocupacao"],
   [/^antecedentes_/, "antecedentes_regularidade"],
@@ -199,8 +217,9 @@ export function getHubCategoriaMeta(categoria: HubCategoria): HubCategoriaMeta {
 }
 
 export function getTipoDocumentoMeta(tipoDocumento: string | null | undefined): HubTipoDocumentoMeta | null {
-  if (!tipoDocumento) return null;
-  return META_BY_TIPO.get(String(tipoDocumento).trim().toLowerCase()) ?? null;
+  const tipo = normalizeTipoDocumento(tipoDocumento);
+  if (!tipo) return null;
+  return META_BY_TIPO.get(tipo) ?? null;
 }
 
 function normalizeDocumentoName(value: unknown): string {
@@ -481,7 +500,10 @@ export function inferEscopoDocumental(input: {
 
 export function listTiposByCategoria(categoria: HubCategoria): HubTipoDocumentoMeta[] {
   return HUB_TIPOS_DOCUMENTO.filter(
-    (item) => item.categoria === categoria && !TIPOS_LEGADOS_OCULTOS.has(item.value),
+    (item) =>
+      item.categoria === categoria &&
+      !TIPOS_LEGADOS_OCULTOS.has(item.value) &&
+      isTipoDocumentoMonitoravelNoHub(item.value),
   );
 }
 
