@@ -19,7 +19,7 @@ const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
   { grupo: "Identificação", tipos: ["cin", "rg_com_cpf", "cnh", "cpf", "certidao_alteracao_nome"] },
   { grupo: "Endereço", tipos: ["comprovante_residencia", "declaracao_responsavel_imovel"] },
   { grupo: "Ocupação Lícita / Renda", tipos: [
-    "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
+    "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico", "renda_carteira_funcional",
     "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social", "renda_ccmei",
     "renda_qsa", "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
   ] },

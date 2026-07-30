@@ -173,7 +173,7 @@ async function callVision(imageDataUrl: string, tool: any, systemPrompt: string)
 const CLASSIFY_TIPOS = [
   "cin","rg_com_cpf","cnh","cpf","certidao_alteracao_nome",
   "comprovante_residencia","declaracao_responsavel_imovel",
-  "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
+  "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico","renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss","renda_qsa",
   "antecedentes_criminais","antecedentes_federal",
@@ -238,6 +238,7 @@ OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genéric
 - ctps: Carteira de Trabalho (CTPS), física ou digital
 - renda_holerite_mes_atual: holerite/contracheque de empresa privada
 - renda_holerite_funcionario_publico: holerite de servidor público
+- renda_carteira_funcional: carteira funcional de servidor público — identifica o servidor e o órgão, comprova o vínculo. NÃO é holerite (não traz valores) nem CTPS
 - renda_cartao_cnpj: Cartão CNPJ da Receita Federal (empresa comum)
 - renda_cnpj_autonomo: CCMEI (Certificado da Condição de Microempreendedor Individual) ou cartão CNPJ de MEI/autônomo
 - renda_contrato_social: contrato social, requerimento de empresário ou alteração contratual (NÃO é o QSA)

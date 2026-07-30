@@ -30,7 +30,7 @@ ALTER TABLE public.qa_documentos_cliente
     'ctps','renda_holerite_mes_atual','renda_holerite_funcionario_publico',
     'renda_cartao_cnpj','renda_cnpj_autonomo','renda_contrato_social',
     'renda_nf_recente','renda_comprovante_beneficio','renda_extrato_inss',
-    'renda_qsa','renda_ccmei',
+    'renda_qsa','renda_ccmei','renda_carteira_funcional',
     'antecedentes_criminais','antecedentes_federal',
     'antecedentes_federal_trf3_regional','antecedentes_federal_sjsp_jef',
     'antecedentes_estadual','antecedentes_estadual_distribuicao',
@@ -38,6 +38,7 @@ ALTER TABLE public.qa_documentos_cliente
     'declaracao_sem_inquerito_processo_criminal','declaracao_guarda_responsavel',
     'declaracao_correlata','declaracao_guarda_acervo_1endereco',
     'declaracao_guarda_acervo_2enderecos','declaracao_homonimia',
+    'declaracao_endereco_acervo','dsa_declaracao_seguranca_acervo',
     'laudo_psicologico','laudo_capacidade_tecnica',
     'comprovante_efetiva_necessidade','documento_complementar_caso',
     'comprovante_habitualidade','declaracao_compromisso_habitualidade',
@@ -63,6 +64,12 @@ INSERT INTO public.qa_tipo_documento_aliases (processo_tipo, hub_tipo) VALUES
   ('certidao_estadual_segundo_grau_acoes_criminais',   'antecedentes_estadual_distribuicao'),
   ('certidao_estadual_segundo_grau_execucoes_criminais','antecedentes_estadual_execucoes')
 ON CONFLICT DO NOTHING;
+
+-- Carteira funcional (exigência de servidor público dentro da ocupação lícita)
+-- e as TRÊS declarações de acervo — guarda, endereço e segurança (DSA) — são
+-- documentos distintos, cada um com sua finalidade. Ganharam tipo próprio no
+-- catálogo, com o mesmo slug que o processo já usa: casam por identidade,
+-- sem precisar de apelido.
 
 -- Reavalia todas as exigências pendentes com o catálogo e os apelidos completos.
 SELECT public.qa_processo_rever_exigencias(NULL);
