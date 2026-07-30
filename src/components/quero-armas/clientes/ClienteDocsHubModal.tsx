@@ -1284,6 +1284,17 @@ export function ClienteDocsHubModal({
       if (clsErr) throw clsErr;
 
       const ia = (cls || {}) as IAClass;
+      // A invoke só devolve `error` quando o HTTP falha. Se a função responder
+      // 200 com corpo vazio ou sem confiança — chave da IA ausente, quota
+      // estourada, resposta que não passou no schema — chegava aqui um objeto
+      // vazio, o carimbo ficava em "AGUARDANDO LEITURA" para sempre e nada
+      // avisava. A falha tem que aparecer, não ser mascarada.
+      if (typeof ia?.confianca !== "number" || !ia?.tipoDetectado) {
+        console.error("[classify] resposta sem classificação utilizável:", cls);
+        toast.error(
+          "A IA não conseguiu ler este documento agora. Classifique o tipo manualmente e preencha os campos, ou tente de novo em instantes.",
+        );
+      }
       setClassificacao(ia);
 
       let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
