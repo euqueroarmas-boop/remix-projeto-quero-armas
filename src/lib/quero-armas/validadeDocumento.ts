@@ -315,7 +315,11 @@ export function calcularValidadeEfetiva(
     v.setUTCDate(v.getUTCDate() + 30);
     return toISO(v);
   }
-  // Comprovante de residência: vale de uma emissão até a próxima (1 mês).
+  // Comprovante de residência: vale até o dia da PRÓXIMA LEITURA impressa na
+  // conta — até lá o cliente não terá outro comprovante. Esse dia ainda conta
+  // como válido; no seguinte, está vencido.
+  // O + 1 mês abaixo é só aproximação para quando a próxima leitura não foi
+  // lida do documento; quem tiver a data real deve gravá-la em data_validade.
   const tipoStr = String(tipo || "").toLowerCase();
   const isRes =
     tipoStr.startsWith("comprovante_residencia") ||

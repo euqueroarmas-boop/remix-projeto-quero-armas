@@ -59,8 +59,13 @@ function validadePorTipo(tipo: string, emissaoIso: string): string | null {
   if (["rg_com_cpf", "cin", "cnh"].includes(tipo)) return addMeses(120);
   // Procuração e filiação a clube: 12 meses
   if (["procuracao", "procuracao_assinada", "comprovante_clube_tiro"].includes(tipo)) return addMeses(12);
-  // Comprovante de residência e demais certidões: 1 mês
-  if (tipo === "comprovante_residencia" || tipo.startsWith("antecedentes_")) return addMeses(1);
+  // Certidões: 1 mês
+  if (tipo.startsWith("antecedentes_")) return addMeses(1);
+  // Comprovante de residência NÃO se calcula pela emissão: vale até o dia da
+  // PRÓXIMA LEITURA impressa na conta — até lá o cliente não terá outro
+  // comprovante. Essa data vem digitada/extraída e é gravada direto em
+  // data_validade, então aqui não há prazo a inferir.
+  if (tipo === "comprovante_residencia") return null;
   // Recibo de pagamento e contratos não vencem
   return null;
 }
@@ -149,12 +154,17 @@ Deno.serve(async (req) => {
       // antes da correção não têm emissão em lugar nenhum do banco — o dado
       // foi descartado na gravação e só pode voltar por digitação.
       const novaEmissao = String(body.data_emissao || "").trim();
+      // Comprovante de residência: a validade é a data da PRÓXIMA LEITURA da
+      // conta, não um prazo contado da emissão. Vem digitada e é gravada direto.
+      const novaValidade = String(body.data_validade || "").trim();
       if (!documentoId) return json({ error: "documento_id_required" }, 400);
-      if (novaEmissao && !/^\d{4}-\d{2}-\d{2}$/.test(novaEmissao)) {
-        return json({ error: "data_invalida", message: "Data de emissão deve estar no formato AAAA-MM-DD." }, 400);
+      for (const [rot, val] of [["emissão", novaEmissao], ["validade", novaValidade]]) {
+        if (val && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return json({ error: "data_invalida", message: `Data de ${rot} deve estar no formato AAAA-MM-DD.` }, 400);
+        }
       }
-      if (!novoTipo && !novaEmissao) {
-        return json({ error: "nada_a_alterar", message: "Informe um novo tipo, uma data de emissão, ou ambos." }, 400);
+      if (!novoTipo && !novaEmissao && !novaValidade) {
+        return json({ error: "nada_a_alterar", message: "Informe um novo tipo, uma data, ou ambos." }, 400);
       }
       if (novoTipo && !TIPOS_DOC_VALIDOS.has(novoTipo)) {
         return json({ error: "tipo_invalido", message: `Tipo "${novoTipo}" não existe no catálogo do Hub Documental.` }, 400);
@@ -175,13 +185,15 @@ Deno.serve(async (req) => {
       const emissaoAnterior = doc.data_emissao;
       const emissaoFinal = novaEmissao || doc.data_emissao || null;
 
-      if (tipoFinal === tipoAnterior && emissaoFinal === emissaoAnterior) {
+      if (tipoFinal === tipoAnterior && emissaoFinal === emissaoAnterior && !novaValidade) {
         return json({ ok: true, inalterado: true, tipo_documento: tipoFinal });
       }
 
       // Validade recalculada sempre que tipo ou emissão mudam — as duas coisas
       // determinam o prazo. Recibo de pagamento e contrato devolvem null: não vencem.
-      const validadeFinal = emissaoFinal ? validadePorTipo(tipoFinal, emissaoFinal) : null;
+      // Validade digitada (comprovante de residência = próxima leitura) tem
+      // precedência sobre a calculada pela regra do tipo.
+      const validadeFinal = novaValidade || (emissaoFinal ? validadePorTipo(tipoFinal, emissaoFinal) : null);
 
       // O status (aprovado/pendente) é preservado de propósito: corrigir a
       // etiqueta ou a data não revalida o arquivo.
@@ -189,7 +201,7 @@ Deno.serve(async (req) => {
         tipo_documento: tipoFinal,
         updated_at: new Date().toISOString(),
       };
-      if (emissaoFinal !== emissaoAnterior) {
+      if (emissaoFinal !== emissaoAnterior || novaValidade) {
         patch.data_emissao = emissaoFinal;
         patch.data_validade = validadeFinal;
       }

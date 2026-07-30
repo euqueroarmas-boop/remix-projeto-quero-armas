@@ -34,6 +34,27 @@ const TIPO_LABEL: Record<string, string> = {
   outro: "Outro Documento",
 };
 
+// O <input type="date"> do Safari não aceita o ano pelo teclado numérico —
+// o campo é segmentado e ignora a digitação. Usamos texto com máscara
+// DD/MM/AAAA, que é o padrão do resto do sistema.
+const mascaraData = (raw: string) => {
+  const d = raw.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 2) return d;
+  if (d.length <= 4) return `${d.slice(0, 2)}/${d.slice(2)}`;
+  return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+};
+const brParaIso = (br: string): string | null => {
+  const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  const iso = `${m[3]}-${m[2]}-${m[1]}`;
+  const d = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? null : iso;
+};
+const isoParaBr = (iso: string | null | undefined) => {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+};
+
 const formatDate = (d: string | null) => {
   if (!d) return "—";
   try {
@@ -187,11 +208,20 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   // Corrige o tipo de um documento já salvo. A exigência do processo casa por
   // tipo_documento — um documento gravado com o tipo errado (ou como "outro")
   // faz o sistema pedir ao cliente algo que ele já enviou.
-  const handleReclassificar = async (docId: string) => {
+  const handleReclassificar = async (docId: string, docTipoAtual: string) => {
     if (!novoTipoTmp && !novaEmissaoTmp) {
-      toast.error("Escolha o novo tipo, informe a data de emissão, ou ambos.");
+      toast.error("Escolha o novo tipo, informe a data, ou ambos.");
       return;
     }
+    let dataIso: string | null = null;
+    if (novaEmissaoTmp) {
+      dataIso = brParaIso(novaEmissaoTmp);
+      if (!dataIso) { toast.error("Data inválida. Use o formato DD/MM/AAAA."); return; }
+    }
+    // Comprovante de residência: a data digitada é a PRÓXIMA LEITURA da conta,
+    // que é a própria validade — não um prazo contado da emissão.
+    const tipoAlvo = novoTipoTmp || docTipoAtual;
+    const ehComprovante = tipoAlvo === "comprovante_residencia";
     if (!clienteId) { toast.error("Cliente sem ID interno — não é possível reclassificar."); return; }
     setSalvandoTipo(true);
     try {
@@ -201,7 +231,8 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           cliente_id: clienteId,
           documento_id: docId,
           novo_tipo: novoTipoTmp || undefined,
-          data_emissao: novaEmissaoTmp || undefined,
+          data_emissao: ehComprovante ? undefined : (dataIso || undefined),
+          data_validade: ehComprovante ? (dataIso || undefined) : undefined,
         },
       });
       if (error) throw error;
@@ -212,11 +243,10 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       if (novoTipoTmp && r.tipo_anterior !== r.tipo_documento) {
         partes.push(`tipo: ${TIPO_LABEL[r.tipo_anterior] || r.tipo_anterior} → ${TIPO_LABEL[novoTipoTmp] || novoTipoTmp}`);
       }
-      if (novaEmissaoTmp) {
-        const venc = r.data_validade
-          ? ` (vence em ${new Date(r.data_validade + "T00:00:00").toLocaleDateString("pt-BR")})`
-          : " (documento sem prazo de validade)";
-        partes.push(`emissão: ${new Date(novaEmissaoTmp + "T00:00:00").toLocaleDateString("pt-BR")}${venc}`);
+      if (dataIso) {
+        partes.push(ehComprovante
+          ? `válido até a próxima leitura em ${isoParaBr(dataIso)}`
+          : `emissão ${isoParaBr(dataIso)}${r.data_validade ? ` · vence em ${isoParaBr(r.data_validade)}` : " · sem prazo de validade"}`);
       }
       if (r.qsa_propagados > 0) {
         partes.push(`${r.qsa_propagados} QSA receberam a mesma data`);
@@ -369,7 +399,7 @@ interface GrupoCardProps {
   setReclassificandoId: (v: string | null) => void;
   setNovoTipoTmp: (v: string) => void;
   setNovaEmissaoTmp: (v: string) => void;
-  onReclassificar: (id: string) => void;
+  onReclassificar: (id: string, tipoAtual: string) => void;
 }
 
 function GrupoCard(props: GrupoCardProps) {
@@ -550,17 +580,23 @@ function DocRow({
                       </select>
                       <div>
                         <label className="text-[10px] text-slate-500 block mb-0.5">
-                          Data de emissão {d.data_emissao ? "" : "(em branco — a validade não é calculada sem ela)"}
+                          {(novoTipoTmp || d.tipo_documento) === "comprovante_residencia"
+                            ? "Data da PRÓXIMA LEITURA (impressa na conta)"
+                            : "Data de emissão"}
                         </label>
                         <input
-                          type="date"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="DD/MM/AAAA"
+                          maxLength={10}
                           value={novaEmissaoTmp}
-                          onChange={(e) => setNovaEmissaoTmp(e.target.value)}
+                          onChange={(e) => setNovaEmissaoTmp(mascaraData(e.target.value))}
                           className="w-full text-[11px] border border-slate-200 rounded p-1.5 bg-white"
                         />
                         <p className="text-[9px] text-slate-500 leading-snug mt-0.5">
-                          A validade é calculada pela regra do tipo. No cartão CNPJ, a data
-                          também é aplicada aos QSA do cliente que estiverem sem data.
+                          {(novoTipoTmp || d.tipo_documento) === "comprovante_residencia"
+                            ? "O comprovante vale ATÉ o dia da próxima leitura — esse dia ainda conta; no seguinte está vencido."
+                            : "A validade é calculada pela regra do tipo. No cartão CNPJ, a data também é aplicada aos QSA do cliente que estiverem sem data."}
                         </p>
                       </div>
                       <p className="text-[9px] text-slate-500 leading-snug">
@@ -575,7 +611,7 @@ function DocRow({
                         </Button>
                         <Button size="sm" className="h-6 text-[10px] bg-[#7A1F2B] hover:bg-[#63161f]"
                           disabled={salvandoTipo || (!novoTipoTmp && !novaEmissaoTmp)}
-                          onClick={() => onReclassificar(d.id)}>
+                          onClick={() => onReclassificar(d.id, d.tipo_documento)}>
                           {salvandoTipo ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar correção"}
                         </Button>
                       </div>
@@ -643,7 +679,7 @@ function DocRow({
                     onClick={() => {
                       setReclassificandoId(reclassificandoId === d.id ? null : d.id);
                       setNovoTipoTmp("");
-                      setNovaEmissaoTmp(d.data_emissao || "");
+                      setNovaEmissaoTmp(isoParaBr(d.tipo_documento === "comprovante_residencia" ? d.data_validade : d.data_emissao));
                     }}
                     className="h-7 px-2 text-[10px] text-[#7A1F2B] border-[#7A1F2B]/30 hover:bg-[#7A1F2B]/5"
                     title="Alterar tipo do documento (corrige a exigência do processo)"

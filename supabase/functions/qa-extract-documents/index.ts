@@ -207,6 +207,7 @@ const CLASSIFY_TOOL = {
             cpf: { type: "string" },
             numero_documento: { type: "string" },
             data_emissao: { type: "string" },
+            data_proxima_leitura: { type: "string", description: "Só para conta de consumo: data da PRÓXIMA LEITURA impressa na fatura. É ela que define a validade do comprovante de residência." },
             data_validade: { type: "string" },
             orgao_emissor: { type: "string" },
             resultado: { type: "string" },
@@ -232,7 +233,10 @@ IDENTIFICAÇÃO
 - certidao_alteracao_nome: certidão averbada de alteração/retificação de nome
 
 ENDEREÇO
-- comprovante_residencia: conta de luz, água, gás, telefone, internet, IPTU ou correspondência bancária com endereço
+- comprovante_residencia: conta de luz, água, gás, telefone, internet, IPTU ou correspondência bancária com endereço.
+  ATENÇÃO — extraia SEMPRE o campo data_proxima_leitura quando existir: contas de consumo trazem
+  "PRÓXIMA LEITURA", "PROXIMA LEITURA", "Leitura seguinte" ou "Próxima medição". É essa data que
+  define até quando o comprovante vale — NÃO é a emissão nem o vencimento da fatura
 - declaracao_responsavel_imovel: declaração assinada pelo responsável/proprietário do imóvel
 - documento_identificacao_terceiro: RG, CIN ou CNH do DONO DO IMÓVEL — usado quando o comprovante de residência está em nome de terceiro. O nome NÃO é o do cliente, e isso é esperado: não trate como divergência
 
