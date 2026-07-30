@@ -34,10 +34,12 @@ type Evento =
   // Verde — documento com validade cadastrado/renovado (não precisa de solicitacao_id)
   | "documento_em_dia"
   // Verde — exigência do processo cumprida
-  | "exigencia_cumprida";
+  | "exigencia_cumprida"
+  // Verde — cadastro alterado (pelo cliente ou pela equipe)
+  | "cadastro_atualizado";
 
 /** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
-const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida"]);
+const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado"]);
 
 interface Payload {
   evento: Evento;
@@ -66,6 +68,9 @@ interface Payload {
   /** Para exigencia_cumprida. */
   processo?: string;
   exigencia?: string;
+  /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
+  campos_alterados?: Array<{ label: string; valor: string }>;
+  alterado_por?: string;
 }
 
 function brDate(iso?: string | null): string {
@@ -141,6 +146,19 @@ function mapEventoToTemplate(
           portalUrl,
         },
       };
+    case "cadastro_atualizado": {
+      const campos = Array.isArray(p.campos_alterados) ? p.campos_alterados : [];
+      return {
+        templateName: "cadastro-atualizado",
+        templateData: {
+          nome,
+          campos,
+          alteradoPor: p.alterado_por ?? "Você, pelo portal do cliente",
+          alteradoEm: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+          portalUrl,
+        },
+      };
+    }
     case "exigencia_cumprida":
       return {
         templateName: "exigencia-cumprida",
@@ -197,9 +215,14 @@ Deno.serve(async (req) => {
       const mapped = mapEventoToTemplate(body, { nome: nomeCli }, body.processo || body.documento || "");
       let emailOk = false;
       if (mapped && emailCli) {
+        // A chave de idempotência precisa distinguir CADA alteração: se dois
+        // campos diferentes gerassem a mesma chave, o segundo aviso seria
+        // engolido como duplicata e o cliente não saberia do que mudou.
         const idem = body.evento === "documento_em_dia"
           ? `qa-verde-doc-${body.cliente_id}-${body.referencia_tabela || "x"}-${body.referencia_id || body.documento || "x"}-${body.validade || "x"}`
-          : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
+          : body.evento === "cadastro_atualizado"
+            ? `qa-verde-cad-${body.cliente_id}-${(body.campos_alterados || []).map((c) => c.label).join("|") || "x"}-${Date.now()}`
+            : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
         const send = await sendTransactional({
           templateName: mapped.templateName,
           recipientEmail: emailCli,
@@ -208,13 +231,24 @@ Deno.serve(async (req) => {
         });
         emailOk = send.ok;
       }
-      const categoria = body.evento === "documento_em_dia" ? "documento_em_dia" : "exigencia_cumprida";
+      const nCampos = (body.campos_alterados || []).length;
+      const categoria = body.evento === "documento_em_dia"
+        ? "documento_em_dia"
+        : body.evento === "cadastro_atualizado"
+          ? "cadastro_atualizado"
+          : "exigencia_cumprida";
       const titulo = body.evento === "documento_em_dia"
         ? `${body.documento || "Documento"} ${body.documento_evento === "renovado" ? "renovado" : "cadastrado"} — em dia`
-        : "Exigência cumprida";
+        : body.evento === "cadastro_atualizado"
+          ? "Cadastro atualizado"
+          : "Exigência cumprida";
       const mensagem = body.evento === "documento_em_dia"
         ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
-        : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
+        : body.evento === "cadastro_atualizado"
+          ? (nCampos
+              ? `${nCampos === 1 ? "1 informação foi atualizada" : `${nCampos} informações foram atualizadas`}: ${(body.campos_alterados || []).map((c) => c.label).join(", ")}.`
+              : "Seu cadastro foi atualizado.")
+          : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,

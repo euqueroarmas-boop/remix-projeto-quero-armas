@@ -35,6 +35,43 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 // Campos brancos-listados. Qualquer outro é descartado.
+/**
+ * Rótulos legíveis dos campos, para o cliente entender o aviso.
+ *
+ * Sem isso o e-mail diria "naturalidade_uf" — nome de coluna, não de
+ * informação. Campo sem rótulo aqui cai no próprio nome, que é feio mas
+ * honesto; nunca é omitido do aviso.
+ */
+const ROTULO_CAMPO: Record<string, string> = {
+  nome: "Nome",
+  nome_completo: "Nome completo",
+  data_nascimento: "Data de nascimento",
+  sexo: "Sexo",
+  estado_civil: "Estado civil",
+  nacionalidade: "Nacionalidade",
+  naturalidade_municipio: "Naturalidade — município",
+  naturalidade_uf: "Naturalidade — UF",
+  naturalidade: "Naturalidade",
+  nome_mae: "Nome da mãe",
+  nome_pai: "Nome do pai",
+  celular: "Celular",
+  cep: "CEP",
+  endereco: "Logradouro",
+  numero: "Número",
+  complemento: "Complemento",
+  bairro: "Bairro",
+  cidade: "Cidade",
+  estado: "Estado (UF)",
+  profissao: "Profissão",
+  escolaridade: "Escolaridade",
+  rg: "RG / CIN",
+  emissor_rg: "Órgão emissor do RG",
+  uf_emissor_rg: "UF do emissor do RG",
+  expedicao_rg: "Data de expedição do RG",
+  tipo_documento_identidade: "Tipo do documento de identidade",
+  titulo_eleitor: "Título de eleitor",
+};
+
 const CAMPOS_PERMITIDOS = new Set<string>([
   // Pessoais
   "nome",
@@ -267,6 +304,25 @@ Deno.serve(async (req) => {
         dados_json: { cliente_id: cliente.id, campos: Object.keys(updates) },
       } as any);
     } catch { /* opcional */ }
+
+    // Avisa o cliente, campo a campo. Regra do usuário: qualquer mudança no
+    // cadastro tem de ser informada. Best-effort — se o e-mail falhar, a
+    // gravação já aconteceu e não pode ser desfeita por causa do aviso.
+    try {
+      await admin.functions.invoke("qa-notify-event", {
+        body: {
+          evento: "cadastro_atualizado",
+          cliente_id: cliente.id,
+          alterado_por: "Você, pelo portal do cliente",
+          campos_alterados: Object.entries(updates).map(([k, v]) => ({
+            label: ROTULO_CAMPO[k] ?? k,
+            valor: String(v ?? ""),
+          })),
+        },
+      });
+    } catch (err) {
+      console.error("[qa-cliente-atualizar-cadastro] aviso ao cliente falhou:", err);
+    }
 
     return json({
       success: true,
