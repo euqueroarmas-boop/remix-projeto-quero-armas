@@ -43,7 +43,7 @@ interface Props {
 }
 
 type FrontTone = "bordo" | "amber" | "green";
-type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean; onClick?: () => void };
+type FrontItem = { label: string; status: string; tone: "bad" | "warn" | "ok" | "muted"; stack?: boolean; dias?: number | null; onClick?: () => void };
 type Front = { key: string; title: string; count: number; tone: FrontTone; status: "bad" | "warn" | "ok" | "muted"; items: FrontItem[]; navTo: string };
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro" };
 
@@ -207,7 +207,7 @@ export default function ClienteResumoKanban({
     };
     const addArsenal = (label: string, date: string | null | undefined) => {
       const days = daysUntil(date);
-      arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days) });
+      arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days), dias: days });
     };
     if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr);
     crafs.forEach((cr: any) => {
@@ -254,11 +254,13 @@ export default function ClienteResumoKanban({
         label: getNomeDocumentoDisplay({ tipo_documento: "laudo_psicologico" }, "Laudo de Avaliação Psicológica para Aquisição/Porte de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
+        dias: daysUntil(exameByTipo.get("psicologico")?.data_vencimento),
       },
       exameByTipo.get("tiro") && {
         label: getNomeDocumentoDisplay({ tipo_documento: "laudo_capacidade_tecnica" }, "Atestado de Capacidade Técnica para Manuseio de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
         tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
+        dias: daysUntil(exameByTipo.get("tiro")?.data_vencimento),
       },
     ].filter(Boolean) as FrontItem[];
 
@@ -338,7 +340,7 @@ export default function ClienteResumoKanban({
         // escondia o vencimento atrás da contagem de histórico.
         const statusStr =
           g.statusConsolidado === "historico" ? "Histórico" : compactStatus(days);
-        return { label: nome, status: statusStr, tone, stack: g.versoesAnteriores > 0 } as FrontItem;
+        return { label: nome, status: statusStr, tone, stack: g.versoesAnteriores > 0, dias: days } as FrontItem;
       })
       .sort((a, b) => (a.tone === "bad" ? -1 : b.tone === "bad" ? 1 : 0));
 
@@ -356,12 +358,24 @@ export default function ClienteResumoKanban({
       if (items.some((i) => i.tone === "ok")) return "ok";
       return "muted";
     };
+    // Todo card mostra no máximo os 5 mais urgentes: quem vence primeiro no
+    // topo. Item sem prazo (procuração sem data, recibo) vai para o fim — não
+    // é urgência, é ausência de prazo. Vencido (dias negativo) sobe primeiro.
+    const maisUrgentes = (itens: FrontItem[]): FrontItem[] =>
+      [...itens]
+        .sort((a, b) => {
+          const da = a.dias ?? Number.POSITIVE_INFINITY;
+          const db = b.dias ?? Number.POSITIVE_INFINITY;
+          return da - db;
+        })
+        .slice(0, 5);
+
     const fronts: Front[] = [
-      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", status: aggregateStatus(arsenalItems), items: arsenalItems, navTo: "arsenal" },
-      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: examesItems, navTo: "documentos" },
+      { key: "arsenal", title: "ARSENAL", count: arsenalItems.length, tone: "bordo", status: aggregateStatus(arsenalItems), items: maisUrgentes(arsenalItems), navTo: "arsenal" },
+      { key: "exames", title: "EXAMES", count: examesItems.length, tone: "amber", status: aggregateStatus(examesItems), items: maisUrgentes(examesItems), navTo: "documentos" },
       { key: "filiacao", title: "FILIAÇÃO", count: filiacaoItems.length, tone: "amber", status: aggregateStatus(filiacaoItems), items: filiacaoItems, navTo: "documentos" },
-      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: docItems, navTo: "documentos" },
-      { key: "processos", title: "PROCESSOS", count: activeProcessos.length || activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: processoItems, navTo: "processos" },
+      { key: "documentos", title: "DOCUMENTOS", count: docItems.length, tone: "amber", status: aggregateStatus(docItems), items: maisUrgentes(docItems), navTo: "documentos" },
+      { key: "processos", title: "PROCESSOS", count: activeProcessos.length || activeItems.length, tone: "bordo", status: aggregateStatus(processoItems), items: maisUrgentes(processoItems), navTo: "processos" },
     ];
 
     const urgents: Urgent[] = [];

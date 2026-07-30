@@ -362,7 +362,27 @@ export default function QAClientePortalPage() {
     setPendenciasGuiadasDismissed(sessionStorage.getItem("qa:pendencias-dismissed") === "1");
   }, []);
 
+  /**
+   * Porta de entrada única do checklist do processo.
+   *
+   * Antes de liberar, faz a MESMA verificação da entrada no portal: se o
+   * cadastro tem campo obrigatório em branco, abre o checklist cadastral e
+   * segura o processual. Vale para o "Rodar checklist", para o clique num
+   * serviço e para a abertura automática — nenhum caminho pula o cadastro.
+   *
+   * A exceção é assinatura pendente: contrato e procuração vêm antes de tudo,
+   * porque os dados para elaborá-los já vieram do fechamento da venda.
+   */
   const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null }) => {
+    const faltaCadastro =
+      pendingSignatureCount === 0 &&
+      CAMPOS_CADASTRO.some(
+        (c) => c.crucial && String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+      );
+    if (faltaCadastro) {
+      setShowChecklistCadastral(true);
+      return;
+    }
     sessionStorage.removeItem("qa:pendencias-dismissed");
     setPendenciasGuiadasDismissed(false);
     if (opts?.pinnedId !== undefined) setPinnedPendenciaId(opts.pinnedId);
