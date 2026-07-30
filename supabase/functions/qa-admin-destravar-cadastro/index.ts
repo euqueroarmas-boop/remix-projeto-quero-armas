@@ -236,12 +236,13 @@ Deno.serve(async (req) => {
 
       try {
         await admin.from("qa_logs_auditoria").insert({
-        tipo: "admin_reclassificar_documento",
+        entidade: "qa_documentos_cliente",
+        entidade_id: documentoId,
         acao: "reclassificar_documento",
-        ator_id: userData.user.id,
-        ator_email: userData.user.email,
-        cliente_id: clienteId,
-        detalhes: {
+        usuario_id: userData.user.id,
+        detalhes_json: {
+          ator_email: userData.user.email,
+          cliente_id: clienteId,
           documento_id: documentoId,
           arquivo_nome: doc.arquivo_nome,
           tipo_anterior: tipoAnterior,
