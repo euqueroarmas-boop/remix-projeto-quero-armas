@@ -73,6 +73,14 @@ async function salvarCampo(key: string, valor: string): Promise<{ ok: boolean; e
       }),
     });
     if (!resp.ok) return { ok: false, erro: (await resp.text()) || "Não foi possível salvar." };
+    // A função responde 200 mesmo quando descarta o campo por não estar na
+    // allowlist. Sem checar `ignorados`, o wizard dava a pergunta por
+    // respondida, nada era gravado e ela voltava na visita seguinte — foi o
+    // que fez o título de eleitor ser pedido três vezes.
+    const body = await resp.json().catch(() => null);
+    if (body && Array.isArray(body.ignorados) && body.ignorados.includes(key)) {
+      return { ok: false, erro: "Este campo não pôde ser salvo. Avise o suporte." };
+    }
     return { ok: true };
   } catch (e) {
     return { ok: false, erro: (e as Error).message || "Erro de conexão." };

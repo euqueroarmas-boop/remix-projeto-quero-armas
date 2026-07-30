@@ -67,6 +67,7 @@ const CAMPOS_PERMITIDOS = new Set<string>([
   "uf_emissor_rg",
   "expedicao_rg",
   "tipo_documento_identidade",
+  "titulo_eleitor",
 ]);
 
 // Campos explicitamente proibidos (mesmo se chegarem).
