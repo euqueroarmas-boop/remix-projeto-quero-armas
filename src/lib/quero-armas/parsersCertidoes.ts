@@ -247,9 +247,10 @@ function parseTjmSp(texto: string): CamposCertidao {
     data_nascimento: iso(g(/Data de Nascimento:\s*([\d/]+)/i)),
     nome_mae: upperOrUndef(g(/Mae:\s*(.+?)\s*$/im)),
     nome_pai: upperOrUndef(g(/Pai:\s*(.+?)\s*$/im)),
-    // Naturalidade do TJM/SP NÃO é confiável: num cliente veio "JACAREI - SP"
-    // e no outro "3750 - SP" — código do município em vez do nome. Extraio,
-    // mas o consumidor não deve usar este campo para conferência de cadastro.
+    // Naturalidade aqui é digitada por quem PEDE a certidão, não pelo tribunal.
+    // Num cliente veio "JACAREI - SP" e no outro "3750 - SP" — este segundo é
+    // erro de digitação do próprio requerente. Por isso o campo É comparado e,
+    // divergindo, a certidão é REJEITADA (ver conferenciaCertidao.ts).
     naturalidade: naturalidadeTjm(t),
     validade_dias: numOrUndef(g(/PRAZO DE\s*(\d{1,3})\s*\(/i)),
     data_emissao: iso(g(/^\s*(\d{2}\/\d{2}\/\d{4}),/m)),
