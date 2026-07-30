@@ -17,9 +17,72 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
+  rg_com_cpf: "Cédula de Identidade (RG) com CPF",
+  rg: "Cédula de Identidade (RG) com CPF",
+  cin: "Carteira de Identidade Nacional (CIN)",
+  cnh: "Carteira Nacional de Habilitação (CNH)",
+  cpf: "Cadastro de Pessoas Físicas (CPF)",
+  certidao_alteracao_nome: "Certidão averbada de alteração de nome",
+  comprovante_residencia: "Comprovante de residência",
+  comprovante_endereco: "Comprovante de residência",
+  declaracao_responsavel_imovel: "Declaração do responsável pelo imóvel",
+  ctps: "Carteira de Trabalho (CTPS)",
+  renda_holerite_mes_atual: "Holerite mais recente",
+  renda_holerite_funcionario_publico: "Holerite recente (servidor público)",
+  renda_cartao_cnpj: "Cartão CNPJ",
+  renda_qsa: "QSA — Quadro de Sócios e Administradores",
+  renda_contrato_social: "Contrato Social / Requerimento de Empresário",
+  renda_ccmei: "CCMEI — Certificado da Condição de MEI",
+  renda_cnpj_autonomo: "Cartão CNPJ (autônomo / MEI)",
+  renda_nf_recente: "Nota fiscal recente",
+  renda_comprovante_beneficio: "Comprovante de benefício",
+  renda_extrato_inss: "Extrato INSS",
+  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP",
+  antecedentes_federal: "Certidão de Distribuição Criminal — Justiça Federal",
+  antecedentes_estadual: "Certidão Estadual Criminal — TJSP",
+  antecedentes_federal_trf3_regional: "Certidão Federal — TRF 3ª Região",
+  antecedentes_federal_sjsp_jef: "Certidão Federal — Seção Judiciária SP e JEF/SP",
+  antecedentes_estadual_distribuicao: "Certidão Estadual TJSP — Distribuição de Ações Criminais",
+  antecedentes_estadual_execucoes: "Certidão Estadual TJSP — Execuções Criminais",
+  antecedentes_militar: "Certidão Criminal Militar",
+  antecedentes_eleitoral: "Certidão de Crimes Eleitorais — TSE",
+  declaracao_sem_inquerito_processo_criminal: "Declaração de não responder a inquérito/processo",
+  declaracao_guarda_responsavel: "Declaração de guarda responsável",
+  declaracao_correlata: "Declaração correlata",
+  laudo_psicologico: "Laudo psicológico",
+  laudo_capacidade_tecnica: "Atestado de capacidade técnica",
+  comprovante_efetiva_necessidade: "Comprovação de efetiva necessidade",
+  documento_complementar_caso: "Documento complementar do caso",
+  cr: "CR — Certificado de Registro",
+  craf: "CRAF — Certificado de Registro de Arma de Fogo",
+  sinarm: "SINARM — Certificado de Registro de Arma de Fogo",
+  gt: "GT — Guia de Tráfego",
+  gte: "GTE — Guia de Tráfego Eventual",
+  autorizacao_compra: "Autorização de compra",
+  nota_fiscal_arma: "Nota fiscal da arma",
+  comprovante_habitualidade: "Comprovante de habitualidade",
+  comprovante_clube_tiro: "Comprovante de clube / entidade",
+  comprovante_competicao: "Comprovante de competição / atividade",
+  comprovante_pagamento: "Comprovante de pagamento",
+  protocolo_processo: "Protocolo do processo",
+  oficio: "Ofício",
+  despacho: "Despacho / movimentação",
+  exigencia: "Exigência administrativa",
+  indeferimento: "Indeferimento",
+  procuracao: "Procuração",
+  procuracao_assinada: "Procuração assinada",
+  contrato_assinado: "Contrato assinado",
+  recurso_administrativo_doc: "Recurso administrativo",
+  mandado_seguranca_doc: "Mandado de segurança / peça jurídica",
+  outro: "Documento complementar",
+};
+
 function nomeDocumento(doc: Record<string, unknown>) {
-  const nome = String(doc.nome_documento || doc.arquivo_nome || doc.tipo_documento || "Documento").trim();
-  return nome || "Documento";
+  const nome = String(doc.nome_documento || "").trim();
+  if (nome) return nome;
+  const tipo = String(doc.tipo_documento || "").trim().toLowerCase();
+  return TIPO_DOCUMENTO_LABELS[tipo] || "Documento complementar";
 }
 
 function motivoPadrao(status: string) {
@@ -118,10 +181,10 @@ Deno.serve(async (req) => {
       documento_id: documentoId,
       customer_id: doc.customer_id ?? null,
       qa_cliente_id: doc.qa_cliente_id ?? null,
-      acao: `email_documento_${status}`,
+      acao: status,
       ator_tipo: "equipe",
       ator_user_id: guard.userId,
-      detalhes: { trace_id: traceId, email: cliente.email, status, motivo, ok: result.ok, queued: result.queued, error: result.error },
+      detalhes: { trace_id: traceId, email: cliente.email, status, motivo, tipo: "email_documento_status", ok: result.ok, queued: result.queued, error: result.error },
     }).then(() => {}, () => {});
 
     return json({ success: result.ok, queued: result.queued, traceId }, result.ok ? 200 : 500);
