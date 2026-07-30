@@ -951,10 +951,11 @@ export function ClienteDocsHubModal({
     data_nascimento: string | null;
     nome_mae: string | null;
     naturalidade_municipio: string | null;
+    rg: string | null;
     cep: string | null;
     cidade: string | null;
     uf: string | null;
-  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, cep: null, cidade: null, uf: null });
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, rg: null, cep: null, cidade: null, uf: null });
 
   // Docs aprovados carregados internamente quando o prop vier vazio
   const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
@@ -1014,7 +1015,7 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
@@ -1044,6 +1045,7 @@ export function ClienteDocsHubModal({
           // Naturalidade entra para a conferência local de certidões: vários
           // portais deixam o próprio cliente digitá-la, e a PF confere.
           naturalidade_municipio: row.naturalidade_municipio || null,
+          rg: row.rg || null,
           // Endereço: sempre atualiza — nunca vem como prop
           cep, cidade, uf,
         }));
@@ -1742,6 +1744,7 @@ export function ClienteDocsHubModal({
       data_nascimento: refClienteDataNascimento,
       nome_mae: refClienteNomeMae,
       naturalidade_municipio: clienteAutoFetch.naturalidade_municipio,
+      rg: clienteAutoFetch.rg,
     });
     setConferenciaLocal({ doc, conf });
 

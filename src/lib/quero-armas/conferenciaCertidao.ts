@@ -74,20 +74,55 @@ const chaveCidade = (v: unknown) =>
     .toUpperCase();
 
 /**
- * Campos que CADA órgão é obrigado a trazer.
+ * Campos que CADA órgão é obrigado a trazer na certidão emitida.
  *
- * Certidão sem isso não cumpre a exigência — é rejeitada mesmo que nada
- * divirja, porque não dá para provar que é do cliente nem calcular validade.
+ * A lista NÃO é "o que costuma aparecer" — é o que o formulário de emissão do
+ * órgão exige. Campo em branco na certidão significa que quem pediu deixou o
+ * formulário incompleto, e o documento não serve: a PF confere a qualificação
+ * inteira contra o cadastro.
+ *
+ * TJSP (e-SAJ) — conferido no formulário em 30/07/2026, ambos os modelos
+ * ("Certidão de Distribuição de Ações Criminais" e "Certidão de Execução
+ * Criminal") pedem os mesmos campos, marcados com asterisco:
+ *   Nome Completo*, CPF*, RG*, Gênero*, Nome da mãe*, Data de nascimento*
+ * Nome do pai e Naturalidade aparecem SEM asterisco no site, mas entram aqui
+ * como obrigatórios por decisão do usuário: certidão sem eles é reemitida,
+ * porque a qualificação incompleta é motivo de exigência na PF.
+ *
+ * Os demais órgãos ainda estão com a lista mínima — o usuário vai enviar as
+ * exigências de emissão da União e dos tribunais de SP, e cada um passa a ter
+ * a sua lista real. Até lá, não invento requisito que não conferi.
  */
 const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
-  stm: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+  stm: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
   // TSE e IIRGD não trazem CPF por natureza — identificam por título e RG.
   tse: ["nome_titular", "data_nascimento", "data_emissao", "resultado"],
-  iirgd: ["nome_titular", "data_nascimento", "data_emissao", "resultado"],
-  tjsp_distribuicao: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
-  tjsp_execucoes: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
-  trf_regional: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
-  tjm_sp: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+  iirgd: ["nome_titular", "rg", "data_nascimento", "data_emissao", "resultado"],
+  tjsp_distribuicao: [
+    "nome_titular", "cpf", "rg", "data_nascimento",
+    "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
+  ],
+  tjsp_execucoes: [
+    "nome_titular", "cpf", "rg", "data_nascimento",
+    "nome_mae", "nome_pai", "naturalidade", "data_emissao", "resultado",
+  ],
+  trf_regional: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
+  tjm_sp: ["nome_titular", "cpf", "data_nascimento", "nome_mae", "naturalidade", "data_emissao", "resultado"],
+};
+
+/**
+ * Como o campo se chama NO FORMULÁRIO de emissão. É isso que o cliente vê na
+ * tela do órgão — dizer "preencha Naturalidade" só ajuda se for o mesmo rótulo.
+ */
+const CAMPO_NO_FORMULARIO: Partial<Record<OrgaoCertidao, Record<string, string>>> = {
+  tjsp_distribuicao: {
+    nome_titular: "Nome Completo", cpf: "CPF", rg: "RG", nome_mae: "Nome da mãe",
+    nome_pai: "Nome do pai", data_nascimento: "Data de nascimento", naturalidade: "Naturalidade",
+  },
+  tjsp_execucoes: {
+    nome_titular: "Nome Completo", cpf: "CPF", rg: "RG", nome_mae: "Nome da mãe",
+    nome_pai: "Nome do pai", data_nascimento: "Data de nascimento", naturalidade: "Naturalidade",
+  },
 };
 
 const LABEL: Record<string, string> = {
@@ -97,6 +132,7 @@ const LABEL: Record<string, string> = {
   nome_mae: "Nome da mãe",
   nome_pai: "Nome do pai",
   naturalidade: "Naturalidade",
+  rg: "RG",
   data_emissao: "Data de emissão",
   resultado: "Resultado da consulta",
   filiacao: "Filiação",
@@ -121,7 +157,12 @@ export function conferirCertidao(
         mensagem:
           campo === "data_emissao"
             ? "A certidão enviada não mostra a data de emissão. Sem ela não é possível comprovar que está dentro da validade. Baixe o PDF original pelo site do órgão, sem recortar cabeçalho ou rodapé."
-            : `A certidão não traz "${LABEL[String(campo)] ?? String(campo)}", que é obrigatório para conferir se o documento é seu.`,
+            : (() => {
+                const noForm = CAMPO_NO_FORMULARIO[doc.orgao]?.[String(campo)];
+                return noForm
+                  ? `O campo "${noForm}" ficou em branco no pedido da certidão, e por isso não aparece no documento. Refaça a emissão preenchendo "${noForm}" — a qualificação precisa estar completa.`
+                  : `A certidão não traz "${LABEL[String(campo)] ?? String(campo)}", que é obrigatório para conferir se o documento é seu.`;
+              })(),
       });
     }
   }
@@ -182,6 +223,13 @@ export function conferirCertidao(
     digitos(doc.cpf),
     digitos(cadastro.cpf),
     `O CPF na certidão não é o seu. Na certidão: ${doc.cpf}. No cadastro: ${cadastro.cpf}. Emita novamente com o CPF correto.`,
+  );
+
+  comparar(
+    "rg",
+    String(doc.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(),
+    String(cadastro.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(),
+    `O RG na certidão está diferente do cadastro. Na certidão: ${doc.rg}. No cadastro: ${cadastro.rg}. Emita novamente com o RG correto.`,
   );
 
   comparar(
