@@ -166,7 +166,18 @@ export async function compararConteudoPdf(
 ): Promise<ResultadoComparacao> {
   const original = normalizarParaComparacao(await extrairTextoPdf(bytesOriginal));
   const assinado = normalizarParaComparacao(await extrairTextoPdf(bytesAssinado));
+  return compararTextos(original, assinado);
+}
 
+/**
+ * O mesmo confronto, a partir de textos JÁ normalizados.
+ *
+ * Existe para o golden record: o texto do original é gravado na geração, então
+ * na validação não há PDF original para reprocessar — só o texto guardado.
+ * Evita depender de o arquivo ainda estar no storage e de os bytes serem os
+ * mesmos, que é justamente o que a re-linearização quebra.
+ */
+export function compararTextos(original: string, assinado: string): ResultadoComparacao {
   const palavras = original.split(" ").filter(Boolean);
 
   if (palavras.length < MINIMO_PALAVRAS || assinado.length < 40) {
@@ -237,14 +248,26 @@ export interface ResultadoGolden {
   divergencias: string[];
 }
 
+/**
+ * Normalização para IDENTIDADE, diferente da de integridade.
+ *
+ * Na integridade a pontuação importa — trocar vírgula por ponto num valor muda
+ * o contrato. Na identidade ela é ruído: o CPF aparece como 377.995.388-99 no
+ * documento e pode estar 37799538899 no cadastro, e é a mesma pessoa. Por isso
+ * aqui, e SÓ aqui, a pontuação sai.
+ */
+function chaveIdentidade(v: string): string {
+  return normalizarParaComparacao(v).replace(/[^A-Z0-9]+/g, " ").trim();
+}
+
 export function conferirGoldenRecord(
   textoDocumento: string,
   cadastro: CadastroGolden,
 ): ResultadoGolden {
-  const texto = normalizarParaComparacao(textoDocumento);
+  const texto = chaveIdentidade(textoDocumento);
   const divergencias: string[] = [];
 
-  const nome = normalizarParaComparacao(String(cadastro.nome_completo ?? ""));
+  const nome = chaveIdentidade(String(cadastro.nome_completo ?? ""));
   const cpfDigitos = String(cadastro.cpf ?? "").replace(/\D/g, "");
 
   // O nome tem de aparecer inteiro. Nome parcial não vale: "WILLIAN" bate com

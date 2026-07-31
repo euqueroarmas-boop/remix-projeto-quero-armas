@@ -13,7 +13,7 @@
  * (usado pelo encadeamento qa-upload-signed-contract).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { compararConteudoPdf, conferirGoldenRecord, extrairTextoPdf } from "../_shared/compararTextoPdf.ts";
+import { compararConteudoPdf, compararTextos, conferirGoldenRecord, extrairTextoPdf, normalizarParaComparacao } from "../_shared/compararTextoPdf.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { validatePdfSignature, normalizeCpf } from "../_shared/qaPdfSignatureValidate.ts";
 
@@ -205,7 +205,46 @@ Deno.serve(async (req) => {
   // é texto como qualquer outro.
   let conteudo: Awaited<ReturnType<typeof compararConteudoPdf>> | null = null;
   let golden: ReturnType<typeof conferirGoldenRecord> | null = null;
-  if (!bindingOk && originalBytesParaComparar) {
+  let carimboDivergente: string[] = [];
+
+  // Golden record gravado na geração. Preferimos ele ao arquivo do storage:
+  // guarda o TEXTO e o CARIMBO como dados, então a conferência não depende de
+  // o PDF original ainda estar lá nem de os bytes serem os mesmos.
+  const { data: goldenRow } = await sb
+    .from("qa_documentos_golden")
+    .select("texto_normalizado, carimbo_ip, carimbo_so, carimbo_navegador, carimbo_pais, carimbo_registrado_em, titular_nome, titular_cpf")
+    .eq("documento_tipo", "contrato")
+    .eq("documento_id", contract.id)
+    .maybeSingle();
+
+  if (!bindingOk && goldenRow?.texto_normalizado) {
+    const textoAssinado = normalizarParaComparacao(await extrairTextoPdf(bytes));
+    conteudo = compararTextos(goldenRow.texto_normalizado as string, textoAssinado);
+
+    // CARIMBO valor a valor. A comparação de texto já detecta remoção; isto
+    // detecta TROCA — um IP diferente no mesmo lugar, por exemplo — e diz
+    // exatamente qual campo mudou, em vez de apontar um trecho.
+    const confereCampo = (rotulo: string, valor: unknown) => {
+      const v = String(valor ?? "").trim();
+      if (!v || v === "—") return;
+      if (!textoAssinado.includes(normalizarParaComparacao(v))) {
+        carimboDivergente.push(`${rotulo}: "${v}" não consta no documento assinado`);
+      }
+    };
+    confereCampo("IP", goldenRow.carimbo_ip);
+    confereCampo("Sistema operacional", goldenRow.carimbo_so);
+    confereCampo("Navegador", goldenRow.carimbo_navegador);
+
+    if (conteudo.integro && carimboDivergente.length === 0) {
+      golden = conferirGoldenRecord(textoAssinado, {
+        // Titular congelado na geração: o cadastro pode ter mudado depois, e a
+        // conferência tem de ser contra quem ele era quando assinou.
+        nome_completo: (goldenRow.titular_nome as string) ?? (cliente as any)?.nome_completo ?? null,
+        cpf: (goldenRow.titular_cpf as string) ?? (cliente as any)?.cpf ?? null,
+      });
+    }
+  } else if (!bindingOk && originalBytesParaComparar) {
+    // Sem golden (contratos anteriores a esta mudança): comportamento atual.
     conteudo = await compararConteudoPdf(originalBytesParaComparar, bytes);
     if (conteudo.integro) {
       // Golden record: o documento é o que geramos — mas é do cliente certo?
@@ -225,11 +264,15 @@ Deno.serve(async (req) => {
     !!meta.icp_brasil &&
     // Conteúdo idêntico E cliente certo. Sem isso não há aprovação automática.
     !!conteudo?.integro &&
-    !!golden?.confere;
+    !!golden?.confere &&
+    carimboDivergente.length === 0;
 
   if (!bindingOk && !softBindingOk) {
     const motivo = (conteudo && !conteudo.integro && !conteudo.inconclusivo
         ? `O conteúdo do arquivo enviado não confere com o contrato original. ${conteudo.detalhe} Trecho que não foi encontrado: "${(conteudo.trechosFaltantes[0] ?? "").slice(0, 120)}". Baixe o contrato novamente e assine sem editar o arquivo.`
+        : null)
+      || (carimboDivergente.length > 0
+        ? `O carimbo de conexão do documento foi alterado. ${carimboDivergente.join("; ")}. Baixe o contrato novamente e assine sem editar o arquivo.`
         : null)
       || (golden && !golden.confere ? golden.divergencias.join(" ") : null)
       || bindingReason
@@ -249,6 +292,7 @@ Deno.serve(async (req) => {
         conteudo_cobertura: conteudo?.cobertura ?? null,
         conteudo_trechos_faltantes: conteudo?.trechosFaltantes ?? null,
         golden_record: golden ?? null,
+        carimbo_divergente: carimboDivergente.length ? carimboDivergente : null,
         ...meta,
       },
     }).eq("id", contract.id);

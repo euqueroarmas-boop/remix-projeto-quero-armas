@@ -22,6 +22,7 @@
  *  - "original": apenas staff.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { extrairTextoPdf, normalizarParaComparacao } from "../_shared/compararTextoPdf.ts";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { constantTimeEqual, sha256Hex } from "../_shared/qaAsaas.ts";
 import { jsPDF } from "npm:jspdf@2.5.1";
@@ -259,6 +260,45 @@ async function ensureCanonicalPdf(
     event_type: "original_pdf_gerado",
     event_payload: { path, sha256: sha, size: bytes.byteLength },
   });
+
+  // ── GOLDEN RECORD ───────────────────────────────────────────────────────
+  //
+  // Grava, no instante da geração, o que a re-linearização do Gov.br NÃO muda:
+  // o texto e os campos do carimbo como colunas. A validação da assinatura
+  // passa a conferir contra isto, e não contra o arquivo no storage.
+  //
+  // Best-effort de propósito: falha aqui NÃO pode impedir o cliente de baixar
+  // o contrato. Sem golden, a validação cai no comportamento atual — comparar
+  // com o PDF do storage —, que continua funcionando.
+  try {
+    const texto = normalizarParaComparacao(await extrairTextoPdf(bytes));
+    const textoSha = await sha256Bytes(new TextEncoder().encode(texto));
+    const sessao = (contract as any).aceite_eletronico_data ?? {};
+    await sb.from("qa_documentos_golden").upsert({
+      documento_tipo: "contrato",
+      documento_id: contract.id,
+      cliente_id: (contract as any).cliente_id ?? null,
+      numero: (contract as any).contract_number ?? null,
+      sha256: sha,
+      storage_path: path,
+      tamanho_bytes: bytes.byteLength,
+      texto_normalizado: texto,
+      texto_sha256: textoSha,
+      carimbo_ip: sessao?.ip ?? (contract as any).aceite_ip ?? null,
+      carimbo_so: sessao?.so ?? null,
+      carimbo_navegador: sessao?.browser ?? null,
+      carimbo_pais: sessao?.country ?? null,
+      carimbo_idioma: sessao?.accept_language ?? null,
+      carimbo_referer: sessao?.referer ?? null,
+      carimbo_registrado_em: sessao?.registrado_em ?? (contract as any).aceite_eletronico_data?.registrado_em ?? null,
+      titular_nome: (contract as any).cliente_nome ?? null,
+      titular_cpf: (contract as any).cliente_cpf ?? null,
+      gerado_em: new Date().toISOString(),
+    }, { onConflict: "documento_tipo,documento_id" });
+  } catch (e) {
+    console.error("[golden] falha ao gravar (nao bloqueia a geracao):", e);
+  }
+
   return { bytes, path, sha256: sha };
 }
 
