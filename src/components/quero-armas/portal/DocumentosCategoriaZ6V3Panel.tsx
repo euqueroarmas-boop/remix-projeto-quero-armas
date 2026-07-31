@@ -408,11 +408,15 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         const dias = daysUntil(focoDoc.data_validade);
         if (dias === null || dias > 30) return null;
         const nome = getNomeDocumentoDisplay(focoDoc, "Documento");
+        // Sem "— atualize agora": o comprovante novo (conta de luz, boleto) só
+        // é emitido no ciclo seguinte. Mandar atualizar antes de existir
+        // documento novo é pedir o impossível. O aviso informa o prazo; o
+        // botão ao lado já diz o que fazer quando der.
         const msg = dias < 0
-          ? `${nome} venceu há ${Math.abs(dias)} dias — atualize agora`
+          ? `${nome} venceu há ${Math.abs(dias)} dias`
           : dias === 0
-          ? `${nome} vence hoje — atualize agora`
-          : `${nome} vence em ${dias} dias — atualize agora`;
+          ? `${nome} vence hoje`
+          : `${nome} vence em ${dias} dias`;
         return (
           <div className="focus">
             <div>
