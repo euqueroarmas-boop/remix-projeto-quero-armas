@@ -13,6 +13,7 @@
  * (usado pelo encadeamento qa-upload-signed-contract).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { compararConteudoPdf, conferirGoldenRecord, extrairTextoPdf } from "../_shared/compararTextoPdf.ts";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { validatePdfSignature, normalizeCpf } from "../_shared/qaPdfSignatureValidate.ts";
 
@@ -132,6 +133,7 @@ Deno.serve(async (req) => {
   const originalPath = (contract as any).original_pdf_path as string | null;
   const expectedSha = ((contract as any).original_sha256 || "").toString().toLowerCase();
 
+  let originalBytesParaComparar: Uint8Array | null = null;
   let bindingOk = false;
   let bindingReason = "";
   let bindingDetails: Record<string, unknown> = {};
@@ -149,6 +151,7 @@ Deno.serve(async (req) => {
       bindingDetails = { erro: origErr?.message };
     } else {
       const origBytes = new Uint8Array(await origFile.arrayBuffer());
+      originalBytesParaComparar = origBytes;
       // 1) Confere SHA-256 do original armazenado (defesa contra adulteração interna).
       const origDigest = await crypto.subtle.digest("SHA-256", origBytes as BufferSource);
       const origSha = Array.from(new Uint8Array(origDigest))
@@ -192,15 +195,44 @@ Deno.serve(async (req) => {
   // o binding é tratado como "soft" e o contrato entra em REVISÃO MANUAL em vez
   // de ser rejeitado. Se o CPF do signatário também bater com o do cliente,
   // aprovamos automaticamente.
+  // ── CONTEÚDO: comparação texto a texto com o original ───────────────────
+  //
+  // Substitui a camada fraca. Antes, quando o Gov.br re-linearizava o PDF, a
+  // única verificação de conteúdo era "o número do contrato aparece no texto"
+  // — e quem alterasse uma cláusula mantendo o número passava, caindo em
+  // revisão manual. Agora conferimos TODO o texto do original, incluindo o
+  // carimbo de conexão da lateral esquerda (IP, dispositivo, data/hora), que
+  // é texto como qualquer outro.
+  let conteudo: Awaited<ReturnType<typeof compararConteudoPdf>> | null = null;
+  let golden: ReturnType<typeof conferirGoldenRecord> | null = null;
+  if (!bindingOk && originalBytesParaComparar) {
+    conteudo = await compararConteudoPdf(originalBytesParaComparar, bytes);
+    if (conteudo.integro) {
+      // Golden record: o documento é o que geramos — mas é do cliente certo?
+      // São falhas diferentes, e a integridade sozinha não pega a segunda.
+      golden = conferirGoldenRecord(await extrairTextoPdf(bytes), {
+        nome_completo: (cliente as any)?.nome_completo ?? null,
+        cpf: (cliente as any)?.cpf ?? null,
+      });
+    }
+  }
+
   const softBindingOk =
     !bindingOk &&
     shaIntegrityOk &&
     numeroPresente &&
     !!meta.valida &&
-    !!meta.icp_brasil;
+    !!meta.icp_brasil &&
+    // Conteúdo idêntico E cliente certo. Sem isso não há aprovação automática.
+    !!conteudo?.integro &&
+    !!golden?.confere;
 
   if (!bindingOk && !softBindingOk) {
-    const motivo = bindingReason
+    const motivo = (conteudo && !conteudo.integro && !conteudo.inconclusivo
+        ? `O conteúdo do arquivo enviado não confere com o contrato original. ${conteudo.detalhe} Trecho que não foi encontrado: "${(conteudo.trechosFaltantes[0] ?? "").slice(0, 120)}". Baixe o contrato novamente e assine sem editar o arquivo.`
+        : null)
+      || (golden && !golden.confere ? golden.divergencias.join(" ") : null)
+      || bindingReason
       || (numero
         ? `O PDF enviado não corresponde a este contrato (${numero}).`
         : "Não foi possível confirmar o vínculo do PDF com o contrato.");
@@ -213,6 +245,10 @@ Deno.serve(async (req) => {
         expected_contract_number: numero,
         contract_number_in_pdf: numeroPresente,
         ...bindingDetails,
+        conteudo_integro: conteudo?.integro ?? null,
+        conteudo_cobertura: conteudo?.cobertura ?? null,
+        conteudo_trechos_faltantes: conteudo?.trechosFaltantes ?? null,
+        golden_record: golden ?? null,
         ...meta,
       },
     }).eq("id", contract.id);
