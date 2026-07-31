@@ -547,7 +547,7 @@ export default function QAClientePortalPage() {
           setMustChangePassword(true);
         }
 
-        const [{ data: profile }, { data: authLink }] = await Promise.all([
+        const [{ data: profile }, { data: authLink }, { data: clienteDireto }] = await Promise.all([
           supabase
             .from("qa_usuarios_perfis" as any)
             .select("*")
@@ -563,9 +563,15 @@ export default function QAClientePortalPage() {
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
+          supabase
+            .from("qa_clientes" as any)
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("excluido", false)
+            .maybeSingle(),
         ]);
 
-        if (!profile && !authLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
+        if (!profile && !authLink && !clienteDireto) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
         let customerLink: any = null;
         if ((authLink as any)?.customer_id) {
@@ -577,7 +583,7 @@ export default function QAClientePortalPage() {
           customerLink = data;
         }
 
-        let clienteData: any = null;
+        let clienteData: any = clienteDireto || null;
         if ((authLink as any)?.qa_cliente_id) {
           const { data } = await supabase
             .from("qa_clientes" as any)

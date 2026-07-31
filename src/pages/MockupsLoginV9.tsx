@@ -86,13 +86,27 @@ export default function MockupsLoginV9() {
   async function ensureLinkedOrPromptCpf(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
-    const { data: link } = await supabase
-      .from("cliente_auth_links" as any)
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
-    if (link) return true;
+
+    // O acesso do Arsenal pode ter sido provisionado pelo fluxo QA-puro, que
+    // grava qa_clientes.user_id. A tela v9 antes olhava apenas
+    // cliente_auth_links e pedia CPF mesmo quando o cadastro ja estava ligado.
+    const [{ data: link }, { data: clienteDireto }] = await Promise.all([
+      supabase
+        .from("cliente_auth_links" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle(),
+      supabase
+        .from("qa_clientes" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("excluido", false)
+        .maybeSingle(),
+    ]);
+
+    if (link || clienteDireto) return true;
+
     setNeedCpf(true);
     toast.info("Para finalizar, informe seu CPF para localizarmos seu cadastro.");
     return false;
