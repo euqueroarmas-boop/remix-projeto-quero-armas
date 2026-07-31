@@ -5,7 +5,8 @@
 -- "defesa pessoal", "tiro esportivo", "caçador" e "militar aposentado" são sob
 -- qual fundamento. São eixos independentes — e a base legal confirma: a
 -- IN DG/PF 201 rege a defesa pessoal, a IN DG/PF 311 rege os CACs, enquanto a
--- Lei 10.826/2003 e os decretos valem para todos.
+-- Lei 10.826/2003 e os decretos valem para todos. Militar aposentado tem
+-- portarias próprias e fica de fora por ora (usuário, 31/07/2026).
 --
 -- Duplicar serviço por modalidade daria 8 serviços e ~144 linhas de catálogo,
 -- a maioria repetida (RG, endereço, as 7 certidões, laudos são iguais em todas
@@ -56,10 +57,16 @@ INSERT INTO public.qa_modalidades (codigo, nome, base_legal) VALUES
    'Lei 10.826/2003; Decreto 11.615/2023; IN DG/PF 311'),
   ('colecionador',       'Colecionador',
    'Lei 10.826/2003; Decreto 11.615/2023; IN DG/PF 311'),
+  -- Militar/agente aposentado NÃO segue a IN 201: tem portarias próprias, que
+  -- ainda não foram mapeadas. Fica cadastrado e INATIVO — existe no vocabulário
+  -- para não ser esquecido, mas não é oferecido até a base legal ser definida.
   ('militar_aposentado', 'Militar / agente aposentado',
-   'Lei 10.826/2003; Decreto 11.615/2023; IN DG/PF 201')
+   'Portarias próprias — a mapear. NÃO se aplica a IN DG/PF 201.')
 ON CONFLICT (codigo) DO UPDATE
-  SET nome = EXCLUDED.nome, base_legal = EXCLUDED.base_legal, ativo = true;
+  SET nome = EXCLUDED.nome, base_legal = EXCLUDED.base_legal;
+
+UPDATE public.qa_modalidades SET ativo = false WHERE codigo = 'militar_aposentado';
+UPDATE public.qa_modalidades SET ativo = true  WHERE codigo <> 'militar_aposentado';
 
 ALTER TABLE public.qa_modalidades ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS qa_modalidades_leitura ON public.qa_modalidades;
