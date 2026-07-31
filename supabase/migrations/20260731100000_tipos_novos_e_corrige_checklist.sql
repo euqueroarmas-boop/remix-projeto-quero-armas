@@ -53,6 +53,19 @@ BEGIN
 END $$;
 
 -- ─── 2) Biblioteca ───────────────────────────────────────────────────────
+-- ATENÇÃO: `qa_documentos_biblioteca.categoria` tem vocabulário PRÓPRIO, que
+-- NÃO é o do catálogo do Hub. Aqui vale 'ocupacao_licita', não
+-- 'renda_ocupacao'. E 'efetiva_necessidade' precisou ser acrescentada à
+-- constraint — o Boletim de Ocorrência iria parar em 'outros', onde a prova da
+-- efetiva necessidade sumiria da vista.
+ALTER TABLE public.qa_documentos_biblioteca
+  DROP CONSTRAINT IF EXISTS chk_qa_bib_categoria;
+
+ALTER TABLE public.qa_documentos_biblioteca
+  ADD CONSTRAINT chk_qa_bib_categoria CHECK (categoria IN (
+    'identificacao','residencia','ocupacao_licita','certidoes',
+    'laudos','arma_acervo','declaracoes','efetiva_necessidade','outros'
+  ));
 INSERT INTO public.qa_documentos_biblioteca
   (codigo, nome, categoria, descricao_o_que_e, descricao_como_enviar,
    observacao_cliente, validade_dias, formato_aceito, link_emissao, base_legal,
@@ -83,7 +96,7 @@ VALUES
   (
     'renda_ficha_cadastral_jucesp',
     'Ficha Cadastral Completa (Junta Comercial)',
-    'renda_ocupacao',
+    'ocupacao_licita',
     'Ficha Cadastral Completa emitida pela Junta Comercial do estado. Traz NIRE, CNPJ, data de constituição, objeto social e o quadro de titular/sócios.',
     'Emita no portal da Junta Comercial do seu estado (em São Paulo, JUCESP Online) e envie o PDF original.',
     'Comprova ocupação lícita de empresário. Substitui o Contrato Social / Requerimento de Empresário — é o mesmo documento, com outro nome.',
@@ -93,6 +106,7 @@ VALUES
   )
 ON CONFLICT (codigo) DO UPDATE
   SET nome = EXCLUDED.nome,
+      categoria = EXCLUDED.categoria,
       descricao_o_que_e = EXCLUDED.descricao_o_que_e,
       descricao_como_enviar = EXCLUDED.descricao_como_enviar,
       observacao_cliente = EXCLUDED.observacao_cliente,
