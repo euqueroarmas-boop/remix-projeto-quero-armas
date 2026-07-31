@@ -29,18 +29,29 @@ const Email = (props: Props) => (
           <Heading as="h2" style={h2}>Como assinar — passo a passo</Heading>
           <Text style={text}>Você pode assinar de duas formas oficiais, ambas com validade jurídica plena (MP 2.200-2/2001):</Text>
 
+          {/* Passo a passo ditado pelo usuário em 31/07/2026. É o caminho REAL
+              do assinador: sem os "Atalhos gov.br" o cliente não encontra a
+              tela de assinatura, e sem o item do código reenviado ele desiste
+              quando o SMS não chega. Este mesmo texto aparece no portal. */}
           <Heading as="h3" style={h3}>Opção 1 — Assinatura gov.br (recomendada, gratuita)</Heading>
-          <Text style={step}><strong>1.</strong> Clique no botão <strong>“Assinar contrato”</strong> acima. Você será direcionado ao Assinador gov.br.</Text>
+          <Text style={step}><strong>1.</strong> Clique no botão <strong>“Assinar contrato”</strong> acima. Você será direcionado ao contrato do seu serviço. Clique em <strong>Baixar contrato</strong> e salve ele no seu celular ou computador.</Text>
           <Text style={step}><strong>2.</strong> Faça login com seu <strong>CPF e senha gov.br</strong>. Se ainda não tem conta, crie em <a href="https://sso.acesso.gov.br" style={link}>sso.acesso.gov.br</a>.</Text>
           <Text style={step}><strong>3.</strong> Sua conta gov.br precisa ser <strong>nível Prata ou Ouro</strong>. Se estiver Bronze, eleve pelo app <strong>gov.br</strong> (biometria facial via CNH digital ou banco credenciado).</Text>
-          <Text style={step}><strong>4.</strong> Confirme o contrato exibido, clique em <strong>“Assinar”</strong> e autorize com o <strong>código enviado por SMS</strong> (ou notificação no app gov.br).</Text>
-          <Text style={step}><strong>5.</strong> Pronto — você receberá o PDF assinado por e-mail e também poderá baixá-lo pela sua Área do Cliente.</Text>
+          <Text style={step}><strong>4.</strong> Clique ou toque em <strong>“Atalhos gov.br”</strong> e, na janela que se abrirá, escolha <strong>“Assinar Documentos”</strong>. Toque novamente no redirecionamento <strong>“Assinar documentos”</strong> para ser levado ao <a href="https://assinador.iti.br" style={link}>assinador.iti.br</a>.</Text>
+          <Text style={step}><strong>5.</strong> Clique ou toque em <strong>“+ Escolher arquivo”</strong>, navegue até a pasta onde salvou e anexe o documento no assinador.</Text>
+          <Text style={step}><strong>6.</strong> Apenas toque ou clique no botão azul <strong>“Avançar”</strong>.</Text>
+          <Text style={step}><strong>7.</strong> A assinatura será colada automaticamente na última página do contrato — <strong>mantenha ela onde está</strong>. Clique em <strong>“Assinar”</strong>, toque novamente em <strong>“Assinar”</strong> e autorize com o código enviado por SMS ou pela notificação no app gov.br.</Text>
+          <Text style={step}><strong>8.</strong> Se o código não chegar pelo app nem por SMS, abra <strong>somente o aplicativo gov.br</strong> no celular, volte à tela de autorização e toque em <strong>reenviar código</strong> — ele chega na hora.</Text>
+          <Text style={step}><strong>9.</strong> Copie e cole o código no campo de assinatura e clique no botão azul <strong>“Autorizar”</strong>.</Text>
+          <Text style={step}><strong>10.</strong> Clique ou toque em <strong>“Baixar arquivo assinado”</strong> e salve no seu celular ou computador.</Text>
 
           <Heading as="h3" style={h3}>Opção 2 — Certificado Digital ICP-Brasil (A1 ou A3)</Heading>
           <Text style={step}><strong>1.</strong> Tenha em mãos seu certificado <strong>e-CPF A1</strong> (arquivo .pfx/.p12) ou <strong>A3</strong> (token/smartcard) já instalado no computador.</Text>
           <Text style={step}><strong>2.</strong> Clique em <strong>“Assinar contrato”</strong> e escolha a opção <strong>“Assinar com Certificado ICP-Brasil”</strong>.</Text>
           <Text style={step}><strong>3.</strong> Selecione o certificado, informe a <strong>senha do certificado</strong> (PIN) e confirme.</Text>
           <Text style={step}><strong>4.</strong> O PDF assinado (padrão PAdES) ficará disponível para download imediato e também será enviado por e-mail.</Text>
+
+          <Text style={note}><strong>Atenção:</strong> não imprima, edite, altere nem refaça o arquivo original baixado — nem mesmo reimprimir em PDF. A assinatura perde a validade e o documento não será aceito no Arsenal Inteligente. Envie o arquivo original baixado.</Text>
 
           <Text style={note}>Precisa de ajuda? Responda este e-mail ou fale com a equipe pelo WhatsApp no rodapé do site. Não compartilhe sua senha gov.br nem o PIN do certificado com ninguém.</Text>
 

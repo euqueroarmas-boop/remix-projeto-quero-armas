@@ -192,34 +192,38 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const isSignature = active.kind === "signature";
   const isPergunta = active.kind === "pergunta";
+  const doc = active.tipo === "contract" ? "contrato" : "procuracao";
   const explicBase = isSignature
     ? {
         titulo:
           active.tipo === "contract"
             ? "Contrato de adesão aguardando sua assinatura"
             : "Procuração aguardando sua assinatura",
-        // Passo a passo REAL do assinador do Gov.br, com a URL e onde clicar.
-        // O texto genérico anterior ("assine com sua conta GOV.BR") não dizia
-        // ONDE se assina — o cliente ficava procurando no portal do Gov.br um
-        // botão que não existe lá. O assinador é um serviço à parte.
+        // MESMO passo a passo do e-mail (usuário, 31/07/2026). Ele pediu
+        // explicitamente que portal e e-mail digam a mesma coisa: o cliente lê
+        // um, abre o outro, e qualquer diferença entre os dois vira dúvida.
         //
-        // Esta versão espelha a que já existia no cockpit de contratos
-        // (QAContratosCockpitV1), que é onde a equipe orienta hoje.
+        // Os itens 4 e 8 são os que faltavam e faziam o cliente travar: sem
+        // "Atalhos gov.br" ele não acha a tela de assinatura, e sem o reenvio
+        // do código ele desiste quando o SMS não chega.
         passos: [
-          active.tipo === "contract"
-            ? "Clique em \"Baixar contrato\" aqui embaixo e salve o PDF no seu celular ou computador."
-            : "Clique em \"Baixar procuração\" aqui embaixo e salve o PDF no seu celular ou computador.",
-          "Abra o assinador oficial do Gov.br: assinador.iti.br",
-          "Clique em \"Escolher arquivo\" e selecione o PDF que você acabou de baixar.",
-          "Faça login com a sua conta Gov.br (a mesma do INSS, Receita e e-CAC).",
-          "Na tela do documento, clique em \"Avançar\" e depois em \"Assinar\".",
-          "Confirme a assinatura pelo aplicativo Gov.br no celular, ou pelo código enviado por SMS.",
-          "Clique em \"Baixar arquivo assinado\" — o nome dele termina com \"-assinado.pdf\".",
-          active.tipo === "contract"
+          doc === "contrato"
+            ? "Clique em \"Baixar contrato\" aqui embaixo e salve o arquivo no seu celular ou computador."
+            : "Clique em \"Baixar procuração\" aqui embaixo e salve o arquivo no seu celular ou computador.",
+          "Faça login com seu CPF e senha gov.br. Se ainda não tem conta, crie em sso.acesso.gov.br",
+          "Sua conta gov.br precisa ser nível Prata ou Ouro. Se estiver Bronze, eleve pelo app gov.br (biometria facial via CNH digital ou banco credenciado).",
+          "Clique ou toque em \"Atalhos gov.br\" e, na janela que se abrirá, escolha \"Assinar Documentos\". Toque novamente no redirecionamento \"Assinar documentos\" para ser levado ao assinador.iti.br",
+          "Clique ou toque em \"+ Escolher arquivo\", navegue até a pasta onde salvou e anexe o documento no assinador.",
+          "Apenas toque ou clique no botão azul \"Avançar\".",
+          `A assinatura será colada automaticamente na última página d${doc === "contrato" ? "o contrato" : "a procuração"} — mantenha ela onde está. Clique em "Assinar", toque novamente em "Assinar" e autorize com o código enviado por SMS ou pela notificação no app gov.br.`,
+          "Se o código não chegar pelo app nem por SMS, abra somente o aplicativo gov.br no celular, volte à tela de autorização e toque em reenviar código — ele chega na hora.",
+          "Copie e cole o código no campo de assinatura e clique no botão azul \"Autorizar\".",
+          "Clique ou toque em \"Baixar arquivo assinado\" e salve no seu celular ou computador.",
+          doc === "contrato"
             ? "Volte aqui e clique em \"Enviar contrato assinado\"."
             : "Volte aqui e clique em \"Enviar procuração assinada\".",
         ],
-        observacao: "NÃO imprima, não fotografe e não digitalize o documento — a assinatura é digital e some no papel. Envie o PDF exatamente como saiu do assinador.",
+        observacao: "NÃO imprima, edite, altere nem refaça o arquivo original baixado — nem mesmo reimprimir em PDF. A assinatura perde a validade e o documento não será aceito no Arsenal Inteligente. Envie o arquivo original baixado.",
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
