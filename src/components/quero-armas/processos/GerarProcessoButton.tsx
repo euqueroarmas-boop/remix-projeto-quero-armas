@@ -56,6 +56,11 @@ interface Props {
 export function GerarProcessoButton({ venda, itens, clienteNome, processoExistente, onCreated }: Props) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Modalidade = fundamento do pedido (defesa pessoal, atirador, caçador...).
+  // É a segunda dimensão do serviço: define QUAIS exigências entram no
+  // checklist. Sem ela o checklist sai completo, que é o padrão seguro.
+  const [modalidade, setModalidade] = useState<string>("");
+  const [modalidades, setModalidades] = useState<Array<{ codigo: string; nome: string; base_legal: string }>>([]);
   const [openProcessoId, setOpenProcessoId] = useState<string | null>(null);
   const [servicos, setServicos] = useState<ServicoLite[]>([]);
   const [servicoId, setServicoId] = useState<string>("");
@@ -104,6 +109,21 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
     })();
     return () => { cancel = true; };
   }, [open, servicoSugeridoId]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelado = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_modalidades" as any)
+        .select("codigo, nome, base_legal")
+        .eq("ativo", true)
+        .order("nome");
+      if (!cancelado && data) setModalidades(data as unknown as Array<{ codigo: string; nome: string; base_legal: string }>);
+    })();
+    setModalidade("");
+    return () => { cancelado = true; };
+  }, [open]);
 
   // ─── Caso já exista processo: badge + abrir ───
   if (processoExistente) {
@@ -176,6 +196,21 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
       if (error) throw error;
       const res = (data || {}) as any;
       const processoId = res.processo_id as string | undefined;
+
+      // A modalidade é aplicada DEPOIS da criação: o checklist já nasceu
+      // completo, e esta chamada tira o que não se aplica e traz o que faltava.
+      // Falha aqui não invalida o processo — ele existe e pode ser ajustado
+      // depois. Por isso avisa, mas não derruba o fluxo.
+      if (processoId && modalidade) {
+        const { error: errMod } = await supabase.rpc("qa_processo_definir_modalidade" as any, {
+          p_processo_id: processoId,
+          p_modalidade: modalidade,
+        });
+        if (errMod) {
+          console.error("[GerarProcessoButton] modalidade:", errMod);
+          toast.warning("Processo criado, mas a modalidade não foi aplicada. Ajuste no processo.");
+        }
+      }
       if (res.ja_existia) {
         toast.message("Processo já existia para essa venda", {
           description: processoId ? `Abrindo processo ${processoId.slice(0, 8)}…` : undefined,
@@ -267,6 +302,35 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
               {servicoSugeridoId && servicoSelecionado && Number(servicoId) === servicoSugeridoId && (
                 <p className="text-[9px] text-slate-400 mt-1">Sugerido a partir do item da venda.</p>
               )}
+            </div>
+
+            <div>
+              <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-1 block">
+                Modalidade
+              </label>
+              <Select value={modalidade} onValueChange={setModalidade} disabled={submitting}>
+                <SelectTrigger className="h-9 text-sm bg-slate-50 border-slate-200 text-slate-800 rounded-md">
+                  <SelectValue placeholder="Selecionar modalidade (opcional)" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border border-slate-200 z-[110] max-h-72 shadow-lg">
+                  {modalidades.length === 0 ? (
+                    <div className="px-3 py-4 text-[12px] text-slate-500">Nenhuma modalidade ativa.</div>
+                  ) : modalidades.map((m) => (
+                    <SelectItem
+                      key={m.codigo}
+                      value={m.codigo}
+                      className="text-sm text-slate-900 font-medium data-[highlighted]:bg-amber-100 data-[highlighted]:text-slate-900 focus:bg-amber-100 focus:text-slate-900"
+                    >
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[9px] text-slate-400 mt-1">
+                {modalidade
+                  ? modalidades.find((m) => m.codigo === modalidade)?.base_legal
+                  : "Sem modalidade, o checklist sai completo — nada é filtrado."}
+              </p>
             </div>
 
             <div>
