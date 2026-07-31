@@ -382,8 +382,21 @@ Deno.serve(async (req) => {
       if (arquivos.length === 0) {
         return json({ success: true, resultados: [] });
       }
+      // Corpo total: se o lote for grande demais, devolve erro POR ARQUIVO em
+      // vez de deixar o worker morrer — o frontend preserva a classificação
+      // heurística e permite classificação manual.
+      const totalChars = arquivos.reduce((s, a) => s + (a?.data_url?.length || 0), 0);
+      if (totalChars > MAX_BODY_CHARS) {
+        return json({
+          success: true,
+          resultados: arquivos.map((a) => ({
+            nome: a?.nome, tipo_detectado: "outro", confianca: 0, motivo: "",
+            legivel: false, campos_extraidos: {}, erro: "lote_muito_grande",
+          })),
+        });
+      }
       const resultados: any[] = new Array(arquivos.length).fill(null);
-      const CONC = 4;
+      const CONC = 2;
       for (let i = 0; i < arquivos.length; i += CONC) {
         const lote = arquivos.slice(i, i + CONC);
         const loteRes = await Promise.all(
