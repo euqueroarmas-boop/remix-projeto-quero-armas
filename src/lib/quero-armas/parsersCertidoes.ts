@@ -24,7 +24,8 @@ export type OrgaoCertidao =
   | "tjsp_distribuicao"
   | "tjsp_execucoes"
   | "trf_regional"
-  | "tjm_sp";
+  | "tjm_sp"
+  | "cr_exercito";
 
 export interface CamposCertidao {
   orgao: OrgaoCertidao;
@@ -47,6 +48,12 @@ export interface CamposCertidao {
   resultado?: "NADA_CONSTA" | "CONSTA";
   titulo_eleitor?: string;
   codigo_autenticidade?: string;
+  /** Só no CR: validade, órgão vinculador e atividades apostiladas. */
+  data_validade?: string; // YYYY-MM-DD
+  orgao_vinculacao?: string;
+  amparo_legal?: string;
+  /** Modalidades apostiladas: colecionador | atirador | cacador. */
+  atividades?: string[];
 }
 
 const norm = (v: string) =>
@@ -102,6 +109,7 @@ function dataPorExtenso(t: string): string | undefined {
 
 export function identificarOrgao(texto: string): OrgaoCertidao | null {
   const t = flat(texto).toUpperCase();
+  if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
   if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO/.test(t)) return "tjm_sp";
   if (/TRIBUNAL SUPERIOR ELEITORAL/.test(t)) return "tse";
@@ -289,6 +297,62 @@ function parseTjmSp(texto: string): CamposCertidao {
   };
 }
 
+/* ── CR — Certificado de Registro ──────────────────────────────────────── */
+
+/**
+ * As três atividades que o CR pode apostilar.
+ *
+ * O documento as escreve por extenso e numeradas: "1- Tiro Desportivo -
+ * Atirador Desportivo; 2- Caça - Caçador; 3- Colecionamento - Colecionador".
+ * O cliente pode ter uma, duas ou as três — e cada autorização de compra sai
+ * em UMA delas, nunca em mais de uma.
+ */
+const ATIVIDADES_CR: Array<{ re: RegExp; codigo: string }> = [
+  { re: /ATIRADOR DESPORTIVO|TIRO DESPORTIVO/i, codigo: "atirador" },
+  { re: /CA[CÇ]ADOR|\bCA[CÇ]A\b/i, codigo: "cacador" },
+  { re: /COLECIONADOR|COLECIONAMENTO/i, codigo: "colecionador" },
+];
+
+/**
+ * A linha de valores do CR: "755.477.752-15        SR/PF/SP".
+ *
+ * Usa `\s+`, não `\s{2,}`: o `norm()` já colapsou os espaços múltiplos do
+ * layout em um só. A âncora `^` é o que impede casar com a linha do topo
+ * ("N° CR 300.532.598-90 VALIDADE ..."), onde o número do CR também tem
+ * formato de CPF mas não começa a linha.
+ */
+function linhaCpfOrgao(t: string): [string, string, string] | null {
+  const m = t.match(/^\s*(\d{3}\.\d{3}\.\d{3}-\d{2})\s+(\S.*?)\s*$/m);
+  return m ? [m[0], m[1], m[2].trim()] : null;
+}
+
+function parseCr(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+
+  // O bloco de atividades vai do rótulo até a linha da assinatura.
+  const bloco = t.match(/ATIVIDADES AUTORIZADAS([\s\S]*?)(?:Documento Assinado|QR Code|$)/i)?.[1] ?? "";
+  const atividades = ATIVIDADES_CR.filter((a) => a.re.test(bloco)).map((a) => a.codigo);
+
+  return {
+    orgao: "cr_exercito",
+    tipoDocumento: "cr",
+    // O nº do CR tem formato de CPF mas NÃO é CPF: é o registro. Não passa
+    // por cpf11() para não ser confundido com o documento do titular.
+    numero_documento: g(/N.\s*CR\s+([\d.\-]{10,20})/i)?.replace(/\D/g, ""),
+    data_validade: iso(g(/VALIDADE\s+([\d/]+)/i)),
+    nome_titular: upperOrUndef(g(/NOME COMPLETO\s*\n\s*(.+)$/im)),
+    // CPF e órgão dividem a MESMA linha, separados só por espaços — o rótulo
+    // fica na linha de cima. Capturar a linha inteira colava um no outro.
+    cpf: cpf11(linhaCpfOrgao(t)?.[1]),
+    orgao_vinculacao: linhaCpfOrgao(t)?.[2],
+    amparo_legal: g(/AMPARO LEGAL\s*\n\s*(.+?)\s*$/im),
+    atividades: atividades.length ? atividades : undefined,
+    codigo_autenticidade: g(/SisGCOrp\s+([0-9a-f]{16,64})/i),
+    data_emissao: iso(g(/,\s*([\d]{2}\/[\d]{2}\/[\d]{4})\s*$/m)),
+  };
+}
+
 /* ── helpers ───────────────────────────────────────────────────────────── */
 
 /**
@@ -328,5 +392,6 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "tjsp_execucoes": return parseTjsp(texto, "tjsp_execucoes");
     case "trf_regional": return parseTrfRegional(texto);
     case "tjm_sp": return parseTjmSp(texto);
+    case "cr_exercito": return parseCr(texto);
   }
 }
