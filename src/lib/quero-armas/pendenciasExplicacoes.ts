@@ -193,9 +193,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 90 dias. Envie o PDF assinado digitalmente — reimpressões escaneadas são reprovadas pela IA.",
   },
   certidao_antecedentes_criminais_militar: {
-    titulo: "Superior Tribunal Militar — STM",
+    titulo: "Justiça Militar Estadual — TJM",
     passos: [
-      "Abra o portal do STM (federal) ou TJM-SP (estadual) pelo botão \"Acessar site de emissão\", conforme o que a PF solicitou.",
+      "Abra o portal do Tribunal de Justiça Militar do seu estado pelo botão \"Acessar site de emissão\". Esta NÃO é a certidão do STM — são documentos diferentes e a PF exige os dois.",
       "Clique em \"Certidão Negativa\" no menu do topo.",
       "Preencha CPF, nome completo, nome da mãe e data de nascimento exatamente como no RG.",
       "Marque \"Não sou robô\" e clique em \"Emitir Certidão\".",
@@ -204,6 +204,26 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
     observacao: "Validade de 90 dias. Não imprima e escaneie — envie o PDF original com a assinatura digital.",
+  },
+  // Mesmo documento, dois códigos: o catálogo de serviços usa
+  // `certidao_estadual_policia_civil` e o Hub usa
+  // `certidao_antecedentes_policia_civil_sp`. Sem esta entrada o item cai no
+  // texto genérico "Documento adicional" e o cliente não sabe o que emitir.
+  certidao_estadual_policia_civil: {
+    titulo: "Antecedentes Criminais — Polícia Civil (SSP)",
+    passos: [
+      "Clique em \"Acessar site de emissão\" logo abaixo — abre o serviço \"Atestado de Antecedentes Criminais\" no portal servicos.sp.gov.br.",
+      "Clique no botão \"Iniciar\" (ou \"Solicitar\") no bloco central da página.",
+      "Faça login com a sua conta Gov.br (mesma do INSS/Receita/e-CAC). Se ainda não tem, crie na hora com CPF, e-mail e celular.",
+      "Autorize o compartilhamento dos seus dados com o Governo de SP quando o Gov.br pedir.",
+      "Confira nome completo, CPF, RG e filiação já preenchidos automaticamente — se algum estiver errado, corrija pelo próprio Gov.br antes de continuar.",
+      "Selecione a finalidade \"Porte/Posse de arma de fogo\" (ou \"Outros\", se não aparecer) e clique em \"Solicitar Atestado\".",
+      "O atestado abre em PDF assinado digitalmente pela SSP em nova aba.",
+      "Baixe pelo ícone de download. NÃO use \"Imprimir → Salvar como PDF\" — quebra a assinatura ICP-Brasil.",
+      "Confira no PDF: seu nome, CPF, a frase \"NADA CONSTA\" e o código de autenticidade no rodapé.",
+      "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
+    ],
+    observacao: "Emitido pela SSP-SP via login Gov.br. Como os dados vêm do seu cadastro no Gov.br, não há campo para digitar errado. Envie o PDF original — nunca imprima e escaneie.",
   },
   certidao_antecedentes_policia_civil_sp: {
     titulo: "Secretaria de Segurança Pública — SSP",
