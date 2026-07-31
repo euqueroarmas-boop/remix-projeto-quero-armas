@@ -2405,6 +2405,34 @@ export default function QAClientePortalPage() {
         const procuracoesPendentes = procuracoesArr.filter((p) => !procFulfilled(p));
 
         setPendingContracts(contractsPendentes.length);
+
+        // DEDUP das procurações por venda.
+        //
+        // O cliente assina UMA procuração por venda. Três linhas pendentes da
+        // mesma venda são geração duplicada, e mostrá-las vira três passos
+        // idênticos no popup — foi o que apareceu no portal em 31/07/2026.
+        // Fica a mais recente; as outras somem da fila (não são apagadas do
+        // banco: isso é decisão da equipe, não do portal).
+        const procuracoesUnicas: any[] = Array.from(
+          procuracoesPendentes
+            .slice()
+            .sort((a, b) =>
+              String(b?.created_at ?? "").localeCompare(String(a?.created_at ?? "")),
+            )
+            .reduce((mapa, proc) => {
+              const chave = String(proc?.venda_id ?? proc?.id);
+              if (!mapa.has(chave)) mapa.set(chave, proc);
+              return mapa;
+            }, new Map<string, any>())
+            .values(),
+        );
+
+        // ORDEM: contrato ANTES da procuração (regra do usuário, 31/07/2026).
+        //
+        // Enquanto houver contrato pendente, a procuração nem entra na fila —
+        // não basta ordenar, porque o cliente conseguia pular para ela. A
+        // procuração é outorgada com base no contrato: assinar a segunda antes
+        // do primeiro inverte a relação.
         const assinaturaDocs: PendingSignatureDoc[] = [
           ...contractsPendentes.map((contract) => ({
             id: String(contract.id),
@@ -2415,15 +2443,17 @@ export default function QAClientePortalPage() {
             venda_id: contract.venda_id ?? null,
             created_at: contract.created_at ?? null,
           })),
-          ...procuracoesPendentes.map((procuracao) => ({
-            id: String(procuracao.id),
-            kind: "procuration" as const,
-            label: "Procuração",
-            status: procuracao.status ?? null,
-            contract_number: null,
-            venda_id: procuracao.venda_id ?? null,
-            created_at: procuracao.created_at ?? null,
-          })),
+          ...(contractsPendentes.length > 0
+            ? []
+            : procuracoesUnicas.map((procuracao) => ({
+                id: String(procuracao.id),
+                kind: "procuration" as const,
+                label: "Procuração",
+                status: procuracao.status ?? null,
+                contract_number: null,
+                venda_id: procuracao.venda_id ?? null,
+                created_at: procuracao.created_at ?? null,
+              }))),
         ];
         setPendingSignatureDocs(assinaturaDocs);
         setPendingContractsLoaded(true);

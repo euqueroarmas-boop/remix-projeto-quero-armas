@@ -161,12 +161,28 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           active.tipo === "contract"
             ? "Contrato de adesão aguardando sua assinatura"
             : "Procuração aguardando sua assinatura",
+        // Passo a passo REAL do assinador do Gov.br, com a URL e onde clicar.
+        // O texto genérico anterior ("assine com sua conta GOV.BR") não dizia
+        // ONDE se assina — o cliente ficava procurando no portal do Gov.br um
+        // botão que não existe lá. O assinador é um serviço à parte.
+        //
+        // Esta versão espelha a que já existia no cockpit de contratos
+        // (QAContratosCockpitV1), que é onde a equipe orienta hoje.
         passos: [
-          "Baixe o documento no botão ao lado.",
-          "Assine com sua conta GOV.BR ou certificado ICP-Brasil.",
-          "Envie o PDF assinado usando o botão \"Enviar assinado\".",
+          active.tipo === "contract"
+            ? "Clique em \"Baixar contrato\" aqui embaixo e salve o PDF no seu celular ou computador."
+            : "Clique em \"Baixar procuração\" aqui embaixo e salve o PDF no seu celular ou computador.",
+          "Abra o assinador oficial do Gov.br: assinador.iti.br",
+          "Clique em \"Escolher arquivo\" e selecione o PDF que você acabou de baixar.",
+          "Faça login com a sua conta Gov.br (a mesma do INSS, Receita e e-CAC).",
+          "Na tela do documento, clique em \"Avançar\" e depois em \"Assinar\".",
+          "Confirme a assinatura pelo aplicativo Gov.br no celular, ou pelo código enviado por SMS.",
+          "Clique em \"Baixar arquivo assinado\" — o nome dele termina com \"-assinado.pdf\".",
+          active.tipo === "contract"
+            ? "Volte aqui e clique em \"Enviar contrato assinado\"."
+            : "Volte aqui e clique em \"Enviar procuração assinada\".",
         ],
-        observacao: "A IA valida a assinatura antes de destravar as próximas etapas.",
+        observacao: "NÃO imprima, não fotografe e não digitalize o documento — a assinatura é digital e some no papel. Envie o PDF exatamente como saiu do assinador.",
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
@@ -277,11 +293,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         {/* Header */}
         <div className="px-6 pt-8 pb-4 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            {totalNoGrupo > 1 ? (
-              <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
-                {posicaoNoGrupo} de {totalNoGrupo} no grupo
-              </span>
-            ) : null}
+            {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
+                criminais, Ocupação lícita — e não mais a posição dentro dele.
+                "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
+                cliente em que parte do processo ele estava. */}
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+              {activeGrupo}
+            </span>
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
