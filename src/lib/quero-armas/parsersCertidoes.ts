@@ -69,6 +69,19 @@ export interface CamposCertidao {
   vitima_nome?: string;
   vitima_cpf?: string;
   relato?: string;
+  /* ── Só na certidão do TRF ── */
+  /**
+   * Número da região do Tribunal Regional Federal (1 a 6), lido do próprio
+   * documento.
+   *
+   * Existe porque a certidão federal é REGIONAL: a do TRF3 cobre SP e MS, e
+   * não cobre quem mora na Bahia (TRF1). Sem este campo o sistema tratava
+   * toda certidão federal como se fosse TRF3 — inclusive as que não são —, e
+   * um documento passaria a cumprir a exigência de quem ele não cobre.
+   *
+   * `undefined` quando o documento não declara a região. Não inferir.
+   */
+  trf_regiao?: number;
 }
 
 const norm = (v: string) =>
@@ -262,6 +275,30 @@ function parseTjsp(texto: string, orgao: "tjsp_distribuicao" | "tjsp_execucoes")
 
 /* ── TRF — certidão regional ───────────────────────────────────────────── */
 
+/**
+ * Região do TRF, lida do cabeçalho do documento.
+ *
+ * Aceita algarismo ("DA 3ª REGIÃO") e romano ("DA III REGIÃO") porque os
+ * portais das seis regiões não seguem a mesma grafia. Devolve `undefined`
+ * quando não encontra — nunca assume TRF3.
+ */
+function trfRegiao(texto: string): number | undefined {
+  const t = flat(texto).toUpperCase();
+  const arabe = t.match(/TRIBUNAL REGIONAL FEDERAL DA\s*(\d)\s*[ªAO]?\s*REGIAO/);
+  if (arabe) {
+    const n = Number(arabe[1]);
+    return n >= 1 && n <= 6 ? n : undefined;
+  }
+  const romano = t.match(/TRIBUNAL REGIONAL FEDERAL DA\s*(I{1,3}|IV|V|VI)\s*REGIAO/);
+  if (romano) {
+    const mapa: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6 };
+    return mapa[romano[1]];
+  }
+  // Forma abreviada usada por alguns portais: "TRF3", "TRF-3".
+  const curto = t.match(/\bTRF\s*-?\s*([1-6])\b/);
+  return curto ? Number(curto[1]) : undefined;
+}
+
 function parseTrfRegional(texto: string): CamposCertidao {
   const t = norm(texto);
   const corrido = flat(t);
@@ -281,6 +318,10 @@ function parseTrfRegional(texto: string): CamposCertidao {
     validade_dias: numOrUndef(corrido.match(/no prazo de\s*(\d{1,3})\s*\(/i)?.[1]),
     codigo_autenticidade: corrido.match(/codigo de\s*seguranca\s*([A-Z0-9]{10,32})/i)?.[1],
     resultado: resultado(corrido),
+    // Campo NOVO, ao lado do slug — não substitui `tipoDocumento`. O slot do
+    // Hub continua sendo `antecedentes_federal_trf3_regional` para as seis
+    // regiões; quem diz qual região é este campo.
+    trf_regiao: trfRegiao(texto),
   };
 }
 
