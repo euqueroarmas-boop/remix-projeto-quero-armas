@@ -195,7 +195,17 @@ Deno.serve(async (req) => {
     procuraExistenteQuery = venda_id == null
       ? procuraExistenteQuery.is("venda_id", null)
       : procuraExistenteQuery.eq("venda_id", venda_id);
-    const { data: jaExiste } = await procuraExistenteQuery.maybeSingle();
+    // ORDER + LIMIT são obrigatórios aqui.
+    //
+    // `maybeSingle()` sozinho ERRA quando encontra mais de uma linha, e o erro
+    // é ignorado — `jaExiste` volta nulo, a função conclui que não existe
+    // procuração nenhuma e gera outra. Efeito: a partir da segunda duplicata o
+    // problema se alimenta sozinho, criando uma procuração nova a cada visita
+    // ao portal. Foi assim que o cliente 214 chegou a três.
+    const { data: jaExiste } = await procuraExistenteQuery
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     // force_regenerate=true (admin) regenera qualquer status; caso contrário
     // só atualiza se ainda estiver pendente/rejeitada e com template antigo.
     const podeAtualizar = Boolean(

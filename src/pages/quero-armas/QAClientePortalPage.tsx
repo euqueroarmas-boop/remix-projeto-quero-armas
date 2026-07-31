@@ -2484,9 +2484,17 @@ export default function QAClientePortalPage() {
           // 3) Reaproveitamento: procuração aprovada e vigente no Hub cobre
           //    novas exigências, mesmo entre processos distintos.
           if (temProcuracaoVigenteNoHub) return true;
-          // 4) Fallback histórico: existe procuração assinada no Hub e
-          //    apenas uma procuração pendente — trata como cumprida.
-          if (hubProcuracoes.length > 0 && procuracoesArr.length === 1) return true;
+          // 4) ENTREGUE, mesmo que ainda não aprovada.
+          //
+          // Esta fila se chama "aguardando SUA assinatura". Depois que o
+          // cliente sobe o PDF assinado, a bola está com a equipe — continuar
+          // mostrando a mesma tela faz ele achar que o envio falhou e mandar
+          // de novo.
+          //
+          // A consulta acima já traz status "pendente_aprovacao" e "aprovado";
+          // qualquer um dos dois significa entregue. A aprovação em si é
+          // acompanhada em Contratos, não aqui.
+          if (hubProcuracoes.length > 0) return true;
           return false;
         };
 
