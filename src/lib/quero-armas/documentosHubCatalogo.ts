@@ -112,6 +112,7 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
 
 export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "rg_com_cpf", label: "RG com CPF", short: "RG", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "foto_3x4", label: "Foto 3x4 do requerente", short: "FOTO 3X4", categoria: "identificacao", escopo: "permanente" },
   { value: "cin", label: "CIN — Carteira de Identidade Nacional", short: "CIN", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "cnh", label: "CNH — Carteira Nacional de Habilitação", short: "CNH", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "cpf", label: "CPF", short: "CPF", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
@@ -126,6 +127,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_cartao_cnpj", label: "Cartão CNPJ", short: "CNPJ", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_qsa", label: "QSA — Quadro de Sócios e Administradores", short: "QSA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_contrato_social", label: "Contrato Social / Requerimento de Empresário", short: "CONTRATO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_ficha_cadastral_jucesp", label: "Ficha Cadastral Completa (Junta Comercial)", short: "FICHA JUNTA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_ccmei", label: "CCMEI — Certificado da Condição de MEI", short: "CCMEI", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_cnpj_autonomo", label: "Cartão CNPJ (autônomo / MEI)", short: "CNPJ MEI", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
@@ -152,6 +154,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "laudo_psicologico", label: "Laudo psicológico", short: "LAUDO PSI", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "boletim_ocorrencia", label: "Boletim de Ocorrência", short: "BO", categoria: "efetiva_necessidade", escopo: "processo", aceitaIA: true },
   { value: "documento_complementar_caso", label: "Documento complementar do caso", short: "COMPLEMENTAR", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "cr", label: "CR — Certificado de Registro de Colecionador, Atirador Desportivo e Caçador (Exército)", short: "CR · Cert. Registro CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
   { value: "craf", label: "CRAF — Certificado de Registro de Arma de Fogo", short: "CRAF · Cert. Reg. de Arma de Fogo", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
