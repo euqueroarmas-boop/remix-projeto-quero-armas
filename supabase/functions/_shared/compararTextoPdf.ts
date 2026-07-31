@@ -121,9 +121,16 @@ export async function extrairTextoPdf(bytes: Uint8Array): Promise<string> {
 export function normalizarParaComparacao(texto: string): string {
   return texto
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    // Acento sai: a codificação da fonte pode representá-lo de formas
+    // diferentes sem que o texto mude.
+    .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, " ")
+    // PONTUAÇÃO FICA. Antes eu a removia junto com o espaço, e isso abria um
+    // furo real: trocar vírgula por ponto num valor ("1.000,00" → "1,000.00")
+    // passava batido, porque os dígitos eram os mesmos. Em contrato, pontuação
+    // muda sentido — e a re-linearização do Gov.br não mexe em pontuação, só
+    // em quebras de linha. Por isso só o ESPAÇO é normalizado.
+    .replace(/\s+/g, " ")
     .trim();
 }
 
