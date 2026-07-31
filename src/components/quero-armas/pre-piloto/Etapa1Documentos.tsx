@@ -269,7 +269,9 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     setClassificandoNomes((prev) => new Set([...prev, ...nomesNovos]));
     setClassificando(true);
 
-    const LOTE = 5;
+    // 1 arquivo por requisição: lotes de 5 PDFs em base64 estouravam o limite de
+    // corpo da edge function e a chamada morria com "Failed to send a request".
+    const LOTE = 1;
     // mapa nome → resultado da IA
     const resultadosPorNome = new Map<string, any>();
 
