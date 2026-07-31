@@ -28,7 +28,7 @@
 
 import type { CamposCertidao, OrgaoCertidao } from "./parsersCertidoes";
 
-export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente";
+export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente" | "revisao_equipe";
 
 export interface CadastroConferencia {
   nome_completo?: string | null;
@@ -119,6 +119,38 @@ const CAMPO_NO_FORMULARIO: Partial<Record<OrgaoCertidao, Record<string, string>>
     nome_titular: "Nome Completo", cpf: "CPF", rg: "RG", nome_mae: "Nome da mãe",
     nome_pai: "Nome do pai", data_nascimento: "Data de nascimento", naturalidade: "Naturalidade",
   },
+};
+
+/**
+ * De onde vem o conteúdo impresso na certidão.
+ *
+ * Distinção descoberta ao mapear os formulários de emissão (30/07/2026), e ela
+ * decide QUEM tem de agir quando um dado diverge:
+ *
+ *   "cliente_digita"    → o requerente preenche nome, filiação, naturalidade e
+ *                         o órgão imprime o que ele escreveu. Divergência = erro
+ *                         de digitação dele. Ação: reemitir corrigindo.
+ *
+ *   "registro_oficial"  → o órgão puxa os dados do próprio cadastro (SSP via
+ *                         login gov.br, TSE via cadastro eleitoral, TRF via CPF).
+ *                         O cliente não digita nada disso. Divergência NÃO é erro
+ *                         dele — é o registro oficial discordando do nosso
+ *                         cadastro. Mandar reemitir seria cruel e inútil: sairia
+ *                         idêntica. Ação: equipe apura qual dos dois está certo.
+ */
+const FONTE_DADOS: Record<OrgaoCertidao, "cliente_digita" | "registro_oficial"> = {
+  // Formulário pede nome, CPF, mãe e nascimento, e imprime o que foi digitado.
+  stm: "cliente_digita",
+  tjsp_distribuicao: "cliente_digita",
+  tjsp_execucoes: "cliente_digita",
+  tjm_sp: "cliente_digita",
+  // SSP/IIRGD: emite direto da conta gov.br, sem digitação de dados pessoais.
+  iirgd: "registro_oficial",
+  // TSE: os dados vêm do cadastro eleitoral; o que se digita é só autenticação.
+  tse: "registro_oficial",
+  // TRF3: o formulário pede apenas CPF e abrangência — nome, mãe e nascimento
+  // saem da base da Justiça Federal.
+  trf_regional: "registro_oficial",
 };
 
 const LABEL: Record<string, string> = {
@@ -303,19 +335,27 @@ export function conferirCertidao(
     (a) => a.problema === "divergente" || a.problema === "ausente_no_documento",
   );
   const soCadastro = achados.length > 0 && bloqueia.length === 0;
+  const dadoOficial = FONTE_DADOS[doc.orgao] === "registro_oficial";
 
-  const veredicto: VeredictoCertidao = bloqueia.length
-    ? "rejeitado"
-    : soCadastro
-      ? "cadastro_pendente"
-      : "aprovado";
+  const veredicto: VeredictoCertidao = !bloqueia.length
+    ? (soCadastro ? "cadastro_pendente" : "aprovado")
+    // Órgão que emite do próprio registro não erra por digitação do cliente:
+    // pedir reemissão devolveria a mesma certidão. Vai para a equipe.
+    : dadoOficial
+      ? "revisao_equipe"
+      : "rejeitado";
+
+  const listaAchados = bloqueia.map((a) => `• ${a.label}: ${a.mensagem}`).join("\n\n");
 
   const mensagemCliente =
     veredicto === "aprovado"
       ? "Certidão conferida: todos os dados batem com o seu cadastro."
       : veredicto === "cadastro_pendente"
         ? "A certidão está correta, mas faltam dados no seu cadastro para a conferência completa. Complete o cadastro para seguir."
-        : `Esta certidão não pode ser aceita:\n\n${bloqueia.map((a) => `• ${a.label}: ${a.mensagem}`).join("\n\n")}`;
+        : veredicto === "revisao_equipe"
+          ? "Esta certidão é emitida direto do registro oficial do órgão — o cliente não digita esses dados, então reemitir devolveria o mesmo resultado. " +
+            `O registro do órgão diverge do nosso cadastro e a equipe precisa apurar qual está correto antes do protocolo:\n\n${listaAchados}`
+          : `Esta certidão não pode ser aceita:\n\n${listaAchados}`;
 
   return { veredicto, achados, mensagemCliente };
 }
