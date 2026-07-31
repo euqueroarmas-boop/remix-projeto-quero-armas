@@ -33,6 +33,7 @@ import ContratosPosPagamentoCard from "@/components/quero-armas/portal/Contratos
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
 import { abrirChecklistGuiado, onAbrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
 import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
@@ -1510,23 +1511,37 @@ export default function QAClientePortalPage() {
     toast.info("Estamos preparando a procuração. Tente novamente em alguns segundos.", { duration: 5000 });
   };
 
-  const pendingContractPublicUrl = activePendingSignature?.kind === "contract"
-    ? `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${activePendingSignature.id}`
-    : activePendingSignature?.kind === "procuration"
+  const pendingProcuracaoPublicUrl = activePendingSignature?.kind === "procuration"
       ? `https://www.euqueroarmas.com.br/area-do-cliente/procuracoes/${activePendingSignature.id}`
     : null;
 
-  const openPendingSignatureLink = () => {
-    if (!activePendingSignature) {
+  const openPendingSignatureLink = async (signature: PendingSignatureDoc | null = activePendingSignature) => {
+    if (!signature) {
       goContractsSection();
       return;
     }
-    if (!pendingContractPublicUrl) {
-      goContractsSection();
+
+    if (signature.kind === "contract") {
+      const toastId = toast.loading("Preparando contrato correto…");
+      try {
+        await openMinutaContratoQueroArmas({
+          contractId: signature.id,
+          contractNumber: signature.contract_number,
+          vendaId: signature.venda_id,
+          variant: "company_signed",
+        });
+        toast.success("Download iniciado.", { id: toastId });
+      } catch (e) {
+        console.warn("[openPendingSignatureLink] contrato:", e);
+        toast.error(e instanceof Error ? e.message : "Não foi possível baixar o contrato.", { id: toastId });
+        goContractsSection();
+      }
       return;
     }
-    window.open(pendingContractPublicUrl, "_blank", "noopener,noreferrer");
-    toast.success(activePendingSignature.kind === "contract" ? "Contrato aberto em nova aba." : "Procuração aberta em nova aba.");
+
+    const url = pendingProcuracaoPublicUrl ?? `https://www.euqueroarmas.com.br/area-do-cliente/procuracoes/${signature.id}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+    toast.success("Procuração aberta em nova aba.");
   };
 
   const uploadSignedPendingSignatureFromPopup = async (file: File) => {
@@ -1658,7 +1673,7 @@ export default function QAClientePortalPage() {
         label: sig.kind === "contract" ? "Contrato de adesão" : "Procuração",
         tipo: kindTipo,
         contexto: sig.contract_number ? `Protocolo ${sig.contract_number}` : null,
-        onPrimary: () => openPendingSignatureLink(),
+        onPrimary: () => openPendingSignatureLink(sig),
         onEntregar: () => {
           if (sig.kind === "contract") {
             // ANTES: openPendingSignatureLink(), que reabria a página de

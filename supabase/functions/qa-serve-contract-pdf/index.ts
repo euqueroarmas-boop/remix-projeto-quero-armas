@@ -104,6 +104,53 @@ function htmlToBlocks(html: string): Block[] {
   return blocks;
 }
 
+function detectOS(ua: string | null | undefined): string {
+  const s = String(ua || "");
+  if (/iPhone|iPad|iPod/i.test(s)) return "iOS";
+  if (/Android/i.test(s)) return "Android";
+  if (/Mac OS X|Macintosh/i.test(s)) return "macOS";
+  if (/Windows/i.test(s)) return "Windows";
+  if (/Linux/i.test(s)) return "Linux";
+  return "Não identificado";
+}
+
+function detectBrowser(ua: string | null | undefined): string {
+  const s = String(ua || "");
+  if (/Edg\//i.test(s)) return "Edge";
+  if (/CriOS|Chrome\//i.test(s) && !/Edg\//i.test(s)) return "Chrome";
+  if (/FxiOS|Firefox\//i.test(s)) return "Firefox";
+  if (/Safari\//i.test(s) && !/Chrome\//i.test(s) && !/CriOS/i.test(s)) return "Safari";
+  return "Não identificado";
+}
+
+function formatBrtDate(value: string | null | undefined): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function connectionStampLines(contract: any): string[] {
+  const userAgent = String(contract.aceite_user_agent || "").trim();
+  return [
+    "CARIMBO DE CONEXAO",
+    `Contrato: ${contract.contract_number || contract.id || "—"}`,
+    `Gerado em: ${formatBrtDate(contract.aceite_eletronico_data || contract.created_at)}`,
+    `IP: ${contract.aceite_ip || "—"}`,
+    `Sistema: ${detectOS(userAgent)}`,
+    `Navegador: ${detectBrowser(userAgent)}`,
+    `Hash: ${contract.aceite_hash || "—"}`,
+  ];
+}
+
 function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   const blocks = htmlToBlocks(sanitizeTechnicalJargon(html));
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: false });
@@ -213,6 +260,21 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   y += 10;
   writeParagraph(rodape, { size: 8, align: "left", lineGap: 0 });
 
+  const stampLines = connectionStampLines(contract);
+  const totalPages = doc.getNumberOfPages();
+  for (let page = 1; page <= totalPages; page++) {
+    doc.setPage(page);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(95);
+    let stampY = 72;
+    for (const line of stampLines) {
+      doc.text(line.slice(0, 118), 16, stampY, { angle: 90 } as any);
+      stampY += 8;
+    }
+    doc.setTextColor(0);
+  }
+
   const ab = doc.output("arraybuffer") as ArrayBuffer;
   return new Uint8Array(ab);
 }
@@ -236,10 +298,15 @@ async function ensureCanonicalPdf(
       const bytes = new Uint8Array(await data.arrayBuffer());
       const sha = await sha256Bytes(bytes);
       if (!existingSha || sha === existingSha) {
-        return { bytes, path: existingPath, sha256: sha };
+        const textoExistente = normalizarParaComparacao(await extrairTextoPdf(bytes));
+        if (textoExistente.includes(normalizarParaComparacao("CARIMBO DE CONEXAO"))) {
+          return { bytes, path: existingPath, sha256: sha };
+        }
+        console.warn("[qa-serve-contract-pdf] original sem carimbo de conexao, regenerando");
+      } else {
+        // hash divergente: registra e regenera (não deveria acontecer)
+        console.warn("[qa-serve-contract-pdf] hash divergente do original salvo, regenerando");
       }
-      // hash divergente: registra e regenera (não deveria acontecer)
-      console.warn("[qa-serve-contract-pdf] hash divergente do original salvo, regenerando");
     }
   }
 
@@ -273,7 +340,7 @@ async function ensureCanonicalPdf(
   try {
     const texto = normalizarParaComparacao(await extrairTextoPdf(bytes));
     const textoSha = await sha256Bytes(new TextEncoder().encode(texto));
-    const sessao = (contract as any).aceite_eletronico_data ?? {};
+    const userAgent = String((contract as any).aceite_user_agent || "");
     await sb.from("qa_documentos_golden").upsert({
       documento_tipo: "contrato",
       documento_id: contract.id,
@@ -284,13 +351,13 @@ async function ensureCanonicalPdf(
       tamanho_bytes: bytes.byteLength,
       texto_normalizado: texto,
       texto_sha256: textoSha,
-      carimbo_ip: sessao?.ip ?? (contract as any).aceite_ip ?? null,
-      carimbo_so: sessao?.so ?? null,
-      carimbo_navegador: sessao?.browser ?? null,
-      carimbo_pais: sessao?.country ?? null,
-      carimbo_idioma: sessao?.accept_language ?? null,
-      carimbo_referer: sessao?.referer ?? null,
-      carimbo_registrado_em: sessao?.registrado_em ?? (contract as any).aceite_eletronico_data?.registrado_em ?? null,
+      carimbo_ip: (contract as any).aceite_ip ?? null,
+      carimbo_so: detectOS(userAgent),
+      carimbo_navegador: detectBrowser(userAgent),
+      carimbo_pais: null,
+      carimbo_idioma: null,
+      carimbo_referer: null,
+      carimbo_registrado_em: (contract as any).aceite_eletronico_data ?? null,
       titular_nome: (contract as any).cliente_nome ?? null,
       titular_cpf: (contract as any).cliente_cpf ?? null,
       gerado_em: new Date().toISOString(),
