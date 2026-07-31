@@ -17,6 +17,9 @@
 // ============================================================================
 
 import { supabase } from "@/integrations/supabase/client";
+import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import { conferirCertidao, type CadastroConferencia } from "@/lib/quero-armas/conferenciaCertidao";
 import {
   STATUS_CHECKLIST_CUMPRIDO,
   STATUS_CHECKLIST_EM_ANALISE,
@@ -656,6 +659,49 @@ async function authHeader(): Promise<Record<string, string>> {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
+/**
+ * Leitura LOCAL antes do upload — a mesma que roda no Hub do /admin.
+ *
+ * Regra do usuário (31/07/2026): PARSEOU, DECIDE O PARSER. A IA não trabalha
+ * mais nos grupos que têm parser. Se o documento não corresponde ao esperado,
+ * é rejeitado pelas regras da conferência; se nada foi parseado, aí sim a IA
+ * analisa.
+ *
+ * Roda no navegador do cliente, com o arquivo que ele acabou de escolher. Sem
+ * isso, certidão perfeita subia e ficava "AGUARDANDO ANÁLISE" esperando um
+ * humano — foi o que aconteceu com o TRF3 do cliente 214.
+ */
+export interface LeituraLocalResultado {
+  reconhecido: boolean;
+  aprovado: boolean;
+  tipoLido?: string;
+  motivo?: string;
+  campos?: Record<string, unknown>;
+}
+
+export async function lerDocumentoLocalmente(
+  file: File,
+  cadastro: CadastroConferencia,
+): Promise<LeituraLocalResultado> {
+  if (file.type !== "application/pdf") return { reconhecido: false, aprovado: false };
+  try {
+    const doc = parseCertidao(await extrairTextoPdf(file));
+    if (!doc) return { reconhecido: false, aprovado: false };
+    const conf = conferirCertidao(doc, cadastro);
+    return {
+      reconhecido: true,
+      aprovado: conf.veredicto === "aprovado",
+      tipoLido: doc.tipoDocumento,
+      motivo: conf.veredicto === "aprovado" ? undefined : conf.mensagemCliente,
+      campos: doc as unknown as Record<string, unknown>,
+    };
+  } catch (e) {
+    // PDF de imagem ou layout desconhecido: não é erro, é caso da IA.
+    console.warn("[leitura local] ignorado:", e);
+    return { reconhecido: false, aprovado: false };
+  }
+}
+
 export interface ResultadoAcao {
   ok: boolean;
   error?: string;
@@ -669,6 +715,7 @@ export async function enviarDocumentoGuia(
   doc: GuiaDoc,
   file: File,
   armaId?: string | null,
+  cadastro?: CadastroConferencia,
 ): Promise<ResultadoAcao> {
   // Validação de formato no front (UX rápida) — idêntica ao drawer.
   // Aceita tanto extensões ("pdf","jpg") quanto MIME ("application/pdf","image/jpeg").
@@ -690,6 +737,18 @@ export async function enviarDocumentoGuia(
         : `Formato não aceito. Envie: ${fmts.join(", ").toUpperCase()}.`;
     return { ok: false, error: msg };
   }
+  // ── PARSE-FIRST ─────────────────────────────────────────────────────────
+  // Parseou, decide o parser. Documento reconhecido e reprovado NÃO sobe: o
+  // cliente recebe o motivo na hora e reemite, em vez de esperar análise de um
+  // documento que já se sabe errado.
+  let leitura: LeituraLocalResultado = { reconhecido: false, aprovado: false };
+  if (cadastro) {
+    leitura = await lerDocumentoLocalmente(file, cadastro);
+    if (leitura.reconhecido && !leitura.aprovado) {
+      return { ok: false, error: leitura.motivo ?? "Documento recusado na conferência." };
+    }
+  }
+
   try {
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
     const key = `${processo.cliente_id}/${processo.id}/${doc.id}-${Date.now()}-${safe}`;
@@ -710,6 +769,12 @@ export async function enviarDocumentoGuia(
         tamanho_bytes: file.size,
         nome_arquivo_original: file.name,
         ...(armaId ? { arma_id: armaId } : {}),
+        // Leitura local já decidiu: a IA não trabalha nos grupos que têm
+        // parser. `leitura_local` diz ao backend para não chamar a validação
+        // por IA e aceitar os campos que vieram lidos do próprio PDF.
+        ...(leitura.reconhecido && leitura.aprovado
+          ? { leitura_local: { aprovado: true, tipo: leitura.tipoLido, campos: leitura.campos } }
+          : {}),
       }),
     });
     const out = await resp.json().catch(() => ({}));

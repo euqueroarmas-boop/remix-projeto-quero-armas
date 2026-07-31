@@ -58,6 +58,7 @@ import {
 } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
+import type { CadastroConferencia } from "@/lib/quero-armas/conferenciaCertidao";
 import EfetivaNecessidadeModal from "./EfetivaNecessidadeModal";
 import { toast } from "sonner";
 import { saveOrShareBlob, isMobileUA } from "@/lib/quero-armas/saveOrShareBlob";
@@ -291,13 +292,32 @@ export default function ChecklistGuiadoModal({
   const [hubModalTipo, setHubModalTipo] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
+  /**
+   * Cadastro do cliente para a conferência local das certidões.
+   *
+   * Sem estes campos o parser lê o documento mas não tem contra o que comparar,
+   * e a decisão volta para a IA — que é justamente o que queremos evitar nos
+   * grupos já parseados.
+   */
+  const [cadastroConf, setCadastroConf] = useState<CadastroConferencia | null>(null);
+
   useEffect(() => {
     supabase
       .from("qa_clientes")
-      .select("customer_id")
+      .select("customer_id, nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, rg")
       .eq("id", clienteId)
       .maybeSingle()
-      .then(({ data }) => setCustomerId((data as any)?.customer_id ?? null));
+      .then(({ data }) => {
+        const row = data as any;
+        setCustomerId(row?.customer_id ?? null);
+        if (row) {
+          setCadastroConf({
+            nome_completo: row.nome_completo, cpf: row.cpf,
+            data_nascimento: row.data_nascimento, nome_mae: row.nome_mae,
+            naturalidade_municipio: row.naturalidade_municipio, rg: row.rg,
+          });
+        }
+      });
   }, [clienteId]);
 
   // ----- Vínculo documento ↔ arma do acervo (Bloco 10) -----
@@ -756,6 +776,7 @@ export default function ChecklistGuiadoModal({
       docUpload,
       file,
       armaParaEnvio,
+      cadastroConf ?? undefined,
     );
     if (!enviar.ok) {
       setErroAcao(enviar.error ?? "Erro no envio.");

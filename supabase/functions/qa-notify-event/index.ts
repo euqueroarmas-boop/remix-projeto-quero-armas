@@ -40,10 +40,12 @@ type Evento =
   // Alerta — certidão recusada na conferência automática
   | "certidao_rejeitada"
   // Verde — prova da efetiva necessidade recebida e lida
-  | "prova_recebida";
+  | "prova_recebida"
+  // Alerta — a equipe removeu um arquivo do acervo do cliente
+  | "documento_excluido";
 
 /** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
-const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada", "prova_recebida"]);
+const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada", "prova_recebida", "documento_excluido"]);
 
 interface Payload {
   evento: Evento;
@@ -87,6 +89,11 @@ interface Payload {
   naturezas?: string[];
   local_fato?: string;
   total_provas?: number;
+  /** Para documento_excluido. */
+  documento?: string;
+  arquivo?: string;
+  motivo?: string;
+  o_que_enviar?: string;
 }
 
 function brDate(iso?: string | null): string {
@@ -159,6 +166,18 @@ function mapEventoToTemplate(
           validade: brDate(p.validade),
           diasRestantes: diasAteVencer(p.validade),
           evento: p.documento_evento === "renovado" ? "renovado" : "cadastrado",
+          portalUrl,
+        },
+      };
+    case "documento_excluido":
+      return {
+        templateName: "documento-excluido",
+        templateData: {
+          nome,
+          documento: p.documento ?? "",
+          arquivo: p.arquivo ?? "",
+          motivo: p.motivo ?? "",
+          oQueEnviar: p.o_que_enviar ?? "",
           portalUrl,
         },
       };
@@ -265,7 +284,9 @@ Deno.serve(async (req) => {
           ? `qa-verde-doc-${body.cliente_id}-${body.referencia_tabela || "x"}-${body.referencia_id || body.documento || "x"}-${body.validade || "x"}`
           : body.evento === "cadastro_atualizado"
             ? `qa-verde-cad-${body.cliente_id}-${(body.campos_alterados || []).map((c) => c.label).join("|") || "x"}-${Date.now()}`
-            : body.evento === "prova_recebida"
+            : body.evento === "documento_excluido"
+              ? `qa-doc-excl-${body.cliente_id}-${body.referencia_id || body.arquivo || Date.now()}`
+              : body.evento === "prova_recebida"
               ? `qa-prova-${body.cliente_id}-${body.referencia_id || body.numero || Date.now()}`
               : body.evento === "certidao_rejeitada"
               ? `qa-cert-rej-${body.cliente_id}-${body.referencia_id || body.certidao || "x"}-${(body.problemas || []).map((x) => x.label).join("|")}`
@@ -287,7 +308,9 @@ Deno.serve(async (req) => {
             ? "certidao_rejeitada"
             : body.evento === "prova_recebida"
               ? "prova_recebida"
-              : "exigencia_cumprida";
+              : body.evento === "documento_excluido"
+                ? "documento_excluido"
+                : "exigencia_cumprida";
       const titulo = body.evento === "documento_em_dia"
         ? `${body.documento || "Documento"} ${body.documento_evento === "renovado" ? "renovado" : "cadastrado"} — em dia`
         : body.evento === "cadastro_atualizado"
@@ -296,7 +319,9 @@ Deno.serve(async (req) => {
             ? `${body.certidao || "Certidão"} precisa ser reenviada`
             : body.evento === "prova_recebida"
               ? `${body.tipo_prova || "Prova"} recebido${body.numero ? ` — nº ${body.numero}` : ""}`
-              : "Exigência cumprida";
+              : body.evento === "documento_excluido"
+                ? "Arquivo removido do seu processo"
+                : "Exigência cumprida";
       const mensagem = body.evento === "documento_em_dia"
         ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
         : body.evento === "cadastro_atualizado"
@@ -307,6 +332,8 @@ Deno.serve(async (req) => {
             ? `Divergência em: ${(body.problemas || []).map((x) => x.label).join(", ") || "dados do documento"}. Emita novamente e reenvie.`
             : body.evento === "prova_recebida"
               ? `${(body.naturezas || []).join(", ") || "Prova"} — em análise pela equipe.`
+            : body.evento === "documento_excluido"
+              ? `${body.motivo || "Não aproveitável para o processo"}. Se você já enviou o correto, desconsidere.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         await supabase.from("qa_notificacoes_cliente").upsert({

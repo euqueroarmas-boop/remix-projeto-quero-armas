@@ -60,6 +60,7 @@ import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
 import { template as cadastroAtualizado } from './cadastro-atualizado.tsx'
 import { template as certidaoRejeitada } from './certidao-rejeitada.tsx'
 import { template as provaRecebida } from './prova-recebida.tsx'
+import { template as documentoExcluido } from './documento-excluido.tsx'
 import { template as documentoStatusCliente } from './documento-status-cliente.tsx'
 
 // Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
@@ -158,6 +159,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'cadastro-atualizado': cadastroAtualizado,
   'certidao-rejeitada': certidaoRejeitada,
   'prova-recebida': provaRecebida,
+  'documento-excluido': documentoExcluido,
   'documento-status-cliente': documentoStatusCliente,
 
   // Habitualidade — 12 novos alertas (mockup — sem motor ainda)
