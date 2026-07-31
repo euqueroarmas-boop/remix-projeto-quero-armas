@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { ArquivoUpload } from "./PrePilotoWizard";
+import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
 
@@ -177,7 +179,66 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     }
   }
 
-  async function classificarComIA(novos: ArquivoUpload[], offsetIdx: number) {
+  /**
+   * Leitura LOCAL antes da IA.
+   *
+   * Certidão de órgão público é PDF gerado, com camada de texto exata: o
+   * pdf.js lê e o parser extrai sem margem de erro nem custo. Só o que sobra
+   * — foto, PDF digitalizado, layout desconhecido — segue para a IA.
+   *
+   * Isso é o que impede um gateway de IA fora do ar de travar a adesão
+   * inteira: os documentos mais comuns já vêm classificados sem depender dele.
+   *
+   * Devolve os arquivos que a IA ainda precisa ver.
+   */
+  async function classificarLocalmente(novos: ArquivoUpload[]): Promise<ArquivoUpload[]> {
+    const resolvidos = new Map<string, { tipo: string; data_emissao?: string; campos: Record<string, unknown> }>();
+
+    for (const a of novos) {
+      if (a.file.type !== "application/pdf") continue;
+      if (deletadosRef.current.has(a.file.name)) continue;
+      try {
+        const doc = parseCertidao(await extrairTextoPdf(a.file));
+        if (!doc) continue;
+        resolvidos.set(a.file.name, {
+          tipo: doc.tipoDocumento,
+          data_emissao: doc.data_emissao,
+          campos: doc as unknown as Record<string, unknown>,
+        });
+      } catch (e) {
+        // PDF de imagem ou ilegível: não é erro, é caso da IA.
+        console.warn("[leitura local] ignorado:", a.file.name, e);
+      }
+    }
+
+    if (resolvidos.size > 0) {
+      // `setArquivos` aqui é um setter simples vindo do wizard (não aceita
+      // função), então parto da lista atual do próprio componente.
+      setArquivos(arquivos.map((a) => {
+        const r = resolvidos.get(a.file.name);
+        if (!r || deletadosRef.current.has(a.file.name)) return a;
+        return {
+          ...a,
+          tipo: r.tipo,
+          // Leitura do texto do próprio documento: não é palpite, é o que está
+          // escrito. Confiança 1 e sem marca de IA.
+          tipo_ia_confianca: 1,
+          tipo_ia_motivo: "Lido do texto do PDF (sem IA)",
+          ...(r.data_emissao ? { data_emissao: r.data_emissao } : {}),
+          campos_extraidos: r.campos,
+        } as ArquivoUpload;
+      }));
+      toast.success(`${resolvidos.size} documento(s) lido(s) localmente, sem IA`);
+    }
+
+    return novos.filter((a) => !resolvidos.has(a.file.name));
+  }
+
+  async function classificarComIA(novosBrutos: ArquivoUpload[], offsetIdx: number) {
+    if (novosBrutos.length === 0) return;
+
+    // Parse-first: o que a leitura local resolveu não vai para a IA.
+    const novos = await classificarLocalmente(novosBrutos);
     if (novos.length === 0) return;
 
     const nomesNovos = novos.map((a) => a.file.name);
