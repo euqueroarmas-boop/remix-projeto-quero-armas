@@ -6107,6 +6107,142 @@ export type Database = {
           },
         ]
       }
+      qa_efetiva_necessidade: {
+        Row: {
+          aprovado_cliente: boolean
+          aprovado_cliente_em: string | null
+          cliente_id: number
+          contexto_risco: string | null
+          created_at: string
+          enviado_equipe_em: string | null
+          id: string
+          narrativa_gerada: string | null
+          narrativa_gerada_em: string | null
+          processo_id: string
+          relato_cliente: string | null
+          sofre_ameaca: boolean | null
+          status: string
+          tem_acao_criminal: boolean | null
+          tem_bo: boolean | null
+          tem_inquerito: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          aprovado_cliente?: boolean
+          aprovado_cliente_em?: string | null
+          cliente_id: number
+          contexto_risco?: string | null
+          created_at?: string
+          enviado_equipe_em?: string | null
+          id?: string
+          narrativa_gerada?: string | null
+          narrativa_gerada_em?: string | null
+          processo_id: string
+          relato_cliente?: string | null
+          sofre_ameaca?: boolean | null
+          status?: string
+          tem_acao_criminal?: boolean | null
+          tem_bo?: boolean | null
+          tem_inquerito?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          aprovado_cliente?: boolean
+          aprovado_cliente_em?: string | null
+          cliente_id?: number
+          contexto_risco?: string | null
+          created_at?: string
+          enviado_equipe_em?: string | null
+          id?: string
+          narrativa_gerada?: string | null
+          narrativa_gerada_em?: string | null
+          processo_id?: string
+          relato_cliente?: string | null
+          sofre_ameaca?: boolean | null
+          status?: string
+          tem_acao_criminal?: boolean | null
+          tem_bo?: boolean | null
+          tem_inquerito?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_efetiva_necessidade_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: true
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_efetiva_necessidade_provas: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
+          confere_com_cliente: boolean | null
+          created_at: string
+          dados_extraidos: Json
+          data_fato: string | null
+          efetiva_necessidade_id: string
+          id: string
+          leitura_por: string | null
+          local_fato: string | null
+          naturezas: string[] | null
+          numero: string | null
+          orgao: string | null
+          protocolo: string | null
+          relato: string | null
+          tipo: string
+          vitima_nome: string | null
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          confere_com_cliente?: boolean | null
+          created_at?: string
+          dados_extraidos?: Json
+          data_fato?: string | null
+          efetiva_necessidade_id: string
+          id?: string
+          leitura_por?: string | null
+          local_fato?: string | null
+          naturezas?: string[] | null
+          numero?: string | null
+          orgao?: string | null
+          protocolo?: string | null
+          relato?: string | null
+          tipo: string
+          vitima_nome?: string | null
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
+          confere_com_cliente?: boolean | null
+          created_at?: string
+          dados_extraidos?: Json
+          data_fato?: string | null
+          efetiva_necessidade_id?: string
+          id?: string
+          leitura_por?: string | null
+          local_fato?: string | null
+          naturezas?: string[] | null
+          numero?: string | null
+          orgao?: string | null
+          protocolo?: string | null
+          relato?: string | null
+          tipo?: string
+          vitima_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_efetiva_necessidade_provas_efetiva_necessidade_id_fkey"
+            columns: ["efetiva_necessidade_id"]
+            isOneToOne: false
+            referencedRelation: "qa_efetiva_necessidade"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_embeddings: {
         Row: {
           chunk_id: string
@@ -7772,6 +7908,30 @@ export type Database = {
           },
         ]
       }
+      qa_modalidades: {
+        Row: {
+          ativo: boolean
+          base_legal: string
+          codigo: string
+          created_at: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_legal: string
+          codigo: string
+          created_at?: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          base_legal?: string
+          codigo?: string
+          created_at?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       qa_modelos_docx: {
         Row: {
           arquivo_template_path: string | null
@@ -8561,6 +8721,7 @@ export type Database = {
           etapa_liberada_ate: number
           id: string
           mes_protocolo_alvo: string | null
+          modalidade: string | null
           observacao_prazo: string | null
           observacoes_admin: string | null
           pagamento_id: string | null
@@ -8585,6 +8746,7 @@ export type Database = {
           etapa_liberada_ate?: number
           id?: string
           mes_protocolo_alvo?: string | null
+          modalidade?: string | null
           observacao_prazo?: string | null
           observacoes_admin?: string | null
           pagamento_id?: string | null
@@ -8609,6 +8771,7 @@ export type Database = {
           etapa_liberada_ate?: number
           id?: string
           mes_protocolo_alvo?: string | null
+          modalidade?: string | null
           observacao_prazo?: string | null
           observacoes_admin?: string | null
           pagamento_id?: string | null
@@ -8699,11 +8862,14 @@ export type Database = {
           customer_signature_uploaded_at: string | null
           generated_at: string
           id: string
+          original_pdf_path: string | null
+          original_sha256: string | null
           outorgado_ate: string | null
           reaproveitada_de: string | null
           reaproveitada_de_hub_id: string | null
           rejection_reason: string | null
           servico_id: number | null
+          sessao_geracao: Json | null
           status: string
           template_id: string | null
           template_versao: number | null
@@ -8721,11 +8887,14 @@ export type Database = {
           customer_signature_uploaded_at?: string | null
           generated_at?: string
           id?: string
+          original_pdf_path?: string | null
+          original_sha256?: string | null
           outorgado_ate?: string | null
           reaproveitada_de?: string | null
           reaproveitada_de_hub_id?: string | null
           rejection_reason?: string | null
           servico_id?: number | null
+          sessao_geracao?: Json | null
           status?: string
           template_id?: string | null
           template_versao?: number | null
@@ -8743,11 +8912,14 @@ export type Database = {
           customer_signature_uploaded_at?: string | null
           generated_at?: string
           id?: string
+          original_pdf_path?: string | null
+          original_sha256?: string | null
           outorgado_ate?: string | null
           reaproveitada_de?: string | null
           reaproveitada_de_hub_id?: string | null
           rejection_reason?: string | null
           servico_id?: number | null
+          sessao_geracao?: Json | null
           status?: string
           template_id?: string | null
           template_versao?: number | null
@@ -9292,6 +9464,7 @@ export type Database = {
         Row: {
           ativo: boolean
           biblioteca_id: string | null
+          condicao_modalidade: string[] | null
           condicao_profissional: string | null
           created_at: string
           emissor: string
@@ -9319,6 +9492,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           biblioteca_id?: string | null
+          condicao_modalidade?: string[] | null
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
@@ -9346,6 +9520,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           biblioteca_id?: string | null
+          condicao_modalidade?: string[] | null
           condicao_profissional?: string | null
           created_at?: string
           emissor?: string
@@ -11689,6 +11864,13 @@ export type Database = {
       qa_pos_pagamento_protocolar: {
         Args: { p_processo_id: string }
         Returns: Json
+      }
+      qa_processo_definir_modalidade: {
+        Args: { p_modalidade: string; p_processo_id: string }
+        Returns: {
+          adicionados: number
+          removidos: number
+        }[]
       }
       qa_processo_rever_exigencias: {
         Args: { p_cliente_id?: number }
