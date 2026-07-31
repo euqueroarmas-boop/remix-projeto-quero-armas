@@ -298,23 +298,50 @@ REGRAS: Decida pelo CONTEÚDO do documento, não pelo nome do arquivo. Leia o ca
 
 async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
   const model = mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
-  const resp = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: CLASSIFY_SYSTEM },
-        { role: "user", content: [
-          { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ]},
-      ],
-      tools: [CLASSIFY_TOOL],
-      tool_choice: { type: "function", function: { name: "classificar_documento" } },
-      max_tokens: 512,
-    }),
+  // Guarda de tamanho: um data URL gigante estoura a memória do worker e derruba
+  // a função inteira ("Failed to send a request to the Edge Function").
+  if (typeof dataUrl !== "string" || dataUrl.length < 32) throw new Error("data_url_invalida");
+  if (dataUrl.length > MAX_DATA_URL_CHARS) throw new Error("arquivo_muito_grande");
+
+  const body = JSON.stringify({
+    model,
+    messages: [
+      { role: "system", content: CLASSIFY_SYSTEM },
+      { role: "user", content: [
+        { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
+        { type: "image_url", image_url: { url: dataUrl } },
+      ]},
+    ],
+    tools: [CLASSIFY_TOOL],
+    tool_choice: { type: "function", function: { name: "classificar_documento" } },
+    max_tokens: 512,
   });
+
+  // Timeout duro + 1 retry: sem AbortController um gateway pendurado segura o
+  // worker até o kill do runtime, e o cliente vê erro de rede em vez de erro útil.
+  let resp: Response | null = null;
+  let lastErr = "";
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), GATEWAY_TIMEOUT_MS);
+    try {
+      resp = await fetch(GATEWAY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body,
+        signal: ctrl.signal,
+      });
+    } catch (e: any) {
+      lastErr = e?.name === "AbortError" ? "timeout_ia" : `rede_ia_${e?.message || e}`;
+      resp = null;
+    } finally {
+      clearTimeout(t);
+    }
+    if (resp && (resp.ok || (resp.status !== 429 && resp.status < 500))) break;
+    if (resp) lastErr = `gateway_${resp.status}`;
+    if (tentativa === 0) await new Promise((r) => setTimeout(r, 1200));
+  }
+  if (!resp) throw new Error(lastErr || "rede_ia");
   if (!resp.ok) throw new Error(`gateway_${resp.status}`);
   const data = await resp.json();
   const call = data?.choices?.[0]?.message?.tool_calls?.[0];
