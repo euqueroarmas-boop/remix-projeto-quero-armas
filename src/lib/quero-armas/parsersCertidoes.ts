@@ -379,8 +379,11 @@ function parseCr(texto: string): CamposCertidao {
  * cronológica e o e-mail específico que o cliente recebe ("recebemos o BO nº
  * X, referente a ameaça, ocorrida em ...").
  *
- * A vítima é extraída para conferir se o BO é mesmo do cliente. BO de terceiro
- * não sustenta a necessidade dele.
+ * Sobre a VÍTIMA: o nome é extraído para contexto, NÃO para rejeitar. BO de
+ * terceiro é aceito quando a vítima está intrinsecamente ligada a ele — por
+ * exemplo, um fato ocorrido na empresa do patrão que colocou o cliente em
+ * risco. O BO em nome do próprio cliente tem mais peso, e é isso que o sistema
+ * o orienta a providenciar; mas a falta dele não invalida a prova.
  */
 function parseBoletimOcorrencia(texto: string): CamposCertidao {
   const t = norm(texto);

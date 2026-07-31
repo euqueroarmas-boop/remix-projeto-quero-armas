@@ -59,7 +59,7 @@ const PERGUNTAS: Array<{
   {
     campo: "tem_bo",
     pergunta: "Você já registrou algum boletim de ocorrência?",
-    ajuda: "Ameaça, furto, roubo, invasão de propriedade — qualquer registro policial. Se tiver mais de um, envie todos: cada fato conta.",
+    ajuda: "Ameaça, furto, roubo, invasão de propriedade — qualquer registro policial. Se tiver mais de um, envie todos: cada fato conta. O BO pode estar em nome de outra pessoa, desde que o fato tenha colocado você em risco (por exemplo, algo ocorrido na empresa onde trabalha).",
     tipoProva: "boletim_ocorrencia",
   },
   {
@@ -80,6 +80,15 @@ const PERGUNTAS: Array<{
     ajuda: "Mesmo sem registro policial. Conte o que está acontecendo — isso será desenvolvido na sua defesa.",
   },
 ];
+
+/**
+ * Tamanho mínimo do relato para quem NÃO tem nenhuma prova documental.
+ *
+ * Definido pelo usuário em 1000 caracteres. Não é burocracia: sem BO, sem
+ * inquérito e sem ação, este texto é a peça inteira. Um parágrafo curto não dá
+ * à equipe material para fundamentar coisa nenhuma perante a PF.
+ */
+const RELATO_MINIMO = 1000;
 
 const LABEL_TIPO: Record<TipoProva, string> = {
   boletim_ocorrencia: "Boletim de Ocorrência",
@@ -274,7 +283,7 @@ export default function EfetivaNecessidadeModal({
   );
 
   const todasRespondidas = PERGUNTAS.every((q) => typeof respostas[q.campo] === "boolean");
-  const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= 120);
+  const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= RELATO_MINIMO);
 
   if (!open) return null;
 
@@ -393,9 +402,10 @@ export default function EfetivaNecessidadeModal({
                 placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
                 className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
-              {semProvaNenhuma && relato.trim().length < 120 && (
+              {semProvaNenhuma && relato.trim().length < RELATO_MINIMO && (
                 <p className="mt-1 text-[11px] text-amber-700">
-                  Faltam {120 - relato.trim().length} caracteres para o mínimo necessário.
+                  Faltam {RELATO_MINIMO - relato.trim().length} caracteres. Sem prova documental,
+                  o detalhamento é o que sustenta o pedido — não economize.
                 </p>
               )}
             </div>

@@ -58,6 +58,7 @@ import {
 } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
+import EfetivaNecessidadeModal from "./EfetivaNecessidadeModal";
 import { toast } from "sonner";
 import { saveOrShareBlob, isMobileUA } from "@/lib/quero-armas/saveOrShareBlob";
 import {
@@ -143,6 +144,19 @@ const HUB_TIPOS_VALIDOS = new Set([
   "certidao_alteracao_nome",
   "outro",
 ]);
+
+/**
+ * A efetiva necessidade aparece com dois códigos no catálogo — o do processo e
+ * o do Hub. Os dois abrem o mesmo fluxo.
+ */
+const TIPOS_EFETIVA_NECESSIDADE = new Set([
+  "declaracao_necessidade_efetiva",
+  "comprovante_efetiva_necessidade",
+]);
+
+function ehEfetivaNecessidade(tipo: string | null | undefined): boolean {
+  return TIPOS_EFETIVA_NECESSIDADE.has(String(tipo ?? "").trim());
+}
 
 function toHubTipo(processoTipo: string): string {
   const mapped = PROCESSO_TO_HUB_TIPO[processoTipo] ?? processoTipo;
@@ -260,6 +274,7 @@ export default function ChecklistGuiadoModal({
   const [carga, setCarga] = useState<CargaProcesso | null>(null);
   const [pularIds, setPularIds] = useState<Set<string>>(new Set());
   const [docAtivoId, setDocAtivoId] = useState<string | null>(null);
+  const [efetivaNecessidadeAberta, setEfetivaNecessidadeAberta] = useState(false);
   const [resultadoDoc, setResultadoDoc] = useState<GuiaDoc | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -1564,8 +1579,36 @@ export default function ChecklistGuiadoModal({
                   </div>
                 )}
 
+                {/* EFETIVA NECESSIDADE — fluxo próprio, não é upload de arquivo.
+                    O cliente não tem "a declaração de efetiva necessidade" para
+                    anexar: ela é construída a partir das provas que ele tem e do
+                    relato dele. Pedir um upload aqui é o que fazia essa pendência
+                    travar sem que ninguém soubesse o motivo. */}
+                {tipoItemGuia(docAtivo) === "documento" && ehEfetivaNecessidade(docAtivo.tipo_documento) && (
+                  <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-4">
+                    <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                      Esta etapa é diferente
+                    </div>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-slate-700">
+                      Você não precisa anexar nenhum documento pronto aqui. Vamos fazer algumas
+                      perguntas sobre o seu caso e reunir as provas que você tiver — boletins de
+                      ocorrência, inquéritos, ações. Com esse material, nossa equipe escreve a peça
+                      que fundamenta o seu pedido perante a Polícia Federal.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setEfetivaNecessidadeAberta(true)}
+                      className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white"
+                      style={{ background: MARROM }}
+                    >
+                      Começar
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+
                 {/* DOCUMENTO */}
-                {tipoItemGuia(docAtivo) === "documento" && (
+                {tipoItemGuia(docAtivo) === "documento" && !ehEfetivaNecessidade(docAtivo.tipo_documento) && (
                   <>
                   {isDocDeArma(docAtivo.tipo_documento) && (
                     <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-3">
@@ -2236,6 +2279,15 @@ export default function ChecklistGuiadoModal({
           }
         }}
       />
+      {efetivaNecessidadeAberta && processoId && (
+        <EfetivaNecessidadeModal
+          open={efetivaNecessidadeAberta}
+          processoId={processoId}
+          clienteId={clienteId}
+          onClose={() => setEfetivaNecessidadeAberta(false)}
+          onConcluido={() => onUpdated?.()}
+        />
+      )}
     </>
   );
 }
