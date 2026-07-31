@@ -89,8 +89,8 @@ const CAMPOS_POR_CATEGORIA: Record<(typeof CATEGORIAS_ORDENADAS)[number], Campo[
     { key: "titulo_eleitor", label: "Título de Eleitor" },
   ],
   "Contato": [
-    { key: "email", label: "E-mail" },
-    { key: "celular", label: "Celular/WhatsApp" },
+    { key: "email", label: "E-mail", required: true },
+    { key: "celular", label: "Celular/WhatsApp", required: true },
     { key: "telefone_secundario", label: "Telefone Secundário" },
   ],
   "Endereço": [
@@ -167,6 +167,21 @@ function confidenceBadge(c: number | null) {
   const pct = Math.round(c * 100);
   const color = c >= 0.85 ? "text-green-700 bg-green-100" : c >= 0.6 ? "text-yellow-700 bg-yellow-100" : "text-red-700 bg-red-100";
   return <span className={`text-[10px] px-1 py-0.5 rounded font-medium ${color}`}>{pct}%</span>;
+}
+
+function emailValido(email: string | null | undefined): boolean {
+  const s = String(email || "").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+}
+
+function celularValido(celular: string | null | undefined): boolean {
+  const d = String(celular || "").replace(/\D/g, "");
+  return d.length === 10 || d.length === 11 || (d.length === 13 && d.startsWith("55"));
+}
+
+function campoPreenchido(v: string | null | undefined): boolean {
+  const s = String(v || "").trim();
+  return !!s && !/^não extra[ií]do$/i.test(s);
 }
 
 export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDadosRevisados, arquivos, setArquivos, onAvancar, onVoltar }: Props) {
@@ -259,7 +274,13 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
 
   // Campos com confiança baixa
   const alertas = dadosExtraidos.confidence_pairs.filter((p) => p.confidence < 0.6 && p.valor);
-  const temObrigatorios = !!(dadosRevisados.nome_completo?.trim() && dadosRevisados.cpf?.trim());
+  const obrigatoriosPendentes = [
+    !campoPreenchido(dadosRevisados.nome_completo) ? "Nome completo" : null,
+    !campoPreenchido(dadosRevisados.cpf) ? "CPF" : null,
+    !emailValido(dadosRevisados.email) ? "E-mail válido" : null,
+    !celularValido(dadosRevisados.celular) ? "Celular/WhatsApp com DDD" : null,
+  ].filter(Boolean) as string[];
+  const temObrigatorios = obrigatoriosPendentes.length === 0;
 
   // Campos extraídos que não têm categoria mapeada caem em "Outros",
   // junto de observações — evita perder dado extraído sem bagunçar as
@@ -378,6 +399,18 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
           <ul className="text-xs text-blue-700 mt-0.5 list-disc list-inside">
             {dadosExtraidos.warnings.map((w, i) => <li key={i}>{w}</li>)}
           </ul>
+        </div>
+      )}
+
+      {!temObrigatorios && (
+        <div className="bg-red-50 border border-red-200 rounded p-3 flex gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-red-800">Dados mínimos obrigatórios</p>
+            <p className="text-xs text-red-700 mt-0.5">
+              Preencha {obrigatoriosPendentes.join(", ")} antes de salvar o cliente. Os demais dados podem ser completados pelo cliente no modal de atualização cadastral.
+            </p>
+          </div>
         </div>
       )}
 

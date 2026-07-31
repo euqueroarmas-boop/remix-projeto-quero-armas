@@ -22,6 +22,29 @@ function formatCpf(cpf: string | null): string | null {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+function campoPreenchido(v: string | null | undefined): boolean {
+  const s = String(v || "").trim();
+  return !!s && !/^não extra[ií]do$/i.test(s);
+}
+
+function emailValido(email: string | null | undefined): boolean {
+  const s = String(email || "").trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
+}
+
+function celularValido(celular: string | null | undefined): boolean {
+  const d = String(celular || "").replace(/\D/g, "");
+  return d.length === 10 || d.length === 11 || (d.length === 13 && d.startsWith("55"));
+}
+
+function validarDadosMinimos(dados: Record<string, string | null>, cpfNorm: string | null): string | null {
+  if (!campoPreenchido(dados.nome_completo)) return "Nome completo é obrigatório.";
+  if (!cpfNorm || cpfNorm.length !== 11) return "CPF inválido — corrija na etapa anterior.";
+  if (!emailValido(dados.email)) return "E-mail válido é obrigatório.";
+  if (!celularValido(dados.celular)) return "Celular/WhatsApp com DDD é obrigatório.";
+  return null;
+}
+
 // Mapeia o "tipo" usado na Etapa 1 para o `tipo_documento` canônico do
 // Hub Documental (qa_documentos_cliente). GOV.BR não é doc — vai como senha.
 // Mapa de aliases legado → canônico. Tipos já canônicos (retornados pela IA
@@ -121,8 +144,9 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
   const cpfNorm = dadosRevisados.cpf?.replace(/\D/g, "") ?? null;
 
   async function verificarDuplicata() {
-    if (!cpfNorm || cpfNorm.length !== 11) {
-      toast.error("CPF inválido — corrija na etapa anterior");
+    const erroMinimo = validarDadosMinimos(dadosRevisados, cpfNorm);
+    if (erroMinimo) {
+      toast.error(erroMinimo);
       return;
     }
     setSalvando(true);
@@ -150,6 +174,11 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
   }
 
   async function salvar(reutilizar: boolean) {
+    const erroMinimo = validarDadosMinimos(dadosRevisados, cpfNorm);
+    if (erroMinimo) {
+      toast.error(erroMinimo);
+      return;
+    }
     setSalvando(true);
     try {
       // Normaliza data DD/MM/AAAA -> AAAA-MM-DD (Postgres date)

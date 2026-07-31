@@ -37,6 +37,24 @@ function sanitize(value: unknown): string | boolean | undefined {
   return text || undefined;
 }
 
+function texto(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function campoPreenchido(value: unknown): boolean {
+  const s = texto(value);
+  return !!s && !/^não extra[ií]do$/i.test(s);
+}
+
+function emailValido(value: unknown): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(texto(value));
+}
+
+function celularValido(value: unknown): boolean {
+  const d = texto(value).replace(/\D/g, "");
+  return d.length === 10 || d.length === 11 || (d.length === 13 && d.startsWith("55"));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -75,11 +93,20 @@ Deno.serve(async (req) => {
 
     const { data: atual, error: atualError } = await admin
       .from("qa_clientes")
-      .select("id, campo_origens")
+      .select("id, nome_completo, cpf, email, celular, campo_origens")
       .eq("id", clienteId)
       .maybeSingle();
     if (atualError) return json({ error: atualError.message }, 500);
     if (!atual) return json({ error: "cliente_nao_encontrado" }, 404);
+
+    const finalNome = campos.nome_completo ?? atual.nome_completo;
+    const finalEmail = campos.email ?? atual.email;
+    const finalCelular = campos.celular ?? atual.celular;
+    const finalCpf = texto(atual.cpf).replace(/\D/g, "");
+    if (!campoPreenchido(finalNome)) return json({ error: "nome_obrigatorio" }, 400);
+    if (finalCpf.length !== 11) return json({ error: "cpf_obrigatorio" }, 400);
+    if (!emailValido(finalEmail)) return json({ error: "email_obrigatorio" }, 400);
+    if (!celularValido(finalCelular)) return json({ error: "celular_obrigatorio" }, 400);
 
     const campoOrigens = {
       ...((atual.campo_origens && typeof atual.campo_origens === "object")
