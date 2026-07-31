@@ -1090,9 +1090,14 @@ export function ClienteDocsHubModal({
   // de um slot específico do checklist). Mantemos este valor "congelado" para exibir
   // sob o DOSSIÊ e comparar contra a classificação da IA.
   const expectedTipoMeta = defaultTipo ? (getTipoDocumentoMeta(defaultTipo) ?? null) : null;
+  // A comparação vale para QUALQUER leitura que tenha identificado o tipo —
+  // a da IA (`classificacao`) ou a local (`conferenciaLocal`). Exigir só
+  // `classificacao` fazia a checagem sumir no caminho novo: o parser local
+  // classificava certo, o documento era aceito, e ninguém avisava que não era
+  // o que o checklist havia pedido.
   const tipoDivergenteExigencia = !!(
     expectedTipoMeta &&
-    classificacao &&
+    (classificacao || conferenciaLocal) &&
     form.tipo_documento &&
     form.tipo_documento !== expectedTipoMeta.value
   );
