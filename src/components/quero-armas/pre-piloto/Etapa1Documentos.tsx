@@ -131,12 +131,34 @@ function BadgeConfianca({ confianca, classifying }: { confianca?: number; classi
   );
 }
 
+/**
+ * Teto de espera pela IA. Passou disso, a chamada é dada como perdida e o
+ * usuário volta a poder classificar à mão e seguir para o contrato.
+ * Documento é classificável manualmente; ficar preso num spinner, não.
+ */
+const TIMEOUT_IA_MS = 90_000;
+
+function comTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error("a IA não respondeu a tempo — classifique manualmente e siga")),
+        ms,
+      ),
+    ),
+  ]);
+}
+
 export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaColado, setTextoPastaColado, onAvancar }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   // Nomes de arquivos excluídos pelo usuário durante a classificação — a IA ignora esses ao aplicar resultados
   const deletadosRef = useRef<Set<string>>(new Set());
   const [processandoZip, setProcessandoZip] = useState(false);
   const [classificando, setClassificando] = useState(false);
+  /** Nomes realmente em classificação. Espelha o Set do estado sem sofrer com
+   *  fechamento obsoleto — é ele que decide quando o spinner global apaga. */
+  const emClassificacaoRef = useRef<Set<string>>(new Set());
   const [previewItem, setPreviewItem] = useState<{ url: string; tipo: string; nome: string } | null>(null);
   // Nomes dos arquivos que ainda estão sendo classificados pela IA
   const [classificandoNomes, setClassificandoNomes] = useState<Set<string>>(new Set());
@@ -159,6 +181,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (novos.length === 0) return;
 
     const nomesNovos = novos.map((a) => a.file.name);
+    nomesNovos.forEach((n) => emClassificacaoRef.current.add(n));
     setClassificandoNomes((prev) => new Set([...prev, ...nomesNovos]));
     setClassificando(true);
 
@@ -188,9 +211,17 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         const payloadFiltrado = payload.filter((_, j) => !deletadosRef.current.has(fatia[j].file.name));
         if (payloadFiltrado.length === 0) continue;
 
-        const { data, error } = await supabase.functions.invoke("qa-extract-documents", {
-          body: { mode: "classify", arquivos: payloadFiltrado },
-        });
+        // TIMEOUT OBRIGATÓRIO. `functions.invoke` não tem timeout próprio: se a
+        // função pendurar — gateway de IA fora do ar, quota estourada — a
+        // promise nunca resolve, o `finally` nunca roda e o spinner fica
+        // eterno. Como `podeProsseguir` exige `!classificando`, a Central de
+        // Adesão inteira trava e não se gera contrato nenhum.
+        const { data, error } = await comTimeout(
+          supabase.functions.invoke("qa-extract-documents", {
+            body: { mode: "classify", arquivos: payloadFiltrado },
+          }),
+          TIMEOUT_IA_MS,
+        );
 
         if (error) throw error;
 
@@ -242,11 +273,11 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         nomesNovos.forEach((n) => next.delete(n));
         return next;
       });
-      setClassificando((prev) => {
-        // Só desliga o spinner global quando não houver mais nenhum arquivo sendo classificado
-        const restantes = new Set([...classificandoNomes].filter((n) => !nomesNovos.includes(n)));
-        return restantes.size > 0;
-      });
+      // O cálculo antigo lia `classificandoNomes` do fechamento — o valor de
+      // quando a função começou, não o atual. Com dois lotes em voo o spinner
+      // podia desligar cedo ou nunca desligar. O ref carrega o estado real.
+      nomesNovos.forEach((n) => emClassificacaoRef.current.delete(n));
+      setClassificando(emClassificacaoRef.current.size > 0);
     }
   }
 
