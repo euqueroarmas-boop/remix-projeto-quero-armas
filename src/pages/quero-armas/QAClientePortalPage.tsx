@@ -120,6 +120,22 @@ const urgencyLabel = (d: number | null) => {
   return `${d} ${d === 1 ? "DIA RESTANTE" : "DIAS RESTANTES"}`;
 };
 
+function deveForcarTrocaSenha(user: any): boolean {
+  if (user?.user_metadata?.password_change_required !== true) return false;
+  const providers = new Set<string>();
+  const primaryProvider = String(user?.app_metadata?.provider || "").toLowerCase();
+  if (primaryProvider) providers.add(primaryProvider);
+  if (Array.isArray(user?.identities)) {
+    for (const identity of user.identities) {
+      const provider = String(identity?.provider || "").toLowerCase();
+      if (provider) providers.add(provider);
+    }
+  }
+  // Login social não usa a senha temporária do Arsenal.
+  if ((primaryProvider === "google" || primaryProvider === "apple") && !providers.has("email")) return false;
+  return true;
+}
+
 type PendingSignatureDoc = {
   id: string;
   kind: "contract" | "procuration";
@@ -374,6 +390,7 @@ export default function QAClientePortalPage() {
    * porque os dados para elaborá-los já vieram do fechamento da venda.
    */
   const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null; pularGateCadastral?: boolean }) => {
+    if (mustChangePassword) return;
     // `pularGateCadastral` existe para o retorno do wizard cadastral: ele acabou
     // de gravar os campos pela edge function, mas o `cliente` em memória ainda é
     // o de antes do save. Reavaliar aqui reabriria o cadastral — que, sem
@@ -543,7 +560,7 @@ export default function QAClientePortalPage() {
         setAuthKnown(true);
 
         // Força troca de senha no primeiro acesso
-        if (user.user_metadata?.password_change_required === true) {
+        if (deveForcarTrocaSenha(user)) {
           setMustChangePassword(true);
         }
 
@@ -2217,6 +2234,7 @@ export default function QAClientePortalPage() {
   // procuração já vieram do fechamento da venda, então não há por que travar
   // a assinatura esperando cadastro completo.
   useEffect(() => {
+    if (mustChangePassword) return;
     if (!reconciliouCadastro) return;
     if (!pendingContractsLoaded) return;
     if (pendingSignatureCount > 0) return;   // assinaturas primeiro
@@ -2232,7 +2250,7 @@ export default function QAClientePortalPage() {
       checklistCadastralAbertoRef.current = true;
       setShowChecklistCadastral(true);
     }
-  }, [reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cliente]);
+  }, [mustChangePassword, reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cliente]);
 
   // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
   // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
@@ -2241,6 +2259,7 @@ export default function QAClientePortalPage() {
   // Checklist Guiado, modal de cadastro) e quando o usuário não dispensou o
   // popup na sessão atual (clicou no X ou fora da janela).
   useEffect(() => {
+    if (mustChangePassword) return;
     if (!pendingContractsLoaded) return;
     if (pendenciasGuiadasCount <= 0) return;
     if (showContratoPopup) return;
@@ -2251,12 +2270,13 @@ export default function QAClientePortalPage() {
     if (showChecklistCadastral && pendingSignatureCount === 0) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
-  }, [pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, pendenciasGuiadasDismissed]);
+  }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, pendenciasGuiadasDismissed]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
   useEffect(() => {
     const handler = () => {
+      if (mustChangePassword) return;
       if (pendenciasGuiadasCount > 0) {
         abrirPendenciasGuiadas();
       } else {
@@ -2265,7 +2285,7 @@ export default function QAClientePortalPage() {
     };
     window.addEventListener("qa:abrir-assinaturas-pendentes", handler);
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
-  }, [pendenciasGuiadasCount]);
+  }, [mustChangePassword, pendenciasGuiadasCount]);
 
   // Fase 2 — o wizard antigo (ChecklistGuiadoModal) foi aposentado. Todos os
   // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
@@ -2561,14 +2581,14 @@ export default function QAClientePortalPage() {
         onSuccess={() => setMustChangePassword(false)}
       />
       <EntradaWizard
-        open={entradaWizardOpen}
+        open={!mustChangePassword && entradaWizardOpen}
         onOpenChange={setEntradaWizardOpen}
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
       
       <ClienteFotoUploadModal
-        open={showFotoModal}
+        open={!mustChangePassword && showFotoModal}
         onOpenChange={setShowFotoModal}
         onUploaded={() => {
           setAvatarReloadKey((k) => k + 1);
@@ -2828,7 +2848,7 @@ export default function QAClientePortalPage() {
             </button>
           </div>
           <ArmaManualForm
-            open={showArmaManual}
+            open={!mustChangePassword && showArmaManual}
             onOpenChange={(v) => {
               setShowArmaManual(v);
               // BLOCO 12 — ao fechar (salvou OU pulou), prossegue para o
@@ -3549,7 +3569,7 @@ export default function QAClientePortalPage() {
 
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
-          open={showAddDoc}
+          open={!mustChangePassword && showAddDoc}
           onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); setSubstituirDocId(null); }}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
@@ -3567,7 +3587,7 @@ export default function QAClientePortalPage() {
 
       {cliente?.id ? (
         <ClienteChecklistCadastralModal
-          open={showChecklistCadastral}
+          open={!mustChangePassword && showChecklistCadastral}
           cliente={cliente as Record<string, unknown>}
           onClose={() => setShowChecklistCadastral(false)}
           onConcluido={() => {
@@ -3583,7 +3603,7 @@ export default function QAClientePortalPage() {
 
       {cliente?.id ? (
         <ClienteCadastroProgressivoModal
-          open={showCadastroModal}
+          open={!mustChangePassword && showCadastroModal}
           onClose={() => setShowCadastroModal(false)}
           cliente={cliente}
           onUpdated={() => setDocsReloadKey((k) => k + 1)}
@@ -3592,11 +3612,11 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay
         clienteId={(cliente as any)?.id ?? null}
-        bloqueado={showContratoPopup || showAddDoc || showCadastroModal}
+        bloqueado={mustChangePassword || showContratoPopup || showAddDoc || showCadastroModal}
       />
 
       <PendenciasGuiadasPopup
-        open={showContratoPopup && pendenciasGuiadasCount > 0}
+        open={!mustChangePassword && showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
         pinnedId={pinnedPendenciaId}
         ufCliente={(cliente as any)?.estado ?? null}

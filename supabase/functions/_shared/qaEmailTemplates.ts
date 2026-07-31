@@ -225,27 +225,28 @@ const chip = (txt: string, color: string = AMBER_DARK, bg: string = AMBER_SOFT) 
 export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword: string; portalUrl?: string }) {
   const url = opts.portalUrl || PORTAL_URL;
   return qaWrap({
-    preheader: "Acesso provisionado · credenciais ativas no Portal Tático.",
-    opTag: "OPERAÇÃO · PROVISIONAMENTO DE ACESSO",
-    title: "Seu portal está armado.",
-    subtitle: "Conta criada, credenciais geradas, perímetro liberado para o primeiro acesso.",
+    preheader: "Bem-vindo à nossa família — seu acesso ao Arsenal Inteligente.",
+    opTag: "ARSENAL INTELIGENTE · PRIMEIRO ACESSO",
+    title: "Bem-vindo à nossa família.",
+    subtitle: "Seu acesso ao Arsenal Inteligente foi criado.",
     body: `
       ${greeting(opts.name)}
-      ${para("Sua conta no <strong>Portal Arsenal Inteligente</strong> acabou de ser provisionada. Use exatamente as credenciais abaixo no <strong>primeiro login</strong> — depois disso, o sistema vai forçar a troca por uma senha pessoal e descartar a provisória.")}
+      ${para("A partir de agora, você faz parte da nossa família.")}
+      ${para("Criamos o seu acesso ao <strong>Arsenal Inteligente</strong>, o ambiente onde você poderá acompanhar seus processos, documentos, prazos, pendências e atualizações importantes com mais clareza, segurança e organização.")}
+      ${para("A ideia é simples: você não precisa ficar tentando lembrar o que falta, quando vence ou onde está cada documento. O Arsenal Inteligente foi criado para cuidar dessa parte com você, mantendo tudo em um só lugar e ajudando nossa equipe a conduzir seu atendimento com mais precisão.")}
       ${diagBlock([
-        { k: "Identificador", v: opts.email, mono: true },
-        { k: "Senha provisória", v: opts.tempPassword, mono: true, tone: "warn" },
-        { k: "Endpoint", v: "Arsenal do Cliente · /area-do-cliente/login", mono: true },
+        { k: "E-mail", v: opts.email, mono: true },
+        { k: "Senha temporária", v: opts.tempPassword, mono: true, tone: "warn" },
       ])}
-      ${btn(url, "Entrar no Portal Tático")}
+      ${btn(url, "Entrar no Arsenal Inteligente")}
       ${hr}
-      ${notice("warn", "REGRA DE ENGAJAMENTO", "A senha provisória é descartável e single-use. No primeiro login você será obrigado a definir a sua. Nunca compartilhe estas credenciais — elas dão acesso integral ao seu acervo de armas, documentos e processos.")}
+      ${notice("warn", "PRIMEIRO ACESSO", "Copie e cole a senha temporária no primeiro acesso. Por segurança, antes de carregar qualquer informação do portal, você será direcionado para criar uma nova senha pessoal. Se acessar usando Google ou Apple, essa troca não será necessária.")}
       ${notice("danger", "NÃO ESPERAVA ESTE E-MAIL?", "Significa que alguém criou conta usando seu e-mail. Ignore este aviso — sem o primeiro login, o acesso permanece bloqueado.")}
     `,
   });
 }
 export const qaWelcomeText = (o: { name: string; email: string; tempPassword: string; portalUrl?: string }) =>
-  `ARSENAL INTELIGENTE — PROVISIONAMENTO DE ACESSO\n\n${o.name},\n\nSua conta no Portal Tático foi provisionada.\n\nIDENTIFICADOR: ${o.email}\nSENHA PROVISÓRIA: ${o.tempPassword}\nENDPOINT: ${o.portalUrl || PORTAL_URL}\n\nA senha acima é single-use. No primeiro login você será obrigado a trocá-la. Não compartilhe.`;
+  `Bem-vindo à nossa família\n\nOlá, ${o.name}.\n\nA partir de agora, você faz parte da nossa família.\n\nCriamos o seu acesso ao Arsenal Inteligente, o ambiente onde você poderá acompanhar seus processos, documentos, prazos, pendências e atualizações importantes com mais clareza, segurança e organização.\n\nA ideia é simples: você não precisa ficar tentando lembrar o que falta, quando vence ou onde está cada documento. O Arsenal Inteligente foi criado para cuidar dessa parte com você, mantendo tudo em um só lugar e ajudando nossa equipe a conduzir seu atendimento com mais precisão.\n\nE-mail: ${o.email}\nSenha temporária: ${o.tempPassword}\n\nCopie e cole a senha temporária no primeiro acesso. Por segurança, antes de carregar qualquer informação do portal, você será direcionado para criar uma nova senha pessoal.\n\nImportante: se você acessar usando sua conta Google ou Apple, não será necessário trocar essa senha temporária.\n\nAcesse: ${o.portalUrl || PORTAL_URL}`;
 
 // ════════════════════════════════════════════════════════════════════
 // 2. CÓDIGO OTP DE PRIMEIRO ACESSO / ATIVAÇÃO
