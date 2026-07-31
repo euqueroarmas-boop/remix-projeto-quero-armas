@@ -11346,6 +11346,17 @@ export type Database = {
         Args: { p_processo_id: string }
         Returns: string
       }
+      qa_avisar_documentos_rejeitados: {
+        Args: { p_cliente_id: number; p_disparar?: boolean }
+        Returns: {
+          documento: string
+          documento_id: string
+          enviado: boolean
+          motivo: string
+          rejeitado_em: string
+          tipo_documento: string
+        }[]
+      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
