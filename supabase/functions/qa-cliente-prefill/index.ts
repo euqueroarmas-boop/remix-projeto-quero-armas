@@ -609,11 +609,6 @@ function extractManualOverrides(text: string): Record<string, string> {
   return overrides;
 }
 
-function soTextoDigitado(text: string): string {
-  const marker = text.search(/(?:^|\n)\s*===\s*(?:NOMES DE ARQUIVO|CONVERSA WHATSAPP \(ZIP\))/i);
-  return marker >= 0 ? text.slice(0, marker) : text;
-}
-
 function sameFieldValue(field: string, a: unknown, b: unknown): boolean {
   if (["rg", "cep", "cnpj", "celular", "telefone_secundario", "cpf"].includes(field)) {
     return digitsOnly(a) === digitsOnly(b);
