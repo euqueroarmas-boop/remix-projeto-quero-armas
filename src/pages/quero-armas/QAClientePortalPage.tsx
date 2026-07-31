@@ -441,6 +441,8 @@ export default function QAClientePortalPage() {
       );
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+      toast.info("Contrato enviado. Validando assinatura agora…", { duration: 5000 });
+      await validarContratoAssinadoOuFalhar(contractId);
       toast.success("Contrato recebido com sucesso.", { duration: 5000 });
       setShowContratoPopup(false);
       setShowProcuracaoNextPrompt(true);
@@ -536,6 +538,24 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarReloadKey, setAvatarReloadKey] = useState(0);
   const [showFotoModal, setShowFotoModal] = useState(false);
+
+  const validarContratoAssinadoOuFalhar = async (contractId: string) => {
+    const { data, error } = await supabase.functions.invoke("qa-validate-customer-signature", {
+      body: { contract_id: contractId },
+    });
+    if (error) throw new Error(error.message || "Falha ao validar o contrato assinado.");
+    const status = String((data as any)?.status || "");
+    const outcome = String((data as any)?.outcome || "");
+    if (status === "validated" && outcome === "valid") return data;
+    if (status === "rejected" || outcome === "invalid") {
+      const motivo =
+        (data as any)?.message ||
+        (data as any)?.reason ||
+        "O contrato assinado foi recusado pela validação automática. Baixe o contrato original e envie o PDF assinado correto.";
+      throw new Error(motivo);
+    }
+    throw new Error("Contrato recebido, mas ainda não foi aprovado automaticamente. Aguarde a validação antes de avançar para a procuração.");
+  };
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
@@ -1550,22 +1570,24 @@ export default function QAClientePortalPage() {
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
         if (resp.status === 409 && String(data.error || "").includes("validated")) {
-          toast.info("Este documento já foi validado. Atualizando…", { duration: 5000 });
+          toast.info("Este contrato já foi validado. Preparando a próxima etapa…", { duration: 5000 });
           setShowContratoPopup(false);
+          setShowProcuracaoNextPrompt(true);
           setDocsReloadKey((k) => k + 1);
           return;
         }
         throw new Error(data.error || `HTTP ${resp.status}`);
       }
 
-      toast.success(
-        activePendingSignature.kind === "contract"
-          ? "Contrato recebido com sucesso."
-          : "Procuração assinada enviada. Validação em andamento.",
-      );
-      setShowContratoPopup(false);
       if (activePendingSignature.kind === "contract") {
+        toast.info("Contrato enviado. Validando assinatura agora…", { duration: 5000 });
+        await validarContratoAssinadoOuFalhar(activePendingSignature.id);
+        toast.success("Contrato recebido com sucesso.", { duration: 5000 });
+        setShowContratoPopup(false);
         setShowProcuracaoNextPrompt(true);
+      } else {
+        toast.success("Procuração assinada enviada. Validação em andamento.");
+        setShowContratoPopup(false);
       }
       if (activePendingSignature.kind === "contract") {
         setPendingContracts((n) => Math.max(0, n - 1));
