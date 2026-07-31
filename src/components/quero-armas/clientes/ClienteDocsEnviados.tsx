@@ -272,12 +272,55 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
   };
 
+  /**
+   * Motivos prontos para a exclusão.
+   *
+   * Existem para o aviso ao cliente sair específico sem custar tempo da equipe.
+   * "Documento removido" não diz nada a quem enviou; "era um print da tela de
+   * instruções" faz ele entender o erro e não repetir.
+   */
+  const MOTIVOS_EXCLUSAO = [
+    "O arquivo era um print da tela de instruções, não o documento em si.",
+    "O arquivo estava ilegível ou incompleto.",
+    "O documento é de outra pessoa.",
+    "O documento não corresponde ao que foi pedido neste item.",
+    "Documento duplicado — já existe uma versão válida no acervo.",
+  ];
+
   const handleDelete = async (docId: string) => {
-    if (!confirm("Remover este documento? Será marcado como excluído (soft delete) e somirá do portal.")) return;
+    const doc = (docs ?? []).find((d: any) => d.id === docId) as any;
+
+    const lista = MOTIVOS_EXCLUSAO.map((m, i) => `${i + 1}. ${m}`).join("\n");
+    const escolha = prompt(
+      `Remover este documento?\n\nPor que está sendo excluído? O cliente será avisado com esta explicação.\n\n${lista}\n\nDigite o número, ou escreva o motivo com suas palavras.\nDeixe em branco para cancelar.`,
+    );
+    if (!escolha || !escolha.trim()) return;
+
+    const n = Number(escolha.trim());
+    const motivo = Number.isInteger(n) && n >= 1 && n <= MOTIVOS_EXCLUSAO.length
+      ? MOTIVOS_EXCLUSAO[n - 1]
+      : escolha.trim();
+
     try {
       await excluirDocumentoLogico(docId);
       toast.success("Documento removido");
       queryClient.invalidateQueries({ queryKey });
+
+      // Avisa o cliente. Best-effort: falha no e-mail não desfaz a exclusão,
+      // que já aconteceu e é a operação que importa.
+      if (clienteId) {
+        void supabase.functions.invoke("qa-notify-event", {
+          body: {
+            evento: "documento_excluido",
+            cliente_id: clienteId,
+            documento: doc?.nome_documento || doc?.tipo_documento || "",
+            arquivo: doc?.arquivo_nome || "",
+            motivo,
+            referencia_tabela: "qa_documentos_cliente",
+            referencia_id: docId,
+          },
+        });
+      }
     } catch (err: any) {
       toast.error(err?.message || "Falha ao remover");
     }
