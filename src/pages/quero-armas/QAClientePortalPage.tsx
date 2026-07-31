@@ -310,6 +310,11 @@ export default function QAClientePortalPage() {
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
   const [pendingSignatureDocs, setPendingSignatureDocs] = useState<PendingSignatureDoc[]>([]);
+  /** Envio do contrato assinado — reusa `qa-upload-signed-contract`, o mesmo
+   *  motor do cockpit de contratos. Não passa pelo Hub documental. */
+  const contratoAssinadoInputRef = useRef<HTMLInputElement>(null);
+  const contratoAssinadoAlvoRef = useRef<string | null>(null);
+  const [enviandoContratoAssinado, setEnviandoContratoAssinado] = useState(false);
   const [uploadingPendingSignature, setUploadingPendingSignature] = useState<PendingSignatureDoc["kind"] | null>(null);
   const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
@@ -389,6 +394,61 @@ export default function QAClientePortalPage() {
    * A exceção é assinatura pendente: contrato e procuração vêm antes de tudo,
    * porque os dados para elaborá-los já vieram do fechamento da venda.
    */
+  /**
+   * Envia o PDF assinado do contrato.
+   *
+   * Espelha o `handleUpload` do QAContratosCockpitV1 — mesma edge function,
+   * mesmo FormData. Duplicar aqui é de propósito: o cockpit é um componente de
+   * outra tela, e importá-lo só para reaproveitar uma função traria junto todo
+   * o estado dele.
+   */
+  const enviarContratoAssinado = async (file: File) => {
+    const contractId = contratoAssinadoAlvoRef.current;
+    if (!contractId) return;
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Envie apenas arquivo PDF — o mesmo que você baixou do assinador.");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Arquivo maior que 25 MB.");
+      return;
+    }
+    setEnviandoContratoAssinado(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const fd = new FormData();
+      fd.append("contract_id", contractId);
+      fd.append("file", file);
+      fd.append("device_meta", JSON.stringify({
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+      }));
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-upload-signed-contract`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token ?? ""}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: fd,
+        },
+      );
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+      toast.success("Contrato recebido. Estamos validando a assinatura — a página atualiza sozinha.", { duration: 7000 });
+      setDocsReloadKey((k) => k + 1);
+    } catch (e) {
+      console.error("[contrato assinado]", e);
+      toast.error((e as Error)?.message || "Falha ao enviar o contrato.");
+    } finally {
+      setEnviandoContratoAssinado(false);
+      contratoAssinadoAlvoRef.current = null;
+      if (contratoAssinadoInputRef.current) contratoAssinadoInputRef.current.value = "";
+    }
+  };
+
   const abrirPendenciasGuiadas = (opts?: { pinnedId?: string | null; pularGateCadastral?: boolean }) => {
     if (mustChangePassword) return;
     // `pularGateCadastral` existe para o retorno do wizard cadastral: ele acabou
@@ -1559,7 +1619,16 @@ export default function QAClientePortalPage() {
         onPrimary: () => openPendingSignatureLink(),
         onEntregar: () => {
           if (sig.kind === "contract") {
-            openPendingSignatureLink();
+            // ANTES: openPendingSignatureLink(), que reabria a página de
+            // DOWNLOAD do contrato. O cliente clicava em "Enviar contrato
+            // assinado" e o sistema devolvia o contrato em branco para baixar
+            // de novo — não havia por onde entregar.
+            //
+            // Contrato assinado NÃO vai para o Hub: ele é validado e guardado
+            // em Contratos, pela edge function `qa-upload-signed-contract`,
+            // que é a mesma que o cockpit de contratos já usa.
+            contratoAssinadoAlvoRef.current = sig.id;
+            contratoAssinadoInputRef.current?.click();
             return;
           }
           setEditDocTipo("procuracao_assinada");
@@ -3615,6 +3684,18 @@ export default function QAClientePortalPage() {
         bloqueado={mustChangePassword || showContratoPopup || showAddDoc || showCadastroModal}
       />
 
+      {/* Seletor do PDF assinado. Fica fora do popup para sobreviver ao
+          fechamento dele durante o envio. */}
+      <input
+        ref={contratoAssinadoInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void enviarContratoAssinado(f);
+        }}
+      />
       <PendenciasGuiadasPopup
         open={!mustChangePassword && showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
