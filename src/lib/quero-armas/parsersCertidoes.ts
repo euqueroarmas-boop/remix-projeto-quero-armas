@@ -25,7 +25,8 @@ export type OrgaoCertidao =
   | "tjsp_execucoes"
   | "trf_regional"
   | "tjm_sp"
-  | "cr_exercito";
+  | "cr_exercito"
+  | "boletim_ocorrencia";
 
 export interface CamposCertidao {
   orgao: OrgaoCertidao;
@@ -54,6 +55,20 @@ export interface CamposCertidao {
   amparo_legal?: string;
   /** Modalidades apostiladas: colecionador | atirador | cacador. */
   atividades?: string[];
+  /* ── Só no Boletim de Ocorrência ── */
+  /** Nº do boletim, como impresso (ex.: "EP6371-1/2026"). */
+  numero_bo?: string;
+  protocolo?: string;
+  delegacia?: string;
+  /** Tipificações: "Código Penal - Ameaça (art. 147)". */
+  naturezas?: string[];
+  data_fato?: string;      // YYYY-MM-DD
+  hora_fato?: string;
+  local_fato?: string;
+  /** Nome da vítima, para conferir se o BO é do cliente. */
+  vitima_nome?: string;
+  vitima_cpf?: string;
+  relato?: string;
 }
 
 const norm = (v: string) =>
@@ -110,6 +125,7 @@ function dataPorExtenso(t: string): string | undefined {
 export function identificarOrgao(texto: string): OrgaoCertidao | null {
   const t = flat(texto).toUpperCase();
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
+  if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
   if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO/.test(t)) return "tjm_sp";
   if (/TRIBUNAL SUPERIOR ELEITORAL/.test(t)) return "tse";
@@ -353,6 +369,57 @@ function parseCr(texto: string): CamposCertidao {
   };
 }
 
+/* ── Boletim de Ocorrência ─────────────────────────────────────────────── */
+
+/**
+ * O BO é a prova que sustenta a efetiva necessidade.
+ *
+ * O que importa extrair não é só identificar o documento: é a MATÉRIA — o que
+ * aconteceu, quando e contra quem. São esses campos que alimentam a narrativa
+ * cronológica e o e-mail específico que o cliente recebe ("recebemos o BO nº
+ * X, referente a ameaça, ocorrida em ...").
+ *
+ * A vítima é extraída para conferir se o BO é mesmo do cliente. BO de terceiro
+ * não sustenta a necessidade dele.
+ */
+function parseBoletimOcorrencia(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+
+  // "Naturezas da Ocorrência" lista uma ou mais tipificações, uma por linha.
+  const blocoNat = t.match(/Naturezas da Ocorrencia([\s\S]*?)Dados da Ocorrencia/i)?.[1] ?? "";
+  const naturezas = blocoNat
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => /art\.|Lei |Codigo Penal|Decreto/i.test(l))
+    .map((l) => l.replace(/\s+/g, " "));
+
+  // O bloco da vítima vem depois do rótulo "- Vítima".
+  const blocoVit = t.match(/-\s*Vitima\s+Nome:\s*([\s\S]{0,400})/i)?.[1] ?? "";
+
+  const dataHora = t.match(/^\s*Ocorrencia:\s*(\d{2}\/\d{2}\/\d{4})(?:\s*as\s*([\d:]+))?/im);
+
+  return {
+    orgao: "boletim_ocorrencia",
+    tipoDocumento: "boletim_ocorrencia",
+    numero_bo: g(/Boletim N.:\s*([A-Z0-9\-\/]+)/i),
+    numero_documento: g(/Boletim N.:\s*([A-Z0-9\-\/]+)/i)?.replace(/\D/g, ""),
+    protocolo: g(/Protocolo N.:\s*([\d\/]+)/i),
+    delegacia: g(/Dependencia:\s*(.+?)\s*$/im) ?? g(/Circunscricao:\s*(.+?)\s*$/im),
+    naturezas: naturezas.length ? naturezas : undefined,
+    data_fato: iso(dataHora?.[1]),
+    hora_fato: dataHora?.[2],
+    local_fato: g(/Local do Fato:\s*(.+?)\s*$/im),
+    vitima_nome: upperOrUndef(blocoVit.split("\n")[0]),
+    vitima_cpf: cpf11(blocoVit.match(/CPF:\s*([\d.\-]{11,14})/i)?.[1]),
+    data_emissao: iso(g(/Emitido:\s*(\d{2}\/\d{2}\/\d{4})/i)),
+    relato: g(/Descricao ocorrencia cidadao:\s*([\s\S]{0,1200}?)(?:\n\s*Documento assinado|$)/i)
+      ?.replace(/\s+/g, " ")
+      .trim(),
+    codigo_autenticidade: g(/Chave de Impressao:\s*([A-F0-9]{16,64})/i),
+  };
+}
+
 /* ── helpers ───────────────────────────────────────────────────────────── */
 
 /**
@@ -393,5 +460,6 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "trf_regional": return parseTrfRegional(texto);
     case "tjm_sp": return parseTjmSp(texto);
     case "cr_exercito": return parseCr(texto);
+    case "boletim_ocorrencia": return parseBoletimOcorrencia(texto);
   }
 }
