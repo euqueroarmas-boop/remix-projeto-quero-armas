@@ -320,6 +320,7 @@ export default function QAClientePortalPage() {
   const [uploadingPendingSignature, setUploadingPendingSignature] = useState<PendingSignatureDoc["kind"] | null>(null);
   const pendingContractUploadInputRef = useRef<HTMLInputElement>(null);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
+  const [showProcuracaoNextPrompt, setShowProcuracaoNextPrompt] = useState(false);
   const [pendenciasGuiadasDismissed, setPendenciasGuiadasDismissed] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -440,7 +441,9 @@ export default function QAClientePortalPage() {
       );
       const data = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
-      toast.success("Contrato recebido. Estamos validando a assinatura — a página atualiza sozinha.", { duration: 7000 });
+      toast.success("Contrato recebido com sucesso.", { duration: 5000 });
+      setShowContratoPopup(false);
+      setShowProcuracaoNextPrompt(true);
       setDocsReloadKey((k) => k + 1);
     } catch (e) {
       console.error("[contrato assinado]", e);
@@ -1475,6 +1478,17 @@ export default function QAClientePortalPage() {
 
   const activePendingSignature = pendingSignatureDocs[0] ?? null;
   const pendingSignatureCount = pendingSignatureDocs.length;
+  const nextPendingProcuracao = pendingSignatureDocs.find((doc) => doc.kind === "procuration") ?? null;
+
+  const abrirProcuracaoDepoisDoContrato = () => {
+    setShowProcuracaoNextPrompt(false);
+    if (nextPendingProcuracao) {
+      abrirPendenciasGuiadas({ pinnedId: `sig:procuration:${nextPendingProcuracao.id}`, pularGateCadastral: true });
+      return;
+    }
+    setDocsReloadKey((k) => k + 1);
+    toast.info("Estamos preparando a procuração. Tente novamente em alguns segundos.", { duration: 5000 });
+  };
 
   const pendingContractPublicUrl = activePendingSignature?.kind === "contract"
     ? `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${activePendingSignature.id}`
@@ -1546,10 +1560,13 @@ export default function QAClientePortalPage() {
 
       toast.success(
         activePendingSignature.kind === "contract"
-          ? "Contrato assinado enviado. Validação em andamento."
+          ? "Contrato recebido com sucesso."
           : "Procuração assinada enviada. Validação em andamento.",
       );
       setShowContratoPopup(false);
+      if (activePendingSignature.kind === "contract") {
+        setShowProcuracaoNextPrompt(true);
+      }
       if (activePendingSignature.kind === "contract") {
         setPendingContracts((n) => Math.max(0, n - 1));
       }
@@ -3731,7 +3748,7 @@ export default function QAClientePortalPage() {
 
       <NotificacaoEngineOverlay
         clienteId={(cliente as any)?.id ?? null}
-        bloqueado={mustChangePassword || showContratoPopup || showAddDoc || showCadastroModal}
+        bloqueado={mustChangePassword || showContratoPopup || showProcuracaoNextPrompt || showAddDoc || showCadastroModal}
       />
 
       {/* Seletor do PDF assinado. Fica fora do popup para sobreviver ao
@@ -3746,6 +3763,71 @@ export default function QAClientePortalPage() {
           if (f) void enviarContratoAssinado(f);
         }}
       />
+      {!mustChangePassword && showProcuracaoNextPrompt ? (
+        <div className="fixed inset-0 z-[125] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qa-procuracao-next-title"
+            className="w-full max-w-[620px] overflow-hidden rounded-t-3xl border border-[#F1D6DA] bg-white shadow-2xl sm:rounded-2xl"
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-[#F4E5E7] px-6 py-5 md:px-8">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                  <CheckCircle className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8A1224]">
+                    Próxima etapa
+                  </p>
+                  <h2
+                    id="qa-procuracao-next-title"
+                    className="mt-1 text-2xl font-semibold leading-tight text-[#0A0A0A]"
+                  >
+                    Contrato recebido com sucesso
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowProcuracaoNextPrompt(false)}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E4E4E4] text-[#6A6A6A] transition-colors hover:bg-[#FAFAFA] hover:text-[#0A0A0A]"
+                aria-label="Fechar aviso"
+              >
+                <XCircle className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-5 px-6 py-6 md:px-8">
+              <p className="text-sm leading-relaxed text-[#4B4B4B]">
+                Recebemos o contrato assinado. Agora falta enviar a procuração para a equipe
+                continuar o atendimento do seu processo sem travar a próxima etapa.
+              </p>
+              <div className="rounded-sm border border-[#F1D6DA] bg-[#FFF8F9] px-4 py-3 text-sm text-[#8A1224]">
+                A procuração é outro documento. Ela precisa ser baixada, assinada e enviada
+                separadamente, mesmo que o passo a passo seja parecido com o do contrato.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 border-t border-[#F4E5E7] bg-white px-6 py-5 md:grid-cols-[1fr_auto] md:px-8">
+              <button
+                type="button"
+                onClick={() => setShowProcuracaoNextPrompt(false)}
+                className="inline-flex h-12 items-center justify-center rounded-sm border border-[#E4E4E4] bg-white px-5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#4B4B4B] transition-colors hover:bg-[#FAFAFA]"
+              >
+                Ver depois
+              </button>
+              <button
+                type="button"
+                onClick={abrirProcuracaoDepoisDoContrato}
+                className="inline-flex h-12 items-center justify-center rounded-sm bg-[#8A1224] px-6 text-[11px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#6f0f1d]"
+              >
+                {nextPendingProcuracao ? "Enviar procuração agora" : "Preparar procuração"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <PendenciasGuiadasPopup
         open={!mustChangePassword && showContratoPopup && pendenciasGuiadasCount > 0}
         pendencias={pendenciasGuiadas}
