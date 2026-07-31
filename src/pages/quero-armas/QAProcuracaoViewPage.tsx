@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, Download, FileText, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { baixarHtmlProcuracao } from "@/lib/quero-armas/procuracaoHtml";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -303,13 +302,6 @@ export default function QAProcuracaoViewPage() {
     }
   }
 
-  function baixarHtml() {
-    if (!procuracao) return;
-    const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
-    const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}`;
-    baixarHtmlProcuracao(procuracao.conteudo_html, nome, nome);
-    toast.success("HTML da procuração baixado");
-  }
 
   if (carregando) {
     return (
@@ -375,10 +367,6 @@ export default function QAProcuracaoViewPage() {
             <Button size="sm" onClick={baixarPdf} disabled={baixando} className="gap-2 bg-[#7A1F2B] hover:bg-[#6a1827] text-white text-xs">
               {baixando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
               {baixando ? "Gerando PDF..." : "Baixar procuração (PDF)"}
-            </Button>
-            <Button size="sm" variant="outline" onClick={baixarHtml} className="gap-2 text-xs border-[#7A1F2B]/30 bg-white text-[#7A1F2B] hover:bg-[#7A1F2B]/5 hover:text-[#7A1F2B]">
-              <Download className="w-3.5 h-3.5" />
-              Baixar HTML
             </Button>
             <Button size="sm" variant="outline" onClick={() => window.print()} className="gap-2 text-xs border-[#7A1F2B]/30 bg-white text-[#7A1F2B] hover:bg-[#7A1F2B]/5 hover:text-[#7A1F2B]">
               <Printer className="w-3.5 h-3.5" />
