@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Upload, FileText, Trash2, ChevronRight, Sparkles, Loader2, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -169,6 +169,21 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
   // Nomes dos arquivos que ainda estão sendo classificados pela IA
   const [classificandoNomes, setClassificandoNomes] = useState<Set<string>>(new Set());
 
+  /**
+   * Lista viva de arquivos. `setArquivos` é um setter simples do wizard (não
+   * aceita função), então qualquer atualização assíncrona — leitura local, IA —
+   * partia do `arquivos` capturado no fechamento e APAGAVA os arquivos
+   * adicionados depois. Era isso que sumia com a lista quando a IA falhava.
+   */
+  const arquivosRef = useRef<ArquivoUpload[]>(arquivos);
+  useEffect(() => { arquivosRef.current = arquivos; }, [arquivos]);
+
+  function aplicarArquivos(updater: (prev: ArquivoUpload[]) => ArquivoUpload[]) {
+    const next = updater(arquivosRef.current);
+    arquivosRef.current = next;
+    setArquivos(next);
+  }
+
   function abrirPreview(a: ArquivoUpload) {
     if (a.file.type === "application/pdf") {
       const reader = new FileReader();
@@ -222,7 +237,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (resolvidos.size > 0) {
       // `setArquivos` aqui é um setter simples vindo do wizard (não aceita
       // função), então parto da lista atual do próprio componente.
-      setArquivos(arquivos.map((a) => {
+      aplicarArquivos((atuais) => atuais.map((a) => {
         const r = resolvidos.get(a.file.name);
         if (!r || deletadosRef.current.has(a.file.name)) return a;
         return {
@@ -303,7 +318,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       // Aplica somente nos arquivos que ainda estão na lista e não foram deletados.
       // A IA NUNCA rebaixa uma classificação já correta: se ela devolver "outro"
       // (ou falhar), o tipo inferido pelo nome do arquivo é mantido.
-      setArquivos(arquivos.map((a) => {
+      aplicarArquivos((atuais) => atuais.map((a) => {
         if (!nomesNovos.includes(a.file.name)) return a;
         if (deletadosRef.current.has(a.file.name)) return a;
         const r = resultadosPorNome.get(a.file.name);
@@ -376,7 +391,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
     if (combinados.length > 0) {
       // Adiciona imediatamente com classificação por nome (feedback visual rápido)
-      setArquivos([...arquivos, ...combinados]);
+      aplicarArquivos((atuais) => [...atuais, ...combinados]);
 
       // Em seguida classifica com IA em background
       classificarComIA(combinados, arquivos.length);
@@ -509,18 +524,18 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     // Marca este arquivo como deletado — classificarComIA ignora resultados para ele
     deletadosRef.current.add(nome);
     setClassificandoNomes((prev) => { const next = new Set(prev); next.delete(nome); return next; });
-    const copia = [...arquivos];
+    const copia = [...arquivosRef.current];
     if (copia[i].preview) URL.revokeObjectURL(copia[i].preview!);
     copia.splice(i, 1);
-    setArquivos(copia);
+    aplicarArquivos(() => copia);
     if (copia.length === 0) setClassificando(false);
   };
 
   const alterarTipo = (i: number, tipo: string) => {
-    const copia = [...arquivos];
+    const copia = [...arquivosRef.current];
     // Ao corrigir manualmente, zera a confiança da IA (indicando intervenção humana)
     copia[i] = { ...copia[i], tipo, tipo_ia_confianca: undefined, tipo_ia_motivo: undefined };
-    setArquivos(copia);
+    aplicarArquivos(() => copia);
   };
 
   const podeProsseguir = (arquivos.length > 0 || textoPastaColado.trim().length > 50) && !classificando;
