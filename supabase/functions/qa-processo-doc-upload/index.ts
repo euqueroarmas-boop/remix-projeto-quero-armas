@@ -96,6 +96,31 @@ Deno.serve(async (req) => {
     const skip_ia: boolean = !!body?.skip_ia;
     const arma_id: string | undefined = body?.arma_id ?? undefined;
 
+    /**
+     * Leitura LOCAL feita no navegador antes do upload (parse-first).
+     *
+     * O front já mandava isto; a função descartava. O documento aprovado pelo
+     * parser subia e ia para a fila da IA do mesmo jeito, e os campos lidos do
+     * próprio PDF eram perdidos — foi o que deixou a certidão do TRF3 parada
+     * em "AGUARDANDO ANÁLISE" com o documento correto em mãos.
+     *
+     * Regra do usuário (31/07/2026): parseou, decide o parser. A IA não dá
+     * segunda opinião onde existe parser.
+     *
+     * Só aceitamos o caminho curto quando o parser AFIRMA aprovação. Qualquer
+     * outra forma do payload cai no fluxo de hoje, com IA.
+     */
+    const leituraLocal = body?.leitura_local ?? null;
+    const parserAprovou =
+      !!leituraLocal &&
+      typeof leituraLocal === "object" &&
+      leituraLocal.aprovado === true &&
+      !!leituraLocal.tipo;
+    const parserCampos =
+      leituraLocal && typeof leituraLocal.campos === "object" && leituraLocal.campos
+        ? (leituraLocal.campos as Record<string, unknown>)
+        : null;
+
     if (!documento_id || !storage_path) {
       return json({ error: "documento_id e storage_path/storage_key são obrigatórios" }, 400);
     }
@@ -283,16 +308,31 @@ Deno.serve(async (req) => {
       return json({ error: motivo, code: "pdf_invalido" }, 400);
     }
 
-    // ===== OK: registra envio e dispara IA =====
+    // ===== OK: registra envio =====
+    // Com leitura local aprovada o documento já entra APROVADO e a IA não é
+    // chamada. Sem ela, tudo segue exatamente como antes: em_analise + fila.
     const { data: docRow, error: upErr } = await supabase
       .from("qa_processo_documentos")
       .update({
         arquivo_storage_key: storage_path,
         arquivo_url: null,
-        status: "em_analise",
+        status: parserAprovou ? "aprovado" : "em_analise",
         data_envio: new Date().toISOString(),
         motivo_rejeicao: null,
-        validacao_ia_status: "fila",
+        ...(parserAprovou
+          ? {
+              data_validacao: new Date().toISOString(),
+              validacao_ia_status: "dispensado_parser",
+              // Campos lidos do PDF. É daqui que o motor de reaproveitamento
+              // lê `trf_regiao` e `uf_comprovante`.
+              dados_extraidos_json: {
+                ...(parserCampos ?? {}),
+                lido_por: "parser",
+                parser_tipo: leituraLocal.tipo,
+                parser_lido_em: new Date().toISOString(),
+              },
+            }
+          : { validacao_ia_status: "fila" }),
         validacao_ia_erro: null,
         observacoes: nome_arquivo_original
           ? `arquivo:${nome_arquivo_original}|mime:${realMime}|bytes:${realSize}`
@@ -307,7 +347,10 @@ Deno.serve(async (req) => {
     if (upErr) return json({ error: upErr.message }, 400);
 
     let iaTriggered = false;
-    if (!skip_ia) {
+    // `parserAprovou` bloqueia o disparo: chamar a IA aqui a faria revalidar —
+    // e possivelmente reprovar — um documento que o parser já aprovou lendo o
+    // texto do próprio PDF.
+    if (!skip_ia && !parserAprovou) {
       try {
         // @ts-ignore EdgeRuntime
         (globalThis as any).EdgeRuntime?.waitUntil(

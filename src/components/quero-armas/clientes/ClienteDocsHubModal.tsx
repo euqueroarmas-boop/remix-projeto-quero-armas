@@ -30,6 +30,10 @@ import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
+import {
+  parseComprovanteEndereco,
+  type ResultadoEndereco,
+} from "@/lib/quero-armas/parserComprovanteEndereco";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import {
   HUB_CATEGORIAS,
@@ -1040,6 +1044,16 @@ export function ClienteDocsHubModal({
     conf: ReturnType<typeof conferirCertidao>;
   } | null>(null);
 
+  /**
+   * UF lida do comprovante de endereço pela faixa de CEP.
+   *
+   * NÃO substitui a IA neste tipo: o parser de endereço só resolve a UF, e o
+   * comprovante ainda precisa da leitura do titular e da próxima leitura da
+   * fatura. Entra como canal paralelo — a UF fica gravada, o resto segue o
+   * caminho de hoje.
+   */
+  const [enderecoLocal, setEnderecoLocal] = useState<ResultadoEndereco | null>(null);
+
   const [clienteAutoFetch, setClienteAutoFetch] = useState<{
     nome: string | null;
     cpf: string | null;
@@ -1820,6 +1834,16 @@ export function ClienteDocsHubModal({
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
     }
+    // Canal paralelo: a UF do comprovante decide qual TRF e qual tribunal
+    // estadual cobrem o cliente. Roda antes de qualquer `return` para não
+    // depender de o documento ser uma certidão — e NÃO encerra o fluxo: o
+    // comprovante continua indo para a IA ler titular e próxima leitura.
+    //
+    // Guarda a leitura CRUA. O uso é filtrado no salvar, por tipo de
+    // documento: toda certidão traz o CEP do tribunal no rodapé, e aproveitar
+    // isso como "UF do cliente" mandaria o processo para a região errada.
+    setEnderecoLocal(parseComprovanteEndereco(texto));
+
     if (ehPaginaAutenticacaoTrfIsolada(`${f.name}\n${texto}`)) {
       toast.error("Este arquivo parece ser apenas a página de autenticação/QR da certidão TRF. Envie o PDF completo, com todas as páginas, para a certidão ficar inteira e classificada corretamente.");
       setConferenciaLocal(null);
@@ -2116,6 +2140,49 @@ export function ClienteDocsHubModal({
         mime = file.type || null;
       }
 
+      /**
+       * O que o PARSER leu, gravado ao lado do que a IA extraiu.
+       *
+       * Até aqui o parser decidia aprovar ou rejeitar e o resultado morria na
+       * tela: os campos lidos do próprio PDF eram jogados fora, e o único
+       * registro que sobrava era o da IA. Sem isto, `trf_regiao` e
+       * `uf_comprovante` não existiriam para o motor de reaproveitamento
+       * consultar.
+       *
+       * `lido_por` deixa auditável quem leu cada documento — dá para
+       * reprocessar depois só o que veio da IA.
+       *
+       * A UF só entra quando o documento É comprovante de residência: certidão
+       * traz o CEP do tribunal no rodapé, e usá-lo como UF do cliente mandaria
+       * o processo para a região errada.
+       */
+      const parserBloco = (() => {
+        const ehComprovante = form.tipo_documento === "comprovante_residencia";
+        const uf = ehComprovante && enderecoLocal?.ok ? enderecoLocal.dados : null;
+        if (!conferenciaLocal?.doc && !uf) return null;
+        return {
+          lido_por: "parser" as const,
+          parser_lido_em: new Date().toISOString(),
+          ...(conferenciaLocal?.doc
+            ? {
+                parser: conferenciaLocal.doc as unknown as Record<string, unknown>,
+                parser_veredicto: conferenciaLocal.conf.veredicto,
+                // Promovido para o topo: o SQL do motor lê sem descer no objeto.
+                ...(conferenciaLocal.doc.trf_regiao != null
+                  ? { trf_regiao: conferenciaLocal.doc.trf_regiao }
+                  : {}),
+              }
+            : {}),
+          ...(uf
+            ? {
+                uf_comprovante: uf.uf,
+                uf_comprovante_cep: uf.cep,
+                uf_comprovante_confirmada: uf.uf_confirmada,
+              }
+            : {}),
+        };
+      })();
+
       const payload: any = {
         customer_id: customerId ?? null,
         qa_cliente_id: qaClienteId ?? null,
@@ -2222,8 +2289,12 @@ export function ClienteDocsHubModal({
                 data_validade: buildFieldAudit("data_validade", form.data_validade || null),
                 sistema_registro: buildFieldAudit("sistema_registro", form.sistema_registro || null),
               },
+              ...(parserBloco ?? {}),
             }
-          : null,
+          // Sem IA, mas com parser: grava só o do parser. Antes disto, o
+          // documento lido localmente era salvo com ia_dados_extraidos = null
+          // e nada do que o parser leu sobrevivia.
+          : parserBloco,
       };
 
       // Fluxo de aprovação:
