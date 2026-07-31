@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, Fragment, useRef } from "react";
+import { useEffect, useState, useMemo, Fragment, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -85,6 +85,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ShoppingCart, UserCog } from "lucide-react";
+
+const CHECKLIST_AUTO_REVIEW_INTERVAL_MS = 10 * 60 * 1000;
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -538,6 +540,7 @@ export default function QAClientePortalPage() {
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // Reconciliação silenciosa na entrada — roda uma vez por carregamento.
   const reconciliouRef = useRef(false);
+  const revisaoChecklistInFlightRef = useRef(false);
   // Checklist cadastral — abre sozinho quando há campo obrigatório em branco.
   // Só depois que o cadastro fecha é que o checklist processual entra: nenhum
   // documento é gerado antes de o cadastro estar completo.
@@ -2254,25 +2257,12 @@ export default function QAClientePortalPage() {
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
 
-  // ── Reconciliação automática na entrada do cliente ────────────────────────
-  // Antes, nada rodava ao abrir/atualizar o portal: o cadastro só era
-  // completado quando o modal progressivo abria, e as exigências do checklist
-  // só eram reavaliadas em pontos específicos. Resultado: documento já enviado
-  // e classificado no Hub continuava sendo pedido no checklist.
-  //
-  // Roda apenas qa_processo_rever_exigencias, que casa os documentos válidos
-  // do Hub com os slots pendentes do processo. Só lê documento e escreve em
-  // qa_processo_documentos — não encosta no cadastro do cliente.
-  //
-  // O auto-prefill do cadastro foi retirado daqui: ele reescreve cpf e
-  // nome_completo a partir dos documentos, e rodar isso sem supervisão a cada
-  // acesso pode trocar a identidade do cadastro por dado de terceiro.
-  useEffect(() => {
+  const revisarChecklistsSilenciosamente = useCallback(async (opts?: { permitirReabrir?: boolean }) => {
     const clienteId = Number((cliente as any)?.id) || null;
-    if (!clienteId || reconciliouRef.current) return;
-    reconciliouRef.current = true;
+    if (!clienteId || revisaoChecklistInFlightRef.current) return;
+    revisaoChecklistInFlightRef.current = true;
 
-    (async () => {
+    try {
       // 1) Cadastro — DESLIGADO de propósito.
       //
       // qa-cliente-auto-prefill escreve cpf e nome_completo, e sua regra
@@ -2291,11 +2281,70 @@ export default function QAClientePortalPage() {
         console.warn("[portal] revisão de exigências falhou", e);
       }
 
+      if (opts?.permitirReabrir) {
+        const idLegado = (cliente as any)?.id_legado ?? (cliente as any)?.id ?? "anon";
+        sessionStorage.removeItem("qa:pendencias-dismissed");
+        localStorage.removeItem(`qa-portal-startup-${idLegado}-checklist_pendente-dia`);
+        localStorage.removeItem(`qa-portal-startup-${idLegado}-checklist_reprovado-dia`);
+        checklistCadastralAbertoRef.current = false;
+        setPendenciasGuiadasDismissed(false);
+        setEntradaAutoChecked(false);
+      }
+
       // Recarrega a tela com o estado já reconciliado.
       setDocsReloadKey((k) => k + 1);
       setReconciliouCadastro(true);
-    })();
-  }, [cliente]); // eslint-disable-line react-hooks/exhaustive-deps
+    } finally {
+      revisaoChecklistInFlightRef.current = false;
+    }
+  }, [cliente]);
+
+  // ── Reconciliação automática na entrada do cliente ────────────────────────
+  // Antes, nada rodava ao abrir/atualizar o portal: o cadastro só era
+  // completado quando o modal progressivo abria, e as exigências do checklist
+  // só eram reavaliadas em pontos específicos. Resultado: documento já enviado
+  // e classificado no Hub continuava sendo pedido no checklist.
+  //
+  // Roda apenas qa_processo_rever_exigencias, que casa os documentos válidos
+  // do Hub com os slots pendentes do processo. Só lê documento e escreve em
+  // qa_processo_documentos — não encosta no cadastro do cliente.
+  //
+  // O auto-prefill do cadastro foi retirado daqui: ele reescreve cpf e
+  // nome_completo a partir dos documentos, e rodar isso sem supervisão a cada
+  // acesso pode trocar a identidade do cadastro por dado de terceiro.
+  useEffect(() => {
+    const clienteId = Number((cliente as any)?.id) || null;
+    if (!clienteId || reconciliouRef.current) return;
+    reconciliouRef.current = true;
+    void revisarChecklistsSilenciosamente();
+  }, [cliente, revisarChecklistsSilenciosamente]);
+
+  // ── Varredura invisível do checklist ─────────────────────────────────────
+  // A cada 10 minutos, quando não há fluxo bloqueante na frente, roda o mesmo
+  // reconciliador por baixo. Se não sobrar pendência, nada aparece. Se sobrar
+  // pendência cadastral ou processual, limpamos só a trava de "já mostrei" para
+  // que os modais existentes possam nascer novamente na tela do cliente.
+  useEffect(() => {
+    if (!cliente?.id) return;
+    const timer = window.setInterval(() => {
+      if (mustChangePassword) return;
+      if (!pendingContractsLoaded) return;
+      if (pendingSignatureCount > 0) return;
+      if (showContratoPopup || showAddDoc || showCadastroModal || showChecklistCadastral) return;
+      void revisarChecklistsSilenciosamente({ permitirReabrir: true });
+    }, CHECKLIST_AUTO_REVIEW_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [
+    cliente?.id,
+    mustChangePassword,
+    pendingContractsLoaded,
+    pendingSignatureCount,
+    showContratoPopup,
+    showAddDoc,
+    showCadastroModal,
+    showChecklistCadastral,
+    revisarChecklistsSilenciosamente,
+  ]);
 
   // ── Ordem do portal: assinaturas → cadastro → checklist do processo ───────
   // Contrato e procuração aparecem juntos na fila e o cliente resolve um a um.
