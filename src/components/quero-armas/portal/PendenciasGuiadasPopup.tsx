@@ -82,9 +82,23 @@ interface Props {
    * o TRF regional correspondente.
    */
   ufCliente?: string | null;
+  /**
+   * Números REAIS do processo, contados fora daqui.
+   *
+   * A fila do popup mostra só o que está liberado agora; sem este resumo o
+   * cliente lê "5 de 5" e conclui que acabou, quando ainda faltam laudos,
+   * requerimento e perguntas. O contador da fila responde "onde estou"; este
+   * responde "quanto falta".
+   */
+  resumoProcesso?: {
+    documentosPendentes: number;
+    perguntasPendentes: number;
+    totalObrigatorios: number;
+    concluidos: number;
+  } | null;
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente }: Props) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso }: Props) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
@@ -126,8 +140,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
   const posicaoNoGrupo = grupoInfo ? grupoInfo.ids.indexOf(active.id) + 1 : 0;
   const totalNoGrupo = grupoInfo?.ids.length ?? 0;
+  // UMA EXIGÊNCIA POR VEZ (regra do usuário, 31/07/2026).
+  //
+  // A navegação livre foi REMOVIDA de propósito: o cliente pulava para a
+  // quarta pendência, mandava aquele documento, e a primeira ficava
+  // esquecida — que foi como o processo do cliente 214 acumulou itens meio
+  // resolvidos. Resolvida a atual, ela sai da lista e a seguinte assume.
+  //
+  // "Anterior" continua disponível quando há pendência pinada (o cliente
+  // clicou num card específico): aí ele veio de fora da ordem e precisa
+  // conseguir voltar para a fila normal.
   const podeVoltar = atual > 0;
-  const podeAvancar = atual < total - 1;
+  const podeAvancar = false;
 
   const isSignature = active.kind === "signature";
   const isPergunta = active.kind === "pergunta";
@@ -367,7 +391,37 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Footer */}
         <div className="mt-auto border-t border-[#E4E4E4] bg-white shrink-0">
-          {total > 1 ? (
+          {/* Números do PROCESSO, não da fila. A fila mostra o que está
+              liberado agora; o cliente precisa saber o tamanho do caminho. */}
+          {resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
+            <div className="px-6 py-3 border-b border-[#F0F0F0]">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                  Resolva um por vez
+                </span>
+                <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+                  {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
+                </span>
+              </div>
+              <p className="mt-1.5 text-[11px] text-[#6A6A6A]">
+                Ainda faltam{" "}
+                {resumoProcesso.documentosPendentes > 0 ? (
+                  <strong className="text-[#0A0A0A]">
+                    {resumoProcesso.documentosPendentes}{" "}
+                    {resumoProcesso.documentosPendentes === 1 ? "documento" : "documentos"}
+                  </strong>
+                ) : null}
+                {resumoProcesso.documentosPendentes > 0 && resumoProcesso.perguntasPendentes > 0 ? " e " : null}
+                {resumoProcesso.perguntasPendentes > 0 ? (
+                  <strong className="text-[#0A0A0A]">
+                    {resumoProcesso.perguntasPendentes}{" "}
+                    {resumoProcesso.perguntasPendentes === 1 ? "pergunta" : "perguntas"}
+                  </strong>
+                ) : null}{" "}
+                neste processo.
+              </p>
+            </div>
+          ) : total > 1 ? (
             <div className="px-6 py-3 flex justify-between items-center">
               <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                 Resolva um por vez
@@ -379,7 +433,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           ) : null}
 
           <div className="px-6 py-4 flex flex-col gap-3">
-            {total > 1 ? (
+            {total > 1 && podeVoltar ? (
               <div className="flex gap-3">
                 <button
                   type="button"

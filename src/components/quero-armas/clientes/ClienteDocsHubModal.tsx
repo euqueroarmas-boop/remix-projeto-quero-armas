@@ -1889,6 +1889,23 @@ export function ClienteDocsHubModal({
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
+    // Documento diferente do pedido, mas que cobre outra pendência: é aceito
+    // e o cliente PRECISA saber disso. Sem o aviso ele acha que resolveu a
+    // exigência que estava vendo na tela, e a original fica esquecida — foi
+    // como o processo do cliente 214 acumulou itens meio resolvidos.
+    if (cobreOutraPendencia && qaClienteId && expectedTipoMeta) {
+      void supabase.functions.invoke("qa-notify-event", {
+        body: {
+          evento: "documento_reaproveitado",
+          cliente_id: qaClienteId,
+          documento: getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
+          exigencia_pedida: expectedTipoMeta.label,
+          exigencia_cumprida: getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
+          link_emissao: getLinkEmissaoCertidao(expectedTipoMeta.value) ?? "",
+        },
+      });
+    }
+
     if (conferenciaLocal?.conf.veredicto === "rejeitado") {
       toast.error("Esta certidão foi recusada na conferência e não pode ser salva. O cliente já foi avisado por e-mail com o motivo.");
       return;

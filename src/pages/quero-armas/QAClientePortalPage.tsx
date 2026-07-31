@@ -1966,6 +1966,37 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  /**
+   * Números REAIS do processo, contados sobre `processoDocs` e não sobre a
+   * fila do popup.
+   *
+   * A fila mostra só o que está liberado agora — deduplicada, filtrada por
+   * titular e por obrigatoriedade. Por isso ela dizia "5 de 5" enquanto o
+   * processo ainda tinha laudos, requerimento e perguntas em aberto. Contar
+   * aqui é o que permite dizer ao cliente o tamanho do caminho, não só onde
+   * ele está.
+   */
+  const resumoProcesso = useMemo(() => {
+    const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
+    const ehPergunta = (d: any) => {
+      const rv = d?.regra_validacao;
+      return !!rv && typeof rv === "object" && rv.tipo === "pergunta";
+    };
+    const concluido = (d: any) => {
+      const st = String(d?.status ?? "").toLowerCase();
+      return st === "aprovado"
+        || st === "dispensado_grupo"
+        || st === "dispensado_por_reaproveitamento";
+    };
+    const abertos = obrigatorios.filter((d: any) => !concluido(d));
+    return {
+      documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
+      perguntasPendentes: abertos.filter(ehPergunta).length,
+      totalObrigatorios: obrigatorios.length,
+      concluidos: obrigatorios.length - abertos.length,
+    };
+  }, [processoDocs]);
+
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
   // ---------------------------------------------------------------------------
@@ -3540,7 +3571,8 @@ export default function QAClientePortalPage() {
         pinnedId={pinnedPendenciaId}
         ufCliente={(cliente as any)?.estado ?? null}
         onDismiss={dismissPendenciasGuiadas}
-      />
+                resumoProcesso={resumoProcesso}
+        />
     </div>
     </PortalFilterProvider>
   );
