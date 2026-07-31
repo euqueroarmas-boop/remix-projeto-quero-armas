@@ -378,11 +378,12 @@ export default function QAClientePortalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Restaura, ao carregar o portal, se o usuário dispensou o popup de
-  // pendências guiadas na sessão atual. Isso permite fechar o popup para
-  // fazer outras atividades sem que ele reabra automaticamente.
+  // O fechamento do popup vale só para a tela atual. Ao atualizar a página, o
+  // checklist roda de novo e, se ainda houver pendência real, o balão nasce
+  // novamente. Isso mantém o ciclo solicitado: silencioso quando está tudo ok,
+  // insistente apenas quando existe algo para o cliente resolver.
   useEffect(() => {
-    setPendenciasGuiadasDismissed(sessionStorage.getItem("qa:pendencias-dismissed") === "1");
+    setPendenciasGuiadasDismissed(false);
   }, []);
 
   /**
@@ -478,7 +479,6 @@ export default function QAClientePortalPage() {
     setShowContratoPopup(true);
   };
   const dismissPendenciasGuiadas = () => {
-    sessionStorage.setItem("qa:pendencias-dismissed", "1");
     setPendenciasGuiadasDismissed(true);
     setShowContratoPopup(false);
     setPinnedPendenciaId(null);
@@ -2198,28 +2198,19 @@ export default function QAClientePortalPage() {
     const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
     // Cadastro incompleto reabre em todo refresh até ser preenchido — bloqueante.
     // Contrato/procuração: reabre a cada sessão até ser assinado.
-    // Checklist pendente/reprovado: aparece 1x por dia por tipo — o cliente
-    // pode fechar e o popup não volta até o dia seguinte (ou até resolver).
+    // Checklist pendente/reprovado: reabre em todo refresh se a pendência ainda
+    // existir. Se não houver pendência real, portalStartupAction fica null e
+    // nada aparece.
     const ignorarTrava =
       portalStartupAction.type === "cadastro" ||
-      portalStartupAction.type === "contrato";
-    const usarLimiteDiario =
+      portalStartupAction.type === "contrato" ||
       portalStartupAction.type === "checklist_pendente" ||
       portalStartupAction.type === "checklist_reprovado";
-    if (usarLimiteDiario) {
-      const lsKey = `${key}-dia`;
-      const ultimo = localStorage.getItem(lsKey);
-      const hoje = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-      if (ultimo === hoje) {
-        setEntradaAutoChecked(true);
-        return;
-      }
-      localStorage.setItem(lsKey, hoje);
-    } else if (!ignorarTrava && sessionStorage.getItem(key)) {
+    if (!ignorarTrava && sessionStorage.getItem(key)) {
       setEntradaAutoChecked(true);
       return;
     }
-    if (!ignorarTrava && !usarLimiteDiario) sessionStorage.setItem(key, "1");
+    if (!ignorarTrava) sessionStorage.setItem(key, "1");
     setEntradaAutoChecked(true);
 
     if (portalStartupAction.type === "contrato") {
@@ -2228,10 +2219,12 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "checklist_reprovado" && resumoState.checklistReproc) {
+      abrirPendenciasGuiadas();
       return;
     }
 
     if (portalStartupAction.type === "checklist_pendente" && resumoState.checklistPend) {
+      abrirPendenciasGuiadas();
       return;
     }
 
