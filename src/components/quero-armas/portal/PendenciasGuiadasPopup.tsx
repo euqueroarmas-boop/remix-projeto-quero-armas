@@ -98,6 +98,43 @@ interface Props {
   } | null;
 }
 
+/**
+ * Transforma endereços de site em links clicáveis dentro do texto do passo.
+ *
+ * Os passos são escritos como frases ("Abra o assinador oficial do Gov.br:
+ * assinador.iti.br"), e o cliente lia o endereço e tinha que digitar à mão no
+ * navegador — no celular, letra por letra. Errar um caractere leva a lugar
+ * nenhum, e o cliente conclui que a instrução está errada.
+ *
+ * Reconhece tanto `https://…` quanto domínio solto (`assinador.iti.br`,
+ * `www.tjsp.jus.br/...`). Domínio sem protocolo recebe `https://` ao abrir.
+ */
+const RE_URL = /((?:https?:\/\/|www\.)[^\s,;)]+|\b[a-z0-9-]+(?:\.[a-z0-9-]+){1,3}\.(?:br|com|org|gov|jus|net)(?:\/[^\s,;)]*)?)/gi;
+
+function TextoComLinks({ texto }: { texto: string }) {
+  const partes = String(texto ?? "").split(RE_URL);
+  return (
+    <>
+      {partes.map((parte, i) => {
+        // Os índices ímpares são os grupos capturados pelo split — as URLs.
+        if (i % 2 === 0) return <span key={i}>{parte}</span>;
+        const href = /^https?:\/\//i.test(parte) ? parte : `https://${parte}`;
+        return (
+          <a
+            key={i}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-[#8A1224] underline decoration-[#8A1224]/30 underline-offset-2 hover:decoration-[#8A1224] break-all"
+          >
+            {parte}
+          </a>
+        );
+      })}
+    </>
+  );
+}
+
 export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso }: Props) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
@@ -351,7 +388,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                     {i + 1}
                   </span>
                   <p className="text-[14px] leading-relaxed text-[#3A3A3A] pt-1">
-                    {p}
+                    <TextoComLinks texto={p} />
                   </p>
                 </li>
               ))}
@@ -362,7 +399,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           {explic.observacao && activeGrupoId !== "antecedentes" ? (
             <div className="mt-6 p-4 bg-[#FFF7F8] rounded-xl border border-[#8A1224]/10">
               <p className="text-xs leading-relaxed text-[#8A1224]">
-                {explic.observacao}
+                <TextoComLinks texto={explic.observacao} />
               </p>
             </div>
           ) : null}
