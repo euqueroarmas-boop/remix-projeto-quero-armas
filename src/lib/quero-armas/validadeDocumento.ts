@@ -208,7 +208,12 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
   const t = String(tipo ?? "").toLowerCase();
   return [
     "certidao_federal_trf3_regional",
+    "certidao_federal_trf3",
+    "certidao_federal_trf",
     "antecedentes_federal_trf3_regional",
+    "antecedentes_federal_trf3",
+    "antecedentes_federal_trf",
+    "trf3",
     "certidao_criminal_tjmsp",
     "certidao_crimes_militares_stm",
     // No Hub documental esses dois tipos militares chegam consolidados.

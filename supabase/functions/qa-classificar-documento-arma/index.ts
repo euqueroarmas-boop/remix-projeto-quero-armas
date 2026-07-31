@@ -236,6 +236,7 @@ const SYSTEM_PROMPT = [
   "• ANTECEDENTES_FEDERAL: certidão criminal PF, STF, STJ ou TRF.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
   "  Se for TRF da 3ª Região/regional, use ANTECEDENTES_FEDERAL_TRF3_REGIONAL. Se for Seção Judiciária de São Paulo/JEF-SP, use ANTECEDENTES_FEDERAL_SJSP_JEF.",
+  "  REGRA CRÍTICA TRF3: página de autenticação, QR Code, código de segurança ou cabeçalho 'TRIBUNAL REGIONAL FEDERAL DA 3ª REGIÃO / EMISSÃO DE CERTIDÕES' pertence à mesma certidão TRF3. Nunca classifique essa página como DESCONHECIDO, DOCUMENTO_COMPLEMENTAR, COMPROVANTE_EFETIVA_NECESSIDADE ou OUTRO. Se ela vier isolada sem a página principal, retorne ANTECEDENTES_FEDERAL_TRF3_REGIONAL com revisão obrigatória e justifique que falta o PDF completo.",
   "• ANTECEDENTES_ESTADUAL: certidão criminal de Tribunal de Justiça estadual apenas quando o subtipo não ficar claro.",
   "  TJSP — REGRA CRÍTICA: o cabeçalho 'CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS' é genérico e NÃO define sozinho o subtipo. Leia a frase do corpo 'pesquisando os registros de distribuições de ...'.",
   "  Se o corpo disser 'EXECUÇÕES CRIMINAIS' ou 'feitos de Execuções Criminais', classifique como ANTECEDENTES_ESTADUAL_EXECUCOES, mesmo que o cabeçalho diga 'Distribuições Criminais'.",
@@ -379,7 +380,14 @@ async function fetchFewShotBlock(supabase: any): Promise<string> {
 
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
-  const x = String(t).trim().toUpperCase().replace(/[\s-]+/g, "_");
+  const x = String(t)
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ª/g, "A")
+    .replace(/º/g, "O")
+    .replace(/[\s\-./|]+/g, "_");
   if (x === "CR") return "CR";
   if (x === "CRAF") return "CRAF";
   if (x === "SINARM" || x.includes("POSSE") || x.includes("PORTE")) return "SINARM";
@@ -402,7 +410,17 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("CONTRATO_SOCIAL")) return "CONTRATO_SOCIAL";
   if (x.includes("BENEFICIO") || x.includes("BENEFÍCIO")) return "COMPROVANTE_BENEFICIO";
   if (x.includes("INSS")) return "EXTRATO_INSS";
-  if ((x.includes("TRF3") || x.includes("TRF_3") || x.includes("3A_REGIAO") || x.includes("3ª_REGIAO")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
+  if (
+    (
+      x.includes("TRF3") ||
+      x.includes("TRF_3") ||
+      x.includes("3A_REGIAO") ||
+      x.includes("3_REGIAO") ||
+      x.includes("TERCEIRA_REGIAO") ||
+      (x.includes("TRIBUNAL_REGIONAL_FEDERAL") && x.includes("3"))
+    ) &&
+    (x.includes("FED") || x.includes("CERTIDAO") || x.includes("CERTIDOES") || x.includes("EMISSAO"))
+  ) return "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
   if ((x.includes("SJSP") || x.includes("JEF")) && (x.includes("FED") || x.includes("CERTIDAO"))) return "ANTECEDENTES_FEDERAL_SJSP_JEF";
   if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
   if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
@@ -516,6 +534,32 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     parsed.justificativa = execucoes
       ? "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de EXECUÇÕES CRIMINAIS."
       : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
+  }
+
+  const isTrf3 =
+    /TRF3|TRF_3|TRF\s*3|TRIBUNAL REGIONAL FEDERAL(?:\s+DA)?\s+3(?:A|O)?\s+REGIAO|3(?:A|O)?\s+REGIAO|TERCEIRA REGIAO/.test(norm) ||
+    (/TRIBUNAL REGIONAL FEDERAL/.test(norm) && /EMISSAO DE CERTIDOES|CERTIDAO/.test(norm) && /\b3\b/.test(norm));
+  if (isTrf3) {
+    parsed.tipoDetectado = "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.tipo_certidao = "trf3_regional";
+    campos.finalidade_certidao = campos.finalidade_certidao || "federal_regional";
+    campos.nome_documento = campos.nome_documento || "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+    campos.orgao_emissor = campos.orgao_emissor || "Tribunal Regional Federal da 3ª Região";
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
+    if (!campos.resultado_certidao && /NADA CONSTAR|NADA CONSTA/.test(norm)) campos.resultado_certidao = "nada_consta";
+    const temCorpo = /CRIMINAIS CONTRA|CPF N|DATA DE NASCIMENTO|NOME DA MAE|NADA CONSTA|NADA CONSTAR/.test(norm);
+    if (!temCorpo) {
+      parsed.revisao_obrigatoria = true;
+      parsed.recomendacao = "revisao_obrigatoria";
+      parsed.justificativa =
+        "Classificação determinística: página de autenticação/QR do TRF3. Pertence à certidão federal TRF3, mas deve ser conferida junto ao PDF completo.";
+    } else {
+      parsed.justificativa =
+        "Classificação determinística: cabeçalho/texto nativo identifica certidão federal do TRF da 3ª Região.";
+    }
+    return parsed;
   }
 
   // === Órgão competente inferido a partir do OBJETO do contrato/procuração ===

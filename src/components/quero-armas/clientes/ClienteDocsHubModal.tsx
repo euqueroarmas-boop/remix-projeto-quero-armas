@@ -157,10 +157,105 @@ const TIPOS_CERTIDAO = new Set([
 function normalizeStr(s: string): string {
   return s.trim().toUpperCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/ª/g, "A")
+    .replace(/º/g, "O")
     // Normaliza separadores variados (–, —, -, /, |) para espaço
-    .replace(/[–—\-\/|]/g, " ")
+    .replace(/[–—\-\/|_.]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function collectTextParts(value: unknown, acc: string[] = []): string[] {
+  if (value == null) return acc;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const s = String(value).trim();
+    if (s) acc.push(s);
+    return acc;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectTextParts(item, acc));
+    return acc;
+  }
+  if (typeof value === "object") {
+    Object.values(value as Record<string, unknown>).forEach((item) => collectTextParts(item, acc));
+  }
+  return acc;
+}
+
+function buildDocumentoHaystack(input: {
+  tipoDocumento?: string | null;
+  arquivoNome?: string | null;
+  nomeDocumento?: string | null;
+  orgaoEmissor?: string | null;
+  numeroDocumento?: string | null;
+  classificacao?: IAClass | null;
+  campos?: unknown;
+}): string {
+  const parts = collectTextParts([
+    input.tipoDocumento,
+    input.arquivoNome,
+    input.nomeDocumento,
+    input.orgaoEmissor,
+    input.numeroDocumento,
+    input.classificacao?.tipoDetectado,
+    input.classificacao?.justificativa,
+    input.classificacao?.camposExtraidos,
+    input.campos,
+  ]);
+  return normalizeStr(parts.join(" "));
+}
+
+function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_regional" | "antecedentes_federal_sjsp_jef" | "antecedentes_federal" | null {
+  const isCertidaoFederal =
+    /\bTRF\b|\bTRF3\b|TRIBUNAL REGIONAL FEDERAL|JUSTICA FEDERAL|SECAO JUDICIARIA|JEF/.test(hay);
+  if (!isCertidaoFederal) return null;
+  if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SECAO JUDICIARIA DE SAO PAULO/.test(hay)) {
+    return "antecedentes_federal_sjsp_jef";
+  }
+  if (
+    /TRF3/.test(hay) ||
+    /TRF\s*3/.test(hay) ||
+    /TRIBUNAL REGIONAL FEDERAL(?:\s+DA)?\s+3(?:A|O)?\s+REGIAO/.test(hay) ||
+    /3(?:A|O)?\s+REGIAO/.test(hay) ||
+    /TERCEIRA\s+REGIAO/.test(hay)
+  ) {
+    return "antecedentes_federal_trf3_regional";
+  }
+  return "antecedentes_federal";
+}
+
+function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
+  if (tipoAtual === "antecedentes_estadual") {
+    if (/EXECU|1448406/.test(hay)) return "antecedentes_estadual_execucoes";
+    if (/DISTRIBUI|ACOES CRIMINAIS|A[CÇ][OÕ]ES CRIMINAIS|1448405/.test(hay)) return "antecedentes_estadual_distribuicao";
+    return tipoAtual;
+  }
+  const subtipoFederal = detectaSubtipoCertidaoFederal(hay);
+  if (
+    subtipoFederal &&
+    (
+      tipoAtual === "antecedentes_federal" ||
+      tipoAtual === "outro" ||
+      tipoAtual === "documento_complementar_caso" ||
+      tipoAtual === "comprovante_efetiva_necessidade" ||
+      tipoAtual === "trf" ||
+      /\bTRF\b|TRIBUNAL REGIONAL FEDERAL|JUSTICA FEDERAL/.test(hay)
+    )
+  ) {
+    return subtipoFederal;
+  }
+  return tipoAtual;
+}
+
+function ehPaginaAutenticacaoTrfIsolada(texto: string): boolean {
+  const hay = normalizeStr(texto);
+  const ehTrf =
+    /TRIBUNAL REGIONAL FEDERAL|TRF3|TRF\s*3|EMISSAO DE CERTIDOES/.test(hay) &&
+    /CERTIDAO|CERTIDOES|CODIGO DE SEGURANCA|QR\s*CODE|AUTENTIC/.test(hay);
+  if (!ehTrf) return false;
+  const temCorpoCertidao =
+    /CRIMINAIS CONTRA|NADA CONSTA|CPF\s*N|CPF\s*NO|DATA DE NASCIMENTO|NOME DA MAE/.test(hay);
+  return !temCorpoCertidao;
 }
 
 function normCpf(s: string): string {
@@ -1340,33 +1435,18 @@ export function ClienteDocsHubModal({
 
       let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
       // Refinamento de subtipo para certidões TJSP e Federal: cada uma tem seu
-      // slot próprio. A IA pode retornar o pai genérico — aqui detectamos o
-      // subtipo pelo texto extraído / campos identificados.
-      if (tipoIA === "antecedentes_estadual" || tipoIA === "antecedentes_federal") {
-        const c: any = ia.camposExtraidos || {};
-        // Coleta agressiva de sinais: todos os campos extraídos + justificativa
-        // da IA + observações. Sem isso, quando a IA retorna o pai genérico e
-        // não popula `tipo_certidao`, o refinamento falha e o usuário vê o
-        // tipo genérico obsoleto.
-        const parts: string[] = [];
-        for (const v of Object.values(c)) {
-          if (typeof v === "string" && v) parts.push(v);
-          else if (Array.isArray(v)) parts.push(v.map((x) => String(x || "")).join(" "));
-        }
-        if (ia.justificativa) parts.push(String(ia.justificativa));
-        if ((c as any).observacoes) parts.push(String((c as any).observacoes));
-        const hay = parts.join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        if (tipoIA === "antecedentes_estadual") {
-          // EXECUÇÕES tem prioridade sobre DISTRIBUIÇÕES porque a certidão de
-          // execuções também usa a palavra "distribuição" no cabeçalho ("dá fé
-          // que, pesquisando os registros de distribuições de EXECUÇÕES...").
-          if (/EXECU|1448406/.test(hay)) tipoIA = "antecedentes_estadual_execucoes";
-          else if (/DISTRIBUI|ACOES CRIMINAIS|A[CÇ][ÕO]ES CRIMINAIS|1448405/.test(hay)) tipoIA = "antecedentes_estadual_distribuicao";
-        } else {
-          if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SE[CÇ][AÃ]O JUDICI[AÁ]RIA/.test(hay)) tipoIA = "antecedentes_federal_sjsp_jef";
-          else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL|TRF3/.test(hay)) tipoIA = "antecedentes_federal_trf3_regional";
-        }
-      }
+      // slot próprio. A IA pode retornar o pai genérico ou até "outro" numa
+      // página de QR/autenticação; por isso usamos também nome do arquivo,
+      // título oficial e justificativa como sinais determinísticos.
+      tipoIA = refinarTipoDocumentoPorTexto(
+        tipoIA,
+        buildDocumentoHaystack({
+          tipoDocumento: tipoIA,
+          arquivoNome: target.name,
+          classificacao: ia,
+          campos: ia.camposExtraidos,
+        }),
+      );
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       setCategoriaHub(categoriaIA);
       const campos = ia.camposExtraidos || {};
@@ -1740,6 +1820,18 @@ export function ClienteDocsHubModal({
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
     }
+    if (ehPaginaAutenticacaoTrfIsolada(`${f.name}\n${texto}`)) {
+      toast.error("Este arquivo parece ser apenas a página de autenticação/QR da certidão TRF. Envie o PDF completo, com todas as páginas, para a certidão ficar inteira e classificada corretamente.");
+      setConferenciaLocal(null);
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: "antecedentes_federal_trf3_regional",
+        nome_documento: "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região",
+        orgao_emissor: "Tribunal Regional Federal da 3ª Região",
+      }));
+      setCategoriaHub("antecedentes_regularidade");
+      return true;
+    }
     const doc = parseCertidao(texto);
     if (!doc) return false;
 
@@ -1821,25 +1913,27 @@ export function ClienteDocsHubModal({
     // ser gravadas no seu subtipo específico. Nenhuma pode ser salva no
     // lugar de outra — a IA classifica na hora da captura, mas o cliente pode
     // ter mantido o tipo genérico "pai" via override manual.
+    const haySalvar = buildDocumentoHaystack({
+      tipoDocumento: form.tipo_documento,
+      arquivoNome: file?.name ?? null,
+      nomeDocumento: form.nome_documento,
+      orgaoEmissor: form.orgao_emissor,
+      numeroDocumento: form.numero_documento,
+      classificacao,
+      campos: classificacao?.camposExtraidos,
+    });
+    const tipoRefinadoTexto = refinarTipoDocumentoPorTexto(form.tipo_documento, haySalvar);
+    if (tipoRefinadoTexto !== form.tipo_documento) {
+      form.tipo_documento = tipoRefinadoTexto;
+      setCategoriaHub(inferHubCategoriaFromTipo(tipoRefinadoTexto));
+    }
     if (form.tipo_documento === "antecedentes_estadual" || form.tipo_documento === "antecedentes_federal") {
-      const parts: string[] = [
-        form.nome_documento,
-        form.orgao_emissor,
-        form.numero_documento,
-      ].filter(Boolean) as string[];
-      const campos = (classificacao?.camposExtraidos as any) || {};
-      for (const v of Object.values(campos)) {
-        if (typeof v === "string" && v) parts.push(v);
-      }
-      if (classificacao?.justificativa) parts.push(String(classificacao.justificativa));
-      const hay = parts.join(" ").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
       let refinado: string | null = null;
       if (form.tipo_documento === "antecedentes_estadual") {
-        if (/EXECU|1448406/.test(hay)) refinado = "antecedentes_estadual_execucoes";
-        else if (/DISTRIBUI|A[CÇ][OÕ]ES CRIMINAIS|1448405/.test(hay)) refinado = "antecedentes_estadual_distribuicao";
+        if (/EXECU|1448406/.test(haySalvar)) refinado = "antecedentes_estadual_execucoes";
+        else if (/DISTRIBUI|A[CÇ][OÕ]ES CRIMINAIS|1448405/.test(haySalvar)) refinado = "antecedentes_estadual_distribuicao";
       } else {
-        if (/JUDICIARIA SP|SJSP|JEF|871659|SE[CÇ][AÃ]O JUDICI[AÁ]RIA/.test(hay)) refinado = "antecedentes_federal_sjsp_jef";
-        else if (/TRIBUNAL REGIONAL FEDERAL|TRF DA 3|3A REGI|3 REGI|REGIONAL|TRF3/.test(hay)) refinado = "antecedentes_federal_trf3_regional";
+        refinado = detectaSubtipoCertidaoFederal(haySalvar);
       }
       if (!refinado) {
         toast.error(
@@ -1850,6 +1944,7 @@ export function ClienteDocsHubModal({
         return;
       }
       form.tipo_documento = refinado;
+      setCategoriaHub(inferHubCategoriaFromTipo(refinado));
     }
     if (!customerId && !qaClienteId) {
       toast.error("Não foi possível identificar seu cadastro. Recarregue a página.");
@@ -1993,7 +2088,8 @@ export function ClienteDocsHubModal({
       if (file) {
         const safe = sanitize(file.name);
         const ownerKey = customerId ?? `qa-${qaClienteId}`;
-        const path = `cliente-docs/${ownerKey}/${categoriaHub}/${form.tipo_documento}/${Date.now()}_${safe}`;
+        const categoriaFinal = inferHubCategoriaFromTipo(form.tipo_documento);
+        const path = `cliente-docs/${ownerKey}/${categoriaFinal}/${form.tipo_documento}/${Date.now()}_${safe}`;
         const { error: upErr } = await supabase.storage
           .from("qa-documentos")
           .upload(path, file, { upsert: false, contentType: file.type });
@@ -2006,12 +2102,18 @@ export function ClienteDocsHubModal({
       const payload: any = {
         customer_id: customerId ?? null,
         qa_cliente_id: qaClienteId ?? null,
-        categoria_hub: categoriaHub,
-        subcategoria_hub: tipoAtual?.value ?? form.tipo_documento,
-        escopo_documental: escopoAtual,
-        reaproveitavel_global: escopoAtual !== "processo",
-        revisao_humana_obrigatoria: !!tipoAtual?.revisaoHumanaObrigatoria,
-        fonte_normativa: tipoAtual ? ["Lei 10.826/2003", ...(tipoAtual.categoria === "arma_acervo" || tipoAtual.categoria === "cac_atividade" ? ["Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 311"] : ["IN DG/PF 201"])] : ["Lei 10.826/2003"],
+        categoria_hub: inferHubCategoriaFromTipo(form.tipo_documento),
+        subcategoria_hub: (getTipoDocumentoMeta(form.tipo_documento)?.value ?? form.tipo_documento),
+        escopo_documental: inferEscopoDocumental({
+          tipo_documento: form.tipo_documento,
+          categoria_hub: inferHubCategoriaFromTipo(form.tipo_documento),
+        }),
+        reaproveitavel_global: inferEscopoDocumental({
+          tipo_documento: form.tipo_documento,
+          categoria_hub: inferHubCategoriaFromTipo(form.tipo_documento),
+        }) !== "processo",
+        revisao_humana_obrigatoria: !!getTipoDocumentoMeta(form.tipo_documento)?.revisaoHumanaObrigatoria,
+        fonte_normativa: getTipoDocumentoMeta(form.tipo_documento) ? ["Lei 10.826/2003", ...(getTipoDocumentoMeta(form.tipo_documento)?.categoria === "arma_acervo" || getTipoDocumentoMeta(form.tipo_documento)?.categoria === "cac_atividade" ? ["Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 311"] : ["IN DG/PF 201"])] : ["Lei 10.826/2003"],
         tipo_documento: form.tipo_documento,
         nome_documento: form.nome_documento || null,
         numero_documento: form.tipo_documento === "cr"

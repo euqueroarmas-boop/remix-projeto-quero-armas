@@ -286,6 +286,20 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     doc?.numero_documento,
   ].filter(Boolean).join(" "));
 
+  if (
+    tipo === "trf" ||
+    tipo === "trf3" ||
+    tipo === "certidao_federal_trf" ||
+    tipo === "certidao_federal_trf3" ||
+    tipo === "antecedentes_federal_trf" ||
+    tipo === "antecedentes_federal_trf3"
+  ) {
+    if (haystack.includes("3 REGIAO") || haystack.includes("3A REGIAO") || haystack.includes("TRF3")) {
+      return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+    }
+    return "Certidão de Distribuição Criminal — Justiça Federal";
+  }
+
   if (tipo === "antecedentes_eleitoral" || haystack.includes("CRIMES ELEITORAIS")) {
     return "Certidão de Crimes Eleitorais — TSE";
   }
@@ -490,6 +504,14 @@ export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefin
   if (tipo.includes("protocolo") || tipo.includes("indeferimento") || tipo.includes("exigencia")) return "documentos_processo";
   if (tipo.includes("oficio") || tipo.includes("despacho")) return "documentos_processo";
   if (tipo.includes("habitualidade") || tipo.includes("clube") || tipo.includes("competicao")) return "cac_atividade";
+  if (
+    tipo === "trf" ||
+    tipo === "trf3" ||
+    tipo.includes("certidao_federal_trf") ||
+    tipo.includes("antecedentes_federal_trf")
+  ) {
+    return "antecedentes_regularidade";
+  }
   for (const [pattern, categoria] of CATEGORIA_BY_TIPO_PREFIX) {
     if (pattern.test(tipo)) return categoria;
   }
