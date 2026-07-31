@@ -140,6 +140,10 @@ function BadgeConfianca({ confianca, classifying }: { confianca?: number; classi
  */
 const TIMEOUT_IA_MS = 90_000;
 
+/** Teto da leitura local por arquivo. PDF de texto resolve em milissegundos;
+ *  passar disso significa worker travado, não documento grande. */
+const TIMEOUT_PDF_MS = 15_000;
+
 function comTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     p,
@@ -198,7 +202,11 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
       if (a.file.type !== "application/pdf") continue;
       if (deletadosRef.current.has(a.file.name)) continue;
       try {
-        const doc = parseCertidao(await extrairTextoPdf(a.file));
+        // Teto curto e obrigatório: o worker do pdf.js vem de CDN e, se ele não
+        // carregar, o await nunca resolve. Sem isso a leitura local — que roda
+        // ANTES da IA — vira um travamento novo, pior que o que ela resolve.
+        const texto = await comTimeout(extrairTextoPdf(a.file), TIMEOUT_PDF_MS);
+        const doc = parseCertidao(texto);
         if (!doc) continue;
         resolvidos.set(a.file.name, {
           tipo: doc.tipoDocumento,
