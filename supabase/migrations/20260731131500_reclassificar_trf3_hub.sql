@@ -27,11 +27,6 @@ set
     then (data_emissao::date + interval '90 days')::date
     else data_validade
   end,
-  data_validade_efetiva = case
-    when data_validade_efetiva is null and data_emissao is not null
-    then (data_emissao::date + interval '90 days')::date
-    else data_validade_efetiva
-  end,
   updated_at = now()
 where coalesce(status, '') <> 'excluido'
   and (
