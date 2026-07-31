@@ -104,6 +104,16 @@ const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
   tjsp_execucoes: ["nome_titular", "cpf", "rg", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
   trf_regional: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
   tjm_sp: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+
+  // CR — não é certidão de antecedentes, mas passa pelo mesmo parser. Exige o
+  // mínimo que prova de quem é e até quando vale.
+  cr_exercito: ["nome_titular", "cpf", "data_validade"],
+
+  // Boletim de Ocorrência: NADA é obrigatório aqui, e é de propósito. O BO é
+  // prova de fato, não prova de identidade — e pode legitimamente estar em nome
+  // de terceiro, quando o fato atingiu o cliente (regra do usuário, 31/07).
+  // Reprovar um BO por divergência de nome seria descartar prova válida.
+  boletim_ocorrencia: [],
 };
 
 /**
