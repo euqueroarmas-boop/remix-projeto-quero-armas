@@ -18,6 +18,12 @@ function json(body: Record<string, unknown>, status = 200) {
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
 
+// Limites do runtime edge: corpo grande demais = requisição rejeitada antes de
+// chegar na função (o cliente vê "Failed to send a request to the Edge Function").
+const MAX_DATA_URL_CHARS = 7_000_000;   // ~5 MB de arquivo em base64
+const MAX_BODY_CHARS = 9_000_000;       // teto do lote inteiro
+const GATEWAY_TIMEOUT_MS = 55_000;
+
 // ─── Modo de teste interno (preview/dev) ─────────────────────────────────
 // Permite chamar a função sem precisar fazer upload via <input type="file">,
 // usando um arquivo já presente no bucket privado `qa-cadastro-selfies`
