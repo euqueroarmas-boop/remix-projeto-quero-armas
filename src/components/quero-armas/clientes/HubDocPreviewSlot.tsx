@@ -160,7 +160,7 @@ export default function HubDocPreviewSlot({
             <button
               type="button"
               onClick={onRemove}
-              className="sticky top-0 z-40 ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+              className="sticky top-0 z-[60] ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
               style={{ borderRadius: 4, position: "absolute", right: 8, top: 8 }}
               aria-label="Excluir arquivo"
               title="Excluir arquivo"
@@ -172,12 +172,12 @@ export default function HubDocPreviewSlot({
               <img
                 src={fileUrl}
                 alt={displayName}
-                className="relative z-0 max-h-[620px] w-auto max-w-full object-contain shadow-sm"
+                className="relative z-0 [isolation:isolate] max-h-[620px] w-auto max-w-full object-contain shadow-sm"
               />
             )}
 
             {isPdf && fileUrl && (
-              <div className="relative z-0">
+              <div className="relative z-0 [isolation:isolate]">
               <Document
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }) => setNumPages(n)}
@@ -220,10 +220,13 @@ export default function HubDocPreviewSlot({
             {/* Carimbo IA · APROVADO */}
             {pct != null && !incorreta && (
               <div
-                className="pointer-events-none absolute z-30"
+                className="pointer-events-none absolute z-[55]"
                 style={{
+                  // `right: -6` deixava o carimbo pendurado para fora da
+                  // moldura, onde qualquer ancestral com overflow o cortava.
+                  // Dentro da moldura ele aparece inteiro.
                   top: 68,
-                  right: -6,
+                  right: 10,
                   transform: "rotate(-8deg)",
                   border: `4px solid ${BORDO}`,
                   padding: "6px 12px 3px",
@@ -244,7 +247,7 @@ export default function HubDocPreviewSlot({
             {/* Carimbo CERTIDÃO INCORRETA */}
             {incorreta && (
               <div
-                className="pointer-events-none absolute z-40"
+                className="pointer-events-none absolute z-[55]"
                 style={{
                   top: "42%",
                   left: "50%",
