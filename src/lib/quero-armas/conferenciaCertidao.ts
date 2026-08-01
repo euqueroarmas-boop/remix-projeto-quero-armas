@@ -114,6 +114,17 @@ const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
   // de terceiro, quando o fato atingiu o cliente (regra do usuário, 31/07).
   // Reprovar um BO por divergência de nome seria descartar prova válida.
   boletim_ocorrencia: [],
+
+  /* ── Ocupação lícita e renda ──────────────────────────────────────────
+   * Exigido só o que PROVA o vínculo do documento com o cliente e com a
+   * empresa. O cartão CNPJ e o QSA não trazem CPF nem nome do titular no
+   * corpo — cobrar isso reprovaria documento correto.
+   */
+  ccmei: ["nome_titular", "cpf", "cnpj", "situacao_cadastral"],
+  cartao_cnpj: ["cnpj", "razao_social", "situacao_cadastral"],
+  qsa: ["cnpj", "socios"],
+  // Nota fiscal: emitida pela empresa, não pela pessoa. Nada obrigatório.
+  nota_fiscal: [],
 };
 
 /**
@@ -155,6 +166,11 @@ const LABEL: Record<string, string> = {
   resultado: "Resultado da consulta",
   filiacao: "Filiação",
   titulo_eleitor: "Título de eleitor",
+  cnpj: "CNPJ",
+  razao_social: "Nome empresarial",
+  situacao_cadastral: "Situação cadastral",
+  socios: "Quadro de sócios",
+  numero_nf: "Número da nota fiscal",
 };
 
 /**
@@ -212,6 +228,38 @@ export function conferirCertidao(
   }
 
   // ── 2) O que está no documento bate com o cadastro? ────────────────────
+  // Empresa fora de atividade não comprova ocupação lícita hoje.
+  if (doc.situacao_cadastral && doc.situacao_cadastral !== "ATIVA") {
+    achados.push({
+      campo: "situacao_cadastral",
+      label: LABEL.situacao_cadastral,
+      noDocumento: doc.situacao_cadastral,
+      noCadastro: "ATIVA",
+      problema: "divergente",
+      mensagem:
+        `O CNPJ está com situação "${doc.situacao_cadastral}" na Receita Federal. ` +
+        `Para comprovar ocupação lícita a inscrição precisa estar ATIVA — regularize e emita o documento novamente.`,
+    });
+  }
+
+  // QSA: o cliente precisa aparecer no quadro. Sem papel inferido — basta
+  // estar entre os nomes listados, igual à regra de filiação.
+  if (doc.socios?.length && cadastro.nome_completo) {
+    const eu = chaveNome(cadastro.nome_completo);
+    if (!doc.socios.some((s) => chaveNome(s) === eu)) {
+      achados.push({
+        campo: "socios",
+        label: LABEL.socios,
+        noDocumento: doc.socios.join(" / "),
+        noCadastro: String(cadastro.nome_completo),
+        problema: "divergente",
+        mensagem:
+          `Seu nome não aparece no quadro de sócios deste documento. ` +
+          `Envie o QSA da empresa em que você consta como sócio ou administrador.`,
+      });
+    }
+  }
+
   const comparar = (
     campo: string,
     doDoc: string,
