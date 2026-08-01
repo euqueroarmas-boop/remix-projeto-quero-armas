@@ -849,9 +849,28 @@ function formatCnpj(v?: string | null): string {
 function numeroDocumentoRenda(tipo: string, campos: Record<string, any>): string {
   if (!isDocumentoEmpresa30Dias(tipo) && !isNotaFiscalSemVencimento(tipo)) return "";
   if (isNotaFiscalSemVencimento(tipo)) {
-    return String(campos.numero_nf || campos.numero_documento || "").trim();
+    // O identificador oficial da NFS-e é a CHAVE DE ACESSO (44 dígitos); o
+    // "número da nota" costuma ser sequencial (1, 2, 3...) e não identifica
+    // nada sozinho. A IA devolve o campo com nomes variados — aceitamos todos.
+    const chave = String(
+      campos.chave_acesso || campos.chave || campos.chave_de_acesso || "",
+    ).replace(/\D/g, "");
+    if (chave.length >= 40) return chave;
+    const numero = String(
+      campos.numero_nf ||
+        campos.numero_nfse ||
+        campos.numero_nota ||
+        campos.numero_nota_fiscal ||
+        campos.numero ||
+        campos.numero_documento ||
+        "",
+    ).trim();
+    return numero;
   }
-  return formatCnpj(campos.cnpj) || String(campos.numero_documento || "").trim();
+  return (
+    formatCnpj(campos.cnpj || campos.cnpj_prestador || campos.cnpj_empresa) ||
+    String(campos.numero_documento || "").trim()
+  );
 }
 
 function addOneYearIso(iso?: string | null): string {
