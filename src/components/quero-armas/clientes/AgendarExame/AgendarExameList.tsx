@@ -49,7 +49,31 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
             )}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, marginTop: 4 }}>
               {c.telefones.map((t) => (
-                <a key={t} href={`tel:${t.replace(/\D/g, "")}`} style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>📞 {t}</a>
+                <span key={t} style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+                  <a href={`tel:${t.replace(/\D/g, "")}`} style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>📞 {t}</a>
+                  {/* WhatsApp: a maioria destes profissionais atende por lá, e
+                      ligar do celular para um consultório raramente é atendido.
+                      Só aparece em número com DDD (10 ou 11 dígitos) — fixo de
+                      8 dígitos sem DDD viraria um link quebrado.
+                      O 55 é acrescentado porque o wa.me exige o código do país. */}
+                  {(() => {
+                    const d = t.replace(/\D/g, "");
+                    if (d.length < 10 || d.length > 11) return null;
+                    const msg = encodeURIComponent(
+                      "Olá! Encontrei seu contato pelo Arsenal Inteligente da Quero Armas e gostaria de agendar o exame.",
+                    );
+                    return (
+                      <a
+                        href={`https://wa.me/55${d}?text=${msg}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        style={{ color: "#0A7C42", textDecoration: "none", borderBottom: "1px dotted #0A7C42", fontWeight: 600 }}
+                      >
+                        WhatsApp
+                      </a>
+                    );
+                  })()}
+                </span>
               ))}
               {c.emails.map((e) => (
                 <a key={e} href={`mailto:${e}`} style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>✉ {e}</a>

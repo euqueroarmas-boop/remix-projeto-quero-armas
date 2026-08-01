@@ -20,7 +20,10 @@ const TITULO = {
 };
 
 export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerListaCompleta }: Props) {
-  const [raio, setRaio] = useState(50);
+  // 25 km é o raio padrão definido pelo usuário — a distância que ele
+  // considera razoável para o cliente se deslocar. Continua ajustável nos
+  // botões, para quem mora em região com poucos credenciados.
+  const [raio, setRaio] = useState(25);
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
