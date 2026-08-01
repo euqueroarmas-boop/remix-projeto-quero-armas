@@ -16,7 +16,9 @@ export type PendenciaGrupoId =
   | "ocupacao"
   | "habitualidade"
   | "declaracoes"
+  | "efetiva_necessidade"
   | "saude"
+  | "requerimento"
   | "arma"
   | "outros";
 
@@ -34,9 +36,15 @@ const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
   antecedentes:  { id: "antecedentes",  label: "Antecedentes criminais",   ordem: 50 },
   ocupacao:      { id: "ocupacao",      label: "Ocupação lícita e renda",  ordem: 60 },
   habitualidade: { id: "habitualidade", label: "Habitualidade e clube",    ordem: 70 },
-  saude:         { id: "saude",         label: "Aptidão psicológica e técnica", ordem: 80 },
-  arma:          { id: "arma",          label: "Documentos da arma",       ordem: 85 },
-  declaracoes:   { id: "declaracoes",   label: "Declarações do processo",  ordem: 90 },
+  arma:          { id: "arma",          label: "Documentos da arma",       ordem: 72 },
+  declaracoes:   { id: "declaracoes",   label: "Declarações do processo",  ordem: 75 },
+  // ─── Os três últimos, nesta ordem (usuário, 01/08/2026) ───────────────
+  // A efetiva necessidade PRECEDE os laudos: é ela que justifica o pedido, e
+  // o cliente só marca os exames depois de saber que o caso se sustenta.
+  // O requerimento fecha o processo — é a peça que consolida tudo.
+  efetiva_necessidade: { id: "efetiva_necessidade", label: "Efetiva necessidade", ordem: 80 },
+  saude:         { id: "saude",         label: "Aptidão psicológica e técnica", ordem: 90 },
+  requerimento:  { id: "requerimento",  label: "Requerimento",             ordem: 95 },
   outros:        { id: "outros",        label: "Outros documentos",        ordem: 99 },
 };
 
@@ -136,12 +144,24 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     return GRUPOS.identificacao;
   }
 
-  // Declarações do processo (requerimentos, declarações genéricas)
+  // Efetiva necessidade — grupo próprio, ANTES dos laudos.
+  // Precisa vir antes do teste genérico de `declaracao_`, senão cairia nas
+  // declarações do processo, que é onde estava.
   if (
-    t.startsWith("requerimento_") ||
     t.startsWith("declaracao_necessidade") ||
-    t.startsWith("declaracao_")
+    t.startsWith("comprovante_efetiva_necessidade") ||
+    t.includes("efetiva_necessidade")
   ) {
+    return GRUPOS.efetiva_necessidade;
+  }
+
+  // Requerimento — último grupo. Também sai das declarações genéricas.
+  if (t.startsWith("requerimento_") || t === "requerimento" || t.includes("sinarm_requerimento")) {
+    return GRUPOS.requerimento;
+  }
+
+  // Declarações do processo (as genéricas que sobraram)
+  if (t.startsWith("declaracao_")) {
     return GRUPOS.declaracoes;
   }
 
