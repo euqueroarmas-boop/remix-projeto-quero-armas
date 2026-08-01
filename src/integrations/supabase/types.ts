@@ -8339,6 +8339,147 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_nf_golden_records: {
+        Row: {
+          chave_acesso: string
+          cliente_id: string | null
+          codigo_tributacao_municipal: string | null
+          codigo_tributacao_nacional: string | null
+          competencia: string | null
+          created_at: string
+          data_emissao_nfse: string | null
+          descricao_servico: string | null
+          documento_id: string | null
+          email_municipio: string | null
+          id: string
+          itens_servico: Json
+          local_prestacao: string | null
+          municipio_emissor: string | null
+          municipio_incidencia_issqn: string | null
+          numero_dps: string | null
+          numero_nfse: string | null
+          pais_prestacao: string | null
+          prestador_cep: string | null
+          prestador_cnpj: string | null
+          prestador_email: string | null
+          prestador_endereco: string | null
+          prestador_inscricao_municipal: string | null
+          prestador_municipio: string | null
+          prestador_nome: string | null
+          prestador_regime_apuracao: string | null
+          prestador_simples_nacional: string | null
+          prestador_telefone: string | null
+          processo_documento_id: string | null
+          retencao_issqn: string | null
+          serie_dps: string | null
+          texto_bruto: string | null
+          tomador_cep: string | null
+          tomador_documento: string | null
+          tomador_email: string | null
+          tomador_endereco: string | null
+          tomador_inscricao_municipal: string | null
+          tomador_municipio: string | null
+          tomador_nome: string | null
+          tomador_telefone: string | null
+          tributacao_issqn: string | null
+          updated_at: string
+          valor_liquido: number | null
+          valor_servico: number | null
+        }
+        Insert: {
+          chave_acesso: string
+          cliente_id?: string | null
+          codigo_tributacao_municipal?: string | null
+          codigo_tributacao_nacional?: string | null
+          competencia?: string | null
+          created_at?: string
+          data_emissao_nfse?: string | null
+          descricao_servico?: string | null
+          documento_id?: string | null
+          email_municipio?: string | null
+          id?: string
+          itens_servico?: Json
+          local_prestacao?: string | null
+          municipio_emissor?: string | null
+          municipio_incidencia_issqn?: string | null
+          numero_dps?: string | null
+          numero_nfse?: string | null
+          pais_prestacao?: string | null
+          prestador_cep?: string | null
+          prestador_cnpj?: string | null
+          prestador_email?: string | null
+          prestador_endereco?: string | null
+          prestador_inscricao_municipal?: string | null
+          prestador_municipio?: string | null
+          prestador_nome?: string | null
+          prestador_regime_apuracao?: string | null
+          prestador_simples_nacional?: string | null
+          prestador_telefone?: string | null
+          processo_documento_id?: string | null
+          retencao_issqn?: string | null
+          serie_dps?: string | null
+          texto_bruto?: string | null
+          tomador_cep?: string | null
+          tomador_documento?: string | null
+          tomador_email?: string | null
+          tomador_endereco?: string | null
+          tomador_inscricao_municipal?: string | null
+          tomador_municipio?: string | null
+          tomador_nome?: string | null
+          tomador_telefone?: string | null
+          tributacao_issqn?: string | null
+          updated_at?: string
+          valor_liquido?: number | null
+          valor_servico?: number | null
+        }
+        Update: {
+          chave_acesso?: string
+          cliente_id?: string | null
+          codigo_tributacao_municipal?: string | null
+          codigo_tributacao_nacional?: string | null
+          competencia?: string | null
+          created_at?: string
+          data_emissao_nfse?: string | null
+          descricao_servico?: string | null
+          documento_id?: string | null
+          email_municipio?: string | null
+          id?: string
+          itens_servico?: Json
+          local_prestacao?: string | null
+          municipio_emissor?: string | null
+          municipio_incidencia_issqn?: string | null
+          numero_dps?: string | null
+          numero_nfse?: string | null
+          pais_prestacao?: string | null
+          prestador_cep?: string | null
+          prestador_cnpj?: string | null
+          prestador_email?: string | null
+          prestador_endereco?: string | null
+          prestador_inscricao_municipal?: string | null
+          prestador_municipio?: string | null
+          prestador_nome?: string | null
+          prestador_regime_apuracao?: string | null
+          prestador_simples_nacional?: string | null
+          prestador_telefone?: string | null
+          processo_documento_id?: string | null
+          retencao_issqn?: string | null
+          serie_dps?: string | null
+          texto_bruto?: string | null
+          tomador_cep?: string | null
+          tomador_documento?: string | null
+          tomador_email?: string | null
+          tomador_endereco?: string | null
+          tomador_inscricao_municipal?: string | null
+          tomador_municipio?: string | null
+          tomador_nome?: string | null
+          tomador_telefone?: string | null
+          tributacao_issqn?: string | null
+          updated_at?: string
+          valor_liquido?: number | null
+          valor_servico?: number | null
+        }
+        Relationships: []
+      }
       qa_notificacao_eventos: {
         Row: {
           acao: string
