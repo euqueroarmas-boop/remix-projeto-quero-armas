@@ -2041,6 +2041,22 @@ export default function QAClientePortalPage() {
               toast.error("Sessão expirada. Faça login novamente.");
               return;
             }
+            // Condição profissional tem engine própria: precisa INJETAR as
+            // exigências de ocupação lícita da condição escolhida. Se cair no
+            // caminho genérico, o grupo fecha vazio.
+            if (chave === "condicao_profissional" || rawTipo === "renda_definir_condicao") {
+              const { data: dc, error: ec } = await supabase.functions.invoke(
+                "qa-processo-set-condicao",
+                { body: { processo_id: doc.processo_id, condicao_profissional: valor } },
+              );
+              if (ec || (dc as any)?.error) {
+                toast.error("Não foi possível salvar sua condição profissional. Tente novamente.");
+                return;
+              }
+              toast.success("Condição registrada. Listamos os documentos de ocupação lícita.");
+              setDocsReloadKey((k) => k + 1);
+              return;
+            }
             const { data, error } = await supabase.functions.invoke(
               "qa-processo-responder-pergunta",
               {

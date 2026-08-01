@@ -102,8 +102,8 @@ export const CONDICAO_OPCOES_GUIA: {
   hint: string;
 }[] = [
   { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
-  { id: "autonomo", label: "Autônomo / MEI", hint: "Cartão CNPJ + NF recente" },
-  { id: "empresario", label: "Empresário/Sócio", hint: "Cartão CNPJ + QSA + Contrato Social/Requerimento/CCMEI + NF" },
+  { id: "autonomo", label: "Autônomo / MEI", hint: "CCMEI + Cartão CNPJ + QSA + NF emitida a um cliente" },
+  { id: "empresario", label: "Empresário/Sócio", hint: "Contrato Social/Requerimento/Ficha Cadastral + Cartão CNPJ + QSA + NF" },
   { id: "aposentado", label: "Aposentado", hint: "Comprovante de benefício INSS" },
   { id: "funcionario_publico", label: "Funcionário Público (área geral)", hint: "Carteira Funcional + Holerite" },
   { id: "seguranca_publica", label: "Servidor da Segurança Pública", hint: "PM, PC, PF, PRF, Guarda, Bombeiro, Agente Penitenciário — Funcional + Holerite" },
@@ -876,6 +876,14 @@ export async function responderPerguntaGuia(
   try {
     const chave = (doc.regra_validacao as any)?.chave as string;
     if (!chave) throw new Error("Pergunta sem chave configurada");
+    // Condição profissional NUNCA pode ir pelo caminho genérico: ela precisa
+    // injetar as exigências de ocupação lícita da condição escolhida.
+    if (
+      chave === "condicao_profissional" ||
+      String(doc.tipo_documento || "") === "renda_definir_condicao"
+    ) {
+      return definirCondicaoGuia(processo, valor as CondicaoGuiaId);
+    }
     // RLS bloqueia UPDATE em qa_processos pelo cliente — usamos edge function
     // service_role (camada aditiva) para gravar resposta + status + evento.
     const headers = await authHeader();

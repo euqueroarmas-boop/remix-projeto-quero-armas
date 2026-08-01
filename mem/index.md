@@ -44,3 +44,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Location-Aware Antecedentes](mem://features/quero-armas/location-aware-antecedentes) — Popup troca links/textos por UF do cliente (TJ/PC/TJM/TRF) e raio 25 km recomendado em Agendar Exame
 - [Popup de Pendências Dispensável](mem://features/quero-armas/popup-pendencias-dismissivel) — Fechar o popup de pendências guiadas (X ou fora) o mantém fechado na sessão atual; ações manuais reabrem normalmente
 - [Procuração Reaproveitável](mem://features/quero-armas/procuracao-reaproveitavel) — Contrato em Processos; Procuração no Hub Jurídico com validade 12m, reaproveitada entre processos enquanto vigente
+- [Ocupação Lícita](mem://features/quero-armas/ocupacao-licita-matriz) — Matriz de docs por condição profissional; condicao_profissional SEMPRE via qa-processo-set-condicao (nunca responder-pergunta)
