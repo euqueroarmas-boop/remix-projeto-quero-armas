@@ -34,6 +34,7 @@ import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCoc
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
 import { abrirChecklistGuiado, onAbrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
+import { baixarProcuracaoCanonica } from "@/lib/quero-armas/procuracaoPdfDownload";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
 import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
@@ -1539,9 +1540,30 @@ export default function QAClientePortalPage() {
       return;
     }
 
-    const url = pendingProcuracaoPublicUrl ?? `https://www.euqueroarmas.com.br/area-do-cliente/procuracoes/${signature.id}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-    toast.success("Procuração aberta em nova aba.");
+    // Procuração baixa DIRETO, como o contrato (usuário, 01/08/2026).
+    //
+    // Antes abria a página pública numa aba nova, e o cliente tinha que achar
+    // o botão "Baixar procuração (PDF)" lá dentro — um passo a mais para
+    // fazer exatamente a mesma coisa que o contrato faz com um clique.
+    //
+    // O arquivo vem da `qa-serve-procuracao-pdf`: PDF canônico, com carimbo
+    // de servidor e golden record. Se o servidor falhar, aí sim caímos na
+    // página pública, que ainda tem o caminho antigo como último recurso.
+    const toastId = toast.loading("Preparando procuração…");
+    try {
+      const nomeCliente = cliente?.nome_completo ? ` - ${cliente.nome_completo}` : "";
+      const nome = `${signature.venda_id ? `VENDA ${signature.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
+      await baixarProcuracaoCanonica(signature.id, nome);
+      toast.success("Download iniciado.", { id: toastId });
+    } catch (e) {
+      console.warn("[openPendingSignatureLink] procuração:", e);
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível baixar a procuração.",
+        { id: toastId },
+      );
+      const url = pendingProcuracaoPublicUrl ?? `https://www.euqueroarmas.com.br/area-do-cliente/procuracoes/${signature.id}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   };
 
   const uploadSignedPendingSignatureFromPopup = async (file: File) => {
