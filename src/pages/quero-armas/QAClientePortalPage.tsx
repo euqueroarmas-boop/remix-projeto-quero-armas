@@ -1879,7 +1879,7 @@ export default function QAClientePortalPage() {
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
-        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Enviar Efetiva necessidade" : undefined,
+        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Resolver efetiva necessidade" : undefined,
         onEntregar: () => {
           // Efetiva necessidade fica no fluxo guiado já existente.
           if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {

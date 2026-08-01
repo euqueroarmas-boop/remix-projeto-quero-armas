@@ -480,7 +480,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     titulo: "Documento oficial de identidade",
     passos: [
       "Entre no gov.br (site ou aplicativo) com o seu CPF e senha e conclua a verificação em duas etapas, se pedirem.",
-      "No aplicativo gov.br, toque em \"Carteira de Documentos\". Pelo site, acesse gov.br/carteiradedocumentos.",
+      "No aplicativo gov.br, toque em \"Carteira de Documentos\". Pelo site, acesse https://servicos.acesso.gov.br/carteira.",
       "Abra o documento de identidade que você tem cadastrado ali: CIN (Carteira de Identidade Nacional), RG digital ou CNH digital.",
       "Toque em \"Baixar\", \"Exportar PDF\" ou \"Compartilhar\" e escolha salvar em PDF — nunca tire foto nem print da tela.",
       "O PDF baixado sai com o QR Code de verificação do gov.br. É exatamente esse arquivo que você deve enviar aqui.",
@@ -491,7 +491,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   rg_com_cpf: {
     titulo: "RG com CPF (ou CIN)",
     passos: [
-      "Acesse o gov.br com CPF e senha e abra a \"Carteira de Documentos\" (aplicativo gov.br ou gov.br/carteiradedocumentos).",
+      "Acesse o gov.br com CPF e senha e abra a \"Carteira de Documentos\" pelo aplicativo gov.br ou por https://servicos.acesso.gov.br/carteira.",
       "Selecione o RG digital ou a CIN (Carteira de Identidade Nacional).",
       "Use \"Baixar\" / \"Exportar PDF\" e salve o arquivo — o PDF sai com o QR Code de verificação.",
       "Envie esse PDF aqui, sem editar, cortar ou converter em imagem.",

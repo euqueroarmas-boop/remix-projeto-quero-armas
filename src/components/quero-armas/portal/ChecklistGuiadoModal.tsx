@@ -1737,17 +1737,35 @@ export default function ChecklistGuiadoModal({
                     travar sem que ninguém soubesse o motivo. */}
                 {tipoItemGuia(docAtivo) === "documento" && ehEfetivaNecessidade(docAtivo.tipo_documento) && (
                   efetivaNecessidadePasso === "intro" ? (
-                    <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-4">
-                      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
-                        Esta etapa é diferente
+                    <div className="space-y-5">
+                      <div>
+                        <h3 className="font-display text-2xl font-bold text-slate-950">
+                          Declaração de efetiva necessidade
+                        </h3>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                          Antes de responder, confirme que entendeu como esta etapa funciona. Depois disso,
+                          o conteúdo deste mesmo pop-up muda para o questionário e para os anexos.
+                        </p>
                       </div>
-                      <p className="mt-1.5 text-[12px] leading-relaxed text-slate-700">
-                        Você não precisa anexar nenhum documento pronto aqui. Vamos fazer algumas
-                        perguntas sobre o seu caso e reunir as provas que você tiver — boletins de
-                        ocorrência, inquéritos, ações. Com esse material, nossa equipe escreve a peça
-                        que fundamenta o seu pedido perante a Polícia Federal.
-                      </p>
-                      <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-[#E5C2C6] bg-white/70 px-3 py-2 text-[12px] leading-relaxed text-slate-700">
+
+                      <div className="space-y-4">
+                        {[
+                          "Esta é a parte que mais reprova pedido de arma na Polícia Federal. E quase nunca é por falta de documento: é por justificativa vaga. \"Quero para defesa pessoal\" não sustenta um pedido.",
+                          "Você não vai escrever nada sozinho, nem baixar modelo. São perguntas, aqui mesmo, e nós redigimos a declaração com as suas respostas.",
+                          "Começamos pelo que você já tem: boletim de ocorrência, inquérito, ação criminal. Documento em nome de familiar próximo também pode valer quando o fato colocou você ou sua família em risco.",
+                          "Depois vêm os detalhes que constroem o caso: ameaça, abordagem, rotina, profissão, transporte de valores, região onde mora ou trabalha e demais fatos relevantes.",
+                          "Quanto mais concreto, melhor. Data, lugar, pessoas envolvidas e consequência prática ajudam a demonstrar risco real, com fundamento na Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024 e IN DG/PF 201 e 311.",
+                        ].map((texto, idx) => (
+                          <div key={idx} className="flex gap-4">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E5C2C6] bg-[#FFF6F7] text-[13px] font-bold" style={{ color: MARROM }}>
+                              {idx + 1}
+                            </div>
+                            <p className="pt-1.5 text-[14px] leading-relaxed text-slate-700">{texto}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] px-4 py-3 text-[12px] leading-relaxed text-slate-700">
                         <input
                           type="checkbox"
                           checked={efetivaNecessidadeAceite}
@@ -1756,19 +1774,20 @@ export default function ChecklistGuiadoModal({
                           style={{ accentColor: MARROM }}
                         />
                         <span>
-                          Entendi que a declaração de efetiva necessidade será construída com minhas
-                          respostas e documentos de prova, conforme a Lei 10.826/2003, o Decreto
-                          11.615/2023, o Decreto 12.345/2024 e as Instruções Normativas DG/PF 201 e 311.
+                          Entendi que esta etapa gera a base da declaração de efetiva necessidade, que as
+                          respostas devem ser verdadeiras e que o envio final só ficará disponível depois
+                          que o questionário e os anexos obrigatórios forem concluídos.
                         </span>
                       </label>
+
                       <button
                         type="button"
                         disabled={!efetivaNecessidadeAceite}
                         onClick={() => setEfetivaNecessidadePasso("questionario")}
-                        className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[12px] font-bold uppercase tracking-[0.2em] text-white disabled:cursor-not-allowed disabled:opacity-40"
                         style={{ background: MARROM }}
                       >
-                        Concordo e continuar
+                        Concordo e avançar
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
