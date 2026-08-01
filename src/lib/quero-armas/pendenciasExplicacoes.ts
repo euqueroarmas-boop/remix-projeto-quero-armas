@@ -41,12 +41,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   declaracao_necessidade_efetiva: {
     titulo: "Declaração de efetiva necessidade",
     passos: [
-      "Você não precisa escrever nada sozinho, nem baixar modelo: são algumas perguntas, aqui mesmo.",
-      "Primeiro perguntamos o que você já tem — boletim de ocorrência, inquérito ou ação criminal. Documento em nome de terceiro também vale, se o fato te atingiu.",
-      "Depois pedimos o contexto do risco: sua profissão, sua rotina, valores que você transporta, a região onde mora.",
-      "Com isso nós redigimos a declaração. Você lê, aprova, e só então ela vai para o processo.",
+      "Esta é a parte que mais reprova pedido de arma na Polícia Federal. E quase nunca é por falta de documento: é por justificativa vaga. \"Quero para defesa pessoal\" não sustenta um pedido — e é o que a maioria escreve.",
+      "Você não vai escrever nada sozinho, nem baixar modelo. São perguntas, aqui mesmo, e nós redigimos a declaração com as suas respostas.",
+      "Começamos pelo que você já tem: boletim de ocorrência, inquérito, ação criminal. Documento em nome de outra pessoa também vale — se ameaçaram sua esposa, seu filho ou um funcionário seu, a necessidade é sua também.",
+      "Depois vêm os detalhes que constroem o caso: se você já foi ameaçado ou abordado, se alguém da família foi, o que você faz, se transporta dinheiro ou mercadoria, o horário em que costuma chegar em casa, a região onde mora ou trabalha.",
+      "Quanto mais concreto, melhor. Data, lugar, o que aconteceu, quem estava com você. A Polícia Federal avalia risco REAL, não sensação de risco — e é o detalhe que separa os dois.",
+      "No fim você lê a declaração pronta, aprova, e só então ela vai para o processo. Nada é enviado sem a sua confirmação.",
     ],
-    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles.",
+    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles. Mas se você não tem nenhum, o relato ainda sustenta, desde que seja específico. Vago é o que reprova.",
   },
   declaracao_compromisso_treino: {
     titulo: "Declaração de compromisso de treino",
@@ -787,12 +789,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   comprovante_efetiva_necessidade: {
     titulo: "Efetiva necessidade",
     passos: [
-      "Você não precisa escrever nada sozinho, nem baixar modelo: são algumas perguntas, aqui mesmo.",
-      "Primeiro perguntamos o que você já tem — boletim de ocorrência, inquérito ou ação criminal. Documento em nome de terceiro também vale, se o fato te atingiu.",
-      "Depois pedimos o contexto do risco: sua profissão, sua rotina, valores que você transporta, a região onde mora.",
-      "Com isso nós redigimos a declaração. Você lê, aprova, e só então ela vai para o processo.",
+      "Esta é a parte que mais reprova pedido de arma na Polícia Federal. E quase nunca é por falta de documento: é por justificativa vaga. \"Quero para defesa pessoal\" não sustenta um pedido — e é o que a maioria escreve.",
+      "Você não vai escrever nada sozinho, nem baixar modelo. São perguntas, aqui mesmo, e nós redigimos a declaração com as suas respostas.",
+      "Começamos pelo que você já tem: boletim de ocorrência, inquérito, ação criminal. Documento em nome de outra pessoa também vale — se ameaçaram sua esposa, seu filho ou um funcionário seu, a necessidade é sua também.",
+      "Depois vêm os detalhes que constroem o caso: se você já foi ameaçado ou abordado, se alguém da família foi, o que você faz, se transporta dinheiro ou mercadoria, o horário em que costuma chegar em casa, a região onde mora ou trabalha.",
+      "Quanto mais concreto, melhor. Data, lugar, o que aconteceu, quem estava com você. A Polícia Federal avalia risco REAL, não sensação de risco — e é o detalhe que separa os dois.",
+      "No fim você lê a declaração pronta, aprova, e só então ela vai para o processo. Nada é enviado sem a sua confirmação.",
     ],
-    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles.",
+    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles. Mas se você não tem nenhum, o relato ainda sustenta, desde que seja específico. Vago é o que reprova.",
   },
   documento_complementar_caso: {
     titulo: "Documento complementar do caso",
