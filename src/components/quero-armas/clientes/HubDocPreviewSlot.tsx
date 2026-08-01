@@ -32,6 +32,8 @@ interface Props {
   dragOver: boolean;
   extracting: boolean;
   incorreta?: boolean;
+  /** Documento do mesmo tipo já aprovado no Hub — rejeição imediata. */
+  duplicado?: boolean;
 }
 
 export default function HubDocPreviewSlot({
@@ -47,6 +49,7 @@ export default function HubDocPreviewSlot({
   dragOver,
   extracting,
   incorreta = false,
+  duplicado = false,
 }: Props) {
   const slotRef = useRef<HTMLDivElement | null>(null);
   const [slotW, setSlotW] = useState<number>(0);
@@ -294,7 +297,35 @@ export default function HubDocPreviewSlot({
             <Trash2 className="h-4 w-4" strokeWidth={2.4} />
           </button>
 
-          {pct != null && !incorreta && (
+          {duplicado ? (
+            <div
+              className="pointer-events-none absolute"
+              style={{
+                zIndex: 2001,
+                top: 52,
+                right: 0,
+                transform: "rotate(-8deg)",
+                border: `7px solid ${RED}`,
+                padding: "12px 22px 8px",
+                background: "rgba(255,255,255,.97)",
+                borderRadius: 6,
+                color: RED,
+                fontFamily: "'Oswald', sans-serif",
+                boxShadow: "0 10px 26px rgba(185,28,28,.32)",
+                maxWidth: "88%",
+              }}
+            >
+              <div style={{ fontSize: 62, fontWeight: 700, lineHeight: 0.86, letterSpacing: "-.02em", textAlign: "center" }}>
+                100%
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, letterSpacing: ".12em", textAlign: "center", marginTop: 4 }}>
+                REJEITADO
+              </div>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".24em", textAlign: "center", marginTop: 6 }}>
+                DOCUMENTO EM DUPLICIDADE
+              </div>
+            </div>
+          ) : pct != null && !incorreta ? (
             <div
               className="pointer-events-none absolute"
               style={{
@@ -316,7 +347,7 @@ export default function HubDocPreviewSlot({
                 {pct >= 85 ? "IA · APROVADO" : "IA · REVISAR"}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

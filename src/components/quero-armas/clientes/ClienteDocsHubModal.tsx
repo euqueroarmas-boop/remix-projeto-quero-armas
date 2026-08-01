@@ -1204,7 +1204,7 @@ export function ClienteDocsHubModal({
     if (!open || !qaClienteId || docsAprovados.length > 0) { setDocsAprovadosFetched([]); return; }
     let cancelled = false;
     supabase
-      .from("qa_cliente_documentos" as any)
+      .from("qa_documentos_cliente" as any)
       .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos")
       .eq("qa_cliente_id", qaClienteId)
       .eq("status", "aprovado")
@@ -1330,6 +1330,21 @@ export function ClienteDocsHubModal({
     pendingSet.size > 0 &&
     !pendingSet.has(form.tipo_documento)
   );
+  // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
+  // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
+  // hora, com carimbo vermelho, e o cliente precisa excluir o anterior ou
+  // anexar o documento realmente exigido.
+  const docDuplicado = !!(
+    form.tipo_documento &&
+    (classificacao || conferenciaLocal) &&
+    docsEfetivos.some(
+      (d: any) =>
+        String(d.tipo_documento || "") === form.tipo_documento &&
+        String(d.status || "") === "aprovado",
+    )
+  );
+  // Bloqueio duro da prévia: divergente do slot E já entregue antes.
+  const rejeitadoDuplicidade = docDuplicado;
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
   // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
@@ -2937,7 +2952,21 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {cobreOutraPendencia ? (
+            {rejeitadoDuplicidade ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Rejeitado · documento em duplicidade</div>
+                  <div>
+                    A IA identificou <b>{tipoAtual?.label || form.tipo_documento}</b> e esse
+                    documento <b>já consta aprovado</b> no seu Hub Documental. Não será salvo
+                    nem enviado para análise. Exclua o anterior se quiser substituí-lo, ou
+                    anexe o documento realmente exigido
+                    {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
+                  </div>
+                </div>
+              </div>
+            ) : cobreOutraPendencia ? (
               <div className="mt-1 flex items-start gap-1.5 border border-sky-300 bg-sky-50 p-2 text-[10px] leading-snug text-sky-900">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
@@ -3287,6 +3316,7 @@ export function ClienteDocsHubModal({
               dragOver={dragOver}
               extracting={extracting}
               incorreta={certidaoIncorreta}
+              duplicado={rejeitadoDuplicidade}
             />
           </div>
 
@@ -3993,7 +4023,7 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : certidaoIncorreta ? (
+          ) : certidaoIncorreta || rejeitadoDuplicidade ? (
             <div className="flex">
               <Button
                 variant="outline"
