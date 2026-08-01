@@ -34,6 +34,13 @@ interface Props {
   incorreta?: boolean;
   /** Documento do mesmo tipo já aprovado no Hub — rejeição imediata. */
   duplicado?: boolean;
+  /**
+   * Motivo de rejeição imediata (carimbo vermelho 100%).
+   *  - "duplicidade": mesmo tipo já aprovado no Hub
+   *  - "titular": documento é de OUTRA pessoa (nome/CPF divergem do interessado)
+   *  - "tipo": documento do próprio titular, mas não é o exigido
+   */
+  motivoRejeicao?: "duplicidade" | "titular" | "tipo" | null;
 }
 
 export default function HubDocPreviewSlot({
@@ -50,6 +57,7 @@ export default function HubDocPreviewSlot({
   extracting,
   incorreta = false,
   duplicado = false,
+  motivoRejeicao = null,
 }: Props) {
   const slotRef = useRef<HTMLDivElement | null>(null);
   const [slotW, setSlotW] = useState<number>(0);
@@ -297,7 +305,7 @@ export default function HubDocPreviewSlot({
             <Trash2 className="h-4 w-4" strokeWidth={2.4} />
           </button>
 
-          {duplicado ? (
+          {motivoRejeicao || duplicado ? (
             <div
               className="pointer-events-none absolute"
               style={{
@@ -322,7 +330,11 @@ export default function HubDocPreviewSlot({
                 REJEITADO
               </div>
               <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".24em", textAlign: "center", marginTop: 6 }}>
-                DOCUMENTO EM DUPLICIDADE
+                {motivoRejeicao === "titular"
+                  ? "DOCUMENTO DE OUTRO TITULAR"
+                  : motivoRejeicao === "tipo"
+                    ? "DOCUMENTO INCORRETO"
+                    : "DOCUMENTO EM DUPLICIDADE"}
               </div>
             </div>
           ) : pct != null && !incorreta ? (

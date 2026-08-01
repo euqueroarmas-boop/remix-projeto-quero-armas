@@ -1346,6 +1346,26 @@ export function ClienteDocsHubModal({
   // Bloqueio duro da prévia: divergente do slot E já entregue antes.
   const rejeitadoDuplicidade = docDuplicado;
 
+  // ── TITULAR DIVERGENTE ──────────────────────────────────────────────────
+  // O documento é de OUTRA pessoa: nome completo e/ou CPF lidos no documento
+  // não batem com o interessado. Rejeição imediata (não é duplicidade).
+  const titularDivergente = conformidade.some(
+    (i) =>
+      (i.campo === "nome_completo" || i.campo === "cpf") &&
+      i.status === "divergente" &&
+      !!i.valorReferencia,
+  );
+  // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
+  const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
+  // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
+  const motivoRejeicao: "titular" | "duplicidade" | "tipo" | null = titularDivergente
+    ? "titular"
+    : rejeitadoDuplicidade
+      ? "duplicidade"
+      : documentoIncorretoTipo
+        ? "tipo"
+        : null;
+
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
   // canônica: a emissão do QSA é a MESMA do Cartão CNPJ aprovado no Hub
@@ -2321,6 +2341,12 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // Trava dura: documento de outro titular nunca é salvo nem enviado à análise.
+    if (titularDivergente) {
+      toast.error("Documento rejeitado: os dados não são do titular deste processo.");
+      return;
+    }
+
     // Trava de segurança: nenhum campo sensível pode ser gravado sem
     // confirmação humana explícita (clique em Confirmar OU edição manual).
     const pendentes = pendingSensitiveKeys();
@@ -3003,7 +3029,20 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {rejeitadoDuplicidade ? (
+            {titularDivergente ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Rejeitado · documento de outro titular</div>
+                  <div>
+                    Os dados lidos no documento <b>não são do interessado</b> deste processo
+                    (nome e/ou CPF divergem do cadastro). O documento não será salvo nem
+                    enviado para análise. Anexe o documento em nome do próprio titular
+                    {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
+                  </div>
+                </div>
+              </div>
+            ) : rejeitadoDuplicidade ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
@@ -3368,6 +3407,7 @@ export function ClienteDocsHubModal({
               extracting={extracting}
               incorreta={certidaoIncorreta}
               duplicado={rejeitadoDuplicidade}
+              motivoRejeicao={motivoRejeicao}
             />
           </div>
 
@@ -4071,7 +4111,7 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : certidaoIncorreta || rejeitadoDuplicidade ? (
+          ) : certidaoIncorreta || rejeitadoDuplicidade || titularDivergente ? (
             <div className="flex">
               <Button
                 variant="outline"
