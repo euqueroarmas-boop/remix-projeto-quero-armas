@@ -277,48 +277,48 @@ export default function HubDocPreviewSlot({
           </div>
         )}
 
-        {/* Overlays fora da moldura da prévia — mesma posição na tela, porém
-            irmãos posteriores do contêiner do documento, garantindo que fiquem
-            acima do canvas do react-pdf independentemente de z-index interno. */}
-        {file && (
-          <div className="pointer-events-none absolute inset-0" style={{ zIndex: 1000, isolation: "isolate" }}>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="pointer-events-auto absolute flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
-              style={{ borderRadius: 4, right: 8, top: 8, zIndex: 1001 }}
-              aria-label="Excluir arquivo"
-              title="Excluir arquivo"
-            >
-              <Trash2 className="h-4 w-4" strokeWidth={2.4} />
-            </button>
-
-            {pct != null && !incorreta && (
-              <div
-                className="pointer-events-none absolute"
-                style={{
-                  zIndex: 1001,
-                  top: 68,
-                  right: 10,
-                  transform: "rotate(-8deg)",
-                  border: `4px solid ${BORDO}`,
-                  padding: "6px 12px 3px",
-                  background: "rgba(255,255,255,.92)",
-                  borderRadius: 4,
-                  color: BORDO,
-                  fontFamily: "'Oswald', sans-serif",
-                  boxShadow: "0 6px 18px rgba(122,31,43,.25)",
-                }}
-              >
-                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
-                <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
-                  IA · APROVADO
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Overlays da prévia — irmãos posteriores do slot inteiro (raiz), com
+          z-index acima de qualquer canvas do react-pdf. */}
+      {file && (
+        <div className="pointer-events-none absolute inset-0" style={{ zIndex: 2000 }}>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="pointer-events-auto absolute flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-lg transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+            style={{ borderRadius: 4, right: 0, top: 0, zIndex: 2001 }}
+            aria-label="Excluir arquivo"
+            title="Excluir arquivo"
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={2.4} />
+          </button>
+
+          {pct != null && !incorreta && (
+            <div
+              className="pointer-events-none absolute"
+              style={{
+                zIndex: 2001,
+                top: 52,
+                right: 0,
+                transform: "rotate(-8deg)",
+                border: `4px solid ${pct >= 85 ? "#166534" : BORDO}`,
+                padding: "6px 12px 3px",
+                background: "rgba(255,255,255,.96)",
+                borderRadius: 4,
+                color: pct >= 85 ? "#166534" : BORDO,
+                fontFamily: "'Oswald', sans-serif",
+                boxShadow: "0 6px 18px rgba(0,0,0,.25)",
+              }}
+            >
+              <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
+              <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
+                {pct >= 85 ? "IA · APROVADO" : "IA · REVISAR"}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
