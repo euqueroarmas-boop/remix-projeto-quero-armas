@@ -734,6 +734,41 @@ function calcularConformidade(
         status: !r ? "sem_referencia" : res === true ? "conforme" : res === "gray" ? "verificando" : "divergente",
       });
     }
+    // ── TOMADOR DA NOTA FISCAL ────────────────────────────────────────────
+    // O tomador (cliente da nota) legitimamente é outra pessoa — mas quando ele
+    // carrega o sobrenome de família do prestador E divide o mesmo endereço, a
+    // nota não comprova atividade econômica real: é emissão entre parentes da
+    // mesma casa. Regra do usuário (01/08/2026): rejeitar por grau de parentesco.
+    const tomadorNome = campos.tomador_nome;
+    if (tomadorNome) {
+      const prestadorNome = campos.razao_social || campos.nome_empresarial || clienteNome || "";
+      const parentesco =
+        mesmaFamilia(tomadorNome, prestadorNome) || mesmaFamilia(tomadorNome, clienteNome);
+      const mesmaCasa = mesmoEnderecoDoc(
+        campos.tomador_endereco,
+        campos.tomador_cep,
+        campos.prestador_endereco,
+        campos.prestador_cep,
+      );
+      items.push({
+        campo: "tomador_nome",
+        label: "Tomador (destinatário)",
+        valorCertidao: tomadorNome,
+        valorReferencia: prestadorNome || null,
+        fonteReferencia: "Prestador da própria nota",
+        status: parentesco && mesmaCasa ? "divergente" : "conforme",
+      });
+      if (campos.tomador_endereco || campos.tomador_cep) {
+        items.push({
+          campo: "tomador_endereco",
+          label: "Endereço do tomador",
+          valorCertidao: campos.tomador_endereco || `CEP ${campos.tomador_cep}`,
+          valorReferencia: campos.prestador_endereco || (campos.prestador_cep ? `CEP ${campos.prestador_cep}` : null),
+          fonteReferencia: "Endereço do prestador",
+          status: parentesco && mesmaCasa ? "divergente" : "conforme",
+        });
+      }
+    }
     // Nome/CPF pessoal não se aplicam a documento da pessoa jurídica.
     return items;
   }
