@@ -162,12 +162,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     titulo: "Nota fiscal emitida pela sua empresa",
     passos: [
       "Acesse o emissor de NFe da prefeitura (NFS-e) ou da SEFAZ do estado (NF-e), com login da empresa.",
-      "Selecione uma nota emitida nos últimos 90 dias para qualquer cliente.",
+      "Selecione qualquer nota já emitida pela empresa — pode ser de qualquer período, não precisa ser recente.",
       "Baixe o DANFE ou o PDF da NFS-e — os dois formatos servem.",
       "Confira que aparecem: razão social + CNPJ da sua empresa, valor da nota e data de emissão.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+      "Em caso de dúvida, fale com o seu contador e peça uma nota fiscal emitida pela empresa em qualquer período — ele consegue baixar o PDF em minutos.",
     ],
-    observacao: "Serve como comprovação de atividade e faturamento. Se a empresa não emitiu nota nos últimos 90 dias, envie também o QSA para reforçar a comprovação.",
+    observacao: "Serve como comprovação de atividade e faturamento e NÃO tem prazo de validade: qualquer nota fiscal já emitida pela empresa é aceita, mesmo antiga. Só não vale nota cancelada ou ilegível.",
   },
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
@@ -772,12 +773,13 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     passos: [
       "Serve para mostrar que a sua atividade não existe só no papel: houve serviço ou venda de verdade, com nota emitida para um cliente.",
       "Acesse o emissor da sua prefeitura (NFS-e, serviços) ou da SEFAZ do seu estado (NF-e, produtos), com o login do seu CNPJ.",
-      "Abra as notas emitidas e escolha uma dos últimos 90 dias, para qualquer cliente.",
+      "Abra as notas emitidas e escolha qualquer uma, de qualquer período e para qualquer cliente — nota antiga também é aceita.",
       "Baixe o PDF da NFS-e ou o DANFE da NF-e — os dois formatos são aceitos.",
       "Confira que aparecem: seu CNPJ como emitente, o cliente (tomador), o valor, a descrição do serviço/produto e a data de emissão.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF. Se quiser reforçar, pode juntar mais notas num único PDF (ilovepdf.com → \"Juntar PDF\").",
+      "Ficou em dúvida sobre qual nota enviar ou não tem acesso ao emissor? Entre em contato com o seu contador e solicite uma nota fiscal emitida pela empresa em qualquer período — ele envia o PDF por e-mail.",
     ],
-    observacao: "Uma nota basta, desde que seja dos últimos 90 dias e esteja legível. Nota muito antiga, cancelada ou sem identificação do tomador é reprovada. Não tem nota nesse período? Fale com a equipe — trocamos por contrato de prestação de serviço vigente ou RPAs recentes.",
+    observacao: "Uma nota basta e ela NÃO vence: pode ser de qualquer período, desde que esteja legível e não cancelada. Em caso de dúvida, peça ao seu contador uma nota fiscal emitida pela empresa em qualquer período.",
   },
   renda_comprovante_beneficio: {
     titulo: "Comprovante de benefício",
