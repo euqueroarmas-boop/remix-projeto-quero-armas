@@ -12,6 +12,7 @@ export interface ExplicacaoPendencia {
   titulo: string;
   passos: string[];
   observacao?: string;
+  siteUrl?: string;
 }
 
 const REGISTRO: Record<string, ExplicacaoPendencia> = {
