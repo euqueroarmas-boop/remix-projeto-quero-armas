@@ -1204,7 +1204,7 @@ export function ClienteDocsHubModal({
     if (!open || !qaClienteId || docsAprovados.length > 0) { setDocsAprovadosFetched([]); return; }
     let cancelled = false;
     supabase
-      .from("qa_cliente_documentos" as any)
+      .from("qa_documentos_cliente" as any)
       .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos")
       .eq("qa_cliente_id", qaClienteId)
       .eq("status", "aprovado")
