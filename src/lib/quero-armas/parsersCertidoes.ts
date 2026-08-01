@@ -537,5 +537,101 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "tjm_sp": return parseTjmSp(texto);
     case "cr_exercito": return parseCr(texto);
     case "boletim_ocorrencia": return parseBoletimOcorrencia(texto);
+    case "ccmei": return parseCcmei(texto);
+    case "cartao_cnpj": return parseCartaoCnpj(texto);
+    case "qsa": return parseQsa(texto);
+    case "nota_fiscal": return parseNotaFiscal(texto);
   }
+}
+
+/* =============================================================================
+ * Grupo OCUPAÇÃO LÍCITA E RENDA
+ *
+ * Mesmas regras do resto do arquivo: campo que não aparece rotulado volta
+ * `undefined`. Situação cadastral sai como está impressa — quem decide se
+ * "BAIXADA" reprova é a conferência, não o parser.
+ * ============================================================================= */
+
+function cnpj14(v: string | undefined): string | undefined {
+  const d = (v ?? "").replace(/\D/g, "");
+  return d.length === 14 ? d : undefined;
+}
+
+function situacao(t: string): string | undefined {
+  const m = norm(t).match(/SITUACAO CADASTRAL\s*:?\s*([A-ZÁÉÍÓÚÃÕÇa-z]+)/i);
+  const s = m?.[1]?.toUpperCase();
+  return s && /ATIVA|BAIXADA|SUSPENSA|INAPTA|NULA/.test(s) ? s : undefined;
+}
+
+function parseCcmei(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  return {
+    orgao: "ccmei",
+    tipoDocumento: "renda_ccmei",
+    nome_titular: upperOrUndef(g(/Nome\s+(?:Empresarial|do\s+Empres[aá]rio)\s*:?\s*(.+)$/im)),
+    cpf: cpf11(g(/CPF\s*:?\s*([\d.\-]+)/i)),
+    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    razao_social: upperOrUndef(g(/Nome\s+Empresarial\s*:?\s*(.+)$/im)),
+    nome_fantasia: upperOrUndef(g(/Nome\s+Fantasia\s*:?\s*(.+)$/im)),
+    situacao_cadastral: situacao(t),
+    data_abertura: iso(g(/Data\s+de\s+(?:In[ií]cio\s+de\s+Atividades|Abertura)\s*:?\s*([\d/]+)/i)),
+    ocupacao_principal: upperOrUndef(g(/Ocupa[cç][aã]o\s+Principal\s*:?\s*(.+)$/im)),
+    data_emissao: iso(g(/(?:Emitido|Data\s+de\s+emiss[aã]o)\s*(?:em)?\s*:?\s*([\d/]+)/i)),
+  };
+}
+
+function parseCartaoCnpj(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  return {
+    orgao: "cartao_cnpj",
+    tipoDocumento: "renda_cartao_cnpj",
+    cnpj: cnpj14(g(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O\s*:?\s*([\d./\-]+)/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    nome_fantasia: upperOrUndef(g(/T[IÍ]TULO DO ESTABELECIMENTO[^:]*:?\s*(.+)$/im)),
+    situacao_cadastral: situacao(t),
+    data_abertura: iso(g(/DATA DE ABERTURA\s*:?\s*([\d/]+)/i)),
+    ocupacao_principal: upperOrUndef(
+      g(/ATIVIDADE ECON[OÔ]MICA PRINCIPAL\s*:?\s*(.+)$/im),
+    ),
+    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+  };
+}
+
+function parseQsa(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  // Cada sócio aparece como "Nome do Sócio: FULANO" ou em linhas após o
+  // cabeçalho do quadro. Só o que vem ROTULADO é lido — sem varrer linhas
+  // soltas, que trariam endereço e capital social como se fossem nomes.
+  const socios = Array.from(
+    t.matchAll(/Nome(?:\/Nome Empresarial)?\s+do\s+S[oó]cio\s*:?\s*(.+)$/gim),
+  )
+    .map((m) => upper(m[1]))
+    .filter((s) => s.length > 2);
+  return {
+    orgao: "qsa",
+    tipoDocumento: "renda_qsa",
+    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    socios: socios.length ? socios : undefined,
+    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+  };
+}
+
+function parseNotaFiscal(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  return {
+    orgao: "nota_fiscal",
+    tipoDocumento: "renda_nf_recente",
+    numero_nf: g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ?? g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i),
+    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    razao_social: upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)),
+    valor_nf: g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i),
+    data_emissao:
+      iso(g(/Data(?:\s+e\s+Hora)?\s+de\s+Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
+      iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)),
+  };
 }
