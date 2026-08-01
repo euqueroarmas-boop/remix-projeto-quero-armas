@@ -1330,6 +1330,21 @@ export function ClienteDocsHubModal({
     pendingSet.size > 0 &&
     !pendingSet.has(form.tipo_documento)
   );
+  // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
+  // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
+  // hora, com carimbo vermelho, e o cliente precisa excluir o anterior ou
+  // anexar o documento realmente exigido.
+  const docDuplicado = !!(
+    form.tipo_documento &&
+    (classificacao || conferenciaLocal) &&
+    docsEfetivos.some(
+      (d: any) =>
+        String(d.tipo_documento || "") === form.tipo_documento &&
+        String(d.status || "") === "aprovado",
+    )
+  );
+  // Bloqueio duro da prévia: divergente do slot E já entregue antes.
+  const rejeitadoDuplicidade = docDuplicado;
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
   // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
