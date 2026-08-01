@@ -179,6 +179,17 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   useEffect(() => {
     if (!open) return;
+    // REGRA DE NEGÓCIO (ordem inegociável): 1) contrato e procuração,
+    // 2) exigências cadastrais, 3) checklist documental. Enquanto houver
+    // assinatura na fila, o popup fica travado nela — nenhum pin de card
+    // (declaração, comprovante, etc.) pode passar na frente.
+    const iAssinatura = pendencias.findIndex((p) => p.kind === "signature");
+    if (iAssinatura >= 0) {
+      const pinEhAssinatura =
+        pinnedId != null && pendencias.find((p) => p.id === pinnedId)?.kind === "signature";
+      setIndice(pinEhAssinatura ? pendencias.findIndex((p) => p.id === pinnedId) : iAssinatura);
+      return;
+    }
     if (pinnedId) {
       const i = pendencias.findIndex((p) => p.id === pinnedId);
       if (i >= 0) {
