@@ -763,15 +763,16 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Contratos antigos sem as últimas alterações são reprovados. Envie sempre a versão CONSOLIDADA mais recente registrada na Junta Comercial. Requerimento de Empresário para EIRELI/individual é 100% aceito no lugar do contrato — em dúvida, peça ao contador.",
   },
   renda_nf_recente: {
-    titulo: "Notas fiscais recentes",
+    titulo: "Nota fiscal emitida a um cliente",
     passos: [
-      "Acesse o emissor de NFe da sua prefeitura (para NFS-e) ou da SEFAZ do seu estado (para NF-e de produto), com login da empresa.",
-      "Baixe as 3 últimas notas fiscais emitidas nos últimos 90 dias em PDF.",
-      "Se são muitas notas, junte tudo em um único PDF (use ilovepdf.com → \"Juntar PDF\") antes de enviar.",
-      "As notas devem comprovar faturamento recorrente da empresa.",
-      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+      "Serve para mostrar que a sua atividade não existe só no papel: houve serviço ou venda de verdade, com nota emitida para um cliente.",
+      "Acesse o emissor da sua prefeitura (NFS-e, serviços) ou da SEFAZ do seu estado (NF-e, produtos), com o login do seu CNPJ.",
+      "Abra as notas emitidas e escolha uma dos últimos 90 dias, para qualquer cliente.",
+      "Baixe o PDF da NFS-e ou o DANFE da NF-e — os dois formatos são aceitos.",
+      "Confira que aparecem: seu CNPJ como emitente, o cliente (tomador), o valor, a descrição do serviço/produto e a data de emissão.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF. Se quiser reforçar, pode juntar mais notas num único PDF (ilovepdf.com → \"Juntar PDF\").",
     ],
-    observacao: "Enviar apenas 1 nota antiga é reprovado — a ideia é comprovar atividade constante. Mínimo de 3 notas dos últimos 90 dias.",
+    observacao: "Uma nota basta, desde que seja dos últimos 90 dias e esteja legível. Nota muito antiga, cancelada ou sem identificação do tomador é reprovada. Não tem nota nesse período? Fale com a equipe — trocamos por contrato de prestação de serviço vigente ou RPAs recentes.",
   },
   renda_comprovante_beneficio: {
     titulo: "Comprovante de benefício",
