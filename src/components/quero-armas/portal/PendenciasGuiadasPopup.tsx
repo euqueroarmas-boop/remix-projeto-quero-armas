@@ -353,11 +353,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 </span>
               ) : null}
             </span>
-            {totalNoGrupo > 1 ? (
-              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
-                {posicaoNoGrupo} de {totalNoGrupo} no grupo
-              </span>
-            ) : null}
+            {/* NÃO reintroduzir "N de M no grupo": quando a fila tem um grupo
+                só — que é o caso comum — ele repete exatamente os números do
+                "Passo N de M" ao lado, e o cliente lê a mesma informação duas
+                vezes com nomes diferentes. */}
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
@@ -383,23 +382,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   ? `Acesse o site oficial da ${nome} para baixar: `
                   : `Acesse o site oficial para baixar: `;
               })()}
-              {/* Texto do link é o NOME do órgão, não a URL crua. Endereço de
-                  site não diz nada ao cliente e ainda ocupa três linhas no
-                  celular; "TRF 3ª REGIÃO" diz exatamente onde ele vai cair.
-                  O nome já vem corrigido por UF (aplicarUfEmTexto), então o
-                  cliente da Bahia lê "TRF 1ª REGIÃO". */}
+              {/* URL por extenso, como ela é. Tentei encurtar para o nome do
+                  órgão e o resultado foi pior: com o título "TRF3 — Regional"
+                  o link virou só "REGIONAL", que não diz nada e não dá para
+                  copiar. O cliente precisa ver o endereço para conferir que
+                  está indo ao site oficial. */}
               <a
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-[#8A1224] underline underline-offset-2 break-words"
+                className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
               >
-                {(() => {
-                  const t = explic.titulo || "";
-                  const i = t.indexOf("—");
-                  const nome = (i >= 0 ? t.slice(i + 1).trim() : "").toUpperCase();
-                  return nome || "ABRIR SITE OFICIAL";
-                })()}
+                {linkEmissaoFinal}
               </a>
             </p>
           ) : null}
