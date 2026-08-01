@@ -685,18 +685,9 @@ function parseNotaFiscal(texto: string): CamposCertidao {
   // linha seguinte, em colunas — daí os fallbacks posicionais abaixo.
   const chave =
     t.match(/Chave\s+de\s+Acesso[^\d]{0,80}(\d{40,60})/i)?.[1] ?? t.match(/\b(\d{44,50})\b/)?.[1];
-  // No DANFSe o valor fica na linha seguinte ao rótulo em coluna.
-  const linhaApos = (rotulo: RegExp): string | undefined => {
-    const linhas = t.split(/\r?\n/);
-    const i = linhas.findIndex((l) => rotulo.test(l));
-    if (i < 0) return undefined;
-    for (let j = i + 1; j < Math.min(i + 4, linhas.length); j++) {
-      const v = linhas[j].trim();
-      if (v && !/^[-\s]+$/.test(v)) return v.split(/\s{3,}/)[0].trim();
-    }
-    return undefined;
-  };
-  const nomeEmpresarial = linhaApos(/Nome\s*\/\s*Nome\s+Empresarial/i);
+  const nomeEmpresarial = linhaAposRotulo(t, /Nome\s*\/\s*Nome\s+Empresarial/i)
+    ?.replace(/\S+@\S+/g, "")
+    .trim();
   const dataHora = t.match(/(\d{2}\/\d{2}\/\d{4})\s+\d{2}:\d{2}(?::\d{2})?/)?.[1];
   const valorNacional =
     g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i) ??
