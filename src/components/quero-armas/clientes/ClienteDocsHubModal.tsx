@@ -2087,13 +2087,16 @@ export function ClienteDocsHubModal({
     setForm((prev) => ({
       ...prev,
       tipo_documento: doc.tipoDocumento,
-      numero_documento: doc.numero_documento ?? prev.numero_documento,
+      numero_documento:
+        doc.numero_documento ??
+        (numeroDocumentoRenda(doc.tipoDocumento, doc as any) || prev.numero_documento),
       data_emissao: doc.data_emissao ?? prev.data_emissao,
       orgao_emissor: ORGAO_LABEL[doc.orgao] ?? prev.orgao_emissor,
       data_validade:
         doc.data_emissao && doc.validade_dias
           ? somarDias(doc.data_emissao, doc.validade_dias)
-          : prev.data_validade,
+          : (calcularValidadeHubPorTipo(doc.tipoDocumento, doc.data_emissao) ||
+             prev.data_validade),
     }));
     setCategoriaHub(inferHubCategoriaFromTipo(doc.tipoDocumento));
 
