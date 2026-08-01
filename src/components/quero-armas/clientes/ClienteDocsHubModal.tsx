@@ -1011,6 +1011,9 @@ export function ClienteDocsHubModal({
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resultadoCarimbo, setResultadoCarimbo] = useState<
+    { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
+  >(null);
   const [dragOver, setDragOver] = useState(false);
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
@@ -2463,18 +2466,18 @@ export function ClienteDocsHubModal({
       // cópia de campos para qa_clientes (titulo_eleitor, etc.) e e-mail são
       // disparados por triggers SECURITY DEFINER no banco.
 
-      toast.success(
+      setResultadoCarimbo(
         isStaff || iaConfia
-          ? "Documento aprovado e adicionado ao seu Hub."
-          : "Documento enviado! Aguardando aprovação da equipe."
+          ? {
+              tipo: "aprovado",
+              percentual:
+                classificacao?.confianca != null ? Math.round((classificacao.confianca || 0) * 100) : null,
+            }
+          : { tipo: "analise" }
       );
-      setForm(EMPTY);
-      setFile(null);
-      onSaved();
-      onClose();
     } catch (e: any) {
       console.error("[save doc] error:", e);
-      toast.error(e?.message || "Falha ao salvar documento.");
+      setResultadoCarimbo({ tipo: "reprovado", mensagem: e?.message || "Falha ao salvar documento." });
     } finally {
       setSaving(false);
     }
