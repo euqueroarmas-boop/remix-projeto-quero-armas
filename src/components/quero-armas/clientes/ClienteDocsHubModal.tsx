@@ -330,6 +330,44 @@ const TIPOS_EMPRESARIAIS = new Set([
 
 const PARTICULAS_NOME = new Set(["DE", "DA", "DO", "DAS", "DOS", "E"]);
 
+const PREFIXOS_LOGRADOURO = /\b(RUA|R|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|PRACA|ESTRADA|ROD|RODOVIA|VIELA|VILA)\b/g;
+
+/**
+ * Normaliza endereço para comparação estrutural: remove acento, prefixo de
+ * logradouro, pontuação e complemento textual. "RUA ANTONIO MIGLIORI, 117,
+ * JARDIM SAO JOAO" e "ANTONIO MIGLIORI, 117, JARDIM SAO JOAO" viram a mesma
+ * chave — é o caso real da NFS-e em que prestador e tomador moram juntos.
+ */
+function normEndereco(s?: string | null): string {
+  if (!s) return "";
+  return normalizeStr(s)
+    .replace(PREFIXOS_LOGRADOURO, " ")
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Dois endereços são o mesmo quando batem normalizados ou pelo CEP + número. */
+function mesmoEnderecoDoc(
+  endA?: string | null,
+  cepA?: string | null,
+  endB?: string | null,
+  cepB?: string | null,
+): boolean {
+  const a = normEndereco(endA);
+  const b = normEndereco(endB);
+  if (a && b && a === b) return true;
+  const ca = String(cepA || "").replace(/\D/g, "");
+  const cb = String(cepB || "").replace(/\D/g, "");
+  if (ca.length === 8 && ca === cb) {
+    const numA = a.match(/\b\d{1,6}\b/)?.[0];
+    const numB = b.match(/\b\d{1,6}\b/)?.[0];
+    // Mesmo CEP já é forte; mesmo CEP + mesmo número é conclusivo.
+    if (!numA || !numB || numA === numB) return true;
+  }
+  return false;
+}
+
 /**
  * Parentesco: nomes diferentes que compartilham sobrenome de família
  * (ex.: GILSON DO NASCIMENTO × RYAN DIAS DO NASCIMENTO).
@@ -695,6 +733,41 @@ function calcularConformidade(
         fonteReferencia: r?.fonte ?? null,
         status: !r ? "sem_referencia" : res === true ? "conforme" : res === "gray" ? "verificando" : "divergente",
       });
+    }
+    // ── TOMADOR DA NOTA FISCAL ────────────────────────────────────────────
+    // O tomador (cliente da nota) legitimamente é outra pessoa — mas quando ele
+    // carrega o sobrenome de família do prestador E divide o mesmo endereço, a
+    // nota não comprova atividade econômica real: é emissão entre parentes da
+    // mesma casa. Regra do usuário (01/08/2026): rejeitar por grau de parentesco.
+    const tomadorNome = campos.tomador_nome;
+    if (tomadorNome) {
+      const prestadorNome = campos.razao_social || campos.nome_empresarial || clienteNome || "";
+      const parentesco =
+        mesmaFamilia(tomadorNome, prestadorNome) || mesmaFamilia(tomadorNome, clienteNome);
+      const mesmaCasa = mesmoEnderecoDoc(
+        campos.tomador_endereco,
+        campos.tomador_cep,
+        campos.prestador_endereco,
+        campos.prestador_cep,
+      );
+      items.push({
+        campo: "tomador_nome",
+        label: "Tomador (destinatário)",
+        valorCertidao: tomadorNome,
+        valorReferencia: prestadorNome || null,
+        fonteReferencia: "Prestador da própria nota",
+        status: parentesco && mesmaCasa ? "divergente" : "conforme",
+      });
+      if (campos.tomador_endereco || campos.tomador_cep) {
+        items.push({
+          campo: "tomador_endereco",
+          label: "Endereço do tomador",
+          valorCertidao: campos.tomador_endereco || `CEP ${campos.tomador_cep}`,
+          valorReferencia: campos.prestador_endereco || (campos.prestador_cep ? `CEP ${campos.prestador_cep}` : null),
+          fonteReferencia: "Endereço do prestador",
+          status: parentesco && mesmaCasa ? "divergente" : "conforme",
+        });
+      }
     }
     // Nome/CPF pessoal não se aplicam a documento da pessoa jurídica.
     return items;
@@ -1177,6 +1250,10 @@ export function ClienteDocsHubModal({
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
+  const [enviandoNovamente, setEnviandoNovamente] = useState(false);
+  /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
+  const motivoCarimbadoRef = useRef<string | null>(null);
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
@@ -1453,14 +1530,42 @@ export function ClienteDocsHubModal({
     );
   // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
   const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
-  // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
-  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = titularDivergente
-    ? (parentescoDetectado ? "parentesco" : "titular")
-    : rejeitadoDuplicidade
-      ? "duplicidade"
-      : documentoIncorretoTipo
-        ? "tipo"
-        : null;
+  // ── NOTA FISCAL · TOMADOR PARENTE NO MESMO ENDEREÇO ─────────────────────
+  // Rejeição dura: a nota foi emitida para um familiar que mora no mesmo
+  // endereço do prestador — não comprova ocupação lícita perante a PF.
+  const notaTomadorParentesco = conformidade.some(
+    (i) => i.campo === "tomador_nome" && i.status === "divergente",
+  );
+  const tomadorInfo = conformidade.find((i) => i.campo === "tomador_nome");
+  const tomadorEnderecoInfo = conformidade.find((i) => i.campo === "tomador_endereco");
+  // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
+  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = notaTomadorParentesco
+    ? "parentesco"
+    : titularDivergente
+      ? (parentescoDetectado ? "parentesco" : "titular")
+      : rejeitadoDuplicidade
+        ? "duplicidade"
+        : documentoIncorretoTipo
+          ? "tipo"
+          : null;
+
+  // O carimbo de rejeição não fica mais colado no documento: ele aparece por
+  // 3 segundos no centro da tela, como o carimbo de aprovação.
+  const MOTIVO_CARIMBO: Record<string, string> = {
+    titular: "Documento de outro titular",
+    parentesco: "Grau de parentesco · mesmo endereço",
+    duplicidade: "Documento em duplicidade",
+    tipo: "Documento incorreto",
+  };
+  useEffect(() => {
+    if (!motivoRejeicao) {
+      motivoCarimbadoRef.current = null;
+      return;
+    }
+    if (motivoCarimbadoRef.current === motivoRejeicao) return;
+    motivoCarimbadoRef.current = motivoRejeicao;
+    setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
+  }, [motivoRejeicao]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
@@ -2335,6 +2440,69 @@ export function ClienteDocsHubModal({
     await classifyAndExtract(f);
   }
 
+  /**
+   * REJEITADO → ENVIAR NOVAMENTE.
+   * Dispara o e-mail que explica, em detalhe, por que o documento foi recusado
+   * (incluindo o alerta sobre a Polícia Federal) e devolve o modal ao estado
+   * limpo para o cliente anexar o documento correto.
+   */
+  async function handleEnviarNovamente() {
+    if (enviandoNovamente) return;
+    setEnviandoNovamente(true);
+    try {
+      if (qaClienteId && motivoRejeicao) {
+        const detalhes: Array<{ label: string; valor: string }> = [];
+        if (tomadorInfo?.valorCertidao) {
+          detalhes.push({ label: "Tomador na nota", valor: tomadorInfo.valorCertidao });
+        }
+        if (tomadorInfo?.valorReferencia) {
+          detalhes.push({ label: "Prestador (você / sua empresa)", valor: tomadorInfo.valorReferencia });
+        }
+        if (tomadorEnderecoInfo?.valorCertidao) {
+          detalhes.push({ label: "Endereço do tomador", valor: tomadorEnderecoInfo.valorCertidao });
+        }
+        if (tomadorEnderecoInfo?.valorReferencia) {
+          detalhes.push({ label: "Endereço do prestador", valor: tomadorEnderecoInfo.valorReferencia });
+        }
+        conformidade
+          .filter((i) => i.status === "divergente" && !String(i.campo).startsWith("tomador"))
+          .forEach((i) =>
+            detalhes.push({
+              label: i.label,
+              valor: `${i.valorCertidao} (no cadastro: ${i.valorReferencia || "—"})`,
+            }),
+          );
+        await supabase.functions.invoke("qa-notify-event", {
+          body: {
+            evento: "documento_rejeitado",
+            cliente_id: qaClienteId,
+            motivo_rejeicao: motivoRejeicao,
+            documento:
+              expectedTipoMeta?.label ||
+              getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
+            arquivo: file?.name || "",
+            detalhes,
+            referencia_id: `${form.tipo_documento || "doc"}-${Date.now()}`,
+          },
+        });
+      }
+      toast.success("Enviamos ao seu e-mail o motivo da recusa. Anexe agora o documento correto.");
+    } catch {
+      toast.error("Não conseguimos enviar o e-mail agora, mas você já pode anexar outro arquivo.");
+    } finally {
+      setEnviandoNovamente(false);
+      setFile(null);
+      setClassificacao(null);
+      setConferenciaLocal(null);
+      setAutoResult(null);
+      setConformidade([]);
+      setIaExtraido({});
+      setConfirmados({});
+      setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+      setTimeout(() => fileInputRef.current?.click(), 150);
+    }
+  }
+
   async function handleSave() {
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
@@ -2441,6 +2609,14 @@ export function ClienteDocsHubModal({
     // Trava dura: documento de outro titular nunca é salvo nem enviado à análise.
     if (titularDivergente) {
       toast.error("Documento rejeitado: os dados não são do titular deste processo.");
+      return;
+    }
+
+    // Trava dura: nota fiscal emitida para parente no mesmo endereço.
+    if (notaTomadorParentesco) {
+      toast.error(
+        "Nota fiscal rejeitada: o tomador é parente do prestador e consta no mesmo endereço.",
+      );
       return;
     }
 
@@ -3135,7 +3311,25 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {titularDivergente ? (
+            {notaTomadorParentesco ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">
+                    Rejeitado · grau de parentesco no mesmo endereço
+                  </div>
+                  <div>
+                    A nota foi emitida para <b>{tomadorInfo?.valorCertidao}</b>, que tem o mesmo
+                    sobrenome de família do prestador (<b>{tomadorInfo?.valorReferencia}</b>) e
+                    consta no <b>mesmo endereço</b>
+                    {tomadorEnderecoInfo?.valorCertidao ? <> (<b>{tomadorEnderecoInfo.valorCertidao}</b>)</> : null}.
+                    Nota entre parentes da mesma casa <b>não comprova ocupação lícita</b> e não será
+                    salva. Envie uma nota emitida para um cliente sem vínculo familiar e com
+                    endereço diferente do seu.
+                  </div>
+                </div>
+              </div>
+            ) : titularDivergente ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
@@ -4225,14 +4419,26 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : certidaoIncorreta || rejeitadoDuplicidade || titularDivergente ? (
-            <div className="flex">
+          ) : certidaoIncorreta || rejeitadoDuplicidade || titularDivergente || notaTomadorParentesco ? (
+            <div className="flex gap-2.5">
               <Button
                 variant="outline"
                 onClick={onClose}
                 className="h-11 flex-1 rounded-sm border-[#E5E5E5] bg-white font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] hover:bg-[#F7F7F7]"
               >
                 Cancelar
+              </Button>
+              <Button
+                onClick={handleEnviarNovamente}
+                disabled={enviandoNovamente}
+                className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
+              >
+                {enviandoNovamente ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="mr-2 h-4 w-4" />
+                )}
+                {enviandoNovamente ? "Enviando aviso..." : "Enviar novamente"}
               </Button>
             </div>
           ) : (

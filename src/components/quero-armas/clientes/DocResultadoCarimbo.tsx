@@ -21,7 +21,7 @@ export default function DocResultadoCarimbo({
   percentual,
   mensagem,
   onDone,
-  duracaoMs = 4000,
+  duracaoMs = 3000,
 }: {
   tipo: DocResultadoTipo;
   percentual?: number | null;
