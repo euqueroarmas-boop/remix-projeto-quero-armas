@@ -255,7 +255,9 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   certidao_crimes_militares_stm: {
     titulo: "Superior Tribunal Militar — STM",
     passos: [
-      "Clique em \"Acessar site de emissão\" (abre https://www.stm.jus.br/servicos-stm/certidao-negativa/emitir-certidao) ou copie o endereço no navegador.",
+      // URL removida: dava 404 (usuário, 01/08/2026). O passo aponta para o link
+      // do cabeçalho, que vem do banco e é o único ponto a manter atualizado.
+      "Clique em \"Acessar site de emissão\" no link acima.",
       "Na página do STM, clique em \"Emitir Certidão Negativa\".",
       "Selecione \"Pessoa Física\".",
       "Preencha CPF, NOME COMPLETO em MAIÚSCULAS (igualzinho ao RG), nome da mãe e data de nascimento (DD/MM/AAAA).",

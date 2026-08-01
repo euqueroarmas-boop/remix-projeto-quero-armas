@@ -2132,11 +2132,37 @@ export default function QAClientePortalPage() {
         || st === "dispensado_por_reaproveitamento";
     };
     const abertos = obrigatorios.filter((d: any) => !concluido(d));
+
+    // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
+    //
+    // O popup só recebia a fila do momento, então dizia "Passo 1 de 6" sem o
+    // cliente saber quantas frentes ainda existem. Aqui os grupos são
+    // calculados sobre TODAS as exigências obrigatórias do processo — as
+    // liberadas e as que ainda vão abrir.
+    //
+    // A ordem é a mesma da fila (`ordem` de pendenciasGrupos), para o número
+    // do grupo bater com a sequência em que o cliente vai encontrá-los.
+    const mapaGrupos = new Map<string, { label: string; ordem: number; total: number; concluidos: number }>();
+    for (const d of obrigatorios) {
+      const g = grupoDaPendenciaHelper(
+        String(d?.tipo_documento || ""),
+        toHubTipoCompartilhado(String(d?.tipo_documento || "")),
+      );
+      const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
+      cur.total += 1;
+      if (concluido(d)) cur.concluidos += 1;
+      mapaGrupos.set(g.id, cur);
+    }
+    const grupos = [...mapaGrupos.entries()]
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => a.ordem - b.ordem);
+
     return {
       documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
       perguntasPendentes: abertos.filter(ehPergunta).length,
       totalObrigatorios: obrigatorios.length,
       concluidos: obrigatorios.length - abertos.length,
+      grupos,
     };
   }, [processoDocs]);
 

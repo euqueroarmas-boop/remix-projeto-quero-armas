@@ -95,6 +95,13 @@ interface Props {
     perguntasPendentes: number;
     totalObrigatorios: number;
     concluidos: number;
+    /**
+     * Grupos do PROCESSO INTEIRO, na ordem em que o cliente vai encontrá-los —
+     * incluindo os que ainda não foram liberados na fila. Sem isto o popup só
+     * sabia dizer "Passo 1 de 6" da fila do momento, e o cliente não tinha
+     * ideia de quantas frentes ainda existem.
+     */
+    grupos?: Array<{ id: string; label: string; total: number; concluidos: number }>;
   } | null;
 }
 
@@ -180,6 +187,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   // Posição do grupo entre os grupos do processo, na ordem em que a fila os
   // apresenta. `gruposOrdenados` já preserva essa ordem.
   const grupoOrdem = gruposOrdenados.findIndex((g) => g.id === activeGrupoId) + 1;
+
+  /**
+   * Posição do grupo atual entre os grupos do PROCESSO.
+   *
+   * Diferente de `grupoOrdem`, que conta só os grupos presentes na fila
+   * liberada agora. É este que responde "1 de quantos grupos faltam".
+   */
+  const gruposProcesso = resumoProcesso?.grupos ?? [];
+  const grupoNoProcesso = (() => {
+    if (gruposProcesso.length < 2) return null;
+    const i = gruposProcesso.findIndex((g) => g.id === activeGrupoId);
+    if (i < 0) return null;
+    const g = gruposProcesso[i];
+    return {
+      posicao: i + 1,
+      totalGrupos: gruposProcesso.length,
+      total: g.total,
+      concluidos: g.concluidos,
+    };
+  })();
   // UMA EXIGÊNCIA POR VEZ (regra do usuário, 31/07/2026).
   //
   // A navegação livre foi REMOVIDA de propósito: o cliente pulava para a
@@ -347,9 +374,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   via só o nome do grupo e não tinha ideia de quantas frentes
                   ainda existem — "Antecedentes" podia ser a única ou a
                   segunda de seis. */}
-              {gruposOrdenados.length > 1 ? (
+              {grupoNoProcesso ? (
                 <span className="ml-1.5 font-semibold text-[#8A1224]/70">
-                  · GRUPO {grupoOrdem} DE {gruposOrdenados.length}
+                  · GRUPO {grupoNoProcesso.posicao} DE {grupoNoProcesso.totalGrupos}
                 </span>
               ) : null}
             </span>
@@ -500,6 +527,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 ) : null}{" "}
                 neste processo.
               </p>
+              {grupoNoProcesso ? (
+                <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                  Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
+                  {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
+                  {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
+                </p>
+              ) : null}
             </div>
           ) : total > 1 ? (
             <div className="px-6 py-3 flex justify-between items-center">
