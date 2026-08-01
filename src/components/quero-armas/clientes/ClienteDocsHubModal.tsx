@@ -35,6 +35,10 @@ import {
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
 import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
+import {
+  isDocumentoEmpresa30Dias,
+  isNotaFiscalSemVencimento,
+} from "@/lib/quero-armas/validadeDocumento";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
 import {
