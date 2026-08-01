@@ -72,6 +72,12 @@ interface Props {
   open: boolean;
   pendencias: PendenciaItem[];
   onDismiss: () => void;
+  /**
+   * Quando true o popup vira obrigatório: sem botão de fechar e sem dispensar
+   * clicando fora. Usado enquanto houver contrato ou procuração pendente de
+   * assinatura — o cliente só usa o portal depois de cumprir a obrigação.
+   */
+  bloqueante?: boolean;
   /** Id da pendência que deve aparecer primeiro (ex.: doc clicado pelo cliente). */
   pinnedId?: string | null;
   /**
@@ -142,7 +148,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso }: Props) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso, bloqueante = false }: Props) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
@@ -345,21 +351,23 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       role="dialog"
       aria-modal="true"
       data-qa-overlay
-      onClick={onDismiss}
+      onClick={bloqueante ? undefined : onDismiss}
     >
       <div
         className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="absolute top-3 right-3 z-20 p-2 rounded-full text-[#6A6A6A] hover:bg-black/5 transition-colors"
-          aria-label="Fechar"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {/* Close button — some no modo bloqueante (assinatura obrigatória) */}
+        {bloqueante ? null : (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="absolute top-3 right-3 z-20 p-2 rounded-full text-[#6A6A6A] hover:bg-black/5 transition-colors"
+            aria-label="Fechar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
 
         {/* Header */}
         <div className="px-6 pt-8 pb-4 shrink-0">

@@ -486,6 +486,9 @@ export default function QAClientePortalPage() {
     setShowContratoPopup(true);
   };
   const dismissPendenciasGuiadas = () => {
+    // Contrato/procuração pendentes são obrigações bloqueantes: o popup não
+    // pode ser dispensado até a assinatura ser enviada.
+    if (pendingContractsLoaded && pendingSignatureDocs.length > 0) return;
     setPendenciasGuiadasDismissed(true);
     setShowContratoPopup(false);
     setPinnedPendenciaId(null);
@@ -2483,11 +2486,19 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
+    // Assinatura pendente é obrigação bloqueante: reabre sempre, ignorando
+    // qualquer dispensa anterior do cliente.
+    if (pendingSignatureCount > 0) {
+      sessionStorage.removeItem("qa:pendencias-dismissed");
+      setPendenciasGuiadasDismissed(false);
+      setShowContratoPopup(true);
+      return;
+    }
     // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) cadastro
     // completo, 3) checklist do processo. Sem assinatura pendente, o checklist
     // NUNCA nasce enquanto houver campo crucial do cadastro em branco — mesmo
     // que o modal cadastral ainda não tenha sido aberto ou tenha sido fechado.
-    if (pendingSignatureCount === 0 && (showChecklistCadastral || cadastroCrucialIncompleto)) return;
+    if (showChecklistCadastral || cadastroCrucialIncompleto) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
   }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed]);
@@ -3921,7 +3932,17 @@ export default function QAClientePortalPage() {
         </div>
       ) : null}
       <PendenciasGuiadasPopup
-        open={!mustChangePassword && showContratoPopup && pendenciasGuiadasCount > 0}
+        open={
+          !mustChangePassword &&
+          (showContratoPopup ||
+            (pendingContractsLoaded &&
+              pendingSignatureCount > 0 &&
+              !showAddDoc &&
+              !showCadastroModal &&
+              !showChecklistCadastral)) &&
+          pendenciasGuiadasCount > 0
+        }
+        bloqueante={pendingContractsLoaded && pendingSignatureCount > 0}
         pendencias={pendenciasGuiadas}
         pinnedId={pinnedPendenciaId}
         ufCliente={(cliente as any)?.estado ?? null}
