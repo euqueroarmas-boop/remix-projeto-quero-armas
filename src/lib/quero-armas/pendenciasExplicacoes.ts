@@ -479,24 +479,36 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   cin: {
     titulo: "Documento oficial de identidade",
     passos: [
-      "Envie um documento oficial com foto, CPF e data de nascimento (CIN, RG com CPF ou CNH).",
-      "O arquivo deve estar legível, colorido e mostrar frente e verso.",
+      "Entre no gov.br (site ou aplicativo) com o seu CPF e senha e conclua a verificação em duas etapas, se pedirem.",
+      "No aplicativo gov.br, toque em \"Carteira de Documentos\". Pelo site, acesse gov.br/carteiradedocumentos.",
+      "Abra o documento de identidade que você tem cadastrado ali: CIN (Carteira de Identidade Nacional), RG digital ou CNH digital.",
+      "Toque em \"Baixar\", \"Exportar PDF\" ou \"Compartilhar\" e escolha salvar em PDF — nunca tire foto nem print da tela.",
+      "O PDF baixado sai com o QR Code de verificação do gov.br. É exatamente esse arquivo que você deve enviar aqui.",
     ],
-    observacao: "Aceita-se PDF ou foto nítida do documento original.",
+    observacao:
+      "Aceita-se SOMENTE o PDF com QR Code emitido pela Carteira de Documentos do gov.br. Foto, print ou digitalização do documento físico são recusados automaticamente pelo sistema.",
   },
   rg_com_cpf: {
     titulo: "RG com CPF (ou CIN)",
     passos: [
-      "Envie o RG com CPF impresso (frente e verso) ou a nova CIN.",
-      "O documento deve estar dentro da validade e sem cortes.",
+      "Acesse o gov.br com CPF e senha e abra a \"Carteira de Documentos\" (aplicativo gov.br ou gov.br/carteiradedocumentos).",
+      "Selecione o RG digital ou a CIN (Carteira de Identidade Nacional).",
+      "Use \"Baixar\" / \"Exportar PDF\" e salve o arquivo — o PDF sai com o QR Code de verificação.",
+      "Envie esse PDF aqui, sem editar, cortar ou converter em imagem.",
     ],
+    observacao:
+      "Somente o PDF com QR Code da Carteira de Documentos do gov.br é aceito. Foto ou print do documento físico é recusado.",
   },
   cnh: {
     titulo: "CNH válida",
     passos: [
-      "Envie a CNH dentro do prazo de validade, frente e verso.",
-      "Aceita-se a CNH digital exportada em PDF pelo aplicativo oficial.",
+      "Acesse o gov.br com CPF e senha e abra a \"Carteira de Documentos\" (ou o aplicativo Carteira Digital de Trânsito).",
+      "Abra a CNH digital e toque em \"Baixar\" / \"Exportar PDF\".",
+      "Confira que a CNH está dentro do prazo de validade antes de enviar.",
+      "Envie o PDF exportado, que já vem com o QR Code de verificação.",
     ],
+    observacao:
+      "Somente o PDF com QR Code oficial é aceito. Foto da CNH física, print ou digitalização são recusados.",
   },
   cpf: {
     titulo: "Comprovante de CPF",

@@ -7092,6 +7092,83 @@ export type Database = {
           },
         ]
       }
+      qa_habitualidade_alertas_ativos: {
+        Row: {
+          ativo: boolean
+          calculado_em: string
+          cliente_id: number
+          competicoes_validas: number | null
+          created_at: string
+          dados_json: Json
+          id: string
+          marco_hash: string
+          motivo: string | null
+          nivel_atual: string | null
+          nivel_sugerido: string | null
+          periodo_ref: string | null
+          prioridade: number
+          proxima_acao: string | null
+          resolvido_em: string | null
+          template_name: string
+          tipo_arma_ancora: string | null
+          titulo: string
+          treinos_validos: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          calculado_em?: string
+          cliente_id: number
+          competicoes_validas?: number | null
+          created_at?: string
+          dados_json?: Json
+          id?: string
+          marco_hash: string
+          motivo?: string | null
+          nivel_atual?: string | null
+          nivel_sugerido?: string | null
+          periodo_ref?: string | null
+          prioridade?: number
+          proxima_acao?: string | null
+          resolvido_em?: string | null
+          template_name: string
+          tipo_arma_ancora?: string | null
+          titulo: string
+          treinos_validos?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          calculado_em?: string
+          cliente_id?: number
+          competicoes_validas?: number | null
+          created_at?: string
+          dados_json?: Json
+          id?: string
+          marco_hash?: string
+          motivo?: string | null
+          nivel_atual?: string | null
+          nivel_sugerido?: string | null
+          periodo_ref?: string | null
+          prioridade?: number
+          proxima_acao?: string | null
+          resolvido_em?: string | null
+          template_name?: string
+          tipo_arma_ancora?: string | null
+          titulo?: string
+          treinos_validos?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_habitualidade_alertas_ativos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_habitualidade_alertas_enviados: {
         Row: {
           cliente_id: number
