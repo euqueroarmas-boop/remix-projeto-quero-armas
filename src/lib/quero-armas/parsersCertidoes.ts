@@ -568,39 +568,83 @@ function situacao(t: string): string | undefined {
   return s && /ATIVA|BAIXADA|SUSPENSA|INAPTA|NULA/.test(s) ? s : undefined;
 }
 
+/**
+ * Documentos oficiais em layout de FORMULÁRIO (CCMEI, cartão CNPJ, QSA,
+ * DANFSe): o rótulo fica em uma linha e o valor na linha seguinte, em
+ * colunas separadas por espaços. Retorna a primeira linha útil após o rótulo.
+ */
+function linhaAposRotulo(texto: string, rotulo: RegExp): string | undefined {
+  const linhas = texto.split(/\r?\n/);
+  const i = linhas.findIndex((l) => rotulo.test(l));
+  if (i < 0) return undefined;
+  for (let j = i + 1; j < Math.min(i + 5, linhas.length); j++) {
+    const v = linhas[j].trim();
+    if (v && !/^[-\s]+$/.test(v)) return v;
+  }
+  return undefined;
+}
+
+const RE_CPF = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
+const RE_CNPJ = /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/;
+const RE_DATA = /\b\d{2}\/\d{2}\/\d{4}\b/;
+const RE_SIT = /\b(ATIVA|BAIXADA|SUSPENSA|INAPTA|NULA)\b/i;
+
 function parseCcmei(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const linha = (re: RegExp) => linhaAposRotulo(t, re);
+  const linhaCpf = linha(/^\s*Nome\s+Civil\b/im);
+  const linhaCnpj = linha(/^\s*CNPJ\b/im);
+  const linhaSit = linha(/Situa[cç][aã]o\s+Cadastral\s+Vigente/i);
   return {
     orgao: "ccmei",
     tipoDocumento: "renda_ccmei",
-    nome_titular: upperOrUndef(g(/Nome\s+(?:Empresarial|do\s+Empres[aá]rio)\s*:?\s*(.+)$/im)),
-    cpf: cpf11(g(/CPF\s*:?\s*([\d.\-]+)/i)),
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    nome_titular: upperOrUndef(
+      linhaCpf?.replace(RE_CPF, "").trim() ||
+        g(/Nome\s+(?:Empresarial|do\s+Empres[aá]rio)\s*:?\s*(.+)$/im),
+    ),
+    cpf: cpf11(g(/CPF\s*:?\s*([\d.\-]+)/i) ?? linhaCpf?.match(RE_CPF)?.[0]),
+    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i) ?? linhaCnpj?.match(RE_CNPJ)?.[0]),
     razao_social: upperOrUndef(g(/Nome\s+Empresarial\s*:?\s*(.+)$/im)),
     nome_fantasia: upperOrUndef(g(/Nome\s+Fantasia\s*:?\s*(.+)$/im)),
-    situacao_cadastral: situacao(t),
-    data_abertura: iso(g(/Data\s+de\s+(?:In[ií]cio\s+de\s+Atividades|Abertura)\s*:?\s*([\d/]+)/i)),
+    situacao_cadastral: situacao(t) ?? linhaSit?.match(RE_SIT)?.[1]?.toUpperCase(),
+    data_abertura: iso(
+      g(/Data\s+de\s+(?:In[ií]cio\s+de\s+Atividades|Abertura)\s*:?\s*([\d/]+)/i) ??
+        linhaCnpj?.match(RE_DATA)?.[0],
+    ),
     ocupacao_principal: upperOrUndef(g(/Ocupa[cç][aã]o\s+Principal\s*:?\s*(.+)$/im)),
-    data_emissao: iso(g(/(?:Emitido|Data\s+de\s+emiss[aã]o)\s*(?:em)?\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(
+      g(/(?:Emitido(?:\s+no\s+dia)?|Data\s+de\s+emiss[aã]o)\s*(?:em)?\s*:?\s*([\d/]+)/i),
+    ),
   };
 }
 
 function parseCartaoCnpj(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const linha = (re: RegExp) => linhaAposRotulo(t, re);
+  const linhaInscricao = linha(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O/i);
+  const linhaSit = linha(/^\s*SITUA[CÇ][AÃ]O CADASTRAL\b/im);
   return {
     orgao: "cartao_cnpj",
     tipoDocumento: "renda_cartao_cnpj",
-    cnpj: cnpj14(g(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O\s*:?\s*([\d./\-]+)/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    cnpj: cnpj14(
+      g(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O\s*:?\s*([\d./\-]+)/i) ??
+        g(/CNPJ\s*:?\s*([\d./\-]+)/i) ??
+        linhaInscricao?.match(RE_CNPJ)?.[0],
+    ),
+    razao_social: upperOrUndef(
+      g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im) ?? linha(/^\s*NOME EMPRESARIAL\b/im),
+    ),
     nome_fantasia: upperOrUndef(g(/T[IÍ]TULO DO ESTABELECIMENTO[^:]*:?\s*(.+)$/im)),
-    situacao_cadastral: situacao(t),
-    data_abertura: iso(g(/DATA DE ABERTURA\s*:?\s*([\d/]+)/i)),
+    situacao_cadastral: situacao(t) ?? linhaSit?.match(RE_SIT)?.[1]?.toUpperCase(),
+    data_abertura: iso(
+      g(/DATA DE ABERTURA\s*:?\s*([\d/]+)/i) ?? linhaInscricao?.match(RE_DATA)?.[0],
+    ),
     ocupacao_principal: upperOrUndef(
       g(/ATIVIDADE ECON[OÔ]MICA PRINCIPAL\s*:?\s*(.+)$/im),
     ),
-    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i) ?? linha(/Emitido no dia/i)?.match(RE_DATA)?.[0]),
   };
 }
 
@@ -618,10 +662,19 @@ function parseQsa(texto: string): CamposCertidao {
   return {
     orgao: "qsa",
     tipoDocumento: "renda_qsa",
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    cnpj: cnpj14(
+      g(/CNPJ\s*:?\s*([\d./\-]+)/i) ??
+        linhaAposRotulo(t, /N[UÚ]MERO DE INSCRI[CÇ][AÃ]O/i)?.match(RE_CNPJ)?.[0] ??
+        t.match(RE_CNPJ)?.[0],
+    ),
+    razao_social: upperOrUndef(
+      g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im) ?? linhaAposRotulo(t, /^\s*NOME EMPRESARIAL\b/im),
+    ),
     socios: socios.length ? socios : undefined,
-    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(
+      g(/Emitido no dia\s*:?\s*([\d/]+)/i) ??
+        linhaAposRotulo(t, /Emitido no dia/i)?.match(RE_DATA)?.[0],
+    ),
   };
 }
 
