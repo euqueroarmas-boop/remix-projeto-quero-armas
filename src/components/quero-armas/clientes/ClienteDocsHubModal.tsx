@@ -3023,7 +3023,20 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {rejeitadoDuplicidade ? (
+            {titularDivergente ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Rejeitado · documento de outro titular</div>
+                  <div>
+                    Os dados lidos no documento <b>não são do interessado</b> deste processo
+                    (nome e/ou CPF divergem do cadastro). O documento não será salvo nem
+                    enviado para análise. Anexe o documento em nome do próprio titular
+                    {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
+                  </div>
+                </div>
+              </div>
+            ) : rejeitadoDuplicidade ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
