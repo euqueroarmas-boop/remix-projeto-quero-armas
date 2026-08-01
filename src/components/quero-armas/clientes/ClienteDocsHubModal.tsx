@@ -1250,6 +1250,8 @@ export function ClienteDocsHubModal({
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
+  const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
