@@ -3934,7 +3934,12 @@ export default function QAClientePortalPage() {
       <PendenciasGuiadasPopup
         open={
           !mustChangePassword &&
-          (showContratoPopup || (pendingContractsLoaded && pendingSignatureCount > 0)) &&
+          (showContratoPopup ||
+            (pendingContractsLoaded &&
+              pendingSignatureCount > 0 &&
+              !showAddDoc &&
+              !showCadastroModal &&
+              !showChecklistCadastral)) &&
           pendenciasGuiadasCount > 0
         }
         bloqueante={pendingContractsLoaded && pendingSignatureCount > 0}
