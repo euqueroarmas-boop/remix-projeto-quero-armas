@@ -478,23 +478,26 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   // Identidade
   cin: {
     titulo: "Documento oficial de identidade",
+    siteUrl: "https://www.gov.br",
     passos: [
-      "Entre no gov.br (site ou aplicativo) com o seu CPF e senha e conclua a verificação em duas etapas, se pedirem.",
-      "No aplicativo gov.br, toque em \"Carteira de Documentos\". Pelo site, acesse https://servicos.acesso.gov.br/carteira.",
-      "Abra o documento de identidade que você tem cadastrado ali: CIN (Carteira de Identidade Nacional), RG digital ou CNH digital.",
-      "Toque em \"Baixar\", \"Exportar PDF\" ou \"Compartilhar\" e escolha salvar em PDF — nunca tire foto nem print da tela.",
-      "O PDF baixado sai com o QR Code de verificação do gov.br. É exatamente esse arquivo que você deve enviar aqui.",
+      "Entre no gov.br pelo site ou aplicativo com o seu CPF e senha e conclua a verificação em duas etapas, se pedirem.",
+      "Depois de entrar, procure a área de \"Atalhos\" e abra \"Carteira de Documentos\".",
+      "Na Carteira de Documentos, abra a CIN (Carteira de Identidade Nacional) ou a CNH digital que estiver disponível na sua conta.",
+      "Dentro do documento, toque em \"Baixar\", \"Exportar PDF\" ou \"Compartilhar\" e escolha salvar em PDF.",
+      "Envie aqui somente o PDF baixado pelo gov.br, com QR Code de verificação. Não envie foto, print da tela nem digitalização do documento físico.",
     ],
     observacao:
       "Aceita-se SOMENTE o PDF com QR Code emitido pela Carteira de Documentos do gov.br. Foto, print ou digitalização do documento físico são recusados automaticamente pelo sistema.",
   },
   rg_com_cpf: {
-    titulo: "RG com CPF (ou CIN)",
+    titulo: "Documento oficial de identidade com CPF",
+    siteUrl: "https://www.gov.br",
     passos: [
-      "Acesse o gov.br com CPF e senha e abra a \"Carteira de Documentos\" pelo aplicativo gov.br ou por https://servicos.acesso.gov.br/carteira.",
-      "Selecione o RG digital ou a CIN (Carteira de Identidade Nacional).",
-      "Use \"Baixar\" / \"Exportar PDF\" e salve o arquivo — o PDF sai com o QR Code de verificação.",
-      "Envie esse PDF aqui, sem editar, cortar ou converter em imagem.",
+      "Entre no gov.br pelo site ou aplicativo com o seu CPF e senha.",
+      "Abra \"Atalhos\" e toque em \"Carteira de Documentos\".",
+      "Selecione a CIN (Carteira de Identidade Nacional) ou a CNH digital disponível na sua conta.",
+      "Use \"Baixar\", \"Exportar PDF\" ou \"Compartilhar\" e salve o arquivo em PDF.",
+      "Envie esse PDF aqui, sem editar, cortar, fotografar ou converter em imagem.",
     ],
     observacao:
       "Somente o PDF com QR Code da Carteira de Documentos do gov.br é aceito. Foto ou print do documento físico é recusado.",

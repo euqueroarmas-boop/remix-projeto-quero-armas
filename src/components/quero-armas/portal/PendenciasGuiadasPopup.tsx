@@ -379,10 +379,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       : "Entregar documento");
 
   const passoAtual = atual + 1;
-  // "Passo N de M" era lido como "N de M dentro deste grupo" e brigava com o
-  // "0 de 4 itens concluídos" logo abaixo (fila inteira × grupo atual).
-  const passoLabel = `Pendência ${passoAtual} de ${total} na fila`;
   const faltam = total - passoAtual;
+  const totalItensGrupo = grupoNoProcesso?.total ?? totalNoGrupo;
+  const concluidosGrupo = grupoNoProcesso?.concluidos ?? Math.max(0, posicaoNoGrupo - 1);
+  const pendenciasGrupo = Math.max(0, totalItensGrupo - concluidosGrupo);
+  const pendenciasGrupoLabel = `${pendenciasGrupo} pendência${pendenciasGrupo === 1 ? "" : "s"}`;
 
   return (
     <div
@@ -434,9 +435,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
-            {total > 1 ? (
+            {pendenciasGrupo > 0 ? (
               <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
-                {passoLabel}
+                {pendenciasGrupoLabel}
               </span>
             ) : null}
           </div>
