@@ -1205,7 +1205,7 @@ export function ClienteDocsHubModal({
     let cancelled = false;
     supabase
       .from("qa_documentos_cliente" as any)
-      .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos")
+      .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos, data_emissao, numero_documento")
       .eq("qa_cliente_id", qaClienteId)
       .eq("status", "aprovado")
       .then(({ data }) => {
@@ -1345,6 +1345,57 @@ export function ClienteDocsHubModal({
   );
   // Bloqueio duro da prévia: divergente do slot E já entregue antes.
   const rejeitadoDuplicidade = docDuplicado;
+
+  // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
+  // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
+  // canônica: a emissão do QSA é a MESMA do Cartão CNPJ aprovado no Hub
+  // (ambos saem da mesma consulta da Receita). Validade = emissão + 30 dias.
+  useEffect(() => {
+    if (!open || !qaClienteId) return;
+    const tipo = String(form.tipo_documento || "");
+    const isQsa = tipo === "renda_qsa" || tipo.includes("qsa");
+    if (!isQsa || form.data_emissao) return;
+    let cancelled = false;
+    (async () => {
+      // 1) tenta a lista já carregada
+      const localCnpj = docsEfetivos
+        .filter(
+          (d: any) =>
+            String(d.status || "") === "aprovado" &&
+            ["renda_cartao_cnpj", "cartao_cnpj_mei", "cartao_cnpj"].includes(String(d.tipo_documento || "")),
+        )
+        .sort((a: any, b: any) =>
+          String(b.data_emissao || b.updated_at || "").localeCompare(String(a.data_emissao || a.updated_at || "")),
+        )[0];
+      let emissao: string | null = localCnpj?.data_emissao ? String(localCnpj.data_emissao).slice(0, 10) : null;
+      // 2) fallback: busca direta (a lista pode vir por prop, sem data_emissao)
+      if (!emissao) {
+        const { data } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("data_emissao, tipo_documento, updated_at")
+          .eq("qa_cliente_id", qaClienteId)
+          .eq("status", "aprovado")
+          .in("tipo_documento", ["renda_cartao_cnpj", "cartao_cnpj_mei", "cartao_cnpj"])
+          .order("data_emissao", { ascending: false })
+          .limit(1);
+        const row = (data as any[])?.[0];
+        emissao = row?.data_emissao ? String(row.data_emissao).slice(0, 10) : null;
+      }
+      if (cancelled || !emissao) return;
+      setForm((prev) => {
+        if (prev.data_emissao) return prev;
+        return {
+          ...prev,
+          data_emissao: emissao as string,
+          data_validade: prev.data_validade || addDaysIso(emissao as string, 30) || prev.data_validade,
+          orgao_emissor: prev.orgao_emissor || "Receita Federal do Brasil",
+        };
+      });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, qaClienteId, form.tipo_documento, form.data_emissao, docsEfetivos.length]);
+
   const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
   const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
   // CR e Autorização de Compra PRECEDEM a arma — não exigir dados da arma.
