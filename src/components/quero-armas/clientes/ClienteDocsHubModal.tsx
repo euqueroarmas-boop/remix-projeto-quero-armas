@@ -330,6 +330,44 @@ const TIPOS_EMPRESARIAIS = new Set([
 
 const PARTICULAS_NOME = new Set(["DE", "DA", "DO", "DAS", "DOS", "E"]);
 
+const PREFIXOS_LOGRADOURO = /\b(RUA|R|AVENIDA|AV|TRAVESSA|TV|ALAMEDA|AL|PRACA|ESTRADA|ROD|RODOVIA|VIELA|VILA)\b/g;
+
+/**
+ * Normaliza endereço para comparação estrutural: remove acento, prefixo de
+ * logradouro, pontuação e complemento textual. "RUA ANTONIO MIGLIORI, 117,
+ * JARDIM SAO JOAO" e "ANTONIO MIGLIORI, 117, JARDIM SAO JOAO" viram a mesma
+ * chave — é o caso real da NFS-e em que prestador e tomador moram juntos.
+ */
+function normEndereco(s?: string | null): string {
+  if (!s) return "";
+  return normalizeStr(s)
+    .replace(PREFIXOS_LOGRADOURO, " ")
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Dois endereços são o mesmo quando batem normalizados ou pelo CEP + número. */
+function mesmoEnderecoDoc(
+  endA?: string | null,
+  cepA?: string | null,
+  endB?: string | null,
+  cepB?: string | null,
+): boolean {
+  const a = normEndereco(endA);
+  const b = normEndereco(endB);
+  if (a && b && a === b) return true;
+  const ca = String(cepA || "").replace(/\D/g, "");
+  const cb = String(cepB || "").replace(/\D/g, "");
+  if (ca.length === 8 && ca === cb) {
+    const numA = a.match(/\b\d{1,6}\b/)?.[0];
+    const numB = b.match(/\b\d{1,6}\b/)?.[0];
+    // Mesmo CEP já é forte; mesmo CEP + mesmo número é conclusivo.
+    if (!numA || !numB || numA === numB) return true;
+  }
+  return false;
+}
+
 /**
  * Parentesco: nomes diferentes que compartilham sobrenome de família
  * (ex.: GILSON DO NASCIMENTO × RYAN DIAS DO NASCIMENTO).
