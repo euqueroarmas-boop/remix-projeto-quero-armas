@@ -124,7 +124,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_holerite_mes_atual", label: "Holerite mais recente", short: "HOLERITE", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_holerite_funcionario_publico", label: "Holerite recente (servidor público)", short: "HOL. SERVIDOR", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_carteira_funcional", label: "Carteira funcional (servidor público)", short: "CART. FUNCIONAL", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
-  { value: "renda_cartao_cnpj", label: "Cartão CNPJ", short: "CNPJ", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_cartao_cnpj", label: "Comprovante de Inscrição e de Situação Cadastral do CNPJ", short: "CNPJ", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_qsa", label: "QSA — Quadro de Sócios e Administradores", short: "QSA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_contrato_social", label: "Contrato Social / Requerimento de Empresário", short: "CONTRATO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_ficha_cadastral_jucesp", label: "Ficha Cadastral Completa (Junta Comercial)", short: "FICHA JUNTA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },

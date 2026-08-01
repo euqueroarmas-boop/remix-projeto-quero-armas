@@ -701,7 +701,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Não envie prints do app nem fotos do canhoto do banco. Precisa ser o PDF oficial baixado direto do sistema do INSS ou do órgão pagador, do mês vigente ou do anterior.",
   },
   renda_cartao_cnpj: {
-    titulo: "Cartão CNPJ",
+    titulo: "Comprovante de Inscrição e de Situação Cadastral do CNPJ",
     passos: [
       "É o \"Comprovante de Inscrição e de Situação Cadastral\" do seu CNPJ (MEI, autônomo com CNPJ ou empresa). Ele prova que a sua atividade está ATIVA na Receita Federal.",
       "Use o botão de emissão abaixo (ou o link oficial acima, do site da Receita Federal) — é o único endereço válido para emitir o comprovante.",
