@@ -6492,6 +6492,11 @@ export type Database = {
           cadastrado_por_nome: string | null
           cliente_id: number
           created_at: string
+          credenciado_id: string | null
+          credenciado_nome: string | null
+          credenciado_origem: string | null
+          credenciado_registro: string | null
+          data_agendada: string | null
           data_realizacao: string
           data_vencimento: string
           id: string
@@ -6504,6 +6509,11 @@ export type Database = {
           cadastrado_por_nome?: string | null
           cliente_id: number
           created_at?: string
+          credenciado_id?: string | null
+          credenciado_nome?: string | null
+          credenciado_origem?: string | null
+          credenciado_registro?: string | null
+          data_agendada?: string | null
           data_realizacao: string
           data_vencimento: string
           id?: string
@@ -6516,6 +6526,11 @@ export type Database = {
           cadastrado_por_nome?: string | null
           cliente_id?: number
           created_at?: string
+          credenciado_id?: string | null
+          credenciado_nome?: string | null
+          credenciado_origem?: string | null
+          credenciado_registro?: string | null
+          data_agendada?: string | null
           data_realizacao?: string
           data_vencimento?: string
           id?: string
