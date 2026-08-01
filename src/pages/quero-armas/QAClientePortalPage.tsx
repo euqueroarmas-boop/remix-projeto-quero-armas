@@ -483,7 +483,15 @@ export default function QAClientePortalPage() {
     }
     sessionStorage.removeItem("qa:pendencias-dismissed");
     setPendenciasGuiadasDismissed(false);
-    if (opts?.pinnedId !== undefined) setPinnedPendenciaId(opts.pinnedId);
+    // REGRA DE NEGÓCIO: contrato e procuração vêm SEMPRE primeiro. Um pin
+    // vindo de card/kanban (ex.: uma declaração) não pode furar a fila
+    // enquanto houver assinatura pendente — a única exceção é pinar a
+    // própria assinatura (`sig:*`).
+    if (opts?.pinnedId !== undefined) {
+      const pin = opts.pinnedId;
+      const ehAssinatura = typeof pin === "string" && pin.startsWith("sig:");
+      setPinnedPendenciaId(pendingSignatureCount > 0 && !ehAssinatura ? null : pin);
+    }
     setShowContratoPopup(true);
   };
   const dismissPendenciasGuiadas = () => {
