@@ -2550,6 +2550,7 @@ export function ClienteDocsHubModal({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
       <DialogContent
         style={modalTheme}
