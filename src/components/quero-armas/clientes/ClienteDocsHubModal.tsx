@@ -2602,11 +2602,11 @@ export function ClienteDocsHubModal({
         payload.validado_admin = false;
       }
 
-      // Documento do MESMO TIPO já entregue = SUBSTITUIÇÃO, nunca duplicata.
-      // Sem esta trava o Hub inseria uma segunda linha aprovada do mesmo tipo
-      // (ex.: dois cartões CNPJ), e o checklist passava a contar dois
-      // documentos onde a PF exige um só.
-      let alvoSubstituicao: string | null = substituirDocumentoId ?? null;
+      // Documento do MESMO TIPO já entregue: NÃO salva. O envio é bloqueado e o
+      // cliente é avisado para excluir o documento anterior antes de enviar o
+      // correto. Salvar por cima gerava duas linhas aprovadas do mesmo tipo
+      // (ex.: dois cartões CNPJ) — a PF exige um só.
+      const alvoSubstituicao: string | null = substituirDocumentoId ?? null;
       if (!alvoSubstituicao && qaClienteId && form.tipo_documento) {
         const { data: jaEnviados } = await supabase
           .from("qa_documentos_cliente" as any)
@@ -2614,9 +2614,12 @@ export function ClienteDocsHubModal({
           .eq("qa_cliente_id", qaClienteId)
           .eq("tipo_documento", form.tipo_documento)
           .in("status", ["aprovado", "pendente_aprovacao"])
-          .order("created_at", { ascending: false })
           .limit(1);
-        alvoSubstituicao = (jaEnviados as any)?.[0]?.id ?? null;
+        if ((jaEnviados as any)?.length) {
+          throw new Error(
+            "Este documento já foi enviado e consta no seu Hub Documental. Exclua o documento anterior e envie o correto no lugar.",
+          );
+        }
       }
       if (alvoSubstituicao) {
         payload.substitui_documento_id = alvoSubstituicao;
@@ -2652,9 +2655,6 @@ export function ClienteDocsHubModal({
           })
           .eq("id", alvoSubstituicao);
         if (subErr) console.warn("[hub] falha ao marcar documento anterior como substituído:", subErr);
-        if (!substituirDocumentoId) {
-          toast.info("Já havia um documento deste tipo. O anterior foi arquivado e este passou a valer.");
-        }
       }
 
       // Promoção para o Arsenal operacional (qa_crafs) quando o documento for
