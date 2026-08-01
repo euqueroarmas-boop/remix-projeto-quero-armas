@@ -782,7 +782,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Baixe o PDF da NFS-e ou o DANFE da NF-e — os dois formatos são aceitos.",
       "Confira que aparecem: seu CNPJ como emitente, o cliente (tomador), o valor, a descrição do serviço/produto e a data de emissão.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF. Se quiser reforçar, pode juntar mais notas num único PDF (ilovepdf.com → \"Juntar PDF\").",
-      "Ficou em dúvida sobre qual nota enviar ou não tem acesso ao emissor? Entre em contato com o seu contador e solicite uma nota fiscal emitida pela empresa em qualquer período — ele envia o PDF por e-mail.",
+      "Ficou em dúvida sobre qual nota enviar ou não tem acesso ao emissor? Entre em contato com o seu contador e solicite uma nota fiscal emitida pela empresa em qualquer período — ele envia o PDF por e-mail. Aviso ao contador: nota fiscal não tem prazo de validade e pode ser de qualquer período; já os demais documentos de ocupação lícita e renda precisam ter no máximo 30 dias de emissão.",
     ],
     observacao: "Uma nota basta e ela NÃO vence: pode ser de qualquer período, desde que esteja legível e não cancelada. Em caso de dúvida, peça ao seu contador uma nota fiscal emitida pela empresa em qualquer período.",
   },
