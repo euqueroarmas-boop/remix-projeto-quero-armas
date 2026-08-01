@@ -5,6 +5,10 @@ import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
 import { sendTransactional } from "../_shared/sendTransactional.ts";
 
+// Caixa da equipe. Mesmo endereço que o notifyAdminUpload já usa, para não
+// espalhar destinatário administrativo por vários lugares.
+const EMAIL_EQUIPE = "eu@queroarmas.com.br";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -121,6 +125,40 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (docErr || !doc) return json({ error: "Documento não encontrado", traceId }, 404);
+
+    // ── ALERTA INTERNO: vai para a EQUIPE, nunca para o cliente ──────────
+    //
+    // Regra do usuário (01/08/2026): quando o credenciado do laudo não é
+    // encontrado no cadastro da PF, o cliente AVANÇA e não é alarmado. Quem
+    // decide se há problema é a equipe — e, se houver, é a equipe que avisa.
+    //
+    // Fica aqui, e não numa função nova, porque este endpoint já é chamado
+    // pelo mesmo modal que faz a conferência do laudo.
+    const alertaEquipe = String(body?.alerta_equipe || "").trim();
+    if (alertaEquipe) {
+      const resultEquipe = await sendTransactional({
+        templateName: "documento-status-cliente",
+        recipientEmail: EMAIL_EQUIPE,
+        idempotencyKey: `${traceId}-${documentoId}-alerta-equipe`,
+        templateData: {
+          nome: "Equipe Quero Armas",
+          documento: nomeDocumento(doc),
+          status: "alerta_interno",
+          motivo:
+            `Cliente ${String(body?.cliente_nome || "").trim() || doc.qa_cliente_id || "—"} enviou ` +
+            `${nomeDocumento(doc)}. ${alertaEquipe} Conferir manualmente antes de protocolar. ` +
+            `O cliente NÃO foi avisado.`,
+          portalUrl: "https://euqueroarmas.com.br/admin",
+        },
+      });
+      await logSistemaBackend({
+        tipo: "email",
+        status: resultEquipe.ok ? "success" : "error",
+        mensagem: `Alerta interno de laudo enviado à equipe: ${EMAIL_EQUIPE}`,
+        payload: { trace_id: traceId, documento_id: documentoId, alerta: alertaEquipe, queued: resultEquipe.queued, error: resultEquipe.error },
+      }).catch(() => {});
+      return json({ ok: true, destinatario: "equipe", traceId });
+    }
 
     const status = statusInformado || String(doc.status || "").toLowerCase();
     if (status !== "aprovado" && status !== "reprovado") {

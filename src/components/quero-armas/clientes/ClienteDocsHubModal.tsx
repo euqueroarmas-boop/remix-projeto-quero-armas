@@ -63,6 +63,30 @@ function notificarDocumentoHubAprovado(documentoId?: string | null) {
   }).catch((e) => console.warn("Falha ao notificar aprovação do documento do Hub:", e));
 }
 
+/**
+ * Avisa a EQUIPE — nunca o cliente — quando a conferência do laudo levantou
+ * algo que só nós podemos resolver (hoje: credenciado não localizado no
+ * cadastro da PF).
+ *
+ * Regra do usuário (01/08/2026): o cliente avança sem ser alarmado; a equipe
+ * valida e, se for o caso, a equipe avisa.
+ */
+function alertarEquipeSobreLaudo(
+  documentoId: string | null | undefined,
+  alerta: string | null | undefined,
+  clienteNome?: string | null,
+) {
+  if (!documentoId || !alerta) return;
+  void supabase.functions
+    .invoke("qa-documento-cliente-notificar", {
+      body: { documento_id: documentoId, alerta_equipe: alerta, cliente_nome: clienteNome ?? null },
+    })
+    .then(({ error }) => {
+      if (error) console.warn("Falha ao alertar a equipe sobre o laudo:", error);
+    })
+    .catch((e) => console.warn("Falha ao alertar a equipe sobre o laudo:", e));
+}
+
 // Mapeia o `tipoDetectado` retornado pela edge `qa-classificar-documento-arma`
 // para o `tipo_documento` salvo em `qa_documentos_cliente`.
 const IA_TO_TIPO: Record<string, string> = {
@@ -2460,6 +2484,13 @@ export function ClienteDocsHubModal({
       const novoDocId = (inserted as any)?.id as string | undefined;
       if (isStaff && novoDocId) {
         notificarDocumentoHubAprovado(novoDocId);
+        if (conferenciaLaudo?.veredicto === "aprovado_com_alerta_interno") {
+          alertarEquipeSobreLaudo(
+            novoDocId,
+            conferenciaLaudo.achados.filter((a) => a.interno).map((a) => a.mensagem).join(" "),
+            refClienteNome,
+          );
+        }
       }
 
       // Substituição: marca o documento antigo como 'substituido' e vincula
