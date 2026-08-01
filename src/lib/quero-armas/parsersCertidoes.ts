@@ -107,6 +107,8 @@ export interface CamposCertidao {
   socios?: string[];
   numero_nf?: string;
   valor_nf?: string;
+  /** Chave de acesso de 44 dígitos da NFS-e (padrão nacional / DANFSe). */
+  chave_acesso?: string;
 }
 
 const norm = (v: string) =>
