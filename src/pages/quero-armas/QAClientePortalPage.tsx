@@ -486,6 +486,9 @@ export default function QAClientePortalPage() {
     setShowContratoPopup(true);
   };
   const dismissPendenciasGuiadas = () => {
+    // Contrato/procuração pendentes são obrigações bloqueantes: o popup não
+    // pode ser dispensado até a assinatura ser enviada.
+    if (pendingContractsLoaded && pendingSignatureDocs.length > 0) return;
     setPendenciasGuiadasDismissed(true);
     setShowContratoPopup(false);
     setPinnedPendenciaId(null);
