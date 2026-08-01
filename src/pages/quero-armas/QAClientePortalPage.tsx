@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
-import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import PainelDisparo, { type ItemDisparo } from "@/components/quero-armas/portal/PainelDisparo";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
@@ -575,19 +574,6 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarReloadKey, setAvatarReloadKey] = useState(0);
   const [showFotoModal, setShowFotoModal] = useState(false);
-
-  /**
-   * Questionário da efetiva necessidade.
-   *
-   * A exigência NÃO é "baixe um modelo e assine": é um questionário que chama
-   * primeiro as PROVAS que o cliente já tem — boletim de ocorrência, inquérito,
-   * ação criminal — e só depois pede a narrativa. Pedir o texto no vazio faz o
-   * cliente travar, que era o sintoma original.
-   *
-   * O questionário já existia, ligado ao checklist antigo. Aqui ele passa a ser
-   * aberto também pelo popup guiado, que é a tela que o cliente usa hoje.
-   */
-  const [efetivaNecessidadeProcessoId, setEfetivaNecessidadeProcessoId] = useState<string | null>(null);
 
   const validarContratoAssinadoOuFalhar = async (contractId: string) => {
     const { data, error } = await supabase.functions.invoke("qa-validate-customer-signature", {
@@ -1893,11 +1879,11 @@ export default function QAClientePortalPage() {
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
-        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Responder questionário" : undefined,
+        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Enviar Efetiva necessidade" : undefined,
         onEntregar: () => {
-          // Efetiva necessidade abre o questionário, não o envio de arquivo.
+          // Efetiva necessidade fica no fluxo guiado já existente.
           if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {
-            setEfetivaNecessidadeProcessoId(String(doc.processo_id));
+            abrirChecklistGuiado({ processoId: doc.processo_id, focusDocId: doc.id });
             setShowContratoPopup(false);
             return;
           }
@@ -4130,19 +4116,6 @@ export default function QAClientePortalPage() {
         )}
 
       </main>
-
-      {efetivaNecessidadeProcessoId && cliente?.id ? (
-        <EfetivaNecessidadeModal
-          open
-          processoId={efetivaNecessidadeProcessoId}
-          clienteId={Number(cliente.id)}
-          onClose={() => setEfetivaNecessidadeProcessoId(null)}
-          onConcluido={() => {
-            setEfetivaNecessidadeProcessoId(null);
-            setDocsReloadKey((k) => k + 1);
-          }}
-        />
-      ) : null}
 
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal

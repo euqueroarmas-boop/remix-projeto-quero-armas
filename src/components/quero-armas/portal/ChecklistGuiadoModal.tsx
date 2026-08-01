@@ -400,6 +400,7 @@ export default function ChecklistGuiadoModal({
   const [pularIds, setPularIds] = useState<Set<string>>(new Set());
   const [docAtivoId, setDocAtivoId] = useState<string | null>(null);
   const [efetivaNecessidadePasso, setEfetivaNecessidadePasso] = useState<"intro" | "questionario">("intro");
+  const [efetivaNecessidadeAceite, setEfetivaNecessidadeAceite] = useState(false);
   const [resultadoDoc, setResultadoDoc] = useState<GuiaDoc | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -628,6 +629,7 @@ export default function ChecklistGuiadoModal({
 
   useEffect(() => {
     setEfetivaNecessidadePasso("intro");
+    setEfetivaNecessidadeAceite(false);
   }, [docAtivo?.id]);
 
   const docAtivoReaproveitado = useMemo(() => {
@@ -1745,13 +1747,28 @@ export default function ChecklistGuiadoModal({
                         ocorrência, inquéritos, ações. Com esse material, nossa equipe escreve a peça
                         que fundamenta o seu pedido perante a Polícia Federal.
                       </p>
+                      <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-[#E5C2C6] bg-white/70 px-3 py-2 text-[12px] leading-relaxed text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={efetivaNecessidadeAceite}
+                          onChange={(e) => setEfetivaNecessidadeAceite(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                          style={{ accentColor: MARROM }}
+                        />
+                        <span>
+                          Entendi que a declaração de efetiva necessidade será construída com minhas
+                          respostas e documentos de prova, conforme a Lei 10.826/2003, o Decreto
+                          11.615/2023, o Decreto 12.345/2024 e as Instruções Normativas DG/PF 201 e 311.
+                        </span>
+                      </label>
                       <button
                         type="button"
+                        disabled={!efetivaNecessidadeAceite}
                         onClick={() => setEfetivaNecessidadePasso("questionario")}
-                        className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white"
+                        className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
                         style={{ background: MARROM }}
                       >
-                        Avançar
+                        Concordo e continuar
                         <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -2510,7 +2527,7 @@ function EfetivaNecessidadeInline({
         if (!cancelado) setProvas((ps ?? []) as unknown as ProvaEfetiva[]);
       } catch (e) {
         console.error("[efetiva necessidade] carga:", e);
-        toast.error("Não foi possível abrir o questionário. Tente de novo.");
+        toast.error("Não foi possível carregar a efetiva necessidade. Tente de novo.");
       } finally {
         if (!cancelado) setCarregando(false);
       }
@@ -2750,7 +2767,7 @@ function EfetivaNecessidadeInline({
   if (carregando) {
     return (
       <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-10 text-sm text-slate-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Abrindo questionário…
+        <Loader2 className="h-4 w-4 animate-spin" /> Carregando efetiva necessidade…
       </div>
     );
   }
@@ -2888,7 +2905,7 @@ function EfetivaNecessidadeInline({
         style={{ background: MARROM }}
       >
         {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-        Enviar para equipe
+        Enviar Efetiva necessidade
       </button>
     </div>
   );
