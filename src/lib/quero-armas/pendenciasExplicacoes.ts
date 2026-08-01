@@ -172,9 +172,10 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   },
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
+    siteUrl: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp",
     passos: [
       "É EXATAMENTE O MESMO SITE onde você baixou o Cartão CNPJ (Receita Federal). Você não precisa de outro portal, nem de senha, nem do contador.",
-      "Abra o site no botão abaixo, digite o CNPJ (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
+      "Abra o site da Receita Federal em https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp, digite o CNPJ (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
       "Vai abrir a mesma tela do \"COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL\" — a mesma que você já imprimiu para o Cartão CNPJ.",
       "Role essa tela até o FINAL. Logo abaixo da frase \"Emitido no dia ... (data e hora de Brasília)\" aparecem três botões azuis: CONSULTAR QSA · VOLTAR · IMPRIMIR.",
       "Clique no primeiro botão, \"CONSULTAR QSA\" (o do ícone de duas pessoinhas). A página muda e passa a mostrar o \"QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)\" com os nomes dos sócios.",
