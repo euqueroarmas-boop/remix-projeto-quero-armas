@@ -166,7 +166,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Baixe o DANFE ou o PDF da NFS-e — os dois formatos servem.",
       "Confira que aparecem: razão social + CNPJ da sua empresa, valor da nota e data de emissão.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
-      "Em caso de dúvida, fale com o seu contador e peça uma nota fiscal emitida pela empresa em qualquer período — ele consegue baixar o PDF em minutos.",
+      "Em caso de dúvida, fale com o seu contador e peça uma nota fiscal emitida pela empresa em qualquer período — ele consegue baixar o PDF em minutos. Aviso ao contador: exceto nota fiscal, todos os documentos de ocupação lícita e renda precisam ter no máximo 30 dias de emissão.",
     ],
     observacao: "Serve como comprovação de atividade e faturamento e NÃO tem prazo de validade: qualquer nota fiscal já emitida pela empresa é aceita, mesmo antiga. Só não vale nota cancelada ou ilegível.",
   },
@@ -724,7 +724,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Confira: seu nome, CPF, CNPJ, data de abertura, atividade principal e o QR Code de autenticidade no rodapé.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
-    observacao: "Se você NÃO é MEI (autônomo sem CNPJ ou empresário com contrato social), avise a equipe pelo WhatsApp: trocamos esta exigência pelo documento correto da sua condição. Não envie print nem foto da tela — só o PDF baixado do portal.",
+    observacao: "Se você NÃO é MEI (autônomo sem CNPJ ou empresário com contrato social), avise a equipe pelo WhatsApp: trocamos esta exigência pelo documento correto da sua condição. Não envie print nem foto da tela — só o PDF baixado do portal. Emissão dos últimos 30 dias. Aviso ao contador: exceto nota fiscal, todos os documentos de ocupação lícita e renda precisam ter no máximo 30 dias de emissão.",
   },
   renda_ctps_digital: {
     titulo: "CTPS Digital — Carteira de Trabalho",
