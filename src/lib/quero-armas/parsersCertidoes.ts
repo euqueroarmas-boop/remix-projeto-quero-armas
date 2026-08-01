@@ -162,6 +162,13 @@ function dataPorExtenso(t: string): string | undefined {
 
 export function identificarOrgao(texto: string): OrgaoCertidao | null {
   const t = flat(texto).toUpperCase();
+  /* Ocupação lícita primeiro: são os únicos com CNPJ no cabeçalho, e o
+   * CCMEI precisa vir antes do cartão CNPJ porque também imprime
+   * "SITUACAO CADASTRAL". */
+  if (/CERTIFICADO DA CONDICAO DE MICROEMPREENDEDOR INDIVIDUAL|CCMEI/.test(t)) return "ccmei";
+  if (/QUADRO DE SOCIOS E ADMINISTRADORES/.test(t)) return "qsa";
+  if (/COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL/.test(t)) return "cartao_cnpj";
+  if (/NOTA FISCAL(\s+DE\s+SERVICOS?)?\s*(ELETRONICA)?|NFS-E|DANFE/.test(t)) return "nota_fiscal";
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
