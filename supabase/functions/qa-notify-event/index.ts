@@ -266,6 +266,18 @@ function mapEventoToTemplate(
           portalUrl,
         },
       };
+    case "documento_rejeitado":
+      return {
+        templateName: "documento-rejeitado",
+        templateData: {
+          nome,
+          documento: p.documento || "O documento enviado",
+          arquivo: p.arquivo || "",
+          motivo: (p.motivo_rejeicao || p.motivo || "tipo") as string,
+          detalhes: Array.isArray(p.detalhes) ? p.detalhes : [],
+          portalUrl,
+        },
+      };
   }
   return null;
 }
