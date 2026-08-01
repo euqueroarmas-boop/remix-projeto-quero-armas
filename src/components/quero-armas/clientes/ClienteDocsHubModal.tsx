@@ -32,6 +32,11 @@ import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
 import {
+  conferirLaudo,
+  type ResultadoLaudo,
+  type TipoLaudo,
+} from "@/lib/quero-armas/conferenciaLaudo";
+import {
   parseComprovanteEndereco,
   type ResultadoEndereco,
 } from "@/lib/quero-armas/parserComprovanteEndereco";
@@ -1073,6 +1078,16 @@ export function ClienteDocsHubModal({
    */
   const [enderecoLocal, setEnderecoLocal] = useState<ResultadoEndereco | null>(null);
 
+  /**
+   * Conferência do laudo (psicológico ou tiro).
+   *
+   * Diferente das certidões, o laudo chega como digitalização e os campos vêm
+   * da leitura por IA. Este estado guarda o veredicto para (1) bloquear o
+   * salvamento quando o documento não serve e (2) mostrar à equipe o alerta
+   * que NÃO vai para o cliente.
+   */
+  const [conferenciaLaudo, setConferenciaLaudo] = useState<ResultadoLaudo | null>(null);
+
   const [clienteAutoFetch, setClienteAutoFetch] = useState<{
     nome: string | null;
     cpf: string | null;
@@ -1465,6 +1480,81 @@ export function ClienteDocsHubModal({
         );
       }
       setClassificacao(ia);
+
+      // ── Conferência do laudo ───────────────────────────────────────────
+      // Só para os dois laudos. As certidões já têm a sua, determinística.
+      void (async () => {
+        const tipoIaBruto = String(ia?.tipoDetectado || "").toLowerCase();
+        const tipoLaudo: TipoLaudo | null =
+          tipoIaBruto.includes("psicolog") ? "psicologico"
+          : (tipoIaBruto.includes("capacidade") || tipoIaBruto.includes("tiro")) ? "tiro"
+          : null;
+        if (!tipoLaudo) { setConferenciaLaudo(null); return; }
+
+        const c = (ia.camposExtraidos || {}) as Record<string, string>;
+        const credencial = tipoLaudo === "psicologico" ? c.psicologo_crp : c.instrutor_portaria;
+        const credNome = tipoLaudo === "psicologico" ? c.psicologo_nome : c.instrutor_nome;
+
+        // Credenciado: procura no cadastro da PF que já sincronizamos.
+        // "nao_consultado" quando não há credencial legível — não é motivo
+        // para alarme, só não dá para afirmar nada.
+        let credenciado: "encontrado" | "nao_encontrado" | "nao_consultado" = "nao_consultado";
+        if (credencial) {
+          try {
+            const tabela = tipoLaudo === "psicologico" ? "qa_psico_credenciados" : "qa_iat_credenciados";
+            const alvo = credencial.replace(/\D/g, "");
+            const { data: achados } = await supabase
+              .from(tabela as any)
+              .select("id, nome, registro")
+              .limit(50);
+            const bate = (achados as any[] | null)?.some(
+              (r) => String(r?.registro || "").replace(/\D/g, "").includes(alvo) && alvo.length >= 4,
+            );
+            credenciado = bate ? "encontrado" : "nao_encontrado";
+          } catch {
+            credenciado = "nao_consultado";
+          }
+        }
+
+        // O outro laudo já entregue, para conferir a ordem psicológico → tiro.
+        let outroLaudoRealizacao: string | null = null;
+        try {
+          const outroTipo = tipoLaudo === "psicologico" ? "laudo_capacidade_tecnica" : "laudo_psicologico";
+          const { data: outro } = await supabase
+            .from("qa_documentos_cliente" as any)
+            .select("ia_dados_extraidos")
+            .eq("qa_cliente_id", qaClienteId)
+            .eq("tipo_documento", outroTipo)
+            .eq("status", "aprovado")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          const ce = (outro as any)?.ia_dados_extraidos?.camposExtraidos || {};
+          outroLaudoRealizacao = ce.laudo_data_avaliacao || ce.tiro_data_realizacao || null;
+        } catch { /* sem o outro laudo, a ordem simplesmente não é avaliada */ }
+
+        const resultado = conferirLaudo(
+          {
+            tipo: tipoLaudo,
+            data_realizacao: tipoLaudo === "psicologico" ? c.laudo_data_avaliacao : c.tiro_data_realizacao,
+            data_emissao: tipoLaudo === "psicologico" ? c.data_emissao : c.tiro_data_emissao,
+            nome_avaliado: c.nome_titular,
+            cpf_avaliado: c.cpf,
+            resultado: tipoLaudo === "psicologico" ? c.laudo_aptidao : c.tiro_conclusao,
+            credencial,
+            credenciado_nome: credNome,
+          },
+          { nome_completo: refClienteNome, cpf: refClienteCpf },
+          { outroLaudoRealizacao, credenciado },
+        );
+        setConferenciaLaudo(resultado);
+
+        // Vencimento calculado da REALIZAÇÃO — preenche o campo do formulário
+        // para a equipe não ter que contar um ano na mão.
+        if (resultado.vence_em) {
+          setForm((prev) => ({ ...prev, data_validade: prev.data_validade || resultado.vence_em! }));
+        }
+      })();
 
       let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
       // Refinamento de subtipo para certidões TJSP e Federal: cada uma tem seu
@@ -1949,6 +2039,11 @@ export function ClienteDocsHubModal({
       });
     }
 
+    if (conferenciaLaudo?.veredicto === "rejeitado") {
+      toast.error(conferenciaLaudo.mensagemCliente || "Este laudo não passou na conferência e não pode ser salvo.");
+      return;
+    }
+
     if (conferenciaLocal?.conf.veredicto === "rejeitado") {
       toast.error("Esta certidão foi recusada na conferência e não pode ser salva. O cliente já foi avisado por e-mail com o motivo.");
       return;
@@ -2190,6 +2285,21 @@ export function ClienteDocsHubModal({
                 ...(conferenciaLocal.doc.trf_regiao != null
                   ? { trf_regiao: conferenciaLocal.doc.trf_regiao }
                   : {}),
+              }
+            : {}),
+          ...(conferenciaLaudo
+            ? {
+                // Conferência do laudo, persistida para o painel da equipe.
+                // `laudo_alerta_interno` é o que NÃO vai para o cliente: a
+                // regra do usuário é que a equipe valida e a equipe avisa.
+                laudo_veredicto: conferenciaLaudo.veredicto,
+                laudo_vence_em: conferenciaLaudo.vence_em ?? null,
+                laudo_dias_restantes: conferenciaLaudo.dias_restantes ?? null,
+                laudo_mensagem_equipe: conferenciaLaudo.mensagemEquipe,
+                laudo_alerta_interno:
+                  conferenciaLaudo.veredicto === "aprovado_com_alerta_interno"
+                    ? conferenciaLaudo.achados.filter((a) => a.interno).map((a) => a.mensagem).join(" | ")
+                    : null,
               }
             : {}),
           ...(uf
