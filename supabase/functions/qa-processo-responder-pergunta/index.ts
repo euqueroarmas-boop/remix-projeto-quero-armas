@@ -55,6 +55,20 @@ Deno.serve(async (req) => {
       return json({ error: "missing_fields" }, 400);
     }
 
+    // TRAVA: a condição profissional define QUAIS exigências de ocupação lícita
+    // o cliente precisa entregar. Responder por aqui apenas "dispensava" o grupo
+    // sem injetar nada — furo que fechava a ocupação lícita vazia.
+    if (chave === "condicao_profissional") {
+      return json(
+        {
+          error: "use_set_condicao",
+          detail:
+            "Condição profissional deve ser gravada via qa-processo-set-condicao para injetar as exigências corretas.",
+        },
+        409,
+      );
+    }
+
     const admin = createClient(url, service);
 
     // Resolve cliente_id do usuário e flag staff (best-effort).
