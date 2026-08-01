@@ -2486,11 +2486,19 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
+    // Assinatura pendente é obrigação bloqueante: reabre sempre, ignorando
+    // qualquer dispensa anterior do cliente.
+    if (pendingSignatureCount > 0) {
+      sessionStorage.removeItem("qa:pendencias-dismissed");
+      setPendenciasGuiadasDismissed(false);
+      setShowContratoPopup(true);
+      return;
+    }
     // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) cadastro
     // completo, 3) checklist do processo. Sem assinatura pendente, o checklist
     // NUNCA nasce enquanto houver campo crucial do cadastro em branco — mesmo
     // que o modal cadastral ainda não tenha sido aberto ou tenha sido fechado.
-    if (pendingSignatureCount === 0 && (showChecklistCadastral || cadastroCrucialIncompleto)) return;
+    if (showChecklistCadastral || cadastroCrucialIncompleto) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
   }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed]);
