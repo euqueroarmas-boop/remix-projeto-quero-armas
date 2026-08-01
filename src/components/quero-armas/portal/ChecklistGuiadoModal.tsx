@@ -59,7 +59,6 @@ import {
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
 import type { CadastroConferencia } from "@/lib/quero-armas/conferenciaCertidao";
-import EfetivaNecessidadeModal from "./EfetivaNecessidadeModal";
 import { toast } from "sonner";
 import { saveOrShareBlob, isMobileUA } from "@/lib/quero-armas/saveOrShareBlob";
 import {
@@ -95,6 +94,8 @@ import {
 } from "@/lib/quero-armas/reaproveitamentoCandidatos";
 import ClienteDocsHubModal from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { classificarCaixa } from "@/lib/quero-armas/documentosCaixaClassifier";
+import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 
 // Mapa processo_tipo → hub_tipo (espelho da tabela qa_tipo_documento_aliases).
 // Usado para pré-selecionar o tipo correto no Hub ao abrir o modal.
@@ -138,7 +139,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "declaracao_sem_inquerito_processo_criminal","declaracao_guarda_responsavel",
   "declaracao_correlata","declaracao_guarda_acervo_1endereco",
   "laudo_psicologico","laudo_capacidade_tecnica",
-  "comprovante_efetiva_necessidade","documento_complementar_caso",
+  "comprovante_efetiva_necessidade","boletim_ocorrencia","documento_complementar_caso",
   "comprovante_habitualidade","comprovante_clube_tiro","comprovante_competicao",
   "protocolo_processo","oficio","despacho","exigencia","indeferimento",
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
@@ -233,6 +234,129 @@ function getGuiaCredenciadoConfig(doc: Pick<GuiaDoc, "tipo_documento" | "nome_do
   return null;
 }
 
+type TipoProvaEfetiva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
+type CampoEfetiva = "tem_bo" | "tem_inquerito" | "tem_acao_criminal" | "sofre_ameaca";
+
+type ProvaEfetiva = {
+  id: string;
+  tipo: TipoProvaEfetiva;
+  numero: string | null;
+  data_fato: string | null;
+  naturezas: string[] | null;
+  arquivo_nome: string | null;
+  leitura_por: string | null;
+};
+
+const RELATO_MINIMO_EFETIVA = 1000;
+const VALIDADE_EFETIVA_DIAS = 180;
+const BASE_LEGAL_EFETIVA = [
+  "Lei 10.826/2003",
+  "Decreto 11.615/2023",
+  "Decreto 12.345/2024",
+  "IN DG/PF 201",
+  "IN DG/PF 311",
+];
+
+const PERGUNTAS_EFETIVA: Array<{
+  campo: CampoEfetiva;
+  pergunta: string;
+  ajuda: string;
+  tipoProva?: TipoProvaEfetiva;
+}> = [
+  {
+    campo: "tem_bo",
+    pergunta: "Você já registrou algum boletim de ocorrência?",
+    ajuda: "Ameaça, furto, roubo, invasão de propriedade, violência, perseguição ou qualquer outro fato registrado pela polícia. Se tiver mais de um BO, envie todos: cada fato ajuda a demonstrar melhor a sua situação. O boletim não precisa estar obrigatoriamente em seu nome: ele também pode envolver familiares próximos, como pai, mãe, esposa, marido, companheira(o), filhos ou pessoas que moram com você, desde que o fato tenha relação com a sua segurança, sua rotina, sua residência, seu trabalho ou tenha colocado você e sua família em risco.",
+    tipoProva: "boletim_ocorrencia",
+  },
+  {
+    campo: "tem_inquerito",
+    pergunta: "Algum desses casos virou inquérito policial?",
+    ajuda: "Inquérito instaurado mostra que a autoridade considerou o fato sério o bastante para investigar.",
+    tipoProva: "inquerito_policial",
+  },
+  {
+    campo: "tem_acao_criminal",
+    pergunta: "Você moveu ação criminal contra alguém?",
+    ajuda: "Queixa-crime ou ação penal. Envie a petição ou o andamento processual.",
+    tipoProva: "acao_criminal",
+  },
+  {
+    campo: "sofre_ameaca",
+    pergunta: "Você está sendo ameaçado ou se sente ameaçado por algum motivo?",
+    ajuda: "Mesmo sem registro policial. Conte o que está acontecendo — isso será desenvolvido na sua defesa.",
+  },
+];
+
+const LABEL_TIPO_PROVA_EFETIVA: Record<TipoProvaEfetiva, string> = {
+  boletim_ocorrencia: "Boletim de ocorrência",
+  inquerito_policial: "Inquérito policial",
+  acao_criminal: "Ação criminal",
+  outro: "Documento complementar",
+};
+
+const dataBR = (iso: string | null | undefined) => {
+  const m = String(iso ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
+};
+
+function isoHoje(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDiasISO(dataISO: string, dias: number): string {
+  const d = new Date(`${dataISO}T00:00:00`);
+  d.setDate(d.getDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+function tipoHubProvaEfetiva(tipo: TipoProvaEfetiva): string {
+  return tipo === "boletim_ocorrencia" ? "boletim_ocorrencia" : "documento_complementar_caso";
+}
+
+function nomeHubProvaEfetiva(tipo: TipoProvaEfetiva): string {
+  return `${LABEL_TIPO_PROVA_EFETIVA[tipo]} — efetiva necessidade`;
+}
+
+function gerarTextoQuestionarioEfetiva({
+  processoId,
+  respostas,
+  relato,
+  contexto,
+  provas,
+}: {
+  processoId: string;
+  respostas: Record<string, boolean | null>;
+  relato: string;
+  contexto: string;
+  provas: ProvaEfetiva[];
+}): string {
+  const linhas = [
+    "QUESTIONÁRIO DE EFETIVA NECESSIDADE",
+    "",
+    `Processo: ${processoId}`,
+    `Data de envio: ${dataBR(isoHoje()) ?? isoHoje()}`,
+    `Base legal: ${BASE_LEGAL_EFETIVA.join("; ")}`,
+    "Natureza: fato constitutivo de direito para instrução do pedido perante a Polícia Federal.",
+    `Validade operacional do conjunto: ${VALIDADE_EFETIVA_DIAS} dias a partir do envio.`,
+    "",
+    "RESPOSTAS",
+    ...PERGUNTAS_EFETIVA.map((q) => `${q.pergunta} ${respostas[q.campo] === true ? "Sim" : respostas[q.campo] === false ? "Não" : "Não respondido"}`),
+    "",
+    "PROVAS ANEXADAS",
+    ...(provas.length
+      ? provas.map((p) => `- ${LABEL_TIPO_PROVA_EFETIVA[p.tipo]}${p.numero ? ` nº ${p.numero}` : ""}${p.data_fato ? `, fato em ${dataBR(p.data_fato)}` : ""}${p.arquivo_nome ? `, arquivo ${p.arquivo_nome}` : ""}`)
+      : ["- Nenhuma prova documental anexada."]),
+    "",
+    "RELATO DO CLIENTE",
+    relato.trim() || "Não informado.",
+    "",
+    "CONTEXTO DE RISCO",
+    contexto.trim() || "Não informado.",
+  ];
+  return linhas.join("\n");
+}
+
 type Fase =
   | "carregando"
   | "escolher_processo"
@@ -275,7 +399,7 @@ export default function ChecklistGuiadoModal({
   const [carga, setCarga] = useState<CargaProcesso | null>(null);
   const [pularIds, setPularIds] = useState<Set<string>>(new Set());
   const [docAtivoId, setDocAtivoId] = useState<string | null>(null);
-  const [efetivaNecessidadeAberta, setEfetivaNecessidadeAberta] = useState(false);
+  const [efetivaNecessidadePasso, setEfetivaNecessidadePasso] = useState<"intro" | "questionario">("intro");
   const [resultadoDoc, setResultadoDoc] = useState<GuiaDoc | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -501,6 +625,10 @@ export default function ChecklistGuiadoModal({
     () => (carga?.docs ?? []).find((d) => d.id === docAtivoId) ?? filaAtual[0] ?? null,
     [carga, docAtivoId, filaAtual],
   );
+
+  useEffect(() => {
+    setEfetivaNecessidadePasso("intro");
+  }, [docAtivo?.id]);
 
   const docAtivoReaproveitado = useMemo(() => {
     const meta = docAtivo?.metadados_documento_json && typeof docAtivo.metadados_documento_json === "object"
@@ -1606,26 +1734,38 @@ export default function ChecklistGuiadoModal({
                     relato dele. Pedir um upload aqui é o que fazia essa pendência
                     travar sem que ninguém soubesse o motivo. */}
                 {tipoItemGuia(docAtivo) === "documento" && ehEfetivaNecessidade(docAtivo.tipo_documento) && (
-                  <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-4">
-                    <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
-                      Esta etapa é diferente
+                  efetivaNecessidadePasso === "intro" ? (
+                    <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-4">
+                      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                        Esta etapa é diferente
+                      </div>
+                      <p className="mt-1.5 text-[12px] leading-relaxed text-slate-700">
+                        Você não precisa anexar nenhum documento pronto aqui. Vamos fazer algumas
+                        perguntas sobre o seu caso e reunir as provas que você tiver — boletins de
+                        ocorrência, inquéritos, ações. Com esse material, nossa equipe escreve a peça
+                        que fundamenta o seu pedido perante a Polícia Federal.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setEfetivaNecessidadePasso("questionario")}
+                        className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white"
+                        style={{ background: MARROM }}
+                      >
+                        Avançar
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
                     </div>
-                    <p className="mt-1.5 text-[12px] leading-relaxed text-slate-700">
-                      Você não precisa anexar nenhum documento pronto aqui. Vamos fazer algumas
-                      perguntas sobre o seu caso e reunir as provas que você tiver — boletins de
-                      ocorrência, inquéritos, ações. Com esse material, nossa equipe escreve a peça
-                      que fundamenta o seu pedido perante a Polícia Federal.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setEfetivaNecessidadeAberta(true)}
-                      className="mt-3 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[12px] font-bold text-white"
-                      style={{ background: MARROM }}
-                    >
-                      Começar
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
+                  ) : processoId ? (
+                    <EfetivaNecessidadeInline
+                      processoId={processoId}
+                      clienteId={clienteId}
+                      customerId={customerId}
+                      onConcluido={async () => {
+                        onUpdated?.();
+                        await continuarAposResultado({ pularAtual: true });
+                      }}
+                    />
+                  ) : null
                 )}
 
                 {/* DOCUMENTO */}
@@ -2300,16 +2440,457 @@ export default function ChecklistGuiadoModal({
           }
         }}
       />
-      {efetivaNecessidadeAberta && processoId && (
-        <EfetivaNecessidadeModal
-          open={efetivaNecessidadeAberta}
-          processoId={processoId}
-          clienteId={clienteId}
-          onClose={() => setEfetivaNecessidadeAberta(false)}
-          onConcluido={() => onUpdated?.()}
-        />
-      )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Subcomponente: EFETIVA NECESSIDADE dentro do popup guiado
+// ---------------------------------------------------------------------------
+function EfetivaNecessidadeInline({
+  processoId,
+  clienteId,
+  customerId,
+  onConcluido,
+}: {
+  processoId: string;
+  clienteId: number;
+  customerId: string | null;
+  onConcluido: () => void | Promise<void>;
+}) {
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [registroId, setRegistroId] = useState<string | null>(null);
+  const [respostas, setRespostas] = useState<Record<string, boolean | null>>({});
+  const [relato, setRelato] = useState("");
+  const [contexto, setContexto] = useState("");
+  const [provas, setProvas] = useState<ProvaEfetiva[]>([]);
+  const [enviandoTipo, setEnviandoTipo] = useState<TipoProvaEfetiva | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const tipoAlvoRef = useRef<TipoProvaEfetiva>("boletim_ocorrencia");
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      setCarregando(true);
+      try {
+        const { data: existente } = await supabase
+          .from("qa_efetiva_necessidade" as any)
+          .select("*")
+          .eq("processo_id", processoId)
+          .maybeSingle();
+
+        let reg = existente as any;
+        if (!reg) {
+          const { data: criado, error } = await supabase
+            .from("qa_efetiva_necessidade" as any)
+            .insert({ processo_id: processoId, cliente_id: clienteId })
+            .select("*")
+            .single();
+          if (error) throw error;
+          reg = criado;
+        }
+        if (cancelado) return;
+
+        setRegistroId(reg.id);
+        setRespostas({
+          tem_bo: reg.tem_bo,
+          tem_inquerito: reg.tem_inquerito,
+          tem_acao_criminal: reg.tem_acao_criminal,
+          sofre_ameaca: reg.sofre_ameaca,
+        });
+        setRelato(reg.relato_cliente ?? "");
+        setContexto(reg.contexto_risco ?? "");
+
+        const { data: ps } = await supabase
+          .from("qa_efetiva_necessidade_provas" as any)
+          .select("id, tipo, numero, data_fato, naturezas, arquivo_nome, leitura_por")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("created_at");
+        if (!cancelado) setProvas((ps ?? []) as unknown as ProvaEfetiva[]);
+      } catch (e) {
+        console.error("[efetiva necessidade] carga:", e);
+        toast.error("Não foi possível abrir o questionário. Tente de novo.");
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    })();
+    return () => { cancelado = true; };
+  }, [processoId, clienteId]);
+
+  const responder = useCallback(async (campo: CampoEfetiva, valor: boolean) => {
+    setRespostas((p) => ({ ...p, [campo]: valor }));
+    if (!registroId) return;
+    const { error } = await supabase
+      .from("qa_efetiva_necessidade" as any)
+      .update({ [campo]: valor, updated_at: new Date().toISOString() })
+      .eq("id", registroId);
+    if (error) {
+      console.error("[efetiva necessidade] resposta:", error);
+      toast.error("Não foi possível salvar esta resposta.");
+    }
+  }, [registroId]);
+
+  const salvarTexto = useCallback(async (campo: "relato_cliente" | "contexto_risco", valor: string) => {
+    if (!registroId) return;
+    await supabase
+      .from("qa_efetiva_necessidade" as any)
+      .update({ [campo]: valor, updated_at: new Date().toISOString() })
+      .eq("id", registroId);
+  }, [registroId]);
+
+  const criarRegistroHub = useCallback(async ({
+    tipoDocumento,
+    nomeDocumento,
+    arquivoNome,
+    arquivoMime,
+    storagePath,
+    subcategoria,
+    dadosExtraidos,
+    metadados,
+    iaStatus,
+  }: {
+    tipoDocumento: string;
+    nomeDocumento: string;
+    arquivoNome: string;
+    arquivoMime: string | null;
+    storagePath: string;
+    subcategoria: string;
+    dadosExtraidos: Record<string, unknown>;
+    metadados: Record<string, unknown>;
+    iaStatus: string;
+  }) => {
+    const emissao = isoHoje();
+    const validade = addDiasISO(emissao, VALIDADE_EFETIVA_DIAS);
+    const { error } = await supabase
+      .from("qa_documentos_cliente" as any)
+      .insert({
+        customer_id: customerId,
+        qa_cliente_id: clienteId,
+        tipo_documento: tipoDocumento,
+        nome_documento: nomeDocumento,
+        categoria_hub: "efetiva_necessidade",
+        subcategoria_hub: subcategoria,
+        escopo_documental: "processo",
+        data_emissao: emissao,
+        data_validade: validade,
+        arquivo_storage_path: storagePath,
+        arquivo_nome: arquivoNome,
+        arquivo_mime: arquivoMime,
+        status: "pendente_aprovacao",
+        origem: "cliente",
+        validado_admin: false,
+        revisao_humana_obrigatoria: true,
+        reaproveitavel_global: false,
+        ia_status: iaStatus,
+        fonte_normativa: BASE_LEGAL_EFETIVA,
+        ia_dados_extraidos: {
+          ...dadosExtraidos,
+          origem_fluxo: "efetiva_necessidade",
+          validade_dias: VALIDADE_EFETIVA_DIAS,
+        },
+        metadados_documento_json: {
+          processo_id: processoId,
+          fato_constitutivo_direito: true,
+          validade_operacional_dias: VALIDADE_EFETIVA_DIAS,
+          ...metadados,
+        },
+        observacoes: "Documento enviado no questionário de efetiva necessidade. Validade operacional: 180 dias a partir do envio.",
+      });
+    if (error) throw error;
+  }, [clienteId, customerId, processoId]);
+
+  const receberArquivo = useCallback(async (file: File) => {
+    if (!registroId) return;
+    const tipo = tipoAlvoRef.current;
+    setEnviandoTipo(tipo);
+    try {
+      let lidos: Record<string, unknown> = {};
+      let leituraPor: "parser" | "manual" = "manual";
+      if (file.type === "application/pdf") {
+        try {
+          const doc = parseCertidao(await extrairTextoPdf(file));
+          if (doc?.orgao === "boletim_ocorrencia") {
+            lidos = doc as unknown as Record<string, unknown>;
+            leituraPor = "parser";
+          }
+        } catch (e) {
+          console.warn("[efetiva necessidade] leitura local:", e);
+        }
+      }
+
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+      const path = `cliente-docs/qa-${clienteId}/efetiva_necessidade/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabase.storage
+        .from("qa-documentos")
+        .upload(path, file, { contentType: file.type || "application/octet-stream" });
+      if (upErr) throw upErr;
+
+      const { data: prova, error } = await supabase
+        .from("qa_efetiva_necessidade_provas" as any)
+        .insert({
+          efetiva_necessidade_id: registroId,
+          tipo,
+          arquivo_storage_path: path,
+          arquivo_nome: file.name,
+          numero: (lidos.numero_bo as string) ?? null,
+          protocolo: (lidos.protocolo as string) ?? null,
+          orgao: (lidos.delegacia as string) ?? null,
+          data_fato: (lidos.data_fato as string) ?? null,
+          local_fato: (lidos.local_fato as string) ?? null,
+          naturezas: (lidos.naturezas as string[]) ?? null,
+          vitima_nome: (lidos.vitima_nome as string) ?? null,
+          relato: (lidos.relato as string) ?? null,
+          dados_extraidos: lidos,
+          leitura_por: leituraPor,
+        })
+        .select("id, tipo, numero, data_fato, naturezas, arquivo_nome, leitura_por")
+        .single();
+      if (error) throw error;
+
+      const provaSalva = prova as unknown as ProvaEfetiva;
+      await criarRegistroHub({
+        tipoDocumento: tipoHubProvaEfetiva(tipo),
+        nomeDocumento: nomeHubProvaEfetiva(tipo),
+        arquivoNome: file.name,
+        arquivoMime: file.type || null,
+        storagePath: path,
+        subcategoria: tipo,
+        dadosExtraidos: lidos,
+        iaStatus: leituraPor === "parser" ? "processado" : "nao_processado",
+        metadados: {
+          efetiva_necessidade_id: registroId,
+          prova_id: provaSalva.id,
+          tipo_prova: tipo,
+        },
+      });
+
+      setProvas((p) => [...p, provaSalva]);
+      toast.success(`${LABEL_TIPO_PROVA_EFETIVA[tipo]} recebido e salvo no Hub de Efetiva Necessidade.`);
+    } catch (e) {
+      console.error("[efetiva necessidade] prova:", e);
+      toast.error("Não foi possível enviar este arquivo. Tente novamente.");
+    } finally {
+      setEnviandoTipo(null);
+    }
+  }, [registroId, clienteId, criarRegistroHub]);
+
+  const abrirSeletor = (tipo: TipoProvaEfetiva) => {
+    tipoAlvoRef.current = tipo;
+    inputRef.current?.click();
+  };
+
+  const todasRespondidas = PERGUNTAS_EFETIVA.every((q) => typeof respostas[q.campo] === "boolean");
+  const tiposObrigatoriosSemAnexo = PERGUNTAS_EFETIVA
+    .filter((q) => q.tipoProva && respostas[q.campo] === true)
+    .map((q) => q.tipoProva!)
+    .filter((tipo) => !provas.some((p) => p.tipo === tipo));
+  const temProvaDocumental = provas.length > 0;
+  const relatoObrigatorio = !temProvaDocumental || respostas.sofre_ameaca === true;
+  const relatoValido = !relatoObrigatorio || relato.trim().length >= RELATO_MINIMO_EFETIVA;
+  const podeConcluir = todasRespondidas && tiposObrigatoriosSemAnexo.length === 0 && relatoValido;
+
+  const concluir = async () => {
+    if (!registroId || !podeConcluir) return;
+    setSalvando(true);
+    try {
+      await salvarTexto("relato_cliente", relato);
+      await salvarTexto("contexto_risco", contexto);
+
+      const conteudo = gerarTextoQuestionarioEfetiva({ processoId, respostas, relato, contexto, provas });
+      const nomeArquivo = `questionario-efetiva-necessidade-${processoId.slice(0, 8)}-${Date.now()}.txt`;
+      const path = `cliente-docs/qa-${clienteId}/efetiva_necessidade/${nomeArquivo}`;
+      const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+      const { error: upErr } = await supabase.storage
+        .from("qa-documentos")
+        .upload(path, blob, { contentType: "text/plain;charset=utf-8" });
+      if (upErr) throw upErr;
+
+      await criarRegistroHub({
+        tipoDocumento: "comprovante_efetiva_necessidade",
+        nomeDocumento: "Questionário de efetiva necessidade",
+        arquivoNome: nomeArquivo,
+        arquivoMime: "text/plain;charset=utf-8",
+        storagePath: path,
+        subcategoria: "questionario",
+        dadosExtraidos: {
+          respostas,
+          relato_cliente: relato,
+          contexto_risco: contexto,
+          provas_count: provas.length,
+        },
+        iaStatus: "nao_processado",
+        metadados: {
+          efetiva_necessidade_id: registroId,
+          documento_gerado_pelo_sistema: true,
+          provas_ids: provas.map((p) => p.id),
+        },
+      });
+
+      const { error } = await supabase
+        .from("qa_efetiva_necessidade" as any)
+        .update({
+          status: "aguardando_aprovacao",
+          enviado_equipe_em: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", registroId);
+      if (error) throw error;
+
+      toast.success("Efetiva necessidade enviada para análise.");
+      await onConcluido();
+    } catch (e) {
+      console.error("[efetiva necessidade] concluir:", e);
+      toast.error("Não foi possível concluir esta etapa. Tente novamente.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  if (carregando) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-10 text-sm text-slate-500">
+        <Loader2 className="h-4 w-4 animate-spin" /> Abrindo questionário…
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        accept="application/pdf,image/*"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.currentTarget.value = "";
+          if (file) void receberArquivo(file);
+        }}
+      />
+
+      {PERGUNTAS_EFETIVA.map((q) => (
+        <div key={q.campo} className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="text-sm font-bold text-slate-900">{q.pergunta}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-slate-500">{q.ajuda}</p>
+          <div className="mt-3 flex gap-2">
+            {[true, false].map((v) => (
+              <button
+                key={String(v)}
+                type="button"
+                onClick={() => void responder(q.campo, v)}
+                className={`rounded-lg border px-4 py-2 text-[12px] font-semibold transition-colors ${
+                  respostas[q.campo] === v
+                    ? "border-[#7A1F2B] bg-[#7A1F2B]/5 text-[#7A1F2B]"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {v ? "Sim" : "Não"}
+              </button>
+            ))}
+          </div>
+          {respostas[q.campo] === true && q.tipoProva && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => abrirSeletor(q.tipoProva!)}
+                disabled={enviandoTipo !== null}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
+              >
+                {enviandoTipo === q.tipoProva
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Upload className="h-3.5 w-3.5" />}
+                Anexar {LABEL_TIPO_PROVA_EFETIVA[q.tipoProva].toLowerCase()}
+              </button>
+              {tiposObrigatoriosSemAnexo.includes(q.tipoProva) && (
+                <p className="mt-1 text-[11px] text-amber-700">
+                  Como você respondeu “Sim”, envie este anexo para liberar o envio.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {provas.length > 0 && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+            Provas recebidas ({provas.length})
+          </p>
+          <ul className="mt-2 space-y-2">
+            {provas.map((pr) => (
+              <li key={pr.id} className="flex items-start gap-2 text-[12px] text-emerald-900">
+                <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  <strong>{LABEL_TIPO_PROVA_EFETIVA[pr.tipo]}</strong>
+                  {pr.numero ? ` nº ${pr.numero}` : ""}
+                  {pr.naturezas?.length ? ` — ${pr.naturezas.join(", ")}` : ""}
+                  {pr.data_fato ? ` — fato em ${dataBR(pr.data_fato)}` : ""}
+                  {pr.leitura_por === "parser" && (
+                    <span className="ml-1 text-emerald-700">· lido automaticamente</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div>
+        <label className="text-[12px] font-semibold text-slate-800">
+          Conte o que está acontecendo
+          {relatoObrigatorio && <span className="text-red-500"> *</span>}
+        </label>
+        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+          Escreva com detalhes. O relato deve ter no mínimo {RELATO_MINIMO_EFETIVA} caracteres:
+          datas, locais, pessoas envolvidas, o que aconteceu, o que foi dito ou feito, e por que
+          isso ainda representa risco para você hoje.
+        </p>
+        <textarea
+          value={relato}
+          onChange={(e) => setRelato(e.target.value)}
+          onBlur={() => void salvarTexto("relato_cliente", relato)}
+          rows={6}
+          placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
+          className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+        />
+        {relatoObrigatorio && relato.trim().length < RELATO_MINIMO_EFETIVA && (
+          <p className="mt-1 text-[11px] text-amber-700">
+            Faltam {RELATO_MINIMO_EFETIVA - relato.trim().length} caracteres.
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label className="text-[12px] font-semibold text-slate-800">
+          O que, na sua rotina, aumenta o risco?
+        </label>
+        <textarea
+          value={contexto}
+          onChange={(e) => setContexto(e.target.value)}
+          onBlur={() => void salvarTexto("contexto_risco", contexto)}
+          rows={3}
+          placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
+          className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+        />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-600">
+        Cada questionário enviado e cada prova anexada serão salvos em Efetiva necessidade,
+        com validade operacional de 180 dias a contar do envio.
+      </div>
+
+      <button
+        type="button"
+        onClick={() => void concluir()}
+        disabled={!podeConcluir || salvando || enviandoTipo !== null}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-[12px] font-bold uppercase tracking-[0.2em] text-white disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ background: MARROM }}
+      >
+        {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+        Enviar para equipe
+      </button>
+    </div>
   );
 }
 
