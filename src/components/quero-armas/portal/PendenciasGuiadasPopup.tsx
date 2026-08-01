@@ -496,10 +496,34 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   <p className="text-[14px] leading-relaxed text-[#3A3A3A] pt-1">
                     <TextoComLinks texto={p} />
                   </p>
-                </li>
+              </li>
               ))}
             </ul>
           </div>
+
+          {/* Site de emissão destacado dentro do passo a passo — o cliente não
+              precisa voltar/rolar para o header para encontrar o link. */}
+          {!isSignature && !isPergunta && linkEmissaoFinal ? (
+            <a
+              href={linkEmissaoFinal}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 flex items-center gap-3 rounded-xl border border-[#8A1224]/20 bg-[#FFF7F8] p-4 text-[#8A1224] hover:bg-[#8A1224] hover:text-white transition-colors group"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#8A1224]/10 group-hover:bg-white/20">
+                <ExternalLink className="h-5 w-5" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] font-bold uppercase tracking-[0.2em] opacity-80">
+                  Site oficial de emissão
+                </span>
+                <span className="block truncate text-[13px] font-semibold">
+                  {linkEmissaoFinal}
+                </span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 opacity-60" />
+            </a>
+          ) : null}
 
           {/* Observation */}
           {explic.observacao && activeGrupoId !== "antecedentes" ? (
