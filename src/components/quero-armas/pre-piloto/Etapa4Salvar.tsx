@@ -4,7 +4,11 @@ import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } fr
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { HUB_TIPOS_DOCUMENTO, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { calcularValidadeEfetiva } from "@/lib/quero-armas/validadeDocumento";
+import {
+  calcularValidadeEfetiva,
+  getDataEmissaoDocumentoHub,
+  isCertidaoCivilSemVencimento,
+} from "@/lib/quero-armas/validadeDocumento";
 import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
@@ -25,6 +29,26 @@ function formatCpf(cpf: string | null): string | null {
 function campoPreenchido(v: string | null | undefined): boolean {
   const s = String(v || "").trim();
   return !!s && !/^não extra[ií]do$/i.test(s);
+}
+
+/** Data de hoje em ISO (yyyy-mm-dd), fuso de Brasília (UTC-03). */
+function hojeISOBrasilia(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** Normaliza dd/mm/aaaa ou aaaa-mm-dd para ISO; devolve null se não der. */
+function toIsoData(v: unknown): string | null {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return iso ? `${iso[1]}-${iso[2]}-${iso[3]}` : null;
 }
 
 function emailValido(email: string | null | undefined): boolean {
@@ -406,10 +430,30 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               continue;
             }
 
-            // Emissão lida pela IA; QSA herda a do cartão CNPJ do mesmo lote.
-            const emissao = a.data_emissao
+            // ── Datas: nenhum documento da Central de Adesão pode entrar no
+            // Hub "SEM DATA". A ordem de resolução da emissão é:
+            //   1) data lida pela IA no card da Etapa 1;
+            //   2) qualquer campo de data equivalente dentro de camposExtraidos
+            //      (data_expedicao, data_documento, data_referencia, etc.);
+            //   3) herança do cartão CNPJ (só para o QSA, que não tem data);
+            //   4) presunção pela data do envio — o documento acabou de ser
+            //      entregue pelo cliente, então a contagem começa hoje.
+            // A presunção fica registrada em ia_dados_extraidos para a equipe
+            // poder corrigir depois no Hub.
+            const emissaoIA = a.data_emissao
+              ?? getDataEmissaoDocumentoHub({
+                ia_dados_extraidos: { camposExtraidos: a.campos_extraidos ?? {} },
+              })
               ?? (tipoDb === "renda_qsa" ? emissaoCartaoCnpj : null);
-            const validade = calcularValidadeEfetiva(tipoDb, emissao);
+            const semVencimento = isCertidaoCivilSemVencimento(tipoDb);
+            const emissaoPresumida = !emissaoIA && !semVencimento;
+            const emissao = emissaoIA ?? (semVencimento ? null : hojeISOBrasilia());
+            // Validade explícita lida no documento tem precedência sobre a regra.
+            const validadeIA = toIsoData(
+              (a.campos_extraidos as Record<string, unknown> | undefined)?.data_validade
+                ?? (a.campos_extraidos as Record<string, unknown> | undefined)?.data_vencimento,
+            );
+            const validade = validadeIA ?? calcularValidadeEfetiva(tipoDb, emissao);
 
             const payload: Record<string, unknown> = {
               qa_cliente_id: clienteId,
@@ -444,6 +488,10 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
                 // Usa a mesma chave `camposExtraidos` do fluxo do Hub, para
                 // que backfill e conformidade leiam de um só lugar.
                 ...(a.campos_extraidos ? { camposExtraidos: a.campos_extraidos } : {}),
+                data_emissao_presumida: emissaoPresumida,
+                ...(emissaoPresumida
+                  ? { data_emissao_presumida_motivo: "ia_nao_extraiu_data_usou_data_do_envio" }
+                  : {}),
               },
             };
             const { error: insErr } = await supabase
