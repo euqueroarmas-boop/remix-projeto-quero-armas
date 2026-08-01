@@ -44,6 +44,14 @@ export interface CamposLaudo {
   /** Psicológico: CRP. Tiro: portaria de credenciamento. */
   credencial?: string | null;
   credenciado_nome?: string | null;
+  /**
+   * Só no tiro. Vêm manuscritos e podem não ter sido lidos — `null` significa
+   * "não deu para ler", e nesse caso a pergunta vai para o cliente, que sabe
+   * a própria nota. NÃO confundir com zero.
+   */
+  nota_teorica?: number | null;
+  pontuacao_5m?: number | null;
+  pontuacao_7m?: number | null;
 }
 
 export interface CadastroLaudo {
@@ -86,6 +94,13 @@ export interface ResultadoLaudo {
 
 /** Validade legal do laudo, em dias. Um ano contado da realização. */
 export const VALIDADE_LAUDO_DIAS = 365;
+
+/**
+ * Nota mínima legal, tanto na prova teórica quanto em cada distância do alvo
+ * (5 m e 7 m). Regra do usuário (01/08/2026): está na lei, e abaixo disso é
+ * reprovação.
+ */
+export const NOTA_MINIMA_LEGAL = 60;
 
 const LABEL: Record<TipoLaudo, string> = {
   psicologico: "laudo psicológico",
@@ -244,6 +259,42 @@ export function conferirLaudo(
         `O exame foi realizado em ${realizacao.split("-").reverse().join("/")} e a validade ` +
         `de 1 ano terminou em ${vence_em.split("-").reverse().join("/")}.${atraso}`,
     });
+  }
+
+  // ── 4b) Notas do tiro — a lei exige 60 em cada ────────────────────────
+  //
+  // Quem DECIDE é a conclusão do instrutor, não a nossa leitura do manuscrito.
+  // Ele tem fé pública; nós temos um OCR sobre letra de mão. Se ele marcou
+  // APTO e lemos nota abaixo de 60, o mais provável é que tenhamos lido
+  // errado — e reprovar o cliente por isso seria cobrar dele o nosso erro.
+  //
+  // Por isso a divergência vira ALERTA INTERNO: a equipe abre o documento e
+  // resolve em dez segundos. Nota ausente (`null`) não gera nada: a pergunta
+  // vai para o cliente, que sabe a própria nota.
+  if (campos.tipo === "tiro") {
+    const abaixo: string[] = [];
+    if (typeof campos.nota_teorica === "number" && campos.nota_teorica < NOTA_MINIMA_LEGAL) {
+      abaixo.push(`prova teórica ${campos.nota_teorica}`);
+    }
+    if (typeof campos.pontuacao_5m === "number" && campos.pontuacao_5m < NOTA_MINIMA_LEGAL) {
+      abaixo.push(`alvo de 5 m ${campos.pontuacao_5m}`);
+    }
+    if (typeof campos.pontuacao_7m === "number" && campos.pontuacao_7m < NOTA_MINIMA_LEGAL) {
+      abaixo.push(`alvo de 7 m ${campos.pontuacao_7m}`);
+    }
+    if (abaixo.length) {
+      const conclusaoApta = /aprovado|apto/.test(String(campos.resultado ?? "").toLowerCase())
+        && !/inapto/.test(String(campos.resultado ?? "").toLowerCase());
+      achados.push({
+        campo: "notas",
+        label: "Notas",
+        interno: conclusaoApta,
+        mensagem: conclusaoApta
+          ? `Leitura indica nota abaixo do mínimo legal de ${NOTA_MINIMA_LEGAL} (${abaixo.join(", ")}), ` +
+            `mas o instrutor concluiu APTO. Provável erro de leitura do manuscrito — conferir no documento.`
+          : `A nota está abaixo do mínimo legal de ${NOTA_MINIMA_LEGAL} pontos (${abaixo.join(", ")}).`,
+      });
+    }
   }
 
   // ── 5) Ordem: psicológico precede o tiro ───────────────────────────────

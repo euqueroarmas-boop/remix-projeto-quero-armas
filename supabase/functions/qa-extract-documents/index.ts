@@ -244,8 +244,10 @@ const CLASSIFY_TOOL = {
             instrutor_iat: { type: "string", description: "EXAME DE TIRO: registro IAT do instrutor, ex.: 'IAT - 002/21 - DREX/SR/PF/SP'." },
             tiro_local_nome: { type: "string", description: "EXAME DE TIRO: 'LOCAL DE APLICAÇÃO DA PROVA PRÁTICA' — nome do clube ou estande." },
             tiro_local_endereco: { type: "string", description: "EXAME DE TIRO: endereço do clube ou estande." },
-            tiro_nota_teorica: { type: "string", description: "EXAME DE TIRO: 'NOTA DA PROVA TEÓRICA'. Costuma ser MANUSCRITO — transcreva o que estiver escrito à mão, mesmo que pareça incerto." },
-            tiro_pontuacao_alvo: { type: "string", description: "EXAME DE TIRO: 'PONTUAÇÃO NO ALVO SILHUETA', com as distâncias (ex.: '5 m 4, 7 m 3'). MANUSCRITO — transcreva literalmente, preservando distâncias e pontos." },
+            tiro_nota_teorica: { type: "string", description: "EXAME DE TIRO: 'NOTA DA PROVA TEÓRICA'. MANUSCRITO — só devolva se o número estiver inequivocamente legível. Na dúvida, deixe VAZIO: o sistema pergunta ao cliente." },
+            tiro_pontuacao_5m: { type: "string", description: "EXAME DE TIRO: pontuação no alvo silhueta à distância de 5 METROS. MANUSCRITO — só devolva se estiver inequivocamente legível; na dúvida, VAZIO." },
+            tiro_pontuacao_7m: { type: "string", description: "EXAME DE TIRO: pontuação no alvo silhueta à distância de 7 METROS. MANUSCRITO — só devolva se estiver inequivocamente legível; na dúvida, VAZIO." },
+            tiro_pontuacao_alvo: { type: "string", description: "EXAME DE TIRO: o bloco 'PONTUAÇÃO NO ALVO SILHUETA' transcrito literalmente, como aparece (ex.: '5 m 4, 7 m 3'). Serve de referência para a equipe conferir, mesmo quando as notas por distância não puderam ser lidas." },
             tiro_conclusao: { type: "string", description: "EXAME DE TIRO: alternativa marcada em CONCLUSÃO. Um de: 'aprovado', 'apto', 'inapto'." },
             tiro_fundamentacao: { type: "string", description: "EXAME DE TIRO: alternativa marcada em FUNDAMENTAÇÃO, ex.: 'SINARM-CAC'." },
             arma_tipo: { type: "string", description: "EXAME DE TIRO: TIPO da arma usada na prova, ex.: 'PISTOLA'." },
@@ -318,9 +320,14 @@ esse tempo já conta contra a validade do cliente.
   declara não ter feito outro teste nos últimos 30 dias) — NÃO a do rodapé.
 Extraia as duas datas quando existirem, cada uma no seu campo.
 
-Campos MANUSCRITOS (nota da prova teórica, pontuação no alvo, X das
-alternativas) devem ser transcritos como estiverem, mesmo com baixa certeza.
-Preencher com aproximação é melhor que deixar vazio — a equipe revisa.
+Campos MANUSCRITOS (nota da prova teórica, pontuação no alvo) NÃO devem ser
+adivinhados. Se o número não estiver inequivocamente legível, devolva o campo
+VAZIO. O sistema pergunta a nota ao próprio cliente, que a conhece — e um
+número chutado seria pior que um campo vazio, porque a nota decide aprovação
+(mínimo legal de 60 pontos).
+
+A CONCLUSÃO (APTO / INAPTO / APROVADO) é exceção: é caixa marcada com X, não
+manuscrito livre. Leia com atenção e devolva sempre — é ela que decide.
 
 CAC / ATIVIDADE (três documentos DISTINTOS — cada um cumpre uma exigência própria, nunca use um no lugar do outro)
 - comprovante_clube_tiro: comprovante de FILIAÇÃO a clube ou entidade de tiro — vincula o cliente à entidade (matrícula, carteirinha, declaração de filiação)
