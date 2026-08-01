@@ -260,17 +260,56 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   y += 10;
   writeParagraph(rodape, { size: 8, align: "left", lineGap: 0 });
 
-  const stampLines = connectionStampLines(contract);
+  // ── Carimbo de conexão, na lateral esquerda ────────────────────────────
+  //
+  // Com `angle: 90` o texto sobe a partir do ponto de âncora. A versão
+  // anterior ancorava em y=72 — perto do TOPO —, então o texto saía pela
+  // borda superior e só um fragmento ficava visível. Pior: todas as linhas
+  // usavam o mesmo x=16, sobrepondo-se na mesma coluna.
+  //
+  // Aqui a âncora é o RODAPÉ e cada linha vira uma COLUNA própria, avançando
+  // em X. É o mesmo desenho da procuração.
+  //
+  // O corpo do contrato começa em MARGIN_X (48), então a faixa tem 32pt de
+  // largura útil: cabem 3 colunas de 9pt com uma folga de 14pt antes do
+  // texto. Por isso os campos são unidos e quebrados por altura, em vez de
+  // uma coluna por campo.
+  const CARIMBO_TOPO = 42;
+  const CARIMBO_BASE = PAGE_H - 42;
+  const CARIMBO_X0 = 16;
+  const CARIMBO_PASSO = 9;
+  const CARIMBO_MAX_COLUNAS = 3;
+  const CARIMBO_FONTE = 6.5;
+  // Avanço médio por caractere nesta fonte/corpo — usado só para quebrar em
+  // colunas, não para posicionar.
+  const CARIMBO_AVANCO = 3.1;
+  const alturaUtil = CARIMBO_BASE - CARIMBO_TOPO;
+  const maxCharsPorColuna = Math.max(20, Math.floor(alturaUtil / CARIMBO_AVANCO));
+
+  const carimboTexto = connectionStampLines(contract).join(" · ");
+  const carimboColunas: string[] = [];
+  for (
+    let i = 0;
+    i < carimboTexto.length && carimboColunas.length < CARIMBO_MAX_COLUNAS;
+    i += maxCharsPorColuna
+  ) {
+    carimboColunas.push(carimboTexto.slice(i, i + maxCharsPorColuna));
+  }
+
   const totalPages = doc.getNumberOfPages();
   for (let page = 1; page <= totalPages; page++) {
     doc.setPage(page);
+    doc.setDrawColor(190);
+    doc.setLineWidth(0.4);
+    doc.line(CARIMBO_X0 - 6, CARIMBO_TOPO, CARIMBO_X0 - 6, CARIMBO_BASE);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
+    doc.setFontSize(CARIMBO_FONTE);
     doc.setTextColor(95);
-    let stampY = 72;
-    for (const line of stampLines) {
-      doc.text(line.slice(0, 118), 16, stampY, { angle: 90 } as any);
-      stampY += 8;
+    for (let c = 0; c < carimboColunas.length; c++) {
+      doc.text(carimboColunas[c], CARIMBO_X0 + c * CARIMBO_PASSO, CARIMBO_BASE, {
+        angle: 90,
+        baseline: "alphabetic",
+      } as any);
     }
     doc.setTextColor(0);
   }
