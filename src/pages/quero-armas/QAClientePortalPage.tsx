@@ -1643,6 +1643,22 @@ export default function QAClientePortalPage() {
     }
   };
 
+  /**
+   * Endereço do cadastro em texto legível — usado nas perguntas guiadas sobre
+   * o imóvel. Precisa ser declarado ANTES de `pendenciasGuiadas`, que o lê.
+   */
+  const enderecoCadastroLegivel = useMemo(() => {
+    const c = cliente as any;
+    if (!c) return null;
+    const linha = [c.endereco, c.numero].filter(Boolean).join(", ");
+    const local = [c.bairro, [c.cidade, c.estado].filter(Boolean).join("/")]
+      .filter(Boolean)
+      .join(" — ");
+    const cep = c.cep ? `CEP ${c.cep}` : "";
+    const partes = [linha, local, cep].filter((x) => String(x || "").trim());
+    return partes.length ? partes.join(" · ") : null;
+  }, [cliente]);
+
   const resumoState = useMemo(() => {
     const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
