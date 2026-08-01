@@ -27,13 +27,26 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     ],
     observacao: "Este é o formulário oficial que instrui o processo perante a Polícia Federal.",
   },
+  /**
+   * Efetiva necessidade — regra do usuário (31/07/2026): PRIMEIRO as provas,
+   * DEPOIS a narrativa.
+   *
+   * O texto anterior mandava "baixe o modelo e escreva o motivo". Pedir a
+   * justificativa no vazio é o que travava o cliente: ele não sabe o que
+   * escrever, e o que ele escreveria sozinho raramente sustenta o pedido.
+   *
+   * As perguntas puxam o que ele JÁ TEM — boletim de ocorrência, inquérito,
+   * ação criminal. Quem não tem prova nenhuma é que cai no relato detalhado.
+   */
   declaracao_necessidade_efetiva: {
     titulo: "Declaração de efetiva necessidade",
     passos: [
-      "Baixe o modelo no Hub Documental e preencha com o motivo real da posse.",
-      "Assine (à mão ou via Gov.br) e envie o PDF.",
+      "Você não precisa escrever nada sozinho, nem baixar modelo: são algumas perguntas, aqui mesmo.",
+      "Primeiro perguntamos o que você já tem — boletim de ocorrência, inquérito ou ação criminal. Documento em nome de terceiro também vale, se o fato te atingiu.",
+      "Depois pedimos o contexto do risco: sua profissão, sua rotina, valores que você transporta, a região onde mora.",
+      "Com isso nós redigimos a declaração. Você lê, aprova, e só então ela vai para o processo.",
     ],
-    observacao: "A justificativa precisa ser coerente com o serviço contratado.",
+    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles.",
   },
   declaracao_compromisso_treino: {
     titulo: "Declaração de compromisso de treino",
@@ -770,11 +783,16 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   },
 
   // Efetiva necessidade / correlatos
+  // Mesmo fluxo, código do Hub.
   comprovante_efetiva_necessidade: {
-    titulo: "Comprovante de efetiva necessidade",
+    titulo: "Efetiva necessidade",
     passos: [
-      "Envie os documentos que comprovam a exposição ao risco justificando a posse/porte.",
+      "Você não precisa escrever nada sozinho, nem baixar modelo: são algumas perguntas, aqui mesmo.",
+      "Primeiro perguntamos o que você já tem — boletim de ocorrência, inquérito ou ação criminal. Documento em nome de terceiro também vale, se o fato te atingiu.",
+      "Depois pedimos o contexto do risco: sua profissão, sua rotina, valores que você transporta, a região onde mora.",
+      "Com isso nós redigimos a declaração. Você lê, aprova, e só então ela vai para o processo.",
     ],
+    observacao: "Prova vale mais que texto. Um boletim de ocorrência sustenta o pedido muito melhor do que qualquer justificativa bem escrita — por isso começamos por eles.",
   },
   documento_complementar_caso: {
     titulo: "Documento complementar do caso",

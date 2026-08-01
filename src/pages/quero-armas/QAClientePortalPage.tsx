@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
@@ -552,6 +553,19 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarReloadKey, setAvatarReloadKey] = useState(0);
   const [showFotoModal, setShowFotoModal] = useState(false);
+
+  /**
+   * Questionário da efetiva necessidade.
+   *
+   * A exigência NÃO é "baixe um modelo e assine": é um questionário que chama
+   * primeiro as PROVAS que o cliente já tem — boletim de ocorrência, inquérito,
+   * ação criminal — e só depois pede a narrativa. Pedir o texto no vazio faz o
+   * cliente travar, que era o sintoma original.
+   *
+   * O questionário já existia, ligado ao checklist antigo. Aqui ele passa a ser
+   * aberto também pelo popup guiado, que é a tela que o cliente usa hoje.
+   */
+  const [efetivaNecessidadeProcessoId, setEfetivaNecessidadeProcessoId] = useState<string | null>(null);
 
   const validarContratoAssinadoOuFalhar = async (contractId: string) => {
     const { data, error } = await supabase.functions.invoke("qa-validate-customer-signature", {
@@ -1832,7 +1846,14 @@ export default function QAClientePortalPage() {
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
+        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Responder questionário" : undefined,
         onEntregar: () => {
+          // Efetiva necessidade abre o questionário, não o envio de arquivo.
+          if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {
+            setEfetivaNecessidadeProcessoId(String(doc.processo_id));
+            setShowContratoPopup(false);
+            return;
+          }
           setEditDocTipo(hubTipo);
           setShowAddDoc(true);
           setShowContratoPopup(false);
@@ -1850,6 +1871,13 @@ export default function QAClientePortalPage() {
       const respostas = (p?.respostas_questionario_json as Record<string, string> | null) ?? {};
       respostaTitularPorProcesso.set(String(p.id), respostas["comprovante_em_nome_titular"] ?? null);
     }
+    // A efetiva necessidade aparece com dois códigos — o do processo e o do
+    // Hub. Os dois abrem o mesmo questionário.
+    const ehEfetivaNecessidade = (rawTipo: string) =>
+      ["declaracao_necessidade_efetiva", "comprovante_efetiva_necessidade"].includes(
+        String(rawTipo ?? "").trim().toLowerCase(),
+      );
+
     const ehDocDeTitularTerceiro = (rawTipo: string) => {
       const t = rawTipo.toLowerCase();
       return (
@@ -3907,6 +3935,19 @@ export default function QAClientePortalPage() {
         )}
 
       </main>
+
+      {efetivaNecessidadeProcessoId && cliente?.id ? (
+        <EfetivaNecessidadeModal
+          open
+          processoId={efetivaNecessidadeProcessoId}
+          clienteId={Number(cliente.id)}
+          onClose={() => setEfetivaNecessidadeProcessoId(null)}
+          onConcluido={() => {
+            setEfetivaNecessidadeProcessoId(null);
+            setDocsReloadKey((k) => k + 1);
+          }}
+        />
+      ) : null}
 
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
