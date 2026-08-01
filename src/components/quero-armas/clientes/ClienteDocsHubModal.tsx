@@ -1254,6 +1254,12 @@ export function ClienteDocsHubModal({
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
   const motivoCarimbadoRef = useRef<string | null>(null);
+  /**
+   * Texto cru do PDF lido localmente (pdf.js). A IA devolve apenas os campos do
+   * seu schema — que não inclui prestador/tomador da NFS-e. Guardamos o texto
+   * para reaproveitar o parser determinístico e completar a conformidade.
+   */
+  const textoLocalRef = useRef<string>("");
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
