@@ -76,6 +76,30 @@ const COR: Record<PrioridadeDisparo, string> = {
   acervo: "#6A6A6A",
 };
 
+function RifleDisparoIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 12h10.6" />
+      <path d="M13.6 12h4.4" />
+      <path d="m18 10.7 3.6 1.3-3.6 1.3" />
+      <path d="M5.2 10.4h7.8" />
+      <path d="M6.4 12 4.8 16H3.5" />
+      <path d="m8.8 12 1.7 4.2" />
+      <path d="M11.1 12v2.2h2.2" />
+      <path d="M15.4 10.2h2.4" />
+    </svg>
+  );
+}
+
 export interface ItemDisparo {
   id: string;
   prioridade: PrioridadeDisparo;
@@ -143,15 +167,14 @@ export default function PainelDisparo({ itens, corIcone }: Props) {
         title={total ? `${total} ${total === 1 ? "pendência" : "pendências"}` : "Nada pendente"}
         aria-label={total ? `${total} pendências` : "Nada pendente"}
         aria-expanded={aberto}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
-        style={{ color: total ? corIcone : `${corIcone}88` }}
+        className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
+        style={
+          aberto
+            ? { background: `${corIcone}33`, color: corIcone }
+            : { color: total ? corIcone : `${corIcone}88` }
+        }
       >
-        <img
-          src="/icone-arma-cadastro-squircle.png"
-          alt=""
-          className="h-[28px] w-[28px] shrink-0 object-contain"
-          style={{ opacity: total ? 1 : 0.72 }}
-        />
+        <RifleDisparoIcon className="h-[18px] w-[18px] shrink-0" />
         {total > 0 && (
           // O número no próprio botão: sem hover o cliente já sabe que há algo
           // esperando por ele — e no celular hover nem existe.
