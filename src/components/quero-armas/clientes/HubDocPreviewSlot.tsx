@@ -78,9 +78,9 @@ export default function HubDocPreviewSlot({
   const RED = "#B91C1C";
 
   return (
-    <div className="relative isolate flex h-full w-full flex-col">
+    <div className="relative isolate flex h-full w-full flex-col" style={{ isolation: "isolate" }}>
       {/* Barra vertical esquerda */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-30 hidden w-5 items-center justify-center md:flex">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-[200] hidden w-5 items-center justify-center md:flex" style={{ zIndex: 200 }}>
         <div
           className="font-heading uppercase"
           style={{
@@ -97,7 +97,7 @@ export default function HubDocPreviewSlot({
       </div>
 
       {/* Barra vertical direita */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-30 hidden w-5 items-center justify-center md:flex">
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[200] hidden w-5 items-center justify-center md:flex" style={{ zIndex: 200 }}>
         <div
           className="font-heading uppercase"
           style={{
@@ -153,19 +153,20 @@ export default function HubDocPreviewSlot({
           </div>
         ) : (
           <div
-            className="relative z-0 isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
-            style={{ borderRadius: 2 }}
+            className="relative isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
+            style={{ borderRadius: 2, zIndex: 0, isolation: "isolate" }}
           >
             {isImage && fileUrl && (
               <img
                 src={fileUrl}
                 alt={displayName}
-                className="relative z-0 [isolation:isolate] max-h-[620px] w-auto max-w-full object-contain shadow-sm"
+                className="relative max-h-[620px] w-auto max-w-full object-contain shadow-sm"
+                style={{ zIndex: 0 }}
               />
             )}
 
             {isPdf && fileUrl && (
-              <div className="relative z-0 [isolation:isolate]">
+              <div className="relative" style={{ zIndex: 0 }}>
               <Document
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }) => setNumPages(n)}
@@ -258,12 +259,12 @@ export default function HubDocPreviewSlot({
             irmãos posteriores do contêiner do documento, garantindo que fiquem
             acima do canvas do react-pdf independentemente de z-index interno. */}
         {file && (
-          <div className="pointer-events-none absolute inset-0 z-[70]">
+          <div className="pointer-events-none absolute inset-0" style={{ zIndex: 1000, isolation: "isolate" }}>
             <button
               type="button"
               onClick={onRemove}
-              className="pointer-events-auto absolute z-[71] flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
-              style={{ borderRadius: 4, right: 8, top: 8 }}
+              className="pointer-events-auto absolute flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+              style={{ borderRadius: 4, right: 8, top: 8, zIndex: 1001 }}
               aria-label="Excluir arquivo"
               title="Excluir arquivo"
             >
@@ -272,8 +273,9 @@ export default function HubDocPreviewSlot({
 
             {pct != null && !incorreta && (
               <div
-                className="pointer-events-none absolute z-[71]"
+                className="pointer-events-none absolute"
                 style={{
+                  zIndex: 1001,
                   top: 68,
                   right: 10,
                   transform: "rotate(-8deg)",

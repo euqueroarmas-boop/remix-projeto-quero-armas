@@ -4900,8 +4900,10 @@ export type Database = {
         Row: {
           aceite_data: string
           aceite_dispositivo: Json | null
+          aceite_idioma: string | null
           aceite_inicio_imediato: boolean | null
           aceite_ip: string | null
+          aceite_referer: string | null
           aceite_user_agent: string | null
           cliente_id: number | null
           conteudo_hash: string
@@ -4914,8 +4916,10 @@ export type Database = {
         Insert: {
           aceite_data?: string
           aceite_dispositivo?: Json | null
+          aceite_idioma?: string | null
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
+          aceite_referer?: string | null
           aceite_user_agent?: string | null
           cliente_id?: number | null
           conteudo_hash: string
@@ -4928,8 +4932,10 @@ export type Database = {
         Update: {
           aceite_data?: string
           aceite_dispositivo?: Json | null
+          aceite_idioma?: string | null
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
+          aceite_referer?: string | null
           aceite_user_agent?: string | null
           cliente_id?: number | null
           conteudo_hash?: string
@@ -5142,8 +5148,10 @@ export type Database = {
         Row: {
           aceite_eletronico_data: string | null
           aceite_hash: string | null
+          aceite_idioma: string | null
           aceite_inicio_imediato: boolean | null
           aceite_ip: string | null
+          aceite_referer: string | null
           aceite_user_agent: string | null
           arquivado_em: string | null
           arquivado_motivo: string | null
@@ -5180,8 +5188,10 @@ export type Database = {
         Insert: {
           aceite_eletronico_data?: string | null
           aceite_hash?: string | null
+          aceite_idioma?: string | null
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
+          aceite_referer?: string | null
           aceite_user_agent?: string | null
           arquivado_em?: string | null
           arquivado_motivo?: string | null
@@ -5218,8 +5228,10 @@ export type Database = {
         Update: {
           aceite_eletronico_data?: string | null
           aceite_hash?: string | null
+          aceite_idioma?: string | null
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
+          aceite_referer?: string | null
           aceite_user_agent?: string | null
           arquivado_em?: string | null
           arquivado_motivo?: string | null
@@ -5558,6 +5570,57 @@ export type Database = {
           tipo_documental?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      qa_documento_downloads: {
+        Row: {
+          baixado_em: string
+          cliente_id: number | null
+          documento_id: string
+          documento_tipo: string
+          id: string
+          idioma: string | null
+          ip: string | null
+          numero: string | null
+          pais: string | null
+          referer: string | null
+          sha256: string | null
+          tamanho_bytes: number | null
+          user_agent: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          baixado_em?: string
+          cliente_id?: number | null
+          documento_id: string
+          documento_tipo: string
+          id?: string
+          idioma?: string | null
+          ip?: string | null
+          numero?: string | null
+          pais?: string | null
+          referer?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          baixado_em?: string
+          cliente_id?: number | null
+          documento_id?: string
+          documento_tipo?: string
+          id?: string
+          idioma?: string | null
+          ip?: string | null
+          numero?: string | null
+          pais?: string | null
+          referer?: string | null
+          sha256?: string | null
+          tamanho_bytes?: number | null
+          user_agent?: string | null
+          usuario_id?: string | null
         }
         Relationships: []
       }
