@@ -4,7 +4,11 @@ import { Loader2, ArrowLeft, ChevronRight, UserCheck, UserPlus, ShieldCheck } fr
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { HUB_TIPOS_DOCUMENTO, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { calcularValidadeEfetiva } from "@/lib/quero-armas/validadeDocumento";
+import {
+  calcularValidadeEfetiva,
+  getDataEmissaoDocumentoHub,
+  isCertidaoCivilSemVencimento,
+} from "@/lib/quero-armas/validadeDocumento";
 import type { ArquivoUpload, ClienteSalvo } from "./PrePilotoWizard";
 
 interface Props {
@@ -25,6 +29,26 @@ function formatCpf(cpf: string | null): string | null {
 function campoPreenchido(v: string | null | undefined): boolean {
   const s = String(v || "").trim();
   return !!s && !/^não extra[ií]do$/i.test(s);
+}
+
+/** Data de hoje em ISO (yyyy-mm-dd), fuso de Brasília (UTC-03). */
+function hojeISOBrasilia(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** Normaliza dd/mm/aaaa ou aaaa-mm-dd para ISO; devolve null se não der. */
+function toIsoData(v: unknown): string | null {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return iso ? `${iso[1]}-${iso[2]}-${iso[3]}` : null;
 }
 
 function emailValido(email: string | null | undefined): boolean {
