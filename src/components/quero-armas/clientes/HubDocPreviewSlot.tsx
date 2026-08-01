@@ -52,6 +52,8 @@ export default function HubDocPreviewSlot({
   const [slotW, setSlotW] = useState<number>(0);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageLoaded, setPageLoaded] = useState(false);
+  /** Página visível na rolagem — só para a legenda "pg X/N". */
+  const [pageAtual, setPageAtual] = useState(1);
 
   useEffect(() => {
     if (!slotRef.current) return;
