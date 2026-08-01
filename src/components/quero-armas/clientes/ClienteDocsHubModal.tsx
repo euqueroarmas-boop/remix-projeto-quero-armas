@@ -2419,6 +2419,7 @@ export function ClienteDocsHubModal({
   }
 
   async function handleSave() {
+    // (mantido abaixo)
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
