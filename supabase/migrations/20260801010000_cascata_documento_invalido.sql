@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION public.qa_processo_em_aberto(p_status text)
 RETURNS boolean
 LANGUAGE sql
 IMMUTABLE
-AS $$
+AS $fn_aberto$
   SELECT coalesce(p_status, '') IN (
     'aguardando_pagamento',
     'pagamento_confirmado',
@@ -41,7 +41,7 @@ AS $$
     'aguardando_assinatura',
     'pronto_para_protocolar'
   );
-$$;
+$fn_aberto$;
 
 -- ─── Varredura: reabre o que está sustentado por documento inválido ──────
 -- Devolve quantas exigências foram reabertas. Idempotente: rodar duas vezes
@@ -51,7 +51,7 @@ RETURNS integer
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $fn_reabrir$
 DECLARE v_total integer := 0;
 BEGIN
   WITH reabertas AS (
@@ -96,7 +96,7 @@ BEGIN
   GET DIAGNOSTICS v_total = ROW_COUNT;
   RETURN v_total;
 END;
-$$;
+$fn_reabrir$;
 
 REVOKE ALL ON FUNCTION public.qa_reabrir_exigencias_documento_invalido() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.qa_reabrir_exigencias_documento_invalido() TO service_role;
@@ -109,14 +109,14 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $fn_trigger$
 BEGIN
   IF OLD.status = 'aprovado' AND NEW.status <> 'aprovado' THEN
     PERFORM public.qa_reabrir_exigencias_documento_invalido();
   END IF;
   RETURN NEW;
 END;
-$$;
+$fn_trigger$;
 
 DROP TRIGGER IF EXISTS trg_qa_doc_invalidado_reabre ON public.qa_documentos_cliente;
 CREATE TRIGGER trg_qa_doc_invalidado_reabre
