@@ -3932,7 +3932,12 @@ export default function QAClientePortalPage() {
         </div>
       ) : null}
       <PendenciasGuiadasPopup
-        open={!mustChangePassword && showContratoPopup && pendenciasGuiadasCount > 0}
+        open={
+          !mustChangePassword &&
+          (showContratoPopup || (pendingContractsLoaded && pendingSignatureCount > 0)) &&
+          pendenciasGuiadasCount > 0
+        }
+        bloqueante={pendingContractsLoaded && pendingSignatureCount > 0}
         pendencias={pendenciasGuiadas}
         pinnedId={pinnedPendenciaId}
         ufCliente={(cliente as any)?.estado ?? null}
