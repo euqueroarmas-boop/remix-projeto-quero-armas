@@ -46,7 +46,13 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   declaracao_compromisso_habitualidade: "comprovante_habitualidade",
   declaracao_compromisso_treino: "declaracao_correlata",
   renda_nf_empresa: "renda_nf_recente",
-  renda_qsa: "renda_cartao_cnpj",
+  // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
+  // no cartão CNPJ, senão o slot do QSA nunca é cumprido.
+  // Tipos legados de MEI passam a cair no CCMEI, que é o documento oficial.
+  renda_cnpj_autonomo: "renda_ccmei",
+  ccmei: "renda_ccmei",
+  certificado_mei: "renda_ccmei",
+  renda_ficha_cadastral_jucesp: "renda_contrato_social",
 };
 
 const HUB_TIPOS_VALIDOS = new Set([
@@ -54,7 +60,9 @@ const HUB_TIPOS_VALIDOS = new Set([
   "rg_com_cpf","cin","cnh","cpf",
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
+  "renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
+  "renda_ccmei","renda_qsa",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
   "antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
@@ -68,6 +76,9 @@ const HUB_TIPOS_VALIDOS = new Set([
   "protocolo_processo","oficio","despacho","exigencia","indeferimento",
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
   "certidao_alteracao_nome",
+  "documento_identificacao_terceiro","foto_3x4","boletim_ocorrencia",
+  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento",
+  "habilitacao_cacador_ibama","declaracao_compromisso_habitualidade",
   "contrato_assinado","procuracao_assinada",
   "outro",
 ]);
