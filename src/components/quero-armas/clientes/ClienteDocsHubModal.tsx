@@ -2602,8 +2602,24 @@ export function ClienteDocsHubModal({
         payload.validado_admin = false;
       }
 
-      if (substituirDocumentoId) {
-        payload.substitui_documento_id = substituirDocumentoId;
+      // Documento do MESMO TIPO já entregue = SUBSTITUIÇÃO, nunca duplicata.
+      // Sem esta trava o Hub inseria uma segunda linha aprovada do mesmo tipo
+      // (ex.: dois cartões CNPJ), e o checklist passava a contar dois
+      // documentos onde a PF exige um só.
+      let alvoSubstituicao: string | null = substituirDocumentoId ?? null;
+      if (!alvoSubstituicao && qaClienteId && form.tipo_documento) {
+        const { data: jaEnviados } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("id")
+          .eq("qa_cliente_id", qaClienteId)
+          .eq("tipo_documento", form.tipo_documento)
+          .in("status", ["aprovado", "pendente_aprovacao"])
+          .order("created_at", { ascending: false })
+          .limit(1);
+        alvoSubstituicao = (jaEnviados as any)?.[0]?.id ?? null;
+      }
+      if (alvoSubstituicao) {
+        payload.substitui_documento_id = alvoSubstituicao;
       }
       const { data: inserted, error: insertError } = await supabase
         .from("qa_documentos_cliente" as any)
@@ -2626,7 +2642,7 @@ export function ClienteDocsHubModal({
       // Substituição: marca o documento antigo como 'substituido' e vincula
       // o novo. Assim o antigo sai das listagens e o histórico fica
       // preservado (soft delete com trilha).
-      if (substituirDocumentoId && novoDocId) {
+      if (alvoSubstituicao && novoDocId) {
         const { error: subErr } = await supabase
           .from("qa_documentos_cliente" as any)
           .update({
@@ -2634,8 +2650,11 @@ export function ClienteDocsHubModal({
             substituido_em: new Date().toISOString(),
             substituido_por_documento_id: novoDocId,
           })
-          .eq("id", substituirDocumentoId);
+          .eq("id", alvoSubstituicao);
         if (subErr) console.warn("[hub] falha ao marcar documento anterior como substituído:", subErr);
+        if (!substituirDocumentoId) {
+          toast.info("Já havia um documento deste tipo. O anterior foi arquivado e este passou a valer.");
+        }
       }
 
       // Promoção para o Arsenal operacional (qa_crafs) quando o documento for
