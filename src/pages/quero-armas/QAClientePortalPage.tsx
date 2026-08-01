@@ -197,7 +197,7 @@ interface ClienteAvatarOficial {
   url: string | null;
   path: string | null;
   bucket: string | null;
-  source: "qa_clientes.imagem" | "qa_cadastro_publico.selfie_path" | "avatar_tatico_path" | null;
+  source: "qa_clientes.imagem" | "qa_cadastro_publico.selfie_path" | "avatar_tatico_path" | "documento.foto_3x4" | null;
   hasPhoto: boolean;
 }
 

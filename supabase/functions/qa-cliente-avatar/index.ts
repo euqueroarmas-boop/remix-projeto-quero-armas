@@ -100,10 +100,36 @@ Deno.serve(async (req) => {
       selfiePath = cadByCpf?.selfie_path || null;
     }
 
+    // Foto 3x4 do acervo — última fonte, depois das pessoais.
+    //
+    // Regra do usuário (01/08/2026): a foto do avatar é PARTICULAR e
+    // descartável; a do repositório é DOCUMENTO. Como quase ninguém sobe
+    // avatar, a 3x4 entra só para a interface não ficar vazia.
+    //
+    // Vem por último de propósito: se o cliente escolher um avatar próprio,
+    // ele ganha. E trocar o avatar nunca toca no documento — são caminhos
+    // separados, e é isso que impede a exigência de ser desfeita por um
+    // gesto estético.
+    let foto3x4Path: string | null = null;
+    {
+      const { data: doc } = await admin
+        .from("qa_documentos_cliente")
+        .select("arquivo_storage_path")
+        .eq("qa_cliente_id", cliente.id)
+        .eq("tipo_documento", "foto_3x4")
+        .eq("status", "aprovado")
+        .not("arquivo_storage_path", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      foto3x4Path = (doc as any)?.arquivo_storage_path || null;
+    }
+
     const sources = [
       { path: cliente.imagem as string | null, buckets: ["qa-documentos", "qa-cadastro-selfies"], source: "qa_clientes.imagem" },
       { path: selfiePath, buckets: ["qa-cadastro-selfies", "qa-documentos"], source: "qa_cadastro_publico.selfie_path" },
       { path: cliente.avatar_tatico_path as string | null, buckets: ["qa-cadastro-selfies", "qa-documentos"], source: "avatar_tatico_path" },
+      { path: foto3x4Path, buckets: ["qa-documentos", "qa-cadastro-selfies"], source: "documento.foto_3x4" },
     ].filter((s) => !!s.path) as { path: string; buckets: string[]; source: string }[];
 
     for (const s of sources) {
