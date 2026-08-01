@@ -630,7 +630,20 @@ function parseNotaFiscal(texto: string): CamposCertidao {
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
   // DANFSe (padrão nacional): os rótulos ficam em uma linha e os valores na
   // linha seguinte, em colunas — daí os fallbacks posicionais abaixo.
-  const chave = t.match(/\b(\d{44})\b/)?.[1];
+  const chave =
+    t.match(/Chave\s+de\s+Acesso[^\d]{0,80}(\d{40,60})/i)?.[1] ?? t.match(/\b(\d{44,50})\b/)?.[1];
+  // No DANFSe o valor fica na linha seguinte ao rótulo em coluna.
+  const linhaApos = (rotulo: RegExp): string | undefined => {
+    const linhas = t.split(/\r?\n/);
+    const i = linhas.findIndex((l) => rotulo.test(l));
+    if (i < 0) return undefined;
+    for (let j = i + 1; j < Math.min(i + 4, linhas.length); j++) {
+      const v = linhas[j].trim();
+      if (v && !/^[-\s]+$/.test(v)) return v.split(/\s{3,}/)[0].trim();
+    }
+    return undefined;
+  };
+  const nomeEmpresarial = linhaApos(/Nome\s*\/\s*Nome\s+Empresarial/i);
   const dataHora = t.match(/(\d{2}\/\d{2}\/\d{4})\s+\d{2}:\d{2}(?::\d{2})?/)?.[1];
   const valorNacional =
     g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i) ??
@@ -646,9 +659,9 @@ function parseNotaFiscal(texto: string): CamposCertidao {
     cnpj: cnpj14(
       g(/CNPJ\s*\/?\s*CPF[^\d]{0,60}([\d./\-]{14,20})/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i),
     ),
-    razao_social: upperOrUndef(
-      g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social|Nome\s*\/\s*Nome Empresarial)\s*:?\s*(.+)$/im),
-    ),
+    razao_social:
+      upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)) ??
+      upperOrUndef(nomeEmpresarial),
     valor_nf:
       g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i) ?? valorNacional,
     chave_acesso: chave,
