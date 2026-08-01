@@ -35,6 +35,10 @@ import {
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
 import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
+import {
+  isDocumentoEmpresa30Dias,
+  isNotaFiscalSemVencimento,
+} from "@/lib/quero-armas/validadeDocumento";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
 import {
@@ -741,7 +745,29 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   ) {
     return addCalendarMonthsIso(emissao, 1);
   }
+  // OCUPAÇÃO LÍCITA E RENDA: 30 dias da emissão. Nota fiscal é perpétua.
+  if (isNotaFiscalSemVencimento(tipo)) return "";
+  if (isDocumentoEmpresa30Dias(tipo)) return addDaysIso(emissao, 30);
   return "";
+}
+
+/** Máscara 00.000.000/0000-00 para CNPJ com 14 dígitos. */
+function formatCnpj(v?: string | null): string {
+  const d = String(v || "").replace(/\D/g, "");
+  if (d.length !== 14) return String(v || "").trim();
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
+/**
+ * Nº do documento para o grupo OCUPAÇÃO LÍCITA E RENDA: o identificador
+ * oficial é o CNPJ (cartão CNPJ, CCMEI, QSA) ou o número da nota fiscal.
+ */
+function numeroDocumentoRenda(tipo: string, campos: Record<string, any>): string {
+  if (!isDocumentoEmpresa30Dias(tipo) && !isNotaFiscalSemVencimento(tipo)) return "";
+  if (isNotaFiscalSemVencimento(tipo)) {
+    return String(campos.numero_nf || campos.numero_documento || "").trim();
+  }
+  return formatCnpj(campos.cnpj) || String(campos.numero_documento || "").trim();
 }
 
 function addOneYearIso(iso?: string | null): string {
@@ -1650,7 +1676,9 @@ export function ClienteDocsHubModal({
               (campos as any).matricula ||
               ""
             )
-          : (campos.numero_documento || prev.numero_documento),
+          : (campos.numero_documento ||
+             numeroDocumentoRenda(tipoIA, campos as any) ||
+             prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         // Para laudos/exames, o campo "Avaliação" usa data_avaliacao.
         // A regra legal (Lei 10.826/03) vincula validade à DATA DA AVALIAÇÃO,
@@ -1729,7 +1757,8 @@ export function ClienteDocsHubModal({
       // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
       // bloqueio do salvar até confirmação humana campo a campo.
       setIaExtraido({
-        numero_documento: campos.numero_documento || "",
+        numero_documento:
+          campos.numero_documento || numeroDocumentoRenda(tipoIA, campos as any) || "",
         numero_cad_sinarm: cadSinarmRaw,
         numero_registro_sigma:
           sigmaExplicitoRaw || (tipoIA === "cr" ? (campos.numero_documento || "") : ""),
@@ -2058,13 +2087,16 @@ export function ClienteDocsHubModal({
     setForm((prev) => ({
       ...prev,
       tipo_documento: doc.tipoDocumento,
-      numero_documento: doc.numero_documento ?? prev.numero_documento,
+      numero_documento:
+        doc.numero_documento ??
+        (numeroDocumentoRenda(doc.tipoDocumento, doc as any) || prev.numero_documento),
       data_emissao: doc.data_emissao ?? prev.data_emissao,
       orgao_emissor: ORGAO_LABEL[doc.orgao] ?? prev.orgao_emissor,
       data_validade:
         doc.data_emissao && doc.validade_dias
           ? somarDias(doc.data_emissao, doc.validade_dias)
-          : prev.data_validade,
+          : (calcularValidadeHubPorTipo(doc.tipoDocumento, doc.data_emissao) ||
+             prev.data_validade),
     }));
     setCategoriaHub(inferHubCategoriaFromTipo(doc.tipoDocumento));
 
