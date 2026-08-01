@@ -153,7 +153,7 @@ export default function HubDocPreviewSlot({
           </div>
         ) : (
           <div
-            className="relative isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
+            className="relative z-0 isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
             style={{ borderRadius: 2 }}
           >
             {isImage && fileUrl && (
@@ -258,11 +258,11 @@ export default function HubDocPreviewSlot({
             irmãos posteriores do contêiner do documento, garantindo que fiquem
             acima do canvas do react-pdf independentemente de z-index interno. */}
         {file && (
-          <>
+          <div className="pointer-events-none absolute inset-0 z-[70]">
             <button
               type="button"
               onClick={onRemove}
-              className="absolute z-[60] flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+              className="pointer-events-auto absolute z-[71] flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
               style={{ borderRadius: 4, right: 8, top: 8 }}
               aria-label="Excluir arquivo"
               title="Excluir arquivo"
@@ -272,7 +272,7 @@ export default function HubDocPreviewSlot({
 
             {pct != null && !incorreta && (
               <div
-                className="pointer-events-none absolute z-[55]"
+                className="pointer-events-none absolute z-[71]"
                 style={{
                   top: 68,
                   right: 10,
@@ -292,7 +292,7 @@ export default function HubDocPreviewSlot({
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </div>
