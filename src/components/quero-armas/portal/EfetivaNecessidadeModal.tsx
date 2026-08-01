@@ -289,9 +289,9 @@ export default function EfetivaNecessidadeModal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/60 p-4">
-      <div className="my-8 w-full max-w-2xl rounded-xl bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-12 max-sm:p-4">
+      <div className="flex max-h-[calc(100dvh-6rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl max-sm:max-h-[calc(100dvh-2rem)]">
+        <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
               Efetiva necessidade
@@ -310,11 +310,11 @@ export default function EfetivaNecessidadeModal({
         </div>
 
         {carregando ? (
-          <div className="flex items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
+          <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abrindo…
           </div>
         ) : (
-          <div className="space-y-5 px-6 py-5">
+          <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
             {PERGUNTAS.map((q) => (
               <div key={q.campo} className="rounded-lg border border-zinc-200 p-4">
                 <p className="text-[14px] font-semibold text-zinc-900">{q.pergunta}</p>
@@ -432,7 +432,7 @@ export default function EfetivaNecessidadeModal({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
+        <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
           <p className="text-[10px] leading-tight text-zinc-400">
             Cada resposta é salva na hora.<br />Pode parar e continuar quando quiser.
           </p>
