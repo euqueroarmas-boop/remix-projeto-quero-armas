@@ -44,10 +44,13 @@ type Evento =
   // Alerta — a equipe removeu um arquivo do acervo do cliente
   | "documento_excluido"
   // Alerta — documento errado, mas aproveitado em outra exigência
-  | "documento_reaproveitado";
+  | "documento_reaproveitado"
+  // Alerta — documento recusado no Hub Documental (parentesco, outro titular,
+  // duplicidade ou tipo errado). Dispara quando o cliente clica "Enviar novamente".
+  | "documento_rejeitado";
 
 /** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
-const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada", "prova_recebida", "documento_excluido", "documento_reaproveitado"]);
+const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada", "prova_recebida", "documento_excluido", "documento_reaproveitado", "documento_rejeitado"]);
 
 interface Payload {
   evento: Evento;
@@ -76,6 +79,11 @@ interface Payload {
   /** Para exigencia_cumprida. */
   processo?: string;
   exigencia?: string;
+  /** Para documento_rejeitado. */
+  motivo_rejeicao?: "parentesco" | "titular" | "duplicidade" | "tipo";
+  motivo?: string;
+  detalhes?: Array<{ label: string; valor: string }>;
+  arquivo?: string;
   /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
   campos_alterados?: Array<{ label: string; valor: string }>;
   alterado_por?: string;
