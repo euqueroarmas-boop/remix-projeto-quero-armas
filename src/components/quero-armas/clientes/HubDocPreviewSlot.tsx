@@ -239,35 +239,8 @@ export default function HubDocPreviewSlot({
               </div>
             )}
 
-            {/* Carimbo CERTIDÃO INCORRETA */}
-            {incorreta && (
-              <div
-                className="pointer-events-none absolute z-[55]"
-                style={{
-                  top: "42%",
-                  left: "50%",
-                  transform: "translate(-50%,-50%) rotate(-14deg)",
-                  border: `6px solid ${RED}`,
-                  padding: "10px 22px 6px",
-                  background: "rgba(255,255,255,.90)",
-                  borderRadius: 6,
-                  color: RED,
-                  fontFamily: "'Oswald', sans-serif",
-                  boxShadow: "0 8px 22px rgba(185,28,28,.28)",
-                }}
-              >
-                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.95, letterSpacing: ".04em", textAlign: "center" }}>
-                  CERTIDÃO
-                </div>
-                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.95, letterSpacing: ".04em", textAlign: "center" }}>
-                  INCORRETA
-                </div>
-                <div style={{ fontSize: 10, letterSpacing: ".3em", textAlign: "center", marginTop: 4 }}>
-                  NÃO PODE SER SALVA
-                </div>
-              </div>
-            )}
-
+            {/* Nenhum carimbo é colado sobre o documento: aprovação e rejeição
+                aparecem apenas no carimbo central de 3 segundos (DocResultadoCarimbo). */}
             {extracting && (
               <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-white/85 backdrop-blur-sm">
                 <Loader2 className="h-6 w-6 animate-spin text-[#7A1F2B]" />
