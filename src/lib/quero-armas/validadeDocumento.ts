@@ -274,17 +274,33 @@ export function isProcuracao(tipo?: string | null): boolean {
  * Retorna null se não houver `data_emissao` (não recalcula).
  */
 /**
- * Documentos societários emitidos pela Receita Federal: cartão CNPJ, CCMEI e
- * QSA. Valem 30 dias da emissão — o órgão exige extrato recente.
- * O QSA é emitido junto com o cartão CNPJ e acompanha a data dele.
+ * Nota fiscal (de serviços/produto): comprova renda de um fato passado e
+ * NÃO vence — validade perpétua. Única exceção do grupo Ocupação Lícita.
+ */
+export function isNotaFiscalSemVencimento(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return (
+    t === "renda_nf_recente" ||
+    t === "renda_nf_empresa" ||
+    t === "nota_fiscal" ||
+    t.includes("nota_fiscal") ||
+    /(^|_)nf(_|$)/.test(t)
+  );
+}
+
+/**
+ * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
+ * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
+ * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
+ * ÚNICA exceção: nota fiscal, que tem validade perpétua.
  */
 export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   const t = String(tipo || "").toLowerCase();
+  if (isNotaFiscalSemVencimento(t)) return false;
   return (
+    t.startsWith("renda_") ||
+    t.startsWith("ocupacao_licita") ||
     t === "renda_cartao_cnpj" ||
-    t === "renda_cnpj_autonomo" ||
-    t === "renda_ccmei" ||
-    t === "renda_qsa" ||
     t === "cartao_cnpj_mei" // alias legado
   );
 }
@@ -306,6 +322,8 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  // Nota fiscal: validade perpétua — nunca calcula vencimento.
+  if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
