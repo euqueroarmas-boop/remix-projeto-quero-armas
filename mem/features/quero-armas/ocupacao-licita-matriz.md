@@ -24,3 +24,9 @@ Travas ativas: guard no front (`checklistGuiadoEngine.responderPerguntaGuia` + p
 ## Golden Record — QSA
 - O **QSA (Quadro de Sócios e Administradores)** não imprime data de emissão. A emissão do QSA é **sempre a mesma do Cartão CNPJ** aprovado no Hub (mesma consulta da Receita Federal).
 - O Hub preenche automaticamente: emissão = emissão do Cartão CNPJ aprovado, validade = emissão + 30 dias, órgão emissor = Receita Federal do Brasil.
+
+## Golden Record — Nota Fiscal (tabela dedicada)
+- Toda NFS-e do grupo de ocupação lícita é gravada em `public.qa_nf_golden_records` (chave natural: `chave_acesso`, upsert — reenvio nunca duplica).
+- Guarda o **cabeçalho** (número/competência/emissão da NFS-e, número e série da DPS, município emissor), o **prestador** (CNPJ, nome empresarial, IM, telefone, e-mail, endereço, município, CEP, Simples/MEI), o **tomador** (documento, nome, endereço, município, CEP) e o **serviço prestado** (código de tributação nacional/municipal, local, descrição integral + `itens_servico` JSONB com descrição/quantidade/preço/total), além de valores e ISSQN.
+- Fonte: `parseNotaFiscal` em `src/lib/quero-armas/parsersCertidoes.ts` (seções recortadas para não confundir prestador com tomador) + `salvarNotaFiscalGoldenRecord` em `src/lib/quero-armas/notaFiscalGoldenRecord.ts`.
+- Conformidade continua conferindo **apenas o prestador** (CNPJ + razão social). Tomador é dado do cliente do MEI — nunca comparado com o cadastro.

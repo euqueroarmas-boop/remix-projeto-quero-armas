@@ -40,6 +40,7 @@ import {
   isNotaFiscalSemVencimento,
 } from "@/lib/quero-armas/validadeDocumento";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
 import {
   conferirLaudo,
@@ -2819,6 +2820,15 @@ export function ClienteDocsHubModal({
         .single();
       if (insertError) throw insertError;
       const novoDocId = (inserted as any)?.id as string | undefined;
+      // Golden Record da nota fiscal (grupo de ocupação lícita): tabela própria
+      // com cabeçalho da DANFSe + descrição do serviço já parseada.
+      if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
+        void salvarNotaFiscalGoldenRecord({
+          campos: conferenciaLocal.doc,
+          clienteId: qaClienteId ?? null,
+          documentoId: novoDocId ?? null,
+        });
+      }
       if (isStaff && novoDocId) {
         notificarDocumentoHubAprovado(novoDocId);
         if (conferenciaLaudo?.veredicto === "aprovado_com_alerta_interno") {
