@@ -2418,8 +2418,70 @@ export function ClienteDocsHubModal({
     await classifyAndExtract(f);
   }
 
+  /**
+   * REJEITADO → ENVIAR NOVAMENTE.
+   * Dispara o e-mail que explica, em detalhe, por que o documento foi recusado
+   * (incluindo o alerta sobre a Polícia Federal) e devolve o modal ao estado
+   * limpo para o cliente anexar o documento correto.
+   */
+  async function handleEnviarNovamente() {
+    if (enviandoNovamente) return;
+    setEnviandoNovamente(true);
+    try {
+      if (qaClienteId && motivoRejeicao) {
+        const detalhes: Array<{ label: string; valor: string }> = [];
+        if (tomadorInfo?.valorCertidao) {
+          detalhes.push({ label: "Tomador na nota", valor: tomadorInfo.valorCertidao });
+        }
+        if (tomadorInfo?.valorReferencia) {
+          detalhes.push({ label: "Prestador (você / sua empresa)", valor: tomadorInfo.valorReferencia });
+        }
+        if (tomadorEnderecoInfo?.valorCertidao) {
+          detalhes.push({ label: "Endereço do tomador", valor: tomadorEnderecoInfo.valorCertidao });
+        }
+        if (tomadorEnderecoInfo?.valorReferencia) {
+          detalhes.push({ label: "Endereço do prestador", valor: tomadorEnderecoInfo.valorReferencia });
+        }
+        conformidade
+          .filter((i) => i.status === "divergente" && !String(i.campo).startsWith("tomador"))
+          .forEach((i) =>
+            detalhes.push({
+              label: i.label,
+              valor: `${i.valorCertidao} (no cadastro: ${i.valorReferencia || "—"})`,
+            }),
+          );
+        await supabase.functions.invoke("qa-notify-event", {
+          body: {
+            evento: "documento_rejeitado",
+            cliente_id: qaClienteId,
+            motivo: motivoRejeicao,
+            documento:
+              expectedTipoMeta?.label ||
+              getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
+            arquivo: file?.name || "",
+            detalhes,
+            referencia_id: `${form.tipo_documento || "doc"}-${Date.now()}`,
+          },
+        });
+      }
+      toast.success("Enviamos ao seu e-mail o motivo da recusa. Anexe agora o documento correto.");
+    } catch {
+      toast.error("Não conseguimos enviar o e-mail agora, mas você já pode anexar outro arquivo.");
+    } finally {
+      setEnviandoNovamente(false);
+      setFile(null);
+      setClassificacao(null);
+      setConferenciaLocal(null);
+      setAutoResult(null);
+      setConformidade([]);
+      setIaExtraido({});
+      setConfirmados({});
+      setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+      setTimeout(() => fileInputRef.current?.click(), 150);
+    }
+  }
+
   async function handleSave() {
-    // (mantido abaixo)
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
