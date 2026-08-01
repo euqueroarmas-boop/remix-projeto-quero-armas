@@ -1644,7 +1644,6 @@ export default function QAClientePortalPage() {
   };
 
   const resumoState = useMemo(() => {
-    // (memo movido para cima: usado por pendenciasGuiadas)
     const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
     const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
