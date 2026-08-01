@@ -1520,22 +1520,27 @@ export function ClienteDocsHubModal({
         const credNome = tipoLaudo === "psicologico" ? c.psicologo_nome : c.instrutor_nome;
 
         // Credenciado: procura no cadastro da PF que já sincronizamos.
-        // "nao_consultado" quando não há credencial legível — não é motivo
-        // para alarme, só não dá para afirmar nada.
+        // Busca por índice, comparando só os dígitos da credencial. Os dois
+        // lados escrevem diferente — a tabela guarda 'CRP 10/03363' e o laudo
+        // traz '06/60.138' —, e a normalização por dígitos alinha os dois.
+        //
+        // Credencial com menos de 5 dígitos não identifica ninguém: fica
+        // "nao_consultado" e NÃO vira alerta. Alarmar a equipe porque a leitura
+        // saiu ruim seria ruído, não sinal.
         let credenciado: "encontrado" | "nao_encontrado" | "nao_consultado" = "nao_consultado";
-        if (credencial) {
+        const digitosCred = String(credencial || "").replace(/\D/g, "");
+        if (digitosCred.length >= 5) {
           try {
-            const tabela = tipoLaudo === "psicologico" ? "qa_psico_credenciados" : "qa_iat_credenciados";
-            const alvo = credencial.replace(/\D/g, "");
-            const { data: achados } = await supabase
-              .from(tabela as any)
-              .select("id, nome, registro")
-              .limit(50);
-            const bate = (achados as any[] | null)?.some(
-              (r) => String(r?.registro || "").replace(/\D/g, "").includes(alvo) && alvo.length >= 4,
+            const { data: achado, error: errCred } = await supabase.rpc(
+              "qa_credenciado_por_credencial" as any,
+              { p_tipo: tipoLaudo === "psicologico" ? "psico" : "iat", p_credencial: credencial },
             );
-            credenciado = bate ? "encontrado" : "nao_encontrado";
-          } catch {
+            if (errCred) throw errCred;
+            credenciado = Array.isArray(achado) && achado.length > 0 ? "encontrado" : "nao_encontrado";
+          } catch (e) {
+            // Falha de consulta não é ausência de credenciado. Silenciar evita
+            // acusar profissional legítimo por causa de rede instável.
+            console.warn("[laudo] consulta de credenciado falhou:", e);
             credenciado = "nao_consultado";
           }
         }
