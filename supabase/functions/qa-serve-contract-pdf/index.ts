@@ -317,9 +317,14 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   // Folga antes do texto do contrato (MARGIN_X = 76), para o carimbo nunca
   // encostar no corpo do documento.
   const CARIMBO_GUTTER = 16;
+  // Teto de 4 colunas pedido pelo usuário. O `min` com a largura disponível
+  // impede que o carimbo invada o texto se a margem mudar um dia.
   const CARIMBO_MAX_COLUNAS = Math.max(
     1,
-    Math.floor((MARGIN_X - CARIMBO_CAMPOS_X - CARIMBO_GUTTER) / CARIMBO_PASSO),
+    Math.min(
+      4,
+      Math.floor((MARGIN_X - CARIMBO_CAMPOS_X - CARIMBO_GUTTER) / CARIMBO_PASSO),
+    ),
   );
   // Avanço médio por caractere nesta fonte — usado só para quebrar em colunas.
   const CARIMBO_AVANCO = 3.1;
@@ -333,19 +338,54 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   // continua na coluna ao lado. O que causou o corte no meio do USER-AGENT
   // antes não foi este formato, e sim a faixa estreita demais — agora a
   // margem reserva folga para o texto inteiro caber.
-  const carimboTexto = connectionStampLines(contract).join(", ");
+  // Campos separados por vírgula, um do lado do outro, quebrando SÓ na vírgula
+  // e no máximo em 4 colunas (usuário, 31/07/2026).
+  //
+  // A versão anterior cortava por contagem de caracteres, e o corte caía no
+  // meio do USER-AGENT. Aqui a coluna recebe campos INTEIROS enquanto couber;
+  // quando o próximo não cabe, ele começa a coluna seguinte. Nenhum campo é
+  // partido ao meio.
+  const carimboCampos = connectionStampLines(contract);
   const carimboColunas: string[] = [];
-  for (
-    let i = 0;
-    i < carimboTexto.length && carimboColunas.length < CARIMBO_MAX_COLUNAS;
-    i += maxCharsPorColuna
-  ) {
-    carimboColunas.push(carimboTexto.slice(i, i + maxCharsPorColuna));
+  let colunaAtual = "";
+
+  for (const campo of carimboCampos) {
+    if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
+
+    const candidato = colunaAtual ? `${colunaAtual}, ${campo}` : campo;
+    if (candidato.length <= maxCharsPorColuna) {
+      colunaAtual = candidato;
+      continue;
+    }
+
+    // Não coube: fecha a coluna atual e começa outra com este campo.
+    if (colunaAtual) {
+      carimboColunas.push(colunaAtual);
+      colunaAtual = "";
+      if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
+    }
+
+    // Campo sozinho maior que a coluna inteira (hash longo, user-agent
+    // extenso): aí não há como respeitar a vírgula — parte-se o campo, que é
+    // melhor do que omiti-lo.
+    if (campo.length > maxCharsPorColuna) {
+      for (let i = 0; i < campo.length; i += maxCharsPorColuna) {
+        if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
+        carimboColunas.push(campo.slice(i, i + maxCharsPorColuna));
+      }
+    } else {
+      colunaAtual = campo;
+    }
   }
-  // Se ainda assim não couber, o documento DIZ que foi cortado. Carimbo
-  // truncado em silêncio parece completo e não está.
-  const consumido = carimboColunas.join("").length;
-  if (consumido < carimboTexto.length && carimboColunas.length > 0) {
+  if (colunaAtual && carimboColunas.length < CARIMBO_MAX_COLUNAS) {
+    carimboColunas.push(colunaAtual);
+  }
+
+  // Campo que não coube nas 4 colunas: o documento avisa, em vez de sumir com
+  // ele em silêncio.
+  const camposImpressos = carimboColunas.join(", ");
+  const faltou = carimboCampos.some((c) => !camposImpressos.includes(c.slice(0, 12)));
+  if (faltou && carimboColunas.length > 0) {
     const ultima = carimboColunas.length - 1;
     carimboColunas[ultima] =
       carimboColunas[ultima].slice(0, Math.max(0, maxCharsPorColuna - 1)) + "…";
