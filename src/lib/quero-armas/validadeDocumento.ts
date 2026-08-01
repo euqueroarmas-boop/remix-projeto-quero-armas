@@ -410,7 +410,8 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   const venc = parseISODate(iso)!;
   const hojeUTC = Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate());
   const dias = Math.round((venc.getTime() - hojeUTC) / 86400000);
+  const limiar = limiarAlertaDias(doc.tipo_documento);
   const status: ValidadeStatus =
-    dias < 0 ? "vencido" : dias <= 7 ? "vence_em_breve" : "vigente";
+    dias < 0 ? "vencido" : dias <= limiar ? "vence_em_breve" : "vigente";
   return { iso, label: formatBR(iso), dias, status, origem };
 }
