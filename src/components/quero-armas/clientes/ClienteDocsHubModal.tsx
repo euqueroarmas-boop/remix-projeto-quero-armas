@@ -462,6 +462,11 @@ function calcularConformidade(
   // e servem de "verdade" inicial). Comprovantes e demais docs só entram como
   // fallback quando o dado não existe no documento de identificação.
   const IDENTIDADE_PRIMARIA = new Set(["cin", "rg_com_cpf", "cnh"]);
+  // A CNH (principalmente o modelo antigo) NÃO informa naturalidade — o que
+  // aparece no documento é o local/UF de EMISSÃO. Usar isso como referência de
+  // naturalidade gera divergência falsa em toda certidão. Só documentos que
+  // realmente declaram o local de nascimento servem de referência para esse campo.
+  const SEM_NATURALIDADE_CONFIAVEL = new Set(["cnh", "comprovante_residencia"]);
   const sorted = [...docsAprovados]
     .filter(d => {
       if (NAO_SERVEM_COMO_REFERENCIA.has(d.tipo_documento)) return false;
@@ -494,7 +499,9 @@ function calcularConformidade(
     trySet("data_nascimento", c.data_nascimento);
     trySet("filiacao_mae", c.filiacao_mae);
     trySet("filiacao_pai", c.filiacao_pai);
-    trySet("naturalidade", c.naturalidade);
+    if (!SEM_NATURALIDADE_CONFIAVEL.has(doc.tipo_documento)) {
+      trySet("naturalidade", c.naturalidade);
+    }
     trySet("sexo", c.sexo);
   }
 
