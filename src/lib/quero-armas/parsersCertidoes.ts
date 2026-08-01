@@ -716,18 +716,65 @@ function parseQsa(texto: string): CamposCertidao {
 function parseNotaFiscal(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  /* Recorta as seções do DANFSe: os mesmos rótulos (CNPJ, Endereço, CEP…)
+   * aparecem no prestador e no tomador — sem recorte, o parser leria o
+   * endereço do cliente do Gilson como se fosse o dele. */
+  const secao = (ini: RegExp, fim: RegExp): string => {
+    const i = t.search(ini);
+    if (i < 0) return "";
+    const resto = t.slice(i);
+    const j = resto.slice(1).search(fim);
+    return j < 0 ? resto : resto.slice(0, j + 1);
+  };
+  const secPrest = secao(/EMITENTE DA NFS-?E/i, /TOMADOR DO SERVI[CÇ]O/i);
+  const secTom = secao(/TOMADOR DO SERVI[CÇ]O/i, /INTERMEDI[AÁ]RIO|SERVI[CÇ]O PRESTADO/i);
+  const secServ = secao(/SERVI[CÇ]O PRESTADO/i, /TRIBUTA[CÇ][AÃ]O MUNICIPAL/i);
+  /** Lê um rótulo dentro de uma seção: valor na mesma linha ou na linha seguinte. */
+  const campo = (bloco: string, re: RegExp): string | undefined => {
+    const inline = bloco.match(new RegExp(re.source + String.raw`\s*:?\s*(.+)`, "i"))?.[1];
+    const v = (inline ?? linhaAposRotulo(bloco, re) ?? "").split(/\s{2,}/)[0].trim();
+    return v && v !== "-" ? v : undefined;
+  };
+  const limpaEmail = (v?: string) => v?.replace(/\S+@\S+/g, "").trim() || undefined;
+  const num = (v?: string) =>
+    v ? Number(v.replace(/\./g, "").replace(",", ".")) || undefined : undefined;
+
   // DANFSe (padrão nacional): os rótulos ficam em uma linha e os valores na
   // linha seguinte, em colunas — daí os fallbacks posicionais abaixo.
   const chave =
     t.match(/Chave\s+de\s+Acesso[^\d]{0,80}(\d{40,60})/i)?.[1] ?? t.match(/\b(\d{44,50})\b/)?.[1];
-  const nomeEmpresarial = linhaAposRotulo(t, /Nome\s*\/\s*Nome\s+Empresarial/i)
-    ?.replace(/\S+@\S+/g, "")
-    .trim();
+  const nomeEmpresarial = limpaEmail(
+    campo(secPrest || t, /Nome\s*\/\s*Nome\s+Empresarial/i) ??
+      linhaAposRotulo(t, /Nome\s*\/\s*Nome\s+Empresarial/i) ??
+      undefined,
+  );
   const dataHora = t.match(/(\d{2}\/\d{2}\/\d{4})\s+\d{2}:\d{2}(?::\d{2})?/)?.[1];
   const valorNacional =
     g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i) ??
     g(/Valor\s+do\s+Servi[cç]o[^\d]{0,60}([\d.,]+)/i);
   const numeroNacional = g(/N[uú]mero\s+da\s+NFS-?e\D{0,120}?(\d{1,9})\b/i);
+
+  /* Descrição do serviço → itens (mercadoria, quantidade, preço, total). */
+  const descricao = (() => {
+    const bloco = secServ || t;
+    const m = bloco.match(/Descri[cç][aã]o\s+do\s+Servi[cç]o\s*:?\s*([\s\S]{0,1200}?)(?=TRIBUTA|$)/i);
+    const bruto = (m?.[1] ?? "").replace(/\s+/g, " ").trim();
+    return bruto.replace(/^Descri[cç][aã]o do servi[cç]o\s*/i, "").trim() || undefined;
+  })();
+  const itens: NonNullable<CamposCertidao["itens_servico"]> = [];
+  if (descricao) {
+    const re =
+      /([A-Za-z][A-Za-z0-9À-ÿ\/ .-]{2,60}?)\s+bruto\s*:?\s*([\d.,]+)\s*pre[cç]o\s*:?\s*([\d.,]+)\s*total\s*:?\s*([\d.,]+)/gi;
+    for (const m of descricao.matchAll(re)) {
+      itens.push({
+        descricao: upper(m[1]).replace(/^[,.;]\s*/, ""),
+        quantidade: num(m[2]),
+        preco: num(m[3]),
+        total: num(m[4]),
+      });
+    }
+  }
+
   return {
     orgao: "nota_fiscal",
     tipoDocumento: "renda_nf_recente",
@@ -736,7 +783,10 @@ function parseNotaFiscal(texto: string): CamposCertidao {
       g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i) ??
       numeroNacional,
     cnpj: cnpj14(
-      g(/CNPJ\s*\/?\s*CPF[^\d]{0,60}([\d./\-]{14,20})/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i),
+      secPrest.match(/Prestador\s+do\s+Servi[cç]o[^\d]{0,40}([\d./\-]{14,20})/i)?.[1] ??
+        secPrest.match(RE_CNPJ)?.[0] ??
+        g(/CNPJ\s*\/?\s*CPF[^\d]{0,60}([\d./\-]{14,20})/i) ??
+        g(/CNPJ\s*:?\s*([\d./\-]+)/i),
     ),
     razao_social:
       upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)) ??
@@ -749,5 +799,47 @@ function parseNotaFiscal(texto: string): CamposCertidao {
       iso(g(/Emiss[aã]o\s+da\s+NFS-?e\D{0,120}?(\d{2}\/\d{2}\/\d{4})/i)) ??
       iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
       iso(dataHora),
+
+    /* ── Cabeçalho ── */
+    competencia: iso(g(/Compet[eê]ncia\s+da\s+NFS-?e\D{0,120}?(\d{2}\/\d{2}\/\d{4})/i)),
+    numero_dps: g(/N[uú]mero\s+da\s+DPS\D{0,120}?(\d{1,9})\b/i),
+    serie_dps: g(/S[eé]rie\s+da\s+DPS\D{0,120}?(\d{1,9})\b/i),
+    municipio_emissor: upperOrUndef(g(/PREFEITURA\s+MUNICIPAL\s+DE\s+(.+)$/im)),
+    email_municipio: t.match(/([\w.\-]+@[\w.\-]*gov\.br)/i)?.[1]?.toLowerCase(),
+
+    /* ── Prestador ── */
+    prestador_inscricao_municipal: campo(secPrest, /Inscri[cç][aã]o\s+Municipal/i),
+    prestador_telefone: campo(secPrest, /Telefone/i),
+    prestador_email: secPrest.match(/([\w.\-]+@[\w.\-]+\.\w+)/)?.[1]?.toLowerCase(),
+    prestador_endereco: upperOrUndef(campo(secPrest, /Endere[cç]o/i)),
+    prestador_municipio: upperOrUndef(campo(secPrest, /Munic[ií]pio/i)),
+    prestador_cep: campo(secPrest, /CEP/i)?.replace(/\D/g, "") || undefined,
+    prestador_simples_nacional: campo(secPrest, /Simples\s+Nacional\s+na\s+Data\s+de\s+Compet[eê]ncia/i),
+    prestador_regime_apuracao: campo(secPrest, /Regime\s+de\s+Apura[cç][aã]o\s+Tribut[aá]ria/i),
+
+    /* ── Tomador ── */
+    tomador_documento:
+      campo(secTom, /CNPJ\s*\/\s*CPF\s*\/\s*NIF/i)?.replace(/[^\d]/g, "") || undefined,
+    tomador_nome: upperOrUndef(limpaEmail(campo(secTom, /Nome\s*\/\s*Nome\s+Empresarial/i))),
+    tomador_inscricao_municipal: campo(secTom, /Inscri[cç][aã]o\s+Municipal/i),
+    tomador_telefone: campo(secTom, /Telefone/i),
+    tomador_email: secTom.match(/([\w.\-]+@[\w.\-]+\.\w+)/)?.[1]?.toLowerCase(),
+    tomador_endereco: upperOrUndef(campo(secTom, /Endere[cç]o/i)),
+    tomador_municipio: upperOrUndef(campo(secTom, /Munic[ií]pio/i)),
+    tomador_cep: campo(secTom, /CEP/i)?.replace(/\D/g, "") || undefined,
+
+    /* ── Serviço prestado ── */
+    codigo_tributacao_nacional: campo(secServ, /C[oó]digo\s+de\s+Tributa[cç][aã]o\s+Nacional/i),
+    codigo_tributacao_municipal: campo(secServ, /C[oó]digo\s+de\s+Tributa[cç][aã]o\s+Municipal/i),
+    local_prestacao: upperOrUndef(campo(secServ, /Local\s+da\s+Presta[cç][aã]o/i)),
+    pais_prestacao: campo(secServ, /Pa[ií]s\s+da\s+Presta[cç][aã]o/i),
+    descricao_servico: descricao,
+    itens_servico: itens.length ? itens : undefined,
+
+    /* ── Tributação / valores ── */
+    tributacao_issqn: campo(t, /Tributa[cç][aã]o\s+do\s+ISSQN/i),
+    municipio_incidencia_issqn: upperOrUndef(campo(t, /Munic[ií]pio\s+de\s+Incid[eê]ncia\s+do\s+ISSQN/i)),
+    retencao_issqn: campo(t, /Reten[cç][aã]o\s+do\s+ISSQN/i),
+    valor_liquido: g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i),
   };
 }
