@@ -3996,7 +3996,12 @@ export default function QAClientePortalPage() {
         }
         bloqueante={pendingContractsLoaded && pendingSignatureCount > 0}
         pendencias={pendenciasGuiadas}
-        pinnedId={pinnedPendenciaId}
+        pinnedId={
+          // Assinatura pendente = fila travada no contrato/procuração.
+          pendingSignatureCount > 0 && !String(pinnedPendenciaId ?? "").startsWith("sig:")
+            ? null
+            : pinnedPendenciaId
+        }
         ufCliente={(cliente as any)?.estado ?? null}
         onDismiss={dismissPendenciasGuiadas}
                 resumoProcesso={resumoProcesso}
