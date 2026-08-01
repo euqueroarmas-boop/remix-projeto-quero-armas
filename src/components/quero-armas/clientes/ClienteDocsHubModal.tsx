@@ -32,6 +32,7 @@ import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import {
   isTipoIdentidadeComQr,
   avaliarPdfIdentidade,
+*** placeholder
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
