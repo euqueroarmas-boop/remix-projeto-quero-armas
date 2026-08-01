@@ -2308,8 +2308,10 @@ export function ClienteDocsHubModal({
   async function tentarLeituraLocal(f: File): Promise<boolean> {
     if (f.type !== "application/pdf") return false;
     let texto = "";
+    textoLocalRef.current = "";
     try {
       texto = await extrairTextoPdf(f);
+      textoLocalRef.current = texto;
     } catch (e) {
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
