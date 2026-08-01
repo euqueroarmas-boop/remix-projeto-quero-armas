@@ -662,8 +662,16 @@ function addCalendarMonthsIso(iso?: string | null, months = 1): string {
 function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): string {
   const emissao = dataIsoFromBr(dataEmissao) || String(dataEmissao || "").slice(0, 10);
   if (!emissao) return "";
-  if (tipo === "antecedentes_federal_trf3_regional" || tipo === "antecedentes_militar") {
+  if (
+    tipo === "antecedentes_federal_trf3_regional" ||
+    tipo === "antecedentes_militar" ||
+    tipo === "antecedentes_militar_estadual"
+  ) {
     return addDaysIso(emissao, 90);
+  }
+  // Procuração (assinada ou não): 12 meses a partir da emissão — regra oficial.
+  if (tipo === "procuracao" || tipo === "procuracao_assinada") {
+    return addCalendarMonthsIso(emissao, 12);
   }
   // Documentos de identificação civil: validade = emissão + 10 anos.
   if (

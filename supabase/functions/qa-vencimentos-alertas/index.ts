@@ -29,7 +29,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-cron-token",
 };
 
-const MARCOS = [180, 90, 60, 30, 15, 7, 0, -1];
+const MARCOS = [180, 90, 60, 45, 30, 15, 7, 0, -1];
 const PORTAL_LINK = "https://www.euqueroarmas.com.br/area-do-cliente";
 const REMETENTE = "arsenalinteligente@notificacao.euqueroarmas.com.br";
 
