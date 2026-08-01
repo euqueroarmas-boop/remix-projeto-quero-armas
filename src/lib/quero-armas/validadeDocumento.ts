@@ -289,14 +289,35 @@ export function isNotaFiscalSemVencimento(tipo?: string | null): boolean {
 }
 
 /**
+ * Documentos CONSTITUTIVOS da empresa: não têm prazo de validade. O CCMEI,
+ * o contrato social e o requerimento de empresário provam a existência da
+ * empresa, não a situação dela num dado dia. A atualidade da ocupação lícita
+ * é conferida pela EMISSÃO do cartão CNPJ e do QSA (esses sim, 30 dias).
+ */
+export function isDocumentoConstitutivoPerpetuo(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return (
+    t === "renda_ccmei" ||
+    t === "ccmei" ||
+    t.includes("ccmei") ||
+    t === "renda_contrato_social" ||
+    t.includes("contrato_social") ||
+    t.includes("requerimento_empresario") ||
+    t.includes("requerimento_de_empresario")
+  );
+}
+
+/**
  * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
  * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
  * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
- * ÚNICA exceção: nota fiscal, que tem validade perpétua.
+ * Exceções sem vencimento: nota fiscal e documentos constitutivos
+ * (CCMEI, contrato social, requerimento de empresário).
  */
 export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   const t = String(tipo || "").toLowerCase();
   if (isNotaFiscalSemVencimento(t)) return false;
+  if (isDocumentoConstitutivoPerpetuo(t)) return false;
   return (
     t.startsWith("renda_") ||
     t.startsWith("ocupacao_licita") ||
@@ -324,6 +345,7 @@ export function calcularValidadeEfetiva(
   if (!emi) return null;
   // Nota fiscal: validade perpétua — nunca calcula vencimento.
   if (isNotaFiscalSemVencimento(tipo)) return null;
+  if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
