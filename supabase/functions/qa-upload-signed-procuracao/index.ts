@@ -180,6 +180,16 @@ Deno.serve(async (req) => {
     ip: uploadIp,
     user_agent: uploadUserAgent,
   };
+  // Regra oficial Quero Armas: procuração vale 12 MESES a partir da emissão
+  // (data da assinatura). Gravamos já calculada para o Hub e para os alertas.
+  const emissaoProcIso = String(uploadedAt).slice(0, 10);
+  const validadeProcIso = (() => {
+    const [y, m, d] = emissaoProcIso.split("-").map(Number);
+    const first = new Date(Date.UTC(y, m - 1 + 12, 1));
+    const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(d, last)))
+      .toISOString().slice(0, 10);
+  })();
   try {
     const { data: existente } = await sb
       .from("qa_documentos_cliente")
@@ -200,6 +210,8 @@ Deno.serve(async (req) => {
           arquivo_mime: "application/pdf",
           status: "pendente_aprovacao",
           motivo_reprovacao: null,
+          data_emissao: emissaoProcIso,
+          data_validade: validadeProcIso,
           metadados_documento_json: metadados,
           updated_at: uploadedAt,
         })
@@ -214,6 +226,8 @@ Deno.serve(async (req) => {
         arquivo_mime: "application/pdf",
         origem: "cliente",
         status: "pendente_aprovacao",
+        data_emissao: emissaoProcIso,
+        data_validade: validadeProcIso,
         ia_status: "nao_processado",
         categoria_hub: "juridico",
         escopo_documental: "processo",
