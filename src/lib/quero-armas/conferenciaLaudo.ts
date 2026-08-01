@@ -303,7 +303,10 @@ export function conferirLaudo(
         perguntas.push({
           campo: d.campo,
           label: d.label,
-          pergunta: `Não conseguimos ler "${d.label.toLowerCase()}" no seu laudo — a imagem ficou pouco legível nesse ponto. Qual foi o valor?`,
+          pergunta:
+            d.campo === "nota_teorica"
+              ? "A sua nota na prova teórica não saiu nítida na imagem. Qual foi?"
+              : `A sua nota no alvo de ${d.campo === "pontuacao_5m" ? "5" : "7"} metros não saiu nítida na imagem. Qual foi?`,
         });
       }
     }
@@ -331,8 +334,12 @@ export function conferirLaudo(
               label: d.label,
               valorLido: d.valor,
               pergunta:
-                `Lemos "${d.valor}" em ${d.label.toLowerCase()}, mas o instrutor aprovou você — ` +
-                `então é provável que a imagem tenha confundido nossa leitura. Confirme o valor correto.`,
+                d.campo === "nota_teorica"
+                  ? `Lemos ${d.valor} na sua prova teórica, mas o instrutor aprovou você — ` +
+                    `então foi a imagem que confundiu nossa leitura. Qual foi a sua nota?`
+                  : `Lemos ${d.valor} no seu alvo de ${d.campo === "pontuacao_5m" ? "5" : "7"} metros, ` +
+                    `mas o instrutor aprovou você — então foi a imagem que confundiu nossa leitura. ` +
+                    `Qual foi a sua nota?`,
             });
           }
         }

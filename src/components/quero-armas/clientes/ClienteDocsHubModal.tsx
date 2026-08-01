@@ -3250,7 +3250,16 @@ export function ClienteDocsHubModal({
                   Confirme {conferenciaLaudo.perguntasAoCliente.length === 1 ? "esta nota" : "estas notas"}
                 </div>
                 <p className="mt-1 text-[11px] leading-snug text-amber-900">
-                  Você está com o laudo em mãos — leva dez segundos e evita que a gente registre um valor errado.
+                  Você está com o laudo em mãos, então é rápido — e assim a gente registra a
+                  sua nota certa, e não um chute nosso.
+                </p>
+                {/* O cliente não tem por que se importar com um campo do nosso
+                    banco. Tem, sim, por que se importar com a própria evolução
+                    no tiro — e é isso que a nota vira aqui dentro. */}
+                <p className="mt-1.5 text-[11px] leading-snug text-amber-900/90">
+                  Suas notas ficam no seu histórico de atirador. A cada novo exame você vê
+                  como evoluiu — prova teórica, alvo de 5 e de 7 metros, um ao lado do outro.
+                  Depois de um curso ou de um tempo praticando, a diferença aparece em números.
                 </p>
                 <div className="mt-2 space-y-2">
                   {conferenciaLaudo.perguntasAoCliente.map((q) => (
