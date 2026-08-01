@@ -140,7 +140,8 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "antecedentes_federal_sjsp_jef", label: "Certidão Federal — Seção Judiciária SP e JEF/SP", short: "Certidão Federal — Seção Judiciária SP e JEF/SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_estadual_distribuicao", label: "Certidão Estadual TJSP — Distribuição de Ações Criminais", short: "Certidão Estadual TJSP — Distribuição de Ações Criminais", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_estadual_execucoes", label: "Certidão Estadual TJSP — Execuções Criminais", short: "Certidão Estadual TJSP — Execuções Criminais", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar", label: "Certidão Criminal Militar", short: "Certidão Criminal Militar", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: "Certidão Criminal Militar — Justiça Militar da União (STM)", short: "Certidão Criminal Militar — STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar_estadual", label: "Certidão Criminal Militar — Justiça Militar Estadual (TJM)", short: "Certidão Criminal Militar — TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_eleitoral", label: "Certidão de Crimes Eleitorais — TSE", short: "Certidão de Crimes Eleitorais — TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
@@ -334,6 +335,10 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
   }
   if (tipo === "antecedentes_federal_trf3_regional") {
     return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+  }
+
+  if (tipo === "antecedentes_militar_estadual") {
+    return "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)";
   }
 
   if (tipo === "antecedentes_militar") {
