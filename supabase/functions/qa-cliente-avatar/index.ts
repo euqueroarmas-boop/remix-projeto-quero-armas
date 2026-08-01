@@ -41,6 +41,9 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const uid = claimsData.claims.sub as string;
 
+    // Vínculos podem estar duplicados para o mesmo cliente (histórico de
+    // provisionamentos). Por isso limit(1): maybeSingle sozinho devolve erro
+    // com múltiplas linhas e derrubava o acesso legítimo em 403.
     const [{ data: link }, { data: perfil }] = await Promise.all([
       admin
         .from("cliente_auth_links")
@@ -48,12 +51,14 @@ Deno.serve(async (req) => {
         .eq("user_id", uid)
         .eq("qa_cliente_id", clienteId)
         .eq("status", "active")
+        .limit(1)
         .maybeSingle(),
       admin
         .from("qa_usuarios_perfis")
         .select("perfil")
         .eq("user_id", uid)
         .eq("ativo", true)
+        .limit(1)
         .maybeSingle(),
     ]);
 
