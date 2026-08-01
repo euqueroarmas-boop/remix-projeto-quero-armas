@@ -1526,14 +1526,24 @@ export function ClienteDocsHubModal({
     );
   // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
   const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
-  // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
-  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = titularDivergente
-    ? (parentescoDetectado ? "parentesco" : "titular")
-    : rejeitadoDuplicidade
-      ? "duplicidade"
-      : documentoIncorretoTipo
-        ? "tipo"
-        : null;
+  // ── NOTA FISCAL · TOMADOR PARENTE NO MESMO ENDEREÇO ─────────────────────
+  // Rejeição dura: a nota foi emitida para um familiar que mora no mesmo
+  // endereço do prestador — não comprova ocupação lícita perante a PF.
+  const notaTomadorParentesco = conformidade.some(
+    (i) => i.campo === "tomador_nome" && i.status === "divergente",
+  );
+  const tomadorInfo = conformidade.find((i) => i.campo === "tomador_nome");
+  const tomadorEnderecoInfo = conformidade.find((i) => i.campo === "tomador_endereco");
+  // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
+  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = notaTomadorParentesco
+    ? "parentesco"
+    : titularDivergente
+      ? (parentescoDetectado ? "parentesco" : "titular")
+      : rejeitadoDuplicidade
+        ? "duplicidade"
+        : documentoIncorretoTipo
+          ? "tipo"
+          : null;
 
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
