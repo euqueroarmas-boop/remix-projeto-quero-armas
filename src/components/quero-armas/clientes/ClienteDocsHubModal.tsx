@@ -27,6 +27,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
+import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
