@@ -20,6 +20,7 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
+import PainelDisparo, { type ItemDisparo } from "@/components/quero-armas/portal/PainelDisparo";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
@@ -2238,6 +2239,77 @@ export default function QAClientePortalPage() {
    * é impossível de responder sem dizer QUAL. O cliente não adivinha a que
    * endereço o sistema se refere.
    */
+  /**
+   * Tudo que está esperando o cliente, para o painel do rail.
+   *
+   * Reúne o que hoje está espalhado em quatro lugares — assinaturas, cadastro,
+   * documentos vencendo e exigências do processo — numa lista só, ordenada por
+   * prioridade. A ordem está documentada em PainelDisparo.tsx e foi confirmada
+   * pelo usuário: primeiro o que trava tudo, depois o que tem prazo, por
+   * último a rotina.
+   */
+  const itensDisparo = useMemo<ItemDisparo[]>(() => {
+    const itens: ItemDisparo[] = [];
+
+    // 2) Assinaturas — travam o processo inteiro.
+    for (const sig of pendingSignatureDocs) {
+      itens.push({
+        id: `disparo:sig:${sig.id}`,
+        prioridade: "assinatura",
+        titulo: sig.kind === "contract" ? "Contrato de adesão para assinar" : "Procuração para assinar",
+        detalhe: sig.contract_number ? `Protocolo ${sig.contract_number}` : "Baixe, assine no gov.br e reenvie",
+        onClick: () => setShowContratoPopup(true),
+      });
+    }
+
+    // 3) Cadastro — trava a geração de documentos e o checklist.
+    if (resumoState?.cadastroIncompleto) {
+      itens.push({
+        id: "disparo:cadastro",
+        prioridade: "cadastro",
+        titulo: "Complete seu cadastro",
+        detalhe: "Faltam dados que usamos para gerar seus documentos",
+        onClick: () => setShowCadastroModal(true),
+      });
+    }
+
+    // 4, 5 e 7) Documentos por prazo. A faixa decide a prioridade — é a mesma
+    // régua de cor usada no resto do portal.
+    for (const d of analysis?.expDocs ?? []) {
+      if (d.days === null || d.days === undefined) continue;
+      const dias = Number(d.days);
+      if (dias > 30) continue;
+      itens.push({
+        id: `disparo:venc:${d.category}:${d.label}`,
+        prioridade: dias < 0 ? "vencido" : dias <= 7 ? "vence_7d" : "vence_30d",
+        titulo: d.label,
+        detalhe:
+          dias < 0
+            ? "Venceu — o processo pode ter voltado a pedir este documento"
+            : `Vence em ${d.date ? new Date(`${d.date}T00:00:00`).toLocaleDateString("pt-BR") : "breve"}`,
+        dias,
+        onClick: () => goSection("documentos"),
+      });
+    }
+
+    // 6) Exigências do processo, na ordem dos grupos que a fila já aplica.
+    for (const p of pendenciasGuiadas) {
+      if (p.kind === "signature") continue; // já entrou como assinatura
+      itens.push({
+        id: `disparo:${p.id}`,
+        prioridade: "exigencia",
+        titulo: p.label,
+        detalhe: p.grupoLabel ?? p.servicoLabel ?? null,
+        onClick: () => {
+          setPinnedPendenciaId(p.id);
+          setShowContratoPopup(true);
+        },
+      });
+    }
+
+    return itens;
+  }, [pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
     const ehPergunta = (d: any) => {
@@ -3063,6 +3135,11 @@ export default function QAClientePortalPage() {
 
         {/* Suporte e Configurações — fundo, acima do balão flutuante */}
         <div className="flex flex-col items-center gap-1 pb-[88px]">
+          {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
+              Fica logo acima do Suporte — é o primeiro lugar onde ele olha
+              quando quer saber "o que falta". */}
+          <PainelDisparo itens={itensDisparo} corIcone={railIconColor} />
+
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
