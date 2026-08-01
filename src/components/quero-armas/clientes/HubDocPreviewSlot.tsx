@@ -305,7 +305,7 @@ export default function HubDocPreviewSlot({
             <Trash2 className="h-4 w-4" strokeWidth={2.4} />
           </button>
 
-          {duplicado ? (
+          {motivoRejeicao || duplicado ? (
             <div
               className="pointer-events-none absolute"
               style={{
@@ -330,7 +330,11 @@ export default function HubDocPreviewSlot({
                 REJEITADO
               </div>
               <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".24em", textAlign: "center", marginTop: 6 }}>
-                DOCUMENTO EM DUPLICIDADE
+                {motivoRejeicao === "titular"
+                  ? "DOCUMENTO DE OUTRO TITULAR"
+                  : motivoRejeicao === "tipo"
+                    ? "DOCUMENTO INCORRETO"
+                    : "DOCUMENTO EM DUPLICIDADE"}
               </div>
             </div>
           ) : pct != null && !incorreta ? (
