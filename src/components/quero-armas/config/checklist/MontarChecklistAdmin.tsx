@@ -401,19 +401,23 @@ export default function MontarChecklistAdmin() {
         ativo: true,
       });
 
+      // Pendente: quando a venda/cadastro nascer apenas com endereço digitado,
+      // pedir primeiro somente a identificação civil do cliente; a pergunta
+      // sobre titularidade do comprovante entra depois, se for necessária.
       await salvarOuCriarDocumentoFluxo("pergunta_ainda_reside_imovel", {
-        nome_documento: "Você ainda reside neste imóvel de terceiro?",
+        nome_documento: "Você ainda mora no endereço do comprovante?",
         etapa: "endereco",
         obrigatorio: true,
         formato_aceito: [],
-        instrucoes: "Essa resposta define qual declaração do responsável pelo imóvel será liberada para assinatura.",
+        instrucoes:
+          "Use apenas quando o endereço foi informado sem comprovante anexado ou em recadastro posterior. No cadastro inicial com comprovante já enviado, o sistema deve resolver essa pergunta automaticamente.",
         regra_validacao: {
           tipo: "pergunta",
           chave: "ainda_reside_imovel",
           objetivo_documental: "comprovar_residencia",
           depende_de: { chave: "comprovante_em_nome_titular", valor: "nao" },
           opcoes: [
-            { valor: "sim", label: "SIM, AINDA MORO LÁ" },
+            { valor: "sim", label: "SIM, AINDA MORO" },
             { valor: "nao", label: "NÃO, JÁ MUDEI" },
           ],
         },

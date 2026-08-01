@@ -252,6 +252,31 @@ export function itemVisivelGuia(d: GuiaDoc, respostas: Record<string, string>): 
   return true;
 }
 
+function isPerguntaAindaResideImovel(d: GuiaDoc): boolean {
+  const r = d.regra_validacao;
+  return (
+    d.tipo_documento === "pergunta_ainda_reside_imovel" ||
+    (!!r && typeof r === "object" && r.tipo === "pergunta" && r.chave === "ainda_reside_imovel")
+  );
+}
+
+function isComprovanteResidenciaDoc(d: GuiaDoc): boolean {
+  const t = String(d.tipo_documento || "").toLowerCase();
+  return t === "comprovante_residencia" || t.startsWith("comprovante_endereco");
+}
+
+function hasComprovanteResidenciaAnexado(docs: GuiaDoc[]): boolean {
+  return docs.some((d) => {
+    if (!isComprovanteResidenciaDoc(d)) return false;
+    const st = String(d.status || "").toLowerCase();
+    return (
+      !!d.arquivo_storage_key ||
+      isChecklistCumprido(st) ||
+      isChecklistEmAnalise(st)
+    );
+  });
+}
+
 // Um item é "cumprido" para fins de progresso?
 export function itemCumpridoGuia(d: GuiaDoc, respostas: Record<string, string>): boolean {
   if (isPerguntaGuia(d)) {
@@ -521,6 +546,15 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
         (typeof (d as any).ordem === "number" ? (d as any).ordem : null),
     };
   });
+  const respostasEfetivas = {
+    ...respostas,
+    // Se o comprovante foi anexado no próprio fluxo inicial, não há motivo
+    // para perguntar "ainda mora?" ao cliente naquele mesmo cadastro. Esse
+    // caso futuro, de endereço digitado sem comprovante, fica para outro fluxo.
+    ...(hasComprovanteResidenciaAnexado(docsComOrdem) && !respostas.ainda_reside_imovel
+      ? { ainda_reside_imovel: "sim" }
+      : {}),
+  };
 
   // Busca contrato pendente de assinatura do cliente para este processo.
   // Contrato "pendente" = existe, mas o cliente ainda não enviou o arquivo assinado.
@@ -570,7 +604,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   return {
     processo,
     docs: docsComOrdem as GuiaDoc[],
-    respostas,
+    respostas: respostasEfetivas,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
     sugestaoCondicao: sugerirCondicaoDoCliente(cli as any),
@@ -584,8 +618,10 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
 // sendo respeitadas para não pedir documento que ainda depende de resposta.
 export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
   const { docs, respostas } = carga;
+  const comprovanteResidenciaAnexado = hasComprovanteResidenciaAnexado(docs);
   return docs.filter((d) => {
     if (!itemVisivelGuia(d, respostas)) return false;
+    if (comprovanteResidenciaAnexado && isPerguntaAindaResideImovel(d)) return false;
     // perguntas e o seletor de condição são itens legítimos do checklist
     if (isPerguntaGuia(d) || isCondicaoGuia(d)) return true;
     return d.obrigatorio === true;

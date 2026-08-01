@@ -343,6 +343,25 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     }
   };
 
+  const getPerguntaButtonClassName = (valor: string, ativo: boolean) => {
+    if (active.perguntaChave === "ainda_reside_imovel") {
+      if (ativo) {
+        return valor === "sim"
+          ? "bg-emerald-600 border-emerald-600 text-white"
+          : "bg-red-600 border-red-600 text-white";
+      }
+      if (valor === "sim") {
+        return "bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100 hover:border-emerald-300";
+      }
+      if (valor === "nao") {
+        return "bg-red-50 border-red-200 text-red-900 hover:bg-red-100 hover:border-red-300";
+      }
+    }
+    return ativo
+      ? "bg-[#8A1224] border-[#8A1224] text-white"
+      : "bg-white border-[#8A1224] text-[#8A1224] hover:bg-[#FFF7F8]";
+  };
+
   const primaryLabel =
     active.primaryLabel ||
     (isSignature
@@ -506,11 +525,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                       type="button"
                       onClick={() => handleResponder(op.valor)}
                       disabled={!!respondendo || !!active.respostaAtual}
-                      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-2 ${
-                        ativo
-                          ? "bg-[#8A1224] border-[#8A1224] text-white"
-                          : "bg-white border-[#8A1224] text-[#8A1224] hover:bg-[#FFF7F8]"
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-4 text-sm font-bold uppercase tracking-wider transition-colors border-2 ${getPerguntaButtonClassName(String(op.valor), ativo)} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {ativo ? <Check className="h-4 w-4" /> : null}
                       {loading ? "..." : String(op.label || op.valor).toUpperCase()}

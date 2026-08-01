@@ -2328,6 +2328,18 @@ function PerguntaView({
   const pergunta = (doc.regra_validacao as any) ?? {};
   const enunciado = pergunta.pergunta || pergunta.label || doc.nome_documento;
   const opcoes: any[] = Array.isArray(pergunta.opcoes) ? pergunta.opcoes : [];
+  const getOpcaoClassName = (valor: string) => {
+    const chave = String(pergunta.chave || "");
+    if (chave === "ainda_reside_imovel") {
+      if (valor === "sim") {
+        return "border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-emerald-300 hover:bg-emerald-100";
+      }
+      if (valor === "nao") {
+        return "border-red-200 bg-red-50 text-red-900 hover:border-red-300 hover:bg-red-100";
+      }
+    }
+    return "border-slate-200 bg-white text-slate-800 hover:border-[#E5C2C6]";
+  };
   return (
     <div>
       <h3 className="text-base font-bold text-slate-900">{enunciado}</h3>
@@ -2338,7 +2350,7 @@ function PerguntaView({
             key={op.valor}
             disabled={salvando}
             onClick={() => onResponder(op.valor)}
-            className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 hover:border-[#E5C2C6] disabled:opacity-50"
+            className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm font-bold disabled:opacity-50 ${getOpcaoClassName(String(op.valor))}`}
           >
             {String(op.label || op.valor)}
             {salvando ? <Loader2 className="h-4 w-4 animate-spin text-slate-400" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}

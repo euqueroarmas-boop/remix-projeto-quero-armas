@@ -1895,6 +1895,17 @@ export default function QAClientePortalPage() {
     // e libera / oculta os itens dependentes automaticamente.
     const respondidas = (processo: any) =>
       (processo?.respostas_questionario_json as Record<string, string> | null) ?? {};
+    const temComprovanteResidenciaAnexadoNoProcesso = (processoId: string) =>
+      (processoDocs as any[]).some((x) => {
+        if (String(x?.processo_id) !== processoId) return false;
+        const tipo = String(x?.tipo_documento || "").toLowerCase();
+        if (tipo !== "comprovante_residencia" && !tipo.startsWith("comprovante_endereco")) return false;
+        const st = String(x?.status || "").toLowerCase();
+        return (
+          !!x?.arquivo_storage_key ||
+          ["aprovado", "validado", "dispensado_grupo", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st)
+        );
+      });
     const perguntasPendentes = ordenar(
       processoDocs.filter((d) => {
         if (!d?.obrigatorio) return false;
@@ -1902,6 +1913,9 @@ export default function QAClientePortalPage() {
         if (!rv || typeof rv !== "object" || rv.tipo !== "pergunta") return false;
         const p = procById.get(String(d.processo_id));
         const chave = String(rv.chave || "");
+        if (chave === "ainda_reside_imovel" && temComprovanteResidenciaAnexadoNoProcesso(String(d.processo_id))) {
+          return false;
+        }
         const jaRespondida = chave && !!respondidas(p)[chave];
         return !jaRespondida;
       }),
@@ -2268,7 +2282,16 @@ export default function QAClientePortalPage() {
       if (resp["comprovante_em_nome_titular"]) return false;
       return !autoRespondidasRef.current.has(String(d.id));
     });
-    if (perguntasTitular.length === 0) return;
+    const perguntasAindaReside = processoDocs.filter((d: any) => {
+      const rv = d?.regra_validacao;
+      if (!rv || typeof rv !== "object" || rv.tipo !== "pergunta") return false;
+      if (String(rv.chave || "") !== "ainda_reside_imovel") return false;
+      const p = (processos || []).find((x: any) => String(x.id) === String(d.processo_id));
+      const resp = (p?.respostas_questionario_json ?? {}) as Record<string, string>;
+      if (resp["ainda_reside_imovel"]) return false;
+      return !autoRespondidasRef.current.has(String(d.id));
+    });
+    if (perguntasTitular.length === 0 && perguntasAindaReside.length === 0) return;
 
     const comprovantesPorProcesso = new Map<string, any>();
     for (const d of processoDocs as any[]) {
@@ -2279,7 +2302,11 @@ export default function QAClientePortalPage() {
         (d?.dados_extraidos_json && (d.dados_extraidos_json.nome_titular || d.dados_extraidos_json.titular_comprovante_nome)) ||
         null;
       const flagTerceiro = d?.endereco_em_nome_de_terceiro;
-      if (!nomeExtraido && flagTerceiro == null) continue;
+      const st = String(d?.status || "").toLowerCase();
+      const temComprovanteAnexado =
+        !!d?.arquivo_storage_key ||
+        ["aprovado", "validado", "dispensado_grupo", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st);
+      if (!temComprovanteAnexado && !nomeExtraido && flagTerceiro == null) continue;
       const atual = comprovantesPorProcesso.get(String(d.processo_id));
       const atualTs = atual?.updated_at ? new Date(atual.updated_at).getTime() : 0;
       const novoTs = d?.updated_at ? new Date(d.updated_at).getTime() : 0;
@@ -2320,6 +2347,29 @@ export default function QAClientePortalPage() {
         } catch (e) {
           // Silencioso: se falhar, o UI segue exibindo a pergunta para o cliente.
           console.warn("[portal] auto-responder pergunta comprovante:", e);
+          autoRespondidasRef.current.delete(String(pivot.id));
+        }
+      }
+      // A pergunta "ainda mora?" só faz sentido em recadastro posterior ou
+      // quando o endereço foi digitado sem comprovante. No cadastro inicial
+      // com comprovante anexado, ela é resolvida automaticamente como SIM.
+      for (const pivot of perguntasAindaReside) {
+        const comp = comprovantesPorProcesso.get(String(pivot.processo_id));
+        if (!comp) continue;
+        autoRespondidasRef.current.add(String(pivot.id));
+        try {
+          const { error } = await supabase.functions.invoke("qa-processo-responder-pergunta", {
+            body: {
+              processo_id: pivot.processo_id,
+              documento_id: pivot.id,
+              chave: "ainda_reside_imovel",
+              valor: "sim",
+            },
+          });
+          if (error) throw error;
+          setDocsReloadKey((k) => k + 1);
+        } catch (e) {
+          console.warn("[portal] auto-responder pergunta ainda reside:", e);
           autoRespondidasRef.current.delete(String(pivot.id));
         }
       }
