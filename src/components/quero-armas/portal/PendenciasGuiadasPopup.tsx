@@ -379,7 +379,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       : "Entregar documento");
 
   const passoAtual = atual + 1;
-  const passoLabel = `Passo ${passoAtual} de ${total}`;
+  // "Passo N de M" era lido como "N de M dentro deste grupo" e brigava com o
+  // "0 de 4 itens concluídos" logo abaixo (fila inteira × grupo atual).
+  const passoLabel = `Pendência ${passoAtual} de ${total} na fila`;
   const faltam = total - passoAtual;
 
   return (
