@@ -174,7 +174,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
     titulo: "QSA — Quadro de Sócios e Administradores",
     siteUrl: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp",
     passos: [
-      "É EXATAMENTE O MESMO SITE onde você baixou o Cartão CNPJ (Receita Federal). Você não precisa de outro portal, nem de senha, nem do contador.",
+      "É EXATAMENTE O MESMO SITE onde você baixou o Cartão CNPJ (Receita Federal). Você não precisa de outro portal, nem de senha, nem do contador para acessar.",
       "Abra o site da Receita Federal em https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp, digite o CNPJ (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
       "Vai abrir a mesma tela do \"COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL\" — a mesma que você já imprimiu para o Cartão CNPJ.",
       "Role essa tela até o FINAL. Logo abaixo da frase \"Emitido no dia ... (data e hora de Brasília)\" aparecem três botões azuis: CONSULTAR QSA · VOLTAR · IMPRIMIR.",
@@ -182,6 +182,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Só depois de o QSA aparecer na tela, clique em \"IMPRIMIR\" e escolha \"Salvar como PDF\" (no Mac: \"PDF → Salvar como PDF\"; no Windows: destino \"Microsoft Print to PDF\" / \"Salvar como PDF\").",
       "Antes de enviar, confira no PDF: o CNPJ da empresa E o seu nome listado como sócio/administrador. Se o PDF só tiver os dados cadastrais e nenhum nome de sócio, você salvou o Cartão CNPJ de novo — volte e clique em CONSULTAR QSA.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF do QSA.",
+      "Se seguiu todos os passos e ainda não conseguiu visualizar ou salvar o QSA (erro de captcha, CNPJ inativo, site fora do ar ou exigindo certificado digital), entre em contato com o seu contador. Ele pode acessar o mesmo site da Receita com o certificado digital da empresa e emitir o PDF para você enviar aqui.",
     ],
     observacao: "Cartão CNPJ e QSA saem do mesmo site e da mesma consulta — mudam apenas com um clique no botão CONSULTAR QSA no rodapé da página. São dois PDFs diferentes e a PF exige os dois: sem o QSA com o seu nome como sócio, o processo é indeferido. Emissão dos últimos 30 dias. Empresa MEI não tem QSA — nesse caso envie o CCMEI.",
   },
