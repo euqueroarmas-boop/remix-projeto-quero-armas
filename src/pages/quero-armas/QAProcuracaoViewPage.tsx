@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
+import { baixarProcuracaoCanonica } from "@/lib/quero-armas/procuracaoPdfDownload";
 
 // IMPORTANTE: o HTML da procuração é servido EXATAMENTE como publicado
 // pelo editor. Não aplicar Title Case, não “proteger” nomes, não reescrever
