@@ -216,8 +216,9 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
     "trf3",
     "certidao_criminal_tjmsp",
     "certidao_crimes_militares_stm",
-    // No Hub documental esses dois tipos militares chegam consolidados.
+    "certidao_estadual_justica_militar",
     "antecedentes_militar",
+    "antecedentes_militar_estadual",
   ].includes(t);
 }
 

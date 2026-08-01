@@ -116,7 +116,8 @@ function tipoCompatKey(tipo?: string | null): string {
   }
   if (t === "certidao_antecedentes_policia_civil_sp") return "antecedentes_criminais";
   if (t === "certidao_crimes_eleitorais_tse") return "antecedentes_eleitoral";
-  if (t === "certidao_crimes_militares_stm" || t === "certidao_criminal_tjmsp") return "antecedentes_militar";
+  if (t === "certidao_crimes_militares_stm") return "antecedentes_militar";
+  if (t === "certidao_criminal_tjmsp" || t === "certidao_antecedentes_criminais_militar" || t === "certidao_estadual_justica_militar") return "antecedentes_militar_estadual";
   // Cada certidão tem seu subtipo próprio no Hub — não pode ser colapsada.
   if (t === "certidao_federal_trf3_regional") return "antecedentes_federal_trf3_regional";
   if (t === "certidao_federal_trf3_sjsp_jef") return "antecedentes_federal_sjsp_jef";
