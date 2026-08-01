@@ -156,18 +156,6 @@ export default function HubDocPreviewSlot({
             className="relative isolate flex flex-1 items-start justify-center border border-[#E5E5E5] bg-[#F4F4F2] p-3 shadow-inner"
             style={{ borderRadius: 2 }}
           >
-            {/* Remover — botão vermelho, sempre acima da prévia */}
-            <button
-              type="button"
-              onClick={onRemove}
-              className="sticky top-0 z-[60] ml-auto flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
-              style={{ borderRadius: 4, position: "absolute", right: 8, top: 8 }}
-              aria-label="Excluir arquivo"
-              title="Excluir arquivo"
-            >
-              <Trash2 className="h-4 w-4" strokeWidth={2.4} />
-            </button>
-
             {isImage && fileUrl && (
               <img
                 src={fileUrl}
@@ -214,33 +202,6 @@ export default function HubDocPreviewSlot({
                 <FileText className="h-7 w-7" />
                 <span className="font-heading text-[10px] uppercase tracking-[0.22em]">Arquivo anexado</span>
                 <span className="text-[11px]">{displayName}</span>
-              </div>
-            )}
-
-            {/* Carimbo IA · APROVADO */}
-            {pct != null && !incorreta && (
-              <div
-                className="pointer-events-none absolute z-[55]"
-                style={{
-                  // `right: -6` deixava o carimbo pendurado para fora da
-                  // moldura, onde qualquer ancestral com overflow o cortava.
-                  // Dentro da moldura ele aparece inteiro.
-                  top: 68,
-                  right: 10,
-                  transform: "rotate(-8deg)",
-                  border: `4px solid ${BORDO}`,
-                  padding: "6px 12px 3px",
-                  background: "rgba(255,255,255,.92)",
-                  borderRadius: 4,
-                  color: BORDO,
-                  fontFamily: "'Oswald', sans-serif",
-                  boxShadow: "0 6px 18px rgba(122,31,43,.25)",
-                }}
-              >
-                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
-                <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
-                  IA · APROVADO
-                </div>
               </div>
             )}
 
@@ -291,6 +252,47 @@ export default function HubDocPreviewSlot({
               {isPdf && numPages ? ` · pg 1/${numPages}` : ""}
             </div>
           </div>
+        )}
+
+        {/* Overlays fora da moldura da prévia — mesma posição na tela, porém
+            irmãos posteriores do contêiner do documento, garantindo que fiquem
+            acima do canvas do react-pdf independentemente de z-index interno. */}
+        {file && (
+          <>
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute z-[60] flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-md transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
+              style={{ borderRadius: 4, right: 8, top: 8 }}
+              aria-label="Excluir arquivo"
+              title="Excluir arquivo"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={2.4} />
+            </button>
+
+            {pct != null && !incorreta && (
+              <div
+                className="pointer-events-none absolute z-[55]"
+                style={{
+                  top: 68,
+                  right: 10,
+                  transform: "rotate(-8deg)",
+                  border: `4px solid ${BORDO}`,
+                  padding: "6px 12px 3px",
+                  background: "rgba(255,255,255,.92)",
+                  borderRadius: 4,
+                  color: BORDO,
+                  fontFamily: "'Oswald', sans-serif",
+                  boxShadow: "0 6px 18px rgba(122,31,43,.25)",
+                }}
+              >
+                <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
+                <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
+                  IA · APROVADO
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
