@@ -3693,6 +3693,24 @@ export function ClienteDocsHubModal({
         </div>
       </DialogContent>
     </Dialog>
+    {resultadoCarimbo && (
+      <DocResultadoCarimbo
+        tipo={resultadoCarimbo.tipo}
+        percentual={resultadoCarimbo.percentual}
+        mensagem={resultadoCarimbo.mensagem}
+        onDone={() => {
+          const fechar = resultadoCarimbo.tipo !== "reprovado";
+          setResultadoCarimbo(null);
+          if (fechar) {
+            setForm(EMPTY);
+            setFile(null);
+            onSaved();
+            onClose();
+          }
+        }}
+      />
+    )}
+    </>
   );
 }
 
