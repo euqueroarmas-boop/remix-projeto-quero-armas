@@ -2527,6 +2527,14 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // Trava dura: nota fiscal emitida para parente no mesmo endereço.
+    if (notaTomadorParentesco) {
+      toast.error(
+        "Nota fiscal rejeitada: o tomador é parente do prestador e consta no mesmo endereço.",
+      );
+      return;
+    }
+
     // Trava de segurança: nenhum campo sensível pode ser gravado sem
     // confirmação humana explícita (clique em Confirmar OU edição manual).
     const pendentes = pendingSensitiveKeys();
