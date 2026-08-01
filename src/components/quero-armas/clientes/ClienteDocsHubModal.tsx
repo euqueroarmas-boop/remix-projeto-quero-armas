@@ -3401,6 +3401,7 @@ export function ClienteDocsHubModal({
               extracting={extracting}
               incorreta={certidaoIncorreta}
               duplicado={rejeitadoDuplicidade}
+              motivoRejeicao={motivoRejeicao}
             />
           </div>
 
