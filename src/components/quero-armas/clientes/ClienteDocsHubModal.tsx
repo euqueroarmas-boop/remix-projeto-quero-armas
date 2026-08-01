@@ -1252,6 +1252,8 @@ export function ClienteDocsHubModal({
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
+  /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
+  const motivoCarimbadoRef = useRef<string | null>(null);
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
