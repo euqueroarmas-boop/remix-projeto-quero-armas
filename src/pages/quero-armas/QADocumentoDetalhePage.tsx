@@ -247,7 +247,7 @@ export default function QADocumentoDetalhePage() {
               <span>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
               {doc.tamanho_bytes && <span>{(doc.tamanho_bytes / 1024).toFixed(0)} KB</span>}
               <span>{doc.mime_type}</span>
-              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">parser: {doc.metodo_extracao}</span>}
+              {doc.metodo_extracao && <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">leitura: {doc.metodo_extracao}</span>}
             </div>
             {doc.url_origem && (
               <div className="flex items-center gap-1.5 mt-1.5">
