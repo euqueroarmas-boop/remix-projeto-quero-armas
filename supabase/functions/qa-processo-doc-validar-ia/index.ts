@@ -1295,13 +1295,27 @@ Deno.serve(async (req) => {
     }
 
     const tipoDocAtual = String(doc.tipo_documento ?? "").toLowerCase();
+    // Nota fiscal: validade perpétua (nunca vence).
+    const isNotaFiscal =
+      tipoDocAtual.includes("nota_fiscal") || /(^|_)nf(_|$)/.test(tipoDocAtual);
+    // Grupo OCUPAÇÃO LÍCITA E RENDA: 30 dias da emissão (regra oficial).
+    const isEmpresa30 =
+      !isNotaFiscal &&
+      (tipoDocAtual.startsWith("renda_") ||
+        tipoDocAtual.startsWith("ocupacao_licita") ||
+        tipoDocAtual === "cartao_cnpj_mei");
+
     const validadeDiasEfetiva = [
       "certidao_federal_trf3_regional",
       "certidao_criminal_tjmsp",
       "certidao_crimes_militares_stm",
     ].includes(tipoDocAtual)
       ? 90
-      : doc.validade_dias;
+      : isNotaFiscal
+        ? null
+        : isEmpresa30
+          ? 30
+          : doc.validade_dias;
 
     // calcula data_validade quando aplicável
     let dataValidade: string | null = null;
