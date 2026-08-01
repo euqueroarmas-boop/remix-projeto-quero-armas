@@ -587,7 +587,16 @@ function calcularConformidade(
   }
   pushItem("filiacao_mae",    "Filiação materna",   campos.filiacao_mae,    fuzzyName);
   pushItem("filiacao_pai",    "Filiação paterna",   campos.filiacao_pai,    fuzzyName);
-  pushItem("naturalidade",    "Naturalidade",       campos.naturalidade,    fuzzyNat);
+  // Naturalidade só é comparável quando AMBOS os lados trazem um nome de município.
+  // Certidões antigas gravam apenas o CÓDIGO IBGE/cartorário ("3750 - SP") e a CNH
+  // traz o local de EMISSÃO — comparar isso gera divergência falsa.
+  const naturalidadeCodificada = (v: string) => {
+    const semUf = String(v || "").replace(/[-–/]?\s*[A-Z]{2}\s*$/i, "").trim();
+    return semUf.length === 0 || !/[A-Za-zÀ-ÿ]{3}/.test(semUf);
+  };
+  if (campos.naturalidade && !naturalidadeCodificada(campos.naturalidade)) {
+    pushItem("naturalidade",  "Naturalidade",       campos.naturalidade,    fuzzyNat);
+  }
   pushItem("sexo",            "Sexo",               campos.sexo,            (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
   // Campos de endereço omitidos intencionalmente: endereco, logradouro, cep, cidade, bairro, uf, estado.
 
