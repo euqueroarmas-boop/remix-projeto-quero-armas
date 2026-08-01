@@ -338,6 +338,8 @@ Deno.serve(async (req) => {
               ? `qa-prova-${body.cliente_id}-${body.referencia_id || body.numero || Date.now()}`
               : body.evento === "certidao_rejeitada"
               ? `qa-cert-rej-${body.cliente_id}-${body.referencia_id || body.certidao || "x"}-${(body.problemas || []).map((x) => x.label).join("|")}`
+              : body.evento === "documento_rejeitado"
+              ? `qa-doc-rej-${body.cliente_id}-${body.referencia_id || body.arquivo || Date.now()}`
               : `qa-verde-exig-${body.cliente_id}-${body.referencia_id || body.exigencia || Date.now()}`;
         const send = await sendTransactional({
           templateName: mapped.templateName,
@@ -360,6 +362,8 @@ Deno.serve(async (req) => {
                 ? "documento_excluido"
                 : body.evento === "documento_reaproveitado"
                   ? "documento_reaproveitado"
+                : body.evento === "documento_rejeitado"
+                  ? "certidao_rejeitada"
                   : "exigencia_cumprida";
       const titulo = body.evento === "documento_em_dia"
         ? `${body.documento || "Documento"} ${body.documento_evento === "renovado" ? "renovado" : "cadastrado"} — em dia`
@@ -373,6 +377,8 @@ Deno.serve(async (req) => {
                 ? "Arquivo removido do seu processo"
                 : body.evento === "documento_reaproveitado"
                   ? `Aproveitamos seu documento — ${body.exigencia_pedida || "uma exigência"} continua pendente`
+                : body.evento === "documento_rejeitado"
+                  ? `${body.documento || "Documento"} recusado — reenvie o correto`
                   : "Exigência cumprida";
       const mensagem = body.evento === "documento_em_dia"
         ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
@@ -388,12 +394,14 @@ Deno.serve(async (req) => {
               ? `${body.motivo || "Não aproveitável para o processo"}. Se você já enviou o correto, desconsidere.`
             : body.evento === "documento_reaproveitado"
               ? `Aproveitado em "${body.exigencia_cumprida || "outra exigência"}". Ainda falta: ${body.exigencia_pedida || "-"}.`
+            : body.evento === "documento_rejeitado"
+              ? `Motivo: ${body.motivo_rejeicao === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_rejeicao === "titular" ? "documento de outro titular" : body.motivo_rejeicao === "duplicidade" ? "documento já entregue" : "documento diferente do exigido"}. Enviamos os detalhes no seu e-mail.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,
           categoria,
-          urgencia: body.evento === "certidao_rejeitada" ? "alta" : "normal",
+          urgencia: body.evento === "certidao_rejeitada" || body.evento === "documento_rejeitado" ? "alta" : "normal",
           titulo,
           mensagem,
           link: "/area-do-cliente",
