@@ -275,6 +275,17 @@ export default function QAProcuracaoViewPage() {
     try {
       const nomeCliente = procuracao.nome_cliente ? ` - ${procuracao.nome_cliente}` : "";
       const nome = `${procuracao.venda_id ? `VENDA ${procuracao.venda_id}` : "PROCURACAO"} - Procuração Quero Armas${nomeCliente}.pdf`;
+      // 1) Caminho canônico: PDF em texto gerado no servidor, carimbo de
+      //    sessão do lado do servidor e golden record para validação da via
+      //    assinada. Bytes idênticos em todo download.
+      try {
+        await baixarProcuracaoCanonica(procuracao.id, nome);
+        toast.success("Procuração baixada");
+        return;
+      } catch (e) {
+        console.warn("[baixarProcuracaoPdf] canônico indisponível, usando fallback local", e);
+      }
+      // 2) Fallback local (rasterizado) apenas se o servidor falhar.
       const larguraHtml = Math.max(
         conteudoRef.current.scrollWidth,
         conteudoRef.current.getBoundingClientRect().width,
