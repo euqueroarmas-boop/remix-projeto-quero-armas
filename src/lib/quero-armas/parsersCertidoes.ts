@@ -168,7 +168,10 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   if (/CERTIFICADO DA CONDICAO DE MICROEMPREENDEDOR INDIVIDUAL|CCMEI/.test(t)) return "ccmei";
   if (/QUADRO DE SOCIOS E ADMINISTRADORES/.test(t)) return "qsa";
   if (/COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL/.test(t)) return "cartao_cnpj";
-  if (/NOTA FISCAL(\s+DE\s+SERVICOS?)?\s*(ELETRONICA)?|NFS-E|DANFE/.test(t)) return "nota_fiscal";
+  if (
+    /NOTA FISCAL(\s+DE\s+SERVICOS?)?\s*(ELETRONICA)?|NFS-?E|DANFS?E|CHAVE DE ACESSO DA NFS/.test(t)
+  )
+    return "nota_fiscal";
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
@@ -623,15 +626,34 @@ function parseQsa(texto: string): CamposCertidao {
 function parseNotaFiscal(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  // DANFSe (padrão nacional): os rótulos ficam em uma linha e os valores na
+  // linha seguinte, em colunas — daí os fallbacks posicionais abaixo.
+  const chave = t.match(/\b(\d{44})\b/)?.[1];
+  const dataHora = t.match(/(\d{2}\/\d{2}\/\d{4})\s+\d{2}:\d{2}(?::\d{2})?/)?.[1];
+  const valorNacional =
+    g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i) ??
+    g(/Valor\s+do\s+Servi[cç]o[^\d]{0,60}([\d.,]+)/i);
+  const numeroNacional = g(/N[uú]mero\s+da\s+NFS-?e\D{0,120}?(\d{1,9})\b/i);
   return {
     orgao: "nota_fiscal",
     tipoDocumento: "renda_nf_recente",
-    numero_nf: g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ?? g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i),
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)),
-    valor_nf: g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i),
+    numero_nf:
+      g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ??
+      g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i) ??
+      numeroNacional,
+    cnpj: cnpj14(
+      g(/CNPJ\s*\/?\s*CPF[^\d]{0,60}([\d./\-]{14,20})/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i),
+    ),
+    razao_social: upperOrUndef(
+      g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social|Nome\s*\/\s*Nome Empresarial)\s*:?\s*(.+)$/im),
+    ),
+    valor_nf:
+      g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i) ?? valorNacional,
+    chave_acesso: chave,
     data_emissao:
       iso(g(/Data(?:\s+e\s+Hora)?\s+de\s+Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
-      iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)),
+      iso(g(/Emiss[aã]o\s+da\s+NFS-?e\D{0,120}?(\d{2}\/\d{2}\/\d{4})/i)) ??
+      iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
+      iso(dataHora),
   };
 }
