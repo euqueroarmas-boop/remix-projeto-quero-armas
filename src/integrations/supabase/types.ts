@@ -11939,6 +11939,7 @@ export type Database = {
           removidos: number
         }[]
       }
+      qa_processo_em_aberto: { Args: { p_status: string }; Returns: boolean }
       qa_processo_rever_exigencias: {
         Args: { p_cliente_id?: number }
         Returns: number
@@ -11985,6 +11986,7 @@ export type Database = {
           validade_label: string
         }[]
       }
+      qa_reabrir_exigencias_documento_invalido: { Args: never; Returns: number }
       qa_reaproveitar_documentos_hub_processo: {
         Args: { p_origem?: string; p_processo_id: string }
         Returns: {

@@ -102,6 +102,14 @@ serve(async (req) => {
   );
 
   try {
+    // Reabre exigências sustentadas por documento vencido ANTES dos alertas.
+    try {
+      const { error: reabrirErr } = await sb.rpc("qa_reabrir_exigencias_documento_invalido");
+      if (reabrirErr) console.error("[qa-vencimentos-alertas] reabrir exigencias:", reabrirErr);
+    } catch (e) {
+      console.error("[qa-vencimentos-alertas] reabrir exigencias (throw):", e);
+    }
+
     const candidatos: Candidato[] = [];
 
     // 1) CR
