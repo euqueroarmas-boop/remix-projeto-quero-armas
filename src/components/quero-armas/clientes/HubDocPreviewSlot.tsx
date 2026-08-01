@@ -34,6 +34,13 @@ interface Props {
   incorreta?: boolean;
   /** Documento do mesmo tipo já aprovado no Hub — rejeição imediata. */
   duplicado?: boolean;
+  /**
+   * Motivo de rejeição imediata (carimbo vermelho 100%).
+   *  - "duplicidade": mesmo tipo já aprovado no Hub
+   *  - "titular": documento é de OUTRA pessoa (nome/CPF divergem do interessado)
+   *  - "tipo": documento do próprio titular, mas não é o exigido
+   */
+  motivoRejeicao?: "duplicidade" | "titular" | "tipo" | null;
 }
 
 export default function HubDocPreviewSlot({
@@ -50,6 +57,7 @@ export default function HubDocPreviewSlot({
   extracting,
   incorreta = false,
   duplicado = false,
+  motivoRejeicao = null,
 }: Props) {
   const slotRef = useRef<HTMLDivElement | null>(null);
   const [slotW, setSlotW] = useState<number>(0);
