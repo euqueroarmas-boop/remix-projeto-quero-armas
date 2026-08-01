@@ -173,13 +173,16 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_qsa: {
     titulo: "QSA — Quadro de Sócios e Administradores",
     passos: [
-      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
-      "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\" (mesma página do Cartão CNPJ).",
-      "Role a página até a seção \"QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)\", que fica depois dos dados cadastrais.",
-      "Clique em \"Imprimir\" (canto superior direito) e escolha \"Salvar como PDF\".",
-      "Confira que o seu nome aparece listado como sócio/administrador e envie aqui em \"Entregar documento\".",
+      "É EXATAMENTE O MESMO SITE onde você baixou o Cartão CNPJ (Receita Federal). Você não precisa de outro portal, nem de senha, nem do contador.",
+      "Abra o site no botão abaixo, digite o CNPJ (só números), marque \"Não sou robô\" e clique em \"Consultar\".",
+      "Vai abrir a mesma tela do \"COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL\" — a mesma que você já imprimiu para o Cartão CNPJ.",
+      "Role essa tela até o FINAL. Logo abaixo da frase \"Emitido no dia ... (data e hora de Brasília)\" aparecem três botões azuis: CONSULTAR QSA · VOLTAR · IMPRIMIR.",
+      "Clique no primeiro botão, \"CONSULTAR QSA\" (o do ícone de duas pessoinhas). A página muda e passa a mostrar o \"QUADRO DE SÓCIOS E ADMINISTRADORES (QSA)\" com os nomes dos sócios.",
+      "Só depois de o QSA aparecer na tela, clique em \"IMPRIMIR\" e escolha \"Salvar como PDF\" (no Mac: \"PDF → Salvar como PDF\"; no Windows: destino \"Microsoft Print to PDF\" / \"Salvar como PDF\").",
+      "Antes de enviar, confira no PDF: o CNPJ da empresa E o seu nome listado como sócio/administrador. Se o PDF só tiver os dados cadastrais e nenhum nome de sócio, você salvou o Cartão CNPJ de novo — volte e clique em CONSULTAR QSA.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF do QSA.",
     ],
-    observacao: "É a mesma página do Cartão CNPJ, mas o que a PF exige aqui é o bloco QSA com o seu nome como sócio. Emissão dos últimos 30 dias.",
+    observacao: "Cartão CNPJ e QSA saem do mesmo site e da mesma consulta — mudam apenas com um clique no botão CONSULTAR QSA no rodapé da página. São dois PDFs diferentes e a PF exige os dois: sem o QSA com o seu nome como sócio, o processo é indeferido. Emissão dos últimos 30 dias. Empresa MEI não tem QSA — nesse caso envie o CCMEI.",
   },
 
   // ────────────────────────────────────────────────────────────────────────
