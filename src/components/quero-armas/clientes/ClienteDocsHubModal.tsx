@@ -1939,7 +1939,26 @@ export function ClienteDocsHubModal({
       );
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       setCategoriaHub(categoriaIA);
-      const campos = ia.camposExtraidos || {};
+      const camposIA = ia.camposExtraidos || {};
+      // A IA devolve só os campos do schema dela — prestador e tomador da NFS-e
+      // ficavam de fora, e por isso a conformidade não mostrava o tomador nem o
+      // endereço dele. Reaproveitamos o parser determinístico sobre o texto já
+      // extraído localmente e completamos (sem sobrescrever o que a IA leu).
+      const campos: Record<string, any> = { ...camposIA };
+      if (textoLocalRef.current) {
+        try {
+          const docLocal = parseCertidao(textoLocalRef.current) as Record<string, any> | null;
+          if (docLocal) {
+            for (const k of Object.keys(docLocal)) {
+              if (!/^(prestador_|tomador_|razao_social|nome_empresarial|cnpj|chave_acesso)/.test(k)) continue;
+              const v = docLocal[k];
+              if (v != null && String(v).trim() && !String(campos[k] ?? "").trim()) campos[k] = v;
+            }
+          }
+        } catch (e) {
+          console.warn("[conformidade] parser local não complementou:", e);
+        }
+      }
 
       // Regime canônico (espelha lógica do backend qa-arsenal-doc-autoinsert).
       const cadSinarmRaw = String((campos as any).numero_cad_sinarm || "").trim();
