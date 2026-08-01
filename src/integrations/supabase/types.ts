@@ -2916,7 +2916,6 @@ export type Database = {
           id_legado: number | null
           num_item_servico_cr: number | null
           numero_cr: string | null
-          senha_gov: string | null
           senha_gov_encrypted: string | null
           senha_gov_iv: string | null
           senha_gov_tag: string | null
@@ -2937,7 +2936,6 @@ export type Database = {
           id_legado?: number | null
           num_item_servico_cr?: number | null
           numero_cr?: string | null
-          senha_gov?: string | null
           senha_gov_encrypted?: string | null
           senha_gov_iv?: string | null
           senha_gov_tag?: string | null
@@ -2958,7 +2956,6 @@ export type Database = {
           id_legado?: number | null
           num_item_servico_cr?: number | null
           numero_cr?: string | null
-          senha_gov?: string | null
           senha_gov_encrypted?: string | null
           senha_gov_iv?: string | null
           senha_gov_tag?: string | null
@@ -11712,6 +11709,7 @@ export type Database = {
         Args: { p_cliente_id: number }
         Returns: Json
       }
+      qa_cliente_ids_do_usuario: { Args: { _uid: string }; Returns: number[] }
       qa_cliente_notificacoes_ativas: {
         Args: { p_cliente_id: number }
         Returns: {
