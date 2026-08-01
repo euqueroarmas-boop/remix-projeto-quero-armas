@@ -2825,7 +2825,7 @@ export function ClienteDocsHubModal({
       if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
         void salvarNotaFiscalGoldenRecord({
           campos: conferenciaLocal.doc,
-          clienteId: qaClienteId ?? null,
+          clienteId: qaClienteId != null ? String(qaClienteId) : null,
           documentoId: novoDocId ?? null,
         });
       }
