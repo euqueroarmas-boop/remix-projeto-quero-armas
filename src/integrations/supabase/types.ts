@@ -6039,6 +6039,75 @@ export type Database = {
           },
         ]
       }
+      qa_documentos_golden: {
+        Row: {
+          carimbo_idioma: string | null
+          carimbo_ip: string | null
+          carimbo_navegador: string | null
+          carimbo_pais: string | null
+          carimbo_referer: string | null
+          carimbo_registrado_em: string | null
+          carimbo_so: string | null
+          cliente_id: number | null
+          documento_id: string
+          documento_tipo: string
+          gerado_em: string
+          id: string
+          numero: string | null
+          sha256: string
+          storage_path: string | null
+          tamanho_bytes: number | null
+          texto_normalizado: string | null
+          texto_sha256: string | null
+          titular_cpf: string | null
+          titular_nome: string | null
+        }
+        Insert: {
+          carimbo_idioma?: string | null
+          carimbo_ip?: string | null
+          carimbo_navegador?: string | null
+          carimbo_pais?: string | null
+          carimbo_referer?: string | null
+          carimbo_registrado_em?: string | null
+          carimbo_so?: string | null
+          cliente_id?: number | null
+          documento_id: string
+          documento_tipo: string
+          gerado_em?: string
+          id?: string
+          numero?: string | null
+          sha256: string
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          texto_normalizado?: string | null
+          texto_sha256?: string | null
+          titular_cpf?: string | null
+          titular_nome?: string | null
+        }
+        Update: {
+          carimbo_idioma?: string | null
+          carimbo_ip?: string | null
+          carimbo_navegador?: string | null
+          carimbo_pais?: string | null
+          carimbo_referer?: string | null
+          carimbo_registrado_em?: string | null
+          carimbo_so?: string | null
+          cliente_id?: number | null
+          documento_id?: string
+          documento_tipo?: string
+          gerado_em?: string
+          id?: string
+          numero?: string | null
+          sha256?: string
+          storage_path?: string | null
+          tamanho_bytes?: number | null
+          texto_normalizado?: string | null
+          texto_sha256?: string | null
+          titular_cpf?: string | null
+          titular_nome?: string | null
+        }
+        Relationships: []
+      }
       qa_documentos_modelos_aprovados: {
         Row: {
           aprovado_em: string
@@ -11985,6 +12054,8 @@ export type Database = {
           itens_atualizados: number
         }[]
       }
+      qa_trf_por_uf: { Args: { p_uf: string }; Returns: number }
+      qa_uf_do_cliente: { Args: { p_cliente_id: number }; Returns: string }
       qa_venda_aprovar_valor: { Args: { p_venda_id: number }; Returns: Json }
       qa_venda_corrigir_valor: {
         Args: {
