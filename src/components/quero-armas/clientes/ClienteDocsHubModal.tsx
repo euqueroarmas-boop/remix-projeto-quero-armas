@@ -3302,6 +3302,7 @@ export function ClienteDocsHubModal({
               dragOver={dragOver}
               extracting={extracting}
               incorreta={certidaoIncorreta}
+              duplicado={rejeitadoDuplicidade}
             />
           </div>
 
@@ -4008,7 +4009,7 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : certidaoIncorreta ? (
+          ) : certidaoIncorreta || rejeitadoDuplicidade ? (
             <div className="flex">
               <Button
                 variant="outline"
