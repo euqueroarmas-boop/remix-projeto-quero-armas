@@ -455,6 +455,10 @@ const ORGAO_LABEL: Record<string, string> = {
   tjsp_execucoes: "Tribunal de Justiça de São Paulo",
   trf_regional: "Tribunal Regional Federal da 3ª Região",
   tjm_sp: "Tribunal de Justiça Militar de São Paulo",
+  ccmei: "Receita Federal — Portal do Empreendedor",
+  cartao_cnpj: "Receita Federal do Brasil",
+  qsa: "Receita Federal do Brasil",
+  nota_fiscal: "Prefeitura / SEFAZ",
 };
 
 /** Soma dias a uma data ISO, em UTC, sem depender do fuso da máquina. */
