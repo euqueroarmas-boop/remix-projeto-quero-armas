@@ -1254,6 +1254,12 @@ export function ClienteDocsHubModal({
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
   const motivoCarimbadoRef = useRef<string | null>(null);
+  /**
+   * Texto cru do PDF lido localmente (pdf.js). A IA devolve apenas os campos do
+   * seu schema — que não inclui prestador/tomador da NFS-e. Guardamos o texto
+   * para reaproveitar o parser determinístico e completar a conformidade.
+   */
+  const textoLocalRef = useRef<string>("");
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
@@ -1933,7 +1939,26 @@ export function ClienteDocsHubModal({
       );
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       setCategoriaHub(categoriaIA);
-      const campos = ia.camposExtraidos || {};
+      const camposIA = ia.camposExtraidos || {};
+      // A IA devolve só os campos do schema dela — prestador e tomador da NFS-e
+      // ficavam de fora, e por isso a conformidade não mostrava o tomador nem o
+      // endereço dele. Reaproveitamos o parser determinístico sobre o texto já
+      // extraído localmente e completamos (sem sobrescrever o que a IA leu).
+      const campos: Record<string, any> = { ...camposIA };
+      if (textoLocalRef.current) {
+        try {
+          const docLocal = parseCertidao(textoLocalRef.current) as Record<string, any> | null;
+          if (docLocal) {
+            for (const k of Object.keys(docLocal)) {
+              if (!/^(prestador_|tomador_|razao_social|nome_empresarial|cnpj|chave_acesso)/.test(k)) continue;
+              const v = docLocal[k];
+              if (v != null && String(v).trim() && !String(campos[k] ?? "").trim()) campos[k] = v;
+            }
+          }
+        } catch (e) {
+          console.warn("[conformidade] parser local não complementou:", e);
+        }
+      }
 
       // Regime canônico (espelha lógica do backend qa-arsenal-doc-autoinsert).
       const cadSinarmRaw = String((campos as any).numero_cad_sinarm || "").trim();
@@ -2302,8 +2327,10 @@ export function ClienteDocsHubModal({
   async function tentarLeituraLocal(f: File): Promise<boolean> {
     if (f.type !== "application/pdf") return false;
     let texto = "";
+    textoLocalRef.current = "";
     try {
       texto = await extrairTextoPdf(f);
+      textoLocalRef.current = texto;
     } catch (e) {
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
