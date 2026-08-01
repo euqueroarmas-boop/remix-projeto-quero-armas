@@ -430,10 +430,30 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               continue;
             }
 
-            // Emissão lida pela IA; QSA herda a do cartão CNPJ do mesmo lote.
-            const emissao = a.data_emissao
+            // ── Datas: nenhum documento da Central de Adesão pode entrar no
+            // Hub "SEM DATA". A ordem de resolução da emissão é:
+            //   1) data lida pela IA no card da Etapa 1;
+            //   2) qualquer campo de data equivalente dentro de camposExtraidos
+            //      (data_expedicao, data_documento, data_referencia, etc.);
+            //   3) herança do cartão CNPJ (só para o QSA, que não tem data);
+            //   4) presunção pela data do envio — o documento acabou de ser
+            //      entregue pelo cliente, então a contagem começa hoje.
+            // A presunção fica registrada em ia_dados_extraidos para a equipe
+            // poder corrigir depois no Hub.
+            const emissaoIA = a.data_emissao
+              ?? getDataEmissaoDocumentoHub({
+                ia_dados_extraidos: { camposExtraidos: a.campos_extraidos ?? {} },
+              })
               ?? (tipoDb === "renda_qsa" ? emissaoCartaoCnpj : null);
-            const validade = calcularValidadeEfetiva(tipoDb, emissao);
+            const semVencimento = isCertidaoCivilSemVencimento(tipoDb);
+            const emissaoPresumida = !emissaoIA && !semVencimento;
+            const emissao = emissaoIA ?? (semVencimento ? null : hojeISOBrasilia());
+            // Validade explícita lida no documento tem precedência sobre a regra.
+            const validadeIA = toIsoData(
+              (a.campos_extraidos as Record<string, unknown> | undefined)?.data_validade
+                ?? (a.campos_extraidos as Record<string, unknown> | undefined)?.data_vencimento,
+            );
+            const validade = validadeIA ?? calcularValidadeEfetiva(tipoDb, emissao);
 
             const payload: Record<string, unknown> = {
               qa_cliente_id: clienteId,
@@ -468,6 +488,10 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
                 // Usa a mesma chave `camposExtraidos` do fluxo do Hub, para
                 // que backfill e conformidade leiam de um só lugar.
                 ...(a.campos_extraidos ? { camposExtraidos: a.campos_extraidos } : {}),
+                data_emissao_presumida: emissaoPresumida,
+                ...(emissaoPresumida
+                  ? { data_emissao_presumida_motivo: "ia_nao_extraiu_data_usou_data_do_envio" }
+                  : {}),
               },
             };
             const { error: insErr } = await supabase
