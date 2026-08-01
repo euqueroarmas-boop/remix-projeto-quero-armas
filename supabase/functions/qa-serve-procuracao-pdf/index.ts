@@ -174,6 +174,7 @@ function buildCanonicalPdf(
   numero: string,
   nomeCliente: string,
   sessao: Sessao,
+  hashConteudo: string,
 ): Uint8Array {
   const blocks = htmlToBlocks(html);
   const doc = new jsPDF({ unit: "pt", format: "a4", compress: false });
@@ -293,6 +294,13 @@ function buildCanonicalPdf(
       accept_language: sessao.accept_language,
       referer: sessao.referer,
       acao: "emissão do instrumento",
+      // Hash do CONTEÚDO publicado — não do PDF. O do PDF seria circular:
+      // imprimi-lo dentro do arquivo mudaria o próprio arquivo.
+      //
+      // É o equivalente ao `aceite_hash` do contrato, e serve ao mesmo fim:
+      // provar que o texto assinado é o que emitimos. Com ele, os dois
+      // documentos passam a ter exatamente os mesmos campos no carimbo.
+      hash: hashConteudo,
     },
     margemEsquerda: MARGIN_X_L,
   });
@@ -386,7 +394,8 @@ Deno.serve(async (req) => {
 
     // ── Primeira geração ────────────────────────────────────────────────────
     const sessao = lerSessao(req);
-    const bytes = buildCanonicalPdf(proc, conteudo, numero, nomeCliente, sessao);
+    const hashConteudo = await sha256Bytes(new TextEncoder().encode(conteudo));
+    const bytes = buildCanonicalPdf(proc, conteudo, numero, nomeCliente, sessao, hashConteudo);
     const sha = await sha256Bytes(bytes);
     const path = `qa/procuracoes/original-${(proc as any).id}.pdf`;
 
