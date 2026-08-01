@@ -312,7 +312,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const linkPorUf = !isSignature && !isPergunta
     ? resolveLinkAntecedentePorUf(active.rawTipo || active.tipo, ufCliente)
     : null;
-  const linkEmissaoFinal = active.linkEmissao || linkPorUf || null;
+  const linkEmissaoFinal = active.linkEmissao || linkPorUf || explic.siteUrl || null;
   if (!isSignature && !isPergunta && ufCliente) {
     explic.titulo = aplicarUfEmTexto(explic.titulo, ufCliente);
     if (explic.observacao) explic.observacao = aplicarUfEmTexto(explic.observacao, ufCliente);
