@@ -2050,6 +2050,32 @@ export function ClienteDocsHubModal({
     setConferenciaLocal(null);
     setShowTipoOverride(false);
     if (!f) return;
+
+    // ── Trava: documento oficial de identidade só entra como PDF com QR Code
+    //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
+    if (isTipoIdentidadeComQr(form.tipo_documento)) {
+      if (f.type !== "application/pdf") {
+        toast.error(MSG_IDENTIDADE_SOMENTE_PDF);
+        setFile(null);
+        return;
+      }
+      setExtracting(true);
+      let textoIdentidade = "";
+      try {
+        textoIdentidade = await extrairTextoPdf(f);
+      } catch (e) {
+        console.warn("[identidade] pdf.js falhou:", e);
+      } finally {
+        setExtracting(false);
+      }
+      const veredicto = avaliarPdfIdentidade(textoIdentidade);
+      if (!veredicto.ok) {
+        toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF);
+        setFile(null);
+        return;
+      }
+    }
+
     setExtracting(true);
     try {
       // Parse-first: a IA só entra se o layout não for reconhecido.
