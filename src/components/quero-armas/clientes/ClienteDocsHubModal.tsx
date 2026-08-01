@@ -1960,6 +1960,7 @@ export function ClienteDocsHubModal({
         refClienteNomeMae,
         docsEfetivos,
         (campos as any).data_avaliacao || campos.data_emissao || null,
+        tipoIA,
       );
       setConformidade(items);
 
