@@ -1919,6 +1919,12 @@ export default function QAClientePortalPage() {
         respostaAtual: null,
         perguntaAjudaPos:
           "Assim que você responder, o sistema atualiza o checklist automaticamente. Nós geramos as declarações necessárias — você não precisa inventar nenhum documento.",
+        // Só nas perguntas sobre o imóvel: mostra QUAL endereço está sendo
+        // questionado, senão a pergunta não tem resposta possível.
+        detalheContexto:
+          /imovel|residencia|endereco|comprovante_em_nome/.test(chave) && enderecoCadastroLegivel
+            ? `Endereço no seu cadastro: ${enderecoCadastroLegivel}`
+            : null,
         onPrimary: () => {},
         onEntregar: () => {},
         onResponder: async (valor: string) => {
@@ -2159,6 +2165,25 @@ export default function QAClientePortalPage() {
    * aqui é o que permite dizer ao cliente o tamanho do caminho, não só onde
    * ele está.
    */
+  /**
+   * Endereço do cadastro, formatado para leitura.
+   *
+   * Serve para as perguntas sobre o imóvel: "Você ainda reside neste imóvel?"
+   * é impossível de responder sem dizer QUAL. O cliente não adivinha a que
+   * endereço o sistema se refere.
+   */
+  const enderecoCadastroLegivel = useMemo(() => {
+    const c = cliente as any;
+    if (!c) return null;
+    const linha = [c.endereco, c.numero].filter(Boolean).join(", ");
+    const local = [c.bairro, [c.cidade, c.estado].filter(Boolean).join("/")]
+      .filter(Boolean)
+      .join(" — ");
+    const cep = c.cep ? `CEP ${c.cep}` : "";
+    const partes = [linha, local, cep].filter((x) => String(x || "").trim());
+    return partes.length ? partes.join(" · ") : null;
+  }, [cliente]);
+
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
     const ehPergunta = (d: any) => {

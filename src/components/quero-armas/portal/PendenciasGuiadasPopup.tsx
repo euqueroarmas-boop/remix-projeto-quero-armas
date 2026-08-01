@@ -66,6 +66,13 @@ export interface PendenciaItem {
   onResponder?: (valor: string) => Promise<void> | void;
   /** Frase que reforça o que acontece após responder (contexto pedagógico). */
   perguntaAjudaPos?: string | null;
+  /**
+   * Dado concreto que a pergunta está questionando — hoje, o endereço.
+   *
+   * "Você ainda reside neste imóvel?" é impossível de responder sem dizer
+   * QUAL imóvel. O cliente não tem como saber a que endereço nos referimos.
+   */
+  detalheContexto?: string | null;
 }
 
 interface Props {
@@ -404,6 +411,12 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
             {explic.titulo}
           </h2>
+
+          {active.detalheContexto ? (
+            <p className="mt-2 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[13px] leading-relaxed text-[#3A3A3A]">
+              {active.detalheContexto}
+            </p>
+          ) : null}
 
           {/* Link fixo para o site oficial — permanece abaixo do título,
               independentemente da rolagem do conteúdo. */}
