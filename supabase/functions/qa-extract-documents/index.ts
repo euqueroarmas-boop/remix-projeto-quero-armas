@@ -185,7 +185,7 @@ const CLASSIFY_TIPOS = [
   "antecedentes_criminais","antecedentes_federal",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
   "antecedentes_estadual","antecedentes_estadual_distribuicao",
-  "antecedentes_estadual_execucoes","antecedentes_militar","antecedentes_eleitoral",
+  "antecedentes_estadual_execucoes","antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
   "laudo_psicologico","laudo_capacidade_tecnica",
   "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
   "comprovante_habitualidade","comprovante_clube_tiro","declaracao_compromisso_habitualidade",
@@ -267,7 +267,8 @@ ANTECEDENTES (distinga o órgão emissor — cada um cumpre uma exigência difer
 - antecedentes_estadual: certidão criminal do Tribunal de Justiça estadual (TJSP, TJRJ, etc.)
 - antecedentes_estadual_distribuicao: certidão do TJ especificamente de DISTRIBUIÇÃO de ações criminais
 - antecedentes_estadual_execucoes: certidão do TJ especificamente de EXECUÇÕES criminais
-- antecedentes_militar: Certidão da Justiça Militar (STM — Superior Tribunal Militar, Justiça Militar da União, ou Justiça Militar estadual)
+- antecedentes_militar: Certidão da Justiça Militar da UNIÃO (STM — Superior Tribunal Militar). Use SOMENTE quando o documento for da União
+- antecedentes_militar_estadual: Certidão da Justiça Militar ESTADUAL (TJM / Tribunal de Justiça Militar do Estado). NÃO confunda com o STM — são documentos diferentes e a PF exige os dois
 - antecedentes_eleitoral: Certidão de Crimes Eleitorais (TSE ou TRE)
 
 LAUDOS
