@@ -1296,8 +1296,15 @@ Deno.serve(async (req) => {
 
     const tipoDocAtual = String(doc.tipo_documento ?? "").toLowerCase();
     // Nota fiscal: validade perpétua (nunca vence).
+    // CCMEI, contrato social e requerimento de empresário também NÃO vencem:
+    // são documentos constitutivos. A atualidade da ocupação lícita é
+    // conferida pela emissão do cartão CNPJ e do QSA (30 dias).
     const isNotaFiscal =
-      tipoDocAtual.includes("nota_fiscal") || /(^|_)nf(_|$)/.test(tipoDocAtual);
+      tipoDocAtual.includes("nota_fiscal") ||
+      /(^|_)nf(_|$)/.test(tipoDocAtual) ||
+      tipoDocAtual.includes("ccmei") ||
+      tipoDocAtual.includes("contrato_social") ||
+      tipoDocAtual.includes("requerimento_empresario");
     // Grupo OCUPAÇÃO LÍCITA E RENDA: 30 dias da emissão (regra oficial).
     const isEmpresa30 =
       !isNotaFiscal &&
