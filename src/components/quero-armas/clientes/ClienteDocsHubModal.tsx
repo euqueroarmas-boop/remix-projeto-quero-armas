@@ -3226,7 +3226,25 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {titularDivergente ? (
+            {notaTomadorParentesco ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">
+                    Rejeitado · grau de parentesco no mesmo endereço
+                  </div>
+                  <div>
+                    A nota foi emitida para <b>{tomadorInfo?.valorCertidao}</b>, que tem o mesmo
+                    sobrenome de família do prestador (<b>{tomadorInfo?.valorReferencia}</b>) e
+                    consta no <b>mesmo endereço</b>
+                    {tomadorEnderecoInfo?.valorCertidao ? <> (<b>{tomadorEnderecoInfo.valorCertidao}</b>)</> : null}.
+                    Nota entre parentes da mesma casa <b>não comprova ocupação lícita</b> e não será
+                    salva. Envie uma nota emitida para um cliente sem vínculo familiar e com
+                    endereço diferente do seu.
+                  </div>
+                </div>
+              </div>
+            ) : titularDivergente ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
