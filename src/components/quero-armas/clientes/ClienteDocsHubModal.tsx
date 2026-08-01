@@ -1112,6 +1112,14 @@ export function ClienteDocsHubModal({
    */
   const [conferenciaLaudo, setConferenciaLaudo] = useState<ResultadoLaudo | null>(null);
 
+  /**
+   * Notas que o cliente informou porque a leitura não conseguiu extrair.
+   *
+   * Perguntamos AQUI, no envio, e não num checklist depois: neste momento ele
+   * está com o laudo na mão. Depois teria de procurar o documento de novo.
+   */
+  const [notasInformadas, setNotasInformadas] = useState<Record<string, string>>({});
+
   const [clienteAutoFetch, setClienteAutoFetch] = useState<{
     nome: string | null;
     cpf: string | null;
@@ -1141,6 +1149,7 @@ export function ClienteDocsHubModal({
     setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
     setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
     setClassificacao(null);
+    setNotasInformadas({});
     setAutoResult(null);
     setIaExtraido({});
     setConfirmados({});
@@ -2068,6 +2077,21 @@ export function ClienteDocsHubModal({
       });
     }
 
+    // Nota perguntada e não respondida trava o salvamento. Sem ela o sistema
+    // registraria o laudo com um campo em branco que ninguém mais vai voltar
+    // para preencher — e a nota é o que sustenta a aprovação legal.
+    const notasFaltando = (conferenciaLaudo?.perguntasAoCliente ?? []).filter(
+      (q) => !String(notasInformadas[q.campo] ?? "").trim(),
+    );
+    if (notasFaltando.length > 0) {
+      toast.error(
+        notasFaltando.length === 1
+          ? `Informe ${notasFaltando[0].label.toLowerCase()} — não conseguimos ler no laudo.`
+          : `Informe as ${notasFaltando.length} notas que não conseguimos ler no laudo.`,
+      );
+      return;
+    }
+
     if (conferenciaLaudo?.veredicto === "rejeitado") {
       toast.error(conferenciaLaudo.mensagemCliente || "Este laudo não passou na conferência e não pode ser salvo.");
       return;
@@ -2325,6 +2349,11 @@ export function ClienteDocsHubModal({
                 laudo_vence_em: conferenciaLaudo.vence_em ?? null,
                 laudo_dias_restantes: conferenciaLaudo.dias_restantes ?? null,
                 laudo_mensagem_equipe: conferenciaLaudo.mensagemEquipe,
+                // Notas ditas pelo cliente quando a leitura falhou. Guardadas
+                // separadas das lidas, para a equipe saber a origem de cada uma.
+                ...(Object.keys(notasInformadas).length
+                  ? { laudo_notas_informadas_pelo_cliente: notasInformadas }
+                  : {}),
                 laudo_alerta_interno:
                   conferenciaLaudo.veredicto === "aprovado_com_alerta_interno"
                     ? conferenciaLaudo.achados.filter((a) => a.interno).map((a) => a.mensagem).join(" | ")
@@ -3215,6 +3244,36 @@ export function ClienteDocsHubModal({
             {/* Conferência LOCAL — leitura do PDF sem IA. Quando existe, é ela
                 que vale; o painel de conformidade da IA fica para os tipos que
                 ainda não têm parser. */}
+            {conferenciaLaudo && conferenciaLaudo.perguntasAoCliente.length > 0 && (
+              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3">
+                <div className="font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-amber-900">
+                  Confirme {conferenciaLaudo.perguntasAoCliente.length === 1 ? "esta nota" : "estas notas"}
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-amber-900">
+                  Você está com o laudo em mãos — leva dez segundos e evita que a gente registre um valor errado.
+                </p>
+                <div className="mt-2 space-y-2">
+                  {conferenciaLaudo.perguntasAoCliente.map((q) => (
+                    <div key={q.campo}>
+                      <label className="block text-[11px] leading-snug text-amber-900">{q.pergunta}</label>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        max={100}
+                        value={notasInformadas[q.campo] ?? ""}
+                        onChange={(e) =>
+                          setNotasInformadas((prev) => ({ ...prev, [q.campo]: e.target.value }))
+                        }
+                        placeholder={q.valorLido != null ? `lemos ${q.valorLido}` : "digite a nota"}
+                        className="mt-1 h-9 w-40 rounded-sm border border-amber-400 bg-white px-2 text-[13px] text-[#0A0A0A]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {conferenciaLocal && (
               <div
                 className={

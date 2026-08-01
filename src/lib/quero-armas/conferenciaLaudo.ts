@@ -79,6 +79,21 @@ export interface AchadoLaudo {
   interno?: boolean;
 }
 
+/**
+ * Campo que o sistema não conseguiu ler e vai perguntar ao cliente NA HORA
+ * do envio — enquanto ele ainda está com o laudo na mão.
+ *
+ * Perguntar depois, num checklist, obrigaria o cliente a procurar o documento
+ * de novo. Perguntar agora custa dez segundos a ele.
+ */
+export interface PerguntaLaudo {
+  campo: "nota_teorica" | "pontuacao_5m" | "pontuacao_7m";
+  label: string;
+  pergunta: string;
+  /** Valor lido pela IA, quando houve leitura duvidosa. */
+  valorLido?: number | null;
+}
+
 export interface ResultadoLaudo {
   veredicto: VeredictoLaudo;
   achados: AchadoLaudo[];
@@ -90,6 +105,8 @@ export interface ResultadoLaudo {
   vence_em?: string;
   /** Dias restantes na data de referência. Negativo = vencido. */
   dias_restantes?: number;
+  /** Notas que precisam ser confirmadas pelo cliente antes de salvar. */
+  perguntasAoCliente: PerguntaLaudo[];
 }
 
 /** Validade legal do laudo, em dias. Um ano contado da realização. */
@@ -190,6 +207,7 @@ export function conferirLaudo(
   hoje: string = new Date().toISOString().slice(0, 10),
 ): ResultadoLaudo {
   const achados: AchadoLaudo[] = [];
+  const perguntas: PerguntaLaudo[] = [];
   const label = LABEL[campos.tipo];
   const realizacao = diaISO(campos.data_realizacao);
 
@@ -209,6 +227,7 @@ export function conferirLaudo(
         `Não conseguimos identificar a data em que o ${label} foi realizado. ` +
         `Reenvie o documento completo e legível — se for foto, capture a página inteira, sem cortes.`,
       mensagemEquipe: `Leitura sem data de realização no ${label}.`,
+      perguntasAoCliente: [],
     };
   }
 
@@ -272,6 +291,23 @@ export function conferirLaudo(
   // resolve em dez segundos. Nota ausente (`null`) não gera nada: a pergunta
   // vai para o cliente, que sabe a própria nota.
   if (campos.tipo === "tiro") {
+    // Campo ilegível ou nota abaixo do mínimo com conclusão apta: nos dois
+    // casos quem responde melhor é o cliente, que está com o laudo à frente.
+    const DISTS: Array<{ campo: PerguntaLaudo["campo"]; label: string; valor: number | null | undefined }> = [
+      { campo: "nota_teorica", label: "Nota da prova teórica", valor: campos.nota_teorica },
+      { campo: "pontuacao_5m", label: "Pontuação no alvo de 5 metros", valor: campos.pontuacao_5m },
+      { campo: "pontuacao_7m", label: "Pontuação no alvo de 7 metros", valor: campos.pontuacao_7m },
+    ];
+    for (const d of DISTS) {
+      if (d.valor === null || d.valor === undefined) {
+        perguntas.push({
+          campo: d.campo,
+          label: d.label,
+          pergunta: `Não conseguimos ler "${d.label.toLowerCase()}" no seu laudo — a imagem ficou pouco legível nesse ponto. Qual foi o valor?`,
+        });
+      }
+    }
+
     const abaixo: string[] = [];
     if (typeof campos.nota_teorica === "number" && campos.nota_teorica < NOTA_MINIMA_LEGAL) {
       abaixo.push(`prova teórica ${campos.nota_teorica}`);
@@ -285,6 +321,22 @@ export function conferirLaudo(
     if (abaixo.length) {
       const conclusaoApta = /aprovado|apto/.test(String(campos.resultado ?? "").toLowerCase())
         && !/inapto/.test(String(campos.resultado ?? "").toLowerCase());
+      if (conclusaoApta) {
+        // O instrutor concluiu APTO e lemos abaixo do mínimo: quase certamente
+        // erramos a leitura. Em vez de acusar, perguntamos ao cliente.
+        for (const d of DISTS) {
+          if (typeof d.valor === "number" && d.valor < NOTA_MINIMA_LEGAL) {
+            perguntas.push({
+              campo: d.campo,
+              label: d.label,
+              valorLido: d.valor,
+              pergunta:
+                `Lemos "${d.valor}" em ${d.label.toLowerCase()}, mas o instrutor aprovou você — ` +
+                `então é provável que a imagem tenha confundido nossa leitura. Confirme o valor correto.`,
+            });
+          }
+        }
+      }
       achados.push({
         campo: "notas",
         label: "Notas",
@@ -352,5 +404,13 @@ export function conferirLaudo(
     ? achados.map((a) => `${a.label}: ${a.mensagem}`).join(" | ")
     : `${label} conferido: realizado em ${realizacao}, válido até ${vence_em}.`;
 
-  return { veredicto, achados, mensagemCliente, mensagemEquipe, vence_em, dias_restantes };
+  return {
+    veredicto,
+    achados,
+    mensagemCliente,
+    mensagemEquipe,
+    vence_em,
+    dias_restantes,
+    perguntasAoCliente: perguntas,
+  };
 }
