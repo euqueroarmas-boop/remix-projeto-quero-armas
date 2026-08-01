@@ -133,6 +133,9 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   // Identificação
   if (
     t === "cin" ||
+    t === "documento_identidade_nacional" ||
+    t === "carteira_identidade_nacional" ||
+    t === "cedula_identidade_rg_com_cpf" ||
     t === "rg" ||
     t === "rg_com_cpf" ||
     t === "cnh" ||

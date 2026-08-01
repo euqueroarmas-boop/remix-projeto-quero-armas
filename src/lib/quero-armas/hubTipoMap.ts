@@ -9,6 +9,9 @@
 
 export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   rg_com_cpf: "cin",
+  documento_identidade_nacional: "cin",
+  carteira_identidade_nacional: "cin",
+  cedula_identidade_rg_com_cpf: "cin",
   comprovante_endereco_ano_2022: "comprovante_residencia",
   comprovante_endereco_ano_2023: "comprovante_residencia",
   comprovante_endereco_ano_2024: "comprovante_residencia",

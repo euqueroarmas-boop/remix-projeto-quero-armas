@@ -102,6 +102,26 @@ const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try { const p = new Date(d); return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000); } catch { return null; }
 };
+const TIPOS_IDENTIFICACAO_PESSOAL = new Set([
+  "cin",
+  "rg",
+  "rg_com_cpf",
+  "cnh",
+  "cpf",
+  "documento_identidade_nacional",
+  "carteira_identidade_nacional",
+  "cedula_identidade_rg_com_cpf",
+]);
+const ehTipoIdentificacaoPessoal = (raw?: string | null, hub?: string | null) => {
+  const valores = [raw, hub].map((v) => String(v || "").trim().toLowerCase()).filter(Boolean);
+  return valores.some((v) =>
+    TIPOS_IDENTIFICACAO_PESSOAL.has(v) ||
+    v.includes("identidade_nacional") ||
+    v.includes("carteira_identidade_nacional"),
+  );
+};
+const docHubEstaAprovado = (status?: string | null) =>
+  ["aprovado", "validado"].includes(String(status || "").trim().toLowerCase());
 const docDateFromHub = (doc: any): string | null =>
   getDataEmissaoDocumentoHub(doc) || doc?.created_at || null;
 const urgencyColor = (d: number | null) =>
@@ -1730,6 +1750,21 @@ export default function QAClientePortalPage() {
     return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
   }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
+  const temIdentificacaoPessoalAprovadaNoHub = useMemo(() => {
+    return (meusDocs || []).some((doc: any) => {
+      const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      const nome = `${doc?.nome_documento || ""} ${doc?.numero_documento || ""}`.toLowerCase();
+      return (
+        docHubEstaAprovado(doc?.status) &&
+        (ehTipoIdentificacaoPessoal(tipo) ||
+          nome.includes("carteira de identidade nacional") ||
+          nome.includes("documento de identidade nacional") ||
+          nome.includes("cédula de identidade") ||
+          nome.includes("cedula de identidade"))
+      );
+    });
+  }, [meusDocs]);
+
   // ==========================================================================
   // Fase 1 — Unificação do popup: monta a lista de pendências (assinaturas +
   // exigências documentais) para o PendenciasGuiadasPopup. O botão "Entregar"
@@ -1816,6 +1851,7 @@ export default function QAClientePortalPage() {
     const empurrar = (doc: any) => {
       const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
       const hubTipo = toHubTipoCompartilhado(rawTipo);
+      if (temIdentificacaoPessoalAprovadaNoHub && ehTipoIdentificacaoPessoal(rawTipo, hubTipo)) return;
       // Dedup por (processo, rawTipo). O hubTipo NÃO pode ser a chave: várias
       // exigências distintas (ex.: 8 certidões criminais) mapeiam para o mesmo
       // hubTipo/`outro` e desapareciam da fila. Cada exigência do checklist
@@ -1914,6 +1950,10 @@ export default function QAClientePortalPage() {
         const rv = (d as any)?.regra_validacao;
         if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
         if (bloquearPorTitular(d)) return false;
+        if (
+          temIdentificacaoPessoalAprovadaNoHub &&
+          ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
+        ) return false;
         const st = String(d.status || "").toLowerCase();
         return ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st);
       }),
@@ -1924,6 +1964,10 @@ export default function QAClientePortalPage() {
         const rv = (d as any)?.regra_validacao;
         if (rv && typeof rv === "object" && rv.tipo === "pergunta") return false;
         if (bloquearPorTitular(d)) return false;
+        if (
+          temIdentificacaoPessoalAprovadaNoHub &&
+          ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
+        ) return false;
         return isChecklistPendente(d.status);
       }),
     );
@@ -2197,24 +2241,11 @@ export default function QAClientePortalPage() {
       (a.grupoOrdem - b.grupoOrdem) ||
       (a.idx - b.idx),
     );
-    // ─── Regra de negócio: liberar UM GRUPO POR VEZ ───────────────────────
-    // O próximo grupo temático só entra na fila quando todos os itens do
-    // grupo atual (documentos) forem concluídos/aprovados — ou seja, quando
-    // não houver mais nenhum item pendente daquele grupo aparecendo aqui.
-    // Sempre mantemos assinaturas (tier 0) e perguntas-pivot (subTier 0),
-    // pois elas gate/condicionam os documentos seguintes.
-    const docs = decorados.filter((d) => d.tier === 1 && d.subTier === 1);
-    const firstDoc = docs[0];
-    const chaveGrupoAtivo = firstDoc
-      ? `${firstDoc.servicoOrdem}|${firstDoc.grupoOrdem}`
-      : null;
-    const filtrados = decorados.filter((d) => {
-      if (d.tier === 0) return true; // assinaturas sempre
-      if (d.subTier === 0) return true; // perguntas-pivot sempre
-      return chaveGrupoAtivo === `${d.servicoOrdem}|${d.grupoOrdem}`;
-    });
-    return filtrados.map((d) => d.it);
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo]);
+    // O processo comprado precisa mostrar todas as exigências abertas no
+    // popup guiado. A sequência por grupo continua na ordenação, mas sem
+    // esconder os demais grupos atrás de uma fila paralela.
+    return decorados.map((d) => d.it);
+  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
@@ -2383,6 +2414,19 @@ export default function QAClientePortalPage() {
 
     return itens;
   }, [vendas, pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas, cadastro, filiacoes, habitualidadeAlertas]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const abrirDisparoRail = () => {
+    if (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0) {
+      abrirPendenciasGuiadas();
+      return;
+    }
+    const primeiro = itensDisparo[0];
+    if (primeiro?.onClick) {
+      primeiro.onClick();
+      return;
+    }
+    toast.info("Nenhuma pendência no momento.");
+  };
 
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
@@ -3212,7 +3256,7 @@ export default function QAClientePortalPage() {
           {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
               Fica logo acima do Suporte — é o primeiro lugar onde ele olha
               quando quer saber "o que falta". */}
-          <PainelDisparo itens={itensDisparo} corIcone={railIconColor} />
+          <PainelDisparo itens={itensDisparo} corIcone={railIconColor} onOpen={abrirDisparoRail} />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
             const Icon = item.icon;
