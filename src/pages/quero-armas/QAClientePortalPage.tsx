@@ -2446,6 +2446,17 @@ export default function QAClientePortalPage() {
   // O cadastro só entra depois das duas: os dados para elaborar contrato e
   // procuração já vieram do fechamento da venda, então não há por que travar
   // a assinatura esperando cadastro completo.
+  // Fonte única da verdade da 2ª prioridade: cadastro crucial incompleto.
+  const cadastroCrucialIncompleto = useMemo(() => {
+    if (!cliente) return false;
+    return CAMPOS_CADASTRO.some(
+      (c) =>
+        c.crucial &&
+        !c.somenteEquipe &&
+        String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
+    );
+  }, [cliente]);
+
   useEffect(() => {
     if (mustChangePassword) return;
     if (!reconciliouCadastro) return;
@@ -2453,17 +2464,11 @@ export default function QAClientePortalPage() {
     if (pendingSignatureCount > 0) return;   // assinaturas primeiro
     if (showContratoPopup || showAddDoc || showCadastroModal) return;
     if (showChecklistCadastral || checklistCadastralAbertoRef.current) return;
-    const faltando = CAMPOS_CADASTRO.some(
-      (c) =>
-        c.crucial &&
-        !c.somenteEquipe &&
-        String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
-    );
-    if (faltando) {
+    if (cadastroCrucialIncompleto) {
       checklistCadastralAbertoRef.current = true;
       setShowChecklistCadastral(true);
     }
-  }, [mustChangePassword, reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cliente]);
+  }, [mustChangePassword, reconciliouCadastro, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto]);
 
   // Reabre o popup de assinaturas pendentes sempre que ainda houver contrato
   // ou procuração aguardando envio. O usuário pediu explicitamente: "se houver
@@ -2478,12 +2483,14 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
-    // Assinatura pendente passa na frente; sem assinatura, o cadastro é que
-    // precisa estar fechado antes de cobrar documento do processo.
-    if (showChecklistCadastral && pendingSignatureCount === 0) return;
+    // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) cadastro
+    // completo, 3) checklist do processo. Sem assinatura pendente, o checklist
+    // NUNCA nasce enquanto houver campo crucial do cadastro em branco — mesmo
+    // que o modal cadastral ainda não tenha sido aberto ou tenha sido fechado.
+    if (pendingSignatureCount === 0 && (showChecklistCadastral || cadastroCrucialIncompleto)) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
-  }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, pendenciasGuiadasDismissed]);
+  }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.
