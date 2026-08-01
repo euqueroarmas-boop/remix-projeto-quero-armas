@@ -60,6 +60,26 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   // ────────────────────────────────────────────────────────────────────────
   // Perguntas condicionais (o cliente responde no Hub, não é upload)
   // ────────────────────────────────────────────────────────────────────────
+  /**
+   * Foto 3x4 — regra do usuário (31/07/2026), já registrada na biblioteca de
+   * documentos: o cliente NÃO precisa ir a um fotógrafo. O documento digital
+   * que ele já tem serve, e o recorte é feito no próprio celular.
+   *
+   * Sem estes passos o cliente lê "Foto 3x4 do requerente", pensa em estúdio
+   * fotográfico e trava numa exigência que ele resolve em dois minutos.
+   */
+  foto_3x4: {
+    titulo: "Foto 3x4 do requerente",
+    passos: [
+      "Você NÃO precisa ir a um fotógrafo — a foto do seu documento digital serve.",
+      "Abra seu documento digital pelo site ou aplicativo do órgão: RG Digital, CIN ou CNH Digital (aplicativo Carteira de Documentos do gov.br).",
+      "Com o documento aberto na tela, tire um print (no iPhone, botão lateral + aumentar volume; no Android, ligar + diminuir volume).",
+      "Abra o print na galeria e use a ferramenta de recorte do próprio celular para deixar SÓ o rosto, no formato de retrato — cabeça e um pouco dos ombros.",
+      "Confira que o rosto está nítido, de frente, sem óculos escuros, boné ou filtro.",
+      "Volte aqui, clique em \"Entregar documento\" e envie a imagem recortada.",
+    ],
+    observacao: "Aceita JPG, PNG ou PDF. A foto vai na instrução do requerimento junto à Polícia Federal — se estiver borrada ou cortada demais, a equipe vai pedir outra.",
+  },
   pergunta_ainda_reside_imovel: {
     titulo: "Confirmação: você ainda reside neste imóvel?",
     passos: [
