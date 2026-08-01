@@ -1996,6 +1996,34 @@ export function ClienteDocsHubModal({
     // isso como "UF do cliente" mandaria o processo para a região errada.
     setEnderecoLocal(parseComprovanteEndereco(texto));
 
+    // ── CCMEI — modelo oficial do Portal do Empreendedor. Parse local decide o
+    //    tipo (renda_ccmei) e preenche CNPJ/abertura sem depender da IA.
+    const ccmei = parseCcmei(texto);
+    if (ccmei) {
+      setConferenciaLocal(null);
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: "renda_ccmei",
+        nome_documento: "CCMEI — Certificado da Condição de Microempreendedor Individual",
+        numero_documento: ccmei.cnpj ?? prev.numero_documento,
+        orgao_emissor: "Receita Federal do Brasil",
+        observacoes: [
+          ccmei.nome_civil ? `Nome Civil: ${ccmei.nome_civil}` : "",
+          ccmei.cnpj ? `CNPJ: ${ccmei.cnpj}` : "",
+          ccmei.nome_empresarial ? `Nome empresarial: ${ccmei.nome_empresarial}` : "",
+          ccmei.situacao_cadastral ? `Situação cadastral: ${ccmei.situacao_cadastral}` : "",
+          ccmei.ocupacao_principal ? `Ocupação principal: ${ccmei.ocupacao_principal}` : "",
+        ].filter(Boolean).join("\n") || prev.observacoes,
+      }));
+      setCategoriaHub("renda_ocupacao");
+      if (ccmei.situacao_cadastral && ccmei.situacao_cadastral !== "ATIVA") {
+        toast.error(`CCMEI com situação cadastral ${ccmei.situacao_cadastral}. A PF só aceita MEI ATIVO.`);
+      } else {
+        toast.success("CCMEI lido e reconhecido — ocupação lícita.");
+      }
+      return true;
+    }
+
     if (ehPaginaAutenticacaoTrfIsolada(`${f.name}\n${texto}`)) {
       toast.error("Este arquivo parece ser apenas a página de autenticação/QR da certidão TRF. Envie o PDF completo, com todas as páginas, para a certidão ficar inteira e classificada corretamente.");
       setConferenciaLocal(null);
