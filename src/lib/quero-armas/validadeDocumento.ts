@@ -386,6 +386,19 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
     };
   }
 
+  // 0b) Nota fiscal: validade perpétua (Ocupação Lícita). Ignora qualquer
+  //     data_validade legada gravada no backend.
+  if (isNotaFiscalSemVencimento(doc.tipo_documento)) {
+    return {
+      iso: null,
+      label: "Sem vencimento",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0) Comprovante de residência HISTÓRICO → não vence.
   //    Distinção sem coluna nova: usa regra_validacao.ano_competencia / ano_competencia
   //    contra o ano corrente. Canônico sem ano = corrente.
