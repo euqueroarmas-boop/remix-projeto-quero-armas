@@ -299,6 +299,10 @@ Deno.serve(async (req) => {
     const aceite_ip = (xff.split(",")[0]?.trim() || aceite_ip_body || null);
     const aceite_user_agent =
       req.headers.get("user-agent") || aceite_ua_body || null;
+    // Idioma e origem da requisição. Sem isto o carimbo de conexão do contrato
+    // mostrava IDIOMA e REFERÊNCIA vazios — os dados nunca eram capturados.
+    const aceite_idioma = req.headers.get("accept-language") || null;
+    const aceite_referer = req.headers.get("referer") || null;
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -402,6 +406,8 @@ Deno.serve(async (req) => {
         aceite_eletronico_data: aceite_data_iso,
         aceite_ip,
         aceite_user_agent,
+        aceite_idioma,
+        aceite_referer,
         aceite_hash,
         aceite_inicio_imediato: !!aceite_inicio_imediato,
       })
@@ -424,6 +430,8 @@ Deno.serve(async (req) => {
       aceite_data: aceite_data_iso,
       aceite_ip,
       aceite_user_agent,
+      aceite_idioma,
+      aceite_referer,
       aceite_dispositivo: aceite_dispositivo ?? null,
       aceite_inicio_imediato: !!aceite_inicio_imediato,
     });
