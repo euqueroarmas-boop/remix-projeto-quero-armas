@@ -1676,7 +1676,9 @@ export function ClienteDocsHubModal({
               (campos as any).matricula ||
               ""
             )
-          : (campos.numero_documento || prev.numero_documento),
+          : (campos.numero_documento ||
+             numeroDocumentoRenda(tipoIA, campos as any) ||
+             prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         // Para laudos/exames, o campo "Avaliação" usa data_avaliacao.
         // A regra legal (Lei 10.826/03) vincula validade à DATA DA AVALIAÇÃO,
@@ -1755,7 +1757,8 @@ export function ClienteDocsHubModal({
       // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
       // bloqueio do salvar até confirmação humana campo a campo.
       setIaExtraido({
-        numero_documento: campos.numero_documento || "",
+        numero_documento:
+          campos.numero_documento || numeroDocumentoRenda(tipoIA, campos as any) || "",
         numero_cad_sinarm: cadSinarmRaw,
         numero_registro_sigma:
           sigmaExplicitoRaw || (tipoIA === "cr" ? (campos.numero_documento || "") : ""),
