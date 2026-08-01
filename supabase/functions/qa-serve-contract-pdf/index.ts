@@ -138,16 +138,45 @@ function formatBrtDate(value: string | null | undefined): string {
   });
 }
 
+/** Título do carimbo, em negrito e separado dos campos. */
+export const CARIMBO_TITULO =
+  "REGISTRO DE SESSÃO — EMISSÃO DO INSTRUMENTO · MP 2.200-2/2001";
+
+/**
+ * Campos do carimbo de conexão.
+ *
+ * Formato alinhado ao da procuração (usuário, 31/07/2026): rótulo em CAIXA
+ * ALTA seguido de dois-pontos, separados por vírgula, com o USER-AGENT
+ * inteiro — e não só o navegador resumido.
+ *
+ * Os quatro campos que a procuração NÃO tinha ficam: IP, SISTEMA, NAVEGADOR e
+ * HASH. São eles que transformam o carimbo de "registro de acesso" em prova:
+ * o IP e o hash são o que a validação confere contra o golden record quando o
+ * documento assinado volta do Gov.br.
+ *
+ * Sobre "AÇÃO": na procuração dizia "download" porque o PDF era montado no
+ * navegador, na hora de baixar. Aqui não pode: o contrato tem UM arquivo
+ * canônico, gerado uma vez e byte-idêntico para sempre — é isso que faz a
+ * assinatura do Gov.br encadear com o original. Carimbar o instante de cada
+ * download mudaria os bytes a cada clique e destruiria essa garantia. Então a
+ * ação declarada é a que de fato ficou registrada: o aceite eletrônico.
+ */
 function connectionStampLines(contract: any): string[] {
   const userAgent = String(contract.aceite_user_agent || "").trim();
+  const sessao = (contract.aceite_eletronico_data ?? {}) as Record<string, unknown>;
+  const idioma = String((sessao as any)?.accept_language ?? "").trim();
+  const referencia = String((sessao as any)?.referer ?? "").trim();
   return [
-    "CARIMBO DE CONEXAO",
-    `Contrato: ${contract.contract_number || contract.id || "—"}`,
-    `Gerado em: ${formatBrtDate(contract.aceite_eletronico_data || contract.created_at)}`,
+    `CONTRATO: ${contract.contract_number || contract.id || "—"}`,
+    `DATA/HORA (BRT): ${formatBrtDate(contract.aceite_eletronico_data || contract.created_at)}`,
     `IP: ${contract.aceite_ip || "—"}`,
-    `Sistema: ${detectOS(userAgent)}`,
-    `Navegador: ${detectBrowser(userAgent)}`,
-    `Hash: ${contract.aceite_hash || "—"}`,
+    `SISTEMA: ${detectOS(userAgent)}`,
+    `NAVEGADOR: ${detectBrowser(userAgent)}`,
+    `IDIOMA: ${idioma || "—"}`,
+    `REFERÊNCIA: ${referencia || "—"}`,
+    `USER-AGENT: ${userAgent || "—"}`,
+    "AÇÃO: aceite eletrônico",
+    `HASH: ${contract.aceite_hash || "—"}`,
   ];
 }
 
@@ -174,10 +203,14 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
 
   const PAGE_W = doc.internal.pageSize.getWidth();
   const PAGE_H = doc.internal.pageSize.getHeight();
-  const MARGIN_X = 48;
+  // Margem esquerda maior que a direita: a faixa do carimbo mora nesse
+  // espaco. 76pt e a mesma medida da procuracao, que o usuario aprovou —
+  // cabem o titulo e tres colunas de campos sem encostar no texto.
+  const MARGIN_X = 76;
+  const MARGIN_X_R = 48;
   const MARGIN_TOP = 56;
   const MARGIN_BOTTOM = 56;
-  const CONTENT_W = PAGE_W - MARGIN_X * 2;
+  const CONTENT_W = PAGE_W - MARGIN_X - MARGIN_X_R;
   let y = MARGIN_TOP;
 
   const ensureSpace = (needed: number) => {
@@ -210,7 +243,7 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
         textOpt.align = "justify";
         textOpt.maxWidth = width;
       }
-      const x = isCenter ? PAGE_W / 2 : MARGIN_X + indent + bulletW;
+      const x = isCenter ? MARGIN_X + CONTENT_W / 2 : MARGIN_X + indent + bulletW;
       doc.text(ln, x, y + opts.size, textOpt);
       y += lineHeight;
     });
@@ -243,7 +276,7 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
     } else if (b.kind === "li") {
       writeParagraph(b.text, { size: 10, align: "justify", indent: 14, bullet: "•", lineGap: 5 });
     } else if (b.kind === "hr") {
-      ensureSpace(18); y += 6; doc.setDrawColor(180); doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y); y += 14;
+      ensureSpace(18); y += 6; doc.setDrawColor(180); doc.line(MARGIN_X, y, PAGE_W - MARGIN_X_R, y); y += 14;
     }
     firstBlock = false;
   }
@@ -256,37 +289,40 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   ensureSpace(30);
   y += 8;
   doc.setDrawColor(200);
-  doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+  doc.line(MARGIN_X, y, PAGE_W - MARGIN_X_R, y);
   y += 10;
   writeParagraph(rodape, { size: 8, align: "left", lineGap: 0 });
 
   // ── Carimbo de conexão, na lateral esquerda ────────────────────────────
   //
-  // Com `angle: 90` o texto sobe a partir do ponto de âncora. A versão
-  // anterior ancorava em y=72 — perto do TOPO —, então o texto saía pela
-  // borda superior e só um fragmento ficava visível. Pior: todas as linhas
-  // usavam o mesmo x=16, sobrepondo-se na mesma coluna.
+  // Layout copiado da procuração, que o usuário aprovou (31/07/2026):
+  //   coluna 1  → título em NEGRITO, com a base legal
+  //   colunas 2+ → campos, separados por vírgula, quebrados por altura
+  //   topo       → PÁG. n/N
   //
-  // Aqui a âncora é o RODAPÉ e cada linha vira uma COLUNA própria, avançando
-  // em X. É o mesmo desenho da procuração.
-  //
-  // O corpo do contrato começa em MARGIN_X (48), então a faixa tem 32pt de
-  // largura útil: cabem 3 colunas de 9pt com uma folga de 14pt antes do
-  // texto. Por isso os campos são unidos e quebrados por altura, em vez de
-  // uma coluna por campo.
+  // Com `angle: 90` o texto sobe a partir da âncora, por isso tudo é ancorado
+  // no RODAPÉ. Ancorar no topo (como estava antes) jogava o texto para fora
+  // da página.
   const CARIMBO_TOPO = 42;
   const CARIMBO_BASE = PAGE_H - 42;
-  const CARIMBO_X0 = 16;
+  const CARIMBO_REGUA_X = 24;
+  const CARIMBO_TITULO_X = 32;
+  const CARIMBO_CAMPOS_X = 44;
   const CARIMBO_PASSO = 9;
-  const CARIMBO_MAX_COLUNAS = 3;
-  const CARIMBO_FONTE = 6.5;
-  // Avanço médio por caractere nesta fonte/corpo — usado só para quebrar em
-  // colunas, não para posicionar.
+  const CARIMBO_FONTE = 6.8;
+  // Folga antes do texto do contrato (MARGIN_X = 76), para o carimbo nunca
+  // encostar no corpo do documento.
+  const CARIMBO_GUTTER = 16;
+  const CARIMBO_MAX_COLUNAS = Math.max(
+    1,
+    Math.floor((MARGIN_X - CARIMBO_CAMPOS_X - CARIMBO_GUTTER) / CARIMBO_PASSO),
+  );
+  // Avanço médio por caractere nesta fonte — usado só para quebrar em colunas.
   const CARIMBO_AVANCO = 3.1;
   const alturaUtil = CARIMBO_BASE - CARIMBO_TOPO;
   const maxCharsPorColuna = Math.max(20, Math.floor(alturaUtil / CARIMBO_AVANCO));
 
-  const carimboTexto = connectionStampLines(contract).join(" · ");
+  const carimboTexto = connectionStampLines(contract).join(", ");
   const carimboColunas: string[] = [];
   for (
     let i = 0;
@@ -295,22 +331,48 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   ) {
     carimboColunas.push(carimboTexto.slice(i, i + maxCharsPorColuna));
   }
+  // Nada de truncar em silêncio: se o carimbo não coube, o documento tem de
+  // dizer isso, senão parece completo e não está.
+  const consumido = carimboColunas.join("").length;
+  if (consumido < carimboTexto.length && carimboColunas.length > 0) {
+    const ultima = carimboColunas.length - 1;
+    carimboColunas[ultima] =
+      carimboColunas[ultima].slice(0, Math.max(0, maxCharsPorColuna - 1)) + "…";
+  }
 
   const totalPages = doc.getNumberOfPages();
   for (let page = 1; page <= totalPages; page++) {
     doc.setPage(page);
+
     doc.setDrawColor(190);
     doc.setLineWidth(0.4);
-    doc.line(CARIMBO_X0 - 6, CARIMBO_TOPO, CARIMBO_X0 - 6, CARIMBO_BASE);
+    doc.line(CARIMBO_REGUA_X, CARIMBO_TOPO, CARIMBO_REGUA_X, CARIMBO_BASE);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90);
+    doc.text(CARIMBO_TITULO, CARIMBO_TITULO_X, CARIMBO_BASE, {
+      angle: 90,
+      baseline: "alphabetic",
+    } as any);
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(CARIMBO_FONTE);
-    doc.setTextColor(95);
+    doc.setTextColor(70);
     for (let c = 0; c < carimboColunas.length; c++) {
-      doc.text(carimboColunas[c], CARIMBO_X0 + c * CARIMBO_PASSO, CARIMBO_BASE, {
+      doc.text(carimboColunas[c], CARIMBO_CAMPOS_X + c * CARIMBO_PASSO, CARIMBO_BASE, {
         angle: 90,
         baseline: "alphabetic",
       } as any);
     }
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(140);
+    doc.text(`PÁG. ${page}/${totalPages}`, CARIMBO_TITULO_X, CARIMBO_TOPO + 26, {
+      angle: 90,
+      baseline: "alphabetic",
+    } as any);
+
     doc.setTextColor(0);
   }
 
