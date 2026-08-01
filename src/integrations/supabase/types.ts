@@ -11833,6 +11833,16 @@ export type Database = {
         Args: { p_servico_id: number; p_venda_id: number }
         Returns: Json
       }
+      qa_credenciado_por_credencial: {
+        Args: { p_credencial: string; p_tipo: string }
+        Returns: {
+          fonte_url: string
+          nome: string
+          uf: string
+          validade: string
+        }[]
+      }
+      qa_credencial_digitos: { Args: { p_valor: string }; Returns: string }
       qa_criar_processo_logado: {
         Args: {
           p_catalogo_slug: string
