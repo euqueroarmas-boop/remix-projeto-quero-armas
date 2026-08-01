@@ -81,9 +81,7 @@ interface Payload {
   exigencia?: string;
   /** Para documento_rejeitado. */
   motivo_rejeicao?: "parentesco" | "titular" | "duplicidade" | "tipo";
-  motivo?: string;
   detalhes?: Array<{ label: string; valor: string }>;
-  arquivo?: string;
   /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
   campos_alterados?: Array<{ label: string; valor: string }>;
   alterado_por?: string;
