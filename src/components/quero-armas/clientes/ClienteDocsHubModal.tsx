@@ -1549,6 +1549,24 @@ export function ClienteDocsHubModal({
           ? "tipo"
           : null;
 
+  // O carimbo de rejeição não fica mais colado no documento: ele aparece por
+  // 3 segundos no centro da tela, como o carimbo de aprovação.
+  const MOTIVO_CARIMBO: Record<string, string> = {
+    titular: "Documento de outro titular",
+    parentesco: "Grau de parentesco · mesmo endereço",
+    duplicidade: "Documento em duplicidade",
+    tipo: "Documento incorreto",
+  };
+  useEffect(() => {
+    if (!motivoRejeicao) {
+      motivoCarimbadoRef.current = null;
+      return;
+    }
+    if (motivoCarimbadoRef.current === motivoRejeicao) return;
+    motivoCarimbadoRef.current = motivoRejeicao;
+    setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
+  }, [motivoRejeicao]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
   // canônica: a emissão do QSA é a MESMA do Cartão CNPJ aprovado no Hub
