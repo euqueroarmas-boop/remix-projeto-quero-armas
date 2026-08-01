@@ -20,7 +20,8 @@ const numeroBr = (v?: string): number | null => {
 
 export interface SalvarNfGoldenRecordInput {
   campos: CamposCertidao;
-  clienteId?: string | null;
+  /** Id numérico do cliente em `qa_clientes`. */
+  clienteId?: number | string | null;
   documentoId?: string | null;
   processoDocumentoId?: string | null;
   textoBruto?: string | null;
@@ -40,7 +41,7 @@ export async function salvarNotaFiscalGoldenRecord({
   if (campos?.orgao !== "nota_fiscal" || !campos.chave_acesso) return null;
 
   const row = {
-    cliente_id: clienteId ?? null,
+    cliente_id: clienteId != null && clienteId !== "" ? Number(clienteId) : null,
     documento_id: documentoId ?? null,
     processo_documento_id: processoDocumentoId ?? null,
 
