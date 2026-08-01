@@ -177,6 +177,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
   const posicaoNoGrupo = grupoInfo ? grupoInfo.ids.indexOf(active.id) + 1 : 0;
   const totalNoGrupo = grupoInfo?.ids.length ?? 0;
+  // Posição do grupo entre os grupos do processo, na ordem em que a fila os
+  // apresenta. `gruposOrdenados` já preserva essa ordem.
+  const grupoOrdem = gruposOrdenados.findIndex((g) => g.id === activeGrupoId) + 1;
   // UMA EXIGÊNCIA POR VEZ (regra do usuário, 31/07/2026).
   //
   // A navegação livre foi REMOVIDA de propósito: o cliente pulava para a
@@ -340,7 +343,21 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 cliente em que parte do processo ele estava. */}
             <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
               {activeGrupo}
+              {/* Onde este grupo fica no processo inteiro. Sem isto o cliente
+                  via só o nome do grupo e não tinha ideia de quantas frentes
+                  ainda existem — "Antecedentes" podia ser a única ou a
+                  segunda de seis. */}
+              {gruposOrdenados.length > 1 ? (
+                <span className="ml-1.5 font-semibold text-[#8A1224]/70">
+                  · GRUPO {grupoOrdem} DE {gruposOrdenados.length}
+                </span>
+              ) : null}
             </span>
+            {totalNoGrupo > 1 ? (
+              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+                {posicaoNoGrupo} de {totalNoGrupo} no grupo
+              </span>
+            ) : null}
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
