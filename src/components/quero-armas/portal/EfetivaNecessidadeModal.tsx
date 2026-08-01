@@ -59,7 +59,7 @@ const PERGUNTAS: Array<{
   {
     campo: "tem_bo",
     pergunta: "Você já registrou algum boletim de ocorrência?",
-    ajuda: "Ameaça, furto, roubo, invasão de propriedade — qualquer registro policial. Se tiver mais de um, envie todos: cada fato conta. O BO pode estar em nome de outra pessoa, desde que o fato tenha colocado você em risco (por exemplo, algo ocorrido na empresa onde trabalha).",
+    ajuda: "Ameaça, furto, roubo, invasão de propriedade, violência, perseguição ou qualquer outro fato registrado pela polícia. Se tiver mais de um BO, envie todos: cada fato ajuda a demonstrar melhor a sua situação. O boletim não precisa estar obrigatoriamente em seu nome: ele também pode envolver familiares próximos, como pai, mãe, esposa, marido, companheira(o), filhos ou pessoas que moram com você, desde que o fato tenha relação com a sua segurança, sua rotina, sua residência, seu trabalho ou tenha colocado você e sua família em risco.",
     tipoProva: "boletim_ocorrencia",
   },
   {
@@ -394,13 +394,18 @@ export default function EfetivaNecessidadeModal({
                 Conte o que está acontecendo
                 {semProvaNenhuma && <span className="text-red-500"> *</span>}
               </label>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                Escreva com detalhes. O relato deve ter no mínimo {RELATO_MINIMO} caracteres: datas,
+                locais, pessoas envolvidas, o que aconteceu, o que foi dito ou feito, se houve
+                ameaça direta ou indireta, e por que isso ainda representa risco para você hoje.
+              </p>
               <textarea
                 value={relato}
                 onChange={(e) => setRelato(e.target.value)}
                 onBlur={() => void salvarTexto("relato_cliente", relato)}
                 rows={6}
                 placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
-                className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
               {semProvaNenhuma && relato.trim().length < RELATO_MINIMO && (
                 <p className="mt-1 text-[11px] text-amber-700">
