@@ -306,6 +306,47 @@ function normCpf(s: string): string {
   return s.replace(/\D/g, "");
 }
 
+function normCnpj(s: string): string {
+  return String(s || "").replace(/\D/g, "");
+}
+
+/**
+ * Documentos EMPRESARIAIS: a conformidade se faz pela pessoa jurídica
+ * (razão social + CNPJ do PRESTADOR), nunca pelo nome pessoal — a NF-e, por
+ * exemplo, traz o TOMADOR, que legitimamente é outra pessoa.
+ */
+const TIPOS_EMPRESARIAIS = new Set([
+  "renda_nf_recente",
+  "renda_cartao_cnpj",
+  "renda_cnpj_autonomo",
+  "cartao_cnpj",
+  "cartao_cnpj_mei",
+  "renda_qsa",
+  "renda_ccmei",
+  "renda_contrato_social",
+  "renda_ficha_cadastral_jucesp",
+]);
+
+const PARTICULAS_NOME = new Set(["DE", "DA", "DO", "DAS", "DOS", "E"]);
+
+/**
+ * Parentesco: nomes diferentes que compartilham sobrenome de família
+ * (ex.: GILSON DO NASCIMENTO × RYAN DIAS DO NASCIMENTO).
+ */
+function mesmaFamilia(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  const toks = (s: string) =>
+    normalizeStr(s).split(" ").filter((t) => t.length >= 3 && !PARTICULAS_NOME.has(t));
+  const ta = toks(a);
+  const tb = toks(b);
+  if (ta.length < 2 || tb.length < 2) return false;
+  if (ta.join(" ") === tb.join(" ")) return false; // mesma pessoa
+  // Sobrenome final (ou os dois últimos) em comum caracteriza parentesco.
+  const finalA = ta.slice(-2);
+  const finalB = tb.slice(-2);
+  return finalA.some((t) => finalB.includes(t));
+}
+
 // Mapeia nome completo do estado → sigla (já sem acento, uppercase)
 const ESTADO_PARA_UF: Record<string, string> = {
   "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM",
