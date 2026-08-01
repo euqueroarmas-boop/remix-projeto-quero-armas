@@ -2952,7 +2952,21 @@ export function ClienteDocsHubModal({
                 Exigência do Assistente de Documentação
               </div>
             ) : null}
-            {cobreOutraPendencia ? (
+            {rejeitadoDuplicidade ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Rejeitado · documento em duplicidade</div>
+                  <div>
+                    A IA identificou <b>{tipoAtual?.label || form.tipo_documento}</b> e esse
+                    documento <b>já consta aprovado</b> no seu Hub Documental. Não será salvo
+                    nem enviado para análise. Exclua o anterior se quiser substituí-lo, ou
+                    anexe o documento realmente exigido
+                    {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
+                  </div>
+                </div>
+              </div>
+            ) : cobreOutraPendencia ? (
               <div className="mt-1 flex items-start gap-1.5 border border-sky-300 bg-sky-50 p-2 text-[10px] leading-snug text-sky-900">
                 <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
