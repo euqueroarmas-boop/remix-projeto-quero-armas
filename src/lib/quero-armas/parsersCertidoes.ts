@@ -107,6 +107,8 @@ export interface CamposCertidao {
   socios?: string[];
   numero_nf?: string;
   valor_nf?: string;
+  /** Chave de acesso de 44 dígitos da NFS-e (padrão nacional / DANFSe). */
+  chave_acesso?: string;
 }
 
 const norm = (v: string) =>
@@ -168,7 +170,10 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   if (/CERTIFICADO DA CONDICAO DE MICROEMPREENDEDOR INDIVIDUAL|CCMEI/.test(t)) return "ccmei";
   if (/QUADRO DE SOCIOS E ADMINISTRADORES/.test(t)) return "qsa";
   if (/COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL/.test(t)) return "cartao_cnpj";
-  if (/NOTA FISCAL(\s+DE\s+SERVICOS?)?\s*(ELETRONICA)?|NFS-E|DANFE/.test(t)) return "nota_fiscal";
+  if (
+    /NOTA FISCAL(\s+DE\s+SERVICOS?)?\s*(ELETRONICA)?|NFS-?E|DANFS?E|CHAVE DE ACESSO DA NFS/.test(t)
+  )
+    return "nota_fiscal";
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
@@ -563,39 +568,83 @@ function situacao(t: string): string | undefined {
   return s && /ATIVA|BAIXADA|SUSPENSA|INAPTA|NULA/.test(s) ? s : undefined;
 }
 
+/**
+ * Documentos oficiais em layout de FORMULÁRIO (CCMEI, cartão CNPJ, QSA,
+ * DANFSe): o rótulo fica em uma linha e o valor na linha seguinte, em
+ * colunas separadas por espaços. Retorna a primeira linha útil após o rótulo.
+ */
+function linhaAposRotulo(texto: string, rotulo: RegExp): string | undefined {
+  const linhas = texto.split(/\r?\n/);
+  const i = linhas.findIndex((l) => rotulo.test(l));
+  if (i < 0) return undefined;
+  for (let j = i + 1; j < Math.min(i + 5, linhas.length); j++) {
+    const v = linhas[j].trim();
+    if (v && !/^[-\s]+$/.test(v)) return v;
+  }
+  return undefined;
+}
+
+const RE_CPF = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
+const RE_CNPJ = /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/;
+const RE_DATA = /\b\d{2}\/\d{2}\/\d{4}\b/;
+const RE_SIT = /\b(ATIVA|BAIXADA|SUSPENSA|INAPTA|NULA)\b/i;
+
 function parseCcmei(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const linha = (re: RegExp) => linhaAposRotulo(t, re);
+  const linhaCpf = linha(/^\s*Nome\s+Civil\b/im);
+  const linhaCnpj = linha(/^\s*CNPJ\b/im);
+  const linhaSit = linha(/Situa[cç][aã]o\s+Cadastral\s+Vigente/i);
   return {
     orgao: "ccmei",
     tipoDocumento: "renda_ccmei",
-    nome_titular: upperOrUndef(g(/Nome\s+(?:Empresarial|do\s+Empres[aá]rio)\s*:?\s*(.+)$/im)),
-    cpf: cpf11(g(/CPF\s*:?\s*([\d.\-]+)/i)),
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
+    nome_titular: upperOrUndef(
+      linhaCpf?.replace(RE_CPF, "").trim() ||
+        g(/Nome\s+(?:Empresarial|do\s+Empres[aá]rio)\s*:?\s*(.+)$/im),
+    ),
+    cpf: cpf11(g(/CPF\s*:?\s*([\d.\-]+)/i) ?? linhaCpf?.match(RE_CPF)?.[0]),
+    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i) ?? linhaCnpj?.match(RE_CNPJ)?.[0]),
     razao_social: upperOrUndef(g(/Nome\s+Empresarial\s*:?\s*(.+)$/im)),
     nome_fantasia: upperOrUndef(g(/Nome\s+Fantasia\s*:?\s*(.+)$/im)),
-    situacao_cadastral: situacao(t),
-    data_abertura: iso(g(/Data\s+de\s+(?:In[ií]cio\s+de\s+Atividades|Abertura)\s*:?\s*([\d/]+)/i)),
+    situacao_cadastral: situacao(t) ?? linhaSit?.match(RE_SIT)?.[1]?.toUpperCase(),
+    data_abertura: iso(
+      g(/Data\s+de\s+(?:In[ií]cio\s+de\s+Atividades|Abertura)\s*:?\s*([\d/]+)/i) ??
+        linhaCnpj?.match(RE_DATA)?.[0],
+    ),
     ocupacao_principal: upperOrUndef(g(/Ocupa[cç][aã]o\s+Principal\s*:?\s*(.+)$/im)),
-    data_emissao: iso(g(/(?:Emitido|Data\s+de\s+emiss[aã]o)\s*(?:em)?\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(
+      g(/(?:Emitido(?:\s+no\s+dia)?|Data\s+de\s+emiss[aã]o)\s*(?:em)?\s*:?\s*([\d/]+)/i),
+    ),
   };
 }
 
 function parseCartaoCnpj(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const linha = (re: RegExp) => linhaAposRotulo(t, re);
+  const linhaInscricao = linha(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O/i);
+  const linhaSit = linha(/^\s*SITUA[CÇ][AÃ]O CADASTRAL\b/im);
   return {
     orgao: "cartao_cnpj",
     tipoDocumento: "renda_cartao_cnpj",
-    cnpj: cnpj14(g(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O\s*:?\s*([\d./\-]+)/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    cnpj: cnpj14(
+      g(/N[UÚ]MERO DE INSCRI[CÇ][AÃ]O\s*:?\s*([\d./\-]+)/i) ??
+        g(/CNPJ\s*:?\s*([\d./\-]+)/i) ??
+        linhaInscricao?.match(RE_CNPJ)?.[0],
+    ),
+    razao_social: upperOrUndef(
+      g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im) ?? linha(/^\s*NOME EMPRESARIAL\b/im),
+    ),
     nome_fantasia: upperOrUndef(g(/T[IÍ]TULO DO ESTABELECIMENTO[^:]*:?\s*(.+)$/im)),
-    situacao_cadastral: situacao(t),
-    data_abertura: iso(g(/DATA DE ABERTURA\s*:?\s*([\d/]+)/i)),
+    situacao_cadastral: situacao(t) ?? linhaSit?.match(RE_SIT)?.[1]?.toUpperCase(),
+    data_abertura: iso(
+      g(/DATA DE ABERTURA\s*:?\s*([\d/]+)/i) ?? linhaInscricao?.match(RE_DATA)?.[0],
+    ),
     ocupacao_principal: upperOrUndef(
       g(/ATIVIDADE ECON[OÔ]MICA PRINCIPAL\s*:?\s*(.+)$/im),
     ),
-    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i) ?? linha(/Emitido no dia/i)?.match(RE_DATA)?.[0]),
   };
 }
 
@@ -613,25 +662,57 @@ function parseQsa(texto: string): CamposCertidao {
   return {
     orgao: "qsa",
     tipoDocumento: "renda_qsa",
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im)),
+    cnpj: cnpj14(
+      g(/CNPJ\s*:?\s*([\d./\-]+)/i) ??
+        linhaAposRotulo(t, /N[UÚ]MERO DE INSCRI[CÇ][AÃ]O/i)?.match(RE_CNPJ)?.[0] ??
+        t.match(RE_CNPJ)?.[0],
+    ),
+    razao_social: upperOrUndef(
+      g(/NOME EMPRESARIAL\s*:?\s*(.+)$/im) ?? linhaAposRotulo(t, /^\s*NOME EMPRESARIAL\b/im),
+    ),
     socios: socios.length ? socios : undefined,
-    data_emissao: iso(g(/Emitido no dia\s*:?\s*([\d/]+)/i)),
+    data_emissao: iso(
+      g(/Emitido no dia\s*:?\s*([\d/]+)/i) ??
+        linhaAposRotulo(t, /Emitido no dia/i)?.match(RE_DATA)?.[0],
+    ),
   };
 }
 
 function parseNotaFiscal(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  // DANFSe (padrão nacional): os rótulos ficam em uma linha e os valores na
+  // linha seguinte, em colunas — daí os fallbacks posicionais abaixo.
+  const chave =
+    t.match(/Chave\s+de\s+Acesso[^\d]{0,80}(\d{40,60})/i)?.[1] ?? t.match(/\b(\d{44,50})\b/)?.[1];
+  const nomeEmpresarial = linhaAposRotulo(t, /Nome\s*\/\s*Nome\s+Empresarial/i)
+    ?.replace(/\S+@\S+/g, "")
+    .trim();
+  const dataHora = t.match(/(\d{2}\/\d{2}\/\d{4})\s+\d{2}:\d{2}(?::\d{2})?/)?.[1];
+  const valorNacional =
+    g(/Valor\s+L[ií]quido\s+da\s+NFS-?e[^\d]{0,60}([\d.,]+)/i) ??
+    g(/Valor\s+do\s+Servi[cç]o[^\d]{0,60}([\d.,]+)/i);
+  const numeroNacional = g(/N[uú]mero\s+da\s+NFS-?e\D{0,120}?(\d{1,9})\b/i);
   return {
     orgao: "nota_fiscal",
     tipoDocumento: "renda_nf_recente",
-    numero_nf: g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ?? g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i),
-    cnpj: cnpj14(g(/CNPJ\s*:?\s*([\d./\-]+)/i)),
-    razao_social: upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)),
-    valor_nf: g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i),
+    numero_nf:
+      g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ??
+      g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i) ??
+      numeroNacional,
+    cnpj: cnpj14(
+      g(/CNPJ\s*\/?\s*CPF[^\d]{0,60}([\d./\-]{14,20})/i) ?? g(/CNPJ\s*:?\s*([\d./\-]+)/i),
+    ),
+    razao_social:
+      upperOrUndef(g(/(?:Raz[aã]o Social|Nome\/Raz[aã]o Social)\s*:?\s*(.+)$/im)) ??
+      upperOrUndef(nomeEmpresarial),
+    valor_nf:
+      g(/VALOR (?:TOTAL )?D[AO] (?:NOTA|SERVI[CÇ]O)[^\d]{0,20}([\d.,]+)/i) ?? valorNacional,
+    chave_acesso: chave,
     data_emissao:
       iso(g(/Data(?:\s+e\s+Hora)?\s+de\s+Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
-      iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)),
+      iso(g(/Emiss[aã]o\s+da\s+NFS-?e\D{0,120}?(\d{2}\/\d{2}\/\d{4})/i)) ??
+      iso(g(/Emiss[aã]o\s*:?\s*([\d/]+)/i)) ??
+      iso(dataHora),
   };
 }
