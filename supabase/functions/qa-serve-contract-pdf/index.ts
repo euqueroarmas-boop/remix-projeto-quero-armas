@@ -27,6 +27,12 @@ import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { constantTimeEqual, sha256Hex } from "../_shared/qaAsaas.ts";
 import { jsPDF } from "npm:jspdf@2.5.1";
 import {
+  desenharCarimbo,
+  detectarNavegador,
+  detectarSO,
+  type SessaoCarimbo,
+} from "../_shared/carimboConexao.ts";
+import {
   montarAnexosI,
   aplicarAnexosDinamicos,
   renumberContractAnexoHeadings,
@@ -104,84 +110,31 @@ function htmlToBlocks(html: string): Block[] {
   return blocks;
 }
 
-function detectOS(ua: string | null | undefined): string {
-  const s = String(ua || "");
-  if (/iPhone|iPad|iPod/i.test(s)) return "iOS";
-  if (/Android/i.test(s)) return "Android";
-  if (/Mac OS X|Macintosh/i.test(s)) return "macOS";
-  if (/Windows/i.test(s)) return "Windows";
-  if (/Linux/i.test(s)) return "Linux";
-  return "Não identificado";
-}
-
-function detectBrowser(ua: string | null | undefined): string {
-  const s = String(ua || "");
-  if (/Edg\//i.test(s)) return "Edge";
-  if (/CriOS|Chrome\//i.test(s) && !/Edg\//i.test(s)) return "Chrome";
-  if (/FxiOS|Firefox\//i.test(s)) return "Firefox";
-  if (/Safari\//i.test(s) && !/Chrome\//i.test(s) && !/CriOS/i.test(s)) return "Safari";
-  return "Não identificado";
-}
-
-function formatBrtDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
-/** Título do carimbo, em negrito e separado dos campos. */
-export const CARIMBO_TITULO =
-  "REGISTRO DE SESSÃO — EMISSÃO DO INSTRUMENTO · MP 2.200-2/2001";
-
 /**
- * Campos do carimbo de conexão.
+ * Sessão do aceite, no formato do carimbo compartilhado.
  *
- * Formato alinhado ao da procuração (usuário, 31/07/2026): rótulo em CAIXA
- * ALTA seguido de dois-pontos, separados por vírgula, com o USER-AGENT
- * inteiro — e não só o navegador resumido.
+ * `aceite_eletronico_data` é um TIMESTAMP, não um objeto de sessão — engano
+ * meu anterior, que fazia IDIOMA e REFERÊNCIA virem sempre vazios. Os dois
+ * saem agora de colunas próprias, gravadas no momento do aceite.
  *
- * Os quatro campos que a procuração NÃO tinha ficam: IP, SISTEMA, NAVEGADOR e
- * HASH. São eles que transformam o carimbo de "registro de acesso" em prova:
- * o IP e o hash são o que a validação confere contra o golden record quando o
- * documento assinado volta do Gov.br.
- *
- * Sobre "AÇÃO": na procuração dizia "download" porque o PDF era montado no
- * navegador, na hora de baixar. Aqui não pode: o contrato tem UM arquivo
- * canônico, gerado uma vez e byte-idêntico para sempre — é isso que faz a
- * assinatura do Gov.br encadear com o original. Carimbar o instante de cada
- * download mudaria os bytes a cada clique e destruiria essa garantia. Então a
- * ação declarada é a que de fato ficou registrada: o aceite eletrônico.
+ * AÇÃO diz "aceite eletrônico" e não "download": o contrato tem UM arquivo
+ * canônico, byte-idêntico para sempre, e é isso que permite provar que o PDF
+ * assinado no Gov.br é o que emitimos. Carimbar o instante de cada download
+ * mudaria os bytes a cada clique. O histórico de downloads fica em tabela
+ * própria, ao lado do arquivo.
  */
-function connectionStampLines(contract: any): string[] {
-  const userAgent = String(contract.aceite_user_agent || "").trim();
-  const sessao = (contract.aceite_eletronico_data ?? {}) as Record<string, unknown>;
-  const idioma = String((sessao as any)?.accept_language ?? "").trim();
-  const referencia = String((sessao as any)?.referer ?? "").trim();
-  return [
-    `CONTRATO: ${contract.contract_number || contract.id || "—"}`,
-    `DATA/HORA (BRT): ${formatBrtDate(contract.aceite_eletronico_data || contract.created_at)}`,
-    `IP: ${contract.aceite_ip || "—"}`,
-    `SISTEMA: ${detectOS(userAgent)}`,
-    `NAVEGADOR: ${detectBrowser(userAgent)}`,
-    // Só entram se existirem de verdade. Hoje NÃO existem: `aceite_eletronico_data`
-    // é um timestamp, não um objeto de sessão — foi engano meu supor que
-    // trazia accept-language e referer. Para carimbá-los seria preciso
-    // gravá-los no momento do aceite, o que hoje não acontece.
-    ...(idioma ? [`IDIOMA: ${idioma}`] : []),
-    ...(referencia ? [`REFERÊNCIA: ${referencia}`] : []),
-    ...(userAgent ? [`USER-AGENT: ${userAgent}`] : []),
-    "AÇÃO: aceite eletrônico",
-    `HASH: ${contract.aceite_hash || "—"}`,
-  ];
+function sessaoDoAceite(contract: any): SessaoCarimbo {
+  return {
+    rotuloNumero: "CONTRATO",
+    numero: contract.contract_number || contract.id || null,
+    registrado_em: contract.aceite_eletronico_data || contract.created_at || null,
+    ip: contract.aceite_ip ?? null,
+    user_agent: contract.aceite_user_agent ?? null,
+    accept_language: contract.aceite_idioma ?? null,
+    referer: contract.aceite_referer ?? null,
+    acao: "aceite eletrônico",
+    hash: contract.aceite_hash ?? null,
+  };
 }
 
 function buildCanonicalPdf(contract: any, html: string): Uint8Array {
@@ -297,135 +250,7 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   y += 10;
   writeParagraph(rodape, { size: 8, align: "left", lineGap: 0 });
 
-  // ── Carimbo de conexão, na lateral esquerda ────────────────────────────
-  //
-  // Layout copiado da procuração, que o usuário aprovou (31/07/2026):
-  //   coluna 1  → título em NEGRITO, com a base legal
-  //   colunas 2+ → campos, separados por vírgula, quebrados por altura
-  //   topo       → PÁG. n/N
-  //
-  // Com `angle: 90` o texto sobe a partir da âncora, por isso tudo é ancorado
-  // no RODAPÉ. Ancorar no topo (como estava antes) jogava o texto para fora
-  // da página.
-  const CARIMBO_TOPO = 42;
-  const CARIMBO_BASE = PAGE_H - 42;
-  const CARIMBO_REGUA_X = 24;
-  const CARIMBO_TITULO_X = 32;
-  const CARIMBO_CAMPOS_X = 44;
-  const CARIMBO_PASSO = 9;
-  const CARIMBO_FONTE = 6.8;
-  // Folga antes do texto do contrato (MARGIN_X = 76), para o carimbo nunca
-  // encostar no corpo do documento.
-  const CARIMBO_GUTTER = 16;
-  // Teto de 4 colunas pedido pelo usuário. O `min` com a largura disponível
-  // impede que o carimbo invada o texto se a margem mudar um dia.
-  const CARIMBO_MAX_COLUNAS = Math.max(
-    1,
-    Math.min(
-      4,
-      Math.floor((MARGIN_X - CARIMBO_CAMPOS_X - CARIMBO_GUTTER) / CARIMBO_PASSO),
-    ),
-  );
-  // Avanço médio por caractere nesta fonte — usado só para quebrar em colunas.
-  const CARIMBO_AVANCO = 3.1;
-  const alturaUtil = CARIMBO_BASE - CARIMBO_TOPO;
-  const maxCharsPorColuna = Math.max(20, Math.floor(alturaUtil / CARIMBO_AVANCO));
-
-  // Campos CORRIDOS, um do lado do outro, separados por vírgula (usuário,
-  // 31/07/2026) — não uma coluna por campo.
-  //
-  // A quebra é só de espaço: quando a coluna chega ao fim da página, o texto
-  // continua na coluna ao lado. O que causou o corte no meio do USER-AGENT
-  // antes não foi este formato, e sim a faixa estreita demais — agora a
-  // margem reserva folga para o texto inteiro caber.
-  // Campos separados por vírgula, um do lado do outro, quebrando SÓ na vírgula
-  // e no máximo em 4 colunas (usuário, 31/07/2026).
-  //
-  // A versão anterior cortava por contagem de caracteres, e o corte caía no
-  // meio do USER-AGENT. Aqui a coluna recebe campos INTEIROS enquanto couber;
-  // quando o próximo não cabe, ele começa a coluna seguinte. Nenhum campo é
-  // partido ao meio.
-  const carimboCampos = connectionStampLines(contract);
-  const carimboColunas: string[] = [];
-  let colunaAtual = "";
-
-  for (const campo of carimboCampos) {
-    if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
-
-    const candidato = colunaAtual ? `${colunaAtual}, ${campo}` : campo;
-    if (candidato.length <= maxCharsPorColuna) {
-      colunaAtual = candidato;
-      continue;
-    }
-
-    // Não coube: fecha a coluna atual e começa outra com este campo.
-    if (colunaAtual) {
-      carimboColunas.push(colunaAtual);
-      colunaAtual = "";
-      if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
-    }
-
-    // Campo sozinho maior que a coluna inteira (hash longo, user-agent
-    // extenso): aí não há como respeitar a vírgula — parte-se o campo, que é
-    // melhor do que omiti-lo.
-    if (campo.length > maxCharsPorColuna) {
-      for (let i = 0; i < campo.length; i += maxCharsPorColuna) {
-        if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
-        carimboColunas.push(campo.slice(i, i + maxCharsPorColuna));
-      }
-    } else {
-      colunaAtual = campo;
-    }
-  }
-  if (colunaAtual && carimboColunas.length < CARIMBO_MAX_COLUNAS) {
-    carimboColunas.push(colunaAtual);
-  }
-
-  // Campo que não coube nas 4 colunas: o documento avisa, em vez de sumir com
-  // ele em silêncio.
-  const camposImpressos = carimboColunas.join(", ");
-  const faltou = carimboCampos.some((c) => !camposImpressos.includes(c.slice(0, 12)));
-  if (faltou && carimboColunas.length > 0) {
-    const ultima = carimboColunas.length - 1;
-    carimboColunas[ultima] =
-      carimboColunas[ultima].slice(0, Math.max(0, maxCharsPorColuna - 1)) + "…";
-  }
-
-  const totalPages = doc.getNumberOfPages();
-  for (let page = 1; page <= totalPages; page++) {
-    doc.setPage(page);
-
-    doc.setDrawColor(190);
-    doc.setLineWidth(0.4);
-    doc.line(CARIMBO_REGUA_X, CARIMBO_TOPO, CARIMBO_REGUA_X, CARIMBO_BASE);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(90);
-    doc.text(CARIMBO_TITULO, CARIMBO_TITULO_X, CARIMBO_BASE, {
-      angle: 90,
-      baseline: "alphabetic",
-    } as any);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(CARIMBO_FONTE);
-    doc.setTextColor(70);
-    for (let c = 0; c < carimboColunas.length; c++) {
-      doc.text(carimboColunas[c], CARIMBO_CAMPOS_X + c * CARIMBO_PASSO, CARIMBO_BASE, {
-        angle: 90,
-        baseline: "alphabetic",
-      } as any);
-    }
-
-    doc.setFontSize(6.5);
-    doc.setTextColor(140);
-    doc.text(`PÁG. ${page}/${totalPages}`, CARIMBO_TITULO_X, CARIMBO_TOPO + 26, {
-      angle: 90,
-      baseline: "alphabetic",
-    } as any);
-
-    doc.setTextColor(0);
-  }
+  desenharCarimbo(doc, { sessao: sessaoDoAceite(contract), margemEsquerda: MARGIN_X });
 
   const ab = doc.output("arraybuffer") as ArrayBuffer;
   return new Uint8Array(ab);
@@ -504,11 +329,13 @@ async function ensureCanonicalPdf(
       texto_normalizado: texto,
       texto_sha256: textoSha,
       carimbo_ip: (contract as any).aceite_ip ?? null,
-      carimbo_so: detectOS(userAgent),
-      carimbo_navegador: detectBrowser(userAgent),
+      carimbo_so: detectarSO(userAgent),
+      carimbo_navegador: detectarNavegador(userAgent),
       carimbo_pais: null,
-      carimbo_idioma: null,
-      carimbo_referer: null,
+      // Agora vêm das colunas do aceite — antes eram sempre nulos porque eu os
+      // lia de `aceite_eletronico_data`, que é um timestamp.
+      carimbo_idioma: (contract as any).aceite_idioma ?? null,
+      carimbo_referer: (contract as any).aceite_referer ?? null,
       carimbo_registrado_em: (contract as any).aceite_eletronico_data ?? null,
       titular_nome: (contract as any).cliente_nome ?? null,
       titular_cpf: (contract as any).cliente_cpf ?? null,
@@ -990,7 +817,7 @@ Deno.serve(async (req) => {
   }
 
   let q = sb.from("qa_contracts").select(
-    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_id, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash, created_at"
+    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_id, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_idioma, aceite_referer, aceite_hash, created_at"
   );
   if (contractId) q = q.eq("id", contractId);
   else {

@@ -32,6 +32,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { jsPDF } from "npm:jspdf@2.5.1";
 import { extrairTextoPdf, normalizarParaComparacao } from "../_shared/compararTextoPdf.ts";
+import { desenharCarimbo } from "../_shared/carimboConexao.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -167,82 +168,6 @@ function htmlToBlocks(html: string): Block[] {
   return blocks;
 }
 
-// Carimbo lateral esquerdo, na vertical — mesmos campos do contrato de adesão.
-// A margem esquerda do corpo (MARGIN_X) já reserva o espaço da faixa.
-function aplicarCarimbo(doc: jsPDF, numero: string, sessao: Sessao) {
-  const pageH = doc.internal.pageSize.getHeight();
-  const mTop = 42;
-  const mBottom = 42;
-  const stampRuleX = 24;
-  const titleX = 32;
-  const fieldStartX = 44;
-  const columnGap = 9;
-  const availH = pageH - mBottom - mTop;
-  const maxColumns = 3;
-  const fontSize = 6.8;
-  const charAdvance = 3.1;
-  const maxCharsPerCol = Math.max(20, Math.floor(availH / charAdvance));
-
-  const dataBr = new Date(sessao.registrado_em).toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    dateStyle: "short",
-    timeStyle: "medium",
-  });
-
-  const linhas: [string, string][] = [
-    ["PROCURAÇÃO", numero],
-    ["DATA/HORA (BRT)", dataBr],
-    ["IP", sessao.ip ?? "—"],
-    ["SISTEMA", sessao.so ?? "—"],
-    ["NAVEGADOR", sessao.browser ?? "—"],
-    ["PAÍS", sessao.country ?? "—"],
-    ["IDIOMA", sessao.accept_language ?? "—"],
-    ["ORIGEM", sessao.referer ?? "—"],
-  ];
-
-  const texto = linhas.map(([l, v]) => `${l}: ${v}`).join(", ");
-  const colunas: string[] = [];
-  for (let i = 0; i < texto.length && colunas.length < maxColumns; i += maxCharsPerCol) {
-    colunas.push(texto.slice(i, i + maxCharsPerCol));
-  }
-
-  const totalPages = doc.getNumberOfPages();
-  for (let p = 1; p <= totalPages; p++) {
-    doc.setPage(p);
-    doc.setDrawColor(190);
-    doc.setLineWidth(0.4);
-    doc.line(stampRuleX, mTop, stampRuleX, pageH - mBottom);
-
-    doc.setFont("times", "bold");
-    doc.setFontSize(7.5);
-    doc.setTextColor(90);
-    doc.text(
-      "REGISTRO DE SESSÃO — EMISSÃO DO INSTRUMENTO · MP 2.200-2/2001",
-      titleX,
-      pageH - mBottom,
-      { angle: 90, baseline: "alphabetic" } as any,
-    );
-
-    doc.setFont("times", "normal");
-    doc.setFontSize(fontSize);
-    doc.setTextColor(70);
-    for (let c = 0; c < colunas.length; c++) {
-      doc.text(colunas[c], fieldStartX + c * columnGap, pageH - mBottom, {
-        angle: 90,
-        baseline: "alphabetic",
-      } as any);
-    }
-
-    doc.setFontSize(6.5);
-    doc.setTextColor(140);
-    doc.text(`PÁG. ${p}/${totalPages}`, titleX, mTop + 26, {
-      angle: 90,
-      baseline: "alphabetic",
-    } as any);
-    doc.setTextColor(0);
-  }
-}
-
 function buildCanonicalPdf(
   proc: any,
   html: string,
@@ -356,7 +281,21 @@ function buildCanonicalPdf(
     primeiro = false;
   }
 
-  aplicarCarimbo(doc, numero, sessao);
+  // MESMO carimbo do contrato — código compartilhado, não cópia. Os dois
+  // nasceram separados e divergiram; agora o layout é um só.
+  desenharCarimbo(doc, {
+    sessao: {
+      rotuloNumero: "PROCURAÇÃO",
+      numero,
+      registrado_em: sessao.registrado_em,
+      ip: sessao.ip,
+      user_agent: sessao.user_agent,
+      accept_language: sessao.accept_language,
+      referer: sessao.referer,
+      acao: "emissão do instrumento",
+    },
+    margemEsquerda: MARGIN_X_L,
+  });
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
 }
 
