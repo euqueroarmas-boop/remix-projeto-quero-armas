@@ -6499,6 +6499,7 @@ export type Database = {
           data_agendada: string | null
           data_realizacao: string
           data_vencimento: string
+          declarado_pelo_cliente: boolean
           id: string
           observacoes: string | null
           tipo: string
@@ -6516,6 +6517,7 @@ export type Database = {
           data_agendada?: string | null
           data_realizacao: string
           data_vencimento: string
+          declarado_pelo_cliente?: boolean
           id?: string
           observacoes?: string | null
           tipo: string
@@ -6533,6 +6535,7 @@ export type Database = {
           data_agendada?: string | null
           data_realizacao?: string
           data_vencimento?: string
+          declarado_pelo_cliente?: boolean
           id?: string
           observacoes?: string | null
           tipo?: string
