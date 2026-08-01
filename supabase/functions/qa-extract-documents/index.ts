@@ -180,7 +180,7 @@ const CLASSIFY_TIPOS = [
   "cin","rg_com_cpf","cnh","cpf","certidao_alteracao_nome",
   "comprovante_residencia","declaracao_responsavel_imovel","documento_identificacao_terceiro",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico","renda_carteira_funcional",
-  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
+  "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social","renda_ccmei",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss","renda_qsa",
   "antecedentes_criminais","antecedentes_federal",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
@@ -289,7 +289,8 @@ OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genéric
 - renda_holerite_funcionario_publico: holerite de servidor público
 - renda_carteira_funcional: carteira funcional de servidor público — identifica o servidor e o órgão, comprova o vínculo. NÃO é holerite (não traz valores) nem CTPS
 - renda_cartao_cnpj: Cartão CNPJ da Receita Federal (empresa comum)
-- renda_cnpj_autonomo: CCMEI (Certificado da Condição de Microempreendedor Individual) ou cartão CNPJ de MEI/autônomo
+- renda_ccmei: CCMEI — "Certificado da Condição de Microempreendedor Individual". Cabeçalho com esse título, bloco "Empresário(a)" (Nome Civil + CPF), CNPJ e "Data de Abertura", "Nome Empresarial", "Situação Cadastral Vigente" (ATIVA), "Períodos de Enquadramento como MEI" e rodapé com verificação em mei.receita.economia.gov.br/certificado. SEMPRE use renda_ccmei para este documento — NUNCA renda_cartao_cnpj nem renda_cnpj_autonomo
+- renda_cnpj_autonomo: (legado) cartão CNPJ de MEI/autônomo que NÃO seja o CCMEI
 - renda_contrato_social: contrato social, requerimento de empresário ou alteração contratual (NÃO é o QSA)
 - renda_qsa: QSA — Quadro de Sócios e Administradores, emitido pela Receita Federal. Lista os sócios e sua participação. É documento PRÓPRIO, distinto do contrato social e do cartão CNPJ: no grupo "empresário" os quatro (contrato social, cartão CNPJ, QSA e nota fiscal) são exigidos separadamente
 - renda_nf_recente: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma)
