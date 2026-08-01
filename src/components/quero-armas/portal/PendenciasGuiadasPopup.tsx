@@ -72,6 +72,12 @@ interface Props {
   open: boolean;
   pendencias: PendenciaItem[];
   onDismiss: () => void;
+  /**
+   * Quando true o popup vira obrigatório: sem botão de fechar e sem dispensar
+   * clicando fora. Usado enquanto houver contrato ou procuração pendente de
+   * assinatura — o cliente só usa o portal depois de cumprir a obrigação.
+   */
+  bloqueante?: boolean;
   /** Id da pendência que deve aparecer primeiro (ex.: doc clicado pelo cliente). */
   pinnedId?: string | null;
   /**
