@@ -60,6 +60,7 @@ const TIPOS_CLIENTE = new Set<string>([
   "antecedentes_federal_trf3_regional",
   "antecedentes_federal_sjsp_jef",
   "antecedentes_militar",
+  "antecedentes_militar_estadual",
   "antecedentes_eleitoral",
   "certidao_antecedentes_policia_civil_sp",
   "certidao_crimes_eleitorais_tse",

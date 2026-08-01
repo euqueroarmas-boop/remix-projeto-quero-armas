@@ -43,7 +43,7 @@ const TIPOS_CLIENTE = new Set<string>([
   "comprovante_endereco",
   "certidao_antecedentes", "antecedentes_criminais",
   "antecedentes_federal", "antecedentes_estadual",
-  "antecedentes_militar", "antecedentes_eleitoral",
+  "antecedentes_militar", "antecedentes_militar_estadual", "antecedentes_eleitoral",
   "certidao_antecedentes_policia_civil_sp", "certidao_crimes_eleitorais_tse",
   "certidao_crimes_militares_stm", "certidao_criminal_tjmsp",
   "certidao_federal_trf3_regional", "certidao_federal_trf3_sjsp_jef",
@@ -125,7 +125,8 @@ function tipoCompatKey(tipo?: string | null): string {
   }
   if (t === "certidao_antecedentes_policia_civil_sp") return "antecedentes_criminais";
   if (t === "certidao_crimes_eleitorais_tse") return "antecedentes_eleitoral";
-  if (t === "certidao_crimes_militares_stm" || t === "certidao_criminal_tjmsp") return "antecedentes_militar";
+  if (t === "certidao_crimes_militares_stm") return "antecedentes_militar";
+  if (t === "certidao_criminal_tjmsp" || t === "certidao_antecedentes_criminais_militar" || t === "certidao_estadual_justica_militar") return "antecedentes_militar_estadual";
   if (t === "certidao_federal_trf3_regional" || t === "certidao_federal_trf3_sjsp_jef") return "antecedentes_federal";
   if (t === "certidao_tjsp_distribuicao_criminal" || t === "certidao_tjsp_execucoes_criminais") return "antecedentes_estadual";
   if (t === "renda_ccmei") return "renda_contrato_social";

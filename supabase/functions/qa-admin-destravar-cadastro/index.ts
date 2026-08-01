@@ -25,7 +25,7 @@ const TIPOS_DOC_VALIDOS = new Set([
   "antecedentes_criminais", "antecedentes_federal",
   "antecedentes_federal_trf3_regional", "antecedentes_federal_sjsp_jef",
   "antecedentes_estadual", "antecedentes_estadual_distribuicao",
-  "antecedentes_estadual_execucoes", "antecedentes_militar", "antecedentes_eleitoral",
+  "antecedentes_estadual_execucoes", "antecedentes_militar", "antecedentes_militar_estadual", "antecedentes_eleitoral",
   "declaracao_sem_inquerito_processo_criminal", "declaracao_guarda_responsavel",
   "declaracao_correlata", "declaracao_guarda_acervo_1endereco",
   "declaracao_guarda_acervo_2enderecos", "declaracao_homonimia",
@@ -54,7 +54,7 @@ function validadePorTipo(tipo: string, emissaoIso: string): string | null {
   // Documentos societários da Receita: 30 dias
   if (["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei", "renda_qsa"].includes(tipo)) return addDias(30);
   // Certidões de 90 dias
-  if (["antecedentes_federal_trf3_regional", "antecedentes_militar"].includes(tipo)) return addDias(90);
+  if (["antecedentes_federal_trf3_regional", "antecedentes_militar", "antecedentes_militar_estadual"].includes(tipo)) return addDias(90);
   // Identificação civil: 10 anos
   if (["rg_com_cpf", "cin", "cnh"].includes(tipo)) return addMeses(120);
   // Procuração e filiação a clube: 12 meses

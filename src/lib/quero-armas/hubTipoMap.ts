@@ -17,8 +17,12 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   comprovante_endereco_ano_2027: "comprovante_residencia",
   certidao_antecedentes_policia_civil_sp: "antecedentes_criminais",
   certidao_crimes_eleitorais_tse: "antecedentes_eleitoral",
+  // STM (União) e TJM (Estadual) são certidões DIFERENTES e têm slots
+  // diferentes no processo. Mapeá-las para o mesmo tipo do Hub fazia o TJM
+  // colidir com o STM: o slot da TJM nunca casava e era pedido de novo.
   certidao_crimes_militares_stm: "antecedentes_militar",
-  certidao_criminal_tjmsp: "antecedentes_militar",
+  certidao_criminal_tjmsp: "antecedentes_militar_estadual",
+  certidao_estadual_justica_militar: "antecedentes_militar_estadual",
   certidao_federal_trf3_regional: "antecedentes_federal_trf3_regional",
   certidao_federal_trf3_sjsp_jef: "antecedentes_federal_sjsp_jef",
   certidao_tjsp_distribuicao_criminal: "antecedentes_estadual_distribuicao",
@@ -27,7 +31,7 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   certidao_antecedentes_criminais_eleitoral: "antecedentes_eleitoral",
   certidao_antecedentes_criminais_estadual: "antecedentes_estadual",
   certidao_antecedentes_criminais_federal: "antecedentes_federal",
-  certidao_antecedentes_criminais_militar: "antecedentes_militar",
+  certidao_antecedentes_criminais_militar: "antecedentes_militar_estadual",
   certidao_estadual_distribuicao_acoes_criminais: "antecedentes_estadual_distribuicao",
   certidao_estadual_execucoes_criminais: "antecedentes_estadual_execucoes",
   // 2º grau ainda não tem slot próprio no Hub — mapeia para o equivalente de 1º grau
@@ -50,7 +54,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
-  "antecedentes_militar","antecedentes_eleitoral",
+  "antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
   "antecedentes_estadual_distribuicao","antecedentes_estadual_execucoes",
   "declaracao_sem_inquerito_processo_criminal","declaracao_guarda_responsavel",

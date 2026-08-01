@@ -35,6 +35,7 @@ const TIPOS_VALIDOS = [
   "antecedentes_federal",
   "antecedentes_estadual",
   "antecedentes_militar",
+  "antecedentes_militar_estadual",
   "antecedentes_eleitoral",
   "outro",
 ] as const;
@@ -155,6 +156,8 @@ function systemPromptFor(tipo: TipoDoc): string {
       "Você é especialista em certidões criminais do Tribunal de Justiça estadual. Extraia o título literal e diferencie DISTRIBUIÇÕES CRIMINAIS de EXECUÇÕES CRIMINAIS quando o cabeçalho indicar.",
     antecedentes_militar:
       "Você é especialista em certidões criminais militares. Extraia o título literal e diferencie Justiça Militar da União/STM de Justiça Militar Estadual/TJM.",
+    antecedentes_militar_estadual:
+      "Você é especialista em certidões da Justiça Militar ESTADUAL (TJM). Extraia o título literal do documento do Tribunal de Justiça Militar do Estado; não confunda com a certidão do STM (União).",
     antecedentes_eleitoral:
       "Você é especialista em certidões eleitorais criminais. Este tipo é CERTIDÃO DE CRIMES ELEITORAIS; NÃO chame de quitação eleitoral salvo se o PDF disser literalmente quitação, o que não é o documento esperado aqui.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
