@@ -1346,6 +1346,26 @@ export function ClienteDocsHubModal({
   // Bloqueio duro da prévia: divergente do slot E já entregue antes.
   const rejeitadoDuplicidade = docDuplicado;
 
+  // ── TITULAR DIVERGENTE ──────────────────────────────────────────────────
+  // O documento é de OUTRA pessoa: nome completo e/ou CPF lidos no documento
+  // não batem com o interessado. Rejeição imediata (não é duplicidade).
+  const titularDivergente = conformidade.some(
+    (i) =>
+      (i.campo === "nome_completo" || i.campo === "cpf") &&
+      i.status === "divergente" &&
+      !!i.valorReferencia,
+  );
+  // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
+  const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
+  // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
+  const motivoRejeicao: "titular" | "duplicidade" | "tipo" | null = titularDivergente
+    ? "titular"
+    : rejeitadoDuplicidade
+      ? "duplicidade"
+      : documentoIncorretoTipo
+        ? "tipo"
+        : null;
+
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
   // canônica: a emissão do QSA é a MESMA do Cartão CNPJ aprovado no Hub
