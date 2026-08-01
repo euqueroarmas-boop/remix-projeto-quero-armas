@@ -8342,7 +8342,7 @@ export type Database = {
       qa_nf_golden_records: {
         Row: {
           chave_acesso: string
-          cliente_id: string | null
+          cliente_id: number | null
           codigo_tributacao_municipal: string | null
           codigo_tributacao_nacional: string | null
           competencia: string | null
@@ -8388,7 +8388,7 @@ export type Database = {
         }
         Insert: {
           chave_acesso: string
-          cliente_id?: string | null
+          cliente_id?: number | null
           codigo_tributacao_municipal?: string | null
           codigo_tributacao_nacional?: string | null
           competencia?: string | null
@@ -8434,7 +8434,7 @@ export type Database = {
         }
         Update: {
           chave_acesso?: string
-          cliente_id?: string | null
+          cliente_id?: number | null
           codigo_tributacao_municipal?: string | null
           codigo_tributacao_nacional?: string | null
           competencia?: string | null
