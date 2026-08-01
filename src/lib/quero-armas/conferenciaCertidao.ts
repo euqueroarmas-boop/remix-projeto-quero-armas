@@ -114,6 +114,17 @@ const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
   // de terceiro, quando o fato atingiu o cliente (regra do usuário, 31/07).
   // Reprovar um BO por divergência de nome seria descartar prova válida.
   boletim_ocorrencia: [],
+
+  /* ── Ocupação lícita e renda ──────────────────────────────────────────
+   * Exigido só o que PROVA o vínculo do documento com o cliente e com a
+   * empresa. O cartão CNPJ e o QSA não trazem CPF nem nome do titular no
+   * corpo — cobrar isso reprovaria documento correto.
+   */
+  ccmei: ["nome_titular", "cpf", "cnpj", "situacao_cadastral"],
+  cartao_cnpj: ["cnpj", "razao_social", "situacao_cadastral"],
+  qsa: ["cnpj", "socios"],
+  // Nota fiscal: emitida pela empresa, não pela pessoa. Nada obrigatório.
+  nota_fiscal: [],
 };
 
 /**
@@ -155,6 +166,11 @@ const LABEL: Record<string, string> = {
   resultado: "Resultado da consulta",
   filiacao: "Filiação",
   titulo_eleitor: "Título de eleitor",
+  cnpj: "CNPJ",
+  razao_social: "Nome empresarial",
+  situacao_cadastral: "Situação cadastral",
+  socios: "Quadro de sócios",
+  numero_nf: "Número da nota fiscal",
 };
 
 /**
