@@ -306,6 +306,47 @@ function normCpf(s: string): string {
   return s.replace(/\D/g, "");
 }
 
+function normCnpj(s: string): string {
+  return String(s || "").replace(/\D/g, "");
+}
+
+/**
+ * Documentos EMPRESARIAIS: a conformidade se faz pela pessoa jurídica
+ * (razão social + CNPJ do PRESTADOR), nunca pelo nome pessoal — a NF-e, por
+ * exemplo, traz o TOMADOR, que legitimamente é outra pessoa.
+ */
+const TIPOS_EMPRESARIAIS = new Set([
+  "renda_nf_recente",
+  "renda_cartao_cnpj",
+  "renda_cnpj_autonomo",
+  "cartao_cnpj",
+  "cartao_cnpj_mei",
+  "renda_qsa",
+  "renda_ccmei",
+  "renda_contrato_social",
+  "renda_ficha_cadastral_jucesp",
+]);
+
+const PARTICULAS_NOME = new Set(["DE", "DA", "DO", "DAS", "DOS", "E"]);
+
+/**
+ * Parentesco: nomes diferentes que compartilham sobrenome de família
+ * (ex.: GILSON DO NASCIMENTO × RYAN DIAS DO NASCIMENTO).
+ */
+function mesmaFamilia(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  const toks = (s: string) =>
+    normalizeStr(s).split(" ").filter((t) => t.length >= 3 && !PARTICULAS_NOME.has(t));
+  const ta = toks(a);
+  const tb = toks(b);
+  if (ta.length < 2 || tb.length < 2) return false;
+  if (ta.join(" ") === tb.join(" ")) return false; // mesma pessoa
+  // Sobrenome final (ou os dois últimos) em comum caracteriza parentesco.
+  const finalA = ta.slice(-2);
+  const finalB = tb.slice(-2);
+  return finalA.some((t) => finalB.includes(t));
+}
+
 // Mapeia nome completo do estado → sigla (já sem acento, uppercase)
 const ESTADO_PARA_UF: Record<string, string> = {
   "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM",
@@ -482,6 +523,7 @@ function calcularConformidade(
   clienteNomeMae: string | null | undefined,
   docsAprovados: any[],
   dataAvaliacaoDoc?: string | null,
+  tipoDocumentoAtual?: string | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -615,6 +657,48 @@ function calcularConformidade(
 
   // Endereço NUNCA entra na conformidade: o cliente pode ter vários endereços
   // e o documento pode trazer qualquer um deles — diferença não é divergência.
+  // ── GOLDEN RECORD DA EMPRESA (prestador) ────────────────────────────────
+  if (TIPOS_EMPRESARIAIS.has(String(tipoDocumentoAtual || ""))) {
+    const empresaRefs: {
+      cnpj?: { valor: string; fonte: string };
+      razao?: { valor: string; fonte: string };
+    } = {};
+    for (const doc of sorted) {
+      if (!TIPOS_EMPRESARIAIS.has(String(doc.tipo_documento || ""))) continue;
+      const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
+      const nomeDoc = getNomeDocumentoDisplay(doc, doc.tipo_documento);
+      if (c.cnpj && !empresaRefs.cnpj) empresaRefs.cnpj = { valor: c.cnpj, fonte: nomeDoc };
+      if (c.razao_social && !empresaRefs.razao) empresaRefs.razao = { valor: c.razao_social, fonte: nomeDoc };
+    }
+    const cnpjDoc = campos.cnpj;
+    const razaoDoc = campos.razao_social;
+    if (cnpjDoc) {
+      const r = empresaRefs.cnpj;
+      items.push({
+        campo: "cnpj",
+        label: "CNPJ (prestador)",
+        valorCertidao: cnpjDoc,
+        valorReferencia: r?.valor ?? null,
+        fonteReferencia: r?.fonte ?? null,
+        status: !r ? "sem_referencia" : normCnpj(cnpjDoc) === normCnpj(r.valor) ? "conforme" : "divergente",
+      });
+    }
+    if (razaoDoc) {
+      const r = empresaRefs.razao;
+      const res = r ? fuzzyName(razaoDoc, r.valor) : null;
+      items.push({
+        campo: "razao_social",
+        label: "Razão social (prestador)",
+        valorCertidao: razaoDoc,
+        valorReferencia: r?.valor ?? null,
+        fonteReferencia: r?.fonte ?? null,
+        status: !r ? "sem_referencia" : res === true ? "conforme" : res === "gray" ? "verificando" : "divergente",
+      });
+    }
+    // Nome/CPF pessoal não se aplicam a documento da pessoa jurídica.
+    return items;
+  }
+
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
   // Pula data_nascimento quando: é string de idade ("34 anos") OU
@@ -1355,11 +1439,22 @@ export function ClienteDocsHubModal({
       i.status === "divergente" &&
       !!i.valorReferencia,
   );
+  // ── PARENTESCO ──────────────────────────────────────────────────────────
+  // O titular do documento é outra pessoa, MAS carrega o sobrenome da família
+  // do interessado (pai, filho, cônjuge, irmão). Rejeição específica.
+  const parentescoDetectado =
+    titularDivergente &&
+    conformidade.some(
+      (i) =>
+        i.campo === "nome_completo" &&
+        i.status === "divergente" &&
+        mesmaFamilia(i.valorCertidao, i.valorReferencia),
+    );
   // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
   const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
   // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
-  const motivoRejeicao: "titular" | "duplicidade" | "tipo" | null = titularDivergente
-    ? "titular"
+  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = titularDivergente
+    ? (parentescoDetectado ? "parentesco" : "titular")
     : rejeitadoDuplicidade
       ? "duplicidade"
       : documentoIncorretoTipo
@@ -1876,6 +1971,7 @@ export function ClienteDocsHubModal({
         refClienteNomeMae,
         docsEfetivos,
         (campos as any).data_avaliacao || campos.data_emissao || null,
+        tipoIA,
       );
       setConformidade(items);
 
@@ -3033,8 +3129,16 @@ export function ClienteDocsHubModal({
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
-                  <div className="font-bold uppercase tracking-[0.08em]">Rejeitado · documento de outro titular</div>
+                  <div className="font-bold uppercase tracking-[0.08em]">
+                    {parentescoDetectado
+                      ? "Rejeitado · documento de familiar (parentesco)"
+                      : "Rejeitado · documento de outro titular"}
+                  </div>
                   <div>
+                    {parentescoDetectado ? (
+                      <>O documento está em nome de um <b>familiar</b> (mesmo sobrenome de família),
+                      não do interessado. Documento de parente não é aceito.{" "}</>
+                    ) : null}
                     Os dados lidos no documento <b>não são do interessado</b> deste processo
                     (nome e/ou CPF divergem do cadastro). O documento não será salvo nem
                     enviado para análise. Anexe o documento em nome do próprio titular

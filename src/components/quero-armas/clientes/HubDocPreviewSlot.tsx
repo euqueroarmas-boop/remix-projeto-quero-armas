@@ -40,7 +40,7 @@ interface Props {
    *  - "titular": documento é de OUTRA pessoa (nome/CPF divergem do interessado)
    *  - "tipo": documento do próprio titular, mas não é o exigido
    */
-  motivoRejeicao?: "duplicidade" | "titular" | "tipo" | null;
+  motivoRejeicao?: "duplicidade" | "titular" | "parentesco" | "tipo" | null;
 }
 
 export default function HubDocPreviewSlot({
@@ -332,7 +332,9 @@ export default function HubDocPreviewSlot({
               <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".24em", textAlign: "center", marginTop: 6 }}>
                 {motivoRejeicao === "titular"
                   ? "DOCUMENTO DE OUTRO TITULAR"
-                  : motivoRejeicao === "tipo"
+                  : motivoRejeicao === "parentesco"
+                    ? "DOCUMENTO DE FAMILIAR · PARENTESCO"
+                    : motivoRejeicao === "tipo"
                     ? "DOCUMENTO INCORRETO"
                     : "DOCUMENTO EM DUPLICIDADE"}
               </div>
