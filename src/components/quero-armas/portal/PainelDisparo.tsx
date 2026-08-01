@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /* =============================================================================
  * Painel "Disparo" — tudo que está esperando o cliente, em ordem de prioridade
@@ -95,6 +95,7 @@ interface Props {
 
 export default function PainelDisparo({ itens, corIcone }: Props) {
   const [aberto, setAberto] = useState(false);
+  const painelRef = useRef<HTMLDivElement | null>(null);
 
   const ordenados = useMemo(
     () =>
@@ -112,32 +113,50 @@ export default function PainelDisparo({ itens, corIcone }: Props) {
 
   const total = ordenados.length;
 
+  useEffect(() => {
+    if (!aberto) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!painelRef.current?.contains(event.target as Node)) {
+        setAberto(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAberto(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [aberto]);
+
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setAberto(true)}
-      onMouseLeave={() => setAberto(false)}
-    >
+    <div ref={painelRef} className="relative flex h-10 w-10 items-center justify-center">
       <button
         type="button"
         // No celular não existe hover: o toque abre e fecha.
         onClick={() => setAberto((v) => !v)}
+        onMouseEnter={() => setAberto(true)}
         title={total ? `${total} ${total === 1 ? "pendência" : "pendências"}` : "Nada pendente"}
         aria-label={total ? `${total} pendências` : "Nada pendente"}
-        className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors"
+        aria-expanded={aberto}
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white/60"
         style={{ color: total ? corIcone : `${corIcone}88` }}
       >
         <img
           src="/icone-arma-cadastro-squircle.png"
           alt=""
-          className="h-[20px] w-[20px] shrink-0 object-contain"
-          style={{ opacity: total ? 1 : 0.55 }}
+          className="h-[28px] w-[28px] shrink-0 object-contain"
+          style={{ opacity: total ? 1 : 0.72 }}
         />
         {total > 0 && (
           // O número no próprio botão: sem hover o cliente já sabe que há algo
           // esperando por ele — e no celular hover nem existe.
           <span
-            className="absolute -right-0.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full px-[3px] text-[9px] font-bold leading-none text-white"
+            className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full px-[4px] text-[9px] font-bold leading-none text-white ring-2 ring-[#0A0A0A]"
             style={{ background: "#8A1224" }}
           >
             {total > 9 ? "9+" : total}
@@ -147,7 +166,7 @@ export default function PainelDisparo({ itens, corIcone }: Props) {
 
       {aberto && (
         <div
-          className="absolute right-[calc(100%+8px)] bottom-0 z-[140] w-[320px] overflow-hidden rounded-lg border border-[#E4E4E4] bg-white shadow-2xl"
+          className="fixed bottom-[86px] right-[64px] z-[9999] w-[320px] overflow-hidden rounded-lg border border-[#E4E4E4] bg-white shadow-2xl"
           role="dialog"
         >
           <div className="border-b border-[#F0F0F0] px-4 py-2.5">

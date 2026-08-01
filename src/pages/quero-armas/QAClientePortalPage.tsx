@@ -296,6 +296,7 @@ export default function QAClientePortalPage() {
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
+  const [habitualidadeAlertas, setHabitualidadeAlertas] = useState<any[]>([]);
   const [examesCliente, setExamesCliente] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -800,7 +801,7 @@ export default function QAClientePortalPage() {
         // não pelo id_legado — caso contrário a RLS bloqueia silenciosamente os registros.
         const clienteIdReal = clienteData.id;
         // Carrega vendas primeiro, depois itens via venda_id (qa_itens_venda NÃO possui cliente_id).
-        const [vRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
+        const [vRes, crRes, cfRes, gtRes, flRes, exRes, habRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteIdVendas).order("data_cadastro", { ascending: false }),
           // Cliente pode ter mais de um CR (ex.: CR antigo vencido + CR novo). Mostramos o mais recente.
           supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteIdReal).order("id", { ascending: false }).limit(1),
@@ -811,6 +812,12 @@ export default function QAClientePortalPage() {
             .select("id, tipo, data_realizacao, data_vencimento, observacoes")
             .eq("cliente_id", clienteIdReal)
             .order("data_realizacao", { ascending: false }),
+          supabase
+            .from("qa_habitualidade_alertas_ativos" as any)
+            .select("*")
+            .eq("cliente_id", clienteIdReal)
+            .eq("ativo", true)
+            .order("prioridade", { ascending: true }),
         ]);
 
         // [DIAG ARSENAL] Surface de erros — antes eram silenciosamente convertidos em [].
@@ -821,6 +828,7 @@ export default function QAClientePortalPage() {
         if (gtRes.error) arsenalErrors.qa_gtes = gtRes.error.message;
         if (flRes.error) arsenalErrors.qa_filiacoes = flRes.error.message;
         if (exRes.error) arsenalErrors.qa_exames_cliente = exRes.error.message;
+        if (habRes.error) arsenalErrors.qa_habitualidade_alertas_ativos = habRes.error.message;
         if (Object.keys(arsenalErrors).length > 0) {
           console.warn("[ArsenalDiag] queries com erro:", arsenalErrors);
         }
@@ -835,6 +843,7 @@ export default function QAClientePortalPage() {
             gtes: (gtRes.data as any[] | null)?.length ?? 0,
             filiacoes: (flRes.data as any[] | null)?.length ?? 0,
             exames: (exRes.data as any[] | null)?.length ?? 0,
+            habitualidade_alertas: (habRes.data as any[] | null)?.length ?? 0,
           });
         }
 
@@ -925,6 +934,7 @@ export default function QAClientePortalPage() {
         setCadastro(Array.isArray(crRes.data) ? (crRes.data[0] ?? null) : crRes.data);
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
+        setHabitualidadeAlertas((habRes.data as any[]) ?? []);
 
         // Filiacoes canônicas (qa_filiacoes) + comprovante_clube_tiro aprovados do hub
         // que ainda não têm entrada em qa_filiacoes (histórico via hub documental).
@@ -2250,6 +2260,41 @@ export default function QAClientePortalPage() {
    */
   const itensDisparo = useMemo<ItemDisparo[]>(() => {
     const itens: ItemDisparo[] = [];
+    const statusVenda = (v: any) => String(v?.status ?? "").trim().toLowerCase();
+    const temCrNoSistema = Boolean(cadastro?.numero_cr || cadastro?.validade_cr);
+    const nomeServicoVenda = (v: any) =>
+      v?.servico_nome || v?.produto_nome || v?.descricao || v?.observacoes || v?.id_legado || v?.id || "serviço contratado";
+    const valorVenda = (v: any): number | null => {
+      const candidatos = [
+        v?.valor_aberto,
+        v?.valor_a_pagar,
+        v?.pagamento_valor_total_parcelado,
+        v?.valor_total_pago_cliente,
+        v?.valor_total,
+        v?.valor,
+      ];
+      for (const c of candidatos) {
+        const n = Number(c);
+        if (Number.isFinite(n) && n > 0) return n;
+      }
+      return null;
+    };
+
+    // 1) Pagamento — trava o início financeiro/operacional. Fonte confirmada:
+    // qa_vendas.status = "aguardando_pagamento".
+    for (const venda of vendas) {
+      if (statusVenda(venda) !== "aguardando_pagamento") continue;
+      const valor = valorVenda(venda);
+      itens.push({
+        id: `disparo:pagamento:${venda?.id ?? venda?.id_legado ?? nomeServicoVenda(venda)}`,
+        prioridade: "pagamento",
+        titulo: "Pagamento pendente",
+        detalhe: valor
+          ? `${formatCurrency(valor)} — ${String(nomeServicoVenda(venda)).slice(0, 80)}`
+          : String(nomeServicoVenda(venda)).slice(0, 100),
+        onClick: () => goSection("financeiro"),
+      });
+    }
 
     // 2) Assinaturas — travam o processo inteiro.
     for (const sig of pendingSignatureDocs) {
@@ -2307,8 +2352,37 @@ export default function QAClientePortalPage() {
       });
     }
 
+    // 8) Habitualidade e filiação — só fazem sentido para cliente com CR já
+    // enviado/cadastrado. Sem CR, não há cobrança dessa rotina no Arsenal.
+    if (temCrNoSistema) {
+      for (const f of filiacoes) {
+        const validade = f?.validade_filiacao || f?.data_validade || null;
+        const dias = daysUntil(validade);
+        if (dias === null || dias > 30) continue;
+        const nome = f?.nome_filiacao || f?.nome_clube || "Filiação ao clube de tiro";
+        itens.push({
+          id: `disparo:filiacao:${f?.id ?? nome}`,
+          prioridade: "habitualidade",
+          titulo: dias < 0 ? "Filiação vencida" : "Filiação vence em breve",
+          detalhe: `${String(nome).slice(0, 80)}${dias >= 0 ? ` — ${dias} dia(s)` : ""}`,
+          dias,
+          onClick: () => goSection("documentos"),
+        });
+      }
+
+      for (const h of habitualidadeAlertas) {
+        itens.push({
+          id: `disparo:habitualidade:${h?.id ?? h?.marco_hash ?? h?.template_name}`,
+          prioridade: "habitualidade",
+          titulo: h?.titulo || "Habitualidade precisa de atenção",
+          detalhe: h?.proxima_acao || h?.motivo || "Revise a habitualidade vinculada ao seu CR",
+          onClick: () => goSection("documentos"),
+        });
+      }
+    }
+
     return itens;
-  }, [pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vendas, pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas, cadastro, filiacoes, habitualidadeAlertas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);

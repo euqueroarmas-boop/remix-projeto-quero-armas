@@ -91,6 +91,14 @@ function nivelLabel(n: string): string {
   return n === "nivel_3" ? "Nível 3" : n === "nivel_2" ? "Nível 2" : "Nível 1";
 }
 
+function tituloTemplate(template: string): string {
+  if (template === "habitualidade-pronto-mudanca-nivel") return "Habitualidade pronta para mudança de nível";
+  if (template === "habitualidade-risco-rebaixamento") return "Habitualidade em risco";
+  if (template === "habitualidade-quase-nivel") return "Habitualidade perto do próximo nível";
+  if (template === "habitualidade-por-tipo-arma-incompleta") return "Habitualidade incompleta por tipo de arma";
+  return "Habitualidade atualizada";
+}
+
 type ContagemTipo = { tipo: string; treinos: number; competicoes: number };
 type Candidato = {
   cliente_id: number;
@@ -234,10 +242,29 @@ Deno.serve(async (req) => {
       return json({ error: "select_clientes_failed", detail: cliErr.message }, 500);
     }
 
+    const clienteIds = ((clientes ?? []) as any[]).map((c) => Number(c.id)).filter(Number.isFinite);
+    const clientesComCr = new Set<number>();
+    if (clienteIds.length) {
+      const { data: crs, error: crErr } = await admin
+        .from("qa_cadastro_cr")
+        .select("cliente_id, numero_cr, validade_cr")
+        .in("cliente_id", clienteIds);
+      if (crErr) {
+        console.error("[qa-habitualidade-alertas] cadastro_cr", crErr);
+        return json({ error: "select_cadastro_cr_failed", detail: crErr.message }, 500);
+      }
+      for (const cr of crs ?? []) {
+        if ((cr as any).numero_cr || (cr as any).validade_cr) {
+          clientesComCr.add(Number((cr as any).cliente_id));
+        }
+      }
+    }
+
     const candidatos: Candidato[] = [];
 
     for (const cli of clientes ?? []) {
       if (String((cli as any).status ?? "").toLowerCase() === "excluido_lgpd") continue;
+      if (!clientesComCr.has(Number((cli as any).id))) continue;
 
       // Categoria titular precisa ser CAC/atirador para o motor se aplicar.
       const cat = String((cli as any).categoria_titular ?? "").toLowerCase();
@@ -338,6 +365,42 @@ Deno.serve(async (req) => {
         ja_enviados: candidatos.filter((c) => c.ja_enviado).length,
         candidatos,
       });
+    }
+
+    const clientesEscopo = filtroCliente ? [filtroCliente] : [...clientesComCr];
+    if (clientesEscopo.length) {
+      await admin
+        .from("qa_habitualidade_alertas_ativos")
+        .update({ ativo: false, resolvido_em: new Date().toISOString() })
+        .in("cliente_id", clientesEscopo);
+    }
+
+    if (candidatos.length) {
+      const ativos = candidatos.map((c) => ({
+        cliente_id: c.cliente_id,
+        template_name: c.template,
+        titulo: tituloTemplate(c.template),
+        motivo: c.motivo,
+        proxima_acao: c.proximaAcao,
+        nivel_atual: c.nivel_atual,
+        nivel_sugerido: c.nivel_sugerido,
+        treinos_validos: c.treinos_validos,
+        competicoes_validas: c.competicoes_validas,
+        tipo_arma_ancora: c.tipo_arma_ancora,
+        periodo_ref: c.periodo,
+        marco_hash: c.marco_hash,
+        prioridade: 80,
+        ativo: true,
+        resolvido_em: null,
+        calculado_em: new Date().toISOString(),
+        dados_json: {
+          por_tipo: c.por_tipo,
+          ja_enviado: c.ja_enviado,
+        },
+      }));
+      await admin
+        .from("qa_habitualidade_alertas_ativos")
+        .upsert(ativos, { onConflict: "cliente_id,template_name,marco_hash" });
     }
 
     // Envio real

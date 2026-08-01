@@ -113,6 +113,30 @@ Deno.serve(async (req) => {
       return json({ error: "select_failed", detail: fErr.message }, 500);
     }
 
+    const clienteIds = Array.from(
+      new Set(
+        ((filiacoes ?? []) as any[])
+          .map((f) => Number((f as any).cliente?.id))
+          .filter(Number.isFinite),
+      ),
+    );
+    const clientesComCr = new Set<number>();
+    if (clienteIds.length) {
+      const { data: crs, error: crErr } = await admin
+        .from("qa_cadastro_cr")
+        .select("cliente_id, numero_cr, validade_cr")
+        .in("cliente_id", clienteIds);
+      if (crErr) {
+        console.error("[qa-filiacoes-alertas] cadastro_cr", crErr);
+        return json({ error: "select_cadastro_cr_failed", detail: crErr.message }, 500);
+      }
+      for (const cr of crs ?? []) {
+        if ((cr as any).numero_cr || (cr as any).validade_cr) {
+          clientesComCr.add(Number((cr as any).cliente_id));
+        }
+      }
+    }
+
     const candidatos: Candidato[] = [];
 
     for (const f of filiacoes ?? []) {
@@ -120,6 +144,7 @@ Deno.serve(async (req) => {
       const clube = (f as any).clube;
       if (!cliente?.id) continue;
       if (cliente?.status && String(cliente.status).toLowerCase() === "excluido_lgpd") continue;
+      if (!clientesComCr.has(Number(cliente.id))) continue;
 
       const validade: string | null = (f as any).validade_filiacao ?? null;
       const dias = diasAte(validade);
