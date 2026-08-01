@@ -523,6 +523,7 @@ function calcularConformidade(
   clienteNomeMae: string | null | undefined,
   docsAprovados: any[],
   dataAvaliacaoDoc?: string | null,
+  tipoDocumentoAtual?: string | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -656,6 +657,48 @@ function calcularConformidade(
 
   // Endereço NUNCA entra na conformidade: o cliente pode ter vários endereços
   // e o documento pode trazer qualquer um deles — diferença não é divergência.
+  // ── GOLDEN RECORD DA EMPRESA (prestador) ────────────────────────────────
+  if (TIPOS_EMPRESARIAIS.has(String(tipoDocumentoAtual || ""))) {
+    const empresaRefs: {
+      cnpj?: { valor: string; fonte: string };
+      razao?: { valor: string; fonte: string };
+    } = {};
+    for (const doc of sorted) {
+      if (!TIPOS_EMPRESARIAIS.has(String(doc.tipo_documento || ""))) continue;
+      const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
+      const nomeDoc = getNomeDocumentoDisplay(doc, doc.tipo_documento);
+      if (c.cnpj && !empresaRefs.cnpj) empresaRefs.cnpj = { valor: c.cnpj, fonte: nomeDoc };
+      if (c.razao_social && !empresaRefs.razao) empresaRefs.razao = { valor: c.razao_social, fonte: nomeDoc };
+    }
+    const cnpjDoc = campos.cnpj;
+    const razaoDoc = campos.razao_social;
+    if (cnpjDoc) {
+      const r = empresaRefs.cnpj;
+      items.push({
+        campo: "cnpj",
+        label: "CNPJ (prestador)",
+        valorCertidao: cnpjDoc,
+        valorReferencia: r?.valor ?? null,
+        fonteReferencia: r?.fonte ?? null,
+        status: !r ? "sem_referencia" : normCnpj(cnpjDoc) === normCnpj(r.valor) ? "conforme" : "divergente",
+      });
+    }
+    if (razaoDoc) {
+      const r = empresaRefs.razao;
+      const res = r ? fuzzyName(razaoDoc, r.valor) : null;
+      items.push({
+        campo: "razao_social",
+        label: "Razão social (prestador)",
+        valorCertidao: razaoDoc,
+        valorReferencia: r?.valor ?? null,
+        fonteReferencia: r?.fonte ?? null,
+        status: !r ? "sem_referencia" : res === true ? "conforme" : res === "gray" ? "verificando" : "divergente",
+      });
+    }
+    // Nome/CPF pessoal não se aplicam a documento da pessoa jurídica.
+    return items;
+  }
+
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
   // Pula data_nascimento quando: é string de idade ("34 anos") OU
