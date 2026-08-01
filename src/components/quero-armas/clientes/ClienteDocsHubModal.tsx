@@ -2926,7 +2926,7 @@ export function ClienteDocsHubModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,application/pdf"
+                accept={isTipoIdentidadeComQr(form.tipo_documento) ? "application/pdf" : "image/*,application/pdf"}
                 onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
