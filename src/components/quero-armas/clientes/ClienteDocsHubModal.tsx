@@ -751,7 +751,6 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   return "";
 }
 
-function addOneYearIso(iso?: string | null): string {
 /** Máscara 00.000.000/0000-00 para CNPJ com 14 dígitos. */
 function formatCnpj(v?: string | null): string {
   const d = String(v || "").replace(/\D/g, "");
@@ -771,7 +770,7 @@ function numeroDocumentoRenda(tipo: string, campos: Record<string, any>): string
   return formatCnpj(campos.cnpj) || String(campos.numero_documento || "").trim();
 }
 
-function addOneYearIsoImpl(iso?: string | null): string {
+function addOneYearIso(iso?: string | null): string {
   if (!iso) return "";
   const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return "";
