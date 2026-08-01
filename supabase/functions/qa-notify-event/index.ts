@@ -96,6 +96,15 @@ interface Payload {
   arquivo?: string;
   motivo?: string;
   o_que_enviar?: string;
+  /**
+   * Quem apagou. Muda o texto inteiro do aviso: "removemos" quando é a
+   * equipe, "você removeu" quando é o próprio cliente. Sem isto o cliente
+   * recebia um e-mail dizendo que a equipe mexeu no acervo dele logo depois
+   * de ele mesmo ter clicado na lixeira.
+   */
+  autor?: "cliente" | "equipe";
+  /** Data e hora da exclusão, já formatada em BRT. É o comprovante. */
+  excluido_em?: string;
   /** Para documento_reaproveitado. */
   exigencia_pedida?: string;
   exigencia_cumprida?: string;
@@ -195,6 +204,8 @@ function mapEventoToTemplate(
           arquivo: p.arquivo ?? "",
           motivo: p.motivo ?? "",
           oQueEnviar: p.o_que_enviar ?? "",
+          autor: p.autor ?? "equipe",
+          excluidoEm: p.excluido_em ?? "",
           portalUrl,
         },
       };

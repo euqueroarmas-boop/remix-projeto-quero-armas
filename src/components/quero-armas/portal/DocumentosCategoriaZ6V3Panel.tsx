@@ -313,6 +313,44 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       return;
     }
     toast.success("Documento removido.");
+
+    // Comprovante de que o documento saiu do acervo, com data e hora (regra do
+    // usuário, 31/07/2026). Até aqui a lixeira do portal apagava em silêncio:
+    // registrava o evento na auditoria e não avisava ninguém.
+    //
+    // `autor: "cliente"` muda o texto inteiro do e-mail — sem isso ele diria
+    // que a EQUIPE removeu, logo depois de o próprio cliente ter clicado.
+    //
+    // Best-effort: falha no aviso não desfaz a remoção nem trava a tela. O
+    // documento já saiu, e o evento de auditoria já foi gravado antes.
+    // `cliente_id` é obrigatório na edge function — sem ele a chamada volta
+    // 400 e nenhum e-mail sai. Documento sem vínculo direto (só customer_id)
+    // não tem para quem notificar, então nem tentamos.
+    if (!doc.qa_cliente_id) {
+      console.warn("[documento removido] sem qa_cliente_id, aviso não enviado");
+      onReload();
+      return;
+    }
+
+    try {
+      await supabase.functions.invoke("qa-notify-event", {
+        body: {
+          evento: "documento_excluido",
+          cliente_id: doc.qa_cliente_id,
+          autor: "cliente",
+          documento: getNomeDocumentoDisplay(doc, "Documento"),
+          arquivo: doc.arquivo_nome ?? "",
+          excluido_em: new Date().toLocaleString("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            dateStyle: "short",
+            timeStyle: "short",
+          }),
+        },
+      });
+    } catch (e) {
+      console.error("[documento removido] aviso falhou:", e);
+    }
+
     onReload();
   };
 
