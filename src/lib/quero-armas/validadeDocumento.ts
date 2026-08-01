@@ -289,6 +289,17 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   );
 }
 
+/**
+ * Janela de alerta antecipado (status "vence_em_breve") por tipo.
+ * Padrão: 7 dias. Procuração: 90 dias — a renovação exige nova assinatura
+ * Gov.br do cliente, então os avisos começam com 90 dias de antecedência
+ * (90 → 45 → 30 → 15 → 7 → hoje → vencida).
+ */
+export function limiarAlertaDias(tipo?: string | null): number {
+  if (isProcuracao(tipo)) return 90;
+  return 7;
+}
+
 export function calcularValidadeEfetiva(
   tipo: string | null | undefined,
   dataEmissao: string | null | undefined,
