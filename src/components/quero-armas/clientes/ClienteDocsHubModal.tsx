@@ -2476,7 +2476,7 @@ export function ClienteDocsHubModal({
           body: {
             evento: "documento_rejeitado",
             cliente_id: qaClienteId,
-            motivo: motivoRejeicao,
+            motivo_rejeicao: motivoRejeicao,
             documento:
               expectedTipoMeta?.label ||
               getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
