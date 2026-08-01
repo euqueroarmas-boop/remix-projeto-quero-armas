@@ -1439,11 +1439,22 @@ export function ClienteDocsHubModal({
       i.status === "divergente" &&
       !!i.valorReferencia,
   );
+  // ── PARENTESCO ──────────────────────────────────────────────────────────
+  // O titular do documento é outra pessoa, MAS carrega o sobrenome da família
+  // do interessado (pai, filho, cônjuge, irmão). Rejeição específica.
+  const parentescoDetectado =
+    titularDivergente &&
+    conformidade.some(
+      (i) =>
+        i.campo === "nome_completo" &&
+        i.status === "divergente" &&
+        mesmaFamilia(i.valorCertidao, i.valorReferencia),
+    );
   // ── DOCUMENTO INCORRETO (mesmo titular, tipo errado) ────────────────────
   const documentoIncorretoTipo = !titularDivergente && certidaoIncorreta;
   // Prioridade do carimbo: outro titular > duplicidade > tipo errado.
-  const motivoRejeicao: "titular" | "duplicidade" | "tipo" | null = titularDivergente
-    ? "titular"
+  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = titularDivergente
+    ? (parentescoDetectado ? "parentesco" : "titular")
     : rejeitadoDuplicidade
       ? "duplicidade"
       : documentoIncorretoTipo
