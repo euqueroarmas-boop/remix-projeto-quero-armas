@@ -211,7 +211,8 @@ export default function EfetivaNecessidadeModal({
       }
 
       // 2) Sobe o arquivo
-      const path = `efetiva-necessidade/${clienteId}/${Date.now()}_${file.name.replace(/[^\w.\-]/g, "_")}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+      const path = `cliente-docs/qa-${clienteId}/efetiva_necessidade/${Date.now()}_${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("qa-documentos").upload(path, file, { contentType: file.type });
       if (upErr) throw upErr;
