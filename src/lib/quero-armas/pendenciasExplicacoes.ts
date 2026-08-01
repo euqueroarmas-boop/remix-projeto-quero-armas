@@ -182,7 +182,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "Só depois de o QSA aparecer na tela, clique em \"IMPRIMIR\" e escolha \"Salvar como PDF\" (no Mac: \"PDF → Salvar como PDF\"; no Windows: destino \"Microsoft Print to PDF\" / \"Salvar como PDF\").",
       "Antes de enviar, confira no PDF: o CNPJ da empresa E o seu nome listado como sócio/administrador. Se o PDF só tiver os dados cadastrais e nenhum nome de sócio, você salvou o Cartão CNPJ de novo — volte e clique em CONSULTAR QSA.",
       "Volte aqui e clique em \"Entregar documento\" para enviar o PDF do QSA.",
-      "Se seguiu todos os passos e ainda não conseguiu visualizar ou salvar o QSA (erro de captcha, CNPJ inativo, site fora do ar ou exigindo certificado digital), entre em contato com o seu contador. Ele pode acessar o mesmo site da Receita com o certificado digital da empresa e emitir o PDF para você enviar aqui.",
+      "Se seguiu todos os passos e ainda não conseguiu visualizar ou salvar o QSA (erro de captcha, CNPJ inativo, site fora do ar ou exigindo certificado digital), entre em contato com o seu contador. Ele pode acessar o mesmo site da Receita com o certificado digital da empresa e emitir o PDF para você enviar aqui. Aviso ao contador: exceto nota fiscal, todos os documentos de ocupação lícita e renda precisam ter no máximo 30 dias de emissão.",
     ],
     observacao: "Cartão CNPJ e QSA saem do mesmo site e da mesma consulta — mudam apenas com um clique no botão CONSULTAR QSA no rodapé da página. São dois PDFs diferentes e a PF exige os dois: sem o QSA com o seu nome como sócio, o processo é indeferido. Emissão dos últimos 30 dias. Empresa MEI não tem QSA — nesse caso envie o CCMEI.",
   },
