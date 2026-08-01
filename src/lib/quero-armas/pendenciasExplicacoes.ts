@@ -693,12 +693,49 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   renda_cartao_cnpj: {
     titulo: "Cartão CNPJ",
     passos: [
-      "Abra o site da Receita Federal no botão abaixo, digite o CNPJ (só números) e marque \"Não sou robô\".",
+      "É o \"Comprovante de Inscrição e de Situação Cadastral\" do seu CNPJ (MEI, autônomo com CNPJ ou empresa). Ele prova que a sua atividade está ATIVA na Receita Federal.",
+      "Abra solicitacao.servicos.gov.br/cnpj (ou o botão de emissão abaixo), digite o CNPJ só com números e marque \"Não sou robô\".",
       "Clique em \"Emitir Comprovante de Inscrição e de Situação Cadastral\".",
-      "Na página aberta, use \"Imprimir\" → \"Salvar como PDF\".",
-      "Envie o PDF aqui em \"Entregar documento\".",
+      "Na página aberta, use \"Imprimir\" → \"Salvar como PDF\" e guarde o arquivo.",
+      "Confira antes de enviar: CNPJ, razão social/nome empresarial, situação cadastral \"ATIVA\", CNAE (atividade) e a data de emissão.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
     ],
-    observacao: "Emissão dos últimos 30 dias. Se o site der erro, tente novamente em alguns minutos.",
+    observacao: "Emissão dos últimos 30 dias. Situação \"BAIXADA\", \"SUSPENSA\" ou \"INAPTA\" é reprovada — regularize antes de enviar. Se o site der erro, tente de novo em alguns minutos.",
+  },
+  renda_ccmei: {
+    titulo: "CCMEI — Certificado do MEI",
+    passos: [
+      "O CCMEI é o certificado que comprova que você é Microempreendedor Individual. É ele que sustenta a sua ocupação lícita perante a Polícia Federal — sem ele, o CNPJ sozinho não fecha o grupo.",
+      "Abra o Portal do Empreendedor: gov.br/empresas-e-negocios/pt-br/empreendedor (ou use o botão de emissão abaixo).",
+      "Clique em \"Já sou MEI\" → \"Emitir Certificado CCMEI\".",
+      "Faça login com a sua conta Gov.br (a mesma da Receita/INSS) e clique em \"Emitir Certificado\".",
+      "O CCMEI abre em PDF em nova aba — baixe pelo ícone de download (não use print de tela).",
+      "Confira: seu nome, CPF, CNPJ, data de abertura, atividade principal e o QR Code de autenticidade no rodapé.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+    ],
+    observacao: "Se você NÃO é MEI (autônomo sem CNPJ ou empresário com contrato social), avise a equipe pelo WhatsApp: trocamos esta exigência pelo documento correto da sua condição. Não envie print nem foto da tela — só o PDF baixado do portal.",
+  },
+  renda_ctps_digital: {
+    titulo: "CTPS Digital — Carteira de Trabalho",
+    passos: [
+      "Abra o app \"Carteira de Trabalho Digital\" ou o site gov.br/trabalho-e-emprego e entre com a sua conta Gov.br.",
+      "Toque em \"Contratos de Trabalho\" para conferir se o vínculo atual está registrado.",
+      "Volte à tela inicial e toque em \"Baixar PDF\" (ou \"Compartilhar\" → \"Salvar como PDF\") para gerar o extrato completo.",
+      "Confira que aparecem seu nome, CPF, o empregador e a data de admissão do contrato em aberto.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF.",
+    ],
+    observacao: "Precisa ser o PDF oficial gerado pelo app/site — prints das telas são reprovados. Se o contrato atual não aparece, cobre o RH: o registro é obrigação do empregador.",
+  },
+  renda_carteira_funcional: {
+    titulo: "Carteira funcional do órgão",
+    passos: [
+      "Separe a sua carteira funcional emitida pelo órgão em que você é servidor.",
+      "Se existe versão digital no app oficial do órgão, exporte em PDF direto por lá (\"Compartilhar\" / \"Exportar\").",
+      "Se só tem a física, fotografe frente e verso com boa luz, sem cortes e sem reflexo.",
+      "Confira que estão legíveis: nome completo, matrícula, cargo, órgão e validade.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o arquivo.",
+    ],
+    observacao: "A funcional comprova o vínculo; o contracheque comprova a remuneração. Quando os dois forem pedidos, envie ambos — um não substitui o outro.",
   },
   renda_cnpj_autonomo: {
     titulo: "Comprovante de atividade autônoma",
