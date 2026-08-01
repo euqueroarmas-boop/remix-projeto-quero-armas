@@ -271,70 +271,12 @@ export default function HubDocPreviewSlot({
             type="button"
             onClick={onRemove}
             className="pointer-events-auto absolute flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-lg transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
-            style={{ borderRadius: 4, right: "-5mm", top: "-5mm", zIndex: 2001 }}
+            style={{ borderRadius: 4, right: "-10mm", top: "-10mm", zIndex: 2001 }}
             aria-label="Excluir arquivo"
             title="Excluir arquivo"
           >
             <Trash2 className="h-4 w-4" strokeWidth={2.4} />
           </button>
-
-          {motivoRejeicao || duplicado ? (
-            <div
-              className="pointer-events-none absolute"
-              style={{
-                zIndex: 2001,
-                top: 52,
-                right: 0,
-                transform: "rotate(-8deg)",
-                border: `7px solid ${RED}`,
-                padding: "12px 22px 8px",
-                background: "rgba(255,255,255,.97)",
-                borderRadius: 6,
-                color: RED,
-                fontFamily: "'Oswald', sans-serif",
-                boxShadow: "0 10px 26px rgba(185,28,28,.32)",
-                maxWidth: "88%",
-              }}
-            >
-              <div style={{ fontSize: 62, fontWeight: 700, lineHeight: 0.86, letterSpacing: "-.02em", textAlign: "center" }}>
-                100%
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1, letterSpacing: ".12em", textAlign: "center", marginTop: 4 }}>
-                REJEITADO
-              </div>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".24em", textAlign: "center", marginTop: 6 }}>
-                {motivoRejeicao === "titular"
-                  ? "DOCUMENTO DE OUTRO TITULAR"
-                  : motivoRejeicao === "parentesco"
-                    ? "DOCUMENTO DE FAMILIAR · PARENTESCO"
-                    : motivoRejeicao === "tipo"
-                    ? "DOCUMENTO INCORRETO"
-                    : "DOCUMENTO EM DUPLICIDADE"}
-              </div>
-            </div>
-          ) : pct != null && !incorreta ? (
-            <div
-              className="pointer-events-none absolute"
-              style={{
-                zIndex: 2001,
-                top: 52,
-                right: 0,
-                transform: "rotate(-8deg)",
-                border: `4px solid ${pct >= 85 ? "#166534" : BORDO}`,
-                padding: "6px 12px 3px",
-                background: "rgba(255,255,255,.96)",
-                borderRadius: 4,
-                color: pct >= 85 ? "#166534" : BORDO,
-                fontFamily: "'Oswald', sans-serif",
-                boxShadow: "0 6px 18px rgba(0,0,0,.25)",
-              }}
-            >
-              <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>{pct}%</div>
-              <div style={{ fontSize: 8, letterSpacing: ".28em", textAlign: "center", marginTop: 2 }}>
-                {pct >= 85 ? "IA · APROVADO" : "IA · REVISAR"}
-              </div>
-            </div>
-          ) : null}
         </div>
       )}
     </div>
