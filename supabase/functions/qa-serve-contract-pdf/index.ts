@@ -172,9 +172,13 @@ function connectionStampLines(contract: any): string[] {
     `IP: ${contract.aceite_ip || "—"}`,
     `SISTEMA: ${detectOS(userAgent)}`,
     `NAVEGADOR: ${detectBrowser(userAgent)}`,
-    `IDIOMA: ${idioma || "—"}`,
-    `REFERÊNCIA: ${referencia || "—"}`,
-    `USER-AGENT: ${userAgent || "—"}`,
+    // Só entram se existirem de verdade. Hoje NÃO existem: `aceite_eletronico_data`
+    // é um timestamp, não um objeto de sessão — foi engano meu supor que
+    // trazia accept-language e referer. Para carimbá-los seria preciso
+    // gravá-los no momento do aceite, o que hoje não acontece.
+    ...(idioma ? [`IDIOMA: ${idioma}`] : []),
+    ...(referencia ? [`REFERÊNCIA: ${referencia}`] : []),
+    ...(userAgent ? [`USER-AGENT: ${userAgent}`] : []),
     "AÇÃO: aceite eletrônico",
     `HASH: ${contract.aceite_hash || "—"}`,
   ];
@@ -206,7 +210,7 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   // Margem esquerda maior que a direita: a faixa do carimbo mora nesse
   // espaco. 76pt e a mesma medida da procuracao, que o usuario aprovou —
   // cabem o titulo e tres colunas de campos sem encostar no texto.
-  const MARGIN_X = 76;
+  const MARGIN_X = 128;
   const MARGIN_X_R = 48;
   const MARGIN_TOP = 56;
   const MARGIN_BOTTOM = 56;
@@ -308,8 +312,8 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   const CARIMBO_REGUA_X = 24;
   const CARIMBO_TITULO_X = 32;
   const CARIMBO_CAMPOS_X = 44;
-  const CARIMBO_PASSO = 9;
-  const CARIMBO_FONTE = 6.8;
+  const CARIMBO_PASSO = 8;
+  const CARIMBO_FONTE = 6.2;
   // Folga antes do texto do contrato (MARGIN_X = 76), para o carimbo nunca
   // encostar no corpo do documento.
   const CARIMBO_GUTTER = 16;
@@ -322,22 +326,20 @@ function buildCanonicalPdf(contract: any, html: string): Uint8Array {
   const alturaUtil = CARIMBO_BASE - CARIMBO_TOPO;
   const maxCharsPorColuna = Math.max(20, Math.floor(alturaUtil / CARIMBO_AVANCO));
 
-  const carimboTexto = connectionStampLines(contract).join(", ");
+  // UMA COLUNA POR CAMPO — a "quebra de linha" do carimbo.
+  //
+  // Antes os campos eram unidos num parágrafo só e quebrados por contagem de
+  // caracteres. O corte caía no meio do USER-AGENT e os últimos campos (AÇÃO e
+  // HASH) sumiam sem aviso. Cada campo agora começa na sua própria coluna; só
+  // campo longo demais transborda para a coluna seguinte, e mesmo assim sem se
+  // misturar com o próximo.
   const carimboColunas: string[] = [];
-  for (
-    let i = 0;
-    i < carimboTexto.length && carimboColunas.length < CARIMBO_MAX_COLUNAS;
-    i += maxCharsPorColuna
-  ) {
-    carimboColunas.push(carimboTexto.slice(i, i + maxCharsPorColuna));
-  }
-  // Nada de truncar em silêncio: se o carimbo não coube, o documento tem de
-  // dizer isso, senão parece completo e não está.
-  const consumido = carimboColunas.join("").length;
-  if (consumido < carimboTexto.length && carimboColunas.length > 0) {
-    const ultima = carimboColunas.length - 1;
-    carimboColunas[ultima] =
-      carimboColunas[ultima].slice(0, Math.max(0, maxCharsPorColuna - 1)) + "…";
+  for (const campo of connectionStampLines(contract)) {
+    for (let i = 0; i < campo.length; i += maxCharsPorColuna) {
+      if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
+      carimboColunas.push(campo.slice(i, i + maxCharsPorColuna));
+    }
+    if (carimboColunas.length >= CARIMBO_MAX_COLUNAS) break;
   }
 
   const totalPages = doc.getNumberOfPages();
