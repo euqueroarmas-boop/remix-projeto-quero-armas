@@ -20,3 +20,7 @@ Travas ativas: guard no front (`checklistGuiadoEngine.responderPerguntaGuia` + p
 - **Validade:** **emissão + 30 dias** apenas para **Cartão CNPJ e QSA**. **Sem prazo:** nota fiscal, **CCMEI, contrato social e requerimento de empresário** (documentos constitutivos — a atualidade da ocupação é conferida pela emissão do Cartão CNPJ/QSA).
 - **Duplicidade:** documento do mesmo tipo já enviado (aprovado ou em análise) **bloqueia o envio**. O cliente é avisado para excluir o anterior e enviar o correto — nunca salvar duas vezes.
 - Fonte única das regras: `isDocumentoEmpresa30Dias` / `isNotaFiscalSemVencimento` em `src/lib/quero-armas/validadeDocumento.ts`. O Hub (`calcularValidadeHubPorTipo`) e `numeroDocumentoRenda` delegam para elas — nunca duplicar a regra.
+
+## Golden Record — QSA
+- O **QSA (Quadro de Sócios e Administradores)** não imprime data de emissão. A emissão do QSA é **sempre a mesma do Cartão CNPJ** aprovado no Hub (mesma consulta da Receita Federal).
+- O Hub preenche automaticamente: emissão = emissão do Cartão CNPJ aprovado, validade = emissão + 30 dias, órgão emissor = Receita Federal do Brasil.
