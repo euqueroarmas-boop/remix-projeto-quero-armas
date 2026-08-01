@@ -745,6 +745,9 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   ) {
     return addCalendarMonthsIso(emissao, 1);
   }
+  // OCUPAÇÃO LÍCITA E RENDA: 30 dias da emissão. Nota fiscal é perpétua.
+  if (isNotaFiscalSemVencimento(tipo)) return "";
+  if (isDocumentoEmpresa30Dias(tipo)) return addDaysIso(emissao, 30);
   return "";
 }
 
