@@ -32,9 +32,9 @@ import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import {
   isTipoIdentidadeComQr,
   avaliarPdfIdentidade,
-*** placeholder
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
+import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { conferirCertidao } from "@/lib/quero-armas/conferenciaCertidao";
 import {
