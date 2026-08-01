@@ -52,6 +52,8 @@ export default function HubDocPreviewSlot({
   const [slotW, setSlotW] = useState<number>(0);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageLoaded, setPageLoaded] = useState(false);
+  /** Página visível na rolagem — só para a legenda "pg X/N". */
+  const [pageAtual, setPageAtual] = useState(1);
 
   useEffect(() => {
     if (!slotRef.current) return;
@@ -166,7 +168,21 @@ export default function HubDocPreviewSlot({
             )}
 
             {isPdf && fileUrl && (
-              <div className="relative" style={{ zIndex: 0 }}>
+              <div
+                className="no-scrollbar relative max-h-[620px] w-full overflow-y-auto overscroll-contain"
+                style={{ zIndex: 0 }}
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const total = numPages ?? 1;
+                  if (total < 2 || el.scrollHeight <= el.clientHeight) return;
+                  const alturaPagina = el.scrollHeight / total;
+                  const atual = Math.min(
+                    total,
+                    Math.max(1, Math.floor((el.scrollTop + el.clientHeight / 2) / alturaPagina) + 1),
+                  );
+                  setPageAtual(atual);
+                }}
+              >
               <Document
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }) => setNumPages(n)}
@@ -185,15 +201,21 @@ export default function HubDocPreviewSlot({
                   </div>
                 }
               >
-                {slotW > 0 && (
-                  <Page
-                    pageNumber={1}
-                    width={Math.min(slotW - 24, 640)}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={false}
-                    onRenderSuccess={() => setPageLoaded(true)}
-                  />
-                )}
+                {/* Todas as páginas empilhadas: o PDF enviado vai INTEIRO para o
+                    banco, então a prévia também mostra ele inteiro. Rolagem com
+                    barra invisível (.no-scrollbar). */}
+                {slotW > 0 &&
+                  Array.from({ length: numPages ?? 1 }, (_, i) => (
+                    <div key={i} className={i > 0 ? "mt-3 border-t border-dashed border-[#D8D8D4] pt-3" : ""}>
+                      <Page
+                        pageNumber={i + 1}
+                        width={Math.min(slotW - 24, 640)}
+                        renderAnnotationLayer={false}
+                        renderTextLayer={false}
+                        onRenderSuccess={i === 0 ? () => setPageLoaded(true) : undefined}
+                      />
+                    </div>
+                  ))}
               </Document>
               </div>
             )}
@@ -250,7 +272,7 @@ export default function HubDocPreviewSlot({
               style={{ fontSize: 9, letterSpacing: ".22em", color: "#4A4A4A" }}
             >
               {displayName} · {file ? `${(file.size / 1024).toFixed(0)} KB` : ""}
-              {isPdf && numPages ? ` · pg 1/${numPages}` : ""}
+              {isPdf && numPages ? ` · pg ${Math.min(pageAtual, numPages)}/${numPages}` : ""}
             </div>
           </div>
         )}
