@@ -109,6 +109,41 @@ export interface CamposCertidao {
   valor_nf?: string;
   /** Chave de acesso de 44 dígitos da NFS-e (padrão nacional / DANFSe). */
   chave_acesso?: string;
+
+  /* ── Só na NFS-e (DANFSe padrão nacional) ── */
+  /** Competência da NFS-e (YYYY-MM-DD). */
+  competencia?: string;
+  numero_dps?: string;
+  serie_dps?: string;
+  municipio_emissor?: string;
+  email_municipio?: string;
+  prestador_inscricao_municipal?: string;
+  prestador_telefone?: string;
+  prestador_email?: string;
+  prestador_endereco?: string;
+  prestador_municipio?: string;
+  prestador_cep?: string;
+  prestador_simples_nacional?: string;
+  prestador_regime_apuracao?: string;
+  tomador_documento?: string;
+  tomador_nome?: string;
+  tomador_inscricao_municipal?: string;
+  tomador_telefone?: string;
+  tomador_email?: string;
+  tomador_endereco?: string;
+  tomador_municipio?: string;
+  tomador_cep?: string;
+  codigo_tributacao_nacional?: string;
+  codigo_tributacao_municipal?: string;
+  local_prestacao?: string;
+  pais_prestacao?: string;
+  descricao_servico?: string;
+  /** Itens lidos da descrição do serviço (mercadoria/quantidade/preço/total). */
+  itens_servico?: { descricao: string; quantidade?: number; preco?: number; total?: number }[];
+  tributacao_issqn?: string;
+  municipio_incidencia_issqn?: string;
+  retencao_issqn?: string;
+  valor_liquido?: string;
 }
 
 const norm = (v: string) =>
