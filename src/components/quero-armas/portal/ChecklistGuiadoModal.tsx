@@ -121,7 +121,10 @@ const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   declaracao_compromisso_habitualidade: "comprovante_habitualidade",
   declaracao_compromisso_treino: "declaracao_correlata",
   renda_nf_empresa: "renda_nf_recente",
-  renda_qsa: "renda_cartao_cnpj",
+  // QSA tem slot próprio na matriz de ocupação lícita — não colapsar no CNPJ.
+  renda_cnpj_autonomo: "renda_ccmei",
+  ccmei: "renda_ccmei",
+  renda_ficha_cadastral_jucesp: "renda_contrato_social",
 };
 
 // Tipos aceitos pelo constraint qa_doc_cliente_tipo_check
@@ -131,6 +134,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social","renda_ccmei",
+  "renda_qsa","renda_carteira_funcional",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
   "antecedentes_militar","antecedentes_eleitoral",
@@ -144,6 +148,9 @@ const HUB_TIPOS_VALIDOS = new Set([
   "protocolo_processo","oficio","despacho","exigencia","indeferimento",
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
   "certidao_alteracao_nome",
+  "documento_identificacao_terceiro","foto_3x4",
+  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento",
+  "habilitacao_cacador_ibama","declaracao_compromisso_habitualidade",
   "outro",
 ]);
 
