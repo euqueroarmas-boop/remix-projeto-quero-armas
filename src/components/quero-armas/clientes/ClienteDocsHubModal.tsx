@@ -2341,6 +2341,12 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // Trava dura: documento de outro titular nunca é salvo nem enviado à análise.
+    if (titularDivergente) {
+      toast.error("Documento rejeitado: os dados não são do titular deste processo.");
+      return;
+    }
+
     // Trava de segurança: nenhum campo sensível pode ser gravado sem
     // confirmação humana explícita (clique em Confirmar OU edição manual).
     const pendentes = pendingSensitiveKeys();
