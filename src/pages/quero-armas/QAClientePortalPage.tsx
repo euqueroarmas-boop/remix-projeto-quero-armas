@@ -2134,6 +2134,20 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  // ── Varredura silenciosa por baixo do portal ───────────────────────────────
+  // Só liga quando o cliente logado TEM pendência aberta (assinatura ou
+  // exigência de checklist). Nesse caso o portal se atualiza sozinho quando o
+  // servidor muda. Cliente sem pendência nunca é atualizado.
+  useVarreduraSilenciosaPendencias({
+    clienteId: (cliente as any)?.id ?? null,
+    processoIds: (processos ?? []).map((p: any) => String(p.id)),
+    ativo:
+      !loading &&
+      pendingContractsLoaded &&
+      (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0),
+    onMudanca: () => setDocsReloadKey((k) => k + 1),
+  });
+
   /**
    * Números REAIS do processo, contados sobre `processoDocs` e não sobre a
    * fila do popup.
