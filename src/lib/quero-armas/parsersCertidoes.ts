@@ -26,7 +26,17 @@ export type OrgaoCertidao =
   | "trf_regional"
   | "tjm_sp"
   | "cr_exercito"
-  | "boletim_ocorrencia";
+  | "boletim_ocorrencia"
+  /* ── Grupo OCUPAÇÃO LÍCITA E RENDA ──────────────────────────────────────
+   * Não são certidões, mas entram pelo MESMO motor de propósito: mesma
+   * extração local de texto (`extracaoLocalPdf`), mesmo contrato de campos,
+   * mesma conferência contra o cadastro. Criar um parser paralelo só para
+   * esse grupo duplicaria as regras de "nada é inferido" e de rejeição.
+   */
+  | "ccmei"
+  | "cartao_cnpj"
+  | "qsa"
+  | "nota_fiscal";
 
 export interface CamposCertidao {
   orgao: OrgaoCertidao;
@@ -82,6 +92,21 @@ export interface CamposCertidao {
    * `undefined` quando o documento não declara a região. Não inferir.
    */
   trf_regiao?: number;
+
+  /* ── Só no grupo de ocupação lícita e renda ── */
+  /** CNPJ com 14 dígitos, sem máscara. */
+  cnpj?: string;
+  razao_social?: string;
+  nome_fantasia?: string;
+  /** Como impresso: "ATIVA", "BAIXADA", "SUSPENSA", "INAPTA". */
+  situacao_cadastral?: string;
+  data_abertura?: string; // YYYY-MM-DD
+  /** Ocupação principal do MEI / CNAE principal, como impresso. */
+  ocupacao_principal?: string;
+  /** Sócios e administradores lidos do QSA, sem inferir papel. */
+  socios?: string[];
+  numero_nf?: string;
+  valor_nf?: string;
 }
 
 const norm = (v: string) =>
