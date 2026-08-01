@@ -1,1 +1,0 @@
-update public.qa_documentos_cliente set data_validade = null where data_validade is not null and (lower(tipo_documento) like '%cartao_cnpj%' or lower(tipo_documento) like '%situacao_cadastral%' or lower(tipo_documento) like '%ccmei%' or lower(tipo_documento) like '%contrato_social%' or lower(tipo_documento) like '%requerimento%empresario%');

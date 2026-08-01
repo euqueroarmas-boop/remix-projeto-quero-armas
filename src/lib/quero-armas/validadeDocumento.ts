@@ -289,11 +289,10 @@ export function isNotaFiscalSemVencimento(tipo?: string | null): boolean {
 }
 
 /**
- * Documentos CONSTITUTIVOS / CADASTRAIS da empresa: não têm prazo de validade.
- * CCMEI, contrato social, requerimento de empresário e o Comprovante de
- * Inscrição e de Situação Cadastral (cartão CNPJ) provam a existência e a
- * situação cadastral da empresa — são PERPÉTUOS, nunca contam vencimento.
- * A atualidade é conferida pela DATA DE EMISSÃO, não por prazo.
+ * Documentos CONSTITUTIVOS da empresa: não têm prazo de validade. O CCMEI,
+ * o contrato social e o requerimento de empresário provam a existência da
+ * empresa, não a situação dela num dado dia. A atualidade da ocupação lícita
+ * é conferida pela EMISSÃO do cartão CNPJ e do QSA (esses sim, 30 dias).
  */
 export function isDocumentoConstitutivoPerpetuo(tipo?: string | null): boolean {
   const t = String(tipo || "").toLowerCase();
@@ -304,11 +303,7 @@ export function isDocumentoConstitutivoPerpetuo(tipo?: string | null): boolean {
     t === "renda_contrato_social" ||
     t.includes("contrato_social") ||
     t.includes("requerimento_empresario") ||
-    t.includes("requerimento_de_empresario") ||
-    t === "renda_cartao_cnpj" ||
-    t === "cartao_cnpj_mei" ||
-    t.includes("cartao_cnpj") ||
-    t.includes("situacao_cadastral")
+    t.includes("requerimento_de_empresario")
   );
 }
 
@@ -325,7 +320,9 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   if (isDocumentoConstitutivoPerpetuo(t)) return false;
   return (
     t.startsWith("renda_") ||
-    t.startsWith("ocupacao_licita")
+    t.startsWith("ocupacao_licita") ||
+    t === "renda_cartao_cnpj" ||
+    t === "cartao_cnpj_mei" // alias legado
   );
 }
 
