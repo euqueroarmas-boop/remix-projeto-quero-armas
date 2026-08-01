@@ -383,13 +383,23 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   ? `Acesse o site oficial da ${nome} para baixar: `
                   : `Acesse o site oficial para baixar: `;
               })()}
+              {/* Texto do link é o NOME do órgão, não a URL crua. Endereço de
+                  site não diz nada ao cliente e ainda ocupa três linhas no
+                  celular; "TRF 3ª REGIÃO" diz exatamente onde ele vai cair.
+                  O nome já vem corrigido por UF (aplicarUfEmTexto), então o
+                  cliente da Bahia lê "TRF 1ª REGIÃO". */}
               <a
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
+                className="font-bold text-[#8A1224] underline underline-offset-2 break-words"
               >
-                {linkEmissaoFinal}
+                {(() => {
+                  const t = explic.titulo || "";
+                  const i = t.indexOf("—");
+                  const nome = (i >= 0 ? t.slice(i + 1).trim() : "").toUpperCase();
+                  return nome || "ABRIR SITE OFICIAL";
+                })()}
               </a>
             </p>
           ) : null}

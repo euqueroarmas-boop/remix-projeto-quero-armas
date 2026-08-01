@@ -51,8 +51,8 @@ const TRF_POR_UF: Record<string, { sigla: string; url: string }> = {
   TO: { sigla: "TRF1", url: "https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/" },
   RJ: { sigla: "TRF2", url: "https://www10.trf2.jus.br/portal/certidoes/" },
   ES: { sigla: "TRF2", url: "https://www10.trf2.jus.br/portal/certidoes/" },
-  SP: { sigla: "TRF3", url: "https://web.trf3.jus.br/certidao/Certidao/Solicitar" },
-  MS: { sigla: "TRF3", url: "https://web.trf3.jus.br/certidao/Certidao/Solicitar" },
+  SP: { sigla: "TRF3", url: "https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao" },
+  MS: { sigla: "TRF3", url: "https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao" },
   RS: { sigla: "TRF4", url: "https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471" },
   SC: { sigla: "TRF4", url: "https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471" },
   PR: { sigla: "TRF4", url: "https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471" },
@@ -164,7 +164,40 @@ export function aplicarUfEmTexto(texto: string, uf: string | null | undefined): 
   if (!texto || !uf) return texto;
   const U = String(uf).trim().toUpperCase();
   if (!U || U === "SP") return texto;
-  return texto
+
+  // ── TRF: trocar o NÚMERO da região, não a sigla ────────────────────────
+  //
+  // Os textos foram escritos com "TRF3" e "3ª Região" fixos, porque São Paulo
+  // foi o primeiro estado. Para um cliente da Bahia isso manda emitir no
+  // tribunal errado — os processos federais dele correm no TRF1 e não
+  // aparecem numa certidão do TRF3.
+  //
+  // Regra do usuário (31/07/2026): a certidão segue o ENDEREÇO do cliente, e
+  // o sistema já sabe qual tribunal é o dele. Então aqui não se generaliza
+  // para "sua região": mostra-se o número certo.
+  //
+  // MS fica de fora do `if` acima só por acaso (é TRF3 como SP); a troca
+  // abaixo é inofensiva nesse caso porque o número resultante é o mesmo.
+  const regiao = Number(String(TRF_POR_UF[U]?.sigla ?? "").replace(/\D/g, "")) || null;
+  const comTrf = regiao
+    ? texto
+        // Ordem importa: a forma COMPLETA primeiro. Sem isto, "TRF 3ª Região"
+        // virava "TRF1ª Região" — a regra do número solto casava antes e
+        // engolia o espaço.
+        .replace(/TRF\s*-?\s*3\s*ª\s*Região/g, `TRF ${regiao}ª Região`)
+        .replace(/TRF\s*-?\s*3\s*a\s*Regiao/g, `TRF ${regiao}a Regiao`)
+        .replace(/\b3ª\s*Região\b/g, `${regiao}ª Região`)
+        .replace(/\b3a\s*Regiao\b/g, `${regiao}a Regiao`)
+        // Lookahead: nao mexer quando ja veio "TRF 3ª Região" da regra acima —
+        // senao o espaco some e vira "TRF3ª Região" (aparecia em SP e MS, que
+        // sao TRF3 e por isso passavam pelas duas regras).
+        .replace(/TRF\s*-?\s*3\b(?!\s*[ªa]\s*Regi)/g, `TRF${regiao}`)
+        // "em SP, é o TRF3" vira "em BA, é o TRF1" — o estado citado também
+        // precisa acompanhar, senão o texto fica contraditório.
+        .replace(/\bem SP\b/g, `em ${U}`)
+    : texto;
+
+  return comTrf
     .replace(/TJSP/g, `TJ${U}`)
     .replace(/TJM-SP/g, U === "MG" ? "TJM-MG" : U === "RS" ? "TJM-RS" : `TJ Militar/${U}`)
     .replace(/Polícia Civil\/SP/g, `Polícia Civil/${U}`)
