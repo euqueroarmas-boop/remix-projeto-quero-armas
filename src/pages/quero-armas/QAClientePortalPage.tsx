@@ -3541,7 +3541,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeTab === "resumo" && (
-        <div className="qa-resumo-light h-full min-h-0">
+        <div className="qa-resumo-light h-full min-h-0 pt-[26px]">
         <ClienteResumoKanban
           cliente={cliente}
           vendas={vendas}
