@@ -139,8 +139,8 @@ const Badge: React.FC<{ tone: CockpitZ6Process["badgeTone"]; children: React.Rea
   );
 };
 
-const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
-  <div style={{ background: "#FFFFFF", border: "1px solid #E5E5E5", borderRadius: 4, overflow: "hidden", ...style }}>{children}</div>
+const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties; className?: string }> = ({ children, style, className }) => (
+  <div className={className} style={{ background: "#FFFFFF", border: "1px solid #E5E5E5", borderRadius: 4, overflow: "hidden", ...style }}>{children}</div>
 );
 
 /* -------------------- Variante detalhada (processo 1 do mockup) -------------------- */
