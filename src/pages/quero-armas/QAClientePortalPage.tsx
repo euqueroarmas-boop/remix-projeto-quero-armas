@@ -3175,10 +3175,10 @@ export default function QAClientePortalPage() {
           setDocsReloadKey((k) => k + 1);
         }}
       />
-      {/* ═══ SIDEBAR ESQUERDO — branding apenas em desktop; nav completo em mobile ═══ */}
+      {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className={`qa-client-mobile-drawer flex fixed inset-0 lg:inset-y-0 lg:right-auto left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 overflow-hidden ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[190px] lg:max-w-[190px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
-        style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
+        className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 overflow-hidden ${effectiveCollapsed ? "w-[68px] max-w-[68px]" : "w-[190px] max-w-[190px]"}`}
+        style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* stripe removida conforme solicitado */}
@@ -3216,34 +3216,14 @@ export default function QAClientePortalPage() {
 
         {/* Brand removido da sidebar conforme solicitado */}
 
-        {/* Nav mobile — só aparece abaixo de lg; em desktop a nav vai para o rail direito */}
-        <nav className="qa-client-mobile-nav lg:hidden flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14" style={{ overscrollBehavior: "none", touchAction: "none" }}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => { goSection(item.key); setSidebarCollapsed(true); }}
-                className={`flex items-center justify-between w-full gap-3 px-4 py-2.5 text-[14px] font-bold border-l-2 ${active ? "text-white" : "text-[#c9c2b3] border-transparent hover:text-white hover:bg-white/5"}`}
-                style={active ? { background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, transparent 100%)`, borderLeftColor: sidebarTheme.accent } : undefined}
-              >
-                <span className="text-left">{item.label}</span>
-                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
-              </button>
-            );
-          })}
-        </nav>
-
         {/* Espaçador desktop — empurra rodapé para baixo */}
         <div className="hidden lg:flex flex-1" />
 
       </aside>
 
-      {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
+      {/* ═══ RAIL DIREITO — nav icon-only, navegação única em todas as larguras ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
+        className="flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
         style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
