@@ -26,6 +26,19 @@ function seenNormalKey(id: string) {
   return `qa_notif_seen_normal_${id}`;
 }
 
+// Seções do portal por categoria de notificação. Sem isso, links genéricos
+// "/area-do-cliente" caíam em "resumo" — a seção onde o cliente já estava —
+// e o clique em "Ver detalhes" parecia não fazer nada.
+function secaoPorCategoria(categoria: string): string | null {
+  const c = String(categoria || "").toLowerCase();
+  if (c.includes("documento") || c.includes("certidao") || c.includes("prova") || c.includes("exigencia")) return "documentos";
+  if (c.includes("pagamento") || c.includes("financ") || c.includes("premium") || c.includes("cobranca")) return "financeiro";
+  if (c.includes("processo")) return "processos";
+  if (c.includes("arsenal")) return "arsenal";
+  if (c.includes("cadastro")) return "configuracoes";
+  return null;
+}
+
 /**
  * Motor de notificações persistentes do cliente. Renderizado uma única vez,
  * fora dos blocos condicionais de seção do portal — por isso aparece em
@@ -69,7 +82,17 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       }
       return !sessionStorage.getItem(seenNormalKey(n.id));
     });
-    setVisiveis(filtradas);
+    // Deduplicação: um único aviso por categoria (o mais recente) e no máximo
+    // 3 na tela. O motor cria uma linha por evento (ex: cada arquivo removido),
+    // o que empilhava dezenas de cartões idênticos no portal.
+    const porCategoria = new Map<string, NotificacaoAtiva>();
+    for (const n of [...filtradas].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )) {
+      const chave = `${n.categoria}|${n.titulo}`;
+      if (!porCategoria.has(chave)) porCategoria.set(chave, n);
+    }
+    setVisiveis(Array.from(porCategoria.values()).slice(0, 3));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todas]);
 
@@ -78,6 +101,9 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       localStorage.setItem(hiddenUntilKey(n.id), String(Date.now() + REAPARECER_MS));
     } else {
       sessionStorage.setItem(seenNormalKey(n.id), "1");
+      // Avisos informativos são dispensados de verdade no banco — assim não
+      // voltam no próximo login nem se acumulam.
+      supabase.rpc("qa_notificacao_dispensar" as any, { p_id: n.id }).then(() => {});
     }
     setVisiveis((prev) => prev.filter((x) => x.id !== n.id));
   }
@@ -100,7 +126,6 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
     if (interna) {
       const secao = (interna[1] || "").toLowerCase();
       const mapa: Record<string, string> = {
-        "": "resumo",
         documentos: "documentos",
         processos: "processos",
         financeiro: "financeiro",
@@ -110,8 +135,9 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
         mensagens: "mensagens",
         configuracoes: "configuracoes",
       };
+      const destino = mapa[secao] || secaoPorCategoria(n.categoria) || "documentos";
       window.dispatchEvent(
-        new CustomEvent("qa:portal-ir-para-secao", { detail: { secao: mapa[secao] || "documentos" } }),
+        new CustomEvent("qa:portal-ir-para-secao", { detail: { secao: destino } }),
       );
       fechar(n);
       return;
