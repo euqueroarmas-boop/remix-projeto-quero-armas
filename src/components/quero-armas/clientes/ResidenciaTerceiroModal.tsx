@@ -219,11 +219,12 @@ export default function ResidenciaTerceiroModal({
 
   const conteudo = (
     <div
-      // O Dialog do Radix aplica pointer-events:none no body enquanto está
-      // aberto — sem forçar auto aqui, nenhum clique/digitação chega.
+      // Este overlay fica dentro do DialogContent pai. Não use captura de
+      // pointerdown aqui: ela interrompe o evento antes de chegar aos inputs
+      // e impede que eles recebam foco/teclado.
+      data-qa-overlay="residencia-terceiro"
       style={{ pointerEvents: "auto" }}
       onPointerDown={(e) => e.stopPropagation()}
-      onPointerDownCapture={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
