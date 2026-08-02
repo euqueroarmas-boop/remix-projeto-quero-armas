@@ -691,6 +691,10 @@ Deno.serve(async (req) => {
     const tipoSelecionado: string | undefined = body?.tipoSelecionado;
     const storage_bucket: string | undefined = body?.storage_bucket;
     const storage_path: string | undefined = body?.storage_path;
+    // O cliente já roda pdf.js no navegador antes de chamar aqui. Reaproveitar
+    // esse texto evita repetir a extração no servidor (segundos de CPU).
+    const textoPdfCliente: string =
+      typeof body?.textoPdf === "string" ? body.textoPdf : "";
 
     if (!imageDataUrl && storage_path) {
       const bucket = storage_bucket || "qa-documentos";
@@ -708,7 +712,16 @@ Deno.serve(async (req) => {
       return json({ error: "imageDataUrl ou storage_path obrigatório" }, 400);
     }
 
-    const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+    const textoPdfNativo =
+      textoPdfCliente.trim().length >= 200
+        ? textoPdfCliente
+        : await extractPdfTextFromDataUrl(imageDataUrl);
+
+    // PDF com camada de texto nativa: o modelo lê o texto, que é ordens de
+    // grandeza mais rápido (e mais barato) do que processar o PDF por visão.
+    const usarSomenteTexto =
+      imageDataUrl.startsWith("data:application/pdf") &&
+      textoPdfNativo.trim().length >= 400;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
@@ -734,7 +747,14 @@ Deno.serve(async (req) => {
                     ? `O cliente selecionou manualmente o tipo "${tipoSelecionado}". Avalie de forma INDEPENDENTE.`
                     : "Sem sugestão manual."),
               },
-              { type: "image_url", image_url: { url: imageDataUrl } },
+              ...(usarSomenteTexto
+                ? [{
+                    type: "text",
+                    text:
+                      "TEXTO NATIVO EXTRAÍDO DO PDF (fiel ao original):\n" +
+                      textoPdfNativo.slice(0, 60000),
+                  }]
+                : [{ type: "image_url", image_url: { url: imageDataUrl } }]),
             ],
           },
         ],

@@ -1996,7 +1996,9 @@ export function ClienteDocsHubModal({
       // 1) Classifica automaticamente (sem depender da seleção manual).
       const { data: cls, error: clsErr } = await invokeComTimeout(
         "qa-classificar-documento-arma",
-        { imageDataUrl: dataUrl },
+        // Reaproveita o texto já extraído localmente pelo pdf.js: a função
+        // deixa de repetir a extração e o modelo lê texto em vez de imagem.
+        { imageDataUrl: dataUrl, textoPdf: textoLocalRef.current || "" },
         60000,
       );
       if (clsErr) throw clsErr;
@@ -2314,13 +2316,21 @@ export function ClienteDocsHubModal({
       setHomonimiaSalva(false);
       setShowDeclaracao(false);
 
-      // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
+      // 2) Enriquecimento opcional. Segunda passada de IA custa dezenas de
+      //    segundos; só vale quando a classificação NÃO trouxe o essencial.
+      const jaTemEssencial = !!(
+        String(campos.data_emissao || "").trim() &&
+        (String(campos.numero_documento || "").trim() ||
+          String(campos.nome_completo || "").trim())
+      );
       try {
-        const { data: extra } = await invokeComTimeout(
-          "qa-extract-cliente-doc",
-          { tipo_documento: tipoIA, imageDataUrl: dataUrl },
-          45000,
-        );
+        const { data: extra } = jaTemEssencial
+          ? { data: null }
+          : await invokeComTimeout(
+              "qa-extract-cliente-doc",
+              { tipo_documento: tipoIA, imageDataUrl: dataUrl },
+              45000,
+            );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
