@@ -414,7 +414,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   return (
     <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* ── Bloco fixo: cabeçalho → CONTRATO PRINCIPAL ── */}
-      <div className="flex-none z-30 bg-[#F2F2F2] pt-3 pb-1">
+      <div className="flex-none z-30 bg-[#F2F2F2] pt-[15px] pb-1">
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
         <h1
