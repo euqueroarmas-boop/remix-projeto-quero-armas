@@ -29,6 +29,7 @@ import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
   avaliarPdfIdentidade,
