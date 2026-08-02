@@ -3948,7 +3948,7 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <div className="flex h-full min-h-0 flex-col pt-6">
+          <div className="flex h-full min-h-0 flex-col pt-8">
             <div className="no-print mb-3 mt-1 flex shrink-0 items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
               {(["lista", "extraidos"] as const).map((k) => (
                 <button
