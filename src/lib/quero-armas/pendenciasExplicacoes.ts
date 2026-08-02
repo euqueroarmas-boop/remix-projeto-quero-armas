@@ -535,7 +535,6 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
       "A conta precisa mostrar o endereço completo do imóvel (rua, número, bairro, cidade, UF e CEP) e a data de emissão.",
       "A emissão deve ser recente — o sistema aceita contas emitidas há até 30 dias.",
       "A Polícia Federal NÃO aceita conta de celular, fatura de cartão de crédito, extrato ou fatura de banco, boleto de financiamento e afins: essas cobranças são da pessoa, e não do consumo do imóvel.",
-      "Se a conta não estiver no seu nome, envie também a declaração assinada do titular do imóvel junto com o documento de identidade dele.",
     ],
     observacao:
       "A Polícia Federal precisa confirmar onde você tem residência ou domicílio fixo, porque é nesse endereço que a arma ficará guardada após a aprovação do pedido. Por isso só valem documentos que comprovem consumo naquele imóvel — contas pessoais e móveis (celular, cartão, banco) acompanham a pessoa, não o endereço, e por isso são recusadas.",
