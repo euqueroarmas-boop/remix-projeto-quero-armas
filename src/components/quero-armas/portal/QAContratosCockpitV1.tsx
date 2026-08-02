@@ -15,7 +15,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
-import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
+import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
