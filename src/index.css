@@ -298,7 +298,7 @@
   content: '';
   position: absolute;
   inset: -2px;
-  border-radius: 50%;
+  border-radius: 26%;
   border: 2px solid rgba(37, 211, 102, 0.7);
   background: transparent;
   pointer-events: none;
