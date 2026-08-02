@@ -607,6 +607,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           );
         })
       )}
+      </div>
 
       {preview && (
         <PreviewModal preview={preview} onClose={() => setPreview(null)} />
