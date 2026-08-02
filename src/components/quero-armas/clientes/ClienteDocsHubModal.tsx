@@ -2764,7 +2764,26 @@ export function ClienteDocsHubModal({
     }
   }
 
+  function reabrirHubParaNovoEnvio() {
+    setResultadoCarimbo(null);
+    setFile(null);
+    setClassificacao(null);
+    setConferenciaLocal(null);
+    setAutoResult(null);
+    setConformidade([]);
+    setIaExtraido({});
+    setConfirmados({});
+    setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+    setTimeout(() => fileInputRef.current?.click(), 150);
+  }
+
   async function handleSave() {
+    // Documento reprovado por vencimento: o botão vira "Enviar novamente" e
+    // reabre o seletor do Hub Documental para o cliente anexar a via atualizada.
+    if (docExpirado) {
+      reabrirHubParaNovoEnvio();
+      return;
+    }
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
@@ -4816,14 +4835,16 @@ export function ClienteDocsHubModal({
                 disabled={
                   saving ||
                   extracting ||
-                  (!!classificacao && pendingSensitiveKeys().length > 0) ||
-                  (temApontamento && reconheceApontamento === null) ||
-                  (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
+                  (!docExpirado && !!classificacao && pendingSensitiveKeys().length > 0) ||
+                  (!docExpirado && temApontamento && reconheceApontamento === null) ||
+                  (!docExpirado && temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
                 }
                 className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : docExpirado ? (
+                  <Upload className="mr-2 h-4 w-4" />
                 ) : casoResidenciaTerceiro && terceiroDados ? (
                   <FileDown className="mr-2 h-4 w-4" />
                 ) : (
@@ -4831,7 +4852,9 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : classificacao && pendingSensitiveKeys().length > 0
+                  : docExpirado
+                    ? "Enviar novamente"
+                    : classificacao && pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
                     : temApontamento && reconheceApontamento === null
                       ? "Responda sobre o apontamento"
