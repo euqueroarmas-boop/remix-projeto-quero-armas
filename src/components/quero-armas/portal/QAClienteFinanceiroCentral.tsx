@@ -105,6 +105,10 @@ const CSS = `
 .qafin-central .cc-form input{width:100%;padding:8px 10px;font-family:'Arial Narrow',Arial;font-size:13px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);outline:none;box-sizing:border-box}
 .qafin-central .cc-form input:focus{border-color:var(--bordo)}
 .qafin-central .cc-form .actions{display:flex;gap:8px;margin-top:14px}
+.qafin-central .premium-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:18px;align-items:center}
+.qafin-central .premium-grid > *{min-width:0}
+.qafin-central .cc-light .btn{max-width:100%;white-space:normal;word-break:break-word}
+@media(max-width:720px){.qafin-central .premium-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:720px){.qafin-central .summary,.qafin-central .summary.cols-3{grid-template-columns:repeat(2,1fr)}
 .qafin-central .charge,.qafin-central .expanded .head,.qafin-central .paybody{flex-direction:column;grid-template-columns:1fr}
 .qafin-central .charge .val,.qafin-central .expanded .head .val{text-align:left}
@@ -363,7 +367,7 @@ function PremiumCard({ premium, onRefresh }: { premium: QAArsenalPremiumSubscrip
         <span>Arsenal Inteligente · Premium</span>
         <span className={badgeCls}>{badgeLabel}</span>
       </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 18, alignItems: "center" }}>
+      <div className="premium-grid">
         <div>
           <div style={{ fontFamily: "'Arial Narrow',Arial", fontSize: 15, fontWeight: 700 }}>
             {premium.ativa ? "Assinatura ativa" : "Assinatura pausada"}
