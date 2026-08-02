@@ -60,6 +60,7 @@ export default function DocResultadoCarimbo({
       <div
         className="flex flex-col items-center gap-3 bg-white px-10 py-8 text-center"
         onClick={(e) => { if (persistente) e.stopPropagation(); }}
+        onPointerDown={(e) => e.stopPropagation()}
         style={{
           border: `10px solid ${c.cor}`,
           borderRadius: 10,
