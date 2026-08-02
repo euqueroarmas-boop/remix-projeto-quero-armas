@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
+import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart, Crosshair } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
@@ -143,7 +143,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30 * 1000);
@@ -381,7 +381,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
     setTimeout(() => inputRef.current?.focus(), 0);
   }
 
-  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       enviar(input);
