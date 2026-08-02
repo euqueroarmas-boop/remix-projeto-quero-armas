@@ -1613,6 +1613,29 @@ export function ClienteDocsHubModal({
   // (estado civil, profissão, desde quando mora + documento do responsável).
   const casoResidenciaTerceiro =
     form.tipo_documento === "comprovante_residencia" && titularDivergente && !notaTomadorParentesco;
+
+  /**
+   * Retomada da Declaração do Responsável pelo Imóvel: se o cliente fechou a
+   * tela com a declaração já gerada no servidor, ao reabrir o comprovante de
+   * residência o pop-up guiado volta exatamente naquele passo.
+   */
+  useEffect(() => {
+    if (!open || !qaClienteId) return;
+    if (form.tipo_documento !== "comprovante_residencia") return;
+    if (declaracaoAberta || terceiroDados) return;
+    let vivo = true;
+    (async () => {
+      const { data } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "atual", qa_cliente_id: qaClienteId },
+      });
+      const decl = (data as any)?.declaracao;
+      if (!vivo || !decl) return;
+      setComprovanteDocId(decl.documento_comprovante_id ?? null);
+      setDeclaracaoAberta(true);
+    })();
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, qaClienteId, form.tipo_documento]);
   const titularComprovanteLido =
     conformidade.find((i) => i.campo === "nome_completo" && i.status === "divergente")?.valorCertidao ||
     classificacao?.camposExtraidos?.nome_completo ||
