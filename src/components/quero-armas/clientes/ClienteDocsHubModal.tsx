@@ -1941,6 +1941,30 @@ export function ClienteDocsHubModal({
   }
 
   async function classifyAndExtract(target: File | null) {
+    // A invoke do Supabase não tem timeout: se a edge function estourar o
+    // limite de CPU/wall clock (PDF grande + visão), a promessa nunca resolve
+    // e a tela fica em "Lendo o documento…" para sempre. Corrida com relógio.
+    const invokeComTimeout = async (
+      fn: string,
+      body: Record<string, unknown>,
+      ms = 60000,
+    ): Promise<{ data: any; error: any }> => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return (await Promise.race([
+          supabase.functions.invoke(fn, { body }),
+          new Promise((_, reject) => {
+            timer = setTimeout(
+              () => reject(new Error(`A leitura automática demorou demais (${fn}).`)),
+              ms,
+            );
+          }),
+        ])) as { data: any; error: any };
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    };
+
     if (!target) {
       toast.error("Selecione um arquivo primeiro.");
       return;
@@ -1958,9 +1982,10 @@ export function ClienteDocsHubModal({
       const dataUrl = await fileToDataUrl(target);
 
       // 1) Classifica automaticamente (sem depender da seleção manual).
-      const { data: cls, error: clsErr } = await supabase.functions.invoke(
+      const { data: cls, error: clsErr } = await invokeComTimeout(
         "qa-classificar-documento-arma",
-        { body: { imageDataUrl: dataUrl } },
+        { imageDataUrl: dataUrl },
+        60000,
       );
       if (clsErr) throw clsErr;
 
@@ -2279,9 +2304,11 @@ export function ClienteDocsHubModal({
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
-        const { data: extra } = await supabase.functions.invoke("qa-extract-cliente-doc", {
-          body: { tipo_documento: tipoIA, imageDataUrl: dataUrl },
-        });
+        const { data: extra } = await invokeComTimeout(
+          "qa-extract-cliente-doc",
+          { tipo_documento: tipoIA, imageDataUrl: dataUrl },
+          45000,
+        );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
