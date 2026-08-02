@@ -188,6 +188,13 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<null | "total" | "aprov" | "venc7" | "venc30" | "vencidos" | "hoje">(null);
   const [preview, setPreview] = useState<null | { url: string; nome: string; mime: string; blob: Blob }>(null);
+  // Remoção otimista: some da tela no 1º clique, sem esperar o refetch nem o
+  // e-mail de aviso (era o motivo de "só sumiu na segunda vez").
+  const [removidos, setRemovidos] = useState<Set<string>>(new Set());
+  const docsVisiveis = useMemo(
+    () => meusDocs.filter((d) => !removidos.has(String(d.id))),
+    [meusDocs, removidos],
+  );
 
   const openPreview = async (doc: any) => {
     if (!doc?.arquivo_storage_path) {
@@ -247,10 +254,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
 
   /* KPIs ---------------------------------------------------- */
   const kpis = useMemo(() => {
-    const total = meusDocs.length;
+    const total = docsVisiveis.length;
     let aprov = 0, venc7 = 0, venc30 = 0, vencidos = 0, hoje = 0;
     const hojeISO = new Date().toISOString().slice(0, 10);
-    meusDocs.forEach((d) => {
+    docsVisiveis.forEach((d) => {
       if (d.status === "aprovado") aprov++;
       const dias = daysUntil(dataValidadeHub(d));
       if (dias !== null) {
@@ -261,13 +268,13 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       if (String(d.updated_at || "").slice(0, 10) === hojeISO) hoje++;
     });
     return { total, aprov, venc7, venc30, vencidos, hoje };
-  }, [meusDocs]);
+  }, [docsVisiveis]);
 
   /* Filtragem por KPI -------------------------------------- */
   const docsFiltrados = useMemo(() => {
-    if (!filter || filter === "total") return meusDocs;
+    if (!filter || filter === "total") return docsVisiveis;
     const hojeISO = new Date().toISOString().slice(0, 10);
-    return meusDocs.filter((d) => {
+    return docsVisiveis.filter((d) => {
       const dias = daysUntil(dataValidadeHub(d));
       if (filter === "aprov") return d.status === "aprovado";
       if (filter === "venc7") return dias !== null && dias >= 0 && dias <= 7;
@@ -276,14 +283,14 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       if (filter === "hoje") return String(d.updated_at || "").slice(0, 10) === hojeISO;
       return true;
     });
-  }, [meusDocs, filter]);
+  }, [docsVisiveis, filter]);
 
   /* Foco do dia — doc mais urgente -------------------------- */
   const focoDoc = useMemo(() => {
-    return [...meusDocs]
+    return [...docsVisiveis]
       .filter((d) => dataValidadeHub(d))
       .sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999))[0];
-  }, [meusDocs]);
+  }, [docsVisiveis]);
 
   /* Agrupamento por categoria ------------------------------- */
   const grupos = useMemo(() => {
@@ -307,11 +314,21 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   const handleRemover = async (doc: any) => {
     if (!confirm("Remover este documento?")) return;
     await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, "removido", { tipo: doc.tipo_documento });
-    const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", doc.id);
+    const { data: apagados, error } = await supabase
+      .from("qa_documentos_cliente" as any)
+      .delete()
+      .eq("id", doc.id)
+      .select("id");
     if (error) {
       toast.error("Erro ao remover.");
       return;
     }
+    // RLS pode filtrar sem erro: 0 linhas = nada foi apagado.
+    if (!apagados || apagados.length === 0) {
+      toast.error("Não foi possível remover este documento. Fale com a equipe.");
+      return;
+    }
+    setRemovidos((prev) => new Set(prev).add(String(doc.id)));
     toast.success("Documento removido.");
 
     // Comprovante de que o documento saiu do acervo, com data e hora (regra do
@@ -332,8 +349,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       return;
     }
 
-    try {
-      await supabase.functions.invoke("qa-notify-event", {
+    // Sem await: o aviso não pode segurar a atualização da tela.
+    void supabase.functions
+      .invoke("qa-notify-event", {
         body: {
           evento: "documento_excluido",
           cliente_id: doc.qa_cliente_id,
@@ -346,10 +364,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
             timeStyle: "short",
           }),
         },
-      });
-    } catch (e) {
-      console.error("[documento removido] aviso falhou:", e);
-    }
+      })
+      .catch((e) => console.error("[documento removido] aviso falhou:", e));
 
     onReload();
   };
