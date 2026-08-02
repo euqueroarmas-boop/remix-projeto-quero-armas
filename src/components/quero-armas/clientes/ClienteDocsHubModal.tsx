@@ -1454,8 +1454,7 @@ export function ClienteDocsHubModal({
   // Novo arquivo anexado (ou modal limpo) → libera novamente o carimbo de
   // rejeição por duplicidade.
   useEffect(() => {
-    if (!file) docSalvoRef.current = false;
-    else docSalvoRef.current = false;
+    docSalvoRef.current = false;
   }, [file]);
 
   useEffect(() => {
