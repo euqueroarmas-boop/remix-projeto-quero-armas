@@ -1,5 +1,18 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Info, X } from "lucide-react";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  CreditCard,
+  FileSignature,
+  FileText,
+  FileX2,
+  Info,
+  ShieldCheck,
+  Trash2,
+  UserCog,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -37,6 +50,21 @@ function secaoPorCategoria(categoria: string): string | null {
   if (c.includes("arsenal")) return "arsenal";
   if (c.includes("cadastro")) return "configuracoes";
   return null;
+}
+
+// Ícone por categoria da notificação (o "assunto" gravado no banco), para o
+// cliente identificar o tema do aviso antes mesmo de ler o título.
+function iconePorCategoria(categoria: string, urgente: boolean): LucideIcon {
+  const c = String(categoria || "").toLowerCase();
+  if (c.includes("contrato") || c.includes("assinatura") || c.includes("procuracao")) return FileSignature;
+  if (c.includes("documento_excluido")) return Trash2;
+  if (c.includes("rejeitad") || c.includes("recusad") || c.includes("certidao_rejeitada")) return FileX2;
+  if (c.includes("documento_em_dia") || c.includes("exigencia_cumprida") || c.includes("prova")) return BadgeCheck;
+  if (c.includes("documento")) return FileText;
+  if (c.includes("pagamento") || c.includes("financ") || c.includes("cobranca")) return CreditCard;
+  if (c.includes("premium") || c.includes("arsenal")) return ShieldCheck;
+  if (c.includes("cadastro")) return UserCog;
+  return urgente ? AlertTriangle : Info;
 }
 
 /**
@@ -151,6 +179,7 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
     <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 w-[calc(100%-1.5rem)] max-w-[380px] sm:left-auto sm:right-4 sm:translate-x-0">
       {visiveis.map((n) => {
         const urgente = n.urgencia === "urgente";
+        const IconeCategoria = iconePorCategoria(n.categoria, urgente);
         return (
           <div
             key={n.id}
@@ -169,9 +198,7 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
                   urgente ? "bg-[#7A1F2B]" : "bg-black/80"
                 }`}
               >
-                {urgente
-                  ? <AlertTriangle className="w-3.5 h-3.5 text-white" />
-                  : <Info className="w-3.5 h-3.5 text-white" />}
+                <IconeCategoria className="w-3.5 h-3.5 text-white" />
               </span>
               <div className="min-w-0">
                 <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">
