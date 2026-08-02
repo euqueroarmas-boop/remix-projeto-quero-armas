@@ -3240,6 +3240,37 @@ export default function QAClientePortalPage() {
         style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
+        {/* Avatar (mobile) — mesmo formato squircle do ícone do WhatsApp */}
+        <div className="lg:hidden relative mb-3 flex flex-col items-center">
+          <button
+            type="button"
+            onClick={() => setAvatarDropOpen((v) => !v)}
+            title="Opções de conta"
+            aria-label="Opções de conta"
+            className="overflow-hidden focus:outline-none"
+            style={{ width: 34, height: 34, borderRadius: 10, background: "#ffffff", boxShadow: "0 2px 6px rgba(0,0,0,0.35)" }}
+          >
+            {avatarUrl
+              ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              : <span className="w-full h-full flex items-center justify-center bg-[#7A1F2B] text-white font-bold text-[13px]" style={{ fontFamily: "Oswald, sans-serif" }}>
+                  {userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
+                </span>
+            }
+          </button>
+          {avatarDropOpen && (
+            <>
+              <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setAvatarDropOpen(false)} />
+              <button
+                type="button"
+                onClick={() => { setAvatarDropOpen(false); handleLogout(); }}
+                style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, border: 0, background: '#fff', borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#1c1c1c', whiteSpace: 'nowrap' }}
+              >
+                Sair
+              </button>
+            </>
+          )}
+        </div>
+
         {/* Ícones principais — topo */}
         <div className="flex flex-col items-center gap-1">
           {navItems.filter((i) => i.key !== "mensagens" && i.key !== "configuracoes").map((item) => {
