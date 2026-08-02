@@ -3268,7 +3268,7 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
+      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -4107,7 +4107,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "contratos" && (
-          <div id="qa-portal-contratos" tabIndex={-1} className="space-y-4 outline-none">
+          <div id="qa-portal-contratos" tabIndex={-1} className="outline-none h-full min-h-0">
             {cliente?.id ? (
               <QAContratosCockpitV1 cliente={cliente} />
             ) : (
