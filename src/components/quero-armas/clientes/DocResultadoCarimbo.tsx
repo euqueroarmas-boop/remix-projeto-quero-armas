@@ -5,7 +5,6 @@
  * Substitui o toast discreto: APROVADO (verde, com %), EM ANÁLISE (âmbar)
  * e REPROVADO (vermelho).
  */
-import { useEffect } from "react";
 import { AlertTriangle, Check, Clock } from "lucide-react";
 
 export type DocResultadoTipo = "aprovado" | "analise" | "reprovado";
@@ -21,13 +20,11 @@ export default function DocResultadoCarimbo({
   percentual,
   mensagem,
   onDone,
-  duracaoMs = 3000,
 }: {
   tipo: DocResultadoTipo;
   percentual?: number | null;
   mensagem?: string | null;
   onDone: () => void;
-  duracaoMs?: number;
 }) {
   // Todos os carimbos permanecem na tela até o clique fora.
   const persistente = true;
