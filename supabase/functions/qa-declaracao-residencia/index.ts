@@ -677,5 +677,57 @@ Deno.serve(async (req) => {
     });
   }
 
+  /* CANCELAR — apaga a declaracao pendente e reabre a exigencia de endereco.
+     Usado quando o cliente prefere enviar um comprovante no proprio nome. */
+  if (acao === "cancelar") {
+    const declaracaoId = String(body.declaracao_id || "");
+    if (!declaracaoId) return json({ error: "declaracao_id obrigat\u00f3rio" }, 400);
+
+    const { data: decl } = await sb
+      .from("qa_declaracoes_residencia")
+      .select("id, qa_cliente_id, documento_comprovante_id, status")
+      .eq("id", declaracaoId)
+      .maybeSingle();
+    if (!decl) return json({ ok: true, cancelada: true });
+    if (!clienteIds.includes(Number((decl as any).qa_cliente_id))) return json({ error: "Acesso negado" }, 403);
+    if ((decl as any).status === "assinada_validada") {
+      return json({ error: "Declara\u00e7\u00e3o j\u00e1 validada n\u00e3o pode ser apagada." }, 400);
+    }
+
+    const agora = new Date().toISOString();
+    const comprovanteId = (decl as any).documento_comprovante_id as string | null;
+
+    // Some o comprovante em nome de terceiro para a exigencia voltar do zero.
+    if (comprovanteId) {
+      try {
+        await sb
+          .from("qa_documentos_cliente")
+          .update({
+            status: "excluido",
+            motivo_reprovacao:
+              "Comprovante em nome de terceiro descartado pelo cliente para reenvio em nome pr\u00f3prio.",
+            updated_at: agora,
+          })
+          .eq("id", comprovanteId);
+      } catch (e) {
+        console.error("[qa-declaracao-residencia] cancelar comprovante", (e as Error).message);
+      }
+    }
+
+    try {
+      await sb
+        .from("qa_documentos_cliente")
+        .update({ status: "excluido", updated_at: agora })
+        .eq("tipo_documento", "declaracao_responsavel_imovel")
+        .eq("metadados_documento_json->>declaracao_residencia_id", declaracaoId);
+    } catch (e) {
+      console.error("[qa-declaracao-residencia] cancelar hub", (e as Error).message);
+    }
+
+    await sb.from("qa_declaracoes_residencia").delete().eq("id", declaracaoId);
+
+    return json({ ok: true, cancelada: true });
+  }
+
   return json({ error: `A\u00e7\u00e3o desconhecida: ${acao}` }, 400);
 });
