@@ -54,13 +54,13 @@ export default function ClienteAnaliseAlvoSection() {
           <div className="qa-alvo__figure">
             <img src={alvoHumanoide.url} alt="Alvo humanoide de treinamento com impactos agrupados na região central do tórax" />
             {/* Impactos na obreia central do tórax e no entorno imediato */}
-            <div className="qa-alvo__hit" style={{ left: "48.6%", top: "45.4%" }} />
-            <div className="qa-alvo__hit" style={{ left: "45.9%", top: "43.6%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "51.4%", top: "43.1%" }} />
-            <div className="qa-alvo__hit" style={{ left: "50.2%", top: "48.1%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "44.8%", top: "47.4%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "53.1%", top: "46.6%" }} />
-            <div className="qa-alvo__hit" style={{ left: "47.2%", top: "50.2%" }} />
+            <div className="qa-alvo__hit" style={{ left: "48.4%", top: "39.4%" }} />
+            <div className="qa-alvo__hit" style={{ left: "45.6%", top: "37.6%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "51.2%", top: "37.1%" }} />
+            <div className="qa-alvo__hit" style={{ left: "50.0%", top: "42.0%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "44.6%", top: "41.3%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "52.9%", top: "40.5%" }} />
+            <div className="qa-alvo__hit" style={{ left: "47.0%", top: "44.1%" }} />
           </div>
         </div>
 
