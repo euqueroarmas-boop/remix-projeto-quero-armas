@@ -455,7 +455,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
       {/* Grid */}
-      <div className="px-4 md:px-8 py-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className={`px-4 md:px-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] ${compact ? "pt-5 pb-4" : "py-4"}`}>
         {/* Chat */}
         <div className="bg-white flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
           {showReaberto && proto && (
