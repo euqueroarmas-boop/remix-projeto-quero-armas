@@ -1316,6 +1316,9 @@ export function ClienteDocsHubModal({
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
   const motivoCarimbadoRef = useRef<string | null>(null);
+  // Trava anti falso-positivo: fica true do instante do salvamento bem-sucedido
+  // até o cliente anexar um novo arquivo.
+  const docSalvoRef = useRef(false);
   /**
    * Texto cru do PDF lido localmente (pdf.js). A IA devolve apenas os campos do
    * seu schema — que não inclui prestador/tomador da NFS-e. Guardamos o texto
@@ -1447,6 +1450,12 @@ export function ClienteDocsHubModal({
 
   // Docs efetivos: prop tem prioridade; fallback para os buscados internamente
   const docsEfetivos = docsAprovados.length > 0 ? docsAprovados : docsAprovadosFetched;
+
+  // Novo arquivo anexado (ou modal limpo) → libera novamente o carimbo de
+  // rejeição por duplicidade.
+  useEffect(() => {
+    docSalvoRef.current = false;
+  }, [file]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1703,6 +1712,10 @@ export function ClienteDocsHubModal({
       motivoCarimbadoRef.current = null;
       return;
     }
+    // Documento recém-salvo: a lista do Hub volta com ele já aprovado e o
+    // cálculo de duplicidade passa a apontar o PRÓPRIO envio. Nunca carimbar
+    // rejeição em cima do carimbo de aprovação que acabou de sair.
+    if (docSalvoRef.current) return;
     if (motivoCarimbadoRef.current === motivoRejeicao) return;
     motivoCarimbadoRef.current = motivoRejeicao;
     setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
@@ -3434,6 +3447,7 @@ export function ClienteDocsHubModal({
       // cópia de campos para qa_clientes (titulo_eleitor, etc.) e e-mail são
       // disparados por triggers SECURITY DEFINER no banco.
 
+      docSalvoRef.current = true;
       setResultadoCarimbo(
         terceiroDados
           ? {
