@@ -1316,6 +1316,9 @@ export function ClienteDocsHubModal({
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
   const motivoCarimbadoRef = useRef<string | null>(null);
+  // Trava anti falso-positivo: fica true do instante do salvamento bem-sucedido
+  // até o cliente anexar um novo arquivo.
+  const docSalvoRef = useRef(false);
   /**
    * Texto cru do PDF lido localmente (pdf.js). A IA devolve apenas os campos do
    * seu schema — que não inclui prestador/tomador da NFS-e. Guardamos o texto
