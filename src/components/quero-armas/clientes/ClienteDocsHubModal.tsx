@@ -3936,8 +3936,9 @@ export function ClienteDocsHubModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
-                    {conformidade.map((item) => (
-                      <tr key={item.campo} className="align-top">
+                     {conformidade.map((item) => (
+                       <Fragment key={item.campo}>
+                       <tr className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
                         <td className="py-1 pr-2 font-tactical">
                           {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorCertidao) : item.campo === "sexo" ? expandSexo(item.valorCertidao) : item.valorCertidao}
@@ -3958,14 +3959,32 @@ export function ClienteDocsHubModal({
                             <span className="text-blue-600 font-bold animate-pulse">⟳ IA verificando…</span>
                           )}
                         </td>
-                      </tr>
-                    ))}
+                       </tr>
+                       {item.status === "divergente" && (
+                         <tr>
+                           <td colSpan={4} className="pb-1.5">
+                             <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
+                               MOTIVO DA REJEIÇÃO — {explicarDivergencia(item)}
+                             </div>
+                           </td>
+                         </tr>
+                       )}
+                       </Fragment>
+                     ))}
                   </tbody>
                 </table>
                 {conformidade.some(i => i.status === "divergente") && (
-                  <p className="mt-2 font-semibold text-red-800 text-[10px]">
-                    Atenção: há divergência de dados. Corrija o documento ou entre em contato com a equipe antes de prosseguir.
-                  </p>
+                  <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
+                      Por que este documento foi rejeitado
+                    </div>
+                    <p className="mt-1 text-[10px] font-semibold leading-snug text-red-800">
+                      {conformidade
+                        .filter((i) => i.status === "divergente")
+                        .map((i) => `${i.label}: ${explicarDivergencia(i)}`)
+                        .join(" ")}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
