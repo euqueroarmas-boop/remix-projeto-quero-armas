@@ -519,14 +519,26 @@ export default function ClienteResumoKanban({
           : undefined,
       );
     });
-    processoDocs.forEach((doc: any) => pushUrgent(
-      shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
-      URG_SUB.documento,
-      doc?.data_validade_efetiva || doc?.data_validade,
-      "processos",
-      "ATUALIZAR AGORA →",
-      "processos",
-    ));
+    // Deduplicação: o mesmo documento aparece no Hub (meusDocs, com descrição
+    // detalhada) e vinculado ao processo (processoDocs, texto genérico). Só a
+    // versão detalhada do Hub deve gerar card de "Próximo vencimento".
+    const tiposNoHub = new Set(
+      meusDocs
+        .map((d: any) => String(d?.tipo_documento || "").toLowerCase())
+        .filter(Boolean),
+    );
+    processoDocs.forEach((doc: any) => {
+      const tipo = String(doc?.tipo_documento || "").toLowerCase();
+      if (tipo && tiposNoHub.has(tipo)) return;
+      pushUrgent(
+        shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
+        URG_SUB.documento,
+        doc?.data_validade_efetiva || doc?.data_validade,
+        "processos",
+        "ATUALIZAR AGORA →",
+        "processos",
+      );
+    });
     prazosProc.forEach((p: any) => {
       if (typeof p.diasRestantes === "number" && p.diasRestantes <= 7) {
         urgents.push({

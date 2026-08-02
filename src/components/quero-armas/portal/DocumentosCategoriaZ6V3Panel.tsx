@@ -532,7 +532,19 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const metaLine = [d.numero_documento, d.orgao_emissor, dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null]
                   .filter(Boolean).join(" · ") || "emitido recente";
                 const pillCls = d.status === "aprovado" ? "pill pill-aprov" : d.status === "reprovado" ? "pill pill-repr" : "pill pill-pend";
-                const pillTxt = d.status === "aprovado" ? "APROVADO" : d.status === "reprovado" ? "REPROVADO" : "EM ANÁLISE";
+                // Comprovante em nome de terceiro não está "em análise": ele
+                // aguarda a Declaração do Responsável pelo Imóvel assinada.
+                const aguardaDeclaracao =
+                  d.status !== "aprovado" &&
+                  d.status !== "reprovado" &&
+                  Boolean((d as any)?.ia_dados_extraidos?.aguardando_declaracao_responsavel);
+                const pillTxt = d.status === "aprovado"
+                  ? "APROVADO"
+                  : d.status === "reprovado"
+                    ? "REPROVADO"
+                    : aguardaDeclaracao
+                      ? "AGUARDANDO DECLARAÇÃO DO RESPONSÁVEL"
+                      : "EM ANÁLISE";
                 const temArquivo = Boolean(d.arquivo_storage_path);
                 return (
                   <div className="row" key={d.id}>
