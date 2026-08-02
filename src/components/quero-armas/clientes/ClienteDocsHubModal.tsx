@@ -3154,9 +3154,13 @@ export function ClienteDocsHubModal({
           ...(payload.ia_dados_extraidos ?? {}),
           residencia_terceiro: terceiroDados,
           tem_divergencia: false,
-          // Fluxo concluído: o comprovante não fica em análise. Ou é aprovado
-          // aqui, ou o cliente teria voltado à fase de enviar outra conta.
-          recomendacao: "aceitar",
+          // REGRA (qualquer processo que use o grupo de comprovação de
+          // endereço): comprovante em nome de terceiro NÃO cumpre a exigência
+          // sozinho. Ele fica aguardando até a Declaração do Responsável pelo
+          // Imóvel ser enviada assinada no GOV.BR e validada. Só então o
+          // comprovante é aprovado (feito pela função qa-declaracao-residencia).
+          recomendacao: "revisar",
+          aguardando_declaracao_responsavel: true,
         };
       }
 
@@ -3172,15 +3176,15 @@ export function ClienteDocsHubModal({
       const bloqueioRevisao =
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
       const iaConfia =
-        !bloqueioRevisao && (classificacao?.recomendacao === "aceitar" || !!terceiroDados);
-      if (isStaff) {
+        !bloqueioRevisao && !terceiroDados && classificacao?.recomendacao === "aceitar";
+      if (isStaff && !terceiroDados) {
         payload.status = "aprovado";
         payload.origem = "admin";
         payload.validado_admin = true;
         payload.aprovado_em = new Date().toISOString();
       } else {
         payload.status = "pendente_aprovacao";
-        payload.origem = "cliente";
+        payload.origem = isStaff ? "admin" : "cliente";
         payload.validado_admin = false;
       }
 
@@ -3376,7 +3380,13 @@ export function ClienteDocsHubModal({
       // disparados por triggers SECURITY DEFINER no banco.
 
       setResultadoCarimbo(
-        isStaff || iaConfia
+        terceiroDados
+          ? {
+              tipo: "analise",
+              mensagem:
+                "Conta recebida. A exigência de comprovante de endereço SÓ será concluída após você enviar a Declaração do Responsável pelo Imóvel assinada no GOV.BR.",
+            }
+          : isStaff || iaConfia
           ? {
               tipo: "aprovado",
               percentual:
@@ -3385,8 +3395,9 @@ export function ClienteDocsHubModal({
           : { tipo: "analise" }
       );
 
-      // Residência de terceiro concluída: o comprovante fica aprovado e o
-      // pop-up guiado da Declaração do Responsável pelo Imóvel abre em seguida.
+      // Residência de terceiro: o comprovante fica AGUARDANDO e o pop-up guiado
+      // da Declaração do Responsável pelo Imóvel abre em seguida. A exigência do
+      // grupo de endereço permanece aberta até a declaração assinada ser validada.
       if (terceiroDados) setDeclaracaoAberta(true);
     } catch (e: any) {
       console.error("[save doc] error:", e);
