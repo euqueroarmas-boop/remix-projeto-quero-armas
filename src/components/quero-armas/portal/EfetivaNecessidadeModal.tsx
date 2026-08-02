@@ -289,9 +289,9 @@ export default function EfetivaNecessidadeModal({
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-12 max-sm:p-4">
-      <div className="flex max-h-[calc(100dvh-6rem)] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl max-sm:max-h-[calc(100dvh-2rem)]">
-        <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[90dvh]">
+        <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5 pr-14">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
               Efetiva necessidade
@@ -304,7 +304,12 @@ export default function EfetivaNecessidadeModal({
               Polícia Federal, por que você precisa da arma. Quanto mais concreto, mais forte.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 text-zinc-400 hover:bg-zinc-100">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar"
+            className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
