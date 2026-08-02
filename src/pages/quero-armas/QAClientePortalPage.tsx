@@ -3156,14 +3156,6 @@ export default function QAClientePortalPage() {
         )}
       </div>
 
-      {/* Backdrop — visível apenas <lg quando o drawer está aberto */}
-      {!mobileHidden && isBelowLg && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50"
-          onClick={() => setSidebarCollapsed(true)}
-          aria-hidden
-        />
-      )}
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
