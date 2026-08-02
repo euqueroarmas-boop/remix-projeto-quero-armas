@@ -3061,6 +3061,19 @@ export function ClienteDocsHubModal({
           : parserBloco,
       };
 
+      // Residência em nome de terceiro: grava o titular real do imóvel e a
+      // declaração do cliente. A divergência de nome deixa de ser bloqueio.
+      if (terceiroDados) {
+        payload.endereco_em_nome_de_terceiro = true;
+        payload.titular_comprovante_nome = terceiroDados.responsavel_nome;
+        payload.titular_comprovante_documento = terceiroDados.responsavel_documento;
+        payload.ia_dados_extraidos = {
+          ...(payload.ia_dados_extraidos ?? {}),
+          residencia_terceiro: terceiroDados,
+          tem_divergencia: false,
+        };
+      }
+
       // Fluxo de aprovação:
       // - admin: aprovado direto
       // - cliente: sempre insere como pendente_aprovacao (RLS exige)
@@ -3070,7 +3083,8 @@ export function ClienteDocsHubModal({
       // Documentos vencidos são aceitos como histórico — a rejeição para uso em
       // processos acontece no checklist, não no upload. Só bloqueiam revisão humana
       // documentos com apontamento criminal ou divergência de dados do cliente.
-      const bloqueioRevisao = temApontamento || conformidade.some(i => i.status === "divergente");
+      const bloqueioRevisao =
+        temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
       const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
       if (isStaff) {
         payload.status = "aprovado";
