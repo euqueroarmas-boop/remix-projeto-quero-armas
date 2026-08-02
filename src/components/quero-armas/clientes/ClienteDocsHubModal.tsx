@@ -29,6 +29,7 @@ import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
   avaliarPdfIdentidade,
@@ -2490,7 +2491,20 @@ export function ClienteDocsHubModal({
         setExtracting(false);
       }
       const veredicto = avaliarPdfIdentidade(textoIdentidade);
+      let aprovadoPorQrVisual = false;
       if (!veredicto.ok) {
+        // A CNH digital (CNH-e) e parte das CIN do gov.br saem como PDF de
+        // imagem, sem camada de texto. Antes de recusar, procuramos o QR Code
+        // de autenticidade no próprio pixel do documento.
+        setExtracting(true);
+        try {
+          const qr = await lerQrCodeDoPdf(f);
+          aprovadoPorQrVisual = qr.encontrado && qr.oficial;
+        } finally {
+          setExtracting(false);
+        }
+      }
+      if (!veredicto.ok && !aprovadoPorQrVisual) {
         const id = toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF, {
           duration: Infinity,
           action: {
