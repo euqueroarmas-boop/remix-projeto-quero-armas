@@ -376,8 +376,8 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
       `}</style>
 
       {/* HEADER + FOCO DO DIA fixos no topo */}
-      <div className="z6-sticky-header">
-        <div style={{ marginBottom: 20 }}>
+      <div className="z6-sticky-header" style={{ paddingBottom: focoDoDia ? 16 : 20 }}>
+        <div>
           <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
@@ -390,7 +390,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
 
       {/* FOCO DO DIA */}
       {focoDoDia && (
-        <Card className="z6-foco-card" style={{ marginBottom: 16, borderLeft: "3px solid #D9342B", background: "#fff" }}>
+        <Card className="z6-foco-card" style={{ marginTop: 20, marginBottom: 0, borderLeft: "3px solid #D9342B", background: "#fff" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div className="z6-foco-body" style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
