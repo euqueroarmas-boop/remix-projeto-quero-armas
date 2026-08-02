@@ -525,7 +525,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       </div>
 
       {/* ÁREA ROLÁVEL — cabeçalho da lista + categorias */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y" }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {/* LISTA AGRUPADA POR CATEGORIA */}
       <div className="listhead">
         <div className="ttl">DOCUMENTOS · AGRUPADO POR CATEGORIA <span className="cnt">{kpis.total}</span></div>
