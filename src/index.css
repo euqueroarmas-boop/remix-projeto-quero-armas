@@ -267,3 +267,8 @@
     overscroll-behavior: none !important;
   }
 }
+
+@keyframes qa-wa-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(37,211,102,0.18), 0 6px 16px rgba(0,0,0,0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(37,211,102,0.05), 0 6px 18px rgba(0,0,0,0.5); }
+}
