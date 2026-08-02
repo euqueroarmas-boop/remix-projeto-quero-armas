@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Phone, Mail, ShieldCheck, ChevronLeft, Loader2, Sparkles, ChevronRight, Pause, Play, Star } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithSocial } from "@/shared/auth/socialSignIn";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
@@ -92,10 +92,7 @@ export default function QAClienteLoginV2Page() {
   async function handleSocial(provider: "google" | "apple") {
     setLoadingProvider(provider);
     try {
-      try { localStorage.setItem("qa_oauth_next", nextPath); } catch { /* storage indisponível */ }
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin + "/auth/callback",
-      });
+      const result = await signInWithSocial(provider, nextPath);
       if (result.error) {
         toast.error(`Não foi possível entrar com ${provider === "google" ? "Google" : "Apple"}. Tente novamente.`);
         return;
