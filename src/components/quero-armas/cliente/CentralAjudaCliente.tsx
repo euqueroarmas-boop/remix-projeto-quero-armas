@@ -453,52 +453,10 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
-      {/* Banner WhatsApp removido — contato agora é o botão flutuante do rail */}
-      {/* Header */}
-      <div className="px-4 md:px-8 pt-5 pb-4 border-b" style={{ borderColor: CARD_BORDER }}>
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="uppercase text-[20px] md:text-[26px] break-words" style={{ fontFamily: OSWALD, fontWeight: 600, letterSpacing: "0.06em", color: INK, lineHeight: 1.05 }}>
-              Central de Ajuda · Klal
-            </h1>
-            <p className="uppercase mt-1" style={{ fontFamily: OSWALD, fontWeight: 500, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>
-              Assistente jurídico e consultor da Quero Armas
-            </p>
-          </div>
-          <div className="flex flex-wrap items-stretch gap-2">
-            {cliente && (
-              <div className="uppercase px-3 py-2 bg-white border break-words" style={{ borderColor: CARD_BORDER, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.14em", color: INK, overflowWrap: "anywhere" }}>
-                Cliente: {cliente.nome_completo}
-              </div>
-            )}
-            <div className="uppercase px-3 py-2 bg-white border-2 break-words" style={{ borderColor: INK, fontFamily: OSWALD, fontWeight: 700, fontSize: 11, letterSpacing: "0.14em", color: INK, overflowWrap: "anywhere" }}>
-              Protocolo {proto?.protocolo || "—"}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Grid */}
-      <div className="px-4 md:px-8 py-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="px-4 md:px-8 py-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Chat */}
         <div className="bg-white flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
-          <div className="flex items-start justify-between px-5 py-4 border-b" style={{ borderColor: LINE }}>
-            <div>
-              <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 13, letterSpacing: "0.16em", color: INK }}>
-                Conversa em andamento
-              </div>
-              <div className="mt-1 text-[12px]" style={{ color: INK_2 }}>
-                {proto
-                  ? <>Iniciada {labelRelativo(proto.protocoloData).toLowerCase()} às {fmtHM(proto.protocoloData)} · Expira em {expiraEmMin}min de inatividade</>
-                  : "Envie sua primeira dúvida para abrir um protocolo"}
-              </div>
-            </div>
-            <span className="uppercase inline-flex items-center gap-1.5 px-2.5 py-1" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10.5, letterSpacing: "0.16em", background: isAtiva ? OK_BG : "#F2F2F2", color: isAtiva ? OK : INK_2, borderRadius: 8 }}>
-              <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: isAtiva ? OK : INK_2 }} />
-              {isAtiva ? "Ativa" : proto ? "Expirada" : "Aguardando"}
-            </span>
-          </div>
-
           {showReaberto && proto && (
             <div className="mx-5 mt-3 px-3 py-2 flex items-start gap-2" style={{ background: AMBER_BG, borderLeft: `3px solid ${AMBER}`, borderRadius: 10 }}>
               <Sparkles className="h-4 w-4 mt-0.5 shrink-0" style={{ color: AMBER }} />
