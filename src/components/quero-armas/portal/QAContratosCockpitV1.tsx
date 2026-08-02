@@ -542,6 +542,7 @@ function FeaturedContractCard({
   const [uploading, setUploading] = React.useState(false);
   const [localProcessingSince, setLocalProcessingSince] = React.useState<string | null>(null);
   const [showDone, setShowDone] = React.useState(false);
+  const [baixandoAssinado, setBaixandoAssinado] = React.useState(false);
   const prevStatusRef = React.useRef<string | null>(null);
   const refreshRef = React.useRef(onValidatedRefresh);
 
@@ -579,6 +580,26 @@ function FeaturedContractCard({
   function closeDone() {
     try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
     setShowDone(false);
+  }
+
+  const temAssinado = String(contract.status) === "validated";
+
+  async function baixarAssinado() {
+    setBaixandoAssinado(true);
+    const toastId = toast.loading("Preparando cópia assinada…");
+    try {
+      const { url } = await getContratoAssinadoUrl({
+        contractId: contract.id,
+        contractNumber: contract.contract_number,
+        vendaId: contract.venda_id,
+      });
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast.success("Cópia assinada liberada.", { id: toastId });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar a cópia assinada.", { id: toastId });
+    } finally {
+      setBaixandoAssinado(false);
+    }
   }
 
   const canUpload = !!contract.issued_at && [
