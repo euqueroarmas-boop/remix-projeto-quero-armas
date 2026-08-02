@@ -4145,8 +4145,18 @@ export function ClienteDocsHubModal({
                            <td colSpan={4} className="pb-1.5">
                              {casoResidenciaTerceiro ? (
                                <div className="rounded-md border border-amber-300 bg-amber-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-amber-900">
-                                 PONTO A CONFIRMAR — {explicarDivergencia(item)} Não reprova: será
-                                 cruzado com o documento do responsável pelo imóvel.
+                                 {terceiroDados ? (
+                                   <>
+                                     PONTO A CONFIRMAR — o valor lido no comprovante ("{item.valorCertidao}")
+                                     não confere com o documento de identidade do responsável pelo imóvel
+                                     ("{item.valorReferencia || "não informado"}"). Não reprova.
+                                   </>
+                                 ) : (
+                                   <>
+                                     PONTO A CONFIRMAR — {explicarDivergencia(item)} Não reprova: será
+                                     cruzado com o documento do responsável pelo imóvel.
+                                   </>
+                                 )}
                                </div>
                              ) : (
                                <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
