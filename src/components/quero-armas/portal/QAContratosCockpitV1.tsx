@@ -732,6 +732,17 @@ function FeaturedContractCard({
           <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">
             PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
           </div>
+          {temAssinado ? (
+            <button
+              type="button"
+              onClick={baixarAssinado}
+              disabled={baixandoAssinado}
+              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+            >
+              {baixandoAssinado ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+              {baixandoAssinado ? "PREPARANDO" : "BAIXAR CONTRATO ASSINADO"}
+            </button>
+          ) : null}
           {contract.issued_at && preparedDownload ? (
             <a
               href={preparedDownload.href}
