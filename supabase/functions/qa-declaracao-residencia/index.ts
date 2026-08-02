@@ -304,9 +304,11 @@ Deno.serve(async (req) => {
       .single();
     if (insErr) return json({ error: "Falha ao registrar declara\u00e7\u00e3o", detail: insErr.message }, 500);
 
+    const hashConteudo = await sha256Hex(String(registro.conteudo_html ?? ""));
     const pdf = montarPdf(ctx, {
       numero: (criada as any).id,
       registrado_em: agora.toISOString(),
+      hash: hashConteudo,
       ...sessaoBase,
     });
 
@@ -326,6 +328,36 @@ Deno.serve(async (req) => {
       pdf_path: path,
       pdf_url: signed?.signedUrl ?? null,
       status: "gerada_pendente_assinatura",
+    });
+  }
+
+  /* BAIXAR — devolve os MESMOS bytes canonicos, como no contrato/procuracao */
+  if (acao === "baixar") {
+    const declaracaoId = String(body.declaracao_id || "");
+    if (!declaracaoId) return json({ error: "declaracao_id obrigat\u00f3rio" }, 400);
+
+    const { data: decl } = await sb
+      .from("qa_declaracoes_residencia")
+      .select("id, qa_cliente_id, responsavel_nome")
+      .eq("id", declaracaoId)
+      .maybeSingle();
+    if (!decl) return json({ error: "Declara\u00e7\u00e3o n\u00e3o encontrada" }, 404);
+    if (!clienteIds.includes(Number((decl as any).qa_cliente_id))) return json({ error: "Acesso negado" }, 403);
+
+    const path = `qa-declaracoes-residencia/${(decl as any).qa_cliente_id}/${declaracaoId}/declaracao.pdf`;
+    const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
+    if (dlErr || !file) return json({ error: "PDF n\u00e3o encontrado", detail: dlErr?.message }, 404);
+
+    const nome = `Declaracao do Responsavel pelo Imovel - ${String((decl as any).responsavel_nome || "")}`
+      .replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim() + ".pdf";
+
+    return new Response(await file.arrayBuffer(), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(nome)}`,
+        "Cache-Control": "no-store",
+      },
     });
   }
 
