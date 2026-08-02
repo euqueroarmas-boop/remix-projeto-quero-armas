@@ -413,12 +413,20 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
   return (
     <div className="text-[#0A0A0A]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* ── Bloco fixo: cabeçalho → CONTRATO PRINCIPAL ── */}
+      <div className="sticky top-0 z-30 bg-[#F2F2F2] pt-3 -mt-3 pb-1">
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
-        <h1 className="font-['Oswald'] text-[24px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0">
+        <h1
+          className="text-[24px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0"
+          style={{ fontFamily: "Oswald, 'Arial Narrow', Arial, sans-serif" }}
+        >
           {primeiroNome}, ESSES SÃO SEUS CONTRATOS
         </h1>
-        <div className="mt-[11px] font-['Arial_Narrow'] font-black text-[10px] tracking-[0.22em] text-[#6A6A6A] uppercase">
+        <div
+          className="mt-[11px] font-black text-[10px] tracking-[0.22em] text-[#6A6A6A] uppercase"
+          style={{ fontFamily: "'Arial Narrow', Arial, sans-serif" }}
+        >
           CPF · <b className="text-[#0A0A0A] font-semibold">{cpf}</b> · MEMBRO DESDE <b className="text-[#0A0A0A] font-semibold">{membro}</b>
           {kpis.aguarda > 0 && <> · <b className="text-[#0A0A0A] font-semibold">{kpis.aguarda} CONTRATO{kpis.aguarda > 1 ? "S" : ""}</b> AGUARDANDO ASSINATURA</>}
         </div>
@@ -472,14 +480,16 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <KpiCard tone="red"   label="EXPIRA EM" value={contracts.length ? "—" : "0"} sub="renovação contratual" />
       </div>
 
-      {/* ── Contrato em destaque ── */}
+      {/* ── Contrato em destaque (rótulo faz parte do bloco fixo) ── */}
       {featured && (
-        <>
-          <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mb-2.5 font-semibold uppercase">
-            CONTRATO PRINCIPAL · EM DESTAQUE
-          </div>
-          <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
-        </>
+        <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] pb-2.5 font-semibold uppercase">
+          CONTRATO PRINCIPAL · EM DESTAQUE
+        </div>
+      )}
+      </div>
+
+      {featured && (
+        <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
       )}
 
       {/* ── Outros contratos ── */}
@@ -719,8 +729,8 @@ function FeaturedContractCard({
       )}
 
       {/* topo */}
-      <div className={`flex items-center justify-between gap-3 pb-4 mb-5 border-b ${isRejected ? "border-[#F0B8B4]" : "border-[#EFEFEF]"}`}>
-        <div className="flex items-center gap-3 min-w-0">
+      <div className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 pb-4 mb-5 border-b ${isRejected ? "border-[#F0B8B4]" : "border-[#EFEFEF]"}`}>
+        <div className="flex items-center gap-3 min-w-0 flex-wrap">
           <span className={`font-['Oswald'] tracking-[0.16em] rounded-sm font-bold uppercase ${isRejected ? "text-[11px] px-3 py-2 bg-[#C32E26] text-white" : `text-[9.5px] px-2 py-1 ${badge.cls}`}`}>
             {badge.label}
           </span>
@@ -728,8 +738,8 @@ function FeaturedContractCard({
             {contract.contract_number || "—"}{contract.service_label ? ` · ${contract.service_label}` : ""}
           </h2>
         </div>
-        <div className="flex items-center gap-3 whitespace-nowrap">
-          <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 min-w-0">
+          <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase break-words">
             PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
           </div>
           {temAssinado ? (
