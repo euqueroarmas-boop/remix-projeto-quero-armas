@@ -23,9 +23,12 @@ export type ResidenciaTerceiroPayload = {
   responsavel_documento: string | null;
   responsavel_arquivo_path: string | null;
   responsavel_arquivo_nome: string | null;
+  /** Estado civil DO RESPONSÁVEL PELO IMÓVEL (preâmbulo da declaração). */
   estado_civil: string;
+  /** Profissão DO RESPONSÁVEL PELO IMÓVEL (preâmbulo da declaração). */
   profissao: string;
-  mora_desde: string; // MM/AAAA
+  /** Desde quando o REQUERENTE mora no endereço — MM/AAAA. */
+  mora_desde: string;
   declarado_em: string;
 };
 
@@ -140,7 +143,7 @@ export default function ResidenciaTerceiroModal({
 
   async function confirmar() {
     if (!estadoCivil || !profissao.trim() || !/^\d{2}\/\d{4}$/.test(moraDesde)) {
-      toast.error("Preencha estado civil, profissão e desde quando você mora neste endereço (MM/AAAA).");
+      toast.error("Preencha o estado civil e a profissão do dono do imóvel e desde quando você mora neste endereço (MM/AAAA).");
       return;
     }
     if (!arquivo || !leitura?.nome) {
