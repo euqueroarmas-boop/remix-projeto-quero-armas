@@ -125,25 +125,45 @@ function enderecoDoCliente(c: Record<string, unknown>): string {
   ].filter(Boolean).join(", ");
 }
 
-/** Texto literal do modelo oficial. Nada e inventado alem dos dados. */
-function corpoDeclaracao(ctx: Record<string, string>): string[] {
-  const resp = [
-    `Eu, ${ctx.responsavel_nome}`,
-    ctx.responsavel_nacionalidade ? ctx.responsavel_nacionalidade.toLowerCase() : "",
-    ctx.responsavel_naturalidade ? `natural de ${ctx.responsavel_naturalidade}` : "",
-    ctx.responsavel_nascimento ? `nascido(a) em ${ctx.responsavel_nascimento}` : "",
-    ctx.responsavel_profissao ? ctx.responsavel_profissao.toLowerCase() : "",
-    ctx.responsavel_estado_civil ? ctx.responsavel_estado_civil.toLowerCase() : "",
-    ctx.responsavel_cpf ? `inscrito(a) no CPF sob o n\u00ba ${ctx.responsavel_cpf}` : "",
-  ].filter(Boolean).join(", ");
+/** Segmento de texto: negrito marca TODO dado extraído. */
+type Seg = { t: string; b?: boolean };
 
-  const desde = ctx.mora_desde ? `, desde ${ctx.mora_desde}` : "";
+/** Texto literal do modelo oficial. Nada e inventado alem dos dados. */
+function corpoDeclaracaoSegs(ctx: Record<string, string>): Seg[][] {
+  const preambulo: Seg[] = [{ t: "Eu, " }, { t: ctx.responsavel_nome, b: true }];
+  const add = (rotuloAntes: string, valor: string) => {
+    if (!valor) return;
+    preambulo.push({ t: rotuloAntes });
+    preambulo.push({ t: valor, b: true });
+  };
+  add(", ", ctx.responsavel_nacionalidade ? ctx.responsavel_nacionalidade.toLowerCase() : "");
+  add(", natural de ", ctx.responsavel_naturalidade);
+  add(", nascido(a) em ", ctx.responsavel_nascimento);
+  add(", ", ctx.responsavel_profissao ? ctx.responsavel_profissao.toLowerCase() : "");
+  add(", ", ctx.responsavel_estado_civil ? ctx.responsavel_estado_civil.toLowerCase() : "");
+  add(", inscrito(a) no CPF sob o n\u00ba ", ctx.responsavel_cpf);
+
+  const p1: Seg[] = [
+    ...preambulo,
+    { t: ", DECLARO, para os devidos fins de direito e sob as penas da lei, que " },
+    { t: ctx.requerente_nome, b: true },
+  ];
+  if (ctx.requerente_cpf) {
+    p1.push({ t: ", inscrito(a) no CPF sob o n\u00ba " }, { t: ctx.requerente_cpf, b: true });
+  }
+  p1.push({ t: ", reside no im\u00f3vel situado \u00e0 " }, { t: ctx.endereco_completo, b: true });
+  if (ctx.mora_desde) p1.push({ t: ", desde " }, { t: ctx.mora_desde, b: true });
+  p1.push({ t: ", im\u00f3vel este de minha propriedade e/ou responsabilidade." });
 
   return [
-    `${resp}, DECLARO, para os devidos fins de direito e sob as penas da lei, que ${ctx.requerente_nome}${ctx.requerente_cpf ? `, inscrito(a) no CPF sob o n\u00ba ${ctx.requerente_cpf}` : ""}, reside no im\u00f3vel situado \u00e0 ${ctx.endereco_completo}${desde}, im\u00f3vel este de minha propriedade e/ou responsabilidade.`,
-    `Declaro ainda estar ciente de que a falsidade desta declara\u00e7\u00e3o configura crime previsto no artigo 299 do C\u00f3digo Penal Brasileiro, sujeitando o declarante \u00e0s san\u00e7\u00f5es penais e civis cab\u00edveis, bem como que esta declara\u00e7\u00e3o destina-se \u00e0 instru\u00e7\u00e3o de processo administrativo perante a Pol\u00edcia Federal, nos termos da Lei n\u00ba 10.826/2003 e do Decreto n\u00ba 11.615/2023.`,
-    `Por ser express\u00e3o da verdade, firmo a presente declara\u00e7\u00e3o para que produza seus efeitos legais.`,
+    p1,
+    [{ t: "Declaro ainda estar ciente de que a falsidade desta declara\u00e7\u00e3o configura crime previsto no artigo 299 do C\u00f3digo Penal Brasileiro, sujeitando o declarante \u00e0s san\u00e7\u00f5es penais e civis cab\u00edveis, bem como que esta declara\u00e7\u00e3o destina-se \u00e0 instru\u00e7\u00e3o de processo administrativo perante a Pol\u00edcia Federal, nos termos da Lei n\u00ba 10.826/2003 e do Decreto n\u00ba 11.615/2023." }],
+    [{ t: "Por ser express\u00e3o da verdade, firmo a presente declara\u00e7\u00e3o para que produza seus efeitos legais." }],
   ];
+}
+
+function segsParaTexto(segs: Seg[]): string {
+  return segs.map((s) => s.t).join("");
 }
 
 function montarPdf(ctx: Record<string, string>, sessao: Record<string, unknown>): Uint8Array {
@@ -151,37 +171,74 @@ function montarPdf(ctx: Record<string, string>, sessao: Record<string, unknown>)
   const MARGEM = 104;
   const DIREITA = 56;
   const largura = doc.internal.pageSize.getWidth() - MARGEM - DIREITA;
+  const SIZE = 10.5;
+  const LINHA = SIZE + 4;
   let y = 76;
+
+  const quebrarPagina = () => {
+    if (y > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); y = 76; }
+  };
 
   const escrever = (
     texto: string,
     opts: { size?: number; bold?: boolean; espaco?: number; align?: "left" | "center" } = {},
   ) => {
     doc.setFont("helvetica", opts.bold ? "bold" : "normal");
-    doc.setFontSize(opts.size ?? 10.5);
+    doc.setFontSize(opts.size ?? SIZE);
     const linhas = doc.splitTextToSize(texto, largura) as string[];
     for (const linha of linhas) {
-      if (y > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); y = 76; }
+      quebrarPagina();
       if (opts.align === "center") doc.text(linha, MARGEM + largura / 2, y, { align: "center" });
       else doc.text(linha, MARGEM, y);
-      y += (opts.size ?? 10.5) + 4;
+      y += (opts.size ?? SIZE) + 4;
     }
     y += opts.espaco ?? 10;
   };
 
-  escrever(ctx.empresa_razao_social || "QUERO ARMAS", { size: 9, bold: true, espaco: 2, align: "center" });
-  if (ctx.empresa_cnpj_completo) escrever(`CNPJ: ${ctx.empresa_cnpj_completo}`, { size: 8, espaco: 18, align: "center" });
+  /** Justifica a esquerda mantendo negrito por trecho (dados extraidos). */
+  const escreverRico = (segs: Seg[], espaco = 12) => {
+    doc.setFontSize(SIZE);
+    type Palavra = { t: string; b: boolean };
+    const palavras: Palavra[] = [];
+    for (const seg of segs) {
+      const partes = seg.t.split(/(\s+)/).filter((x) => x !== "");
+      for (const parte of partes) palavras.push({ t: parte, b: !!seg.b });
+    }
+    let x = MARGEM;
+    quebrarPagina();
+    for (const p of palavras) {
+      doc.setFont("helvetica", p.b ? "bold" : "normal");
+      const w = doc.getTextWidth(p.t);
+      if (/^\s+$/.test(p.t)) {
+        if (x > MARGEM) x += w;
+        continue;
+      }
+      if (x + w > MARGEM + largura) {
+        y += LINHA;
+        quebrarPagina();
+        x = MARGEM;
+      }
+      doc.text(p.t, x, y);
+      x += w;
+    }
+    y += LINHA + espaco;
+  };
 
   escrever("DECLARA\u00c7\u00c3O DO RESPONS\u00c1VEL PELO IM\u00d3VEL", { size: 13, bold: true, espaco: 22, align: "center" });
 
-  for (const p of corpoDeclaracao(ctx)) escrever(p, { espaco: 12 });
+  for (const p of corpoDeclaracaoSegs(ctx)) escreverRico(p, 12);
 
   y += 10;
-  escrever(`${ctx.cidade_declaracao || "Jacare\u00ed"}, ${ctx.data_hoje_extenso}.`, { espaco: 46 });
+  // Local e data: cidade do comprovante de endereco, dados em negrito.
+  escreverRico([{ t: `${ctx.cidade_declaracao}, `, b: true }, { t: `${ctx.data_hoje_extenso}.`, b: true }], 0);
+
+  // 10 quebras de linha antes da assinatura.
+  y += LINHA * 10;
+  quebrarPagina();
 
   escrever("____________________________________________", { size: 10, espaco: 2 });
   escrever(ctx.responsavel_nome.toUpperCase(), { size: 10, bold: true, espaco: 2 });
-  if (ctx.responsavel_cpf) escrever(`CPF n\u00ba ${ctx.responsavel_cpf}`, { size: 9, espaco: 2 });
+  if (ctx.responsavel_cpf) escrever(`CPF n\u00ba ${ctx.responsavel_cpf}`, { size: 9, bold: true, espaco: 2 });
   escrever("RESPONS\u00c1VEL PELO IM\u00d3VEL \u00b7 ASSINATURA DIGITAL GOV.BR / ICP-BRASIL", { size: 8, espaco: 0 });
 
   desenharCarimbo(doc, {
@@ -200,6 +257,22 @@ function montarPdf(ctx: Record<string, string>, sessao: Record<string, unknown>)
   });
 
   return new Uint8Array(doc.output("arraybuffer") as ArrayBuffer);
+}
+
+/**
+ * O endereco da declaracao e SEMPRE o do comprovante de residencia enviado
+ * (a conta do responsavel pelo imovel) — nunca o endereco do cadastro do
+ * requerente. A cidade do local/data segue o mesmo comprovante.
+ */
+function limparEndereco(bruto: string): string {
+  return String(bruto || "").replace(/\s+/g, " ").trim();
+}
+function cidadeDoEndereco(bruto: string): string {
+  const txt = limparEndereco(bruto);
+  // "... / FERRAZ DE VASCONCELOS - SP CEP: 08545-090"
+  const m = txt.match(/\/\s*([^\/\-]+?)\s*-\s*[A-Z]{2}\b/i) || txt.match(/,\s*([^,]+?)\s*[-\/]\s*[A-Z]{2}\b/i);
+  if (m?.[1]) return titulo(m[1].trim());
+  return "";
 }
 
 Deno.serve(async (req) => {
@@ -291,7 +364,7 @@ Deno.serve(async (req) => {
       responsavel_doc_path: body.responsavel_doc_path ?? null,
       endereco_completo: endereco,
       mora_desde: body.mora_desde ?? null,
-      conteudo_html: `<article class="qa-doc"><h1>DECLARA\u00c7\u00c3O DO RESPONS\u00c1VEL PELO IM\u00d3VEL</h1>${corpoDeclaracao(ctx).map((p) => `<p>${p}</p>`).join("")}<p class="qa-doc__date">${ctx.cidade_declaracao}, ${ctx.data_hoje_extenso}.</p></article>`,
+      conteudo_html: `<article class="qa-doc"><h1>DECLARA\u00c7\u00c3O DO RESPONS\u00c1VEL PELO IM\u00d3VEL</h1>${corpoDeclaracaoSegs(ctx).map((p) => `<p>${segsParaTexto(p)}</p>`).join("")}<p class="qa-doc__date">${ctx.cidade_declaracao}, ${ctx.data_hoje_extenso}.</p></article>`,
       status: "gerada_pendente_assinatura",
       gerado_em: agora.toISOString(),
       sessao_geracao_json: sessaoBase,
