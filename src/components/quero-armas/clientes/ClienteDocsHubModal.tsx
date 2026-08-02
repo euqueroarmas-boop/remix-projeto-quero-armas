@@ -2778,9 +2778,11 @@ export function ClienteDocsHubModal({
   }
 
   async function handleSave() {
-    // Documento reprovado por vencimento: o botão vira "Enviar novamente" e
-    // reabre o seletor do Hub Documental para o cliente anexar a via atualizada.
-    if (docExpirado) {
+    // Fluxo de rejeição em duas etapas:
+    // 1) o cliente salva e recebe o CARIMBO DE REPROVADO com o motivo;
+    // 2) só então o botão vira "Enviar novamente" e o Hub zera a memória
+    //    para receber o novo arquivo. Nada aprovado é destruído.
+    if (carimboReprovadoEmitido) {
       reabrirHubParaNovoEnvio();
       return;
     }
@@ -2820,12 +2822,18 @@ export function ClienteDocsHubModal({
     }
 
     if (conferenciaLaudo?.veredicto === "rejeitado") {
-      toast.error(conferenciaLaudo.mensagemCliente || "Este laudo não passou na conferência e não pode ser salvo.");
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: conferenciaLaudo.mensagemCliente || "Laudo reprovado na conferência · envie o documento correto",
+      });
       return;
     }
 
     if (conferenciaLocal?.conf.veredicto === "rejeitado") {
-      toast.error("Esta certidão foi recusada na conferência e não pode ser salva. O cliente já foi avisado por e-mail com o motivo.");
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: "Certidão recusada na conferência · envie o documento correto",
+      });
       return;
     }
     if (!form.tipo_documento) {
@@ -2839,9 +2847,10 @@ export function ClienteDocsHubModal({
     // Trava: certidão não é o que o slot pede E também não cobre nenhuma
     // outra pendência do processo → não deixa salvar.
     if (certidaoIncorreta) {
-      toast.error(
-        `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
-      );
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: `Documento diferente do exigido (${expectedTipoMeta?.label ?? "documento pedido"}) · anexe o correto`,
+      });
       return;
     }
     // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
@@ -2892,15 +2901,19 @@ export function ClienteDocsHubModal({
         toast.error("Confirme a declaração de residência e envie o documento do responsável pelo imóvel.");
         return;
       }
-      toast.error("Documento rejeitado: os dados não são do titular deste processo.");
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: "Documento de outro titular · os dados não são do titular deste processo",
+      });
       return;
     }
 
     // Trava dura: nota fiscal emitida para parente no mesmo endereço.
     if (notaTomadorParentesco) {
-      toast.error(
-        "Nota fiscal rejeitada: o tomador é parente do prestador e consta no mesmo endereço.",
-      );
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: "Nota fiscal rejeitada · tomador é parente do prestador no mesmo endereço",
+      });
       return;
     }
 
