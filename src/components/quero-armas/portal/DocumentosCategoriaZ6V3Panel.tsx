@@ -435,7 +435,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         }
       `}</style>
 
-      {/* HEADER cliente-cêntrico */}
+      {/* BLOCO FIXO — header + foco do dia (não rola) */}
+      <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
         <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
         <div className="meta">
@@ -471,7 +472,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           </div>
         );
       })()}
+      </div>
 
+      {/* ÁREA ROLÁVEL — KPIs, filtros e lista */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 24 }}>
       {/* KPIs */}
       <div className="kpis">
         {([
