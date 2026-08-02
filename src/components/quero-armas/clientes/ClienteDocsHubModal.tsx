@@ -2461,6 +2461,9 @@ export function ClienteDocsHubModal({
   }
 
   async function handleFileChange(f: File | null) {
+    // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
+    // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
+    toast.dismiss();
     setFile(f);
     setClassificacao(null);
     setConferenciaLocal(null);
