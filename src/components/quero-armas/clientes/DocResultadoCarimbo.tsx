@@ -11,8 +11,8 @@ import { AlertTriangle, Check, Clock } from "lucide-react";
 export type DocResultadoTipo = "aprovado" | "analise" | "reprovado";
 
 const CORES: Record<DocResultadoTipo, { cor: string; bg: string; titulo: string; sub: string }> = {
-  aprovado: { cor: "#15803D", bg: "rgba(21,128,61,0.10)", titulo: "APROVADO", sub: "ADICIONADO AO SEU HUB" },
-  analise: { cor: "#B45309", bg: "rgba(180,83,9,0.10)", titulo: "EM ANÁLISE", sub: "AGUARDANDO A EQUIPE" },
+  aprovado: { cor: "#15803D", bg: "rgba(21,128,61,0.10)", titulo: "APROVADO", sub: "PARABÉNS · VAMOS PARA A PRÓXIMA EXIGÊNCIA" },
+  analise: { cor: "#B45309", bg: "rgba(180,83,9,0.10)", titulo: "EM ANÁLISE", sub: "SERÁ ANALISADO PELO NOSSO TIME" },
   reprovado: { cor: "#B91C1C", bg: "rgba(185,28,28,0.10)", titulo: "REPROVADO", sub: "NÃO PODE SER ACEITO" },
 };
 
@@ -29,15 +29,8 @@ export default function DocResultadoCarimbo({
   onDone: () => void;
   duracaoMs?: number;
 }) {
-  // Reprovado e Em análise permanecem na tela até o clique do usuário.
-  // Apenas o carimbo de APROVADO some sozinho.
-  const persistente = tipo !== "aprovado";
-
-  useEffect(() => {
-    if (persistente) return;
-    const t = setTimeout(onDone, duracaoMs);
-    return () => clearTimeout(t);
-  }, [onDone, duracaoMs, persistente]);
+  // Todos os carimbos permanecem na tela até o clique fora.
+  const persistente = true;
 
   const c = CORES[tipo];
   const Icone = tipo === "aprovado" ? Check : tipo === "analise" ? Clock : AlertTriangle;
@@ -83,11 +76,6 @@ export default function DocResultadoCarimbo({
         <div style={{ fontSize: 13, letterSpacing: ".3em", fontWeight: 600 }}>
           {(mensagem || c.sub).toUpperCase()}
         </div>
-        {persistente && (
-          <div style={{ fontSize: 11, letterSpacing: ".22em", fontWeight: 500, opacity: 0.65 }}>
-            CLIQUE FORA PARA FECHAR
-          </div>
-        )}
       </div>
     </div>
   );
