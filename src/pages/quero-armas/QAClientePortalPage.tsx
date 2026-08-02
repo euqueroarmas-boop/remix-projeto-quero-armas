@@ -3135,7 +3135,7 @@ export default function QAClientePortalPage() {
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
-      <div style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
+      <div className="hidden lg:block" style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
         <button
           type="button"
           onClick={() => setAvatarDropOpen((v) => !v)}
