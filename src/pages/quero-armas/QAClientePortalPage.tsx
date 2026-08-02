@@ -6,7 +6,7 @@ import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, ChevronLeft, Bell, Target, Zap, History,
-  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
+  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip, Store,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
