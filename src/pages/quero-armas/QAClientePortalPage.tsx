@@ -3323,12 +3323,23 @@ export default function QAClientePortalPage() {
 
       <style>{`
         .qa-portal-main { touch-action: pan-y; overflow-x: hidden; overscroll-behavior-x: none; }
+        /* Enquadramento canônico (referência: aba Contratos) */
+        .qa-portal-main {
+          padding-left: calc(1rem + env(safe-area-inset-left));
+          padding-right: calc(1rem + env(safe-area-inset-right));
+        }
+        @media (min-width: 1024px) {
+          .qa-portal-main {
+            padding-left: calc(2rem + env(safe-area-inset-left));
+            padding-right: calc(2rem + env(safe-area-inset-right));
+          }
+        }
         .qa-portal-main * { touch-action: pan-y; }
         .qa-portal-main [style*="overflow-x"],
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: hidden !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
