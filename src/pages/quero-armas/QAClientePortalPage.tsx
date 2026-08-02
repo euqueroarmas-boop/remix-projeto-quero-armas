@@ -3287,30 +3287,16 @@ export default function QAClientePortalPage() {
             onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
           >
-            <Store className="h-[18px] w-[18px] shrink-0" />
+            <IconBuildingStore className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
           </button>
 
-          {/* Rodar checklist — fuzil */}
-          <button
-            type="button"
-            onClick={() => abrirChecklistGuiado()}
-            title="Rodar checklist"
-            aria-label="Rodar checklist"
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-            onMouseEnter={() => setRifleHover(true)}
-            onMouseLeave={() => setRifleHover(false)}
-          >
-            <RifleIcon
-              className="h-[18px] w-[18px] shrink-0"
-              color={rifleHover ? railIconColor : `${railIconColor}88`}
-            />
-          </button>
-
-
-          {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
-              Fica logo acima do Suporte — é o primeiro lugar onde ele olha
-              quando quer saber "o que falta". */}
-          <PainelDisparo itens={itensDisparo} corIcone={railIconColor} onOpen={abrirDisparoRail} />
+          {/* Checklist guiado — botão único, com o contador de pendências. */}
+          <PainelDisparo
+            itens={itensDisparo}
+            corIcone={railIconColor}
+            onOpen={abrirDisparoRail}
+            badge={pendenciasGuiadasCount + pendingSignatureCount}
+          />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
 
