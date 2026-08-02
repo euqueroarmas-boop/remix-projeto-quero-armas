@@ -29,6 +29,7 @@ import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
+import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
@@ -1288,6 +1289,8 @@ export function ClienteDocsHubModal({
   // Único caso de dados de terceiro no sistema: comprovante de endereço em
   // nome do responsável pelo imóvel onde o cliente reside.
   const [terceiroDados, setTerceiroDados] = useState<ResidenciaTerceiroPayload | null>(null);
+  /** Pop-up guiado da Declaração do Responsável pelo Imóvel (assinatura GOV.BR). */
+  const [declaracaoAberta, setDeclaracaoAberta] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
@@ -3072,6 +3075,9 @@ export function ClienteDocsHubModal({
           ...(payload.ia_dados_extraidos ?? {}),
           residencia_terceiro: terceiroDados,
           tem_divergencia: false,
+          // Fluxo concluído: o comprovante não fica em análise. Ou é aprovado
+          // aqui, ou o cliente teria voltado à fase de enviar outra conta.
+          recomendacao: "aceitar",
         };
       }
 
@@ -3086,7 +3092,8 @@ export function ClienteDocsHubModal({
       // documentos com apontamento criminal ou divergência de dados do cliente.
       const bloqueioRevisao =
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
-      const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
+      const iaConfia =
+        !bloqueioRevisao && (classificacao?.recomendacao === "aceitar" || !!terceiroDados);
       if (isStaff) {
         payload.status = "aprovado";
         payload.origem = "admin";
@@ -3297,6 +3304,10 @@ export function ClienteDocsHubModal({
             }
           : { tipo: "analise" }
       );
+
+      // Residência de terceiro concluída: o comprovante fica aprovado e o
+      // pop-up guiado da Declaração do Responsável pelo Imóvel abre em seguida.
+      if (terceiroDados) setDeclaracaoAberta(true);
     } catch (e: any) {
       console.error("[save doc] error:", e);
       setResultadoCarimbo({ tipo: "reprovado", mensagem: e?.message || "Falha ao salvar documento." });
@@ -4680,6 +4691,23 @@ export function ClienteDocsHubModal({
             toast.success("Residência declarada e documento do responsável validado.");
           }}
         />
+        <DeclaracaoResponsavelImovelModal
+          open={declaracaoAberta}
+          qaClienteId={qaClienteId ?? null}
+          dados={terceiroDados}
+          interessadoNome={refClienteNome ?? null}
+          onFechar={() => {
+            setDeclaracaoAberta(false);
+            setForm(EMPTY);
+            setFile(null);
+            setTerceiroDados(null);
+            onSaved();
+            onClose();
+          }}
+          onValidada={() => {
+            onSaved();
+          }}
+        />
       </DialogContent>
     </Dialog>
     {resultadoCarimbo && (
@@ -4688,7 +4716,9 @@ export function ClienteDocsHubModal({
         percentual={resultadoCarimbo.percentual}
         mensagem={resultadoCarimbo.mensagem}
         onDone={() => {
-          const fechar = resultadoCarimbo.tipo !== "reprovado";
+          // Com a declaração do responsável pendente, o hub permanece aberto:
+          // o próximo passo do cliente é assinar, e fechar aqui o perderia.
+          const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
