@@ -12396,6 +12396,7 @@ export type Database = {
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
       qa_norm_nome: { Args: { p_nome: string }; Returns: string }
+      qa_notificacao_dispensar: { Args: { p_id: string }; Returns: undefined }
       qa_notificacao_marcar_vista: {
         Args: { p_id: string }
         Returns: undefined
