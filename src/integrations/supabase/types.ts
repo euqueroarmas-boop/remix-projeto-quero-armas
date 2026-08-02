@@ -12179,6 +12179,10 @@ export type Database = {
         }[]
       }
       qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
+      qa_comprovante_terceiro_pendente: {
+        Args: { p_documento_id: string }
+        Returns: boolean
+      }
       qa_conceder_arsenal_premium_gratuito: {
         Args: { p_cliente_id: number; p_dias?: number; p_origem?: string }
         Returns: string
