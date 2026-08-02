@@ -3444,10 +3444,14 @@ export function ClienteDocsHubModal({
           : isStaff || iaConfia
           ? {
               tipo: "aprovado",
+              mensagem: `${tipoLabel} conferido com o seu cadastro · exigência atendida`,
               percentual:
                 classificacao?.confianca != null ? Math.round((classificacao.confianca || 0) * 100) : null,
             }
-          : { tipo: "analise" }
+          : {
+              tipo: "analise",
+              mensagem: `${tipoLabel} recebido · nosso time vai conferir e você será avisado`,
+            }
       );
 
       // Residência de terceiro: o comprovante fica AGUARDANDO e o pop-up guiado
@@ -3456,7 +3460,12 @@ export function ClienteDocsHubModal({
       if (terceiroDados) setDeclaracaoAberta(true);
     } catch (e: any) {
       console.error("[save doc] error:", e);
-      setResultadoCarimbo({ tipo: "reprovado", mensagem: e?.message || "Falha ao salvar documento." });
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: e?.message
+          ? `Não foi possível salvar: ${e.message}`
+          : "Falha ao salvar o documento · tente enviar novamente",
+      });
     } finally {
       setSaving(false);
     }
