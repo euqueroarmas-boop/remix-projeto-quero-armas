@@ -120,7 +120,7 @@ interface CentralAjudaClienteProps {
 
 const SUGESTOES = [
   "O que preciso para comprar uma arma como policial civil?",
-  "Quais documentos o vigilante precisa para a CNV?",
+  "Como consigo a posse de arma pra me defender e defender a minha família",
   "Como funciona o registro CAC?",
 ];
 
@@ -130,7 +130,7 @@ const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg:
   baixa: { label: "Confiança baixa", icon: <ShieldX     className="h-3 w-3" />, fg: RED,   bg: RED_BG   },
 };
 
-export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
+export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClienteProps) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
