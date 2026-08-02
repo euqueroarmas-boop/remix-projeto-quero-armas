@@ -4284,6 +4284,7 @@ export default function QAClientePortalPage() {
       <PendenciasGuiadasPopup
         open={
           !mustChangePassword &&
+          !declResidenciaAberta &&
           (showContratoPopup ||
             (pendingContractsLoaded &&
               pendingSignatureCount > 0 &&
@@ -4304,6 +4305,18 @@ export default function QAClientePortalPage() {
         onDismiss={dismissPendenciasGuiadas}
                 resumoProcesso={resumoProcesso}
         />
+      <DeclaracaoResponsavelImovelModal
+        open={declResidenciaAberta}
+        qaClienteId={Number((cliente as any)?.id) || null}
+        dados={null}
+        documentoComprovanteId={declResidenciaComprovanteId}
+        interessadoNome={(cliente as any)?.nome_completo ?? null}
+        onFechar={() => setDeclResidenciaAberta(false)}
+        onValidada={() => {
+          setDeclResidenciaAberta(false);
+          setDocsReloadKey((k) => k + 1);
+        }}
+      />
     </div>
     </PortalFilterProvider>
   );
