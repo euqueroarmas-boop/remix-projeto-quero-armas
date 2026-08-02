@@ -238,6 +238,31 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
+function RifleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* coronha + corpo principal */}
+      <path d="M2 15c0-1.5 1.5-3 3.5-3.5l4.5-1 6.5-3.5c1.5-.5 3 .5 3.5 2l.5 2.5c.5 1.5-.5 3-2 3.5l-9 3-4 1.5c-1 .5-2-.5-2.5-1.5z" />
+      {/* cano */}
+      <path d="M13 7.5L22 5" />
+      {/* mira / trilho */}
+      <path d="M14.5 10l5-1.5" />
+      {/* gatilho */}
+      <path d="M7.5 12.5c-.5 0-1 .5-1 1.5" />
+    </svg>
+  );
+}
+
+
 function ClientAvatar({
   url,
   name,
@@ -3243,12 +3268,27 @@ export default function QAClientePortalPage() {
             <Store className="h-[18px] w-[18px] shrink-0" />
           </button>
 
+          {/* Rodar checklist — fuzil */}
+          <button
+            type="button"
+            onClick={() => abrirChecklistGuiado()}
+            title="Rodar checklist"
+            aria-label="Rodar checklist"
+            className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: `${railIconColor}88` }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
+          >
+            <RifleIcon className="h-[18px] w-[18px] shrink-0" />
+          </button>
+
           {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
               Fica logo acima do Suporte — é o primeiro lugar onde ele olha
               quando quer saber "o que falta". */}
           <PainelDisparo itens={itensDisparo} corIcone={railIconColor} onOpen={abrirDisparoRail} />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
+
             const Icon = item.icon;
             const active = activeSection === item.key;
             return (
