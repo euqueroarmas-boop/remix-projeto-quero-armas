@@ -1,6 +1,6 @@
 import { BadgeCheck, Crosshair, Sparkles, Target, Zap } from "lucide-react";
 import ArsenalPremiumBadge from "@/components/quero-armas/portal/ArsenalPremiumBadge";
-import alvoHumanoide from "@/assets/alvo-humanoide.jpg.asset.json";
+import alvoHumanoide from "@/assets/alvo-humanoide-palco.jpg.asset.json";
 
 const legalBase = "Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311";
 
@@ -13,10 +13,10 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__head-main{min-width:0;flex:1}
         .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
-        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:26px;line-height:1.06;margin:0;letter-spacing:.03em;color:var(--ink);text-transform:uppercase;text-wrap:balance}
-        .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:640px;text-wrap:pretty}
+        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:clamp(17px,4.4vw,26px);line-height:1.06;margin:0;letter-spacing:.02em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
+        .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;text-wrap:pretty}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;box-shadow:0 6px 14px rgba(17,17,17,.04);flex:1;min-height:0;align-items:stretch}
-        .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#0A0A0A;border:1px solid var(--line);border-radius:3px;padding:14px;min-height:300px;height:100%;overflow:hidden}
+        .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:3px;padding:0;min-height:300px;height:100%;overflow:hidden}
         .qa-alvo__figure{position:relative;height:100%;max-height:520px;display:block}
         .qa-alvo__figure img{height:100%;width:auto;max-width:100%;display:block;object-fit:contain}
         .qa-alvo__hit{position:absolute;width:11px;height:11px;border-radius:999px;background:#141414;border:1px solid rgba(0,0,0,.55);box-shadow:0 0 0 1px rgba(255,255,255,.55),inset 0 1px 2px rgba(0,0,0,.9);transform:translate(-50%,-50%)}
@@ -33,7 +33,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}
-        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:16px}.qa-alvo__target{min-height:340px}.qa-alvo__figure{max-height:340px}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo h1{font-size:23px}}
+        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:14px}.qa-alvo__target{min-height:340px}.qa-alvo__figure{max-height:400px}.qa-alvo__cards{grid-template-columns:1fr}}
       `}</style>
 
       <div className="qa-alvo__head">
@@ -54,13 +54,13 @@ export default function ClienteAnaliseAlvoSection() {
           <div className="qa-alvo__figure">
             <img src={alvoHumanoide.url} alt="Alvo humanoide de treinamento com impactos agrupados na região central do tórax" />
             {/* Impactos na obreia central do tórax e no entorno imediato */}
-            <div className="qa-alvo__hit" style={{ left: "48.6%", top: "45.4%" }} />
-            <div className="qa-alvo__hit" style={{ left: "45.9%", top: "43.6%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "51.4%", top: "43.1%" }} />
-            <div className="qa-alvo__hit" style={{ left: "50.2%", top: "48.1%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "44.8%", top: "47.4%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "53.1%", top: "46.6%" }} />
-            <div className="qa-alvo__hit" style={{ left: "47.2%", top: "50.2%" }} />
+            <div className="qa-alvo__hit" style={{ left: "48.4%", top: "39.4%" }} />
+            <div className="qa-alvo__hit" style={{ left: "45.6%", top: "37.6%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "51.2%", top: "37.1%" }} />
+            <div className="qa-alvo__hit" style={{ left: "50.0%", top: "42.0%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "44.6%", top: "41.3%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "52.9%", top: "40.5%" }} />
+            <div className="qa-alvo__hit" style={{ left: "47.0%", top: "44.1%" }} />
           </div>
         </div>
 
