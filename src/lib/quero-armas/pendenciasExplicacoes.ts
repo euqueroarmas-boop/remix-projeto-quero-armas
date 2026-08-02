@@ -531,10 +531,14 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   comprovante_residencia: {
     titulo: "Comprovante de residência atual",
     passos: [
-      "Envie conta de luz, água, gás, internet ou telefone em seu nome.",
+      "Envie uma conta de CONSUMO DO IMÓVEL em seu nome: energia elétrica, água/esgoto, gás encanado, internet fixa ou telefone fixo.",
+      "A conta precisa mostrar o endereço completo do imóvel (rua, número, bairro, cidade, UF e CEP) e a data de emissão.",
       "A emissão deve ser recente — o sistema aceita contas emitidas há até 30 dias.",
+      "A Polícia Federal NÃO aceita conta de celular, fatura de cartão de crédito, extrato ou fatura de banco, boleto de financiamento e afins: essas cobranças são da pessoa, e não do consumo do imóvel.",
+      "Se a conta não estiver no seu nome, envie também a declaração assinada do titular do imóvel junto com o documento de identidade dele.",
     ],
-    observacao: "Se a conta não estiver no seu nome, envie também uma declaração do titular.",
+    observacao:
+      "A Polícia Federal precisa confirmar onde você tem residência ou domicílio fixo, porque é nesse endereço que a arma ficará guardada após a aprovação do pedido. Por isso só valem documentos que comprovem consumo naquele imóvel — contas pessoais e móveis (celular, cartão, banco) acompanham a pessoa, não o endereço, e por isso são recusadas.",
   },
   declaracao_responsavel_imovel: {
     titulo: "Declaração do titular do imóvel",
