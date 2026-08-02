@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCredenciadosPsico, type CredenciadoPsico } from "./AgendarExame/useCredenciadosPsico";
 import { toast } from "sonner";
@@ -186,6 +186,37 @@ type ConformidadeItem = {
   fonteReferencia: string | null;
   status: ConformidadeStatus;
 };
+
+/**
+ * Texto em linguagem clara explicando, campo a campo, por que a conformidade
+ * reprovou o documento. Nada de "fale com a equipe": o cliente vê o motivo.
+ */
+function explicarDivergencia(item: ConformidadeItem): string {
+  const lido = item.valorCertidao || "não localizado";
+  const esperado = item.valorReferencia || "não informado no cadastro";
+  switch (item.campo) {
+    case "nome_completo":
+      return `o documento está em nome de "${lido}", mas o interessado do processo é "${esperado}". Documento de outra pessoa não é aceito.`;
+    case "cpf":
+      return `o CPF do documento (${lido}) é diferente do CPF do interessado (${esperado}).`;
+    case "tomador_nome":
+      return `a nota foi emitida para "${lido}", que tem o mesmo sobrenome de família do prestador "${esperado}". Nota emitida para parente não comprova ocupação lícita.`;
+    case "tomador_endereco":
+      return `o endereço do tomador (${lido}) é o mesmo endereço do prestador (${esperado}) — indício de operação entre familiares no mesmo domicílio.`;
+    case "cnpj":
+    case "cnpj_prestador":
+      return `o CNPJ do documento (${lido}) não é o mesmo CNPJ da empresa já comprovada (${esperado}).`;
+    case "razao_social":
+    case "razao_social_prestador":
+      return `a razão social do documento ("${lido}") não confere com a empresa já comprovada ("${esperado}").`;
+    case "data_nascimento":
+      return `a data de nascimento do documento (${formatDateBrDisplay(lido)}) não confere com a do cadastro (${formatDateBrDisplay(esperado)}).`;
+    case "nome_mae":
+      return `o nome da mãe no documento ("${lido}") não confere com o cadastro ("${esperado}").`;
+    default:
+      return `o valor lido no documento ("${lido}") não confere com a referência já aprovada ("${esperado}").`;
+  }
+}
 
 const TIPOS_CERTIDAO = new Set([
   "antecedentes_criminais",
@@ -3936,8 +3967,9 @@ export function ClienteDocsHubModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
-                    {conformidade.map((item) => (
-                      <tr key={item.campo} className="align-top">
+                     {conformidade.map((item) => (
+                       <Fragment key={item.campo}>
+                       <tr className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
                         <td className="py-1 pr-2 font-tactical">
                           {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorCertidao) : item.campo === "sexo" ? expandSexo(item.valorCertidao) : item.valorCertidao}
@@ -3958,14 +3990,32 @@ export function ClienteDocsHubModal({
                             <span className="text-blue-600 font-bold animate-pulse">⟳ IA verificando…</span>
                           )}
                         </td>
-                      </tr>
-                    ))}
+                       </tr>
+                       {item.status === "divergente" && (
+                         <tr>
+                           <td colSpan={4} className="pb-1.5">
+                             <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
+                               MOTIVO DA REJEIÇÃO — {explicarDivergencia(item)}
+                             </div>
+                           </td>
+                         </tr>
+                       )}
+                       </Fragment>
+                     ))}
                   </tbody>
                 </table>
                 {conformidade.some(i => i.status === "divergente") && (
-                  <p className="mt-2 font-semibold text-red-800 text-[10px]">
-                    Atenção: há divergência de dados. Corrija o documento ou entre em contato com a equipe antes de prosseguir.
-                  </p>
+                  <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
+                      Por que este documento foi rejeitado
+                    </div>
+                    <p className="mt-1 text-[10px] font-semibold leading-snug text-red-800">
+                      {conformidade
+                        .filter((i) => i.status === "divergente")
+                        .map((i) => `${i.label}: ${explicarDivergencia(i)}`)
+                        .join(" ")}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
