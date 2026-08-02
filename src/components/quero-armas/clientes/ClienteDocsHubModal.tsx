@@ -3307,7 +3307,7 @@ export function ClienteDocsHubModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:bg-[#F7F7F7] hover:text-[#0A0A0A]"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#7A1F2B] bg-[#7A1F2B] text-white transition-colors hover:bg-[#5a1620] hover:text-white"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
