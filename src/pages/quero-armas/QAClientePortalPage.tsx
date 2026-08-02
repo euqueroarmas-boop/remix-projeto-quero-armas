@@ -3323,12 +3323,23 @@ export default function QAClientePortalPage() {
 
       <style>{`
         .qa-portal-main { touch-action: pan-y; overflow-x: hidden; overscroll-behavior-x: none; }
+        /* Enquadramento canônico (referência: aba Contratos) */
+        .qa-portal-main {
+          padding-left: calc(1rem + env(safe-area-inset-left));
+          padding-right: calc(1rem + env(safe-area-inset-right));
+        }
+        @media (min-width: 1024px) {
+          .qa-portal-main {
+            padding-left: calc(2rem + env(safe-area-inset-left));
+            padding-right: calc(2rem + env(safe-area-inset-right));
+          }
+        }
         .qa-portal-main * { touch-action: pan-y; }
         .qa-portal-main [style*="overflow-x"],
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: hidden !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -3530,7 +3541,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeTab === "resumo" && (
-        <div className="qa-resumo-light h-full min-h-0">
+        <div className="qa-resumo-light h-full min-h-0 pt-[26px]">
         <ClienteResumoKanban
           cliente={cliente}
           vendas={vendas}
@@ -3955,7 +3966,7 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <div className="flex h-full min-h-0 flex-col pt-8">
+          <div className="flex h-full min-h-0 flex-col pt-[26px]">
             <div className="no-print mb-3 mt-1 flex shrink-0 items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
               {(["lista", "extraidos"] as const).map((k) => (
                 <button
