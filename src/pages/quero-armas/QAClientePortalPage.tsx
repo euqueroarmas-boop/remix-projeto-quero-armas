@@ -1465,17 +1465,17 @@ export default function QAClientePortalPage() {
   // não é mais exposta como item de navegação — "Meus processos" cobre o
   // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
-    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal-inteligente", group: "primary" as const },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
-    { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "processos" as const, label: "Meus Processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
-    { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
-    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
-    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen, path: "/area-do-cliente/recarga-de-municoes", group: "primary" as const },
-    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
-    { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
-    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
+    { key: "resumo" as const, label: "Resumo", icon: IconLayoutGrid, path: "/area-do-cliente", group: "primary" as const },
+    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: IconCrosshair, path: "/area-do-cliente/arsenal-inteligente", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: IconFileCertificate, path: "/area-do-cliente/contratos", group: "primary" as const },
+    { key: "documentos" as const, label: "Documentos", icon: IconFolders, path: "/area-do-cliente/documentos", group: "primary" as const },
+    { key: "processos" as const, label: "Meus Processos", icon: IconLayoutKanban, path: "/area-do-cliente/processos", group: "primary" as const },
+    { key: "pendencias" as const, label: "Pendências", icon: IconBellRinging2, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: IconTargetArrow, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
+    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: IconPackages, path: "/area-do-cliente/recarga-de-municoes", group: "primary" as const },
+    { key: "financeiro" as const, label: "Financeiro", icon: IconCreditCardPay, path: "/area-do-cliente/financeiro", group: "primary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: IconHeadset, path: "/area-do-cliente/mensagens", group: "primary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: IconAdjustmentsHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
   ], []);
 
   // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
