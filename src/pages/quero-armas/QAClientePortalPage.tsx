@@ -91,6 +91,21 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ShoppingCart, UserCog } from "lucide-react";
+import {
+  IconLayoutGrid,
+  IconCrosshair,
+  IconFileCertificate,
+  IconFolders,
+  IconLayoutKanban,
+  IconBellRinging2,
+  IconTargetArrow,
+  IconPackages,
+  IconCreditCardPay,
+  IconHeadset,
+  IconAdjustmentsHorizontal,
+  IconBuildingStore,
+  IconBomb,
+} from "@tabler/icons-react";
 
 const CHECKLIST_AUTO_REVIEW_INTERVAL_MS = 10 * 60 * 1000;
 
