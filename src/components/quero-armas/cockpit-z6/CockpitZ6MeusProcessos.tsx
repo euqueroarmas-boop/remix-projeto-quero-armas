@@ -371,13 +371,15 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-title{padding-left:0}
           .z6-root .z6-foco-body{padding-left:0}
         }
-        /* Foco do dia travado no topo ao rolar */
-        .z6-root .z6-foco-card{position:sticky;position:-webkit-sticky;top:0;z-index:40;box-shadow:0 6px 18px -12px rgba(0,0,0,.35)}
+        /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
+        .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2;padding-bottom:4px}
+        .z6-root .z6-sticky-header::after{content:"";display:block;height:12px;background:linear-gradient(to bottom,#F2F2F2,transparent);pointer-events:none}
       `}</style>
 
-      {/* HEADER cliente-centric */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+      {/* HEADER + FOCO DO DIA fixos no topo */}
+      <div className="z6-sticky-header">
+        <div style={{ marginBottom: 20 }}>
+          <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
         <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
