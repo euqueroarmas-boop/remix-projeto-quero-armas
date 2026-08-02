@@ -2819,6 +2819,20 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // Trava dura · DOCUMENTO VENCIDO (qualquer tipo, qualquer processo):
+    // não é salvo, não entra no Hub Documental e não gera carimbo de aprovado.
+    // Carimbo de REPROVADO explica o motivo resumidamente.
+    if (docExpirado) {
+      const venc = form.data_validade
+        ? new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")
+        : "";
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: `Documento vencido${venc ? ` em ${venc}` : ""} · envie a via atualizada`,
+      });
+      return;
+    }
+
     // Trava de segurança: nenhum campo sensível pode ser gravado sem
     // confirmação humana explícita (clique em Confirmar OU edição manual).
     const pendentes = pendingSensitiveKeys();
