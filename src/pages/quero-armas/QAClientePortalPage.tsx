@@ -3321,7 +3321,14 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
+      <style>{`
+        .qa-portal-main { touch-action: pan-y; overflow-x: hidden; overscroll-behavior-x: none; }
+        .qa-portal-main * { touch-action: pan-y; }
+        .qa-portal-main [style*="overflow-x"],
+        .qa-portal-main .overflow-x-auto,
+        .qa-portal-main .overflow-x-scroll { overflow-x: hidden !important; }
+      `}</style>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
