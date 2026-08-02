@@ -44,7 +44,14 @@ export default function DocResultadoCarimbo({
 
   return (
     <div
+      // O Dialog do Radix aplica pointer-events:none no body enquanto está
+      // aberto — sem forçar auto aqui, o clique fora do carimbo não chega.
+      style={{ pointerEvents: "auto" }}
       className="fixed inset-0 z-[400] flex items-center justify-center bg-black/55 backdrop-blur-[2px] p-6"
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onDone();
+      }}
       onClick={onDone}
       role="status"
       aria-live="polite"
