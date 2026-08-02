@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
 import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import DocResultadoCarimbo from "./DocResultadoCarimbo";
+import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
@@ -1284,6 +1285,9 @@ export function ClienteDocsHubModal({
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
   const [categoriaHub, setCategoriaHub] = useState<HubCategoria>(inferHubCategoriaFromTipo(defaultTipoEfetivo));
   const [file, setFile] = useState<File | null>(null);
+  // Único caso de dados de terceiro no sistema: comprovante de endereço em
+  // nome do responsável pelo imóvel onde o cliente reside.
+  const [terceiroDados, setTerceiroDados] = useState<ResidenciaTerceiroPayload | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
