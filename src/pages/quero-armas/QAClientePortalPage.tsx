@@ -1097,23 +1097,42 @@ export default function QAClientePortalPage() {
 
     let active = true;
     setAvatarLoading(true);
-    void supabase.functions
-      .invoke("qa-cliente-avatar", { body: { cliente_id: clienteId } })
-      .then(({ data, error }) => {
-        if (!active) return;
-        if (error) {
-          console.error("[Portal] avatar oficial não resolvido:", error.message);
-          setAvatarOficial({ url: null, path: null, bucket: null, source: null, hasPhoto: false });
-          return;
-        }
-        setAvatarOficial((data as ClienteAvatarOficial) || { url: null, path: null, bucket: null, source: null, hasPhoto: false });
-      })
-      .finally(() => {
-        if (active) setAvatarLoading(false);
-      });
+    // A URL assinada da foto expira em 1h e a edge function pode falhar de
+    // forma transitória (renovação de sessão, rede do celular). Antes disso
+    // derrubava a foto para as iniciais e não voltava mais. Agora: tenta de
+    // novo uma vez, preserva a última foto boa em caso de erro e renova a
+    // assinatura a cada 45 minutos.
+    const resolver = async (): Promise<void> => {
+      const tentar = () => supabase.functions.invoke("qa-cliente-avatar", { body: { cliente_id: clienteId } });
+      let { data, error } = await tentar();
+      if (error) {
+        await new Promise((r) => setTimeout(r, 1500));
+        ({ data, error } = await tentar());
+      }
+      if (!active) return;
+      if (error) {
+        console.error("[Portal] avatar oficial não resolvido:", error.message);
+        // Mantém a foto anterior se já existia; só zera quando nunca houve foto.
+        setAvatarOficial((prev) => (prev?.hasPhoto ? prev : { url: null, path: null, bucket: null, source: null, hasPhoto: false }));
+        return;
+      }
+      const next = (data as ClienteAvatarOficial) || null;
+      setAvatarOficial((prev) =>
+        next?.hasPhoto || !prev?.hasPhoto
+          ? next || { url: null, path: null, bucket: null, source: null, hasPhoto: false }
+          : prev,
+      );
+    };
+
+    void resolver().finally(() => {
+      if (active) setAvatarLoading(false);
+    });
+
+    const renovar = window.setInterval(() => { void resolver(); }, 45 * 60 * 1000);
 
     return () => {
       active = false;
+      window.clearInterval(renovar);
     };
   }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey, avatarReloadKey]);
 

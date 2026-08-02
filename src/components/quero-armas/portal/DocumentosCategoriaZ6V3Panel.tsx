@@ -407,9 +407,11 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px;cursor:pointer;transition:all .12s ease;text-align:left;font:inherit;color:inherit}
         .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
         .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
-        .qa-docsz6 .kpi .l{font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.24em;color:#7A7A7A;display:flex;align-items:center;gap:6px;text-transform:uppercase}
+        .qa-docsz6 .kpi .l{font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.24em;color:#7A7A7A;display:flex;align-items:flex-start;gap:6px;text-transform:uppercase;min-width:0;overflow-wrap:anywhere;word-break:break-word;line-height:1.25}
+        .qa-docsz6 .kpi .l .dot{margin-top:4px;flex:0 0 auto}
+        .qa-docsz6 .kpi .l .lt{min-width:0;overflow-wrap:anywhere}
         .qa-docsz6 .kpi .v{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:26px;font-weight:900;margin-top:9px;color:#0A0A0A;line-height:1;letter-spacing:0}
-        .qa-docsz6 .kpi .s{font-family:'Arial Narrow',Arial,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0;font-weight:700}
+        .qa-docsz6 .kpi .s{font-family:'Arial Narrow',Arial,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0;font-weight:700;overflow-wrap:anywhere}
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
         .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0;gap:12px}
         .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
@@ -442,7 +444,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .rm:hover{color:#D9342B}
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
-          .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+          .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+          .qa-docsz6 .kpi{padding:10px 9px}
+          .qa-docsz6 .kpi .l{font-size:9px;letter-spacing:.12em;gap:5px}
+          .qa-docsz6 .kpi .s{font-size:10px}
+          .qa-docsz6 .grp-h .gt{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
+          .qa-docsz6 .listhead .ttl{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px;border-bottom:3px solid #F2F2F2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
@@ -490,8 +497,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       })()}
       </div>
 
-      {/* ÁREA ROLÁVEL — KPIs, filtros e lista */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
+      {/* BLOCO FIXO (continuação) — KPIs, filtro e cabeçalho da lista */}
+      <div style={{ flexShrink: 0 }}>
       {/* KPIs */}
       <div className="kpis">
         {([
@@ -509,7 +516,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
             onClick={() => setFilter((f) => (f === it.k ? null : it.k))}
             aria-pressed={filter === it.k}
           >
-            <div className="l"><span className="dot" style={{ background: it.dot }} />{it.l}</div>
+            <div className="l"><span className="dot" style={{ background: it.dot }} /><span className="lt">{it.l}</span></div>
             <div className="v" style={{ color: it.vc }}>{it.v}</div>
             <div className="s">{it.s}</div>
           </button>
@@ -530,7 +537,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           <Plus className="h-3 w-3" /> ADICIONAR
         </button>
       </div>
+      </div>
 
+      {/* ÁREA ROLÁVEL — somente as categorias */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {grupos.length === 0 ? (
         <div className="empty">Nenhum documento cadastrado ainda.</div>
       ) : (
