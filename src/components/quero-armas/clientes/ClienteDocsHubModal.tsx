@@ -2470,7 +2470,13 @@ export function ClienteDocsHubModal({
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
     if (isTipoIdentidadeComQr(form.tipo_documento)) {
       if (f.type !== "application/pdf") {
-        toast.error(MSG_IDENTIDADE_SOMENTE_PDF);
+        const id = toast.error(MSG_IDENTIDADE_SOMENTE_PDF, {
+          duration: Infinity,
+          action: {
+            label: "ENTENDI",
+            onClick: () => toast.dismiss(id),
+          },
+        });
         setFile(null);
         return;
       }
@@ -2485,7 +2491,13 @@ export function ClienteDocsHubModal({
       }
       const veredicto = avaliarPdfIdentidade(textoIdentidade);
       if (!veredicto.ok) {
-        toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF);
+        const id = toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF, {
+          duration: Infinity,
+          action: {
+            label: "ENTENDI",
+            onClick: () => toast.dismiss(id),
+          },
+        });
         setFile(null);
         return;
       }
