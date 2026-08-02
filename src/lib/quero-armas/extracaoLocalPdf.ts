@@ -93,13 +93,31 @@ const ORGAOS: Array<{ re: RegExp; nome: string }> = [
   { re: /RECEITA FEDERAL/i, nome: "Receita Federal" },
 ];
 
+/**
+ * Carrega o pdf.js apontando o worker para o bundle LOCAL do projeto.
+ * O CDN era ponto único de falha: quando ele não carregava, PDFs oficiais
+ * (CNH digital, CIN) eram recusados como "sem texto".
+ */
+export async function carregarPdfjs() {
+  const mod = await import("pdfjs-dist");
+  const { GlobalWorkerOptions, version } = mod;
+  if (!GlobalWorkerOptions.workerSrc) {
+    try {
+      const workerUrl = (
+        await import("pdfjs-dist/build/pdf.worker.min.mjs?url")
+      ).default as string;
+      GlobalWorkerOptions.workerSrc = workerUrl;
+    } catch {
+      GlobalWorkerOptions.workerSrc =
+        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+    }
+  }
+  return mod;
+}
+
 /** Lê a camada de texto do PDF com o pdf.js que já roda no preview. */
 export async function extrairTextoPdf(file: File): Promise<string> {
-  const { getDocument, GlobalWorkerOptions, version } = await import("pdfjs-dist");
-  if (!GlobalWorkerOptions.workerSrc) {
-    GlobalWorkerOptions.workerSrc =
-      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
-  }
+  const { getDocument } = await carregarPdfjs();
   const buf = await file.arrayBuffer();
   const pdf = await getDocument({ data: buf }).promise;
   const partes: string[] = [];
