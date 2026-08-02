@@ -371,6 +371,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         color: "#0A0A0A",
         padding: 0,
         borderRadius: 0,
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
       }}
     >
       <style>{`
