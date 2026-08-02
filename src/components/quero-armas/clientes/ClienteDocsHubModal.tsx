@@ -2581,7 +2581,7 @@ export function ClienteDocsHubModal({
           data_emissao: contaConsumo.data_emissao || "",
         },
       });
-      setCategoriaHub("identificacao_endereco");
+      setCategoriaHub(inferHubCategoriaFromTipo("comprovante_residencia"));
       setForm((prev) => ({
         ...prev,
         tipo_documento: "comprovante_residencia",
