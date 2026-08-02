@@ -2610,6 +2610,11 @@ export function ClienteDocsHubModal({
           codigo_instalacao: contaConsumo.codigo_instalacao,
           orgao_emissor: contaConsumo.empresa_emissora,
           data_emissao: contaConsumo.data_emissao || "",
+          // Titular impresso na fatura. É esse cruzamento que faz o comprovante
+          // em nome de terceiro abrir a Declaração do Responsável pelo Imóvel
+          // em vez de cair em duplicidade/análise.
+          ...(contaConsumo.titular_nome ? { nome_completo: contaConsumo.titular_nome } : {}),
+          ...(contaConsumo.titular_cpf ? { cpf: contaConsumo.titular_cpf } : {}),
         },
       });
       setCategoriaHub(inferHubCategoriaFromTipo("comprovante_residencia"));
