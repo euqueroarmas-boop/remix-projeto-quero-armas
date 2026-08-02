@@ -4090,7 +4090,7 @@ export function ClienteDocsHubModal({
               </div>
             )}
 
-            {!conferenciaLocal && conformidadeExibidaExibida.length > 0 && (
+            {!conferenciaLocal && conformidadeExibida.length > 0 && (
               <div className={cn(
                 "rounded-2xl border p-3 text-xs",
                 conformidadeExibida.some(i => i.status === "divergente")
