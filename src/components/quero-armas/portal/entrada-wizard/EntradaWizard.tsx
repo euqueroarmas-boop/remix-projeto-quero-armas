@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -151,13 +152,25 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
   return (
     <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
       <DialogContent
-        className="max-w-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto"
-        style={{ background: PAPER, borderColor: LINE }}
+        className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-2xl p-0 overflow-hidden rounded-2xl bg-white max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] overflow-y-auto [&>button]:hidden"
+        style={{ borderColor: LINE }}
       >
+        <DialogClose
+          aria-label="Fechar"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </DialogClose>
+
         {/* ── V8 Big-Tile · cabeçalho ────────────────────────────────── */}
-        <div className="px-6 pt-5">
-          <div className="text-[10px] font-bold tracking-[0.22em]" style={{ ...OSWALD, color: BORDO }}>
-            NOVO SERVIÇO · {step}/{totalSteps}
+        <div className="px-6 pt-6 pr-14">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+              Novo serviço
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              Passo {step} de {totalSteps}
+            </span>
           </div>
           <h2 className="mt-1 text-[22px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>
             {step === 1
