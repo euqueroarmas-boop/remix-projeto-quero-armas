@@ -520,6 +520,37 @@ function numeroCertidao(texto: string): string {
   return texto.match(/CERTID[ÃA]O\s*N[ºO°.:\s]*([0-9]{4,})/i)?.[1] || "";
 }
 
+function extrairContaConsumo(texto: string): {
+  empresa: string;
+  codigoInstalacao: string;
+  dataEmissao: string;
+} | null {
+  const norm = normalizarTexto(texto);
+  const contaConsumo = /ENERGIA ELETRICA|CONTA DE ENERGIA|DISTRIBUICAO DE ENERGIA|CONSUMO KWH|CONTA DE AGUA|SERVICO DE AGUA|CONTA DE GAS|INTERNET FIXA|TELEFONIA FIXA/.test(norm);
+  if (!contaConsumo) return null;
+  const empresa = /\bEDP\b|EDP SAO PAULO/.test(norm) ? "EDP São Paulo Distribuição de Energia S.A."
+    : /\bENEL\b/.test(norm) ? "Enel Distribuição"
+    : /\bCPFL\b/.test(norm) ? "CPFL Energia"
+    : /\bSABESP\b/.test(norm) ? "Sabesp"
+    : /\bLIGHT\b/.test(norm) ? "Light"
+    : /\bCEMIG\b/.test(norm) ? "Cemig"
+    : "Concessionária de serviço público";
+  const candidatos = [
+    /(?:N[ºO°.]?\s*(?:DA\s*)?)?(?:INSTALA[ÇC][ÃA]O|UNIDADE\s+CONSUMIDORA|UC|MATR[ÍI]CULA)\s*[:#-]?\s*(0[\d.\s-]{10,24})/i,
+    /(?:C[ÓO]DIGO)\s+(?:DA\s+)?(?:INSTALA[ÇC][ÃA]O|UC)\s*[:#-]?\s*(0?[\d.\s-]{8,24})/i,
+    /\b(0\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}-\s*\d{2})\b/,
+  ];
+  let codigoInstalacao = "";
+  for (const rx of candidatos) {
+    const valor = rx.exec(texto)?.[1]?.replace(/\D/g, "") || "";
+    if (valor.length >= 8 && valor.length <= 18) { codigoInstalacao = valor; break; }
+  }
+  const dataEmissao = /(?:DATA\s+DE\s+)?EMISS[ÃA]O\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(texto)?.[1]
+    || /EMITID[AO]\s+EM\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(texto)?.[1]
+    || "";
+  return { empresa, codigoInstalacao, dataEmissao };
+}
+
 /**
  * CPF tem dois dígitos verificadores determinísticos. Em documentos digitais
  * com fonte pequena (especialmente CNH-e), a visão às vezes lê somente o
@@ -549,6 +580,22 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
+
+  // "Nota Fiscal/Conta de Energia Elétrica" é a denominação fiscal da fatura
+  // da concessionária. Para o Hub continua sendo comprovante de residência.
+  const contaConsumo = extrairContaConsumo(textoPdf);
+  if (contaConsumo) {
+    parsed.tipoDetectado = "COMPROVANTE_RESIDENCIA";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.orgao_emissor = contaConsumo.empresa;
+    if (contaConsumo.codigoInstalacao) {
+      campos.codigo_instalacao = contaConsumo.codigoInstalacao;
+      campos.numero_documento = contaConsumo.codigoInstalacao;
+    }
+    if (contaConsumo.dataEmissao) campos.data_emissao = contaConsumo.dataEmissao;
+    parsed.justificativa = "Classificação determinística: conta de consumo do imóvel; a expressão Nota Fiscal é apenas a denominação fiscal da fatura.";
+    return parsed;
+  }
 
   const isTJSP = norm.includes("TRIBUNAL DE JUSTICA DO ESTADO DE SAO PAULO") || norm.includes(" TJSP ") || norm.includes(" TJ SP ");
   const temExecucoes = /REGISTROS DE DISTRIBUICOES DE EXECUCOES CRIMINAIS|FEITOS DE EXECUCOES CRIMINAIS|\bEXECUCOES CRIMINAIS\b/.test(norm);
