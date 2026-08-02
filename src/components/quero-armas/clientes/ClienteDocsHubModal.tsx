@@ -7,6 +7,7 @@ import {
   Camera,
   CheckCircle2,
   Crosshair,
+  FileDown,
   FileText,
   Hash,
   Image as ImageIcon,
@@ -1307,6 +1308,8 @@ export function ClienteDocsHubModal({
   const [terceiroDados, setTerceiroDados] = useState<ResidenciaTerceiroPayload | null>(null);
   /** Pop-up guiado da Declaração do Responsável pelo Imóvel (assinatura GOV.BR). */
   const [declaracaoAberta, setDeclaracaoAberta] = useState(false);
+  /** ID do comprovante de residência salvo — vincula a declaração ao documento. */
+  const [comprovanteDocId, setComprovanteDocId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
