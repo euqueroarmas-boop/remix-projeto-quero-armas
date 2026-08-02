@@ -1390,6 +1390,7 @@ export function ClienteDocsHubModal({
   useEffect(() => {
     if (open) return;
     setFile(null);
+    setTerceiroDados(null);
     setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
     setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
     setClassificacao(null);
