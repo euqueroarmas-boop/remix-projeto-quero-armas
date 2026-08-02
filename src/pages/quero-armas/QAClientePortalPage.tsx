@@ -3322,7 +3322,7 @@ export default function QAClientePortalPage() {
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <style>{`
-        .qa-portal-main { touch-action: pan-y; overflow-x: hidden; overscroll-behavior-x: none; }
+        .qa-portal-main { touch-action: pan-y; overflow-x: clip; overscroll-behavior-x: none; }
         /* Enquadramento canônico (referência: aba Contratos) */
         .qa-portal-main {
           padding-left: calc(1rem + env(safe-area-inset-left));
@@ -3337,7 +3337,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main * { touch-action: pan-y; }
         .qa-portal-main [style*="overflow-x"],
         .qa-portal-main .overflow-x-auto,
-        .qa-portal-main .overflow-x-scroll { overflow-x: hidden !important; }
+        .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
       <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
