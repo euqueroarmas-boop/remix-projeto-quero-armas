@@ -475,7 +475,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       </div>
 
       {/* ÁREA ROLÁVEL — KPIs, filtros e lista */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: 24 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {/* KPIs */}
       <div className="kpis">
         {([
