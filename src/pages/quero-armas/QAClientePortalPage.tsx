@@ -3120,18 +3120,8 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 pt-14 lg:pt-0 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
-      {/* Botão hambúrguer — visível apenas <lg quando o menu está escondido */}
-      {mobileHidden && (
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(false)}
-          aria-label="Abrir menu"
-          className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-[#141414] text-white border border-[#2a2a2a] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
+      {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito em todas as seções */}
       <div style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
         <button
