@@ -3441,9 +3441,9 @@ export function ClienteDocsHubModal({
       // cópia de campos para qa_clientes (titulo_eleitor, etc.) e e-mail são
       // disparados por triggers SECURITY DEFINER no banco.
 
+      docSalvoRef.current = true;
       setResultadoCarimbo(
         terceiroDados
-          ? (docSalvoRef.current = true) && false ? null
           ? {
               tipo: "analise",
               mensagem:
