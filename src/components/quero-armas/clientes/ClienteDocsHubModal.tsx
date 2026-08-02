@@ -53,6 +53,7 @@ import {
 } from "@/lib/quero-armas/conferenciaLaudo";
 import {
   parseComprovanteEndereco,
+  parseContaConsumo,
   type ResultadoEndereco,
 } from "@/lib/quero-armas/parserComprovanteEndereco";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
@@ -2559,6 +2560,50 @@ export function ClienteDocsHubModal({
       } else {
         toast.success("CCMEI lido e reconhecido — ocupação lícita.");
       }
+      return true;
+    }
+
+    // Contas de concessionária trazem "Nota Fiscal" por exigência fiscal, mas
+    // no Hub são comprovantes de residência. Resolver localmente elimina a
+    // espera da IA e impede a classificação incorreta como nota de renda.
+    const contaConsumo = parseContaConsumo(texto);
+    if (contaConsumo) {
+      const emissaoIso = dataIsoFromBr(contaConsumo.data_emissao);
+      setConferenciaLocal(null);
+      setClassificacao({
+        tipoDetectado: "COMPROVANTE_RESIDENCIA",
+        confianca: 0.99,
+        justificativa: `Conta de ${contaConsumo.tipo} reconhecida pela leitura local do PDF.`,
+        camposExtraidos: {
+          numero_documento: contaConsumo.codigo_instalacao,
+          codigo_instalacao: contaConsumo.codigo_instalacao,
+          orgao_emissor: contaConsumo.empresa_emissora,
+          data_emissao: contaConsumo.data_emissao || "",
+        },
+      });
+      setCategoriaHub(inferHubCategoriaFromTipo("comprovante_residencia"));
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: "comprovante_residencia",
+        nome_documento: `Conta de ${contaConsumo.tipo === "energia" ? "energia elétrica" : contaConsumo.tipo}`,
+        numero_documento: contaConsumo.codigo_instalacao || prev.numero_documento,
+        orgao_emissor: contaConsumo.empresa_emissora,
+        data_emissao: emissaoIso || prev.data_emissao,
+        data_validade: emissaoIso ? addCalendarMonthsIso(emissaoIso, 1) : prev.data_validade,
+      }));
+      setIaExtraido({
+        numero_documento: contaConsumo.codigo_instalacao,
+        numero_cad_sinarm: "",
+        numero_registro_sigma: "",
+        arma_numero_serie: "",
+        arma_marca: "",
+        arma_modelo: "",
+        arma_calibre: "",
+        data_validade: emissaoIso ? addCalendarMonthsIso(emissaoIso, 1) : "",
+        sistema_registro: "REVISAR",
+      });
+      setConfirmados({});
+      toast.success("Conta de consumo lida e classificada localmente.");
       return true;
     }
 
