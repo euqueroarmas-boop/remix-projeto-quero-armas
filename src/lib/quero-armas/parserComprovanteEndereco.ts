@@ -151,28 +151,40 @@ export function parseContaConsumo(texto: string): ContaConsumoExtraida | null {
   const t = norm(original).toUpperCase();
   if (!t) return null;
 
+  // O pdf.js entrega os glifos item a item: "E N E R G I A  E L E T R I C A"
+  // aparece com espaçamento arbitrário e derrubava todas as expressões acima.
+  // A comparação passa a ser feita sobre o texto COMPACTO (só letras/dígitos),
+  // que é imune a como a fatura foi diagramada.
+  const c = t.replace(/[^A-Z0-9]/g, "");
+
   const tipo: ContaConsumoExtraida["tipo"] | null =
-    /ENERGIA ELETRICA|CONTA DE ENERGIA|DISTRIBUICAO DE ENERGIA|CONSUMO KWH/.test(t) ? "energia"
-    : /CONTA DE AGUA|SERVICO DE AGUA|CONSUMO M3/.test(t) ? "agua"
-    : /CONTA DE GAS|DISTRIBUICAO DE GAS|CONSUMO DE GAS/.test(t) ? "gas"
-    : /INTERNET FIXA|BANDA LARGA/.test(t) ? "internet"
-    : /TELEFONE FIXO|TELEFONIA FIXA/.test(t) ? "telefone_fixo"
+    /ENERGIAELETRICA|CONTADEENERGIA|CONTADELUZ|DISTRIBUICAODEENERGIA|FATURADEENERGIA|CONSUMOKWH|KWH|UNIDADECONSUMIDORA|DANF3E/.test(c) ? "energia"
+    : /CONTADEAGUA|SERVICODEAGUA|FATURADEAGUA|AGUAEESGOTO|CONSUMOM3/.test(c) ? "agua"
+    : /CONTADEGAS|DISTRIBUICAODEGAS|CONSUMODEGAS|GASCANALIZADO/.test(c) ? "gas"
+    : /INTERNETFIXA|BANDALARGA/.test(c) ? "internet"
+    : /TELEFONEFIXO|TELEFONIAFIXA/.test(c) ? "telefone_fixo"
     : null;
   if (!tipo) return null;
 
   const empresa_emissora =
-    /\bEDP\b|EDP SAO PAULO/.test(t) ? "EDP São Paulo Distribuição de Energia S.A."
+    /\bEDP\b|EDP SAO PAULO/.test(t) || /EDPSPDISTRIB|EDPSAOPAULO/.test(c) ? "EDP São Paulo Distribuição de Energia S.A."
     : /\bENEL\b/.test(t) ? "Enel Distribuição"
     : /\bCPFL\b/.test(t) ? "CPFL Energia"
     : /\bSABESP\b/.test(t) ? "Sabesp"
+    : /\bCOMGAS\b/.test(t) ? "Comgás"
     : /\bLIGHT\b/.test(t) ? "Light"
     : /\bCEMIG\b/.test(t) ? "Cemig"
+    : /\bCOPEL\b/.test(t) ? "Copel"
+    : /\bCELESC\b/.test(t) ? "Celesc"
+    : /\bNEOENERGIA\b/.test(t) ? "Neoenergia"
     : "Concessionária de serviço público";
 
   const rotulosUc = [
     /(?:N[ºO°.]?\s*(?:DA\s*)?)?(?:INSTALACAO|INSTALAÇÃO|UNIDADE\s+CONSUMIDORA|UC|MATRICULA|MATRÍCULA)\s*[:#-]?\s*(0[\d.\s-]{10,24})/i,
     /(?:CODIGO|CÓDIGO)\s+(?:DA\s+)?(?:INSTALACAO|INSTALAÇÃO|UC)\s*[:#-]?\s*(0?[\d.\s-]{8,24})/i,
     /\b(0\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}-\s*\d{2})\b/,
+    // "NÚMERO DA UC  0.000.433.013.004-04" (EDP) e variantes com pontuação.
+    /\bUC\b[^0-9]{0,20}([\d][\d.\s-]{8,26})/i,
   ];
   let codigo_instalacao = "";
   for (const rx of rotulosUc) {
@@ -185,6 +197,12 @@ export function parseContaConsumo(texto: string): ContaConsumoExtraida | null {
 
   const emissao = /(?:DATA\s+DE\s+)?EMISS[ÃA]O\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
     || /EMITID[AO]\s+EM\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
+    || /EMISS[ÃA]O[^0-9]{0,20}(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
+    // Fatura diagramada glifo a glifo: reconstrói o texto sem espaços antes
+    // de procurar a data, senão "2 5 / 0 6 / 2 0 2 6" passa despercebida.
+    || /EMISSAO[^0-9]{0,4}(\d{2}\/\d{2}\/\d{4})/i.exec(
+         norm(original).toUpperCase().replace(/\s+/g, ""),
+       )?.[1]
     || undefined;
 
   return { tipo, empresa_emissora, codigo_instalacao, data_emissao: emissao };
