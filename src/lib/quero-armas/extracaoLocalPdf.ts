@@ -123,7 +123,8 @@ export async function carregarPdfjs() {
  * cai no caminho lento (visão por IA no servidor) e o usuário espera ~40s.
  */
 function garantirAsyncIteratorEmStreams() {
-  const proto = (globalThis as { ReadableStream?: { prototype: Record<symbol, unknown> } }).ReadableStream?.prototype;
+  const proto = (globalThis as unknown as { ReadableStream?: { prototype: Record<symbol, unknown> } })
+    .ReadableStream?.prototype;
   if (!proto || proto[Symbol.asyncIterator]) return;
   proto[Symbol.asyncIterator] = function (this: ReadableStream) {
     const reader = this.getReader();
