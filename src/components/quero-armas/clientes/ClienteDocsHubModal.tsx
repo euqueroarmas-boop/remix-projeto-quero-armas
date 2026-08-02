@@ -4690,6 +4690,23 @@ export function ClienteDocsHubModal({
             toast.success("Residência declarada e documento do responsável validado.");
           }}
         />
+        <DeclaracaoResponsavelImovelModal
+          open={declaracaoAberta}
+          qaClienteId={qaClienteId ?? null}
+          dados={terceiroDados}
+          interessadoNome={refClienteNome ?? null}
+          onFechar={() => {
+            setDeclaracaoAberta(false);
+            setForm(EMPTY);
+            setFile(null);
+            setTerceiroDados(null);
+            onSaved();
+            onClose();
+          }}
+          onValidada={() => {
+            onSaved();
+          }}
+        />
       </DialogContent>
     </Dialog>
     {resultadoCarimbo && (
@@ -4698,7 +4715,9 @@ export function ClienteDocsHubModal({
         percentual={resultadoCarimbo.percentual}
         mensagem={resultadoCarimbo.mensagem}
         onDone={() => {
-          const fechar = resultadoCarimbo.tipo !== "reprovado";
+          // Com a declaração do responsável pendente, o hub permanece aberto:
+          // o próximo passo do cliente é assinar, e fechar aqui o perderia.
+          const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
