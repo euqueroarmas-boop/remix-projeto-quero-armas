@@ -323,7 +323,24 @@ Deno.serve(async (req) => {
     const cfgMap: Record<string, string> = {};
     for (const r of (cfg ?? []) as any[]) cfgMap[r.chave] = r.valor ?? "";
 
-    const endereco = String(body.endereco_completo || "").trim() || enderecoDoCliente(cli as any);
+    // Endereco/cidade SEMPRE do comprovante de residencia enviado (conta do
+    // responsavel pelo imovel), extraido pela IA/parser. Nunca o cadastro.
+    let enderecoComprovante = "";
+    const comprovanteId = body.documento_comprovante_id ?? null;
+    if (comprovanteId) {
+      const { data: docComp } = await sb
+        .from("qa_documentos_cliente")
+        .select("ia_dados_extraidos")
+        .eq("id", comprovanteId)
+        .maybeSingle();
+      const campos = ((docComp as any)?.ia_dados_extraidos?.camposExtraidos ?? {}) as Record<string, unknown>;
+      enderecoComprovante = limparEndereco(
+        first(campos.endereco_completo, campos.endereco, campos.logradouro),
+      );
+    }
+
+    const endereco = enderecoComprovante || String(body.endereco_completo || "").trim() || enderecoDoCliente(cli as any);
+    const cidadeComprovante = cidadeDoEndereco(endereco);
     const agora = new Date();
 
     const ctx: Record<string, string> = {
@@ -340,7 +357,7 @@ Deno.serve(async (req) => {
       requerente_cpf: String((cli as any).cpf || ""),
       endereco_completo: endereco,
       mora_desde: String(body.mora_desde || ""),
-      cidade_declaracao: titulo(String((cli as any).cidade || "Jacare\u00ed")),
+      cidade_declaracao: cidadeComprovante || titulo(String((cli as any).cidade || "")),
       data_hoje_extenso: brDataExtenso(agora),
     };
 
@@ -370,12 +387,36 @@ Deno.serve(async (req) => {
       sessao_geracao_json: sessaoBase,
     };
 
-    const { data: criada, error: insErr } = await sb
+    // Regerar substitui a declaracao pendente do cliente (mesmo id, PDF novo)
+    // para que o download entregue sempre a versao corrigida.
+    const { data: pendente } = await sb
       .from("qa_declaracoes_residencia")
-      .insert(registro)
       .select("id")
-      .single();
-    if (insErr) return json({ error: "Falha ao registrar declara\u00e7\u00e3o", detail: insErr.message }, 500);
+      .eq("qa_cliente_id", clienteId)
+      .in("status", ["gerada_pendente_assinatura", "assinada_rejeitada"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let criada: { id: string } | null = null;
+    if ((pendente as any)?.id) {
+      const { data: atualizada, error: updErr } = await sb
+        .from("qa_declaracoes_residencia")
+        .update({ ...registro, updated_at: agora.toISOString() })
+        .eq("id", (pendente as any).id)
+        .select("id")
+        .single();
+      if (updErr) return json({ error: "Falha ao regerar declara\u00e7\u00e3o", detail: updErr.message }, 500);
+      criada = atualizada as any;
+    } else {
+      const { data: nova, error: insErr } = await sb
+        .from("qa_declaracoes_residencia")
+        .insert(registro)
+        .select("id")
+        .single();
+      if (insErr) return json({ error: "Falha ao registrar declara\u00e7\u00e3o", detail: insErr.message }, 500);
+      criada = nova as any;
+    }
 
     const hashConteudo = await sha256Hex(String(registro.conteudo_html ?? ""));
     const pdf = montarPdf(ctx, {
