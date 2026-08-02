@@ -1598,6 +1598,41 @@ export function ClienteDocsHubModal({
     conformidade.find((i) => i.campo === "nome_completo" && i.status === "divergente")?.valorCertidao ||
     classificacao?.camposExtraidos?.nome_completo ||
     null;
+  // Depois que o dono do imóvel é declarado e o documento dele é enviado, a
+  // conformidade do comprovante passa a ser CONTRA O DONO DO IMÓVEL — o
+  // interessado não entra nesse cruzamento.
+  const conformidadeExibida = (casoResidenciaTerceiro && terceiroDados)
+    ? conformidade.map((item) => {
+        if (item.campo === "nome_completo") {
+          const refNome = terceiroDados.responsavel_nome || null;
+          return {
+            ...item,
+            valorReferencia: refNome,
+            fonteReferencia: "Documento de identidade do responsável pelo imóvel",
+            status: !refNome
+              ? ("sem_referencia" as const)
+              : normalizeStr(item.valorCertidao) === normalizeStr(refNome) ||
+                nameSim(item.valorCertidao, refNome) >= SIM_HIGH
+                ? ("conforme" as const)
+                : ("divergente" as const),
+          };
+        }
+        if (item.campo === "cpf") {
+          const refCpf = terceiroDados.responsavel_documento || null;
+          return {
+            ...item,
+            valorReferencia: refCpf,
+            fonteReferencia: "Documento de identidade do responsável pelo imóvel",
+            status: !refCpf
+              ? ("sem_referencia" as const)
+              : normCpf(item.valorCertidao) === normCpf(refCpf)
+                ? ("conforme" as const)
+                : ("divergente" as const),
+          };
+        }
+        return item;
+      })
+    : conformidade;
   // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
   const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = casoResidenciaTerceiro
     ? null
@@ -4055,20 +4090,20 @@ export function ClienteDocsHubModal({
               </div>
             )}
 
-            {!conferenciaLocal && conformidade.length > 0 && (
+            {!conferenciaLocal && conformidadeExibida.length > 0 && (
               <div className={cn(
                 "rounded-2xl border p-3 text-xs",
-                conformidade.some(i => i.status === "divergente")
+                conformidadeExibida.some(i => i.status === "divergente")
                   ? "border-red-300 bg-red-50 text-red-900"
                   : "border-emerald-200 bg-emerald-50 text-emerald-900"
               )}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  {conformidade.some(i => i.status === "divergente")
+                  {conformidadeExibida.some(i => i.status === "divergente")
                     ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                     : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
                   <span className="font-bold uppercase tracking-wide text-[10px]">
                     Conformidade com documentos aprovados
-                    {conformidade.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
+                    {conformidadeExibida.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
                   </span>
                 </div>
                 <table className="w-full text-[10px]">
@@ -4081,7 +4116,7 @@ export function ClienteDocsHubModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
-                     {conformidade.map((item) => (
+                     {conformidadeExibida.map((item) => (
                        <Fragment key={item.campo}>
                        <tr className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
@@ -4110,8 +4145,18 @@ export function ClienteDocsHubModal({
                            <td colSpan={4} className="pb-1.5">
                              {casoResidenciaTerceiro ? (
                                <div className="rounded-md border border-amber-300 bg-amber-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-amber-900">
-                                 PONTO A CONFIRMAR — {explicarDivergencia(item)} Não reprova: será
-                                 cruzado com o documento do responsável pelo imóvel.
+                                 {terceiroDados ? (
+                                   <>
+                                     PONTO A CONFIRMAR — o valor lido no comprovante ("{item.valorCertidao}")
+                                     não confere com o documento de identidade do responsável pelo imóvel
+                                     ("{item.valorReferencia || "não informado"}"). Não reprova.
+                                   </>
+                                 ) : (
+                                   <>
+                                     PONTO A CONFIRMAR — {explicarDivergencia(item)} Não reprova: será
+                                     cruzado com o documento do responsável pelo imóvel.
+                                   </>
+                                 )}
                                </div>
                              ) : (
                                <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
@@ -4125,7 +4170,7 @@ export function ClienteDocsHubModal({
                      ))}
                   </tbody>
                 </table>
-                {conformidade.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
+                {conformidadeExibida.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
                   <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
                     <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
                       Por que este documento foi rejeitado
