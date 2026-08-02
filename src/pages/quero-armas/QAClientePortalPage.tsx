@@ -3276,21 +3276,24 @@ export default function QAClientePortalPage() {
         rel="noopener noreferrer"
         title="Falar no WhatsApp"
         aria-label="Falar no WhatsApp"
-        className="fixed z-50 flex items-center justify-center rounded-full transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
+        className="qa-wa-sonar fixed z-50 flex items-center justify-center rounded-full transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
         style={{
-          right: 10,
+          right: 12,
           bottom: 19,
-          width: 38,
-          height: 38,
+          width: 34,
+          height: 34,
           background: "#25D366",
           border: "1px solid rgba(255,255,255,0.35)",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 1px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.12), 0 6px 12px rgba(0,0,0,0.25)",
           animation: "qa-wa-float 3s ease-in-out infinite",
         }}
       >
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="#FFFFFF" aria-hidden="true" className="drop-shadow-[0_1px_0_rgba(0,0,0,0.15)]">
-          <path d="M17.47 14.38c-.29-.15-1.71-.84-1.98-.94-.27-.1-.46-.15-.65.15-.19.29-.75.94-.92 1.13-.17.19-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.76-1.44-1.7-1.61-1.99-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.15-.65-1.57-.89-2.15-.23-.56-.47-.48-.65-.49h-.55c-.19 0-.51.07-.77.36-.27.29-1.01.99-1.01 2.41s1.04 2.8 1.18 2.99c.15.19 2.05 3.13 4.96 4.39.69.3 1.23.48 1.65.61.69.22 1.32.19 1.82.12.56-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.38-.07-.12-.26-.19-.55-.34zM12.03 21.5h-.01a9.44 9.44 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.41 9.41 0 0 1-1.44-5.03c0-5.2 4.24-9.44 9.45-9.44 2.52 0 4.89.98 6.67 2.77a9.37 9.37 0 0 1 2.76 6.68c0 5.2-4.24 9.44-9.45 9.44zM20.5 3.49A11.36 11.36 0 0 0 12.03.02C5.76.02.66 5.12.66 11.39c0 2.01.53 3.96 1.53 5.69L.56 23.98l7.05-1.85a11.34 11.34 0 0 0 4.42.9h.01c6.27 0 11.37-5.1 11.37-11.37 0-3.04-1.18-5.89-3.33-8.04z" />
-        </svg>
+        <img
+          src={whatsappIcon.url}
+          alt="WhatsApp"
+          className="w-full h-full object-contain p-[2px]"
+          style={{ filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.15))" }}
+        />
       </a>
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
