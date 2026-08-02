@@ -647,7 +647,9 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
               className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 hover:bg-[#7A1F2B] hover:text-white"
               style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${CARD_BORDER}`, background: "#FFFFFF", color: BRAND }}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
+              {loading
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1)", opacity: 0.7 }} />}
             </button>
           </div>
         </div>
