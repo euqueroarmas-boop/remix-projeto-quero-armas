@@ -4878,12 +4878,36 @@ export function ClienteDocsHubModal({
           // Com a declaração do responsável pendente, o hub permanece aberto:
           // o próximo passo do cliente é assinar, e fechar aqui o perderia.
           const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
+          const rejeitado = resultadoCarimbo.tipo === "reprovado";
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
             setFile(null);
             onSaved();
             onClose();
+          } else if (rejeitado) {
+            // Rejeição: limpa o modal para o cliente enviar o arquivo correto
+            // imediatamente, sem precisar fechar e reabrir o Hub.
+            toast.dismiss();
+            setFile(null);
+            setTerceiroDados(null);
+            setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+            setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
+            setClassificacao(null);
+            setShowTipoOverride(false);
+            setConferenciaLocal(null);
+            setNotasInformadas({});
+            setAutoResult(null);
+            setIaExtraido({});
+            setConfirmados({});
+            setConformidade([]);
+            setTemApontamento(false);
+            setReconheceApontamento(null);
+            setHomonimiaSalva(false);
+            setShowDeclaracao(false);
+            setExtracting(false);
+            setProfissionalExtraido({ nome: null, registro: null });
+            motivoCarimbadoRef.current = null;
           }
         }}
       />
