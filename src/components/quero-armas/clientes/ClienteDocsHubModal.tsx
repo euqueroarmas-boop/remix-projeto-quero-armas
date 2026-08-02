@@ -2864,12 +2864,12 @@ export function ClienteDocsHubModal({
       );
       const ehResidencia =
         categoriaHub === "endereco" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
-      const instrucao = ehResidencia
-        ? "Envie a conta de consumo recente do imóvel (emitida nos últimos 90 dias)"
-        : "Envie a via atualizada deste documento";
+      const mensagemReprovado = ehResidencia
+        ? `Comprovante de endereço vencido${venc ? ` em ${venc}` : ""}. Existe uma emissão mais recente — envie a última emissão (últimos 30 dias).`
+        : `${rotulo} vencido${venc ? ` em ${venc}` : ""}. Envie a via atualizada deste documento.`;
       setResultadoCarimbo({
         tipo: "reprovado",
-        mensagem: `${rotulo} vencido${venc ? ` em ${venc}` : ""} · ${instrucao}`,
+        mensagem: mensagemReprovado,
       });
       return;
     }

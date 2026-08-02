@@ -61,9 +61,9 @@ const FALLBACK_UNIVERSAL: ChecklistDocItem[] = [
   },
   {
     key: "doc_endereco",
-    label: "Comprovante de residência (últimos 90 dias)",
+    label: "Comprovante de endereço (últimos 30 dias)",
     obrigatorio_etapa02: true,
-    shortName: "comprovante de residência",
+    shortName: "comprovante de endereço",
     tiposCompativeis: TIPOS_ENDERECO_COMPATIVEIS,
     origem: "fallback",
   },
@@ -156,9 +156,9 @@ function mapRows(rows: RawRow[]): ChecklistDocItem[] {
       enderecoJaAdicionado = true;
       out.push({
         key: "doc_endereco",
-        label: r.nome_documento || "Comprovante de residência (últimos 90 dias)",
+        label: r.nome_documento || "Comprovante de endereço (últimos 30 dias)",
         obrigatorio_etapa02: true,
-        shortName: "comprovante de residência",
+        shortName: "comprovante de endereço",
         tiposCompativeis: TIPOS_ENDERECO_COMPATIVEIS,
         instrucoes: r.instrucoes,
         origem: "banco",
