@@ -115,11 +115,12 @@ function formatTimestamp(iso: string | undefined): string {
 
 interface CentralAjudaClienteProps {
   cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
+  compact?: boolean;
 }
 
 const SUGESTOES = [
   "O que preciso para comprar uma arma como policial civil?",
-  "Quais documentos o vigilante precisa para a CNV?",
+  "Como consigo a posse de arma pra me defender e defender a minha família",
   "Como funciona o registro CAC?",
 ];
 
@@ -129,7 +130,7 @@ const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg:
   baixa: { label: "Confiança baixa", icon: <ShieldX     className="h-3 w-3" />, fg: RED,   bg: RED_BG   },
 };
 
-export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
+export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClienteProps) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -454,7 +455,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
       {/* Grid */}
-      <div className="px-4 md:px-8 py-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div className={`px-4 md:px-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] ${compact ? "pt-5 pb-4" : "py-4"}`}>
         {/* Chat */}
         <div className="bg-white flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
           {showReaberto && proto && (
@@ -470,16 +471,13 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             {initLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
             ) : mensagens.length === 0 ? (
-              <div className="flex flex-col items-center text-center py-10 gap-4">
+              <div className="flex flex-col items-start text-left px-5 pt-5 pb-4 gap-4">
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 15, letterSpacing: "0.08em", color: INK }}>
                   Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}
                 </div>
-                <div className="text-[12px]" style={{ color: INK_2 }}>
-                  Sou o Klal, assistente da Quero Armas. Como posso ajudar?
-                </div>
-                <div className="w-full max-w-md space-y-1.5 pt-1">
+                <div className="w-full max-w-md space-y-1 pt-1">
                   {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11.5px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
+                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
                       {s}
                     </button>
                   ))}
@@ -622,35 +620,37 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             )}
           </div>
 
-          <div className="border-t px-4 py-3 flex items-end gap-2" style={{ borderColor: LINE }}>
-            <textarea
-              ref={inputRef}
-              rows={2}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
-              }}
-              onKeyDown={onKeyDown}
-              placeholder="Digite sua dúvida para o Klal..."
-              disabled={loading || !cliente}
-              className="flex-1 px-3 py-2.5 text-[14px] bg-white border focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 resize-none"
-              style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
-            />
-            <button
-              onClick={() => enviar(input)}
-              disabled={loading || !cliente || input.trim().length < 2}
-              title="Enviar"
-              aria-label="Enviar"
-              className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 hover:bg-[#7A1F2B] hover:text-white"
-              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${CARD_BORDER}`, background: "#FFFFFF", color: BRAND }}
-            >
-              {loading
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1)", opacity: 0.7 }} />}
-            </button>
+          <div className="p-1">
+            <div className="flex items-end gap-2 px-3 py-2" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 12, background: "#FFFFFF" }}>
+              <textarea
+                ref={inputRef}
+                rows={2}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+                }}
+                onKeyDown={onKeyDown}
+                placeholder="Digite sua dúvida para o Klal..."
+                disabled={loading || !cliente}
+                className="flex-1 px-0 py-0 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
+                style={{ color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
+              />
+              <button
+                onClick={() => enviar(input)}
+                disabled={loading || !cliente || input.trim().length < 2}
+                title="Enviar"
+                aria-label="Enviar"
+                className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                style={{ width: 34, height: 34, borderRadius: 9, color: INK }}
+              >
+                {loading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1) contrast(1.2)" }} />}
+              </button>
+            </div>
           </div>
         </div>
 
