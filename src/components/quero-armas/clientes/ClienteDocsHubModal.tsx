@@ -2486,10 +2486,12 @@ export function ClienteDocsHubModal({
       }
       setExtracting(true);
       let textoIdentidade = "";
+      let falhaTecnicaLeitura = false;
       try {
         textoIdentidade = await extrairTextoPdf(f);
       } catch (e) {
         console.warn("[identidade] pdf.js falhou:", e);
+        falhaTecnicaLeitura = true;
       } finally {
         setExtracting(false);
       }
@@ -2507,7 +2509,10 @@ export function ClienteDocsHubModal({
           setExtracting(false);
         }
       }
-      if (!veredicto.ok && !aprovadoPorQrVisual) {
+      // Se a leitura falhou por problema técnico (worker do pdf.js, memória do
+      // navegador), o documento NÃO é culpado: seguimos para a IA classificar
+      // em vez de recusar um PDF oficial.
+      if (!veredicto.ok && !aprovadoPorQrVisual && !falhaTecnicaLeitura) {
         const id = toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF, {
           duration: Infinity,
           action: {
@@ -3066,15 +3071,26 @@ export function ClienteDocsHubModal({
       if (!alvoSubstituicao && qaClienteId && form.tipo_documento) {
         const { data: jaEnviados } = await supabase
           .from("qa_documentos_cliente" as any)
-          .select("id")
+          .select("id, status")
           .eq("qa_cliente_id", qaClienteId)
           .eq("tipo_documento", form.tipo_documento)
           .in("status", ["aprovado", "pendente_aprovacao"])
-          .limit(1);
-        if ((jaEnviados as any)?.length) {
+          .limit(5);
+        const linhas = ((jaEnviados as any[]) || []);
+        const jaAprovado = linhas.some((l) => String(l.status) === "aprovado");
+        if (jaAprovado) {
           throw new Error(
             "Este documento já foi enviado e consta no seu Hub Documental. Exclua o documento anterior e envie o correto no lugar.",
           );
+        }
+        // Ainda não aprovado (pendente de análise): o novo envio SUBSTITUI a
+        // tentativa anterior — não faz sentido travar o cliente por um
+        // documento que ninguém aprovou.
+        for (const l of linhas) {
+          await supabase
+            .from("qa_documentos_cliente" as any)
+            .delete()
+            .eq("id", l.id);
         }
       }
       if (alvoSubstituicao) {

@@ -10,6 +10,8 @@
 // autenticidade de verdade, no pixel.
 // ============================================================================
 
+import { carregarPdfjs } from "./extracaoLocalPdf";
+
 export interface ResultadoQrPdf {
   encontrado: boolean;
   conteudo?: string;
@@ -30,15 +32,11 @@ const DOMINIOS_OFICIAIS = [
 /** Renderiza as primeiras páginas e tenta decodificar qualquer QR Code. */
 export async function lerQrCodeDoPdf(file: File, maxPaginas = 3): Promise<ResultadoQrPdf> {
   try {
-    const [{ getDocument, GlobalWorkerOptions, version }, jsQRmod] = await Promise.all([
-      import("pdfjs-dist"),
+    const [{ getDocument }, jsQRmod] = await Promise.all([
+      carregarPdfjs(),
       import("jsqr"),
     ]);
     const jsQR = (jsQRmod as unknown as { default: typeof import("jsqr").default }).default;
-    if (!GlobalWorkerOptions.workerSrc) {
-      GlobalWorkerOptions.workerSrc =
-        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
-    }
 
     const buf = await file.arrayBuffer();
     const pdf = await getDocument({ data: buf }).promise;
