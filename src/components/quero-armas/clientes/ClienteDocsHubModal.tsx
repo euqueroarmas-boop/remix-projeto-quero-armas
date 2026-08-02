@@ -2719,7 +2719,11 @@ export function ClienteDocsHubModal({
     }
 
     // Trava dura: documento de outro titular nunca é salvo nem enviado à análise.
-    if (titularDivergente) {
+    if (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) {
+      if (casoResidenciaTerceiro) {
+        toast.error("Confirme a declaração de residência e envie o documento do responsável pelo imóvel.");
+        return;
+      }
       toast.error("Documento rejeitado: os dados não são do titular deste processo.");
       return;
     }
