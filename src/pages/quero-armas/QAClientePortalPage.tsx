@@ -2864,6 +2864,19 @@ export default function QAClientePortalPage() {
     return () => window.removeEventListener("qa:abrir-assinaturas-pendentes", handler);
   }, [mustChangePassword, pendenciasGuiadasCount]);
 
+  // "Ver detalhes" das notificações internas: troca a seção do portal (SPA),
+  // já que navegar por rota caía no fallback e nada acontecia na tela.
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      const secao = (ev as CustomEvent)?.detail?.secao;
+      if (!secao) return;
+      setActiveSection(secao as any);
+      if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("qa:portal-ir-para-secao", handler);
+    return () => window.removeEventListener("qa:portal-ir-para-secao", handler);
+  }, []);
+
   // Fase 2 — o wizard antigo (ChecklistGuiadoModal) foi aposentado. Todos os
   // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
   // agora abrem o PendenciasGuiadasPopup unificado. Ao receber um `focusDocId`,
