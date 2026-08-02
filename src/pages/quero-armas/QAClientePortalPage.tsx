@@ -3241,7 +3241,7 @@ export default function QAClientePortalPage() {
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Avatar (mobile) — mesmo formato squircle do ícone do WhatsApp */}
-        <div className="lg:hidden relative mb-3 flex flex-col items-center">
+        <div className="lg:hidden relative mb-0 flex flex-col items-center">
           <button
             type="button"
             onClick={() => setAvatarDropOpen((v) => !v)}
@@ -3270,6 +3270,9 @@ export default function QAClientePortalPage() {
             </>
           )}
         </div>
+
+        {/* Espaçador móvel: avatar isolado e alinhamento simétrico dos ícones */}
+        <div className="flex-1 lg:hidden min-h-0" />
 
         {/* Ícones principais — topo */}
         <div className="flex flex-col items-center gap-1">
