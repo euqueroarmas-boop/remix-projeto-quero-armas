@@ -10,6 +10,8 @@
 // autenticidade de verdade, no pixel.
 // ============================================================================
 
+import { carregarPdfjs } from "./extracaoLocalPdf";
+
 export interface ResultadoQrPdf {
   encontrado: boolean;
   conteudo?: string;
