@@ -2853,9 +2853,23 @@ export function ClienteDocsHubModal({
       const venc = form.data_validade
         ? new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")
         : "";
+      const rotulo = getNomeDocumentoDisplay(
+        {
+          tipo_documento: form.tipo_documento,
+          nome_documento: form.nome_documento,
+          numero_documento: form.numero_documento,
+          orgao_emissor: form.orgao_emissor,
+        },
+        form.tipo_documento || "documento",
+      );
+      const ehResidencia =
+        categoriaHub === "endereco" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
+      const instrucao = ehResidencia
+        ? "Envie a conta de consumo recente do imóvel (emitida nos últimos 90 dias)"
+        : "Envie a via atualizada deste documento";
       setResultadoCarimbo({
         tipo: "reprovado",
-        mensagem: `Documento vencido${venc ? ` em ${venc}` : ""} · envie a via atualizada`,
+        mensagem: `${rotulo} vencido${venc ? ` em ${venc}` : ""} · ${instrucao}`,
       });
       return;
     }
@@ -3430,10 +3444,14 @@ export function ClienteDocsHubModal({
           : isStaff || iaConfia
           ? {
               tipo: "aprovado",
+              mensagem: `${tipoLabel} conferido com o seu cadastro · exigência atendida`,
               percentual:
                 classificacao?.confianca != null ? Math.round((classificacao.confianca || 0) * 100) : null,
             }
-          : { tipo: "analise" }
+          : {
+              tipo: "analise",
+              mensagem: `${tipoLabel} recebido · nosso time vai conferir e você será avisado`,
+            }
       );
 
       // Residência de terceiro: o comprovante fica AGUARDANDO e o pop-up guiado
@@ -3442,7 +3460,12 @@ export function ClienteDocsHubModal({
       if (terceiroDados) setDeclaracaoAberta(true);
     } catch (e: any) {
       console.error("[save doc] error:", e);
-      setResultadoCarimbo({ tipo: "reprovado", mensagem: e?.message || "Falha ao salvar documento." });
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        mensagem: e?.message
+          ? `Não foi possível salvar: ${e.message}`
+          : "Falha ao salvar o documento · tente enviar novamente",
+      });
     } finally {
       setSaving(false);
     }
@@ -4855,12 +4878,36 @@ export function ClienteDocsHubModal({
           // Com a declaração do responsável pendente, o hub permanece aberto:
           // o próximo passo do cliente é assinar, e fechar aqui o perderia.
           const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
+          const rejeitado = resultadoCarimbo.tipo === "reprovado";
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
             setFile(null);
             onSaved();
             onClose();
+          } else if (rejeitado) {
+            // Rejeição: limpa o modal para o cliente enviar o arquivo correto
+            // imediatamente, sem precisar fechar e reabrir o Hub.
+            toast.dismiss();
+            setFile(null);
+            setTerceiroDados(null);
+            setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+            setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
+            setClassificacao(null);
+            setShowTipoOverride(false);
+            setConferenciaLocal(null);
+            setNotasInformadas({});
+            setAutoResult(null);
+            setIaExtraido({});
+            setConfirmados({});
+            setConformidade([]);
+            setTemApontamento(false);
+            setReconheceApontamento(null);
+            setHomonimiaSalva(false);
+            setShowDeclaracao(false);
+            setExtracting(false);
+            setProfissionalExtraido({ nome: null, registro: null });
+            motivoCarimbadoRef.current = null;
           }
         }}
       />
