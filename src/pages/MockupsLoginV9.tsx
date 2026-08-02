@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import bgAsset from "@/assets/quero-armas-tactical-bench.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { signInWithSocial } from "@/shared/auth/socialSignIn";
 import { toast } from "sonner";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 import { ArsenalInteligenteLogo } from "@/components/branding/ArsenalInteligenteLogo";
