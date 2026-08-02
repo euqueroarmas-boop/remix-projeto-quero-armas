@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeClientPortalNext } from "@/shared/quero-armas/portalNavigation";
+import { clearOAuthNext, readOAuthNext } from "@/shared/auth/socialSignIn";
 
 export default function QAAuthCallbackPage() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export default function QAAuthCallbackPage() {
         const url = new URL(window.location.href);
         const search = url.searchParams;
         const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
-        const next = sanitizeClientPortalNext(search.get("next") || localStorage.getItem("qa_oauth_next"));
+        const next = search.get("next") ? sanitizeClientPortalNext(search.get("next")) : readOAuthNext();
         const error = search.get("error_description") || hash.get("error_description") || search.get("error") || hash.get("error");
         const code = search.get("code");
         const accessToken = hash.get("access_token");
@@ -39,7 +40,7 @@ export default function QAAuthCallbackPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error("Sessão não foi criada pelo Google.");
 
-        localStorage.removeItem("qa_oauth_next");
+        clearOAuthNext();
         if (!cancelled) navigate(next, { replace: true });
       } catch (err: any) {
         if (cancelled) return;
