@@ -198,6 +198,11 @@ export function parseContaConsumo(texto: string): ContaConsumoExtraida | null {
   const emissao = /(?:DATA\s+DE\s+)?EMISS[ÃA]O\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
     || /EMITID[AO]\s+EM\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
     || /EMISS[ÃA]O[^0-9]{0,20}(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
+    // Fatura diagramada glifo a glifo: reconstrói o texto sem espaços antes
+    // de procurar a data, senão "2 5 / 0 6 / 2 0 2 6" passa despercebida.
+    || /EMISSAO[^0-9]{0,4}(\d{2}\/\d{2}\/\d{4})/i.exec(
+         norm(original).toUpperCase().replace(/\s+/g, ""),
+       )?.[1]
     || undefined;
 
   return { tipo, empresa_emissora, codigo_instalacao, data_emissao: emissao };
