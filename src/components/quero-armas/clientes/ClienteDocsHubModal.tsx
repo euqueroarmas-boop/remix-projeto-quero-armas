@@ -3072,6 +3072,9 @@ export function ClienteDocsHubModal({
           ...(payload.ia_dados_extraidos ?? {}),
           residencia_terceiro: terceiroDados,
           tem_divergencia: false,
+          // Fluxo concluído: o comprovante não fica em análise. Ou é aprovado
+          // aqui, ou o cliente teria voltado à fase de enviar outra conta.
+          recomendacao: "aceitar",
         };
       }
 
