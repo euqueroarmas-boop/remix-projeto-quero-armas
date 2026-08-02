@@ -131,6 +131,65 @@ export type ResultadoEndereco =
   | { ok: true; dados: EnderecoComprovante }
   | { ok: false; motivo: string; dados: EnderecoComprovante };
 
+export interface ContaConsumoExtraida {
+  tipo: "energia" | "agua" | "gas" | "internet" | "telefone_fixo";
+  empresa_emissora: string;
+  codigo_instalacao: string;
+  data_emissao?: string;
+}
+
+/**
+ * Reconhece contas de consumo diretamente na camada textual do PDF.
+ *
+ * Concessionárias de energia imprimem "Nota Fiscal/Conta de Energia Elétrica"
+ * por exigência fiscal. Isso NÃO transforma a fatura em comprovante de renda:
+ * no Hub ela continua sendo comprovante de residência. O parser local também
+ * evita uma chamada de visão e mantém a UC como número estável do documento.
+ */
+export function parseContaConsumo(texto: string): ContaConsumoExtraida | null {
+  const original = String(texto || "");
+  const t = norm(original).toUpperCase();
+  if (!t) return null;
+
+  const tipo: ContaConsumoExtraida["tipo"] | null =
+    /ENERGIA ELETRICA|CONTA DE ENERGIA|DISTRIBUICAO DE ENERGIA|CONSUMO KWH/.test(t) ? "energia"
+    : /CONTA DE AGUA|SERVICO DE AGUA|CONSUMO M3/.test(t) ? "agua"
+    : /CONTA DE GAS|DISTRIBUICAO DE GAS|CONSUMO DE GAS/.test(t) ? "gas"
+    : /INTERNET FIXA|BANDA LARGA/.test(t) ? "internet"
+    : /TELEFONE FIXO|TELEFONIA FIXA/.test(t) ? "telefone_fixo"
+    : null;
+  if (!tipo) return null;
+
+  const empresa_emissora =
+    /\bEDP\b|EDP SAO PAULO/.test(t) ? "EDP São Paulo Distribuição de Energia S.A."
+    : /\bENEL\b/.test(t) ? "Enel Distribuição"
+    : /\bCPFL\b/.test(t) ? "CPFL Energia"
+    : /\bSABESP\b/.test(t) ? "Sabesp"
+    : /\bLIGHT\b/.test(t) ? "Light"
+    : /\bCEMIG\b/.test(t) ? "Cemig"
+    : "Concessionária de serviço público";
+
+  const rotulosUc = [
+    /(?:N[ºO°.]?\s*(?:DA\s*)?)?(?:INSTALACAO|INSTALAÇÃO|UNIDADE\s+CONSUMIDORA|UC|MATRICULA|MATRÍCULA)\s*[:#-]?\s*(0[\d.\s-]{10,24})/i,
+    /(?:CODIGO|CÓDIGO)\s+(?:DA\s+)?(?:INSTALACAO|INSTALAÇÃO|UC)\s*[:#-]?\s*(0?[\d.\s-]{8,24})/i,
+    /\b(0\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}-\s*\d{2})\b/,
+  ];
+  let codigo_instalacao = "";
+  for (const rx of rotulosUc) {
+    const candidato = rx.exec(original)?.[1]?.replace(/\D/g, "") || "";
+    if (candidato.length >= 8 && candidato.length <= 18) {
+      codigo_instalacao = candidato;
+      break;
+    }
+  }
+
+  const emissao = /(?:DATA\s+DE\s+)?EMISS[ÃA]O\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
+    || /EMITID[AO]\s+EM\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(original)?.[1]
+    || undefined;
+
+  return { tipo, empresa_emissora, codigo_instalacao, data_emissao: emissao };
+}
+
 /**
  * Lê a UF do comprovante de endereço.
  *
