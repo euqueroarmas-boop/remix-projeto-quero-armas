@@ -401,7 +401,9 @@ export default function QAClientePortalPage() {
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
   const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
+  const [rifleHover, setRifleHover] = useState(false);
   const [avatarDropOpen, setAvatarDropOpen] = useState(false);
+
 
   // Carrega temas do banco e cor do rail direito
   useEffect(() => {
