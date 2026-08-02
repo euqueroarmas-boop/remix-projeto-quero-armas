@@ -27,6 +27,31 @@ const corsHeaders = {
 const BUCKET = "paid-contracts";
 const MAX_BYTES = 25 * 1024 * 1024;
 
+/** Mesmo motor de carimbo do contrato e da procuração. */
+function detectarSO(ua: string): string | null {
+  if (!ua) return null;
+  if (/Windows NT 10/.test(ua)) return "Windows 10/11";
+  if (/Windows NT/.test(ua)) return "Windows";
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Android/.test(ua)) return "Android";
+  if (/Mac OS X/.test(ua)) return "macOS";
+  if (/Linux/.test(ua)) return "Linux";
+  return null;
+}
+function detectarNavegador(ua: string): string | null {
+  if (!ua) return null;
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/OPR\//.test(ua)) return "Opera";
+  if (/Chrome\//.test(ua)) return "Chrome";
+  if (/Firefox\//.test(ua)) return "Firefox";
+  if (/Safari\//.test(ua)) return "Safari";
+  return null;
+}
+async function sha256Hex(texto: string): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function svc() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
