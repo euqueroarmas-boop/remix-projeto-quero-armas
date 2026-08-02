@@ -962,7 +962,9 @@ Deno.serve(async (req) => {
   }
 
   let path: string | null = null;
-  if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
+  if (variant === "customer_signed" || variant === "customer_signed_url") {
+    path = (auditedContract as any).customer_signed_pdf_path ?? null;
+  }
   else {
     return await failContractDownload(
       req,
@@ -985,6 +987,23 @@ Deno.serve(async (req) => {
     );
   }
 
+  const signedFname = contractDownloadFilename(auditedContract, "pdf");
+  if (variant === "customer_signed_url") {
+    const { data: signed, error: signedErr } = await sb.storage
+      .from(BUCKET)
+      .createSignedUrl(path, 600, { download: signedFname });
+    if (signedErr || !signed?.signedUrl) {
+      return await failContractDownload(
+        req,
+        user,
+        auditedContract as any,
+        variant,
+        `signed_url_failed:${signedErr?.message ?? "url_ausente"}`,
+        500,
+      );
+    }
+    return jsonResp({ url: signed.signedUrl, filename: signedFname, expires_in: 600 });
+  }
   const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
   if (dlErr || !file) {
     return await failContractDownload(

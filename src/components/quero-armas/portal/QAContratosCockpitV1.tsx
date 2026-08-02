@@ -15,7 +15,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
-import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
+import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
@@ -542,6 +542,7 @@ function FeaturedContractCard({
   const [uploading, setUploading] = React.useState(false);
   const [localProcessingSince, setLocalProcessingSince] = React.useState<string | null>(null);
   const [showDone, setShowDone] = React.useState(false);
+  const [baixandoAssinado, setBaixandoAssinado] = React.useState(false);
   const prevStatusRef = React.useRef<string | null>(null);
   const refreshRef = React.useRef(onValidatedRefresh);
 
@@ -579,6 +580,26 @@ function FeaturedContractCard({
   function closeDone() {
     try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
     setShowDone(false);
+  }
+
+  const temAssinado = String(contract.status) === "validated";
+
+  async function baixarAssinado() {
+    setBaixandoAssinado(true);
+    const toastId = toast.loading("Preparando cópia assinada…");
+    try {
+      const { url } = await getContratoAssinadoUrl({
+        contractId: contract.id,
+        contractNumber: contract.contract_number,
+        vendaId: contract.venda_id,
+      });
+      window.open(url, "_blank", "noopener,noreferrer");
+      toast.success("Cópia assinada liberada.", { id: toastId });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar a cópia assinada.", { id: toastId });
+    } finally {
+      setBaixandoAssinado(false);
+    }
   }
 
   const canUpload = !!contract.issued_at && [
@@ -711,6 +732,17 @@ function FeaturedContractCard({
           <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase">
             PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
           </div>
+          {temAssinado ? (
+            <button
+              type="button"
+              onClick={baixarAssinado}
+              disabled={baixandoAssinado}
+              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+            >
+              {baixandoAssinado ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+              {baixandoAssinado ? "PREPARANDO" : "BAIXAR CONTRATO ASSINADO"}
+            </button>
+          ) : null}
           {contract.issued_at && preparedDownload ? (
             <a
               href={preparedDownload.href}

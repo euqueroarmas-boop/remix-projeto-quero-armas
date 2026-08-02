@@ -9,7 +9,7 @@ type OpenMinutaArgs = {
   vendaId?: number | string | null;
   checkoutToken?: string | null;
   slugs?: string[];
-  variant?: "company_signed" | "customer_signed";
+  variant?: "company_signed" | "customer_signed" | "customer_signed_url";
 };
 
 export type PreparedMinutaDownload = {
@@ -40,7 +40,10 @@ async function sessionHeaders() {
   return headers;
 }
 
-function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "customer_signed" | "download_url" | "html_preview") {
+function contractRequestBody(
+  args: OpenMinutaArgs,
+  variant: "company_signed" | "customer_signed" | "customer_signed_url" | "download_url" | "html_preview",
+) {
   return JSON.stringify({
     contract_id: args.contractId || undefined,
     venda_id: args.vendaId ? Number(args.vendaId) : undefined,
@@ -91,4 +94,23 @@ export async function openMinutaContratoQueroArmas(args: OpenMinutaArgs) {
   a.click();
   a.remove();
   setTimeout(prepared.revoke, 60_000);
+}
+
+/**
+ * URL assinada (10 min) do PDF ASSINADO pelo cliente. Usada no portal porque o
+ * download por blob é bloqueado quando o app roda dentro de iframe.
+ */
+export async function getContratoAssinadoUrl(args: OpenMinutaArgs): Promise<{ url: string; filename: string }> {
+  const headers = await sessionHeaders();
+  const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
+  const resp = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: contractRequestBody(args, "customer_signed_url"),
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || !json?.url) {
+    throw new Error(json?.message || json?.error || `HTTP ${resp.status}`);
+  }
+  return { url: String(json.url), filename: String(json.filename || "contrato-assinado.pdf") };
 }
