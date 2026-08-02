@@ -29,10 +29,15 @@ export default function DocResultadoCarimbo({
   onDone: () => void;
   duracaoMs?: number;
 }) {
+  // Reprovado e Em análise permanecem na tela até o clique do usuário.
+  // Apenas o carimbo de APROVADO some sozinho.
+  const persistente = tipo !== "aprovado";
+
   useEffect(() => {
+    if (persistente) return;
     const t = setTimeout(onDone, duracaoMs);
     return () => clearTimeout(t);
-  }, [onDone, duracaoMs]);
+  }, [onDone, duracaoMs, persistente]);
 
   const c = CORES[tipo];
   const Icone = tipo === "aprovado" ? Check : tipo === "analise" ? Clock : AlertTriangle;
@@ -47,6 +52,7 @@ export default function DocResultadoCarimbo({
       <style>{`@keyframes qaCarimboIn{0%{opacity:0;transform:scale(1.6) rotate(-18deg)}60%{opacity:1;transform:scale(.94) rotate(-9deg)}100%{opacity:1;transform:scale(1) rotate(-11deg)}}`}</style>
       <div
         className="flex flex-col items-center gap-3 bg-white px-10 py-8 text-center"
+        onClick={(e) => { if (persistente) e.stopPropagation(); }}
         style={{
           border: `10px solid ${c.cor}`,
           borderRadius: 10,
@@ -69,6 +75,11 @@ export default function DocResultadoCarimbo({
         <div style={{ fontSize: 13, letterSpacing: ".3em", fontWeight: 600 }}>
           {(mensagem || c.sub).toUpperCase()}
         </div>
+        {persistente && (
+          <div style={{ fontSize: 11, letterSpacing: ".22em", fontWeight: 500, opacity: 0.65 }}>
+            CLIQUE FORA PARA FECHAR
+          </div>
+        )}
       </div>
     </div>
   );
