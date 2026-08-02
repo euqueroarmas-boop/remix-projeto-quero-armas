@@ -238,10 +238,11 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
-function RifleIcon({ className }: { className?: string }) {
+function RifleIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <svg
       className={className}
+      style={style}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -261,6 +262,7 @@ function RifleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
 
 
 function ClientAvatar({
