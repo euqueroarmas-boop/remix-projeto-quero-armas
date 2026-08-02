@@ -4171,7 +4171,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "contratos" && (
-          <div id="qa-portal-contratos" tabIndex={-1} className="outline-none h-full min-h-0">
+          <div id="qa-portal-contratos" tabIndex={-1} className="outline-none h-full min-h-0 pt-[10px]">
             {cliente?.id ? (
               <QAContratosCockpitV1 cliente={cliente} />
             ) : (
