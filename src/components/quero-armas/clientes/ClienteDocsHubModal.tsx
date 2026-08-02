@@ -825,7 +825,10 @@ function calcularConformidade(
   }
 
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
-  pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
+  // Comparação de CPF tolerante a erro de leitura dos dígitos verificadores:
+  // a base de 9 dígitos é o que identifica a pessoa; DV é reconstruído.
+  pushItem("cpf",             "CPF",                campos.cpf,             (a, b) =>
+    normCpf(a) === normCpf(b) || cpfComDigitosVerificadores(a) === cpfComDigitosVerificadores(b));
   // Pula data_nascimento quando: é string de idade ("34 anos") OU
   // quando dia/mês coincidem com a data de avaliação — sinal de que a IA
   // calculou a data subtraindo a idade da data de avaliação (resultado impreciso).
