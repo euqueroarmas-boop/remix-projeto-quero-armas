@@ -42,7 +42,6 @@ export default function DocResultadoCarimbo({
         e.stopPropagation();
         if (e.target === e.currentTarget) onDone();
       }}
-      onClick={onDone}
       role="status"
       aria-live="polite"
     >
