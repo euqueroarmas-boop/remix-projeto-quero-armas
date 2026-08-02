@@ -372,8 +372,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-foco-body{padding-left:0}
         }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
-        .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2;padding-bottom:4px}
-        .z6-root .z6-sticky-header::after{content:"";display:block;height:12px;background:linear-gradient(to bottom,#F2F2F2,transparent);pointer-events:none}
+        .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
       `}</style>
 
       {/* HEADER + FOCO DO DIA fixos no topo */}
