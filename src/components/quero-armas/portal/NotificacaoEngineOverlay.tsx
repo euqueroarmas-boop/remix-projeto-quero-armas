@@ -92,45 +92,73 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       window.dispatchEvent(new CustomEvent("qa:abrir-assinaturas-pendentes"));
       return;
     }
-    if (n.link) navigate(n.link);
+    // Demais categorias: o portal é uma SPA de seções, então links internos
+    // do tipo /area-do-cliente/<secao> devem trocar a seção em vez de navegar
+    // (navegar caía no fallback da home e "nada acontecia").
+    const link = String(n.link || "");
+    const interna = link.match(/^\/area-do-cliente\/?([a-z_-]*)/i);
+    if (interna) {
+      const secao = (interna[1] || "").toLowerCase();
+      const mapa: Record<string, string> = {
+        "": "resumo",
+        documentos: "documentos",
+        processos: "processos",
+        financeiro: "financeiro",
+        contratos: "contratos",
+        arsenal: "arsenal",
+        pendencias: "pendencias",
+        mensagens: "mensagens",
+        configuracoes: "configuracoes",
+      };
+      window.dispatchEvent(
+        new CustomEvent("qa:portal-ir-para-secao", { detail: { secao: mapa[secao] || "documentos" } }),
+      );
+      fechar(n);
+      return;
+    }
+    if (link) navigate(link);
   }
 
   if (visiveis.length === 0 || bloqueado) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
+    <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 w-[calc(100%-1.5rem)] max-w-[380px] sm:left-auto sm:right-4 sm:translate-x-0">
       {visiveis.map((n) => {
         const urgente = n.urgencia === "urgente";
         return (
           <div
             key={n.id}
-            className={`relative rounded-xl border shadow-lg p-3.5 pr-8 animate-in slide-in-from-top-2 ${
-              urgente ? "bg-red-50 border-red-200" : "bg-blue-50 border-blue-200"
-            }`}
+            className="relative rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_-8px_rgba(0,0,0,0.28)] px-3 py-2.5 pr-8 animate-in slide-in-from-top-2 fade-in"
           >
             <button
               onClick={() => fechar(n)}
-              className="absolute top-2 right-2 h-5 w-5 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-black/5"
+              className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full flex items-center justify-center text-black/35 hover:text-black/70 hover:bg-black/5"
               aria-label="Fechar notificação"
             >
               <X className="w-3.5 h-3.5" />
             </button>
-            <div className="flex items-start gap-2">
-              {urgente
-                ? <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                : <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />}
+            <div className="flex items-start gap-2.5">
+              <span
+                className={`shrink-0 mt-0.5 h-6 w-6 rounded-[9px] flex items-center justify-center ${
+                  urgente ? "bg-[#7A1F2B]" : "bg-black/80"
+                }`}
+              >
+                {urgente
+                  ? <AlertTriangle className="w-3.5 h-3.5 text-white" />
+                  : <Info className="w-3.5 h-3.5 text-white" />}
+              </span>
               <div className="min-w-0">
-                <p className={`text-xs font-semibold ${urgente ? "text-red-800" : "text-blue-800"}`}>
+                <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">
                   {n.titulo}
                 </p>
-                <p className={`text-[11px] mt-0.5 ${urgente ? "text-red-700" : "text-blue-700"}`}>
+                <p className="text-[12px] leading-snug mt-0.5 text-black/55 line-clamp-2">
                   {n.mensagem}
                 </p>
                 {n.link && (
                   <a
                     href={n.link}
                     onClick={(e) => abrirDetalhes(n, e)}
-                    className={`text-[11px] font-medium underline mt-1 inline-block ${urgente ? "text-red-800" : "text-blue-800"}`}
+                    className={`text-[12px] font-semibold mt-1 inline-block ${urgente ? "text-[#7A1F2B]" : "text-black/80"}`}
                   >
                     Ver detalhes
                   </a>
