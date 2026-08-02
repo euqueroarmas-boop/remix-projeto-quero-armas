@@ -286,18 +286,18 @@ export default function ResidenciaTerceiroModal({
               {/* BLOCO 1 — dados DO REQUERENTE (fica explícito de quem são) */}
               <section className="rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8] p-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8A1224]">
-                  Bloco 1 · Dados de {requerente}
+                  Bloco 1 · Dados de {titular} — dono do imóvel
                 </p>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#3A3A3A]">
-                  <strong>Estes dados são SEUS</strong>, o interessado no processo — não do dono da conta de
-                  luz. Eles vão para a declaração de residência que a Polícia Federal exige quando o
-                  comprovante está no nome de outra pessoa.
+                  <strong>Estado civil e profissão são de {titular}</strong>, o responsável pelo imóvel — não
+                  seus. Eles formam o preâmbulo da <strong>declaração do responsável pelo imóvel</strong> que
+                  será gerada na sequência.
                 </p>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2">
                   <label className="block">
                     <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
-                      Seu estado civil
+                      Estado civil de {titular}
                     </span>
                     <select
                       value={estadoCivil}
@@ -312,7 +312,7 @@ export default function ResidenciaTerceiroModal({
                   </label>
                   <label className="block">
                     <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
-                      Sua profissão
+                      Profissão de {titular}
                     </span>
                     <input
                       value={profissao}
@@ -324,7 +324,7 @@ export default function ResidenciaTerceiroModal({
                   </label>
                   <label className="block sm:col-span-2">
                     <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
-                      Você mora neste endereço desde
+                      {requerente} mora neste endereço desde (dado seu)
                     </span>
                     <input
                       value={moraDesde}
