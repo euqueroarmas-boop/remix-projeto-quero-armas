@@ -1631,8 +1631,17 @@ export function ClienteDocsHubModal({
   // Comprovante de endereço no nome de outra pessoa NÃO reprova: o cliente
   // pode morar no imóvel de um terceiro. Abrimos o fluxo de declaração
   // (estado civil, profissão, desde quando mora + documento do responsável).
+  // Vale para o tipo lido E para a exigência aberta: o cliente pode enviar a
+  // conta e a leitura classificar como "declaração do responsável pelo imóvel"
+  // (ou outro rótulo do grupo de endereço). Amarrar só ao tipo lido fazia o
+  // documento do terceiro cair na rejeição por parentesco em vez de abrir o
+  // fluxo de declaração — regra já aprovada em 01/08/2026.
+  const contextoEnderecoTerceiro =
+    form.tipo_documento === "comprovante_residencia" ||
+    form.tipo_documento === "declaracao_responsavel_imovel" ||
+    defaultTipo === "comprovante_residencia";
   const casoResidenciaTerceiro =
-    form.tipo_documento === "comprovante_residencia" && titularDivergente && !notaTomadorParentesco;
+    contextoEnderecoTerceiro && titularDivergente && !notaTomadorParentesco;
 
   /**
    * Retomada da Declaração do Responsável pelo Imóvel: se o cliente fechou a
