@@ -453,25 +453,7 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
 
   return (
     <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
-      {/* Banner WhatsApp — discreto */}
-      <a
-        href="https://wa.me/5511978481919"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-between gap-2 px-4 md:px-8 py-1.5 transition hover:opacity-80"
-        style={{ background: "#f4f4f4", borderBottom: "1px solid #e5e5e5", textDecoration: "none" }}
-      >
-        <div className="flex items-center gap-1.5">
-          <MessageCircle className="h-3 w-3 shrink-0" style={{ color: "#1CC355" }} />
-          <span className="text-[10px] tracking-[0.10em] uppercase" style={{ fontFamily: OSWALD, color: "#555", fontWeight: 600 }}>
-            Precisa de ajuda? Fale com a equipe pelo WhatsApp
-          </span>
-        </div>
-        <span className="text-[10px] tracking-[0.06em] whitespace-nowrap" style={{ fontFamily: OSWALD, color: "#555", fontWeight: 600 }}>
-          +55 11 97848-1919
-        </span>
-      </a>
-
+      {/* Banner WhatsApp removido — contato agora é o botão flutuante do rail */}
       {/* Header */}
       <div className="px-4 md:px-8 pt-5 pb-4 border-b" style={{ borderColor: CARD_BORDER }}>
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
