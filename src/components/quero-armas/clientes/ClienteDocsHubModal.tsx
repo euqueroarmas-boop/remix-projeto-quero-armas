@@ -1993,6 +1993,13 @@ export function ClienteDocsHubModal({
     setAutoResult(null);
     try {
       const textoPdf = textoLocalRef.current.trim();
+      // Rede de segurança: se a leitura local reconhece uma conta de
+      // concessionária, ela É comprovante de residência. Não vai para a IA —
+      // era exatamente aí que a fatura de energia voltava como "nota fiscal".
+      if (textoPdf && parseContaConsumo(textoPdf)) {
+        const resolvidoLocal = await tentarLeituraLocal(target);
+        if (resolvidoLocal) return;
+      }
       // PDF nativo já foi lido pelo pdf.js. Não transforme nem envie novamente
       // centenas de KB/MB em Base64: isso duplicava a leitura no Safari e fazia
       // a requisição aguardar o upload inteiro antes de começar a classificação.
@@ -2004,7 +2011,7 @@ export function ClienteDocsHubModal({
         // Reaproveita o texto já extraído localmente pelo pdf.js: a função
         // deixa de repetir a extração e o modelo lê texto em vez de imagem.
         { imageDataUrl: dataUrl || undefined, textoPdf },
-        20000,
+        12000,
       );
       if (clsErr) throw clsErr;
 
@@ -2335,7 +2342,7 @@ export function ClienteDocsHubModal({
           : await invokeComTimeout(
               "qa-extract-cliente-doc",
                { tipo_documento: tipoIA, imageDataUrl: dataUrl || await fileToDataUrl(target) },
-               20000,
+               12000,
             );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
