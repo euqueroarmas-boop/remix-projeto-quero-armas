@@ -497,8 +497,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       })()}
       </div>
 
-      {/* ÁREA ROLÁVEL — KPIs, filtros e lista */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
+      {/* BLOCO FIXO (continuação) — KPIs, filtro e cabeçalho da lista */}
+      <div style={{ flexShrink: 0 }}>
       {/* KPIs */}
       <div className="kpis">
         {([
@@ -516,7 +516,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
             onClick={() => setFilter((f) => (f === it.k ? null : it.k))}
             aria-pressed={filter === it.k}
           >
-            <div className="l"><span className="dot" style={{ background: it.dot }} />{it.l}</div>
+            <div className="l"><span className="dot" style={{ background: it.dot }} /><span className="lt">{it.l}</span></div>
             <div className="v" style={{ color: it.vc }}>{it.v}</div>
             <div className="s">{it.s}</div>
           </button>
@@ -537,7 +537,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           <Plus className="h-3 w-3" /> ADICIONAR
         </button>
       </div>
+      </div>
 
+      {/* ÁREA ROLÁVEL — somente as categorias */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {grupos.length === 0 ? (
         <div className="empty">Nenhum documento cadastrado ainda.</div>
       ) : (
