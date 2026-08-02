@@ -46,3 +46,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Procuração Reaproveitável](mem://features/quero-armas/procuracao-reaproveitavel) — Contrato em Processos; Procuração no Hub Jurídico com validade 12m, reaproveitada entre processos enquanto vigente
 - [Ocupação Lícita](mem://features/quero-armas/ocupacao-licita-matriz) — Matriz de docs por condição profissional; condicao_profissional SEMPRE via qa-processo-set-condicao (nunca responder-pergunta)
 - [Declaração Responsável Imóvel](mem://features/quero-armas/declaracao-responsavel-imovel) — Comprovante em nome de terceiro: aprova, gera declaração e valida assinatura GOV.BR do dono do imóvel
+- [Comprovante Terceiro](mem://features/quero-armas/comprovante-endereco-terceiro) — Comprovante em nome de terceiro só cumpre a exigência após declaração do responsável assinada no GOV.BR
