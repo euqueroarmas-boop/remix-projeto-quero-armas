@@ -3241,7 +3241,7 @@ export default function QAClientePortalPage() {
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Avatar (mobile) — mesmo formato squircle do ícone do WhatsApp */}
-        <div className="lg:hidden relative mb-0 flex flex-col items-center">
+        <div className="lg:hidden relative mb-[26px] flex flex-col items-center">
           <button
             type="button"
             onClick={() => setAvatarDropOpen((v) => !v)}
@@ -3271,9 +3271,6 @@ export default function QAClientePortalPage() {
           )}
         </div>
 
-        {/* Espaçador móvel: avatar isolado e alinhamento simétrico dos ícones */}
-        <div className="flex-1 lg:hidden min-h-0" />
-
         {/* Ícones principais — topo */}
         <div className="flex flex-col items-center gap-1">
           {navItems.filter((i) => i.key !== "mensagens" && i.key !== "configuracoes").map((item) => {
@@ -3296,11 +3293,11 @@ export default function QAClientePortalPage() {
           })}
         </div>
 
-        {/* Espaçador */}
-        <div className="flex-1" />
+        {/* Espaçador — apenas desktop; no mobile a distância entre TODOS os ícones é igual */}
+        <div className="hidden lg:block flex-1" />
 
         {/* Suporte e Configurações — fundo do rail */}
-        <div className="flex flex-col items-center gap-1 pb-[88px]">
+        <div className="flex flex-col items-center gap-1 mt-1 lg:mt-0 pb-[88px]">
           {/* Novo serviço — loja, logo acima do fuzil (checklist). */}
           <button
             type="button"
