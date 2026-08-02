@@ -218,6 +218,9 @@ Deno.serve(async (req) => {
     user_agent: req.headers.get("user-agent") || null,
     accept_language: req.headers.get("accept-language") || null,
     referer: req.headers.get("referer") || null,
+    so: detectarSO(req.headers.get("user-agent") || ""),
+    browser: detectarNavegador(req.headers.get("user-agent") || ""),
+    country: req.headers.get("cf-ipcountry"),
   };
 
   let body: Record<string, any> = {};
