@@ -387,14 +387,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       data-qa-overlay
       onClick={bloqueante ? undefined : onDismiss}
     >
       <div
-        className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]"
+        className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button — some no modo bloqueante (assinatura obrigatória) */}
@@ -402,10 +402,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           <button
             type="button"
             onClick={onDismiss}
-            className="absolute top-3 right-3 z-20 p-2 rounded-full text-[#6A6A6A] hover:bg-black/5 transition-colors"
+            className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
             aria-label="Fechar"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         )}
 
