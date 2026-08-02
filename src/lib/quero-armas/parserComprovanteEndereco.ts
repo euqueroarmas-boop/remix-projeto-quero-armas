@@ -136,6 +136,58 @@ export interface ContaConsumoExtraida {
   empresa_emissora: string;
   codigo_instalacao: string;
   data_emissao?: string;
+  /** Nome impresso como titular/cliente da unidade consumidora. */
+  titular_nome?: string;
+  /** CPF do titular, quando impresso na fatura. */
+  titular_cpf?: string;
+}
+
+/** Palavras que denunciam linha institucional (não é nome de pessoa). */
+const NAO_E_NOME =
+  /(LTDA|S\.?A\.?\b|EIRELI|ME\b|DISTRIBUI|ENERGIA|ELETRIC|NOTA|FISCAL|FATURA|CONTA|CNPJ|INSCRICAO|INSC\.|CEP|BAIRRO|MUNICIPIO|ENDERECO|VENCIMENTO|LEITURA|CONSUMO|TARIFA|TOTAL|CLASSIFICACAO|DANF|PROTOCOLO|AUTORIZACAO|CHAVE|SERIE|AGENCIA|BANCO|PAGAR|REFERENTE|DEBITO|CREDITO|SAC|OUVIDORIA|WWW|HTTP|GOV|COM\.BR)/;
+
+const PREFIXO_LOGRADOURO =
+  /^(RUA|AV|AVENIDA|TRAVESSA|TV|ESTRADA|ROD|RODOVIA|ALAMEDA|AL|PRACA|PC|VIELA|LARGO|QUADRA|Q\.|SITIO|CHACARA|JARDIM)\b/;
+
+/**
+ * Titular impresso na conta de consumo.
+ *
+ * Por que existe: comprovante de endereço em nome de terceiro NÃO reprova —
+ * abre o fluxo de Declaração do Responsável pelo Imóvel. Sem ler o nome do
+ * titular aqui, a conferência não percebia a divergência e o documento caía
+ * em duplicidade/análise em vez do fluxo correto.
+ */
+function extrairTitularConta(original: string): { nome?: string; cpf?: string } {
+  const cpf =
+    /CPF[^0-9]{0,12}(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2})/i.exec(original)?.[1]?.replace(/\D/g, "") ||
+    undefined;
+
+  const linhas = original
+    .split(/\r?\n/)
+    .map((l) => norm(l).toUpperCase())
+    .filter(Boolean);
+
+  let nome: string | undefined;
+  for (let i = 0; i < linhas.length; i++) {
+    const linha = linhas[i];
+    if (!/^[A-Z' ]{6,60}$/.test(linha)) continue;
+    if (NAO_E_NOME.test(linha)) continue;
+    if (PREFIXO_LOGRADOURO.test(linha)) continue;
+    if (linha.split(" ").filter(Boolean).length < 2) continue;
+    const proxima = linhas[i + 1] || "";
+    const anterior = linhas[i - 1] || "";
+    // Nome de titular vem imediatamente antes do logradouro, ou logo depois
+    // do rótulo de entrega/cliente.
+    if (
+      PREFIXO_LOGRADOURO.test(proxima) ||
+      /(ENDERECO DE ENTREGA|CLIENTE|TITULAR|NOME DO CLIENTE)/.test(anterior)
+    ) {
+      nome = linha;
+      break;
+    }
+  }
+
+  return { nome, cpf: cpf && cpf.length === 11 ? cpf : undefined };
 }
 
 /**
@@ -205,7 +257,16 @@ export function parseContaConsumo(texto: string): ContaConsumoExtraida | null {
        )?.[1]
     || undefined;
 
-  return { tipo, empresa_emissora, codigo_instalacao, data_emissao: emissao };
+  const titular = extrairTitularConta(original);
+
+  return {
+    tipo,
+    empresa_emissora,
+    codigo_instalacao,
+    data_emissao: emissao,
+    titular_nome: titular.nome,
+    titular_cpf: titular.cpf,
+  };
 }
 
 /**
