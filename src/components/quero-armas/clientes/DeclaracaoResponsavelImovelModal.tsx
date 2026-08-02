@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown } from "lucide-react";
+import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown, Trash2 } from "lucide-react";
 import type { ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
 import { baixarDeclaracaoResidencia } from "@/lib/quero-armas/declaracaoResidenciaDownload";
 
@@ -47,6 +47,7 @@ export default function DeclaracaoResponsavelImovelModal({
 }) {
   const [gerando, setGerando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [apagando, setApagando] = useState(false);
   const [declaracaoId, setDeclaracaoId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   /** Retomada: dados da declaração já gravada no servidor (Golden Record). */
@@ -132,6 +133,77 @@ export default function DeclaracaoResponsavelImovelModal({
   }
 
   async function enviarAssinada(file: File) {
+    if (!declaracaoId) {
+      toast.error("Gere a declaração antes de enviar o arquivo assinado.");
+      return;
+    }
+    if (file.type !== "application/pdf") {
+      toast.error("Envie o PDF assinado no GOV.BR — foto ou print não têm assinatura digital.");
+      return;
+    }
+    setEnviando(true);
+    setResultado(null);
+    try {
+      const base64 = await fileToBase64(file);
+      const { data, error } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "enviar_assinada", declaracao_id: declaracaoId, file_base64: base64 },
+      });
+      if (error) throw error;
+      const r = data as {
+        conforme?: boolean;
+        motivos?: string[];
+        assinatura?: { signatario?: string | null; data_assinatura?: string | null };
+        error?: string;
+      };
+      if (r?.error) throw new Error(r.error);
+      setResultado({
+        conforme: !!r.conforme,
+        motivos: r.motivos ?? [],
+        signatario: r.assinatura?.signatario ?? null,
+        data: r.assinatura?.data_assinatura ?? null,
+      });
+      if (r.conforme) {
+        toast.success("Declaração assinada e conferida com sucesso.");
+        onValidada();
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar a declaração assinada.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  /** Apaga a declaração e o comprovante de terceiro: a exigência de endereço
+   *  reabre do zero para o cliente enviar uma conta no próprio nome. */
+  async function apagarDeclaracao() {
+    if (!declaracaoId) {
+      onFechar();
+      return;
+    }
+    if (!window.confirm("Apagar esta declaração e o comprovante em nome de terceiro? Você poderá enviar uma conta no seu próprio nome.")) return;
+    setApagando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "cancelar", declaracao_id: declaracaoId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDeclaracaoId(null);
+      setDadosSalvos(null);
+      setComprovanteSalvoId(null);
+      setResultado(null);
+      setPdfUrl(null);
+      toast.success("Declaração apagada. Envie um comprovante no seu próprio nome.");
+      onValidada();
+      onFechar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível apagar a declaração.");
+    } finally {
+      setApagando(false);
+    }
+  }
+
+  async function enviarAssinadaLegacy(file: File) {
     if (!declaracaoId) {
       toast.error("Gere a declaração antes de enviar o arquivo assinado.");
       return;
