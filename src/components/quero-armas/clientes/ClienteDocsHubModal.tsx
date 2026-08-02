@@ -1996,7 +1996,9 @@ export function ClienteDocsHubModal({
       // 1) Classifica automaticamente (sem depender da seleção manual).
       const { data: cls, error: clsErr } = await invokeComTimeout(
         "qa-classificar-documento-arma",
-        { imageDataUrl: dataUrl },
+        // Reaproveita o texto já extraído localmente pelo pdf.js: a função
+        // deixa de repetir a extração e o modelo lê texto em vez de imagem.
+        { imageDataUrl: dataUrl, textoPdf: textoLocalRef.current || "" },
         60000,
       );
       if (clsErr) throw clsErr;
