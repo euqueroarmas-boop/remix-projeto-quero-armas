@@ -38,7 +38,7 @@ export default function DocResultadoCarimbo({
       // aberto — sem forçar auto aqui, o clique fora do carimbo não chega.
       style={{ pointerEvents: "auto" }}
       className="fixed inset-0 z-[400] flex items-center justify-center bg-black/55 backdrop-blur-[2px] p-6"
-      onClick={(e) => {
+      onPointerDown={(e) => {
         e.stopPropagation();
         if (e.target === e.currentTarget) onDone();
       }}
