@@ -2486,10 +2486,12 @@ export function ClienteDocsHubModal({
       }
       setExtracting(true);
       let textoIdentidade = "";
+      let falhaTecnicaLeitura = false;
       try {
         textoIdentidade = await extrairTextoPdf(f);
       } catch (e) {
         console.warn("[identidade] pdf.js falhou:", e);
+        falhaTecnicaLeitura = true;
       } finally {
         setExtracting(false);
       }
@@ -2507,7 +2509,10 @@ export function ClienteDocsHubModal({
           setExtracting(false);
         }
       }
-      if (!veredicto.ok && !aprovadoPorQrVisual) {
+      // Se a leitura falhou por problema técnico (worker do pdf.js, memória do
+      // navegador), o documento NÃO é culpado: seguimos para a IA classificar
+      // em vez de recusar um PDF oficial.
+      if (!veredicto.ok && !aprovadoPorQrVisual && !falhaTecnicaLeitura) {
         const id = toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF, {
           duration: Infinity,
           action: {
