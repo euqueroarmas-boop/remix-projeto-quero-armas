@@ -1338,6 +1338,8 @@ export function ClienteDocsHubModal({
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
+  /** O cliente já viu e dispensou o carimbo vermelho; libera o reenvio no mesmo Hub. */
+  const [rejeicaoCarimbada, setRejeicaoCarimbada] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
@@ -1434,6 +1436,7 @@ export function ClienteDocsHubModal({
     setIaExtraido({});
     setConfirmados({});
     setConformidade([]);
+    setRejeicaoCarimbada(false);
     setTemApontamento(false);
     setReconheceApontamento(null);
     setHomonimiaSalva(false);
@@ -1533,6 +1536,7 @@ export function ClienteDocsHubModal({
       setIaExtraido({});
       setConfirmados({});
       setConformidade([]);
+      setRejeicaoCarimbada(false);
       setTemApontamento(false);
       setReconheceApontamento(null);
       setHomonimiaSalva(false);
@@ -2672,6 +2676,7 @@ export function ClienteDocsHubModal({
     setFile(null);
     setClassificacao(null);
     setConferenciaLocal(null);
+    setRejeicaoCarimbada(false);
     setShowTipoOverride(false);
     if (!selectedFile) return;
 
@@ -2821,20 +2826,37 @@ export function ClienteDocsHubModal({
     }
   }
 
-  /** Já existe carimbo de REPROVADO na tela → próximo clique reenvia. */
-  const carimboReprovadoEmitido = resultadoCarimbo?.tipo === "reprovado";
+  /** Depois de o cliente dispensar o carimbo, o rodapé permanece em modo de reenvio. */
+  const carimboReprovadoEmitido = rejeicaoCarimbada;
 
   function reabrirHubParaNovoEnvio() {
     setResultadoCarimbo(null);
+    setRejeicaoCarimbada(false);
     setFile(null);
     setClassificacao(null);
     setConferenciaLocal(null);
+    setConferenciaLaudo(null);
     setAutoResult(null);
     setConformidade([]);
     setIaExtraido({});
     setConfirmados({});
+    setEnderecoLocal(null);
+    setTerceiroDados(null);
+    setNotasInformadas({});
+    setTemApontamento(false);
+    setReconheceApontamento(null);
+    setHomonimiaSalva(false);
+    setShowDeclaracao(false);
+    setProfissionalExtraido({ nome: null, registro: null });
+    textoLocalRef.current = "";
+    motivoCarimbadoRef.current = null;
     setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
-    setTimeout(() => fileInputRef.current?.click(), 150);
+    setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
+    setTimeout(() => {
+      if (!fileInputRef.current) return;
+      fileInputRef.current.value = "";
+      fileInputRef.current.click();
+    }, 150);
   }
 
   async function handleSave() {
@@ -4990,6 +5012,7 @@ export function ClienteDocsHubModal({
           // Com a declaração do responsável pendente, o hub permanece aberto:
           // o próximo passo do cliente é assinar, e fechar aqui o perderia.
           const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
+          if (resultadoCarimbo.tipo === "reprovado") setRejeicaoCarimbada(true);
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
