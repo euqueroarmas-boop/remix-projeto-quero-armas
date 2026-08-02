@@ -2765,6 +2765,8 @@ export function ClienteDocsHubModal({
   }
 
   async function handleSave() {
+    // Documento reprovado por vencimento: o botão vira "Enviar novamente" e
+    // reabre o seletor do Hub Documental para o cliente anexar a via atualizada.
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
