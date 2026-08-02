@@ -2853,9 +2853,23 @@ export function ClienteDocsHubModal({
       const venc = form.data_validade
         ? new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")
         : "";
+      const rotulo = getNomeDocumentoDisplay(
+        {
+          tipo_documento: form.tipo_documento,
+          nome_documento: form.nome_documento,
+          numero_documento: form.numero_documento,
+          orgao_emissor: form.orgao_emissor,
+        },
+        form.tipo_documento || "documento",
+      );
+      const ehResidencia =
+        categoriaHub === "residencia" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
+      const instrucao = ehResidencia
+        ? "Envie a conta de consumo recente do imóvel (emitida nos últimos 90 dias)"
+        : "Envie a via atualizada deste documento";
       setResultadoCarimbo({
         tipo: "reprovado",
-        mensagem: `Documento vencido${venc ? ` em ${venc}` : ""} · envie a via atualizada`,
+        mensagem: `${rotulo} vencido${venc ? ` em ${venc}` : ""} · ${instrucao}`,
       });
       return;
     }
