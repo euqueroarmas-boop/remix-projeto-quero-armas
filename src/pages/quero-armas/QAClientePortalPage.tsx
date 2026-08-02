@@ -238,6 +238,31 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
+function RifleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* coronha + corpo principal */}
+      <path d="M2 15c0-1.5 1.5-3 3.5-3.5l4.5-1 6.5-3.5c1.5-.5 3 .5 3.5 2l.5 2.5c.5 1.5-.5 3-2 3.5l-9 3-4 1.5c-1 .5-2-.5-2.5-1.5z" />
+      {/* cano */}
+      <path d="M13 7.5L22 5" />
+      {/* mira / trilho */}
+      <path d="M14.5 10l5-1.5" />
+      {/* gatilho */}
+      <path d="M7.5 12.5c-.5 0-1 .5-1 1.5" />
+    </svg>
+  );
+}
+
+
 function ClientAvatar({
   url,
   name,
