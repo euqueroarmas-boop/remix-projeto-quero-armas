@@ -1,0 +1,1 @@
+UPDATE public.qa_servicos_documentos SET link_emissao = 'https://gov.br' WHERE tipo_documento IN ('cin','rg_com_cpf','cnh','identidade','documento_identidade') AND link_emissao ILIKE '%gov.br%';
