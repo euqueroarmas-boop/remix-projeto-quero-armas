@@ -9,7 +9,7 @@ type OpenMinutaArgs = {
   vendaId?: number | string | null;
   checkoutToken?: string | null;
   slugs?: string[];
-  variant?: "company_signed" | "customer_signed";
+  variant?: "company_signed" | "customer_signed" | "customer_signed_url";
 };
 
 export type PreparedMinutaDownload = {
@@ -40,7 +40,10 @@ async function sessionHeaders() {
   return headers;
 }
 
-function contractRequestBody(args: OpenMinutaArgs, variant: "company_signed" | "customer_signed" | "download_url" | "html_preview") {
+function contractRequestBody(
+  args: OpenMinutaArgs,
+  variant: "company_signed" | "customer_signed" | "customer_signed_url" | "download_url" | "html_preview",
+) {
   return JSON.stringify({
     contract_id: args.contractId || undefined,
     venda_id: args.vendaId ? Number(args.vendaId) : undefined,
@@ -103,7 +106,7 @@ export async function getContratoAssinadoUrl(args: OpenMinutaArgs): Promise<{ ur
   const resp = await fetch(endpoint, {
     method: "POST",
     headers,
-    body: contractRequestBody(args, "customer_signed_url" as any),
+    body: contractRequestBody(args, "customer_signed_url"),
   });
   const json = await resp.json().catch(() => ({}));
   if (!resp.ok || !json?.url) {
