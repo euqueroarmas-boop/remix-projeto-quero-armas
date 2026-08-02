@@ -195,8 +195,14 @@ export default function ResidenciaTerceiroModal({
             ),
           },
           {
-            titulo: "Se você mora aqui, responda três perguntas sobre VOCÊ",
-            corpo: <>Seu estado civil, sua profissão e desde quando você mora neste endereço.</>,
+            titulo: "Informe o estado civil e a profissão do dono do imóvel",
+            corpo: (
+              <>
+                Estado civil e profissão de <strong>{titular}</strong> compõem o preâmbulo da declaração do
+                responsável pelo imóvel, que será gerada na sequência. De <strong>{requerente}</strong> pedimos
+                apenas desde quando mora neste endereço.
+              </>
+            ),
           },
           {
             titulo: "Depois, envie o documento de identidade do dono da conta",
