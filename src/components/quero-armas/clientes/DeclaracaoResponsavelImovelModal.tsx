@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown } from "lucide-react";
 import type { ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
+import { baixarDeclaracaoResidencia } from "@/lib/quero-armas/declaracaoResidenciaDownload";
 
 /**
  * DECLARAÇÃO DO RESPONSÁVEL PELO IMÓVEL — assinatura digital GOV.BR.
@@ -83,12 +84,21 @@ export default function DeclaracaoResponsavelImovelModal({
       if (payload?.error) throw new Error(payload.error);
       setDeclaracaoId(payload.declaracao_id ?? null);
       setPdfUrl(payload.pdf_url ?? null);
-      if (payload.pdf_url) window.open(payload.pdf_url, "_blank", "noopener");
-      toast.success("Declaração gerada. Envie ao dono do imóvel para assinar no GOV.BR.");
+      if (payload.declaracao_id) await baixarDeclaracaoResidencia(payload.declaracao_id);
+      toast.success("Declaração baixada. Envie ao dono do imóvel para assinar no GOV.BR.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível gerar a declaração.");
     } finally {
       setGerando(false);
+    }
+  }
+
+  async function baixarNovamente() {
+    if (!declaracaoId) return;
+    try {
+      await baixarDeclaracaoResidencia(declaracaoId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar a declaração.");
     }
   }
 
@@ -225,16 +235,15 @@ export default function DeclaracaoResponsavelImovelModal({
             </ul>
           </div>
 
-          {pdfUrl ? (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noreferrer"
+          {declaracaoId ? (
+            <button
+              type="button"
+              onClick={baixarNovamente}
               className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
             >
               <FileDown className="h-3.5 w-3.5" />
               Baixar declaração novamente
-            </a>
+            </button>
           ) : null}
 
           {resultado ? (
