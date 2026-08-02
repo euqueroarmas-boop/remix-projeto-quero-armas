@@ -341,6 +341,19 @@ function normCpf(s: string): string {
   return s.replace(/\D/g, "");
 }
 
+function cpfComDigitosVerificadores(s: string | null | undefined): string {
+  const digitos = normCpf(String(s || ""));
+  if (digitos.length !== 11 || /^(\d)\1{10}$/.test(digitos)) return digitos;
+  const base = digitos.slice(0, 9);
+  const calcular = (parcial: string, pesoInicial: number) => {
+    const soma = parcial.split("").reduce((acc, n, i) => acc + Number(n) * (pesoInicial - i), 0);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  const d1 = calcular(base, 10);
+  return `${base}${d1}${calcular(`${base}${d1}`, 11)}`;
+}
+
 function normCnpj(s: string): string {
   return String(s || "").replace(/\D/g, "");
 }
@@ -1618,14 +1631,16 @@ export function ClienteDocsHubModal({
           };
         }
         if (item.campo === "cpf") {
-          const refCpf = terceiroDados.responsavel_documento || null;
+          const refCpf = terceiroDados.responsavel_documento
+            ? cpfComDigitosVerificadores(terceiroDados.responsavel_documento)
+            : null;
           return {
             ...item,
             valorReferencia: refCpf,
             fonteReferencia: "Documento de identidade do responsável pelo imóvel",
             status: !refCpf
               ? ("sem_referencia" as const)
-              : normCpf(item.valorCertidao) === normCpf(refCpf)
+              : cpfComDigitosVerificadores(item.valorCertidao) === refCpf
                 ? ("conforme" as const)
                 : ("divergente" as const),
           };
