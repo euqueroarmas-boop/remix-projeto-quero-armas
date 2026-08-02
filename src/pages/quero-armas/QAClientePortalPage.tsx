@@ -239,6 +239,7 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
 }
 
 function RifleIcon({ className, color }: { className?: string; color?: string }) {
+  // Banana de dinamite (feixe de 3 bananas + pavio) — mesmo tom acinzentado do rail.
   return (
     <svg
       className={className}
@@ -250,14 +251,16 @@ function RifleIcon({ className, color }: { className?: string; color?: string })
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {/* coronha + corpo principal */}
-      <path d="M2 15c0-1.5 1.5-3 3.5-3.5l4.5-1 6.5-3.5c1.5-.5 3 .5 3.5 2l.5 2.5c.5 1.5-.5 3-2 3.5l-9 3-4 1.5c-1 .5-2-.5-2.5-1.5z" />
-      {/* cano */}
-      <path d="M13 7.5L22 5" />
-      {/* mira / trilho */}
-      <path d="M14.5 10l5-1.5" />
-      {/* gatilho */}
-      <path d="M7.5 12.5c-.5 0-1 .5-1 1.5" />
+      {/* bananas de dinamite */}
+      <rect x="4" y="10" width="4" height="11" rx="2" />
+      <rect x="9.5" y="10" width="4" height="11" rx="2" />
+      <rect x="15" y="10" width="4" height="11" rx="2" />
+      {/* cinta que amarra o feixe */}
+      <path d="M3.2 14.5h16.6" />
+      {/* pavio */}
+      <path d="M11.5 10V7.5c0-2 1.5-3.5 3.5-3.5" />
+      {/* faísca */}
+      <path d="M16.6 2.6l1.4-.6M16.6 5.4l1.4.6M17.4 4h1.6" />
     </svg>
   );
 }
