@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown } from "lucide-react";
+import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown, Trash2 } from "lucide-react";
 import type { ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
 import { baixarDeclaracaoResidencia } from "@/lib/quero-armas/declaracaoResidenciaDownload";
 
@@ -47,6 +47,7 @@ export default function DeclaracaoResponsavelImovelModal({
 }) {
   const [gerando, setGerando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [apagando, setApagando] = useState(false);
   const [declaracaoId, setDeclaracaoId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   /** Retomada: dados da declaração já gravada no servidor (Golden Record). */
@@ -172,6 +173,37 @@ export default function DeclaracaoResponsavelImovelModal({
     }
   }
 
+  /** Apaga a declaração e o comprovante de terceiro: a exigência de endereço
+   *  reabre do zero para o cliente enviar uma conta no próprio nome. */
+  async function apagarDeclaracao() {
+    if (!declaracaoId) {
+      onFechar();
+      return;
+    }
+    if (!window.confirm("Apagar esta declaração e o comprovante em nome de terceiro? Você poderá enviar uma conta no seu próprio nome.")) return;
+    setApagando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "cancelar", declaracao_id: declaracaoId },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setDeclaracaoId(null);
+      setDadosSalvos(null);
+      setComprovanteSalvoId(null);
+      setResultado(null);
+      setPdfUrl(null);
+      toast.success("Declaração apagada. Envie um comprovante no seu próprio nome.");
+      onValidada();
+      onFechar();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível apagar a declaração.");
+    } finally {
+      setApagando(false);
+    }
+  }
+
+
   const passos = [
     {
       titulo: "Baixe a declaração já preenchida",
@@ -211,11 +243,11 @@ export default function DeclaracaoResponsavelImovelModal({
       data-qa-overlay="declaracao-responsavel-imovel"
       style={{ pointerEvents: "auto" }}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]">
+      <div className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]">
         <button
           type="button"
           onClick={onFechar}
@@ -225,7 +257,7 @@ export default function DeclaracaoResponsavelImovelModal({
           <X className="h-4 w-4" />
         </button>
 
-        <div className="px-6 pt-8 pb-4 shrink-0">
+        <div className="px-6 pt-6 pb-4 pr-14 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
               Comprovação de endereço
@@ -265,14 +297,25 @@ export default function DeclaracaoResponsavelImovelModal({
           </div>
 
           {declaracaoId ? (
-            <button
-              type="button"
-              onClick={baixarNovamente}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Baixar declaração novamente
-            </button>
+            <div className="mt-5 flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={baixarNovamente}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                Baixar declaração novamente
+              </button>
+              <button
+                type="button"
+                onClick={apagarDeclaracao}
+                disabled={apagando}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8A1224]/40 bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8A1224] hover:bg-[#8A1224] hover:text-white disabled:opacity-50 transition-colors"
+              >
+                {apagando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Apagar e enviar no meu nome
+              </button>
+            </div>
           ) : null}
 
           {resultado ? (
