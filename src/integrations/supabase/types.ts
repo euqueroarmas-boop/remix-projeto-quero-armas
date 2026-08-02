@@ -12074,6 +12074,10 @@ export type Database = {
         Args: { p_status_venda: string; p_valor_aberto: number }
         Returns: string
       }
+      qa_doc_grupo_efetiva_necessidade: {
+        Args: { _categoria: string; _tipo: string }
+        Returns: boolean
+      }
       qa_email_existe_em_auth: { Args: { p_email: string }; Returns: boolean }
       qa_ensure_cliente_from_auth: {
         Args: {
