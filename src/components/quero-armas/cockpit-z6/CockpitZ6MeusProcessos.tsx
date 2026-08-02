@@ -362,7 +362,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         .z6-root .z6-step-row .z6-seg{flex:1;height:2px;margin:0 -8px}
         @media (max-width: 900px){ .z6-root .z6-proc-grid{grid-template-columns:1fr} .z6-root .z6-proc-left{border-right:0;border-bottom:1px solid #ECECEC;padding-right:0;padding-bottom:16px} }
         .z6-root, .z6-root *{min-width:0}
-        .z6-root{overflow-x:hidden}
+        .z6-root{overflow:visible}
         .z6-root .z6-detalhe-grid > div{min-width:0}
         .z6-root .z6-detalhe-grid *{overflow-wrap:anywhere;word-break:break-word}
         @media (max-width: 780px){ .z6-root .z6-detalhe-grid{grid-template-columns:minmax(0,1fr) !important} }
@@ -372,7 +372,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-foco-body{padding-left:0}
         }
         /* Foco do dia travado no topo ao rolar */
-        .z6-root .z6-foco-card{position:sticky;top:0;z-index:30}
+        .z6-root .z6-foco-card{position:sticky;position:-webkit-sticky;top:0;z-index:40;box-shadow:0 6px 18px -12px rgba(0,0,0,.35)}
       `}</style>
 
       {/* HEADER cliente-centric */}

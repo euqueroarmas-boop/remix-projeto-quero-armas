@@ -3112,7 +3112,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
@@ -3322,7 +3322,7 @@ export default function QAClientePortalPage() {
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <style>{`
-        .qa-portal-main { touch-action: pan-y; overflow-x: hidden; overscroll-behavior-x: none; }
+        .qa-portal-main { touch-action: pan-y; overflow-x: clip; overscroll-behavior-x: none; }
         /* Enquadramento canônico (referência: aba Contratos) */
         .qa-portal-main {
           padding-left: calc(1rem + env(safe-area-inset-left));
@@ -3337,7 +3337,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main * { touch-action: pan-y; }
         .qa-portal-main [style*="overflow-x"],
         .qa-portal-main .overflow-x-auto,
-        .qa-portal-main .overflow-x-scroll { overflow-x: hidden !important; }
+        .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
       <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
