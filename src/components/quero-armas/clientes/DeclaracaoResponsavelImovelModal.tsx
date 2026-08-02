@@ -297,14 +297,25 @@ export default function DeclaracaoResponsavelImovelModal({
           </div>
 
           {declaracaoId ? (
-            <button
-              type="button"
-              onClick={baixarNovamente}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              Baixar declaração novamente
-            </button>
+            <div className="mt-5 flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={baixarNovamente}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors"
+              >
+                <FileDown className="h-3.5 w-3.5" />
+                Baixar declaração novamente
+              </button>
+              <button
+                type="button"
+                onClick={apagarDeclaracao}
+                disabled={apagando}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8A1224]/40 bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8A1224] hover:bg-[#8A1224] hover:text-white disabled:opacity-50 transition-colors"
+              >
+                {apagando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Apagar e enviar no meu nome
+              </button>
+            </div>
           ) : null}
 
           {resultado ? (
