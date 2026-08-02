@@ -77,7 +77,7 @@ export function avaliarPdfIdentidade(texto: string): ResultadoTravaIdentidade {
       ok: false,
       temQr: false,
       motivo:
-        "Não conseguimos ler nenhum texto neste PDF — ele parece ser só a imagem/foto do documento. Baixe o PDF original na Carteira de Documentos do gov.br.",
+        "Não encontramos o QR Code de autenticidade neste PDF — ele parece ser só a imagem/foto do documento. Baixe o PDF original (CIN ou CNH digital) na Carteira de Documentos do gov.br.",
     };
   }
   if (!temQr) {
