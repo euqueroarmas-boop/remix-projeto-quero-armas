@@ -4859,7 +4859,7 @@ export function ClienteDocsHubModal({
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : docExpirado ? (
+                ) : carimboReprovadoEmitido ? (
                   <Upload className="mr-2 h-4 w-4" />
                 ) : casoResidenciaTerceiro && terceiroDados ? (
                   <FileDown className="mr-2 h-4 w-4" />
@@ -4868,7 +4868,7 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : docExpirado
+                  : carimboReprovadoEmitido
                     ? "Enviar novamente"
                     : classificacao && pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
