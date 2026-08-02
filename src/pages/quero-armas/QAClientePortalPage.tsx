@@ -104,7 +104,6 @@ import {
   IconHeadset,
   IconAdjustmentsHorizontal,
   IconBuildingStore,
-  IconBomb,
 } from "@tabler/icons-react";
 
 const CHECKLIST_AUTO_REVIEW_INTERVAL_MS = 10 * 60 * 1000;
@@ -253,32 +252,6 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
-function RifleIcon({ className, color }: { className?: string; color?: string }) {
-  // Banana de dinamite (feixe de 3 bananas + pavio) — mesmo tom acinzentado do rail.
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color ?? "currentColor"}
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* bananas de dinamite */}
-      <rect x="4" y="10" width="4" height="11" rx="2" />
-      <rect x="9.5" y="10" width="4" height="11" rx="2" />
-      <rect x="15" y="10" width="4" height="11" rx="2" />
-      {/* cinta que amarra o feixe */}
-      <path d="M3.2 14.5h16.6" />
-      {/* pavio */}
-      <path d="M11.5 10V7.5c0-2 1.5-3.5 3.5-3.5" />
-      {/* faísca */}
-      <path d="M16.6 2.6l1.4-.6M16.6 5.4l1.4.6M17.4 4h1.6" />
-    </svg>
-  );
-}
 
 
 
@@ -419,7 +392,6 @@ export default function QAClientePortalPage() {
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
   const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
-  const [rifleHover, setRifleHover] = useState(false);
   const [avatarDropOpen, setAvatarDropOpen] = useState(false);
 
 
