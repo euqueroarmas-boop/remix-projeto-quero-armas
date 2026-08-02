@@ -371,13 +371,14 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-title{padding-left:0}
           .z6-root .z6-foco-body{padding-left:0}
         }
-        /* Foco do dia travado no topo ao rolar */
-        .z6-root .z6-foco-card{position:sticky;position:-webkit-sticky;top:0;z-index:40;box-shadow:0 6px 18px -12px rgba(0,0,0,.35)}
+        /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
+        .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
       `}</style>
 
-      {/* HEADER cliente-centric */}
-      <div style={{ marginBottom: 20 }}>
-        <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+      {/* HEADER + FOCO DO DIA fixos no topo */}
+      <div className="z6-sticky-header" style={{ paddingBottom: focoDoDia ? 16 : 20 }}>
+        <div>
+          <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: ".04em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
         <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
@@ -389,7 +390,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
 
       {/* FOCO DO DIA */}
       {focoDoDia && (
-        <Card className="z6-foco-card" style={{ marginBottom: 16, borderLeft: "3px solid #D9342B", background: "#fff" }}>
+        <Card className="z6-foco-card" style={{ marginTop: 20, marginBottom: 0, borderLeft: "3px solid #D9342B", background: "#fff" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div className="z6-foco-body" style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
@@ -406,6 +407,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           </div>
         </Card>
       )}
+      </div>
 
       {/* 6 KPIs humanos */}
       <div
