@@ -175,7 +175,13 @@ export default function ResidenciaTerceiroModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4">
+    <div
+      // O Dialog do Radix aplica pointer-events:none no body enquanto está
+      // aberto — sem forçar auto aqui, nenhum clique deste modal chega.
+      style={{ pointerEvents: "auto" }}
+      onPointerDown={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4"
+    >
       <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-sm border border-[#E5E5E5] bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-[#E5E5E5] px-5 py-4">
           <div>
