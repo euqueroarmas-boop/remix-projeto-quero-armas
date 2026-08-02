@@ -245,12 +245,34 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   const messageId = crypto.randomUUID()
 
+  const authSubject = EMAIL_SUBJECTS[emailType] || 'Notification'
+
+  // Arquiva conteúdo integral para consulta por SQL
+  const { error: authContentLogError } = await supabase
+    .from('email_content_log')
+    .upsert(
+      {
+        message_id: messageId,
+        template_name: emailType,
+        recipient_email: payload.data.email,
+        subject: authSubject,
+        template_data: { ...templateProps, token: undefined },
+        html,
+        plain_text: text,
+      },
+      { onConflict: 'message_id' }
+    )
+  if (authContentLogError) {
+    console.error('Failed to archive auth email content', { error: authContentLogError, emailType })
+  }
+
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: emailType,
     recipient_email: payload.data.email,
     status: 'pending',
+    metadata: { subject: authSubject },
   })
 
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {
@@ -261,7 +283,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       to: payload.data.email,
       from: `${SITE_NAME} <${FROM_LOCAL_PART}@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
+      subject: authSubject,
       html,
       text,
       purpose: 'transactional',

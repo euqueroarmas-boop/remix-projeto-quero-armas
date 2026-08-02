@@ -296,12 +296,33 @@ Deno.serve(async (req) => {
   // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
   // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
 
+  // Arquiva o conteúdo integral do e-mail (assunto, variáveis do template,
+  // HTML e texto) para auditoria/consulta por SQL.
+  const { error: contentLogError } = await supabase
+    .from('email_content_log')
+    .upsert(
+      {
+        message_id: messageId,
+        template_name: templateName,
+        recipient_email: effectiveRecipient,
+        subject: resolvedSubject,
+        template_data: templateData ?? {},
+        html,
+        plain_text: plainText,
+      },
+      { onConflict: 'message_id' }
+    )
+  if (contentLogError) {
+    console.error('Failed to archive email content', { error: contentLogError, templateName })
+  }
+
   // Log pending BEFORE enqueue so we have a record even if enqueue crashes
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: templateName,
     recipient_email: effectiveRecipient,
     status: 'pending',
+    metadata: { subject: resolvedSubject, template_data: templateData ?? {} },
   })
 
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {

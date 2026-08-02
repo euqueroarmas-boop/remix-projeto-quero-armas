@@ -1041,6 +1041,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_content_log: {
+        Row: {
+          created_at: string
+          html: string | null
+          id: string
+          message_id: string
+          plain_text: string | null
+          recipient_email: string
+          subject: string | null
+          template_data: Json
+          template_name: string
+        }
+        Insert: {
+          created_at?: string
+          html?: string | null
+          id?: string
+          message_id: string
+          plain_text?: string | null
+          recipient_email: string
+          subject?: string | null
+          template_data?: Json
+          template_name: string
+        }
+        Update: {
+          created_at?: string
+          html?: string | null
+          id?: string
+          message_id?: string
+          plain_text?: string | null
+          recipient_email?: string
+          subject?: string | null
+          template_data?: Json
+          template_name?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
