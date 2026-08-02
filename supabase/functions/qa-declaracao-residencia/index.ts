@@ -194,6 +194,7 @@ function montarPdf(ctx: Record<string, string>, sessao: Record<string, unknown>)
       accept_language: (sessao.accept_language as string) ?? null,
       referer: (sessao.referer as string) ?? null,
       acao: "emiss\u00e3o da declara\u00e7\u00e3o do respons\u00e1vel pelo im\u00f3vel",
+      hash: (sessao.hash as string) ?? undefined,
     },
     margemEsquerda: MARGEM,
   });
