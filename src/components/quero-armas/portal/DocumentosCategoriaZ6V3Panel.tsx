@@ -543,7 +543,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   : d.status === "reprovado"
                     ? "REPROVADO"
                     : aguardaDeclaracao
-                      ? "AGUARDANDO DECLARAÇÃO DO RESPONSÁVEL"
+                      ? "AGUARDANDO ASSINATURA DO RESPONSÁVEL DO IMÓVEL"
                       : "EM ANÁLISE";
                 const temArquivo = Boolean(d.arquivo_storage_path);
                 return (
