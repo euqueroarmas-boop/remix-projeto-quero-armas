@@ -3281,7 +3281,7 @@ export default function QAClientePortalPage() {
             onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
           >
-            <RifleIcon className="h-[18px] w-[18px] shrink-0" />
+            <RifleIcon className="h-[18px] w-[18px] shrink-0" style={{ color: `${railIconColor}88` }} />
           </button>
 
           {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
