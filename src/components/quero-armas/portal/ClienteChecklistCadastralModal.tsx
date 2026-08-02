@@ -167,10 +167,10 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
   const pct = Math.round((jaPreenchidos / totalObrigatorios) * 100);
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] flex flex-col">
         {/* Cabeçalho com progresso */}
-        <div className="border-b border-zinc-200 px-6 pt-5 pb-4">
+        <div className="shrink-0 border-b border-zinc-200 px-6 pt-5 pb-4 pr-14">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
@@ -183,7 +183,8 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+              aria-label="Fechar"
+              className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
               title="Continuar depois — o que você já respondeu fica salvo"
             >
               <X className="h-4 w-4" />
