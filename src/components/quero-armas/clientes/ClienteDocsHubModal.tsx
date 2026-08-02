@@ -3411,11 +3411,14 @@ export function ClienteDocsHubModal({
               ) : null}
             </div>
             <div className="font-heading text-[14px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
-              {expectedTipoMeta?.label || tipoAtual?.label || "Aguardando classificação"}
+              {(classificacao ? tipoAtual?.label : null) ||
+                expectedTipoMeta?.label ||
+                tipoAtual?.label ||
+                "Aguardando classificação"}
             </div>
             {expectedTipoMeta ? (
               <div className="font-heading text-[9px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
-                Exigência do Assistente de Documentação
+                Exigência: {expectedTipoMeta.label}
               </div>
             ) : null}
             {notaTomadorParentesco ? (
