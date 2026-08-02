@@ -477,9 +477,9 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
                 <div className="text-[12px]" style={{ color: INK_2 }}>
                   Sou o Klal, assistente da Quero Armas. Como posso ajudar?
                 </div>
-                <div className="w-full max-w-md space-y-2 pt-2">
+                <div className="w-full max-w-md space-y-1.5 pt-1">
                   {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[13px] px-3 py-2.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK }}>
+                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11.5px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
                       {s}
                     </button>
                   ))}
@@ -622,24 +622,32 @@ export function CentralAjudaCliente({ cliente }: CentralAjudaClienteProps) {
             )}
           </div>
 
-          <div className="border-t px-4 py-3 flex gap-2" style={{ borderColor: LINE }}>
-            <input
+          <div className="border-t px-4 py-3 flex items-end gap-2" style={{ borderColor: LINE }}>
+            <textarea
               ref={inputRef}
+              rows={2}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+              }}
               onKeyDown={onKeyDown}
               placeholder="Digite sua dúvida para o Klal..."
               disabled={loading || !cliente}
-              className="flex-1 px-3 py-2.5 text-[14px] bg-white border focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
-              style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK }}
+              className="flex-1 px-3 py-2.5 text-[14px] bg-white border focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 resize-none"
+              style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
             />
             <button
               onClick={() => enviar(input)}
               disabled={loading || !cliente || input.trim().length < 2}
-              className="uppercase px-5 text-white disabled:opacity-60"
-              style={{ background: BRAND, borderRadius: 10, fontFamily: OSWALD, fontWeight: 700, fontSize: 12, letterSpacing: "0.16em", minWidth: 110 }}
+              title="Enviar"
+              aria-label="Enviar"
+              className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 hover:bg-[#7A1F2B] hover:text-white"
+              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${CARD_BORDER}`, background: "#FFFFFF", color: BRAND }}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin inline" /> : "Enviar"}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crosshair className="h-4 w-4" />}
             </button>
           </div>
         </div>
