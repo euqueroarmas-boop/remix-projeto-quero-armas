@@ -2489,6 +2489,29 @@ export default function QAClientePortalPage() {
   // é ambíguo (`"unknown"`).
   // ==========================================================================
   const autoRespondidasRef = useRef<Set<string>>(new Set());
+  // ==========================================================================
+  // RETOMADA DA DECLARAÇÃO DO RESPONSÁVEL PELO IMÓVEL
+  // Se existe declaração gerada e ainda não validada, ao recarregar o portal o
+  // cliente volta EXATAMENTE nessa tela (baixar / enviar assinada / apagar),
+  // e não na instrução genérica de comprovante de residência.
+  // ==========================================================================
+  const [declResidenciaAberta, setDeclResidenciaAberta] = useState(false);
+  const [declResidenciaComprovanteId, setDeclResidenciaComprovanteId] = useState<string | null>(null);
+  useEffect(() => {
+    const cid = Number((cliente as any)?.id);
+    if (!Number.isFinite(cid)) return;
+    let vivo = true;
+    (async () => {
+      const { data } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "atual", qa_cliente_id: cid },
+      });
+      const decl = (data as any)?.declaracao;
+      if (!vivo || !decl) return;
+      setDeclResidenciaComprovanteId(decl.documento_comprovante_id ?? null);
+      setDeclResidenciaAberta(true);
+    })();
+    return () => { vivo = false; };
+  }, [(cliente as any)?.id, docsReloadKey]);
   useEffect(() => {
     if (!cliente?.nome_completo || !processoDocs?.length) return;
     const nomeCliente = String(cliente.nome_completo);
