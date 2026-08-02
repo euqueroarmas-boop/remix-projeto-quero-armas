@@ -44,7 +44,7 @@ const App = () => (
           <AuthProvider>
             <CartProvider>
               <Suspense fallback={<PageLoader />}>
-                <div className="overflow-x-hidden max-w-full">
+                <div className="overflow-x-clip max-w-full">
                   <QAFaviconManager />
                   <AuthDeepLinkHandler />
                   <OAuthReturnHandler />

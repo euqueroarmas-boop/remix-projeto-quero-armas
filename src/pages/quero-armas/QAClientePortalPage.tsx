@@ -3268,7 +3268,7 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden mr-[56px]">
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-clip mr-[56px]">
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
