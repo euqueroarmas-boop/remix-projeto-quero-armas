@@ -3276,23 +3276,23 @@ export default function QAClientePortalPage() {
         rel="noopener noreferrer"
         title="Falar no WhatsApp"
         aria-label="Falar no WhatsApp"
-        className="qa-wa-sonar fixed z-50 flex items-center justify-center rounded-full transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
+        className="qa-wa-sonar fixed z-50 flex items-center justify-center transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
         style={{
           right: 12,
           bottom: 19,
           width: 34,
           height: 34,
-          background: "#25D366",
-          border: "1px solid rgba(255,255,255,0.35)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 1px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.12), 0 6px 12px rgba(0,0,0,0.25)",
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
           animation: "qa-wa-float 3s ease-in-out infinite",
         }}
       >
         <img
           src={whatsappIcon.url}
           alt="WhatsApp"
-          className="w-full h-full object-contain p-[2px]"
-          style={{ filter: "drop-shadow(0 1px 0 rgba(0,0,0,0.15))" }}
+          className="w-full h-full object-contain"
+          style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
         />
       </a>
 
