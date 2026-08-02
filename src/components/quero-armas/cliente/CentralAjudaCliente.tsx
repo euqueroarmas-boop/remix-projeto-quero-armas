@@ -620,35 +620,37 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
           </div>
 
-          <div className="border-t px-4 py-3 flex items-end gap-2" style={{ borderColor: LINE }}>
-            <textarea
-              ref={inputRef}
-              rows={2}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
-              }}
-              onKeyDown={onKeyDown}
-              placeholder="Digite sua dúvida para o Klal..."
-              disabled={loading || !cliente}
-              className="flex-1 px-3 py-2.5 text-[14px] bg-white border focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 resize-none"
-              style={{ borderColor: CARD_BORDER, borderRadius: 10, color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
-            />
-            <button
-              onClick={() => enviar(input)}
-              disabled={loading || !cliente || input.trim().length < 2}
-              title="Enviar"
-              aria-label="Enviar"
-              className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 hover:bg-[#7A1F2B] hover:text-white"
-              style={{ width: 38, height: 38, borderRadius: 9, border: `1px solid ${CARD_BORDER}`, background: "#FFFFFF", color: BRAND }}
-            >
-              {loading
-                ? <Loader2 className="h-4 w-4 animate-spin" />
-                : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1)", opacity: 0.7 }} />}
-            </button>
+          <div className="p-1">
+            <div className="flex items-end gap-2 px-3 py-2" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 12, background: "#FFFFFF" }}>
+              <textarea
+                ref={inputRef}
+                rows={2}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+                }}
+                onKeyDown={onKeyDown}
+                placeholder="Digite sua dúvida para o Klal..."
+                disabled={loading || !cliente}
+                className="flex-1 px-0 py-0 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
+                style={{ color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
+              />
+              <button
+                onClick={() => enviar(input)}
+                disabled={loading || !cliente || input.trim().length < 2}
+                title="Enviar"
+                aria-label="Enviar"
+                className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                style={{ width: 34, height: 34, borderRadius: 9, color: INK }}
+              >
+                {loading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1) contrast(1.2)" }} />}
+              </button>
+            </div>
           </div>
         </div>
 
