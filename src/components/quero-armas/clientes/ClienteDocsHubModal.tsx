@@ -4090,20 +4090,20 @@ export function ClienteDocsHubModal({
               </div>
             )}
 
-            {!conferenciaLocal && conformidade.length > 0 && (
+            {!conferenciaLocal && conformidadeExibidaExibida.length > 0 && (
               <div className={cn(
                 "rounded-2xl border p-3 text-xs",
-                conformidade.some(i => i.status === "divergente")
+                conformidadeExibida.some(i => i.status === "divergente")
                   ? "border-red-300 bg-red-50 text-red-900"
                   : "border-emerald-200 bg-emerald-50 text-emerald-900"
               )}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  {conformidade.some(i => i.status === "divergente")
+                  {conformidadeExibida.some(i => i.status === "divergente")
                     ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                     : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
                   <span className="font-bold uppercase tracking-wide text-[10px]">
                     Conformidade com documentos aprovados
-                    {conformidade.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
+                    {conformidadeExibida.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
                   </span>
                 </div>
                 <table className="w-full text-[10px]">
@@ -4116,7 +4116,7 @@ export function ClienteDocsHubModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-black/5">
-                     {conformidade.map((item) => (
+                     {conformidadeExibida.map((item) => (
                        <Fragment key={item.campo}>
                        <tr className="align-top">
                         <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
@@ -4160,7 +4160,7 @@ export function ClienteDocsHubModal({
                      ))}
                   </tbody>
                 </table>
-                {conformidade.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
+                {conformidadeExibida.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
                   <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
                     <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
                       Por que este documento foi rejeitado
