@@ -51,6 +51,7 @@ export default function DeclaracaoResponsavelImovelModal({
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   /** Retomada: dados da declaração já gravada no servidor (Golden Record). */
   const [dadosSalvos, setDadosSalvos] = useState<ResidenciaTerceiroPayload | null>(null);
+  const [comprovanteSalvoId, setComprovanteSalvoId] = useState<string | null>(null);
   const [retomando, setRetomando] = useState(false);
   const [resultado, setResultado] = useState<
     { conforme: boolean; motivos: string[]; signatario: string | null; data: string | null } | null
@@ -72,6 +73,7 @@ export default function DeclaracaoResponsavelImovelModal({
         if (!vivo || !decl) return;
         setDeclaracaoId(String(decl.id));
         setDadosSalvos(decl.dados as ResidenciaTerceiroPayload);
+        setComprovanteSalvoId(decl.documento_comprovante_id ?? null);
         if (decl.status === "assinada_rejeitada" && decl.motivo_reprovacao) {
           setResultado({ conforme: false, motivos: [decl.motivo_reprovacao], signatario: null, data: null });
         }
@@ -100,7 +102,7 @@ export default function DeclaracaoResponsavelImovelModal({
         body: {
           acao: "gerar",
           qa_cliente_id: qaClienteId,
-          documento_comprovante_id: documentoComprovanteId ?? null,
+          documento_comprovante_id: documentoComprovanteId ?? comprovanteSalvoId ?? null,
           responsavel_nome: dadosEfetivos!.responsavel_nome,
           responsavel_cpf: dadosEfetivos!.responsavel_documento,
           responsavel_estado_civil: dadosEfetivos!.estado_civil,
@@ -123,13 +125,10 @@ export default function DeclaracaoResponsavelImovelModal({
     }
   }
 
+  // Baixar novamente REGENERA o documento com a versão vigente do modelo
+  // (endereço do comprovante, dados em negrito, layout atual) e então baixa.
   async function baixarNovamente() {
-    if (!declaracaoId) return;
-    try {
-      await baixarDeclaracaoResidencia(declaracaoId);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Não foi possível baixar a declaração.");
-    }
+    await gerar();
   }
 
   async function enviarAssinada(file: File) {
