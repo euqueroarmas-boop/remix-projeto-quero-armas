@@ -4246,15 +4246,12 @@ export function ClienteDocsHubModal({
                       inputClassName,
                       "flex items-center gap-2 text-left font-medium bg-[#F5F5F5] text-[#0A0A0A] cursor-default select-none",
                     )}
-                    title="Classificação automática do documento"
                   >
                     <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#7A1F2B]" />
                     <span className="truncate">{tipoAtual?.label ?? "Aguardando leitura do documento"}</span>
                   </div>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[#8A8A8A]">
-                    Classificação automática
-                  </p>
                 </Field>
+
               </div>
 
               <div className="rounded-sm border border-[#EFEFEF] bg-[#FAFAFA] px-3 py-2">
