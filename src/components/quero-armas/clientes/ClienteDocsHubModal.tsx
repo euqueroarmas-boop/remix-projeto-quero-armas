@@ -2863,7 +2863,7 @@ export function ClienteDocsHubModal({
         form.tipo_documento || "documento",
       );
       const ehResidencia =
-        categoriaHub === "residencia" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
+        categoriaHub === "endereco" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
       const instrucao = ehResidencia
         ? "Envie a conta de consumo recente do imóvel (emitida nos últimos 90 dias)"
         : "Envie a via atualizada deste documento";
