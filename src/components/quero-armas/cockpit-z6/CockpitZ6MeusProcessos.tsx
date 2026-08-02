@@ -193,7 +193,7 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
         </div>
 
         {/* Linha do tempo + Checklist */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 6 }}>
+        <div className="z6-detalhe-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 20, marginTop: 6 }}>
           <div>
             <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 10, letterSpacing: ".2em", color: "#7A7A7A", marginBottom: 10 }}>LINHA DO TEMPO</div>
             <div style={{ borderLeft: "2px solid #E5E5E5", paddingLeft: 14, marginLeft: 6 }}>
@@ -361,11 +361,18 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         .z6-root .z6-item .z6-d{font-size:9px;color:#7A7A7A;margin-top:1px}
         .z6-root .z6-step-row .z6-seg{flex:1;height:2px;margin:0 -8px}
         @media (max-width: 900px){ .z6-root .z6-proc-grid{grid-template-columns:1fr} .z6-root .z6-proc-left{border-right:0;border-bottom:1px solid #ECECEC;padding-right:0;padding-bottom:16px} }
+        .z6-root, .z6-root *{min-width:0}
+        .z6-root{overflow-x:hidden}
+        .z6-root .z6-detalhe-grid > div{min-width:0}
+        .z6-root .z6-detalhe-grid *{overflow-wrap:anywhere;word-break:break-word}
+        @media (max-width: 780px){ .z6-root .z6-detalhe-grid{grid-template-columns:minmax(0,1fr) !important} }
         /* Alinhamento à esquerda em mobile (rail de ícones fica à direita). */
         @media (max-width: 640px){
           .z6-root .z6-title{padding-left:0}
           .z6-root .z6-foco-body{padding-left:0}
         }
+        /* Foco do dia travado no topo ao rolar */
+        .z6-root .z6-foco-card{position:sticky;top:0;z-index:30}
       `}</style>
 
       {/* HEADER cliente-centric */}
@@ -382,7 +389,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
 
       {/* FOCO DO DIA */}
       {focoDoDia && (
-        <Card style={{ marginBottom: 16, borderLeft: "3px solid #D9342B" }}>
+        <Card className="z6-foco-card" style={{ marginBottom: 16, borderLeft: "3px solid #D9342B", background: "#fff" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div className="z6-foco-body" style={{ minWidth: 0 }}>
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
