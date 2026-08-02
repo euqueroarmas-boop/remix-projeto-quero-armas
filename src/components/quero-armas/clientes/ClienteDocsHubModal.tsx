@@ -3089,7 +3089,8 @@ export function ClienteDocsHubModal({
       // documentos com apontamento criminal ou divergência de dados do cliente.
       const bloqueioRevisao =
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
-      const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
+      const iaConfia =
+        !bloqueioRevisao && (classificacao?.recomendacao === "aceitar" || !!terceiroDados);
       if (isStaff) {
         payload.status = "aprovado";
         payload.origem = "admin";
@@ -3300,6 +3301,10 @@ export function ClienteDocsHubModal({
             }
           : { tipo: "analise" }
       );
+
+      // Residência de terceiro concluída: o comprovante fica aprovado e o
+      // pop-up guiado da Declaração do Responsável pelo Imóvel abre em seguida.
+      if (terceiroDados) setDeclaracaoAberta(true);
     } catch (e: any) {
       console.error("[save doc] error:", e);
       setResultadoCarimbo({ tipo: "reprovado", mensagem: e?.message || "Falha ao salvar documento." });
