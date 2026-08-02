@@ -6,7 +6,7 @@ import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, ChevronLeft, Bell, Target, Zap, History,
-  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
+  FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip, Store,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
   ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal, Loader2,
@@ -3224,8 +3224,22 @@ export default function QAClientePortalPage() {
         {/* Espaçador */}
         <div className="flex-1" />
 
-        {/* Suporte e Configurações — fundo, acima do balão flutuante */}
+        {/* Suporte e Configurações — fundo do rail */}
         <div className="flex flex-col items-center gap-1 pb-[88px]">
+          {/* Novo serviço — loja, logo acima do fuzil (checklist). */}
+          <button
+            type="button"
+            onClick={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+            title="Novo serviço"
+            aria-label="Novo serviço"
+            className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: `${railIconColor}88` }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
+          >
+            <Store className="h-[18px] w-[18px] shrink-0" />
+          </button>
+
           {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
               Fica logo acima do Suporte — é o primeiro lugar onde ele olha
               quando quer saber "o que falta". */}
