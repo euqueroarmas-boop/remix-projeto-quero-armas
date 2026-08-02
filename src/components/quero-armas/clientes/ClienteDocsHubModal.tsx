@@ -1579,7 +1579,15 @@ export function ClienteDocsHubModal({
   const certidaoIncorreta = !!(
     tipoDivergenteExigencia &&
     form.tipo_documento &&
-    !cobreOutraPendencia
+    !cobreOutraPendencia &&
+    // Mesmo grupo de comprovação de endereço: conta, contrato de locação e
+    // declaração do responsável cumprem a mesma exigência. Não é documento
+    // errado — segue para o fluxo de residência em nome de terceiro.
+    !(
+      defaultTipo === "comprovante_residencia" &&
+      (form.tipo_documento === "comprovante_residencia" ||
+        form.tipo_documento === "declaracao_responsavel_imovel")
+    )
   );
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
