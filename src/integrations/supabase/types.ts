@@ -5430,6 +5430,126 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_declaracoes_residencia: {
+        Row: {
+          arquivo_assinado_path: string | null
+          assinado_enviado_em: string | null
+          assinatura_autoridade: string | null
+          assinatura_cpf: string | null
+          assinatura_data: string | null
+          assinatura_detalhes_json: Json | null
+          assinatura_icp_brasil: boolean | null
+          assinatura_motivo_falha: string | null
+          assinatura_signatario: string | null
+          assinatura_status: string | null
+          conteudo_html: string
+          created_at: string
+          documento_comprovante_id: string | null
+          endereco_completo: string
+          gerado_em: string
+          id: string
+          mora_desde: string | null
+          qa_cliente_id: number
+          requerente_cpf: string | null
+          requerente_estado_civil: string | null
+          requerente_nacionalidade: string | null
+          requerente_nascimento: string | null
+          requerente_naturalidade: string | null
+          requerente_nome: string
+          requerente_profissao: string | null
+          responsavel_cpf: string | null
+          responsavel_doc_path: string | null
+          responsavel_estado_civil: string | null
+          responsavel_nacionalidade: string | null
+          responsavel_nascimento: string | null
+          responsavel_naturalidade: string | null
+          responsavel_nome: string
+          responsavel_profissao: string | null
+          sessao_envio_json: Json | null
+          sessao_geracao_json: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_assinado_path?: string | null
+          assinado_enviado_em?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_icp_brasil?: boolean | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          conteudo_html: string
+          created_at?: string
+          documento_comprovante_id?: string | null
+          endereco_completo: string
+          gerado_em?: string
+          id?: string
+          mora_desde?: string | null
+          qa_cliente_id: number
+          requerente_cpf?: string | null
+          requerente_estado_civil?: string | null
+          requerente_nacionalidade?: string | null
+          requerente_nascimento?: string | null
+          requerente_naturalidade?: string | null
+          requerente_nome: string
+          requerente_profissao?: string | null
+          responsavel_cpf?: string | null
+          responsavel_doc_path?: string | null
+          responsavel_estado_civil?: string | null
+          responsavel_nacionalidade?: string | null
+          responsavel_nascimento?: string | null
+          responsavel_naturalidade?: string | null
+          responsavel_nome: string
+          responsavel_profissao?: string | null
+          sessao_envio_json?: Json | null
+          sessao_geracao_json?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_assinado_path?: string | null
+          assinado_enviado_em?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_icp_brasil?: boolean | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          conteudo_html?: string
+          created_at?: string
+          documento_comprovante_id?: string | null
+          endereco_completo?: string
+          gerado_em?: string
+          id?: string
+          mora_desde?: string | null
+          qa_cliente_id?: number
+          requerente_cpf?: string | null
+          requerente_estado_civil?: string | null
+          requerente_nacionalidade?: string | null
+          requerente_nascimento?: string | null
+          requerente_naturalidade?: string | null
+          requerente_nome?: string
+          requerente_profissao?: string | null
+          responsavel_cpf?: string | null
+          responsavel_doc_path?: string | null
+          responsavel_estado_civil?: string | null
+          responsavel_nacionalidade?: string | null
+          responsavel_nascimento?: string | null
+          responsavel_naturalidade?: string | null
+          responsavel_nome?: string
+          responsavel_profissao?: string | null
+          sessao_envio_json?: Json | null
+          sessao_geracao_json?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_doc_incompat_alertas_enviados: {
         Row: {
           cliente_id: number | null
