@@ -91,6 +91,20 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { ShoppingCart, UserCog } from "lucide-react";
+import {
+  IconLayoutGrid,
+  IconCrosshair,
+  IconFileCertificate,
+  IconFolders,
+  IconLayoutKanban,
+  IconBellRinging2,
+  IconTargetArrow,
+  IconPackages,
+  IconCreditCardPay,
+  IconHeadset,
+  IconAdjustmentsHorizontal,
+  IconBuildingStore,
+} from "@tabler/icons-react";
 
 const CHECKLIST_AUTO_REVIEW_INTERVAL_MS = 10 * 60 * 1000;
 
@@ -238,32 +252,6 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
-function RifleIcon({ className, color }: { className?: string; color?: string }) {
-  // Banana de dinamite (feixe de 3 bananas + pavio) — mesmo tom acinzentado do rail.
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color ?? "currentColor"}
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {/* bananas de dinamite */}
-      <rect x="4" y="10" width="4" height="11" rx="2" />
-      <rect x="9.5" y="10" width="4" height="11" rx="2" />
-      <rect x="15" y="10" width="4" height="11" rx="2" />
-      {/* cinta que amarra o feixe */}
-      <path d="M3.2 14.5h16.6" />
-      {/* pavio */}
-      <path d="M11.5 10V7.5c0-2 1.5-3.5 3.5-3.5" />
-      {/* faísca */}
-      <path d="M16.6 2.6l1.4-.6M16.6 5.4l1.4.6M17.4 4h1.6" />
-    </svg>
-  );
-}
 
 
 
@@ -404,7 +392,6 @@ export default function QAClientePortalPage() {
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
   const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
-  const [rifleHover, setRifleHover] = useState(false);
   const [avatarDropOpen, setAvatarDropOpen] = useState(false);
 
 
@@ -1450,17 +1437,17 @@ export default function QAClientePortalPage() {
   // não é mais exposta como item de navegação — "Meus processos" cobre o
   // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
-    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: Crosshair, path: "/area-do-cliente/arsenal-inteligente", group: "primary" as const },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
-    { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "processos" as const, label: "Meus Processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
-    { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
-    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
-    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen, path: "/area-do-cliente/recarga-de-municoes", group: "primary" as const },
-    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
-    { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "primary" as const },
-    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
+    { key: "resumo" as const, label: "Resumo", icon: IconLayoutGrid, path: "/area-do-cliente", group: "primary" as const },
+    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: IconCrosshair, path: "/area-do-cliente/arsenal-inteligente", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: IconFileCertificate, path: "/area-do-cliente/contratos", group: "primary" as const },
+    { key: "documentos" as const, label: "Documentos", icon: IconFolders, path: "/area-do-cliente/documentos", group: "primary" as const },
+    { key: "processos" as const, label: "Meus Processos", icon: IconLayoutKanban, path: "/area-do-cliente/processos", group: "primary" as const },
+    { key: "pendencias" as const, label: "Pendências", icon: IconBellRinging2, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: IconTargetArrow, path: "/area-do-cliente/analise-de-alvo", group: "primary" as const },
+    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: IconPackages, path: "/area-do-cliente/recarga-de-municoes", group: "primary" as const },
+    { key: "financeiro" as const, label: "Financeiro", icon: IconCreditCardPay, path: "/area-do-cliente/financeiro", group: "primary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: IconHeadset, path: "/area-do-cliente/mensagens", group: "primary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: IconAdjustmentsHorizontal, path: "/area-do-cliente/configuracoes", group: "primary" as const },
   ], []);
 
   // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
@@ -3272,30 +3259,16 @@ export default function QAClientePortalPage() {
             onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
           >
-            <Store className="h-[18px] w-[18px] shrink-0" />
+            <IconBuildingStore className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
           </button>
 
-          {/* Rodar checklist — fuzil */}
-          <button
-            type="button"
-            onClick={() => abrirChecklistGuiado()}
-            title="Rodar checklist"
-            aria-label="Rodar checklist"
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-            onMouseEnter={() => setRifleHover(true)}
-            onMouseLeave={() => setRifleHover(false)}
-          >
-            <RifleIcon
-              className="h-[18px] w-[18px] shrink-0"
-              color={rifleHover ? railIconColor : `${railIconColor}88`}
-            />
-          </button>
-
-
-          {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
-              Fica logo acima do Suporte — é o primeiro lugar onde ele olha
-              quando quer saber "o que falta". */}
-          <PainelDisparo itens={itensDisparo} corIcone={railIconColor} onOpen={abrirDisparoRail} />
+          {/* Checklist guiado — botão único, com o contador de pendências. */}
+          <PainelDisparo
+            itens={itensDisparo}
+            corIcone={railIconColor}
+            onOpen={abrirDisparoRail}
+            badge={pendenciasGuiadasCount + pendingSignatureCount}
+          />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
 

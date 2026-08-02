@@ -6,6 +6,8 @@
  * o contador e abrimos esse fluxo.
  * ============================================================================= */
 
+import { IconBomb } from "@tabler/icons-react";
+
 export type PrioridadeDisparo =
   | "pagamento"
   | "assinatura"
@@ -30,37 +32,29 @@ interface Props {
   itens: ItemDisparo[];
   corIcone: string;
   onOpen: () => void;
+  /** Contador exibido no badge (pendências do checklist guiado). */
+  badge?: number;
 }
 
-export default function PainelDisparo({ itens, corIcone, onOpen }: Props) {
-  const total = itens.length;
+export default function PainelDisparo({ itens, corIcone, onOpen, badge }: Props) {
+  const total = typeof badge === "number" ? badge : itens.length;
+  const ativo = total > 0 || itens.length > 0;
 
   return (
     <button
       type="button"
       onClick={onOpen}
-      title={total ? `${total} ${total === 1 ? "pendência" : "pendências"}` : "Nada pendente"}
-      aria-label={total ? `Abrir ${total} pendências` : "Nada pendente"}
+      title={total ? `Checklist guiado — ${total} ${total === 1 ? "pendência" : "pendências"}` : "Checklist guiado"}
+      aria-label={total ? `Abrir checklist guiado, ${total} pendências` : "Abrir checklist guiado"}
       className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
-      style={{ color: total ? corIcone : `${corIcone}88` }}
+      style={{ color: ativo ? corIcone : `${corIcone}88` }}
       onMouseEnter={(e) => { e.currentTarget.style.background = `${corIcone}1F`; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
     >
-      <span
-        aria-hidden="true"
-        className="h-[18px] w-[23px] shrink-0"
-        style={{
-          backgroundColor: corIcone,
-          opacity: total ? 1 : 0.53,
-          WebkitMaskImage: "url(/icone-arma-cadastro.png)",
-          maskImage: "url(/icone-arma-cadastro.png)",
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
-        }}
+      <IconBomb
+        className="h-[19px] w-[19px] shrink-0"
+        stroke={1.6}
+        style={{ color: corIcone, opacity: ativo ? 1 : 0.53 }}
       />
       {total > 0 && (
         <span
