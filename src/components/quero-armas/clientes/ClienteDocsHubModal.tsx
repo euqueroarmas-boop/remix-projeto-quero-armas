@@ -4835,14 +4835,16 @@ export function ClienteDocsHubModal({
                 disabled={
                   saving ||
                   extracting ||
-                  (!!classificacao && pendingSensitiveKeys().length > 0) ||
-                  (temApontamento && reconheceApontamento === null) ||
-                  (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
+                  (!docExpirado && !!classificacao && pendingSensitiveKeys().length > 0) ||
+                  (!docExpirado && temApontamento && reconheceApontamento === null) ||
+                  (!docExpirado && temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
                 }
                 className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : docExpirado ? (
+                  <Upload className="mr-2 h-4 w-4" />
                 ) : casoResidenciaTerceiro && terceiroDados ? (
                   <FileDown className="mr-2 h-4 w-4" />
                 ) : (
@@ -4850,7 +4852,9 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : classificacao && pendingSensitiveKeys().length > 0
+                  : docExpirado
+                    ? "Enviar novamente"
+                    : classificacao && pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
                     : temApontamento && reconheceApontamento === null
                       ? "Responda sobre o apontamento"
