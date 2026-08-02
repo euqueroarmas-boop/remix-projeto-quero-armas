@@ -239,11 +239,11 @@ export default function ResidenciaTerceiroModal({
       data-qa-overlay="residencia-terceiro"
       style={{ pointerEvents: "auto" }}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]">
+      <div className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]">
         <button
           type="button"
           onClick={onCancelar}
