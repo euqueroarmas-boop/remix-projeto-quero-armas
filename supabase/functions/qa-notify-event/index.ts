@@ -407,6 +407,9 @@ Deno.serve(async (req) => {
           link: "/area-do-cliente",
           referencia_tabela: body.referencia_tabela || null,
           referencia_id: body.referencia_id || null,
+          // Avisos informativos expiram em 7 dias — sem isso eles ficavam
+          // ativos para sempre e empilhavam no portal a cada login.
+          expira_em: new Date(Date.now() + 7 * 24 * 60 * 60_000).toISOString(),
           ativa: true,
         }, { onConflict: "cliente_id,categoria,referencia_tabela,referencia_id" });
       } catch (err) {
