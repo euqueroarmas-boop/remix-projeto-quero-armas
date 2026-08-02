@@ -408,6 +408,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           </div>
         </Card>
       )}
+      </div>
 
       {/* 6 KPIs humanos */}
       <div
