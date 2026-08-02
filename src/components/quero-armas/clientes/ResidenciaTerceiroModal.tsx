@@ -175,115 +175,175 @@ export default function ResidenciaTerceiroModal({
     }
   }
 
-  return (
+  const requerente = (interessadoNome || "VOCÊ").toUpperCase();
+  const titular = (titularComprovante || "OUTRA PESSOA").toUpperCase();
+
+  // MESMO pop-up das pendências guiadas (PendenciasGuiadasPopup): mesma
+  // moldura branca, mesmos chips no topo, mesma lista numerada com linha
+  // vertical e mesmo rodapé com botão bordô. Nenhuma interface nova.
+  const passos: { titulo: string; corpo: React.ReactNode }[] =
+    etapa === "pergunta"
+      ? [
+          {
+            titulo: "Confirme se você mora neste imóvel",
+            corpo: (
+              <>
+                A conta está em nome de <strong>{titular}</strong> e não de <strong>{requerente}</strong>.
+                Isso <strong>não reprova</strong> o documento — a Polícia Federal só precisa saber onde você
+                tem residência fixa, porque é nesse imóvel que a arma ficará guardada.
+              </>
+            ),
+          },
+          {
+            titulo: "Se você mora aqui, responda três perguntas sobre VOCÊ",
+            corpo: <>Seu estado civil, sua profissão e desde quando você mora neste endereço.</>,
+          },
+          {
+            titulo: "Depois, envie o documento de identidade do dono da conta",
+            corpo: (
+              <>
+                RG, CNH ou CIN de <strong>{titular}</strong> — a pessoa que aparece no comprovante. É o
+                cruzamento final: o documento é conferido com o titular lido na conta.
+              </>
+            ),
+          },
+        ]
+      : [];
+
+  const conteudo = (
     <div
       // O Dialog do Radix aplica pointer-events:none no body enquanto está
-      // aberto — sem forçar auto aqui, nenhum clique deste modal chega.
+      // aberto — sem forçar auto aqui, nenhum clique/digitação chega.
       style={{ pointerEvents: "auto" }}
       onPointerDown={(e) => e.stopPropagation()}
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4"
+      onPointerDownCapture={(e) => e.stopPropagation()}
+      onFocusCapture={(e) => e.stopPropagation()}
+      onKeyDownCapture={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
     >
-      <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-sm border border-[#E5E5E5] bg-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4 border-b border-[#E5E5E5] px-5 py-4">
-          <div>
-            <p className="font-['Oswald'] text-[10px] tracking-[0.2em] uppercase text-[#7A1F2B]">
+      <div className="relative w-full sm:max-w-2xl bg-white sm:rounded-2xl sm:shadow-2xl overflow-hidden flex flex-col max-h-[100dvh] sm:max-h-[90dvh]">
+        <button
+          type="button"
+          onClick={onCancelar}
+          aria-label="Fechar"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Header — mesmos chips do pop-up de pendências */}
+        <div className="px-6 pt-8 pb-4 shrink-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
               Comprovação de endereço
-            </p>
-            <h2 className="font-['Oswald'] text-[18px] uppercase tracking-[0.06em] text-[#0A0A0A]">
-              Este endereço é de outro titular
-            </h2>
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              Exigência do processo
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              Conta em nome de terceiro
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={onCancelar}
-            aria-label="Fechar"
-            className="rounded-full bg-[#7A1F2B] p-1.5 text-white hover:bg-[#5f1721]"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
+            {etapa === "pergunta"
+              ? "Este endereço está no nome de outra pessoa"
+              : "Sobre você e sobre o dono da conta"}
+          </h2>
+          <p className="mt-2 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[13px] leading-relaxed text-[#3A3A3A]">
+            Titular da conta: <strong>{titular}</strong> · Interessado no processo: <strong>{requerente}</strong>
+          </p>
         </div>
 
-        <div className="px-5 py-5 space-y-4 text-[13px] text-[#2A2A2A]">
-          <p>
-            A conta está em nome de{" "}
-            <strong className="uppercase">{titularComprovante || "outra pessoa"}</strong>
-            {interessadoNome ? (
-              <> e não de <strong className="uppercase">{interessadoNome}</strong></>
-            ) : null}
-            . Isso não reprova o documento — a Polícia Federal só precisa saber onde você tem residência fixa,
-            porque é nesse imóvel que a arma ficará guardada.
-          </p>
-
+        {/* Corpo rolável */}
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
           {etapa === "pergunta" ? (
-            <div className="space-y-3">
-              <p className="font-['Oswald'] uppercase tracking-[0.08em] text-[#0A0A0A]">
-                Você realmente mora neste endereço?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEtapa("dados")}
-                  className="flex-1 rounded-sm bg-[#7A1F2B] px-4 py-3 font-['Oswald'] text-[12px] uppercase tracking-[0.14em] text-white hover:bg-[#5f1721]"
-                >
-                  Sim, moro aqui
-                </button>
-                <button
-                  type="button"
-                  onClick={onCancelar}
-                  className="flex-1 rounded-sm border border-[#CFCFCF] px-4 py-3 font-['Oswald'] text-[12px] uppercase tracking-[0.14em] text-[#0A0A0A] hover:border-[#0A0A0A]"
-                >
-                  Não · enviar outra conta
-                </button>
-              </div>
+            <div className="relative">
+              <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
+              <ul className="space-y-5 relative">
+                {passos.map((p, i) => (
+                  <li key={i} className="flex gap-4">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                      {i + 1}
+                    </span>
+                    <div className="pt-1">
+                      <p className="text-[14px] font-semibold leading-snug text-[#0A0A0A]">{p.titulo}</p>
+                      <p className="mt-1 text-[14px] leading-relaxed text-[#3A3A3A]">{p.corpo}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="block font-['Oswald'] text-[10px] uppercase tracking-[0.16em] text-[#6B6B6B]">Estado civil</span>
-                  <select
-                    value={estadoCivil}
-                    onChange={(e) => setEstadoCivil(e.target.value)}
-                    className="mt-1 h-9 w-full rounded-sm border border-[#CFCFCF] px-2 text-[13px] uppercase"
-                  >
-                    <option value="">SELECIONE</option>
-                    {ESTADOS_CIVIS.map((e) => (
-                      <option key={e} value={e}>{e}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="block font-['Oswald'] text-[10px] uppercase tracking-[0.16em] text-[#6B6B6B]">Profissão</span>
-                  <input
-                    value={profissao}
-                    onChange={(e) => setProfissao(e.target.value.toUpperCase())}
-                    placeholder="EX.: EMPRESÁRIO"
-                    className="mt-1 h-9 w-full rounded-sm border border-[#CFCFCF] px-2 text-[13px] uppercase"
-                  />
-                </label>
-                <label className="block sm:col-span-2">
-                  <span className="block font-['Oswald'] text-[10px] uppercase tracking-[0.16em] text-[#6B6B6B]">
-                    Mora neste endereço desde
-                  </span>
-                  <input
-                    value={moraDesde}
-                    onChange={(e) => {
-                      const d = e.target.value.replace(/\D/g, "").slice(0, 6);
-                      setMoraDesde(d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d);
-                    }}
-                    placeholder="MM/AAAA"
-                    className="mt-1 h-9 w-full rounded-sm border border-[#CFCFCF] px-2 text-[13px]"
-                  />
-                </label>
-              </div>
-
-              <div className="rounded-sm border border-[#E5E5E5] bg-[#FAFAFA] p-3">
-                <p className="font-['Oswald'] text-[10px] uppercase tracking-[0.16em] text-[#6B6B6B]">
-                  Documento de identidade do responsável pelo imóvel
+            <div className="space-y-6">
+              {/* BLOCO 1 — dados DO REQUERENTE (fica explícito de quem são) */}
+              <section className="rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8A1224]">
+                  Bloco 1 · Dados de {requerente}
                 </p>
-                <p className="mt-1 text-[12px] text-[#4A4A4A]">
-                  RG, CNH ou CIN de quem consta na conta. O documento passa pela mesma leitura automática e é
-                  confrontado com o titular do comprovante.
+                <p className="mt-1 text-[13px] leading-relaxed text-[#3A3A3A]">
+                  <strong>Estes dados são SEUS</strong>, o interessado no processo — não do dono da conta de
+                  luz. Eles vão para a declaração de residência que a Polícia Federal exige quando o
+                  comprovante está no nome de outra pessoa.
+                </p>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                      Seu estado civil
+                    </span>
+                    <select
+                      value={estadoCivil}
+                      onChange={(e) => setEstadoCivil(e.target.value)}
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                    >
+                      <option value="">SELECIONE</option>
+                      {ESTADOS_CIVIS.map((e) => (
+                        <option key={e} value={e}>{e}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                      Sua profissão
+                    </span>
+                    <input
+                      value={profissao}
+                      onChange={(e) => setProfissao(e.target.value.toUpperCase())}
+                      placeholder="EX.: EMPRESÁRIO"
+                      autoComplete="off"
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                    />
+                  </label>
+                  <label className="block sm:col-span-2">
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
+                      Você mora neste endereço desde
+                    </span>
+                    <input
+                      value={moraDesde}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 6);
+                        setMoraDesde(d.length > 2 ? `${d.slice(0, 2)}/${d.slice(2)}` : d);
+                      }}
+                      inputMode="numeric"
+                      placeholder="MM/AAAA"
+                      autoComplete="off"
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                    />
+                  </label>
+                </div>
+              </section>
+
+              {/* BLOCO 2 — documento DO DONO DO IMÓVEL */}
+              <section className="rounded-xl border border-[#E4E4E4] bg-[#FAFAFA] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6A6A6A]">
+                  Bloco 2 · Documento de {titular}
+                </p>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#3A3A3A]">
+                  <strong>Este documento NÃO é seu</strong>: é o RG, a CNH ou a CIN de <strong>{titular}</strong>,
+                  a pessoa que aparece na conta. Ele passa pela mesma leitura automática e é confrontado com o
+                  titular do comprovante.
                 </p>
                 <input
                   ref={inputRef}
@@ -299,57 +359,83 @@ export default function ResidenciaTerceiroModal({
                   type="button"
                   onClick={() => inputRef.current?.click()}
                   disabled={lendo}
-                  className="mt-3 inline-flex items-center gap-2 rounded-sm border border-[#0A0A0A] px-3 py-2 font-['Oswald'] text-[11px] uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60"
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#0A0A0A] bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 transition-colors"
                 >
                   {lendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                   {lendo ? "Lendo documento" : arquivo ? "Trocar documento" : "Anexar documento"}
                 </button>
                 {arquivo ? (
-                  <p className="mt-2 truncate text-[11px] text-[#6B6B6B]">{arquivo.name}</p>
+                  <p className="mt-2 truncate text-[11px] text-[#6A6A6A]">{arquivo.name}</p>
                 ) : null}
 
                 {leitura?.nome ? (
                   <div
-                    className={`mt-3 flex gap-2 rounded-sm border p-2 text-[12px] ${
+                    className={`mt-3 flex gap-2 rounded-lg border p-3 text-[12px] ${
                       confere
                         ? "border-[#1F7A3F]/40 bg-[#1F7A3F]/5 text-[#1F5F33]"
-                        : "border-[#7A1F2B]/40 bg-[#7A1F2B]/5 text-[#7A1F2B]"
+                        : "border-[#8A1224]/40 bg-[#8A1224]/5 text-[#8A1224]"
                     }`}
                   >
                     {confere ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
                     <span>
                       {confere
                         ? `Confere: o documento é de ${leitura.nome.toUpperCase()}, mesmo titular da conta.`
-                        : `O documento é de ${leitura.nome.toUpperCase()}, que não é o titular do comprovante (${(titularComprovante || "").toUpperCase()}).`}
+                        : `O documento é de ${leitura.nome.toUpperCase()}, que não é o titular do comprovante (${titular}).`}
                     </span>
                   </div>
                 ) : null}
                 {erroLeitura ? (
-                  <p className="mt-2 text-[12px] text-[#7A1F2B]">{erroLeitura}</p>
+                  <p className="mt-2 text-[12px] text-[#8A1224]">{erroLeitura}</p>
                 ) : null}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={onCancelar}
-                  className="flex-1 rounded-sm border border-[#CFCFCF] px-4 py-3 font-['Oswald'] text-[12px] uppercase tracking-[0.14em] text-[#0A0A0A] hover:border-[#0A0A0A]"
-                >
-                  Enviar outra conta
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmar}
-                  disabled={salvando || lendo || !confere}
-                  className="flex-1 rounded-sm bg-[#7A1F2B] px-4 py-3 font-['Oswald'] text-[12px] uppercase tracking-[0.14em] text-white hover:bg-[#5f1721] disabled:opacity-50"
-                >
-                  {salvando ? "Enviando" : "Confirmar residência"}
-                </button>
-              </div>
+              </section>
             </div>
           )}
+        </div>
+
+        {/* Rodapé — mesmo padrão do pop-up de pendências */}
+        <div className="mt-auto border-t border-[#E4E4E4] bg-white shrink-0">
+          <div className="px-6 py-3 flex justify-between items-center border-b border-[#F0F0F0]">
+            <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+              Resolva um por vez
+            </span>
+            <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+              {etapa === "pergunta" ? "Passo 1 de 2" : "Passo 2 de 2"}
+            </span>
+          </div>
+
+          <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-2 items-stretch gap-2">
+            <button
+              type="button"
+              onClick={onCancelar}
+              className="inline-flex h-14 w-full items-center justify-center rounded-xl border border-[#E4E4E4] bg-white px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A0A0A] hover:bg-[#FAFAFA] transition-colors"
+            >
+              {etapa === "pergunta" ? "Não · enviar outra conta" : "Enviar outra conta"}
+            </button>
+            {etapa === "pergunta" ? (
+              <button
+                type="button"
+                onClick={() => setEtapa("dados")}
+                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] transition-colors"
+              >
+                Sim, eu moro aqui
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={confirmar}
+                disabled={salvando || lendo || !confere}
+                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] disabled:opacity-50 transition-colors"
+              >
+                {salvando ? "Enviando" : "Confirmar residência"}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
+
+  // Portal no body: fora da árvore do Dialog do Radix, o focus trap dele não
+  // rouba o cursor dos campos (era o motivo de não conseguir digitar).
+  return typeof document === "undefined" ? conteudo : createPortal(conteudo, document.body);
 }
