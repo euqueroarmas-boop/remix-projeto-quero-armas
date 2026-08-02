@@ -7,6 +7,7 @@ import {
   Camera,
   CheckCircle2,
   Crosshair,
+  FileDown,
   FileText,
   Hash,
   Image as ImageIcon,
@@ -1307,6 +1308,8 @@ export function ClienteDocsHubModal({
   const [terceiroDados, setTerceiroDados] = useState<ResidenciaTerceiroPayload | null>(null);
   /** Pop-up guiado da Declaração do Responsável pelo Imóvel (assinatura GOV.BR). */
   const [declaracaoAberta, setDeclaracaoAberta] = useState(false);
+  /** ID do comprovante de residência salvo — vincula a declaração ao documento. */
+  const [comprovanteDocId, setComprovanteDocId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
@@ -3198,6 +3201,7 @@ export function ClienteDocsHubModal({
         .single();
       if (insertError) throw insertError;
       const novoDocId = (inserted as any)?.id as string | undefined;
+      if (terceiroDados) setComprovanteDocId(novoDocId ?? null);
       // Golden Record da nota fiscal (grupo de ocupação lícita): tabela própria
       // com cabeçalho da DANFSe + descrição do serviço já parseada.
       if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
@@ -4677,7 +4681,10 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : certidaoIncorreta || rejeitadoDuplicidade || titularDivergente || notaTomadorParentesco ? (
+          ) : (certidaoIncorreta ||
+              rejeitadoDuplicidade ||
+              (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) ||
+              notaTomadorParentesco) ? (
             <div className="flex gap-2.5">
               <Button
                 variant="outline"
@@ -4719,7 +4726,13 @@ export function ClienteDocsHubModal({
                 }
                 className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
               >
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : casoResidenciaTerceiro && terceiroDados ? (
+                  <FileDown className="mr-2 h-4 w-4" />
+                ) : (
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                )}
                 {saving
                   ? "Salvando..."
                   : classificacao && pendingSensitiveKeys().length > 0
@@ -4728,7 +4741,9 @@ export function ClienteDocsHubModal({
                       ? "Responda sobre o apontamento"
                       : temApontamento && reconheceApontamento === "nao" && !homonimiaSalva
                         ? "Assine a declaração"
-                        : "Salvar documento"}
+                        : casoResidenciaTerceiro && terceiroDados
+                          ? "Baixar declaração do responsável pelo imóvel"
+                          : "Salvar documento"}
               </Button>
             </div>
           )}
@@ -4758,6 +4773,7 @@ export function ClienteDocsHubModal({
           open={declaracaoAberta}
           qaClienteId={qaClienteId ?? null}
           dados={terceiroDados}
+          documentoComprovanteId={comprovanteDocId}
           interessadoNome={refClienteNome ?? null}
           onFechar={() => {
             setDeclaracaoAberta(false);
