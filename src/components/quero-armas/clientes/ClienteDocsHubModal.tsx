@@ -3474,6 +3474,22 @@ export function ClienteDocsHubModal({
                   </div>
                 </div>
               </div>
+            ) : casoResidenciaTerceiro ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-amber-500 bg-amber-50 p-2 text-[10px] leading-snug text-amber-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">
+                    Conta em nome de outro titular · não reprovado
+                  </div>
+                  <div>
+                    A conta está em nome de <b>{titularComprovanteLido || "outra pessoa"}</b>. Isso
+                    <b> não reprova</b> o comprovante — a Polícia Federal só precisa saber onde você
+                    tem <b>residência fixa</b>. Confirme que mora neste endereço e envie o documento
+                    de identidade do responsável pelo imóvel: o cruzamento final é feito nesse
+                    último envio.
+                  </div>
+                </div>
+              </div>
             ) : titularDivergente ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -4081,9 +4097,16 @@ export function ClienteDocsHubModal({
                        {item.status === "divergente" && (
                          <tr>
                            <td colSpan={4} className="pb-1.5">
-                             <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
-                               MOTIVO DA REJEIÇÃO — {explicarDivergencia(item)}
-                             </div>
+                             {casoResidenciaTerceiro ? (
+                               <div className="rounded-md border border-amber-300 bg-amber-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-amber-900">
+                                 PONTO A CONFIRMAR — {explicarDivergencia(item)} Não reprova: será
+                                 cruzado com o documento do responsável pelo imóvel.
+                               </div>
+                             ) : (
+                               <div className="rounded-md border border-red-300 bg-red-100/70 px-2 py-1 text-[9.5px] font-semibold leading-snug text-red-800">
+                                 MOTIVO DA REJEIÇÃO — {explicarDivergencia(item)}
+                               </div>
+                             )}
                            </td>
                          </tr>
                        )}
@@ -4091,7 +4114,7 @@ export function ClienteDocsHubModal({
                      ))}
                   </tbody>
                 </table>
-                {conformidade.some(i => i.status === "divergente") && (
+                {conformidade.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
                   <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
                     <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
                       Por que este documento foi rejeitado
