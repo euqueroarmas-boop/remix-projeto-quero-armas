@@ -101,12 +101,12 @@ export default function DeclaracaoResponsavelImovelModal({
           acao: "gerar",
           qa_cliente_id: qaClienteId,
           documento_comprovante_id: documentoComprovanteId ?? null,
-          responsavel_nome: dados!.responsavel_nome,
-          responsavel_cpf: dados!.responsavel_documento,
-          responsavel_estado_civil: dados!.estado_civil,
-          responsavel_profissao: dados!.profissao,
-          responsavel_doc_path: dados!.responsavel_arquivo_path,
-          mora_desde: dados!.mora_desde,
+          responsavel_nome: dadosEfetivos!.responsavel_nome,
+          responsavel_cpf: dadosEfetivos!.responsavel_documento,
+          responsavel_estado_civil: dadosEfetivos!.estado_civil,
+          responsavel_profissao: dadosEfetivos!.profissao,
+          responsavel_doc_path: dadosEfetivos!.responsavel_arquivo_path,
+          mora_desde: dadosEfetivos!.mora_desde,
         },
       });
       if (error) throw error;
