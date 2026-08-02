@@ -20,7 +20,7 @@
 // Diretrizes:
 //  - service_role no servidor; aceita sessão autenticada ou fluxo público via anon key.
 //  - Não escreve em tabelas (decisão de salvar fica com o caller).
-//  - Modelo: google/gemini-3.6-flash.
+//  - Modelo: google/gemini-3-flash-preview.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 // @ts-ignore esm.sh fornece tipos mínimos para Deno Edge
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
@@ -39,7 +39,7 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3.6-flash";
+const MODEL = "google/gemini-3-flash-preview";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -520,37 +520,6 @@ function numeroCertidao(texto: string): string {
   return texto.match(/CERTID[ÃA]O\s*N[ºO°.:\s]*([0-9]{4,})/i)?.[1] || "";
 }
 
-function extrairContaConsumo(texto: string): {
-  empresa: string;
-  codigoInstalacao: string;
-  dataEmissao: string;
-} | null {
-  const norm = normalizarTexto(texto);
-  const contaConsumo = /ENERGIA ELETRICA|CONTA DE ENERGIA|DISTRIBUICAO DE ENERGIA|CONSUMO KWH|CONTA DE AGUA|SERVICO DE AGUA|CONTA DE GAS|INTERNET FIXA|TELEFONIA FIXA/.test(norm);
-  if (!contaConsumo) return null;
-  const empresa = /\bEDP\b|EDP SAO PAULO/.test(norm) ? "EDP São Paulo Distribuição de Energia S.A."
-    : /\bENEL\b/.test(norm) ? "Enel Distribuição"
-    : /\bCPFL\b/.test(norm) ? "CPFL Energia"
-    : /\bSABESP\b/.test(norm) ? "Sabesp"
-    : /\bLIGHT\b/.test(norm) ? "Light"
-    : /\bCEMIG\b/.test(norm) ? "Cemig"
-    : "Concessionária de serviço público";
-  const candidatos = [
-    /(?:N[ºO°.]?\s*(?:DA\s*)?)?(?:INSTALA[ÇC][ÃA]O|UNIDADE\s+CONSUMIDORA|UC|MATR[ÍI]CULA)\s*[:#-]?\s*(0[\d.\s-]{10,24})/i,
-    /(?:C[ÓO]DIGO)\s+(?:DA\s+)?(?:INSTALA[ÇC][ÃA]O|UC)\s*[:#-]?\s*(0?[\d.\s-]{8,24})/i,
-    /\b(0\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}\.\s*\d{3}-\s*\d{2})\b/,
-  ];
-  let codigoInstalacao = "";
-  for (const rx of candidatos) {
-    const valor = rx.exec(texto)?.[1]?.replace(/\D/g, "") || "";
-    if (valor.length >= 8 && valor.length <= 18) { codigoInstalacao = valor; break; }
-  }
-  const dataEmissao = /(?:DATA\s+DE\s+)?EMISS[ÃA]O\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(texto)?.[1]
-    || /EMITID[AO]\s+EM\s*[:\s-]*(\d{2}\/\d{2}\/\d{4})/i.exec(texto)?.[1]
-    || "";
-  return { empresa, codigoInstalacao, dataEmissao };
-}
-
 /**
  * CPF tem dois dígitos verificadores determinísticos. Em documentos digitais
  * com fonte pequena (especialmente CNH-e), a visão às vezes lê somente o
@@ -580,22 +549,6 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
-
-  // "Nota Fiscal/Conta de Energia Elétrica" é a denominação fiscal da fatura
-  // da concessionária. Para o Hub continua sendo comprovante de residência.
-  const contaConsumo = extrairContaConsumo(textoPdf);
-  if (contaConsumo) {
-    parsed.tipoDetectado = "COMPROVANTE_RESIDENCIA";
-    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
-    campos.orgao_emissor = contaConsumo.empresa;
-    if (contaConsumo.codigoInstalacao) {
-      campos.codigo_instalacao = contaConsumo.codigoInstalacao;
-      campos.numero_documento = contaConsumo.codigoInstalacao;
-    }
-    if (contaConsumo.dataEmissao) campos.data_emissao = contaConsumo.dataEmissao;
-    parsed.justificativa = "Classificação determinística: conta de consumo do imóvel; a expressão Nota Fiscal é apenas a denominação fiscal da fatura.";
-    return parsed;
-  }
 
   const isTJSP = norm.includes("TRIBUNAL DE JUSTICA DO ESTADO DE SAO PAULO") || norm.includes(" TJSP ") || norm.includes(" TJ SP ");
   const temExecucoes = /REGISTROS DE DISTRIBUICOES DE EXECUCOES CRIMINAIS|FEITOS DE EXECUCOES CRIMINAIS|\bEXECUCOES CRIMINAIS\b/.test(norm);
@@ -738,10 +691,6 @@ Deno.serve(async (req) => {
     const tipoSelecionado: string | undefined = body?.tipoSelecionado;
     const storage_bucket: string | undefined = body?.storage_bucket;
     const storage_path: string | undefined = body?.storage_path;
-    // O cliente já roda pdf.js no navegador antes de chamar aqui. Reaproveitar
-    // esse texto evita repetir a extração no servidor (segundos de CPU).
-    const textoPdfCliente: string =
-      typeof body?.textoPdf === "string" ? body.textoPdf : "";
 
     if (!imageDataUrl && storage_path) {
       const bucket = storage_bucket || "qa-documentos";
@@ -755,20 +704,11 @@ Deno.serve(async (req) => {
       imageDataUrl = `data:${mime};base64,${b64}`;
     }
 
-    if (!imageDataUrl && textoPdfCliente.trim().length < 200) {
-      return json({ error: "textoPdf, imageDataUrl ou storage_path obrigatório" }, 400);
+    if (!imageDataUrl) {
+      return json({ error: "imageDataUrl ou storage_path obrigatório" }, 400);
     }
 
-    const textoPdfNativo =
-      textoPdfCliente.trim().length >= 200
-        ? textoPdfCliente
-        : await extractPdfTextFromDataUrl(imageDataUrl || "");
-
-    // PDF com camada de texto nativa: o modelo lê o texto, que é ordens de
-    // grandeza mais rápido (e mais barato) do que processar o PDF por visão.
-    const usarSomenteTexto =
-      (!imageDataUrl || imageDataUrl.startsWith("data:application/pdf")) &&
-      textoPdfNativo.trim().length >= 200;
+    const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
@@ -794,14 +734,7 @@ Deno.serve(async (req) => {
                     ? `O cliente selecionou manualmente o tipo "${tipoSelecionado}". Avalie de forma INDEPENDENTE.`
                     : "Sem sugestão manual."),
               },
-              ...(usarSomenteTexto
-                ? [{
-                    type: "text",
-                    text:
-                      "TEXTO NATIVO EXTRAÍDO DO PDF (fiel ao original):\n" +
-                      textoPdfNativo.slice(0, 60000),
-                  }]
-                : [{ type: "image_url", image_url: { url: imageDataUrl } }]),
+              { type: "image_url", image_url: { url: imageDataUrl } },
             ],
           },
         ],

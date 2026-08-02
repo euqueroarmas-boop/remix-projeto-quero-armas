@@ -101,7 +101,6 @@ const ORGAOS: Array<{ re: RegExp; nome: string }> = [
 export async function carregarPdfjs() {
   const mod = await import("pdfjs-dist");
   const { GlobalWorkerOptions, version } = mod;
-  garantirAsyncIteratorEmStreams();
   if (!GlobalWorkerOptions.workerSrc) {
     try {
       const workerUrl = (
@@ -116,75 +115,22 @@ export async function carregarPdfjs() {
   return mod;
 }
 
-/**
- * Safari não implementa `Symbol.asyncIterator` em `ReadableStream`, e o pdf.js
- * faz `for await (const value of readableStream)` dentro de `getTextContent()`.
- * Sem esse polyfill a leitura local falha em todo iPhone/Mac Safari, o arquivo
- * cai no caminho lento (visão por IA no servidor) e o usuário espera ~40s.
- */
-function garantirAsyncIteratorEmStreams() {
-  const proto = (globalThis as unknown as { ReadableStream?: { prototype: Record<symbol, unknown> } })
-    .ReadableStream?.prototype;
-  if (!proto || proto[Symbol.asyncIterator]) return;
-  proto[Symbol.asyncIterator] = function (this: ReadableStream) {
-    const reader = this.getReader();
-    return {
-      async next() {
-        const { done, value } = await reader.read();
-        if (done) {
-          reader.releaseLock();
-          return { done: true as const, value: undefined };
-        }
-        return { done: false as const, value };
-      },
-      async return(v: unknown) {
-        await reader.cancel();
-        reader.releaseLock();
-        return { done: true as const, value: v };
-      },
-      [Symbol.asyncIterator]() {
-        return this;
-      },
-    };
-  };
-}
-
-/**
- * Lê a camada de texto do PDF com o pdf.js que já roda no preview.
- *
- * Usa `streamTextContent` com reader manual (sem `for await`), o caminho que
- * funciona em qualquer navegador, e faz o parse das páginas em paralelo.
- */
+/** Lê a camada de texto do PDF com o pdf.js que já roda no preview. */
 export async function extrairTextoPdf(file: File): Promise<string> {
   const { getDocument } = await carregarPdfjs();
   const buf = await file.arrayBuffer();
   const pdf = await getDocument({ data: buf }).promise;
-
-  const lerPagina = async (n: number): Promise<string> => {
-    const page = await pdf.getPage(n);
-    const stream = (page as unknown as {
-      streamTextContent?: (p?: unknown) => ReadableStream<{ items?: Array<{ str?: string }> }>;
-    }).streamTextContent?.();
-
-    if (stream) {
-      const reader = stream.getReader();
-      const partes: string[] = [];
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        for (const it of value?.items ?? []) partes.push(it.str ?? "");
-      }
-      return partes.join(" ");
-    }
-
+  const partes: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    return content.items.map((it: unknown) => (it as { str?: string }).str ?? "").join(" ");
-  };
-
-  const paginas = await Promise.all(
-    Array.from({ length: pdf.numPages }, (_, i) => lerPagina(i + 1)),
-  );
-  return paginas.join("\n");
+    partes.push(
+      content.items
+        .map((it: unknown) => (it as { str?: string }).str ?? "")
+        .join(" "),
+    );
+  }
+  return partes.join("\n");
 }
 
 /**

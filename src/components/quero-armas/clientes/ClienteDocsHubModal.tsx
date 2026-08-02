@@ -53,7 +53,6 @@ import {
 } from "@/lib/quero-armas/conferenciaLaudo";
 import {
   parseComprovanteEndereco,
-  parseContaConsumo,
   type ResultadoEndereco,
 } from "@/lib/quero-armas/parserComprovanteEndereco";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
@@ -1119,24 +1118,12 @@ const modalTheme = {
   "--ring": "352 60% 30%",
 } as React.CSSProperties;
 
-async function fileToDataUrl(file: File): Promise<string> {
-  // Safari pode invalidar o descritor temporário do seletor depois que pdf.js
-  // já o leu. A partir daqui trabalhamos com a cópia em memória criada no
-  // handleFileChange e evitamos FileReader (origem do erro nativo de I/O).
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const chunkSize = 0x8000;
-  let binary = "";
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
-  }
-  return `data:${file.type || "application/octet-stream"};base64,${btoa(binary)}`;
-}
-
-async function copyFileToMemory(file: File): Promise<File> {
-  const bytes = await file.arrayBuffer();
-  return new File([bytes], file.name, {
-    type: file.type || "application/octet-stream",
-    lastModified: file.lastModified,
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
   });
 }
 
@@ -1338,8 +1325,6 @@ export function ClienteDocsHubModal({
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
   >(null);
-  /** O cliente já viu e dispensou o carimbo vermelho; libera o reenvio no mesmo Hub. */
-  const [rejeicaoCarimbada, setRejeicaoCarimbada] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
@@ -1436,7 +1421,6 @@ export function ClienteDocsHubModal({
     setIaExtraido({});
     setConfirmados({});
     setConformidade([]);
-    setRejeicaoCarimbada(false);
     setTemApontamento(false);
     setReconheceApontamento(null);
     setHomonimiaSalva(false);
@@ -1536,7 +1520,6 @@ export function ClienteDocsHubModal({
       setIaExtraido({});
       setConfirmados({});
       setConformidade([]);
-      setRejeicaoCarimbada(false);
       setTemApontamento(false);
       setReconheceApontamento(null);
       setHomonimiaSalva(false);
@@ -1571,23 +1554,12 @@ export function ClienteDocsHubModal({
     pendingSet.size > 0 &&
     pendingSet.has(form.tipo_documento)
   );
-  // Cliente mandou algo que não é o exigido pelo slot e que também não cobre
-  // nenhuma outra pendência do processo → REPROVADO na hora.
-  // Antes isto exigia `pendingSet.size > 0`: quando o modal era aberto sem a
-  // lista de pendências (caso comum no portal), o documento errado escapava da
-  // trava e ia para "EM ANÁLISE". A ausência da lista não pode virar permissão.
+  // Cliente mandou algo que não é pedido em lugar nenhum do processo.
   const certidaoIncorreta = !!(
     tipoDivergenteExigencia &&
     form.tipo_documento &&
-    !cobreOutraPendencia &&
-    // Mesmo grupo de comprovação de endereço: conta, contrato de locação e
-    // declaração do responsável cumprem a mesma exigência. Não é documento
-    // errado — segue para o fluxo de residência em nome de terceiro.
-    !(
-      defaultTipo === "comprovante_residencia" &&
-      (form.tipo_documento === "comprovante_residencia" ||
-        form.tipo_documento === "declaracao_responsavel_imovel")
-    )
+    pendingSet.size > 0 &&
+    !pendingSet.has(form.tipo_documento)
   );
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
@@ -1639,17 +1611,8 @@ export function ClienteDocsHubModal({
   // Comprovante de endereço no nome de outra pessoa NÃO reprova: o cliente
   // pode morar no imóvel de um terceiro. Abrimos o fluxo de declaração
   // (estado civil, profissão, desde quando mora + documento do responsável).
-  // Vale para o tipo lido E para a exigência aberta: o cliente pode enviar a
-  // conta e a leitura classificar como "declaração do responsável pelo imóvel"
-  // (ou outro rótulo do grupo de endereço). Amarrar só ao tipo lido fazia o
-  // documento do terceiro cair na rejeição por parentesco em vez de abrir o
-  // fluxo de declaração — regra já aprovada em 01/08/2026.
-  const contextoEnderecoTerceiro =
-    form.tipo_documento === "comprovante_residencia" ||
-    form.tipo_documento === "declaracao_responsavel_imovel" ||
-    defaultTipo === "comprovante_residencia";
   const casoResidenciaTerceiro =
-    contextoEnderecoTerceiro && titularDivergente && !notaTomadorParentesco;
+    form.tipo_documento === "comprovante_residencia" && titularDivergente && !notaTomadorParentesco;
 
   /**
    * Retomada da Declaração do Responsável pelo Imóvel: se o cliente fechou a
@@ -2016,26 +1979,13 @@ export function ClienteDocsHubModal({
     setExtracting(true);
     setAutoResult(null);
     try {
-      const textoPdf = textoLocalRef.current.trim();
-      // Rede de segurança: se a leitura local reconhece uma conta de
-      // concessionária, ela É comprovante de residência. Não vai para a IA —
-      // era exatamente aí que a fatura de energia voltava como "nota fiscal".
-      if (textoPdf && parseContaConsumo(textoPdf)) {
-        const resolvidoLocal = await tentarLeituraLocal(target);
-        if (resolvidoLocal) return;
-      }
-      // PDF nativo já foi lido pelo pdf.js. Não transforme nem envie novamente
-      // centenas de KB/MB em Base64: isso duplicava a leitura no Safari e fazia
-      // a requisição aguardar o upload inteiro antes de começar a classificação.
-      const dataUrl = textoPdf.length >= 200 ? "" : await fileToDataUrl(target);
+      const dataUrl = await fileToDataUrl(target);
 
       // 1) Classifica automaticamente (sem depender da seleção manual).
       const { data: cls, error: clsErr } = await invokeComTimeout(
         "qa-classificar-documento-arma",
-        // Reaproveita o texto já extraído localmente pelo pdf.js: a função
-        // deixa de repetir a extração e o modelo lê texto em vez de imagem.
-        { imageDataUrl: dataUrl || undefined, textoPdf },
-        12000,
+        { imageDataUrl: dataUrl },
+        60000,
       );
       if (clsErr) throw clsErr;
 
@@ -2352,22 +2302,13 @@ export function ClienteDocsHubModal({
       setHomonimiaSalva(false);
       setShowDeclaracao(false);
 
-      // 2) Enriquecimento opcional. Segunda passada de IA custa dezenas de
-      //    segundos; só vale quando a classificação NÃO trouxe o essencial.
-       const jaTemEssencial = !!(
-         ia.tipoDetectado &&
-         ia.tipoDetectado !== "DESCONHECIDO" &&
-         Number(ia.confianca || 0) >= 0.7 &&
-         Object.values(campos).some((valor) => String(valor || "").trim())
-       );
+      // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
-        const { data: extra } = jaTemEssencial
-          ? { data: null }
-          : await invokeComTimeout(
-              "qa-extract-cliente-doc",
-               { tipo_documento: tipoIA, imageDataUrl: dataUrl || await fileToDataUrl(target) },
-               12000,
-            );
+        const { data: extra } = await invokeComTimeout(
+          "qa-extract-cliente-doc",
+          { tipo_documento: tipoIA, imageDataUrl: dataUrl },
+          45000,
+        );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
@@ -2594,55 +2535,6 @@ export function ClienteDocsHubModal({
       return true;
     }
 
-    // Contas de concessionária trazem "Nota Fiscal" por exigência fiscal, mas
-    // no Hub são comprovantes de residência. Resolver localmente elimina a
-    // espera da IA e impede a classificação incorreta como nota de renda.
-    const contaConsumo = parseContaConsumo(texto);
-    if (contaConsumo) {
-      const emissaoIso = dataIsoFromBr(contaConsumo.data_emissao);
-      setConferenciaLocal(null);
-      setClassificacao({
-        tipoDetectado: "COMPROVANTE_RESIDENCIA",
-        confianca: 0.99,
-        justificativa: `Conta de ${contaConsumo.tipo} reconhecida pela leitura local do PDF.`,
-        camposExtraidos: {
-          numero_documento: contaConsumo.codigo_instalacao,
-          codigo_instalacao: contaConsumo.codigo_instalacao,
-          orgao_emissor: contaConsumo.empresa_emissora,
-          data_emissao: contaConsumo.data_emissao || "",
-          // Titular impresso na fatura. É esse cruzamento que faz o comprovante
-          // em nome de terceiro abrir a Declaração do Responsável pelo Imóvel
-          // em vez de cair em duplicidade/análise.
-          ...(contaConsumo.titular_nome ? { nome_completo: contaConsumo.titular_nome } : {}),
-          ...(contaConsumo.titular_cpf ? { cpf: contaConsumo.titular_cpf } : {}),
-        },
-      });
-      setCategoriaHub(inferHubCategoriaFromTipo("comprovante_residencia"));
-      setForm((prev) => ({
-        ...prev,
-        tipo_documento: "comprovante_residencia",
-        nome_documento: `Conta de ${contaConsumo.tipo === "energia" ? "energia elétrica" : contaConsumo.tipo}`,
-        numero_documento: contaConsumo.codigo_instalacao || prev.numero_documento,
-        orgao_emissor: contaConsumo.empresa_emissora,
-        data_emissao: emissaoIso || prev.data_emissao,
-        data_validade: emissaoIso ? addCalendarMonthsIso(emissaoIso, 1) : prev.data_validade,
-      }));
-      setIaExtraido({
-        numero_documento: contaConsumo.codigo_instalacao,
-        numero_cad_sinarm: "",
-        numero_registro_sigma: "",
-        arma_numero_serie: "",
-        arma_marca: "",
-        arma_modelo: "",
-        arma_calibre: "",
-        data_validade: emissaoIso ? addCalendarMonthsIso(emissaoIso, 1) : "",
-        sistema_registro: "REVISAR",
-      });
-      setConfirmados({});
-      toast.success("Conta de consumo lida e classificada localmente.");
-      return true;
-    }
-
     if (ehPaginaAutenticacaoTrfIsolada(`${f.name}\n${texto}`)) {
       toast.error("Este arquivo parece ser apenas a página de autenticação/QR da certidão TRF. Envie o PDF completo, com todas as páginas, para a certidão ficar inteira e classificada corretamente.");
       setConferenciaLocal(null);
@@ -2694,33 +2586,15 @@ export function ClienteDocsHubModal({
     return true;
   }
 
-  async function handleFileChange(selectedFile: File | null) {
+  async function handleFileChange(f: File | null) {
     // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
     // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
     toast.dismiss();
-    setFile(null);
+    setFile(f);
     setClassificacao(null);
     setConferenciaLocal(null);
-    setRejeicaoCarimbada(false);
     setShowTipoOverride(false);
-    if (!selectedFile) return;
-
-    // Congela imediatamente o arquivo escolhido. No Safari, o File original
-    // pode apontar para um descritor temporário que deixa de existir enquanto
-    // o modal faz leituras sucessivas; isso gerava "The I/O read operation
-    // failed" depois que o preview já estava visível.
-    setExtracting(true);
-    let f: File;
-    try {
-      f = await copyFileToMemory(selectedFile);
-      setFile(f);
-    } catch (e) {
-      console.error("[arquivo] falha ao criar cópia em memória:", e);
-      toast.error("Não foi possível ler este arquivo. Selecione-o novamente no dispositivo.");
-      return;
-    } finally {
-      setExtracting(false);
-    }
+    if (!f) return;
 
     // ── Trava: documento oficial de identidade só entra como PDF com QR Code
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
@@ -2851,48 +2725,7 @@ export function ClienteDocsHubModal({
     }
   }
 
-  /** Depois de o cliente dispensar o carimbo, o rodapé permanece em modo de reenvio. */
-  const carimboReprovadoEmitido = rejeicaoCarimbada;
-
-  function reabrirHubParaNovoEnvio() {
-    setResultadoCarimbo(null);
-    setRejeicaoCarimbada(false);
-    setFile(null);
-    setClassificacao(null);
-    setConferenciaLocal(null);
-    setConferenciaLaudo(null);
-    setAutoResult(null);
-    setConformidade([]);
-    setIaExtraido({});
-    setConfirmados({});
-    setEnderecoLocal(null);
-    setTerceiroDados(null);
-    setNotasInformadas({});
-    setTemApontamento(false);
-    setReconheceApontamento(null);
-    setHomonimiaSalva(false);
-    setShowDeclaracao(false);
-    setProfissionalExtraido({ nome: null, registro: null });
-    textoLocalRef.current = "";
-    motivoCarimbadoRef.current = null;
-    setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
-    setCategoriaHub(inferHubCategoriaFromTipo(defaultTipoEfetivo));
-    setTimeout(() => {
-      if (!fileInputRef.current) return;
-      fileInputRef.current.value = "";
-      fileInputRef.current.click();
-    }, 150);
-  }
-
   async function handleSave() {
-    // Fluxo de rejeição em duas etapas:
-    // 1) o cliente salva e recebe o CARIMBO DE REPROVADO com o motivo;
-    // 2) só então o botão vira "Enviar novamente" e o Hub zera a memória
-    //    para receber o novo arquivo. Nada aprovado é destruído.
-    if (carimboReprovadoEmitido) {
-      reabrirHubParaNovoEnvio();
-      return;
-    }
     // Certidão recusada na conferência local NÃO entra no acervo. Salvar
     // significaria dar a exigência por cumprida com um documento que a PF vai
     // recusar — o cliente descobriria só no indeferimento.
@@ -2929,18 +2762,12 @@ export function ClienteDocsHubModal({
     }
 
     if (conferenciaLaudo?.veredicto === "rejeitado") {
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        mensagem: conferenciaLaudo.mensagemCliente || "Laudo reprovado na conferência · envie o documento correto",
-      });
+      toast.error(conferenciaLaudo.mensagemCliente || "Este laudo não passou na conferência e não pode ser salvo.");
       return;
     }
 
     if (conferenciaLocal?.conf.veredicto === "rejeitado") {
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        mensagem: "Certidão recusada na conferência · envie o documento correto",
-      });
+      toast.error("Esta certidão foi recusada na conferência e não pode ser salva. O cliente já foi avisado por e-mail com o motivo.");
       return;
     }
     if (!form.tipo_documento) {
@@ -2954,10 +2781,9 @@ export function ClienteDocsHubModal({
     // Trava: certidão não é o que o slot pede E também não cobre nenhuma
     // outra pendência do processo → não deixa salvar.
     if (certidaoIncorreta) {
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        mensagem: `Documento diferente do exigido (${expectedTipoMeta?.label ?? "documento pedido"}) · anexe o correto`,
-      });
+      toast.error(
+        `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
+      );
       return;
     }
     // Refinamento obrigatório de subtipo: certidões TJSP e Federal precisam
@@ -3008,19 +2834,15 @@ export function ClienteDocsHubModal({
         toast.error("Confirme a declaração de residência e envie o documento do responsável pelo imóvel.");
         return;
       }
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        mensagem: "Documento de outro titular · os dados não são do titular deste processo",
-      });
+      toast.error("Documento rejeitado: os dados não são do titular deste processo.");
       return;
     }
 
     // Trava dura: nota fiscal emitida para parente no mesmo endereço.
     if (notaTomadorParentesco) {
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        mensagem: "Nota fiscal rejeitada · tomador é parente do prestador no mesmo endereço",
-      });
+      toast.error(
+        "Nota fiscal rejeitada: o tomador é parente do prestador e consta no mesmo endereço.",
+      );
       return;
     }
 
@@ -4955,16 +4777,14 @@ export function ClienteDocsHubModal({
                 disabled={
                   saving ||
                   extracting ||
-                  (!docExpirado && !!classificacao && pendingSensitiveKeys().length > 0) ||
-                  (!docExpirado && temApontamento && reconheceApontamento === null) ||
-                  (!docExpirado && temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
+                  (!!classificacao && pendingSensitiveKeys().length > 0) ||
+                  (temApontamento && reconheceApontamento === null) ||
+                  (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
                 }
                 className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : carimboReprovadoEmitido ? (
-                  <Upload className="mr-2 h-4 w-4" />
                 ) : casoResidenciaTerceiro && terceiroDados ? (
                   <FileDown className="mr-2 h-4 w-4" />
                 ) : (
@@ -4972,9 +4792,7 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : carimboReprovadoEmitido
-                    ? "Enviar novamente"
-                    : classificacao && pendingSensitiveKeys().length > 0
+                  : classificacao && pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
                     : temApontamento && reconheceApontamento === null
                       ? "Responda sobre o apontamento"
@@ -5037,7 +4855,6 @@ export function ClienteDocsHubModal({
           // Com a declaração do responsável pendente, o hub permanece aberto:
           // o próximo passo do cliente é assinar, e fechar aqui o perderia.
           const fechar = resultadoCarimbo.tipo !== "reprovado" && !declaracaoAberta;
-          if (resultadoCarimbo.tipo === "reprovado") setRejeicaoCarimbada(true);
           setResultadoCarimbo(null);
           if (fechar) {
             setForm(EMPTY);
