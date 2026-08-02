@@ -6,6 +6,8 @@
  * o contador e abrimos esse fluxo.
  * ============================================================================= */
 
+import { IconBomb } from "@tabler/icons-react";
+
 export type PrioridadeDisparo =
   | "pagamento"
   | "assinatura"
