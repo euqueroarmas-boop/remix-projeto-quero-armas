@@ -4643,6 +4643,27 @@ export function ClienteDocsHubModal({
         }}
       />
     )}
+    <ResidenciaTerceiroModal
+      open={!!casoResidenciaTerceiro && !terceiroDados}
+      titularComprovante={titularComprovanteLido}
+      interessadoNome={refClienteNome ?? null}
+      ownerKey={String(customerId ?? `qa-${qaClienteId}`)}
+      onCancelar={() => {
+        // Volta à fase inicial: o cliente pode conseguir uma conta no nome dele.
+        setTerceiroDados(null);
+        setFile(null);
+        setClassificacao(null);
+        setConformidade([]);
+        setConferenciaLocal(null);
+        setIaExtraido({});
+        setConfirmados({});
+        toast.info("Envie um comprovante de consumo do imóvel em seu nome.");
+      }}
+      onConfirmado={(dados) => {
+        setTerceiroDados(dados);
+        toast.success("Residência declarada e documento do responsável validado.");
+      }}
+    />
     </>
   );
 }
