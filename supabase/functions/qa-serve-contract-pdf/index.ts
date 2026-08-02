@@ -987,7 +987,6 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
   const signedFname = contractDownloadFilename(auditedContract, "pdf");
   if (variant === "customer_signed_url") {
     const { data: signed, error: signedErr } = await sb.storage
@@ -1005,6 +1004,7 @@ Deno.serve(async (req) => {
     }
     return jsonResp({ url: signed.signedUrl, filename: signedFname, expires_in: 600 });
   }
+  const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
   if (dlErr || !file) {
     return await failContractDownload(
       req,
