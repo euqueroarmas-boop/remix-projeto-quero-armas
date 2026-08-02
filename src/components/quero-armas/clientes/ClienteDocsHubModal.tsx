@@ -3201,6 +3201,7 @@ export function ClienteDocsHubModal({
         .single();
       if (insertError) throw insertError;
       const novoDocId = (inserted as any)?.id as string | undefined;
+      if (terceiroDados) setComprovanteDocId(novoDocId ?? null);
       // Golden Record da nota fiscal (grupo de ocupação lícita): tabela própria
       // com cabeçalho da DANFSe + descrição do serviço já parseada.
       if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
