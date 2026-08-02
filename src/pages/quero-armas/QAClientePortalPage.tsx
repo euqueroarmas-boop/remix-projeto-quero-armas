@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, Fragment, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import whatsappIcon from "@/assets/whatsapp-icon.png.asset.json";
 import { toast } from "sonner";
 import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
