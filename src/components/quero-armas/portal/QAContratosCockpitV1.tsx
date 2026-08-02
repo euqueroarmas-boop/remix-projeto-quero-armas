@@ -412,9 +412,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   }
 
   return (
-    <div className="text-[#0A0A0A]" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* ── Bloco fixo: cabeçalho → CONTRATO PRINCIPAL ── */}
-      <div className="sticky top-0 z-30 bg-[#F2F2F2] pt-3 -mt-3 pb-1">
+      <div className="flex-none z-30 bg-[#F2F2F2] pt-3 pb-1">
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
         <h1
@@ -488,6 +488,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       )}
       </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       {featured && (
         <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
       )}
@@ -515,6 +516,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
