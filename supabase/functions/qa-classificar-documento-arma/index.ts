@@ -721,7 +721,7 @@ Deno.serve(async (req) => {
     // grandeza mais rápido (e mais barato) do que processar o PDF por visão.
     const usarSomenteTexto =
       (!imageDataUrl || imageDataUrl.startsWith("data:application/pdf")) &&
-      textoPdfNativo.trim().length >= 400;
+      textoPdfNativo.trim().length >= 200;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
