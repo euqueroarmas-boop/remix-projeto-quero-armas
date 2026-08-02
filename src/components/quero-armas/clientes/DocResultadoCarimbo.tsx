@@ -53,36 +53,37 @@ export default function DocResultadoCarimbo({
     >
       <style>{`@keyframes qaCarimboIn{0%{opacity:0;transform:scale(1.25) rotate(-6deg)}60%{opacity:1;transform:scale(.96) rotate(-3deg)}100%{opacity:1;transform:scale(1) rotate(-4deg)}}`}</style>
       <div
-        className="flex flex-col items-center gap-2 bg-white px-6 py-5 text-center"
+        className="flex flex-col items-center gap-3 bg-white px-8 py-6 text-center"
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
         style={{
-          maxWidth: 340,
+          maxWidth: 510,
           width: "100%",
-          border: `4px solid ${c.cor}`,
-          borderRadius: 8,
+          border: `6px solid ${c.cor}`,
+          borderRadius: 10,
           color: c.cor,
           fontFamily: "'Oswald', sans-serif",
-          boxShadow: "0 14px 36px rgba(0,0,0,.35)",
+          boxShadow: "0 18px 44px rgba(0,0,0,.35)",
           animation: "qaCarimboIn .35s cubic-bezier(.2,.9,.3,1) both",
           background: `linear-gradient(${c.bg}, ${c.bg}), #fff`,
         }}
       >
-        <Icone className="h-8 w-8" strokeWidth={2.5} />
-        <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1, letterSpacing: ".08em" }}>
+        <Icone className="h-12 w-12" strokeWidth={2.5} />
+        <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, letterSpacing: ".08em" }}>
           {c.titulo}
         </div>
         {tipo === "aprovado" && percentual != null && (
-          <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>
+          <div style={{ fontSize: 63, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>
             {percentual}%
           </div>
         )}
-        <div className="flex flex-col gap-0.5" style={{ fontSize: 12, letterSpacing: ".08em", fontWeight: 600, lineHeight: 1.35 }}>
+        <div className="flex flex-col gap-1" style={{ fontSize: 18, letterSpacing: ".08em", fontWeight: 600, lineHeight: 1.35 }}>
           {linhas.map((linha, i) => (
             <span key={i}>{linha.toUpperCase()}</span>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
