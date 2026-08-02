@@ -1118,12 +1118,24 @@ const modalTheme = {
   "--ring": "352 60% 30%",
 } as React.CSSProperties;
 
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+async function fileToDataUrl(file: File): Promise<string> {
+  // Safari pode invalidar o descritor temporário do seletor depois que pdf.js
+  // já o leu. A partir daqui trabalhamos com a cópia em memória criada no
+  // handleFileChange e evitamos FileReader (origem do erro nativo de I/O).
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return `data:${file.type || "application/octet-stream"};base64,${btoa(binary)}`;
+}
+
+async function copyFileToMemory(file: File): Promise<File> {
+  const bytes = await file.arrayBuffer();
+  return new File([bytes], file.name, {
+    type: file.type || "application/octet-stream",
+    lastModified: file.lastModified,
   });
 }
 
@@ -2586,15 +2598,32 @@ export function ClienteDocsHubModal({
     return true;
   }
 
-  async function handleFileChange(f: File | null) {
+  async function handleFileChange(selectedFile: File | null) {
     // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
     // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
     toast.dismiss();
-    setFile(f);
+    setFile(null);
     setClassificacao(null);
     setConferenciaLocal(null);
     setShowTipoOverride(false);
-    if (!f) return;
+    if (!selectedFile) return;
+
+    // Congela imediatamente o arquivo escolhido. No Safari, o File original
+    // pode apontar para um descritor temporário que deixa de existir enquanto
+    // o modal faz leituras sucessivas; isso gerava "The I/O read operation
+    // failed" depois que o preview já estava visível.
+    setExtracting(true);
+    let f: File;
+    try {
+      f = await copyFileToMemory(selectedFile);
+      setFile(f);
+    } catch (e) {
+      console.error("[arquivo] falha ao criar cópia em memória:", e);
+      toast.error("Não foi possível ler este arquivo. Selecione-o novamente no dispositivo.");
+      return;
+    } finally {
+      setExtracting(false);
+    }
 
     // ── Trava: documento oficial de identidade só entra como PDF com QR Code
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
