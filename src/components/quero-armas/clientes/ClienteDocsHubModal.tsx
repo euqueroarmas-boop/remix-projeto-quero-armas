@@ -1991,15 +1991,19 @@ export function ClienteDocsHubModal({
     setExtracting(true);
     setAutoResult(null);
     try {
-      const dataUrl = await fileToDataUrl(target);
+      const textoPdf = textoLocalRef.current.trim();
+      // PDF nativo já foi lido pelo pdf.js. Não transforme nem envie novamente
+      // centenas de KB/MB em Base64: isso duplicava a leitura no Safari e fazia
+      // a requisição aguardar o upload inteiro antes de começar a classificação.
+      const dataUrl = textoPdf.length >= 200 ? "" : await fileToDataUrl(target);
 
       // 1) Classifica automaticamente (sem depender da seleção manual).
       const { data: cls, error: clsErr } = await invokeComTimeout(
         "qa-classificar-documento-arma",
         // Reaproveita o texto já extraído localmente pelo pdf.js: a função
         // deixa de repetir a extração e o modelo lê texto em vez de imagem.
-        { imageDataUrl: dataUrl, textoPdf: textoLocalRef.current || "" },
-        60000,
+        { imageDataUrl: dataUrl || undefined, textoPdf },
+        20000,
       );
       if (clsErr) throw clsErr;
 
@@ -2318,18 +2322,19 @@ export function ClienteDocsHubModal({
 
       // 2) Enriquecimento opcional. Segunda passada de IA custa dezenas de
       //    segundos; só vale quando a classificação NÃO trouxe o essencial.
-      const jaTemEssencial = !!(
-        String(campos.data_emissao || "").trim() &&
-        (String(campos.numero_documento || "").trim() ||
-          String(campos.nome_completo || "").trim())
-      );
+       const jaTemEssencial = !!(
+         ia.tipoDetectado &&
+         ia.tipoDetectado !== "DESCONHECIDO" &&
+         Number(ia.confianca || 0) >= 0.7 &&
+         Object.values(campos).some((valor) => String(valor || "").trim())
+       );
       try {
         const { data: extra } = jaTemEssencial
           ? { data: null }
           : await invokeComTimeout(
               "qa-extract-cliente-doc",
-              { tipo_documento: tipoIA, imageDataUrl: dataUrl },
-              45000,
+               { tipo_documento: tipoIA, imageDataUrl: dataUrl || await fileToDataUrl(target) },
+               20000,
             );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
