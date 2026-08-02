@@ -1451,6 +1451,13 @@ export function ClienteDocsHubModal({
   // Docs efetivos: prop tem prioridade; fallback para os buscados internamente
   const docsEfetivos = docsAprovados.length > 0 ? docsAprovados : docsAprovadosFetched;
 
+  // Novo arquivo anexado (ou modal limpo) → libera novamente o carimbo de
+  // rejeição por duplicidade.
+  useEffect(() => {
+    if (!file) docSalvoRef.current = false;
+    else docSalvoRef.current = false;
+  }, [file]);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
