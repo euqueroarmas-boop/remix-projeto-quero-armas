@@ -3268,7 +3268,7 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-clip mr-[56px]">
+      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 py-6 mr-[56px] ${activeTab === "resumo" ? "h-dvh overflow-hidden" : "space-y-5 overflow-x-clip"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -3470,7 +3470,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeTab === "resumo" && (
-        <div className="qa-resumo-light space-y-4">
+        <div className="qa-resumo-light h-full min-h-0">
         <ClienteResumoKanban
           cliente={cliente}
           vendas={vendas}
