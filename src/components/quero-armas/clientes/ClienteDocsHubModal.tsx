@@ -781,13 +781,17 @@ function calcularConformidade(
         campos.prestador_endereco,
         campos.prestador_cep,
       );
+      // Parentesco por si só já rejeita: nota emitida para parente não
+      // comprova ocupação lícita, morando junto ou não. O mesmo endereço
+      // apenas reforça a explicação exibida ao cliente.
+      const reprovaTomador = parentesco;
       items.push({
         campo: "tomador_nome",
         label: "Tomador (destinatário)",
         valorCertidao: tomadorNome,
         valorReferencia: prestadorNome || null,
         fonteReferencia: "Prestador da própria nota",
-        status: parentesco && mesmaCasa ? "divergente" : "conforme",
+        status: reprovaTomador ? "divergente" : "conforme",
       });
       if (campos.tomador_endereco || campos.tomador_cep) {
         items.push({
@@ -796,7 +800,7 @@ function calcularConformidade(
           valorCertidao: campos.tomador_endereco || `CEP ${campos.tomador_cep}`,
           valorReferencia: campos.prestador_endereco || (campos.prestador_cep ? `CEP ${campos.prestador_cep}` : null),
           fonteReferencia: "Endereço do prestador",
-          status: parentesco && mesmaCasa ? "divergente" : "conforme",
+          status: reprovaTomador && mesmaCasa ? "divergente" : "conforme",
         });
       }
     }
