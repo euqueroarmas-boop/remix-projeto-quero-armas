@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, X, ShieldCheck, AlertTriangle, FileDown } from "lucide-react";
@@ -49,18 +49,48 @@ export default function DeclaracaoResponsavelImovelModal({
   const [enviando, setEnviando] = useState(false);
   const [declaracaoId, setDeclaracaoId] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  /** Retomada: dados da declaração já gravada no servidor (Golden Record). */
+  const [dadosSalvos, setDadosSalvos] = useState<ResidenciaTerceiroPayload | null>(null);
+  const [retomando, setRetomando] = useState(false);
   const [resultado, setResultado] = useState<
     { conforme: boolean; motivos: string[]; signatario: string | null; data: string | null } | null
   >(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  if (!open || !dados) return null;
+  // Se o cliente fechar a tela, ao reabrir o pop-up volta exatamente neste
+  // passo: a declaração já está gerada, parseada e salva no servidor.
+  useEffect(() => {
+    if (!open || !qaClienteId || declaracaoId) return;
+    let vivo = true;
+    (async () => {
+      setRetomando(true);
+      try {
+        const { data } = await supabase.functions.invoke("qa-declaracao-residencia", {
+          body: { acao: "atual", qa_cliente_id: qaClienteId },
+        });
+        const decl = (data as any)?.declaracao;
+        if (!vivo || !decl) return;
+        setDeclaracaoId(String(decl.id));
+        setDadosSalvos(decl.dados as ResidenciaTerceiroPayload);
+        if (decl.status === "assinada_rejeitada" && decl.motivo_reprovacao) {
+          setResultado({ conforme: false, motivos: [decl.motivo_reprovacao], signatario: null, data: null });
+        }
+      } finally {
+        if (vivo) setRetomando(false);
+      }
+    })();
+    return () => { vivo = false; };
+  }, [open, qaClienteId, declaracaoId]);
 
-  const titular = (dados.responsavel_nome || "DONO DO IMÓVEL").toUpperCase();
+  const dadosEfetivos = dados ?? dadosSalvos;
+
+  if (!open || (!dadosEfetivos && !retomando)) return null;
+
+  const titular = (dadosEfetivos?.responsavel_nome || "DONO DO IMÓVEL").toUpperCase();
   const requerente = (interessadoNome || "VOCÊ").toUpperCase();
 
   async function gerar() {
-    if (!qaClienteId) {
+    if (!qaClienteId || !dadosEfetivos) {
       toast.error("Não foi possível identificar seu cadastro.");
       return;
     }
