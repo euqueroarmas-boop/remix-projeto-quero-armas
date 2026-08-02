@@ -540,36 +540,8 @@ export default function QAClientePortalPage() {
   const effectiveCollapsed = sidebarCollapsed;
   // Em tablet/celular (<lg), quando o menu está recolhido, ele some 100%
   // e fica apenas uma seta colada no canto esquerdo da tela.
-  const mobileHidden = sidebarCollapsed && isBelowLg;
-  // Lock total do viewport no mobile quando drawer está aberto — evita rolagem
-  // do body/html e qualquer “bounce” visual em smartphone.
-  useEffect(() => {
-    if (!isBelowLg) return;
-    if (!mobileHidden) {
-      const scrollY = window.scrollY;
-      const html = document.documentElement;
-      const prev = document.body.style.overflow;
-      const prevHtmlOverflow = html.style.overflow;
-      const prevBodyPosition = document.body.style.position;
-      const prevBodyTop = document.body.style.top;
-      const prevBodyWidth = document.body.style.width;
-      html.classList.add("qa-mobile-drawer-open");
-      html.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      return () => {
-        html.classList.remove("qa-mobile-drawer-open");
-        html.style.overflow = prevHtmlOverflow;
-        document.body.style.overflow = prev;
-        document.body.style.position = prevBodyPosition;
-        document.body.style.top = prevBodyTop;
-        document.body.style.width = prevBodyWidth;
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [mobileHidden, isBelowLg]);
+  // Drawer mobile removido: a navegação é o rail de ícones à direita em todas
+  // as larguras, então não há mais lock de viewport.
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
