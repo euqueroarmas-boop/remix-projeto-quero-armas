@@ -3112,7 +3112,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
