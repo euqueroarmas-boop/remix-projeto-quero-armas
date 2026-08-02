@@ -471,16 +471,13 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             {initLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
             ) : mensagens.length === 0 ? (
-              <div className="flex flex-col items-center text-center py-10 gap-4">
+              <div className="flex flex-col items-start text-left px-5 pt-5 pb-4 gap-4">
                 <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 15, letterSpacing: "0.08em", color: INK }}>
                   Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}
                 </div>
-                <div className="text-[12px]" style={{ color: INK_2 }}>
-                  Sou o Klal, assistente da Quero Armas. Como posso ajudar?
-                </div>
-                <div className="w-full max-w-md space-y-1.5 pt-1">
+                <div className="w-full max-w-md space-y-1 pt-1">
                   {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11.5px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
+                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
                       {s}
                     </button>
                   ))}
