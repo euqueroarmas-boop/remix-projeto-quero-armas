@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Upload, X, ShieldCheck, AlertTriangle } from "lucide-react";
@@ -146,12 +145,8 @@ export default function ResidenciaTerceiroModal({
       toast.error("Preencha o estado civil e a profissão do dono do imóvel e desde quando você mora neste endereço (MM/AAAA).");
       return;
     }
-    if (!arquivo || !leitura?.nome) {
+    if (!arquivo) {
       toast.error("Envie o documento de identidade do responsável pelo imóvel.");
-      return;
-    }
-    if (!confere) {
-      toast.error("O documento enviado não é da pessoa que consta como titular do comprovante de endereço.");
       return;
     }
     setSalvando(true);
@@ -162,8 +157,8 @@ export default function ResidenciaTerceiroModal({
         .upload(path, arquivo, { upsert: false, contentType: arquivo.type });
       if (upErr) throw upErr;
       onConfirmado({
-        responsavel_nome: leitura.nome.toUpperCase(),
-        responsavel_documento: leitura.cpf,
+        responsavel_nome: (leitura?.nome || titularComprovante || "").toUpperCase(),
+        responsavel_documento: leitura?.cpf ?? null,
         responsavel_arquivo_path: path,
         responsavel_arquivo_nome: arquivo.name,
         estado_civil: estadoCivil,
@@ -177,6 +172,9 @@ export default function ResidenciaTerceiroModal({
       setSalvando(false);
     }
   }
+
+  const podeConfirmar =
+    !!estadoCivil && !!profissao.trim() && /^\d{2}\/\d{4}$/.test(moraDesde) && !!arquivo;
 
   const requerente = (interessadoNome || "VOCÊ").toUpperCase();
   const titular = (titularComprovante || "OUTRA PESSOA").toUpperCase();
@@ -226,8 +224,6 @@ export default function ResidenciaTerceiroModal({
       style={{ pointerEvents: "auto" }}
       onPointerDown={(e) => e.stopPropagation()}
       onPointerDownCapture={(e) => e.stopPropagation()}
-      onFocusCapture={(e) => e.stopPropagation()}
-      onKeyDownCapture={(e) => e.stopPropagation()}
       className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-y-auto"
       role="dialog"
       aria-modal="true"
@@ -432,7 +428,7 @@ export default function ResidenciaTerceiroModal({
               <button
                 type="button"
                 onClick={confirmar}
-                disabled={salvando || lendo || !confere}
+                disabled={salvando || lendo || !podeConfirmar}
                 className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] disabled:opacity-50 transition-colors"
               >
                 {salvando ? "Enviando" : "Confirmar residência"}
@@ -444,7 +440,7 @@ export default function ResidenciaTerceiroModal({
     </div>
   );
 
-  // Portal no body: fora da árvore do Dialog do Radix, o focus trap dele não
-  // rouba o cursor dos campos (era o motivo de não conseguir digitar).
-  return typeof document === "undefined" ? conteudo : createPortal(conteudo, document.body);
+  // Renderizado dentro da árvore do Dialog pai: assim o focus trap do Radix
+  // reconhece os campos como internos e libera a digitação.
+  return conteudo;
 }
