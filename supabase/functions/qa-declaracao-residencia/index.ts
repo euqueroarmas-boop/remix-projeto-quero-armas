@@ -27,6 +27,31 @@ const corsHeaders = {
 const BUCKET = "paid-contracts";
 const MAX_BYTES = 25 * 1024 * 1024;
 
+/** Mesmo motor de carimbo do contrato e da procuração. */
+function detectarSO(ua: string): string | null {
+  if (!ua) return null;
+  if (/Windows NT 10/.test(ua)) return "Windows 10/11";
+  if (/Windows NT/.test(ua)) return "Windows";
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Android/.test(ua)) return "Android";
+  if (/Mac OS X/.test(ua)) return "macOS";
+  if (/Linux/.test(ua)) return "Linux";
+  return null;
+}
+function detectarNavegador(ua: string): string | null {
+  if (!ua) return null;
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/OPR\//.test(ua)) return "Opera";
+  if (/Chrome\//.test(ua)) return "Chrome";
+  if (/Firefox\//.test(ua)) return "Firefox";
+  if (/Safari\//.test(ua)) return "Safari";
+  return null;
+}
+async function sha256Hex(texto: string): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(d)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function svc() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
@@ -169,6 +194,7 @@ function montarPdf(ctx: Record<string, string>, sessao: Record<string, unknown>)
       accept_language: (sessao.accept_language as string) ?? null,
       referer: (sessao.referer as string) ?? null,
       acao: "emiss\u00e3o da declara\u00e7\u00e3o do respons\u00e1vel pelo im\u00f3vel",
+      hash: (sessao.hash as string) ?? undefined,
     },
     margemEsquerda: MARGEM,
   });
@@ -192,6 +218,9 @@ Deno.serve(async (req) => {
     user_agent: req.headers.get("user-agent") || null,
     accept_language: req.headers.get("accept-language") || null,
     referer: req.headers.get("referer") || null,
+    so: detectarSO(req.headers.get("user-agent") || ""),
+    browser: detectarNavegador(req.headers.get("user-agent") || ""),
+    country: req.headers.get("cf-ipcountry"),
   };
 
   let body: Record<string, any> = {};
@@ -275,9 +304,11 @@ Deno.serve(async (req) => {
       .single();
     if (insErr) return json({ error: "Falha ao registrar declara\u00e7\u00e3o", detail: insErr.message }, 500);
 
+    const hashConteudo = await sha256Hex(String(registro.conteudo_html ?? ""));
     const pdf = montarPdf(ctx, {
       numero: (criada as any).id,
       registrado_em: agora.toISOString(),
+      hash: hashConteudo,
       ...sessaoBase,
     });
 
@@ -297,6 +328,36 @@ Deno.serve(async (req) => {
       pdf_path: path,
       pdf_url: signed?.signedUrl ?? null,
       status: "gerada_pendente_assinatura",
+    });
+  }
+
+  /* BAIXAR — devolve os MESMOS bytes canonicos, como no contrato/procuracao */
+  if (acao === "baixar") {
+    const declaracaoId = String(body.declaracao_id || "");
+    if (!declaracaoId) return json({ error: "declaracao_id obrigat\u00f3rio" }, 400);
+
+    const { data: decl } = await sb
+      .from("qa_declaracoes_residencia")
+      .select("id, qa_cliente_id, responsavel_nome")
+      .eq("id", declaracaoId)
+      .maybeSingle();
+    if (!decl) return json({ error: "Declara\u00e7\u00e3o n\u00e3o encontrada" }, 404);
+    if (!clienteIds.includes(Number((decl as any).qa_cliente_id))) return json({ error: "Acesso negado" }, 403);
+
+    const path = `qa-declaracoes-residencia/${(decl as any).qa_cliente_id}/${declaracaoId}/declaracao.pdf`;
+    const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
+    if (dlErr || !file) return json({ error: "PDF n\u00e3o encontrado", detail: dlErr?.message }, 404);
+
+    const nome = `Declaracao do Responsavel pelo Imovel - ${String((decl as any).responsavel_nome || "")}`
+      .replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim() + ".pdf";
+
+    return new Response(await file.arrayBuffer(), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(nome)}`,
+        "Cache-Control": "no-store",
+      },
     });
   }
 
