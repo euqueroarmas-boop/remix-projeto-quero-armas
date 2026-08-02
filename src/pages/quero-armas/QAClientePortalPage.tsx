@@ -540,36 +540,8 @@ export default function QAClientePortalPage() {
   const effectiveCollapsed = sidebarCollapsed;
   // Em tablet/celular (<lg), quando o menu está recolhido, ele some 100%
   // e fica apenas uma seta colada no canto esquerdo da tela.
-  const mobileHidden = sidebarCollapsed && isBelowLg;
-  // Lock total do viewport no mobile quando drawer está aberto — evita rolagem
-  // do body/html e qualquer “bounce” visual em smartphone.
-  useEffect(() => {
-    if (!isBelowLg) return;
-    if (!mobileHidden) {
-      const scrollY = window.scrollY;
-      const html = document.documentElement;
-      const prev = document.body.style.overflow;
-      const prevHtmlOverflow = html.style.overflow;
-      const prevBodyPosition = document.body.style.position;
-      const prevBodyTop = document.body.style.top;
-      const prevBodyWidth = document.body.style.width;
-      html.classList.add("qa-mobile-drawer-open");
-      html.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      return () => {
-        html.classList.remove("qa-mobile-drawer-open");
-        html.style.overflow = prevHtmlOverflow;
-        document.body.style.overflow = prev;
-        document.body.style.position = prevBodyPosition;
-        document.body.style.top = prevBodyTop;
-        document.body.style.width = prevBodyWidth;
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [mobileHidden, isBelowLg]);
+  // Drawer mobile removido: a navegação é o rail de ícones à direita em todas
+  // as larguras, então não há mais lock de viewport.
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -3120,18 +3092,8 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 pt-14 lg:pt-0 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
-      {/* Botão hambúrguer — visível apenas <lg quando o menu está escondido */}
-      {mobileHidden && (
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(false)}
-          aria-label="Abrir menu"
-          className="lg:hidden fixed top-3 left-3 z-[60] w-10 h-10 rounded-full bg-[#141414] text-white border border-[#2a2a2a] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.35)]"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
+      {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito em todas as seções */}
       <div style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
         <button
@@ -3166,14 +3128,6 @@ export default function QAClientePortalPage() {
         )}
       </div>
 
-      {/* Backdrop — visível apenas <lg quando o drawer está aberto */}
-      {!mobileHidden && isBelowLg && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50"
-          onClick={() => setSidebarCollapsed(true)}
-          aria-hidden
-        />
-      )}
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -3193,10 +3147,10 @@ export default function QAClientePortalPage() {
           setDocsReloadKey((k) => k + 1);
         }}
       />
-      {/* ═══ SIDEBAR ESQUERDO — branding apenas em desktop; nav completo em mobile ═══ */}
+      {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className={`qa-client-mobile-drawer flex fixed inset-0 lg:inset-y-0 lg:right-auto left-0 z-50 flex-col text-[#E8E8E8] transition-[width,transform] duration-200 overflow-hidden ${effectiveCollapsed ? "w-screen max-w-full lg:w-[68px] lg:max-w-[68px]" : "w-screen max-w-full lg:w-[190px] lg:max-w-[190px]"} ${mobileHidden ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}`}
-        style={{ background: sidebarTheme.bg, overscrollBehavior: "none", touchAction: isBelowLg ? "none" : undefined }}
+        className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 overflow-hidden ${effectiveCollapsed ? "w-[68px] max-w-[68px]" : "w-[190px] max-w-[190px]"}`}
+        style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* stripe removida conforme solicitado */}
@@ -3234,34 +3188,14 @@ export default function QAClientePortalPage() {
 
         {/* Brand removido da sidebar conforme solicitado */}
 
-        {/* Nav mobile — só aparece abaixo de lg; em desktop a nav vai para o rail direito */}
-        <nav className="qa-client-mobile-nav lg:hidden flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-1 mt-14" style={{ overscrollBehavior: "none", touchAction: "none" }}>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => { goSection(item.key); setSidebarCollapsed(true); }}
-                className={`flex items-center justify-between w-full gap-3 px-4 py-2.5 text-[14px] font-bold border-l-2 ${active ? "text-white" : "text-[#c9c2b3] border-transparent hover:text-white hover:bg-white/5"}`}
-                style={active ? { background: `linear-gradient(90deg, ${sidebarTheme.accent}47 0%, transparent 100%)`, borderLeftColor: sidebarTheme.accent } : undefined}
-              >
-                <span className="text-left">{item.label}</span>
-                <Icon className="h-5 w-5 shrink-0" style={active ? { color: sidebarTheme.accent } : undefined} />
-              </button>
-            );
-          })}
-        </nav>
-
         {/* Espaçador desktop — empurra rodapé para baixo */}
         <div className="hidden lg:flex flex-1" />
 
       </aside>
 
-      {/* ═══ RAIL DIREITO — nav icon-only, visível apenas em desktop (lg+) ═══ */}
+      {/* ═══ RAIL DIREITO — nav icon-only, navegação única em todas as larguras ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
+        className="flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
         style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
@@ -3320,7 +3254,7 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden lg:mr-[56px]">
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden mr-[56px]">
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
