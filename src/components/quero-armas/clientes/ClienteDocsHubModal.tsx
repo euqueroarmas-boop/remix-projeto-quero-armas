@@ -1703,6 +1703,10 @@ export function ClienteDocsHubModal({
       motivoCarimbadoRef.current = null;
       return;
     }
+    // Documento recém-salvo: a lista do Hub volta com ele já aprovado e o
+    // cálculo de duplicidade passa a apontar o PRÓPRIO envio. Nunca carimbar
+    // rejeição em cima do carimbo de aprovação que acabou de sair.
+    if (docSalvoRef.current) return;
     if (motivoCarimbadoRef.current === motivoRejeicao) return;
     motivoCarimbadoRef.current = motivoRejeicao;
     setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
