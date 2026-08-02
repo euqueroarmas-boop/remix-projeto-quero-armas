@@ -458,7 +458,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         }
       `}</style>
 
-      {/* BLOCO FIXO — header + foco do dia (não rola) */}
+      {/* BLOCO FIXO — header + foco do dia + KPIs + filtro ativo */}
       <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
         <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
@@ -474,10 +474,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         const dias = daysUntil(focoDoc.data_validade);
         if (dias === null || dias > 30) return null;
         const nome = getNomeDocumentoDisplay(focoDoc, "Documento");
-        // Sem "— atualize agora": o comprovante novo (conta de luz, boleto) só
-        // é emitido no ciclo seguinte. Mandar atualizar antes de existir
-        // documento novo é pedir o impossível. O aviso informa o prazo; o
-        // botão ao lado já diz o que fazer quando der.
         const msg = dias < 0
           ? `${nome} venceu há ${Math.abs(dias)} dias`
           : dias === 0
@@ -495,10 +491,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           </div>
         );
       })()}
-      </div>
 
-      {/* BLOCO FIXO (continuação) — KPIs, filtro e cabeçalho da lista */}
-      <div style={{ flexShrink: 0 }}>
       {/* KPIs */}
       <div className="kpis">
         {([
@@ -529,7 +522,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".22em",fontSize:10,fontWeight:900}}>LIMPAR ✕</button>
         </div>
       )}
+      </div>
 
+      {/* ÁREA ROLÁVEL — cabeçalho da lista + categorias */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {/* LISTA AGRUPADA POR CATEGORIA */}
       <div className="listhead">
         <div className="ttl">DOCUMENTOS · AGRUPADO POR CATEGORIA <span className="cnt">{kpis.total}</span></div>
@@ -537,10 +533,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           <Plus className="h-3 w-3" /> ADICIONAR
         </button>
       </div>
-      </div>
 
-      {/* ÁREA ROLÁVEL — somente as categorias */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", touchAction: "pan-y", paddingBottom: 24 }}>
       {grupos.length === 0 ? (
         <div className="empty">Nenhum documento cadastrado ainda.</div>
       ) : (
