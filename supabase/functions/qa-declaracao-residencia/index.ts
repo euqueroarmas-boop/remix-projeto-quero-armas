@@ -331,6 +331,42 @@ Deno.serve(async (req) => {
     });
   }
 
+  /* ATUAL — retoma a declaracao pendente/reprovada ja gerada para o cliente */
+  if (acao === "atual") {
+    const clienteId = Number(body.qa_cliente_id);
+    if (!clienteIds.includes(clienteId)) return json({ error: "Acesso negado" }, 403);
+
+    const { data: decl } = await sb
+      .from("qa_declaracoes_residencia")
+      .select("*")
+      .eq("qa_cliente_id", clienteId)
+      .in("status", ["gerada_pendente_assinatura", "assinada_rejeitada"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!decl) return json({ ok: true, declaracao: null });
+
+    const d = decl as any;
+    return json({
+      ok: true,
+      declaracao: {
+        id: d.id,
+        status: d.status,
+        documento_comprovante_id: d.documento_comprovante_id ?? null,
+        motivo_reprovacao: d.assinatura_motivo_falha ?? null,
+        dados: {
+          responsavel_nome: d.responsavel_nome ?? "",
+          responsavel_documento: d.responsavel_cpf ?? "",
+          estado_civil: d.responsavel_estado_civil ?? "",
+          profissao: d.responsavel_profissao ?? "",
+          mora_desde: d.mora_desde ?? "",
+          responsavel_arquivo_path: d.responsavel_doc_path ?? null,
+        },
+      },
+    });
+  }
+
   /* BAIXAR — devolve os MESMOS bytes canonicos, como no contrato/procuracao */
   if (acao === "baixar") {
     const declaracaoId = String(body.declaracao_id || "");
