@@ -1598,6 +1598,41 @@ export function ClienteDocsHubModal({
     conformidade.find((i) => i.campo === "nome_completo" && i.status === "divergente")?.valorCertidao ||
     classificacao?.camposExtraidos?.nome_completo ||
     null;
+  // Depois que o dono do imóvel é declarado e o documento dele é enviado, a
+  // conformidade do comprovante passa a ser CONTRA O DONO DO IMÓVEL — o
+  // interessado não entra nesse cruzamento.
+  const conformidadeExibida = (casoResidenciaTerceiro && terceiroDados)
+    ? conformidade.map((item) => {
+        if (item.campo === "nome_completo") {
+          const refNome = terceiroDados.responsavel_nome || null;
+          return {
+            ...item,
+            valorReferencia: refNome,
+            fonteReferencia: "Documento de identidade do responsável pelo imóvel",
+            status: !refNome
+              ? ("sem_referencia" as const)
+              : normalizeStr(item.valorCertidao) === normalizeStr(refNome) ||
+                nameSim(item.valorCertidao, refNome) >= SIM_HIGH
+                ? ("conforme" as const)
+                : ("divergente" as const),
+          };
+        }
+        if (item.campo === "cpf") {
+          const refCpf = terceiroDados.responsavel_documento || null;
+          return {
+            ...item,
+            valorReferencia: refCpf,
+            fonteReferencia: "Documento de identidade do responsável pelo imóvel",
+            status: !refCpf
+              ? ("sem_referencia" as const)
+              : normCpf(item.valorCertidao) === normCpf(refCpf)
+                ? ("conforme" as const)
+                : ("divergente" as const),
+          };
+        }
+        return item;
+      })
+    : conformidade;
   // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
   const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = casoResidenciaTerceiro
     ? null
