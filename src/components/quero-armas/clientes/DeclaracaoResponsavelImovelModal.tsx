@@ -203,46 +203,6 @@ export default function DeclaracaoResponsavelImovelModal({
     }
   }
 
-  async function enviarAssinadaLegacy(file: File) {
-    if (!declaracaoId) {
-      toast.error("Gere a declaração antes de enviar o arquivo assinado.");
-      return;
-    }
-    if (file.type !== "application/pdf") {
-      toast.error("Envie o PDF assinado no GOV.BR — foto ou print não têm assinatura digital.");
-      return;
-    }
-    setEnviando(true);
-    setResultado(null);
-    try {
-      const base64 = await fileToBase64(file);
-      const { data, error } = await supabase.functions.invoke("qa-declaracao-residencia", {
-        body: { acao: "enviar_assinada", declaracao_id: declaracaoId, file_base64: base64 },
-      });
-      if (error) throw error;
-      const r = data as {
-        conforme?: boolean;
-        motivos?: string[];
-        assinatura?: { signatario?: string | null; data_assinatura?: string | null };
-        error?: string;
-      };
-      if (r?.error) throw new Error(r.error);
-      setResultado({
-        conforme: !!r.conforme,
-        motivos: r.motivos ?? [],
-        signatario: r.assinatura?.signatario ?? null,
-        data: r.assinatura?.data_assinatura ?? null,
-      });
-      if (r.conforme) {
-        toast.success("Declaração assinada e conferida com sucesso.");
-        onValidada();
-      }
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Falha ao enviar a declaração assinada.");
-    } finally {
-      setEnviando(false);
-    }
-  }
 
   const passos = [
     {
