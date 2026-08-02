@@ -3443,6 +3443,7 @@ export function ClienteDocsHubModal({
 
       setResultadoCarimbo(
         terceiroDados
+          ? (docSalvoRef.current = true) && false ? null
           ? {
               tipo: "analise",
               mensagem:
