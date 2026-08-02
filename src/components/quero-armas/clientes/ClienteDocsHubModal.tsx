@@ -2764,6 +2764,19 @@ export function ClienteDocsHubModal({
     }
   }
 
+  function reabrirHubParaNovoEnvio() {
+    setResultadoCarimbo(null);
+    setFile(null);
+    setClassificacao(null);
+    setConferenciaLocal(null);
+    setAutoResult(null);
+    setConformidade([]);
+    setIaExtraido({});
+    setConfirmados({});
+    setForm({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+    setTimeout(() => fileInputRef.current?.click(), 150);
+  }
+
   async function handleSave() {
     // Documento reprovado por vencimento: o botão vira "Enviar novamente" e
     // reabre o seletor do Hub Documental para o cliente anexar a via atualizada.
