@@ -115,6 +115,7 @@ function formatTimestamp(iso: string | undefined): string {
 
 interface CentralAjudaClienteProps {
   cliente: { id: number; nome_completo: string; cpf?: string | null } | null;
+  compact?: boolean;
 }
 
 const SUGESTOES = [
