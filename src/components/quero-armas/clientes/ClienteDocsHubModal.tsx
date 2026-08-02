@@ -1584,8 +1584,20 @@ export function ClienteDocsHubModal({
   );
   const tomadorInfo = conformidade.find((i) => i.campo === "tomador_nome");
   const tomadorEnderecoInfo = conformidade.find((i) => i.campo === "tomador_endereco");
+  // ── RESIDÊNCIA EM NOME DE TERCEIRO ──────────────────────────────────────
+  // Comprovante de endereço no nome de outra pessoa NÃO reprova: o cliente
+  // pode morar no imóvel de um terceiro. Abrimos o fluxo de declaração
+  // (estado civil, profissão, desde quando mora + documento do responsável).
+  const casoResidenciaTerceiro =
+    form.tipo_documento === "comprovante_residencia" && titularDivergente && !notaTomadorParentesco;
+  const titularComprovanteLido =
+    conformidade.find((i) => i.campo === "nome_completo" && i.status === "divergente")?.valorCertidao ||
+    classificacao?.camposExtraidos?.nome_completo ||
+    null;
   // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
-  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = notaTomadorParentesco
+  const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = casoResidenciaTerceiro
+    ? null
+    : notaTomadorParentesco
     ? "parentesco"
     : titularDivergente
       ? (parentescoDetectado ? "parentesco" : "titular")
