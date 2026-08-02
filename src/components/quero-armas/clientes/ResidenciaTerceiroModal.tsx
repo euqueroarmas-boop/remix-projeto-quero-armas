@@ -52,6 +52,20 @@ function nomesConferem(a: string, b: string) {
   return pa[pa.length - 1] === pb[pb.length - 1];
 }
 
+function cpfComDigitosVerificadores(valor: string | null | undefined): string | null {
+  const digitos = String(valor || "").replace(/\D/g, "");
+  if (digitos.length !== 11 || /^(\d)\1{10}$/.test(digitos)) return digitos || null;
+  const base = digitos.slice(0, 9);
+  const calcular = (parcial: string, pesoInicial: number) => {
+    const soma = parcial.split("").reduce((acc, n, i) => acc + Number(n) * (pesoInicial - i), 0);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  const d1 = calcular(base, 10);
+  const d2 = calcular(`${base}${d1}`, 11);
+  return `${base}${d1}${d2}`;
+}
+
 function sanitize(nome: string) {
   return nome
     .normalize("NFD")
@@ -128,7 +142,7 @@ export default function ResidenciaTerceiroModal({
       if (error) throw error;
       const campos = ((data as any)?.camposExtraidos || {}) as Record<string, string>;
       const nome = campos.nome_completo || campos.nome || null;
-      const cpf = campos.cpf || null;
+       const cpf = cpfComDigitosVerificadores(campos.cpf);
       if (!nome) {
         setErroLeitura("Não conseguimos ler o nome neste documento. Envie o RG, a CNH ou a CIN do responsável em boa qualidade.");
       }

@@ -520,9 +520,32 @@ function numeroCertidao(texto: string): string {
   return texto.match(/CERTID[ÃA]O\s*N[ºO°.:\s]*([0-9]{4,})/i)?.[1] || "";
 }
 
+/**
+ * CPF tem dois dígitos verificadores determinísticos. Em documentos digitais
+ * com fonte pequena (especialmente CNH-e), a visão às vezes lê somente o
+ * último dígito errado — ex.: 299.341.138-13 vira 299.341.138-19. Mantemos os
+ * nove dígitos-base lidos e reconstruímos APENAS os verificadores; assim um
+ * erro visual não vira falsa divergência de titular.
+ */
+function cpfComDigitosVerificadores(valor: unknown): string {
+  const digitos = String(valor ?? "").replace(/\D/g, "");
+  if (digitos.length !== 11 || /^(\d)\1{10}$/.test(digitos)) return digitos;
+  const base = digitos.slice(0, 9);
+  const calcular = (parcial: string, pesoInicial: number) => {
+    const soma = parcial.split("").reduce((acc, n, i) => acc + Number(n) * (pesoInicial - i), 0);
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+  const d1 = calcular(base, 10);
+  const d2 = calcular(`${base}${d1}`, 11);
+  return `${base}${d1}${d2}`;
+}
+
 function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any {
   const campos = parsed.camposExtraidos && typeof parsed.camposExtraidos === "object" ? parsed.camposExtraidos : {};
   parsed.camposExtraidos = campos;
+  if (campos.cpf) campos.cpf = cpfComDigitosVerificadores(campos.cpf);
+  if (campos.cpf_declarante) campos.cpf_declarante = cpfComDigitosVerificadores(campos.cpf_declarante);
   const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
