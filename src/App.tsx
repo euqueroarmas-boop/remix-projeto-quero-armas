@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { AuthProvider } from "@/shared/auth/AuthProvider";
 import { AuthDeepLinkHandler } from "@/shared/auth/AuthDeepLinkHandler";
+import { OAuthReturnHandler } from "@/shared/auth/OAuthReturnHandler";
 import { CartProvider } from "@/shared/cart/CartProvider";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 import QAFaviconManager from "@/components/quero-armas/branding/QAFaviconManager";
@@ -46,6 +47,7 @@ const App = () => (
                 <div className="overflow-x-hidden max-w-full">
                   <QAFaviconManager />
                   <AuthDeepLinkHandler />
+                  <OAuthReturnHandler />
                   <Routes>
                   {/* Legacy: redireciona /quero-armas/* → /* */}
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />

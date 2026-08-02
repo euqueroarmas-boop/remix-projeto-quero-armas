@@ -128,10 +128,7 @@ export default function MockupsLoginV9() {
   async function handleSocial(provider: "google" | "apple") {
     setLoadingProvider(provider);
     try {
-      try { localStorage.setItem("qa_oauth_next", nextPath); } catch { /* storage indisponível */ }
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin + "/auth/callback",
-      });
+      const result = await signInWithSocial(provider, nextPath);
       if (result.error) {
         toast.error(`Não foi possível entrar com ${provider === "google" ? "Google" : "Apple"}. Tente novamente.`);
         return;
