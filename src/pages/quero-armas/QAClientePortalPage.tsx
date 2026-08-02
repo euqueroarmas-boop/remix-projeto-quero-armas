@@ -28,6 +28,7 @@ import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/Cliente
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
+import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
@@ -2489,6 +2490,29 @@ export default function QAClientePortalPage() {
   // é ambíguo (`"unknown"`).
   // ==========================================================================
   const autoRespondidasRef = useRef<Set<string>>(new Set());
+  // ==========================================================================
+  // RETOMADA DA DECLARAÇÃO DO RESPONSÁVEL PELO IMÓVEL
+  // Se existe declaração gerada e ainda não validada, ao recarregar o portal o
+  // cliente volta EXATAMENTE nessa tela (baixar / enviar assinada / apagar),
+  // e não na instrução genérica de comprovante de residência.
+  // ==========================================================================
+  const [declResidenciaAberta, setDeclResidenciaAberta] = useState(false);
+  const [declResidenciaComprovanteId, setDeclResidenciaComprovanteId] = useState<string | null>(null);
+  useEffect(() => {
+    const cid = Number((cliente as any)?.id);
+    if (!Number.isFinite(cid)) return;
+    let vivo = true;
+    (async () => {
+      const { data } = await supabase.functions.invoke("qa-declaracao-residencia", {
+        body: { acao: "atual", qa_cliente_id: cid },
+      });
+      const decl = (data as any)?.declaracao;
+      if (!vivo || !decl) return;
+      setDeclResidenciaComprovanteId(decl.documento_comprovante_id ?? null);
+      setDeclResidenciaAberta(true);
+    })();
+    return () => { vivo = false; };
+  }, [(cliente as any)?.id, docsReloadKey]);
   useEffect(() => {
     if (!cliente?.nome_completo || !processoDocs?.length) return;
     const nomeCliente = String(cliente.nome_completo);
@@ -4261,6 +4285,7 @@ export default function QAClientePortalPage() {
       <PendenciasGuiadasPopup
         open={
           !mustChangePassword &&
+          !declResidenciaAberta &&
           (showContratoPopup ||
             (pendingContractsLoaded &&
               pendingSignatureCount > 0 &&
@@ -4281,6 +4306,18 @@ export default function QAClientePortalPage() {
         onDismiss={dismissPendenciasGuiadas}
                 resumoProcesso={resumoProcesso}
         />
+      <DeclaracaoResponsavelImovelModal
+        open={declResidenciaAberta}
+        qaClienteId={Number((cliente as any)?.id) || null}
+        dados={null}
+        documentoComprovanteId={declResidenciaComprovanteId}
+        interessadoNome={(cliente as any)?.nome_completo ?? null}
+        onFechar={() => setDeclResidenciaAberta(false)}
+        onValidada={() => {
+          setDeclResidenciaAberta(false);
+          setDocsReloadKey((k) => k + 1);
+        }}
+      />
     </div>
     </PortalFilterProvider>
   );
