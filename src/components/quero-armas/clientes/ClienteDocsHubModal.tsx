@@ -1288,6 +1288,8 @@ export function ClienteDocsHubModal({
   // Único caso de dados de terceiro no sistema: comprovante de endereço em
   // nome do responsável pelo imóvel onde o cliente reside.
   const [terceiroDados, setTerceiroDados] = useState<ResidenciaTerceiroPayload | null>(null);
+  /** Pop-up guiado da Declaração do Responsável pelo Imóvel (assinatura GOV.BR). */
+  const [declaracaoAberta, setDeclaracaoAberta] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
