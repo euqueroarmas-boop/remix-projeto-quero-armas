@@ -46,14 +46,20 @@ export default function PainelDisparo({ itens, corIcone, onOpen }: Props) {
       onMouseEnter={(e) => { e.currentTarget.style.background = `${corIcone}1F`; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
     >
-      <img
-        src="/icone-arma-cadastro.png"
-        alt=""
+      <span
         aria-hidden="true"
-        className="h-[18px] w-[23px] shrink-0 object-contain"
+        className="h-[18px] w-[23px] shrink-0"
         style={{
-          mixBlendMode: "screen",
-          opacity: total ? 0.95 : 0.58,
+          backgroundColor: corIcone,
+          opacity: total ? 1 : 0.53,
+          WebkitMaskImage: "url(/icone-arma-cadastro.png)",
+          maskImage: "url(/icone-arma-cadastro.png)",
+          WebkitMaskRepeat: "no-repeat",
+          maskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          maskPosition: "center",
+          WebkitMaskSize: "contain",
+          maskSize: "contain",
         }}
       />
       {total > 0 && (
