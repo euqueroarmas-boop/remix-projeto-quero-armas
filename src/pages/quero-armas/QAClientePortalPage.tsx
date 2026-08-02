@@ -3345,7 +3345,7 @@ export default function QAClientePortalPage() {
 
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
-      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
+      <main className={`max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip py-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -3972,8 +3972,8 @@ export default function QAClientePortalPage() {
         })()}
 
         {activeSection === "documentos" && analysis && (
-          <div>
-            <div className="no-print mb-3 flex items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
+          <div className="flex h-full min-h-0 flex-col pt-6">
+            <div className="no-print mb-3 mt-1 flex shrink-0 items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
               {(["lista", "extraidos"] as const).map((k) => (
                 <button
                   key={k}
@@ -3990,6 +3990,7 @@ export default function QAClientePortalPage() {
               ))}
             </div>
             {docsSubview === "lista" ? (
+              <div className="min-h-0 flex-1">
               <DocumentosCategoriaZ6V3Panel
                 cliente={cliente}
                 meusDocs={meusDocs}
@@ -4001,7 +4002,9 @@ export default function QAClientePortalPage() {
                   setShowAddDoc(true);
                 }}
               />
+              </div>
             ) : (
+              <div className="min-h-0 flex-1 overflow-y-auto pb-6">
               <DadosExtraidosPanel
                 cliente={cliente}
                 meusDocs={meusDocs}
@@ -4010,6 +4013,7 @@ export default function QAClientePortalPage() {
                   setShowAddDoc(true);
                 }}
               />
+              </div>
             )}
           </div>
         )}
