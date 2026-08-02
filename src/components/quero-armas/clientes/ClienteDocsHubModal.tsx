@@ -2764,6 +2764,9 @@ export function ClienteDocsHubModal({
     }
   }
 
+  /** Já existe carimbo de REPROVADO na tela → próximo clique reenvia. */
+  const carimboReprovadoEmitido = resultadoCarimbo?.tipo === "reprovado";
+
   function reabrirHubParaNovoEnvio() {
     setResultadoCarimbo(null);
     setFile(null);
