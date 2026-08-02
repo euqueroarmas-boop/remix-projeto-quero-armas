@@ -52,6 +52,7 @@ export default function DocResultadoCarimbo({
       <style>{`@keyframes qaCarimboIn{0%{opacity:0;transform:scale(1.6) rotate(-18deg)}60%{opacity:1;transform:scale(.94) rotate(-9deg)}100%{opacity:1;transform:scale(1) rotate(-11deg)}}`}</style>
       <div
         className="flex flex-col items-center gap-3 bg-white px-10 py-8 text-center"
+        onClick={(e) => { if (persistente) e.stopPropagation(); }}
         style={{
           border: `10px solid ${c.cor}`,
           borderRadius: 10,
