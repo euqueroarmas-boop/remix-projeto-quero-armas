@@ -523,6 +523,37 @@ Deno.serve(async (req) => {
       console.error("[qa-declaracao-residencia] hub upsert falhou", (e as Error).message);
     }
 
+    // REGRA: o comprovante de endereco em nome de terceiro fica AGUARDANDO ate
+    // aqui. Ele so e aprovado (exigencia cumprida) quando a declaracao do
+    // responsavel pelo imovel e validada. Se a assinatura falhar, o comprovante
+    // continua pendente com o motivo visivel para o cliente.
+    try {
+      const comprovanteId = (decl as any)?.documento_comprovante_id as string | null;
+      if (comprovanteId) {
+        await sb
+          .from("qa_documentos_cliente")
+          .update(
+            conforme
+              ? {
+                  status: "aprovado",
+                  aprovado_em: agoraIso,
+                  motivo_reprovacao: null,
+                  updated_at: agoraIso,
+                }
+              : {
+                  status: "pendente_aprovacao",
+                  motivo_reprovacao:
+                    "Aguardando a declaracao do responsavel pelo imovel assinada no GOV.BR. " +
+                    motivos.join(" "),
+                  updated_at: agoraIso,
+                },
+          )
+          .eq("id", comprovanteId);
+      }
+    } catch (e) {
+      console.error("[qa-declaracao-residencia] comprovante update falhou", (e as Error).message);
+    }
+
     return json({
       ok: true,
       conforme,
