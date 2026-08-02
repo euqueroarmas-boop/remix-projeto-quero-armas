@@ -238,13 +238,13 @@ function SectionCard({ icon: Icon, title, color, children, containerClassName, h
   );
 }
 
-function RifleIcon({ className }: { className?: string }) {
+function RifleIcon({ className, color }: { className?: string; color?: string }) {
   return (
     <svg
       className={className}
       viewBox="0 0 24 24"
       fill="none"
-      stroke="currentColor"
+      stroke={color ?? "currentColor"}
       strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -261,6 +261,8 @@ function RifleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+
 
 
 function ClientAvatar({
@@ -399,7 +401,9 @@ export default function QAClientePortalPage() {
     () => QA_SIDEBAR_THEMES.find((t) => t.key === getPersonalThemeKey()) ?? QA_SIDEBAR_THEMES[0],
   );
   const [railIconColor, setRailIconColor] = useState<string>("#9a9a9a");
+  const [rifleHover, setRifleHover] = useState(false);
   const [avatarDropOpen, setAvatarDropOpen] = useState(false);
+
 
   // Carrega temas do banco e cor do rail direito
   useEffect(() => {
@@ -3275,12 +3279,15 @@ export default function QAClientePortalPage() {
             title="Rodar checklist"
             aria-label="Rodar checklist"
             className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-            style={{ color: `${railIconColor}88` }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
+            onMouseEnter={() => setRifleHover(true)}
+            onMouseLeave={() => setRifleHover(false)}
           >
-            <RifleIcon className="h-[18px] w-[18px] shrink-0" />
+            <RifleIcon
+              className="h-[18px] w-[18px] shrink-0"
+              color={rifleHover ? railIconColor : `${railIconColor}88`}
+            />
           </button>
+
 
           {/* Disparo: tudo que espera o cliente, em ordem de prioridade.
               Fica logo acima do Suporte — é o primeiro lugar onde ele olha
