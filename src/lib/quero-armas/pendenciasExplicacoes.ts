@@ -485,7 +485,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   // Identidade
   cin: {
     titulo: "Documento oficial de identidade",
-    siteUrl: "https://www.gov.br",
+    siteUrl: "https://gov.br",
     passos: [
       "Entre no gov.br pelo site ou aplicativo com o seu CPF e senha e conclua a verificação em duas etapas, se pedirem.",
       "Depois de entrar, procure a área de \"Atalhos\" e abra \"Carteira de Documentos\".",
@@ -498,7 +498,7 @@ const REGISTRO: Record<string, ExplicacaoPendencia> = {
   },
   rg_com_cpf: {
     titulo: "Documento oficial de identidade com CPF",
-    siteUrl: "https://www.gov.br",
+    siteUrl: "https://gov.br",
     passos: [
       "Entre no gov.br pelo site ou aplicativo com o seu CPF e senha.",
       "Abra \"Atalhos\" e toque em \"Carteira de Documentos\".",
