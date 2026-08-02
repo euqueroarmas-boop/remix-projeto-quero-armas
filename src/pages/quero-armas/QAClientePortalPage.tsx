@@ -3970,7 +3970,7 @@ export default function QAClientePortalPage() {
         {activeSection === "mensagens" && (
           <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Klal — Assistente Jurídico">
             <div className="-mx-4 lg:-mx-8 -mt-5">
-              <CentralAjudaCliente cliente={cliente as any} />
+              <CentralAjudaCliente cliente={cliente as any} compact />
             </div>
           </ArsenalPremiumGate>
         )}
