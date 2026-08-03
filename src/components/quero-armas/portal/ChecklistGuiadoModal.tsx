@@ -54,7 +54,6 @@ import {
   pickTemplateGuia,
   progressoGuia,
   responderPerguntaGuia,
-  tipoItemGuia,
   tipoItemGuiaComRespostas,
 } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
