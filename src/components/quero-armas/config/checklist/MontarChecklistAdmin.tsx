@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  BookMarked, Plus, Search, Loader2, ArrowRight, Trash2, ArrowUp, ArrowDown,
+  BookMarked, Plus, Search, Loader2, ArrowRight, Trash2, ArrowUp, ArrowDown, GripVertical,
   Eye, RotateCcw, Sparkles, Home, BriefcaseBusiness, GitBranch, Landmark,
 } from "lucide-react";
 import PreviaClienteChecklistModal from "./PreviaClienteChecklistModal";
@@ -168,6 +168,8 @@ export default function MontarChecklistAdmin() {
   const [servicoId, setServicoId] = useState<number | null>(null);
   const [biblioteca, setBiblioteca] = useState<BibliotecaItem[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [arrastandoIdx, setArrastandoIdx] = useState<number | null>(null);
+  const [sobreIdx, setSobreIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [carregandoAcao, setCarregandoAcao] = useState(false);
   const [buscaBib, setBuscaBib] = useState("");
@@ -997,7 +999,42 @@ export default function MontarChecklistAdmin() {
             ) : (
               <div className="space-y-1 max-h-[600px] overflow-y-auto pr-1">
                 {checklist.map((c, i) => (
-                  <div key={c.id} className="flex items-center gap-1.5 border border-slate-200 rounded-md px-2 py-1.5 bg-white">
+                  <div
+                    key={c.id}
+                    draggable={!carregandoAcao}
+                    onDragStart={(e) => {
+                      setArrastandoIdx(i);
+                      e.dataTransfer.effectAllowed = "move";
+                      try { e.dataTransfer.setData("text/plain", String(i)); } catch { /* noop */ }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (sobreIdx !== i) setSobreIdx(i);
+                    }}
+                    onDragLeave={() => setSobreIdx((prev) => (prev === i ? null : prev))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const from = arrastandoIdx;
+                      setArrastandoIdx(null);
+                      setSobreIdx(null);
+                      if (from !== null) void reordenarPorArraste(from, i);
+                    }}
+                    onDragEnd={() => { setArrastandoIdx(null); setSobreIdx(null); }}
+                    className={`flex items-center gap-1.5 border rounded-md px-2 py-1.5 bg-white transition-all ${
+                      arrastandoIdx === i
+                        ? "opacity-40 border-[#7B1C2E]"
+                        : sobreIdx === i && arrastandoIdx !== null
+                          ? "border-[#7B1C2E] ring-1 ring-[#7B1C2E]/30"
+                          : "border-slate-200"
+                    }`}
+                  >
+                    <span
+                      title="Clique, segure e arraste para reordenar"
+                      className="shrink-0 text-slate-300 hover:text-[#7B1C2E] cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical className="w-3.5 h-3.5" />
+                    </span>
                     <div className="flex flex-col gap-0.5">
                       <button
                         disabled={i === 0 || carregandoAcao}
