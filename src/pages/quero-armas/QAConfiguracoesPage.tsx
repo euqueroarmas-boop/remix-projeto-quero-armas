@@ -885,7 +885,7 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
-        <TabsContent value="aparencia" className="mt-4 space-y-5">
+        <TabsContent value="aparencia" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden space-y-5">
           {/* Temas da sidebar — administração global */}
           <QASidebarTemasAdmin />
           {/* Dimensões das colunas e cor do rail direito */}
