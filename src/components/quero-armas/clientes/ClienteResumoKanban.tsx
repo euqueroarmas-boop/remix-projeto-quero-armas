@@ -929,6 +929,23 @@ export default function ClienteResumoKanban({
           <br />
           <span>TODOS OS DIREITOS RESERVADOS</span>
         </div>
+        <style>{`
+          .qa-client-summary-print__footer {
+            text-align: center;
+            margin-top: 21px;
+            color: #b1b1b1;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .22em;
+          }
+          @media (max-width: 768px) {
+            .qa-client-summary-print__footer {
+              margin-top: 48px !important;
+              padding-bottom: 24px;
+            }
+          }
+        `}</style>
+
         </div>
       </div>
       {exameModal && (
