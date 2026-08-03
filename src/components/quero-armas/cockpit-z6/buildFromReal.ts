@@ -19,6 +19,7 @@ import type {
 } from "./CockpitZ6MeusProcessos";
 import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { filtrarIdentidadeUnica } from "@/lib/quero-armas/identidadeUnica";
 import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
