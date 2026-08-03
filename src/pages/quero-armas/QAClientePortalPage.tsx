@@ -17,6 +17,7 @@ import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/v
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
+import ProtocolosAtendimentoPanel from "@/components/quero-armas/cliente/ProtocolosAtendimentoPanel";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
@@ -3393,7 +3394,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || activeSection === "mensagens" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -4068,7 +4069,7 @@ export default function QAClientePortalPage() {
 
         {activeSection === "mensagens" && (
           <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Klal — Assistente Jurídico">
-            <div className="-mx-4 lg:-mx-8 -mt-5">
+            <div className="-mx-4 lg:-mx-8 h-full min-h-0 pt-[26px] pb-3">
               <CentralAjudaCliente cliente={cliente as any} compact />
             </div>
           </ArsenalPremiumGate>
@@ -4153,7 +4154,7 @@ export default function QAClientePortalPage() {
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
-
+            <ProtocolosAtendimentoPanel clienteId={cliente?.id} />
           </SectionCard>
         )}
 

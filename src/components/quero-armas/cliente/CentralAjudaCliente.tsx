@@ -597,11 +597,11 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   })();
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden" style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
+    <div className={`w-full max-w-full overflow-x-hidden ${compact ? "h-full min-h-0" : ""}`} style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
       {/* Grid */}
-      <div className={`px-4 md:px-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] ${compact ? "pt-5 pb-4" : "py-4"}`}>
+      <div className={`px-4 md:px-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] ${compact ? "h-full min-h-0 pt-0 pb-3 lg:pb-4 items-stretch" : "py-4"}`}>
         {/* Chat */}
-        <div className="bg-white flex flex-col overflow-hidden min-w-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: 620 }}>
+        <div className="bg-white flex flex-col overflow-hidden min-w-0 h-full min-h-0" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16, minHeight: compact ? 0 : 620 }}>
           {showReaberto && proto && (
             <div className="mx-5 mt-3 px-3 py-2 flex items-start gap-2" style={{ background: AMBER_BG, borderLeft: `3px solid ${AMBER}`, borderRadius: 10 }}>
               <Sparkles className="h-4 w-4 mt-0.5 shrink-0" style={{ color: AMBER }} />
@@ -611,15 +611,25 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             </div>
           )}
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ background: "#FFFFFF" }}>
+          <div
+            ref={scrollRef}
+            className={`flex-1 min-h-0 overflow-y-auto px-5 py-4 ${mensagens.length === 0 && !initLoading ? "flex flex-col justify-end" : "space-y-4"}`}
+            style={{ background: "#FFFFFF" }}
+          >
             {initLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
             ) : mensagens.length === 0 ? (
-              <div className="flex flex-col items-start text-left px-5 pt-5 pb-4 gap-4">
-                <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 15, letterSpacing: "0.08em", color: INK }}>
-                  Olá{cliente ? `, ${cliente.nome_completo.split(" ")[0]}` : ""}
-                </div>
-                <div className="w-full max-w-md space-y-1 pt-1">
+              <div className="flex flex-col items-start text-left pb-1 gap-3">
+                <h2
+                  className="uppercase text-left"
+                  style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, lineHeight: 1.1, letterSpacing: "0.04em", color: INK }}
+                >
+                  Olá,{" "}
+                  <span style={{ color: BRAND }}>
+                    {cliente ? cliente.nome_completo.split(" ")[0] : ""}
+                  </span>
+                </h2>
+                <div className="w-full max-w-md space-y-1">
                   {SUGESTOES.map((s) => (
                     <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
                       {s}
@@ -764,7 +774,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
           </div>
 
-          <div className="p-2">
+          <div className="p-2 shrink-0">
             <input
               ref={fileInputRef}
               type="file"
@@ -886,7 +896,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
         </div>
 
         {/* Rail */}
-        <div className="space-y-4 min-w-0">
+        <div className={`space-y-4 min-w-0 ${compact ? "hidden lg:block lg:overflow-y-auto" : ""}`}>
           <div className="bg-white p-3.5" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 16 }}>
             <div className="uppercase mb-2" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.18em", color: INK_2 }}>Protocolo atual</div>
             <div style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 18, letterSpacing: "0.06em", color: INK, wordBreak: "break-all" }}>
