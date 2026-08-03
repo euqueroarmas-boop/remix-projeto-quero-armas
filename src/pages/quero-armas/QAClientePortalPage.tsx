@@ -4193,12 +4193,44 @@ export default function QAClientePortalPage() {
               const isReprov = (d: any) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
               const totalReenvio = docsFilt.filter(isReprov).length;
               const primeiroNome = String(userName || cliente?.nome_completo || cliente?.nome || "").trim().split(" ")[0]?.toUpperCase() || "CLIENTE";
+              // ORDEM REAL DO CHECKLIST: a fila guiada (`pendenciasGuiadas`) já
+              // aplica ordem_no_pacote do serviço, data de criação do processo e
+              // a ordem do catálogo de documentos. Aqui só espelhamos essa fila,
+              // uma a uma, na mesma sequência em que o cliente vai respondê-las.
+              const ordemFila = new Map<string, number>();
+              pendenciasGuiadas.forEach((p, i) => {
+                if (p.kind === "documento") ordemFila.set(String(p.id), i);
+              });
+              const passoDe = (d: any) => ordemFila.get(`doc:${d.id}`);
+              const fallbackOrdem = (d: any) => {
+                const o = Number(d?.ordem);
+                if (Number.isFinite(o)) return o;
+                const e = Number(d?.etapa);
+                return Number.isFinite(e) ? e * 100 : 9_999;
+              };
+              const docsOrdenados = [...docsFilt].sort((a, b) => {
+                const pa = passoDe(a);
+                const pb = passoDe(b);
+                if (pa !== undefined && pb !== undefined) return pa - pb;
+                // Itens fora da fila (bloqueados por gate) vão para o fim, mas
+                // mantêm a ordem do catálogo entre si.
+                if (pa !== undefined) return -1;
+                if (pb !== undefined) return 1;
+                return fallbackOrdem(a) - fallbackOrdem(b);
+              });
               const byProc = new Map<string, any[]>();
-              for (const d of docsFilt) {
+              for (const d of docsOrdenados) {
                 const key = String(d.processo_id);
                 if (!byProc.has(key)) byProc.set(key, []);
                 byProc.get(key)!.push(d);
               }
+              // Processos na mesma ordem em que a fila os apresenta.
+              const procsOrdenados = [...byProc.entries()].sort((a, b) => {
+                const ia = passoDe(a[1][0]) ?? 99_999;
+                const ib = passoDe(b[1][0]) ?? 99_999;
+                return ia - ib;
+              });
+              let contadorPasso = 0;
               const kpis = [
                 { label: "PENDENTES", value: docsFilt.length - totalReenvio, sub: "documentos a enviar", accent: "#B8860B" },
                 { label: "REENVIAR", value: totalReenvio, sub: "documentos rejeitados", accent: "#C32E26" },
@@ -4255,7 +4287,7 @@ export default function QAClientePortalPage() {
                       <div className="qa-eyebrow pb-2.5">CHECKLIST · DOCUMENTOS OBRIGATÓRIOS</div>
                       <div className="mb-5"><ChecklistGuiadoBotao /></div>
                       <div className="space-y-4">
-                        {Array.from(byProc.entries()).map(([procId, lista]) => {
+                        {procsOrdenados.map(([procId, lista]) => {
                           const proc = processos.find((p) => String(p.id) === procId);
                           const nome = String(proc?.servico_nome || "Processo").toUpperCase();
                           return (
@@ -4267,6 +4299,8 @@ export default function QAClientePortalPage() {
                               <div className="divide-y divide-[#F0F0F0]">
                                 {lista.map((d) => {
                                   const reprov = isReprov(d);
+                                  const passo = ++contadorPasso;
+                                  const foraDaFila = passoDe(d) === undefined;
                                   return (
                                     <button
                                       key={d.id}
@@ -4296,10 +4330,22 @@ export default function QAClientePortalPage() {
                                       className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-[#FAFAFA]"
                                     >
                                       <div className="min-w-0 flex-1">
-                                        <div className="qa-h3" style={{ overflowWrap: "anywhere" }}>
-                                          {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                        <div className="flex items-start gap-2">
+                                          <span
+                                            className="qa-eyebrow mt-[3px] shrink-0 rounded-sm px-1.5 py-[2px]"
+                                            style={{ background: "#0A0A0A", color: "#FFFFFF" }}
+                                          >
+                                            {passo}
+                                          </span>
+                                          <div className="min-w-0">
+                                            <div className="qa-h3" style={{ overflowWrap: "anywhere" }}>
+                                              {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                            </div>
+                                            <div className="qa-kpi-sub mt-0.5">
+                                              {foraDaFila ? "LIBERA APÓS OS PASSOS ANTERIORES" : (d.etapa ? String(d.etapa).toUpperCase() : "—")}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="qa-kpi-sub mt-0.5">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
                                       </div>
                                       <span
                                         className="qa-eyebrow shrink-0 rounded-sm px-2 py-1"
