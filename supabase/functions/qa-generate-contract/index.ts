@@ -560,7 +560,7 @@ Deno.serve(async (req) => {
           ? dj.itens
               .filter((i: any) => i && Math.abs(Number(i.diferenca_valor ?? 0)) > 0.004)
               .map((i: any) =>
-                `<li><strong>${esc(String(i.servico_nome || i.slug || "Serviço"))}</strong> — ` +
+                `<li><strong>${esc(String(i.nome || i.slug || "Serviço"))}</strong> — ` +
                 `valor de tabela ${brl(Math.round(Number(i.preco_catalogo || 0) * 100))}, ` +
                 `valor contratado ${brl(Math.round(Number(i.preco_aplicado || 0) * 100))}</li>`,
               )
