@@ -22,6 +22,7 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { RECEITAS, aplicarReceita, type ReceitaChecklist } from "@/lib/quero-armas/receitasChecklist";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -213,6 +214,7 @@ export default function SimuladorChecklistAdmin() {
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
    */
   async function removerItem(id: string, nome: string) {
+    void 0;
     const anteriores = linhas;
     setLinhas((p) => p.filter((l) => l.id !== id));
     const { error } = await supabase
