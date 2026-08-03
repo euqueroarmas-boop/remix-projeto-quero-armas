@@ -906,12 +906,93 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
 
             {ultimaAssistente && (
-              <div className="flex justify-start pt-1">
-                <button onClick={() => escalarParaEquipe(ultimaAssistente.content)} disabled={escalating} className="uppercase inline-flex items-center gap-1.5 px-3 py-2 text-white disabled:opacity-60" style={{ background: INK, borderRadius: 10, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.16em" }}>
-                  {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
-                  Não resolveu? Falar com a equipe
-                </button>
-              </div>
+              (() => {
+                const dado = feedbackMap[ultimaAssistente.id] ?? null;
+                return (
+                  <div className="pt-2">
+                    <div
+                      className="px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                      style={{
+                        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAFA 100%)",
+                        border: `1px solid ${CARD_BORDER}`,
+                        borderRadius: 16,
+                        boxShadow: "0 1px 2px rgba(10,10,10,.04), 0 8px 24px -18px rgba(10,10,10,.35)",
+                      }}
+                    >
+                      <div className="min-w-0">
+                        <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.18em", color: INK_2 }}>
+                          Avaliação da resposta
+                        </div>
+                        <div className="mt-0.5" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 15.5, letterSpacing: "0.01em", color: INK }}>
+                          {dado ? "Obrigado pela sua resposta" : "Isso resolveu sua dúvida?"}
+                        </div>
+                        <div className="text-[11.5px] mt-0.5" style={{ color: INK_2 }}>
+                          {dado
+                            ? "Enviado para a nossa equipe validar o aprendizado do Klal."
+                            : "Sim ou não — as duas respostas vão para a nossa equipe revisar e treinar o Klal."}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => void registrarFeedback(ultimaAssistente.id, "sim")}
+                          disabled={!!dado || feedbackSalvando}
+                          aria-label="Sim, resolveu"
+                          title="Sim, resolveu"
+                          className="inline-flex items-center justify-center h-10 w-10 transition-transform active:scale-95 disabled:cursor-default"
+                          style={{
+                            borderRadius: 12,
+                            background: dado === "sim" ? BLUE : "#FFFFFF",
+                            border: `1px solid ${dado === "sim" ? BLUE : CARD_BORDER}`,
+                            color: dado === "sim" ? "#FFFFFF" : BLUE,
+                            opacity: dado === "nao" ? 0.35 : 1,
+                            boxShadow: dado === "sim" ? `0 6px 18px -8px ${BLUE}` : "none",
+                          }}
+                        >
+                          {dado === "sim" ? <Check className="h-4 w-4" /> : <ThumbsUp className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => void registrarFeedback(ultimaAssistente.id, "nao")}
+                          disabled={!!dado || feedbackSalvando}
+                          aria-label="Não resolveu"
+                          title="Não resolveu"
+                          className="inline-flex items-center justify-center h-10 w-10 transition-transform active:scale-95 disabled:cursor-default"
+                          style={{
+                            borderRadius: 12,
+                            background: dado === "nao" ? NEG : "#FFFFFF",
+                            border: `1px solid ${dado === "nao" ? NEG : CARD_BORDER}`,
+                            color: dado === "nao" ? "#FFFFFF" : NEG,
+                            opacity: dado === "sim" ? 0.35 : 1,
+                            boxShadow: dado === "nao" ? `0 6px 18px -8px ${NEG}` : "none",
+                          }}
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                        </button>
+
+                        <span className="hidden sm:block h-6 w-px" style={{ background: LINE }} />
+
+                        <button
+                          onClick={() => escalarParaEquipe(ultimaAssistente.content)}
+                          disabled={escalating}
+                          className="uppercase inline-flex items-center gap-2 px-4 h-10 text-white disabled:opacity-60 transition-transform active:scale-[.98]"
+                          style={{
+                            background: `linear-gradient(180deg, ${WHATSAPP} 0%, ${WHATSAPP_DARK} 100%)`,
+                            borderRadius: 12,
+                            fontFamily: OSWALD,
+                            fontWeight: 700,
+                            fontSize: 11,
+                            letterSpacing: "0.16em",
+                            boxShadow: `0 8px 20px -10px ${WHATSAPP_DARK}`,
+                          }}
+                        >
+                          {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                          Falar com uma pessoa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </div>
 
