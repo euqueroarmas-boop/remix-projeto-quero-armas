@@ -161,6 +161,11 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Primeiro nome em capitalização natural (o banco costuma guardar em CAIXA ALTA).
+  const primeiroNome = (() => {
+    const raw = (cliente?.nome_completo || "").trim().split(/\s+/)[0] || "";
+    return raw ? raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() : "";
+  })();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<WavRecorder | null>(null);
@@ -613,28 +618,32 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
 
           <div
             ref={scrollRef}
-            className={`flex-1 min-h-0 overflow-y-auto px-5 py-4 ${mensagens.length === 0 && !initLoading ? "flex flex-col justify-end" : "space-y-4"}`}
+            className={`flex-1 min-h-0 overflow-y-auto py-4 ${mensagens.length === 0 && !initLoading ? "flex flex-col justify-end px-0" : "px-5 space-y-4"}`}
             style={{ background: "#FFFFFF" }}
           >
             {initLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
             ) : mensagens.length === 0 ? (
-              <div className="flex flex-col items-start text-left pb-1 gap-3">
+              <div className="flex flex-col items-start text-left gap-3 pb-10">
                 <h2
-                  className="uppercase text-left"
-                  style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, lineHeight: 1.1, letterSpacing: "0.04em", color: INK }}
+                  className="text-left px-5"
+                  style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, lineHeight: 1.1, letterSpacing: "0.01em", color: INK }}
                 >
-                  Olá,{" "}
-                  <span style={{ color: BRAND }}>
-                    {cliente ? cliente.nome_completo.split(" ")[0] : ""}
-                  </span>
+                  Olá, <span style={{ color: BRAND }}>{primeiroNome}</span>
                 </h2>
-                <div className="w-full max-w-md space-y-1">
-                  {SUGESTOES.map((s) => (
-                    <button key={s} onClick={() => enviar(s)} className="w-full text-left text-[11px] px-2.5 py-1.5 bg-white border transition-colors hover:bg-slate-50" style={{ borderColor: CARD_BORDER, borderRadius: 8, color: INK_2, lineHeight: 1.35 }}>
-                      {s}
-                    </button>
-                  ))}
+                <div className="w-full overflow-x-auto no-scrollbar">
+                  <div className="flex items-stretch gap-2 px-5 w-max">
+                    {SUGESTOES.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => enviar(s)}
+                        className="shrink-0 max-w-[240px] text-left text-[11.5px] px-3 py-2 bg-white border transition-colors hover:bg-slate-50"
+                        style={{ borderColor: CARD_BORDER, borderRadius: 999, color: INK_2, lineHeight: 1.3 }}
+                      >
+                        <span className="block truncate">{s}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
