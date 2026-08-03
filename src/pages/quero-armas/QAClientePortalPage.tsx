@@ -23,7 +23,7 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import PainelDisparo, { type ItemDisparo } from "@/components/quero-armas/portal/PainelDisparo";
-import { Camera, Wand2 } from "lucide-react";
+import { Camera, Wand2, ChevronDown } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
 import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/ClienteRecargaMunicoesSection";
@@ -570,6 +570,7 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarReloadKey, setAvatarReloadKey] = useState(0);
   const [showFotoModal, setShowFotoModal] = useState(false);
+  const [meusDadosAberto, setMeusDadosAberto] = useState(false);
 
   const validarContratoAssinadoOuFalhar = async (contractId: string) => {
     const { data, error } = await supabase.functions.invoke("qa-validate-customer-signature", {
@@ -4101,14 +4102,23 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "configuracoes" && (
-          <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
-            <div className="grid gap-3 md:grid-cols-3 mb-4">
+          <div className="text-[#0A0A0A]" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+            <header className="mb-5">
+              <h1 className="qa-h1">CONFIGURAÇÕES DA SUA CONTA</h1>
+              <div className="qa-meta qa-meta-lines">
+                <span>
+                  <span>CPF · <b>{cliente?.cpf || "—"}</b></span>
+                  <span>ACESSO · <b>{String(cliente?.email || "").toUpperCase() || "—"}</b></span>
+                </span>
+              </div>
+            </header>
+            <div className="grid gap-2.5 md:grid-cols-3 mb-5">
               <button
                 type="button"
                 onClick={() => setShowFotoModal(true)}
-                className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50 flex items-center gap-3"
+                className="rounded-sm border border-[#E5E5E5] bg-white p-4 text-left hover:bg-[#FAFAFA] flex items-center gap-3 min-w-0"
               >
-                <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-slate-200 bg-[#7A1F2B] flex items-center justify-center">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 ring-1 ring-[#E5E5E5] bg-[#7A1F2B] flex items-center justify-center">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={userName || "Foto"} className="w-full h-full object-cover" />
                   ) : (
@@ -4119,40 +4129,46 @@ export default function QAClientePortalPage() {
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[12px] font-bold text-slate-900">Minha foto</div>
-                  <p className="mt-1 text-[11px] text-slate-500">{avatarUrl ? "Trocar a foto exibida no menu." : "Adicione uma foto para o menu."}</p>
+                  <div className="qa-h3">Minha foto</div>
+                  <p className="qa-caption mt-1">{avatarUrl ? "Trocar a foto exibida no menu." : "Adicione uma foto para o menu."}</p>
                 </div>
               </button>
-              <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
-              <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
+              <div className="rounded-sm border border-[#E5E5E5] bg-white p-4 min-w-0"><div className="qa-h3">Dados de acesso</div><p className="qa-caption mt-1">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
+              <button type="button" onClick={handleLogout} className="rounded-sm border border-[#E5E5E5] bg-white p-4 text-left hover:bg-[#FAFAFA] min-w-0"><div className="qa-h3">Sair com segurança</div><p className="qa-caption mt-1">Encerra a sessão neste dispositivo.</p></button>
             </div>
             <ProtocolosAtendimentoPanel clienteId={cliente?.id} onContinuarChat={() => setActiveSection("mensagens")} />
 
             {/* Dados extraídos pela IA — movido de Documentos para Configurações */}
             <div className="mt-6 border-t border-[#E5E5E5] pt-5">
-              <div className="no-print mb-3">
-                <div
-                  className="text-[10px] font-black uppercase text-[#7A1F2B]"
-                  style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".22em" }}
-                >
-                  Meus dados
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Campos lidos pela inteligência artificial nos documentos enviados. Você pode conferir, corrigir e imprimir o relatório completo.
-                </p>
-              </div>
-              <div className="rounded-xl bg-[#FAFAFA] p-3 md:p-4">
-                <DadosExtraidosPanel
-                  cliente={cliente}
-                  meusDocs={meusDocs}
-                  onEditDoc={(d) => {
-                    setEditDocTipo(d?.tipo_documento || undefined);
-                    setShowAddDoc(true);
-                  }}
+              <button
+                type="button"
+                onClick={() => setMeusDadosAberto((v) => !v)}
+                className="no-print w-full rounded-sm border border-[#E5E5E5] bg-white px-4 py-3 text-left flex items-center justify-between gap-3 hover:bg-[#FAFAFA]"
+              >
+                <span className="min-w-0">
+                  <span className="qa-eyebrow block" style={{ color: "#7A1F2B" }}>Meus dados</span>
+                  <span className="qa-caption mt-1 block">
+                    Campos lidos pela inteligência artificial nos documentos enviados. Toque para conferir, corrigir e imprimir.
+                  </span>
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-[#7A7A7A] transition-transform ${meusDadosAberto ? "rotate-180" : ""}`}
                 />
-              </div>
+              </button>
+              {meusDadosAberto ? (
+                <div className="mt-3 rounded-sm bg-[#FAFAFA] p-3 md:p-4">
+                  <DadosExtraidosPanel
+                    cliente={cliente}
+                    meusDocs={meusDocs}
+                    onEditDoc={(d) => {
+                      setEditDocTipo(d?.tipo_documento || undefined);
+                      setShowAddDoc(true);
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
-          </SectionCard>
+          </div>
         )}
 
         {activeSection === "pendencias" && (

@@ -86,7 +86,10 @@ interface Props {
 }
 
 export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Props) {
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  // Grupos nascem RECOLHIDOS: o cliente toca no cabeçalho para expandir.
+  const [aberto, setAberto] = useState<Record<string, boolean>>({});
+  const isCollapsed = (k: string) => !aberto[k];
+  const toggle = (k: string) => setAberto((s) => ({ ...s, [k]: !s[k] }));
 
   const camposTitular: Campo[] = useMemo(() => {
     const c = cliente || {};
@@ -151,10 +154,15 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
         .qa-dx-toolbar .sub{font-size:11px;color:#7A7A7A;text-transform:uppercase;letter-spacing:.18em;font-weight:700}
         .qa-dx-print{display:inline-flex;align-items:center;gap:6px;background:#7A1F2B;color:#fff;border:0;padding:9px 14px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.22em;font-size:11px;font-weight:900;cursor:pointer;border-radius:2px;text-transform:uppercase}
         .qa-dx-print:hover{background:#5e1721}
-        .qa-dx-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
-        .qa-dx-kpi{background:#fff;border:1px solid #E5E5E5;padding:12px;border-radius:4px}
-        .qa-dx-kpi .l{font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.24em;color:#7A7A7A;text-transform:uppercase}
-        .qa-dx-kpi .v{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:26px;font-weight:900;margin-top:8px;color:#0A0A0A;line-height:1}
+        .qa-dx-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:18px}
+        .qa-dx-kpi{background:#fff;border:1px solid #E5E5E5;padding:10px 8px 9px;border-radius:4px;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start}
+        .qa-dx-kpi .l{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.12em;color:#7A7A7A;text-transform:uppercase;line-height:1.15;min-height:2.3em}
+        .qa-dx-kpi .v{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:26px;font-weight:900;margin-top:5px;color:#0A0A0A;line-height:1}
+        @media (min-width:641px){
+          .qa-dx-kpi{padding:12px}
+          .qa-dx-kpi .l{font-size:10px;letter-spacing:.18em;min-height:0}
+          .qa-dx-kpi .v{margin-top:8px}
+        }
         .qa-dx-grp{background:#fff;border:1px solid #E5E5E5;border-radius:4px;margin-bottom:12px;overflow:hidden}
         .qa-dx-grp-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #F2F2F2;background:#FAFAFA;cursor:pointer;user-select:none}
         .qa-dx-grp-h .gt{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
@@ -224,11 +232,11 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
       {/* Grupos */}
       {/* Dados do titular */}
       <div className="qa-dx-grp">
-        <div className="qa-dx-grp-h" onClick={() => setCollapsed((s) => ({ ...s, __titular: !s.__titular }))}>
+        <div className="qa-dx-grp-h" onClick={() => toggle("__titular")}>
           <div className="gt">DADOS DO TITULAR <span className="gc">{camposTitular.filter((c) => c.valor && c.valor !== "—").length}</span></div>
-          {collapsed.__titular ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+          {isCollapsed("__titular") ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </div>
-        {!collapsed.__titular && (
+        {!isCollapsed("__titular") && (
           <div className="qa-dx-doc">
             <table className="qa-dx-table">
               <tbody>
@@ -245,10 +253,10 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
         <div className="qa-dx-empty">Nenhum documento com dados extraídos.</div>
       ) : (
         grupos.map((g) => {
-          const isCol = collapsed[g.key];
+          const isCol = isCollapsed(g.key);
           return (
             <div key={g.key} className="qa-dx-grp">
-              <div className="qa-dx-grp-h" onClick={() => setCollapsed((s) => ({ ...s, [g.key]: !s[g.key] }))}>
+              <div className="qa-dx-grp-h" onClick={() => toggle(g.key)}>
                 <div className="gt">{g.label} <span className="gc">{g.docs.length}</span></div>
                 {isCol ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
               </div>
