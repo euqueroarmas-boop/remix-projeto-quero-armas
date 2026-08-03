@@ -26,6 +26,17 @@ interface Servico { id: number; nome_servico: string; valor_servico: number; is_
 
 type ServicoTab = "catalogo" | "internos";
 
+// ── Estilo premium das abas (rail vertical no desktop, scroll horizontal no mobile) ──
+const QA_TABS_LIST =
+  "h-auto w-full gap-1 bg-transparent p-0 mb-3 lg:mb-0 " +
+  "flex overflow-x-auto flex-nowrap justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-24 lg:rounded-2xl lg:border lg:border-[hsl(220_13%_90%)] lg:bg-white lg:p-2 lg:shadow-[0_1px_2px_rgba(16,24,40,.04)]";
+
+const QA_TAB =
+  "shrink-0 lg:w-full lg:justify-start rounded-lg px-3 py-2 text-[12.5px] font-semibold tracking-[.02em] " +
+  "text-[#4A5361] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-[hsl(220_20%_96%)] " +
+  "data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white data-[state=active]:shadow-none";
+
 // ── Banner de redeploy de edge functions ──────────────────────────────────────
 const REDEPLOY_KEY = "qa_redeploy_banner_dismissed_v1";
 
@@ -429,41 +440,42 @@ export default function QAConfiguracoesPage() {
   }
 
   return (
-    <div className="qa-config-surface space-y-5 md:space-y-6 max-w-4xl mx-auto">
+    <div className="qa-config-surface w-full max-w-[1440px] mx-auto px-1 sm:px-2">
       {/* Header */}
-      <div>
+      <div className="sticky top-0 z-20 -mx-1 sm:-mx-2 px-4 sm:px-5 py-3 mb-4 border-b bg-[#FAFAF8]/95 backdrop-blur supports-[backdrop-filter]:bg-[#FAFAF8]/80"
+        style={{ borderColor: "hsl(220 13% 88%)" }}>
         <h1 className="qa-h1 flex items-center gap-2">
           <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
         </h1>
-        <p className="qa-body qa-body--soft mt-1">Status do sistema, serviços e pesos de ranking</p>
+        <p className="qa-body qa-body--soft mt-0.5">Status do sistema, serviços e pesos de ranking</p>
       </div>
 
-      <Tabs defaultValue="sistema" className="w-full">
-        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-          <TabsTrigger value="sistema" className="data-[state=active]:bg-slate-100">Sistema</TabsTrigger>
-          {isAdmin && <TabsTrigger value="servicos" className="data-[state=active]:bg-slate-100">Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="biblioteca" className="data-[state=active]:bg-slate-100">Biblioteca de Documentos</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="checklist" className="data-[state=active]:bg-slate-100">Montar Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="simulador" className="data-[state=active]:bg-slate-100">Simulador do Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="klal" className="data-[state=active]:bg-slate-100">Klal</TabsTrigger>}
-          <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
-          <TabsTrigger value="perfil" className="data-[state=active]:bg-slate-100">Perfil</TabsTrigger>
-          {isAdmin && <TabsTrigger value="monitoramento" className="data-[state=active]:bg-slate-100">Monitoramento</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="aparencia" className="data-[state=active]:bg-slate-100">Aparência</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="favicon" className="data-[state=active]:bg-slate-100">Favicon</TabsTrigger>}
+      <Tabs defaultValue="sistema" className="w-full lg:grid lg:grid-cols-[228px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+        <TabsList className={QA_TABS_LIST}>
+          <TabsTrigger value="sistema" className={QA_TAB}>Sistema</TabsTrigger>
+          {isAdmin && <TabsTrigger value="servicos" className={QA_TAB}>Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="contrato" className={QA_TAB}>Contrato Primário</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="procuracao" className={QA_TAB}>Procuração</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="biblioteca" className={QA_TAB}>Biblioteca de Documentos</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="checklist" className={QA_TAB}>Montar Checklist</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="simulador" className={QA_TAB}>Simulador do Checklist</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="status" className={QA_TAB}>Status dos Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="notificacoes" className={QA_TAB}>Notificações</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="klal" className={QA_TAB}>Klal</TabsTrigger>}
+          <TabsTrigger value="ranking" className={QA_TAB}>Pesos de Ranking</TabsTrigger>
+          <TabsTrigger value="perfil" className={QA_TAB}>Perfil</TabsTrigger>
+          {isAdmin && <TabsTrigger value="monitoramento" className={QA_TAB}>Monitoramento</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="aparencia" className={QA_TAB}>Aparência</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="favicon" className={QA_TAB}>Favicon</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
-          <TabsContent value="klal" className="mt-4">
+          <TabsContent value="klal" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
             <QAKlalPersonaAdmin />
           </TabsContent>
         )}
 
-        <TabsContent value="sistema" className="mt-4">
+        <TabsContent value="sistema" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* System Status */}
           <div className="qa-card p-5">
             <div className="flex items-center gap-2 mb-3">
@@ -490,7 +502,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
 
       {isAdmin && (
-        <TabsContent value="servicos" className="mt-4">
+        <TabsContent value="servicos" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
         <div className="qa-card p-5">
           {(() => {
             const servicosCatalogo = servicos.filter((s) => catalogoIds.has(s.id));
@@ -619,29 +631,29 @@ export default function QAConfiguracoesPage() {
 
       {isAdmin && (
         <>
-        <TabsContent value="contrato" className="mt-4">
+        <TabsContent value="contrato" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QARedeployBanner />
           {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
           <QAContratoPrimarioAdmin />
         </TabsContent>
 
-        <TabsContent value="procuracao" className="mt-4">
+        <TabsContent value="procuracao" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QARedeployBanner />
           {/* Procuração — motor de stringagem + publicação do modelo vigente */}
           <QAProcuracaoPrimarioAdmin />
         </TabsContent>
 
-        <TabsContent value="biblioteca" className="mt-4">
+        <TabsContent value="biblioteca" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Biblioteca central alfabética de documentos — fonte única do passo a passo */}
           <QABibliotecaDocumentosAdmin />
         </TabsContent>
 
-        <TabsContent value="checklist" className="mt-4">
+        <TabsContent value="checklist" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Montar checklist do serviço a partir da biblioteca + modelos prontos + preview + snapshots */}
           <MontarChecklistAdmin />
         </TabsContent>
 
-        <TabsContent value="simulador" className="mt-4">
+        <TabsContent value="simulador" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Simulação passo a passo: mesma regra do motor real (explosão + perguntas) */}
           <SimuladorChecklistAdmin />
         </TabsContent>
@@ -649,7 +661,7 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
-        <TabsContent value="status" className="mt-4">
+        <TabsContent value="status" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
         {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
@@ -814,12 +826,12 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
-        <TabsContent value="notificacoes" className="mt-4">
+        <TabsContent value="notificacoes" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QANotificacoesAdmin />
         </TabsContent>
       )}
 
-      <TabsContent value="ranking" className="mt-4">
+      <TabsContent value="ranking" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Pesos de Ranking</span>
@@ -849,7 +861,7 @@ export default function QAConfiguracoesPage() {
       </div>
       </TabsContent>
 
-      <TabsContent value="perfil" className="mt-4">
+      <TabsContent value="perfil" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
       {/* Profile */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
@@ -866,14 +878,14 @@ export default function QAConfiguracoesPage() {
       </TabsContent>
 
       {isAdmin && (
-        <TabsContent value="monitoramento" className="mt-4">
+        <TabsContent value="monitoramento" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Configurações de Monitoramento */}
           <MonitoramentoToggles />
         </TabsContent>
       )}
 
       {isAdmin && (
-        <TabsContent value="aparencia" className="mt-4 space-y-5">
+        <TabsContent value="aparencia" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden space-y-5">
           {/* Temas da sidebar — administração global */}
           <QASidebarTemasAdmin />
           {/* Dimensões das colunas e cor do rail direito */}
@@ -883,7 +895,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
       )}
       {isAdmin && (
-        <TabsContent value="favicon" className="mt-4">
+        <TabsContent value="favicon" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QAFaviconAdmin />
         </TabsContent>
       )}
