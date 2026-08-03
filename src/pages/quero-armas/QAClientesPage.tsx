@@ -30,6 +30,8 @@ import { toast } from "sonner";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
+import { PORTAL_NAV_ITEMS } from "@/components/quero-armas/portal/portalNavItems";
+import { IconBuildingStore, IconBomb } from "@tabler/icons-react";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
