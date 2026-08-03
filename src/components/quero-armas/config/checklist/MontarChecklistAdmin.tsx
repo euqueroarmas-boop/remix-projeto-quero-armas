@@ -154,8 +154,10 @@ const OCUPACAO_RAMOS: Array<{ titulo: string; itens: string[] }> = [
   {
     titulo: "AUTÔNOMO / MEI",
     itens: [
-      "Cartão CNPJ / MEI",
-      "Nota fiscal recente ou documento substituto definido pela equipe",
+      "CCMEI — Certificado da Condição de Microempreendedor Individual",
+      "Cartão CNPJ emitido nos últimos 30 dias",
+      "QSA emitido nos últimos 30 dias",
+      "Nota fiscal emitida para um cliente, em qualquer data",
     ],
   },
   {
