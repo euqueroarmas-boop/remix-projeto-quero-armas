@@ -17,6 +17,7 @@ import type {
   CockpitZ6Kpi,
   CockpitZ6FocoDoDia,
 } from "./CockpitZ6MeusProcessos";
+import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 
@@ -124,14 +125,13 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
     st.startsWith("dispensado") ||
     st.includes("reaproveitamento");
   if (!docs.length) return [];
-  // pega até 4 documentos da etapa atual / pendentes mais relevantes
   const sortable = [...docs].sort((a, b) => {
     const pa = a.obrigatorio ? 0 : 1;
     const pb = b.obrigatorio ? 0 : 1;
     if (pa !== pb) return pa - pb;
     return (a.ordem ?? 999) - (b.ordem ?? 999);
   });
-  return sortable.slice(0, 4).map((d) => {
+  return sortable.slice(0, 6).map((d) => {
     const st = String(d.status || "").toLowerCase();
     if (CUMPRIDO(st))
       return {
@@ -196,10 +196,25 @@ function buildProcessoCard(args: {
     ? { badge: "AGUARDANDO PRÉ-REQUISITO", tone: "gray" as CockpitZ6Process["badgeTone"] }
     : badgeForStatus(proc.status);
 
-  // Etapa atual: a etapa do primeiro doc pendente/em_analise; fallback para o status
+  // Etapa atual: MENOR etapa numérica que ainda tem documento em aberto.
   const docsAbertos = docs.filter((d) => !isCumprido(d));
-  const etapasAbertas = Array.from(new Set(docsAbertos.map((d) => String(d.etapa || "").trim()).filter(Boolean)));
-  let etapaAtual = (etapasAbertas[0] || "").toUpperCase();
+  const numeroEtapa = (d: any) => etapaDoTipoDocumento(d.tipo_documento, d.etapa);
+  const etapaAtualNum = docsAbertos.length
+    ? Math.min(...docsAbertos.map(numeroEtapa))
+    : null;
+  const docsEtapaAtual =
+    etapaAtualNum == null ? [] : docs.filter((d) => numeroEtapa(d) === etapaAtualNum);
+  const abertosEtapaAtual = docsEtapaAtual.filter((d) => !isCumprido(d));
+  const rotuloEtapa = (n: number | null) =>
+    n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
+    : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
+    : n === 3 ? "ANTECEDENTES CRIMINAIS"
+    : n === 4 ? "DECLARAÇÕES"
+    : n === 5 ? "EXAMES TÉCNICOS"
+    : "";
+  let etapaAtual =
+    rotuloEtapa(etapaAtualNum) ||
+    String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
   if (bloqueado) {
     etapaAtual = "AGUARDANDO PRÉ-REQUISITO";
   } else if (!etapaAtual) {
@@ -252,11 +267,11 @@ function buildProcessoCard(args: {
     base.detalhado = {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
-      checklist: checklistFromDocs(docs),
+      checklist: checklistFromDocs(docsEtapaAtual.length ? docsEtapaAtual : docs),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
-        : docsAbertos.length
-          ? `${docsAbertos.length} documento(s) pendente(s). Conclua a etapa atual para liberar a próxima.`
+        : abertosEtapaAtual.length
+          ? `${abertosEtapaAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
           : "Aguardando ação da equipe Quero Armas.",
     };
   } else {
