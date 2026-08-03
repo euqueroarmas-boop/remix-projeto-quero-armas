@@ -62,6 +62,13 @@ export default function SimuladorChecklistAdmin() {
   function alternarEntrega(tipo: string) {
     setEntregues((p) => ({ ...p, [tipo]: !p[tipo] }));
   }
+  function limparResposta(chave: string) {
+    setRespostas((p) => {
+      const n = { ...p };
+      delete n[chave];
+      return n;
+    });
+  }
   function reiniciar() {
     setRespostas({});
     setEntregues({});
