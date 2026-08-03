@@ -132,6 +132,18 @@ const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg:
   baixa: { label: "Confiança baixa", icon: <ShieldX     className="h-3 w-3" />, fg: RED,   bg: RED_BG   },
 };
 
+type AnexoChat = {
+  localId: string;
+  id: string | null;
+  nome_arquivo: string;
+  mime_type: string;
+  tamanho_bytes: number;
+  previewUrl: string | null;
+  texto_extraido: string | null;
+  status: "enviando" | "lendo" | "pronto" | "erro";
+  erro?: string | null;
+};
+
 export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClienteProps) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
@@ -142,11 +154,16 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
   const [now, setNow] = useState<number>(Date.now());
   const [reabertoBannerFor, setReabertoBannerFor] = useState<string | null>(null);
+  const [anexos, setAnexos] = useState<AnexoChat[]>([]);
+  const [gravando, setGravando] = useState(false);
+  const [transcrevendo, setTranscrevendo] = useState(false);
   const navigate = useNavigate();
   const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recorderRef = useRef<WavRecorder | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30 * 1000);
