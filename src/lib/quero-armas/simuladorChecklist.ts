@@ -368,6 +368,26 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
       if (pergunta) {
         const respondida = chave && respostas[chave] != null;
+        // Pergunta HÍBRIDA: respondida no gatilho, ainda exige o arquivo.
+        const gatilho = (rv as any)?.exige_documento_quando;
+        if (respondida && gatilho != null) {
+          const alvos = (Array.isArray(gatilho) ? gatilho : [gatilho]).map((v: any) =>
+            String(v).trim().toLowerCase(),
+          );
+          const casa =
+            alvos.includes("*") ||
+            alvos.includes(String(respostas[chave]).trim().toLowerCase());
+          if (casa) {
+            const item = paraItem(
+              l,
+              entregues[l.tipo_documento] ? "cumprido" : "pendente",
+              entregues[l.tipo_documento]
+                ? undefined
+                : `RESPONDIDO: ${String(respostas[chave]).toUpperCase()} — FALTA ANEXAR O DOCUMENTO`,
+            );
+            return { ...item, tipo: "documento" as const };
+          }
+        }
         return paraItem(
           l,
           respondida ? "cumprido" : "pendente",
