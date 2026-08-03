@@ -269,6 +269,10 @@ function matchCondicaoGuia(
 export function itemVisivelGuia(d: GuiaDoc, respostas: Record<string, string>): boolean {
   const r = d.regra_validacao;
   if (!r || typeof r !== "object") return true;
+  // dispensa_quando: some do checklist quando TODAS as chaves casam.
+  if (r.dispensa_quando && typeof r.dispensa_quando === "object") {
+    if (matchCondicaoGuia(respostas, r.dispensa_quando)) return false;
+  }
   if (r.depende_de && typeof r.depende_de === "object") {
     const ok = respostas[r.depende_de.chave] === r.depende_de.valor;
     if (!ok) return false;

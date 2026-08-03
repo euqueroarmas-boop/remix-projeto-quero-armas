@@ -344,6 +344,21 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       const pergunta = ehPergunta(rv);
       const chave = pergunta ? chavePergunta(rv, l.tipo_documento) : "";
 
+      // dispensa_quando: exigência sai do checklist quando a resposta casa
+      // (ex.: servidor de segurança pública usa os exames da instituição).
+      const disp = (rv as any)?.dispensa_quando;
+      if (disp && typeof disp === "object") {
+        const entradas = Object.entries(disp as Record<string, string>);
+        if (entradas.length > 0 && entradas.every(([k, v]) => respostas[k] === v)) {
+          const [k, v] = entradas[0];
+          return paraItem(
+            l,
+            "dispensado",
+            `DISPENSADO PORQUE "${k.toUpperCase()}" = ${String(v).toUpperCase()}`,
+          );
+        }
+      }
+
       // Exigência amarrada a uma condição profissional ainda não escolhida:
       // mostra como "aguardando", com relógio, igual ao grupo de endereço.
       if (l.condicao_profissional && semCondicaoDefinida) {

@@ -22,7 +22,6 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
-import { ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -593,16 +592,14 @@ export default function SimuladorChecklistAdmin() {
                   {sim.proximo.nome_documento}
                 </div>
 
-                {ehDocumentoIdentidade(sim.proximo.tipo_documento, sim.proximo.nome_documento) && (
+                {sim.proximo.linha?.instrucoes ? (
                   <div
-                    className="mb-3 rounded-md border p-2.5 text-[11.5px] leading-snug"
+                    className="mb-3 rounded-md border p-2.5 text-[11.5px] leading-snug whitespace-pre-line"
                     style={{ borderColor: LINE, background: "hsl(220 13% 97%)", color: MUTED }}
                   >
-                    <strong style={{ color: INK }}>VALE QUALQUER UM:</strong> CIN, RG DIGITAL OU CNH
-                    (INCLUSIVE CNH DIGITAL) — SEMPRE O PDF ORIGINAL COM QR CODE. AO ENVIAR UM DELES,
-                    AS DEMAIS EXIGÊNCIAS DE IDENTIDADE SAEM DO CHECKLIST AUTOMATICAMENTE.
+                    {sim.proximo.linha.instrucoes}
                   </div>
-                )}
+                ) : null}
 
                 {sim.proximo.tipo === "pergunta" && sim.proximo.opcoes?.length ? (
                   <div className="flex flex-col gap-2">
