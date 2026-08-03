@@ -21,6 +21,11 @@ import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { filtrarIdentidadeUnica } from "@/lib/quero-armas/identidadeUnica";
 import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
+import {
+  grupoCanonico,
+  ordemGrupoChecklist,
+  rotuloGrupo as rotuloGrupoCanonico,
+} from "@/lib/quero-armas/simuladorChecklist";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 
@@ -253,22 +258,19 @@ function buildProcessoCard(args: {
   // e a ordem definidos em Preços e Serviços (qa_servicos_documentos.etapa +
   // .ordem). Sem isso, o portal agrupava foto 3x4, pergunta de endereço e
   // requerimento no mesmo bloco "Comprovação de endereço".
-  const grupoCatalogo = (d: any): string => {
-    const raw = String(d?.etapa ?? "").trim().toLowerCase();
-    if (!raw || /^[1-5]$/.test(raw)) return "base";
-    if (raw === "endereço") return "endereco";
-    if (raw === "condicao" || raw === "renda") return "condicao_profissional";
-    return raw;
-  };
-  const rotuloGrupo = (g: string) =>
-    g === "base" ? "DOCUMENTOS BASE"
-    : g === "endereco" ? "COMPROVAÇÃO DE ENDEREÇO"
-    : g === "condicao_profissional" ? "CONDIÇÃO PROFISSIONAL / RENDA"
-    : g === "complementar" ? "DOCUMENTOS COMPLEMENTARES"
-    : g.replace(/_/g, " ").toUpperCase();
-  const docsPorOrdemCatalogo = [...docsVisiveisObrigatorios].sort(
-    (a, b) => ordemDoc(a) - ordemDoc(b),
-  );
+  // Grupo temático CANÔNICO — exatamente a mesma classificação usada pelo
+  // Simulador do Checklist e pela fila de pendências.
+  const grupoCatalogo = (d: any): string =>
+    grupoCanonico(String(d?.tipo_documento ?? ""), d?.regra_validacao);
+  const rotuloGrupo = (g: string) => rotuloGrupoCanonico(g);
+  const ordemGrupoDoc = (d: any) =>
+    ordemGrupoChecklist(String(d?.tipo_documento ?? ""), d?.regra_validacao);
+  const docsPorOrdemCatalogo = [...docsVisiveisObrigatorios].sort((a, b) => {
+    const ga = ordemGrupoDoc(a);
+    const gb = ordemGrupoDoc(b);
+    if (ga !== gb) return ga - gb;
+    return ordemDoc(a) - ordemDoc(b);
+  });
   const primeiroAbertoCatalogo = docsPorOrdemCatalogo.find((d) => !isCumprido(d));
   const grupoAtual = primeiroAbertoCatalogo ? grupoCatalogo(primeiroAbertoCatalogo) : null;
   const docsGrupoAtual = grupoAtual
