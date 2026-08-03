@@ -823,29 +823,38 @@ function FeaturedContractCard({
               type="button"
               onClick={baixarAssinado}
               disabled={baixandoAssinado}
-              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center justify-center gap-1.5 min-w-[210px] hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-colors duration-200"
             >
               {baixandoAssinado ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-              {baixandoAssinado ? "PREPARANDO" : "BAIXAR CONTRATO ASSINADO"}
+              <span className="whitespace-nowrap">{baixandoAssinado ? "PREPARANDO" : "BAIXAR CONTRATO ASSINADO"}</span>
             </button>
           ) : null}
-          {contract.issued_at && preparedDownload ? (
+          {temAssinado && contract.issued_at ? (
+            <span
+              aria-disabled="true"
+              title="Contrato já assinado — use o download da cópia assinada."
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center justify-center gap-1.5 opacity-40 cursor-not-allowed select-none"
+            >
+              <Download className="h-3 w-3" /> <span className="whitespace-nowrap">BAIXAR CONTRATO</span>
+            </span>
+          ) : contract.issued_at && preparedDownload ? (
             <a
               href={preparedDownload.href}
               download={preparedDownload.filename}
               onClick={() => toast.success("Download iniciado.")}
-              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all duration-200"
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center justify-center gap-1.5 min-w-[180px] hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors duration-200"
             >
-              <Download className="h-3 w-3" /> BAIXAR CONTRATO
+              <Download className="h-3 w-3" /> <span className="whitespace-nowrap">BAIXAR CONTRATO</span>
             </a>
           ) : contract.issued_at ? (
             <button
               type="button"
               onClick={onAssinar}
               disabled={preparingDownload}
-              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center justify-center gap-1.5 min-w-[180px] hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 disabled:cursor-wait transition-colors duration-200"
             >
-              {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} {preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO"}
+              {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+              <span className="whitespace-nowrap">{preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO"}</span>
             </button>
           ) : null}
           {canUpload && (
