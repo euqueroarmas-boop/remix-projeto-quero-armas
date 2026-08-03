@@ -922,7 +922,7 @@ function LinhaItem({
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
-  onDefinirCondicao: (id: string, valor: string) => void;
+  onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
