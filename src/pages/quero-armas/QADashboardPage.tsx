@@ -178,22 +178,3 @@ export default function QADashboardPage() {
     </div>
   );
 }
-
-function KPICard({ icon: Icon, label, value, to }: {
-  icon: any; label: string; value: number; to?: string;
-}) {
-  const content = (
-    <div className="qa-card qa-hover-lift p-4 md:p-5 cursor-pointer h-full pointer-events-none">
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 33% 97%)" }}>
-          <Icon className="h-[18px] w-[18px]" style={{ color: "hsl(352 60% 30%)" }} />
-        </div>
-      </div>
-      <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
-        {value.toLocaleString("pt-BR")}
-      </div>
-      <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
-    </div>
-  );
-  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] rounded-xl">{content}</Link> : content;
-}
