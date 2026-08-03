@@ -36,9 +36,11 @@ export default function ClienteRecargaMunicoesSection() {
       `}</style>
 
       <div className="qa-alvo__head">
-        <div className="qa-alvo__badge-slot"><ArsenalPremiumBadge /></div>
-        <div className="qa-alvo__head-main">
+        <div className="qa-alvo__row">
           <div className="qa-alvo__kicker"><span className="qa-alvo__dot" />Recarga de Munições</div>
+          <div className="qa-alvo__badge-slot"><ArsenalPremiumBadge /></div>
+        </div>
+        <div className="qa-alvo__head-main">
           <h1>Sua munição, calibrada por nós</h1>
           <p className="qa-alvo__lead">
             Em breve, o Arsenal Inteligente orienta cada etapa da recarga, do preparo do estojo à
