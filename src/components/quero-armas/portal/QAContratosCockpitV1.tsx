@@ -570,6 +570,9 @@ function FeaturedContractCard({
     const already = typeof window !== "undefined" && window.localStorage.getItem(seenKey);
     if (status === "validated" && !already) {
       // pequena espera para não competir com toast/realtime
+      // marca como visto imediatamente ao abrir — garante exibição única
+      // mesmo se o cliente fechar a aba sem interagir com o modal.
+      try { window.localStorage.setItem(seenKey, "1"); } catch {}
       const t = setTimeout(() => setShowDone(true), 350);
       return () => clearTimeout(t);
     }
