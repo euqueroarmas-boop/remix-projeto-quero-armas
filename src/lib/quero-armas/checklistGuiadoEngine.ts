@@ -619,12 +619,19 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
 export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
   const { docs, respostas } = carga;
   const comprovanteResidenciaAnexado = hasComprovanteResidenciaAnexado(docs);
-  return docs.filter((d) => {
+  const visiveis = docs.filter((d) => {
     if (!itemVisivelGuia(d, respostas)) return false;
     if (comprovanteResidenciaAnexado && isPerguntaAindaResideImovel(d)) return false;
     // perguntas e o seletor de condição são itens legítimos do checklist
     if (isPerguntaGuia(d) || isCondicaoGuia(d)) return true;
     return d.obrigatorio === true;
+  });
+  // REGRA: identificação é UM documento só. Com uma identidade já cumprida
+  // (ex.: CNH aprovada), não cobramos CIN/RG com CPF no mesmo checklist.
+  return filtrarIdentidadeUnica(visiveis, {
+    tipo: (d) => d.tipo_documento,
+    nome: (d) => d.nome_documento,
+    cumprido: (d) => itemCumpridoGuia(d, respostas),
   });
 }
 
