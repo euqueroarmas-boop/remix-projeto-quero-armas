@@ -136,7 +136,7 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
     if (CUMPRIDO(st))
       return {
         label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(),
-        badge: st.startsWith("dispensado") || st.includes("reaproveitamento") ? "REAPROVEITADO" : "RECEBIDO",
+        badge: "RECEBIDO",
         tone: "green",
       } as CockpitZ6ChecklistItem;
     if (st === "em_analise" || st === "enviado")
