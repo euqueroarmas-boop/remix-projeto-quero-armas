@@ -482,8 +482,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 </p>
                 <h1 className="mt-1 font-['Oswald',sans-serif] text-[20px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
                   {primeiroNome
-                    ? <>{primeiroNome}, você está nos devendo enviar<br />esses documentos!</>
-                    : <>Você está nos devendo enviar<br />esses documentos!</>}
+                    ? <>{primeiroNome}, você está nos devendo<br />enviar esses documentos!</>
+                    : <>Você está nos devendo<br />enviar esses documentos!</>}
                 </h1>
               </div>
             </div>
