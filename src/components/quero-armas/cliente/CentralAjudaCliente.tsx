@@ -764,8 +764,60 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
           </div>
 
-          <div className="p-1">
-            <div className="flex items-end gap-2 px-3 py-2" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 12, background: "#FFFFFF" }}>
+          <div className="p-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,application/pdf,text/plain,.txt,.csv,.md,.json"
+              className="hidden"
+              onChange={(e) => { anexarArquivos(e.target.files); e.currentTarget.value = ""; }}
+            />
+            <div className="flex flex-col" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 14, background: "#FFFFFF" }}>
+              {/* Anexos — sempre acima do campo de texto */}
+              {anexos.length > 0 && (
+                <div className="flex flex-wrap gap-2 px-3 pt-3">
+                  {anexos.map((a) => {
+                    const carregando = a.status === "enviando" || a.status === "lendo";
+                    const erro = a.status === "erro";
+                    return (
+                      <div
+                        key={a.localId}
+                        className="relative flex items-center gap-2 pl-2 pr-6 py-1.5 max-w-[220px]"
+                        style={{
+                          background: erro ? RED_BG : "#FAFAFA",
+                          border: `1px solid ${erro ? "#F3C6C6" : LINE}`,
+                          borderRadius: 10,
+                        }}
+                      >
+                        {a.previewUrl ? (
+                          <img src={a.previewUrl} alt="" className="object-cover shrink-0" style={{ width: 30, height: 30, borderRadius: 7 }} />
+                        ) : (
+                          <span className="inline-flex items-center justify-center shrink-0" style={{ width: 30, height: 30, borderRadius: 7, background: "#F2F2F2", color: INK_2 }}>
+                            {a.mime_type.startsWith("image/") ? <IconPhoto size={15} /> : <IconFileText size={15} />}
+                          </span>
+                        )}
+                        <span className="min-w-0">
+                          <span className="block truncate text-[11.5px]" style={{ color: INK }}>{a.nome_arquivo}</span>
+                          <span className="block text-[10px]" style={{ color: erro ? RED : INK_2 }}>
+                            {carregando ? (a.status === "enviando" ? "Enviando…" : "Lendo…") : erro ? (a.erro || "Falhou") : "Pronto"}
+                          </span>
+                        </span>
+                        {carregando && <Loader2 className="h-3 w-3 animate-spin shrink-0" style={{ color: INK_2 }} />}
+                        <button
+                          onClick={() => removerAnexo(a.localId)}
+                          aria-label={`Remover ${a.nome_arquivo}`}
+                          className="absolute inline-flex items-center justify-center"
+                          style={{ top: -6, right: -6, width: 18, height: 18, borderRadius: 999, background: INK, color: "#FFFFFF" }}
+                        >
+                          <IconX size={11} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               <textarea
                 ref={inputRef}
                 rows={2}
@@ -777,23 +829,58 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
                   el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
                 }}
                 onKeyDown={onKeyDown}
-                placeholder="Digite sua dúvida para o Klal..."
+                placeholder={gravando ? "Gravando… toque no microfone para parar" : "Digite sua dúvida para o Klal..."}
                 disabled={loading || !cliente}
-                className="flex-1 px-0 py-0 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
-                style={{ color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
+                className="w-full px-3 pt-3 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
+                style={{ color: INK, minHeight: 60, maxHeight: 180, lineHeight: 1.45 }}
               />
-              <button
-                onClick={() => enviar(input)}
-                disabled={loading || !cliente || input.trim().length < 2}
-                title="Enviar"
-                aria-label="Enviar"
-                className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
-                style={{ width: 34, height: 34, borderRadius: 9, color: INK }}
-              >
-                {loading
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1) contrast(1.2)" }} />}
-              </button>
+
+              {/* Barra de controles — abaixo do campo */}
+              <div className="flex items-center gap-1.5 px-2.5 pb-2.5 pt-1">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading || !cliente}
+                  title="Adicionar arquivos"
+                  aria-label="Adicionar arquivos"
+                  className="inline-flex items-center justify-center transition-colors disabled:opacity-40 hover:bg-slate-50"
+                  style={{ width: 32, height: 32, borderRadius: 999, border: `1px solid ${CARD_BORDER}`, color: INK }}
+                >
+                  <IconPlus size={17} />
+                </button>
+                <button
+                  onClick={alternarGravacao}
+                  disabled={loading || !cliente || transcrevendo}
+                  title={gravando ? "Parar gravação" : "Ditar por voz"}
+                  aria-label={gravando ? "Parar gravação" : "Ditar por voz"}
+                  className="inline-flex items-center justify-center transition-colors disabled:opacity-40 hover:bg-slate-50"
+                  style={{
+                    width: 32, height: 32, borderRadius: 999,
+                    border: `1px solid ${gravando ? BRAND : CARD_BORDER}`,
+                    background: gravando ? BRAND : "transparent",
+                    color: gravando ? "#FFFFFF" : INK,
+                  }}
+                >
+                  {transcrevendo ? <Loader2 className="h-4 w-4 animate-spin" /> : gravando ? <IconPlayerStopFilled size={14} /> : <IconMicrophone size={17} />}
+                </button>
+
+                <span className="flex-1 truncate text-[10.5px] uppercase" style={{ fontFamily: OSWALD, letterSpacing: "0.14em", color: INK_2 }}>
+                  {gravando ? "Gravando" : transcrevendo ? "Transcrevendo" : anexos.length > 0 ? `${anexos.length} anexo(s)` : ""}
+                </span>
+
+                <button
+                  onClick={() => enviar(input)}
+                  disabled={
+                    loading || !cliente ||
+                    (input.trim().length < 2 && anexos.filter((a) => a.status === "pronto").length === 0)
+                  }
+                  title="Enviar"
+                  aria-label="Enviar"
+                  className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                  style={{ width: 32, height: 32, borderRadius: 999, background: BRAND, color: "#FFFFFF" }}
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconArrowUp size={17} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>
