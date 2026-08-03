@@ -12395,6 +12395,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      qa_marcar_contrato_ack: {
+        Args: { _contract_id: string }
+        Returns: undefined
+      }
       qa_norm_cr: { Args: { p_cr: string }; Returns: string }
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
