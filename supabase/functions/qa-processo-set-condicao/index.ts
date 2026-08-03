@@ -419,13 +419,21 @@ Deno.serve(async (req) => {
     let origemItens: "catalogo" | "padrao" = "padrao";
     let base: Item[] = rendaPara(condicao);
     if (processo.servico_id != null) {
-      const { data: catalogo } = await supabase
+      const { data: catalogoBruto } = await supabase
         .from("qa_servicos_documentos")
-        .select("tipo_documento, nome_documento, obrigatorio, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias, regra_validacao, ordem")
+        .select("tipo_documento, nome_documento, obrigatorio, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias, regra_validacao, ordem, condicao_profissional")
         .eq("servico_id", processo.servico_id)
         .eq("ativo", true)
-        .eq("condicao_profissional", condicao)
         .order("ordem", { ascending: true });
+      // condicao_profissional aceita UMA ou VÁRIAS condições separadas por
+      // vírgula ("autonomo,empresario") — mesma regra do simulador/admin.
+      const catalogo = (catalogoBruto ?? []).filter((c: any) =>
+        String(c.condicao_profissional ?? "")
+          .split(",")
+          .map((x: string) => x.trim().toLowerCase())
+          .filter(Boolean)
+          .includes(condicao),
+      );
       if (catalogo && catalogo.length > 0) {
         origemItens = "catalogo";
         base = catalogo.map((c: any) => ({
