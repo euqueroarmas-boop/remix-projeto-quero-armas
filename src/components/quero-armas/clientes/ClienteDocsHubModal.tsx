@@ -2201,6 +2201,26 @@ export function ClienteDocsHubModal({
 
       const modeloExtraidoSeguro = safeExtractedModel(campos.arma_modelo);
 
+      // Foto 3x4: documento gerado pelo próprio sistema. Sem número oficial,
+      // sem órgão emissor externo — emitida hoje, válida por 5 anos.
+      if (ehFoto3x4) {
+        const hoje = new Date();
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        const val = new Date(hoje);
+        val.setFullYear(val.getFullYear() + 5);
+        const serie = `AI-3X4-${(refClienteCpf || "").replace(/\D/g, "").slice(-4) || "0000"}-${hoje.getFullYear()}${String(hoje.getMonth() + 1).padStart(2, "0")}${String(hoje.getDate()).padStart(2, "0")}`;
+        setForm((prev) => ({
+          ...prev,
+          tipo_documento: "foto_3x4",
+          numero_documento: prev.numero_documento || serie,
+          orgao_emissor: prev.orgao_emissor || "ARSENAL INTELIGENTE",
+          data_emissao: prev.data_emissao || iso(hoje),
+          data_validade: prev.data_validade || iso(val),
+        }));
+        setExtracting(false);
+        return;
+      }
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
