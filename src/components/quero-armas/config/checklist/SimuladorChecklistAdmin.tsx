@@ -785,7 +785,7 @@ function BlocoGrupo({
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? undefined : transition,
         opacity: isDragging ? 0.65 : 1,
       }}
     >
