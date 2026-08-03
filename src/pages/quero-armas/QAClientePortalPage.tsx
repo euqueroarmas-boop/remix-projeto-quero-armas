@@ -4287,7 +4287,7 @@ export default function QAClientePortalPage() {
                       <div className="qa-eyebrow pb-2.5">CHECKLIST · DOCUMENTOS OBRIGATÓRIOS</div>
                       <div className="mb-5"><ChecklistGuiadoBotao /></div>
                       <div className="space-y-4">
-                        {Array.from(byProc.entries()).map(([procId, lista]) => {
+                        {procsOrdenados.map(([procId, lista]) => {
                           const proc = processos.find((p) => String(p.id) === procId);
                           const nome = String(proc?.servico_nome || "Processo").toUpperCase();
                           return (
@@ -4299,6 +4299,8 @@ export default function QAClientePortalPage() {
                               <div className="divide-y divide-[#F0F0F0]">
                                 {lista.map((d) => {
                                   const reprov = isReprov(d);
+                                  const passo = ++contadorPasso;
+                                  const foraDaFila = passoDe(d) === undefined;
                                   return (
                                     <button
                                       key={d.id}
@@ -4328,10 +4330,22 @@ export default function QAClientePortalPage() {
                                       className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-[#FAFAFA]"
                                     >
                                       <div className="min-w-0 flex-1">
-                                        <div className="qa-h3" style={{ overflowWrap: "anywhere" }}>
-                                          {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                        <div className="flex items-start gap-2">
+                                          <span
+                                            className="qa-eyebrow mt-[3px] shrink-0 rounded-sm px-1.5 py-[2px]"
+                                            style={{ background: "#0A0A0A", color: "#FFFFFF" }}
+                                          >
+                                            {passo}
+                                          </span>
+                                          <div className="min-w-0">
+                                            <div className="qa-h3" style={{ overflowWrap: "anywhere" }}>
+                                              {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                            </div>
+                                            <div className="qa-kpi-sub mt-0.5">
+                                              {foraDaFila ? "LIBERA APÓS OS PASSOS ANTERIORES" : (d.etapa ? String(d.etapa).toUpperCase() : "—")}
+                                            </div>
+                                          </div>
                                         </div>
-                                        <div className="qa-kpi-sub mt-0.5">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
                                       </div>
                                       <span
                                         className="qa-eyebrow shrink-0 rounded-sm px-2 py-1"
