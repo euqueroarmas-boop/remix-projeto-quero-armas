@@ -540,6 +540,42 @@ function normalizarTexto(s: string): string {
     .trim();
 }
 
+/**
+ * Extração 100% determinística (sem IA) a partir do texto nativo do PDF.
+ * Usada quando o documento casa com um MODELO APROVADO da Biblioteca — nesses
+ * casos o parser já sabe o que é o documento e a IA só adiciona erro.
+ */
+function extrairCamposDeterministicos(textoPdf: string): Record<string, string> {
+  const campos: Record<string, string> = {};
+  const bruto = String(textoPdf || "");
+  if (!bruto.trim()) return campos;
+
+  const cpfMatch = bruto.match(/\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\b/);
+  if (cpfMatch) campos.cpf = cpfComDigitosVerificadores(cpfMatch[1]);
+
+  const nomeMatch =
+    bruto.match(/NOME(?:\s+COMPLETO)?\s*[:\-]\s*([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][A-ZÁÂÃÀÉÊÍÓÔÕÚÇ'\s]{6,80})/i) ||
+    bruto.match(/TITULAR\s*[:\-]\s*([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][A-ZÁÂÃÀÉÊÍÓÔÕÚÇ'\s]{6,80})/i);
+  if (nomeMatch) campos.nome_completo = nomeMatch[1].replace(/\s+/g, " ").trim();
+
+  const emissao = primeiraDataBR(bruto);
+  if (emissao) campos.data_emissao = emissao;
+
+  const cep = bruto.match(/\bCEP[:\s]*([0-9]{5}-?[0-9]{3})\b/i);
+  if (cep) campos.cep = cep[1];
+
+  const uc = bruto.match(/(?:UNIDADE\s+CONSUMIDORA|C[ÓO]DIGO\s+DE\s+INSTALA[ÇC][ÃA]O|N[ºO°.]?\s*DA\s*UC)[:\s]*([0-9][0-9.\-\/]{4,})/i);
+  if (uc) {
+    campos.codigo_instalacao = uc[1].replace(/\s/g, "");
+    campos.numero_documento = campos.codigo_instalacao;
+  }
+
+  const numCert = numeroCertidao(bruto);
+  if (!campos.numero_documento && numCert) campos.numero_documento = numCert;
+
+  return campos;
+}
+
 function decodeDataUrlBytes(dataUrl: string): { mime: string; bytes: Uint8Array } | null {
   const m = /^data:([^;,]+);base64,(.*)$/s.exec(dataUrl || "");
   if (!m) return null;
