@@ -25,23 +25,24 @@ const CSS = `
   font-family:'Arial Narrow',Arial,sans-serif;padding:0 0 24px}
 .qafin-sticky-header{position:sticky;top:0;z-index:10;background:var(--paper);padding:0 0 14px;margin:0}
 .qafin-scrollable{position:relative}
-.qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:11px;
-  letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:600}
+@media (max-width:640px){.qafin-central .sumlabel{font-size:9.5px;letter-spacing:.12em}.qafin-central .sumsub{font-size:10px}}
+.qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:900}
 .qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:22px;
   line-height:1.05;letter-spacing:.04em;font-weight:700;text-transform:uppercase;
   color:#0A0A0A;margin:0 0 14px}
 .qafin-central .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 22px}
 .qafin-central .summary.cols-3{grid-template-columns:repeat(3,1fr)}
 .qafin-central .sumcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.qafin-central .sumlabel{font-family:Oswald,sans-serif;font-size:10px;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink-soft);font-weight:600}
-.qafin-central .sumval{font-family:Oswald,sans-serif;font-size:22px;font-weight:600;margin-top:4px;letter-spacing:.02em}
+.qafin-central .sumlabel{font-family:Oswald,sans-serif;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:#7A7A7A;font-weight:900;line-height:1.1}
+.qafin-central .sumval{font-family:Oswald,sans-serif;font-size:26px;font-weight:900;line-height:1;margin-top:4px;letter-spacing:0}
 .qafin-central .sumval.danger{color:var(--danger)}
 .qafin-central .sumval.amber{color:var(--amber)}
 .qafin-central .sumval.ok{color:var(--ok)}
-.qafin-central .sumsub{font-family:Arial;font-size:11px;color:var(--ink-soft);margin-top:2px}
-.qafin-central .section{font-family:Oswald,sans-serif;font-size:11px;letter-spacing:.22em;
-  text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin:22px 0 10px;
+.qafin-central .sumsub{font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;line-height:1.25;color:#7A7A7A;margin-top:2px}
+.qafin-central .section{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:.24em;
+  text-transform:uppercase;color:#0A0A0A;font-weight:900;margin:22px 0 10px;
   display:flex;justify-content:space-between;align-items:center}
 .qafin-central .section .cnt{background:#efece4;padding:2px 8px;border-radius:100px;font-size:10px;letter-spacing:.14em;color:var(--ink-soft)}
 .qafin-central .charge{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);
@@ -53,7 +54,7 @@ const CSS = `
 .qafin-central .charge .m{font-family:Arial;font-size:11.5px;color:var(--ink-soft);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qafin-central .charge .val{font-family:Oswald,sans-serif;font-size:22px;font-weight:600;text-align:right;min-width:110px}
 .qafin-central .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.qafin-central .btn{padding:7px 11px;font-family:Oswald,sans-serif;font-size:10.5px;letter-spacing:.1em;
+.qafin-central .btn{padding:7px 11px;font-family:Oswald,sans-serif;font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
   text-transform:uppercase;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);
   border-radius:6px;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .qafin-central .btn:disabled{opacity:.5;cursor:not-allowed}

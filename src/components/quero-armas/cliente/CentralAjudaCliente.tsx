@@ -21,7 +21,7 @@ const AMBER = "#B45309";
 const AMBER_BG = "#FEF3C7";
 const RED = "#B91C1C";
 const RED_BG = "#FEE2E2";
-const OSWALD = "Oswald, 'Inter', sans-serif";
+const OSWALD = "Oswald, 'Arial Narrow', Arial, sans-serif";
 
 const INACTIVITY_MS = 30 * 60 * 1000;
 
@@ -684,7 +684,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   })();
 
   return (
-    <div className={`w-full max-w-full overflow-x-hidden ${compact ? "h-full min-h-0" : ""}`} style={{ background: PAPER, fontFamily: "Inter, sans-serif", color: INK }}>
+    <div className={`w-full max-w-full overflow-x-hidden ${compact ? "h-full min-h-0" : ""}`} style={{ background: PAPER, fontFamily: "Arial, Helvetica, sans-serif", color: INK }}>
       {/* Grid */}
       <div className={`px-4 md:px-8 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] ${compact ? "h-full min-h-0 pt-0 pb-3 lg:pb-4 items-stretch" : "py-4"}`}>
         {/* Chat */}
