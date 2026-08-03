@@ -241,7 +241,15 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
   };
 
   const itens: ItemSimulado[] = manter
-    .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
+    .sort((a, b) => {
+      // Ordem canônica idêntica à do portal: primeiro o grupo temático,
+      // depois a ordem interna. Sem isso um item de outro grupo com número
+      // menor (ex.: ocupação 80) "furava a fila" do endereço (81).
+      const ga = ordemGrupoChecklist(a.tipo_documento, a.regra_validacao);
+      const gb = ordemGrupoChecklist(b.tipo_documento, b.regra_validacao);
+      if (ga !== gb) return ga - gb;
+      return (a.ordem ?? 999) - (b.ordem ?? 999);
+    })
     .map((l) => {
       const rv = l.regra_validacao;
       const dep = extrairDependencia(rv);
