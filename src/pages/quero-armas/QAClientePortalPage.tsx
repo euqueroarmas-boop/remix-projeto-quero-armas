@@ -380,6 +380,7 @@ export default function QAClientePortalPage() {
     | "armas_municoes"
     | "analise_alvo"
     | "recarga_municoes"
+    | "novo_servico"
     | "mensagens"
     | "configuracoes"
   >("resumo");
@@ -588,7 +589,6 @@ export default function QAClientePortalPage() {
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
-  const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // Reconciliação silenciosa na entrada — roda uma vez por carregamento.
   const reconciliouRef = useRef(false);
@@ -2708,7 +2708,7 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "entrada_wizard") {
-      setEntradaWizardOpen(true);
+      setActiveSection("novo_servico" as any);
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
 
@@ -3295,7 +3295,7 @@ export default function QAClientePortalPage() {
           {/* Novo serviço — loja, logo acima do fuzil (checklist). */}
           <button
             type="button"
-            onClick={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+            onClick={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
             title="Novo serviço"
             aria-label="Novo serviço"
             className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
@@ -3601,7 +3601,7 @@ export default function QAClientePortalPage() {
           pendingContracts={pendingContracts}
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
-          onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+          onOpenComprar={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
           onOpenChecklist={() => abrirChecklistGuiado()}
           onOpenDocsHub={() => setShowAddDoc(true)}
           onLogout={handleLogout}
