@@ -5198,6 +5198,7 @@ export type Database = {
           conteudo_renderizado: string | null
           contract_number: string
           created_at: string
+          customer_ack_completed_at: string | null
           customer_signature_validated_at: string | null
           customer_signed_pdf_path: string | null
           customer_signed_sha256: string | null
@@ -5238,6 +5239,7 @@ export type Database = {
           conteudo_renderizado?: string | null
           contract_number: string
           created_at?: string
+          customer_ack_completed_at?: string | null
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
@@ -5278,6 +5280,7 @@ export type Database = {
           conteudo_renderizado?: string | null
           contract_number?: string
           created_at?: string
+          customer_ack_completed_at?: string | null
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
@@ -12390,6 +12393,10 @@ export type Database = {
           _status_anterior: string
           _status_tentado: string
         }
+        Returns: undefined
+      }
+      qa_marcar_contrato_ack: {
+        Args: { _contract_id: string }
         Returns: undefined
       }
       qa_norm_cr: { Args: { p_cr: string }; Returns: string }

@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_contracts ADD COLUMN IF NOT EXISTS customer_ack_completed_at timestamptz;
