@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock, X } from "lucide-react";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 
