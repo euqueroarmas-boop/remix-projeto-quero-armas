@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
-  Clock, AlertTriangle, ArrowRight, GripVertical, X,
+  Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -20,6 +20,19 @@ import {
 } from "@/lib/quero-armas/simuladorChecklist";
 
 type Servico = { id: number; nome_servico: string };
+
+/** Item da BIBLIOTECA — mesma fonte usada por Montar Checklist e Catálogo. */
+type BibliotecaItem = {
+  id: string;
+  codigo: string;
+  nome: string;
+  categoria: string | null;
+  validade_dias: number | null;
+  formato_aceito: string | null;
+  link_emissao: string | null;
+  descricao_como_enviar: string | null;
+  observacao_cliente: string | null;
+};
 
 const INK = "hsl(220 20% 18%)";
 const MUTED = "hsl(220 10% 45%)";
