@@ -39,6 +39,7 @@ const CATEGORIAS: Array<{ valor: string; label: string }> = [
   { valor: "laudos",           label: "Laudos" },
   { valor: "arma_acervo",      label: "Arma / Acervo" },
   { valor: "declaracoes",      label: "Declarações" },
+  { valor: "efetiva_necessidade", label: "Efetiva Necessidade" },
   { valor: "outros",           label: "Outros" },
 ];
 
@@ -148,15 +149,25 @@ export default function QABibliotecaDocumentosAdmin() {
       );
   }, [itens, busca, categoriaFiltro]);
 
-  // Agrupa por letra inicial (A, B, C…) — ordem alfabética natural
+  // Agrupa por CATEGORIA (Identificação, Residência, Certidões…) na ordem
+  // canônica do catálogo; dentro de cada categoria, ordem alfabética.
   const grupos = useMemo(() => {
     const map = new Map<string, BibliotecaItem[]>();
     for (const item of itensFiltrados) {
-      const letra = (item.nome[0] ?? "?").toUpperCase();
-      if (!map.has(letra)) map.set(letra, []);
-      map.get(letra)!.push(item);
+      const cat = item.categoria || "outros";
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(item);
     }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, "pt-BR"));
+    const peso = (c: string) => {
+      const i = CATEGORIAS.findIndex((x) => x.valor === c);
+      return i === -1 ? 999 : i;
+    };
+    return Array.from(map.entries())
+      .map(([cat, lista]) => {
+        lista.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+        return [cat, lista] as [string, BibliotecaItem[]];
+      })
+      .sort(([a], [b]) => peso(a) - peso(b) || a.localeCompare(b, "pt-BR"));
   }, [itensFiltrados]);
 
   async function salvarItem(item: BibliotecaItem) {
@@ -421,7 +432,7 @@ export default function QABibliotecaDocumentosAdmin() {
         </div>
       )}
 
-      {/* Lista alfabética agrupada */}
+      {/* Lista agrupada por categoria */}
       {carregando ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-6 justify-center">
           <Loader2 className="w-4 h-4 animate-spin" /> Carregando biblioteca…
@@ -432,10 +443,15 @@ export default function QABibliotecaDocumentosAdmin() {
         </p>
       ) : (
         <div className="space-y-4">
-          {grupos.map(([letra, lista]) => (
-            <div key={letra}>
-              <div className="text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase mb-1.5 px-1">
-                {letra}
+          {grupos.map(([cat, lista]) => (
+            <div key={cat}>
+              <div className="flex items-center justify-between gap-2 mb-1.5 px-1 border-b border-slate-200 pb-1">
+                <span className="text-[11px] font-bold tracking-[0.18em] text-[#7A1F2B] uppercase">
+                  {labelCategoria(cat)}
+                </span>
+                <span className="text-[10px] font-semibold text-slate-500 tabular-nums">
+                  {lista.length}
+                </span>
               </div>
               <div className="space-y-1">
                 {lista.map((item) => (
