@@ -120,11 +120,33 @@ interface CentralAjudaClienteProps {
   compact?: boolean;
 }
 
-const SUGESTOES = [
-  "O que preciso para comprar uma arma como policial civil?",
-  "Como consigo a posse de arma pra me defender e defender a minha família",
+const SUGESTOES_BASE = [
   "Como funciona o registro CAC?",
+  "Quanto tempo demora a análise da Polícia Federal?",
+  "Quais documentos ainda faltam no meu processo?",
+  "Posso comprar munição enquanto o processo corre?",
+  "Como consigo a posse pra defender minha família?",
+  "Qual a validade dos exames psicológico e de tiro?",
+  "O que muda entre posse e porte de arma?",
+  "Preciso renovar meu CR? Como faço?",
+  "Como declaro a guia de tráfego (GTE)?",
+  "Meu endereço mudou: o que preciso atualizar?",
 ];
+
+function montarSugestoes(servicos: string[], pendentes: number): string[] {
+  const pool: string[] = [];
+  servicos.slice(0, 3).forEach((s) => {
+    const nome = s.trim();
+    if (!nome) return;
+    pool.push(`Como está o andamento de ${nome.toLowerCase()}?`);
+    pool.push(`O que falta para concluir ${nome.toLowerCase()}?`);
+  });
+  if (pendentes > 0) {
+    pool.push(`Tenho ${pendentes} documento${pendentes > 1 ? "s" : ""} pendente${pendentes > 1 ? "s" : ""}. Como resolvo?`);
+    pool.push("Posso enviar foto do documento ou só PDF?");
+  }
+  return [...pool, ...SUGESTOES_BASE];
+}
 
 const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg: string; bg: string }> = {
   alta:  { label: "Confiança alta",  icon: <ShieldCheck className="h-3 w-3" />, fg: OK,    bg: OK_BG    },
