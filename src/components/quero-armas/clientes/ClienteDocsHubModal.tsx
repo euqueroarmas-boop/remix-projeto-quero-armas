@@ -3665,7 +3665,9 @@ export function ClienteDocsHubModal({
                 Adicionar Documento
               </h2>
               <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-[#4A4A4A]">
-                Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
+                {tipoAceitaImagem(form.tipo_documento)
+                  ? "Envie a foto 3x4 já reenquadrada (JPG ou PNG) — a leitura automática confere e preenche os campos. Você só revisa antes de salvar."
+                  : "Anexe o PDF ORIGINAL emitido pelo órgão — print, foto ou digitalização não são aceitos. A leitura automática identifica o tipo e preenche os campos; você só revisa antes de salvar."}
               </p>
             </div>
 
