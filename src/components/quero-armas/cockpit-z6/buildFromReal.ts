@@ -124,14 +124,13 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
     st.startsWith("dispensado") ||
     st.includes("reaproveitamento");
   if (!docs.length) return [];
-  // pega até 4 documentos da etapa atual / pendentes mais relevantes
   const sortable = [...docs].sort((a, b) => {
     const pa = a.obrigatorio ? 0 : 1;
     const pb = b.obrigatorio ? 0 : 1;
     if (pa !== pb) return pa - pb;
     return (a.ordem ?? 999) - (b.ordem ?? 999);
   });
-  return sortable.slice(0, 4).map((d) => {
+  return sortable.slice(0, 6).map((d) => {
     const st = String(d.status || "").toLowerCase();
     if (CUMPRIDO(st))
       return {
