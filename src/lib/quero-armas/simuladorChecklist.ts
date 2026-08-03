@@ -93,12 +93,18 @@ export type ResultadoSimulacao = {
   ignoradosPorDuplicidade: ItemSimulado[];
 };
 
-export const CONDICOES: OpcaoPergunta[] = [
+/** Opções canônicas da condição profissional (mesmos valores do catálogo). */
+export const CONDICOES_CHECKLIST: OpcaoPergunta[] = [
   { label: "CLT — CARTEIRA ASSINADA", valor: "clt" },
+  { label: "SERVIDOR PÚBLICO (ÁREA GERAL)", valor: "funcionario_publico" },
+  { label: "SERVIDOR DE SEGURANÇA PÚBLICA (PM, PC, PF, PRF, GUARDA, BOMBEIRO, AGENTE PENITENCIÁRIO)", valor: "seguranca_publica" },
   { label: "AUTÔNOMO / MEI", valor: "autonomo" },
   { label: "EMPRESÁRIO / SÓCIO", valor: "empresario" },
-  { label: "APOSENTADO", valor: "aposentado" },
-  { label: "SERVIDOR PÚBLICO", valor: "funcionario_publico" },
+  { label: "APOSENTADO OU PENSIONISTA", valor: "aposentado" },
+];
+
+export const CONDICOES: OpcaoPergunta[] = [
+  ...CONDICOES_CHECKLIST,
   { label: "INDEFINIDO", valor: "indefinido" },
 ];
 
