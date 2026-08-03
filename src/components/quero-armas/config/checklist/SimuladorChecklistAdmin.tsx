@@ -209,6 +209,25 @@ export default function SimuladorChecklistAdmin() {
 
   /**
    * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
+   */
+  async function aplicarBloco(receita: ReceitaChecklist) {
+    if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
+    setAdicionando(true);
+    try {
+      const r = await aplicarReceita(receita, servicoId);
+      toast.success(
+        `BLOCO APLICADO — ${r.criadas} CRIADA(S), ${r.atualizadas} AJUSTADA(S)`,
+      );
+      await carregar(servicoId);
+    } catch (e: any) {
+      toast.error("NÃO FOI POSSÍVEL APLICAR O BLOCO: " + (e?.message ?? "ERRO"));
+    } finally {
+      setAdicionando(false);
+    }
+  }
+
+  /**
+   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
    * (`ativo = false`), que é o mesmo mecanismo do Montar Checklist — o item
    * some do simulador, do portal do cliente e de todos os motores, e pode ser
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
