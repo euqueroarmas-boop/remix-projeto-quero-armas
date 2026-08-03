@@ -235,6 +235,29 @@ export default function SimuladorChecklistAdmin() {
   }
 
   /**
+   * Renomeia o "nome amigável" da exigência (campo `nome_documento`).
+   * NÃO toca em `tipo_documento`/`codigo` — esses são a chave técnica usada por
+   * parser, motores e uploads. Só muda o texto que o cliente lê, e é esse mesmo
+   * texto que aparece no título do Checklist Guiado da área do cliente.
+   */
+  async function renomearItem(id: string, novoNome: string) {
+    const nome = novoNome.trim();
+    if (!nome) return;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, nome_documento: nome } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ nome_documento: nome })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL RENOMEAR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success("NOME ATUALIZADO");
+  }
+
+  /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
    * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
    * mudar nada de lugar.
@@ -647,6 +670,7 @@ export default function SimuladorChecklistAdmin() {
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
                               onDefinirOrdem={definirOrdem}
+                              onRenomear={renomearItem}
                             />
                           ))}
                         </div>
