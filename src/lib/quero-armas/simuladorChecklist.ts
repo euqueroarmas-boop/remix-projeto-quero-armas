@@ -208,7 +208,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
   const paraItem = (l: LinhaCatalogo, estado: EstadoItem, motivo?: string): ItemSimulado => {
     const rv = l.regra_validacao;
-    const grupo = String(l.etapa || "base").trim().toLowerCase();
+    const grupo = grupoCanonico(l.tipo_documento);
     return {
       id: l.id,
       tipo: ehPergunta(rv) ? "pergunta" : "documento",
