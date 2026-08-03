@@ -390,6 +390,69 @@ async function fetchFewShotBlock(supabase: any): Promise<string> {
   }
 }
 
+type BibliotecaMatch = {
+  tipo: Tipo;
+  tipoDocumento: string;
+  nomeModelo: string;
+  cobertura: number;
+  palavrasEncontradas: number;
+};
+
+/**
+ * Os modelos ensinados na Biblioteca são a referência canônica do parser.
+ * Uma conta de energia moderna é fiscalmente uma DANF3E e contém "nota fiscal",
+ * mas operacionalmente continua sendo COMPROVANTE_RESIDENCIA. Por isso, uma
+ * correspondência forte com modelo aprovado prevalece sobre a aparência fiscal.
+ */
+async function buscarModeloBiblioteca(
+  supabase: any,
+  textoPdf: string,
+): Promise<BibliotecaMatch | null> {
+  const texto = normalizarTexto(textoPdf);
+  if (texto.length < 80) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("qa_documentos_modelos_aprovados")
+      .select("tipo_documento, nome_modelo, palavras_chave_json")
+      .eq("ativo", true)
+      .not("palavras_chave_json", "is", null)
+      .limit(100);
+    if (error || !Array.isArray(data)) return null;
+
+    let melhor: BibliotecaMatch | null = null;
+    for (const modelo of data as Array<Record<string, unknown>>) {
+      const tipo = normalizeTipoSelecionado(String(modelo.tipo_documento || ""));
+      if (!tipo) continue;
+      const palavras = Array.isArray(modelo.palavras_chave_json)
+        ? modelo.palavras_chave_json
+            .map((p) => normalizarTexto(String(p)))
+            .filter((p) => p.length >= 4)
+        : [];
+      if (palavras.length < 8) continue;
+      const encontradas = palavras.filter((p) => texto.includes(p)).length;
+      const cobertura = encontradas / palavras.length;
+
+      // Exige vários sinais simultâneos para uma palavra genérica não dominar.
+      if (encontradas < 8 || cobertura < 0.35) continue;
+      if (!melhor || cobertura > melhor.cobertura ||
+          (cobertura === melhor.cobertura && encontradas > melhor.palavrasEncontradas)) {
+        melhor = {
+          tipo,
+          tipoDocumento: String(modelo.tipo_documento || ""),
+          nomeModelo: String(modelo.nome_modelo || modelo.tipo_documento || "MODELO APROVADO"),
+          cobertura,
+          palavrasEncontradas: encontradas,
+        };
+      }
+    }
+    return melhor;
+  } catch (e) {
+    console.warn("[qa-classificar] comparação com Biblioteca indisponível:", e);
+    return null;
+  }
+}
+
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t)
@@ -709,6 +772,7 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+    const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
@@ -761,6 +825,19 @@ Deno.serve(async (req) => {
       return json({ error: "Resposta da IA inválida" }, 500);
     }
     parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
+
+    if (modeloBiblioteca) {
+      parsed.tipoDetectado = modeloBiblioteca.tipo;
+      parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.98);
+      parsed.justificativa =
+        `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
+        `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis).`;
+      parsed.modelo_biblioteca = {
+        tipo_documento: modeloBiblioteca.tipoDocumento,
+        nome_modelo: modeloBiblioteca.nomeModelo,
+        cobertura: modeloBiblioteca.cobertura,
+      };
+    }
 
     const tipoDetectado = (TIPOS as readonly string[]).includes(parsed.tipoDetectado)
       ? (parsed.tipoDetectado as Tipo)
