@@ -4273,7 +4273,8 @@ export default function QAClientePortalPage() {
                                         <div className="qa-kpi-sub mt-0.5">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
                                       </div>
                                       <span
-                                        className={`qa-eyebrow shrink-0 rounded-sm px-2 py-1 ${reprov ? "bg-[#C32E26] text-white" : "bg-[#F5EDD8] text-[#7A5A14]"}`}
+                                        className="qa-eyebrow shrink-0 rounded-sm px-2 py-1"
+                                        style={reprov ? { background: "#C32E26", color: "#FFFFFF" } : { background: "#F5EDD8", color: "#7A5A14" }}
                                       >
                                         {reprov ? "REENVIAR" : "PENDENTE"}
                                       </span>
