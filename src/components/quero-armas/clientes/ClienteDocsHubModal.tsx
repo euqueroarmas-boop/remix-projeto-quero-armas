@@ -1884,7 +1884,12 @@ export function ClienteDocsHubModal({
   function bloqueioExtracao(): string | null {
     if (!file) return "Anexe o arquivo (PDF ou foto) para a leitura automática conferir com o seu cadastro.";
     if (extracting) return "Aguarde a leitura automática terminar.";
-    if (!classificacao) return "A leitura automática não conseguiu extrair os dados deste arquivo. Envie o PDF original emitido pelo órgão.";
+    // O parser determinístico local (certidões, notas fiscais) é leitura válida.
+    // Exigir só a IA travava documentos perfeitamente lidos quando a chamada de
+    // visão falhava/estourava tempo — foi o caso da certidão do TSE.
+    if (!classificacao && !conferenciaLocal?.doc) {
+      return "A leitura automática não conseguiu extrair os dados deste arquivo. Envie o PDF original emitido pelo órgão.";
+    }
     return null;
   }
 
@@ -3268,12 +3273,16 @@ export function ClienteDocsHubModal({
       const bloqueioRevisao =
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
       const iaConfia =
-        !bloqueioRevisao && !terceiroDados && classificacao?.recomendacao === "aceitar";
+        !bloqueioRevisao && !terceiroDados && (
+          classificacao?.recomendacao === "aceitar" ||
+          // Leitura local determinística aprovada vale como decisão automática.
+          (!classificacao && conferenciaLocal?.conf?.veredicto === "aprovado")
+        );
 
       // Sem leitura automática concluída não há decisão possível: o documento
       // NÃO é salvo (evita a fila fantasma de "em análise") e o cliente recebe
       // o carimbo de reprovado com o motivo real.
-      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !classificacao) {
+      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !classificacao && !conferenciaLocal?.doc) {
         throw new Error(
           "Não conseguimos ler este arquivo. Envie o PDF original emitido pelo órgão (não use foto nem print) para conferirmos com o seu cadastro.",
         );
