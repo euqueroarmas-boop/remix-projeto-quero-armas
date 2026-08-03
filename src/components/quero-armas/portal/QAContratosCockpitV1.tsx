@@ -573,12 +573,12 @@ function KpiCard({ tone, label, value, sub }: { tone: Tone; label: string; value
   const dot = ({ amber:"bg-[#D6A64B]", blue:"bg-[#3A6FB3]", green:"bg-[#2F8F4A]", bordo:"bg-[#7A1F2B]", gray:"bg-[#8A8A8A]", red:"bg-[#C32E26]" } as Record<Tone,string>)[tone];
   return (
     <div className="qa-kpi-card bg-white border border-[#E5E5E5] rounded-sm px-3.5 py-3.5">
-      <div className="qa-kpi-card__label font-['Oswald'] text-[9px] tracking-[0.18em] text-[#0A0A0A] font-semibold uppercase flex items-center gap-1.5">
+      <div className="qa-kpi-card__label qa-kpi-label flex items-center gap-1.5">
         <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
         {label}
       </div>
-      <div className="qa-kpi-card__value font-['Oswald'] text-[28px] font-semibold mt-1.5 leading-none">{value}</div>
-      <div className="qa-kpi-card__sub text-[10.5px] text-[#7A7A7A] mt-1.5">{sub}</div>
+      <div className="qa-kpi-card__value qa-kpi-value mt-1.5">{value}</div>
+      <div className="qa-kpi-card__sub qa-kpi-sub mt-1.5">{sub}</div>
     </div>
   );
 }
