@@ -312,6 +312,33 @@ export default function MontarChecklistAdmin() {
     }
   }
 
+  async function reordenarPorArraste(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= checklist.length || to >= checklist.length) return;
+    const novo = [...checklist];
+    const [movido] = novo.splice(from, 1);
+    novo.splice(to, 0, movido);
+    const comOrdem = novo.map((c, idx) => ({ ...c, ordem: (idx + 1) * 10 }));
+    setChecklist(comOrdem);
+    setCarregandoAcao(true);
+    try {
+      const alterados = comOrdem.filter((c, idx) => c.ordem !== checklist[idx]?.ordem || c.id !== checklist[idx]?.id);
+      for (const c of alterados) {
+        const { error } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .update({ ordem: c.ordem })
+          .eq("id", c.id);
+        if (error) throw error;
+      }
+      toast.success("Ordem atualizada");
+      await carregarChecklist(servicoId!);
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha ao reordenar");
+      await carregarChecklist(servicoId!);
+    } finally {
+      setCarregandoAcao(false);
+    }
+  }
+
   async function toggleObrigatorio(item: ChecklistItem) {
     await supabase
       .from("qa_servicos_documentos" as any)
