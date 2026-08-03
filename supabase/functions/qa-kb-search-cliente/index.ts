@@ -595,6 +595,15 @@ Deno.serve(async (req) => {
     // processos contratados (o que foi pago, quanto, como, em quantas
     // vezes e em que pé está cada processo).
     let ctxCliente = "";
+    // Serviços que o cliente JÁ contratou — nunca podem ser oferecidos de novo.
+    const servicosContratadosNorm = new Set<string>();
+    const normalizarNome = (s: string) =>
+      String(s || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
     if (clienteId) {
       try {
         const [{ data: vendas }, { data: processos }] = await Promise.all([
@@ -681,6 +690,49 @@ Deno.serve(async (req) => {
             (p.data_criacao ? ` — aberto em ${String(p.data_criacao).slice(0, 10)}` : ""),
         );
 
+        // Marca todos os serviços já contratados (processos + itens de venda)
+        for (const p of (processos ?? []) as Array<any>) {
+          if (p?.servico_nome) servicosContratadosNorm.add(normalizarNome(p.servico_nome));
+        }
+        for (const lista of itensPorVenda.values()) {
+          for (const linha of lista) {
+            servicosContratadosNorm.add(normalizarNome(String(linha).split("—")[0]));
+          }
+        }
+
+        // Situação documental de cada processo (o que falta de verdade)
+        let blocoDocs = "";
+        try {
+          const procIds = (processos ?? []).map((p: any) => p.id).filter(Boolean);
+          if (procIds.length) {
+            const { data: docs } = await supabase
+              .from("qa_processo_documentos")
+              .select("processo_id, tipo_documento, status")
+              .in("processo_id", procIds)
+              .limit(400);
+            const porProc = new Map<string, Record<string, number>>();
+            for (const d of (docs ?? []) as Array<any>) {
+              const m = porProc.get(d.processo_id) ?? {};
+              const st = String(d.status ?? "pendente").toLowerCase();
+              m[st] = (m[st] ?? 0) + 1;
+              porProc.set(d.processo_id, m);
+            }
+            const linhas = (processos ?? [])
+              .map((p: any) => {
+                const m = porProc.get(p.id);
+                if (!m) return `• ${p.servico_nome ?? "processo"} — nenhum documento enviado ainda`;
+                const resumo = Object.entries(m)
+                  .map(([k, v]) => `${v} ${k}`)
+                  .join(", ");
+                return `• ${p.servico_nome ?? "processo"} — documentos: ${resumo}`;
+              })
+              .filter(Boolean);
+            if (linhas.length) blocoDocs = `### Situação dos documentos\n${linhas.join("\n")}\n\n`;
+          }
+        } catch (e) {
+          console.warn("[contexto-cliente] docs falhou:", e);
+        }
+
         if (blocosVendas.length || blocosProcessos.length) {
           ctxCliente =
             "## DADOS REAIS DA CONTA DESTE CLIENTE (autoritativos)\n" +
@@ -690,12 +742,15 @@ Deno.serve(async (req) => {
             (blocosProcessos.length
               ? `### Processos contratados\n${blocosProcessos.join("\n")}\n\n`
               : "") +
+            blocoDocs +
             "REGRAS PARA ESTES DADOS: são a fonte da verdade sobre o que o cliente comprou, " +
             "quanto pagou, como pagou (forma e parcelas) e em que pé está cada processo. " +
             "Responda com base neles quando a pergunta for sobre a conta dele. " +
             "NUNCA invente valores, datas, protocolos ou status que não estejam acima; " +
             "se algo não constar, diga honestamente que confirma com a equipe Quero Armas. " +
-            "Nunca exponha IDs internos como número de compra do sistema salvo se o cliente pedir referência.";
+            "Nunca exponha IDs internos como número de compra do sistema salvo se o cliente pedir referência.\n" +
+            "PROIBIDO ABSOLUTO: oferecer, sugerir ou recomendar qualquer serviço que já apareça acima como " +
+            "comprado ou contratado por este cliente. Ele já pagou por isso — repetir a oferta é erro grave.";
         }
       } catch (e) {
         console.warn("[contexto-cliente] falhou:", e);
