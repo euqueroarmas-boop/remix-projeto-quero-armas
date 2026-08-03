@@ -219,7 +219,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
     // daquela condição — a pergunta de definição continua sempre visível.
     if (l.condicao_profissional == null && condicao && condicao !== "indefinido") {
       const g = grupoCanonico(l.tipo_documento, l.regra_validacao);
-      const ehRenda = g === "condicao_profissional" || g === "renda";
+      const ehRenda = g === "ocupacao";
       const ehSeletor =
         ehPergunta(l.regra_validacao) || l.tipo_documento === "renda_definir_condicao";
       if (ehRenda && !ehSeletor) return false;
