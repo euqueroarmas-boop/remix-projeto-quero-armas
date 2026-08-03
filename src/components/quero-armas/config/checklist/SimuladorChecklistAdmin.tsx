@@ -559,10 +559,37 @@ export default function SimuladorChecklistAdmin() {
                     ))}
                   </div>
                 ) : sim.proximo.tipo === "pergunta" ? (
-                  <div className="text-[11px]" style={{ color: "#B91C1C" }}>
-                    Esta pergunta não tem opções cadastradas em regra_validacao.opcoes — o cliente
-                    ficaria travado aqui.
-                  </div>
+                  (sim.proximo.linha?.regra_validacao as any)?.entrada === "texto" ? (
+                    <form
+                      className="flex gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const el = (e.currentTarget.elements.namedItem("resp") as HTMLInputElement);
+                        const v = el.value.trim();
+                        if (v) responder(sim.proximo!.chave as string, v);
+                      }}
+                    >
+                      <input
+                        name="resp"
+                        autoComplete="off"
+                        placeholder="DIGITE A RESPOSTA"
+                        className="h-9 flex-1 rounded-md border px-3 text-[11px] uppercase"
+                        style={{ borderColor: LINE, color: INK }}
+                      />
+                      <button
+                        type="submit"
+                        className="h-9 rounded-md px-3 text-[11px] uppercase text-white"
+                        style={{ background: BORDO }}
+                      >
+                        Responder
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="text-[11px]" style={{ color: "#B91C1C" }}>
+                      Esta pergunta não tem opções cadastradas em regra_validacao.opcoes — o cliente
+                      ficaria travado aqui.
+                    </div>
+                  )
                 ) : (
                   <button
                     onClick={() => alternarEntrega(sim.proximo!.tipo_documento)}
