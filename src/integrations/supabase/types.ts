@@ -3871,6 +3871,8 @@ export type Database = {
           conteudo_corrigido: string | null
           created_at: string
           doc_kb_id: string | null
+          feedback_cliente: string | null
+          feedback_em: string | null
           fontes: Json | null
           id: string
           motivo_rejeicao: string | null
@@ -3889,6 +3891,8 @@ export type Database = {
           conteudo_corrigido?: string | null
           created_at?: string
           doc_kb_id?: string | null
+          feedback_cliente?: string | null
+          feedback_em?: string | null
           fontes?: Json | null
           id?: string
           motivo_rejeicao?: string | null
@@ -3907,6 +3911,8 @@ export type Database = {
           conteudo_corrigido?: string | null
           created_at?: string
           doc_kb_id?: string | null
+          feedback_cliente?: string | null
+          feedback_em?: string | null
           fontes?: Json | null
           id?: string
           motivo_rejeicao?: string | null

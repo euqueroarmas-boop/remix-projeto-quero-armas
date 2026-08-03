@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
+import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { IconPlus, IconMicrophone, IconPlayerStopFilled, IconArrowUp, IconX, IconFileText, IconPhoto } from "@tabler/icons-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -22,6 +22,10 @@ const AMBER_BG = "#FEF3C7";
 const RED = "#B91C1C";
 const RED_BG = "#FEE2E2";
 const OSWALD = "Oswald, 'Arial Narrow', Arial, sans-serif";
+const WHATSAPP = "#25D366";
+const WHATSAPP_DARK = "#128C7E";
+const BLUE = "#2563EB";
+const NEG = "#DC2626";
 
 const INACTIVITY_MS = 30 * 60 * 1000;
 
@@ -171,6 +175,8 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, "sim" | "nao">>({});
+  const [feedbackSalvando, setFeedbackSalvando] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
   const [proto, setProto] = useState<ProtocoloAtivo | null>(null);
   const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
@@ -650,6 +656,41 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     (m) => m.role === "assistant" && !m.isStreaming && m.content.trim().length > 0,
   );
 
+  /** Registra o "resolveu? sim/não" do cliente na última resposta do Klal.
+   *  Ambas as respostas entram na fila de aprovação dos administradores. */
+  async function registrarFeedback(msgLocalId: string, valor: "sim" | "nao") {
+    if (feedbackMap[msgLocalId] || feedbackSalvando) return;
+    setFeedbackMap((prev) => ({ ...prev, [msgLocalId]: valor }));
+    setFeedbackSalvando(true);
+    try {
+      if (proto?.sessaoId) {
+        const { data: ultima } = await (supabase as any)
+          .from("qa_chat_mensagens")
+          .select("id")
+          .eq("sessao_id", proto.sessaoId)
+          .eq("role", "assistant")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const alvo = (ultima ?? [])[0]?.id;
+        if (alvo) {
+          await (supabase as any)
+            .from("qa_chat_mensagens")
+            .update({ feedback_cliente: valor, feedback_em: new Date().toISOString() })
+            .eq("id", alvo);
+        }
+      }
+      toast.success(
+        valor === "sim"
+          ? "Obrigado! Sua avaliação vai para a nossa equipe validar o aprendizado do Klal."
+          : "Registrado. Nossa equipe vai revisar essa resposta e corrigir o Klal.",
+      );
+    } catch {
+      toast.error("Não consegui registrar sua avaliação agora.");
+    } finally {
+      setFeedbackSalvando(false);
+    }
+  }
+
   const expiraEmMin = proto
     ? Math.max(0, Math.round((new Date(proto.lastActivityAt).getTime() + INACTIVITY_MS - now) / 60000))
     : 30;
@@ -865,12 +906,93 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
 
             {ultimaAssistente && (
-              <div className="flex justify-start pt-1">
-                <button onClick={() => escalarParaEquipe(ultimaAssistente.content)} disabled={escalating} className="uppercase inline-flex items-center gap-1.5 px-3 py-2 text-white disabled:opacity-60" style={{ background: INK, borderRadius: 10, fontFamily: OSWALD, fontWeight: 600, fontSize: 11, letterSpacing: "0.16em" }}>
-                  {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
-                  Não resolveu? Falar com a equipe
-                </button>
-              </div>
+              (() => {
+                const dado = feedbackMap[ultimaAssistente.id] ?? null;
+                return (
+                  <div className="pt-2">
+                    <div
+                      className="px-4 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                      style={{
+                        background: "linear-gradient(180deg,#FFFFFF 0%,#FAFAFA 100%)",
+                        border: `1px solid ${CARD_BORDER}`,
+                        borderRadius: 16,
+                        boxShadow: "0 1px 2px rgba(10,10,10,.04), 0 8px 24px -18px rgba(10,10,10,.35)",
+                      }}
+                    >
+                      <div className="min-w-0">
+                        <div className="uppercase" style={{ fontFamily: OSWALD, fontWeight: 600, fontSize: 10, letterSpacing: "0.18em", color: INK_2 }}>
+                          Avaliação da resposta
+                        </div>
+                        <div className="mt-0.5" style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 15.5, letterSpacing: "0.01em", color: INK }}>
+                          {dado ? "Obrigado pela sua resposta" : "Isso resolveu sua dúvida?"}
+                        </div>
+                        <div className="text-[11.5px] mt-0.5" style={{ color: INK_2 }}>
+                          {dado
+                            ? "Enviado para a nossa equipe validar o aprendizado do Klal."
+                            : "Sim ou não — as duas respostas vão para a nossa equipe revisar e treinar o Klal."}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => void registrarFeedback(ultimaAssistente.id, "sim")}
+                          disabled={!!dado || feedbackSalvando}
+                          aria-label="Sim, resolveu"
+                          title="Sim, resolveu"
+                          className="inline-flex items-center justify-center h-10 w-10 transition-transform active:scale-95 disabled:cursor-default"
+                          style={{
+                            borderRadius: 12,
+                            background: dado === "sim" ? BLUE : "#FFFFFF",
+                            border: `1px solid ${dado === "sim" ? BLUE : CARD_BORDER}`,
+                            color: dado === "sim" ? "#FFFFFF" : BLUE,
+                            opacity: dado === "nao" ? 0.35 : 1,
+                            boxShadow: dado === "sim" ? `0 6px 18px -8px ${BLUE}` : "none",
+                          }}
+                        >
+                          {dado === "sim" ? <Check className="h-4 w-4" /> : <ThumbsUp className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => void registrarFeedback(ultimaAssistente.id, "nao")}
+                          disabled={!!dado || feedbackSalvando}
+                          aria-label="Não resolveu"
+                          title="Não resolveu"
+                          className="inline-flex items-center justify-center h-10 w-10 transition-transform active:scale-95 disabled:cursor-default"
+                          style={{
+                            borderRadius: 12,
+                            background: dado === "nao" ? NEG : "#FFFFFF",
+                            border: `1px solid ${dado === "nao" ? NEG : CARD_BORDER}`,
+                            color: dado === "nao" ? "#FFFFFF" : NEG,
+                            opacity: dado === "sim" ? 0.35 : 1,
+                            boxShadow: dado === "nao" ? `0 6px 18px -8px ${NEG}` : "none",
+                          }}
+                        >
+                          <ThumbsDown className="h-4 w-4" />
+                        </button>
+
+                        <span className="hidden sm:block h-6 w-px" style={{ background: LINE }} />
+
+                        <button
+                          onClick={() => escalarParaEquipe(ultimaAssistente.content)}
+                          disabled={escalating}
+                          className="uppercase inline-flex items-center gap-2 px-4 h-10 text-white disabled:opacity-60 transition-transform active:scale-[.98]"
+                          style={{
+                            background: `linear-gradient(180deg, ${WHATSAPP} 0%, ${WHATSAPP_DARK} 100%)`,
+                            borderRadius: 12,
+                            fontFamily: OSWALD,
+                            fontWeight: 700,
+                            fontSize: 11,
+                            letterSpacing: "0.16em",
+                            boxShadow: `0 8px 20px -10px ${WHATSAPP_DARK}`,
+                          }}
+                        >
+                          {escalating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                          Falar com uma pessoa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </div>
 
