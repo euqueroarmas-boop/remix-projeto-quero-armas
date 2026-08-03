@@ -786,6 +786,7 @@ interface CardProps {
   onSave: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onToggleAtivo: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onUpload: (campo: "modelo_url" | "exemplo_url", file: File) => void;
