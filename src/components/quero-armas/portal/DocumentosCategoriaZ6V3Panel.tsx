@@ -401,22 +401,22 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;color:#6A6A6A;display:flex;gap:18px;flex-wrap:wrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
         .qa-docsz6 .focus{background:#fff;border:1px solid #E5E5E5;border-left:4px solid #D9342B;border-radius:3px;padding:16px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
-        .qa-docsz6 .focus .lbl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.28em;color:#D9342B;text-transform:uppercase}
-        .qa-docsz6 .focus .msg{font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.15;margin-top:6px;font-weight:700;color:#0c0c0c;text-transform:none;letter-spacing:-.01em}
+        .qa-docsz6 .focus .lbl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.22em;color:#D9342B;text-transform:uppercase}
+        .qa-docsz6 .focus .msg{font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.1;margin-top:6px;font-weight:700;color:#0c0c0c;text-transform:none;letter-spacing:-.015em}
         .qa-docsz6 .focus button{background:#7A1F2B;color:#fff;border:0;padding:11px 16px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.22em;font-size:11px;font-weight:900;cursor:pointer;border-radius:2px;text-transform:uppercase}
         .qa-docsz6 .focus button:hover{background:#5e1721}
         .qa-docsz6 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
         .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px;cursor:pointer;transition:all .12s ease;text-align:left;font:inherit;color:inherit}
         .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
         .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
-        .qa-docsz6 .kpi .l{font-family:'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.24em;color:#7A7A7A;display:flex;align-items:flex-start;gap:6px;text-transform:uppercase;min-width:0;overflow-wrap:anywhere;word-break:break-word;line-height:1.25}
+        .qa-docsz6 .kpi .l{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;color:#7A7A7A;display:flex;align-items:flex-start;gap:6px;text-transform:uppercase;min-width:0;overflow-wrap:anywhere;word-break:break-word;line-height:1.25}
         .qa-docsz6 .kpi .l .dot{margin-top:4px;flex:0 0 auto}
         .qa-docsz6 .kpi .l .lt{min-width:0;overflow-wrap:anywhere}
         .qa-docsz6 .kpi .v{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:26px;font-weight:900;margin-top:9px;color:#0A0A0A;line-height:1;letter-spacing:0}
-        .qa-docsz6 .kpi .s{font-family:'Arial Narrow',Arial,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0;font-weight:700;overflow-wrap:anywhere}
+        .qa-docsz6 .kpi .s{font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7A7A7A;margin-top:3px;text-transform:none;letter-spacing:0;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
         .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0;gap:12px}
-        .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
+        .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:13px;letter-spacing:.24em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
         .qa-docsz6 .listhead .ttl .cnt{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.18em}
         .qa-docsz6 .listhead .add{display:inline-flex;align-items:center;gap:3px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:3px 7px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:8.5px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase}
         .qa-docsz6 .listhead .add:hover{border-color:#7A1F2B;color:#7A1F2B}
@@ -424,7 +424,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .grp{background:#fff;border:1px solid #E5E5E5;border-top:0}
         .qa-docsz6 .grp:last-child{border-radius:0 0 4px 4px}
         .qa-docsz6 .grp-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:3px solid #F2F2F2;background:#FAFAFA;cursor:pointer;user-select:none}
-        .qa-docsz6 .grp-h .gt{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:12px;letter-spacing:.22em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
+        .qa-docsz6 .grp-h .gt{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:13px;letter-spacing:.24em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
         .qa-docsz6 .grp-h .gt .gc{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.18em}
         .qa-docsz6 .grp-h .chev{color:#7A7A7A}
         .qa-docsz6 .row{display:grid;grid-template-columns:14px 1fr auto auto auto auto;gap:18px;align-items:center;padding:16px 18px;border-bottom:3px solid #F2F2F2}
@@ -448,8 +448,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         @media (max-width: 900px){
           .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
           .qa-docsz6 .kpi{padding:10px 9px}
-          .qa-docsz6 .kpi .l{font-size:9px;letter-spacing:.12em;gap:5px}
+          .qa-docsz6 .kpi .l{font-size:9.5px;letter-spacing:.12em;gap:5px}
           .qa-docsz6 .kpi .s{font-size:10px}
+          .qa-docsz6 .focus .msg{font-size:16px;line-height:1.2}
           .qa-docsz6 .grp-h .gt{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .listhead .ttl{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px;border-bottom:3px solid #F2F2F2}
