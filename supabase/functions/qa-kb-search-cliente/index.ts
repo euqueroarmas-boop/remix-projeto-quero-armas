@@ -590,9 +590,121 @@ Deno.serve(async (req) => {
       console.warn("[competencia] exceção:", e);
     }
 
-    const ctxFinal = ctxCompetencia
-      ? `${ctxCompetencia}\n\n======\n\n${ctx}`
-      : ctx;
+    // ── Contexto REAL do cliente: o que ele já comprou/contratou ──────
+    // O Klal precisa responder qualquer pergunta sobre as compras e os
+    // processos contratados (o que foi pago, quanto, como, em quantas
+    // vezes e em que pé está cada processo).
+    let ctxCliente = "";
+    if (clienteId) {
+      try {
+        const [{ data: vendas }, { data: processos }] = await Promise.all([
+          supabase
+            .from("qa_vendas")
+            .select(
+              "id, data_cadastro, status, forma_pagamento, valor_a_pagar, valor_total_pago_cliente, pagamento_parcelas, pagamento_valor_parcela, cobranca_status, cobranca_confirmada_em, numero_processo, data_protocolo, data_deferimento",
+            )
+            .eq("cliente_id", clienteId)
+            .order("data_cadastro", { ascending: false })
+            .limit(25),
+          supabase
+            .from("qa_processos")
+            .select(
+              "id, servico_nome, status, pagamento_status, data_criacao, modalidade, venda_id",
+            )
+            .eq("cliente_id", clienteId)
+            .order("data_criacao", { ascending: false })
+            .limit(40),
+        ]);
+
+        const vendaIds = (vendas ?? []).map((v: any) => v.id);
+        let itensPorVenda = new Map<number, string[]>();
+        if (vendaIds.length) {
+          const { data: itens } = await supabase
+            .from("qa_itens_venda")
+            .select(
+              "venda_id, servico_id, valor, status, numero_processo, data_protocolo, data_deferimento",
+            )
+            .in("venda_id", vendaIds);
+          const servIds = [
+            ...new Set((itens ?? []).map((i: any) => i.servico_id).filter(Boolean)),
+          ];
+          const nomes = new Map<number, string>();
+          if (servIds.length) {
+            const { data: servs } = await supabase
+              .from("qa_servicos")
+              .select("id, nome_servico")
+              .in("id", servIds);
+            (servs ?? []).forEach((s: any) => nomes.set(s.id, s.nome_servico));
+          }
+          (itens ?? []).forEach((i: any) => {
+            const arr = itensPorVenda.get(i.venda_id) ?? [];
+            arr.push(
+              `${nomes.get(i.servico_id) ?? "serviço"}` +
+                (i.valor ? ` — R$ ${Number(i.valor).toFixed(2)}` : "") +
+                (i.status ? ` — situação: ${i.status}` : "") +
+                (i.numero_processo ? ` — processo ${i.numero_processo}` : "") +
+                (i.data_protocolo ? ` — protocolado em ${i.data_protocolo}` : "") +
+                (i.data_deferimento ? ` — deferido em ${i.data_deferimento}` : ""),
+            );
+            itensPorVenda.set(i.venda_id, arr);
+          });
+        }
+
+        const blocosVendas = (vendas ?? []).map((v: any) => {
+          const pago = String(v.status ?? "").toUpperCase() === "PAGO" ||
+            String(v.cobranca_status ?? "").toLowerCase() === "confirmado";
+          const parcelas = Number(v.pagamento_parcelas ?? 0);
+          return (
+            `• Compra #${v.id}${v.data_cadastro ? ` (${v.data_cadastro})` : ""} — ` +
+            `situação do pagamento: ${pago ? "PAGO/CONFIRMADO" : v.status ?? "em aberto"}` +
+            (v.forma_pagamento ? ` — forma: ${v.forma_pagamento}` : "") +
+            (parcelas > 1
+              ? ` — ${parcelas}x de R$ ${Number(v.pagamento_valor_parcela ?? 0).toFixed(2)}`
+              : " — à vista") +
+            (v.valor_total_pago_cliente || v.valor_a_pagar
+              ? ` — total: R$ ${Number(v.valor_total_pago_cliente || v.valor_a_pagar).toFixed(2)}`
+              : "") +
+            (v.cobranca_confirmada_em
+              ? ` — confirmado em ${String(v.cobranca_confirmada_em).slice(0, 10)}`
+              : "") +
+            (itensPorVenda.get(v.id)?.length
+              ? `\n   Serviços desta compra:\n   - ${itensPorVenda.get(v.id)!.join("\n   - ")}`
+              : "")
+          );
+        });
+
+        const blocosProcessos = (processos ?? []).map(
+          (p: any) =>
+            `• ${p.servico_nome ?? "processo"} — status: ${p.status ?? "—"}` +
+            (p.pagamento_status ? ` — pagamento: ${p.pagamento_status}` : "") +
+            (p.modalidade ? ` — modalidade: ${p.modalidade}` : "") +
+            (p.data_criacao ? ` — aberto em ${String(p.data_criacao).slice(0, 10)}` : ""),
+        );
+
+        if (blocosVendas.length || blocosProcessos.length) {
+          ctxCliente =
+            "## DADOS REAIS DA CONTA DESTE CLIENTE (autoritativos)\n" +
+            (blocosVendas.length
+              ? `### Compras e pagamentos\n${blocosVendas.join("\n")}\n\n`
+              : "") +
+            (blocosProcessos.length
+              ? `### Processos contratados\n${blocosProcessos.join("\n")}\n\n`
+              : "") +
+            "REGRAS PARA ESTES DADOS: são a fonte da verdade sobre o que o cliente comprou, " +
+            "quanto pagou, como pagou (forma e parcelas) e em que pé está cada processo. " +
+            "Responda com base neles quando a pergunta for sobre a conta dele. " +
+            "NUNCA invente valores, datas, protocolos ou status que não estejam acima; " +
+            "se algo não constar, diga honestamente que confirma com a equipe Quero Armas. " +
+            "Nunca exponha IDs internos como número de compra do sistema salvo se o cliente pedir referência.";
+        }
+      } catch (e) {
+        console.warn("[contexto-cliente] falhou:", e);
+      }
+    }
+
+    const ctxFinal = [ctxCompetencia, ctxCliente, ctx]
+      .filter(Boolean)
+      .join("\n\n======\n\n");
 
     // ── Anexos enviados pelo cliente no chat ──────────────────────────
     const anexosLista = (Array.isArray(anexos) ? anexos : []).slice(0, 6);
