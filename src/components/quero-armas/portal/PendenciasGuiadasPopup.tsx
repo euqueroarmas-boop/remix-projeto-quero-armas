@@ -428,8 +428,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Abertura pessoal — bloco limpo, no mesmo papel branco das demais
             páginas. Sem gradiente: só o filete bordô e a tipografia fazem a
-            hierarquia. */}
-        <div className="shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 sm:px-6">
+            hierarquia. REGRA DE LAYOUT: nenhum texto do header deve competir
+            com o botão de fechar (X) no canto superior direito. O padding-right
+            abaixo reserva a zona do botão em todas as larguras. */}
+        <div className="shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14">
           <div className="flex items-start gap-3">
             <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8]">
               <FileUp className="h-4 w-4 text-[#8A1224]" />
@@ -440,8 +442,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </p>
               <h1 className="mt-1 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.2] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]">
                 {primeiroNome
-                  ? `${primeiroNome}, você está nos devendo enviar esses documentos!`
-                  : "Você está nos devendo enviar esses documentos!"}
+                  ? <>{primeiroNome}, você está nos devendo enviar<br />esses documentos!</>
+                  : <>Você está nos devendo enviar<br />esses documentos!</>}
               </h1>
             </div>
           </div>
