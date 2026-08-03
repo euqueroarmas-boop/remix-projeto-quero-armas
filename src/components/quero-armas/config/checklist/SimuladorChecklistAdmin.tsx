@@ -97,17 +97,7 @@ export default function SimuladorChecklistAdmin() {
    * fonte única lida por TODOS os motores (Preços e Serviços / Montar Checklist,
    * catálogo, explosão do checklist do processo e portal do cliente).
    */
-  async function onDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
-    const from = visiveisIds.indexOf(String(active.id));
-    const to = visiveisIds.indexOf(String(over.id));
-    if (from < 0 || to < 0) return;
-
-    const novaOrdemVisivel = arrayMove(visiveisIds, from, to);
-
+  async function persistirSequencia(novaOrdemVisivel: string[]) {
     // Ordem global: itens visíveis primeiro (na nova sequência), depois o restante
     // do catálogo do serviço preservando a ordem relativa atual.
     const restantes = [...linhas]
@@ -144,6 +134,40 @@ export default function SimuladorChecklistAdmin() {
     } finally {
       setSalvandoOrdem(false);
     }
+  }
+
+  /** Move um item dentro/entre grupos OU um grupo inteiro (id "grupo:<slug>"). */
+  async function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // ── Arrasto de GRUPO INTEIRO ────────────────────────────────────────────
+    if (activeId.startsWith("grupo:")) {
+      const gruposIds = sim.grupos.map((g) => `grupo:${g.grupo}`);
+      const overGrupo = overId.startsWith("grupo:")
+        ? overId
+        : `grupo:${sim.grupos.find((g) => g.itens.some((i) => i.id === overId))?.grupo ?? ""}`;
+      const from = gruposIds.indexOf(activeId);
+      const to = gruposIds.indexOf(overGrupo);
+      if (from < 0 || to < 0 || from === to) return;
+      const novaOrdemGrupos = arrayMove(gruposIds, from, to);
+      const novaOrdemVisivel = novaOrdemGrupos.flatMap((gid) => {
+        const slug = gid.slice("grupo:".length);
+        return sim.grupos.find((g) => g.grupo === slug)?.itens.map((i) => i.id) ?? [];
+      });
+      await persistirSequencia(novaOrdemVisivel);
+      return;
+    }
+
+    // ── Arrasto de ITEM ─────────────────────────────────────────────────────
+    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
+    const from = visiveisIds.indexOf(activeId);
+    const to = visiveisIds.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    await persistirSequencia(arrayMove(visiveisIds, from, to));
   }
 
   return (
