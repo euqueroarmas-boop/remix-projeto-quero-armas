@@ -19,6 +19,7 @@ import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/Mont
 import SimuladorChecklistAdmin from "@/components/quero-armas/config/checklist/SimuladorChecklistAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
+import MotoresApagadosAdmin from "@/components/quero-armas/config/MotoresApagadosAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
@@ -462,6 +463,7 @@ export default function QAConfiguracoesPage() {
           {isAdmin && <TabsTrigger value="status" className={QA_TAB}>Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className={QA_TAB}>Notificações</TabsTrigger>}
           {isAdmin && <TabsTrigger value="klal" className={QA_TAB}>Klal</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="apagar" className={QA_TAB}>Apagar</TabsTrigger>}
           <TabsTrigger value="ranking" className={QA_TAB}>Pesos de Ranking</TabsTrigger>
           <TabsTrigger value="perfil" className={QA_TAB}>Perfil</TabsTrigger>
           {isAdmin && <TabsTrigger value="monitoramento" className={QA_TAB}>Monitoramento</TabsTrigger>}
@@ -472,6 +474,12 @@ export default function QAConfiguracoesPage() {
         {isAdmin && (
           <TabsContent value="klal" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
             <QAKlalPersonaAdmin />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="apagar" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
+            <MotoresApagadosAdmin />
           </TabsContent>
         )}
 
