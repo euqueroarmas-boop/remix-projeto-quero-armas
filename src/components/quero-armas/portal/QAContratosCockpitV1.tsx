@@ -139,6 +139,7 @@ interface Props {
 }
 
 export default function QAContratosCockpitV1({ cliente }: Props) {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [valorPago, setValorPago] = useState<number>(0);
