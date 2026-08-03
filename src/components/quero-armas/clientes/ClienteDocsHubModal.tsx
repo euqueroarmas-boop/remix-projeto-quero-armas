@@ -2144,7 +2144,29 @@ export function ClienteDocsHubModal({
         }),
       );
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
-      setCategoriaHub(categoriaIA);
+      // ── Foto 3x4 do requerente ───────────────────────────────────────────
+      // Retrato não tem texto: a IA sempre cai em "outro documento" e o slot
+      // acusava divergência indevida. Imagem de rosto num slot de foto 3x4 (ou
+      // classificada como retrato) é foto 3x4, ponto. Sem divergência.
+      const iaFalaDeFoto = /foto|retrato|rosto|3\s*[x×]\s*4/i.test(
+        `${ia.tipoDetectado || ""} ${ia.justificativa || ""} ${target.name}`,
+      );
+      const ehFoto3x4 =
+        isImage &&
+        (defaultTipoEfetivo === "foto_3x4" || tipoIA === "foto_3x4" ||
+          (tipoIA === "outro" && iaFalaDeFoto));
+      if (ehFoto3x4) {
+        tipoIA = "foto_3x4";
+        setClassificacao({
+          ...ia,
+          tipoDetectado: "FOTO_3X4",
+          confianca: Math.max(ia.confianca || 0, 0.95),
+          justificativa:
+            "Imagem de rosto do requerente, sem texto — classificada como Foto 3x4 (identificação civil).",
+        });
+      }
+      const categoriaIA2 = ehFoto3x4 ? "identificacao" : categoriaIA;
+      setCategoriaHub(categoriaIA2 as typeof categoriaIA);
       const camposIA = ia.camposExtraidos || {};
       // A IA devolve só os campos do schema dela — prestador e tomador da NFS-e
       // ficavam de fora, e por isso a conformidade não mostrava o tomador nem o
