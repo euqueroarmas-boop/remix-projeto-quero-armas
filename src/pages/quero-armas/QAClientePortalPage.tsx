@@ -3361,7 +3361,7 @@ export default function QAClientePortalPage() {
         rel="noopener noreferrer"
         title="Falar no WhatsApp"
         aria-label="Falar no WhatsApp"
-        className="qa-wa-sonar fixed z-50 flex items-center justify-center transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
+        className="fixed z-50 flex items-center justify-center transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-105 active:scale-95"
         style={{
           right: 12,
           bottom: 19,
