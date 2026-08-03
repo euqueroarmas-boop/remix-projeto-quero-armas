@@ -238,6 +238,25 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     return Array.from({ length: Math.min(4, p.length) }, (_, k) => p[(rotIndex + k) % p.length]);
   })();
 
+  // Arrastar sugestões na horizontal (dedo/mouse)
+  const sugRef = useRef<HTMLDivElement>(null);
+  const sugDrag = useRef<{ active: boolean; startX: number; startLeft: number; moved: boolean }>({ active: false, startX: 0, startLeft: 0, moved: false });
+  const onSugPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = sugRef.current;
+    if (!el) return;
+    sugDrag.current = { active: true, startX: e.clientX, startLeft: el.scrollLeft, moved: false };
+  };
+  const onSugPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = sugRef.current;
+    if (!el || !sugDrag.current.active) return;
+    const dx = e.clientX - sugDrag.current.startX;
+    if (Math.abs(dx) > 4) sugDrag.current.moved = true;
+    el.scrollLeft = sugDrag.current.startLeft - dx;
+  };
+  const onSugPointerUp = () => {
+    setTimeout(() => { sugDrag.current.active = false; }, 0);
+  };
+
   const carregarAnteriores = useCallback(async (excludeId?: string) => {
     if (!cliente) return;
     try {
