@@ -1183,19 +1183,8 @@ function ClientePortalMirrorAdmin({
   const customerId = docsCliente.find((d: any) => d.customer_id)?.customer_id ?? null;
   const userName = cliente.nome_completo || "Cliente";
 
-  const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard },
-    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: Crosshair },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText },
-    { key: "documentos" as const, label: "Documentos", icon: Files },
-    { key: "processos" as const, label: "Meus Processos", icon: FolderKanban },
-    { key: "pendencias" as const, label: "Pendências", icon: BellDot },
-    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target },
-    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen },
-    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard },
-    { key: "mensagens" as const, label: "Suporte", icon: Headphones },
-    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal },
-  ], []);
+  // Espelho fiel da área do cliente: mesma fonte única de atalhos.
+  const navItems = useMemo(() => PORTAL_NAV_ITEMS, []);
 
   const servicoNomePorId = useMemo(() => {
     const map: Record<number, string> = {};
