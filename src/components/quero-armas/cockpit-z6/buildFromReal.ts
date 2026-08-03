@@ -183,8 +183,18 @@ function buildProcessoCard(args: {
   docs: any[];
   eventos: any[];
   detalhado: boolean;
+  /** Ordem canônica vinda de Preços e Serviços (qa_servicos_documentos.ordem). */
+  ordemDoc?: (d: any) => number;
 }): CockpitZ6Process {
   const { proc, docs, eventos, detalhado } = args;
+  const ordemDoc =
+    args.ordemDoc ??
+    ((d: any) => {
+      const ord = Number(d?.ordem);
+      if (Number.isFinite(ord)) return ord;
+      const et = Number(d?.etapa);
+      return Number.isFinite(et) ? et * 100 : 9_999;
+    });
   const bloqueado = proc?._bloqueadoPrerequisito === true;
   const docsObrig = docs.filter((d) => d.obrigatorio !== false);
   // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
@@ -207,7 +217,9 @@ function buildProcessoCard(args: {
   const docsVisiveisObrigatorios = docs.filter(
     (d) => d.obrigatorio !== false && itemVisivelGuia(d, respostas),
   );
-  const docsAbertos = docsVisiveisObrigatorios.filter((d) => !isCumprido(d));
+  const docsAbertos = docsVisiveisObrigatorios
+    .filter((d) => !isCumprido(d))
+    .sort((a, b) => ordemDoc(a) - ordemDoc(b));
   const numeroEtapa = (d: any) => etapaDoTipoDocumento(d.tipo_documento, d.etapa);
   const etapaLiberadaRaw = Number(proc.etapa_liberada_ate);
   const etapaLiberada = Number.isFinite(etapaLiberadaRaw)
@@ -225,7 +237,9 @@ function buildProcessoCard(args: {
     etapaAtualNum == null
       ? []
       : docsVisiveisObrigatorios.filter((d) => numeroEtapa(d) === etapaAtualNum);
-  const abertosEtapaAtual = docsEtapaAtual.filter((d) => !isCumprido(d));
+  const abertosEtapaAtual = docsEtapaAtual
+    .filter((d) => !isCumprido(d))
+    .sort((a, b) => ordemDoc(a) - ordemDoc(b));
   const rotuloEtapa = (n: number | null) =>
     n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
     : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
@@ -291,7 +305,10 @@ function buildProcessoCard(args: {
     base.detalhado = {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
-      checklist: checklistFromDocs(abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs),
+      checklist: checklistFromDocs(
+        abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs,
+        ordemDoc,
+      ),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
         : abertosEtapaAtual.length
