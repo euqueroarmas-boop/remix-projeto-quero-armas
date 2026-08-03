@@ -3394,7 +3394,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || activeSection === "mensagens" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pt-[26px] pb-6"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
