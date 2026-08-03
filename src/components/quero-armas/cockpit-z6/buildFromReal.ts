@@ -19,6 +19,7 @@ import type {
 } from "./CockpitZ6MeusProcessos";
 import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 
@@ -120,10 +121,9 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
 
 function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
   const CUMPRIDO = (st: string) =>
-    st === "aprovado" ||
+    isChecklistCumprido(st) ||
     st === "recebido" ||
     st === "arquivado" ||
-    st.startsWith("dispensado") ||
     st.includes("reaproveitamento");
   if (!docs.length) return [];
   const sortable = [...docs].sort((a, b) => {
@@ -187,7 +187,7 @@ function buildProcessoCard(args: {
   // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
   const isCumprido = (d: any) => {
     const st = String(d.status || "").toLowerCase();
-    return st === "aprovado" || st === "recebido" || st === "arquivado" || st.startsWith("dispensado") || st.includes("reaproveitamento");
+    return isChecklistCumprido(st) || st === "recebido" || st === "arquivado" || st.includes("reaproveitamento");
   };
   const docsAprov = docsObrig.filter(isCumprido);
   const totalObrig = docsObrig.length || 1;
