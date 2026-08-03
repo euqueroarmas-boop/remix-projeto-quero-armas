@@ -75,8 +75,9 @@ const formatMemberSince = (d: string | null | undefined) => {
   try {
     const p = new Date(d);
     if (isNaN(p.getTime())) return "—";
-    const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
-    return `${meses[p.getMonth()]}/${p.getFullYear()}`;
+    const dd = String(p.getDate()).padStart(2, "0");
+    const mm = String(p.getMonth() + 1).padStart(2, "0");
+    return `${dd}/${mm}/${p.getFullYear()}`;
   } catch {
     return "—";
   }

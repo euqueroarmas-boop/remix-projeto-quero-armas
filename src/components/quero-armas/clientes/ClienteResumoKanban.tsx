@@ -706,8 +706,9 @@ export default function ClienteResumoKanban({
     if (!d) return null;
     const p = new Date(d);
     if (isNaN(p.getTime())) return null;
-    const meses = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
-    return `${meses[p.getMonth()]}/${p.getFullYear()}`;
+    const dd = String(p.getDate()).padStart(2, "0");
+    const mm = String(p.getMonth() + 1).padStart(2, "0");
+    return `${dd}/${mm}/${p.getFullYear()}`;
   })();
   // Categoria do titular: usa categoria_titular do cadastro/cliente.
   // Se ainda não houver CR enviado, exibe "SEM CATEGORIA" (sem inventar valor padrão).
