@@ -108,6 +108,36 @@ export const CONDICOES: OpcaoPergunta[] = [
   { label: "INDEFINIDO", valor: "indefinido" },
 ];
 
+// ─── MULTI-CONDIÇÃO ──────────────────────────────────────────────────────────
+// `condicao_profissional` aceita UMA condição ("autonomo") ou VÁRIAS separadas
+// por vírgula ("autonomo,empresario"). Regra única lida pelo simulador, pelo
+// admin e pelo qa-processo-set-condicao.
+export function parseCondicoes(valor: string | null | undefined): string[] {
+  return String(valor ?? "")
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function serializarCondicoes(valores: string[]): string | null {
+  const limpos = Array.from(new Set(valores.map((v) => v.trim().toLowerCase()).filter(Boolean)));
+  return limpos.length ? limpos.join(",") : null;
+}
+
+/** true quando a linha vale para a condição escolhida (ou não tem condição). */
+export function condicaoCasa(valor: string | null | undefined, condicao: string | null): boolean {
+  const lista = parseCondicoes(valor);
+  if (lista.length === 0) return true;
+  if (!condicao || condicao === "indefinido") return false;
+  return lista.includes(String(condicao).toLowerCase());
+}
+
+export function rotulosCondicoes(valor: string | null | undefined): string {
+  return parseCondicoes(valor)
+    .map((v) => CONDICOES_CHECKLIST.find((c) => c.valor === v)?.label ?? v.toUpperCase())
+    .join(" OU ");
+}
+
 export const MODALIDADES: OpcaoPergunta[] = [
   { label: "DEFESA PESSOAL", valor: "defesa_pessoal" },
   { label: "ATIRADOR ESPORTIVO", valor: "atirador" },
