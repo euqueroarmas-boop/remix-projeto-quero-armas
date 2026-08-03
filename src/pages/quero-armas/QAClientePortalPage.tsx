@@ -343,7 +343,6 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
-  const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
   // id para que o Hub Documental salve o novo como substituição (marca o
