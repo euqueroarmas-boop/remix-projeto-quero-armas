@@ -65,11 +65,24 @@ Deno.serve(async (req) => {
   const { data: roleData } = await admin
     .from("user_roles").select("role")
     .eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
-  if (!roleData) return json({ error: "forbidden" }, 403);
+  const isAdmin = Boolean(roleData);
 
   let body: any = {};
   try { body = await req.json(); } catch { body = {}; }
   const action = String(body.action || "");
+
+  // "encerrar" também pode ser disparado de dentro da sessão de suporte
+  // (o operador está logado como o cliente, portanto sem papel de admin).
+  if (!isAdmin) {
+    if (action !== "encerrar") return json({ error: "forbidden" }, 403);
+    const { data: sCheck } = await admin
+      .from("qa_suporte_sessoes").select("cliente_email")
+      .eq("id", String(body.sessao_id || "")).maybeSingle();
+    const callerEmail = (userData.user.email || "").toLowerCase();
+    if (!sCheck || String(sCheck.cliente_email || "").toLowerCase() !== callerEmail) {
+      return json({ error: "forbidden" }, 403);
+    }
+  }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
   const userAgent = req.headers.get("user-agent") || null;
