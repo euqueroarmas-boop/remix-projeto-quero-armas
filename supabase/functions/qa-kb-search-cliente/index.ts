@@ -636,7 +636,10 @@ Deno.serve(async (req) => {
             ...historyMessages,
             {
               role: "user",
-              content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctxFinal}`,
+              content:
+                `Dúvida do cliente: "${query}"\n\n` +
+                (anexosCtx ? `${anexosCtx}\n\n======\n\n` : "") +
+                `Fontes disponíveis:\n\n${ctxFinal}`,
             },
           ],
         }),
