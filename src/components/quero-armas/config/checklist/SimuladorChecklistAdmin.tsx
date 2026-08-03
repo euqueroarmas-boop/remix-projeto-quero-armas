@@ -19,6 +19,7 @@ import {
   simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
+import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -39,6 +40,9 @@ const INK = "hsl(220 20% 18%)";
 const MUTED = "hsl(220 10% 45%)";
 const LINE = "hsl(220 13% 91%)";
 const BORDO = "#7A1F2B";
+const GRUPOS_MOVIMENTO = Object.values(PENDENCIA_GRUPOS).filter(
+  (g) => g.id !== "assinaturas" && g.id !== "perguntas",
+);
 
 export default function SimuladorChecklistAdmin() {
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -274,6 +278,20 @@ export default function SimuladorChecklistAdmin() {
     const destino = Math.max(0, Math.min(estrutura.length - 1, Math.round(novaPosicao) - 1));
     if (atual === destino) return;
     await persistirGrupos(arrayMove(estrutura, atual, destino));
+  }
+
+  async function moverItemParaGrupo(id: string, grupoDestino: PendenciaGrupoId) {
+    const estrutura = sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) }));
+    const origem = estrutura.findIndex((g) => g.ids.includes(id));
+    if (origem < 0 || estrutura[origem].grupo === grupoDestino) return;
+    estrutura[origem].ids = estrutura[origem].ids.filter((itemId) => itemId !== id);
+    let destino = estrutura.findIndex((g) => g.grupo === grupoDestino);
+    if (destino < 0) {
+      estrutura.push({ grupo: grupoDestino, ids: [] });
+      destino = estrutura.length - 1;
+    }
+    estrutura[destino].ids.push(id);
+    await persistirGrupos(estrutura.filter((g) => g.ids.length > 0));
   }
 
   const sensors = useSensors(
@@ -711,6 +729,7 @@ export default function SimuladorChecklistAdmin() {
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
                               onDefinirOrdem={definirOrdem}
+                              onMoverGrupo={moverItemParaGrupo}
                               onRenomear={renomearItem}
                             />
                           ))}
@@ -817,6 +836,7 @@ function LinhaItem({
   onLimparResposta,
   onRemover,
   onDefinirOrdem,
+  onMoverGrupo,
   onRenomear,
 }: {
   item: ItemSimulado;
@@ -825,6 +845,7 @@ function LinhaItem({
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
+  onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
@@ -921,6 +942,22 @@ function LinhaItem({
           />
           <span>· {item.tipo_documento}</span>
           {item.motivo ? <span>· {item.motivo}</span> : null}
+        </div>
+        <div className="mt-1 flex items-center gap-1">
+          <span className="text-[9px] uppercase" style={{ color: MUTED }}>grupo</span>
+          <select
+            value={item.grupo}
+            onChange={(e) => onMoverGrupo(item.id, e.currentTarget.value as PendenciaGrupoId)}
+            onClick={(e) => e.stopPropagation()}
+            disabled={item.estado === "dispensado"}
+            className="h-5 min-w-0 max-w-[210px] rounded border bg-white px-1 text-[9px] uppercase"
+            style={{ borderColor: LINE, color: INK }}
+            title="Escolha em qual grupo esta exigência deve aparecer para o cliente"
+          >
+            {GRUPOS_MOVIMENTO.map((grupo) => (
+              <option key={grupo.id} value={grupo.id}>{grupo.label}</option>
+            ))}
+          </select>
         </div>
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
