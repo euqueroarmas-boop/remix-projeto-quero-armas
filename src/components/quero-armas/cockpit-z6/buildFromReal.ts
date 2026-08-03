@@ -62,6 +62,22 @@ function formatServicoNome(value: string | null | undefined): string {
 }
 
 /** Mapeia status do qa_processos → badge visual canônica do Z6. */
+/** Nome curto e amigável do serviço (sem caixa alta gritante). */
+function formatServicoAmigavel(value: string | null | undefined): string {
+  const raw = String(value ?? "").replace(/\s+/g, " ").trim();
+  if (!raw) return "seu processo";
+  const l = raw.toLocaleLowerCase("pt-BR");
+  if (l.includes("posse")) return "Posse de arma de fogo";
+  if (l.includes("porte")) return "Porte de arma de fogo";
+  if (l.includes("caç") || l.includes("cac") || l.includes("colecionador") || l.includes("atirador"))
+    return "Registro CAC";
+  if (l.includes("transfer")) return "Transferência de arma";
+  if (l.includes("renova")) return "Renovação de registro";
+  if (l.includes("guia") && l.includes("tráfego")) return "Guia de tráfego";
+  const curto = raw.split("/")[0].trim();
+  return curto.charAt(0).toLocaleUpperCase("pt-BR") + curto.slice(1).toLocaleLowerCase("pt-BR");
+}
+
 function badgeForStatus(status: string | null | undefined): { badge: string; tone: CockpitZ6Process["badgeTone"] } {
   const s = String(status || "").toLowerCase();
   if (s === "protocolado") return { badge: "NA POLÍCIA FEDERAL", tone: "green" };
@@ -334,20 +350,20 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   const procDocs = focoCandidates.find((p) => String(p.status).toLowerCase() === "aguardando_documentos");
   if (procPagamento) {
     focoDoDia = {
-      titulo: `Pagamento pendente — ${formatServicoNome(procPagamento.servico_nome || "Processo")}`,
+      titulo: `Pagamento pendente · ${formatServicoAmigavel(procPagamento.servico_nome)}`,
       descricao: "Liberamos a próxima etapa assim que o pagamento for confirmado.",
       cta: { label: "PAGAR AGORA →", onClick: onFocoCta },
     };
   } else if (procAssinatura) {
     focoDoDia = {
-      titulo: `Assinatura pendente — ${formatServicoNome(procAssinatura.servico_nome || "Processo")}`,
+      titulo: `Assinatura pendente · ${formatServicoAmigavel(procAssinatura.servico_nome)}`,
       descricao: "Pagamento confirmado. Assine o contrato para liberarmos o checklist e iniciarmos o seu processo. O Arsenal Inteligente segue liberado.",
       cta: { label: "ASSINAR CONTRATO →", onClick: onFocoCta },
     };
   } else if (procDocs) {
     const docsAbertos = processoDocs.filter((d) => d.processo_id === procDocs.id && !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
     focoDoDia = {
-      titulo: `${docsAbertos.length} documento(s) pendente(s) — ${formatServicoNome(procDocs.servico_nome || "Processo")}`,
+      titulo: `${docsAbertos.length} ${docsAbertos.length === 1 ? "documento pendente" : "documentos pendentes"} · ${formatServicoAmigavel(procDocs.servico_nome)}`,
       descricao: "Conclua a etapa atual para liberar o próximo passo do seu processo.",
       cta: { label: "ENVIAR DOCUMENTOS →", onClick: onFocoCta },
     };
