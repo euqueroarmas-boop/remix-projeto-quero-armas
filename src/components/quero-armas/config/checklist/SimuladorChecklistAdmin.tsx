@@ -85,6 +85,43 @@ export default function SimuladorChecklistAdmin() {
     setEntregues({});
   }
 
+  /**
+   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
+   * (`ativo = false`), que é o mesmo mecanismo do Montar Checklist — o item
+   * some do simulador, do portal do cliente e de todos os motores, e pode ser
+   * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
+   */
+  async function removerItem(id: string, nome: string) {
+    const anteriores = linhas;
+    setLinhas((p) => p.filter((l) => l.id !== id));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ativo: false })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL EXCLUIR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success(`"${String(nome).toUpperCase()}" REMOVIDO DO CHECKLIST`, {
+      action: {
+        label: "DESFAZER",
+        onClick: async () => {
+          const { error: e2 } = await supabase
+            .from("qa_servicos_documentos" as any)
+            .update({ ativo: true })
+            .eq("id", id);
+          if (e2) {
+            toast.error("NÃO FOI POSSÍVEL REATIVAR");
+            return;
+          }
+          setLinhas(anteriores);
+          toast.success("EXIGÊNCIA RESTAURADA");
+        },
+      },
+    });
+  }
+
   const servicoNome = servicos.find((s) => s.id === servicoId)?.nome_servico ?? "";
 
   const sensors = useSensors(
