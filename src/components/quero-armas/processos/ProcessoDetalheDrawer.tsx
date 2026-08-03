@@ -1337,7 +1337,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
                   <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: progresso === 100 ? "#00FF41" : st.color }} />
                   </div>
                 </div>
               )}

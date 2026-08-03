@@ -3906,7 +3906,7 @@ export default function QAClientePortalPage() {
                             </div>
                             <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
                               <div className="h-full rounded-full"
-                                style={{ width: `${metrics.progresso}%`, background: done ? "#639922" : bad ? "#E24B4A" : "#BA7517" }} />
+                                style={{ width: `${metrics.progresso}%`, background: done ? "#00FF41" : bad ? "#E24B4A" : "#BA7517" }} />
                             </div>
                             <div className="flex justify-between text-[10px] mt-1 text-slate-400">
                               <span>{metrics.cumpridos}/{metrics.total} documentos</span>

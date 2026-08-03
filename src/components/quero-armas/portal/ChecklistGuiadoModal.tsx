@@ -1563,7 +1563,7 @@ export default function ChecklistGuiadoModal({
                   </span>
                 </div>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: MARROM }} />
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? "#00FF41" : MARROM }} />
                 </div>
                 {/* Bloco 11 — Resumo das 3 caixas (aditivo, não altera o fluxo guiado) */}
                 <div className="mt-3">
@@ -1618,7 +1618,7 @@ export default function ChecklistGuiadoModal({
                       </div>
                       {p.total > 0 && (
                         <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.percentual ?? p.pct}%`, background: MARROM }} />
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.percentual ?? p.pct}%`, background: (p.percentual ?? p.pct) === 100 ? "#00FF41" : MARROM }} />
                         </div>
                       )}
                     </div>
