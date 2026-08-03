@@ -445,7 +445,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   }
 
   async function removeRow(row: ExigenciaRow) {
-
+    if (!confirm(`EXCLUIR "${row.nome_documento}"?`)) return;
     if (!confirm(`EXCLUIR "${row.nome_documento}"?`)) return;
     const { error } = await supabase.from("qa_servicos_documentos" as any).delete().eq("id", row.id);
     if (error) {
