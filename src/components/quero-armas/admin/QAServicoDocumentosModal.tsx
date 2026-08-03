@@ -463,13 +463,18 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   async function toggleAtivo(row: ExigenciaRow) {
     const novo = !row.ativo;
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: novo } : r)));
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("qa_servicos_documentos" as any)
       .update({ ativo: novo })
-      .eq("id", row.id);
-    if (error) {
+      .eq("id", row.id)
+      .select("id, ativo");
+    // Sem erro mas sem linha retornada = update bloqueado por permissão.
+    if (error || !data || (data as any[]).length === 0) {
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: !novo } : r)));
-      toast.error("FALHA AO ALTERAR STATUS — " + error.message.toUpperCase());
+      toast.error(
+        "FALHA AO ALTERAR STATUS — " +
+          (error?.message?.toUpperCase() || "SEM PERMISSÃO PARA GRAVAR ESTA EXIGÊNCIA"),
+      );
       return;
     }
     setPatches((prev) => {
