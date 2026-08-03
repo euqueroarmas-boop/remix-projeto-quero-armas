@@ -396,6 +396,7 @@ export default function SimuladorChecklistAdmin() {
 
 function LinhaItem({
   item,
+  item,
   onToggle,
   onResponder,
   onLimparResposta,
