@@ -1,0 +1,65 @@
+/* =======================================================================
+   QA TYPE — Tokens tipográficos canônicos da área do cliente Quero Armas
+   Padrão Editorial: Oswald (títulos/labels) + Arial Narrow (metadados)
+   + Georgia (destaque editorial) + Arial (corpo)
+   Uso: aplicar as classes; NUNCA redefinir font-size/font-family inline.
+   ======================================================================= */
+
+:root {
+  --qa-font-display: 'Oswald', 'Arial Narrow', Arial, sans-serif;
+  --qa-font-meta: 'Arial Narrow', Arial, sans-serif;
+  --qa-font-editorial: Georgia, 'Times New Roman', serif;
+  --qa-font-body: Arial, Helvetica, sans-serif;
+  --qa-ink: #0A0A0A;
+  --qa-ink-soft: #5A5A5A;
+  --qa-ink-mute: #7A7A7A;
+  --qa-bordo: #7A1F2B;
+  --qa-alert: #C32E26;
+}
+
+/* 1. Título principal da página (22px fixo) */
+.qa-h1 { font-family: var(--qa-font-display); font-size: 22px; font-weight: 700; letter-spacing: .03em; line-height: 1.05; text-transform: uppercase; color: var(--qa-ink); margin: 0; }
+
+/* 2. Título de bloco/card */
+.qa-h2 { font-family: var(--qa-font-display); font-size: 13px; font-weight: 900; letter-spacing: .24em; line-height: 1.25; text-transform: uppercase; color: var(--qa-ink); margin: 0; }
+
+/* 3. Subtítulo interno de card */
+.qa-h3 { font-family: var(--qa-font-display); font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--qa-ink); margin: 0; }
+
+/* 4. Eyebrow / kicker */
+.qa-eyebrow { font-family: var(--qa-font-display); font-size: 10px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; color: var(--qa-ink-mute); }
+.qa-eyebrow--alert { color: var(--qa-alert); }
+
+/* 5. Linha de metadados (CPF, membro desde, contadores) */
+.qa-meta { font-family: var(--qa-font-meta); font-size: 10px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; color: #6A6A6A; }
+.qa-meta b { color: var(--qa-ink); font-weight: 600; }
+
+/* 6. Rótulo de KPI */
+.qa-kpi-label { font-family: var(--qa-font-display); font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: var(--qa-ink-mute); line-height: 1.1; }
+
+/* 7. Valor de KPI */
+.qa-kpi-value { font-family: var(--qa-font-display); font-size: 26px; font-weight: 900; line-height: 1; color: var(--qa-ink); }
+
+/* 8. Subtexto de KPI */
+.qa-kpi-sub { font-family: var(--qa-font-body); font-size: 11px; font-weight: 700; color: var(--qa-ink-mute); line-height: 1.25; }
+
+/* 9. Destaque editorial (manchete de card, ex.: Foco do Dia) */
+.qa-editorial { font-family: var(--qa-font-editorial); font-size: 26px; font-weight: 700; letter-spacing: -.015em; line-height: 1.1; color: #0C0C0C; }
+
+/* 10. Corpo de texto */
+.qa-body { font-family: var(--qa-font-body); font-size: 13px; line-height: 1.45; color: var(--qa-ink); }
+.qa-body--soft { color: var(--qa-ink-soft); }
+
+/* 11. Legenda / texto auxiliar */
+.qa-caption { font-family: var(--qa-font-body); font-size: 11px; line-height: 1.35; color: var(--qa-ink-mute); }
+
+/* 12. Rótulo de botão/CTA */
+.qa-btn-label { font-family: var(--qa-font-display); font-size: 11px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; }
+
+/* Ajustes mobile canônicos (hierarquia, sem alterar layout) */
+@media (max-width: 640px) {
+  .qa-editorial { font-size: 16px; line-height: 1.2; }
+  .qa-kpi-label { font-size: 9.5px; letter-spacing: .12em; }
+  .qa-kpi-sub { font-size: 10px; }
+  .qa-btn-label { font-size: 10px; letter-spacing: .14em; }
+}
