@@ -413,6 +413,33 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
   return (
     <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .qa-kpi-card {
+            padding: 10px 10px 9px !important;
+            border-radius: 5px !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+          }
+          .qa-kpi-card__label {
+            font-size: 8px !important;
+            letter-spacing: 0.14em !important;
+            gap: 4px !important;
+          }
+          .qa-kpi-card__label span {
+            width: 5px !important;
+            height: 5px !important;
+          }
+          .qa-kpi-card__value {
+            font-size: 22px !important;
+            margin-top: 5px !important;
+          }
+          .qa-kpi-card__sub {
+            font-size: 9px !important;
+            margin-top: 3px !important;
+            line-height: 1.2 !important;
+          }
+        }
+      `}</style>
       {/* ── Bloco fixo: cabeçalho → CONTRATO PRINCIPAL ── */}
       <div className="flex-none z-30 bg-[#F2F2F2] pt-4 pb-1">
       {/* ── Cabeçalho cliente-centric ── */}
