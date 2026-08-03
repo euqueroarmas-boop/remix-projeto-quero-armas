@@ -17,6 +17,7 @@ import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcura
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
 import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/MontarChecklistAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
+import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
@@ -446,12 +447,19 @@ export default function QAConfiguracoesPage() {
           {isAdmin && <TabsTrigger value="checklist" className="data-[state=active]:bg-slate-100">Montar Checklist</TabsTrigger>}
           {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="klal" className="data-[state=active]:bg-slate-100">Klal</TabsTrigger>}
           <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
           <TabsTrigger value="perfil" className="data-[state=active]:bg-slate-100">Perfil</TabsTrigger>
           {isAdmin && <TabsTrigger value="monitoramento" className="data-[state=active]:bg-slate-100">Monitoramento</TabsTrigger>}
           {isAdmin && <TabsTrigger value="aparencia" className="data-[state=active]:bg-slate-100">Aparência</TabsTrigger>}
           {isAdmin && <TabsTrigger value="favicon" className="data-[state=active]:bg-slate-100">Favicon</TabsTrigger>}
         </TabsList>
+
+        {isAdmin && (
+          <TabsContent value="klal" className="mt-4">
+            <QAKlalPersonaAdmin />
+          </TabsContent>
+        )}
 
         <TabsContent value="sistema" className="mt-4">
           {/* System Status */}
