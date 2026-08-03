@@ -563,10 +563,41 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
       }
     } catch { /* fallback silencioso para ordenação alfabética */ }
   }
+  // Camada 3 (fonte única): Biblioteca de Documentos. Quando o serviço não
+  // preencheu instrucoes/link_emissao/observacoes, o texto vem do cadastro
+  // único da biblioteca (qa_documentos_biblioteca.codigo = tipo_documento).
+  const bibliotecaMap = new Map<string, {
+    instrucoes: string | null;
+    link_emissao: string | null;
+    observacoes_cliente: string | null;
+    modelo_url: string | null;
+  }>();
+  if ((dList?.length ?? 0) > 0) {
+    try {
+      const codigos = Array.from(
+        new Set(((dList ?? []) as any[]).map((d) => String(d.tipo_documento ?? "").toLowerCase()).filter(Boolean)),
+      );
+      if (codigos.length > 0) {
+        const { data: bib } = await supabase
+          .from("qa_documentos_biblioteca" as any)
+          .select("codigo, descricao_como_enviar, link_emissao, observacao_cliente, link_modelo")
+          .in("codigo", codigos);
+        for (const b of ((bib as any[]) ?? [])) {
+          bibliotecaMap.set(String(b.codigo ?? "").toLowerCase(), {
+            instrucoes:          b.descricao_como_enviar || null,
+            link_emissao:        b.link_emissao          || null,
+            observacoes_cliente: b.observacao_cliente    || null,
+            modelo_url:          b.link_modelo           || null,
+          });
+        }
+      }
+    } catch { /* biblioteca é fallback — nunca bloqueia o checklist */ }
+  }
   const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => {
     const key = String((d as any).tipo_documento ?? "").toLowerCase();
     const catalogoRegra   = catalogoRegraMap.get(key);
     const cat             = catalogoConteudoMap.get(key);
+    const bib             = bibliotecaMap.get(key);
     return {
       ...d,
       // Hidrata wizard_pre_documento do catálogo quando o doc do processo não
@@ -578,11 +609,11 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
       ),
       // Hidrata campos de conteúdo do catálogo quando o snapshot do processo
       // está vazio — o admin preencheu instrucoes/link_emissao depois da explosão.
-      link_emissao:           (d as any).link_emissao           || cat?.link_emissao           || null,
-      instrucoes:             (d as any).instrucoes             || cat?.instrucoes             || null,
-      observacoes_cliente:    (d as any).observacoes_cliente    || cat?.observacoes_cliente    || null,
+      link_emissao:           (d as any).link_emissao           || cat?.link_emissao           || bib?.link_emissao        || null,
+      instrucoes:             (d as any).instrucoes             || cat?.instrucoes             || bib?.instrucoes          || null,
+      observacoes_cliente:    (d as any).observacoes_cliente    || cat?.observacoes_cliente    || bib?.observacoes_cliente || null,
       orgao_emissor:          (d as any).orgao_emissor          || cat?.orgao_emissor          || null,
-      modelo_url:             (d as any).modelo_url             || cat?.modelo_url             || null,
+      modelo_url:             (d as any).modelo_url             || cat?.modelo_url             || bib?.modelo_url          || null,
       exemplo_url:            (d as any).exemplo_url            || cat?.exemplo_url            || null,
       prazo_recomendado_dias: (d as any).prazo_recomendado_dias ?? cat?.prazo_recomendado_dias ?? null,
       // Ordem efetiva: catálogo (qa_servicos_documentos.ordem) sempre tem

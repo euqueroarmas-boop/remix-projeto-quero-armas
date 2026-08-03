@@ -283,15 +283,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
-  // Regra: os passos ricos (código) SEMPRE têm precedência sobre `instrucoes`
-  // curtas do catálogo, para garantir explicação passo-a-passo para leigos.
-  // Só usamos o texto do admin quando o REGISTRO estático não tem passos
-  // detalhados (menos de 2 passos).
+  // Regra (03/08/2026): a FONTE ÚNICA é o texto cadastrado pela equipe —
+  // Biblioteca de Documentos ou catálogo do serviço. Quando ele existe, vence
+  // o REGISTRO estático do código, que passa a ser apenas fallback para
+  // documentos ainda sem passo a passo cadastrado.
   const passosCatalogo = active.instrucoesCatalogo
     ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     : [];
-  const estaticoRico = !isSignature && explicBase.passos.length >= 2;
-  const usarCatalogo = !isSignature && !estaticoRico && passosCatalogo.length > 0;
+  const usarCatalogo = !isSignature && passosCatalogo.length > 0;
   const explic = usarCatalogo
     ? {
         ...explicBase,

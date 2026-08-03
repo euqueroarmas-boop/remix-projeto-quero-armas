@@ -5,11 +5,12 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookMarked, Plus, Search, Loader2, RefreshCw, Save, Trash2,
-  ChevronDown, ChevronUp, Archive, X, Upload,
+  ChevronDown, ChevronUp, Archive, X, Upload, Copy, HelpCircle,
 } from "lucide-react";
 import BibliotecaModelosParser, {
   SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
 } from "./BibliotecaModelosParser";
+import { EXPLICACOES_REGISTRO } from "@/lib/quero-armas/pendenciasExplicacoes";
 
 type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
 
@@ -104,6 +105,35 @@ export default function QABibliotecaDocumentosAdmin() {
   const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
   const [modelosNovo, setModelosNovo] = useState<File[]>([]);
   const [treinandoNovo, setTreinandoNovo] = useState(false);
+  const [importando, setImportando] = useState(false);
+
+  // Traz para a biblioteca (fonte única) o passo a passo que hoje está escrito
+  // no módulo do assistente do cliente. Só preenche o que está EM BRANCO —
+  // nunca sobrescreve texto já editado pela equipe.
+  async function importarTextosDoAssistente() {
+    const alvos = itens.filter(
+      (i) => !((i.descricao_como_enviar ?? "").trim()) && EXPLICACOES_REGISTRO[i.codigo]?.passos?.length,
+    );
+    if (alvos.length === 0) { toast.info("Nada a importar — todos os documentos já têm passo a passo escrito aqui."); return; }
+    if (!confirm(`Importar o passo a passo do assistente para ${alvos.length} documento(s) sem texto? Nada que já foi escrito aqui será sobrescrito.`)) return;
+    setImportando(true);
+    let ok = 0;
+    for (const item of alvos) {
+      const e = EXPLICACOES_REGISTRO[item.codigo];
+      const { error } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .update({
+          descricao_como_enviar: e.passos.join("\n"),
+          observacao_cliente: item.observacao_cliente || e.observacao || null,
+          link_emissao: item.link_emissao || e.siteUrl || null,
+        })
+        .eq("id", item.id);
+      if (!error) ok++;
+    }
+    setImportando(false);
+    toast.success(`${ok} documento(s) atualizados com o passo a passo do assistente.`);
+    await carregar();
+  }
 
   async function recarregarResumo() {
     try { setResumoModelos(await carregarResumoModelos()); } catch { /* silencioso */ }
@@ -218,6 +248,36 @@ export default function QABibliotecaDocumentosAdmin() {
     await carregar();
   }
 
+  // Duplicar: cria uma cópia editável do documento (mesmo passo a passo,
+  // links e base legal), com código novo. Útil para variações regionais —
+  // ex.: "Certidão Federal — TRF 3ª Região" vira TRF 1ª/2ª/4ª/5ª.
+  async function duplicarItem(item: BibliotecaItem) {
+    const nome = prompt("Nome da cópia:", `${item.nome} (cópia)`);
+    if (!nome || !nome.trim()) return;
+    let codigo = gerarCodigo(nome);
+    if (itens.some((i) => i.codigo === codigo)) codigo = `${codigo}_${Date.now().toString().slice(-4)}`;
+    const { error } = await supabase
+      .from("qa_documentos_biblioteca" as any)
+      .insert({
+        codigo,
+        nome: nome.trim(),
+        categoria: item.categoria,
+        descricao_o_que_e: item.descricao_o_que_e,
+        descricao_como_enviar: item.descricao_como_enviar,
+        observacao_cliente: item.observacao_cliente,
+        validade_dias: item.validade_dias,
+        formato_aceito: item.formato_aceito,
+        link_emissao: item.link_emissao,
+        link_modelo: item.link_modelo,
+        base_legal: item.base_legal,
+        emissor_padrao: item.emissor_padrao || "cliente",
+        ativo: true,
+      });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Cópia criada: "${nome.trim()}" — ajuste o texto e o link antes de usar.`);
+    await carregar();
+  }
+
   async function criarNovo() {
     if (!novo.nome.trim()) { toast.error("Informe o nome do documento"); return; }
     const codigo = novo.codigo.trim() || gerarCodigo(novo.nome);
@@ -274,6 +334,18 @@ export default function QABibliotecaDocumentosAdmin() {
         </h2>
         <Button variant="ghost" size="sm" onClick={carregar} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
+        </Button>
+      </div>
+      <div className="flex justify-end mb-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={importarTextosDoAssistente}
+          disabled={importando || carregando}
+          className="h-7 text-xs gap-1 text-[#7A1F2B]"
+        >
+          {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+          Importar passo a passo do assistente
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
@@ -467,6 +539,7 @@ export default function QABibliotecaDocumentosAdmin() {
                     onToggle={() => setAbertoId((v) => (v === item.id ? null : item.id))}
                     onSalvar={salvarItem}
                     onArquivar={arquivarItem}
+                    onDuplicar={duplicarItem}
                     salvando={salvandoId === item.id}
                   />
                 ))}
@@ -481,18 +554,20 @@ export default function QABibliotecaDocumentosAdmin() {
 
 // ─── Linha da biblioteca (accordion editável) ─────────────────────────────
 function ItemBiblioteca({
-  item, aberto, onToggle, onSalvar, onArquivar, salvando, resumoModelos, onModelosChanged,
+  item, aberto, onToggle, onSalvar, onArquivar, onDuplicar, salvando, resumoModelos, onModelosChanged,
 }: {
   item: BibliotecaItem;
   aberto: boolean;
   onToggle: () => void;
   onSalvar: (i: BibliotecaItem) => void;
   onArquivar: (i: BibliotecaItem) => void;
+  onDuplicar: (i: BibliotecaItem) => void;
   salvando: boolean;
   resumoModelos?: { total: number; deterministico: number; ia: number };
   onModelosChanged?: () => void;
 }) {
   const [local, setLocal] = useState<BibliotecaItem>(item);
+  const [ajudaAberta, setAjudaAberta] = useState(false);
   useEffect(() => { setLocal(item); }, [item]);
 
   function set<K extends keyof BibliotecaItem>(k: K, v: BibliotecaItem[K]) {
@@ -560,11 +635,35 @@ function ItemBiblioteca({
           </div>
 
           <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Como o cliente deve enviar? (passo a passo)</label>
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Como o cliente deve enviar? (passo a passo)</label>
+              <button
+                type="button"
+                onClick={() => setAjudaAberta((v) => !v)}
+                className="text-[10px] font-semibold uppercase tracking-wide text-[#7A1F2B] inline-flex items-center gap-1 hover:underline"
+              >
+                <HelpCircle className="w-3 h-3" /> Como escrever
+              </button>
+            </div>
+            {ajudaAberta && (
+              <div className="mb-1.5 rounded-md border border-[#7A1F2B]/25 bg-[#7A1F2B]/[0.04] p-2.5 text-[11px] leading-relaxed text-slate-700 space-y-1.5">
+                <p><b>Uma linha = um passo numerado no portal do cliente.</b> Escreva como se estivesse explicando por telefone para alguém que nunca entrou no site do órgão. Dê Enter a cada passo — o sistema numera sozinho (1, 2, 3…).</p>
+                <p>Regras práticas: comece cada linha com o verbo (“Abra…”, “Selecione…”, “Marque…”), diga <b>exatamente</b> o nome do botão ou campo entre aspas, e termine mandando o cliente voltar e clicar em “Entregar documento”.</p>
+                <p>O <b>link do site oficial</b> não vai no texto: coloque no campo “Link para emissão” abaixo — ele aparece destacado no topo do passo a passo. A frase curta de prazo (“emitida nos últimos 30 dias”) vai em “Observação curta ao cliente”.</p>
+                <p className="font-mono text-[10px] whitespace-pre-wrap bg-white border border-slate-200 rounded p-2 text-slate-600">{`Abra o portal do TRF pelo link acima (em SP e MS é o TRF3).
+Em "Tipo de certidão" selecione "Criminal (engloba ações criminais em geral, inclusive execuções)".
+Em "Tipo de documento" selecione "CPF" e informe o número em "Documento".
+Deixe "Nome social" em branco, salvo se for o seu caso.
+Em "Abrangência" selecione "Regional" — é a que a Polícia Federal exige.
+Marque "Confirme que é humano" e envie o formulário.
+Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
+              </div>
+            )}
             <textarea
               value={local.descricao_como_enviar ?? ""}
               onChange={(e) => set("descricao_como_enviar", e.target.value)}
-              rows={4}
+              rows={7}
+              placeholder={"Um passo por linha. Ex.:\nAbra o portal pelo link acima.\nEm \"Tipo de certidão\" selecione \"Criminal\".\nBaixe o PDF original com QR Code e volte aqui."}
               className="w-full rounded-md border px-2 py-1.5 text-xs resize-y"
               style={{ borderColor: "hsl(220 15% 88%)" }}
             />
@@ -631,14 +730,24 @@ function ItemBiblioteca({
           />
 
           <div className="flex justify-between items-center pt-1">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onArquivar(item)}
-              className="text-xs h-7 text-slate-500 hover:text-red-600 gap-1"
-            >
-              {item.ativo ? <><Archive className="w-3 h-3" /> Arquivar</> : <><Trash2 className="w-3 h-3" /> Arquivado</>}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onArquivar(item)}
+                className="text-xs h-7 text-slate-500 hover:text-red-600 gap-1"
+              >
+                {item.ativo ? <><Archive className="w-3 h-3" /> Arquivar</> : <><Trash2 className="w-3 h-3" /> Arquivado</>}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onDuplicar(item)}
+                className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
+              >
+                <Copy className="w-3 h-3" /> Duplicar
+              </Button>
+            </div>
             <Button
               size="sm"
               onClick={() => onSalvar(local)}
