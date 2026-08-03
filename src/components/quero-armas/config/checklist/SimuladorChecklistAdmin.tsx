@@ -716,12 +716,14 @@ function LinhaItem({
   onResponder,
   onLimparResposta,
   onRemover,
+  onDefinirOrdem,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
   onResponder: (chave: string, valor: string) => void;
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
+  onDefinirOrdem: (id: string, novaOrdem: number) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -769,9 +771,28 @@ function LinhaItem({
         >
           {item.nome_documento}
         </div>
-        <div className="text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
-          ordem {item.ordem} · {item.tipo_documento}
-          {item.motivo ? ` · ${item.motivo}` : ""}
+        <div className="flex flex-wrap items-center gap-1 text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
+          <span className="uppercase">ordem</span>
+          <input
+            type="number"
+            min={0}
+            step={10}
+            defaultValue={item.ordem}
+            key={`ord-${item.id}-${item.ordem}`}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const v = Number(e.currentTarget.value);
+              if (Number.isFinite(v) && v !== item.ordem) onDefinirOrdem(item.id, v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+            }}
+            title="Digite o número de ordem desta exigência"
+            className="w-12 rounded border px-1 py-0 text-[9px] font-mono tabular-nums"
+            style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
+          />
+          <span>· {item.tipo_documento}</span>
+          {item.motivo ? <span>· {item.motivo}</span> : null}
         </div>
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
