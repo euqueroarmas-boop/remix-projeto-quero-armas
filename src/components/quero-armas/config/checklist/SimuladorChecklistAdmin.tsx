@@ -114,6 +114,58 @@ export default function SimuladorChecklistAdmin() {
 
   /**
    * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
+   */
+  /**
+   * Adiciona uma exigência ao serviço a partir da BIBLIOTECA — exatamente a
+   * mesma tabela (qa_documentos_biblioteca) e a mesma gravação
+   * (qa_servicos_documentos) usadas por Montar Checklist / Catálogo de Preços.
+   * Não existe cadastro paralelo: o que é criado aqui aparece lá e vice-versa.
+   */
+  async function adicionarExigencia(item: BibliotecaItem) {
+    if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
+    setAdicionando(true);
+    try {
+      // Entra no fim do grupo temático a que o documento pertence, para já
+      // nascer na posição certa da lista que o cliente vê.
+      const grupo = grupoCanonico(item.codigo);
+      const doGrupo = linhas.filter((l) => grupoCanonico(l.tipo_documento) === grupo);
+      const base = doGrupo.length
+        ? Math.max(...doGrupo.map((l) => l.ordem ?? 0))
+        : Math.max(0, ...linhas.map((l) => l.ordem ?? 0));
+      const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+        servico_id: servicoId,
+        biblioteca_id: item.id,
+        tipo_documento: item.codigo,
+        nome_documento: item.nome,
+        etapa: "base",
+        obrigatorio: true,
+        condicao_profissional: condicaoNova || null,
+        validade_dias: item.validade_dias,
+        formato_aceito: item.formato_aceito,
+        link_emissao: item.link_emissao,
+        instrucoes: item.descricao_como_enviar,
+        observacoes_cliente: item.observacao_cliente,
+        ordem: base + 1,
+        ativo: true,
+      });
+      if (error) throw error;
+      toast.success(`"${item.nome.toUpperCase()}" ADICIONADO AO CHECKLIST`);
+      setBuscaBib("");
+      await carregar(servicoId);
+    } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      toast.error(
+        msg.includes("duplicate")
+          ? "ESTE DOCUMENTO JÁ ESTÁ NO CHECKLIST DESTE SERVIÇO"
+          : "NÃO FOI POSSÍVEL ADICIONAR: " + (msg || "ERRO"),
+      );
+    } finally {
+      setAdicionando(false);
+    }
+  }
+
+  /**
+   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
    * (`ativo = false`), que é o mesmo mecanismo do Montar Checklist — o item
    * some do simulador, do portal do cliente e de todos os motores, e pode ser
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
