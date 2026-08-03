@@ -1477,6 +1477,32 @@ function ClientePortalMirrorAdmin({
           </div>
           <div className="flex-1" />
           <div className="flex flex-col items-center gap-1 pb-[88px]">
+            {/* Loja (novo serviço) — espelho visual, desabilitado no admin */}
+            <button
+              type="button"
+              disabled
+              title="Novo serviço — indisponível no espelho admin (somente leitura)"
+              aria-label="Novo serviço (somente leitura)"
+              className="w-10 h-10 rounded-lg flex items-center justify-center cursor-not-allowed"
+              style={{ color: `${railIconColor}55` }}
+            >
+              <IconBuildingStore className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
+            </button>
+
+            {/* Checklist guiado — abre em modo visualização */}
+            <button
+              type="button"
+              onClick={() => abrirChecklistGuiado()}
+              title="Checklist guiado (visualização)"
+              aria-label="Checklist guiado (visualização)"
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: `${railIconColor}88` }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
+            >
+              <IconBomb className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
+            </button>
+
             {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
               const Icon = item.icon;
               const active = activeSection === item.key;
