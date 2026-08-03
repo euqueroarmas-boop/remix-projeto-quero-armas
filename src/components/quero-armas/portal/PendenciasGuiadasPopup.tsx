@@ -403,6 +403,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       }
       role={asPage ? undefined : "dialog"}
       aria-modal={asPage ? undefined : true}
+      style={{ fontFamily: "Arial, Helvetica, sans-serif", color: "#0A0A0A" }}
       data-qa-overlay={asPage ? undefined : true}
       onClick={asPage || bloqueante ? undefined : onDismiss}
     >
@@ -491,20 +492,20 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5">
+        <div className={asPage ? "px-0 pt-4 pb-4 shrink-0 sm:pt-5" : "px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5"}>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
                 cliente em que parte do processo ele estava. */}
-            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-1" style={{ color: "#7A1F2B" }}>
               {activeGrupo}
               {/* Onde este grupo fica no processo inteiro. Sem isto o cliente
                   via só o nome do grupo e não tinha ideia de quantas frentes
                   ainda existem — "Antecedentes" podia ser a única ou a
                   segunda de seis. */}
               {grupoNoProcesso ? (
-                <span className="ml-1.5 font-semibold text-[#8A1224]/70">
+                <span className="ml-1.5 font-bold text-[#8A1224]/70">
                   · GRUPO {grupoNoProcesso.posicao} DE {grupoNoProcesso.totalGrupos}
                 </span>
               ) : null}
@@ -513,21 +514,21 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 só — que é o caso comum — ele repete exatamente os números do
                 "Passo N de M" ao lado, e o cliente lê a mesma informação duas
                 vezes com nomes diferentes. */}
-            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-1">
               {headerContexto}
             </span>
             {pendenciasGrupo > 0 ? (
-              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-1">
                 {pendenciasGrupoLabel}
               </span>
             ) : null}
           </div>
-          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
+          <h2 className="qa-editorial mt-2">
             {explic.titulo}
           </h2>
 
           {active.detalheContexto ? (
-            <p className="mt-2 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[13px] leading-relaxed text-[#3A3A3A]">
+            <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
               {active.detalheContexto}
             </p>
           ) : null}
@@ -535,7 +536,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           {/* Link fixo para o site oficial — permanece abaixo do título,
               independentemente da rolagem do conteúdo. */}
           {!isSignature && !isPergunta && linkEmissaoFinal ? (
-            <p className="mt-3 text-[13px] leading-relaxed text-[#3A3A3A]">
+            <p className="qa-body qa-body--soft mt-3">
               {(() => {
                 const t = explic.titulo || "";
                 const i = t.indexOf("—");
@@ -562,7 +563,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Scrollable body */}
-        <div className="no-scrollbar flex-1 overflow-y-auto px-6 pb-2">
+        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pb-2"}>
 
 
           {/* Step list with vertical timeline */}
@@ -571,10 +572,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             <ul className="space-y-5 relative">
               {explic.passos.map((p, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                  <span className="qa-btn-label flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center z-10" style={{ letterSpacing: 0, fontSize: 12 }}>
                     {i + 1}
                   </span>
-                  <p className="text-[14px] leading-relaxed text-[#3A3A3A] pt-1">
+                  <p className="qa-body qa-body--soft pt-1">
                     <TextoComLinks texto={p} />
                   </p>
               </li>
@@ -585,8 +586,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {/* Observation */}
           {explic.observacao && activeGrupoId !== "antecedentes" ? (
-            <div className="mt-6 p-4 bg-[#FFF7F8] rounded-xl border border-[#8A1224]/10">
-              <p className="text-xs leading-relaxed text-[#8A1224]">
+            <div className="mt-6 p-4 bg-[#FFF7F8] rounded-sm border border-[#8A1224]/10">
+              <p className="qa-caption" style={{ color: "#7A1F2B" }}>
                 <TextoComLinks texto={explic.observacao} />
               </p>
             </div>
@@ -594,8 +595,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {/* Botões de resposta inline — perguntas pivot */}
           {isPergunta && Array.isArray(active.perguntaOpcoes) && active.perguntaOpcoes.length > 0 ? (
-            <div className="mt-6 rounded-xl border border-[#8A1224]/20 bg-white p-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8A1224] mb-3">
+            <div className="mt-6 rounded-sm border border-[#8A1224]/20 bg-white p-4">
+              <div className="qa-eyebrow mb-3" style={{ color: "#7A1F2B" }}>
                 {active.respostaAtual
                   ? `Resposta registrada: ${String(active.respostaAtual).toUpperCase()}`
                   : "Responda para liberar o próximo passo"}
@@ -619,7 +620,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 })}
               </div>
               {active.perguntaAjudaPos ? (
-                <p className="mt-3 text-[11px] leading-relaxed text-[#6A6A6A]">
+                <p className="qa-caption mt-3">
                   {active.perguntaAjudaPos}
                 </p>
               ) : null}
@@ -631,14 +632,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           {asPage && resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
             <div className="mt-4 border-t border-[#EFEFEF] pt-3">
               <div className="flex justify-between items-baseline">
-                <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                <span className="qa-kpi-label">
                   Resolva um por vez
                 </span>
-                <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+                <span className="qa-kpi-label" style={{ color: "#7A1F2B" }}>
                   {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
                 </span>
               </div>
-              <p className="mt-1.5 text-[11px] text-[#6A6A6A]">
+              <p className="qa-caption mt-1.5">
                 Ainda faltam{" "}
                 {resumoProcesso.documentosPendentes > 0 ? (
                   <strong className="text-[#0A0A0A]">
@@ -656,7 +657,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 neste processo.
               </p>
               {grupoNoProcesso ? (
-                <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                <p className="qa-caption mt-1">
                   Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
                   {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
                   {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
@@ -729,7 +730,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.max(0, i - 1))}
                   disabled={!podeVoltar}
-                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Anterior
                 </button>
@@ -737,7 +738,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
                   disabled={!podeAvancar}
-                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                 >
                   Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
