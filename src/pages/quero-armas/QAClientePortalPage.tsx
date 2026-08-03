@@ -23,6 +23,7 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import PainelDisparo, { type ItemDisparo } from "@/components/quero-armas/portal/PainelDisparo";
+import ClienteSegurancaPanel, { registrarLoginArsenal } from "@/components/quero-armas/portal/ClienteSegurancaPanel";
 import { PORTAL_NAV_ITEMS } from "@/components/quero-armas/portal/portalNavItems";
 import { Camera, Wand2, ChevronDown } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
