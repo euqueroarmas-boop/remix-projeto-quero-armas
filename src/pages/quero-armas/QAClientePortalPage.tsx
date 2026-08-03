@@ -625,7 +625,7 @@ export default function QAClientePortalPage() {
         : null;
   const isLockedSection = (
     activeTab === "resumo" ||
-    (["contratos", "documentos", "mensagens", "financeiro"] as string[]).includes(activeSection) ||
+    (["contratos", "documentos", "mensagens", "financeiro", "pendencias"] as string[]).includes(activeSection) ||
     (activeSection === "checklist_guiado" && isBelowLg)
   );
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
