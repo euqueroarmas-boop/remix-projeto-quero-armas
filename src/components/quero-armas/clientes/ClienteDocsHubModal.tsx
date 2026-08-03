@@ -4851,7 +4851,7 @@ export function ClienteDocsHubModal({
                 disabled={
                   saving ||
                   extracting ||
-                  (!!classificacao && pendingSensitiveKeys().length > 0) ||
+                  pendingSensitiveKeys().length > 0 ||
                   (temApontamento && reconheceApontamento === null) ||
                   (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
                 }
@@ -4866,7 +4866,7 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : classificacao && pendingSensitiveKeys().length > 0
+                  : pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
                     : temApontamento && reconheceApontamento === null
                       ? "Responda sobre o apontamento"
