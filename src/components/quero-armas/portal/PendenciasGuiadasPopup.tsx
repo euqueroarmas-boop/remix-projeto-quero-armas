@@ -409,7 +409,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       <div
         className={
           asPage
-            ? "relative w-full h-full min-h-0 bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden flex flex-col"
+            ? "relative w-full h-full min-h-0 bg-transparent overflow-hidden flex flex-col"
             : "relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
         }
         onClick={(e) => e.stopPropagation()}
@@ -431,15 +431,24 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             hierarquia. REGRA DE LAYOUT: nenhum texto do header deve competir
             com o botão de fechar (X) no canto superior direito. O padding-right
             abaixo reserva a zona do botão em todas as larguras. */}
-        <div className="shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14">
+        <div
+          className={
+            asPage
+              ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-1 pb-4"
+              : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14"
+          }
+        >
           {asPage ? (
-            /* Modo página (ícone da granada): mesma formação tipográfica do H1
-               da home — Oswald 700, 22px, uppercase, tracking .04em, nome em
-               bordô. Não replicar no pop-up. */
+            /* ⚠️ LAYOUT TRAVADO — MODO PÁGINA (ícone da granada) ⚠️
+               Aprovado pelo usuário em 03/08/2026. Regras congeladas:
+               - SEM kicker "Checklist guiado"
+               - SEM a palavra "VOCÊ" no H1
+               - SEM fundo branco / card (bg-transparent, sem borda)
+               - H1 alinhado à esquerda com o restante da página (px-0)
+               - Oswald 700, 22px, uppercase, tracking .04em, nome em bordô
+               NÃO ALTERAR sem confirmar com o usuário DUAS vezes ("tem certeza?"
+               e depois "confirma mesmo?"). Não replicar no pop-up. */
             <div className="min-w-0">
-              <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#8A1224]">
-                Checklist guiado
-              </p>
               <h1
                 style={{
                   fontFamily: "Oswald,'Arial Narrow',Arial,sans-serif",
@@ -454,11 +463,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               >
                 {primeiroNome ? (
                   <>
-                    <span style={{ color: "#7A1F2B" }}>{primeiroNome.toUpperCase()}</span>, VOCÊ ESTÁ NOS DEVENDO
+                    <span style={{ color: "#7A1F2B" }}>{primeiroNome.toUpperCase()}</span>, ESTÁ NOS DEVENDO
                     <br />ENVIAR ESSES DOCUMENTOS!
                   </>
                 ) : (
-                  <>VOCÊ ESTÁ NOS DEVENDO<br />ENVIAR ESSES DOCUMENTOS!</>
+                  <>ESTÁ NOS DEVENDO<br />ENVIAR ESSES DOCUMENTOS!</>
                 )}
               </h1>
             </div>
