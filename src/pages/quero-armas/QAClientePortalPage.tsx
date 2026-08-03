@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, Fragment, useRef, useCallback } from "react";
+import SuporteModoBanner from "@/components/quero-armas/clientes/SuporteModoBanner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import whatsappIcon from "@/assets/whatsapp-icon.png.asset.json";
@@ -3153,6 +3154,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
+    <><SuporteModoBanner />
     <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[190px]"}`}>
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
