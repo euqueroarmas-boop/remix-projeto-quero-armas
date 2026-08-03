@@ -562,7 +562,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-6 pb-2">
+        <div className="no-scrollbar flex-1 overflow-y-auto px-6 pb-2">
 
 
           {/* Step list with vertical timeline */}
