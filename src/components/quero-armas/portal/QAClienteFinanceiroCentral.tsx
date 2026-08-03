@@ -116,6 +116,14 @@ const CSS = `
 .qafin-central .charge .val,.qafin-central .expanded .head .val{text-align:left}
 .qafin-central .meta{grid-template-columns:repeat(2,1fr)}
 .qafin-central .cc-form .row.cols-2,.qafin-central .cc-form .row.cols-3{grid-template-columns:1fr}}
+@media(max-width:720px){
+.qafin-central{height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);
+  display:flex;flex-direction:column;overflow:hidden;padding-bottom:0;overscroll-behavior:none}
+.qafin-sticky-header{flex:0 0 auto;position:static}
+.qafin-scrollable{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:24px}
+.qafin-scrollable::-webkit-scrollbar{width:0;height:0}
+.qafin-scrollable{scrollbar-width:none}}
 `;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
