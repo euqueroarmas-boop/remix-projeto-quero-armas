@@ -426,10 +426,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       <style>{`
         @media (max-width: 640px) {
           .qa-kpi-card {
-            padding: 8px 8px 7px !important;
+            padding: 10px 8px 9px !important;
             border-radius: 4px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
-            aspect-ratio: 1 / 1 !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
@@ -437,8 +436,8 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
             overflow: hidden !important;
           }
           .qa-kpi-card__label {
-            font-size: 7.5px !important;
-            letter-spacing: 0.14em !important;
+            font-size: 9.5px !important;
+            letter-spacing: 0.12em !important;
             gap: 4px !important;
             line-height: 1.1 !important;
           }
@@ -448,13 +447,13 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
             flex: none !important;
           }
           .qa-kpi-card__value {
-            font-size: 20px !important;
-            margin-top: 4px !important;
+            font-size: 26px !important;
+            margin-top: 5px !important;
           }
           .qa-kpi-card__sub {
-            font-size: 8.5px !important;
-            margin-top: 2px !important;
-            line-height: 1.2 !important;
+            font-size: 10px !important;
+            margin-top: 3px !important;
+            line-height: 1.25 !important;
           }
           .qa-kpi-grid {
             gap: 8px !important;
