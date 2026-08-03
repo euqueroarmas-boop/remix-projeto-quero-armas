@@ -222,6 +222,9 @@ function normalizarTextoBusca(valor: string | null | undefined): string {
 
 function getGuiaCredenciadoConfig(doc: Pick<GuiaDoc, "tipo_documento" | "nome_documento" | "instrucoes"> | null | undefined): GuiaCredenciadoConfig | null {
   const texto = normalizarTextoBusca(`${doc?.tipo_documento || ""} ${doc?.nome_documento || ""} ${doc?.instrucoes || ""}`);
+  // Atestados emitidos pela própria instituição de segurança pública não têm
+  // busca de credenciados — o documento vem do órgão do servidor.
+  if (/instituicao|institucional/.test(texto)) return null;
   if (/psicolog|laudo psic/.test(texto)) {
     return {
       tipo: "psicologo",
