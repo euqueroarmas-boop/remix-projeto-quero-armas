@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
+import { IconPlus, IconMicrophone, IconPlayerStopFilled, IconArrowUp, IconX, IconFileText, IconPhoto } from "@tabler/icons-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/shared/cart/CartProvider";
 import { getServiceBySlug } from "@/shared/data/catalog";
+import { startWavRecording, type WavRecorder } from "@/lib/quero-armas/wavRecorder";
 
 const BRAND = "#7A1F2B";
 const INK = "#0A0A0A";
@@ -130,6 +132,18 @@ const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg:
   baixa: { label: "Confiança baixa", icon: <ShieldX     className="h-3 w-3" />, fg: RED,   bg: RED_BG   },
 };
 
+type AnexoChat = {
+  localId: string;
+  id: string | null;
+  nome_arquivo: string;
+  mime_type: string;
+  tamanho_bytes: number;
+  previewUrl: string | null;
+  texto_extraido: string | null;
+  status: "enviando" | "lendo" | "pronto" | "erro";
+  erro?: string | null;
+};
+
 export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClienteProps) {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [input, setInput] = useState("");
@@ -140,11 +154,16 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
   const [now, setNow] = useState<number>(Date.now());
   const [reabertoBannerFor, setReabertoBannerFor] = useState<string | null>(null);
+  const [anexos, setAnexos] = useState<AnexoChat[]>([]);
+  const [gravando, setGravando] = useState(false);
+  const [transcrevendo, setTranscrevendo] = useState(false);
   const navigate = useNavigate();
   const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recorderRef = useRef<WavRecorder | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30 * 1000);
@@ -255,12 +274,26 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const enviar = useCallback(async (texto: string) => {
     if (!cliente || loading) return;
     const query = texto.trim();
-    if (query.length < 2) return;
+    const anexosProntos = anexos.filter((a) => a.status === "pronto" && a.id);
+    if (query.length < 2 && anexosProntos.length === 0) return;
+    const queryFinal =
+      query.length >= 2
+        ? query
+        : `Analise o que enviei em anexo: ${anexosProntos.map((a) => a.nome_arquivo).join(", ")}`;
 
     setInput("");
+    setAnexos([]);
     const startIso = new Date().toISOString();
     const startMs = Date.now();
-    const userMsg: Mensagem = { id: `u-${Date.now()}`, role: "user", content: query, createdAt: startIso };
+    const userMsg: Mensagem = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content:
+        anexosProntos.length > 0
+          ? `${queryFinal}\n\n📎 ${anexosProntos.map((a) => a.nome_arquivo).join(", ")}`
+          : queryFinal,
+      createdAt: startIso,
+    };
     const asstId = `a-${Date.now()}`;
     const asstMsg: Mensagem = { id: asstId, role: "assistant", content: "", fontes: [], isStreaming: true, createdAt: startIso };
 
@@ -287,7 +320,18 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
           Authorization: `Bearer ${jwt}`,
           apikey: PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ query, sessao_id: proto?.sessaoId ?? null, historico, limit: 5 }),
+        body: JSON.stringify({
+          query: queryFinal,
+          sessao_id: proto?.sessaoId ?? null,
+          historico,
+          limit: 5,
+          anexos: anexosProntos.map((a) => ({
+            id: a.id,
+            nome_arquivo: a.nome_arquivo,
+            mime_type: a.mime_type,
+            texto_extraido: a.texto_extraido,
+          })),
+        }),
       });
 
       if (!res.ok || !res.body) {
@@ -371,7 +415,107 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     } finally {
       setLoading(false);
     }
-  }, [cliente, loading, mensagens, proto?.sessaoId, carregarAnteriores]);
+  }, [cliente, loading, mensagens, proto?.sessaoId, carregarAnteriores, anexos]);
+
+  // ── Anexos ────────────────────────────────────────────────────────────
+  const MAX_ANEXO_BYTES = 20 * 1024 * 1024;
+
+  const anexarArquivos = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const { data: sess } = await supabase.auth.getSession();
+    const jwt = sess.session?.access_token;
+    const userId = sess.session?.user?.id;
+    if (!jwt || !userId) { toast.error("Faça login novamente para enviar arquivos."); return; }
+
+    for (const file of Array.from(files).slice(0, 5)) {
+      if (file.size > MAX_ANEXO_BYTES) { toast.error(`${file.name}: arquivo maior que 20 MB.`); continue; }
+      const localId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const isImg = file.type.startsWith("image/");
+      setAnexos((prev) => [...prev, {
+        localId, id: null, nome_arquivo: file.name, mime_type: file.type,
+        tamanho_bytes: file.size, previewUrl: isImg ? URL.createObjectURL(file) : null,
+        texto_extraido: null, status: "enviando",
+      }]);
+
+      try {
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+        const path = `${userId}/${localId}-${safe}`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-chat-anexos")
+          .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+        if (upErr) throw new Error(upErr.message);
+
+        setAnexos((prev) => prev.map((a) => a.localId === localId ? { ...a, status: "lendo" } : a));
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/qa-chat-anexo-processar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwt}`, apikey: PUBLISHABLE_KEY },
+          body: JSON.stringify({
+            storage_path: path, nome_arquivo: file.name, mime_type: file.type,
+            tamanho_bytes: file.size, sessao_id: proto?.sessaoId ?? null,
+          }),
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error || "Falha ao ler o arquivo.");
+        setAnexos((prev) => prev.map((a) => a.localId === localId
+          ? { ...a, id: j.id, texto_extraido: j.texto_extraido ?? null, status: "pronto", erro: j.erro ?? null }
+          : a));
+      } catch (e: any) {
+        setAnexos((prev) => prev.map((a) => a.localId === localId
+          ? { ...a, status: "erro", erro: e?.message ?? "Falha no envio" } : a));
+        toast.error(`${file.name}: ${e?.message ?? "falha no envio"}`);
+      }
+    }
+  }, [proto?.sessaoId]);
+
+  function removerAnexo(localId: string) {
+    setAnexos((prev) => {
+      const alvo = prev.find((a) => a.localId === localId);
+      if (alvo?.previewUrl) URL.revokeObjectURL(alvo.previewUrl);
+      return prev.filter((a) => a.localId !== localId);
+    });
+  }
+
+  // ── Voz → texto ───────────────────────────────────────────────────────
+  async function alternarGravacao() {
+    if (transcrevendo) return;
+    if (gravando && recorderRef.current) {
+      const rec = recorderRef.current;
+      recorderRef.current = null;
+      setGravando(false);
+      setTranscrevendo(true);
+      try {
+        const blob = await rec.stop();
+        if (blob.size < 2048) { toast.error("Gravação vazia. Tente novamente."); return; }
+        const { data: sess } = await supabase.auth.getSession();
+        const jwt = sess.session?.access_token ?? PUBLISHABLE_KEY;
+        const fd = new FormData();
+        fd.append("file", blob, "gravacao.wav");
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/qa-chat-transcrever`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${jwt}`, apikey: PUBLISHABLE_KEY },
+          body: fd,
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error || "Falha ao transcrever.");
+        const texto = (j?.text || "").trim();
+        if (!texto) { toast.error("Não consegui entender o áudio."); return; }
+        setInput((prev) => (prev ? `${prev} ${texto}` : texto));
+        setTimeout(() => inputRef.current?.focus(), 0);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Falha ao transcrever o áudio.");
+      } finally {
+        setTranscrevendo(false);
+      }
+      return;
+    }
+    try {
+      recorderRef.current = await startWavRecording();
+      setGravando(true);
+    } catch {
+      toast.error("Não consegui acessar o microfone. Verifique a permissão.");
+    }
+  }
 
   function novaConversa() {
     if (loading) return;
@@ -620,8 +764,60 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
             )}
           </div>
 
-          <div className="p-1">
-            <div className="flex items-end gap-2 px-3 py-2" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 12, background: "#FFFFFF" }}>
+          <div className="p-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,application/pdf,text/plain,.txt,.csv,.md,.json"
+              className="hidden"
+              onChange={(e) => { anexarArquivos(e.target.files); e.currentTarget.value = ""; }}
+            />
+            <div className="flex flex-col" style={{ border: `1px solid ${CARD_BORDER}`, borderRadius: 14, background: "#FFFFFF" }}>
+              {/* Anexos — sempre acima do campo de texto */}
+              {anexos.length > 0 && (
+                <div className="flex flex-wrap gap-2 px-3 pt-3">
+                  {anexos.map((a) => {
+                    const carregando = a.status === "enviando" || a.status === "lendo";
+                    const erro = a.status === "erro";
+                    return (
+                      <div
+                        key={a.localId}
+                        className="relative flex items-center gap-2 pl-2 pr-6 py-1.5 max-w-[220px]"
+                        style={{
+                          background: erro ? RED_BG : "#FAFAFA",
+                          border: `1px solid ${erro ? "#F3C6C6" : LINE}`,
+                          borderRadius: 10,
+                        }}
+                      >
+                        {a.previewUrl ? (
+                          <img src={a.previewUrl} alt="" className="object-cover shrink-0" style={{ width: 30, height: 30, borderRadius: 7 }} />
+                        ) : (
+                          <span className="inline-flex items-center justify-center shrink-0" style={{ width: 30, height: 30, borderRadius: 7, background: "#F2F2F2", color: INK_2 }}>
+                            {a.mime_type.startsWith("image/") ? <IconPhoto size={15} /> : <IconFileText size={15} />}
+                          </span>
+                        )}
+                        <span className="min-w-0">
+                          <span className="block truncate text-[11.5px]" style={{ color: INK }}>{a.nome_arquivo}</span>
+                          <span className="block text-[10px]" style={{ color: erro ? RED : INK_2 }}>
+                            {carregando ? (a.status === "enviando" ? "Enviando…" : "Lendo…") : erro ? (a.erro || "Falhou") : "Pronto"}
+                          </span>
+                        </span>
+                        {carregando && <Loader2 className="h-3 w-3 animate-spin shrink-0" style={{ color: INK_2 }} />}
+                        <button
+                          onClick={() => removerAnexo(a.localId)}
+                          aria-label={`Remover ${a.nome_arquivo}`}
+                          className="absolute inline-flex items-center justify-center"
+                          style={{ top: -6, right: -6, width: 18, height: 18, borderRadius: 999, background: INK, color: "#FFFFFF" }}
+                        >
+                          <IconX size={11} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               <textarea
                 ref={inputRef}
                 rows={2}
@@ -633,23 +829,58 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
                   el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
                 }}
                 onKeyDown={onKeyDown}
-                placeholder="Digite sua dúvida para o Klal..."
+                placeholder={gravando ? "Gravando… toque no microfone para parar" : "Digite sua dúvida para o Klal..."}
                 disabled={loading || !cliente}
-                className="flex-1 px-0 py-0 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
-                style={{ color: INK, minHeight: 64, maxHeight: 180, lineHeight: 1.45 }}
+                className="w-full px-3 pt-3 text-[14px] bg-transparent border-0 focus:outline-none focus:ring-0 disabled:text-slate-400 resize-none"
+                style={{ color: INK, minHeight: 60, maxHeight: 180, lineHeight: 1.45 }}
               />
-              <button
-                onClick={() => enviar(input)}
-                disabled={loading || !cliente || input.trim().length < 2}
-                title="Enviar"
-                aria-label="Enviar"
-                className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
-                style={{ width: 34, height: 34, borderRadius: 9, color: INK }}
-              >
-                {loading
-                  ? <Loader2 className="h-4 w-4 animate-spin" />
-                  : <img src="/icone-arma-cadastro.png" alt="" aria-hidden="true" className="h-[14px] w-[19px] object-contain" style={{ filter: "invert(1) contrast(1.2)" }} />}
-              </button>
+
+              {/* Barra de controles — abaixo do campo */}
+              <div className="flex items-center gap-1.5 px-2.5 pb-2.5 pt-1">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading || !cliente}
+                  title="Adicionar arquivos"
+                  aria-label="Adicionar arquivos"
+                  className="inline-flex items-center justify-center transition-colors disabled:opacity-40 hover:bg-slate-50"
+                  style={{ width: 32, height: 32, borderRadius: 999, border: `1px solid ${CARD_BORDER}`, color: INK }}
+                >
+                  <IconPlus size={17} />
+                </button>
+                <button
+                  onClick={alternarGravacao}
+                  disabled={loading || !cliente || transcrevendo}
+                  title={gravando ? "Parar gravação" : "Ditar por voz"}
+                  aria-label={gravando ? "Parar gravação" : "Ditar por voz"}
+                  className="inline-flex items-center justify-center transition-colors disabled:opacity-40 hover:bg-slate-50"
+                  style={{
+                    width: 32, height: 32, borderRadius: 999,
+                    border: `1px solid ${gravando ? BRAND : CARD_BORDER}`,
+                    background: gravando ? BRAND : "transparent",
+                    color: gravando ? "#FFFFFF" : INK,
+                  }}
+                >
+                  {transcrevendo ? <Loader2 className="h-4 w-4 animate-spin" /> : gravando ? <IconPlayerStopFilled size={14} /> : <IconMicrophone size={17} />}
+                </button>
+
+                <span className="flex-1 truncate text-[10.5px] uppercase" style={{ fontFamily: OSWALD, letterSpacing: "0.14em", color: INK_2 }}>
+                  {gravando ? "Gravando" : transcrevendo ? "Transcrevendo" : anexos.length > 0 ? `${anexos.length} anexo(s)` : ""}
+                </span>
+
+                <button
+                  onClick={() => enviar(input)}
+                  disabled={
+                    loading || !cliente ||
+                    (input.trim().length < 2 && anexos.filter((a) => a.status === "pronto").length === 0)
+                  }
+                  title="Enviar"
+                  aria-label="Enviar"
+                  className="inline-flex items-center justify-center shrink-0 transition-colors disabled:opacity-40"
+                  style={{ width: 32, height: 32, borderRadius: 999, background: BRAND, color: "#FFFFFF" }}
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <IconArrowUp size={17} />}
+                </button>
+              </div>
             </div>
           </div>
         </div>

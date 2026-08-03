@@ -118,12 +118,19 @@ Deno.serve(async (req) => {
       sessao_id = null,
       historico = [],
       modo_refinamento = false,
+      anexos = [],
     }: {
       query: string;
       limit?: number;
       sessao_id?: string | null;
       historico?: Array<{ role: "user" | "assistant"; content: string }>;
       modo_refinamento?: boolean;
+      anexos?: Array<{
+        id?: string;
+        nome_arquivo?: string;
+        mime_type?: string;
+        texto_extraido?: string | null;
+      }>;
     } = await req.json();
     if (!query || typeof query !== "string" || query.trim().length < 2) {
       return new Response(JSON.stringify({ error: "query inválida" }), {
@@ -587,6 +594,24 @@ Deno.serve(async (req) => {
       ? `${ctxCompetencia}\n\n======\n\n${ctx}`
       : ctx;
 
+    // ── Anexos enviados pelo cliente no chat ──────────────────────────
+    const anexosLista = (Array.isArray(anexos) ? anexos : []).slice(0, 6);
+    const anexosCtx = anexosLista.length
+      ? "## ARQUIVOS ENVIADOS PELO CLIENTE NESTA MENSAGEM\n" +
+        anexosLista
+          .map((a, i) => {
+            const texto = (a?.texto_extraido || "").toString().slice(0, 12000).trim();
+            return (
+              `### Arquivo ${i + 1}: ${a?.nome_arquivo ?? "sem nome"} (${a?.mime_type ?? "tipo desconhecido"})\n` +
+              (texto ? texto : "[não foi possível ler o conteúdo deste arquivo]")
+            );
+          })
+          .join("\n\n---\n\n") +
+        "\n\nREGRA PARA OS ARQUIVOS: leia e interprete o conteúdo acima EXCLUSIVAMENTE à luz da legislação e das fontes fornecidas neste contexto. " +
+        "Nunca ensine o cliente a executar o processo; explique o que a lei exige sobre o que ele enviou e diga que a QUERO ARMAS executa. " +
+        "Se o arquivo não puder ser lido ou não tiver relação com a matéria, diga isso com honestidade."
+      : "";
+
     const r = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -611,7 +636,10 @@ Deno.serve(async (req) => {
             ...historyMessages,
             {
               role: "user",
-              content: `Dúvida do cliente: "${query}"\n\nFontes disponíveis:\n\n${ctxFinal}`,
+              content:
+                `Dúvida do cliente: "${query}"\n\n` +
+                (anexosCtx ? `${anexosCtx}\n\n======\n\n` : "") +
+                `Fontes disponíveis:\n\n${ctxFinal}`,
             },
           ],
         }),
@@ -973,13 +1001,19 @@ Deno.serve(async (req) => {
         // interno de refinamento não deve poluir a fila de aprovação).
         if (!modo_refinamento && clienteId && effectiveSessaoId && fullLimpo.length > 0) {
           try {
-            await supabase.from("qa_chat_mensagens").insert([
+            const anexosResumo = anexosLista.map((a) => ({
+              id: a?.id ?? null,
+              nome_arquivo: a?.nome_arquivo ?? null,
+              mime_type: a?.mime_type ?? null,
+            }));
+            const { data: inseridas } = await supabase.from("qa_chat_mensagens").insert([
               {
                 sessao_id: effectiveSessaoId,
                 cliente_id: clienteId,
                 role: "user",
                 content: query,
                 fontes: [],
+                anexos: anexosResumo,
               },
               {
                 sessao_id: effectiveSessaoId,
@@ -990,7 +1024,22 @@ Deno.serve(async (req) => {
                 nivel_confianca: nivelConfianca,
                 servico_sugerido_slug: servicoSugeridoSlug,
               },
-            ] as any);
+            ] as any).select("id, role");
+            // Vincula os anexos à sessão/mensagem (auditoria)
+            const idsAnexos = anexosLista
+              .map((a) => a?.id)
+              .filter((id): id is string => typeof id === "string" && id.length > 0);
+            if (idsAnexos.length > 0) {
+              const msgUser = (inseridas ?? []).find((m: any) => m.role === "user");
+              await supabase
+                .from("qa_chat_anexos")
+                .update({
+                  sessao_id: effectiveSessaoId,
+                  cliente_id: clienteId,
+                  mensagem_id: msgUser?.id ?? null,
+                })
+                .in("id", idsAnexos);
+            }
             await supabase
               .from("qa_chat_sessoes")
               .update({

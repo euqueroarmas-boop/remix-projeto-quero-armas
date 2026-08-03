@@ -3725,8 +3725,144 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_chat_anexos: {
+        Row: {
+          cliente_id: number | null
+          created_at: string
+          erro_processamento: string | null
+          hash_sha256: string | null
+          id: string
+          mensagem_id: string | null
+          metodo_extracao: string | null
+          mime_type: string | null
+          nome_arquivo: string
+          observacao_admin: string | null
+          origem: string
+          sessao_id: string | null
+          status_processamento: string
+          storage_path: string
+          tamanho_bytes: number | null
+          texto_extraido: string | null
+          updated_at: string
+          usuario_id: string | null
+          validado_admin: boolean
+          validado_em: string | null
+          validado_por: string | null
+          virou_golden: boolean
+        }
+        Insert: {
+          cliente_id?: number | null
+          created_at?: string
+          erro_processamento?: string | null
+          hash_sha256?: string | null
+          id?: string
+          mensagem_id?: string | null
+          metodo_extracao?: string | null
+          mime_type?: string | null
+          nome_arquivo: string
+          observacao_admin?: string | null
+          origem?: string
+          sessao_id?: string | null
+          status_processamento?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          texto_extraido?: string | null
+          updated_at?: string
+          usuario_id?: string | null
+          validado_admin?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+          virou_golden?: boolean
+        }
+        Update: {
+          cliente_id?: number | null
+          created_at?: string
+          erro_processamento?: string | null
+          hash_sha256?: string | null
+          id?: string
+          mensagem_id?: string | null
+          metodo_extracao?: string | null
+          mime_type?: string | null
+          nome_arquivo?: string
+          observacao_admin?: string | null
+          origem?: string
+          sessao_id?: string | null
+          status_processamento?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          texto_extraido?: string | null
+          updated_at?: string
+          usuario_id?: string | null
+          validado_admin?: boolean
+          validado_em?: string | null
+          validado_por?: string | null
+          virou_golden?: boolean
+        }
+        Relationships: []
+      }
+      qa_chat_golden_records: {
+        Row: {
+          anexos_ids: string[]
+          aprovado_em: string
+          aprovado_por: string | null
+          ativo: boolean
+          cliente_id: number | null
+          contexto_anexos: string | null
+          created_at: string
+          doc_kb_id: string | null
+          fundamentacao_legal: string | null
+          id: string
+          mensagem_id: string | null
+          pergunta: string
+          peso: number
+          resposta: string
+          sessao_id: string | null
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          anexos_ids?: string[]
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          cliente_id?: number | null
+          contexto_anexos?: string | null
+          created_at?: string
+          doc_kb_id?: string | null
+          fundamentacao_legal?: string | null
+          id?: string
+          mensagem_id?: string | null
+          pergunta: string
+          peso?: number
+          resposta: string
+          sessao_id?: string | null
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          anexos_ids?: string[]
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          cliente_id?: number | null
+          contexto_anexos?: string | null
+          created_at?: string
+          doc_kb_id?: string | null
+          fundamentacao_legal?: string | null
+          id?: string
+          mensagem_id?: string | null
+          pergunta?: string
+          peso?: number
+          resposta?: string
+          sessao_id?: string | null
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_chat_mensagens: {
         Row: {
+          anexos: Json
           aprovada_em: string | null
           aprovada_kb: boolean | null
           aprovada_por: string | null
@@ -3744,6 +3880,7 @@ export type Database = {
           sessao_id: string
         }
         Insert: {
+          anexos?: Json
           aprovada_em?: string | null
           aprovada_kb?: boolean | null
           aprovada_por?: string | null
@@ -3761,6 +3898,7 @@ export type Database = {
           sessao_id: string
         }
         Update: {
+          anexos?: Json
           aprovada_em?: string | null
           aprovada_kb?: boolean | null
           aprovada_por?: string | null
