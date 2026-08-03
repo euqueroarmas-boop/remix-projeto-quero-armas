@@ -383,6 +383,7 @@ export default function QAClientePortalPage() {
     | "novo_servico"
     | "mensagens"
     | "configuracoes"
+    | "checklist_guiado"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
@@ -2430,6 +2431,13 @@ export default function QAClientePortalPage() {
   }, [vendas, pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas, cadastro, filiacoes, habitualidadeAlertas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const abrirDisparoRail = () => {
+    // MOBILE: a granada se comporta como os demais ícones do rail — abre uma
+    // seção do portal (página), não um pop-up. Desktop segue com o pop-up.
+    if (isBelowLg && (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0)) {
+      setActiveSection("checklist_guiado");
+      setSidebarCollapsed(true);
+      return;
+    }
     if (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0) {
       abrirPendenciasGuiadas();
       return;
@@ -3312,6 +3320,7 @@ export default function QAClientePortalPage() {
             corIcone={railIconColor}
             onOpen={abrirDisparoRail}
             badge={pendenciasGuiadasCount + pendingSignatureCount}
+            active={activeSection === "checklist_guiado"}
           />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
