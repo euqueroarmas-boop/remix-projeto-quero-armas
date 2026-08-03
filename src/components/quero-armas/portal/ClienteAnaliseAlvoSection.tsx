@@ -9,18 +9,25 @@ export default function ClienteAnaliseAlvoSection() {
     <section className="qa-alvo qa-client-summary-print">
       <style>{`
         .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
-        .qa-alvo__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
-        .qa-alvo__head-main{min-width:0;flex:1}
-        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+        .qa-alvo__head{position:relative;margin-bottom:16px}
+        .qa-alvo__head-main{min-width:0}
+        .qa-alvo__badge-slot{position:absolute;top:0;right:0;z-index:2}
+        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-right:110px}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
-        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:clamp(17px,4.4vw,26px);line-height:1.06;margin:0;letter-spacing:.02em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
-        .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;text-wrap:pretty}
+        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:clamp(17px,4.4vw,26px);line-height:1.06;margin:8px 0 0;letter-spacing:.02em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
+        .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;width:100%;text-wrap:pretty}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;box-shadow:0 6px 14px rgba(17,17,17,.04);flex:1;min-height:0;align-items:stretch}
         .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:3px;padding:0;min-height:300px;height:100%;overflow:hidden}
         .qa-alvo__figure{position:relative;height:100%;max-height:520px;display:block}
         .qa-alvo__figure img{height:100%;width:auto;max-width:100%;display:block;object-fit:contain}
-        .qa-alvo__hit{position:absolute;width:11px;height:11px;border-radius:999px;background:#141414;border:1px solid rgba(0,0,0,.55);box-shadow:0 0 0 1px rgba(255,255,255,.55),inset 0 1px 2px rgba(0,0,0,.9);transform:translate(-50%,-50%)}
-        .qa-alvo__hit.sm{width:8px;height:8px}
+        /* Furo de projétil: cratera irregular + fuligem/anel de graxa ao redor */
+        .qa-alvo__hit{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);border-radius:52% 48% 55% 45%/48% 55% 45% 52%;background:radial-gradient(circle at 42% 40%,#000 0 46%,#0d0d0d 62%,#2a2a2a 78%,rgba(60,60,60,.55) 100%);box-shadow:0 0 0 1px rgba(40,40,40,.55),0 0 5px 2px rgba(0,0,0,.28)}
+        .qa-alvo__hit::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.30) 0 32%,rgba(0,0,0,.14) 52%,rgba(0,0,0,0) 74%);filter:blur(1.6px);z-index:-1}
+        .qa-alvo__hit::after{content:"";position:absolute;inset:1.5px;border-radius:46% 54% 42% 58%/56% 44% 58% 42%;background:#000;box-shadow:inset 0 0 2px 1px rgba(0,0,0,.9)}
+        .qa-alvo__hit.sm{width:9px;height:9px}
+        .qa-alvo__hit:nth-of-type(2n){transform:translate(-50%,-50%) rotate(38deg)}
+        .qa-alvo__hit:nth-of-type(3n){transform:translate(-50%,-50%) rotate(-27deg) scale(1.06)}
+        .qa-alvo__hit:nth-of-type(5n){transform:translate(-50%,-50%) rotate(72deg) scale(.94)}
         .qa-alvo__body{display:flex;flex-direction:column;gap:16px;min-width:0;justify-content:center}
         .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
@@ -33,7 +40,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}
-        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:14px}.qa-alvo__target{min-height:340px}.qa-alvo__figure{max-height:400px}.qa-alvo__cards{grid-template-columns:1fr}}
+        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:14px}.qa-alvo__target{min-height:340px}.qa-alvo__figure{max-height:400px}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo__kicker{padding-right:104px}}
       `}</style>
 
       <div className="qa-alvo__head">
