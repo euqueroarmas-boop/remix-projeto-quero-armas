@@ -4177,80 +4177,120 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "pendencias" && (
-          <div className="space-y-4">
-            <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
-            <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
-              {(() => {
-                const docsBase = processoDocs.filter((d) =>
-                  d.obrigatorio &&
-                  (isChecklistPendente(d.status) ||
-                    ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())),
-                );
-                const docsFilt = currentScope.type === "processo"
-                  ? docsBase.filter((d) => String(d.processo_id) === String(currentScope.processoId))
-                  : docsBase;
-                if (docsFilt.length === 0) {
-                  return (
-                    <div className="py-8 text-center">
-                      <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                      <p className="text-sm text-slate-600 font-semibold">
-                        {currentScope.type === "processo"
-                          ? "Sem pendências obrigatórias neste processo."
-                          : "Você não tem pendências obrigatórias agora."}
-                      </p>
+          <div className="text-[#0A0A0A]" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+            {(() => {
+              const docsBase = processoDocs.filter((d) =>
+                d.obrigatorio &&
+                (isChecklistPendente(d.status) ||
+                  ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())),
+              );
+              const docsFilt = currentScope.type === "processo"
+                ? docsBase.filter((d) => String(d.processo_id) === String(currentScope.processoId))
+                : docsBase;
+              const isReprov = (d: any) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
+              const totalReenvio = docsFilt.filter(isReprov).length;
+              const primeiroNome = String(userName || cliente?.nome_completo || cliente?.nome || "").trim().split(" ")[0]?.toUpperCase() || "CLIENTE";
+              const byProc = new Map<string, any[]>();
+              for (const d of docsFilt) {
+                const key = String(d.processo_id);
+                if (!byProc.has(key)) byProc.set(key, []);
+                byProc.get(key)!.push(d);
+              }
+              const kpis = [
+                { label: "PENDENTES", value: docsFilt.length - totalReenvio, sub: "documentos a enviar", accent: "#B8860B" },
+                { label: "REENVIAR", value: totalReenvio, sub: "documentos rejeitados", accent: "#C32E26" },
+                { label: "PROCESSOS", value: byProc.size, sub: "com pendências", accent: "#7A1F2B" },
+              ];
+              return (
+                <>
+                  <header className="mb-5">
+                    <h1 className="qa-h1">{primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS</h1>
+                    <div className="qa-meta qa-meta-lines">
+                      <span>
+                        <span>CPF · <b>{cliente?.cpf || "—"}</b></span>
+                        <span>PROCESSOS · <b>{byProc.size}</b></span>
+                      </span>
+                      <span>
+                        <b>{docsFilt.length}</b>&nbsp;DOCUMENTO{docsFilt.length === 1 ? "" : "S"} AGUARDANDO ENVIO
+                      </span>
                     </div>
-                  );
-                }
-                // Agrupa por processo (UI mais clara mesmo em "Todos").
-                const byProc = new Map<string, any[]>();
-                for (const d of docsFilt) {
-                  const key = String(d.processo_id);
-                  if (!byProc.has(key)) byProc.set(key, []);
-                  byProc.get(key)!.push(d);
-                }
-                return (
-                  <div className="space-y-4">
-                    <div className="flex justify-end"><ChecklistGuiadoBotao /></div>
-                    {Array.from(byProc.entries()).map(([procId, lista]) => {
-                      const proc = processos.find((p) => String(p.id) === procId);
-                      const nome = proc?.servico_nome || "Processo";
-                      return (
-                        <div key={procId} className="rounded-xl border border-slate-200 bg-white">
-                          <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-700">
-                            {nome} <span className="ml-1 text-slate-400">· {lista.length} pendência(s)</span>
-                          </div>
-                          <div className="divide-y divide-slate-100">
-                            {lista.map((d) => {
-                              const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
-                              return (
-                                <button
-                                  key={d.id}
-                                  type="button"
-                                  onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
-                                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition"
-                                >
-                                  <div className="min-w-0">
-                                    <div className="text-[12px] font-semibold text-slate-800 truncate">
-                                      {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
-                                    </div>
-                                    <div className="text-[10px] text-slate-500">
-                                      {d.etapa ? String(d.etapa).toUpperCase() : "—"}
-                                    </div>
-                                  </div>
-                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
-                                    {reprov ? "Reenviar" : "Pendente"}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                  </header>
+
+                  <div className="qa-kpi-grid grid grid-cols-3 gap-2.5 mb-6">
+                    {kpis.map((k) => (
+                      <div key={k.label} className="rounded-sm border border-[#E5E5E5] bg-white px-3 py-3">
+                        <div className="qa-kpi-label flex items-center gap-1.5">
+                          <span className="inline-block h-[5px] w-[5px] rounded-full" style={{ background: k.accent }} />
+                          {k.label}
                         </div>
-                      );
-                    })}
+                        <div className="qa-kpi-value mt-1.5">{k.value}</div>
+                        <div className="qa-kpi-sub mt-1">{k.sub}</div>
+                      </div>
+                    ))}
                   </div>
-                );
-              })()}
-            </SectionCard>
+
+                  <div className="mb-5">
+                    <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
+                  </div>
+
+                  {docsFilt.length === 0 ? (
+                    <div className="rounded-sm border border-[#E5E5E5] bg-white px-5 py-8 text-center">
+                      <CheckCircle className="mx-auto mb-2 h-7 w-7 text-emerald-600" />
+                      <div className="qa-h3">
+                        {currentScope.type === "processo"
+                          ? "SEM PENDÊNCIAS NESTE PROCESSO"
+                          : "VOCÊ NÃO TEM PENDÊNCIAS AGORA"}
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="qa-eyebrow pb-2.5">CHECKLIST · DOCUMENTOS OBRIGATÓRIOS</div>
+                      <div className="mb-5"><ChecklistGuiadoBotao /></div>
+                      <div className="space-y-4">
+                        {Array.from(byProc.entries()).map(([procId, lista]) => {
+                          const proc = processos.find((p) => String(p.id) === procId);
+                          const nome = String(proc?.servico_nome || "Processo").toUpperCase();
+                          return (
+                            <div key={procId} className="rounded-sm border border-[#E5E5E5] bg-white">
+                              <div className="border-b border-[#EEEEEE] px-5 py-3">
+                                <div className="qa-eyebrow">{nome}</div>
+                                <div className="qa-kpi-sub mt-1">{lista.length} pendência(s)</div>
+                              </div>
+                              <div className="divide-y divide-[#F0F0F0]">
+                                {lista.map((d) => {
+                                  const reprov = isReprov(d);
+                                  return (
+                                    <button
+                                      key={d.id}
+                                      type="button"
+                                      onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
+                                      className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-[#FAFAFA]"
+                                    >
+                                      <div className="min-w-0">
+                                        <div className="qa-h3 truncate">
+                                          {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                        </div>
+                                        <div className="qa-kpi-sub mt-0.5">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
+                                      </div>
+                                      <span
+                                        className="qa-eyebrow shrink-0 rounded-sm px-2 py-1"
+                                        style={reprov ? { background: "#C32E26", color: "#FFFFFF" } : { background: "#F5EDD8", color: "#7A5A14" }}
+                                      >
+                                        {reprov ? "REENVIAR" : "PENDENTE"}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
 
