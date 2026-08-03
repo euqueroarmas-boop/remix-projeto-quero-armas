@@ -654,6 +654,41 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     (m) => m.role === "assistant" && !m.isStreaming && m.content.trim().length > 0,
   );
 
+  /** Registra o "resolveu? sim/não" do cliente na última resposta do Klal.
+   *  Ambas as respostas entram na fila de aprovação dos administradores. */
+  async function registrarFeedback(msgLocalId: string, valor: "sim" | "nao") {
+    if (feedbackMap[msgLocalId] || feedbackSalvando) return;
+    setFeedbackMap((prev) => ({ ...prev, [msgLocalId]: valor }));
+    setFeedbackSalvando(true);
+    try {
+      if (proto?.sessaoId) {
+        const { data: ultima } = await (supabase as any)
+          .from("qa_chat_mensagens")
+          .select("id")
+          .eq("sessao_id", proto.sessaoId)
+          .eq("role", "assistant")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const alvo = (ultima ?? [])[0]?.id;
+        if (alvo) {
+          await (supabase as any)
+            .from("qa_chat_mensagens")
+            .update({ feedback_cliente: valor, feedback_em: new Date().toISOString() })
+            .eq("id", alvo);
+        }
+      }
+      toast.success(
+        valor === "sim"
+          ? "Obrigado! Sua avaliação vai para a nossa equipe validar o aprendizado do Klal."
+          : "Registrado. Nossa equipe vai revisar essa resposta e corrigir o Klal.",
+      );
+    } catch {
+      toast.error("Não consegui registrar sua avaliação agora.");
+    } finally {
+      setFeedbackSalvando(false);
+    }
+  }
+
   const expiraEmMin = proto
     ? Math.max(0, Math.round((new Date(proto.lastActivityAt).getTime() + INACTIVITY_MS - now) / 60000))
     : 30;
