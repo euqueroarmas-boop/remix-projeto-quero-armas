@@ -242,7 +242,13 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
   const ativas = entrada.linhas.filter((l) => l.ativo);
 
   const filtradas = ativas.filter((l) => {
-    const cpOk = l.condicao_profissional == null || l.condicao_profissional === condicao;
+    // Sem condição definida ainda, as linhas amarradas a uma condição NÃO somem:
+    // ficam visíveis como "aguardando a resposta" (igual ao grupo de endereço).
+    const cpOk =
+      l.condicao_profissional == null ||
+      !condicao ||
+      condicao === "indefinido" ||
+      l.condicao_profissional === condicao;
     const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
     const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
     if (!cpOk || !modOk) return false;
