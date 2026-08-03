@@ -255,7 +255,25 @@ export default function ClienteResumoKanban({
   const snapshot = useMemo(() => {
     const activeItems = itens.filter((i: any) => !ACTIVE_FINAL_STATUSES.includes(String(i.status || "").toUpperCase()));
     const PROCESSO_FINAL_STATUSES = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "arquivado", "desistiu", "restituido"]);
-    const activeProcessos = processos.filter((p: any) => !PROCESSO_FINAL_STATUSES.has(String(p.status || "").toLowerCase()));
+    // ── REGRA-MÃE DE PRÉ-REQUISITO (LEIA ANTES DE ALTERAR) ─────────────
+    // O CRAF (Certificado de Registro de Arma de Fogo) + GT NUNCA pode
+    // iniciar antes da AUTORIZAÇÃO DE COMPRA correspondente estar
+    // CONCLUÍDA/DEFERIDA. Isso vale para QUALQUER modalidade do serviço:
+    //   • CRAF como CAC (atirador esportivo, caçador, colecionador)
+    //   • CRAF como policial / agente de segurança pública
+    //   • CRAF como militar (ativa ou aposentado/reserva)
+    //   • CRAF como posse simples (cidadão comum)
+    // Motivo legal/operacional: o CRAF só existe depois que a arma é
+    // efetivamente adquirida, e a aquisição depende da autorização de
+    // compra deferida pela PF/Exército. Sem isso, não há arma registrável.
+    // Única exceção: cliente que apresenta autorização já emitida por
+    // terceiro (PDF externo) — nesse caso não existe processo de
+    // autorização no sistema e o CRAF entra como standalone (não bloqueia).
+    // A trava vem de `qa_servicos_prerequisitos` e é resolvida em
+    // QAClientePortalPage (`_bloqueadoPrerequisito`). Aqui apenas a honramos.
+    const activeProcessosTodos = processos.filter((p: any) => !PROCESSO_FINAL_STATUSES.has(String(p.status || "").toLowerCase()));
+    const processosBloqueados = activeProcessosTodos.filter((p: any) => p?._bloqueadoPrerequisito === true);
+    const activeProcessos = activeProcessosTodos.filter((p: any) => p?._bloqueadoPrerequisito !== true);
     const prazosProc = calcularPrazosProcessuais(
       itens.map((it: any) => ({
         id: it.id,
@@ -344,7 +362,10 @@ export default function ClienteResumoKanban({
       };
     });
 
-    const processoItems = (activeProcessos.length ? activeProcessos : activeItems).map((item: any) => {
+    const baseProcessoItems = activeProcessos.length
+      ? [...activeProcessos, ...processosBloqueados]
+      : (activeItems.length ? activeItems : processosBloqueados);
+    const processoItems = baseProcessoItems.map((item: any) => {
       const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
       const prazo = prazosProc.find((p: any) =>
         p.id === item.id ||
@@ -353,6 +374,11 @@ export default function ClienteResumoKanban({
       );
       const statusProcesso = String(item.status || "").toLowerCase();
       const nomeProcesso = titleCaseServico(nome, "Processo");
+      // Bloqueado por etapa anterior: não é tarefa do cliente, não recebe
+      // CTA e não entra na contagem de "tarefas abertas".
+      if (item?._bloqueadoPrerequisito === true) {
+        return { label: nomeProcesso, status: "Aguardando etapa anterior", tone: "muted" as const };
+      }
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
         return {
           label: nomeProcesso,
