@@ -403,6 +403,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       }
       role={asPage ? undefined : "dialog"}
       aria-modal={asPage ? undefined : true}
+      style={{ fontFamily: "Arial, Helvetica, sans-serif", color: "#0A0A0A" }}
       data-qa-overlay={asPage ? undefined : true}
       onClick={asPage || bloqueante ? undefined : onDismiss}
     >
