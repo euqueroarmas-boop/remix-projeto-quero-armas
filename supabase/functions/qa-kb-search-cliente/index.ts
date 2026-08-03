@@ -1001,13 +1001,19 @@ Deno.serve(async (req) => {
         // interno de refinamento não deve poluir a fila de aprovação).
         if (!modo_refinamento && clienteId && effectiveSessaoId && fullLimpo.length > 0) {
           try {
-            await supabase.from("qa_chat_mensagens").insert([
+            const anexosResumo = anexosLista.map((a) => ({
+              id: a?.id ?? null,
+              nome_arquivo: a?.nome_arquivo ?? null,
+              mime_type: a?.mime_type ?? null,
+            }));
+            const { data: inseridas } = await supabase.from("qa_chat_mensagens").insert([
               {
                 sessao_id: effectiveSessaoId,
                 cliente_id: clienteId,
                 role: "user",
                 content: query,
                 fontes: [],
+                anexos: anexosResumo,
               },
               {
                 sessao_id: effectiveSessaoId,
@@ -1018,7 +1024,22 @@ Deno.serve(async (req) => {
                 nivel_confianca: nivelConfianca,
                 servico_sugerido_slug: servicoSugeridoSlug,
               },
-            ] as any);
+            ] as any).select("id, role");
+            // Vincula os anexos à sessão/mensagem (auditoria)
+            const idsAnexos = anexosLista
+              .map((a) => a?.id)
+              .filter((id): id is string => typeof id === "string" && id.length > 0);
+            if (idsAnexos.length > 0) {
+              const msgUser = (inseridas ?? []).find((m: any) => m.role === "user");
+              await supabase
+                .from("qa_chat_anexos")
+                .update({
+                  sessao_id: effectiveSessaoId,
+                  cliente_id: clienteId,
+                  mensagem_id: msgUser?.id ?? null,
+                })
+                .in("id", idsAnexos);
+            }
             await supabase
               .from("qa_chat_sessoes")
               .update({
