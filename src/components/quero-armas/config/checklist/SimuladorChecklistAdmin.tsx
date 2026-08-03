@@ -948,6 +948,16 @@ function LinhaItem({
           </button>
         )}
         <div className="flex flex-wrap items-center gap-1 text-[11px] font-mono" style={{ color: "hsl(220 12% 38%)" }}>
+          <span
+            className={`font-sans text-[9.5px] font-bold tracking-wide px-1.5 py-[2px] rounded border ${
+              item.tipo === "pergunta"
+                ? "text-sky-800 bg-sky-50 border-sky-200"
+                : "text-[#7B1C2E] bg-[#7B1C2E]/[0.06] border-[#7B1C2E]/25"
+            }`}
+            title={item.tipo === "pergunta" ? "O cliente responde — não envia arquivo" : "O cliente precisa enviar o arquivo (PDF)"}
+          >
+            {item.tipo === "pergunta" ? "PERGUNTA" : "ENVIAR DOCUMENTO"}
+          </span>
           <span className="uppercase">ordem</span>
           <input
             type="number"

@@ -50,7 +50,11 @@ const CATEGORIAS: Array<{ valor: string; label: string }> = [
   { valor: "certidoes",        label: "Certidões" },
   { valor: "laudos",           label: "Laudos" },
   { valor: "arma_acervo",      label: "Arma / Acervo" },
+  { valor: "cac_atividade",    label: "Atividade CAC / Habitualidade" },
   { valor: "declaracoes",      label: "Declarações" },
+  { valor: "efetiva_necessidade", label: "Efetiva Necessidade" },
+  { valor: "documentos_processo", label: "Documentos do Processo" },
+  { valor: "juridico",         label: "Jurídico" },
   { valor: "outros",           label: "Outros" },
 ];
 
@@ -246,7 +250,11 @@ export default function MontarChecklistAdmin() {
       if (!m.has(i.categoria)) m.set(i.categoria, []);
       m.get(i.categoria)!.push(i);
     }
-    return Array.from(m.entries()).sort(([a], [b]) => labelCategoria(a).localeCompare(labelCategoria(b), "pt-BR"));
+    const ordem = (c: string) => {
+      const i = CATEGORIAS.findIndex((x) => x.valor === c);
+      return i === -1 ? 999 : i;
+    };
+    return Array.from(m.entries()).sort(([a], [b]) => ordem(a) - ordem(b) || labelCategoria(a).localeCompare(labelCategoria(b), "pt-BR"));
   }, [bibliotecaFiltrada]);
 
   async function snapshot(motivo: string) {
@@ -1061,11 +1069,24 @@ export default function MontarChecklistAdmin() {
                       </button>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 15%)" }}>
-                        {nomeDocumentoExibicao(c)}
-                      </p>
+                      <div className="flex items-start gap-1.5">
+                        <span
+                          className={`shrink-0 mt-[1px] text-[9.5px] font-bold tracking-wide px-1.5 py-[2px] rounded border ${
+                            c.regra_validacao?.tipo === "pergunta"
+                              ? "text-sky-800 bg-sky-50 border-sky-200"
+                              : "text-[#7B1C2E] bg-[#7B1C2E]/[0.06] border-[#7B1C2E]/25"
+                          }`}
+                        >
+                          {c.regra_validacao?.tipo === "pergunta" ? "PERGUNTA" : "DOCUMENTO"}
+                        </span>
+                        <p className={`text-xs font-medium ${(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 15%)" }}>
+                          {nomeDocumentoExibicao(c)}
+                        </p>
+                      </div>
                       <p className="text-[11.5px] font-mono truncate text-slate-600">
-                        ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
+                        ordem {c.ordem} · {c.etapa}
+                        {c.regra_validacao?.tipo === "pergunta" ? " · resposta do cliente" : " · arquivo (PDF)"}
+                        {c.biblioteca_id ? " · ligado à biblioteca" : ""}
                         {(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? " · pacote estadual" : ""}
                       </p>
                     </div>
