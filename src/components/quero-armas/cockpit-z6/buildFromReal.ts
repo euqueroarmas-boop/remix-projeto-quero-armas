@@ -17,6 +17,7 @@ import type {
   CockpitZ6Kpi,
   CockpitZ6FocoDoDia,
 } from "./CockpitZ6MeusProcessos";
+import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 
