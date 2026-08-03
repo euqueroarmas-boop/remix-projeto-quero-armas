@@ -390,7 +390,27 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-kpi-l span:last-child{white-space:normal !important}
           .z6-root .z6-kpi-v{font-size:19px !important;margin-top:6px !important}
           .z6-root .z6-kpi-s{font-size:9.5px !important}
-          .z6-root .z6-proc-title{font-size:11px !important;letter-spacing:.1em !important}
+          .z6-root .z6-proc-title{font-size:11.5px !important;letter-spacing:.04em !important;line-height:1.25 !important}
+
+          /* Bloco PROGRESSO: vira faixa horizontal compacta, sem vazio */
+          .z6-root .z6-proc-grid{gap:14px !important}
+          .z6-root .z6-proc-left{padding-bottom:12px !important;display:grid !important;grid-template-columns:auto 1fr !important;grid-template-areas:"pct etapa" "bar bar" "prev prev" !important;align-items:center !important;column-gap:14px !important;row-gap:8px !important}
+          .z6-root .z6-proc-left .z6-lab{display:none !important}
+          .z6-root .z6-proc-left .z6-pct{grid-area:pct !important;font-size:30px !important;margin-top:0 !important}
+          .z6-root .z6-proc-left .z6-pct small{font-size:13px !important}
+          .z6-root .z6-proc-left > div:nth-child(4){display:none !important} /* rótulo "Etapa atual" */
+          .z6-root .z6-proc-left .z6-etapa{grid-area:etapa !important;margin-top:0 !important;font-size:12px !important;letter-spacing:.04em !important}
+          .z6-root .z6-proc-left .z6-bar{grid-area:bar !important;margin-top:0 !important;height:5px !important}
+          .z6-root .z6-proc-left .z6-prev{grid-area:prev !important;margin-top:0 !important;display:flex !important;align-items:baseline !important;gap:6px !important;font-size:10.5px !important}
+          .z6-root .z6-proc-left .z6-prev:last-child{justify-self:end !important}
+          .z6-root .z6-proc-left .z6-prev b{display:inline !important;margin-top:0 !important;font-size:11.5px !important}
+
+          /* Sem quebras feias nos rótulos técnicos */
+          .z6-root .z6-item .z6-t{font-size:8px !important;letter-spacing:0 !important;overflow-wrap:normal !important;word-break:normal !important;hyphens:none !important}
+          .z6-root .z6-barra-lab{font-size:8px !important;letter-spacing:0 !important;overflow-wrap:normal !important;word-break:normal !important}
+          .z6-root .z6-check-badge{font-size:8.5px !important;letter-spacing:.06em !important;padding:3px 6px !important}
+          .z6-root .z6-check-row span:first-child{font-size:11px !important;line-height:1.25 !important}
+          .z6-root .z6-detalhe-grid{gap:14px !important}
         }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
         .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
