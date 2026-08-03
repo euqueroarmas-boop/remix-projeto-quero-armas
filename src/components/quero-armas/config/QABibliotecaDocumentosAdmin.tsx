@@ -10,6 +10,7 @@ import {
 import BibliotecaModelosParser, {
   SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
 } from "./BibliotecaModelosParser";
+import { EXPLICACOES_REGISTRO } from "@/lib/quero-armas/pendenciasExplicacoes";
 
 type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
 
@@ -104,6 +105,35 @@ export default function QABibliotecaDocumentosAdmin() {
   const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
   const [modelosNovo, setModelosNovo] = useState<File[]>([]);
   const [treinandoNovo, setTreinandoNovo] = useState(false);
+  const [importando, setImportando] = useState(false);
+
+  // Traz para a biblioteca (fonte única) o passo a passo que hoje está escrito
+  // no módulo do assistente do cliente. Só preenche o que está EM BRANCO —
+  // nunca sobrescreve texto já editado pela equipe.
+  async function importarTextosDoAssistente() {
+    const alvos = itens.filter(
+      (i) => !((i.descricao_como_enviar ?? "").trim()) && EXPLICACOES_REGISTRO[i.codigo]?.passos?.length,
+    );
+    if (alvos.length === 0) { toast.info("Nada a importar — todos os documentos já têm passo a passo escrito aqui."); return; }
+    if (!confirm(`Importar o passo a passo do assistente para ${alvos.length} documento(s) sem texto? Nada que já foi escrito aqui será sobrescrito.`)) return;
+    setImportando(true);
+    let ok = 0;
+    for (const item of alvos) {
+      const e = EXPLICACOES_REGISTRO[item.codigo];
+      const { error } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .update({
+          descricao_como_enviar: e.passos.join("\n"),
+          observacao_cliente: item.observacao_cliente || e.observacao || null,
+          link_emissao: item.link_emissao || e.siteUrl || null,
+        })
+        .eq("id", item.id);
+      if (!error) ok++;
+    }
+    setImportando(false);
+    toast.success(`${ok} documento(s) atualizados com o passo a passo do assistente.`);
+    await carregar();
+  }
 
   async function recarregarResumo() {
     try { setResumoModelos(await carregarResumoModelos()); } catch { /* silencioso */ }
@@ -304,6 +334,18 @@ export default function QABibliotecaDocumentosAdmin() {
         </h2>
         <Button variant="ghost" size="sm" onClick={carregar} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
+        </Button>
+      </div>
+      <div className="flex justify-end mb-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={importarTextosDoAssistente}
+          disabled={importando || carregando}
+          className="h-7 text-xs gap-1 text-[#7A1F2B]"
+        >
+          {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+          Importar passo a passo do assistente
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
