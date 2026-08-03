@@ -212,10 +212,10 @@ Deno.serve(async (req) => {
       });
 
       const r = await sendTransactional({
-        templateName: "otp-cliente",
+        templateName: "contra-senha-troca",
         recipientEmail: email,
         idempotencyKey: `contrasenha-${uid}-${Date.now()}`,
-        templateData: { nome, codigo, code: codigo, otp: codigo, minutos: 10 },
+        templateData: { nome, codigo },
       });
       if (!r.ok) return json({ error: "Não foi possível enviar a contra-senha agora." }, 502);
       return json({ ok: true, mascara: email.replace(/^(.).*(@.*)$/, "$1•••$2") });
