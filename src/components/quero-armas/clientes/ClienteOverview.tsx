@@ -512,7 +512,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                 return (
                   <div className="mt-3">
                     <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #F59E0B, #EA580C)" }} />
+                      <div className="h-full rounded-full" style={{ width: `${progress}%`, background: statusDone ? "#00FF41" : "linear-gradient(90deg, #F59E0B, #EA580C)" }} />
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-[12px] font-bold" style={{ color: "#B45309" }}>{progress}%</span>

@@ -191,7 +191,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
             </button>
           </div>
           <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-100">
-            <div className="h-full rounded-full bg-[#7A1F2B] transition-all duration-300" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-[#7A1F2B] transition-all duration-300" style={{ width: `${pct}%`, background: pct === 100 ? "#00FF41" : "#7A1F2B" }} />
           </div>
         </div>
 

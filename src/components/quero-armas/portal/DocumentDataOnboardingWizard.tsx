@@ -359,7 +359,7 @@ export default function DocumentDataOnboardingWizard({
                 <span>{pct}%</span>
               </div>
               <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: MARROM }} />
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: pct === 100 ? "#00FF41" : MARROM }} />
               </div>
             </div>
           )}
