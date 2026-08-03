@@ -470,12 +470,12 @@ export default function QAConfiguracoesPage() {
         </TabsList>
 
         {isAdmin && (
-          <TabsContent value="klal" className="mt-4">
+          <TabsContent value="klal" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
             <QAKlalPersonaAdmin />
           </TabsContent>
         )}
 
-        <TabsContent value="sistema" className="mt-4">
+        <TabsContent value="sistema" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* System Status */}
           <div className="qa-card p-5">
             <div className="flex items-center gap-2 mb-3">
@@ -502,7 +502,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
 
       {isAdmin && (
-        <TabsContent value="servicos" className="mt-4">
+        <TabsContent value="servicos" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
         <div className="qa-card p-5">
           {(() => {
             const servicosCatalogo = servicos.filter((s) => catalogoIds.has(s.id));
@@ -631,29 +631,29 @@ export default function QAConfiguracoesPage() {
 
       {isAdmin && (
         <>
-        <TabsContent value="contrato" className="mt-4">
+        <TabsContent value="contrato" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QARedeployBanner />
           {/* Contrato Primário — publicação de nova versão + anexos por serviço */}
           <QAContratoPrimarioAdmin />
         </TabsContent>
 
-        <TabsContent value="procuracao" className="mt-4">
+        <TabsContent value="procuracao" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QARedeployBanner />
           {/* Procuração — motor de stringagem + publicação do modelo vigente */}
           <QAProcuracaoPrimarioAdmin />
         </TabsContent>
 
-        <TabsContent value="biblioteca" className="mt-4">
+        <TabsContent value="biblioteca" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Biblioteca central alfabética de documentos — fonte única do passo a passo */}
           <QABibliotecaDocumentosAdmin />
         </TabsContent>
 
-        <TabsContent value="checklist" className="mt-4">
+        <TabsContent value="checklist" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Montar checklist do serviço a partir da biblioteca + modelos prontos + preview + snapshots */}
           <MontarChecklistAdmin />
         </TabsContent>
 
-        <TabsContent value="simulador" className="mt-4">
+        <TabsContent value="simulador" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Simulação passo a passo: mesma regra do motor real (explosão + perguntas) */}
           <SimuladorChecklistAdmin />
         </TabsContent>
@@ -661,7 +661,7 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
-        <TabsContent value="status" className="mt-4">
+        <TabsContent value="status" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
         {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
@@ -826,12 +826,12 @@ export default function QAConfiguracoesPage() {
       )}
 
       {isAdmin && (
-        <TabsContent value="notificacoes" className="mt-4">
+        <TabsContent value="notificacoes" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QANotificacoesAdmin />
         </TabsContent>
       )}
 
-      <TabsContent value="ranking" className="mt-4">
+      <TabsContent value="ranking" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Pesos de Ranking</span>
@@ -861,7 +861,7 @@ export default function QAConfiguracoesPage() {
       </div>
       </TabsContent>
 
-      <TabsContent value="perfil" className="mt-4">
+      <TabsContent value="perfil" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
       {/* Profile */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
@@ -878,7 +878,7 @@ export default function QAConfiguracoesPage() {
       </TabsContent>
 
       {isAdmin && (
-        <TabsContent value="monitoramento" className="mt-4">
+        <TabsContent value="monitoramento" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Configurações de Monitoramento */}
           <MonitoramentoToggles />
         </TabsContent>
@@ -895,7 +895,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
       )}
       {isAdmin && (
-        <TabsContent value="favicon" className="mt-4">
+        <TabsContent value="favicon" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           <QAFaviconAdmin />
         </TabsContent>
       )}
