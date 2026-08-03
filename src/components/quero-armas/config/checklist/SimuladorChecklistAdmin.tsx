@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
-  ListOrdered,
+  ListOrdered, ChevronRight, ChevronDown,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
@@ -51,6 +51,7 @@ export default function SimuladorChecklistAdmin() {
   const [loading, setLoading] = useState(false);
   const [salvandoOrdem, setSalvandoOrdem] = useState(false);
   const [arrastandoId, setArrastandoId] = useState<string | null>(null);
+  const [gruposAbertos, setGruposAbertos] = useState<string[]>([]);
 
   const [modalidade, setModalidade] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
@@ -741,6 +742,12 @@ export default function SimuladorChecklistAdmin() {
                       posicao={sim.grupos.findIndex((x) => x.grupo === g.grupo) + 1}
                       totalGrupos={sim.grupos.length}
                       onDefinirPosicao={definirPosicaoGrupo}
+                      aberto={gruposAbertos.includes(g.grupo)}
+                      onAlternar={() =>
+                        setGruposAbertos((prev) =>
+                          prev.includes(g.grupo) ? prev.filter((x) => x !== g.grupo) : [...prev, g.grupo],
+                        )
+                      }
                     >
                       <SortableContext
                         items={g.itens.map((i) => i.id)}
@@ -796,12 +803,16 @@ function BlocoGrupo({
   posicao,
   totalGrupos,
   onDefinirPosicao,
+  aberto,
+  onAlternar,
   children,
 }: {
   grupo: { grupo: string; rotulo: string; cumpridos: number; pendentes: number };
   posicao: number;
   totalGrupos: number;
   onDefinirPosicao: (grupo: string, posicao: number) => void;
+  aberto: boolean;
+  onAlternar: () => void;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -829,14 +840,25 @@ function BlocoGrupo({
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>
-          <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
-            {grupo.rotulo}
-          </span>
+          <button
+            type="button"
+            onClick={onAlternar}
+            aria-expanded={aberto}
+            title={aberto ? "Recolher grupo" : "Expandir grupo"}
+            className="flex items-center gap-1 text-left"
+            style={{ color: BORDO }}
+          >
+            {aberto ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            <span className="text-[11.5px] font-semibold uppercase tracking-wider">
+              {grupo.rotulo}
+            </span>
+          </button>
         </div>
         <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
           {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
         </span>
       </div>
+      {aberto && (
       <div className="flex items-center gap-1">
         <span className="text-[11px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
         <input
@@ -851,7 +873,8 @@ function BlocoGrupo({
           style={{ borderColor: LINE, color: INK }}
         />
       </div>
-      {children}
+      )}
+      {aberto && children}
     </div>
   );
 }
