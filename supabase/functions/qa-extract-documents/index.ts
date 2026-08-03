@@ -449,6 +449,7 @@ async function classificarUmArquivo(dataUrl: string, mime: string, nome: string,
   // Sem tool call = a IA não conseguiu ler o documento. É FALHA, não classificação
   // "outro" — marca com erro para o frontend preservar o tipo já inferido pelo nome.
   if (!call?.function?.arguments) {
+    console.error("[classify] sem tool call", nome, JSON.stringify(data?.choices?.[0] ?? data).slice(0, 600));
     return { tipo_detectado: "outro", confianca: 0, motivo: "", legivel: false, campos_extraidos: {}, erro: "sem_resposta_ia" };
   }
   const parsed = JSON.parse(call.function.arguments);
