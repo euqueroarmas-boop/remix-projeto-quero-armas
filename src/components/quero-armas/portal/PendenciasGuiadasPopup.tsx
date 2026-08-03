@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, FileUp, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import {
@@ -386,6 +386,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const concluidosGrupo = grupoNoProcesso?.concluidos ?? Math.max(0, posicaoNoGrupo - 1);
   const pendenciasGrupo = Math.max(0, totalItensGrupo - concluidosGrupo);
   const pendenciasGrupoLabel = `${pendenciasGrupo} pendência${pendenciasGrupo === 1 ? "" : "s"}`;
+
+  // Só o primeiro nome: "WILLIAN RODRIGUES DA SILVA MASSAROTO, VOCÊ ESTÁ..."
+  // quebrava em três linhas e dominava o topo do card.
+  const primeiroNomeRaw = (nomeCliente || "").trim().split(/\s+/)[0] || "";
+  const primeiroNome = primeiroNomeRaw
+    ? primeiroNomeRaw.charAt(0).toUpperCase() + primeiroNomeRaw.slice(1).toLowerCase()
+    : "";
 
   return (
     <div
