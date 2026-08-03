@@ -10661,6 +10661,69 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_suporte_sessoes: {
+        Row: {
+          acoes: Json
+          cliente_email: string | null
+          cliente_id: string | null
+          cliente_nome: string | null
+          created_at: string
+          email_fim_enviado: boolean
+          email_inicio_enviado: boolean
+          encerrado_em: string | null
+          escopo: string
+          id: string
+          iniciado_em: string
+          ip: string | null
+          motivo: string
+          operador_email: string | null
+          operador_user_id: string | null
+          processo_ref: string | null
+          resumo: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          acoes?: Json
+          cliente_email?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          email_fim_enviado?: boolean
+          email_inicio_enviado?: boolean
+          encerrado_em?: string | null
+          escopo?: string
+          id?: string
+          iniciado_em?: string
+          ip?: string | null
+          motivo: string
+          operador_email?: string | null
+          operador_user_id?: string | null
+          processo_ref?: string | null
+          resumo?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          acoes?: Json
+          cliente_email?: string | null
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          email_fim_enviado?: boolean
+          email_inicio_enviado?: boolean
+          encerrado_em?: string | null
+          escopo?: string
+          id?: string
+          iniciado_em?: string
+          ip?: string | null
+          motivo?: string
+          operador_email?: string | null
+          operador_user_id?: string | null
+          processo_ref?: string | null
+          resumo?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       qa_template_placeholder_config: {
         Row: {
           ativo: boolean
