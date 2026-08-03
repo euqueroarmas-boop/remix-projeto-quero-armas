@@ -434,7 +434,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div
           className={
             asPage
-              ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-1 pb-4"
+              ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-0 pb-4"
               : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14"
           }
         >
