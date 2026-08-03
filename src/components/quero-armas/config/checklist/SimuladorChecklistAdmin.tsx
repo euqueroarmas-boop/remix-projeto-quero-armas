@@ -449,6 +449,7 @@ export default function SimuladorChecklistAdmin() {
                               onToggle={alternarEntrega}
                               onResponder={responder}
                               onLimparResposta={limparResposta}
+                              onRemover={removerItem}
                             />
                           ))}
                         </div>
