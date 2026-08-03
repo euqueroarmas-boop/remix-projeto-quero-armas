@@ -115,12 +115,6 @@ export default function QADashboardPage() {
 
   if (loading) return <LoadingState label="Carregando dashboard…" />;
 
-  const alerts = [
-    stats.erros > 0 && { label: `${stats.erros} documento(s) com erro de processamento`, icon: XCircle, color: "text-red-500", bg: "bg-red-50 border-red-100", link: "/base-conhecimento" },
-    stats.pendentes > 0 && { label: `${stats.pendentes} documento(s) pendente(s) de validação`, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-100", link: "/base-conhecimento" },
-    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4] border-[#E5C2C6]", link: "/historico" },
-  ].filter(Boolean) as any[];
-
   return (
     <div className="space-y-5 md:space-y-6 max-w-7xl mx-auto">
       {/* Page title */}
@@ -162,61 +156,10 @@ export default function QADashboardPage() {
         <DashboardProntoProtocolar />
       </Suspense>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map((a, i) => (
-            <Link key={i} to={a.link}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${a.bg} hover:shadow-sm transition-all group`}>
-              <a.icon className={`h-4 w-4 ${a.color} shrink-0`} />
-              <span className="text-[13px] text-slate-700 flex-1 font-medium">{a.label}</span>
-              <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Novos cadastros recebidos (operacional, topo) */}
-      {mountHeavy && (
-        <Suspense fallback={<Spinner />}>
-          <DashboardNovosCadastrosRecebidos />
-        </Suspense>
-      )}
-
-      {/* SLA novos clientes */}
-      {mountHeavy && (
-        <Suspense fallback={<Spinner />}>
-          <DashboardSlaClientesNovos />
-        </Suspense>
-      )}
-
-      {/* Monitor de exames */}
-      {mountHeavy && (
-        <Suspense fallback={<Spinner />}>
-          <DashboardExames />
-        </Suspense>
-      )}
-
-      {/* Monitor operacional de processos */}
-      {mountHeavy && (
-        <Suspense fallback={<Spinner />}>
-          <DashboardProcessosMonitor />
-        </Suspense>
-      )}
-
-      {/* KPIs essenciais (resumo) */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-        <KPICard to="/clientes"           icon={Users}       label="Cadastros"  value={stats.novosCadastros} />
-        <KPICard to="/base-conhecimento"  icon={FileText}    label="Acervo"     value={stats.documentos} />
-        <KPICard to="/historico"          icon={PenTool}     label="Peças"      value={stats.pecas} />
-        <KPICard to="/historico"          icon={CheckCircle} label="Aprovadas"  value={stats.aprovadas} />
-        <KPICard to="/ia"                 icon={Shield}      label="IA"         value={stats.consultas} />
-      </div>
-
       <p className="text-[11px] text-center" style={{ color: "hsl(220 10% 62%)" }}>
-        Indicadores analíticos, listas e gráficos detalhados em{" "}
-        <Link to="/operacao/monitoramento" className="font-semibold hover:underline" style={{ color: "hsl(352 60% 30%)" }}>
-          Operação → Monitoramento
+        Os demais motores foram movidos para{" "}
+        <Link to="/configuracoes" className="font-semibold hover:underline" style={{ color: "hsl(352 60% 30%)" }}>
+          Configurações → Apagar
         </Link>
       </p>
 
