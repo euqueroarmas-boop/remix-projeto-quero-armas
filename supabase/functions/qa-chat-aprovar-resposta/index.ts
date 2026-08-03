@@ -193,7 +193,54 @@ Deno.serve(async (req) => {
       .eq("id", mensagem_id);
     if (updErr) return json({ error: updErr.message }, 500);
 
-    return json({ success: true, acao: "aprovada", doc_kb_id: docId, chunks: chunks.length });
+    // ─── GOLDEN RECORD ──────────────────────────────────────
+    // Toda resposta validada pela administração vira registro de ouro,
+    // carregando também os anexos que o cliente enviou na pergunta.
+    let goldenId: string | null = null;
+    try {
+      const { data: anexosMsg } = await supabase
+        .from("qa_chat_anexos")
+        .select("id, nome_arquivo, mime_type, texto_extraido")
+        .eq("sessao_id", msg.sessao_id);
+
+      const anexosIds = (anexosMsg ?? []).map((a: any) => a.id);
+      const contextoAnexos = (anexosMsg ?? [])
+        .map((a: any) => `${a.nome_arquivo} (${a.mime_type}):\n${(a.texto_extraido || "").slice(0, 4000)}`)
+        .join("\n\n---\n\n") || null;
+
+      const { data: golden } = await supabase
+        .from("qa_chat_golden_records")
+        .insert({
+          sessao_id: msg.sessao_id,
+          mensagem_id: msg.id,
+          cliente_id: msg.cliente_id,
+          pergunta,
+          resposta,
+          anexos_ids: anexosIds,
+          contexto_anexos: contextoAnexos,
+          doc_kb_id: docId,
+          aprovado_por: staffUserId,
+        })
+        .select("id")
+        .single();
+      goldenId = (golden as any)?.id ?? null;
+
+      if (anexosIds.length > 0) {
+        await supabase
+          .from("qa_chat_anexos")
+          .update({
+            validado_admin: true,
+            validado_por: staffUserId,
+            validado_em: new Date().toISOString(),
+            virou_golden: true,
+          })
+          .in("id", anexosIds);
+      }
+    } catch (e) {
+      console.warn("[qa-chat-aprovar] golden record falhou (não bloqueante):", e);
+    }
+
+    return json({ success: true, acao: "aprovada", doc_kb_id: docId, golden_id: goldenId, chunks: chunks.length });
   } catch (e: any) {
     console.error("qa-chat-aprovar-resposta error:", e);
     return json({ error: e?.message ?? "erro" }, 500);
