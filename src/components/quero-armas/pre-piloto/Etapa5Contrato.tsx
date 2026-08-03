@@ -354,9 +354,93 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       )}
 
       {selecionados.length > 0 && (
-        <div className="bg-muted/40 rounded p-2 text-xs flex justify-between">
-          <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
-          <span className="font-medium">{formatBRL(totalSelecionados)}</span>
+        <div className="border rounded-lg p-3 space-y-3 bg-white">
+          <p className="text-xs font-semibold">Valores e descontos (exceções comerciais)</p>
+          <div className="space-y-2">
+            {selecionados.map((s) => {
+              const aplicado = precoAplicado(s);
+              const dif = (s.preco ?? 0) - aplicado;
+              return (
+                <div key={s.id} className="flex items-center gap-2 text-xs">
+                  <span className="flex-1 truncate">{s.nome}</span>
+                  <span className="text-muted-foreground line-through w-20 text-right">
+                    {formatBRL(s.preco)}
+                  </span>
+                  <Input
+                    value={precosNegociados[s.id] ?? ""}
+                    onChange={(e) =>
+                      setPrecosNegociados((prev) => ({ ...prev, [s.id]: e.target.value }))
+                    }
+                    placeholder={String((s.preco ?? 0).toFixed(2)).replace(".", ",")}
+                    className="h-8 w-28 text-xs text-right"
+                  />
+                  {dif > 0.0049 && (
+                    <span className="text-[10px] font-semibold text-emerald-700 w-24 text-right">
+                      -{formatBRL(dif)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-between text-xs pt-1 border-t">
+            <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
+            <span className="text-right">
+              {descontoTotal > 0.0049 && (
+                <span className="block text-[10px] text-muted-foreground line-through">
+                  {formatBRL(totalCatalogo)}
+                </span>
+              )}
+              <span className="font-semibold">{formatBRL(totalSelecionados)}</span>
+            </span>
+          </div>
+
+          {temNegociacao && (
+            <div className="space-y-2 border-t pt-2">
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Tipo de ajuste
+                </Label>
+                <select
+                  value={tipoAjuste}
+                  onChange={(e) => setTipoAjuste(e.target.value as TipoAjuste)}
+                  className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                >
+                  {Object.entries(TIPOS_AJUSTE_LABEL).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Motivo do desconto (mín. 20 caracteres — vai para o contrato)
+                </Label>
+                <textarea
+                  value={motivoAjuste}
+                  onChange={(e) => setMotivoAjuste(e.target.value)}
+                  rows={3}
+                  className="w-full text-xs border rounded-md px-2 py-1.5 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                  placeholder="Ex.: Desconto concedido por contratação conjunta de dois serviços na mesma adesão."
+                />
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {motivoAjuste.trim().length}/20
+                </p>
+              </div>
+              <label className="flex items-start gap-2 text-[11px]">
+                <input
+                  type="checkbox"
+                  checked={confirmadoAjuste}
+                  onChange={(e) => setConfirmadoAjuste(e.target.checked)}
+                  className="mt-0.5"
+                />
+                Confirmo o desconto de <b>{formatBRL(descontoTotal)}</b> e autorizo que ele conste no
+                objeto do contrato.
+              </label>
+            </div>
+          )}
         </div>
       )}
 
