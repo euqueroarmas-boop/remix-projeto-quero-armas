@@ -607,6 +607,8 @@ function FeaturedContractCard({
   const [localProcessingSince, setLocalProcessingSince] = React.useState<string | null>(null);
   const [showDone, setShowDone] = React.useState(false);
   const [baixandoAssinado, setBaixandoAssinado] = React.useState(false);
+  // Nasce recolhido — o cliente expande quando quiser ver o detalhamento
+  const [expandido, setExpandido] = React.useState(false);
   const prevStatusRef = React.useRef<string | null>(null);
   const refreshRef = React.useRef(onValidatedRefresh);
 
