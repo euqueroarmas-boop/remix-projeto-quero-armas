@@ -421,6 +421,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Header */}
         <div className="px-6 pt-8 pb-4 shrink-0">
+          {/* Abertura pessoal: diz ao cliente, pelo nome, o que está sendo
+              cobrado dele. Fica acima dos chips de contexto. */}
+          <h1 className="mb-3 font-['Oswald',sans-serif] text-[16px] font-bold uppercase leading-snug tracking-[0.02em] text-[#0A0A0A]">
+            {(nomeCliente || "").trim()
+              ? `${(nomeCliente || "").trim().toUpperCase()}, VOCÊ ESTÁ NOS DEVENDO ENVIAR ESTES DOCUMENTOS ABAIXO.`
+              : "VOCÊ ESTÁ NOS DEVENDO ENVIAR ESTES DOCUMENTOS ABAIXO."}
+          </h1>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
