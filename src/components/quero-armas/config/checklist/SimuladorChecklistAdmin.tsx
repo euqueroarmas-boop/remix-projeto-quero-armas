@@ -799,6 +799,7 @@ export default function SimuladorChecklistAdmin() {
             </div>
 
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
+*** MARKER ***
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
