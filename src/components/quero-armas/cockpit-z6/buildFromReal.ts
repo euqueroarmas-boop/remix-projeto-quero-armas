@@ -248,6 +248,34 @@ function buildProcessoCard(args: {
   const abertosEtapaAtual = docsEtapaAtual
     .filter((d) => !isCumprido(d))
     .sort((a, b) => ordemDoc(a) - ordemDoc(b));
+
+  // ORGANIZAÇÃO CANÔNICA: o checklist do cliente segue exatamente os grupos
+  // e a ordem definidos em Preços e Serviços (qa_servicos_documentos.etapa +
+  // .ordem). Sem isso, o portal agrupava foto 3x4, pergunta de endereço e
+  // requerimento no mesmo bloco "Comprovação de endereço".
+  const grupoCatalogo = (d: any): string => {
+    const raw = String(d?.etapa ?? "").trim().toLowerCase();
+    if (!raw || /^[1-5]$/.test(raw)) return "base";
+    if (raw === "endereço") return "endereco";
+    if (raw === "condicao" || raw === "renda") return "condicao_profissional";
+    return raw;
+  };
+  const rotuloGrupo = (g: string) =>
+    g === "base" ? "DOCUMENTOS BASE"
+    : g === "endereco" ? "COMPROVAÇÃO DE ENDEREÇO"
+    : g === "condicao_profissional" ? "CONDIÇÃO PROFISSIONAL / RENDA"
+    : g === "complementar" ? "DOCUMENTOS COMPLEMENTARES"
+    : g.replace(/_/g, " ").toUpperCase();
+  const docsPorOrdemCatalogo = [...docsVisiveisObrigatorios].sort(
+    (a, b) => ordemDoc(a) - ordemDoc(b),
+  );
+  const primeiroAbertoCatalogo = docsPorOrdemCatalogo.find((d) => !isCumprido(d));
+  const grupoAtual = primeiroAbertoCatalogo ? grupoCatalogo(primeiroAbertoCatalogo) : null;
+  const docsGrupoAtual = grupoAtual
+    ? docsPorOrdemCatalogo.filter((d) => grupoCatalogo(d) === grupoAtual)
+    : [];
+  const abertosGrupoAtual = docsGrupoAtual.filter((d) => !isCumprido(d));
+
   const rotuloEtapa = (n: number | null) =>
     n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
     : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
@@ -257,10 +285,12 @@ function buildProcessoCard(args: {
     : "";
   // Quando resta uma única exigência, o nome dela é a etapa real percebida
   // pelo cliente (ex.: Certidão de Crimes Eleitorais — TSE), não o grupo amplo.
-  let etapaAtual = abertosEtapaAtual.length === 1
-    ? String(abertosEtapaAtual[0].nome_documento || abertosEtapaAtual[0].tipo_documento || "").trim().toUpperCase()
-    : rotuloEtapa(etapaAtualNum) ||
-      String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
+  let etapaAtual = abertosGrupoAtual.length === 1
+    ? String(abertosGrupoAtual[0].nome_documento || abertosGrupoAtual[0].tipo_documento || "").trim().toUpperCase()
+    : grupoAtual
+      ? rotuloGrupo(grupoAtual)
+      : rotuloEtapa(etapaAtualNum) ||
+        String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
   if (bloqueado) {
     etapaAtual = "AGUARDANDO PRÉ-REQUISITO";
   } else if (!etapaAtual) {
@@ -314,13 +344,19 @@ function buildProcessoCard(args: {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
       checklist: checklistFromDocs(
-        abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs,
+        abertosGrupoAtual.length
+          ? abertosGrupoAtual
+          : docsGrupoAtual.length
+            ? docsGrupoAtual
+            : docsPorOrdemCatalogo.length
+              ? docsPorOrdemCatalogo
+              : docs,
         ordemDoc,
       ),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
-        : abertosEtapaAtual.length
-          ? `${abertosEtapaAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
+        : abertosGrupoAtual.length
+          ? `${abertosGrupoAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
           : "Aguardando ação da equipe Quero Armas.",
     };
   } else {
