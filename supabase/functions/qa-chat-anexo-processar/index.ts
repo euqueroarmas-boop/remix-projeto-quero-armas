@@ -65,12 +65,10 @@ Deno.serve(async (req) => {
       const { data: u } = await supabase.auth.getUser(jwt);
       usuarioId = u?.user?.id ?? null;
       if (usuarioId) {
-        const { data: cli } = await supabase
-          .from("qa_clientes")
-          .select("id")
-          .eq("auth_user_id", usuarioId)
-          .maybeSingle();
-        clienteId = (cli as any)?.id ?? null;
+        const { data: cid } = await supabase.rpc("qa_current_cliente_id", {
+          _uid: usuarioId,
+        } as any);
+        clienteId = typeof cid === "number" ? cid : cid ? Number(cid) || null : null;
       }
     }
     if (!usuarioId) return json({ error: "não autenticado" }, 401);
