@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
 
     const { data: processo } = await supabase
       .from("qa_processos")
-      .select("id, cliente_id, condicao_profissional, status")
+      .select("id, cliente_id, servico_id, condicao_profissional, status")
       .eq("id", processo_id)
       .maybeSingle();
     if (!processo) return json({ error: "Processo não encontrado" }, 404);
@@ -411,7 +411,41 @@ Deno.serve(async (req) => {
       .eq("processo_id", processo_id)
       .like("tipo_documento", "renda_%");
     const presentesSet = new Set((aindaPresentes ?? []).map((d: any) => d.tipo_documento));
-    const novos = rendaPara(condicao).filter((it) => !presentesSet.has(it.tipo_documento));
+
+    // FONTE ÚNICA: o catálogo (Preços e Serviços → qa_servicos_documentos) manda.
+    // Só quando o serviço não tem NENHUMA exigência cadastrada para a condição
+    // escolhida é que caímos na lista padrão embutida — assim, ativar/desativar
+    // uma exigência no admin (e o Simulador do Checklist) reflete no cliente.
+    let origemItens: "catalogo" | "padrao" = "padrao";
+    let base: Item[] = rendaPara(condicao);
+    if (processo.servico_id != null) {
+      const { data: catalogo } = await supabase
+        .from("qa_servicos_documentos")
+        .select("tipo_documento, nome_documento, obrigatorio, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias, regra_validacao, ordem")
+        .eq("servico_id", processo.servico_id)
+        .eq("ativo", true)
+        .eq("condicao_profissional", condicao)
+        .order("ordem", { ascending: true });
+      if (catalogo && catalogo.length > 0) {
+        origemItens = "catalogo";
+        base = catalogo.map((c: any) => ({
+          tipo_documento: c.tipo_documento,
+          nome_documento: c.nome_documento,
+          obrigatorio: c.obrigatorio !== false,
+          link_emissao: c.link_emissao ?? null,
+          label_botao: String(c.regra_validacao?.label_botao ?? "Enviar documento"),
+          instrucoes: c.instrucoes ?? undefined,
+          observacoes_cliente: c.observacoes_cliente ?? undefined,
+          orgao_emissor: c.orgao_emissor ?? undefined,
+          prazo_recomendado_dias: c.prazo_recomendado_dias ?? undefined,
+          checklist_operador: Array.isArray(c.regra_validacao?.checklist_operador)
+            ? c.regra_validacao.checklist_operador
+            : [],
+        }));
+      }
+    }
+    const novos = base.filter((it) => !presentesSet.has(it.tipo_documento));
+    console.log("[set-condicao] origem dos itens de renda:", origemItens);
     console.log("[set-condicao] presentes pós-delete:", Array.from(presentesSet), "novos a inserir:", novos.map(n => n.tipo_documento));
     if (novos.length > 0) {
       const rows = novos.map((d, idx) => ({
@@ -456,11 +490,12 @@ Deno.serve(async (req) => {
       tipo_evento: "condicao_profissional_definida",
       descricao: `Condição profissional definida: ${condicao.toUpperCase()}.`,
       dados_json: { condicao, removidos_solicitados: aRemover.length, removidos_reais: removidosReais, criados: novos.length, preservados_aprovados: Array.from(aprovados) },
+      // origem registrada para auditoria do que ditou a lista
       ator: staffRow ? "staff" : "cliente",
       user_id: userId,
     });
 
-    return json({ success: true, condicao_profissional: condicao, removidos: removidosReais, criados: novos.length });
+    return json({ success: true, condicao_profissional: condicao, removidos: removidosReais, criados: novos.length, origem_itens: origemItens });
   } catch (e: any) {
     console.error("qa-processo-set-condicao:", e);
     return json({ error: e?.message || "Erro interno" }, 500);
