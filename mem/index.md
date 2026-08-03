@@ -49,3 +49,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Comprovante Terceiro](mem://features/quero-armas/comprovante-endereco-terceiro) — Comprovante em nome de terceiro só cumpre a exigência após declaração do responsável assinada no GOV.BR
 - [Checklist Granada Lock](mem://style/quero-armas/checklist-granada-layout-lock) — Layout congelado da página do checklist guiado (mobile/granada): sem kicker, sem "você", sem fundo branco, H1 alinhado à página. Confirmar 2x antes de mudar.
 - [Só PDF original nos documentos](mem://features/quero-armas/somente-pdf-original) — Regra canônica: todo documento do processo só aceita PDF original do órgão emissor; imagem (JPG/PNG/WebP) apenas para a foto 3x4
+- [Klal Fontes](mem://features/quero-armas/klal-exibicao-fontes) — Sem legislação em perguntas de processo; exibir só as fontes realmente usadas em dúvida técnica ou recomendação de serviço
