@@ -4154,7 +4154,7 @@ export default function QAClientePortalPage() {
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
-            <ProtocolosAtendimentoPanel clienteId={cliente?.id} />
+            <ProtocolosAtendimentoPanel clienteId={cliente?.id} onContinuarChat={() => setActiveSection("mensagens")} />
           </SectionCard>
         )}
 
