@@ -387,18 +387,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      data-qa-overlay
-      onClick={bloqueante ? undefined : onDismiss}
+      className={
+        asPage
+          ? "w-full"
+          : "fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+      }
+      role={asPage ? undefined : "dialog"}
+      aria-modal={asPage ? undefined : "aria-modal" in {} ? undefined : true}
+      data-qa-overlay={asPage ? undefined : true}
+      onClick={asPage || bloqueante ? undefined : onDismiss}
     >
       <div
-        className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
+        className={
+          asPage
+            ? "relative w-full bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden flex flex-col max-h-[calc(100dvh-140px)]"
+            : "relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
+        }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button — some no modo bloqueante (assinatura obrigatória) */}
-        {bloqueante ? null : (
+        {/* Close button — some no modo bloqueante (assinatura obrigatória) e no modo página */}
+        {bloqueante || asPage ? null : (
           <button
             type="button"
             onClick={onDismiss}
