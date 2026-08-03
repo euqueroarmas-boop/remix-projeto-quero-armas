@@ -26,6 +26,17 @@ interface Servico { id: number; nome_servico: string; valor_servico: number; is_
 
 type ServicoTab = "catalogo" | "internos";
 
+// ── Estilo premium das abas (rail vertical no desktop, scroll horizontal no mobile) ──
+const QA_TABS_LIST =
+  "h-auto w-full gap-1 bg-transparent p-0 mb-3 lg:mb-0 " +
+  "flex overflow-x-auto flex-nowrap justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
+  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-24 lg:rounded-2xl lg:border lg:border-[hsl(220_13%_90%)] lg:bg-white lg:p-2 lg:shadow-[0_1px_2px_rgba(16,24,40,.04)]";
+
+const QA_TAB =
+  "shrink-0 lg:w-full lg:justify-start rounded-lg px-3 py-2 text-[12.5px] font-semibold tracking-[.02em] " +
+  "text-[#4A5361] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-[hsl(220_20%_96%)] " +
+  "data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white data-[state=active]:shadow-none";
+
 // ── Banner de redeploy de edge functions ──────────────────────────────────────
 const REDEPLOY_KEY = "qa_redeploy_banner_dismissed_v1";
 
