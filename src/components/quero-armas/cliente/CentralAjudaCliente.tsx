@@ -727,7 +727,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
                     {sugestoesVisiveis.map((s) => (
                       <button
                         key={s}
-                        onClick={() => enviar(s)}
+                        onClick={() => { if (sugDrag.current.moved) return; enviar(s); }}
                         className="shrink-0 max-w-[230px] text-left text-[11.5px] px-3 py-2 bg-white border transition-colors hover:bg-slate-50"
                         style={{ borderColor: CARD_BORDER, borderRadius: 999, color: INK_2, lineHeight: 1.3 }}
                       >
