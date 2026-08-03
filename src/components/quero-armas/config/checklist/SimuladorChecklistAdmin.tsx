@@ -259,20 +259,31 @@ export default function SimuladorChecklistAdmin() {
     if (error) {
       setLinhas(anteriores);
       toast.error("NÃO FOI POSSÍVEL RENOMEAR: " + (error.message ?? "ERRO"));
-    const nome = novoNome.trim();
-    if (!nome) return;
-    const anteriores = linhas;
-    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, nome_documento: nome } : l)));
-    const { error } = await supabase
-      .from("qa_servicos_documentos" as any)
-      .update({ nome_documento: nome })
-      .eq("id", id);
-    if (error) {
-      setLinhas(anteriores);
-      toast.error("NÃO FOI POSSÍVEL RENOMEAR: " + (error.message ?? "ERRO"));
       return;
     }
     toast.success("NOME ATUALIZADO");
+  }
+
+  /**
+   * Define (ou remove) o "SE" da exigência: `condicao_profissional`.
+   * Vazio = vale para todo mundo. Com valor = a exigência só nasce no processo
+   * depois que o cliente responder aquela condição profissional. É o MESMO
+   * campo lido pelo portal, pelo explodir_checklist e pelo simulador.
+   */
+  async function definirCondicao(id: string, valor: string) {
+    const cond = valor || null;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, condicao_profissional: cond } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ condicao_profissional: cond })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR A CONDIÇÃO: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success(cond ? "CONDIÇÃO PROFISSIONAL APLICADA" : "EXIGÊNCIA AGORA VALE PARA TODOS");
   }
 
   /**
