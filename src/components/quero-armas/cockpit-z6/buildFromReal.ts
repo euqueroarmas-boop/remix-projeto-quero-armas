@@ -19,6 +19,7 @@ import type {
 } from "./CockpitZ6MeusProcessos";
 import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { filtrarIdentidadeUnica } from "@/lib/quero-armas/identidadeUnica";
 import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
@@ -196,12 +197,19 @@ function buildProcessoCard(args: {
       return Number.isFinite(et) ? et * 100 : 9_999;
     });
   const bloqueado = proc?._bloqueadoPrerequisito === true;
-  const docsObrig = docs.filter((d) => d.obrigatorio !== false);
   // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
   const isCumprido = (d: any) => {
     const st = String(d.status || "").toLowerCase();
     return isChecklistCumprido(st) || st === "recebido" || st === "arquivado" || st.includes("reaproveitamento");
   };
+  // REGRA: identificação é UM documento só — com uma identidade já cumprida
+  // (ex.: CNH aprovada), as demais (CIN/RG com CPF) saem do checklist.
+  const docsRelevantes = filtrarIdentidadeUnica(docs, {
+    tipo: (d: any) => d?.tipo_documento,
+    nome: (d: any) => d?.nome_documento,
+    cumprido: isCumprido,
+  });
+  const docsObrig = docsRelevantes.filter((d) => d.obrigatorio !== false);
   const docsAprov = docsObrig.filter(isCumprido);
   const totalObrig = docsObrig.length || 1;
   const progressoPct = Math.round((docsAprov.length / totalObrig) * 100);
@@ -214,7 +222,7 @@ function buildProcessoCard(args: {
   // somente exigências obrigatórias, visíveis e ainda acionáveis. Isso evita
   // que uma condição oculta de etapa anterior desloque o cockpit para trás.
   const respostas = (proc.respostas_questionario_json ?? {}) as Record<string, string>;
-  const docsVisiveisObrigatorios = docs.filter(
+  const docsVisiveisObrigatorios = docsRelevantes.filter(
     (d) => d.obrigatorio !== false && itemVisivelGuia(d, respostas),
   );
   const docsAbertos = docsVisiveisObrigatorios
