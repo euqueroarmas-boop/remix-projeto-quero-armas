@@ -4897,23 +4897,7 @@ export function ClienteDocsHubModal({
                 ) : (
                   <ShieldCheck className="mr-2 h-4 w-4" />
                 )}
-                {saving
-                  ? "Salvando..."
-                  : !file
-                    ? "Anexe o arquivo"
-                    : extracting
-                      ? "Lendo o documento..."
-                      : !classificacao
-                        ? "Leitura automática necessária"
-                        : pendingSensitiveKeys().length > 0
-                    ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
-                    : temApontamento && reconheceApontamento === null
-                      ? "Responda sobre o apontamento"
-                      : temApontamento && reconheceApontamento === "nao" && !homonimiaSalva
-                        ? "Assine a declaração"
-                        : casoResidenciaTerceiro && terceiroDados
-                          ? "Baixar declaração do responsável pelo imóvel"
-                          : "Salvar documento"}
+                {saving ? "Salvando..." : "Salvar documento"}
               </Button>
             </div>
             </>
