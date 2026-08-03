@@ -4489,6 +4489,7 @@ export default function QAClientePortalPage() {
         </div>
       )}
     </div>
+    </>
     </PortalFilterProvider>
   );
 }
