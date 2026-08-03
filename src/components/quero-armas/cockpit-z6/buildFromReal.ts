@@ -117,6 +117,12 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
 }
 
 function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
+  const CUMPRIDO = (st: string) =>
+    st === "aprovado" ||
+    st === "recebido" ||
+    st === "arquivado" ||
+    st.startsWith("dispensado") ||
+    st.includes("reaproveitamento");
   if (!docs.length) return [];
   // pega até 4 documentos da etapa atual / pendentes mais relevantes
   const sortable = [...docs].sort((a, b) => {
@@ -127,8 +133,12 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
   });
   return sortable.slice(0, 4).map((d) => {
     const st = String(d.status || "").toLowerCase();
-    if (st === "aprovado")
-      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "RECEBIDO", tone: "green" } as CockpitZ6ChecklistItem;
+    if (CUMPRIDO(st))
+      return {
+        label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(),
+        badge: st.startsWith("dispensado") || st.includes("reaproveitamento") ? "REAPROVEITADO" : "RECEBIDO",
+        tone: "green",
+      } as CockpitZ6ChecklistItem;
     if (st === "em_analise" || st === "enviado")
       return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "EM ANÁLISE", tone: "amber" } as CockpitZ6ChecklistItem;
     if (st === "rejeitado" || st === "reprovado")
