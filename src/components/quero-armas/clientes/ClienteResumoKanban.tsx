@@ -897,10 +897,21 @@ export default function ClienteResumoKanban({
         </section>
 
         <section className="qa-client-summary-print__summary" aria-label="Indicadores do resumo">
-          {(isMobile ? snapshot.summary.filter(([, value]) => value && value !== "0" && value !== "—") : snapshot.summary).map(([label, value, small]) => (
-            <div className="qa-client-summary-print__sm" key={label}>
-              <div className="qa-client-summary-print__k">{label}</div>
-              <div className="qa-client-summary-print__v">{value}{small && <small>{small}</small>}</div>
+          {summaryItems.map((item) => (
+            <div className={`qa-client-summary-print__sm${item.merged ? " qa-summary-merged" : ""}`} key={item.label}>
+              <div className="qa-client-summary-print__k">{item.label}</div>
+              {item.merged ? (
+                <div className="qa-summary-merged__body">
+                  {item.parts?.map((part) => (
+                    <div className="qa-summary-merged__part" key={part.small}>
+                      <div className="qa-client-summary-print__v">{part.value}</div>
+                      <small>{part.small}</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="qa-client-summary-print__v">{item.value}{item.small && <small>{item.small}</small>}</div>
+              )}
             </div>
           ))}
         </section>
