@@ -629,10 +629,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Footer */}
-        <div className="mt-auto border-t border-[#E4E4E4] bg-white shrink-0">
+        <div
+          className={
+            asPage
+              ? "mt-auto border-t border-[#E4E4E4] bg-transparent shrink-0"
+              : "mt-auto border-t border-[#E4E4E4] bg-white shrink-0"
+          }
+        >
           {/* Números do PROCESSO, não da fila. A fila mostra o que está
               liberado agora; o cliente precisa saber o tamanho do caminho. */}
-          {resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
+          {asPage ? null : resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
             <div className="px-6 py-3 border-b border-[#F0F0F0]">
               <div className="flex justify-between items-baseline">
                 <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
@@ -678,7 +684,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             </div>
           ) : null}
 
-          <div className="px-6 py-4 flex flex-col gap-3">
+          <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-6 py-4 flex flex-col gap-3"}>
             {total > 1 && podeVoltar ? (
               <div className="flex gap-3">
                 <button
