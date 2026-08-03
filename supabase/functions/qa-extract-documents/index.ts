@@ -372,7 +372,13 @@ async function classificarUmArquivo(dataUrl: string, mime: string, nome: string,
       { role: "system", content: CLASSIFY_SYSTEM },
       { role: "user", content: [
         { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
-        { type: "image_url", image_url: { url: dataUrl } },
+        // PDF NÃO pode ir como `image_url`: o provedor recusa o data URL
+        // `data:application/pdf;...` e a resposta volta sem tool call, o que o
+        // frontend interpreta como "não classificado" — era por isso que um
+        // comprovante de residência em PDF caía em "Outro documento".
+        mime === "application/pdf"
+          ? { type: "file", file: { filename: nome || "documento.pdf", file_data: dataUrl } }
+          : { type: "image_url", image_url: { url: dataUrl } },
       ]},
     ],
     tools: [CLASSIFY_TOOL],
