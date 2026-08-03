@@ -4068,7 +4068,7 @@ export default function QAClientePortalPage() {
 
         {activeSection === "mensagens" && (
           <ArsenalPremiumGate arsenal={arsenalPremium} recurso="Klal — Assistente Jurídico">
-            <div className="-mx-4 lg:-mx-8 -mt-5">
+            <div className="-mx-4 lg:-mx-8 h-full min-h-0 pt-[26px] lg:pt-0">
               <CentralAjudaCliente cliente={cliente as any} compact />
             </div>
           </ArsenalPremiumGate>
@@ -4151,9 +4151,8 @@ export default function QAClientePortalPage() {
                 </div>
               </button>
               <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
-              <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
-
+            <ProtocolosAtendimentoPanel clienteId={cliente?.id} />
           </SectionCard>
         )}
 
