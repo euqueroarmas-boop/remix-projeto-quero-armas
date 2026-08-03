@@ -97,25 +97,45 @@ export default function SimuladorChecklistAdmin() {
    * fonte única lida por TODOS os motores (Preços e Serviços / Montar Checklist,
    * catálogo, explosão do checklist do processo e portal do cliente).
    */
-  async function persistirSequencia(novaOrdemVisivel: string[]) {
-    // Ordem global: itens visíveis primeiro (na nova sequência), depois o restante
-    // do catálogo do serviço preservando a ordem relativa atual.
-    const restantes = [...linhas]
-      .filter((l) => !novaOrdemVisivel.includes(l.id))
-      .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
-      .map((l) => l.id);
-    const sequencia = [...novaOrdemVisivel, ...restantes];
+  /**
+   * Grava a nova estrutura (grupos + itens) em qa_servicos_documentos gravando
+   * `etapa` e `ordem`. As linhas ocultas do catálogo (variantes condicionais que
+   * não aparecem nesta combinação) acompanham o próprio grupo — assim nada fica
+   * "solto" no fim da lista e todos os motores leem exatamente a mesma sequência.
+   */
+  async function persistirGrupos(gruposNovos: { grupo: string; ids: string[] }[]) {
+    const visiveis = new Set(gruposNovos.flatMap((g) => g.ids));
+    const porOrdem = (a: LinhaCatalogo, b: LinhaCatalogo) => (a.ordem ?? 999) - (b.ordem ?? 999);
+    const etapaDe = (l: LinhaCatalogo) => String(l.etapa || "base").trim().toLowerCase();
 
-    const mapaOrdem = new Map<string, number>();
-    sequencia.forEach((id, idx) => mapaOrdem.set(id, (idx + 1) * 10));
+    const sequencia: { id: string; etapa: string }[] = [];
+    for (const g of gruposNovos) {
+      for (const id of g.ids) sequencia.push({ id, etapa: g.grupo });
+      // variantes ocultas do mesmo grupo ficam logo abaixo, mantendo a ordem atual
+      [...linhas]
+        .filter((l) => !visiveis.has(l.id) && etapaDe(l) === g.grupo)
+        .sort(porOrdem)
+        .forEach((l) => sequencia.push({ id: l.id, etapa: g.grupo }));
+    }
+    const incluidos = new Set(sequencia.map((s) => s.id));
+    [...linhas]
+      .filter((l) => !incluidos.has(l.id))
+      .sort(porOrdem)
+      .forEach((l) => sequencia.push({ id: l.id, etapa: etapaDe(l) }));
+
+    const mapa = new Map(sequencia.map((s, idx) => [s.id, { ordem: (idx + 1) * 10, etapa: s.etapa }]));
 
     const anteriores = linhas;
-    const atualizadas = linhas.map((l) => ({ ...l, ordem: mapaOrdem.get(l.id) ?? l.ordem }));
+    const atualizadas = linhas.map((l) => {
+      const m = mapa.get(l.id);
+      return m ? { ...l, ordem: m.ordem, etapa: m.etapa } : l;
+    });
     setLinhas(atualizadas);
 
-    const alterados = atualizadas.filter(
-      (l) => l.ordem !== anteriores.find((a) => a.id === l.id)?.ordem,
-    );
+    const alterados = atualizadas.filter((l) => {
+      const a = anteriores.find((x) => x.id === l.id);
+      return !a || a.ordem !== l.ordem || a.etapa !== l.etapa;
+    });
     if (alterados.length === 0) return;
 
     setSalvandoOrdem(true);
@@ -123,7 +143,7 @@ export default function SimuladorChecklistAdmin() {
       for (const l of alterados) {
         const { error } = await supabase
           .from("qa_servicos_documentos" as any)
-          .update({ ordem: l.ordem })
+          .update({ ordem: l.ordem, etapa: l.etapa })
           .eq("id", l.id);
         if (error) throw error;
       }
@@ -144,30 +164,42 @@ export default function SimuladorChecklistAdmin() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
+    // Estrutura atual: grupos na ordem em que o cliente vê, com seus itens.
+    let estrutura = sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) }));
+
+    const grupoDoItem = (id: string) =>
+      estrutura.findIndex((g) => g.ids.includes(id));
+
     // ── Arrasto de GRUPO INTEIRO ────────────────────────────────────────────
     if (activeId.startsWith("grupo:")) {
-      const gruposIds = sim.grupos.map((g) => `grupo:${g.grupo}`);
-      const overGrupo = overId.startsWith("grupo:")
-        ? overId
-        : `grupo:${sim.grupos.find((g) => g.itens.some((i) => i.id === overId))?.grupo ?? ""}`;
-      const from = gruposIds.indexOf(activeId);
-      const to = gruposIds.indexOf(overGrupo);
+      const slug = activeId.slice("grupo:".length);
+      const from = estrutura.findIndex((g) => g.grupo === slug);
+      const to = overId.startsWith("grupo:")
+        ? estrutura.findIndex((g) => g.grupo === overId.slice("grupo:".length))
+        : grupoDoItem(overId);
       if (from < 0 || to < 0 || from === to) return;
-      const novaOrdemGrupos = arrayMove(gruposIds, from, to);
-      const novaOrdemVisivel = novaOrdemGrupos.flatMap((gid) => {
-        const slug = gid.slice("grupo:".length);
-        return sim.grupos.find((g) => g.grupo === slug)?.itens.map((i) => i.id) ?? [];
-      });
-      await persistirSequencia(novaOrdemVisivel);
+      estrutura = arrayMove(estrutura, from, to);
+      await persistirGrupos(estrutura);
       return;
     }
 
-    // ── Arrasto de ITEM ─────────────────────────────────────────────────────
-    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
-    const from = visiveisIds.indexOf(activeId);
-    const to = visiveisIds.indexOf(overId);
-    if (from < 0 || to < 0) return;
-    await persistirSequencia(arrayMove(visiveisIds, from, to));
+    // ── Arrasto de ITEM (dentro do grupo ou para outro grupo) ───────────────
+    const gOrigem = grupoDoItem(activeId);
+    if (gOrigem < 0) return;
+    const gDestino = overId.startsWith("grupo:")
+      ? estrutura.findIndex((g) => g.grupo === overId.slice("grupo:".length))
+      : grupoDoItem(overId);
+    if (gDestino < 0) return;
+
+    estrutura = estrutura.map((g) => ({ ...g, ids: [...g.ids] }));
+    const idxOrigem = estrutura[gOrigem].ids.indexOf(activeId);
+    estrutura[gOrigem].ids.splice(idxOrigem, 1);
+    const idxDestino = overId.startsWith("grupo:")
+      ? estrutura[gDestino].ids.length
+      : Math.max(0, estrutura[gDestino].ids.indexOf(overId));
+    estrutura[gDestino].ids.splice(idxDestino, 0, activeId);
+
+    await persistirGrupos(estrutura);
   }
 
   return (
