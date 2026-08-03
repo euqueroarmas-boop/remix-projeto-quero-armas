@@ -49,14 +49,13 @@ export default function PainelDisparo({ itens, corIcone, onOpen, badge, active =
       title={total ? `Checklist guiado — ${total} ${total === 1 ? "pendência" : "pendências"}` : "Checklist guiado"}
       aria-label={total ? `Abrir checklist guiado, ${total} pendências` : "Abrir checklist guiado"}
       className="relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
-      style={{ color: ativo ? corIcone : `${corIcone}88`, background: active ? `${corIcone}33` : "transparent" }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = `${corIcone}1F`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = active ? `${corIcone}33` : "transparent"; }}
+      style={active ? { background: `${corIcone}33`, color: corIcone } : { color: `${corIcone}88`, background: "transparent" }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = corIcone; }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = `${corIcone}88`; }}
     >
       <IconBomb
-        className="h-[19px] w-[19px] shrink-0"
+        className="h-[18px] w-[18px] shrink-0"
         stroke={1.6}
-        style={{ color: corIcone, opacity: ativo ? 1 : 0.53 }}
       />
       {total > 0 && (
         <span
