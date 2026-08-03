@@ -15,7 +15,7 @@ export interface ExplicacaoPendencia {
   siteUrl?: string;
 }
 
-const REGISTRO: Record<string, ExplicacaoPendencia> = {
+export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
   // ────────────────────────────────────────────────────────────────────────
   // Requerimento / formulários do processo
   // ────────────────────────────────────────────────────────────────────────
@@ -1001,7 +1001,7 @@ export function getExplicacaoPendencia(
 ): ExplicacaoPendencia {
   const primary = String(rawTipo || "").trim().toLowerCase();
   const secondary = String(hubTipoFallback || "").trim().toLowerCase();
-  const hit = REGISTRO[primary] || (secondary ? REGISTRO[secondary] : undefined);
+  const hit = EXPLICACOES_REGISTRO[primary] || (secondary ? EXPLICACOES_REGISTRO[secondary] : undefined);
   if (hit) return hit;
   const titulo = fallbackNome && fallbackNome.trim()
     ? fallbackNome.trim()
