@@ -25,6 +25,11 @@ interface Props {
   fileNameDisplay?: string;
   onPickFile: () => void;
   onPickCamera: () => void;
+  /**
+   * Só a foto 3x4 aceita imagem — nos demais documentos o cliente precisa
+   * anexar o PDF original, então o botão "Tirar foto" nem aparece.
+   */
+  permiteCamera?: boolean;
   onRemove: () => void;
   onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
@@ -49,6 +54,7 @@ export default function HubDocPreviewSlot({
   fileNameDisplay,
   onPickFile,
   onPickCamera,
+  permiteCamera = false,
   onRemove,
   onDragOver,
   onDragLeave,
@@ -152,17 +158,26 @@ export default function HubDocPreviewSlot({
               <div className="font-heading text-[13px] font-bold uppercase tracking-[0.24em] text-[#0A0A0A]">
                 Anexe o arquivo
               </div>
-              <div className="mt-1 text-xs text-[#7A7A7A]">JPG · PNG · PDF · até 20MB</div>
+              <div className="mt-1 text-xs text-[#7A7A7A]">
+                {permiteCamera ? "JPG · PNG · até 20MB" : "SOMENTE PDF ORIGINAL · até 20MB"}
+              </div>
+              {!permiteCamera && (
+                <div className="mt-1 text-[10px] leading-snug text-[#7A1F2B]">
+                  Não aceitamos print, foto ou digitalização do documento.
+                </div>
+              )}
               <div className="mt-3 text-[10px] uppercase tracking-[0.22em] text-[#A0A0A0]">Toque ou arraste aqui</div>
             </div>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onPickCamera(); }}
-              className="mt-2 inline-flex items-center gap-2 border border-[#0A0A0A] bg-white px-4 py-2 font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] transition-colors hover:bg-[#0A0A0A] hover:text-white"
-              style={{ borderRadius: 2 }}
-            >
-              <Camera className="h-3.5 w-3.5" /> Tirar foto
-            </button>
+            {permiteCamera && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onPickCamera(); }}
+                className="mt-2 inline-flex items-center gap-2 border border-[#0A0A0A] bg-white px-4 py-2 font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A] transition-colors hover:bg-[#0A0A0A] hover:text-white"
+                style={{ borderRadius: 2 }}
+              >
+                <Camera className="h-3.5 w-3.5" /> Tirar foto
+              </button>
+            )}
           </div>
         ) : (
           <div
