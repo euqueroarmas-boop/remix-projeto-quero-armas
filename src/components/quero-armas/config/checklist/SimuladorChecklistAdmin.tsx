@@ -744,6 +744,7 @@ function LinhaItem({
   onLimparResposta,
   onRemover,
   onDefinirOrdem,
+  onRenomear,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
@@ -751,6 +752,7 @@ function LinhaItem({
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
+  onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -761,6 +763,7 @@ function LinhaItem({
   const Icon = cfg.icon;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const [editandoNome, setEditandoNome] = useState(false);
 
   return (
     <div
