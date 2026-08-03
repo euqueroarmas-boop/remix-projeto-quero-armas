@@ -1876,6 +1876,18 @@ export function ClienteDocsHubModal({
     return requiredSensitiveKeys().filter((k) => !confirmados[k]);
   }
 
+  /**
+   * Trava de extração: sem arquivo anexado ou sem leitura automática concluída,
+   * o salvamento fica bloqueado. Só libera após a IA/parser extrair os dados
+   * e o cliente confirmar os campos pedidos.
+   */
+  function bloqueioExtracao(): string | null {
+    if (!file) return "Anexe o arquivo (PDF ou foto) para a leitura automática conferir com o seu cadastro.";
+    if (extracting) return "Aguarde a leitura automática terminar.";
+    if (!classificacao) return "A leitura automática não conseguiu extrair os dados deste arquivo. Envie o PDF original emitido pelo órgão.";
+    return null;
+  }
+
   // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
   const hoje = new Date().toISOString().slice(0, 10);
   const docExpirado = !!form.data_validade && form.data_validade < hoje;
