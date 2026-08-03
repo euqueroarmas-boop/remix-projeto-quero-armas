@@ -953,71 +953,41 @@ function FeaturedContractCard({
         </div>
       )}
 
-      {/* stepper */}
-      <div className="flex gap-0 mb-5 py-1.5">
-        {STEP_LABELS.map((lbl, i) => {
-          const isValidated =
-            contract.status === "validated" ||
-            contract.validation_status === "valid" ||
-            !!contract.customer_signature_validated_at;
-          const done = isValidated ? true : i < step;
-          const curr = !isValidated && i === step;
-          const circBg = done ? "bg-[#2F8F4A] border-[#2F8F4A] text-white" : curr ? "bg-[#D6A64B] border-[#D6A64B] text-white" : "bg-[#F2F2F2] border-[#DADADA] text-[#9a9a9a]";
-          const dt = i === 0 ? fmtDateShort(contract.issued_at)
-                   : i === 1 ? (curr ? "EM ANDAMENTO" : fmtDateShort(contract.customer_uploaded_at))
-                   : i === 2 ? (curr ? "EM VALIDAÇÃO" : fmtDateShort(contract.customer_signature_validated_at))
-                             : (isValidated ? fmtDateShort(contract.customer_signature_validated_at) : done ? "VIGENTE" : "—");
-          return (
-            <div key={lbl} className="flex-1 text-center">
-              <div className={`w-7 h-7 rounded-full border flex items-center justify-center mx-auto font-['Oswald'] font-semibold text-[11px] ${circBg}`}>
-                {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : (i + 1)}
-              </div>
-              <div className="mt-2 text-[11px] text-[#0A0A0A] font-medium">{lbl}</div>
-              <div className={`mt-0.5 font-['Oswald'] text-[9.5px] tracking-[0.1em] ${curr ? "text-[#7A5A14] font-bold" : "text-[#9a9a9a]"}`}>{dt}</div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* grid: progresso + linha do tempo + checklist */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr_1.1fr] gap-7">
-        {/* coluna progresso */}
-        <div>
-          <div className="font-['Oswald'] text-[9px] tracking-[0.2em] text-[#7A7A7A] font-semibold uppercase">PROGRESSO</div>
-          <div className="font-['Oswald'] text-[42px] font-semibold leading-none mt-1.5">
-            {progress}<span className="text-[18px] text-[#555]">%</span>
+      {/* barra de progresso compacta — % + etapa atual + prazos na mesma faixa */}
+      <div className="mb-4 rounded-md border border-[#EFEFEF] bg-[#FAFAFA] px-3.5 py-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="font-['Oswald'] text-[9px] tracking-[0.2em] text-[#7A7A7A] font-semibold uppercase">
+            PROGRESSO · <span className="text-[#0A0A0A]">{STEP_LABELS[step] || "—"}{step === 1 ? " GOV.BR" : ""}</span>
           </div>
-          <div className="mt-2.5 h-[5px] bg-[#EEE] rounded-full overflow-hidden">
-            <div className="h-full bg-[#7A1F2B]" style={{ width: `${progress}%` }} />
-          </div>
-          <div className="mt-4">
-            <div className="font-['Oswald'] text-[9px] tracking-[0.2em] text-[#7A7A7A] font-semibold uppercase">ETAPA ATUAL</div>
-            <div className="font-['Oswald'] text-[14px] font-semibold mt-1 tracking-[0.04em] uppercase">
-              {STEP_LABELS[step] || "—"} {step === 1 ? "GOV.BR" : ""}
-            </div>
-          </div>
-          <div className="mt-3.5 text-[11px]">
-            <b className="block text-[#0A0A0A] font-semibold">Prev. assinatura:</b>
-            <span className="text-[#7A7A7A]">até {fmtDateLong(contract.issued_at)}</span>
-          </div>
-          <div className="mt-2.5 text-[11px]">
-            <b className="block text-[#0A0A0A] font-semibold">Aberto há:</b>
-            <span className="text-[#7A7A7A]">{openedDays !== null ? `${openedDays} DIA${openedDays === 1 ? "" : "S"}` : "—"}</span>
+          <div className="font-['Oswald'] text-[20px] font-semibold leading-none">
+            {progress}<span className="text-[11px] text-[#777]">%</span>
           </div>
         </div>
+        <div className="mt-2 h-[5px] bg-[#EAEAEA] rounded-full overflow-hidden">
+          <div className="h-full bg-[#7A1F2B]" style={{ width: `${progress}%` }} />
+        </div>
+        <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-[#7A7A7A]">
+          <span><b className="text-[#0A0A0A] font-semibold">Prev. assinatura:</b> até {fmtDateLong(contract.issued_at)}</span>
+          <span><b className="text-[#0A0A0A] font-semibold">Aberto há:</b> {openedDays !== null ? `${openedDays} dia${openedDays === 1 ? "" : "s"}` : "—"}</span>
+        </div>
+      </div>
 
+      {/* grid: linha do tempo (com etapas e datas) + checklist */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* coluna linha do tempo */}
         <div>
-          <div className="font-['Oswald'] text-[10px] tracking-[0.2em] text-[#7A7A7A] font-bold uppercase mb-3.5">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.2em] text-[#7A7A7A] font-bold uppercase mb-2.5">
             LINHA DO <span className="text-[#0A0A0A]">TEMPO</span>
           </div>
-          <div className="relative pl-4.5" style={{ paddingLeft: 18 }}>
+          <div className="relative" style={{ paddingLeft: 18 }}>
             <div className="absolute left-[4.5px] top-1.5 bottom-1.5 w-px bg-[#E5E5E5]" />
             {timelineEvents.map((ev, i) => (
-              <div key={i} className="relative pb-3.5">
-                <span className={`absolute -left-[17px] top-[3px] h-2.5 w-2.5 rounded-full border ${ev.ok ? "bg-[#2F8F4A] border-[#2F8F4A]" : "bg-white border-[#C0C0C0]"}`} />
-                <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.08em]">{ev.date ? fmtDateShort(ev.date) + (ev.ok ? "" : " · agora") : "—"}</div>
-                <div className="text-[12px] text-[#0A0A0A] font-medium mt-0.5">{ev.t}</div>
+              <div key={i} className="relative pb-2.5">
+                <span className={`absolute -left-[17px] top-[5px] h-2.5 w-2.5 rounded-full border ${ev.ok ? "bg-[#2F8F4A] border-[#2F8F4A]" : "bg-white border-[#C0C0C0]"}`} />
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-[12px] text-[#0A0A0A] font-medium">{ev.t}</span>
+                  <span className="font-['Oswald'] text-[10px] text-[#9a9a9a] tracking-[0.08em]">{ev.date ? fmtDateShort(ev.date) + (ev.ok ? "" : " · agora") : "—"}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -1025,19 +995,19 @@ function FeaturedContractCard({
 
         {/* coluna checklist */}
         <div>
-          <div className="font-['Oswald'] text-[10px] tracking-[0.2em] text-[#7A7A7A] font-bold uppercase mb-3.5">
+          <div className="font-['Oswald'] text-[10px] tracking-[0.2em] text-[#7A7A7A] font-bold uppercase mb-2.5">
             CHECKLIST · <span className="text-[#0A0A0A]">ETAPA ATUAL</span>
           </div>
           <div>
             {checklist.map((it, i) => (
-              <div key={i} className={`flex justify-between items-center py-2.5 text-[12px] ${i === checklist.length - 1 ? "" : "border-b border-dashed border-[#EFEFEF]"}`}>
+              <div key={i} className={`flex justify-between items-center gap-3 py-1.5 text-[12px] ${i === checklist.length - 1 ? "" : "border-b border-dashed border-[#EFEFEF]"}`}>
                 <span className="text-[#0A0A0A]">{it.label}</span>
-                <span className={`font-['Oswald'] text-[9px] tracking-[0.14em] px-1.5 py-0.5 rounded-sm font-bold uppercase ${TAG_CLS[it.tag]}`}>{it.tag.toUpperCase()}</span>
+                <span className={`font-['Oswald'] text-[9px] tracking-[0.14em] px-1.5 py-0.5 rounded-sm font-bold uppercase shrink-0 ${TAG_CLS[it.tag]}`}>{it.tag.toUpperCase()}</span>
               </div>
             ))}
           </div>
           {nextAuto && (
-            <div className="mt-3.5 bg-[#FFF5DD] border border-[#F0DDA0] px-3.5 py-3 rounded-sm text-[11px] text-[#5a4410]">
+            <div className="mt-3 bg-[#FFF5DD] border border-[#F0DDA0] px-3 py-2.5 rounded-sm text-[11px] text-[#5a4410]">
               <b className="font-semibold">Próximo passo automático:</b> {nextAuto}
             </div>
           )}
