@@ -238,6 +238,25 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     return Array.from({ length: Math.min(4, p.length) }, (_, k) => p[(rotIndex + k) % p.length]);
   })();
 
+  // Arrastar sugestões na horizontal (dedo/mouse)
+  const sugRef = useRef<HTMLDivElement>(null);
+  const sugDrag = useRef<{ active: boolean; startX: number; startLeft: number; moved: boolean }>({ active: false, startX: 0, startLeft: 0, moved: false });
+  const onSugPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = sugRef.current;
+    if (!el) return;
+    sugDrag.current = { active: true, startX: e.clientX, startLeft: el.scrollLeft, moved: false };
+  };
+  const onSugPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = sugRef.current;
+    if (!el || !sugDrag.current.active) return;
+    const dx = e.clientX - sugDrag.current.startX;
+    if (Math.abs(dx) > 4) sugDrag.current.moved = true;
+    el.scrollLeft = sugDrag.current.startLeft - dx;
+  };
+  const onSugPointerUp = () => {
+    setTimeout(() => { sugDrag.current.active = false; }, 0);
+  };
+
   const carregarAnteriores = useCallback(async (excludeId?: string) => {
     if (!cliente) return;
     try {
@@ -696,14 +715,19 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
                 </h2>
                 <div className="flex-1" />
                 <div
-                  className="w-full no-scrollbar pb-1"
-                  style={{ overflowX: "auto", touchAction: "pan-x", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+                  ref={sugRef}
+                  className="w-full no-scrollbar pb-1 select-none"
+                  onPointerDown={onSugPointerDown}
+                  onPointerMove={onSugPointerMove}
+                  onPointerUp={onSugPointerUp}
+                  onPointerCancel={onSugPointerUp}
+                  style={{ overflowX: "auto", overflowY: "hidden", touchAction: "pan-x", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", cursor: "grab" }}
                 >
-                  <div className="flex items-stretch gap-1.5 px-5 w-max">
+                  <div className="flex items-stretch gap-[7.5px] px-5 w-max">
                     {sugestoesVisiveis.map((s) => (
                       <button
                         key={s}
-                        onClick={() => enviar(s)}
+                        onClick={() => { if (sugDrag.current.moved) return; enviar(s); }}
                         className="shrink-0 max-w-[230px] text-left text-[11.5px] px-3 py-2 bg-white border transition-colors hover:bg-slate-50"
                         style={{ borderColor: CARD_BORDER, borderRadius: 999, color: INK_2, lineHeight: 1.3 }}
                       >
