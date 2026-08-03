@@ -1427,7 +1427,11 @@ function SortableExigenciaItem(props: SortableProps) {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            onClick={onToggleAtivo}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleAtivo();
+            }}
             title={row.ativo ? "Desativar exigência (sem excluir)" : "Ativar exigência"}
             aria-pressed={!!row.ativo}
             className={
