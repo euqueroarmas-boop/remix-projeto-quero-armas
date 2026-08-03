@@ -4851,7 +4851,14 @@ export function ClienteDocsHubModal({
             </div>
           ) : (
             <>
-            {pendingSensitiveKeys().length > 0 ? (
+            {bloqueioExtracao() ? (
+              <div className="mb-2 rounded-sm border border-[#7A1F2B]/35 bg-[#7A1F2B]/[0.06] px-3 py-2">
+                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
+                  Leitura automática pendente
+                </p>
+                <p className="mt-1 text-[12px] leading-snug text-[#3A3A3A]">{bloqueioExtracao()}</p>
+              </div>
+            ) : pendingSensitiveKeys().length > 0 ? (
               <div className="mb-2 rounded-sm border border-[#7A1F2B]/35 bg-[#7A1F2B]/[0.06] px-3 py-2">
                 <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
                   Confirmação obrigatória
@@ -4872,10 +4879,11 @@ export function ClienteDocsHubModal({
               </Button>
               <Button
                 onClick={handleSave}
-                title={pendingSensitiveKeys().length ? "Confirme os campos destacados antes de salvar" : undefined}
+                title={bloqueioExtracao() ?? (pendingSensitiveKeys().length ? "Confirme os campos destacados antes de salvar" : undefined)}
                 disabled={
                   saving ||
                   extracting ||
+                  !!bloqueioExtracao() ||
                   pendingSensitiveKeys().length > 0 ||
                   (temApontamento && reconheceApontamento === null) ||
                   (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
@@ -4891,7 +4899,13 @@ export function ClienteDocsHubModal({
                 )}
                 {saving
                   ? "Salvando..."
-                  : pendingSensitiveKeys().length > 0
+                  : !file
+                    ? "Anexe o arquivo"
+                    : extracting
+                      ? "Lendo o documento..."
+                      : !classificacao
+                        ? "Leitura automática necessária"
+                        : pendingSensitiveKeys().length > 0
                     ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
                     : temApontamento && reconheceApontamento === null
                       ? "Responda sobre o apontamento"
