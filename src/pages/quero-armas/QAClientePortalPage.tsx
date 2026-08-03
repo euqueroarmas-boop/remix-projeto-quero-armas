@@ -4254,6 +4254,30 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
+        {/* MOBILE: checklist guiado como PÁGINA (mesmo conteúdo do pop-up). */}
+        {activeSection === "checklist_guiado" && isBelowLg && (
+          <div id="qa-portal-checklist-guiado" tabIndex={-1} className="outline-none pt-[10px]">
+            {pendenciasGuiadas.length > 0 ? (
+              <PendenciasGuiadasPopup
+                asPage
+                open
+                bloqueante
+                pendencias={pendenciasGuiadas}
+                pinnedId={
+                  pendingSignatureCount > 0 && !String(pinnedPendenciaId ?? "").startsWith("sig:")
+                    ? null
+                    : pinnedPendenciaId
+                }
+                ufCliente={(cliente as any)?.estado ?? null}
+                onDismiss={dismissPendenciasGuiadas}
+                resumoProcesso={resumoProcesso}
+              />
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhuma pendência no momento.</p>
+            )}
+          </div>
+        )}
+
       </main>
 
       {(customerId || cliente?.id) && (
