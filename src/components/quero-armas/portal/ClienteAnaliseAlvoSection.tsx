@@ -44,6 +44,7 @@ export default function ClienteAnaliseAlvoSection() {
       `}</style>
 
       <div className="qa-alvo__head">
+        <div className="qa-alvo__badge-slot"><ArsenalPremiumBadge /></div>
         <div className="qa-alvo__head-main">
           <div className="qa-alvo__kicker"><span className="qa-alvo__dot" />Análise de Alvo</div>
           <h1>Seu disparo, explicado por nós</h1>
@@ -53,7 +54,6 @@ export default function ClienteAnaliseAlvoSection() {
             no próximo carregador — em linguagem de instrutor, sem achismo.
           </p>
         </div>
-        <ArsenalPremiumBadge />
       </div>
 
       <div className="qa-alvo__grid">
@@ -61,13 +61,15 @@ export default function ClienteAnaliseAlvoSection() {
           <div className="qa-alvo__figure">
             <img src={alvoHumanoide.url} alt="Alvo humanoide de treinamento com impactos agrupados na região central do tórax" />
             {/* Impactos na obreia central do tórax e no entorno imediato */}
-            <div className="qa-alvo__hit" style={{ left: "48.4%", top: "39.4%" }} />
-            <div className="qa-alvo__hit" style={{ left: "45.6%", top: "37.6%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "51.2%", top: "37.1%" }} />
-            <div className="qa-alvo__hit" style={{ left: "50.0%", top: "42.0%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "44.6%", top: "41.3%" }} />
-            <div className="qa-alvo__hit sm" style={{ left: "52.9%", top: "40.5%" }} />
-            <div className="qa-alvo__hit" style={{ left: "47.0%", top: "44.1%" }} />
+            <div className="qa-alvo__hit" style={{ left: "48.4%", top: "39.2%" }} />
+            <div className="qa-alvo__hit" style={{ left: "44.9%", top: "36.9%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "52.1%", top: "36.4%" }} />
+            <div className="qa-alvo__hit" style={{ left: "50.6%", top: "42.6%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "43.6%", top: "42.1%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "54.0%", top: "40.8%" }} />
+            <div className="qa-alvo__hit" style={{ left: "46.6%", top: "45.3%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "56.4%", top: "33.6%" }} />
+            <div className="qa-alvo__hit sm" style={{ left: "41.4%", top: "48.4%" }} />
           </div>
         </div>
 
