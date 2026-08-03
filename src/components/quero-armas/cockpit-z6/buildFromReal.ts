@@ -119,7 +119,10 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
   }));
 }
 
-function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
+function checklistFromDocs(
+  docs: any[],
+  ordemDoc: (d: any) => number = (d) => Number(d?.ordem ?? 999),
+): CockpitZ6ChecklistItem[] {
   const CUMPRIDO = (st: string) =>
     isChecklistCumprido(st) ||
     st === "recebido" ||
@@ -130,7 +133,7 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
     const pa = a.obrigatorio ? 0 : 1;
     const pb = b.obrigatorio ? 0 : 1;
     if (pa !== pb) return pa - pb;
-    return (a.ordem ?? 999) - (b.ordem ?? 999);
+    return ordemDoc(a) - ordemDoc(b);
   });
   return sortable.slice(0, 6).map((d) => {
     const st = String(d.status || "").toLowerCase();
@@ -180,8 +183,18 @@ function buildProcessoCard(args: {
   docs: any[];
   eventos: any[];
   detalhado: boolean;
+  /** Ordem canônica vinda de Preços e Serviços (qa_servicos_documentos.ordem). */
+  ordemDoc?: (d: any) => number;
 }): CockpitZ6Process {
   const { proc, docs, eventos, detalhado } = args;
+  const ordemDoc =
+    args.ordemDoc ??
+    ((d: any) => {
+      const ord = Number(d?.ordem);
+      if (Number.isFinite(ord)) return ord;
+      const et = Number(d?.etapa);
+      return Number.isFinite(et) ? et * 100 : 9_999;
+    });
   const bloqueado = proc?._bloqueadoPrerequisito === true;
   const docsObrig = docs.filter((d) => d.obrigatorio !== false);
   // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
@@ -204,7 +217,9 @@ function buildProcessoCard(args: {
   const docsVisiveisObrigatorios = docs.filter(
     (d) => d.obrigatorio !== false && itemVisivelGuia(d, respostas),
   );
-  const docsAbertos = docsVisiveisObrigatorios.filter((d) => !isCumprido(d));
+  const docsAbertos = docsVisiveisObrigatorios
+    .filter((d) => !isCumprido(d))
+    .sort((a, b) => ordemDoc(a) - ordemDoc(b));
   const numeroEtapa = (d: any) => etapaDoTipoDocumento(d.tipo_documento, d.etapa);
   const etapaLiberadaRaw = Number(proc.etapa_liberada_ate);
   const etapaLiberada = Number.isFinite(etapaLiberadaRaw)
@@ -222,7 +237,9 @@ function buildProcessoCard(args: {
     etapaAtualNum == null
       ? []
       : docsVisiveisObrigatorios.filter((d) => numeroEtapa(d) === etapaAtualNum);
-  const abertosEtapaAtual = docsEtapaAtual.filter((d) => !isCumprido(d));
+  const abertosEtapaAtual = docsEtapaAtual
+    .filter((d) => !isCumprido(d))
+    .sort((a, b) => ordemDoc(a) - ordemDoc(b));
   const rotuloEtapa = (n: number | null) =>
     n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
     : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
@@ -288,7 +305,10 @@ function buildProcessoCard(args: {
     base.detalhado = {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
-      checklist: checklistFromDocs(abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs),
+      checklist: checklistFromDocs(
+        abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs,
+        ordemDoc,
+      ),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
         : abertosEtapaAtual.length
@@ -315,6 +335,12 @@ export interface BuildCockpitZ6FromRealInput {
   crafs: any[];              // qa_crafs (com data_validade)
   gtes: any[];               // qa_gtes (com data_validade)
   examesCliente: any[];      // qa_exames_cliente
+  /**
+   * Ordem canônica das exigências definida em Preços e Serviços
+   * (chave `${servico_id}:${tipo_documento.toLowerCase()}` → ordem).
+   * Quando presente, tem prioridade sobre o snapshot do processo.
+   */
+  catalogoDocOrdem?: Map<string, number>;
   onFocoCta?: () => void;    // callback do botão do Foco do Dia
 }
 
@@ -322,14 +348,27 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   const {
     nomeCliente, cpfMascarado, membroDesde,
     processos, processoDocs, processoEventos,
-    vendas, crafs, gtes, examesCliente, onFocoCta,
+    vendas, crafs, gtes, examesCliente, onFocoCta, catalogoDocOrdem,
   } = input;
 
   // 1) Cards de processo (primeiro detalhado, demais compactos)
   const cards: CockpitZ6Process[] = processos.map((proc, i) => {
     const docs = processoDocs.filter((d) => d.processo_id === proc.id);
     const eventos = processoEventos.filter((e) => e.processo_id === proc.id);
-    return buildProcessoCard({ proc, docs, eventos, detalhado: i === 0 });
+    const ordemDoc = (d: any) => {
+      const servicoId = proc?.servico_id;
+      if (catalogoDocOrdem && servicoId != null) {
+        const cat = catalogoDocOrdem.get(
+          `${servicoId}:${String(d?.tipo_documento || "").toLowerCase()}`,
+        );
+        if (cat !== undefined) return cat;
+      }
+      const ord = Number(d?.ordem);
+      if (Number.isFinite(ord)) return ord;
+      const et = Number(d?.etapa);
+      return Number.isFinite(et) ? et * 100 : 9_999;
+    };
+    return buildProcessoCard({ proc, docs, eventos, detalhado: i === 0, ordemDoc });
   });
 
   // 2) KPIs humanos derivados do estado real
