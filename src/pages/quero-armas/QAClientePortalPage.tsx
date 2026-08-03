@@ -1138,7 +1138,20 @@ export default function QAClientePortalPage() {
   }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey, avatarReloadKey]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* segue o encerramento mesmo se a chamada falhar */
+    }
+    // Limpeza da sessão local do portal (escopo/preferências voláteis).
+    try {
+      sessionStorage.clear();
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("qa_") || k.startsWith("sb-"))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* storage indisponível — ignorar */
+    }
     navigate("/area-do-cliente/login", { replace: true });
   };
 
