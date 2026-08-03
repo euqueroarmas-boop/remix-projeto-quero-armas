@@ -347,7 +347,8 @@ export default function SimuladorChecklistAdmin() {
               {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
             </div>
             <p className="text-[10px] mb-3" style={{ color: MUTED }}>
-              Clique, segure o punho ⠿ e arraste para definir a ordem. A nova ordem é gravada no
+              Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
+              título do grupo para mover o grupo inteiro. A nova ordem é gravada no
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
               processos e portal do cliente).
             </p>
@@ -355,31 +356,28 @@ export default function SimuladorChecklistAdmin() {
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext
-                  items={sim.grupos.flatMap((g) => g.itens.map((i) => i.id))}
+                  items={sim.grupos.map((g) => `grupo:${g.grupo}`)}
                   strategy={verticalListSortingStrategy}
                 >
                   {sim.grupos.map((g) => (
-                    <div key={g.grupo}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
-                          {g.rotulo}
-                        </span>
-                        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
-                          {g.cumpridos}/{g.cumpridos + g.pendentes}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {g.itens.map((i) => (
-                          <LinhaItem
-                            key={i.id}
-                            item={i}
-                            onToggle={alternarEntrega}
-                            onResponder={responder}
-                            onLimparResposta={limparResposta}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <BlocoGrupo key={g.grupo} grupo={g}>
+                      <SortableContext
+                        items={g.itens.map((i) => i.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-1">
+                          {g.itens.map((i) => (
+                            <LinhaItem
+                              key={i.id}
+                              item={i}
+                              onToggle={alternarEntrega}
+                              onResponder={responder}
+                              onLimparResposta={limparResposta}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </BlocoGrupo>
                   ))}
                 </SortableContext>
               </DndContext>
