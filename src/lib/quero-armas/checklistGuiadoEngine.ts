@@ -28,6 +28,7 @@ import {
   isChecklistEmAnalise,
 } from "./checklistMetrics";
 import { wizardPendentePara } from "./checklistWizardGate";
+import { filtrarIdentidadeUnica } from "./identidadeUnica";
 
 export interface GuiaProcesso {
   id: string;
