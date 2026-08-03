@@ -5198,6 +5198,7 @@ export type Database = {
           conteudo_renderizado: string | null
           contract_number: string
           created_at: string
+          customer_ack_completed_at: string | null
           customer_signature_validated_at: string | null
           customer_signed_pdf_path: string | null
           customer_signed_sha256: string | null
@@ -5238,6 +5239,7 @@ export type Database = {
           conteudo_renderizado?: string | null
           contract_number: string
           created_at?: string
+          customer_ack_completed_at?: string | null
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
@@ -5278,6 +5280,7 @@ export type Database = {
           conteudo_renderizado?: string | null
           contract_number?: string
           created_at?: string
+          customer_ack_completed_at?: string | null
           customer_signature_validated_at?: string | null
           customer_signed_pdf_path?: string | null
           customer_signed_sha256?: string | null
