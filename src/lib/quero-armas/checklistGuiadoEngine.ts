@@ -652,11 +652,15 @@ export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
       // Preferimos o campo `etapa` salvo no banco (espelhado de
       // qa_servicos_documentos / qa_processo_documentos) sobre a heurística
       // por tipo_documento — assim a categorização visual respeita o catálogo.
+      // GRUPO TEMÁTICO CANÔNICO (mesma classificação do Simulador e do portal):
+      // identificação → endereço → antecedentes → ocupação lícita → ...
+      const ga = ordemGrupoChecklist(a.tipo_documento, (a as any).regra_validacao);
+      const gb = ordemGrupoChecklist(b.tipo_documento, (b as any).regra_validacao);
+      if (ga !== gb) return ga - gb;
       const ea = etapaDoDoc(a);
       const eb = etapaDoDoc(b);
-      if (ea !== eb) return ea - eb;
-      // Dentro da Etapa 1: identidade primeiro, depois endereço, depois resto.
-      if (ea === 1) {
+      // Dentro do mesmo grupo: identidade primeiro, depois endereço, depois resto.
+      if (ea === 1 && eb === 1) {
         const pa = prioridadeEtapa1(a);
         const pb = prioridadeEtapa1(b);
         if (pa !== pb) return pa - pb;
