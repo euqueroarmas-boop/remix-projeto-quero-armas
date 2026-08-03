@@ -155,8 +155,35 @@ export function rotuloGrupo(grupo: string): string {
   return g.replace(/_/g, " ").toUpperCase();
 }
 
+/**
+ * Tipos de linha que o cliente RESPONDE (não envia arquivo). Além do "pergunta"
+ * clássico, o catálogo também usa "seletor_condicao_profissional" — que é a
+ * pergunta que destrava os comprovantes de ocupação lícita.
+ */
 function ehPergunta(rv: any): boolean {
-  return !!rv && typeof rv === "object" && rv.tipo === "pergunta";
+  if (!rv || typeof rv !== "object") return false;
+  return rv.tipo === "pergunta" || rv.tipo === "seletor_condicao_profissional";
+}
+
+function ehSeletorCondicao(rv: any, tipoDocumento?: string): boolean {
+  if (tipoDocumento === "renda_definir_condicao") return true;
+  if (!rv || typeof rv !== "object") return false;
+  return rv.tipo === "seletor_condicao_profissional" || rv.chave === "condicao_profissional";
+}
+
+/** Chave gravada no processo por esta pergunta. */
+function chavePergunta(rv: any, tipoDocumento?: string): string {
+  const chave = String(rv?.chave ?? "").trim();
+  if (chave) return chave;
+  if (ehSeletorCondicao(rv, tipoDocumento)) return "condicao_profissional";
+  return "";
+}
+
+/** Opções da pergunta, com fallback canônico para a condição profissional. */
+function opcoesPergunta(rv: any, tipoDocumento?: string): OpcaoPergunta[] | undefined {
+  if (Array.isArray(rv?.opcoes) && rv.opcoes.length > 0) return rv.opcoes as OpcaoPergunta[];
+  if (ehSeletorCondicao(rv, tipoDocumento)) return CONDICOES_CHECKLIST;
+  return undefined;
 }
 
 /** Extrai a dependência do item nos dois formatos legados aceitos no banco. */
