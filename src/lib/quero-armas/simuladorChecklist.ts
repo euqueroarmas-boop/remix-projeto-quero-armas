@@ -278,8 +278,8 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       obrigatorio: !!l.obrigatorio,
       estado,
       motivo,
-      chave: ehPergunta(rv) ? String(rv.chave ?? "") : undefined,
-      opcoes: ehPergunta(rv) && Array.isArray(rv.opcoes) ? (rv.opcoes as OpcaoPergunta[]) : undefined,
+      chave: ehPergunta(rv) ? chavePergunta(rv, l.tipo_documento) : undefined,
+      opcoes: ehPergunta(rv) ? opcoesPergunta(rv, l.tipo_documento) : undefined,
       dependeDe: extrairDependencia(rv) ?? undefined,
       linha: l,
     };
