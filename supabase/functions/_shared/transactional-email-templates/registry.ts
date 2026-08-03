@@ -4,6 +4,7 @@ import { template as credenciaisPortal } from './credenciais-portal.tsx'
 import { template as senhaAlterada } from './senha-alterada.tsx'
 import { template as loginSuspeito } from './login-suspeito.tsx'
 import { template as otpCliente } from './otp-cliente.tsx'
+import { template as contraSenhaTroca } from './contra-senha-troca.tsx'
 import { template as cobrancaGerada } from './cobranca-gerada.tsx'
 import { template as pagamentoConfirmado } from './pagamento-confirmado.tsx'
 import { template as pagamentoAtrasado } from './pagamento-atrasado.tsx'
@@ -96,6 +97,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'senha-alterada': senhaAlterada,
   'login-suspeito': loginSuspeito,
   'otp-cliente': otpCliente,
+  'contra-senha-troca': contraSenhaTroca,
   // Financeiro
   'cobranca-gerada': cobrancaGerada,
   'pagamento-confirmado': pagamentoConfirmado,
