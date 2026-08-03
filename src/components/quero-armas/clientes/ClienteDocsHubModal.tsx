@@ -4827,7 +4827,6 @@ export function ClienteDocsHubModal({
               <Button
                 onClick={handleEnviarNovamente}
                 disabled={enviandoNovamente}
-                disabled={enviandoNovamente}
                 className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
               >
                 {enviandoNovamente ? (
