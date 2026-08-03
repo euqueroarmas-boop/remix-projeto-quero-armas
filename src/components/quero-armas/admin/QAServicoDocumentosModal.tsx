@@ -1388,6 +1388,12 @@ function SortableExigenciaItem(props: SortableProps) {
           <span className="text-[10px] font-mono lowercase text-slate-500 truncate max-w-[200px]" title={row.tipo_documento}>
             {row.tipo_documento}
           </span>
+          <span
+            className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-100"
+            title="Condição profissional — a exigência só aparece para clientes nesta condição"
+          >
+            {row.condicao_profissional ? row.condicao_profissional : "TODOS"}
+          </span>
           {row.obrigatorio ? (
             <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
           ) : (
