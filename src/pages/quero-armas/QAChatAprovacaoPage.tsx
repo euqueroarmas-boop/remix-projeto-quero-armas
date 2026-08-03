@@ -436,6 +436,19 @@ export default function QAChatAprovacaoPage() {
                     {row.cliente_nome ? row.cliente_nome.toUpperCase() : "Cliente"} · {new Date(row.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                   </div>
                   <div className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+                    {row.feedback_cliente && (
+                      <span
+                        className="inline-flex items-center gap-1 mr-2 px-1.5 py-0.5 rounded"
+                        style={
+                          row.feedback_cliente === "sim"
+                            ? { background: "hsl(217 91% 96%)", color: "hsl(217 85% 45%)" }
+                            : { background: "hsl(0 80% 96%)", color: "hsl(0 70% 45%)" }
+                        }
+                        title="Avaliação do cliente"
+                      >
+                        {row.feedback_cliente === "sim" ? "Cliente: resolveu" : "Cliente: não resolveu"}
+                      </span>
+                    )}
                     {row.aprovada_kb === true && (
                       <span className="inline-flex items-center gap-1" style={{ color: "hsl(150 60% 30%)" }}>
                         <CheckCircle2 className="h-3 w-3" /> Aprovada
