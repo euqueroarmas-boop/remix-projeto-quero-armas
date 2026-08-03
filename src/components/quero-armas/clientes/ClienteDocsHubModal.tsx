@@ -3257,6 +3257,29 @@ export function ClienteDocsHubModal({
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
       const iaConfia =
         !bloqueioRevisao && !terceiroDados && classificacao?.recomendacao === "aceitar";
+
+      // Sem leitura automática concluída não há decisão possível: o documento
+      // NÃO é salvo (evita a fila fantasma de "em análise") e o cliente recebe
+      // o carimbo de reprovado com o motivo real.
+      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !classificacao) {
+        throw new Error(
+          "Não conseguimos ler este arquivo. Envie o PDF original emitido pelo órgão (não use foto nem print) para conferirmos com o seu cadastro.",
+        );
+      }
+      // Divergência ou apontamento: reprova na hora, com o motivo, em vez de
+      // mandar para conferência humana.
+      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !iaConfia) {
+        const motivos = conformidade
+          .filter((i) => i.status === "divergente")
+          .map((i) => explicarDivergencia(i))
+          .join(" ");
+        throw new Error(
+          temApontamento
+            ? `${tipoLabel} apresenta apontamento. Regularize ou registre a declaração de homonímia antes de enviar.`
+            : motivos ||
+              `${tipoLabel} não confere com os seus dados de cadastro. Confira o documento e envie novamente.`,
+        );
+      }
       if (isStaff && !terceiroDados) {
         payload.status = "aprovado";
         payload.origem = "admin";
