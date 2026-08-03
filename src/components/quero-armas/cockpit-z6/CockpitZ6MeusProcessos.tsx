@@ -428,9 +428,11 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           <h1 className="z6-title qa-h1">
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
-        <div className="qa-meta" style={{ marginTop: 11, lineHeight: 1.4, display: "flex", gap: "4px 18px", flexWrap: "wrap" }}>
-          <span>CPF · <b>{cpfMascarado}</b></span>
-          <span>MEMBRO DESDE · <b>{membroDesde}</b></span>
+        <div className="qa-meta qa-meta-lines">
+          <span>
+            <span>CPF · <b>{cpfMascarado}</b></span>
+            <span>MEMBRO DESDE · <b>{membroDesde}</b></span>
+          </span>
           <span>{processosAtivos} PROCESSOS ATIVOS</span>
         </div>
       </div>
