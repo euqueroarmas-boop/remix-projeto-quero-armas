@@ -621,7 +621,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-600">
         <Loader2 className="mx-auto h-6 w-6 animate-spin text-slate-950" />
-        <p className="mt-3 text-sm font-semibold">Carregando armas pelo Hub de Documentos...</p>
+        <p className="qa-body qa-body--soft mt-3">Carregando armas pelo Hub de Documentos...</p>
       </div>
     );
   }
@@ -629,10 +629,10 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
   if (erro) {
     return (
       <div className="rounded-2xl border border-slate-300 bg-white p-6 text-slate-950">
-        <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.18em]">
+        <div className="qa-h2 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" /> Armas e Munições
         </div>
-        <p className="mt-2 text-sm">{erro}</p>
+        <p className="qa-body mt-2">{erro}</p>
       </div>
     );
   }
@@ -641,14 +641,15 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
         <Target className="mx-auto h-9 w-9 text-slate-400" />
-        <h2 className="mt-4 text-2xl font-black text-slate-950">Nenhuma arma encontrada no Hub de Documentos</h2>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600">
+        <div className="qa-eyebrow mt-4">Arsenal inteligente</div>
+        <h2 className="qa-editorial mx-auto mt-1.5 max-w-xl">Nenhuma arma encontrada no Hub de Documentos</h2>
+        <p className="qa-body qa-body--soft mx-auto mt-2.5 max-w-xl">
           Anexe o CRAF na seção Documentos. Depois da leitura, a arma aparece aqui com identificação,
           ficha técnica, fotos e munições compatíveis.
         </p>
         {onOpenDocumentos && (
           <Button onClick={onOpenDocumentos} className="mt-5 bg-slate-950 text-white hover:bg-slate-800">
-            <Upload className="mr-2 h-4 w-4" /> Abrir Documentos
+            <Upload className="mr-2 h-4 w-4" /> <span className="qa-btn-label">Abrir Documentos</span>
           </Button>
         )}
       </div>
