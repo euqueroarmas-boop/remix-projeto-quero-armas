@@ -3499,7 +3499,9 @@ export function ClienteDocsHubModal({
             }
           : {
               tipo: "analise",
-              mensagem: `${tipoLabel} recebido · nosso time vai conferir e você será avisado`,
+              mensagem: ehEfetivaNecessidade
+                ? `${tipoLabel} recebido · a equipe vai analisar a efetiva necessidade e você será avisado`
+                : `${tipoLabel} recebido · aguardando conferência`,
             }
       );
 
