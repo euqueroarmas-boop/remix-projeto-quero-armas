@@ -150,6 +150,24 @@ export default function SimuladorChecklistAdmin() {
     if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
     setAdicionando(true);
     try {
+      // Se a exigência já existe mas está desativada, REATIVA em vez de tentar
+      // inserir de novo (o insert bateria na unicidade e o item seguiria oculto).
+      const desativada = linhas.find(
+        (l) =>
+          (l as any).ativo === false &&
+          (l.tipo_documento === item.codigo || (l as any).biblioteca_id === item.id),
+      );
+      if (desativada) {
+        const { error: errReativar } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .update({ ativo: true })
+          .eq("id", desativada.id);
+        if (errReativar) throw errReativar;
+        toast.success(`"${item.nome.toUpperCase()}" REATIVADO NO CHECKLIST`);
+        setBuscaBib("");
+        await carregar(servicoId);
+        return;
+      }
       // Entra no fim do grupo temático a que o documento pertence, para já
       // nascer na posição certa da lista que o cliente vê.
       const grupo = grupoCanonico(item.codigo);
