@@ -26,7 +26,7 @@ const SOFT = "#EFEFEF";
 const PAPER = "#FFFFFF";
 const BORDO = "#7A1F2B";
 const OSWALD = { fontFamily: "Oswald, sans-serif" } as const;
-const INTER = { fontFamily: "Inter, sans-serif" } as const;
+const INTER = { fontFamily: "Arial, Helvetica, sans-serif" } as const;
 
 /* =============================================================================
  * EntradaWizard — Assistente de Entrada do portal

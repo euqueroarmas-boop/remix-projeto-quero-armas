@@ -331,7 +331,7 @@ export default function DivergenciasResolverPanel({
                 <Icon className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
+                <div className="qa-h3 text-slate-700">
                   {GRUPO_LABEL[grupo]}
                 </div>
 
@@ -344,7 +344,7 @@ export default function DivergenciasResolverPanel({
                         className="grid grid-cols-1 gap-1 rounded-md bg-slate-50 px-2 py-1.5 text-[11px] sm:grid-cols-2"
                       >
                         <div className="min-w-0">
-                          <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                          <div className="qa-eyebrow text-slate-400">
                             No cadastro
                           </div>
                           <div className="truncate italic text-slate-600">

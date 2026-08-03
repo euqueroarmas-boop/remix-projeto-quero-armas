@@ -422,7 +422,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   }
 
   return (
-    <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <style>{`
         @media (max-width: 640px) {
           .qa-kpi-card {
