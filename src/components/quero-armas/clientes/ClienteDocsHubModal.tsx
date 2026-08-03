@@ -2161,8 +2161,11 @@ export function ClienteDocsHubModal({
           ...ia,
           tipoDetectado: "FOTO_3X4",
           confianca: Math.max(ia.confianca || 0, 0.95),
+          recomendacao: "aceitar",
+          revisao_obrigatoria: false,
           justificativa:
-            "Imagem de rosto do requerente, sem texto — classificada como Foto 3x4 (identificação civil).",
+            "Imagem enviada no campo Foto 3x4 do requerente — classificação determinística pelo slot e pelo formato do arquivo.",
+          camposExtraidos: {},
         });
       }
       const categoriaIA2 = ehFoto3x4 ? "identificacao" : categoriaIA;
@@ -3366,17 +3369,27 @@ export function ClienteDocsHubModal({
       //   a trigger qa_doc_auto_aprovar_por_ia_trigger promove para aprovado
       //   no servidor quando ia_dados_extraidos.recomendacao = 'aceitar'
       const isStaff = await isCurrentUserStaff();
+      // Foto 3x4 não contém nome, CPF ou texto para cruzamento cadastral. A
+      // validação correta é determinística: imagem aceita enviada no slot
+      // exclusivo de Foto 3x4. A recomendação genérica que veio da leitura
+      // inicial nunca pode transformar a ausência de texto em divergência.
+      const ehFoto3x4Deterministica =
+        form.tipo_documento === "foto_3x4" &&
+        !!file &&
+        file.type.toLowerCase().startsWith("image/");
       // Documentos vencidos são aceitos como histórico — a rejeição para uso em
       // processos acontece no checklist, não no upload. Só bloqueiam revisão humana
       // documentos com apontamento criminal ou divergência de dados do cliente.
       const bloqueioRevisao =
-        temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
+        !ehFoto3x4Deterministica &&
+        (temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente")));
       const iaConfia =
-        !bloqueioRevisao && !terceiroDados && (
+        ehFoto3x4Deterministica ||
+        (!bloqueioRevisao && !terceiroDados && (
           classificacao?.recomendacao === "aceitar" ||
           // Leitura local determinística aprovada vale como decisão automática.
           (!classificacao && conferenciaLocal?.conf?.veredicto === "aprovado")
-        );
+        ));
 
       // Sem leitura automática concluída não há decisão possível: o documento
       // NÃO é salvo (evita a fila fantasma de "em análise") e o cliente recebe
