@@ -3021,6 +3021,18 @@ export function ClienteDocsHubModal({
       let fileName: string | null = null;
       let mime: string | null = null;
 
+      // REGRA: só documentos de EFETIVA NECESSIDADE podem entrar "em análise".
+      // Todo o resto é decidido na hora — aprovado ou reprovado. Um registro
+      // sem arquivo nunca pode nascer no Hub: era exatamente isso que gerava
+      // certidão "EM ANÁLISE" sem nada para a leitura automática ler.
+      const ehEfetivaNecessidade =
+        inferHubCategoriaFromTipo(form.tipo_documento) === "efetiva_necessidade";
+      if (!file && !ehEfetivaNecessidade) {
+        throw new Error(
+          "Nenhum arquivo foi anexado. Anexe o PDF do documento para que a leitura automática possa conferir com o seu cadastro.",
+        );
+      }
+
       if (file) {
         const safe = sanitize(file.name);
         const ownerKey = customerId ?? `qa-${qaClienteId}`;
@@ -3245,6 +3257,29 @@ export function ClienteDocsHubModal({
         temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente"));
       const iaConfia =
         !bloqueioRevisao && !terceiroDados && classificacao?.recomendacao === "aceitar";
+
+      // Sem leitura automática concluída não há decisão possível: o documento
+      // NÃO é salvo (evita a fila fantasma de "em análise") e o cliente recebe
+      // o carimbo de reprovado com o motivo real.
+      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !classificacao) {
+        throw new Error(
+          "Não conseguimos ler este arquivo. Envie o PDF original emitido pelo órgão (não use foto nem print) para conferirmos com o seu cadastro.",
+        );
+      }
+      // Divergência ou apontamento: reprova na hora, com o motivo, em vez de
+      // mandar para conferência humana.
+      if (!ehEfetivaNecessidade && !isStaff && !terceiroDados && !iaConfia) {
+        const motivos = conformidade
+          .filter((i) => i.status === "divergente")
+          .map((i) => explicarDivergencia(i))
+          .join(" ");
+        throw new Error(
+          temApontamento
+            ? `${tipoLabel} apresenta apontamento. Regularize ou registre a declaração de homonímia antes de enviar.`
+            : motivos ||
+              `${tipoLabel} não confere com os seus dados de cadastro. Confira o documento e envie novamente.`,
+        );
+      }
       if (isStaff && !terceiroDados) {
         payload.status = "aprovado";
         payload.origem = "admin";
@@ -3464,7 +3499,9 @@ export function ClienteDocsHubModal({
             }
           : {
               tipo: "analise",
-              mensagem: `${tipoLabel} recebido · nosso time vai conferir e você será avisado`,
+              mensagem: ehEfetivaNecessidade
+                ? `${tipoLabel} recebido · a equipe vai analisar a efetiva necessidade e você será avisado`
+                : `${tipoLabel} recebido · aguardando conferência`,
             }
       );
 

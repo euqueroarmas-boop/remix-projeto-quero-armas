@@ -1,0 +1,1 @@
+DELETE FROM public.qa_documentos_cliente WHERE id = '547a4a67-41dc-4afe-a3bd-a12ae3156d3d' AND arquivo_storage_path IS NULL;
