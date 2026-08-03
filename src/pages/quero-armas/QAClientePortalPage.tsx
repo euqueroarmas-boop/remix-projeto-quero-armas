@@ -61,7 +61,7 @@ import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/Cli
 import ClienteChecklistCadastralModal from "@/components/quero-armas/portal/ClienteChecklistCadastralModal";
 import { CAMPOS_CADASTRO } from "@/lib/quero-armas/cadastroCompleteness";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
-import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
+import { EntradaWizardPagina, type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
 import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
 import { useArsenalPremium } from "@/hooks/useArsenalPremium";
@@ -380,6 +380,7 @@ export default function QAClientePortalPage() {
     | "armas_municoes"
     | "analise_alvo"
     | "recarga_municoes"
+    | "novo_servico"
     | "mensagens"
     | "configuracoes"
   >("resumo");
@@ -588,7 +589,6 @@ export default function QAClientePortalPage() {
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
   // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
-  const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
   const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // Reconciliação silenciosa na entrada — roda uma vez por carregamento.
   const reconciliouRef = useRef(false);
@@ -2708,7 +2708,7 @@ export default function QAClientePortalPage() {
     }
 
     if (portalStartupAction.type === "entrada_wizard") {
-      setEntradaWizardOpen(true);
+      setActiveSection("novo_servico" as any);
     }
   }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
 
@@ -3173,13 +3173,7 @@ export default function QAClientePortalPage() {
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
-      <EntradaWizard
-        open={!mustChangePassword && entradaWizardOpen}
-        onOpenChange={setEntradaWizardOpen}
-        clienteId={(cliente as any)?.id ?? null}
-        onConcluido={handleEntradaConcluido}
-      />
-      
+
       <ClienteFotoUploadModal
         open={!mustChangePassword && showFotoModal}
         onOpenChange={setShowFotoModal}
@@ -3301,7 +3295,7 @@ export default function QAClientePortalPage() {
           {/* Novo serviço — loja, logo acima do fuzil (checklist). */}
           <button
             type="button"
-            onClick={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+            onClick={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
             title="Novo serviço"
             aria-label="Novo serviço"
             className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
@@ -3607,7 +3601,7 @@ export default function QAClientePortalPage() {
           pendingContracts={pendingContracts}
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
-          onOpenComprar={() => { setShowCadastroModal(false); setTimeout(() => setEntradaWizardOpen(true), 30); }}
+          onOpenComprar={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
           onOpenChecklist={() => abrirChecklistGuiado()}
           onOpenDocsHub={() => setShowAddDoc(true)}
           onLogout={handleLogout}
@@ -4238,6 +4232,16 @@ export default function QAClientePortalPage() {
             ) : (
               <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
             )}
+          </div>
+        )}
+
+        {activeSection === "novo_servico" && (
+          <div id="qa-portal-novo-servico" tabIndex={-1} className="outline-none pt-[10px]">
+            <EntradaWizardPagina
+              clienteId={(cliente as any)?.id ?? null}
+              onConcluido={handleEntradaConcluido}
+              onCancelar={() => setActiveSection("resumo" as any)}
+            />
           </div>
         )}
 

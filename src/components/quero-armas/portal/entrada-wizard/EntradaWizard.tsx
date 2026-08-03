@@ -62,9 +62,23 @@ interface Props {
   onConcluido?: (respostas: EntradaWizardRespostas) => void;
 }
 
+interface PageProps {
+  clienteId: string | number | null | undefined;
+  onConcluido?: (respostas: EntradaWizardRespostas) => void;
+  onCancelar?: () => void;
+}
+
 type Step = 1 | 2;
 
-export default function EntradaWizard({ open, onOpenChange, clienteId, onConcluido }: Props) {
+function useEntradaWizardBody({
+  clienteId,
+  onConcluido,
+  onFechar,
+}: {
+  clienteId: string | number | null | undefined;
+  onConcluido?: (respostas: EntradaWizardRespostas) => void;
+  onFechar: () => void;
+}) {
   const [step, setStep] = useState<Step>(1);
   const [objetivo, setObjetivo] = useState<EntradaObjetivo | null>(null);
   const [possuiArma, setPossuiArma] = useState<EntradaPossuiArma | null>(null);
@@ -100,7 +114,7 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
         return;
       }
       onConcluido?.({ objetivo, possuiArma: possuiArmaFinal, finalidadeArma });
-      onOpenChange(false);
+      onFechar();
       setTimeout(() => {
         setStep(1);
         setObjetivo(null);
@@ -149,19 +163,8 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
     void concluir();
   }
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
-      <DialogContent
-        className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-2xl p-0 overflow-hidden rounded-2xl bg-white max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] overflow-y-auto [&>button]:hidden"
-        style={{ borderColor: LINE }}
-      >
-        <DialogClose
-          aria-label="Fechar"
-          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
-        >
-          <X className="h-4 w-4" />
-        </DialogClose>
-
+  const body = (
+    <>
         {/* ── V8 Big-Tile · cabeçalho ────────────────────────────────── */}
         <div className="px-6 pt-6 pr-14">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -272,7 +275,7 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             <button
               type="button"
               disabled={salvando}
-              onClick={() => (step === 2 ? setStep(1) : onOpenChange(false))}
+              onClick={() => (step === 2 ? setStep(1) : onFechar())}
               className="inline-flex items-center gap-1 text-[11px] font-bold uppercase disabled:opacity-50"
               style={{ ...OSWALD, color: SUB }}
             >
@@ -295,6 +298,48 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             </button>
           </div>
         </div>
+    </>
+  );
+
+  return { body, salvando };
+}
+
+/** Versão página (sem modal) — usada pelo ícone da loja no portal. */
+export function EntradaWizardPagina({ clienteId, onConcluido, onCancelar }: PageProps) {
+  const { body } = useEntradaWizardBody({
+    clienteId,
+    onConcluido,
+    onFechar: () => onCancelar?.(),
+  });
+  return (
+    <div
+      className="mx-auto w-full max-w-2xl rounded-2xl border bg-white"
+      style={{ borderColor: LINE }}
+    >
+      {body}
+    </div>
+  );
+}
+
+export default function EntradaWizard({ open, onOpenChange, clienteId, onConcluido }: Props) {
+  const { body, salvando } = useEntradaWizardBody({
+    clienteId,
+    onConcluido,
+    onFechar: () => onOpenChange(false),
+  });
+  return (
+    <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
+      <DialogContent
+        className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-2xl p-0 overflow-hidden rounded-2xl bg-white max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] overflow-y-auto [&>button]:hidden"
+        style={{ borderColor: LINE }}
+      >
+        <DialogClose
+          aria-label="Fechar"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </DialogClose>
+        {body}
       </DialogContent>
     </Dialog>
   );
