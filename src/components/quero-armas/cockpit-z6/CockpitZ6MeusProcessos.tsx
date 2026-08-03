@@ -226,9 +226,10 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
             <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 10, letterSpacing: ".2em", color: "#7A7A7A", marginBottom: 10 }}>CHECKLIST · ETAPA ATUAL</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {d.checklist.map((c, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#F7F7F7", borderRadius: 3 }}>
+                <div key={i} className="z6-check-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 10px", background: "#F7F7F7", borderRadius: 3 }}>
                   <span style={{ fontSize: 11.5 }}>{c.label}</span>
                   <span
+                    className="z6-check-badge"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -238,6 +239,8 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
                       fontFamily: "Oswald, sans-serif",
                       letterSpacing: ".14em",
                       fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                       background: CHECK_TONE[c.tone].bg,
                       color: CHECK_TONE[c.tone].fg,
                     }}
@@ -312,14 +315,14 @@ const ProcessoCompacto: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
             )}
           </div>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, textAlign: "center" }}>
+        <div className="z6-barras" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, textAlign: "center" }}>
           {c.barras.map((b, i) => {
             const bg = b.tone === "done" ? "#2F8F4A" : b.tone === "current" ? "#D6A64B" : "#EDEDED";
             const color = b.tone === "current" ? "#D6A64B" : b.tone === "pending" ? "#999" : "#0A0A0A";
             return (
               <div key={i}>
                 <div style={{ height: 4, background: bg, borderRadius: 2 }} />
-                <div style={{ fontSize: 9.5, fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginTop: 6, color }}>{b.label}</div>
+                <div className="z6-barra-lab" style={{ fontSize: 9.5, fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginTop: 6, color }}>{b.label}</div>
               </div>
             );
           })}
