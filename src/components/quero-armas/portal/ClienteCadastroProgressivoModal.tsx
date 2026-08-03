@@ -605,7 +605,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 PROGRESSO DO CADASTRO
               </div>
               <div className="mt-2 h-[7px] w-full overflow-hidden rounded-[2px] bg-[#ECECEC]">
-                <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: progresso === 100 ? "#00FF41" : MARROM }} />
+                <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: progresso === 100 ? "#059669" : MARROM }} />
               </div>
               <div className="mt-2 font-heading text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
                 {motivacao}

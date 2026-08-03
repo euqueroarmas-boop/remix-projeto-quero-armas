@@ -154,7 +154,7 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
           {p.progressoPct}
           <small>%</small>
         </div>
-        <div className="z6-bar"><i style={{ width: `${p.progressoPct}%`, background: p.progressoPct === 100 ? "#00FF41" : PROGRESS_FILL[p.progressoTone] }} /></div>
+        <div className="z6-bar"><i style={{ width: `${p.progressoPct}%`, background: p.progressoPct === 100 ? "#059669" : PROGRESS_FILL[p.progressoTone] }} /></div>
         <div style={{ fontSize: 11, color: "#6A6A6A", marginTop: 14 }}>Etapa atual</div>
         <div className="z6-etapa" style={p.etapaAtualTone === "danger" ? { color: "#8A1410" } : undefined}>{p.etapaAtual}</div>
         {p.previsao && (
@@ -273,7 +273,7 @@ const ProcessoCompacto: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
           {p.progressoPct}
           <small>%</small>
         </div>
-        <div className="z6-bar"><i style={{ width: `${p.progressoPct}%`, background: p.progressoPct === 100 ? "#00FF41" : PROGRESS_FILL[p.progressoTone] }} /></div>
+        <div className="z6-bar"><i style={{ width: `${p.progressoPct}%`, background: p.progressoPct === 100 ? "#059669" : PROGRESS_FILL[p.progressoTone] }} /></div>
         <div style={{ fontSize: 11, color: "#6A6A6A", marginTop: 14 }}>Etapa atual</div>
         <div className="z6-etapa" style={p.etapaAtualTone === "danger" ? { color: "#8A1410" } : undefined}>{p.etapaAtual}</div>
         {p.previsao && (

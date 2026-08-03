@@ -964,7 +964,7 @@ function FeaturedContractCard({
           </div>
         </div>
         <div className="mt-2 h-[5px] bg-[#EAEAEA] rounded-full overflow-hidden">
-          <div className="h-full" style={{ width: `${progress}%`, background: progress === 100 ? "#00FF41" : "#7A1F2B" }} />
+          <div className="h-full" style={{ width: `${progress}%`, background: progress === 100 ? "#059669" : "#7A1F2B" }} />
         </div>
         <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-[#7A7A7A]">
           <span><b className="text-[#0A0A0A] font-semibold">Prev. assinatura:</b> até {fmtDateLong(contract.issued_at)}</span>
