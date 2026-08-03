@@ -21,7 +21,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__figure{position:relative;height:100%;max-height:520px;display:block}
         .qa-alvo__figure img{height:100%;width:auto;max-width:100%;display:block;object-fit:contain}
         /* Furo de projétil: cratera irregular + fuligem/anel de graxa ao redor */
-        .qa-alvo__hit{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);border-radius:52% 48% 55% 45%/48% 55% 45% 52%;background:radial-gradient(circle at 42% 40%,#000 0 46%,#0d0d0d 62%,#2a2a2a 78%,rgba(60,60,60,.55) 100%);box-shadow:0 0 0 1px rgba(40,40,40,.55),0 0 5px 2px rgba(0,0,0,.28)}
+        .qa-alvo__hit{isolation:isolate;position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);border-radius:52% 48% 55% 45%/48% 55% 45% 52%;background:radial-gradient(circle at 42% 40%,#000 0 46%,#0d0d0d 62%,#2a2a2a 78%,rgba(60,60,60,.55) 100%);box-shadow:0 0 0 1px rgba(40,40,40,.55),0 0 5px 2px rgba(0,0,0,.28)}
         .qa-alvo__hit::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(0,0,0,.30) 0 32%,rgba(0,0,0,.14) 52%,rgba(0,0,0,0) 74%);filter:blur(1.6px);z-index:-1}
         .qa-alvo__hit::after{content:"";position:absolute;inset:1.5px;border-radius:46% 54% 42% 58%/56% 44% 58% 42%;background:#000;box-shadow:inset 0 0 2px 1px rgba(0,0,0,.9)}
         .qa-alvo__hit.sm{width:9px;height:9px}
