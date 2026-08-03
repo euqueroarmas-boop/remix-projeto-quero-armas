@@ -1323,6 +1323,7 @@ export default function QAClienteFinanceiroCentral({
           />
         ))
       )}
+      </div>
     </div>
   );
 }
