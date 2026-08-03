@@ -792,15 +792,40 @@ function LinhaItem({
       </button>
       <Icon className="h-3.5 w-3.5 shrink-0 mt-[2px]" style={{ color: cfg.cor }} />
       <div className="min-w-0 flex-1">
-        <div
-          className="text-[11px] leading-snug"
-          style={{
-            color: "hsl(220 20% 18%)",
-            textDecoration: item.estado === "cumprido" ? "line-through" : undefined,
-          }}
-        >
-          {item.nome_documento}
-        </div>
+        {editandoNome ? (
+          <input
+            autoFocus
+            defaultValue={item.nome_documento}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const v = e.currentTarget.value.trim();
+              setEditandoNome(false);
+              if (v && v !== item.nome_documento) onRenomear(item.id, v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+              if (e.key === "Escape") setEditandoNome(false);
+            }}
+            className="w-full rounded border px-1.5 py-0.5 text-[11px] leading-snug"
+            style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 18%)" }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditandoNome(true);
+            }}
+            title="Clique para editar o nome que o cliente vê (não muda o código técnico)"
+            className="text-left text-[11px] leading-snug hover:underline decoration-dotted"
+            style={{
+              color: "hsl(220 20% 18%)",
+              textDecoration: item.estado === "cumprido" ? "line-through" : undefined,
+            }}
+          >
+            {item.nome_documento}
+          </button>
+        )}
         <div className="flex flex-wrap items-center gap-1 text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
           <span className="uppercase">ordem</span>
           <input
