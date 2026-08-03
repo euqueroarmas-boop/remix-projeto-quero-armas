@@ -4016,6 +4016,7 @@ export default function QAClientePortalPage() {
             crafs,
             gtes,
             examesCliente,
+            catalogoDocOrdem,
             onFocoCta: () => setActiveSection("contratos"),
           });
 
