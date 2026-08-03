@@ -1233,6 +1233,58 @@ export default function QAClientePortalPage() {
     return () => { supabase.removeChannel(channel); };
   }, [cliente?.id, customerId]);
 
+  // Realtime: ordem/instruções do checklist definidas em Preços e Serviços
+  // (qa_servicos_documentos). Recarrega os mapas do catálogo sem F5.
+  const servicoIdsKey = useMemo(
+    () => Array.from(new Set(itens.map((i: any) => Number(i.servico_id)).filter(Number.isFinite))).sort((a, b) => a - b).join(","),
+    [itens],
+  );
+  useEffect(() => {
+    if (!servicoIdsKey) return;
+    const servicoIds = servicoIdsKey.split(",").map(Number);
+    let cancelled = false;
+
+    const recarregarCatalogoDocs = async () => {
+      const { data: servicoDocsData } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente")
+        .in("servico_id", servicoIds);
+      if (cancelled) return;
+      const docOrdemMap = new Map<string, number>();
+      const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
+      ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
+        const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
+        const ord = Number(sd.ordem);
+        if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
+        if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente) {
+          docInfoMap.set(key, {
+            instrucoes: sd.instrucoes ?? null,
+            link_emissao: sd.link_emissao ?? null,
+            observacoes_cliente: sd.observacoes_cliente ?? null,
+          });
+        }
+      });
+      setCatalogoDocOrdem(docOrdemMap);
+      setCatalogoDocInfo(docInfoMap);
+    };
+
+    const channel = supabase
+      .channel(`portal-catalogo-docs-${servicoIdsKey}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_servicos_documentos" },
+        (payload: any) => {
+          const row = payload.new || payload.old;
+          const sid = Number(row?.servico_id);
+          if (Number.isFinite(sid) && !servicoIds.includes(sid)) return;
+          void recarregarCatalogoDocs();
+        },
+      )
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [servicoIdsKey]);
+
   const analysis = useMemo(() => {
     if (!cliente) return null;
     const totalServicos = itens.length;
