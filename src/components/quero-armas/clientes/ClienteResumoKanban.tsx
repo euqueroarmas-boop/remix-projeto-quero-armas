@@ -924,6 +924,8 @@ export default function ClienteResumoKanban({
             </div>
           ))}
         </section>
+        </div>
+
         <div className="qa-client-summary-print__footer">
           <span>QUERO ARMAS · ARSENAL INTELIGENTE ·</span>
           <br />
@@ -940,14 +942,16 @@ export default function ClienteResumoKanban({
           }
           @media (max-width: 768px) {
             .qa-client-summary-print__footer {
-              margin-top: 48px !important;
+              flex: none;
+              margin-top: auto !important;
+              padding-top: 18px;
               padding-bottom: 24px;
+              background: var(--paper, #f3f3f2);
             }
           }
         `}</style>
-
-        </div>
       </div>
+
       {exameModal && (
         <AgendarExameModal
           open
