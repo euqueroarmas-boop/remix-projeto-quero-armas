@@ -51,6 +51,7 @@ export default function SimuladorChecklistAdmin() {
   const [loading, setLoading] = useState(false);
   const [salvandoOrdem, setSalvandoOrdem] = useState(false);
   const [arrastandoId, setArrastandoId] = useState<string | null>(null);
+  const [gruposAbertos, setGruposAbertos] = useState<string[]>([]);
 
   const [modalidade, setModalidade] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
