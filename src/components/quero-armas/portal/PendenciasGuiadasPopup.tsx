@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, FileUp, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import {
@@ -387,6 +387,13 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   const pendenciasGrupo = Math.max(0, totalItensGrupo - concluidosGrupo);
   const pendenciasGrupoLabel = `${pendenciasGrupo} pendência${pendenciasGrupo === 1 ? "" : "s"}`;
 
+  // Só o primeiro nome: "WILLIAN RODRIGUES DA SILVA MASSAROTO, VOCÊ ESTÁ..."
+  // quebrava em três linhas e dominava o topo do card.
+  const primeiroNomeRaw = (nomeCliente || "").trim().split(/\s+/)[0] || "";
+  const primeiroNome = primeiroNomeRaw
+    ? primeiroNomeRaw.charAt(0).toUpperCase() + primeiroNomeRaw.slice(1).toLowerCase()
+    : "";
+
   return (
     <div
       className={
@@ -419,15 +426,29 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           </button>
         )}
 
+        {/* Faixa de abertura pessoal — bloco próprio, separado do corpo.
+            Só o primeiro nome: o nome completo em caixa alta ocupava três
+            linhas e parecia texto solto colado no topo do card. */}
+        <div className="shrink-0 bg-gradient-to-r from-[#7A1F2B] to-[#4E1119] px-5 py-4 sm:px-6 sm:py-5">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/12 ring-1 ring-white/20">
+              <FileUp className="h-4 w-4 text-white" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/60">
+                Checklist guiado
+              </p>
+              <h1 className="mt-1 font-['Oswald',sans-serif] text-[17px] font-bold leading-[1.15] tracking-[0.01em] text-white sm:text-[19px]">
+                {primeiroNome
+                  ? `${primeiroNome}, você está nos devendo enviar esses documentos!`
+                  : "Você está nos devendo enviar esses documentos!"}
+              </h1>
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
-        <div className="px-6 pt-8 pb-4 shrink-0">
-          {/* Abertura pessoal: diz ao cliente, pelo nome, o que está sendo
-              cobrado dele. Fica acima dos chips de contexto. */}
-          <h1 className="mb-3 font-['Oswald',sans-serif] text-[16px] font-bold uppercase leading-snug tracking-[0.02em] text-[#0A0A0A]">
-            {(nomeCliente || "").trim()
-              ? `${(nomeCliente || "").trim().toUpperCase()}, VOCÊ ESTÁ NOS DEVENDO ENVIAR ESTES DOCUMENTOS ABAIXO.`
-              : "VOCÊ ESTÁ NOS DEVENDO ENVIAR ESTES DOCUMENTOS ABAIXO."}
-          </h1>
+        <div className="px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
