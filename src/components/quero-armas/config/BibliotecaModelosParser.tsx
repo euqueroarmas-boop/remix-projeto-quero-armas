@@ -34,6 +34,28 @@ export async function carregarResumoModelos(): Promise<
   return mapa;
 }
 
+
+/** Sobe um arquivo e treina o modelo do parser. Lança em caso de falha. */
+export async function treinarModeloArquivo(codigo: string, nomeDocumento: string, file: File) {
+  const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase();
+  const path = `biblioteca-modelos/${codigo}/${crypto.randomUUID()}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from("qa-processo-docs")
+    .upload(path, file, { upsert: false, contentType: file.type || undefined });
+  if (upErr) throw upErr;
+  const { data, error } = await supabase.functions.invoke("qa-modelo-biblioteca-treinar", {
+    body: {
+      codigo,
+      nome_modelo: file.name.replace(/\.[^.]+$/, "").toUpperCase(),
+      storage_path: path,
+      observacoes: `MODELO DE REFERÊNCIA — ${nomeDocumento.toUpperCase()}`,
+    },
+  });
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data as { deterministico?: boolean; ia?: boolean };
+}
+
 /** Selo compacto exibido na linha da biblioteca. */
 export function SeloModeloParser({
   resumo,
@@ -109,23 +131,7 @@ export default function BibliotecaModelosParser({
     for (const file of lista) {
       setEnviando(file.name);
       try {
-        const ext = (file.name.split(".").pop() ?? "pdf").toLowerCase();
-        const path = `biblioteca-modelos/${codigo}/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("qa-processo-docs")
-          .upload(path, file, { upsert: false, contentType: file.type || undefined });
-        if (upErr) throw upErr;
-
-        const { data, error } = await supabase.functions.invoke("qa-modelo-biblioteca-treinar", {
-          body: {
-            codigo,
-            nome_modelo: file.name.replace(/\.[^.]+$/, "").toUpperCase(),
-            storage_path: path,
-            observacoes: `MODELO DE REFERÊNCIA — ${nomeDocumento.toUpperCase()}`,
-          },
-        });
-        if (error) throw error;
-        if ((data as any)?.error) throw new Error((data as any).error);
+        const data = await treinarModeloArquivo(codigo, nomeDocumento, file);
 
         const det = (data as any)?.deterministico ? "determinística ✓" : "determinística —";
         const ia = (data as any)?.ia ? "IA ✓" : "IA —";
