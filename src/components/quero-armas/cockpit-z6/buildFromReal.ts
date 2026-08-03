@@ -344,13 +344,19 @@ function buildProcessoCard(args: {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
       checklist: checklistFromDocs(
-        abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs,
+        abertosGrupoAtual.length
+          ? abertosGrupoAtual
+          : docsGrupoAtual.length
+            ? docsGrupoAtual
+            : docsPorOrdemCatalogo.length
+              ? docsPorOrdemCatalogo
+              : docs,
         ordemDoc,
       ),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
-        : abertosEtapaAtual.length
-          ? `${abertosEtapaAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
+        : abertosGrupoAtual.length
+          ? `${abertosGrupoAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
           : "Aguardando ação da equipe Quero Armas.",
     };
   } else {
