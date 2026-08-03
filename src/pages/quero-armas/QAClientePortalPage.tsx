@@ -2564,7 +2564,7 @@ export default function QAClientePortalPage() {
         String(d?.tipo_documento || ""),
         toHubTipoCompartilhado(String(d?.tipo_documento || "")),
       );
-      const processo = procById.get(String(d?.processo_id || ""));
+      const processo = (processos ?? []).find((p: any) => String(p?.id) === String(d?.processo_id || ""));
       const catGrupo = processo?.servico_id != null
         ? catalogoDocInfo.get(`${processo.servico_id}:${String(d?.tipo_documento || "").toLowerCase()}`)
         : undefined;
