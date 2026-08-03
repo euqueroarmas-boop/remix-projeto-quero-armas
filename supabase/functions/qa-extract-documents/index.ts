@@ -277,6 +277,7 @@ IDENTIFICAÇÃO
 
 ENDEREÇO
 - comprovante_residencia: conta de luz, água, gás, telefone, internet, IPTU ou correspondência bancária com endereço.
+  PRIORIDADE ABSOLUTA: DANF3E/NF3e de ENERGIA ELÉTRICA e faturas de água, gás, telefone ou internet são comprovante_residencia, mesmo contendo "DANFE", "NOTA FISCAL", chave de acesso, CNPJ, tributos, valores e tabelas. São contas de consumo do imóvel. NUNCA classifique esses documentos como renda_nf_recente, nota_fiscal_arma ou comprovante_pagamento.
   ATENÇÃO — extraia SEMPRE o campo data_proxima_leitura quando existir: contas de consumo trazem
   "PRÓXIMA LEITURA", "PROXIMA LEITURA", "Leitura seguinte" ou "Próxima medição". É essa data que
   define até quando o comprovante vale — NÃO é a emissão nem o vencimento da fatura
@@ -293,7 +294,7 @@ OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genéric
 - renda_cnpj_autonomo: (legado) cartão CNPJ de MEI/autônomo que NÃO seja o CCMEI
 - renda_contrato_social: contrato social, requerimento de empresário ou alteração contratual (NÃO é o QSA)
 - renda_qsa: QSA — Quadro de Sócios e Administradores, emitido pela Receita Federal. Lista os sócios e sua participação. É documento PRÓPRIO, distinto do contrato social e do cartão CNPJ: no grupo "empresário" os quatro (contrato social, cartão CNPJ, QSA e nota fiscal) são exigidos separadamente
-- renda_nf_recente: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma)
+- renda_nf_recente: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma nem conta de consumo do imóvel). Exige evidência de que o cliente é o EMITENTE/PRESTADOR; DANF3E/NF3e e contas de concessionárias são comprovante_residencia
 - renda_comprovante_beneficio: comprovante de benefício (INSS, BPC, aposentadoria, pensão)
 - renda_extrato_inss: extrato CNIS ou extrato de contribuições do INSS
 
