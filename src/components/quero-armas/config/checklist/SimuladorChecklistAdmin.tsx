@@ -255,7 +255,15 @@ export default function SimuladorChecklistAdmin() {
                     </span>
                   </div>
                   <div className="space-y-1">
-                    {g.itens.map((i) => <LinhaItem key={i.id} item={i} onToggle={alternarEntrega} />)}
+                    {g.itens.map((i) => (
+                      <LinhaItem
+                        key={i.id}
+                        item={i}
+                        onToggle={alternarEntrega}
+                        onResponder={responder}
+                        onLimparResposta={limparResposta}
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
@@ -272,7 +280,17 @@ export default function SimuladorChecklistAdmin() {
   );
 }
 
-function LinhaItem({ item, onToggle }: { item: ItemSimulado; onToggle: (tipo: string) => void }) {
+function LinhaItem({
+  item,
+  onToggle,
+  onResponder,
+  onLimparResposta,
+}: {
+  item: ItemSimulado;
+  onToggle: (tipo: string) => void;
+  onResponder: (chave: string, valor: string) => void;
+  onLimparResposta: (chave: string) => void;
+}) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
     pendente:   { icon: CircleDashed, cor: "#7A1F2B", label: "PENDENTE" },
@@ -304,6 +322,37 @@ function LinhaItem({ item, onToggle }: { item: ItemSimulado; onToggle: (tipo: st
           ordem {item.ordem} · {item.tipo_documento}
           {item.motivo ? ` · ${item.motivo}` : ""}
         </div>
+
+        {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {item.opcoes.map((o) => {
+              const ativa = item.estado === "cumprido" && String(item.motivo ?? "").endsWith(o.valor.toUpperCase());
+              return (
+                <button
+                  key={o.valor}
+                  onClick={() => onResponder(item.chave as string, o.valor)}
+                  className="rounded border px-1.5 py-0.5 text-[9px] uppercase"
+                  style={{
+                    borderColor: ativa ? "#7A1F2B" : "hsl(220 13% 88%)",
+                    background: ativa ? "#7A1F2B" : "transparent",
+                    color: ativa ? "#FFFFFF" : "hsl(220 20% 18%)",
+                  }}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
+            {item.estado === "cumprido" && (
+              <button
+                onClick={() => onLimparResposta(item.chave as string)}
+                className="text-[9px] uppercase underline"
+                style={{ color: "hsl(220 10% 45%)" }}
+              >
+                corrigir
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {item.tipo === "documento" && item.estado !== "dispensado" && item.estado !== "aguardando" && (
         <button
