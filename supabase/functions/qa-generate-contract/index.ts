@@ -687,7 +687,7 @@ Deno.serve(async (req) => {
     aceite_ip: "__QA_ACEITE_IP__",
     aceite_user_agent: "__QA_ACEITE_UA__",
     aceite_hash: "__QA_ACEITE_HASH__",
-    itens_contratados_bloco: itensContratadosBloco + composicaoResumoBloco,
+    itens_contratados_bloco: itensContratadosBloco + composicaoResumoBloco + descontoBloco,
     clausula_pagamento_bloco: clausulaPagamentoBloco,
   });
   const aceiteHash = await sha256Text(`${conteudoRenderizado}|${aceiteDataIso}|${venda.cliente_id}`);
