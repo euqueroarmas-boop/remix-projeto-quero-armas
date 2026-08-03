@@ -520,11 +520,13 @@ function LinhaItem({
   onToggle,
   onResponder,
   onLimparResposta,
+  onRemover,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
   onResponder: (chave: string, valor: string) => void;
   onLimparResposta: (chave: string) => void;
+  onRemover: (id: string, nome: string) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -617,6 +619,26 @@ function LinhaItem({
           {item.estado === "cumprido" ? "desfazer" : "enviar"}
         </button>
       )}
+      <button
+        type="button"
+        aria-label="Excluir exigência do checklist"
+        title="Excluir esta exigência do checklist"
+        onClick={() => {
+          if (
+            window.confirm(
+              `Excluir "${item.nome_documento}" do checklist?\n\nO item deixa de ser exigido no simulador, no portal do cliente e em todos os motores. Você pode desfazer logo em seguida.`,
+            )
+          ) {
+            onRemover(item.id, item.nome_documento);
+          }
+        }}
+        className="shrink-0 mt-[1px] rounded p-0.5 text-slate-400 hover:text-white"
+        style={{ transition: "all .12s" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#7A1F2B")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        <X className="h-3 w-3" />
+      </button>
     </div>
   );
 }
