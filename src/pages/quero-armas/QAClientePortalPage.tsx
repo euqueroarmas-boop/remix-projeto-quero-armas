@@ -4177,7 +4177,10 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "pendencias" && (
-          <div className="text-[#0A0A0A]" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+          <div
+            className="text-[#0A0A0A] h-full min-h-0 flex flex-col overflow-hidden"
+            style={{ fontFamily: "Arial, Helvetica, sans-serif", maxWidth: "100%" }}
+          >
             {(() => {
               const docsBase = processoDocs.filter((d) =>
                 d.obrigatorio &&
@@ -4203,8 +4206,9 @@ export default function QAClientePortalPage() {
               ];
               return (
                 <>
-                  <header className="mb-5">
-                    <h1 className="qa-h1">{primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS</h1>
+                  {/* Cabeçalho travado: H1 + metadados + KPIs (até o card PROCESSOS). */}
+                  <header className="shrink-0 pt-[26px] pb-4" style={{ maxWidth: "100%" }}>
+                    <h1 className="qa-h1" style={{ overflowWrap: "anywhere" }}>{primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS</h1>
                     <div className="qa-meta qa-meta-lines">
                       <span>
                         <span>CPF · <b>{cliente?.cpf || "—"}</b></span>
@@ -4214,22 +4218,26 @@ export default function QAClientePortalPage() {
                         <b>{docsFilt.length}</b>&nbsp;DOCUMENTO{docsFilt.length === 1 ? "" : "S"} AGUARDANDO ENVIO
                       </span>
                     </div>
-                  </header>
-
-                  <div className="qa-kpi-grid grid grid-cols-3 gap-2.5 mb-6">
+                    <div className="qa-kpi-grid grid grid-cols-3 gap-2 mt-4">
                     {kpis.map((k) => (
-                      <div key={k.label} className="rounded-sm border border-[#E5E5E5] bg-white px-3 py-3">
-                        <div className="qa-kpi-label flex items-center gap-1.5">
+                      <div key={k.label} className="min-w-0 rounded-sm border border-[#E5E5E5] bg-white px-2.5 py-3">
+                        <div className="qa-kpi-label flex items-center gap-1.5" style={{ overflowWrap: "anywhere" }}>
                           <span className="inline-block h-[5px] w-[5px] rounded-full" style={{ background: k.accent }} />
                           {k.label}
                         </div>
                         <div className="qa-kpi-value mt-1.5">{k.value}</div>
-                        <div className="qa-kpi-sub mt-1">{k.sub}</div>
+                        <div className="qa-kpi-sub mt-1" style={{ overflowWrap: "anywhere" }}>{k.sub}</div>
                       </div>
                     ))}
-                  </div>
+                    </div>
+                  </header>
 
-                  <div className="mb-5">
+                  {/* Área rolável: filtro + checklist. */}
+                  <div
+                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar pb-6"
+                    style={{ overscrollBehavior: "contain" }}
+                  >
+                  <div className="mb-5 overflow-hidden">
                     <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
                   </div>
 
@@ -4263,11 +4271,32 @@ export default function QAClientePortalPage() {
                                     <button
                                       key={d.id}
                                       type="button"
-                                      onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
+                                      onClick={() => {
+                                        // Abre exatamente a pendência clicada. Se ela não estiver
+                                        // na fila guiada (gates/dedup), cai direto no Hub com o tipo
+                                        // correto — antes o pin não era encontrado e a fila voltava
+                                        // ao primeiro item (TSE).
+                                        const pid = `doc:${d.id}`;
+                                        const naFila = pendenciasGuiadas.some((p) => p.id === pid);
+                                        if (naFila) {
+                                          setPinnedPendenciaId(pid);
+                                          if (isBelowLg) {
+                                            setActiveSection("checklist_guiado");
+                                            setSidebarCollapsed(true);
+                                          } else {
+                                            setShowContratoPopup(true);
+                                          }
+                                          return;
+                                        }
+                                        setEditDocTipo(
+                                          toHubTipoCompartilhado(String(d.tipo_documento || "").toLowerCase()) as any,
+                                        );
+                                        setShowAddDoc(true);
+                                      }}
                                       className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-[#FAFAFA]"
                                     >
-                                      <div className="min-w-0">
-                                        <div className="qa-h3 truncate">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="qa-h3" style={{ overflowWrap: "anywhere" }}>
                                           {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
                                         </div>
                                         <div className="qa-kpi-sub mt-0.5">{d.etapa ? String(d.etapa).toUpperCase() : "—"}</div>
@@ -4288,6 +4317,7 @@ export default function QAClientePortalPage() {
                       </div>
                     </>
                   )}
+                  </div>
                 </>
               );
             })()}
