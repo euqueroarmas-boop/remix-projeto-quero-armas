@@ -540,6 +540,42 @@ function normalizarTexto(s: string): string {
     .trim();
 }
 
+/**
+ * Extração 100% determinística (sem IA) a partir do texto nativo do PDF.
+ * Usada quando o documento casa com um MODELO APROVADO da Biblioteca — nesses
+ * casos o parser já sabe o que é o documento e a IA só adiciona erro.
+ */
+function extrairCamposDeterministicos(textoPdf: string): Record<string, string> {
+  const campos: Record<string, string> = {};
+  const bruto = String(textoPdf || "");
+  if (!bruto.trim()) return campos;
+
+  const cpfMatch = bruto.match(/\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\b/);
+  if (cpfMatch) campos.cpf = cpfComDigitosVerificadores(cpfMatch[1]);
+
+  const nomeMatch =
+    bruto.match(/NOME(?:\s+COMPLETO)?\s*[:\-]\s*([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][A-ZÁÂÃÀÉÊÍÓÔÕÚÇ'\s]{6,80})/i) ||
+    bruto.match(/TITULAR\s*[:\-]\s*([A-ZÁÂÃÀÉÊÍÓÔÕÚÇ][A-ZÁÂÃÀÉÊÍÓÔÕÚÇ'\s]{6,80})/i);
+  if (nomeMatch) campos.nome_completo = nomeMatch[1].replace(/\s+/g, " ").trim();
+
+  const emissao = primeiraDataBR(bruto);
+  if (emissao) campos.data_emissao = emissao;
+
+  const cep = bruto.match(/\bCEP[:\s]*([0-9]{5}-?[0-9]{3})\b/i);
+  if (cep) campos.cep = cep[1];
+
+  const uc = bruto.match(/(?:UNIDADE\s+CONSUMIDORA|C[ÓO]DIGO\s+DE\s+INSTALA[ÇC][ÃA]O|N[ºO°.]?\s*DA\s*UC)[:\s]*([0-9][0-9.\-\/]{4,})/i);
+  if (uc) {
+    campos.codigo_instalacao = uc[1].replace(/\s/g, "");
+    campos.numero_documento = campos.codigo_instalacao;
+  }
+
+  const numCert = numeroCertidao(bruto);
+  if (!campos.numero_documento && numCert) campos.numero_documento = numCert;
+
+  return campos;
+}
+
 function decodeDataUrlBytes(dataUrl: string): { mime: string; bytes: Uint8Array } | null {
   const m = /^data:([^;,]+);base64,(.*)$/s.exec(dataUrl || "");
   if (!m) return null;
@@ -785,7 +821,73 @@ Deno.serve(async (req) => {
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
     const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
+    // === DOCUMENTO PARSEADO: SEM IA ===
+    // Se o texto nativo casa com um modelo aprovado da Biblioteca, o parser já
+    // sabe exatamente o que é o documento. Nesses casos a IA só acrescenta erro
+    // (divergências falsas, campos trocados) — então nem é chamada.
+    if (modeloBiblioteca) {
+      let parsedParser: any = {
+        tipoDetectado: modeloBiblioteca.tipo,
+        confianca: 0.99,
+        camposExtraidos: extrairCamposDeterministicos(textoPdfNativo),
+        justificativa:
+          `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
+          `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis). Sem uso de IA.`,
+      };
+      parsedParser = aplicarClassificacaoDeterministica(parsedParser, textoPdfNativo);
+      // O modelo aprovado prevalece sobre qualquer heurística.
+      parsedParser.tipoDetectado = modeloBiblioteca.tipo;
+      parsedParser.confianca = 0.99;
+      parsedParser.modelo_biblioteca = {
+        tipo_documento: modeloBiblioteca.tipoDocumento,
+        nome_modelo: modeloBiblioteca.nomeModelo,
+        cobertura: modeloBiblioteca.cobertura,
+      };
+
+      const tipoNormParser = normalizeTipoSelecionado(tipoSelecionado);
+      return json({
+        tipoDetectado: modeloBiblioteca.tipo,
+        confianca: 0.99,
+        camposExtraidos: parsedParser.camposExtraidos || {},
+        justificativa: String(parsedParser.justificativa || "").slice(0, 500),
+        // Documento parseado por modelo aprovado nunca gera divergência/revisão.
+        divergenciaComSelecaoManual: false,
+        tipoSelecionadoNormalizado: tipoNormParser,
+        recomendacao: "aceitar",
+        revisao_obrigatoria: false,
+        origemClassificacao: "parser_biblioteca",
+        modelo_biblioteca: parsedParser.modelo_biblioteca,
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    // Regras determinísticas sobre o texto nativo (conta de consumo, TJSP, TRF3,
+    // contrato de adesão...). Se o parser resolve sozinho, também não chama IA.
+    if (textoPdfNativo && textoPdfNativo.trim().length >= 80) {
+      const preParse = aplicarClassificacaoDeterministica(
+        { camposExtraidos: extrairCamposDeterministicos(textoPdfNativo) },
+        textoPdfNativo,
+      );
+      const tipoParser = (TIPOS as readonly string[]).includes(preParse?.tipoDetectado)
+        ? (preParse.tipoDetectado as Tipo)
+        : null;
+      if (tipoParser) {
+        const revisao = !!preParse.revisao_obrigatoria;
+        return json({
+          tipoDetectado: tipoParser,
+          confianca: Number(preParse.confianca || 0.97),
+          camposExtraidos: preParse.camposExtraidos || {},
+          justificativa: String(preParse.justificativa || "").slice(0, 500),
+          divergenciaComSelecaoManual: false,
+          tipoSelecionadoNormalizado: normalizeTipoSelecionado(tipoSelecionado),
+          recomendacao: revisao ? "revisao_obrigatoria" : "aceitar",
+          revisao_obrigatoria: revisao,
+          origemClassificacao: "parser_deterministico",
+        });
+      }
+    }
+
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
 
     const aiResp = await fetch(GATEWAY_URL, {
