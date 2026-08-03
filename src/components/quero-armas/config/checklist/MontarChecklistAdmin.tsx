@@ -223,12 +223,21 @@ export default function MontarChecklistAdmin() {
   }, [servicoId]);
 
   const bibliotecaFiltrada = useMemo(() => {
+    // Linhas antigas do catálogo podem não ter biblioteca_id preenchido — nesses
+    // casos o vínculo é pelo código do documento (tipo_documento). Sem isso o
+    // item aparecia como disponível e o banco recusava por duplicidade.
     const idsUsados = new Set(checklist.map((c) => c.biblioteca_id).filter(Boolean));
+    const codigosUsados = new Set(
+      checklist.map((c) => String(c.tipo_documento ?? "").trim().toLowerCase()).filter(Boolean),
+    );
     const b = buscaBib.trim().toLowerCase();
     return biblioteca
       .filter((i) => (catFiltro ? i.categoria === catFiltro : true))
       .filter((i) => (b ? i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b) : true))
-      .map((i) => ({ ...i, jaNoServico: idsUsados.has(i.id) }));
+      .map((i) => ({
+        ...i,
+        jaNoServico: idsUsados.has(i.id) || codigosUsados.has(String(i.codigo).trim().toLowerCase()),
+      }));
   }, [biblioteca, buscaBib, catFiltro, checklist]);
 
   const gruposBib = useMemo(() => {
