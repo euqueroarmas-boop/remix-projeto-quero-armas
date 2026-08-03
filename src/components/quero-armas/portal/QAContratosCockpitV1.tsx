@@ -658,15 +658,30 @@ function FeaturedContractCard({
   async function baixarAssinado() {
     setBaixandoAssinado(true);
     const toastId = toast.loading("Preparando cópia assinada…");
+    // Abrimos a aba de forma síncrona (dentro do gesto do usuário) porque o portal
+    // roda dentro de iframe e o popup seria bloqueado após o await.
+    let win: Window | null = null;
+    try { win = window.open("", "_blank", "noopener,noreferrer"); } catch { win = null; }
     try {
       const { url } = await getContratoAssinadoUrl({
         contractId: contract.id,
         contractNumber: contract.contract_number,
         vendaId: contract.venda_id,
       });
-      window.open(url, "_blank", "noopener,noreferrer");
+      if (win && !win.closed) {
+        win.location.href = url;
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
       toast.success("Cópia assinada liberada.", { id: toastId });
     } catch (e) {
+      try { win?.close(); } catch {}
       toast.error(e instanceof Error ? e.message : "Não foi possível baixar a cópia assinada.", { id: toastId });
     } finally {
       setBaixandoAssinado(false);
