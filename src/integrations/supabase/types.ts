@@ -4423,6 +4423,111 @@ export type Database = {
           },
         ]
       }
+      qa_cliente_login_eventos: {
+        Row: {
+          alerta_enviado: boolean
+          created_at: string
+          dispositivo: string | null
+          email: string | null
+          id: string
+          ip: string | null
+          local_aproximado: string | null
+          navegador: string | null
+          origem: string | null
+          qa_cliente_id: string | null
+          sistema: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          alerta_enviado?: boolean
+          created_at?: string
+          dispositivo?: string | null
+          email?: string | null
+          id?: string
+          ip?: string | null
+          local_aproximado?: string | null
+          navegador?: string | null
+          origem?: string | null
+          qa_cliente_id?: string | null
+          sistema?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          alerta_enviado?: boolean
+          created_at?: string
+          dispositivo?: string | null
+          email?: string | null
+          id?: string
+          ip?: string | null
+          local_aproximado?: string | null
+          navegador?: string | null
+          origem?: string | null
+          qa_cliente_id?: string | null
+          sistema?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      qa_cliente_seguranca_config: {
+        Row: {
+          alerta_login: boolean
+          created_at: string
+          mfa_troca_senha: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alerta_login?: boolean
+          created_at?: string
+          mfa_troca_senha?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alerta_login?: boolean
+          created_at?: string
+          mfa_troca_senha?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      qa_cliente_senha_desafios: {
+        Row: {
+          codigo_hash: string
+          created_at: string
+          email: string | null
+          expira_em: string
+          id: string
+          tentativas: number
+          usado_em: string | null
+          user_id: string
+        }
+        Insert: {
+          codigo_hash: string
+          created_at?: string
+          email?: string | null
+          expira_em: string
+          id?: string
+          tentativas?: number
+          usado_em?: string | null
+          user_id: string
+        }
+        Update: {
+          codigo_hash?: string
+          created_at?: string
+          email?: string | null
+          expira_em?: string
+          id?: string
+          tentativas?: number
+          usado_em?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       qa_clientes: {
         Row: {
           arquivado: boolean
