@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta, isTipoDocumentoMonitoravelNoHub, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
@@ -592,6 +593,7 @@ export default function ClienteResumoKanban({
     return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onEsc); };
   }, [atalhosOpen]);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
   const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
@@ -675,6 +677,11 @@ export default function ClienteResumoKanban({
     { key: "documentos", label: `DOCUMENTOS ${snapshot.urgents.filter((u) => u.frontKey === "documentos").length}` },
     { key: "processos", label: `PROCESSOS ${Math.max(snapshot.urgents.filter((u) => u.frontKey === "processos").length, processosEmAndamento)}` },
   ];
+  // Mobile: só exibe o que tem informação. A ordem original é preservada,
+  // então quando um item "nascer" ele reaparece exatamente no mesmo lugar.
+  const visibleFilters = isMobile
+    ? filters.filter((f) => f.key === "todos" || !/\s0$/.test(f.label))
+    : filters;
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }).format(new Date());
 
@@ -709,7 +716,7 @@ export default function ClienteResumoKanban({
           </header>
 
           <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">
-            {filters.map((filter) => (
+            {visibleFilters.map((filter) => (
               <button
                 type="button"
                 key={filter.key}
@@ -725,6 +732,8 @@ export default function ClienteResumoKanban({
 
         <div className="qa-client-summary-print__cards-scroll">
         {(() => {
+          // Mobile: sem documento crítico, não renderiza o banner vazio.
+          if (isMobile && !activeUrgent) return null;
           const isVencido = !!activeUrgent && activeUrgent.days < 0;
           const kicker = isVencido
             ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
@@ -803,7 +812,7 @@ export default function ClienteResumoKanban({
 
         <div style={{ marginTop: 24 }} />
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
-          {snapshot.fronts.map((front) => (
+          {(isMobile ? snapshot.fronts.filter((f) => f.count > 0 || f.items.length > 0) : snapshot.fronts).map((front) => (
             <article className={`qa-front-card qa-front-card--${front.key} s-${front.status}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
               <div className="qa-front-card__head">
                 <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
@@ -844,7 +853,7 @@ export default function ClienteResumoKanban({
         </section>
 
         <section className="qa-client-summary-print__summary" aria-label="Indicadores do resumo">
-          {snapshot.summary.map(([label, value, small]) => (
+          {(isMobile ? snapshot.summary.filter(([, value]) => value && value !== "0" && value !== "—") : snapshot.summary).map(([label, value, small]) => (
             <div className="qa-client-summary-print__sm" key={label}>
               <div className="qa-client-summary-print__k">{label}</div>
               <div className="qa-client-summary-print__v">{value}{small && <small>{small}</small>}</div>
