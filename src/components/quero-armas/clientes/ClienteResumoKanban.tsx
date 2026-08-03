@@ -594,7 +594,8 @@ export default function ClienteResumoKanban({
   }, [atalhosOpen]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const summaryItems = useMemo(() => {
+  type SummaryItem = { label: string; value: string; small?: string; merged?: boolean; parts?: Array<{ value: string; small: string }> };
+  const summaryItems = useMemo<SummaryItem[]>(() => {
     if (!isMobile) return snapshot.summary.map(([label, value, small]) => ({ label, value, small }));
     const [tarefas, proxVenc, renovar, processos] = snapshot.summary;
     const merged = {
