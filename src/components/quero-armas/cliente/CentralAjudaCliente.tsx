@@ -179,6 +179,8 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [anexos, setAnexos] = useState<AnexoChat[]>([]);
   const [gravando, setGravando] = useState(false);
   const [transcrevendo, setTranscrevendo] = useState(false);
+  const [poolSugestoes, setPoolSugestoes] = useState<string[]>(SUGESTOES_BASE);
+  const [rotIndex, setRotIndex] = useState(0);
   const navigate = useNavigate();
   const { addItem } = useCart();
 
@@ -196,6 +198,45 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     const t = setInterval(() => setNow(Date.now()), 30 * 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Sugestões personalizadas com base no perfil/processos do cliente
+  useEffect(() => {
+    if (!cliente) return;
+    let alive = true;
+    (async () => {
+      try {
+        const [proc, docs] = await Promise.all([
+          (supabase as any)
+            .from("qa_processos")
+            .select("servico_nome, status")
+            .eq("cliente_id", cliente.id)
+            .limit(5),
+          (supabase as any)
+            .from("qa_documentos_cliente")
+            .select("id", { count: "exact", head: true })
+            .eq("cliente_id", cliente.id)
+            .in("status", ["pendente", "aguardando", "rejeitado"]),
+        ]);
+        if (!alive) return;
+        const servicos = ((proc?.data ?? []) as any[])
+          .map((p) => (p?.servico_nome || "").toString())
+          .filter(Boolean);
+        setPoolSugestoes(montarSugestoes(servicos, docs?.count ?? 0));
+      } catch (_) { /* mantém base */ }
+    })();
+    return () => { alive = false; };
+  }, [cliente?.id]);
+
+  // Troca as 4 sugestões a cada 15s
+  useEffect(() => {
+    const t = setInterval(() => setRotIndex((i) => i + 4), 15000);
+    return () => clearInterval(t);
+  }, []);
+
+  const sugestoesVisiveis = (() => {
+    const p = poolSugestoes.length ? poolSugestoes : SUGESTOES_BASE;
+    return Array.from({ length: Math.min(4, p.length) }, (_, k) => p[(rotIndex + k) % p.length]);
+  })();
 
   const carregarAnteriores = useCallback(async (excludeId?: string) => {
     if (!cliente) return;
