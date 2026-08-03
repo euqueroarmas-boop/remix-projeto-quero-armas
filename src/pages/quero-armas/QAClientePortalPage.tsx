@@ -23,7 +23,7 @@ import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clie
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import PainelDisparo, { type ItemDisparo } from "@/components/quero-armas/portal/PainelDisparo";
-import { Camera, Wand2 } from "lucide-react";
+import { Camera, Wand2, ChevronDown } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
 import ClienteRecargaMunicoesSection from "@/components/quero-armas/portal/ClienteRecargaMunicoesSection";
@@ -570,6 +570,7 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarReloadKey, setAvatarReloadKey] = useState(0);
   const [showFotoModal, setShowFotoModal] = useState(false);
+  const [meusDadosAberto, setMeusDadosAberto] = useState(false);
 
   const validarContratoAssinadoOuFalhar = async (contractId: string) => {
     const { data, error } = await supabase.functions.invoke("qa-validate-customer-signature", {
