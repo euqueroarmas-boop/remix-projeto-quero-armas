@@ -425,12 +425,12 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
       {/* HEADER + FOCO DO DIA fixos no topo */}
       <div className="z6-sticky-header" style={{ paddingBottom: focoDoDia ? 16 : 20 }}>
         <div>
-          <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: ".03em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+          <h1 className="z6-title qa-h1">
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
-        <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
-          <span>CPF · <b style={{ color: "#0A0A0A", fontWeight: 600 }}>{cpfMascarado}</b></span>
-          <span>MEMBRO DESDE · <b style={{ color: "#0A0A0A", fontWeight: 600 }}>{membroDesde}</b></span>
+        <div className="qa-meta" style={{ marginTop: 11, display: "flex", gap: 18, flexWrap: "wrap" }}>
+          <span>CPF · <b>{cpfMascarado}</b></span>
+          <span>MEMBRO DESDE · <b>{membroDesde}</b></span>
           <span>{processosAtivos} PROCESSOS ATIVOS</span>
         </div>
       </div>
@@ -440,15 +440,15 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         <Card className="z6-foco-card" style={{ marginTop: 20, marginBottom: 0, borderLeft: "3px solid #D9342B", background: "#fff" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div className="z6-foco-body" style={{ minWidth: 0 }}>
-              <div className="z6-foco-kicker" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
-              <div className="z6-foco-title" style={{ fontFamily: "Georgia,'Times New Roman',serif", fontSize: 26, lineHeight: 1.1, marginTop: 10, fontWeight: 700, letterSpacing: "-.015em", color: "#0c0c0c" }}>{focoDoDia.titulo}</div>
-              <div className="z6-foco-desc" style={{ fontFamily: "Arial,sans-serif", fontSize: 13, color: "#5a5a5a", marginTop: 6 }}>{focoDoDia.descricao}</div>
+              <div className="z6-foco-kicker qa-eyebrow qa-eyebrow--alert">FOCO DO DIA · AÇÃO BLOQUEANTE</div>
+              <div className="z6-foco-title qa-editorial" style={{ marginTop: 10 }}>{focoDoDia.titulo}</div>
+              <div className="z6-foco-desc qa-body qa-body--soft" style={{ marginTop: 6 }}>{focoDoDia.descricao}</div>
             </div>
             <button
               type="button"
               onClick={focoDoDia.cta.onClick}
-              className="z6-foco-cta"
-              style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "11px 16px", fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontWeight: 900, letterSpacing: ".22em", fontSize: 11, cursor: "pointer", borderRadius: 2, textTransform: "uppercase" }}
+              className="z6-foco-cta qa-btn-label"
+              style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "11px 16px", cursor: "pointer", borderRadius: 2 }}
             >
               {focoDoDia.cta.label}
             </button>
@@ -474,12 +474,12 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         `}</style>
         {kpis.map((k, i) => (
           <div key={i} className="z6-kpi" style={{ background: "#fff", border: "1px solid #E5E5E5", padding: "14px 14px", borderRadius: 4, minWidth: 0 }}>
-            <div className="z6-kpi-l" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".18em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            <div className="z6-kpi-l qa-kpi-label" style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", display: "inline-block", background: DOT[k.dot], flexShrink: 0 }} />
               <span style={{ whiteSpace: "nowrap" }}>{k.label}</span>
             </div>
-            <div className="z6-kpi-v" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 26, lineHeight: 1, fontWeight: 900, marginTop: 9, color: "#0A0A0A" }}>{k.value}</div>
-            <div className="z6-kpi-s" style={{ fontFamily: "Arial,sans-serif", fontSize: 11, fontWeight: 700, color: "#7A7A7A", marginTop: 4 }}>{k.sub}</div>
+            <div className="z6-kpi-v qa-kpi-value" style={{ marginTop: 9 }}>{k.value}</div>
+            <div className="z6-kpi-s qa-kpi-sub" style={{ marginTop: 4 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -490,7 +490,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #EFEFEF", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
               <Badge tone={p.badgeTone}>{p.badge}</Badge>
-              <h2 className="z6-proc-title" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 13, letterSpacing: ".24em", color: "#0A0A0A", fontWeight: 900, margin: 0, textTransform: "uppercase" }}>{p.titulo}</h2>
+              <h2 className="z6-proc-title qa-h2">{p.titulo}</h2>
             </div>
             {p.protocolo && (
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, color: "#6A6A6A", letterSpacing: ".22em", textTransform: "uppercase" }}>{p.protocolo}</div>
