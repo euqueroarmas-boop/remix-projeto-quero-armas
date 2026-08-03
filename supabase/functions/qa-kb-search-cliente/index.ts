@@ -606,7 +606,12 @@ Deno.serve(async (req) => {
         .trim();
     if (clienteId) {
       try {
-        const [{ data: vendas }, { data: processos }] = await Promise.all([
+        const [{ data: clienteRow }, { data: vendas }, { data: processos }] = await Promise.all([
+          supabase
+            .from("qa_clientes")
+            .select("id, nome_completo")
+            .eq("id", clienteId)
+            .maybeSingle(),
           supabase
             .from("qa_vendas")
             .select(
