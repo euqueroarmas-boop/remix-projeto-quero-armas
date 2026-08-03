@@ -48,3 +48,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Declaração Responsável Imóvel](mem://features/quero-armas/declaracao-responsavel-imovel) — Comprovante em nome de terceiro: aprova, gera declaração e valida assinatura GOV.BR do dono do imóvel
 - [Comprovante Terceiro](mem://features/quero-armas/comprovante-endereco-terceiro) — Comprovante em nome de terceiro só cumpre a exigência após declaração do responsável assinada no GOV.BR
 - [Checklist Granada Lock](mem://style/quero-armas/checklist-granada-layout-lock) — Layout congelado da página do checklist guiado (mobile/granada): sem kicker, sem "você", sem fundo branco, H1 alinhado à página. Confirmar 2x antes de mudar.
+- [Só PDF original nos documentos](mem://features/quero-armas/somente-pdf-original) — Regra canônica: todo documento do processo só aceita PDF original do órgão emissor; imagem (JPG/PNG/WebP) apenas para a foto 3x4
