@@ -25,7 +25,7 @@ const CSS = `
   font-family:'Arial Narrow',Arial,sans-serif;padding:4px 0 24px}
 .qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:11px;
   letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:600}
-.qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:24px;
+.qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:clamp(28px,6.6vw,32px);
   line-height:1.05;letter-spacing:.04em;font-weight:700;text-transform:uppercase;
   color:#0A0A0A;margin:0 0 14px}
 .qafin-central .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 22px}
