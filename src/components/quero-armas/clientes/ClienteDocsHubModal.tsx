@@ -4848,6 +4848,7 @@ export function ClienteDocsHubModal({
               </Button>
               <Button
                 onClick={handleSave}
+                title={pendingSensitiveKeys().length ? "Confirme os campos destacados antes de salvar" : undefined}
                 disabled={
                   saving ||
                   extracting ||
