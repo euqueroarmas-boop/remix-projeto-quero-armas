@@ -45,6 +45,17 @@ interface Contract {
 
 const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
 
+/** Marca no banco que o cliente já viu o aviso de assinatura confirmada. */
+async function marcarAckContrato(contractId: string) {
+  try {
+    await supabase
+      .from("qa_contracts" as any)
+      .update({ customer_ack_completed_at: new Date().toISOString() } as any)
+      .eq("id", contractId)
+      .is("customer_ack_completed_at", null);
+  } catch { /* silencioso */ }
+}
+
 function statusToStep(status: string | null): number {
   switch (status) {
     case "generated_pending_company_signature": return 1; // fallback legado
