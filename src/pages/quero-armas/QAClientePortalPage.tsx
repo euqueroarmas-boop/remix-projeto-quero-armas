@@ -3272,18 +3272,6 @@ export default function QAClientePortalPage() {
                 </span>
             }
           </button>
-          {avatarDropOpen && (
-            <>
-              <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setAvatarDropOpen(false)} />
-              <button
-                type="button"
-                onClick={() => { setAvatarDropOpen(false); handleLogout(); }}
-                style={{ position: 'absolute', top: 40, right: 0, zIndex: 50, border: 0, background: '#fff', borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#1c1c1c', whiteSpace: 'nowrap' }}
-              >
-                Sair
-              </button>
-            </>
-          )}
         </div>
 
         {/* Ícones principais — topo */}
