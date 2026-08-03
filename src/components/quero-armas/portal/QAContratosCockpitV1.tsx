@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock, X } from "lucide-react";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Tone = "amber" | "blue" | "green" | "bordo" | "gray" | "red";
 
@@ -138,6 +139,7 @@ interface Props {
 }
 
 export default function QAContratosCockpitV1({ cliente }: Props) {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [valorPago, setValorPago] = useState<number>(0);
@@ -416,27 +418,38 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       <style>{`
         @media (max-width: 640px) {
           .qa-kpi-card {
-            padding: 10px 10px 9px !important;
-            border-radius: 5px !important;
+            padding: 8px 8px 7px !important;
+            border-radius: 4px !important;
             box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+            aspect-ratio: 1 / 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            overflow: hidden !important;
           }
           .qa-kpi-card__label {
-            font-size: 8px !important;
+            font-size: 7.5px !important;
             letter-spacing: 0.14em !important;
             gap: 4px !important;
+            line-height: 1.1 !important;
           }
           .qa-kpi-card__label span {
             width: 5px !important;
             height: 5px !important;
+            flex: none !important;
           }
           .qa-kpi-card__value {
-            font-size: 22px !important;
-            margin-top: 5px !important;
+            font-size: 20px !important;
+            margin-top: 4px !important;
           }
           .qa-kpi-card__sub {
-            font-size: 9px !important;
-            margin-top: 3px !important;
+            font-size: 8.5px !important;
+            margin-top: 2px !important;
             line-height: 1.2 !important;
+          }
+          .qa-kpi-grid {
+            gap: 8px !important;
           }
         }
       `}</style>
@@ -498,13 +511,19 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       )}
 
       {/* ── 6 KPIs ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-6">
-        <KpiCard tone="amber" label="AGUARDA VOCÊ" value={kpis.aguarda} sub="contratos para assinar" />
-        <KpiCard tone="blue"  label="EM ASSINATURA" value={kpis.emAssin} sub="aguardando contraparte" />
-        <KpiCard tone="green" label="ASSINADOS" value={kpis.assinados} sub="no histórico" />
-        <KpiCard tone="bordo" label="EM VIGÊNCIA" value={kpis.vigentes} sub="contratos ativos" />
-        <KpiCard tone="gray"  label="VALOR TOTAL" value={formatBRLKpi(kpis.valor)} sub="pedidos pagos" />
-        <KpiCard tone="red"   label="EXPIRA EM" value={contracts.length ? "—" : "0"} sub="renovação contratual" />
+      <div className="qa-kpi-grid grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-6">
+        {[
+          { tone: "amber" as Tone, label: "AGUARDA VOCÊ", value: kpis.aguarda, sub: "contratos para assinar", has: kpis.aguarda > 0 },
+          { tone: "blue" as Tone, label: "EM ASSINATURA", value: kpis.emAssin, sub: "aguardando contraparte", has: kpis.emAssin > 0 },
+          { tone: "green" as Tone, label: "ASSINADOS", value: kpis.assinados, sub: "no histórico", has: kpis.assinados > 0 },
+          { tone: "bordo" as Tone, label: "EM VIGÊNCIA", value: kpis.vigentes, sub: "contratos ativos", has: kpis.vigentes > 0 },
+          { tone: "gray" as Tone, label: "VALOR TOTAL", value: formatBRLKpi(kpis.valor), sub: "pedidos pagos", has: kpis.valor > 0 },
+          { tone: "red" as Tone, label: "EXPIRA EM", value: contracts.length ? "—" : "0", sub: "renovação contratual", has: false },
+        ]
+          .filter((k) => (isMobile ? k.has : true))
+          .map((k) => (
+            <KpiCard key={k.label} tone={k.tone} label={k.label} value={k.value} sub={k.sub} />
+          ))}
       </div>
 
       {/* ── Contrato em destaque (rótulo faz parte do bloco fixo) ── */}
