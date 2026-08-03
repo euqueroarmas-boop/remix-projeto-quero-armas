@@ -393,7 +393,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           : "fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
       }
       role={asPage ? undefined : "dialog"}
-      aria-modal={asPage ? undefined : "aria-modal" in {} ? undefined : true}
+      aria-modal={asPage ? undefined : true}
       data-qa-overlay={asPage ? undefined : true}
       onClick={asPage || bloqueante ? undefined : onDismiss}
     >
