@@ -100,10 +100,13 @@ export default function SimuladorChecklistAdmin() {
     const b = buscaBib.trim().toLowerCase();
     if (b.length < 2) return [] as (BibliotecaItem & { jaNoServico: boolean })[];
     const usados = new Set(linhas.map((l) => l.tipo_documento));
+    const bibUsadas = new Set(
+      linhas.map((l) => (l as any).biblioteca_id as string | null).filter(Boolean) as string[],
+    );
     return biblioteca
       .filter((i) => i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b))
       .slice(0, 40)
-      .map((i) => ({ ...i, jaNoServico: usados.has(i.codigo) }));
+      .map((i) => ({ ...i, jaNoServico: usados.has(i.codigo) || bibUsadas.has(i.id) }));
   }, [biblioteca, buscaBib, linhas]);
 
   function responder(chave: string, valor: string) {
