@@ -15,7 +15,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Download, Upload, Loader2, Clock, X } from "lucide-react";
-import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
+import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -662,30 +663,19 @@ function FeaturedContractCard({
   async function baixarAssinado() {
     setBaixandoAssinado(true);
     const toastId = toast.loading("Preparando cópia assinada…");
-    // Abrimos a aba de forma síncrona (dentro do gesto do usuário) porque o portal
-    // roda dentro de iframe e o popup seria bloqueado após o await.
-    let win: Window | null = null;
-    try { win = window.open("", "_blank", "noopener,noreferrer"); } catch { win = null; }
+    // Nunca expor URL do storage: baixamos os bytes e entregamos via blob local.
     try {
-      const { url } = await getContratoAssinadoUrl({
+      const prepared = await prepareMinutaContratoQueroArmas({
         contractId: contract.id,
         contractNumber: contract.contract_number,
         vendaId: contract.venda_id,
+        variant: "customer_signed",
       });
-      if (win && !win.closed) {
-        win.location.href = url;
-      } else {
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      }
+      const blob = await (await fetch(prepared.href)).blob();
+      prepared.revoke();
+      await saveOrShareBlob(blob, prepared.filename);
       toast.success("Cópia assinada liberada.", { id: toastId });
     } catch (e) {
-      try { win?.close(); } catch {}
       toast.error(e instanceof Error ? e.message : "Não foi possível baixar a cópia assinada.", { id: toastId });
     } finally {
       setBaixandoAssinado(false);
