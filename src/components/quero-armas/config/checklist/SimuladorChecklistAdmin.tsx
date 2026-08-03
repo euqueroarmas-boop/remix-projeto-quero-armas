@@ -536,13 +536,28 @@ export default function SimuladorChecklistAdmin() {
                   O que o cliente vê — {servicoNome}
                 </span>
               </div>
-              {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
+              <div className="flex items-center gap-2">
+                {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
+                <button
+                  type="button"
+                  onClick={renumerar}
+                  disabled={salvandoOrdem || sim.grupos.length === 0}
+                  title="Renumerar tudo em 10, 20, 30… na sequência atual"
+                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[9px] font-semibold uppercase tracking-wider disabled:opacity-40"
+                  style={{ borderColor: LINE, color: BORDO }}
+                >
+                  <ListOrdered className="h-3 w-3" /> Renumerar
+                </button>
+              </div>
             </div>
             <p className="text-[10px] mb-3" style={{ color: MUTED }}>
               Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
               título do grupo para mover o grupo inteiro. A nova ordem é gravada no
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
               processos e portal do cliente).
+              <br />
+              Você também pode digitar o número de ordem direto no campo de cada linha —
+              e usar RENUMERAR para fechar os buracos (10, 20, 30…) sem mudar nada de lugar.
             </p>
 
             {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
