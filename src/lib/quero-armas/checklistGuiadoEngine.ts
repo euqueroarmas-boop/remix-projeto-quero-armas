@@ -28,6 +28,7 @@ import {
   isChecklistEmAnalise,
 } from "./checklistMetrics";
 import { wizardPendentePara } from "./checklistWizardGate";
+import { ordemGrupoChecklist } from "./simuladorChecklist";
 import { filtrarIdentidadeUnica } from "./identidadeUnica";
 
 export interface GuiaProcesso {
