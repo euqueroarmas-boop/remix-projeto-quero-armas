@@ -398,7 +398,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     <div
       className={
         asPage
-          ? "w-full"
+          ? "w-full h-full min-h-0"
           : "fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
       }
       role={asPage ? undefined : "dialog"}
@@ -409,7 +409,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       <div
         className={
           asPage
-            ? "relative w-full bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden flex flex-col max-h-[calc(100dvh-140px)]"
+            ? "relative w-full h-full min-h-0 bg-white rounded-2xl border border-[#EAEAEA] overflow-hidden flex flex-col"
             : "relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
         }
         onClick={(e) => e.stopPropagation()}
@@ -426,19 +426,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           </button>
         )}
 
-        {/* Faixa de abertura pessoal — bloco próprio, separado do corpo.
-            Só o primeiro nome: o nome completo em caixa alta ocupava três
-            linhas e parecia texto solto colado no topo do card. */}
-        <div className="shrink-0 bg-gradient-to-r from-[#7A1F2B] to-[#4E1119] px-5 py-4 sm:px-6 sm:py-5">
+        {/* Abertura pessoal — bloco limpo, no mesmo papel branco das demais
+            páginas. Sem gradiente: só o filete bordô e a tipografia fazem a
+            hierarquia. */}
+        <div className="shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 sm:px-6">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/12 ring-1 ring-white/20">
-              <FileUp className="h-4 w-4 text-white" />
+            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8]">
+              <FileUp className="h-4 w-4 text-[#8A1224]" />
             </span>
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/60">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#8A1224]">
                 Checklist guiado
               </p>
-              <h1 className="mt-1 font-['Oswald',sans-serif] text-[17px] font-bold leading-[1.15] tracking-[0.01em] text-white sm:text-[19px]">
+              <h1 className="mt-1 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.2] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]">
                 {primeiroNome
                   ? `${primeiroNome}, você está nos devendo enviar esses documentos!`
                   : "Você está nos devendo enviar esses documentos!"}
