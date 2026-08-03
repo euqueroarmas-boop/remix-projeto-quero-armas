@@ -568,8 +568,22 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const dias = daysUntil(validade);
                 const cor = dotColor(dias, d.status);
                 const dataEmissao = dataEmissaoHub(d);
-                const metaLine = [d.numero_documento, d.orgao_emissor, dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null]
-                  .filter(Boolean).join(" · ") || "emitido recente";
+                // Emissor e número podem estar só no resultado da leitura
+                // automática (camposExtraidos) quando as colunas não foram
+                // preenchidas no cadastro — o cliente precisa ver por quem o
+                // documento foi emitido, principalmente no comprovante de
+                // residência (concessionária).
+                const campos = ((d as any)?.ia_dados_extraidos?.camposExtraidos ?? {}) as Record<string, any>;
+                const emissor = d.orgao_emissor || campos.orgao_emissor || campos.emissor || null;
+                const numeroDoc = d.numero_documento || campos.numero_documento || campos.codigo_instalacao || null;
+                const titular = campos.nome_completo || (d as any)?.ia_dados_extraidos?.comprovante_residencia_nome_titular || null;
+                const ehResidencia = String(d.tipo_documento || "").includes("residencia");
+                const metaLine = [
+                  numeroDoc,
+                  emissor ? `emitido por ${emissor}` : ehResidencia ? "emissor não identificado" : null,
+                  ehResidencia && titular ? `titular ${titular}` : null,
+                  dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null,
+                ].filter(Boolean).join(" · ") || "emitido recente";
                 const pillCls = d.status === "aprovado" ? "pill pill-aprov" : d.status === "reprovado" ? "pill pill-repr" : "pill pill-pend";
                 // Comprovante em nome de terceiro não está "em análise": ele
                 // aguarda a Declaração do Responsável pelo Imóvel assinada.
