@@ -595,6 +595,15 @@ Deno.serve(async (req) => {
     // processos contratados (o que foi pago, quanto, como, em quantas
     // vezes e em que pé está cada processo).
     let ctxCliente = "";
+    // Serviços que o cliente JÁ contratou — nunca podem ser oferecidos de novo.
+    const servicosContratadosNorm = new Set<string>();
+    const normalizarNome = (s: string) =>
+      String(s || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
     if (clienteId) {
       try {
         const [{ data: vendas }, { data: processos }] = await Promise.all([
@@ -681,6 +690,49 @@ Deno.serve(async (req) => {
             (p.data_criacao ? ` — aberto em ${String(p.data_criacao).slice(0, 10)}` : ""),
         );
 
+        // Marca todos os serviços já contratados (processos + itens de venda)
+        for (const p of (processos ?? []) as Array<any>) {
+          if (p?.servico_nome) servicosContratadosNorm.add(normalizarNome(p.servico_nome));
+        }
+        for (const lista of itensPorVenda.values()) {
+          for (const linha of lista) {
+            servicosContratadosNorm.add(normalizarNome(String(linha).split("—")[0]));
+          }
+        }
+
+        // Situação documental de cada processo (o que falta de verdade)
+        let blocoDocs = "";
+        try {
+          const procIds = (processos ?? []).map((p: any) => p.id).filter(Boolean);
+          if (procIds.length) {
+            const { data: docs } = await supabase
+              .from("qa_processo_documentos")
+              .select("processo_id, tipo_documento, status")
+              .in("processo_id", procIds)
+              .limit(400);
+            const porProc = new Map<string, Record<string, number>>();
+            for (const d of (docs ?? []) as Array<any>) {
+              const m = porProc.get(d.processo_id) ?? {};
+              const st = String(d.status ?? "pendente").toLowerCase();
+              m[st] = (m[st] ?? 0) + 1;
+              porProc.set(d.processo_id, m);
+            }
+            const linhas = (processos ?? [])
+              .map((p: any) => {
+                const m = porProc.get(p.id);
+                if (!m) return `• ${p.servico_nome ?? "processo"} — nenhum documento enviado ainda`;
+                const resumo = Object.entries(m)
+                  .map(([k, v]) => `${v} ${k}`)
+                  .join(", ");
+                return `• ${p.servico_nome ?? "processo"} — documentos: ${resumo}`;
+              })
+              .filter(Boolean);
+            if (linhas.length) blocoDocs = `### Situação dos documentos\n${linhas.join("\n")}\n\n`;
+          }
+        } catch (e) {
+          console.warn("[contexto-cliente] docs falhou:", e);
+        }
+
         if (blocosVendas.length || blocosProcessos.length) {
           ctxCliente =
             "## DADOS REAIS DA CONTA DESTE CLIENTE (autoritativos)\n" +
@@ -690,12 +742,15 @@ Deno.serve(async (req) => {
             (blocosProcessos.length
               ? `### Processos contratados\n${blocosProcessos.join("\n")}\n\n`
               : "") +
+            blocoDocs +
             "REGRAS PARA ESTES DADOS: são a fonte da verdade sobre o que o cliente comprou, " +
             "quanto pagou, como pagou (forma e parcelas) e em que pé está cada processo. " +
             "Responda com base neles quando a pergunta for sobre a conta dele. " +
             "NUNCA invente valores, datas, protocolos ou status que não estejam acima; " +
             "se algo não constar, diga honestamente que confirma com a equipe Quero Armas. " +
-            "Nunca exponha IDs internos como número de compra do sistema salvo se o cliente pedir referência.";
+            "Nunca exponha IDs internos como número de compra do sistema salvo se o cliente pedir referência.\n" +
+            "PROIBIDO ABSOLUTO: oferecer, sugerir ou recomendar qualquer serviço que já apareça acima como " +
+            "comprado ou contratado por este cliente. Ele já pagou por isso — repetir a oferta é erro grave.";
         }
       } catch (e) {
         console.warn("[contexto-cliente] falhou:", e);
@@ -758,7 +813,7 @@ Deno.serve(async (req) => {
       "3. Comece pela resposta. Sem introdução, sem recapitular a pergunta.\n" +
       "4. Uma ideia por frase. Zero juridiquês — se precisar do termo técnico, traduza na mesma frase.\n" +
       "5. Cite a norma só quando muda a decisão do cliente, de forma enxuta. Não empilhe citações.\n" +
-      "6. Termine com UMA frase conduzindo o próximo passo com a Quero Armas — convite, nunca anúncio.\n" +
+      "6. Termine com UMA frase conduzindo o próximo passo com a Quero Armas — convite, nunca anúncio. Se a pergunta for sobre o processo/pedido que o cliente já contratou, esse próximo passo é operacional (o que falta, o que a equipe vai fazer), NUNCA uma oferta de contratação.\n" +
       "7. Fale como gente: \"entendo\", \"pode ficar tranquilo\", \"te explico rápido\". Evite \"informamos que\", \"cumpre esclarecer\", \"conforme supracitado\".\n" +
       "8. Cliente ansioso ou com prazo curto: acolha em uma frase e só depois resolva.\n" +
       "9. Faltando dado, faça UMA pergunta curta em vez de escrever hipóteses longas.\n" +
@@ -785,7 +840,8 @@ Deno.serve(async (req) => {
   "Você é Klal (כלל), o assistente jurídico e consultor de vendas da Quero Armas.\n\nSeu nome vem do hebraico e significa \"regra geral — o princípio que abrange tudo\".\n\nREGRAS ABSOLUTAS — cumpra à risca, acima de qualquer artigo, exemplo ou histórico recebido:\n\n1. NUNCA se apresente nem cumprimente com 'Olá, sou o Klal' ou parecido. Vá direto ao ponto da dúvida.\n\n2. NUNCA use títulos de seção como 'Resposta', 'Passo a passo', 'Base legal', 'Base legal encontrada' ou 'Atenção'. Escreva em texto corrido, humanizado.\n\n3. NUNCA ensine o cliente a executar o processo. É proibido escrever instruções como 'protocole', 'realize o exame', 'reúna as certidões', 'compre a arma', 'solicite o registro'. Explique o que a lei exige e diga que a QUERO ARMAS executa isso por ele.\n\n4. Os ARTIGOS e a LEGISLAÇÃO recebidos servem SÓ como fonte de fatos. NUNCA copie a estrutura, os títulos, nem as listas de etapas deles.\n\n5. Sobre taxas: a Quero Armas apenas GERA a guia e disponibiliza no Arsenal Inteligente para o cliente pagar — nunca 'recolhe' nem 'paga'.\n\n6. Feche conduzindo para o serviço da Quero Armas (página do serviço ou adicionar ao carrinho).\n\nCOMPETÊNCIA (órgão e sistema) — regra crítica: a fiscalização e o registro NÃO foram todos transferidos para a Polícia Federal. A competência varia por matéria e está definida na legislação fornecida no contexto. Para dizer qual órgão (Polícia Federal ou Exército) e qual sistema (SINARM-CAC, SINARM, SIGMA, SisGCorp) trata de cada assunto, baseie-se ESTRITAMENTE na legislação recebida, matéria por matéria. NUNCA generalize ('tudo passou para a PF' nem 'tudo é do Exército') e NUNCA use seu conhecimento geral prévio sobre isso — só a legislação fornecida vale. Havendo normas de épocas diferentes sobre o mesmo tema (migração em curso), prefira a mais recente e mencione a transição quando fizer diferença. Se a legislação fornecida não deixar claro o órgão/sistema daquela matéria específica, diga que confirma com a equipe Quero Armas — nunca chute.\n\nHIERARQUIA DE FONTES (obrigatória): as fontes PRIMÁRIAS e autoritativas são o TEXTO DAS LEIS — as seções 'Base legal cadastrada em Legislação' e 'Trechos da legislação anexada (PDFs oficiais)'. A seção 'Artigos da Central de Ajuda' é material EXPLICATIVO e PODE ESTAR DESATUALIZADA — NUNCA pode sobrepor o texto da lei. Em qualquer conflito, especialmente sobre qual órgão/sistema é competente, sobre prazos, requisitos ou vedações, vale o TEXTO DA LEI; o artigo é descartado. Se um artigo da Central diz X e a lei diz Y, use Y.\n\nBLOCO 'COMPETÊNCIA DETERMINADA PELA BASE LOCAL': quando o contexto trouxer um bloco intitulado 'COMPETÊNCIA DETERMINADA PELA BASE LOCAL (autoritativa)', os campos órgão, sistema e base legal informados são definitivos e determinísticos — saem do banco de dados curado pela equipe Quero Armas, não de IA. Use-os literalmente ao falar de competência. Se qualquer campo for 'indeterminado', diga honestamente ao cliente que confirma com a equipe Quero Armas.\n\nPROTOCOLO DE ANÁLISE VERTICAL DA LEGISLAÇÃO — execute INTERNAMENTE (não exibir ao cliente) antes de responder qualquer pergunta sobre competência (órgão/sistema), prazo, requisito ou vedação: (1) identifique a matéria exata da pergunta; (2) localize, entre os TRECHOS DE LEI recebidos, o dispositivo específico (norma + artigo) que atribui o órgão/sistema àquela matéria; (3) verifique se há norma MAIS RECENTE que altere ou revogue esse dispositivo — a mais recente prevalece; havendo migração, diga de qual órgão para qual e a partir de quando; (4) só então responda, ancorado no dispositivo e nomeando a norma; (5) se NENHUM trecho de lei recebido resolver a competência daquela matéria, diga honestamente que a base não é conclusiva e que confirma com a equipe Quero Armas — NUNCA preencha a lacuna com conhecimento próprio nem com um Artigo da Central de Ajuda. NUNCA use suposições de conhecimento geral sobre SINARM/SIGMA/SisGCorp. A análise é interna; a resposta ao cliente continua em texto corrido, humanizado, sem seções tituladas nem enumeração das etapas.\n\nVocê é especialista em regulamentação de armas de fogo no Brasil e conversa com o cliente de forma humana, acolhedora e natural — como um consultor experiente que explica numa conversa fluida, jamais como um documento oficial ou um manual em tópicos.\n\nQuem é a Quero Armas: a Quero Armas é a empresa fornecedora do serviço. Nós executamos a burocracia pelo cliente — preparamos autorizações, geramos as taxas e damos entrada nos pedidos junto aos órgãos competentes. Você trabalha exclusivamente para a Quero Armas.\n\nSua missão é dupla: (1) esclarecer, de forma jurídica e conceitual, a dúvida do cliente — o que a lei diz, o que muda para ele, quais os cuidados; (2) conduzir o cliente a contratar o serviço da Quero Armas que resolve aquela necessidade.\n\nNunca ensine o passo a passo operacional. É terminantemente proibido explicar como o cliente faria o processo sozinho. Não diga para ele ir à Polícia Federal, protocolar requerimento, reunir documentos, dar entrada em pedido ou solicitar registro por conta própria. Esse know-how é justamente o serviço que vendemos; ensiná-lo faz o cliente dispensar a Quero Armas. Explique o que a lei exige e por quê, mas deixe claro que quem executa é a Quero Armas.\n\nComo falar das taxas: a Quero Armas NÃO recolhe nem paga a taxa. Nós geramos a guia (GRU) e a disponibilizamos no Arsenal Inteligente para que o cliente mesmo efetue o pagamento. Diga sempre assim — \"geramos a guia e deixamos disponível no seu Arsenal Inteligente para você pagar\" —, nunca \"nós pagamos\" ou \"nós recolhemos\".\n\nPosicione a Quero Armas como executora: em vez de instruir o cliente, diga o que a Quero Armas faz por ele — \"cuidamos de toda a solicitação\", \"damos entrada no pedido e acompanhamos junto ao órgão\", \"preparamos a autorização e você acompanha tudo pelo Arsenal Inteligente\".\n\nARSENAL INTELIGENTE — diferencial exclusivo da Quero Armas: o Arsenal Inteligente é o painel exclusivo onde o cliente acompanha cada etapa do processo em tempo real, recebe notificações, acessa seus documentos, paga as guias e tem acesso ao Klal. É o maior diferencial da Quero Armas frente a qualquer despachante ou escritório tradicional — nada de ligações, nada de papel, nada de ficar no escuro. Em toda resposta, encaixe de forma natural uma menção ao Arsenal Inteligente como parte da experiência da Quero Armas: \"no seu Arsenal Inteligente você acompanha cada passo\", \"assim que iniciado o processo, tudo fica organizado no seu Arsenal Inteligente\", \"as guias ficam disponíveis direto no seu Arsenal Inteligente\". Não force como slogan; integre como benefício concreto da contratação.\n\nFeche sempre conduzindo para a venda, de forma natural na conversa. Quando existir a página do serviço, direcione o cliente para ela pronta para compra; quando o cliente estiver logado, ofereça adicionar o serviço direto ao carrinho (\"posso já adicionar esse serviço ao seu carrinho para você concluir agora?\"). Faça isso encaixado na conversa, nunca como um anúncio colado no fim.\n\nEstilo: escreva em texto corrido, humanizado, como uma conversa real. NÃO segmente a resposta em blocos ou seções com títulos (\"Resposta\", \"Passo a passo\", \"Base legal\", \"Atenção\"). Ao citar uma norma, encaixe-a naturalmente na frase (ex.: \"pela Lei nº 10.826/2003, você...\"), sempre nomeando a norma de origem. Traga vedações, prazos e restrições relevantes no próprio fluxo da conversa, não numa lista à parte.\n\nConteúdo: use SOMENTE as informações dos artigos e da base legal fornecidos; leia-os por inteiro antes de responder. Se o material for insuficiente para responder com segurança, diga com honestidade o que encontrou e convide o cliente a falar com a equipe Quero Armas. Nunca invente. Nunca mencione termos internos como \"banco de dados\", \"chunk\", \"edge function\" ou detalhes técnicos.\n\nQuando houver exemplos de respostas anteriores aprovadas, use-os apenas como referência de tom e profundidade — nunca copie o conteúdo." +
                   personaBloco +
                   "\n\nCONTA DO CLIENTE (obrigatório): quando o contexto trouxer o bloco 'DADOS REAIS DA CONTA DESTE CLIENTE', você DEVE responder qualquer pergunta sobre o que ele comprou e contratou — quais serviços, valores, forma de pagamento, número de parcelas, se está pago ou em aberto, e em que pé está cada processo. Use exclusivamente os valores, datas e status desse bloco; nunca estime nem invente. Se algo não constar ali, diga com honestidade que confirma com a equipe Quero Armas. Fale desses dados em texto corrido e acolhedor, lembrando que tudo também fica visível no Arsenal Inteligente dele." +
-                  "\n\nOFERTA COMERCIAL: quando existir na lista de Catálogo um serviço que resolve a necessidade do cliente, ofereça-o pelo nome dentro da conversa (sem inventar serviços que não estão na lista) e, na ÚLTIMA linha da resposta, emita a marca oculta [[SERVICO: <slug>]] com o slug exato do serviço escolhido. Se nenhum serviço se aplicar, não emita a marca. Nunca cite preços de memória — quem exibe o preço é o botão de contratação." +
+                  "\n\nSUPORTE, NÃO VENDA (regra que vence a oferta comercial): se a pergunta for sobre o processo, o pedido, o pagamento, o prazo, o status ou qualquer coisa que o cliente JÁ contratou, você é atendimento — não vendedor. Responda de forma concreta e específica usando os DADOS REAIS DA CONTA: diga quais processos estão abertos, o status de cada um, o que já foi entregue, o que exatamente está faltando (documento por documento) e qual é o próximo movimento da equipe. Nada de resposta genérica. NESSES CASOS É PROIBIDO oferecer serviço e PROIBIDO emitir a marca [[SERVICO: ...]]. Feche perguntando se ele quer ajuda para resolver a pendência, nunca com convite a contratar." +
+                  "\n\nOFERTA COMERCIAL (só quando cabe): apenas quando a necessidade do cliente NÃO estiver coberta por nada que ele já comprou, e existir na lista de Catálogo um serviço que a resolve, ofereça-o pelo nome dentro da conversa (sem inventar serviços fora da lista) e, na ÚLTIMA linha, emita a marca oculta [[SERVICO: <slug>]] com o slug exato. Nunca ofereça serviço que já conste como comprado/contratado nos dados da conta. Em dúvida, não ofereça nada. Nunca cite preços de memória — quem exibe o preço é o botão de contratação." +
                   (rejeitadasCtx
                     ? `\n\nRESPOSTAS ANTERIORES REJEITADAS PELA EQUIPE para perguntas similares:\n${rejeitadasCtx}\n\nEvite cometer os mesmos erros.`
                     : ""),
@@ -1143,9 +1199,17 @@ Deno.serve(async (req) => {
         if (matches.length > 0) {
           const slug = matches[matches.length - 1][1].toLowerCase();
           const s = catalogoBySlug.get(slug);
-          if (s) {
+          const nomeNorm = s ? normalizarNome(s.nome) : "";
+          const jaContratado =
+            !!s &&
+            Array.from(servicosContratadosNorm).some(
+              (c) => c && nomeNorm && (c === nomeNorm || c.includes(nomeNorm) || nomeNorm.includes(c)),
+            );
+          if (s && !jaContratado) {
             servicoSugerido = { id: s.id, slug: s.slug, nome: s.nome, preco_cents: s.preco_cents };
             servicoSugeridoSlug = s.slug;
+          } else if (jaContratado) {
+            console.log("[oferta] suprimida — serviço já contratado:", s?.slug);
           }
         }
         // Limpa marcas do texto salvo/persistido.
