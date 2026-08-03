@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookMarked, Plus, Search, Loader2, RefreshCw, Save, Trash2,
-  ChevronDown, ChevronUp, Archive, X, Upload,
+  ChevronDown, ChevronUp, Archive, X, Upload, Copy, HelpCircle,
 } from "lucide-react";
 import BibliotecaModelosParser, {
   SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
