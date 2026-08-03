@@ -117,8 +117,22 @@ export function etapaSegura(etapa: string): string {
   return "base";
 }
 
+import { grupoDaPendencia, ordemGrupo, PENDENCIA_GRUPOS, type PendenciaGrupoId } from "./pendenciasGrupos";
+
+/**
+ * Grupo temático canônico do sistema (identificação, endereço, antecedentes,
+ * ocupação lícita, ...). É a MESMA classificação usada pelo portal do cliente
+ * (pendenciasGrupos.ts) — o simulador não inventa grupos próprios nem usa a
+ * `etapa` crua do catálogo.
+ */
+export function grupoCanonico(tipoDocumento: string): PendenciaGrupoId {
+  return grupoDaPendencia(tipoDocumento).id;
+}
+
 export function rotuloGrupo(grupo: string): string {
   const g = String(grupo || "").trim().toLowerCase();
+  const meta = (PENDENCIA_GRUPOS as any)[g];
+  if (meta) return String(meta.label).toUpperCase();
   if (g === "base") return "DOCUMENTOS BASE";
   if (g === "endereco" || g === "endereço") return "COMPROVAÇÃO DE ENDEREÇO";
   if (g === "condicao_profissional" || g === "renda") return "CONDIÇÃO PROFISSIONAL / RENDA";
