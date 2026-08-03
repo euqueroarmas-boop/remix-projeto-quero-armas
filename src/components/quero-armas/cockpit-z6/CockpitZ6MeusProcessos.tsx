@@ -414,6 +414,12 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
         .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
+        @media (max-width: 640px){
+          .z6-root{display:flex !important;flex-direction:column !important;height:calc(100dvh - 24px) !important;min-height:0 !important;overflow:hidden !important;overscroll-behavior:none !important}
+          .z6-root .z6-sticky-header{position:static !important;flex:0 0 auto !important}
+          .z6-root .z6-scroll-body{flex:1 1 auto !important;min-height:0 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:24px}
+          .z6-root .z6-scroll-body::-webkit-scrollbar{width:0;height:0}
+        }
       `}</style>
 
       {/* HEADER + FOCO DO DIA fixos no topo */}
@@ -451,6 +457,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
       )}
       </div>
 
+      <div className="z6-scroll-body">
       {/* 6 KPIs humanos */}
       <div
         style={{
@@ -494,6 +501,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           </div>
         </Card>
       ))}
+      </div>
     </div>
   );
 };
