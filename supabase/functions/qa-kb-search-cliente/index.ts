@@ -944,13 +944,52 @@ Deno.serve(async (req) => {
     const decoder = new TextDecoder();
     const reader = r.body!.getReader();
 
+    // ═══════════════════════════════════════════════════════════════
+    // EXIBIÇÃO DE FONTES — regra de negócio (Quero Armas):
+    //  • Pergunta sobre o processo/pedido/status/pagamento do cliente
+    //    (atendimento) → NÃO mostrar legislação nenhuma.
+    //  • Recomendação de serviço ou dúvida técnica/jurídica → mostrar
+    //    SOMENTE as fontes efetivamente usadas naquela resposta.
+    // ═══════════════════════════════════════════════════════════════
+    const qNorm = (query || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const PROCESSO_RE =
+      /(andamento|status|em que pe|meu processo|meus processos|meu pedido|meus pedidos|protocolo|prazo do meu|quando fica pronto|quanto tempo falta|pendencia|pendencias|falta o que|o que falta|documento que falta|pagamento|paguei|parcela|boleto|fatura|nota fiscal do meu|contrato assinado|minha compra|contratei|ja contratei)/;
+    const perguntaSobreProcesso = PROCESSO_RE.test(qNorm);
+
+    const chaveNorma = (t: string | null | undefined) => {
+      const s = (t || "").toLowerCase();
+      const nums = Array.from(s.matchAll(/(\d{1,3}[.\s]?\d{3}|\d{1,5})\s*[\/,]?\s*(\d{4})?/g))
+        .map((m) => m[0].replace(/[^\d]/g, ""))
+        .filter((n) => n.length >= 4);
+      return nums;
+    };
+    const fontesUsadas = (texto: string) => {
+      const t = (texto || "").toLowerCase().replace(/[^\w\d]/g, "");
+      const vistos = new Set<string>();
+      const out: typeof fontesResumo = [];
+      for (const f of fontesResumo) {
+        const chave = `${f.titulo_norma ?? ""}`.trim();
+        if (!chave || vistos.has(chave)) continue;
+        const nums = chaveNorma(chave);
+        const citada = nums.some((n) => t.includes(n));
+        if (citada) {
+          vistos.add(chave);
+          out.push(f);
+        }
+      }
+      return out.slice(0, 4);
+    };
+
     const stream = new ReadableStream({
       async start(controller) {
         const send = (obj: unknown) =>
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
 
-        // meta primeiro
-        send({ type: "meta", fontes: fontesResumo });
+        // Fontes só são enviadas ao final, já filtradas pelo que foi usado.
+        send({ type: "meta", fontes: [] });
 
         // ═════ Resolve/abre/reabre sessão + protocolo ═════
         // Regra: última sessão do cliente é ATIVA se status='ativo' E
@@ -1223,6 +1262,8 @@ Deno.serve(async (req) => {
         }
         // Limpa marcas do texto salvo/persistido.
         const fullLimpo = full.replace(MARK_RE, "").trim();
+        const fontesFinais = perguntaSobreProcesso ? [] : fontesUsadas(fullLimpo);
+        send({ type: "meta", fontes: fontesFinais });
         if (servicoSugerido) {
           send({ type: "servico_sugerido", servico: servicoSugerido });
         }
@@ -1250,7 +1291,7 @@ Deno.serve(async (req) => {
                 cliente_id: clienteId,
                 role: "assistant",
                 content: fullLimpo,
-                fontes: fontesResumo,
+                fontes: fontesFinais,
                 nivel_confianca: nivelConfianca,
                 servico_sugerido_slug: servicoSugeridoSlug,
               },
