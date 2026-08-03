@@ -446,7 +446,6 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
   async function removeRow(row: ExigenciaRow) {
     if (!confirm(`EXCLUIR "${row.nome_documento}"?`)) return;
-    if (!confirm(`EXCLUIR "${row.nome_documento}"?`)) return;
     const { error } = await supabase.from("qa_servicos_documentos" as any).delete().eq("id", row.id);
     if (error) {
       toast.error("FALHA AO EXCLUIR — " + error.message.toUpperCase());
@@ -458,6 +457,32 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       const { [row.id]: _d, ...rest } = prev;
       return rest;
     });
+  }
+
+  /** Liga/desliga a exigência sem excluir — persiste na hora. */
+  async function toggleAtivo(row: ExigenciaRow) {
+    const novo = !row.ativo;
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: novo } : r)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ativo: novo })
+      .eq("id", row.id);
+    if (error) {
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: !novo } : r)));
+      toast.error("FALHA AO ALTERAR STATUS — " + error.message.toUpperCase());
+      return;
+    }
+    setPatches((prev) => {
+      const atual = prev[row.id];
+      if (!atual || !("ativo" in atual)) return prev;
+      const { ativo: _a, ...rest } = atual as any;
+      if (Object.keys(rest).length === 0) {
+        const { [row.id]: _d, ...others } = prev;
+        return others;
+      }
+      return { ...prev, [row.id]: rest };
+    });
+    toast.success(novo ? "EXIGÊNCIA ATIVADA" : "EXIGÊNCIA DESATIVADA");
   }
 
   async function moveRow(row: ExigenciaRow, dir: -1 | 1) {
