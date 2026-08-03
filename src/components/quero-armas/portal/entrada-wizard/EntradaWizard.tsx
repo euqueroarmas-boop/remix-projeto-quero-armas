@@ -275,7 +275,7 @@ function useEntradaWizardBody({
             <button
               type="button"
               disabled={salvando}
-              onClick={() => (step === 2 ? setStep(1) : onOpenChange(false))}
+              onClick={() => (step === 2 ? setStep(1) : onFechar())}
               className="inline-flex items-center gap-1 text-[11px] font-bold uppercase disabled:opacity-50"
               style={{ ...OSWALD, color: SUB }}
             >
