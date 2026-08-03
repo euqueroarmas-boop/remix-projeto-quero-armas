@@ -48,11 +48,7 @@ const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
 /** Marca no banco que o cliente já viu o aviso de assinatura confirmada. */
 async function marcarAckContrato(contractId: string) {
   try {
-    await supabase
-      .from("qa_contracts" as any)
-      .update({ customer_ack_completed_at: new Date().toISOString() } as any)
-      .eq("id", contractId)
-      .is("customer_ack_completed_at", null);
+    await supabase.rpc("qa_marcar_contrato_ack" as any, { _contract_id: contractId } as any);
   } catch { /* silencioso */ }
 }
 
@@ -1035,6 +1031,7 @@ const TAG_CLS: Record<string, string> = {
 function ContractCompletedDialog({ contract, onClose }: { contract: Contract; onClose: () => void }) {
   function goToProcessos() {
     try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
+    void marcarAckContrato(contract.id);
     window.location.href = "/area-do-cliente/processos";
   }
   return (
