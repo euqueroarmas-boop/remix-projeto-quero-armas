@@ -119,7 +119,10 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
   }));
 }
 
-function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
+function checklistFromDocs(
+  docs: any[],
+  ordemDoc: (d: any) => number = (d) => Number(d?.ordem ?? 999),
+): CockpitZ6ChecklistItem[] {
   const CUMPRIDO = (st: string) =>
     isChecklistCumprido(st) ||
     st === "recebido" ||
@@ -130,7 +133,7 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
     const pa = a.obrigatorio ? 0 : 1;
     const pb = b.obrigatorio ? 0 : 1;
     if (pa !== pb) return pa - pb;
-    return (a.ordem ?? 999) - (b.ordem ?? 999);
+    return ordemDoc(a) - ordemDoc(b);
   });
   return sortable.slice(0, 6).map((d) => {
     const st = String(d.status || "").toLowerCase();
