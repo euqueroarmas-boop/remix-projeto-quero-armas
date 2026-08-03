@@ -4838,6 +4838,18 @@ export function ClienteDocsHubModal({
               </Button>
             </div>
           ) : (
+            <>
+            {pendingSensitiveKeys().length > 0 ? (
+              <div className="mb-2 rounded-sm border border-[#7A1F2B]/35 bg-[#7A1F2B]/[0.06] px-3 py-2">
+                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
+                  Confirmação obrigatória
+                </p>
+                <p className="mt-1 text-[12px] leading-snug text-[#3A3A3A]">
+                  Você só pode salvar depois de conferir e confirmar:{" "}
+                  <b className="uppercase">{pendingSensitiveKeys().join(", ").replace(/_/g, " ")}</b>.
+                </p>
+              </div>
+            ) : null}
             <div className="flex gap-2.5">
               <Button
                 variant="outline"
