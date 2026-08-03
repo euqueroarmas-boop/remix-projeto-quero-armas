@@ -207,6 +207,7 @@ const SYSTEM_PROMPT = [
   "",
   "=== RESIDÊNCIA / ENDEREÇO ===",
   "• COMPROVANTE_RESIDENCIA: conta de concessionária (luz, água, gás, telefone) ou extrato bancário com endereço.",
+  "  REGRA CRÍTICA: DANF3E/NF3e de ENERGIA ELÉTRICA, conta de água, gás ou telecom é COMPROVANTE_RESIDENCIA, mesmo contendo os termos DANFE, NOTA FISCAL, chave de acesso, CNPJ e tributos. NÃO classifique conta de consumo do imóvel como NOTA_FISCAL_AUTONOMO.",
   "  Extrair: nome_completo, cpf (se constar), endereco_completo, cep, orgao_emissor (ex.: CPFL, Sabesp, Claro), data_emissao.",
   "  OBRIGATÓRIO: extraia o CÓDIGO DE INSTALAÇÃO / UC / matrícula da conta no campo codigo_instalacao (somente dígitos, sem traços ou pontos).",
   "  Procure pelos rótulos: 'Código de Instalação', 'Número UC', 'UC', 'Instalação', 'Nº de Instalação', 'Nº UC', 'Matrícula'. Este é o identificador fixo do imóvel — um número de 8 a 15 dígitos, NÃO é o número da fatura nem o mês/ano.",
@@ -612,6 +613,16 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
+
+  const contaConsumoImovel =
+    /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(norm) &&
+    /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(norm);
+  if (contaConsumoImovel) {
+    parsed.tipoDetectado = "COMPROVANTE_RESIDENCIA";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    parsed.justificativa =
+      "Classificação determinística: conta de consumo do imóvel; DANF3E/NF3e de energia não é nota fiscal de ocupação/renda.";
+  }
 
   const isTJSP = norm.includes("TRIBUNAL DE JUSTICA DO ESTADO DE SAO PAULO") || norm.includes(" TJSP ") || norm.includes(" TJ SP ");
   const temExecucoes = /REGISTROS DE DISTRIBUICOES DE EXECUCOES CRIMINAIS|FEITOS DE EXECUCOES CRIMINAIS|\bEXECUCOES CRIMINAIS\b/.test(norm);
