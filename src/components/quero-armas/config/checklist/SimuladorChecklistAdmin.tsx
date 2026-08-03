@@ -94,6 +94,17 @@ export default function SimuladorChecklistAdmin() {
     [linhas, condicao, modalidade, respostas, entregues],
   );
 
+  /** Busca na biblioteca oficial, marcando o que já está neste serviço. */
+  const bibliotecaFiltrada = useMemo(() => {
+    const b = buscaBib.trim().toLowerCase();
+    if (b.length < 2) return [] as (BibliotecaItem & { jaNoServico: boolean })[];
+    const usados = new Set(linhas.map((l) => l.tipo_documento));
+    return biblioteca
+      .filter((i) => i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b))
+      .slice(0, 40)
+      .map((i) => ({ ...i, jaNoServico: usados.has(i.codigo) }));
+  }, [biblioteca, buscaBib, linhas]);
+
   function responder(chave: string, valor: string) {
     setRespostas((p) => ({ ...p, [chave]: valor }));
   }
