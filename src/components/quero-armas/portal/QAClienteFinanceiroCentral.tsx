@@ -1253,27 +1253,27 @@ export default function QAClienteFinanceiroCentral({
     <div className="qafin-central">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      <div>
+      <div className="qafin-sticky-header">
         <h1 className="qatitle">
           {(clienteNome ? String(clienteNome).trim().split(/\s+/)[0].toUpperCase() : "CLIENTE")}
           , ESTE É O SEU CONTROLE FINANCEIRO
         </h1>
+        {premium && <PremiumCard premium={premium} onRefresh={onPremiumRefresh} />}
       </div>
 
-      {premium && <PremiumCard premium={premium} onRefresh={onPremiumRefresh} />}
+      <div className="qafin-scrollable">
+        <KpiRow
+          emAbertoTotal={kpi.emAbertoTotal} emAbertoQtd={kpi.emAbertoQtd}
+          vencidasTotal={kpi.vencidasTotal} vencidasQtd={kpi.vencidasQtd}
+          pagasAnoTotal={kpi.pagasAnoTotal} pagasAnoQtd={kpi.pagasAnoQtd}
+          ano={anoAtual}
+          premium={premium}
+        />
 
-      <KpiRow
-        emAbertoTotal={kpi.emAbertoTotal} emAbertoQtd={kpi.emAbertoQtd}
-        vencidasTotal={kpi.vencidasTotal} vencidasQtd={kpi.vencidasQtd}
-        pagasAnoTotal={kpi.pagasAnoTotal} pagasAnoQtd={kpi.pagasAnoQtd}
-        ano={anoAtual}
-        premium={premium}
-      />
-
-      <div className="section">
-        <span>Cobranças em aberto</span>
-        <span className="cnt">{abertas.length}</span>
-      </div>
+        <div className="section">
+          <span>Cobranças em aberto</span>
+          <span className="cnt">{abertas.length}</span>
+        </div>
       {abertas.length === 0 ? (
         <div className="empty">Nenhuma cobrança em aberto no momento.</div>
       ) : (
