@@ -52,6 +52,7 @@ export type ItemSimulado = {
   nome_documento: string;
   etapa: string;
   grupo: string;
+  ordemGrupo: number;
   rotuloGrupo: string;
   ordem: number;
   obrigatorio: boolean;
@@ -125,8 +126,18 @@ import { grupoDaPendencia, ordemGrupo, PENDENCIA_GRUPOS, type PendenciaGrupoId }
  * (pendenciasGrupos.ts) — o simulador não inventa grupos próprios nem usa a
  * `etapa` crua do catálogo.
  */
-export function grupoCanonico(tipoDocumento: string): PendenciaGrupoId {
+export function grupoCanonico(tipoDocumento: string, regraValidacao?: any): PendenciaGrupoId {
+  const override = String(regraValidacao?.grupo_checklist ?? "").trim().toLowerCase();
+  if (override && Object.prototype.hasOwnProperty.call(PENDENCIA_GRUPOS, override)) {
+    return override as PendenciaGrupoId;
+  }
   return grupoDaPendencia(tipoDocumento).id;
+}
+
+export function ordemGrupoChecklist(tipoDocumento: string, regraValidacao?: any): number {
+  const manual = Number(regraValidacao?.ordem_grupo_checklist);
+  if (Number.isFinite(manual) && manual > 0) return manual;
+  return ordemGrupo(grupoCanonico(tipoDocumento, regraValidacao));
 }
 
 export function rotuloGrupo(grupo: string): string {
@@ -208,7 +219,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
   const paraItem = (l: LinhaCatalogo, estado: EstadoItem, motivo?: string): ItemSimulado => {
     const rv = l.regra_validacao;
-    const grupo = grupoCanonico(l.tipo_documento);
+    const grupo = grupoCanonico(l.tipo_documento, l.regra_validacao);
     return {
       id: l.id,
       tipo: ehPergunta(rv) ? "pergunta" : "documento",
@@ -216,6 +227,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       nome_documento: l.nome_documento,
       etapa: l.etapa,
       grupo,
+      ordemGrupo: ordemGrupoChecklist(l.tipo_documento, l.regra_validacao),
       rotuloGrupo: rotuloGrupo(grupo),
       ordem: l.ordem ?? 999,
       obrigatorio: !!l.obrigatorio,
@@ -267,9 +279,11 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
   // (identificação → endereço → antecedentes → ocupação → ... → requerimento).
   const ordemGrupos: string[] = [];
   for (const it of itens) if (!ordemGrupos.includes(it.grupo)) ordemGrupos.push(it.grupo);
-  ordemGrupos.sort(
-    (a, b) => ordemGrupo(a as PendenciaGrupoId) - ordemGrupo(b as PendenciaGrupoId),
-  );
+  ordemGrupos.sort((a, b) => {
+    const ordemA = Math.min(...itens.filter((i) => i.grupo === a).map((i) => i.ordemGrupo));
+    const ordemB = Math.min(...itens.filter((i) => i.grupo === b).map((i) => i.ordemGrupo));
+    return ordemA - ordemB;
+  });
 
   const grupos: GrupoSimulado[] = ordemGrupos.map((g) => {
     const doGrupo = itens.filter((i) => i.grupo === g);

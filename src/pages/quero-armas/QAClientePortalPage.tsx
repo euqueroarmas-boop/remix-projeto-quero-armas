@@ -73,7 +73,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
-import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper } from "@/lib/quero-armas/pendenciasGrupos";
+import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS } from "@/lib/quero-armas/pendenciasGrupos";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
   QA_SIDEBAR_THEMES,
@@ -328,7 +328,7 @@ export default function QAClientePortalPage() {
   // Usado para ordenar o PendenciasGuiadasPopup respeitando o "Montar Checklist" do admin.
   const [catalogoDocOrdem, setCatalogoDocOrdem] = useState<Map<string, number>>(new Map());
   // Mapa (servico_id:tipo_documento) → instrucoes/link_emissao/observacoes_cliente do catálogo.
-  const [catalogoDocInfo, setCatalogoDocInfo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>>(new Map());
+  const [catalogoDocInfo, setCatalogoDocInfo] = useState<Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null; grupo_checklist?: string | null; ordem_grupo_checklist?: number | null }>>(new Map());
   // Fallback global por tipo_documento: usado quando o servico atual não tem
   // instrucoes/link_emissao populados, mas algum outro serviço já cadastrou
   // no catálogo. Garante que o cliente sempre veja o passo-a-passo com URLs.
@@ -1247,20 +1247,22 @@ export default function QAClientePortalPage() {
     const recarregarCatalogoDocs = async () => {
       const { data: servicoDocsData } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente")
+        .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente, regra_validacao")
         .in("servico_id", servicoIds);
       if (cancelled) return;
       const docOrdemMap = new Map<string, number>();
-      const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
+      const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null; grupo_checklist?: string | null; ordem_grupo_checklist?: number | null }>();
       ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
         const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
         const ord = Number(sd.ordem);
         if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
-        if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente) {
+        if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente || sd.regra_validacao?.grupo_checklist) {
           docInfoMap.set(key, {
             instrucoes: sd.instrucoes ?? null,
             link_emissao: sd.link_emissao ?? null,
             observacoes_cliente: sd.observacoes_cliente ?? null,
+            grupo_checklist: sd.regra_validacao?.grupo_checklist ?? null,
+            ordem_grupo_checklist: Number(sd.regra_validacao?.ordem_grupo_checklist) || null,
           });
         }
       });
@@ -2300,11 +2302,22 @@ export default function QAClientePortalPage() {
     //      declarações → outros).
     //   5) Estável no idx original como desempate.
     const decorados = items.map((it, idx) => {
-      const g = it.kind === "signature"
+      const catalogoGrupo = it.kind === "documento" && it.servicoId != null
+        ? catalogoDocInfo.get(`${it.servicoId}:${String(it.rawTipo || "").toLowerCase()}`)
+        : undefined;
+      const gBase = it.kind === "signature"
         ? { id: "assinaturas" as const, label: "Assinaturas", ordem: 10 }
         : it.kind === "pergunta"
           ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
           : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
+      const grupoOverride = catalogoGrupo?.grupo_checklist;
+      const metaOverride = grupoOverride
+        ? PENDENCIA_GRUPOS[grupoOverride as keyof typeof PENDENCIA_GRUPOS]
+        : undefined;
+      const g = grupoOverride
+        && metaOverride
+        ? { ...metaOverride, ordem: catalogoGrupo?.ordem_grupo_checklist ?? metaOverride.ordem }
+        : gBase;
       const tier = it.kind === "signature" ? 0 : 1;
       const [servicoOrdem, servicoCriacao] =
         it.kind === "signature"
@@ -2547,10 +2560,20 @@ export default function QAClientePortalPage() {
     // do grupo bater com a sequência em que o cliente vai encontrá-los.
     const mapaGrupos = new Map<string, { label: string; ordem: number; total: number; concluidos: number }>();
     for (const d of obrigatorios) {
-      const g = grupoDaPendenciaHelper(
+      const gBase = grupoDaPendenciaHelper(
         String(d?.tipo_documento || ""),
         toHubTipoCompartilhado(String(d?.tipo_documento || "")),
       );
+      const processo = (processos ?? []).find((p: any) => String(p?.id) === String(d?.processo_id || ""));
+      const catGrupo = processo?.servico_id != null
+        ? catalogoDocInfo.get(`${processo.servico_id}:${String(d?.tipo_documento || "").toLowerCase()}`)
+        : undefined;
+      const metaGrupo = catGrupo?.grupo_checklist
+        ? PENDENCIA_GRUPOS[catGrupo.grupo_checklist as keyof typeof PENDENCIA_GRUPOS]
+        : undefined;
+      const g = metaGrupo
+        ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
+        : gBase;
       const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
       cur.total += 1;
       if (concluido(d)) cur.concluidos += 1;
@@ -2567,7 +2590,7 @@ export default function QAClientePortalPage() {
       concluidos: obrigatorios.length - abertos.length,
       grupos,
     };
-  }, [processoDocs]);
+  }, [processoDocs, processos, catalogoDocInfo]);
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.

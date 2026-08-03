@@ -6,8 +6,8 @@ import {
   ListOrdered,
 } from "lucide-react";
 import {
-  DndContext, closestCenter, PointerSensor, KeyboardSensor,
-  useSensor, useSensors, type DragEndEvent,
+  DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext, arrayMove, sortableKeyboardCoordinates,
@@ -19,6 +19,7 @@ import {
   simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
+import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -39,6 +40,9 @@ const INK = "hsl(220 20% 18%)";
 const MUTED = "hsl(220 10% 45%)";
 const LINE = "hsl(220 13% 91%)";
 const BORDO = "#7A1F2B";
+const GRUPOS_MOVIMENTO = Object.values(PENDENCIA_GRUPOS).filter(
+  (g) => g.id !== "assinaturas" && g.id !== "perguntas",
+);
 
 export default function SimuladorChecklistAdmin() {
   const [servicos, setServicos] = useState<Servico[]>([]);
@@ -46,6 +50,7 @@ export default function SimuladorChecklistAdmin() {
   const [linhas, setLinhas] = useState<LinhaCatalogo[]>([]);
   const [loading, setLoading] = useState(false);
   const [salvandoOrdem, setSalvandoOrdem] = useState(false);
+  const [arrastandoId, setArrastandoId] = useState<string | null>(null);
 
   const [modalidade, setModalidade] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
@@ -140,7 +145,7 @@ export default function SimuladorChecklistAdmin() {
       // Entra no fim do grupo temático a que o documento pertence, para já
       // nascer na posição certa da lista que o cliente vê.
       const grupo = grupoCanonico(item.codigo);
-      const doGrupo = linhas.filter((l) => grupoCanonico(l.tipo_documento) === grupo);
+      const doGrupo = linhas.filter((l) => grupoCanonico(l.tipo_documento, l.regra_validacao) === grupo);
       const base = doGrupo.length
         ? Math.max(...doGrupo.map((l) => l.ordem ?? 0))
         : Math.max(0, ...linhas.map((l) => l.ordem ?? 0));
@@ -266,6 +271,29 @@ export default function SimuladorChecklistAdmin() {
     await persistirGrupos(sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) })));
   }
 
+  async function definirPosicaoGrupo(grupo: string, novaPosicao: number) {
+    const estrutura = sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) }));
+    const atual = estrutura.findIndex((g) => g.grupo === grupo);
+    if (atual < 0 || !Number.isFinite(novaPosicao)) return;
+    const destino = Math.max(0, Math.min(estrutura.length - 1, Math.round(novaPosicao) - 1));
+    if (atual === destino) return;
+    await persistirGrupos(arrayMove(estrutura, atual, destino));
+  }
+
+  async function moverItemParaGrupo(id: string, grupoDestino: PendenciaGrupoId) {
+    const estrutura = sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) }));
+    const origem = estrutura.findIndex((g) => g.ids.includes(id));
+    if (origem < 0 || estrutura[origem].grupo === grupoDestino) return;
+    estrutura[origem].ids = estrutura[origem].ids.filter((itemId) => itemId !== id);
+    let destino = estrutura.findIndex((g) => g.grupo === grupoDestino);
+    if (destino < 0) {
+      estrutura.push({ grupo: grupoDestino, ids: [] });
+      destino = estrutura.length - 1;
+    }
+    estrutura[destino].ids.push(id);
+    await persistirGrupos(estrutura.filter((g) => g.ids.length > 0));
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -288,39 +316,53 @@ export default function SimuladorChecklistAdmin() {
     // O grupo é temático e vem do tipo de documento (mesma classificação do
     // portal do cliente). A coluna `etapa` do catálogo é preservada como está.
     const etapaDe = (l: LinhaCatalogo) => String(l.etapa || "base").trim().toLowerCase();
-    const grupoDe = (l: LinhaCatalogo) => grupoCanonico(l.tipo_documento) as string;
+    const grupoDe = (l: LinhaCatalogo) => grupoCanonico(l.tipo_documento, l.regra_validacao) as string;
     const linhaPorId = new Map(linhas.map((l) => [l.id, l]));
 
-    const sequencia: { id: string; etapa: string }[] = [];
-    for (const g of gruposNovos) {
+    const sequencia: { id: string; etapa: string; grupo: string; ordemGrupo: number }[] = [];
+    for (const [indiceGrupo, g] of gruposNovos.entries()) {
+      const ordemGrupo = (indiceGrupo + 1) * 10;
       for (const id of g.ids) {
         const l = linhaPorId.get(id);
-        sequencia.push({ id, etapa: l ? etapaDe(l) : "base" });
+        sequencia.push({ id, etapa: l ? etapaDe(l) : "base", grupo: g.grupo, ordemGrupo });
       }
       // variantes ocultas do mesmo grupo ficam logo abaixo, mantendo a ordem atual
       [...linhas]
         .filter((l) => !visiveis.has(l.id) && grupoDe(l) === g.grupo)
         .sort(porOrdem)
-        .forEach((l) => sequencia.push({ id: l.id, etapa: etapaDe(l) }));
+        .forEach((l) => sequencia.push({ id: l.id, etapa: etapaDe(l), grupo: g.grupo, ordemGrupo }));
     }
     const incluidos = new Set(sequencia.map((s) => s.id));
     [...linhas]
       .filter((l) => !incluidos.has(l.id))
       .sort(porOrdem)
-      .forEach((l) => sequencia.push({ id: l.id, etapa: etapaDe(l) }));
+      .forEach((l) => {
+        const grupo = grupoDe(l);
+        const indiceGrupo = Math.max(0, gruposNovos.findIndex((g) => g.grupo === grupo));
+        sequencia.push({ id: l.id, etapa: etapaDe(l), grupo, ordemGrupo: (indiceGrupo + 1) * 10 });
+      });
 
-    const mapa = new Map(sequencia.map((s, idx) => [s.id, { ordem: (idx + 1) * 10, etapa: s.etapa }]));
+    const mapa = new Map(sequencia.map((s, idx) => [s.id, {
+      ordem: (idx + 1) * 10,
+      etapa: s.etapa,
+      regra_validacao: {
+        ...(linhaPorId.get(s.id)?.regra_validacao ?? {}),
+        grupo_checklist: s.grupo,
+        ordem_grupo_checklist: s.ordemGrupo,
+      },
+    }]));
 
     const anteriores = linhas;
     const atualizadas = linhas.map((l) => {
       const m = mapa.get(l.id);
-      return m ? { ...l, ordem: m.ordem, etapa: m.etapa } : l;
+      return m ? { ...l, ordem: m.ordem, etapa: m.etapa, regra_validacao: m.regra_validacao } : l;
     });
     setLinhas(atualizadas);
 
     const alterados = atualizadas.filter((l) => {
       const a = anteriores.find((x) => x.id === l.id);
-      return !a || a.ordem !== l.ordem || a.etapa !== l.etapa;
+      return !a || a.ordem !== l.ordem || a.etapa !== l.etapa
+        || JSON.stringify(a.regra_validacao) !== JSON.stringify(l.regra_validacao);
     });
     if (alterados.length === 0) return;
 
@@ -329,7 +371,7 @@ export default function SimuladorChecklistAdmin() {
       for (const l of alterados) {
         const { error } = await supabase
           .from("qa_servicos_documentos" as any)
-          .update({ ordem: l.ordem, etapa: l.etapa })
+          .update({ ordem: l.ordem, etapa: l.etapa, regra_validacao: l.regra_validacao })
           .eq("id", l.id);
         if (error) throw error;
       }
@@ -344,6 +386,7 @@ export default function SimuladorChecklistAdmin() {
 
   /** Move um item dentro/entre grupos OU um grupo inteiro (id "grupo:<slug>"). */
   async function onDragEnd(event: DragEndEvent) {
+    setArrastandoId(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -386,6 +429,10 @@ export default function SimuladorChecklistAdmin() {
     estrutura[gDestino].ids.splice(idxDestino, 0, activeId);
 
     await persistirGrupos(estrutura);
+  }
+
+  function onDragStart(event: DragStartEvent) {
+    setArrastandoId(String(event.active.id));
   }
 
   return (
@@ -649,13 +696,25 @@ export default function SimuladorChecklistAdmin() {
             </div>
 
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={onDragStart}
+                onDragCancel={() => setArrastandoId(null)}
+                onDragEnd={onDragEnd}
+              >
                 <SortableContext
                   items={sim.grupos.map((g) => `grupo:${g.grupo}`)}
                   strategy={verticalListSortingStrategy}
                 >
                   {sim.grupos.map((g) => (
-                    <BlocoGrupo key={g.grupo} grupo={g}>
+                    <BlocoGrupo
+                      key={g.grupo}
+                      grupo={g}
+                      posicao={sim.grupos.findIndex((x) => x.grupo === g.grupo) + 1}
+                      totalGrupos={sim.grupos.length}
+                      onDefinirPosicao={definirPosicaoGrupo}
+                    >
                       <SortableContext
                         items={g.itens.map((i) => i.id)}
                         strategy={verticalListSortingStrategy}
@@ -670,6 +729,7 @@ export default function SimuladorChecklistAdmin() {
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
                               onDefinirOrdem={definirOrdem}
+                              onMoverGrupo={moverItemParaGrupo}
                               onRenomear={renomearItem}
                             />
                           ))}
@@ -678,6 +738,18 @@ export default function SimuladorChecklistAdmin() {
                     </BlocoGrupo>
                   ))}
                 </SortableContext>
+                <DragOverlay dropAnimation={null}>
+                  {arrastandoId ? (
+                    <div className="w-[min(520px,70vw)] rounded-md border bg-white px-3 py-2 shadow-xl" style={{ borderColor: LINE }}>
+                      <span className="block truncate text-[11px] font-semibold" style={{ color: INK }}>
+                        {arrastandoId.startsWith("grupo:")
+                          ? sim.grupos.find((g) => `grupo:${g.grupo}` === arrastandoId)?.rotulo
+                          : sim.visiveis.find((i) => i.id === arrastandoId)?.nome_documento}
+                      </span>
+                      <span className="text-[9px] uppercase" style={{ color: MUTED }}>MOVER PARA A NOVA POSIÇÃO</span>
+                    </div>
+                  ) : null}
+                </DragOverlay>
               </DndContext>
               {sim.grupos.length === 0 && (
                 <p className="text-xs py-6 text-center" style={{ color: MUTED }}>
@@ -694,9 +766,15 @@ export default function SimuladorChecklistAdmin() {
 
 function BlocoGrupo({
   grupo,
+  posicao,
+  totalGrupos,
+  onDefinirPosicao,
   children,
 }: {
   grupo: { grupo: string; rotulo: string; cumpridos: number; pendentes: number };
+  posicao: number;
+  totalGrupos: number;
+  onDefinirPosicao: (grupo: string, posicao: number) => void;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -707,7 +785,7 @@ function BlocoGrupo({
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? undefined : transition,
         opacity: isDragging ? 0.65 : 1,
       }}
     >
@@ -732,6 +810,20 @@ function BlocoGrupo({
           {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
         </span>
       </div>
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
+        <input
+          type="number"
+          min={1}
+          max={totalGrupos}
+          key={`${grupo.grupo}-${posicao}`}
+          defaultValue={posicao}
+          onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
+          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          className="h-5 w-10 rounded border bg-white px-1 text-center text-[9px] font-mono"
+          style={{ borderColor: LINE, color: INK }}
+        />
+      </div>
       {children}
     </div>
   );
@@ -744,6 +836,7 @@ function LinhaItem({
   onLimparResposta,
   onRemover,
   onDefinirOrdem,
+  onMoverGrupo,
   onRenomear,
 }: {
   item: ItemSimulado;
@@ -752,6 +845,7 @@ function LinhaItem({
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
+  onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
@@ -771,7 +865,7 @@ function LinhaItem({
       className="flex items-start gap-2 rounded-md border px-2.5 py-1.5"
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? undefined : transition,
         zIndex: isDragging ? 30 : undefined,
         position: "relative",
         background: isDragging ? "#FFFFFF" : undefined,
@@ -848,6 +942,22 @@ function LinhaItem({
           />
           <span>· {item.tipo_documento}</span>
           {item.motivo ? <span>· {item.motivo}</span> : null}
+        </div>
+        <div className="mt-1 flex items-center gap-1">
+          <span className="text-[9px] uppercase" style={{ color: MUTED }}>grupo</span>
+          <select
+            value={item.grupo}
+            onChange={(e) => onMoverGrupo(item.id, e.currentTarget.value as PendenciaGrupoId)}
+            onClick={(e) => e.stopPropagation()}
+            disabled={item.estado === "dispensado"}
+            className="h-5 min-w-0 max-w-[210px] rounded border bg-white px-1 text-[9px] uppercase"
+            style={{ borderColor: LINE, color: INK }}
+            title="Escolha em qual grupo esta exigência deve aparecer para o cliente"
+          >
+            {GRUPOS_MOVIMENTO.map((grupo) => (
+              <option key={grupo.id} value={grupo.id}>{grupo.label}</option>
+            ))}
+          </select>
         </div>
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
