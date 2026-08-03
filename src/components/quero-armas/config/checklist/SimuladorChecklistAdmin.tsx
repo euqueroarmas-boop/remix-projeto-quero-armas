@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
+  ListOrdered,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -210,6 +211,34 @@ export default function SimuladorChecklistAdmin() {
   }
 
   const servicoNome = servicos.find((s) => s.id === servicoId)?.nome_servico ?? "";
+
+  /**
+   * Define manualmente o número de ordem de uma exigência. É o MESMO campo
+   * `ordem` de qa_servicos_documentos lido por todos os motores — digitar aqui
+   * equivale a arrastar, só que com precisão.
+   */
+  async function definirOrdem(id: string, novaOrdem: number) {
+    if (!Number.isFinite(novaOrdem) || novaOrdem < 0) return;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, ordem: novaOrdem } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ordem: novaOrdem })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR A ORDEM: " + (error.message ?? "ERRO"));
+    }
+  }
+
+  /**
+   * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
+   * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
+   * mudar nada de lugar.
+   */
+  async function renumerar() {
+    await persistirGrupos(sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) })));
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
