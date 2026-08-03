@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   CONDICOES_CHECKLIST,
+  parseCondicoes, serializarCondicoes,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -270,8 +271,8 @@ export default function SimuladorChecklistAdmin() {
    * depois que o cliente responder aquela condição profissional. É o MESMO
    * campo lido pelo portal, pelo explodir_checklist e pelo simulador.
    */
-  async function definirCondicao(id: string, valor: string) {
-    const cond = valor || null;
+  async function definirCondicao(id: string, valores: string[]) {
+    const cond = serializarCondicoes(valores);
     const anteriores = linhas;
     setLinhas((p) => p.map((l) => (l.id === id ? { ...l, condicao_profissional: cond } : l)));
     const { error } = await supabase
@@ -283,7 +284,7 @@ export default function SimuladorChecklistAdmin() {
       toast.error("NÃO FOI POSSÍVEL SALVAR A CONDIÇÃO: " + (error.message ?? "ERRO"));
       return;
     }
-    toast.success(cond ? "CONDIÇÃO PROFISSIONAL APLICADA" : "EXIGÊNCIA AGORA VALE PARA TODOS");
+    toast.success(cond ? "CONDIÇÕES PROFISSIONAIS APLICADAS" : "EXIGÊNCIA AGORA VALE PARA TODOS");
   }
 
   /**
@@ -921,7 +922,7 @@ function LinhaItem({
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
-  onDefinirCondicao: (id: string, valor: string) => void;
+  onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
@@ -1046,24 +1047,55 @@ function LinhaItem({
           </select>
         </div>
 
-        {item.tipo !== "pergunta" && (
-          <div className="mt-1 flex items-center gap-1">
-            <span className="text-[11px] uppercase" style={{ color: MUTED }}>só se</span>
-            <select
-              value={item.linha?.condicao_profissional ?? ""}
-              onChange={(e) => onDefinirCondicao(item.id, e.currentTarget.value)}
+        {item.tipo !== "pergunta" && (() => {
+          const selecionadas = parseCondicoes(item.linha?.condicao_profissional);
+          const alternar = (valor: string) => {
+            const nova = selecionadas.includes(valor)
+              ? selecionadas.filter((v) => v !== valor)
+              : [...selecionadas, valor];
+            onDefinirCondicao(item.id, nova);
+          };
+          return (
+            <div
+              className="mt-1 flex flex-wrap items-center gap-1"
               onClick={(e) => e.stopPropagation()}
-              className="h-5 min-w-0 max-w-[260px] rounded border bg-white px-1 text-[11px] uppercase"
-              style={{ borderColor: LINE, color: INK }}
-              title="Condição profissional que faz esta exigência aparecer. Vazio = exigido de todos."
+              title="Marque uma ou mais condições profissionais. Nenhuma marcada = exigido de todos."
             >
-              <option value="">SEM CONDIÇÃO — VALE PARA TODOS</option>
-              {CONDICOES_CHECKLIST.map((c) => (
-                <option key={c.valor} value={c.valor}>{c.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
+              <span className="text-[11px] uppercase" style={{ color: MUTED }}>só se</span>
+              <button
+                type="button"
+                onClick={() => onDefinirCondicao(item.id, [])}
+                className="rounded border px-1.5 py-0.5 text-[10px] uppercase"
+                style={{
+                  borderColor: selecionadas.length === 0 ? "#7A1F2B" : LINE,
+                  background: selecionadas.length === 0 ? "#7A1F2B" : "transparent",
+                  color: selecionadas.length === 0 ? "#FFFFFF" : MUTED,
+                }}
+              >
+                TODOS
+              </button>
+              {CONDICOES_CHECKLIST.map((c) => {
+                const ativa = selecionadas.includes(c.valor);
+                return (
+                  <button
+                    key={c.valor}
+                    type="button"
+                    onClick={() => alternar(c.valor)}
+                    className="rounded border px-1.5 py-0.5 text-[10px] uppercase"
+                    style={{
+                      borderColor: ativa ? "#7A1F2B" : LINE,
+                      background: ativa ? "#7A1F2B" : "transparent",
+                      color: ativa ? "#FFFFFF" : INK,
+                    }}
+                    title={c.label}
+                  >
+                    {c.label.split("—")[0].split("(")[0].trim()}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
           <div className="mt-1.5 flex flex-wrap gap-1">

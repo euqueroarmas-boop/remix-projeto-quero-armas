@@ -108,6 +108,36 @@ export const CONDICOES: OpcaoPergunta[] = [
   { label: "INDEFINIDO", valor: "indefinido" },
 ];
 
+// ─── MULTI-CONDIÇÃO ──────────────────────────────────────────────────────────
+// `condicao_profissional` aceita UMA condição ("autonomo") ou VÁRIAS separadas
+// por vírgula ("autonomo,empresario"). Regra única lida pelo simulador, pelo
+// admin e pelo qa-processo-set-condicao.
+export function parseCondicoes(valor: string | null | undefined): string[] {
+  return String(valor ?? "")
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function serializarCondicoes(valores: string[]): string | null {
+  const limpos = Array.from(new Set(valores.map((v) => v.trim().toLowerCase()).filter(Boolean)));
+  return limpos.length ? limpos.join(",") : null;
+}
+
+/** true quando a linha vale para a condição escolhida (ou não tem condição). */
+export function condicaoCasa(valor: string | null | undefined, condicao: string | null): boolean {
+  const lista = parseCondicoes(valor);
+  if (lista.length === 0) return true;
+  if (!condicao || condicao === "indefinido") return false;
+  return lista.includes(String(condicao).toLowerCase());
+}
+
+export function rotulosCondicoes(valor: string | null | undefined): string {
+  return parseCondicoes(valor)
+    .map((v) => CONDICOES_CHECKLIST.find((c) => c.valor === v)?.label ?? v.toUpperCase())
+    .join(" OU ");
+}
+
 export const MODALIDADES: OpcaoPergunta[] = [
   { label: "DEFESA PESSOAL", valor: "defesa_pessoal" },
   { label: "ATIRADOR ESPORTIVO", valor: "atirador" },
@@ -254,7 +284,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       l.condicao_profissional == null ||
       !condicao ||
       condicao === "indefinido" ||
-      l.condicao_profissional === condicao;
+      condicaoCasa(l.condicao_profissional, condicao);
     const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
     const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
     if (!cpOk || !modOk) return false;
@@ -317,9 +347,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       // Exigência amarrada a uma condição profissional ainda não escolhida:
       // mostra como "aguardando", com relógio, igual ao grupo de endereço.
       if (l.condicao_profissional && semCondicaoDefinida) {
-        const rotulo =
-          CONDICOES_CHECKLIST.find((c) => c.valor === l.condicao_profissional)?.label ??
-          String(l.condicao_profissional).toUpperCase();
+        const rotulo = rotulosCondicoes(l.condicao_profissional);
         return paraItem(l, "aguardando", `SÓ APARECE SE A CONDIÇÃO PROFISSIONAL FOR "${rotulo}"`);
       }
 
@@ -394,7 +422,9 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
   }
 
   const temPerguntaCondicao = chavesPerguntas.has("condicao_profissional");
-  const temDocsCondicao = ativas.some((l) => l.condicao_profissional === condicao);
+  const temDocsCondicao = ativas.some(
+    (l) => l.condicao_profissional != null && condicaoCasa(l.condicao_profissional, condicao),
+  );
   if (temPerguntaCondicao && condicao && condicao !== "indefinido" && !temDocsCondicao) {
     alertas.push({
       nivel: "aviso",
