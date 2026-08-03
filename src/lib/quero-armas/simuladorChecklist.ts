@@ -211,12 +211,18 @@ function extrairDependencia(rv: any): { chave: string; valor: string } | null {
 }
 
 /** Deduplicação idêntica à do SQL: sem condição primeiro, depois ordem, depois id. */
-function dedupPorTipo(linhas: LinhaCatalogo[]): { manter: LinhaCatalogo[]; descartadas: LinhaCatalogo[] } {
+function dedupPorTipo(
+  linhas: LinhaCatalogo[],
+  separarPorCondicao = false,
+): { manter: LinhaCatalogo[]; descartadas: LinhaCatalogo[] } {
   const porTipo = new Map<string, LinhaCatalogo[]>();
   for (const l of linhas) {
-    const arr = porTipo.get(l.tipo_documento) ?? [];
+    const chave = separarPorCondicao
+      ? `${l.tipo_documento}::${l.condicao_profissional ?? ""}`
+      : l.tipo_documento;
+    const arr = porTipo.get(chave) ?? [];
     arr.push(l);
-    porTipo.set(l.tipo_documento, arr);
+    porTipo.set(chave, arr);
   }
   const manter: LinhaCatalogo[] = [];
   const descartadas: LinhaCatalogo[] = [];
@@ -266,7 +272,8 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
     return true;
   });
 
-  const { manter, descartadas } = dedupPorTipo(filtradas);
+  const semCondicaoDefinida = !condicao || condicao === "indefinido";
+  const { manter, descartadas } = dedupPorTipo(filtradas, semCondicaoDefinida);
 
   const paraItem = (l: LinhaCatalogo, estado: EstadoItem, motivo?: string): ItemSimulado => {
     const rv = l.regra_validacao;
@@ -306,6 +313,15 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       const dep = extrairDependencia(rv);
       const pergunta = ehPergunta(rv);
       const chave = pergunta ? chavePergunta(rv, l.tipo_documento) : "";
+
+      // Exigência amarrada a uma condição profissional ainda não escolhida:
+      // mostra como "aguardando", com relógio, igual ao grupo de endereço.
+      if (l.condicao_profissional && semCondicaoDefinida) {
+        const rotulo =
+          CONDICOES_CHECKLIST.find((c) => c.valor === l.condicao_profissional)?.label ??
+          String(l.condicao_profissional).toUpperCase();
+        return paraItem(l, "aguardando", `SÓ APARECE SE A CONDIÇÃO PROFISSIONAL FOR "${rotulo}"`);
+      }
 
       // Item condicional: depende de resposta anterior.
       if (dep) {
