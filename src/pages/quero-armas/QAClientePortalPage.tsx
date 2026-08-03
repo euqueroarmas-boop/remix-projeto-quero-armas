@@ -383,6 +383,7 @@ export default function QAClientePortalPage() {
     | "novo_servico"
     | "mensagens"
     | "configuracoes"
+    | "checklist_guiado"
   >("resumo");
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
@@ -2430,6 +2431,13 @@ export default function QAClientePortalPage() {
   }, [vendas, pendingSignatureDocs, resumoState, analysis, pendenciasGuiadas, cadastro, filiacoes, habitualidadeAlertas]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const abrirDisparoRail = () => {
+    // MOBILE: a granada se comporta como os demais ícones do rail — abre uma
+    // seção do portal (página), não um pop-up. Desktop segue com o pop-up.
+    if (isBelowLg && (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0)) {
+      setActiveSection("checklist_guiado");
+      setSidebarCollapsed(true);
+      return;
+    }
     if (pendingSignatureCount > 0 || pendenciasGuiadasCount > 0) {
       abrirPendenciasGuiadas();
       return;
@@ -3312,6 +3320,7 @@ export default function QAClientePortalPage() {
             corIcone={railIconColor}
             onOpen={abrirDisparoRail}
             badge={pendenciasGuiadasCount + pendingSignatureCount}
+            active={activeSection === "checklist_guiado"}
           />
 
           {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
@@ -4245,6 +4254,30 @@ export default function QAClientePortalPage() {
           </div>
         )}
 
+        {/* MOBILE: checklist guiado como PÁGINA (mesmo conteúdo do pop-up). */}
+        {activeSection === "checklist_guiado" && isBelowLg && (
+          <div id="qa-portal-checklist-guiado" tabIndex={-1} className="outline-none pt-[10px]">
+            {pendenciasGuiadas.length > 0 ? (
+              <PendenciasGuiadasPopup
+                asPage
+                open
+                bloqueante
+                pendencias={pendenciasGuiadas}
+                pinnedId={
+                  pendingSignatureCount > 0 && !String(pinnedPendenciaId ?? "").startsWith("sig:")
+                    ? null
+                    : pinnedPendenciaId
+                }
+                ufCliente={(cliente as any)?.estado ?? null}
+                onDismiss={dismissPendenciasGuiadas}
+                resumoProcesso={resumoProcesso}
+              />
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhuma pendência no momento.</p>
+            )}
+          </div>
+        )}
+
       </main>
 
       {(customerId || cliente?.id) && (
@@ -4376,6 +4409,7 @@ export default function QAClientePortalPage() {
         open={
           !mustChangePassword &&
           !declResidenciaAberta &&
+          !(isBelowLg && activeSection === "checklist_guiado") &&
           (showContratoPopup ||
             (pendingContractsLoaded &&
               pendingSignatureCount > 0 &&
