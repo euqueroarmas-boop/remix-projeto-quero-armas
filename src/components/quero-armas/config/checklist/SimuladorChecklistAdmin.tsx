@@ -108,9 +108,13 @@ export default function SimuladorChecklistAdmin() {
   const bibliotecaFiltrada = useMemo(() => {
     const b = buscaBib.trim().toLowerCase();
     if (b.length < 2) return [] as (BibliotecaItem & { jaNoServico: boolean })[];
-    const usados = new Set(linhas.map((l) => l.tipo_documento));
+    // Só conta como "já está" o que estiver ATIVO. Linha desativada precisa
+    // poder voltar pela busca — senão o documento fica invisível no simulador
+    // e ao mesmo tempo bloqueado para adicionar.
+    const ativas = linhas.filter((l) => (l as any).ativo !== false);
+    const usados = new Set(ativas.map((l) => l.tipo_documento));
     const bibUsadas = new Set(
-      linhas.map((l) => (l as any).biblioteca_id as string | null).filter(Boolean) as string[],
+      ativas.map((l) => (l as any).biblioteca_id as string | null).filter(Boolean) as string[],
     );
     return biblioteca
       .filter((i) => i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b))
@@ -146,6 +150,24 @@ export default function SimuladorChecklistAdmin() {
     if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
     setAdicionando(true);
     try {
+      // Se a exigência já existe mas está desativada, REATIVA em vez de tentar
+      // inserir de novo (o insert bateria na unicidade e o item seguiria oculto).
+      const desativada = linhas.find(
+        (l) =>
+          (l as any).ativo === false &&
+          (l.tipo_documento === item.codigo || (l as any).biblioteca_id === item.id),
+      );
+      if (desativada) {
+        const { error: errReativar } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .update({ ativo: true })
+          .eq("id", desativada.id);
+        if (errReativar) throw errReativar;
+        toast.success(`"${item.nome.toUpperCase()}" REATIVADO NO CHECKLIST`);
+        setBuscaBib("");
+        await carregar(servicoId);
+        return;
+      }
       // Entra no fim do grupo temático a que o documento pertence, para já
       // nascer na posição certa da lista que o cliente vê.
       const grupo = grupoCanonico(item.codigo);
