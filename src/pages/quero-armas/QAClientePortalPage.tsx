@@ -73,7 +73,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
-import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper } from "@/lib/quero-armas/pendenciasGrupos";
+import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS } from "@/lib/quero-armas/pendenciasGrupos";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
   QA_SIDEBAR_THEMES,
@@ -2311,8 +2311,12 @@ export default function QAClientePortalPage() {
           ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
           : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
       const grupoOverride = catalogoGrupo?.grupo_checklist;
+      const metaOverride = grupoOverride
+        ? PENDENCIA_GRUPOS[grupoOverride as keyof typeof PENDENCIA_GRUPOS]
+        : undefined;
       const g = grupoOverride
-        ? { ...grupoDaPendenciaHelper(grupoOverride), id: grupoOverride as any, label: grupoDaPendenciaHelper(grupoOverride).label, ordem: catalogoGrupo?.ordem_grupo_checklist ?? gBase.ordem }
+        && metaOverride
+        ? { ...metaOverride, ordem: catalogoGrupo?.ordem_grupo_checklist ?? metaOverride.ordem }
         : gBase;
       const tier = it.kind === "signature" ? 0 : 1;
       const [servicoOrdem, servicoCriacao] =
