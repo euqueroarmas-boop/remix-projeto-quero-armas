@@ -23,6 +23,8 @@ const CSS = `
   --bordo:#7A1F2B;--bordo-soft:#f4e6e8;--amber:#a8741a;--danger:#8a1414;
   --ok:#1f4d2b;--card:#fff;background:var(--paper);color:var(--ink);
   font-family:'Arial Narrow',Arial,sans-serif;padding:0 0 24px}
+.qafin-sticky-header{position:sticky;top:0;z-index:10;background:var(--paper);padding:0 0 14px;margin:0}
+.qafin-scrollable{position:relative}
 .qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:11px;
   letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:600}
 .qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:22px;
@@ -1253,27 +1255,27 @@ export default function QAClienteFinanceiroCentral({
     <div className="qafin-central">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      <div>
+      <div className="qafin-sticky-header">
         <h1 className="qatitle">
           {(clienteNome ? String(clienteNome).trim().split(/\s+/)[0].toUpperCase() : "CLIENTE")}
           , ESTE É O SEU CONTROLE FINANCEIRO
         </h1>
+        {premium && <PremiumCard premium={premium} onRefresh={onPremiumRefresh} />}
       </div>
 
-      {premium && <PremiumCard premium={premium} onRefresh={onPremiumRefresh} />}
+      <div className="qafin-scrollable">
+        <KpiRow
+          emAbertoTotal={kpi.emAbertoTotal} emAbertoQtd={kpi.emAbertoQtd}
+          vencidasTotal={kpi.vencidasTotal} vencidasQtd={kpi.vencidasQtd}
+          pagasAnoTotal={kpi.pagasAnoTotal} pagasAnoQtd={kpi.pagasAnoQtd}
+          ano={anoAtual}
+          premium={premium}
+        />
 
-      <KpiRow
-        emAbertoTotal={kpi.emAbertoTotal} emAbertoQtd={kpi.emAbertoQtd}
-        vencidasTotal={kpi.vencidasTotal} vencidasQtd={kpi.vencidasQtd}
-        pagasAnoTotal={kpi.pagasAnoTotal} pagasAnoQtd={kpi.pagasAnoQtd}
-        ano={anoAtual}
-        premium={premium}
-      />
-
-      <div className="section">
-        <span>Cobranças em aberto</span>
-        <span className="cnt">{abertas.length}</span>
-      </div>
+        <div className="section">
+          <span>Cobranças em aberto</span>
+          <span className="cnt">{abertas.length}</span>
+        </div>
       {abertas.length === 0 ? (
         <div className="empty">Nenhuma cobrança em aberto no momento.</div>
       ) : (
@@ -1323,6 +1325,7 @@ export default function QAClienteFinanceiroCentral({
           />
         ))
       )}
+      </div>
     </div>
   );
 }
