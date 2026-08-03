@@ -360,26 +360,41 @@ OUTROS
 REGRAS: Decida pelo CONTEÚDO do documento, não pelo nome do arquivo. Leia o cabeçalho e o órgão emissor antes de escolher entre variantes. Extraia apenas dados visíveis.`;
 
 async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
-  const model = mime === "application/pdf" ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
   // Guarda de tamanho: um data URL gigante estoura a memória do worker e derruba
   // a função inteira ("Failed to send a request to the Edge Function").
   if (typeof dataUrl !== "string" || dataUrl.length < 32) throw new Error("data_url_invalida");
   if (dataUrl.length > MAX_DATA_URL_CHARS) throw new Error("arquivo_muito_grande");
 
+  // PDF: a rota multimodal do gateway não devolve tool call de forma confiável
+  // para blocos `file`. Contas de luz, certidões e holerites são PDFs com camada
+  // de texto — extraímos o texto AQUI e classificamos por texto puro, que é
+  // determinístico, barato e sempre produz tool call. Só PDF sem texto
+  // (digitalizado) volta para a rota multimodal.
+  let textoPdf = "";
+  if (mime === "application/pdf") {
+    try {
+      textoPdf = await extrairTextoDePdf(dataUrl);
+    } catch (e) {
+      console.warn("[pdf-text] falhou", nome, String(e));
+    }
+  }
+
+  const usarTexto = textoPdf.trim().length >= 120;
+  const model = "google/gemini-2.5-flash";
+  const userContent = usarTexto
+    ? [{ type: "text", text: `Classifique este documento a partir do TEXTO extraído do PDF. Nome do arquivo: "${nome}".\n\n--- TEXTO DO PDF ---\n${textoPdf.slice(0, 24000)}` }]
+    : [
+        { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
+        mime === "application/pdf"
+          ? { type: "file", file: { filename: nome || "documento.pdf", file_data: dataUrl } }
+          : { type: "image_url", image_url: { url: dataUrl } },
+      ];
+
   const body = JSON.stringify({
     model,
     messages: [
       { role: "system", content: CLASSIFY_SYSTEM },
-      { role: "user", content: [
-        { type: "text", text: `Classifique este documento. Nome: "${nome}".` },
-        // PDF NÃO pode ir como `image_url`: o provedor recusa o data URL
-        // `data:application/pdf;...` e a resposta volta sem tool call, o que o
-        // frontend interpreta como "não classificado" — era por isso que um
-        // comprovante de residência em PDF caía em "Outro documento".
-        mime === "application/pdf"
-          ? { type: "file", file: { filename: nome || "documento.pdf", file_data: dataUrl } }
-          : { type: "image_url", image_url: { url: dataUrl } },
-      ]},
+      { role: "user", content: userContent },
     ],
     tools: [CLASSIFY_TOOL],
     tool_choice: { type: "function", function: { name: "classificar_documento" } },
