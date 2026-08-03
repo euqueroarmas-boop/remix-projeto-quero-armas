@@ -696,10 +696,15 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
                 </h2>
                 <div className="flex-1" />
                 <div
-                  className="w-full no-scrollbar pb-1"
-                  style={{ overflowX: "auto", touchAction: "pan-x", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+                  ref={sugRef}
+                  className="w-full no-scrollbar pb-1 select-none"
+                  onPointerDown={onSugPointerDown}
+                  onPointerMove={onSugPointerMove}
+                  onPointerUp={onSugPointerUp}
+                  onPointerCancel={onSugPointerUp}
+                  style={{ overflowX: "auto", overflowY: "hidden", touchAction: "pan-x", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", cursor: "grab" }}
                 >
-                  <div className="flex items-stretch gap-1.5 px-5 w-max">
+                  <div className="flex items-stretch gap-[7.5px] px-5 w-max">
                     {sugestoesVisiveis.map((s) => (
                       <button
                         key={s}
