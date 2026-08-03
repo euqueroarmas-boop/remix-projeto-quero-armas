@@ -677,6 +677,11 @@ export default function ClienteResumoKanban({
     { key: "documentos", label: `DOCUMENTOS ${snapshot.urgents.filter((u) => u.frontKey === "documentos").length}` },
     { key: "processos", label: `PROCESSOS ${Math.max(snapshot.urgents.filter((u) => u.frontKey === "processos").length, processosEmAndamento)}` },
   ];
+  // Mobile: só exibe o que tem informação. A ordem original é preservada,
+  // então quando um item "nascer" ele reaparece exatamente no mesmo lugar.
+  const visibleFilters = isMobile
+    ? filters.filter((f) => f.key === "todos" || !/\s0$/.test(f.label))
+    : filters;
   const updated = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date()).replace(/\./g, "").toUpperCase();
   const updatedTime = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }).format(new Date());
 
