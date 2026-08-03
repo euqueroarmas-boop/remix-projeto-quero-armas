@@ -865,7 +865,7 @@ function LinhaItem({
       className="flex items-start gap-2 rounded-md border px-2.5 py-1.5"
       style={{
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: isDragging ? undefined : transition,
         zIndex: isDragging ? 30 : undefined,
         position: "relative",
         background: isDragging ? "#FFFFFF" : undefined,
