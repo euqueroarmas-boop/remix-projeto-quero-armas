@@ -24,6 +24,23 @@ function formatBRL(v: number | null) {
 
 type FormaPagamento = "a_combinar" | "pix" | "boleto" | "cartao_debito" | "cartao_credito";
 
+type TipoAjuste =
+  | "promocao"
+  | "negociacao_individual"
+  | "cortesia_parcial"
+  | "complemento"
+  | "correcao"
+  | "outro";
+
+const TIPOS_AJUSTE_LABEL: Record<TipoAjuste, string> = {
+  promocao: "Promoção",
+  negociacao_individual: "Negociação individual",
+  cortesia_parcial: "Cortesia parcial",
+  complemento: "Complemento de valor",
+  correcao: "Correção de preço",
+  outro: "Outro",
+};
+
 export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: Props) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [q, setQ] = useState("");
@@ -38,6 +55,11 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
   const [jaPagou, setJaPagou] = useState<boolean>(false);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("pix");
   const [parcelas, setParcelas] = useState<number>(1);
+  // Desconto / preço negociado por item (exceções comerciais).
+  const [precosNegociados, setPrecosNegociados] = useState<Record<string, string>>({});
+  const [tipoAjuste, setTipoAjuste] = useState<TipoAjuste>("negociacao_individual");
+  const [motivoAjuste, setMotivoAjuste] = useState("");
+  const [confirmadoAjuste, setConfirmadoAjuste] = useState(false);
 
   useEffect(() => {
     supabase
@@ -53,7 +75,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
     return !t || s.nome.toLowerCase().includes(t) || s.slug.includes(t);
   }).slice(0, 20);
 
-  const totalSelecionados = selecionados.reduce((acc, s) => acc + (s.preco ?? 0), 0);
+  function precoAplicado(s: Servico): number {
+    const raw = precosNegociados[s.id];
+    if (raw == null || String(raw).trim() === "") return s.preco ?? 0;
+    const n = Number(String(raw).replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) && n >= 0 ? n : (s.preco ?? 0);
+  }
+
+  const totalCatalogo = selecionados.reduce((acc, s) => acc + (s.preco ?? 0), 0);
+  const totalSelecionados = selecionados.reduce((acc, s) => acc + precoAplicado(s), 0);
+  const descontoTotal = Number((totalCatalogo - totalSelecionados).toFixed(2));
+  const temNegociacao = selecionados.some(
+    (s) => Math.abs(precoAplicado(s) - (s.preco ?? 0)) > 0.0049,
+  );
+  const negociacaoValida = !temNegociacao || (motivoAjuste.trim().length >= 20 && confirmadoAjuste);
 
   function toggleServico(s: Servico) {
     setSelecionados((prev) =>
@@ -63,6 +98,10 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
 
   async function gerarContrato() {
     if (selecionados.length === 0) return;
+    if (temNegociacao && !negociacaoValida) {
+      toast.error("Descreva o motivo do desconto (mín. 20 caracteres) e confirme o ajuste.");
+      return;
+    }
     setEnviando(true);
     try {
       // 1. Criar venda
@@ -70,7 +109,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         "qa-checkout-criar-venda",
         {
           body: {
-            cart: selecionados.map((s) => ({ servico_id: s.id, slug: s.slug, quantidade: 1, preco_negociado: s.preco })),
+            cart: selecionados.map((s) => ({
+              servico_id: s.id,
+              slug: s.slug,
+              quantidade: 1,
+              preco_negociado: precoAplicado(s),
+            })),
+            negociacao: temNegociacao
+              ? {
+                  tipo_ajuste: tipoAjuste,
+                  motivo: motivoAjuste.trim(),
+                  confirmado: true,
+                  origem: "central_adesao_desconto",
+                }
+              : undefined,
             target_qa_cliente_id: clienteSalvo.id,
             identificacao: {
               nome_completo: clienteSalvo.nome_completo,
@@ -208,8 +260,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <p><span className="font-medium">E-mail:</span> {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}</p>
           <p className="font-medium">Serviço(s):</p>
           <ul className="list-disc list-inside ml-2 space-y-0.5">
-            {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
+            {selecionados.map((s) => (
+              <li key={s.id}>
+                {s.nome} — {formatBRL(precoAplicado(s))}
+                {Math.abs(precoAplicado(s) - (s.preco ?? 0)) > 0.0049 && (
+                  <span className="text-emerald-700"> (de {formatBRL(s.preco)})</span>
+                )}
+              </li>
+            ))}
           </ul>
+          {descontoTotal > 0.0049 && (
+            <p className="text-emerald-700">
+              <span className="font-medium">Desconto aplicado:</span> {formatBRL(descontoTotal)} — {TIPOS_AJUSTE_LABEL[tipoAjuste]}
+            </p>
+          )}
           <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
         </div>
 
@@ -302,9 +366,93 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       )}
 
       {selecionados.length > 0 && (
-        <div className="bg-muted/40 rounded p-2 text-xs flex justify-between">
-          <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
-          <span className="font-medium">{formatBRL(totalSelecionados)}</span>
+        <div className="border rounded-lg p-3 space-y-3 bg-white">
+          <p className="text-xs font-semibold">Valores e descontos (exceções comerciais)</p>
+          <div className="space-y-2">
+            {selecionados.map((s) => {
+              const aplicado = precoAplicado(s);
+              const dif = (s.preco ?? 0) - aplicado;
+              return (
+                <div key={s.id} className="flex items-center gap-2 text-xs">
+                  <span className="flex-1 truncate">{s.nome}</span>
+                  <span className="text-muted-foreground line-through w-20 text-right">
+                    {formatBRL(s.preco)}
+                  </span>
+                  <Input
+                    value={precosNegociados[s.id] ?? ""}
+                    onChange={(e) =>
+                      setPrecosNegociados((prev) => ({ ...prev, [s.id]: e.target.value }))
+                    }
+                    placeholder={String((s.preco ?? 0).toFixed(2)).replace(".", ",")}
+                    className="h-8 w-28 text-xs text-right"
+                  />
+                  {dif > 0.0049 && (
+                    <span className="text-[10px] font-semibold text-emerald-700 w-24 text-right">
+                      -{formatBRL(dif)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex justify-between text-xs pt-1 border-t">
+            <span className="text-muted-foreground">{selecionados.length} serviço(s) selecionado(s)</span>
+            <span className="text-right">
+              {descontoTotal > 0.0049 && (
+                <span className="block text-[10px] text-muted-foreground line-through">
+                  {formatBRL(totalCatalogo)}
+                </span>
+              )}
+              <span className="font-semibold">{formatBRL(totalSelecionados)}</span>
+            </span>
+          </div>
+
+          {temNegociacao && (
+            <div className="space-y-2 border-t pt-2">
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Tipo de ajuste
+                </Label>
+                <select
+                  value={tipoAjuste}
+                  onChange={(e) => setTipoAjuste(e.target.value as TipoAjuste)}
+                  className="h-8 w-full text-xs border rounded-md px-2 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                >
+                  {Object.entries(TIPOS_AJUSTE_LABEL).map(([v, l]) => (
+                    <option key={v} value={v}>{l}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Motivo do desconto (mín. 20 caracteres — vai para o contrato)
+                </Label>
+                <textarea
+                  value={motivoAjuste}
+                  onChange={(e) => setMotivoAjuste(e.target.value)}
+                  rows={3}
+                  className="w-full text-xs border rounded-md px-2 py-1.5 mt-0.5"
+                  style={{ borderColor: "hsl(220 15% 88%)" }}
+                  placeholder="Ex.: Desconto concedido por contratação conjunta de dois serviços na mesma adesão."
+                />
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {motivoAjuste.trim().length}/20
+                </p>
+              </div>
+              <label className="flex items-start gap-2 text-[11px]">
+                <input
+                  type="checkbox"
+                  checked={confirmadoAjuste}
+                  onChange={(e) => setConfirmadoAjuste(e.target.checked)}
+                  className="mt-0.5"
+                />
+                Confirmo o desconto de <b>{formatBRL(descontoTotal)}</b> e autorizo que ele conste no
+                objeto do contrato.
+              </label>
+            </div>
+          )}
         </div>
       )}
 
@@ -377,7 +525,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <Button
           size="sm"
           onClick={() => setEtapa("confirmar")}
-          disabled={selecionados.length === 0}
+          disabled={selecionados.length === 0 || !negociacaoValida}
           className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
         >
           Continuar <ChevronRight className="w-3.5 h-3.5" />
