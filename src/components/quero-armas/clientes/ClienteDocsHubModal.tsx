@@ -2626,6 +2626,31 @@ export function ClienteDocsHubModal({
     setShowTipoOverride(false);
     if (!f) return;
 
+    // ── Trava global: PDF ORIGINAL em todas as fases ─────────────────────
+    // Print, foto de tela e digitalização não valem. A única exceção é a
+    // foto 3x4 do titular, que é imagem por natureza.
+    {
+      const aceitaImagem = tipoAceitaImagem(form.tipo_documento);
+      const ehPdf = f.type === "application/pdf";
+      const ehImagem = f.type.startsWith("image/");
+      if (!aceitaImagem && !ehPdf) {
+        const id = toast.error(MSG_SOMENTE_PDF_ORIGINAL, {
+          duration: Infinity,
+          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+        });
+        setFile(null);
+        return;
+      }
+      if (aceitaImagem && !ehImagem) {
+        const id = toast.error(MSG_FOTO_SOMENTE_IMAGEM, {
+          duration: Infinity,
+          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+        });
+        setFile(null);
+        return;
+      }
+    }
+
     // ── Trava: documento oficial de identidade só entra como PDF com QR Code
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
     if (isTipoIdentidadeComQr(form.tipo_documento)) {
