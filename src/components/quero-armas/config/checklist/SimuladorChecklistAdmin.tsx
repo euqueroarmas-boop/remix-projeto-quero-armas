@@ -214,7 +214,6 @@ export default function SimuladorChecklistAdmin() {
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
    */
   async function removerItem(id: string, nome: string) {
-    void 0;
     const anteriores = linhas;
     setLinhas((p) => p.filter((l) => l.id !== id));
     const { error } = await supabase
