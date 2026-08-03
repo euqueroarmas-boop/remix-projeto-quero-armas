@@ -594,6 +594,24 @@ Deno.serve(async (req) => {
       ? `${ctxCompetencia}\n\n======\n\n${ctx}`
       : ctx;
 
+    // ── Anexos enviados pelo cliente no chat ──────────────────────────
+    const anexosLista = (Array.isArray(anexos) ? anexos : []).slice(0, 6);
+    const anexosCtx = anexosLista.length
+      ? "## ARQUIVOS ENVIADOS PELO CLIENTE NESTA MENSAGEM\n" +
+        anexosLista
+          .map((a, i) => {
+            const texto = (a?.texto_extraido || "").toString().slice(0, 12000).trim();
+            return (
+              `### Arquivo ${i + 1}: ${a?.nome_arquivo ?? "sem nome"} (${a?.mime_type ?? "tipo desconhecido"})\n` +
+              (texto ? texto : "[não foi possível ler o conteúdo deste arquivo]")
+            );
+          })
+          .join("\n\n---\n\n") +
+        "\n\nREGRA PARA OS ARQUIVOS: leia e interprete o conteúdo acima EXCLUSIVAMENTE à luz da legislação e das fontes fornecidas neste contexto. " +
+        "Nunca ensine o cliente a executar o processo; explique o que a lei exige sobre o que ele enviou e diga que a QUERO ARMAS executa. " +
+        "Se o arquivo não puder ser lido ou não tiver relação com a matéria, diga isso com honestidade."
+      : "";
+
     const r = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
