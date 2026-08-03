@@ -17,6 +17,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import {
   simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
+  CONDICOES_CHECKLIST,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -247,6 +248,17 @@ export default function SimuladorChecklistAdmin() {
    * texto que aparece no título do Checklist Guiado da área do cliente.
    */
   async function renomearItem(id: string, novoNome: string) {
+    const nome = novoNome.trim();
+    if (!nome) return;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, nome_documento: nome } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ nome_documento: nome })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL RENOMEAR: " + (error.message ?? "ERRO"));
     const nome = novoNome.trim();
     if (!nome) return;
     const anteriores = linhas;
