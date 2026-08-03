@@ -738,9 +738,22 @@ Deno.serve(async (req) => {
           console.warn("[contexto-cliente] docs falhou:", e);
         }
 
-        if (blocosVendas.length || blocosProcessos.length) {
+        const nomeCompleto = String((clienteRow as any)?.nome_completo ?? "").trim();
+        const primeiroNome = nomeCompleto
+          ? nomeCompleto.split(/\s+/)[0].toLowerCase().replace(/^./, (c) => c.toUpperCase())
+          : "";
+        const blocoIdentidade = nomeCompleto
+          ? `### Identidade do cliente (autoritativa)\n` +
+            `Nome completo: ${nomeCompleto}\nPrimeiro nome (use exatamente assim): ${primeiroNome}\n\n` +
+            `REGRA DE NOME: trate o cliente EXCLUSIVAMENTE por "${primeiroNome}". ` +
+            `É PROIBIDO usar qualquer outro nome, apelido, diminutivo ou variação — nunca invente nome.\n\n`
+          : `### Identidade do cliente\nNome não disponível. NUNCA chame o cliente por nenhum nome; ` +
+            `fale de forma neutra, sem vocativo.\n\n`;
+
+        if (blocoIdentidade || blocosVendas.length || blocosProcessos.length) {
           ctxCliente =
             "## DADOS REAIS DA CONTA DESTE CLIENTE (autoritativos)\n" +
+            blocoIdentidade +
             (blocosVendas.length
               ? `### Compras e pagamentos\n${blocosVendas.join("\n")}\n\n`
               : "") +
