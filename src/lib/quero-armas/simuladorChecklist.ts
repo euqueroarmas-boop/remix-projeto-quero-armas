@@ -284,7 +284,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       l.condicao_profissional == null ||
       !condicao ||
       condicao === "indefinido" ||
-      l.condicao_profissional === condicao;
+      condicaoCasa(l.condicao_profissional, condicao);
     const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
     const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
     if (!cpOk || !modOk) return false;
@@ -347,9 +347,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       // Exigência amarrada a uma condição profissional ainda não escolhida:
       // mostra como "aguardando", com relógio, igual ao grupo de endereço.
       if (l.condicao_profissional && semCondicaoDefinida) {
-        const rotulo =
-          CONDICOES_CHECKLIST.find((c) => c.valor === l.condicao_profissional)?.label ??
-          String(l.condicao_profissional).toUpperCase();
+        const rotulo = rotulosCondicoes(l.condicao_profissional);
         return paraItem(l, "aguardando", `SÓ APARECE SE A CONDIÇÃO PROFISSIONAL FOR "${rotulo}"`);
       }
 
@@ -424,7 +422,9 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
   }
 
   const temPerguntaCondicao = chavesPerguntas.has("condicao_profissional");
-  const temDocsCondicao = ativas.some((l) => l.condicao_profissional === condicao);
+  const temDocsCondicao = ativas.some(
+    (l) => l.condicao_profissional != null && condicaoCasa(l.condicao_profissional, condicao),
+  );
   if (temPerguntaCondicao && condicao && condicao !== "indefinido" && !temDocsCondicao) {
     alertas.push({
       nivel: "aviso",
