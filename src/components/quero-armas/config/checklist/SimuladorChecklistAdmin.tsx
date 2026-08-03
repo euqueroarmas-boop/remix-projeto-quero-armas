@@ -787,6 +787,7 @@ export default function SimuladorChecklistAdmin() {
                               onRemover={removerItem}
                               onDefinirOrdem={definirOrdem}
                               onMoverGrupo={moverItemParaGrupo}
+                              onDefinirCondicao={definirCondicao}
                               onRenomear={renomearItem}
                             />
                           ))}
@@ -910,6 +911,7 @@ function LinhaItem({
   onRemover,
   onDefinirOrdem,
   onMoverGrupo,
+  onDefinirCondicao,
   onRenomear,
 }: {
   item: ItemSimulado;
@@ -919,6 +921,7 @@ function LinhaItem({
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
+  onDefinirCondicao: (id: string, valor: string) => void;
   onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
@@ -1042,6 +1045,25 @@ function LinhaItem({
             ))}
           </select>
         </div>
+
+        {item.tipo !== "pergunta" && (
+          <div className="mt-1 flex items-center gap-1">
+            <span className="text-[11px] uppercase" style={{ color: MUTED }}>só se</span>
+            <select
+              value={item.linha?.condicao_profissional ?? ""}
+              onChange={(e) => onDefinirCondicao(item.id, e.currentTarget.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 min-w-0 max-w-[260px] rounded border bg-white px-1 text-[11px] uppercase"
+              style={{ borderColor: LINE, color: INK }}
+              title="Condição profissional que faz esta exigência aparecer. Vazio = exigido de todos."
+            >
+              <option value="">SEM CONDIÇÃO — VALE PARA TODOS</option>
+              {CONDICOES_CHECKLIST.map((c) => (
+                <option key={c.valor} value={c.valor}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
           <div className="mt-1.5 flex flex-wrap gap-1">
