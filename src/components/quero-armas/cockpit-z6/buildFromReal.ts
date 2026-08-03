@@ -335,6 +335,12 @@ export interface BuildCockpitZ6FromRealInput {
   crafs: any[];              // qa_crafs (com data_validade)
   gtes: any[];               // qa_gtes (com data_validade)
   examesCliente: any[];      // qa_exames_cliente
+  /**
+   * Ordem canônica das exigências definida em Preços e Serviços
+   * (chave `${servico_id}:${tipo_documento.toLowerCase()}` → ordem).
+   * Quando presente, tem prioridade sobre o snapshot do processo.
+   */
+  catalogoDocOrdem?: Map<string, number>;
   onFocoCta?: () => void;    // callback do botão do Foco do Dia
 }
 
@@ -342,14 +348,27 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
   const {
     nomeCliente, cpfMascarado, membroDesde,
     processos, processoDocs, processoEventos,
-    vendas, crafs, gtes, examesCliente, onFocoCta,
+    vendas, crafs, gtes, examesCliente, onFocoCta, catalogoDocOrdem,
   } = input;
 
   // 1) Cards de processo (primeiro detalhado, demais compactos)
   const cards: CockpitZ6Process[] = processos.map((proc, i) => {
     const docs = processoDocs.filter((d) => d.processo_id === proc.id);
     const eventos = processoEventos.filter((e) => e.processo_id === proc.id);
-    return buildProcessoCard({ proc, docs, eventos, detalhado: i === 0 });
+    const ordemDoc = (d: any) => {
+      const servicoId = proc?.servico_id;
+      if (catalogoDocOrdem && servicoId != null) {
+        const cat = catalogoDocOrdem.get(
+          `${servicoId}:${String(d?.tipo_documento || "").toLowerCase()}`,
+        );
+        if (cat !== undefined) return cat;
+      }
+      const ord = Number(d?.ordem);
+      if (Number.isFinite(ord)) return ord;
+      const et = Number(d?.etapa);
+      return Number.isFinite(et) ? et * 100 : 9_999;
+    };
+    return buildProcessoCard({ proc, docs, eventos, detalhado: i === 0, ordemDoc });
   });
 
   // 2) KPIs humanos derivados do estado real
