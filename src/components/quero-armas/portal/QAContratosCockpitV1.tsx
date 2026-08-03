@@ -112,7 +112,9 @@ function fmtMemberSince(d: string | null | undefined): string {
   try {
     const p = new Date(d);
     if (isNaN(p.getTime())) return "—";
-    return p.toLocaleDateString("pt-BR", { month: "short", year: "numeric" }).toUpperCase().replace(/\./g, "");
+    const dd = String(p.getDate()).padStart(2, "0");
+    const mm = String(p.getMonth() + 1).padStart(2, "0");
+    return `${dd}/${mm}/${p.getFullYear()}`;
   } catch { return "—"; }
 }
 function maskCpf(cpf: string | null | undefined): string {
