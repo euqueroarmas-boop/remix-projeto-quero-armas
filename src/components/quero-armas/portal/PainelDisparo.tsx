@@ -40,8 +40,6 @@ interface Props {
 
 export default function PainelDisparo({ itens, corIcone, onOpen, badge, active = false }: Props) {
   const total = typeof badge === "number" ? badge : itens.length;
-  const ativo = total > 0 || itens.length > 0;
-
   return (
     <button
       type="button"
