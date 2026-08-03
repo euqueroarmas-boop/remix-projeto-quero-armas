@@ -716,7 +716,7 @@ export default function ClienteResumoKanban({
           </header>
 
           <div className="qa-client-summary-print__toolbar" aria-label="Filtros do resumo">
-            {filters.map((filter) => (
+            {visibleFilters.map((filter) => (
               <button
                 type="button"
                 key={filter.key}
@@ -810,7 +810,7 @@ export default function ClienteResumoKanban({
 
         <div style={{ marginTop: 24 }} />
         <section className="qa-client-summary-print__fronts" aria-label="Suas quatro frentes">
-          {snapshot.fronts.map((front) => (
+          {(isMobile ? snapshot.fronts.filter((f) => f.count > 0 || f.items.length > 0) : snapshot.fronts).map((front) => (
             <article className={`qa-front-card qa-front-card--${front.key} s-${front.status}`} key={front.key} onClick={() => onNavigate(front.navTo)} role="button" tabIndex={0}>
               <div className="qa-front-card__head">
                 <div><h2>{front.title}</h2><div className="qa-front-card__sub">Total de itens monitorados</div></div>
@@ -851,7 +851,7 @@ export default function ClienteResumoKanban({
         </section>
 
         <section className="qa-client-summary-print__summary" aria-label="Indicadores do resumo">
-          {snapshot.summary.map(([label, value, small]) => (
+          {(isMobile ? snapshot.summary.filter(([, value]) => value && value !== "0" && value !== "—") : snapshot.summary).map(([label, value, small]) => (
             <div className="qa-client-summary-print__sm" key={label}>
               <div className="qa-client-summary-print__k">{label}</div>
               <div className="qa-client-summary-print__v">{value}{small && <small>{small}</small>}</div>
