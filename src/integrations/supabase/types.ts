@@ -12763,6 +12763,7 @@ export type Database = {
           processos_processados: number
         }[]
       }
+      qa_suporte_sessao_ativa: { Args: never; Returns: boolean }
       qa_sweep_indeferimento_por_prazo: {
         Args: never
         Returns: {
