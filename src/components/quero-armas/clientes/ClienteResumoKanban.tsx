@@ -594,9 +594,36 @@ export default function ClienteResumoKanban({
   }, [atalhosOpen]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  type SummaryItem = { label: string; value: string; small?: string; merged?: boolean; parts?: Array<{ value: string; small: string }> };
+  const summaryItems = useMemo<SummaryItem[]>(() => {
+    if (!isMobile) return snapshot.summary.map(([label, value, small]) => ({ label, value, small }));
+    const [tarefas, proxVenc, renovar, processos] = snapshot.summary;
+    const merged = {
+      label: "TAREFAS E PROCESSOS",
+      value: "",
+      small: "",
+      merged: true,
+      parts: [
+        { value: tarefas[1], small: tarefas[2] },
+        { value: processos[1], small: processos[2] },
+      ],
+    };
+    const candidates: SummaryItem[] = [
+      { label: proxVenc[0], value: proxVenc[1], small: proxVenc[2] },
+      { label: renovar[0], value: renovar[1], small: renovar[2] },
+      merged,
+    ];
+    return candidates.filter((item) => {
+      if (item.merged) {
+        return item.parts.some((p) => p.value && p.value !== "0" && p.value !== "—");
+      }
+      return item.value && item.value !== "0" && item.value !== "—";
+    });
+  }, [isMobile, snapshot.summary]);
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
   const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
+
 
   const filteredUrgents = useMemo(
     () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
@@ -722,7 +749,16 @@ export default function ClienteResumoKanban({
          .qa-client-summary-print__v{font-size:18px}
          .qa-client-summary-print__v small{font-size:9px;margin-top:2px}
          .qa-client-summary-print__footer{margin-top:14px;font-size:8px}
-       }`}</style>
+        }
+        .qa-summary-merged .qa-client-summary-print__k{margin-bottom:6px}
+        .qa-summary-merged__body{display:flex;align-items:flex-start;gap:18px}
+        .qa-summary-merged__part{display:flex;flex-direction:column;min-width:0;position:relative}
+        .qa-summary-merged__part:first-child{padding-right:18px}
+        .qa-summary-merged__part:first-child:after{content:"";position:absolute;right:0;top:0;bottom:0;width:1px;background:var(--line)}
+        .qa-summary-merged__part .qa-client-summary-print__v{font-size:22px}
+        .qa-summary-merged__part small{font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:var(--muted);margin-top:4px;display:block;text-transform:none}
+        @media (max-width:768px){.qa-summary-merged__body{gap:12px}.qa-summary-merged__part:first-child{padding-right:12px}.qa-summary-merged__part .qa-client-summary-print__v{font-size:18px}.qa-summary-merged__part small{font-size:9px;margin-top:2px}}
+        `}</style>
       <div className="qa-client-summary-print__wrap">
         <div className="qa-client-summary-print__sticky">
           <header className="qa-client-summary-print__top">
@@ -870,10 +906,21 @@ export default function ClienteResumoKanban({
         </section>
 
         <section className="qa-client-summary-print__summary" aria-label="Indicadores do resumo">
-          {(isMobile ? snapshot.summary.filter(([, value]) => value && value !== "0" && value !== "—") : snapshot.summary).map(([label, value, small]) => (
-            <div className="qa-client-summary-print__sm" key={label}>
-              <div className="qa-client-summary-print__k">{label}</div>
-              <div className="qa-client-summary-print__v">{value}{small && <small>{small}</small>}</div>
+          {summaryItems.map((item) => (
+            <div className={`qa-client-summary-print__sm${item.merged ? " qa-summary-merged" : ""}`} key={item.label}>
+              <div className="qa-client-summary-print__k">{item.label}</div>
+              {item.merged ? (
+                <div className="qa-summary-merged__body">
+                  {item.parts?.map((part) => (
+                    <div className="qa-summary-merged__part" key={part.small}>
+                      <div className="qa-client-summary-print__v">{part.value}</div>
+                      <small>{part.small}</small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="qa-client-summary-print__v">{item.value}{item.small && <small>{item.small}</small>}</div>
+              )}
             </div>
           ))}
         </section>
