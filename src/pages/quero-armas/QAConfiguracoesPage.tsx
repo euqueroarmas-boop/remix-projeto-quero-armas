@@ -16,6 +16,7 @@ import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoP
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
 import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/MontarChecklistAdmin";
+import SimuladorChecklistAdmin from "@/components/quero-armas/config/checklist/SimuladorChecklistAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -445,6 +446,7 @@ export default function QAConfiguracoesPage() {
           {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
           {isAdmin && <TabsTrigger value="biblioteca" className="data-[state=active]:bg-slate-100">Biblioteca de Documentos</TabsTrigger>}
           {isAdmin && <TabsTrigger value="checklist" className="data-[state=active]:bg-slate-100">Montar Checklist</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="simulador" className="data-[state=active]:bg-slate-100">Simulador do Checklist</TabsTrigger>}
           {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
           {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
           {isAdmin && <TabsTrigger value="klal" className="data-[state=active]:bg-slate-100">Klal</TabsTrigger>}
@@ -637,6 +639,11 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="checklist" className="mt-4">
           {/* Montar checklist do serviço a partir da biblioteca + modelos prontos + preview + snapshots */}
           <MontarChecklistAdmin />
+        </TabsContent>
+
+        <TabsContent value="simulador" className="mt-4">
+          {/* Simulação passo a passo: mesma regra do motor real (explosão + perguntas) */}
+          <SimuladorChecklistAdmin />
         </TabsContent>
         </>
       )}
