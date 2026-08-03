@@ -505,6 +505,68 @@ export default function SimuladorChecklistAdmin() {
               processos e portal do cliente).
             </p>
 
+            {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
+            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
+                  Adicionar exigência (biblioteca oficial)
+                </span>
+                {adicionando && <Loader2 className="h-3 w-3 animate-spin" style={{ color: BORDO }} />}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: MUTED }} />
+                  <input
+                    value={buscaBib}
+                    onChange={(e) => setBuscaBib(e.target.value)}
+                    placeholder="BUSCAR DOCUMENTO NA BIBLIOTECA..."
+                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[11px] uppercase"
+                    style={{ borderColor: LINE, color: INK }}
+                  />
+                </div>
+                <select
+                  value={condicaoNova}
+                  onChange={(e) => setCondicaoNova(e.target.value)}
+                  className="rounded border bg-white px-2 py-1.5 text-[10px] uppercase"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Exigir só para esta condição profissional"
+                >
+                  <option value="">TODAS AS CONDIÇÕES</option>
+                  {CONDICOES.map((c) => (
+                    <option key={c.valor} value={c.valor}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              {buscaBib.trim().length >= 2 && (
+                <div className="mt-2 max-h-44 overflow-y-auto rounded border bg-white" style={{ borderColor: LINE }}>
+                  {bibliotecaFiltrada.length === 0 && (
+                    <div className="px-2 py-2 text-[10px] uppercase" style={{ color: MUTED }}>
+                      Nenhum documento na biblioteca com esse termo — cadastre-o em Biblioteca de Documentos.
+                    </div>
+                  )}
+                  {bibliotecaFiltrada.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      disabled={b.jaNoServico || adicionando}
+                      onClick={() => adicionarExigencia(b)}
+                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 disabled:opacity-40 hover:bg-slate-50"
+                      style={{ borderColor: "hsl(220 13% 95%)" }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[11px] leading-snug" style={{ color: INK }}>{b.nome}</span>
+                        <span className="block text-[9px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
+                      </span>
+                      <span className="shrink-0 text-[9px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
+                        {b.jaNoServico ? "já está" : "adicionar"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext
