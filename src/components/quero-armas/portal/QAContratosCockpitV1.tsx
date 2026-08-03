@@ -790,7 +790,7 @@ function FeaturedContractCard({
           <span className={`font-['Oswald'] tracking-[0.16em] rounded-sm font-bold uppercase ${isRejected ? "text-[11px] px-3 py-2 bg-[#C32E26] text-white" : `text-[9.5px] px-2 py-1 ${badge.cls}`}`}>
             {badge.label}
           </span>
-          <h2 className="font-['Oswald'] text-[13px] tracking-[0.06em] font-semibold uppercase truncate">
+          <h2 className="font-['Oswald'] text-[13px] leading-[1.3] tracking-[0.06em] font-semibold uppercase min-w-0 flex-1 whitespace-normal break-words [overflow-wrap:anywhere]">
             {contract.contract_number || "—"}{contract.service_label ? ` · ${contract.service_label}` : ""}
           </h2>
         </div>
