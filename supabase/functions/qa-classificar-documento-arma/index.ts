@@ -821,6 +821,45 @@ Deno.serve(async (req) => {
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
     const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
+    // === DOCUMENTO PARSEADO: SEM IA ===
+    // Se o texto nativo casa com um modelo aprovado da Biblioteca, o parser já
+    // sabe exatamente o que é o documento. Nesses casos a IA só acrescenta erro
+    // (divergências falsas, campos trocados) — então nem é chamada.
+    if (modeloBiblioteca) {
+      let parsedParser: any = {
+        tipoDetectado: modeloBiblioteca.tipo,
+        confianca: 0.99,
+        camposExtraidos: extrairCamposDeterministicos(textoPdfNativo),
+        justificativa:
+          `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
+          `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis). Sem uso de IA.`,
+      };
+      parsedParser = aplicarClassificacaoDeterministica(parsedParser, textoPdfNativo);
+      // O modelo aprovado prevalece sobre qualquer heurística.
+      parsedParser.tipoDetectado = modeloBiblioteca.tipo;
+      parsedParser.confianca = 0.99;
+      parsedParser.modelo_biblioteca = {
+        tipo_documento: modeloBiblioteca.tipoDocumento,
+        nome_modelo: modeloBiblioteca.nomeModelo,
+        cobertura: modeloBiblioteca.cobertura,
+      };
+
+      const tipoNormParser = normalizeTipoSelecionado(tipoSelecionado);
+      return json({
+        tipoDetectado: modeloBiblioteca.tipo,
+        confianca: 0.99,
+        camposExtraidos: parsedParser.camposExtraidos || {},
+        justificativa: String(parsedParser.justificativa || "").slice(0, 500),
+        // Documento parseado por modelo aprovado nunca gera divergência/revisão.
+        divergenciaComSelecaoManual: false,
+        tipoSelecionadoNormalizado: tipoNormParser,
+        recomendacao: "aceitar",
+        revisao_obrigatoria: false,
+        origemClassificacao: "parser_biblioteca",
+        modelo_biblioteca: parsedParser.modelo_biblioteca,
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
 
