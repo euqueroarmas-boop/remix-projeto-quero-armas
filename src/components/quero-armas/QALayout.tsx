@@ -6,6 +6,7 @@ import { QAFooter } from "./QAFooter";
 import { lazy, Suspense } from "react";
 
 const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
+const AdminNotificacoesOverlay = lazy(() => import("./notificacoes/AdminNotificacoesOverlay"));
 
 /**
  * Guarda de rota por perfil — espelha as regras do QASidebar.canAccess
@@ -66,6 +67,10 @@ function QALayoutInner() {
       {/* Painel automático de pendências essenciais (perfis internos). */}
       <Suspense fallback={null}>
         <PendenciasEssenciaisModal />
+      </Suspense>
+      {/* Central de Notificação: pop-ups discretos em tempo real. */}
+      <Suspense fallback={null}>
+        <AdminNotificacoesOverlay />
       </Suspense>
     </div>
   );

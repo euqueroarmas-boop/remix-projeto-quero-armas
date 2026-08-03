@@ -2388,6 +2388,60 @@ export type Database = {
           },
         ]
       }
+      qa_admin_notificacoes: {
+        Row: {
+          cliente_id: number | null
+          cliente_nome: string | null
+          created_at: string
+          documento_nome: string | null
+          id: string
+          lida: boolean
+          lida_em: string | null
+          link: string | null
+          mensagem: string
+          metadata: Json
+          referencia_id: string | null
+          referencia_tabela: string | null
+          status: string | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          cliente_id?: number | null
+          cliente_nome?: string | null
+          created_at?: string
+          documento_nome?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem: string
+          metadata?: Json
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          status?: string | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          cliente_id?: number | null
+          cliente_nome?: string | null
+          created_at?: string
+          documento_nome?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string
+          metadata?: Json
+          referencia_id?: string | null
+          referencia_tabela?: string | null
+          status?: string | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       qa_arma_gt_declaracoes: {
         Row: {
           arma_manual_id: number | null
@@ -12334,6 +12388,7 @@ export type Database = {
         Args: { p_cliente_id: number; p_confirm_cpf: string }
         Returns: Json
       }
+      qa_admin_notif_status: { Args: { _status: string }; Returns: string }
       qa_aproveitar_endereco_cadastro_publico: {
         Args: { p_processo_id: string }
         Returns: number
