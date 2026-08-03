@@ -14,7 +14,7 @@
  */
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AlertTriangle, ArrowRight, CheckCircle2, Download, Upload, Loader2, Clock, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ChevronDown, Download, Upload, Loader2, Clock, X } from "lucide-react";
 import { openMinutaContratoQueroArmas, prepareMinutaContratoQueroArmas, getContratoAssinadoUrl, type PreparedMinutaDownload } from "@/lib/quero-armas/minutaContratoDownload";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -607,6 +607,8 @@ function FeaturedContractCard({
   const [localProcessingSince, setLocalProcessingSince] = React.useState<string | null>(null);
   const [showDone, setShowDone] = React.useState(false);
   const [baixandoAssinado, setBaixandoAssinado] = React.useState(false);
+  // Nasce recolhido — o cliente expande quando quiser ver o detalhamento
+  const [expandido, setExpandido] = React.useState(false);
   const prevStatusRef = React.useRef<string | null>(null);
   const refreshRef = React.useRef(onValidatedRefresh);
 
@@ -883,9 +885,20 @@ function FeaturedContractCard({
               </button>
             </>
           )}
+          <button
+            type="button"
+            onClick={() => setExpandido((v) => !v)}
+            aria-expanded={expandido}
+            className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] transition-colors duration-200"
+          >
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expandido ? "rotate-180" : ""}`} />
+            <span className="whitespace-nowrap">{expandido ? "RECOLHER" : "EXPANDIR"}</span>
+          </button>
         </div>
       </div>
 
+      {expandido && (
+        <>
       {/* painel SLA — acompanhamento pós-envio */}
       <ValidationSLAPanel contract={contract} localProcessingSince={localProcessingSince} />
 
@@ -1030,6 +1043,8 @@ function FeaturedContractCard({
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* ─────────── Modal de conclusão ─────────── */}
       {showDone && (
