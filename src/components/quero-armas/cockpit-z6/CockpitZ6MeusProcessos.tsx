@@ -371,6 +371,24 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-title{padding-left:0}
           .z6-root .z6-foco-body{padding-left:0}
         }
+        /* Mobile: densidade menor, nada estoura a tela. */
+        .z6-root{overflow-x:hidden}
+        .z6-root *{overflow-wrap:anywhere}
+        @media (max-width: 640px){
+          .z6-root .z6-title{font-size:18px !important;letter-spacing:.02em !important}
+          .z6-root .z6-foco-card{margin-top:12px !important}
+          .z6-root .z6-foco-card > div{padding:12px 13px !important;gap:10px !important}
+          .z6-root .z6-foco-kicker{font-size:9px !important;letter-spacing:.18em !important}
+          .z6-root .z6-foco-title{font-size:16px !important;line-height:1.2 !important;margin-top:6px !important}
+          .z6-root .z6-foco-desc{font-size:11.5px !important}
+          .z6-root .z6-foco-cta{padding:9px 12px !important;font-size:10px !important;letter-spacing:.14em !important;width:100%}
+          .z6-root .z6-kpi{padding:9px 10px !important}
+          .z6-root .z6-kpi-l{font-size:8.5px !important;letter-spacing:.1em !important;white-space:normal !important}
+          .z6-root .z6-kpi-l span:last-child{white-space:normal !important}
+          .z6-root .z6-kpi-v{font-size:19px !important;margin-top:6px !important}
+          .z6-root .z6-kpi-s{font-size:9.5px !important}
+          .z6-root .z6-proc-title{font-size:11px !important;letter-spacing:.1em !important}
+        }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
         .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
       `}</style>
@@ -393,13 +411,14 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         <Card className="z6-foco-card" style={{ marginTop: 20, marginBottom: 0, borderLeft: "3px solid #D9342B", background: "#fff" }}>
           <div style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
             <div className="z6-foco-body" style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
-              <div style={{ fontFamily: "Georgia,'Times New Roman',serif", fontSize: 26, lineHeight: 1.1, marginTop: 10, fontWeight: 700, letterSpacing: "-.015em", color: "#0c0c0c" }}>{focoDoDia.titulo}</div>
-              <div style={{ fontFamily: "Arial,sans-serif", fontSize: 13, color: "#5a5a5a", marginTop: 6 }}>{focoDoDia.descricao}</div>
+              <div className="z6-foco-kicker" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 11, fontWeight: 900, letterSpacing: ".28em", color: "#D9342B", textTransform: "uppercase" }}>FOCO DO DIA · AÇÃO BLOQUEANTE</div>
+              <div className="z6-foco-title" style={{ fontFamily: "Georgia,'Times New Roman',serif", fontSize: 26, lineHeight: 1.1, marginTop: 10, fontWeight: 700, letterSpacing: "-.015em", color: "#0c0c0c" }}>{focoDoDia.titulo}</div>
+              <div className="z6-foco-desc" style={{ fontFamily: "Arial,sans-serif", fontSize: 13, color: "#5a5a5a", marginTop: 6 }}>{focoDoDia.descricao}</div>
             </div>
             <button
               type="button"
               onClick={focoDoDia.cta.onClick}
+              className="z6-foco-cta"
               style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "11px 16px", fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontWeight: 900, letterSpacing: ".22em", fontSize: 11, cursor: "pointer", borderRadius: 2, textTransform: "uppercase" }}
             >
               {focoDoDia.cta.label}
@@ -424,13 +443,13 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           @media (max-width: 640px){ .z6-kpis{grid-template-columns:repeat(2,minmax(0,1fr)) !important} }
         `}</style>
         {kpis.map((k, i) => (
-          <div key={i} style={{ background: "#fff", border: "1px solid #E5E5E5", padding: "14px 14px", borderRadius: 4 }}>
-            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".18em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase", whiteSpace: "nowrap" }}>
+          <div key={i} className="z6-kpi" style={{ background: "#fff", border: "1px solid #E5E5E5", padding: "14px 14px", borderRadius: 4, minWidth: 0 }}>
+            <div className="z6-kpi-l" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, letterSpacing: ".18em", color: "#7A7A7A", display: "flex", alignItems: "center", gap: 6, textTransform: "uppercase", whiteSpace: "nowrap" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", display: "inline-block", background: DOT[k.dot], flexShrink: 0 }} />
               <span style={{ whiteSpace: "nowrap" }}>{k.label}</span>
             </div>
-            <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 26, lineHeight: 1, fontWeight: 900, marginTop: 9, color: "#0A0A0A" }}>{k.value}</div>
-            <div style={{ fontFamily: "Arial,sans-serif", fontSize: 11, fontWeight: 700, color: "#7A7A7A", marginTop: 4 }}>{k.sub}</div>
+            <div className="z6-kpi-v" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 26, lineHeight: 1, fontWeight: 900, marginTop: 9, color: "#0A0A0A" }}>{k.value}</div>
+            <div className="z6-kpi-s" style={{ fontFamily: "Arial,sans-serif", fontSize: 11, fontWeight: 700, color: "#7A7A7A", marginTop: 4 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -441,7 +460,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #EFEFEF", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
               <Badge tone={p.badgeTone}>{p.badge}</Badge>
-              <h2 style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 13, letterSpacing: ".24em", color: "#0A0A0A", fontWeight: 900, margin: 0, textTransform: "uppercase" }}>{p.titulo}</h2>
+              <h2 className="z6-proc-title" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 13, letterSpacing: ".24em", color: "#0A0A0A", fontWeight: 900, margin: 0, textTransform: "uppercase" }}>{p.titulo}</h2>
             </div>
             {p.protocolo && (
               <div style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", fontSize: 10, fontWeight: 900, color: "#6A6A6A", letterSpacing: ".22em", textTransform: "uppercase" }}>{p.protocolo}</div>
