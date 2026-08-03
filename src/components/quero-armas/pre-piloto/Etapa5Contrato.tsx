@@ -260,8 +260,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <p><span className="font-medium">E-mail:</span> {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}</p>
           <p className="font-medium">Serviço(s):</p>
           <ul className="list-disc list-inside ml-2 space-y-0.5">
-            {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
+            {selecionados.map((s) => (
+              <li key={s.id}>
+                {s.nome} — {formatBRL(precoAplicado(s))}
+                {Math.abs(precoAplicado(s) - (s.preco ?? 0)) > 0.0049 && (
+                  <span className="text-emerald-700"> (de {formatBRL(s.preco)})</span>
+                )}
+              </li>
+            ))}
           </ul>
+          {descontoTotal > 0.0049 && (
+            <p className="text-emerald-700">
+              <span className="font-medium">Desconto aplicado:</span> {formatBRL(descontoTotal)} — {TIPOS_AJUSTE_LABEL[tipoAjuste]}
+            </p>
+          )}
           <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
         </div>
 
@@ -513,7 +525,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <Button
           size="sm"
           onClick={() => setEtapa("confirmar")}
-          disabled={selecionados.length === 0}
+          disabled={selecionados.length === 0 || !negociacaoValida}
           className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
         >
           Continuar <ChevronRight className="w-3.5 h-3.5" />
