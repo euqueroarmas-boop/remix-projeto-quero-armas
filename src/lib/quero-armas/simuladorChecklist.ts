@@ -212,7 +212,19 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
     const cpOk = l.condicao_profissional == null || l.condicao_profissional === condicao;
     const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
     const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
-    return cpOk && modOk;
+    if (!cpOk || !modOk) return false;
+    // BLINDAGEM: exigência de renda/ocupação cadastrada SEM condição no catálogo
+    // não pode vazar para todas as condições (ex.: CTD aparecendo para servidor
+    // público). Assim que o cliente define a condição, só entram as linhas
+    // daquela condição — a pergunta de definição continua sempre visível.
+    if (l.condicao_profissional == null && condicao && condicao !== "indefinido") {
+      const g = grupoCanonico(l.tipo_documento, l.regra_validacao);
+      const ehRenda = g === "ocupacao";
+      const ehSeletor =
+        ehPergunta(l.regra_validacao) || l.tipo_documento === "renda_definir_condicao";
+      if (ehRenda && !ehSeletor) return false;
+    }
+    return true;
   });
 
   const { manter, descartadas } = dedupPorTipo(filtradas);
