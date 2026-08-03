@@ -2,8 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
-  Clock, AlertTriangle, ArrowRight,
+  Clock, AlertTriangle, ArrowRight, GripVertical,
 } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, arrayMove, sortableKeyboardCoordinates,
+  verticalListSortingStrategy, useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { toast } from "sonner";
 import {
   simularChecklist, CONDICOES, MODALIDADES,
   type LinhaCatalogo, type ItemSimulado,
@@ -21,6 +31,7 @@ export default function SimuladorChecklistAdmin() {
   const [servicoId, setServicoId] = useState<number | null>(null);
   const [linhas, setLinhas] = useState<LinhaCatalogo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [salvandoOrdem, setSalvandoOrdem] = useState(false);
 
   const [modalidade, setModalidade] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
@@ -75,6 +86,65 @@ export default function SimuladorChecklistAdmin() {
   }
 
   const servicoNome = servicos.find((s) => s.id === servicoId)?.nome_servico ?? "";
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  /**
+   * Reordena o que o cliente vê e grava a nova ordem em qa_servicos_documentos —
+   * fonte única lida por TODOS os motores (Preços e Serviços / Montar Checklist,
+   * catálogo, explosão do checklist do processo e portal do cliente).
+   */
+  async function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
+    const from = visiveisIds.indexOf(String(active.id));
+    const to = visiveisIds.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+
+    const novaOrdemVisivel = arrayMove(visiveisIds, from, to);
+
+    // Ordem global: itens visíveis primeiro (na nova sequência), depois o restante
+    // do catálogo do serviço preservando a ordem relativa atual.
+    const restantes = [...linhas]
+      .filter((l) => !novaOrdemVisivel.includes(l.id))
+      .sort((a, b) => (a.ordem ?? 999) - (b.ordem ?? 999))
+      .map((l) => l.id);
+    const sequencia = [...novaOrdemVisivel, ...restantes];
+
+    const mapaOrdem = new Map<string, number>();
+    sequencia.forEach((id, idx) => mapaOrdem.set(id, (idx + 1) * 10));
+
+    const anteriores = linhas;
+    const atualizadas = linhas.map((l) => ({ ...l, ordem: mapaOrdem.get(l.id) ?? l.ordem }));
+    setLinhas(atualizadas);
+
+    const alterados = atualizadas.filter(
+      (l) => l.ordem !== anteriores.find((a) => a.id === l.id)?.ordem,
+    );
+    if (alterados.length === 0) return;
+
+    setSalvandoOrdem(true);
+    try {
+      for (const l of alterados) {
+        const { error } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .update({ ordem: l.ordem })
+          .eq("id", l.id);
+        if (error) throw error;
+      }
+      toast.success("ORDEM ATUALIZADA EM TODOS OS MOTORES DO CHECKLIST");
+    } catch (e: any) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR A ORDEM: " + (e?.message ?? "ERRO"));
+    } finally {
+      setSalvandoOrdem(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -243,37 +313,52 @@ export default function SimuladorChecklistAdmin() {
 
           {/* Coluna 2 — checklist projetado */}
           <div className="qa-card p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <ArrowRight className="h-3.5 w-3.5" style={{ color: BORDO }} />
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                O que o cliente vê — {servicoNome}
-              </span>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2">
+                <ArrowRight className="h-3.5 w-3.5" style={{ color: BORDO }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
+                  O que o cliente vê — {servicoNome}
+                </span>
+              </div>
+              {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
             </div>
+            <p className="text-[10px] mb-3" style={{ color: MUTED }}>
+              Clique, segure o punho ⠿ e arraste para definir a ordem. A nova ordem é gravada no
+              catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
+              processos e portal do cliente).
+            </p>
 
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
-              {sim.grupos.map((g) => (
-                <div key={g.grupo}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
-                      {g.rotulo}
-                    </span>
-                    <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
-                      {g.cumpridos}/{g.cumpridos + g.pendentes}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    {g.itens.map((i) => (
-                      <LinhaItem
-                        key={i.id}
-                        item={i}
-                        onToggle={alternarEntrega}
-                        onResponder={responder}
-                        onLimparResposta={limparResposta}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext
+                  items={sim.grupos.flatMap((g) => g.itens.map((i) => i.id))}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sim.grupos.map((g) => (
+                    <div key={g.grupo}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
+                          {g.rotulo}
+                        </span>
+                        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
+                          {g.cumpridos}/{g.cumpridos + g.pendentes}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        {g.itens.map((i) => (
+                          <LinhaItem
+                            key={i.id}
+                            item={i}
+                            onToggle={alternarEntrega}
+                            onResponder={responder}
+                            onLimparResposta={limparResposta}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </SortableContext>
+              </DndContext>
               {sim.grupos.length === 0 && (
                 <p className="text-xs py-6 text-center" style={{ color: MUTED }}>
                   Nenhuma exigência ativa para esta combinação.
@@ -306,14 +391,33 @@ function LinhaItem({
   }[item.estado];
   const Icon = cfg.icon;
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+
   return (
     <div
+      ref={setNodeRef}
       className="flex items-start gap-2 rounded-md border px-2.5 py-1.5"
       style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 30 : undefined,
+        position: "relative",
+        background: isDragging ? "#FFFFFF" : undefined,
+        boxShadow: isDragging ? "0 8px 20px rgba(0,0,0,0.12)" : undefined,
         borderColor: "hsl(220 13% 93%)",
         opacity: item.estado === "dispensado" ? 0.55 : 1,
       }}
     >
+      <button
+        type="button"
+        aria-label="Arrastar para reordenar"
+        title="Clique, segure e arraste para reordenar"
+        {...attributes}
+        {...listeners}
+        className="shrink-0 mt-[1px] cursor-grab active:cursor-grabbing touch-none text-slate-400 hover:text-slate-600"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
       <Icon className="h-3.5 w-3.5 shrink-0 mt-[2px]" style={{ color: cfg.cor }} />
       <div className="min-w-0 flex-1">
         <div
