@@ -732,6 +732,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                         onSave={() => void saveRow(row)}
                         onDuplicate={() => void addNew(row)}
                         onDelete={() => void removeRow(row)}
+                        onToggleAtivo={() => void toggleAtivo(row)}
                         onMoveUp={() => void moveRow(row, -1)}
                         onMoveDown={() => void moveRow(row, 1)}
                         onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
