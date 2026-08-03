@@ -141,6 +141,12 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "cnh" ||
     t === "passaporte" ||
     t === "cpf" ||
+    // A foto 3x4 é peça de IDENTIFICAÇÃO. Caindo em "outros" (ordem 99) ela ia
+    // para o fim da fila e o portal pedia certidões antes — contrariando a
+    // ordem do catálogo (Montar Checklist), onde a foto é ordem 2.
+    t === "foto_3x4" ||
+    t === "foto" ||
+    t.startsWith("foto_3x4") ||
     t === "certidao_nascimento" ||
     t === "certidao_casamento"
   ) {
