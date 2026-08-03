@@ -30,6 +30,8 @@ import { toast } from "sonner";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
+import { PORTAL_NAV_ITEMS } from "@/components/quero-armas/portal/portalNavItems";
+import { IconBuildingStore, IconBomb } from "@tabler/icons-react";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
@@ -1183,19 +1185,8 @@ function ClientePortalMirrorAdmin({
   const customerId = docsCliente.find((d: any) => d.customer_id)?.customer_id ?? null;
   const userName = cliente.nome_completo || "Cliente";
 
-  const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard },
-    { key: "armas_municoes" as const, label: "Arsenal Inteligente", icon: Crosshair },
-    { key: "contratos" as const, label: "Contratos", icon: ScrollText },
-    { key: "documentos" as const, label: "Documentos", icon: Files },
-    { key: "processos" as const, label: "Meus Processos", icon: FolderKanban },
-    { key: "pendencias" as const, label: "Pendências", icon: BellDot },
-    { key: "analise_alvo" as const, label: "Análise de Alvo", icon: Target },
-    { key: "recarga_municoes" as const, label: "Recarga de Munições", icon: PackageOpen },
-    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard },
-    { key: "mensagens" as const, label: "Suporte", icon: Headphones },
-    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal },
-  ], []);
+  // Espelho fiel da área do cliente: mesma fonte única de atalhos.
+  const navItems = useMemo(() => PORTAL_NAV_ITEMS, []);
 
   const servicoNomePorId = useMemo(() => {
     const map: Record<number, string> = {};
@@ -1486,6 +1477,32 @@ function ClientePortalMirrorAdmin({
           </div>
           <div className="flex-1" />
           <div className="flex flex-col items-center gap-1 pb-[88px]">
+            {/* Loja (novo serviço) — espelho visual, desabilitado no admin */}
+            <button
+              type="button"
+              disabled
+              title="Novo serviço — indisponível no espelho admin (somente leitura)"
+              aria-label="Novo serviço (somente leitura)"
+              className="w-10 h-10 rounded-lg flex items-center justify-center cursor-not-allowed"
+              style={{ color: `${railIconColor}55` }}
+            >
+              <IconBuildingStore className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
+            </button>
+
+            {/* Checklist guiado — abre em modo visualização */}
+            <button
+              type="button"
+              onClick={() => abrirChecklistGuiado()}
+              title="Checklist guiado (visualização)"
+              aria-label="Checklist guiado (visualização)"
+              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+              style={{ color: `${railIconColor}88` }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
+            >
+              <IconBomb className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
+            </button>
+
             {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
               const Icon = item.icon;
               const active = activeSection === item.key;
