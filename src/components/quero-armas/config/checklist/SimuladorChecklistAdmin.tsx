@@ -97,17 +97,7 @@ export default function SimuladorChecklistAdmin() {
    * fonte única lida por TODOS os motores (Preços e Serviços / Montar Checklist,
    * catálogo, explosão do checklist do processo e portal do cliente).
    */
-  async function onDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
-    const from = visiveisIds.indexOf(String(active.id));
-    const to = visiveisIds.indexOf(String(over.id));
-    if (from < 0 || to < 0) return;
-
-    const novaOrdemVisivel = arrayMove(visiveisIds, from, to);
-
+  async function persistirSequencia(novaOrdemVisivel: string[]) {
     // Ordem global: itens visíveis primeiro (na nova sequência), depois o restante
     // do catálogo do serviço preservando a ordem relativa atual.
     const restantes = [...linhas]
@@ -144,6 +134,40 @@ export default function SimuladorChecklistAdmin() {
     } finally {
       setSalvandoOrdem(false);
     }
+  }
+
+  /** Move um item dentro/entre grupos OU um grupo inteiro (id "grupo:<slug>"). */
+  async function onDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // ── Arrasto de GRUPO INTEIRO ────────────────────────────────────────────
+    if (activeId.startsWith("grupo:")) {
+      const gruposIds = sim.grupos.map((g) => `grupo:${g.grupo}`);
+      const overGrupo = overId.startsWith("grupo:")
+        ? overId
+        : `grupo:${sim.grupos.find((g) => g.itens.some((i) => i.id === overId))?.grupo ?? ""}`;
+      const from = gruposIds.indexOf(activeId);
+      const to = gruposIds.indexOf(overGrupo);
+      if (from < 0 || to < 0 || from === to) return;
+      const novaOrdemGrupos = arrayMove(gruposIds, from, to);
+      const novaOrdemVisivel = novaOrdemGrupos.flatMap((gid) => {
+        const slug = gid.slice("grupo:".length);
+        return sim.grupos.find((g) => g.grupo === slug)?.itens.map((i) => i.id) ?? [];
+      });
+      await persistirSequencia(novaOrdemVisivel);
+      return;
+    }
+
+    // ── Arrasto de ITEM ─────────────────────────────────────────────────────
+    const visiveisIds = sim.grupos.flatMap((g) => g.itens.map((i) => i.id));
+    const from = visiveisIds.indexOf(activeId);
+    const to = visiveisIds.indexOf(overId);
+    if (from < 0 || to < 0) return;
+    await persistirSequencia(arrayMove(visiveisIds, from, to));
   }
 
   return (
@@ -323,7 +347,8 @@ export default function SimuladorChecklistAdmin() {
               {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
             </div>
             <p className="text-[10px] mb-3" style={{ color: MUTED }}>
-              Clique, segure o punho ⠿ e arraste para definir a ordem. A nova ordem é gravada no
+              Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
+              título do grupo para mover o grupo inteiro. A nova ordem é gravada no
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
               processos e portal do cliente).
             </p>
@@ -331,31 +356,28 @@ export default function SimuladorChecklistAdmin() {
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                 <SortableContext
-                  items={sim.grupos.flatMap((g) => g.itens.map((i) => i.id))}
+                  items={sim.grupos.map((g) => `grupo:${g.grupo}`)}
                   strategy={verticalListSortingStrategy}
                 >
                   {sim.grupos.map((g) => (
-                    <div key={g.grupo}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
-                          {g.rotulo}
-                        </span>
-                        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
-                          {g.cumpridos}/{g.cumpridos + g.pendentes}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {g.itens.map((i) => (
-                          <LinhaItem
-                            key={i.id}
-                            item={i}
-                            onToggle={alternarEntrega}
-                            onResponder={responder}
-                            onLimparResposta={limparResposta}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                    <BlocoGrupo key={g.grupo} grupo={g}>
+                      <SortableContext
+                        items={g.itens.map((i) => i.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-1">
+                          {g.itens.map((i) => (
+                            <LinhaItem
+                              key={i.id}
+                              item={i}
+                              onToggle={alternarEntrega}
+                              onResponder={responder}
+                              onLimparResposta={limparResposta}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                    </BlocoGrupo>
                   ))}
                 </SortableContext>
               </DndContext>
@@ -368,6 +390,51 @@ export default function SimuladorChecklistAdmin() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function BlocoGrupo({
+  grupo,
+  children,
+}: {
+  grupo: { grupo: string; rotulo: string; cumpridos: number; pendentes: number };
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `grupo:${grupo.grupo}`,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.65 : 1,
+      }}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Mover grupo inteiro"
+            title="Arraste para mover o grupo inteiro"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none"
+            style={{ color: BORDO }}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
+            {grupo.rotulo}
+          </span>
+        </div>
+        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
+          {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
+        </span>
+      </div>
+      {children}
     </div>
   );
 }
