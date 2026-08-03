@@ -2560,10 +2560,20 @@ export default function QAClientePortalPage() {
     // do grupo bater com a sequência em que o cliente vai encontrá-los.
     const mapaGrupos = new Map<string, { label: string; ordem: number; total: number; concluidos: number }>();
     for (const d of obrigatorios) {
-      const g = grupoDaPendenciaHelper(
+      const gBase = grupoDaPendenciaHelper(
         String(d?.tipo_documento || ""),
         toHubTipoCompartilhado(String(d?.tipo_documento || "")),
       );
+      const processo = procById.get(String(d?.processo_id || ""));
+      const catGrupo = processo?.servico_id != null
+        ? catalogoDocInfo.get(`${processo.servico_id}:${String(d?.tipo_documento || "").toLowerCase()}`)
+        : undefined;
+      const metaGrupo = catGrupo?.grupo_checklist
+        ? PENDENCIA_GRUPOS[catGrupo.grupo_checklist as keyof typeof PENDENCIA_GRUPOS]
+        : undefined;
+      const g = metaGrupo
+        ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
+        : gBase;
       const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
       cur.total += 1;
       if (concluido(d)) cur.concluidos += 1;
@@ -2580,7 +2590,7 @@ export default function QAClientePortalPage() {
       concluidos: obrigatorios.length - abertos.length,
       grupos,
     };
-  }, [processoDocs]);
+  }, [processoDocs, processos, catalogoDocInfo]);
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
