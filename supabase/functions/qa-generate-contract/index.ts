@@ -533,6 +533,63 @@ Deno.serve(async (req) => {
   } catch { /* best effort */ }
 
   // ---------------------------------------------------------------------------
+  // Desconto / preço negociado — evento `preco_negociado_aplicado` da venda.
+  // Deve constar EXPLICITAMENTE no objeto do contrato.
+  // ---------------------------------------------------------------------------
+  let descontoBloco = "";
+  try {
+    const { data: negEv } = await sb
+      .from("qa_venda_eventos")
+      .select("dados_json")
+      .eq("venda_id", venda.id)
+      .eq("tipo_evento", "preco_negociado_aplicado")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const dj = (negEv as any)?.dados_json ?? null;
+    if (dj) {
+      const catalogo = Number(dj.preco_catalogo_no_momento);
+      const aplicado = Number(dj.preco_aplicado);
+      const diff = Number(dj.diferenca_valor);
+      const pct = Number(dj.percentual_desconto_ou_acrescimo);
+      const motivo = String(dj.motivo_preco_negociado || "").trim();
+      if (Number.isFinite(catalogo) && Number.isFinite(aplicado) && Math.abs(diff) > 0.004) {
+        const desconto = diff < 0;
+        const rotulo = desconto ? "DESCONTO COMERCIAL CONCEDIDO" : "ACRÉSCIMO COMERCIAL ACORDADO";
+        const itensLi = Array.isArray(dj.itens)
+          ? dj.itens
+              .filter((i: any) => i && Math.abs(Number(i.diferenca_valor ?? 0)) > 0.004)
+              .map((i: any) =>
+                `<li><strong>${esc(String(i.servico_nome || i.slug || "Serviço"))}</strong> — ` +
+                `valor de tabela ${brl(Math.round(Number(i.preco_catalogo || 0) * 100))}, ` +
+                `valor contratado ${brl(Math.round(Number(i.preco_aplicado || 0) * 100))}</li>`,
+              )
+              .join("")
+          : "";
+        descontoBloco =
+          `<h2>CLÁUSULA PRIMEIRA-C --- DO ${rotulo}</h2>` +
+          `<p>1.C.1. O valor de tabela dos serviços contratados, na data do aceite, era de ` +
+          `<strong>${brl(Math.round(catalogo * 100))}</strong>. Em condição comercial excepcional, ` +
+          `as partes ajustaram o valor efetivamente contratado em ` +
+          `<strong>${brl(Math.round(aplicado * 100))}</strong>, ` +
+          `${desconto ? "com desconto" : "com acréscimo"} de ` +
+          `<strong>${brl(Math.round(Math.abs(diff) * 100))}</strong>` +
+          `${Number.isFinite(pct) && pct !== 0 ? ` (${Math.abs(pct).toFixed(2).replace(".", ",")}%)` : ""}.</p>` +
+          (itensLi ? `<p>1.C.2. Discriminação por item:</p><ul>${itensLi}</ul>` : "") +
+          (motivo
+            ? `<p>1.C.${itensLi ? "3" : "2"}. Justificativa registrada pela CONTRATADA: ` +
+              `<em>${esc(motivo)}</em>.</p>`
+            : "") +
+          `<p>1.C.${itensLi ? (motivo ? "4" : "3") : motivo ? "3" : "2"}. A condição comercial ora ` +
+          `ajustada é específica desta contratação, não constitui precedente e não se estende a ` +
+          `renovações, aditivos ou novos serviços.</p>`;
+      }
+    }
+  } catch (e) {
+    console.warn("[qa-generate-contract] falha ao ler desconto:", (e as any)?.message || e);
+  }
+
+  // ---------------------------------------------------------------------------
   // Bloco "cláusula de pagamento" — só renderizado quando houve parcelamento
   // com juros/tarifa da adquirente (informado pela Equipe no fluxo manual).
   // Fonte: último evento pagamento_manual_confirmado da venda.
