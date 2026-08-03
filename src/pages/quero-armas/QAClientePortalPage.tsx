@@ -4409,6 +4409,7 @@ export default function QAClientePortalPage() {
         open={
           !mustChangePassword &&
           !declResidenciaAberta &&
+          !(isBelowLg && activeSection === "checklist_guiado") &&
           (showContratoPopup ||
             (pendingContractsLoaded &&
               pendingSignatureCount > 0 &&
