@@ -130,7 +130,12 @@ const CSS = `
    Nenhum eixo escapa: sem rolagem horizontal, sem "bounce" da página e
    textos longos quebram dentro do card em vez de empurrar o layout. */
 .qafin-central{max-width:100%;width:100%;overflow-x:hidden;overscroll-behavior:none;
-  touch-action:pan-y;overflow-anchor:none}
+  touch-action:pan-y;overflow-anchor:none;
+  height:100%;max-height:100%;display:flex;flex-direction:column}
+.qafin-sticky-header{flex:0 0 auto}
+.qafin-scrollable{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none}
+.qafin-scrollable::-webkit-scrollbar{width:0;height:0}
 .qafin-central *{min-width:0;max-width:100%}
 .qafin-central .charge .t,.qafin-central .expanded .head .t,
 .qafin-central h1,.qafin-central h2,.qafin-central h3,.qafin-central p{
