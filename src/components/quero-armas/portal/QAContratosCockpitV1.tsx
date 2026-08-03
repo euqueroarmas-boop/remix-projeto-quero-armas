@@ -40,6 +40,7 @@ interface Contract {
   arquivado_motivo?: string | null;
   venda_status?: string | null;
   is_arquivado?: boolean;
+  customer_ack_completed_at?: string | null;
 }
 
 const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
@@ -155,7 +156,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, valor, servico_slug, created_at, validation_details, arquivado_em, arquivado_motivo")
+          .select("id, cliente_id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, valor, servico_slug, created_at, validation_details, arquivado_em, arquivado_motivo, customer_ack_completed_at")
           .eq("cliente_id", cliente.id)
           .order("created_at", { ascending: false });
         if (error) console.warn("[QAContratosCockpitV1] qa_contracts:", error.message);
@@ -613,12 +614,15 @@ function FeaturedContractCard({
   React.useEffect(() => {
     const status = String(contract.status || "");
     const seenKey = `qa_contract_completed_seen_${contract.id}`;
-    const already = typeof window !== "undefined" && window.localStorage.getItem(seenKey);
+    const already =
+      !!contract.customer_ack_completed_at ||
+      (typeof window !== "undefined" && !!window.localStorage.getItem(seenKey));
     if (status === "validated" && !already) {
       // pequena espera para não competir com toast/realtime
       // marca como visto imediatamente ao abrir — garante exibição única
       // mesmo se o cliente fechar a aba sem interagir com o modal.
       try { window.localStorage.setItem(seenKey, "1"); } catch {}
+      void marcarAckContrato(contract.id);
       const t = setTimeout(() => setShowDone(true), 350);
       return () => clearTimeout(t);
     }
@@ -629,7 +633,7 @@ function FeaturedContractCard({
       if (uploadedMs >= localMs - 3000) setLocalProcessingSince(null);
     }
     prevStatusRef.current = status;
-  }, [contract.status, contract.id, contract.customer_uploaded_at, localProcessingSince]);
+  }, [contract.status, contract.id, contract.customer_uploaded_at, contract.customer_ack_completed_at, localProcessingSince]);
 
   React.useEffect(() => {
     if (!localProcessingSince) return;
@@ -640,6 +644,7 @@ function FeaturedContractCard({
 
   function closeDone() {
     try { window.localStorage.setItem(`qa_contract_completed_seen_${contract.id}`, "1"); } catch {}
+    void marcarAckContrato(contract.id);
     setShowDone(false);
   }
 
