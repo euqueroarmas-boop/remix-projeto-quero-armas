@@ -593,6 +593,7 @@ export default function ClienteResumoKanban({
     return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onEsc); };
   }, [atalhosOpen]);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
   const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
