@@ -974,66 +974,88 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
   }
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8 bg-black/55 backdrop-blur-[2px] animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="w-full max-w-[520px] bg-white border border-[#E5E5E5] rounded-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* header verde */}
-        <div className="bg-[#EAF7EE] border-b border-[#B7E0C2] px-6 py-5 flex items-start gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#2F8F4A] text-white flex items-center justify-center shrink-0">
-            <CheckCircle2 className="h-5 w-5" />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* header padrão — chips de contexto */}
+        <div className="px-6 pt-6 pb-4 pr-14 shrink-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+              Contrato vigente
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              Assinatura GOV.BR
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              {contract.contract_number}
+            </span>
           </div>
-          <div className="min-w-0">
-            <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#1F6638] font-bold uppercase">
-              CONTRATO VIGENTE
-            </div>
-            <h3 className="font-['Oswald'] text-[18px] tracking-[0.02em] font-semibold uppercase text-[#0A0A0A] mt-0.5 leading-tight">
-              Assinatura confirmada!
-            </h3>
-            <div className="text-[11.5px] text-[#4a6a54] mt-1">
-              {contract.contract_number} · liberado em <b>{fmtDateLong(contract.customer_signature_validated_at || contract.customer_uploaded_at)}</b>
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
+            Assinatura confirmada
+          </h2>
+          <p className="mt-2 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[13px] leading-relaxed text-[#3A3A3A]">
+            Contrato liberado em{" "}
+            <strong>{fmtDateLong(contract.customer_signature_validated_at || contract.customer_uploaded_at)}</strong>
+          </p>
         </div>
 
         {/* corpo — próximos passos */}
-        <div className="px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
           <div className="font-['Oswald'] text-[10px] tracking-[0.2em] text-[#7A7A7A] font-bold uppercase mb-3">
             PRÓXIMOS PASSOS
           </div>
-          <ol className="space-y-3 text-[12.5px] text-[#0A0A0A] leading-relaxed">
-            <li className="flex gap-3">
-              <span className="h-5 w-5 rounded-full bg-[#0A0A0A] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <span>
-                <b>Abra seu processo em "Meus Processos"</b> — sua pasta já foi criada e recebeu o número de protocolo interno.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="h-5 w-5 rounded-full bg-[#0A0A0A] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-              <span>
-                <b>Envie a documentação exigida</b> pelo checklist do serviço. Cada documento sobe pelo próprio processo, com validação automática.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <span className="h-5 w-5 rounded-full bg-[#0A0A0A] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <span>
-                <b>Nossa equipe monta e protocola</b> junto ao órgão competente. Você recebe atualização por e-mail e WhatsApp a cada etapa.
-              </span>
-            </li>
-          </ol>
+          <div className="relative">
+            <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
+            <ul className="space-y-5 relative">
+              {[
+                {
+                  titulo: 'Abra seu processo em "Meus Processos"',
+                  corpo: "Sua pasta já foi criada e recebeu o número de protocolo interno.",
+                },
+                {
+                  titulo: "Envie a documentação exigida",
+                  corpo: "Use o checklist do serviço. Cada documento sobe pelo próprio processo, com validação automática.",
+                },
+                {
+                  titulo: "Nossa equipe monta e protocola",
+                  corpo: "Protocolamos junto ao órgão competente. Você recebe atualização por e-mail e WhatsApp a cada etapa.",
+                },
+              ].map((p, i) => (
+                <li key={i} className="flex gap-4">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                    {i + 1}
+                  </span>
+                  <div className="pt-1">
+                    <p className="text-[14px] font-semibold leading-snug text-[#0A0A0A]">{p.titulo}</p>
+                    <p className="mt-1 text-[14px] leading-relaxed text-[#3A3A3A]">{p.corpo}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          <div className="mt-5 bg-[#F8F8F6] border border-[#E5E5E5] rounded-sm px-3.5 py-3 text-[11.5px] text-[#5a5a5a] leading-relaxed">
+          <div className="mt-5 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3.5 py-3 text-[12.5px] text-[#5a5a5a] leading-relaxed">
             Guarde o contrato assinado (você pode rebaixar por <b>BAIXAR CONTRATO</b>). Ele ficará permanentemente disponível na área <b>Contratos</b>.
           </div>
         </div>
 
         {/* rodapé — CTAs */}
-        <div className="px-6 py-4 bg-[#FAFAFA] border-t border-[#EEE] flex items-center justify-end gap-2.5">
+        <div className="shrink-0 px-6 py-4 bg-white border-t border-[#EEE] flex items-center justify-end gap-2.5">
           <button
             type="button"
             onClick={onClose}
