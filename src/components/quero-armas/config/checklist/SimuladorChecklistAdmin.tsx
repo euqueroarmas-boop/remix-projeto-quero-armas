@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
-  Clock, AlertTriangle, ArrowRight, GripVertical,
+  Clock, AlertTriangle, ArrowRight, GripVertical, X,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -83,6 +83,43 @@ export default function SimuladorChecklistAdmin() {
   function reiniciar() {
     setRespostas({});
     setEntregues({});
+  }
+
+  /**
+   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
+   * (`ativo = false`), que é o mesmo mecanismo do Montar Checklist — o item
+   * some do simulador, do portal do cliente e de todos os motores, e pode ser
+   * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
+   */
+  async function removerItem(id: string, nome: string) {
+    const anteriores = linhas;
+    setLinhas((p) => p.filter((l) => l.id !== id));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ativo: false })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL EXCLUIR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success(`"${String(nome).toUpperCase()}" REMOVIDO DO CHECKLIST`, {
+      action: {
+        label: "DESFAZER",
+        onClick: async () => {
+          const { error: e2 } = await supabase
+            .from("qa_servicos_documentos" as any)
+            .update({ ativo: true })
+            .eq("id", id);
+          if (e2) {
+            toast.error("NÃO FOI POSSÍVEL REATIVAR");
+            return;
+          }
+          setLinhas(anteriores);
+          toast.success("EXIGÊNCIA RESTAURADA");
+        },
+      },
+    });
   }
 
   const servicoNome = servicos.find((s) => s.id === servicoId)?.nome_servico ?? "";
@@ -412,6 +449,7 @@ export default function SimuladorChecklistAdmin() {
                               onToggle={alternarEntrega}
                               onResponder={responder}
                               onLimparResposta={limparResposta}
+                              onRemover={removerItem}
                             />
                           ))}
                         </div>
@@ -483,11 +521,13 @@ function LinhaItem({
   onToggle,
   onResponder,
   onLimparResposta,
+  onRemover,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
   onResponder: (chave: string, valor: string) => void;
   onLimparResposta: (chave: string) => void;
+  onRemover: (id: string, nome: string) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -580,6 +620,26 @@ function LinhaItem({
           {item.estado === "cumprido" ? "desfazer" : "enviar"}
         </button>
       )}
+      <button
+        type="button"
+        aria-label="Excluir exigência do checklist"
+        title="Excluir esta exigência do checklist"
+        onClick={() => {
+          if (
+            window.confirm(
+              `Excluir "${item.nome_documento}" do checklist?\n\nO item deixa de ser exigido no simulador, no portal do cliente e em todos os motores. Você pode desfazer logo em seguida.`,
+            )
+          ) {
+            onRemover(item.id, item.nome_documento);
+          }
+        }}
+        className="shrink-0 mt-[1px] rounded p-0.5 text-slate-400 hover:text-white"
+        style={{ transition: "all .12s" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#7A1F2B")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      >
+        <X className="h-3 w-3" />
+      </button>
     </div>
   );
 }
