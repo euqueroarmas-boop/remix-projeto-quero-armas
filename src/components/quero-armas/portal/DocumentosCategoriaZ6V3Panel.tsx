@@ -398,7 +398,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       <style>{`
         .qa-docsz6 .os{font-family:'Oswald','Arial Narrow',Arial,sans-serif}
         .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:22px;font-weight:700;letter-spacing:.03em;color:#0A0A0A;text-transform:uppercase;line-height:1.05;margin:0}
-        .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;line-height:1.4;color:#6A6A6A;display:flex;gap:4px 18px;flex-wrap:wrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
+        .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;line-height:1.4;color:#6A6A6A;display:flex;flex-direction:column;gap:4px;flex-wrap:nowrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
+        .qa-docsz6 .hdr .meta > span{display:flex;align-items:center;gap:18px;white-space:nowrap}
+        @media (max-width:520px){.qa-docsz6 .hdr .meta{font-size:9px;letter-spacing:.12em;gap:3px}.qa-docsz6 .hdr .meta > span{gap:10px}}
+        @media (max-width:380px){.qa-docsz6 .hdr .meta{font-size:8.5px;letter-spacing:.08em}}
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
         .qa-docsz6 .focus{background:#fff;border:1px solid #E5E5E5;border-left:4px solid #D9342B;border-radius:3px;padding:16px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
         .qa-docsz6 .focus .lbl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.22em;color:#D9342B;text-transform:uppercase}
@@ -465,9 +468,11 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
         <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
-        <div className="meta">
-          <span>CPF · <b>{cpfFmt}</b></span>
-          <span>MEMBRO DESDE · <b>{memberSince}</b></span>
+        <div className="meta qa-meta-lines">
+          <span>
+            <span>CPF · <b>{cpfFmt}</b></span>
+            <span>MEMBRO DESDE · <b>{memberSince}</b></span>
+          </span>
           <span><b>{kpis.total}</b> DOCUMENTOS ATIVOS</span>
         </div>
       </div>

@@ -34,6 +34,19 @@
 .qa-meta { font-family: var(--qa-font-meta); font-size: 10px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; color: #6A6A6A; }
 .qa-meta b { color: var(--qa-ink); font-weight: 600; }
 
+/* 5b. Bloco de metadados em 2 linhas (padrão harmonizado do portal):
+   linha 1 = CPF · <cpf>  MEMBRO DESDE · <data>
+   linha 2 = contador da página. Nenhuma das linhas quebra. */
+.qa-meta-lines { display: flex; flex-direction: column; gap: 4px; margin-top: 11px; line-height: 1.4; }
+.qa-meta-lines > span { display: flex; align-items: center; gap: 18px; white-space: nowrap; }
+@media (max-width: 520px) {
+  .qa-meta-lines { font-size: 9px; letter-spacing: .12em; gap: 3px; }
+  .qa-meta-lines > span { gap: 10px; }
+}
+@media (max-width: 380px) {
+  .qa-meta-lines { font-size: 8.5px; letter-spacing: .08em; }
+}
+
 /* 6. Rótulo de KPI */
 .qa-kpi-label { font-family: var(--qa-font-display); font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; color: var(--qa-ink-mute); line-height: 1.1; }
 

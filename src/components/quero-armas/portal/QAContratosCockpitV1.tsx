@@ -467,9 +467,14 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <h1 className="qa-h1">
           {primeiroNome}, ESSES SÃO SEUS CONTRATOS
         </h1>
-        <div className="qa-meta mt-[11px]">
-          CPF · <b>{cpf}</b> · MEMBRO DESDE <b>{membro}</b>
-          {kpis.aguarda > 0 && <> · <b>{kpis.aguarda} CONTRATO{kpis.aguarda > 1 ? "S" : ""}</b> AGUARDANDO ASSINATURA</>}
+        <div className="qa-meta qa-meta-lines">
+          <span>
+            <span>CPF · <b>{cpf}</b></span>
+            <span>MEMBRO DESDE · <b>{membro}</b></span>
+          </span>
+          <span>
+            <b>{kpis.aguarda}</b>&nbsp;CONTRATO{kpis.aguarda === 1 ? "" : "S"} AGUARDANDO ASSINATURA
+          </span>
         </div>
       </header>
 
