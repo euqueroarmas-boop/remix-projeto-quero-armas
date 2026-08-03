@@ -4443,6 +4443,46 @@ export default function QAClientePortalPage() {
           setDocsReloadKey((k) => k + 1);
         }}
       />
+      {avatarDropOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center"
+          style={{ background: "rgba(8,8,8,0.72)", backdropFilter: "blur(6px)", padding: 12 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 text-center"
+            style={{ boxShadow: "0 24px 60px rgba(0,0,0,0.45)" }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">Encerrar sessão</p>
+            <h2
+              className="mt-3 text-[22px] font-bold uppercase leading-tight text-[#0A0A0A]"
+              style={{ fontFamily: "Oswald, sans-serif" }}
+            >
+              Deseja sair do Arsenal Inteligente?
+            </h2>
+            <p className="mt-2 text-[12px] text-slate-500">
+              Sua sessão será encerrada neste dispositivo.
+            </p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setAvatarDropOpen(false)}
+                className="h-12 rounded-xl border border-slate-200 text-[12px] font-bold uppercase tracking-[0.14em] text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                Não
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAvatarDropOpen(false); void handleLogout(); }}
+                className="h-12 rounded-xl bg-[#7A1F2B] text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#611722]"
+              >
+                Sim, sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </PortalFilterProvider>
   );
