@@ -608,7 +608,7 @@ export default function ClienteResumoKanban({
         { value: processos[1], small: processos[2] },
       ],
     };
-    const candidates = [
+    const candidates: SummaryItem[] = [
       { label: proxVenc[0], value: proxVenc[1], small: proxVenc[2] },
       { label: renovar[0], value: renovar[1], small: renovar[2] },
       merged,
