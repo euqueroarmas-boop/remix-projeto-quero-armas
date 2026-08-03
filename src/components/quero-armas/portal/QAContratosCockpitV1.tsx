@@ -817,9 +817,7 @@ function FeaturedContractCard({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 md:gap-3 min-w-0">
-          <div className="font-['Oswald'] text-[10px] text-[#7A7A7A] tracking-[0.16em] uppercase break-words">
-            PROTOCOLO · CONTRATO {(contract.contract_number || "—").replace(/\s+/g, "")}
-          </div>
+
           {temAssinado ? (
             <button
               type="button"
