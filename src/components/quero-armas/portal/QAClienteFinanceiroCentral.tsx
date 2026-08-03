@@ -125,6 +125,18 @@ const CSS = `
   overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:24px}
 .qafin-scrollable::-webkit-scrollbar{width:0;height:0}
 .qafin-scrollable{scrollbar-width:none}}
+
+/* ── TRAVA TOTAL DE EIXOS (todas as larguras) ─────────────────────────────
+   Nenhum eixo escapa: sem rolagem horizontal, sem "bounce" da página e
+   textos longos quebram dentro do card em vez de empurrar o layout. */
+.qafin-central{max-width:100%;width:100%;overflow-x:hidden;overscroll-behavior:none;
+  touch-action:pan-y;overflow-anchor:none}
+.qafin-central *{min-width:0;max-width:100%}
+.qafin-central .charge .t,.qafin-central .expanded .head .t,
+.qafin-central h1,.qafin-central h2,.qafin-central h3,.qafin-central p{
+  overflow-wrap:anywhere;word-break:break-word}
+.qafin-central img,.qafin-central svg,.qafin-central table{max-width:100%}
+.qafin-scrollable{overflow-x:hidden;overscroll-behavior:contain}
 `;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
