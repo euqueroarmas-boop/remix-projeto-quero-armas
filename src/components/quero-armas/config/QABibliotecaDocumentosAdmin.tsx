@@ -229,9 +229,27 @@ export default function QABibliotecaDocumentosAdmin() {
       return;
     }
     toast.success(`"${novo.nome}" adicionado à biblioteca`);
+
+    if (modelosNovo.length > 0) {
+      setTreinandoNovo(true);
+      for (const f of modelosNovo) {
+        try {
+          const r = await treinarModeloArquivo(codigo, novo.nome.trim(), f);
+          toast.success(
+            `Modelo "${f.name}" treinado (${r?.deterministico ? "determinística ✓" : "determinística —"} · ${r?.ia ? "IA ✓" : "IA —"})`,
+          );
+        } catch (e: any) {
+          toast.error(`Falha no modelo "${f.name}": ${e?.message ?? "erro"}`);
+        }
+      }
+      setTreinandoNovo(false);
+    }
+
     setNovo({ ...BLANK });
+    setModelosNovo([]);
     setCriandoNovo(false);
     await carregar();
+    await recarregarResumo();
   }
 
   return (
