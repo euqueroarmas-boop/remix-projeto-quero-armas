@@ -1199,9 +1199,17 @@ Deno.serve(async (req) => {
         if (matches.length > 0) {
           const slug = matches[matches.length - 1][1].toLowerCase();
           const s = catalogoBySlug.get(slug);
-          if (s) {
+          const nomeNorm = s ? normalizarNome(s.nome) : "";
+          const jaContratado =
+            !!s &&
+            Array.from(servicosContratadosNorm).some(
+              (c) => c && nomeNorm && (c === nomeNorm || c.includes(nomeNorm) || nomeNorm.includes(c)),
+            );
+          if (s && !jaContratado) {
             servicoSugerido = { id: s.id, slug: s.slug, nome: s.nome, preco_cents: s.preco_cents };
             servicoSugeridoSlug = s.slug;
+          } else if (jaContratado) {
+            console.log("[oferta] suprimida — serviço já contratado:", s?.slug);
           }
         }
         // Limpa marcas do texto salvo/persistido.
