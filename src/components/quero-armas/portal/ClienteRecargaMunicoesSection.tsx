@@ -13,7 +13,7 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
         .qa-alvo__head-main{min-width:0}
         .qa-alvo__badge-slot{flex-shrink:0;position:static;z-index:2}
-        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0;padding-right:0}
+        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:900;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin:0;padding-right:0}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
         .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:22px;line-height:1.06;margin:8px 0 0;letter-spacing:.01em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
         .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;width:100%;text-wrap:pretty}
@@ -21,18 +21,18 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:#fafafa;border:1px solid var(--line);border-radius:3px;padding:0;min-height:0;height:100%;overflow:hidden}
         .qa-recarga__hero{width:100%;height:100%;max-width:none;object-fit:cover;display:block}
         .qa-alvo__body{display:flex;flex-direction:column;gap:16px;min-width:0;justify-content:center}
-        .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:18px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
+        .qa-alvo__h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;line-height:1.15;margin:0;color:#0c0c0c;letter-spacing:-.01em}
         .qa-alvo__p{font-family:Arial,sans-serif;font-size:13px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
         .qa-alvo__card{border:1px solid var(--line);background:#fafafa;border-radius:3px;padding:14px 16px;display:grid;grid-template-columns:20px 1fr;gap:12px;align-items:start;min-height:80px}
         .qa-alvo__card svg{width:16px;height:16px;color:var(--ink);margin-top:2px}
-        .qa-alvo__card-t{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.18em;color:var(--ink);text-transform:uppercase;line-height:1.1}
+        .qa-alvo__card-t{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;color:var(--ink);text-transform:uppercase;line-height:1.1}
         .qa-alvo__card-d{font-family:Arial,sans-serif;font-size:12px;line-height:1.35;color:var(--muted);margin-top:3px}
         .qa-alvo__note{border:1px solid rgba(122,31,43,.25);background:#fff;border-radius:3px;padding:14px 16px;margin-top:2px}
-        .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
+        .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}
-        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:16px}.qa-alvo__target{min-height:260px;height:auto}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo__kicker{padding-right:0}}
+        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:16px}.qa-alvo__target{min-height:260px;height:auto}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo__h2{font-size:16px}.qa-alvo__kicker{padding-right:0}}
       `}</style>
 
       <div className="qa-alvo__head">
