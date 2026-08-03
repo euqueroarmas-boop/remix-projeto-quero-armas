@@ -394,8 +394,52 @@ export default function SimuladorChecklistAdmin() {
   );
 }
 
+function BlocoGrupo({
+  grupo,
+  children,
+}: {
+  grupo: { grupo: string; rotulo: string; cumpridos: number; pendentes: number };
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: `grupo:${grupo.grupo}`,
+  });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.65 : 1,
+      }}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            aria-label="Mover grupo inteiro"
+            title="Arraste para mover o grupo inteiro"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing touch-none"
+            style={{ color: BORDO }}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
+            {grupo.rotulo}
+          </span>
+        </div>
+        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
+          {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function LinhaItem({
-  item,
   item,
   onToggle,
   onResponder,
