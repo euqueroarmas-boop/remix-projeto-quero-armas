@@ -113,9 +113,6 @@ export default function SimuladorChecklistAdmin() {
   }
 
   /**
-   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
-   */
-  /**
    * Adiciona uma exigência ao serviço a partir da BIBLIOTECA — exatamente a
    * mesma tabela (qa_documentos_biblioteca) e a mesma gravação
    * (qa_servicos_documentos) usadas por Montar Checklist / Catálogo de Preços.
