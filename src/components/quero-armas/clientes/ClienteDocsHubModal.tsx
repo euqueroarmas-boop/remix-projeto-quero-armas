@@ -3620,19 +3620,19 @@ export function ClienteDocsHubModal({
                 Dossiê
               </div>
               {classificacao && tipoAtual ? (
-                <span className="font-heading text-[9px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+                <span className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
                   {tipoAtual.short}
                 </span>
               ) : null}
             </div>
-            <div className="font-heading text-[14px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
+            <div className="font-heading text-[13px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
               {(classificacao ? tipoAtual?.label : null) ||
                 expectedTipoMeta?.label ||
                 tipoAtual?.label ||
                 "Aguardando classificação"}
             </div>
             {expectedTipoMeta ? (
-              <div className="font-heading text-[9px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
                 Exigência: {expectedTipoMeta.label}
               </div>
             ) : null}
@@ -4003,16 +4003,16 @@ export function ClienteDocsHubModal({
                             <p className="font-semibold text-[11px] truncate">{p.nome}</p>
                             <p className="text-[10px] opacity-70">
                               {p.registro ? `${p.registro} · ` : ""}{cidadeFormatada}
-                              {p.distancia_km != null ? <span className="ml-1 text-[9px] bg-blue-100 px-1 py-0.5 rounded">{p.distancia_km.toFixed(1)} km</span> : ""}
+                              {p.distancia_km != null ? <span className="ml-1 text-[10px] bg-blue-100 px-1 py-0.5 rounded">{p.distancia_km.toFixed(1)} km</span> : ""}
                             </p>
-                            {p.endereco && <p className="text-[9px] opacity-50 truncate">{p.endereco}</p>}
+                            {p.endereco && <p className="text-[10px] opacity-50 truncate">{p.endereco}</p>}
                           </div>
                           {waLink && (
                             <a
                               href={waLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="shrink-0 flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg transition-colors"
+                              className="shrink-0 flex items-center gap-1 bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-colors"
                             >
                               WhatsApp
                             </a>
@@ -4094,7 +4094,7 @@ export function ClienteDocsHubModal({
                       <span className="font-bold uppercase tracking-wide text-[10px]">
                         Documento vencido — será rejeitado
                       </span>
-                      <span className="ml-auto rounded bg-red-100 px-1.5 py-0.5 text-[9px] font-tactical">
+                      <span className="ml-auto rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-tactical">
                         {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
                       </span>
                     </div>
@@ -4224,7 +4224,7 @@ export function ClienteDocsHubModal({
                 </div>
                 <table className="w-full text-[10px]">
                   <thead>
-                    <tr className="text-[9px] uppercase tracking-wider opacity-60">
+                    <tr className="text-[10px] uppercase tracking-wider opacity-60">
                       <th className="text-left pb-1 pr-2 font-semibold">Campo</th>
                       <th className="text-left pb-1 pr-2 font-semibold">Na certidão</th>
                       <th className="text-left pb-1 pr-2 font-semibold">Referência</th>
@@ -4243,7 +4243,7 @@ export function ClienteDocsHubModal({
                           {item.valorReferencia
                             ? <span>
                                 {item.campo === "data_nascimento" ? formatDateBrDisplay(item.valorReferencia) : item.campo === "sexo" ? expandSexo(item.valorReferencia) : item.valorReferencia}
-                                <br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span>
+                                <br/><span className="opacity-50 text-[10px]">{item.fonteReferencia}</span>
                               </span>
                             : <span className="opacity-40">sem referência</span>}
                         </td>
@@ -4288,7 +4288,7 @@ export function ClienteDocsHubModal({
                 </table>
                 {conformidadeExibida.some(i => i.status === "divergente") && !casoResidenciaTerceiro && (
                   <div className="mt-2 rounded-lg border border-red-400 bg-red-100 p-2">
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-red-700">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-red-700">
                       Por que este documento foi rejeitado
                     </div>
                     <p className="mt-1 text-[10px] font-semibold leading-snug text-red-800">
@@ -4318,7 +4318,7 @@ export function ClienteDocsHubModal({
                     : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
                   <span className="font-bold uppercase tracking-wide text-[10px]">Resultado da certidão</span>
                   <span className={cn(
-                    "ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded",
+                    "ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded",
                     temApontamento ? "bg-red-200 text-red-800" : "bg-emerald-100 text-emerald-800"
                   )}>
                     {temApontamento ? "CONSTA APONTAMENTO" : "NADA CONSTA"}
@@ -4378,7 +4378,7 @@ export function ClienteDocsHubModal({
                           {showDeclaracao ? "Ocultar declaração" : "Ver declaração"}
                         </button>
                         {showDeclaracao && (
-                          <pre className="text-[9px] text-slate-600 bg-slate-50 rounded-lg p-2 whitespace-pre-wrap font-sans border border-slate-200 max-h-40 overflow-y-auto">
+                          <pre className="text-[10px] text-slate-600 bg-slate-50 rounded-lg p-2 whitespace-pre-wrap font-sans border border-slate-200 max-h-40 overflow-y-auto">
                             {[
                               "DECLARAÇÃO DE HOMONÍMIA",
                               "",

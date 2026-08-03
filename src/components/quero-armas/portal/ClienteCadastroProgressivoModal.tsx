@@ -607,13 +607,13 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
               <div className="mt-2 h-[7px] w-full overflow-hidden rounded-[2px] bg-[#ECECEC]">
                 <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: MARROM }} />
               </div>
-              <div className="mt-2 font-heading text-[10.5px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
+              <div className="mt-2 font-heading text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
                 {motivacao}
               </div>
             </div>
             <div className="text-right leading-none">
-              <span className="font-heading text-[46px] font-semibold text-[#0A0A0A]">{progresso}</span>
-              <span className="font-heading text-[18px] font-semibold text-[#6A6A6A]">%</span>
+              <span className="font-heading text-[26px] font-semibold text-[#0A0A0A]">{progresso}</span>
+              <span className="font-heading text-[16px] font-semibold text-[#6A6A6A]">%</span>
             </div>
           </div>
         </div>
@@ -634,7 +634,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                     Lendo os documentos que você já enviou para preencher o que falta…
                   </p>
                 ) : autoPrefillBanner ? (
-                  <p className="mt-0.5 text-[12.5px] text-[#0A0A0A]">
+                  <p className="mt-0.5 text-[12px] text-[#0A0A0A]">
                     <strong>{autoPrefillBanner.campos} campo(s)</strong> preenchidos automaticamente a partir de{" "}
                     <strong>{autoPrefillBanner.docs} documento(s)</strong> seus. Revise abaixo — se você editar algum valor, sua correção fica salva e a IA não sobrescreve mais.
                   </p>
@@ -652,7 +652,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
                   Quando o cadastro está fechado, o sistema deixa de ser uma lista parada e passa a trabalhar pelo seu acervo todos os dias:
                 </p>
-                <ul className="mt-3 space-y-2 text-[12.5px] leading-snug text-[#3A3A3A]">
+                <ul className="mt-3 space-y-2 text-[12px] leading-snug text-[#3A3A3A]">
                   <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
                     <strong className="text-[#0A0A0A]">Documentos pessoais sob controle.</strong> RG, CIN, CNH e comprovante de residência ficam organizados em um só lugar, com data de emissão, órgão expedidor e validade — sem precisar caçar foto no celular.
                   </li>
@@ -677,10 +677,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">CAMINHO RÁPIDO · RECOMENDADO</div>
-                  <div className="font-heading text-[15px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
+                  <div className="font-heading text-[13px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
                     DEIXE A IA LER SEU DOCUMENTO
                   </div>
-                  <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
+                  <div className="mt-1 text-[12px] leading-snug text-[#6A6A6A]">
                     Envie RG, CIN, CNH ou comprovante. Em segundos a IA extrai os campos, cruza com o que já existe e você só confirma.
                   </div>
                 </div>
@@ -692,10 +692,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6A6A6A]">PREENCHIMENTO MANUAL</div>
-                  <div className="font-heading text-[15px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
+                  <div className="font-heading text-[13px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
                     EU DIGITO OS CAMPOS
                   </div>
-                  <div className="mt-1 text-[12.5px] leading-snug text-[#6A6A6A]">
+                  <div className="mt-1 text-[12px] leading-snug text-[#6A6A6A]">
                     Aparecem só os campos faltantes. Validação em tempo real e salvamento automático a cada toque.
                   </div>
                 </div>
