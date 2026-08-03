@@ -161,6 +161,11 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const { addItem } = useCart();
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Primeiro nome em capitalização natural (o banco costuma guardar em CAIXA ALTA).
+  const primeiroNome = (() => {
+    const raw = (cliente?.nome_completo || "").trim().split(/\s+/)[0] || "";
+    return raw ? raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() : "";
+  })();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recorderRef = useRef<WavRecorder | null>(null);
