@@ -429,32 +429,33 @@ export default function QAConfiguracoesPage() {
   }
 
   return (
-    <div className="qa-config-surface space-y-5 md:space-y-6 max-w-4xl mx-auto">
+    <div className="qa-config-surface w-full max-w-[1440px] mx-auto px-1 sm:px-2">
       {/* Header */}
-      <div>
+      <div className="sticky top-0 z-20 -mx-1 sm:-mx-2 px-4 sm:px-5 py-3 mb-4 border-b bg-[#FAFAF8]/95 backdrop-blur supports-[backdrop-filter]:bg-[#FAFAF8]/80"
+        style={{ borderColor: "hsl(220 13% 88%)" }}>
         <h1 className="qa-h1 flex items-center gap-2">
           <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
         </h1>
-        <p className="qa-body qa-body--soft mt-1">Status do sistema, serviços e pesos de ranking</p>
+        <p className="qa-body qa-body--soft mt-0.5">Status do sistema, serviços e pesos de ranking</p>
       </div>
 
-      <Tabs defaultValue="sistema" className="w-full">
-        <TabsList className="h-auto flex-wrap justify-start gap-1 bg-transparent p-0">
-          <TabsTrigger value="sistema" className="data-[state=active]:bg-slate-100">Sistema</TabsTrigger>
-          {isAdmin && <TabsTrigger value="servicos" className="data-[state=active]:bg-slate-100">Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="contrato" className="data-[state=active]:bg-slate-100">Contrato Primário</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="procuracao" className="data-[state=active]:bg-slate-100">Procuração</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="biblioteca" className="data-[state=active]:bg-slate-100">Biblioteca de Documentos</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="checklist" className="data-[state=active]:bg-slate-100">Montar Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="simulador" className="data-[state=active]:bg-slate-100">Simulador do Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="status" className="data-[state=active]:bg-slate-100">Status dos Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="notificacoes" className="data-[state=active]:bg-slate-100">Notificações</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="klal" className="data-[state=active]:bg-slate-100">Klal</TabsTrigger>}
-          <TabsTrigger value="ranking" className="data-[state=active]:bg-slate-100">Pesos de Ranking</TabsTrigger>
-          <TabsTrigger value="perfil" className="data-[state=active]:bg-slate-100">Perfil</TabsTrigger>
-          {isAdmin && <TabsTrigger value="monitoramento" className="data-[state=active]:bg-slate-100">Monitoramento</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="aparencia" className="data-[state=active]:bg-slate-100">Aparência</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="favicon" className="data-[state=active]:bg-slate-100">Favicon</TabsTrigger>}
+      <Tabs defaultValue="sistema" className="w-full lg:grid lg:grid-cols-[228px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+        <TabsList className={QA_TABS_LIST}>
+          <TabsTrigger value="sistema" className={QA_TAB}>Sistema</TabsTrigger>
+          {isAdmin && <TabsTrigger value="servicos" className={QA_TAB}>Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="contrato" className={QA_TAB}>Contrato Primário</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="procuracao" className={QA_TAB}>Procuração</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="biblioteca" className={QA_TAB}>Biblioteca de Documentos</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="checklist" className={QA_TAB}>Montar Checklist</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="simulador" className={QA_TAB}>Simulador do Checklist</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="status" className={QA_TAB}>Status dos Serviços</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="notificacoes" className={QA_TAB}>Notificações</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="klal" className={QA_TAB}>Klal</TabsTrigger>}
+          <TabsTrigger value="ranking" className={QA_TAB}>Pesos de Ranking</TabsTrigger>
+          <TabsTrigger value="perfil" className={QA_TAB}>Perfil</TabsTrigger>
+          {isAdmin && <TabsTrigger value="monitoramento" className={QA_TAB}>Monitoramento</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="aparencia" className={QA_TAB}>Aparência</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="favicon" className={QA_TAB}>Favicon</TabsTrigger>}
         </TabsList>
 
         {isAdmin && (
