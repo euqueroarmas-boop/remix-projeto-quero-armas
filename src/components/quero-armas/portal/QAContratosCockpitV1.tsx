@@ -464,18 +464,12 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       <div className="flex-none z-30 bg-[#F2F2F2] pt-4 pb-1">
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
-        <h1
-          className="text-[22px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0"
-          style={{ fontFamily: "Oswald, 'Arial Narrow', Arial, sans-serif" }}
-        >
+        <h1 className="qa-h1">
           {primeiroNome}, ESSES SÃO SEUS CONTRATOS
         </h1>
-        <div
-          className="mt-[11px] font-black text-[10px] tracking-[0.22em] text-[#6A6A6A] uppercase"
-          style={{ fontFamily: "'Arial Narrow', Arial, sans-serif" }}
-        >
-          CPF · <b className="text-[#0A0A0A] font-semibold">{cpf}</b> · MEMBRO DESDE <b className="text-[#0A0A0A] font-semibold">{membro}</b>
-          {kpis.aguarda > 0 && <> · <b className="text-[#0A0A0A] font-semibold">{kpis.aguarda} CONTRATO{kpis.aguarda > 1 ? "S" : ""}</b> AGUARDANDO ASSINATURA</>}
+        <div className="qa-meta mt-[11px]">
+          CPF · <b>{cpf}</b> · MEMBRO DESDE <b>{membro}</b>
+          {kpis.aguarda > 0 && <> · <b>{kpis.aguarda} CONTRATO{kpis.aguarda > 1 ? "S" : ""}</b> AGUARDANDO ASSINATURA</>}
         </div>
       </header>
 
@@ -483,12 +477,12 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       {focoBloqueante && (
         <div className="mb-5 bg-white border border-[#E5E5E5] border-l-4 border-l-[#C32E26] rounded-sm px-5 py-4 flex items-center gap-4">
           <div className="flex-1">
-            <div className="font-['Oswald'] text-[9.5px] tracking-[0.18em] text-[#C32E26] font-bold mb-1 uppercase">
+            <div className="qa-eyebrow qa-eyebrow--alert mb-1">
               FOCO DO DIA · <span className="text-[#0A0A0A]">
                 {featured?.status === "rejected" ? "ASSINATURA REJEITADA" : "AÇÃO BLOQUEANTE"}
               </span>
             </div>
-            <div className="text-[13px] text-[#0A0A0A] font-medium">
+            <div className="qa-body">
               {featured?.status === "rejected"
                 ? <><b>Motivo:</b> {contractRejectionReason(featured)} Baixe novamente o contrato deste sistema, assine no GOV.BR sem editar e reenvie.</>
                 : <>Contrato {featured?.contract_number || ""} aguarda sua assinatura via GOV.BR</>}
@@ -499,7 +493,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
               href={preparedFeaturedDownload.href}
               download={preparedFeaturedDownload.filename}
               onClick={() => toast.success("Download iniciado.")}
-              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black"
+              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm qa-btn-label inline-flex items-center gap-2 hover:bg-black"
             >
               {featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA"} <ArrowRight className="h-3 w-3" />
             </a>
@@ -508,7 +502,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
               type="button"
               onClick={handleAssinar}
               disabled={preparingFeaturedDownload}
-              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-2 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
+              className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm qa-btn-label inline-flex items-center gap-2 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
             >
               {preparingFeaturedDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
               {preparingFeaturedDownload ? "PREPARANDO PDF" : (featured?.status === "rejected" ? "BAIXAR CONTRATO CERTO" : "ASSINAR AGORA")} <ArrowRight className="h-3 w-3" />
@@ -535,7 +529,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
       {/* ── Contrato em destaque (rótulo faz parte do bloco fixo) ── */}
       {featured && (
-        <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] pb-2.5 font-semibold uppercase">
+        <div className="qa-eyebrow pb-2.5">
           CONTRATO PRINCIPAL · EM DESTAQUE
         </div>
       )}
@@ -549,7 +543,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       {/* ── Outros contratos ── */}
       {others.length > 0 && (
         <>
-          <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mt-6 mb-2.5 font-semibold uppercase">
+          <div className="qa-eyebrow mt-6 mb-2.5">
             OUTROS CONTRATOS
           </div>
           <div className="space-y-3">
@@ -561,7 +555,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       {/* ── Arquivados / Cancelados ── */}
       {archivedContracts.length > 0 && (
         <>
-          <div className="font-['Oswald'] text-[10px] tracking-[0.22em] text-[#7A7A7A] mt-6 mb-2.5 font-semibold uppercase">
+          <div className="qa-eyebrow mt-6 mb-2.5">
             ARQUIVADOS · CANCELADOS
           </div>
           <div className="space-y-3">
@@ -809,7 +803,7 @@ function FeaturedContractCard({
               type="button"
               onClick={baixarAssinado}
               disabled={baixandoAssinado}
-              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+              className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
             >
               {baixandoAssinado ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
               {baixandoAssinado ? "PREPARANDO" : "BAIXAR CONTRATO ASSINADO"}
@@ -820,7 +814,7 @@ function FeaturedContractCard({
               href={preparedDownload.href}
               download={preparedDownload.filename}
               onClick={() => toast.success("Download iniciado.")}
-              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all duration-200"
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all duration-200"
             >
               <Download className="h-3 w-3" /> BAIXAR CONTRATO
             </a>
@@ -829,7 +823,7 @@ function FeaturedContractCard({
               type="button"
               onClick={onAssinar}
               disabled={preparingDownload}
-              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
+              className="border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white disabled:opacity-60 disabled:cursor-wait transition-all duration-200"
             >
               {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} {preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO"}
             </button>
@@ -850,7 +844,7 @@ function FeaturedContractCard({
                 type="button"
                 disabled={uploading || isLocalProcessing}
                 onClick={() => inputRef.current?.click()}
-                className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
+                className="border border-[#0A0A0A] bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200"
                 title="Enviar PDF assinado (GOV.BR ou ICP-Brasil)"
               >
                 {uploading || isLocalProcessing
@@ -891,7 +885,7 @@ function FeaturedContractCard({
                 href={preparedDownload.href}
                 download={preparedDownload.filename}
                 onClick={() => toast.success("Download iniciado.")}
-                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black"
               >
                 <Download className="h-3 w-3" /> BAIXAR CONTRATO CERTO
               </a>
@@ -900,7 +894,7 @@ function FeaturedContractCard({
                 type="button"
                 onClick={onAssinar}
                 disabled={preparingDownload}
-                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
+                className="bg-[#0A0A0A] text-white px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black disabled:opacity-60 disabled:cursor-wait"
               >
                 {preparingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />} {preparingDownload ? "PREPARANDO PDF" : "BAIXAR CONTRATO CERTO"}
               </button>
@@ -909,7 +903,7 @@ function FeaturedContractCard({
               href="https://assinador.iti.br/"
               target="_blank"
               rel="noopener noreferrer"
-              className="border border-[#0A0A0A] text-[#0A0A0A] px-3 py-1.5 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-[#0A0A0A] hover:text-white"
+              className="border border-[#0A0A0A] text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-[#0A0A0A] hover:text-white"
             >
               ABRIR ASSINADOR GOV.BR
             </a>
@@ -1127,7 +1121,7 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
           <button
             type="button"
             onClick={goToProcessos}
-            className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm font-['Oswald'] text-[10px] tracking-[0.18em] font-semibold uppercase inline-flex items-center gap-1.5 hover:bg-black"
+            className="bg-[#0A0A0A] text-white px-4 py-2 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:bg-black"
           >
             IR PARA MEUS PROCESSOS <ArrowRight className="h-3 w-3" />
           </button>
@@ -1318,8 +1312,8 @@ function CompactContractCard({ contract }: { contract: Contract }) {
         {STEP_LABELS.map((l) => <div key={l}>{l.toUpperCase()}</div>)}
       </div>
       <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
-        <span><b className="text-[#0A0A0A] font-semibold">Cliente:</b> {contract.customer_uploaded_at ? `assinou em ${fmtDateShort(contract.customer_uploaded_at)}` : "—"}</span>
-        <span><b className="text-[#0A0A0A] font-semibold">Prev.:</b> {fmtDateLong(contract.issued_at)}</span>
+        <span><b>Cliente:</b> {contract.customer_uploaded_at ? `assinou em ${fmtDateShort(contract.customer_uploaded_at)}` : "—"}</span>
+        <span><b>Prev.:</b> {fmtDateLong(contract.issued_at)}</span>
       </div>
     </div>
   );
@@ -1347,18 +1341,18 @@ function ArchivedContractCard({ contract }: { contract: Contract }) {
       </div>
       <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
         <span>
-          <b className="text-[#0A0A0A] font-semibold">Gerado:</b>{" "}
+          <b>Gerado:</b>{" "}
           {fmtDateLong(contract.issued_at)}
         </span>
         {contract.arquivado_em && (
           <span>
-            <b className="text-[#0A0A0A] font-semibold">Arquivado:</b>{" "}
+            <b>Arquivado:</b>{" "}
             {fmtDateLong(contract.arquivado_em)}
           </span>
         )}
         {contract.arquivado_motivo && (
           <span className="basis-full">
-            <b className="text-[#0A0A0A] font-semibold">Motivo:</b>{" "}
+            <b>Motivo:</b>{" "}
             {contract.arquivado_motivo}
           </span>
         )}
