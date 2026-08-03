@@ -3988,9 +3988,8 @@ export default function QAClientePortalPage() {
             ? `${cpfRaw.slice(0, 3)}.${cpfRaw.slice(3, 6)}.${cpfRaw.slice(6, 9)}-${cpfRaw.slice(9)}`
             : "—";
           const membroDate = cliente?.created_at ? new Date(cliente.created_at) : null;
-          const mesesPt = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
-          const membroDesde = membroDate
-            ? `${mesesPt[membroDate.getMonth()]}/${membroDate.getFullYear()}`
+          const membroDesde = membroDate && !isNaN(membroDate.getTime())
+            ? `${String(membroDate.getDate()).padStart(2, "0")}/${String(membroDate.getMonth() + 1).padStart(2, "0")}/${membroDate.getFullYear()}`
             : "—";
           const ativosCount = processos.filter((p: any) => !["concluido","deferido","finalizado","indeferido","cancelado"].includes(String(p.status || "").toLowerCase())).length;
 
