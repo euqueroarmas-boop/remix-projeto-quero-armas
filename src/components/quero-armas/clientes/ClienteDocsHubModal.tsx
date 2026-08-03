@@ -3867,7 +3867,7 @@ export function ClienteDocsHubModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={isTipoIdentidadeComQr(form.tipo_documento) ? "application/pdf" : "image/*,application/pdf"}
+                accept={acceptPorTipo(form.tipo_documento)}
                 onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
@@ -4137,6 +4137,7 @@ export function ClienteDocsHubModal({
               fileNameDisplay={file?.name}
               onPickFile={() => fileInputRef.current?.click()}
               onPickCamera={() => cameraInputRef.current?.click()}
+              permiteCamera={tipoAceitaImagem(form.tipo_documento)}
               onRemove={() => setFile(null)}
               onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
