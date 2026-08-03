@@ -18,6 +18,8 @@ import type {
   CockpitZ6FocoDoDia,
 } from "./CockpitZ6MeusProcessos";
 import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
+import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
 
 const MESES_PT = ["JAN","FEV","MAR","ABR","MAI","JUN","JUL","AGO","SET","OUT","NOV","DEZ"];
 
@@ -119,10 +121,9 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
 
 function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
   const CUMPRIDO = (st: string) =>
-    st === "aprovado" ||
+    isChecklistCumprido(st) ||
     st === "recebido" ||
     st === "arquivado" ||
-    st.startsWith("dispensado") ||
     st.includes("reaproveitamento");
   if (!docs.length) return [];
   const sortable = [...docs].sort((a, b) => {
@@ -186,7 +187,7 @@ function buildProcessoCard(args: {
   // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
   const isCumprido = (d: any) => {
     const st = String(d.status || "").toLowerCase();
-    return st === "aprovado" || st === "recebido" || st === "arquivado" || st.startsWith("dispensado") || st.includes("reaproveitamento");
+    return isChecklistCumprido(st) || st === "recebido" || st === "arquivado" || st.includes("reaproveitamento");
   };
   const docsAprov = docsObrig.filter(isCumprido);
   const totalObrig = docsObrig.length || 1;
@@ -196,14 +197,31 @@ function buildProcessoCard(args: {
     ? { badge: "AGUARDANDO PRÉ-REQUISITO", tone: "gray" as CockpitZ6Process["badgeTone"] }
     : badgeForStatus(proc.status);
 
-  // Etapa atual: MENOR etapa numérica que ainda tem documento em aberto.
-  const docsAbertos = docs.filter((d) => !isCumprido(d));
+  // Etapa atual: usa a etapa oficialmente liberada no processo e considera
+  // somente exigências obrigatórias, visíveis e ainda acionáveis. Isso evita
+  // que uma condição oculta de etapa anterior desloque o cockpit para trás.
+  const respostas = (proc.respostas_questionario_json ?? {}) as Record<string, string>;
+  const docsVisiveisObrigatorios = docs.filter(
+    (d) => d.obrigatorio !== false && itemVisivelGuia(d, respostas),
+  );
+  const docsAbertos = docsVisiveisObrigatorios.filter((d) => !isCumprido(d));
   const numeroEtapa = (d: any) => etapaDoTipoDocumento(d.tipo_documento, d.etapa);
-  const etapaAtualNum = docsAbertos.length
-    ? Math.min(...docsAbertos.map(numeroEtapa))
+  const etapaLiberadaRaw = Number(proc.etapa_liberada_ate);
+  const etapaLiberada = Number.isFinite(etapaLiberadaRaw)
+    ? Math.max(1, Math.min(5, etapaLiberadaRaw))
     : null;
+  const abertosNaEtapaLiberada = etapaLiberada == null
+    ? []
+    : docsAbertos.filter((d) => numeroEtapa(d) === etapaLiberada);
+  const etapaAtualNum = abertosNaEtapaLiberada.length
+    ? etapaLiberada
+    : docsAbertos.length
+      ? Math.min(...docsAbertos.map(numeroEtapa))
+      : null;
   const docsEtapaAtual =
-    etapaAtualNum == null ? [] : docs.filter((d) => numeroEtapa(d) === etapaAtualNum);
+    etapaAtualNum == null
+      ? []
+      : docsVisiveisObrigatorios.filter((d) => numeroEtapa(d) === etapaAtualNum);
   const abertosEtapaAtual = docsEtapaAtual.filter((d) => !isCumprido(d));
   const rotuloEtapa = (n: number | null) =>
     n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
@@ -212,9 +230,12 @@ function buildProcessoCard(args: {
     : n === 4 ? "DECLARAÇÕES"
     : n === 5 ? "EXAMES TÉCNICOS"
     : "";
-  let etapaAtual =
-    rotuloEtapa(etapaAtualNum) ||
-    String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
+  // Quando resta uma única exigência, o nome dela é a etapa real percebida
+  // pelo cliente (ex.: Certidão de Crimes Eleitorais — TSE), não o grupo amplo.
+  let etapaAtual = abertosEtapaAtual.length === 1
+    ? String(abertosEtapaAtual[0].nome_documento || abertosEtapaAtual[0].tipo_documento || "").trim().toUpperCase()
+    : rotuloEtapa(etapaAtualNum) ||
+      String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
   if (bloqueado) {
     etapaAtual = "AGUARDANDO PRÉ-REQUISITO";
   } else if (!etapaAtual) {
@@ -267,7 +288,7 @@ function buildProcessoCard(args: {
     base.detalhado = {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
-      checklist: checklistFromDocs(docsEtapaAtual.length ? docsEtapaAtual : docs),
+      checklist: checklistFromDocs(abertosEtapaAtual.length ? abertosEtapaAtual : docsEtapaAtual.length ? docsEtapaAtual : docs),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
         : abertosEtapaAtual.length
