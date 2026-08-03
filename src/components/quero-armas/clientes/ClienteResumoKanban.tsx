@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta, isTipoDocumentoMonitoravelNoHub, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
