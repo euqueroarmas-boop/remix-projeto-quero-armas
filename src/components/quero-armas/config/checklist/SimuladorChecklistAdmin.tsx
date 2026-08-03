@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
+  ListOrdered,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -210,6 +211,34 @@ export default function SimuladorChecklistAdmin() {
   }
 
   const servicoNome = servicos.find((s) => s.id === servicoId)?.nome_servico ?? "";
+
+  /**
+   * Define manualmente o número de ordem de uma exigência. É o MESMO campo
+   * `ordem` de qa_servicos_documentos lido por todos os motores — digitar aqui
+   * equivale a arrastar, só que com precisão.
+   */
+  async function definirOrdem(id: string, novaOrdem: number) {
+    if (!Number.isFinite(novaOrdem) || novaOrdem < 0) return;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, ordem: novaOrdem } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ordem: novaOrdem })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR A ORDEM: " + (error.message ?? "ERRO"));
+    }
+  }
+
+  /**
+   * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
+   * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
+   * mudar nada de lugar.
+   */
+  async function renumerar() {
+    await persistirGrupos(sim.grupos.map((g) => ({ grupo: g.grupo, ids: g.itens.map((i) => i.id) })));
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -507,13 +536,28 @@ export default function SimuladorChecklistAdmin() {
                   O que o cliente vê — {servicoNome}
                 </span>
               </div>
-              {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
+              <div className="flex items-center gap-2">
+                {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
+                <button
+                  type="button"
+                  onClick={renumerar}
+                  disabled={salvandoOrdem || sim.grupos.length === 0}
+                  title="Renumerar tudo em 10, 20, 30… na sequência atual"
+                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[9px] font-semibold uppercase tracking-wider disabled:opacity-40"
+                  style={{ borderColor: LINE, color: BORDO }}
+                >
+                  <ListOrdered className="h-3 w-3" /> Renumerar
+                </button>
+              </div>
             </div>
             <p className="text-[10px] mb-3" style={{ color: MUTED }}>
               Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
               título do grupo para mover o grupo inteiro. A nova ordem é gravada no
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
               processos e portal do cliente).
+              <br />
+              Você também pode digitar o número de ordem direto no campo de cada linha —
+              e usar RENUMERAR para fechar os buracos (10, 20, 30…) sem mudar nada de lugar.
             </p>
 
             {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
@@ -599,6 +643,7 @@ export default function SimuladorChecklistAdmin() {
                               onResponder={responder}
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
+                              onDefinirOrdem={definirOrdem}
                             />
                           ))}
                         </div>
@@ -671,12 +716,14 @@ function LinhaItem({
   onResponder,
   onLimparResposta,
   onRemover,
+  onDefinirOrdem,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
   onResponder: (chave: string, valor: string) => void;
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
+  onDefinirOrdem: (id: string, novaOrdem: number) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -724,9 +771,28 @@ function LinhaItem({
         >
           {item.nome_documento}
         </div>
-        <div className="text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
-          ordem {item.ordem} · {item.tipo_documento}
-          {item.motivo ? ` · ${item.motivo}` : ""}
+        <div className="flex flex-wrap items-center gap-1 text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
+          <span className="uppercase">ordem</span>
+          <input
+            type="number"
+            min={0}
+            step={10}
+            defaultValue={item.ordem}
+            key={`ord-${item.id}-${item.ordem}`}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const v = Number(e.currentTarget.value);
+              if (Number.isFinite(v) && v !== item.ordem) onDefinirOrdem(item.id, v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+            }}
+            title="Digite o número de ordem desta exigência"
+            className="w-12 rounded border px-1 py-0 text-[9px] font-mono tabular-nums"
+            style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
+          />
+          <span>· {item.tipo_documento}</span>
+          {item.motivo ? <span>· {item.motivo}</span> : null}
         </div>
 
         {item.tipo === "pergunta" && item.estado !== "dispensado" && item.estado !== "aguardando" && !!item.opcoes?.length && (
