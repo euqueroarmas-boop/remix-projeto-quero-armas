@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, KeyRound, Eye, EyeOff } from "lucide-react";
+import { KeyRound, Eye, EyeOff } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -62,23 +62,26 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-amber-50 to-white">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5 text-amber-600" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      <div className="relative w-full sm:max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]">
+        <div className="px-6 pt-6 pb-4 shrink-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+              Segurança
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              Primeiro acesso
+            </span>
           </div>
-          <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-              Defina sua nova senha
-            </h2>
-            <p className="text-[11px] text-slate-500">
-              Primeiro acesso — substitua a senha temporária
-            </p>
-          </div>
+          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">
+            Defina sua nova senha
+          </h2>
+          <p className="mt-2 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2 text-[13px] leading-relaxed text-[#3A3A3A]">
+            Substitua a senha temporária por uma senha pessoal antes de acessar o portal.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
             Por segurança, escolha uma senha pessoal antes de acessar o seu
             arsenal. Use no mínimo <strong>6 caracteres</strong>.
