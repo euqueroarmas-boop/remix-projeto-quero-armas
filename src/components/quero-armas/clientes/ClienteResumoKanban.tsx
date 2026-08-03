@@ -594,9 +594,35 @@ export default function ClienteResumoKanban({
   }, [atalhosOpen]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const summaryItems = useMemo(() => {
+    if (!isMobile) return snapshot.summary.map(([label, value, small]) => ({ label, value, small }));
+    const [tarefas, proxVenc, renovar, processos] = snapshot.summary;
+    const merged = {
+      label: "TAREFAS E PROCESSOS",
+      value: "",
+      small: "",
+      merged: true,
+      parts: [
+        { value: tarefas[1], small: tarefas[2] },
+        { value: processos[1], small: processos[2] },
+      ],
+    };
+    const candidates = [
+      { label: proxVenc[0], value: proxVenc[1], small: proxVenc[2] },
+      { label: renovar[0], value: renovar[1], small: renovar[2] },
+      merged,
+    ];
+    return candidates.filter((item) => {
+      if (item.merged) {
+        return item.parts.some((p) => p.value && p.value !== "0" && p.value !== "—");
+      }
+      return item.value && item.value !== "0" && item.value !== "—";
+    });
+  }, [isMobile, snapshot.summary]);
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
   const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
+
 
   const filteredUrgents = useMemo(
     () => (chipFilter === "todos" ? snapshot.urgents : snapshot.urgents.filter((u) => u.frontKey === chipFilter)),
