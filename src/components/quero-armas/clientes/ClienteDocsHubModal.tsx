@@ -4890,6 +4890,7 @@ export function ClienteDocsHubModal({
                           : "Salvar documento"}
               </Button>
             </div>
+            </>
           )}
         </div>
         <ResidenciaTerceiroModal
