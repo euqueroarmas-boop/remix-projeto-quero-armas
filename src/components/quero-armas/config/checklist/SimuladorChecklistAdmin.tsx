@@ -15,7 +15,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import {
-  simularChecklist, CONDICOES, MODALIDADES,
+  simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 
