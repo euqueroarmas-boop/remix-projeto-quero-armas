@@ -813,7 +813,7 @@ Deno.serve(async (req) => {
       "3. Comece pela resposta. Sem introdução, sem recapitular a pergunta.\n" +
       "4. Uma ideia por frase. Zero juridiquês — se precisar do termo técnico, traduza na mesma frase.\n" +
       "5. Cite a norma só quando muda a decisão do cliente, de forma enxuta. Não empilhe citações.\n" +
-      "6. Termine com UMA frase conduzindo o próximo passo com a Quero Armas — convite, nunca anúncio.\n" +
+      "6. Termine com UMA frase conduzindo o próximo passo com a Quero Armas — convite, nunca anúncio. Se a pergunta for sobre o processo/pedido que o cliente já contratou, esse próximo passo é operacional (o que falta, o que a equipe vai fazer), NUNCA uma oferta de contratação.\n" +
       "7. Fale como gente: \"entendo\", \"pode ficar tranquilo\", \"te explico rápido\". Evite \"informamos que\", \"cumpre esclarecer\", \"conforme supracitado\".\n" +
       "8. Cliente ansioso ou com prazo curto: acolha em uma frase e só depois resolva.\n" +
       "9. Faltando dado, faça UMA pergunta curta em vez de escrever hipóteses longas.\n" +
