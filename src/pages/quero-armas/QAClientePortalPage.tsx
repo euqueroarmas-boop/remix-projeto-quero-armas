@@ -623,6 +623,11 @@ export default function QAClientePortalPage() {
       : activeSection === "resumo"
         ? "resumo"
         : null;
+  const isLockedSection = (
+    activeTab === "resumo" ||
+    (["contratos", "documentos", "mensagens", "financeiro"] as string[]).includes(activeSection) ||
+    (activeSection === "checklist_guiado" && isBelowLg)
+  );
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
 
   function handleEntradaConcluido(respostas: EntradaWizardRespostas) {
@@ -3396,7 +3401,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || activeSection === "mensagens" || activeSection === "financeiro" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : `space-y-5 overflow-x-clip pb-6 ${activeSection === "financeiro" ? "pt-[24px]" : "pt-[26px]"}`}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${isLockedSection ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pb-6 pt-[26px]"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
