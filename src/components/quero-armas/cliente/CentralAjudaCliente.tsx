@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
+import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { IconPlus, IconMicrophone, IconPlayerStopFilled, IconArrowUp, IconX, IconFileText, IconPhoto } from "@tabler/icons-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
@@ -22,6 +22,10 @@ const AMBER_BG = "#FEF3C7";
 const RED = "#B91C1C";
 const RED_BG = "#FEE2E2";
 const OSWALD = "Oswald, 'Arial Narrow', Arial, sans-serif";
+const WHATSAPP = "#25D366";
+const WHATSAPP_DARK = "#128C7E";
+const BLUE = "#2563EB";
+const NEG = "#DC2626";
 
 const INACTIVITY_MS = 30 * 60 * 1000;
 
