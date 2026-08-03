@@ -748,7 +748,7 @@ export default function ClienteResumoKanban({
          .qa-client-summary-print__k{font-size:8px;letter-spacing:.16em;margin-bottom:4px}
          .qa-client-summary-print__v{font-size:18px}
          .qa-client-summary-print__v small{font-size:9px;margin-top:2px}
-         .qa-client-summary-print__footer{margin-top:64px;padding-bottom:32px;font-size:8px}
+         .qa-client-summary-print__footer{margin-top:64px;padding-bottom:0px;margin-bottom:-14px;font-size:8px}
         }
         .qa-summary-merged .qa-client-summary-print__k{margin-bottom:6px}
         .qa-summary-merged__body{display:flex;align-items:flex-start;gap:18px}
@@ -945,7 +945,8 @@ export default function ClienteResumoKanban({
               flex: none;
               margin-top: auto !important;
               padding-top: 18px;
-              padding-bottom: 24px;
+              padding-bottom: 0px;
+              margin-bottom: -14px;
               background: var(--paper, #f3f3f2);
             }
           }
