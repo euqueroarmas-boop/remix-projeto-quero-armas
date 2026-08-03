@@ -299,7 +299,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       const rv = l.regra_validacao;
       const dep = extrairDependencia(rv);
       const pergunta = ehPergunta(rv);
-      const chave = pergunta ? String(rv?.chave ?? "") : "";
+      const chave = pergunta ? chavePergunta(rv, l.tipo_documento) : "";
 
       // Item condicional: depende de resposta anterior.
       if (dep) {
