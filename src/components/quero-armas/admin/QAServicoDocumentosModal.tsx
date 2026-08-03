@@ -624,14 +624,14 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
           </DialogHeader>
 
           <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[11px] uppercase tracking-wider text-slate-500">
+            <p className="text-[12.5px] uppercase tracking-wider text-slate-700">
               CADA LINHA É UMA EXIGÊNCIA — A ORDEM AQUI É A ORDEM QUE O CLIENTE VÊ NO ASSISTENTE.
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={collapseAll}
-                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
                 title="Recolher todos"
               >
                 <ChevronsDownUp className="h-3.5 w-3.5" /> RECOLHER
@@ -639,7 +639,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
               <button
                 type="button"
                 onClick={expandAll}
-                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
                 title="Expandir todos"
               >
                 <ChevronsUpDown className="h-3.5 w-3.5" /> EXPANDIR
@@ -648,7 +648,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 type="button"
                 onClick={() => void ordenarAutomaticamente()}
                 disabled={reordenando || merged.length === 0}
-                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                 title="Normalizar ordem em 10, 20, 30…"
               >
                 {reordenando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="h-3.5 w-3.5" />}
@@ -657,7 +657,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
               <button
                 type="button"
                 onClick={() => setPreviewOpen((v) => !v)}
-                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
               >
                 {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VIA CLIENTE"}
@@ -665,7 +665,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
               <button
                 type="button"
                 onClick={() => void addNew()}
-                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
               >
                 <Plus className="h-3.5 w-3.5" /> NOVA EXIGÊNCIA
               </button>
@@ -680,7 +680,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
             <div className="mb-3 flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 shrink-0" />
-                <div className="text-[11px] uppercase tracking-wider text-amber-900 leading-relaxed">
+                <div className="text-[12.5px] uppercase tracking-wider text-amber-900 leading-relaxed">
                   <div className="font-bold">
                     EXISTEM {divergencia.processos_divergentes} PROCESSO(S) ATIVO(S) COM CHECKLIST DIFERENTE DESTE CATÁLOGO.
                   </div>
@@ -694,7 +694,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 type="button"
                 onClick={() => void sincronizarProcessos()}
                 disabled={sincronizando}
-                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
               >
                 {sincronizando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 SINCRONIZAR PROCESSOS EXISTENTES
@@ -703,7 +703,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
           )}
 
           {divergencia && divergencia.processos_divergentes === 0 && divergencia.processos_ativos > 0 && (
-            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] uppercase tracking-wider text-emerald-800">
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11.5px] uppercase tracking-wider text-emerald-800">
               {divergencia.processos_ativos} PROCESSO(S) ATIVO(S) — TODOS EM DIA COM O CATÁLOGO ATUAL.
             </div>
           )}
@@ -714,7 +714,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 <Loader2 className="h-6 w-6 text-[#7A1F2B] animate-spin" />
               </div>
             ) : merged.length === 0 ? (
-              <div className="text-center py-16 text-slate-500 text-xs uppercase tracking-wider">
+              <div className="text-center py-16 text-slate-700 text-xs uppercase tracking-wider">
                 NENHUMA EXIGÊNCIA CADASTRADA. CLIQUE EM "NOVA EXIGÊNCIA".
               </div>
             ) : (
@@ -753,13 +753,13 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
           </div>
 
           <div className="pt-3 mt-2 border-t border-slate-200 flex items-center justify-between">
-            <div className="text-[10px] uppercase tracking-wider text-slate-500">
+            <div className="text-[11.5px] uppercase tracking-wider text-slate-700">
               ALTERAÇÕES SÃO SALVAS LINHA-A-LINHA. CAMPO COM <span className="text-[#7A1F2B] font-bold">PONTO</span> = NÃO SALVO.
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
             >
               <X className="h-3.5 w-3.5 inline mr-1" /> FECHAR
             </button>
@@ -1024,7 +1024,7 @@ function ExigenciaCard({
           {/* Seletor de template preenchível (.docx) */}
           {mostraSeletorTemplate && (
             <div className="col-span-12">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              <div className="text-[11.5px] font-bold uppercase tracking-widest text-slate-700 mb-1">
                 TEMPLATE PREENCHÍVEL (.DOCX)
               </div>
               <div className="flex items-center gap-2">
@@ -1043,12 +1043,12 @@ function ExigenciaCard({
                   href="/modelos-declaracao"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="h-9 px-3 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 shrink-0"
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-[12.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 shrink-0"
                 >
                   GERENCIAR
                 </a>
               </div>
-              <p className="mt-1 text-[10px] text-slate-500 normal-case">
+              <p className="mt-1 text-[11.5px] text-slate-700 normal-case">
                 Quando definido, o cliente vê o botão "BAIXAR DECLARAÇÃO PREENCHIDA" no assistente guiado, gerado com os dados dele a partir do template.
               </p>
             </div>
@@ -1056,7 +1056,7 @@ function ExigenciaCard({
 
           {/* Wizard de Perguntas vinculado — bloqueia o documento até resolver */}
           <div className="col-span-12">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+            <div className="text-[11.5px] font-bold uppercase tracking-widest text-slate-700 mb-1">
               WIZARD OBRIGATÓRIO ANTES DESTE DOCUMENTO
             </div>
             <select
@@ -1069,7 +1069,7 @@ function ExigenciaCard({
                 <option key={w.key} value={w.key}>{w.label}</option>
               ))}
             </select>
-            <p className="mt-1 text-[10px] text-slate-500 normal-case">
+            <p className="mt-1 text-[11.5px] text-slate-700 normal-case">
               Quando definido, o cliente precisa responder este wizard antes de baixar,
               anexar, reaproveitar ou concluir o documento.
             </p>
@@ -1110,7 +1110,7 @@ function ExigenciaCard({
 
           {/* Repete por período/ano (opcional) */}
           <div className="col-span-12 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
-            <label className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-700 cursor-pointer">
+            <label className="inline-flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-widest text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={repeteAberto}
@@ -1122,7 +1122,7 @@ function ExigenciaCard({
             {repeteAberto && (
               <div className="mt-2 grid grid-cols-12 gap-2 items-end">
                 <div className="col-span-8">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                  <div className="text-[11.5px] font-bold uppercase tracking-widest text-slate-700 mb-1">
                     ANOS (separe por vírgula — ex.: 2026, 2025, 2024)
                   </div>
                   <input
@@ -1133,7 +1133,7 @@ function ExigenciaCard({
                   />
                 </div>
                 <div className="col-span-4 flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                  <span className="text-[11.5px] uppercase tracking-wider text-slate-700">
                     {anosParsed.length} ANO(S)
                   </span>
                   <button
@@ -1146,12 +1146,12 @@ function ExigenciaCard({
                       onExpandirAnos(anosParsed);
                       setRepeteAberto(false);
                     }}
-                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
                   >
                     <Plus className="h-3 w-3" /> GERAR 1 EXIGÊNCIA POR ANO
                   </button>
                 </div>
-                <div className="col-span-12 text-[10px] uppercase tracking-wider text-slate-500">
+                <div className="col-span-12 text-[11.5px] uppercase tracking-wider text-slate-700">
                   CRIA NOVAS LINHAS COM TIPO_DOCUMENTO ÚNICO POR ANO (EX.: <span className="font-mono">{normalizeSlug(row.tipo_documento || "documento")}_2026</span>).
                   A LINHA ATUAL NÃO É ALTERADA.
                 </div>
@@ -1162,7 +1162,7 @@ function ExigenciaCard({
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-        <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+        <div className="flex items-center gap-3 text-[11.5px] uppercase tracking-wider">
           <label className="inline-flex items-center gap-1.5 text-slate-700 font-bold">
             <input
               type="checkbox"
@@ -1187,7 +1187,7 @@ function ExigenciaCard({
             type="button"
             onClick={onDuplicate}
             title="Duplicar exigência"
-            className="h-8 px-2 inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B]"
+            className="h-8 px-2 inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-700 text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B]"
           >
             <CopyIcon className="h-3.5 w-3.5" /> DUPLICAR
           </button>
@@ -1195,7 +1195,7 @@ function ExigenciaCard({
             type="button"
             onClick={onDelete}
             title="Excluir"
-            className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-slate-100 text-slate-700 hover:bg-rose-100 hover:text-rose-700"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -1203,7 +1203,7 @@ function ExigenciaCard({
             type="button"
             onClick={onSave}
             disabled={!dirty || saving}
-            className="h-8 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-40"
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-40"
           >
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} SALVAR
           </button>
@@ -1231,30 +1231,30 @@ function AnexoBox({
   const inputId = `anx-${titulo.replace(/\s+/g, "_")}-${Math.random().toString(36).slice(2, 7)}`;
   return (
     <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{titulo}</div>
+      <div className="text-[11.5px] font-bold uppercase tracking-widest text-slate-700 mb-1">{titulo}</div>
       {value ? (
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[11px] font-mono text-slate-700 truncate" title={value}>
+          <div className="text-[12.5px] font-mono text-slate-700 truncate" title={value}>
             {value.split("/").pop()}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={onView}
-              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100"
+              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[11.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100"
             >
               <Eye className="h-3 w-3" /> VER
             </button>
             <label
               htmlFor={inputId}
-              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100 cursor-pointer"
+              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[11.5px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100 cursor-pointer"
             >
               {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} TROCAR
             </label>
             <button
               type="button"
               onClick={onClear}
-              className="h-7 w-7 inline-flex items-center justify-center rounded bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+              className="h-7 w-7 inline-flex items-center justify-center rounded bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-rose-700"
               title="Remover"
             >
               <X className="h-3 w-3" />
@@ -1264,7 +1264,7 @@ function AnexoBox({
       ) : (
         <label
           htmlFor={inputId}
-          className="flex items-center justify-center gap-1.5 h-9 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 cursor-pointer"
+          className="flex items-center justify-center gap-1.5 h-9 rounded bg-white border border-slate-200 text-[11.5px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 cursor-pointer"
         >
           {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <FilePlus2 className="h-3 w-3" />}
           {uploading ? "ENVIANDO…" : "ENVIAR ARQUIVO"}
@@ -1288,11 +1288,11 @@ function AnexoBox({
 function ClientePreview({ rows }: { rows: ExigenciaRow[] }) {
   return (
     <div className="rounded-xl border border-[#7A1F2B]/20 bg-white p-3 mb-3">
-      <div className="text-[10px] font-bold uppercase tracking-widest text-[#7A1F2B] mb-2">
+      <div className="text-[11.5px] font-bold uppercase tracking-widest text-[#7A1F2B] mb-2">
         PRÉ-VIA — ORDEM EM QUE O CLIENTE VERÁ
       </div>
       {rows.length === 0 ? (
-        <div className="text-[11px] uppercase tracking-wider text-slate-500">SEM EXIGÊNCIAS ATIVAS.</div>
+        <div className="text-[12.5px] uppercase tracking-wider text-slate-700">SEM EXIGÊNCIAS ATIVAS.</div>
       ) : (
         <ol className="space-y-1.5">
           {rows
@@ -1300,23 +1300,23 @@ function ClientePreview({ rows }: { rows: ExigenciaRow[] }) {
             .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
             .map((r, i) => (
               <li key={r.id} className="flex items-start gap-2 text-[12px]">
-                <span className="inline-flex shrink-0 w-5 h-5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B] text-[10px] font-bold items-center justify-center mt-0.5">
+                <span className="inline-flex shrink-0 w-5 h-5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B] text-[11.5px] font-bold items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-900">
                     {r.nome_documento}
                     {r.obrigatorio ? (
-                      <span className="ml-2 text-[9px] font-bold uppercase text-[#7A1F2B]">OBRIGATÓRIO</span>
+                      <span className="ml-2 text-[11px] font-bold uppercase text-[#7A1F2B]">OBRIGATÓRIO</span>
                     ) : (
-                      <span className="ml-2 text-[9px] font-bold uppercase text-slate-400">OPCIONAL</span>
+                      <span className="ml-2 text-[11px] font-bold uppercase text-slate-600">OPCIONAL</span>
                     )}
                     {r.condicao_profissional ? (
-                      <span className="ml-2 text-[9px] font-mono uppercase text-slate-500">[{r.condicao_profissional}]</span>
+                      <span className="ml-2 text-[11px] font-mono uppercase text-slate-700">[{r.condicao_profissional}]</span>
                     ) : null}
                   </div>
                   {r.observacoes_cliente ? (
-                    <div className="text-[11px] text-slate-600">{r.observacoes_cliente}</div>
+                    <div className="text-[12.5px] text-slate-600">{r.observacoes_cliente}</div>
                   ) : null}
                 </div>
               </li>
@@ -1331,7 +1331,7 @@ function Field({ label, children, colSpan = 12 }: { label: string; children: Rea
   const cls = `col-span-${colSpan}`;
   return (
     <div className={cls}>
-      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{label}</div>
+      <div className="text-[11.5px] font-bold uppercase tracking-widest text-slate-700 mb-1">{label}</div>
       {children}
     </div>
   );
@@ -1369,14 +1369,14 @@ function SortableExigenciaItem(props: SortableProps) {
           {...listeners}
           aria-label="Arrastar para reordenar"
           title="Arraste para reordenar"
-          className="h-7 w-6 inline-flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-grab active:cursor-grabbing touch-none"
+          className="h-7 w-6 inline-flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 hover:text-slate-700 cursor-grab active:cursor-grabbing touch-none"
         >
           <GripVertical className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
           onClick={onToggleExpand}
-          className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+          className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-700 hover:bg-slate-100"
           title={expanded ? "Recolher" : "Expandir"}
           aria-expanded={expanded}
         >
@@ -1387,39 +1387,39 @@ function SortableExigenciaItem(props: SortableProps) {
           <div className="text-[12.5px] font-bold uppercase tracking-tight text-slate-900 truncate" title={row.nome_documento}>
             {row.nome_documento || "—"}
           </div>
-          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+          <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
             {row.etapa || "base"}
           </span>
-          <span className="text-[10px] font-mono lowercase text-slate-500 truncate max-w-[200px]" title={row.tipo_documento}>
+          <span className="text-[11.5px] font-mono lowercase text-slate-700 truncate max-w-[200px]" title={row.tipo_documento}>
             {row.tipo_documento}
           </span>
           <span
-            className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-100"
+            className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-100"
             title="Condição profissional — a exigência só aparece para clientes nesta condição"
           >
             {row.condicao_profissional ? row.condicao_profissional : "TODOS"}
           </span>
           {row.obrigatorio ? (
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
           ) : (
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">OPC</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">OPC</span>
           )}
           {!row.ativo && (
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
           )}
           {dirty && (
-            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
           )}
         </div>
 
         {/* ordem editável inline */}
         <div className="flex items-center gap-1">
-          <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">ORD</label>
+          <label className="text-[11px] font-bold uppercase tracking-widest text-slate-600">ORD</label>
           <input
             type="number"
             value={row.ordem ?? 0}
             onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
-            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[12.5px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
             title="Ordem — edite e clique fora para salvar via SALVAR"
           />
         </div>
@@ -1435,10 +1435,10 @@ function SortableExigenciaItem(props: SortableProps) {
             title={row.ativo ? "Desativar exigência (sem excluir)" : "Ativar exigência"}
             aria-pressed={!!row.ativo}
             className={
-              "h-7 px-2 inline-flex items-center gap-1 rounded-full border text-[9px] font-bold uppercase tracking-wider transition-colors " +
+              "h-7 px-2 inline-flex items-center gap-1 rounded-full border text-[11px] font-bold uppercase tracking-wider transition-colors " +
               (row.ativo
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100")
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100")
             }
           >
             <span
@@ -1461,7 +1461,7 @@ function SortableExigenciaItem(props: SortableProps) {
             onClick={onMoveUp}
             disabled={!canMoveUp}
             title="Subir"
-            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-700 hover:bg-slate-100 disabled:opacity-30"
           >
             <ChevronUp className="h-3.5 w-3.5" />
           </button>
@@ -1470,7 +1470,7 @@ function SortableExigenciaItem(props: SortableProps) {
             onClick={onMoveDown}
             disabled={!canMoveDown}
             title="Descer"
-            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-700 hover:bg-slate-100 disabled:opacity-30"
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
@@ -1478,7 +1478,7 @@ function SortableExigenciaItem(props: SortableProps) {
             type="button"
             onClick={onDelete}
             title="Excluir"
-            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-700 hover:bg-rose-50 hover:text-rose-700"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

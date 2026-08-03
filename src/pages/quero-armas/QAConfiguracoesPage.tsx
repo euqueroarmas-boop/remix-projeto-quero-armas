@@ -429,13 +429,13 @@ export default function QAConfiguracoesPage() {
   }
 
   return (
-    <div className="space-y-5 md:space-y-6 max-w-4xl mx-auto">
+    <div className="qa-config-surface space-y-5 md:space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+        <h1 className="qa-h1 flex items-center gap-2">
           <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
         </h1>
-        <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Status do sistema, serviços e pesos de ranking</p>
+        <p className="qa-body qa-body--soft mt-1">Status do sistema, serviços e pesos de ranking</p>
       </div>
 
       <Tabs defaultValue="sistema" className="w-full">
@@ -468,7 +468,7 @@ export default function QAConfiguracoesPage() {
           <div className="qa-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <Database className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status</span>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Status</span>
             </div>
             <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
               {[
@@ -482,7 +482,7 @@ export default function QAConfiguracoesPage() {
               ].map(s => (
                 <div key={s.label} className="text-center p-2 rounded-lg" style={{ background: "hsl(220 20% 97%)" }}>
                   <div className="text-lg font-bold tabular-nums" style={{ color: "hsl(220 20% 18%)" }}>{s.value}</div>
-                  <div className="text-[9px] uppercase tracking-wider" style={{ color: "hsl(220 10% 55%)" }}>{s.label}</div>
+                  <div className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 12% 38%)" }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -502,10 +502,10 @@ export default function QAConfiguracoesPage() {
                   <div className="flex items-center gap-1 rounded-lg p-0.5 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
                     <button
                       onClick={() => setActiveTab("catalogo")}
-                      className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
+                      className="h-7 px-3 rounded-md text-[12.5px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "catalogo" ? "white" : "transparent",
-                        color: activeTab === "catalogo" ? "hsl(352 60% 30%)" : "hsl(220 10% 55%)",
+                        color: activeTab === "catalogo" ? "hsl(352 60% 30%)" : "hsl(220 12% 38%)",
                         boxShadow: activeTab === "catalogo" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -513,10 +513,10 @@ export default function QAConfiguracoesPage() {
                     </button>
                     <button
                       onClick={() => setActiveTab("internos")}
-                      className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
+                      className="h-7 px-3 rounded-md text-[12.5px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "internos" ? "white" : "transparent",
-                        color: activeTab === "internos" ? "hsl(352 60% 30%)" : "hsl(220 10% 55%)",
+                        color: activeTab === "internos" ? "hsl(352 60% 30%)" : "hsl(220 12% 38%)",
                         boxShadow: activeTab === "internos" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -524,13 +524,13 @@ export default function QAConfiguracoesPage() {
                     </button>
                   </div>
                   <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "", is_combo: false }); }}
-                    className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+                    className="qa-btn-primary h-8 px-3 text-[12.5px] flex items-center gap-1 no-glow">
                     <Plus className="h-3 w-3" /> Novo Serviço
                   </button>
                 </div>
 
                 {activeTab === "internos" && (
-                  <p className="text-[11px] mb-3 px-2 py-1.5 rounded-md" style={{ color: "hsl(35 60% 30%)", background: "hsl(45 90% 95%)", border: "1px solid hsl(45 80% 85%)" }}>
+                  <p className="text-[12.5px] mb-3 px-2 py-1.5 rounded-md" style={{ color: "hsl(35 60% 30%)", background: "hsl(45 90% 95%)", border: "1px solid hsl(45 80% 85%)" }}>
                     Serviços operacionais/legados — mantidos para preservar vendas, processos e histórico. Não aparecem na vitrine pública.
                   </p>
                 )}
@@ -538,19 +538,19 @@ export default function QAConfiguracoesPage() {
                 {showNew && (
             <div className="flex gap-2 items-end mb-3 rounded-xl p-3 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
               <div className="flex-1 space-y-1">
-                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
+                <Label className="text-[11.5px] uppercase" style={{ color: "hsl(220 14% 32%)" }}>Nome</Label>
                 <Input value={newForm.nome_servico} onChange={e => setNewForm(p => ({ ...p, nome_servico: e.target.value }))}
                   className="h-9 bg-white border-slate-200 text-slate-700" placeholder="Nome do serviço" />
               </div>
               <div className="w-24 space-y-1">
-                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Valor (R$)</Label>
+                <Label className="text-[11.5px] uppercase" style={{ color: "hsl(220 14% 32%)" }}>Valor (R$)</Label>
                 <Input type="number" value={newForm.valor_servico} onChange={e => setNewForm(p => ({ ...p, valor_servico: e.target.value }))}
                   className="h-9 bg-white border-slate-200 text-slate-700 font-mono" placeholder="0" />
               </div>
               <button onClick={handleAddServico} disabled={savingSvc} className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shrink-0">
                 {savingSvc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
               </button>
-              <button onClick={() => setShowNew(false)} className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 shrink-0">
+              <button onClick={() => setShowNew(false)} className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-600 shrink-0">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -568,35 +568,35 @@ export default function QAConfiguracoesPage() {
                     <button onClick={() => handleUpdateServico(svc.id)} disabled={savingSvc} className="h-7 w-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50">
                       <Check className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={() => setEditingId(null)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100">
+                    <button onClick={() => setEditingId(null)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100">
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 truncate" style={{ color: "hsl(220 20% 25%)" }}>{svc.nome_servico}</span>
-                    <span className="font-mono shrink-0" style={{ color: "hsl(220 10% 55%)" }}>R$ {svc.valor_servico}</span>
+                    <span className="flex-1 truncate" style={{ color: "hsl(220 20% 15%)" }}>{svc.nome_servico}</span>
+                    <span className="font-mono shrink-0" style={{ color: "hsl(220 12% 38%)" }}>R$ {svc.valor_servico}</span>
                     <button
                       onClick={() => handleCopiarChecklist(svc)}
                       title="Copiar checklist de outro serviço"
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-[#7A1F2B] opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#7A1F2B] opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Copy className="h-3 w-3" />
                     </button>
-                    <button onClick={() => startEdit(svc)} title="Editar" className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => startEdit(svc)} title="Editar" className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => handleArquivarServico(svc)}
                       title="Arquivar (esconde do cliente, mantém tudo)"
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Archive className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => handleDeleteServico(svc.id)}
                       title="Excluir permanentemente (perde tudo)"
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -605,7 +605,7 @@ export default function QAConfiguracoesPage() {
               </div>
             ))}
             {lista.length === 0 && (
-              <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>
+              <p className="text-xs text-center py-4" style={{ color: "hsl(220 12% 38%)" }}>
                 {activeTab === "catalogo" ? "Nenhum serviço vinculado ao catálogo público" : "Nenhum serviço interno/legado"}
               </p>
             )}
@@ -654,16 +654,16 @@ export default function QAConfiguracoesPage() {
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>
                 Status dos Serviços ({statuses.length})
               </span>
-              <p className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+              <p className="text-[11.5px] mt-0.5" style={{ color: "hsl(220 12% 38%)" }}>
                 Fonte única usada nos menus de status. Status em uso só podem ser desativados.
               </p>
             </div>
             <button
               onClick={() => { setShowNewStatus(!showNewStatus); setNewStatusForm(emptyStatusForm); }}
-              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow"
+              className="qa-btn-primary h-8 px-3 text-[12.5px] flex items-center gap-1 no-glow"
             >
               <Plus className="h-3 w-3" /> Novo Status
             </button>
@@ -673,7 +673,7 @@ export default function QAConfiguracoesPage() {
             <div className="mb-3 rounded-xl p-3 border space-y-3" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
               <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
                 <div className="md:col-span-5 space-y-1">
-                  <Label className="text-[10px] uppercase">Nome exibido</Label>
+                  <Label className="text-[11.5px] uppercase">Nome exibido</Label>
                   <Input
                     value={newStatusForm.nome}
                     onChange={e => setNewStatusForm(p => ({ ...p, nome: e.target.value, codigo: p.codigo || slugify(e.target.value) }))}
@@ -682,7 +682,7 @@ export default function QAConfiguracoesPage() {
                   />
                 </div>
                 <div className="md:col-span-4 space-y-1">
-                  <Label className="text-[10px] uppercase">Código (estável)</Label>
+                  <Label className="text-[11.5px] uppercase">Código (estável)</Label>
                   <Input
                     value={newStatusForm.codigo}
                     onChange={e => setNewStatusForm(p => ({ ...p, codigo: slugify(e.target.value) }))}
@@ -691,20 +691,20 @@ export default function QAConfiguracoesPage() {
                   />
                 </div>
                 <div className="md:col-span-2 space-y-1">
-                  <Label className="text-[10px] uppercase">Ordem</Label>
+                  <Label className="text-[11.5px] uppercase">Ordem</Label>
                   <Input type="number" value={newStatusForm.ordem}
                     onChange={e => setNewStatusForm(p => ({ ...p, ordem: e.target.value }))}
                     className="h-9 bg-white border-slate-200 text-slate-700 font-mono text-right" placeholder="0" />
                 </div>
                 <div className="md:col-span-1 space-y-1">
-                  <Label className="text-[10px] uppercase">Cor</Label>
+                  <Label className="text-[11.5px] uppercase">Cor</Label>
                   <Input type="color" value={newStatusForm.cor}
                     onChange={e => setNewStatusForm(p => ({ ...p, cor: e.target.value }))}
                     className="h-9 w-full p-1 bg-white border-slate-200" />
                 </div>
               </div>
               <div className="space-y-1">
-                <Label className="text-[10px] uppercase">Descrição (opcional)</Label>
+                <Label className="text-[11.5px] uppercase">Descrição (opcional)</Label>
                 <Input value={newStatusForm.descricao}
                   onChange={e => setNewStatusForm(p => ({ ...p, descricao: e.target.value }))}
                   className="h-9 bg-white border-slate-200 text-slate-700" />
@@ -717,16 +717,16 @@ export default function QAConfiguracoesPage() {
                   ["visivel_cliente", "VISÍVEL P/ CLIENTE"],
                   ["visivel_equipe", "VISÍVEL P/ EQUIPE"],
                 ] as const).map(([k, label]) => (
-                  <label key={k} className="flex items-center gap-2 text-[10px] uppercase text-slate-600 cursor-pointer">
+                  <label key={k} className="flex items-center gap-2 text-[11.5px] uppercase text-slate-600 cursor-pointer">
                     <Switch checked={(newStatusForm as any)[k]} onCheckedChange={(v) => setNewStatusForm(p => ({ ...p, [k]: v }))} />
                     <span>{label}</span>
                   </label>
                 ))}
               </div>
               <div className="flex justify-end gap-2">
-                <button onClick={() => setShowNewStatus(false)} className="h-9 px-3 rounded-lg hover:bg-slate-100 text-slate-500 text-[11px]">Cancelar</button>
+                <button onClick={() => setShowNewStatus(false)} className="h-9 px-3 rounded-lg hover:bg-slate-100 text-slate-700 text-[12.5px]">Cancelar</button>
                 <button onClick={handleAddStatus} disabled={savingStatus}
-                  className="h-9 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[11px] flex items-center gap-1">
+                  className="h-9 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] flex items-center gap-1">
                   {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                   Criar
                 </button>
@@ -743,22 +743,22 @@ export default function QAConfiguracoesPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
                         <div className="md:col-span-5 space-y-1">
-                          <Label className="text-[10px] uppercase">Nome exibido</Label>
+                          <Label className="text-[11.5px] uppercase">Nome exibido</Label>
                           <Input value={editStatusForm.nome} onChange={e => setEditStatusForm(p => ({ ...p, nome: e.target.value }))}
                             className="h-8 bg-white border-slate-200 text-slate-700 uppercase text-xs" />
                         </div>
                         <div className="md:col-span-4 space-y-1">
-                          <Label className="text-[10px] uppercase">Código</Label>
+                          <Label className="text-[11.5px] uppercase">Código</Label>
                           <Input value={editStatusForm.codigo} onChange={e => setEditStatusForm(p => ({ ...p, codigo: slugify(e.target.value) }))}
                             className="h-8 bg-white border-slate-200 text-slate-700 font-mono text-xs" />
                         </div>
                         <div className="md:col-span-2 space-y-1">
-                          <Label className="text-[10px] uppercase">Ordem</Label>
+                          <Label className="text-[11.5px] uppercase">Ordem</Label>
                           <Input type="number" value={editStatusForm.ordem} onChange={e => setEditStatusForm(p => ({ ...p, ordem: e.target.value }))}
                             className="h-8 bg-white border-slate-200 text-slate-700 font-mono text-right text-xs" />
                         </div>
                         <div className="md:col-span-1 space-y-1">
-                          <Label className="text-[10px] uppercase">Cor</Label>
+                          <Label className="text-[11.5px] uppercase">Cor</Label>
                           <Input type="color" value={editStatusForm.cor} onChange={e => setEditStatusForm(p => ({ ...p, cor: e.target.value }))}
                             className="h-8 w-full p-1 bg-white border-slate-200" />
                         </div>
@@ -774,16 +774,16 @@ export default function QAConfiguracoesPage() {
                           ["visivel_cliente", "VISÍVEL P/ CLIENTE"],
                           ["visivel_equipe", "VISÍVEL P/ EQUIPE"],
                         ] as const).map(([k, label]) => (
-                          <label key={k} className="flex items-center gap-2 text-[10px] uppercase text-slate-600 cursor-pointer">
+                          <label key={k} className="flex items-center gap-2 text-[11.5px] uppercase text-slate-600 cursor-pointer">
                             <Switch checked={(editStatusForm as any)[k]} onCheckedChange={(v) => setEditStatusForm(p => ({ ...p, [k]: v }))} />
                             <span>{label}</span>
                           </label>
                         ))}
                       </div>
                       <div className="flex justify-end gap-2">
-                        <button onClick={() => setEditingStatusId(null)} className="h-8 px-3 rounded-lg hover:bg-slate-100 text-slate-500 text-[11px]">Cancelar</button>
+                        <button onClick={() => setEditingStatusId(null)} className="h-8 px-3 rounded-lg hover:bg-slate-100 text-slate-700 text-[12.5px]">Cancelar</button>
                         <button onClick={() => handleUpdateStatus(s.id)} disabled={savingStatus}
-                          className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[11px] flex items-center gap-1">
+                          className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[12.5px] flex items-center gap-1">
                           {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                           Salvar
                         </button>
@@ -792,14 +792,14 @@ export default function QAConfiguracoesPage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <span className="inline-block h-3 w-3 rounded-full shrink-0 border" style={{ background: s.cor || "#cbd5e1", borderColor: "hsl(220 13% 85%)" }} />
-                      <span className={`flex-1 truncate font-medium ${s.ativo ? "" : "line-through opacity-50"}`} style={{ color: "hsl(220 20% 25%)" }}>{s.nome}</span>
-                      <span className="font-mono text-[10px] shrink-0 text-slate-400 truncate max-w-[160px]" title={s.codigo}>{s.codigo}</span>
-                      <span className="font-mono text-[10px] shrink-0 text-slate-500">#{s.ordem}</span>
+                      <span className={`flex-1 truncate font-medium ${s.ativo ? "" : "line-through opacity-50"}`} style={{ color: "hsl(220 20% 15%)" }}>{s.nome}</span>
+                      <span className="font-mono text-[11.5px] shrink-0 text-slate-600 truncate max-w-[160px]" title={s.codigo}>{s.codigo}</span>
+                      <span className="font-mono text-[11.5px] shrink-0 text-slate-700">#{s.ordem}</span>
                       <Switch checked={s.ativo} onCheckedChange={() => handleToggleStatusAtivo(s)} />
-                      <button onClick={() => startEditStatus(s)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700">
+                      <button onClick={() => startEditStatus(s)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-slate-700">
                         <Pencil className="h-3 w-3" />
                       </button>
-                      <button onClick={() => handleDeleteStatus(s.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500" title="Excluir (bloqueado se em uso)">
+                      <button onClick={() => handleDeleteStatus(s.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-red-500" title="Excluir (bloqueado se em uso)">
                         <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
@@ -807,7 +807,7 @@ export default function QAConfiguracoesPage() {
                 </div>
               );
             })}
-            {statuses.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum status cadastrado</p>}
+            {statuses.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 12% 38%)" }}>Nenhum status cadastrado</p>}
           </div>
         </div>
         </TabsContent>
@@ -822,9 +822,9 @@ export default function QAConfiguracoesPage() {
       <TabsContent value="ranking" className="mt-4">
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Pesos de Ranking</span>
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Pesos de Ranking</span>
           {isAdmin && (
-            <button onClick={handleSaveWeights} disabled={saving} className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+            <button onClick={handleSaveWeights} disabled={saving} className="qa-btn-primary h-8 px-3 text-[12.5px] flex items-center gap-1 no-glow">
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               Salvar
             </button>
@@ -833,7 +833,7 @@ export default function QAConfiguracoesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {config.map(c => (
             <div key={c.id} className="space-y-1">
-              <Label className="text-[11px] font-medium uppercase" style={{ color: "hsl(220 10% 45%)" }}>{c.descricao || c.chave}</Label>
+              <Label className="text-[12.5px] font-medium uppercase" style={{ color: "hsl(220 14% 32%)" }}>{c.descricao || c.chave}</Label>
               <Input
                 value={editedValues[c.id] || ""}
                 onChange={e => setEditedValues(prev => ({ ...prev, [c.id]: e.target.value }))}
@@ -841,11 +841,11 @@ export default function QAConfiguracoesPage() {
                 type="number" step="0.01"
                 className="h-9 bg-white border-slate-200 text-slate-700 font-mono"
               />
-              <div className="text-[9px] font-mono" style={{ color: "hsl(220 10% 70%)" }}>{c.chave}</div>
+              <div className="text-[11px] font-mono" style={{ color: "hsl(220 10% 70%)" }}>{c.chave}</div>
             </div>
           ))}
         </div>
-        {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 10% 62%)" }}>Apenas a gestão da Equipe Quero Armas pode editar.</p>}
+        {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 12% 38%)" }}>Apenas a gestão da Equipe Quero Armas pode editar.</p>}
       </div>
       </TabsContent>
 
@@ -854,13 +854,13 @@ export default function QAConfiguracoesPage() {
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
           <User className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Perfil</span>
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Perfil</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
-          <div><span style={{ color: "hsl(220 10% 55%)" }}>Nome:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 25%)" }}>{profile?.nome || "—"}</span></div>
-          <div><span style={{ color: "hsl(220 10% 55%)" }}>Perfil:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 25%)" }}>{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
-          <div><span style={{ color: "hsl(220 10% 55%)" }}>Email:</span> <span className="ml-1 truncate uppercase" style={{ color: "hsl(220 20% 25%)" }}>{profile?.email || "—"}</span></div>
-          <div><span style={{ color: "hsl(220 10% 55%)" }}>Status:</span> <span className={`ml-1 font-medium ${profile?.ativo ? "text-emerald-600" : "text-red-500"}`}>{profile?.ativo ? "ATIVO" : "INATIVO"}</span></div>
+          <div><span style={{ color: "hsl(220 12% 38%)" }}>Nome:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 15%)" }}>{profile?.nome || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 12% 38%)" }}>Perfil:</span> <span className="ml-1 uppercase font-medium" style={{ color: "hsl(220 20% 15%)" }}>{profile?.perfil?.replace(/_/g, " ") || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 12% 38%)" }}>Email:</span> <span className="ml-1 truncate uppercase" style={{ color: "hsl(220 20% 15%)" }}>{profile?.email || "—"}</span></div>
+          <div><span style={{ color: "hsl(220 12% 38%)" }}>Status:</span> <span className={`ml-1 font-medium ${profile?.ativo ? "text-emerald-600" : "text-red-500"}`}>{profile?.ativo ? "ATIVO" : "INATIVO"}</span></div>
         </div>
       </div>
       </TabsContent>
@@ -908,17 +908,17 @@ function MonitoramentoToggles() {
     <div className="qa-card p-5">
       <div className="flex items-center gap-2 mb-1">
         <Settings className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>
           Configurações de Monitoramento
         </span>
       </div>
-      <p className="text-[11px] mb-4" style={{ color: "hsl(220 10% 62%)" }}>
+      <p className="text-[12.5px] mb-4" style={{ color: "hsl(220 12% 38%)" }}>
         Controle quais blocos aparecem na página <span className="font-semibold">Operação → Monitoramento</span>.
         Blocos desativados não executam queries.
       </p>
       {loading ? (
         <div className="flex justify-center py-6">
-          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -932,8 +932,8 @@ function MonitoramentoToggles() {
                 className="mt-0.5"
               />
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium" style={{ color: "hsl(220 20% 25%)" }}>{b.label}</div>
-                <div className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>{b.descricao}</div>
+                <div className="text-[13px] font-medium" style={{ color: "hsl(220 20% 15%)" }}>{b.label}</div>
+                <div className="text-[12.5px]" style={{ color: "hsl(220 12% 38%)" }}>{b.descricao}</div>
               </div>
             </label>
           ))}

@@ -708,7 +708,7 @@ export default function MontarChecklistAdmin() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border p-8 flex items-center justify-center gap-2 text-slate-400" style={{ borderColor: "hsl(220 15% 90%)" }}>
+      <div className="bg-white rounded-2xl border p-8 flex items-center justify-center gap-2 text-slate-600" style={{ borderColor: "hsl(220 15% 90%)" }}>
         <Loader2 className="w-4 h-4 animate-spin" /> Carregando…
       </div>
     );
@@ -719,7 +719,7 @@ export default function MontarChecklistAdmin() {
       {/* Seletor de serviço + toolbar */}
       <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 shrink-0">Serviço:</label>
+          <label className="text-[11.5px] font-semibold uppercase tracking-wide text-slate-700 shrink-0">Serviço:</label>
           <select
             value={servicoId ?? ""}
             onChange={(e) => setServicoId(e.target.value ? Number(e.target.value) : null)}
@@ -765,7 +765,7 @@ export default function MontarChecklistAdmin() {
           )}
         </div>
         {modeloEscolhido && (
-          <p className="text-[11px] text-amber-700 mt-2 leading-relaxed">
+          <p className="text-[12.5px] text-amber-700 mt-2 leading-relaxed">
             {getModeloBySlug(modeloEscolhido)?.aviso_juridico}
           </p>
         )}
@@ -777,11 +777,11 @@ export default function MontarChecklistAdmin() {
             <div className="max-w-2xl">
               <div className="flex items-center gap-2">
                 <GitBranch className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
-                <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "hsl(220 20% 25%)" }}>
+                <h3 className="text-xs font-semibold uppercase tracking-wide" style={{ color: "hsl(220 20% 15%)" }}>
                   Fluxos guiados do cliente
                 </h3>
               </div>
-              <p className="text-[11px] mt-1 leading-relaxed text-slate-500">
+              <p className="text-[12.5px] mt-1 leading-relaxed text-slate-700">
                 Use estes fluxos quando uma exigência pode se ramificar. O cliente responde perguntas simples,
                 o sistema pede os documentos certos, grava as respostas no processo e libera declarações quando necessário.
               </p>
@@ -793,16 +793,16 @@ export default function MontarChecklistAdmin() {
                 className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
                 style={{ borderColor: fluxoResidenciaAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
               >
-                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                <span className="flex items-center gap-2 text-[12.5px] font-bold" style={{ color: "hsl(220 20% 15%)" }}>
                   <Home className="w-3.5 h-3.5 text-[#7B1C2E]" />
                   RESIDÊNCIA COM TERCEIRO
                 </span>
-                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold ${
                   fluxoResidenciaAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                 }`}>
                   {fluxoResidenciaAtivo ? "APLICADO" : "CLIQUE PARA APLICAR"}
                 </span>
-                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                <p className="mt-1 text-[11.5px] leading-snug text-slate-700">
                   Comprovante, pergunta de titularidade, documento do terceiro e declaração assinada.
                 </p>
               </button>
@@ -813,16 +813,16 @@ export default function MontarChecklistAdmin() {
                 className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
                 style={{ borderColor: fluxoOcupacaoAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
               >
-                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                <span className="flex items-center gap-2 text-[12.5px] font-bold" style={{ color: "hsl(220 20% 15%)" }}>
                   <BriefcaseBusiness className="w-3.5 h-3.5 text-[#7B1C2E]" />
                   OCUPAÇÃO LÍCITA RAMIFICADA
                 </span>
-                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold ${
                   fluxoOcupacaoAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                 }`}>
                   {fluxoOcupacaoAtivo ? "APLICADO" : "CLIQUE PARA APLICAR"}
                 </span>
-                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                <p className="mt-1 text-[11.5px] leading-snug text-slate-700">
                   O cliente escolhe CLT, MEI, empresário, servidor, autônomo ou aposentado.
                 </p>
               </button>
@@ -833,16 +833,16 @@ export default function MontarChecklistAdmin() {
                 className="rounded-lg border p-3 text-left hover:bg-slate-50 disabled:opacity-60 transition-colors"
                 style={{ borderColor: grupoCertidoesEstaduaisAtivo ? "hsl(145 60% 80%)" : "hsl(220 15% 88%)" }}
               >
-                <span className="flex items-center gap-2 text-[11px] font-bold" style={{ color: "hsl(220 20% 25%)" }}>
+                <span className="flex items-center gap-2 text-[12.5px] font-bold" style={{ color: "hsl(220 20% 15%)" }}>
                   <Landmark className="w-3.5 h-3.5 text-[#7B1C2E]" />
                   CERTIDÕES ESTADUAIS
                 </span>
-                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                <span className={`mt-1 inline-flex rounded px-1.5 py-0.5 text-[11px] font-bold ${
                   grupoCertidoesEstaduaisAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                 }`}>
                   {certidoesEstaduaisAplicadas}/{GRUPO_CERTIDOES_ESTADUAIS.length} ITENS
                 </span>
-                <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                <p className="mt-1 text-[11.5px] leading-snug text-slate-700">
                   Transforma Justiça Estadual em pacote auditável com 4 certidões internas.
                 </p>
               </button>
@@ -851,10 +851,10 @@ export default function MontarChecklistAdmin() {
           {certidoesEstaduaisAplicadas > 0 && (
             <div className="mt-3 rounded-xl border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 88%)" }}>
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                <p className="text-[11.5px] font-bold uppercase tracking-wide text-slate-600">
                   PACOTE DE JUSTIÇA ESTADUAL NO CHECKLIST
                 </p>
-                <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${
+                <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${
                   grupoCertidoesEstaduaisAtivo ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                 }`}>
                   {grupoCertidoesEstaduaisAtivo ? "COMPLETO" : "INCOMPLETO"}
@@ -866,14 +866,14 @@ export default function MontarChecklistAdmin() {
                   return (
                     <div key={item.codigo} className="rounded-lg border bg-white p-2" style={{ borderColor: presente ? "hsl(145 60% 85%)" : "hsl(0 70% 88%)" }}>
                       <div className="flex items-start gap-2">
-                        <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                        <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold ${
                           presente ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
                         }`}>
                           {index + 1}
                         </span>
                         <div>
-                          <div className="text-[10px] font-bold uppercase text-[#7B1C2E]">{item.nome}</div>
-                          <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                          <div className="text-[11.5px] font-bold uppercase text-[#7B1C2E]">{item.nome}</div>
+                          <p className="mt-0.5 text-[11.5px] leading-snug text-slate-700">
                             {presente ? "Está no checklist e será validada separadamente." : "Ainda falta adicionar este item ao checklist."}
                           </p>
                         </div>
@@ -882,7 +882,7 @@ export default function MontarChecklistAdmin() {
                   );
                 })}
               </div>
-              <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+              <p className="mt-2 text-[11.5px] leading-relaxed text-slate-700">
                 Base legal: Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311. A IN 201 exige certidões e comprovação de idoneidade; este pacote organiza a parte estadual para reduzir erro humano.
               </p>
             </div>
@@ -890,20 +890,20 @@ export default function MontarChecklistAdmin() {
           {fluxoOcupacaoAtivo && (
             <div className="mt-3 rounded-xl border bg-slate-50/70 p-3" style={{ borderColor: "hsl(220 15% 88%)" }}>
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                <p className="text-[11.5px] font-bold uppercase tracking-wide text-slate-600">
                   O QUE SERÁ PEDIDO QUANDO O CLIENTE ESCOLHER A CONDIÇÃO PROFISSIONAL
                 </p>
-                <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-bold text-emerald-700">
                   VISÍVEL PARA AUDITORIA
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {OCUPACAO_RAMOS.map((ramo) => (
                   <div key={ramo.titulo} className="rounded-lg border bg-white p-2" style={{ borderColor: "hsl(220 15% 90%)" }}>
-                    <div className="text-[10px] font-bold uppercase text-[#7B1C2E]">{ramo.titulo}</div>
+                    <div className="text-[11.5px] font-bold uppercase text-[#7B1C2E]">{ramo.titulo}</div>
                     <ul className="mt-1 space-y-1">
                       {ramo.itens.map((item) => (
-                        <li key={item} className="flex gap-1.5 text-[10px] leading-snug text-slate-600">
+                        <li key={item} className="flex gap-1.5 text-[11.5px] leading-snug text-slate-600">
                           <span className="mt-[5px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
                           <span>{item}</span>
                         </li>
@@ -912,7 +912,7 @@ export default function MontarChecklistAdmin() {
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
+              <p className="mt-2 text-[11.5px] leading-relaxed text-slate-700">
                 Estes documentos não aparecem todos na lista principal porque eles só nascem no processo depois que o cliente responde a condição profissional. A base legal usada é Lei 10.826/2003, Decreto 11.615/2023, Decreto 12.345/2024, IN DG/PF 201 e IN DG/PF 311.
               </p>
             </div>
@@ -923,7 +923,7 @@ export default function MontarChecklistAdmin() {
       {!servicoId ? (
         <div className="bg-white rounded-2xl border p-10 text-center" style={{ borderColor: "hsl(220 15% 90%)" }}>
           <BookMarked className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Escolha um serviço acima para montar ou editar o checklist.</p>
+          <p className="text-sm text-slate-700">Escolha um serviço acima para montar ou editar o checklist.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
@@ -931,12 +931,12 @@ export default function MontarChecklistAdmin() {
           <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
             <div className="flex items-center gap-2 mb-2">
               <BookMarked className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
-              <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Biblioteca</h3>
-              <span className="text-[10px] text-slate-400 ml-auto">clique em + para adicionar</span>
+              <h3 className="text-xs font-semibold" style={{ color: "hsl(220 20% 15%)" }}>Biblioteca</h3>
+              <span className="text-[11.5px] text-slate-600 ml-auto">clique em + para adicionar</span>
             </div>
             <div className="flex gap-1.5 mb-3">
               <div className="relative flex-1">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-600" />
                 <Input
                   value={buscaBib}
                   onChange={(e) => setBuscaBib(e.target.value)}
@@ -956,11 +956,11 @@ export default function MontarChecklistAdmin() {
             </div>
             <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
               {gruposBib.length === 0 && (
-                <p className="text-center py-8 text-xs italic text-slate-400">Nenhum documento encontrado.</p>
+                <p className="text-center py-8 text-xs italic text-slate-600">Nenhum documento encontrado.</p>
               )}
               {gruposBib.map(([cat, lista]) => (
                 <div key={cat}>
-                  <div className="text-[9px] font-bold tracking-[0.18em] text-slate-400 uppercase mb-1 px-1">
+                  <div className="text-[11px] font-bold tracking-[0.18em] text-slate-600 uppercase mb-1 px-1">
                     {labelCategoria(cat)}
                   </div>
                   <div className="space-y-1">
@@ -971,13 +971,13 @@ export default function MontarChecklistAdmin() {
                         onClick={() => adicionarBiblioteca(i)}
                         className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md border text-left text-xs transition-colors ${
                           i.jaNoServico
-                            ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                            ? "bg-slate-100 border-slate-200 text-slate-600 cursor-not-allowed"
                             : "bg-white border-slate-200 hover:bg-slate-50 hover:border-[#7B1C2E]/30"
                         }`}
                       >
                         <span className="flex-1 truncate">{nomeDocumentoExibicao(i)}</span>
                         {i.jaNoServico ? (
-                          <span className="text-[9px] px-1 rounded bg-slate-200 text-slate-500 shrink-0">já no serviço</span>
+                          <span className="text-[11px] px-1 rounded bg-slate-200 text-slate-700 shrink-0">já no serviço</span>
                         ) : (
                           <Plus className="w-3 h-3 text-[#7B1C2E] shrink-0" />
                         )}
@@ -993,15 +993,15 @@ export default function MontarChecklistAdmin() {
           <div className="bg-white rounded-2xl border p-4" style={{ borderColor: "hsl(220 15% 90%)" }}>
             <div className="flex items-center gap-2 mb-3">
               <ArrowRight className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
-              <h3 className="text-xs font-semibold truncate" style={{ color: "hsl(220 20% 25%)" }}>
+              <h3 className="text-xs font-semibold truncate" style={{ color: "hsl(220 20% 15%)" }}>
                 Checklist — {servicoAtual?.nome_servico}
               </h3>
-              <span className="text-[10px] text-slate-400 ml-auto shrink-0">
+              <span className="text-[11.5px] text-slate-600 ml-auto shrink-0">
                 {checklist.length} exigência{checklist.length !== 1 ? "s" : ""}
               </span>
             </div>
             {checklist.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400 border border-dashed rounded-lg" style={{ borderColor: "hsl(220 15% 88%)" }}>
+              <div className="py-10 text-center text-xs text-slate-600 border border-dashed rounded-lg" style={{ borderColor: "hsl(220 15% 88%)" }}>
                 Nenhuma exigência ainda.<br />
                 Adicione da biblioteca (à esquerda) ou aplique um modelo pronto.
               </div>
@@ -1048,40 +1048,40 @@ export default function MontarChecklistAdmin() {
                       <button
                         disabled={i === 0 || carregandoAcao}
                         onClick={() => moverOrdem(c, "cima")}
-                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-600 hover:text-slate-700 disabled:opacity-30"
                       >
                         <ArrowUp className="w-3 h-3" />
                       </button>
                       <button
                         disabled={i === checklist.length - 1 || carregandoAcao}
                         onClick={() => moverOrdem(c, "baixo")}
-                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="h-3.5 w-3.5 flex items-center justify-center text-slate-600 hover:text-slate-700 disabled:opacity-30"
                       >
                         <ArrowDown className="w-3 h-3" />
                       </button>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 25%)" }}>
+                      <p className={`text-xs font-medium ${(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? "whitespace-normal leading-snug" : "truncate"}`} style={{ color: "hsl(220 20% 15%)" }}>
                         {nomeDocumentoExibicao(c)}
                       </p>
-                      <p className="text-[10px] font-mono truncate text-slate-400">
+                      <p className="text-[11.5px] font-mono truncate text-slate-600">
                         ordem {c.ordem} · {c.etapa}{c.biblioteca_id ? " · ligado à biblioteca" : ""}
                         {(GRUPO_CERTIDOES_ESTADUAIS_TIPOS as readonly string[]).includes(c.tipo_documento) ? " · pacote estadual" : ""}
                       </p>
                     </div>
                     <button
                       onClick={() => toggleObrigatorio(c)}
-                      className={`text-[9px] px-1.5 py-0.5 rounded border font-semibold shrink-0 ${
+                      className={`text-[11px] px-1.5 py-0.5 rounded border font-semibold shrink-0 ${
                         c.obrigatorio
                           ? "text-red-700 bg-red-50 border-red-200"
-                          : "text-slate-500 bg-slate-50 border-slate-200"
+                          : "text-slate-700 bg-slate-50 border-slate-200"
                       }`}
                     >
                       {c.obrigatorio ? "OBRIGATÓRIO" : "OPCIONAL"}
                     </button>
                     <button
                       onClick={() => removerChecklist(c)}
-                      className="h-6 w-6 rounded flex items-center justify-center text-slate-400 hover:text-red-500 shrink-0"
+                      className="h-6 w-6 rounded flex items-center justify-center text-slate-600 hover:text-red-500 shrink-0"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

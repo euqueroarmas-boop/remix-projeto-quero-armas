@@ -36,8 +36,8 @@ type BibliotecaItem = {
   observacao_cliente: string | null;
 };
 
-const INK = "hsl(220 20% 18%)";
-const MUTED = "hsl(220 10% 45%)";
+const INK = "#111418";
+const MUTED = "#4A5361";
 const LINE = "hsl(220 13% 91%)";
 const BORDO = "#7A1F2B";
 const GRUPOS_MOVIMENTO = Object.values(PENDENCIA_GRUPOS).filter(
@@ -445,14 +445,14 @@ export default function SimuladorChecklistAdmin() {
             Simulador do Checklist
           </span>
         </div>
-        <p className="text-[11px] mb-4" style={{ color: MUTED }}>
+        <p className="text-[12.5px] mb-4" style={{ color: MUTED }}>
           Avance respondendo como o cliente responderia. O resultado usa exatamente as
           exigências cadastradas em Preços e Serviços / Montar Checklist — nada é inventado aqui.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
           <div className="md:col-span-7">
-            <label className="text-[10px] uppercase block mb-1" style={{ color: MUTED }}>Serviço</label>
+            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Serviço</label>
             <select
               value={servicoId ?? ""}
               onChange={(e) => {
@@ -471,7 +471,7 @@ export default function SimuladorChecklistAdmin() {
             </select>
           </div>
           <div className="md:col-span-3">
-            <label className="text-[10px] uppercase block mb-1" style={{ color: MUTED }}>Modalidade</label>
+            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Modalidade</label>
             <select
               value={modalidade ?? ""}
               onChange={(e) => setModalidade(e.target.value || null)}
@@ -488,7 +488,7 @@ export default function SimuladorChecklistAdmin() {
             <button
               onClick={reiniciar}
               disabled={!servicoId}
-              className="h-9 w-full rounded-md border text-[11px] uppercase flex items-center justify-center gap-1 disabled:opacity-40"
+              className="h-9 w-full rounded-md border text-[12.5px] uppercase flex items-center justify-center gap-1 disabled:opacity-40"
               style={{ borderColor: LINE, color: INK }}
             >
               <RotateCcw className="h-3 w-3" /> Reiniciar
@@ -511,7 +511,7 @@ export default function SimuladorChecklistAdmin() {
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
                 Passo atual do cliente
               </span>
-              <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
+              <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
                 {sim.totalCumpridos}/{sim.totalCumpridos + sim.totalPendentes}
               </span>
             </div>
@@ -538,7 +538,7 @@ export default function SimuladorChecklistAdmin() {
 
             {sim.proximo && (
               <div className="rounded-lg border p-4" style={{ borderColor: LINE }}>
-                <div className="text-[10px] uppercase mb-1" style={{ color: BORDO }}>
+                <div className="text-[11.5px] uppercase mb-1" style={{ color: BORDO }}>
                   {sim.proximo.rotuloGrupo} · ORDEM {sim.proximo.ordem}
                 </div>
                 <div className="text-sm font-semibold mb-3" style={{ color: INK }}>
@@ -551,7 +551,7 @@ export default function SimuladorChecklistAdmin() {
                       <button
                         key={o.valor}
                         onClick={() => responder(sim.proximo!.chave as string, o.valor)}
-                        className="h-9 rounded-md border px-3 text-[11px] uppercase text-left hover:bg-slate-50"
+                        className="h-9 rounded-md border px-3 text-[12.5px] uppercase text-left hover:bg-slate-50"
                         style={{ borderColor: LINE, color: INK }}
                       >
                         {o.label}
@@ -573,19 +573,19 @@ export default function SimuladorChecklistAdmin() {
                         name="resp"
                         autoComplete="off"
                         placeholder="DIGITE A RESPOSTA"
-                        className="h-9 flex-1 rounded-md border px-3 text-[11px] uppercase"
+                        className="h-9 flex-1 rounded-md border px-3 text-[12.5px] uppercase"
                         style={{ borderColor: LINE, color: INK }}
                       />
                       <button
                         type="submit"
-                        className="h-9 rounded-md px-3 text-[11px] uppercase text-white"
+                        className="h-9 rounded-md px-3 text-[12.5px] uppercase text-white"
                         style={{ background: BORDO }}
                       >
                         Responder
                       </button>
                     </form>
                   ) : (
-                    <div className="text-[11px]" style={{ color: "#B91C1C" }}>
+                    <div className="text-[12.5px]" style={{ color: "#B91C1C" }}>
                       Esta pergunta não tem opções cadastradas em regra_validacao.opcoes — o cliente
                       ficaria travado aqui.
                     </div>
@@ -593,14 +593,14 @@ export default function SimuladorChecklistAdmin() {
                 ) : (
                   <button
                     onClick={() => alternarEntrega(sim.proximo!.tipo_documento)}
-                    className="h-9 w-full rounded-md text-[11px] uppercase text-white"
+                    className="h-9 w-full rounded-md text-[12.5px] uppercase text-white"
                     style={{ background: BORDO }}
                   >
                     Simular envio deste documento
                   </button>
                 )}
 
-                <div className="mt-3 text-[10px] font-mono" style={{ color: MUTED }}>
+                <div className="mt-3 text-[11.5px] font-mono" style={{ color: MUTED }}>
                   {sim.proximo.tipo_documento} · etapa {sim.proximo.etapa}
                   {sim.proximo.obrigatorio ? " · OBRIGATÓRIO" : " · OPCIONAL"}
                 </div>
@@ -612,7 +612,7 @@ export default function SimuladorChecklistAdmin() {
                 {sim.alertas.map((a, i) => (
                   <div
                     key={i}
-                    className="flex gap-2 rounded-lg border p-2.5 text-[11px]"
+                    className="flex gap-2 rounded-lg border p-2.5 text-[12.5px]"
                     style={{
                       borderColor: a.nivel === "erro" ? "#B91C1C33" : "#D9770633",
                       background: a.nivel === "erro" ? "#B91C1C0D" : "#D977060D",
@@ -643,14 +643,14 @@ export default function SimuladorChecklistAdmin() {
                   onClick={renumerar}
                   disabled={salvandoOrdem || sim.grupos.length === 0}
                   title="Renumerar tudo em 10, 20, 30… na sequência atual"
-                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[9px] font-semibold uppercase tracking-wider disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[11px] font-semibold uppercase tracking-wider disabled:opacity-40"
                   style={{ borderColor: LINE, color: BORDO }}
                 >
                   <ListOrdered className="h-3 w-3" /> Renumerar
                 </button>
               </div>
             </div>
-            <p className="text-[10px] mb-3" style={{ color: MUTED }}>
+            <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>
               Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
               título do grupo para mover o grupo inteiro. A nova ordem é gravada no
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
@@ -664,7 +664,7 @@ export default function SimuladorChecklistAdmin() {
             <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
+                <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
                   Adicionar exigência (biblioteca oficial)
                 </span>
                 {adicionando && <Loader2 className="h-3 w-3 animate-spin" style={{ color: BORDO }} />}
@@ -676,14 +676,14 @@ export default function SimuladorChecklistAdmin() {
                     value={buscaBib}
                     onChange={(e) => setBuscaBib(e.target.value)}
                     placeholder="BUSCAR DOCUMENTO NA BIBLIOTECA..."
-                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[11px] uppercase"
+                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[12.5px] uppercase"
                     style={{ borderColor: LINE, color: INK }}
                   />
                 </div>
                 <select
                   value={condicaoNova}
                   onChange={(e) => setCondicaoNova(e.target.value)}
-                  className="rounded border bg-white px-2 py-1.5 text-[10px] uppercase"
+                  className="rounded border bg-white px-2 py-1.5 text-[11.5px] uppercase"
                   style={{ borderColor: LINE, color: INK }}
                   title="Exigir só para esta condição profissional"
                 >
@@ -696,7 +696,7 @@ export default function SimuladorChecklistAdmin() {
               {buscaBib.trim().length >= 2 && (
                 <div className="mt-2 max-h-44 overflow-y-auto rounded border bg-white" style={{ borderColor: LINE }}>
                   {bibliotecaFiltrada.length === 0 && (
-                    <div className="px-2 py-2 text-[10px] uppercase" style={{ color: MUTED }}>
+                    <div className="px-2 py-2 text-[11.5px] uppercase" style={{ color: MUTED }}>
                       Nenhum documento na biblioteca com esse termo — cadastre-o em Biblioteca de Documentos.
                     </div>
                   )}
@@ -710,10 +710,10 @@ export default function SimuladorChecklistAdmin() {
                       style={{ borderColor: "hsl(220 13% 95%)" }}
                     >
                       <span className="min-w-0">
-                        <span className="block text-[11px] leading-snug" style={{ color: INK }}>{b.nome}</span>
-                        <span className="block text-[9px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
+                        <span className="block text-[12.5px] leading-snug" style={{ color: INK }}>{b.nome}</span>
+                        <span className="block text-[11px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
                       </span>
-                      <span className="shrink-0 text-[9px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
+                      <span className="shrink-0 text-[11px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
                         {b.jaNoServico ? "já está" : "adicionar"}
                       </span>
                     </button>
@@ -768,12 +768,12 @@ export default function SimuladorChecklistAdmin() {
                 <DragOverlay dropAnimation={null}>
                   {arrastandoId ? (
                     <div className="w-[min(520px,70vw)] rounded-md border bg-white px-3 py-2 shadow-xl" style={{ borderColor: LINE }}>
-                      <span className="block truncate text-[11px] font-semibold" style={{ color: INK }}>
+                      <span className="block truncate text-[12.5px] font-semibold" style={{ color: INK }}>
                         {arrastandoId.startsWith("grupo:")
                           ? sim.grupos.find((g) => `grupo:${g.grupo}` === arrastandoId)?.rotulo
                           : sim.visiveis.find((i) => i.id === arrastandoId)?.nome_documento}
                       </span>
-                      <span className="text-[9px] uppercase" style={{ color: MUTED }}>MOVER PARA A NOVA POSIÇÃO</span>
+                      <span className="text-[11px] uppercase" style={{ color: MUTED }}>MOVER PARA A NOVA POSIÇÃO</span>
                     </div>
                   ) : null}
                 </DragOverlay>
@@ -829,16 +829,16 @@ function BlocoGrupo({
           >
             <GripVertical className="h-3.5 w-3.5" />
           </button>
-          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
+          <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: BORDO }}>
             {grupo.rotulo}
           </span>
         </div>
-        <span className="text-[10px] font-mono tabular-nums" style={{ color: MUTED }}>
+        <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
           {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
         </span>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-[9px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
+        <span className="text-[11px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
         <input
           type="number"
           min={1}
@@ -847,7 +847,7 @@ function BlocoGrupo({
           defaultValue={posicao}
           onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
           onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-          className="h-5 w-10 rounded border bg-white px-1 text-center text-[9px] font-mono"
+          className="h-5 w-10 rounded border bg-white px-1 text-center text-[11px] font-mono"
           style={{ borderColor: LINE, color: INK }}
         />
       </div>
@@ -878,7 +878,7 @@ function LinhaItem({
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
     pendente:   { icon: CircleDashed, cor: "#7A1F2B", label: "PENDENTE" },
-    dispensado: { icon: MinusCircle,  cor: "hsl(220 10% 62%)", label: "NÃO EXIGIDO" },
+    dispensado: { icon: MinusCircle,  cor: "hsl(220 12% 38%)", label: "NÃO EXIGIDO" },
     aguardando: { icon: Clock,        cor: "#D97706", label: "AGUARDA RESPOSTA" },
   }[item.estado];
   const Icon = cfg.icon;
@@ -907,7 +907,7 @@ function LinhaItem({
         title="Clique, segure e arraste para reordenar"
         {...attributes}
         {...listeners}
-        className="shrink-0 mt-[1px] cursor-grab active:cursor-grabbing touch-none text-slate-400 hover:text-slate-600"
+        className="shrink-0 mt-[1px] cursor-grab active:cursor-grabbing touch-none text-slate-600 hover:text-slate-600"
       >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
@@ -927,7 +927,7 @@ function LinhaItem({
               if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
               if (e.key === "Escape") setEditandoNome(false);
             }}
-            className="w-full rounded border px-1.5 py-0.5 text-[11px] leading-snug"
+            className="w-full rounded border px-1.5 py-0.5 text-[12.5px] leading-snug"
             style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 18%)" }}
           />
         ) : (
@@ -938,7 +938,7 @@ function LinhaItem({
               setEditandoNome(true);
             }}
             title="Clique para editar o nome que o cliente vê (não muda o código técnico)"
-            className="text-left text-[11px] leading-snug hover:underline decoration-dotted"
+            className="text-left text-[12.5px] leading-snug hover:underline decoration-dotted"
             style={{
               color: "hsl(220 20% 18%)",
               textDecoration: item.estado === "cumprido" ? "line-through" : undefined,
@@ -947,7 +947,7 @@ function LinhaItem({
             {item.nome_documento}
           </button>
         )}
-        <div className="flex flex-wrap items-center gap-1 text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
+        <div className="flex flex-wrap items-center gap-1 text-[11px] font-mono" style={{ color: "hsl(220 12% 38%)" }}>
           <span className="uppercase">ordem</span>
           <input
             type="number"
@@ -964,20 +964,20 @@ function LinhaItem({
               if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
             }}
             title="Digite o número de ordem desta exigência"
-            className="w-12 rounded border px-1 py-0 text-[9px] font-mono tabular-nums"
+            className="w-12 rounded border px-1 py-0 text-[11px] font-mono tabular-nums"
             style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
           />
           <span>· {item.tipo_documento}</span>
           {item.motivo ? <span>· {item.motivo}</span> : null}
         </div>
         <div className="mt-1 flex items-center gap-1">
-          <span className="text-[9px] uppercase" style={{ color: MUTED }}>grupo</span>
+          <span className="text-[11px] uppercase" style={{ color: MUTED }}>grupo</span>
           <select
             value={item.grupo}
             onChange={(e) => onMoverGrupo(item.id, e.currentTarget.value as PendenciaGrupoId)}
             onClick={(e) => e.stopPropagation()}
             disabled={item.estado === "dispensado"}
-            className="h-5 min-w-0 max-w-[210px] rounded border bg-white px-1 text-[9px] uppercase"
+            className="h-5 min-w-0 max-w-[210px] rounded border bg-white px-1 text-[11px] uppercase"
             style={{ borderColor: LINE, color: INK }}
             title="Escolha em qual grupo esta exigência deve aparecer para o cliente"
           >
@@ -995,7 +995,7 @@ function LinhaItem({
                 <button
                   key={o.valor}
                   onClick={() => onResponder(item.chave as string, o.valor)}
-                  className="rounded border px-1.5 py-0.5 text-[9px] uppercase"
+                  className="rounded border px-1.5 py-0.5 text-[11px] uppercase"
                   style={{
                     borderColor: ativa ? "#7A1F2B" : "hsl(220 13% 88%)",
                     background: ativa ? "#7A1F2B" : "transparent",
@@ -1009,8 +1009,8 @@ function LinhaItem({
             {item.estado === "cumprido" && (
               <button
                 onClick={() => onLimparResposta(item.chave as string)}
-                className="text-[9px] uppercase underline"
-                style={{ color: "hsl(220 10% 45%)" }}
+                className="text-[11px] uppercase underline"
+                style={{ color: "hsl(220 14% 32%)" }}
               >
                 corrigir
               </button>
@@ -1021,8 +1021,8 @@ function LinhaItem({
       {item.tipo === "documento" && item.estado !== "dispensado" && item.estado !== "aguardando" && (
         <button
           onClick={() => onToggle(item.tipo_documento)}
-          className="text-[9px] uppercase shrink-0 underline"
-          style={{ color: "hsl(220 10% 45%)" }}
+          className="text-[11px] uppercase shrink-0 underline"
+          style={{ color: "hsl(220 14% 32%)" }}
         >
           {item.estado === "cumprido" ? "desfazer" : "enviar"}
         </button>
@@ -1040,7 +1040,7 @@ function LinhaItem({
             onRemover(item.id, item.nome_documento);
           }
         }}
-        className="shrink-0 mt-[1px] rounded p-0.5 text-slate-400 hover:text-white"
+        className="shrink-0 mt-[1px] rounded p-0.5 text-slate-600 hover:text-white"
         style={{ transition: "all .12s" }}
         onMouseEnter={(e) => (e.currentTarget.style.background = "#7A1F2B")}
         onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}

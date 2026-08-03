@@ -76,3 +76,18 @@
   .qa-kpi-sub { font-size: 10px; }
   .qa-btn-label { font-size: 10px; letter-spacing: .14em; }
 }
+
+/* =======================================================================
+   QA CONFIG SURFACE — legibilidade canônica no painel de Configurações
+   Herda os tokens da área do cliente: sem micro-texto e sem cinza fraco.
+   ======================================================================= */
+.qa-config-surface { font-family: var(--qa-font-body); color: var(--qa-ink); }
+.qa-config-surface :where(p, span, div, td, th, li, label, button, input, select, textarea) {
+  font-size: max(1em, 11.5px);
+}
+.qa-config-surface :where(label, .uppercase) { letter-spacing: .06em; }
+.qa-config-surface :where(input, select, textarea) { color: var(--qa-ink); }
+.qa-config-surface :where(input, textarea)::placeholder { color: #6B7280; }
+.qa-config-surface :where(.text-slate-400, .text-slate-500, .text-muted-foreground) { color: #4A5361 !important; }
+.qa-config-surface :where(.font-mono) { font-size: 11.5px; color: #3A424E; }
+.qa-config-surface :where(h2, h3) { font-family: var(--qa-font-display); letter-spacing: .1em; color: var(--qa-ink); }
