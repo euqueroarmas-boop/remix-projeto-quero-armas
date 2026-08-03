@@ -274,12 +274,26 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const enviar = useCallback(async (texto: string) => {
     if (!cliente || loading) return;
     const query = texto.trim();
-    if (query.length < 2) return;
+    const anexosProntos = anexos.filter((a) => a.status === "pronto" && a.id);
+    if (query.length < 2 && anexosProntos.length === 0) return;
+    const queryFinal =
+      query.length >= 2
+        ? query
+        : `Analise o que enviei em anexo: ${anexosProntos.map((a) => a.nome_arquivo).join(", ")}`;
 
     setInput("");
+    setAnexos([]);
     const startIso = new Date().toISOString();
     const startMs = Date.now();
-    const userMsg: Mensagem = { id: `u-${Date.now()}`, role: "user", content: query, createdAt: startIso };
+    const userMsg: Mensagem = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content:
+        anexosProntos.length > 0
+          ? `${queryFinal}\n\n📎 ${anexosProntos.map((a) => a.nome_arquivo).join(", ")}`
+          : queryFinal,
+      createdAt: startIso,
+    };
     const asstId = `a-${Date.now()}`;
     const asstMsg: Mensagem = { id: asstId, role: "assistant", content: "", fontes: [], isStreaming: true, createdAt: startIso };
 
@@ -306,7 +320,18 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
           Authorization: `Bearer ${jwt}`,
           apikey: PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({ query, sessao_id: proto?.sessaoId ?? null, historico, limit: 5 }),
+        body: JSON.stringify({
+          query: queryFinal,
+          sessao_id: proto?.sessaoId ?? null,
+          historico,
+          limit: 5,
+          anexos: anexosProntos.map((a) => ({
+            id: a.id,
+            nome_arquivo: a.nome_arquivo,
+            mime_type: a.mime_type,
+            texto_extraido: a.texto_extraido,
+          })),
+        }),
       });
 
       if (!res.ok || !res.body) {
@@ -390,7 +415,107 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     } finally {
       setLoading(false);
     }
-  }, [cliente, loading, mensagens, proto?.sessaoId, carregarAnteriores]);
+  }, [cliente, loading, mensagens, proto?.sessaoId, carregarAnteriores, anexos]);
+
+  // ── Anexos ────────────────────────────────────────────────────────────
+  const MAX_ANEXO_BYTES = 20 * 1024 * 1024;
+
+  const anexarArquivos = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const { data: sess } = await supabase.auth.getSession();
+    const jwt = sess.session?.access_token;
+    const userId = sess.session?.user?.id;
+    if (!jwt || !userId) { toast.error("Faça login novamente para enviar arquivos."); return; }
+
+    for (const file of Array.from(files).slice(0, 5)) {
+      if (file.size > MAX_ANEXO_BYTES) { toast.error(`${file.name}: arquivo maior que 20 MB.`); continue; }
+      const localId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const isImg = file.type.startsWith("image/");
+      setAnexos((prev) => [...prev, {
+        localId, id: null, nome_arquivo: file.name, mime_type: file.type,
+        tamanho_bytes: file.size, previewUrl: isImg ? URL.createObjectURL(file) : null,
+        texto_extraido: null, status: "enviando",
+      }]);
+
+      try {
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+        const path = `${userId}/${localId}-${safe}`;
+        const { error: upErr } = await supabase.storage
+          .from("qa-chat-anexos")
+          .upload(path, file, { contentType: file.type || "application/octet-stream", upsert: false });
+        if (upErr) throw new Error(upErr.message);
+
+        setAnexos((prev) => prev.map((a) => a.localId === localId ? { ...a, status: "lendo" } : a));
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/qa-chat-anexo-processar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwt}`, apikey: PUBLISHABLE_KEY },
+          body: JSON.stringify({
+            storage_path: path, nome_arquivo: file.name, mime_type: file.type,
+            tamanho_bytes: file.size, sessao_id: proto?.sessaoId ?? null,
+          }),
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error || "Falha ao ler o arquivo.");
+        setAnexos((prev) => prev.map((a) => a.localId === localId
+          ? { ...a, id: j.id, texto_extraido: j.texto_extraido ?? null, status: "pronto", erro: j.erro ?? null }
+          : a));
+      } catch (e: any) {
+        setAnexos((prev) => prev.map((a) => a.localId === localId
+          ? { ...a, status: "erro", erro: e?.message ?? "Falha no envio" } : a));
+        toast.error(`${file.name}: ${e?.message ?? "falha no envio"}`);
+      }
+    }
+  }, [proto?.sessaoId]);
+
+  function removerAnexo(localId: string) {
+    setAnexos((prev) => {
+      const alvo = prev.find((a) => a.localId === localId);
+      if (alvo?.previewUrl) URL.revokeObjectURL(alvo.previewUrl);
+      return prev.filter((a) => a.localId !== localId);
+    });
+  }
+
+  // ── Voz → texto ───────────────────────────────────────────────────────
+  async function alternarGravacao() {
+    if (transcrevendo) return;
+    if (gravando && recorderRef.current) {
+      const rec = recorderRef.current;
+      recorderRef.current = null;
+      setGravando(false);
+      setTranscrevendo(true);
+      try {
+        const blob = await rec.stop();
+        if (blob.size < 2048) { toast.error("Gravação vazia. Tente novamente."); return; }
+        const { data: sess } = await supabase.auth.getSession();
+        const jwt = sess.session?.access_token ?? PUBLISHABLE_KEY;
+        const fd = new FormData();
+        fd.append("file", blob, "gravacao.wav");
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/qa-chat-transcrever`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${jwt}`, apikey: PUBLISHABLE_KEY },
+          body: fd,
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error || "Falha ao transcrever.");
+        const texto = (j?.text || "").trim();
+        if (!texto) { toast.error("Não consegui entender o áudio."); return; }
+        setInput((prev) => (prev ? `${prev} ${texto}` : texto));
+        setTimeout(() => inputRef.current?.focus(), 0);
+      } catch (e: any) {
+        toast.error(e?.message ?? "Falha ao transcrever o áudio.");
+      } finally {
+        setTranscrevendo(false);
+      }
+      return;
+    }
+    try {
+      recorderRef.current = await startWavRecording();
+      setGravando(true);
+    } catch {
+      toast.error("Não consegui acessar o microfone. Verifique a permissão.");
+    }
+  }
 
   function novaConversa() {
     if (loading) return;
