@@ -235,6 +235,29 @@ export default function SimuladorChecklistAdmin() {
   }
 
   /**
+   * Renomeia o "nome amigável" da exigência (campo `nome_documento`).
+   * NÃO toca em `tipo_documento`/`codigo` — esses são a chave técnica usada por
+   * parser, motores e uploads. Só muda o texto que o cliente lê, e é esse mesmo
+   * texto que aparece no título do Checklist Guiado da área do cliente.
+   */
+  async function renomearItem(id: string, novoNome: string) {
+    const nome = novoNome.trim();
+    if (!nome) return;
+    const anteriores = linhas;
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, nome_documento: nome } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ nome_documento: nome })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL RENOMEAR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success("NOME ATUALIZADO");
+  }
+
+  /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
    * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
    * mudar nada de lugar.
@@ -647,6 +670,7 @@ export default function SimuladorChecklistAdmin() {
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
                               onDefinirOrdem={definirOrdem}
+                              onRenomear={renomearItem}
                             />
                           ))}
                         </div>
@@ -720,6 +744,7 @@ function LinhaItem({
   onLimparResposta,
   onRemover,
   onDefinirOrdem,
+  onRenomear,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
@@ -727,6 +752,7 @@ function LinhaItem({
   onLimparResposta: (chave: string) => void;
   onRemover: (id: string, nome: string) => void;
   onDefinirOrdem: (id: string, novaOrdem: number) => void;
+  onRenomear: (id: string, novoNome: string) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -737,6 +763,7 @@ function LinhaItem({
   const Icon = cfg.icon;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const [editandoNome, setEditandoNome] = useState(false);
 
   return (
     <div
@@ -765,15 +792,40 @@ function LinhaItem({
       </button>
       <Icon className="h-3.5 w-3.5 shrink-0 mt-[2px]" style={{ color: cfg.cor }} />
       <div className="min-w-0 flex-1">
-        <div
-          className="text-[11px] leading-snug"
-          style={{
-            color: "hsl(220 20% 18%)",
-            textDecoration: item.estado === "cumprido" ? "line-through" : undefined,
-          }}
-        >
-          {item.nome_documento}
-        </div>
+        {editandoNome ? (
+          <input
+            autoFocus
+            defaultValue={item.nome_documento}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={(e) => {
+              const v = e.currentTarget.value.trim();
+              setEditandoNome(false);
+              if (v && v !== item.nome_documento) onRenomear(item.id, v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+              if (e.key === "Escape") setEditandoNome(false);
+            }}
+            className="w-full rounded border px-1.5 py-0.5 text-[11px] leading-snug"
+            style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 18%)" }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditandoNome(true);
+            }}
+            title="Clique para editar o nome que o cliente vê (não muda o código técnico)"
+            className="text-left text-[11px] leading-snug hover:underline decoration-dotted"
+            style={{
+              color: "hsl(220 20% 18%)",
+              textDecoration: item.estado === "cumprido" ? "line-through" : undefined,
+            }}
+          >
+            {item.nome_documento}
+          </button>
+        )}
         <div className="flex flex-wrap items-center gap-1 text-[9px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>
           <span className="uppercase">ordem</span>
           <input
