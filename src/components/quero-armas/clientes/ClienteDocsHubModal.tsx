@@ -3021,6 +3021,18 @@ export function ClienteDocsHubModal({
       let fileName: string | null = null;
       let mime: string | null = null;
 
+      // REGRA: só documentos de EFETIVA NECESSIDADE podem entrar "em análise".
+      // Todo o resto é decidido na hora — aprovado ou reprovado. Um registro
+      // sem arquivo nunca pode nascer no Hub: era exatamente isso que gerava
+      // certidão "EM ANÁLISE" sem nada para a leitura automática ler.
+      const ehEfetivaNecessidade =
+        inferHubCategoriaFromTipo(form.tipo_documento) === "efetiva_necessidade";
+      if (!file && !ehEfetivaNecessidade) {
+        throw new Error(
+          "Nenhum arquivo foi anexado. Anexe o PDF do documento para que a leitura automática possa conferir com o seu cadastro.",
+        );
+      }
+
       if (file) {
         const safe = sanitize(file.name);
         const ownerKey = customerId ?? `qa-${qaClienteId}`;
