@@ -797,7 +797,10 @@ export default function ClienteResumoKanban({
           <header className="qa-client-summary-print__top">
             <div>
               <h1>{greetingNode}</h1>
-              <div className="qa-client-summary-print__meta"><span className="qa-client-summary-print__dot" />{statusLine}</div>
+              <div className="qa-client-summary-print__meta">
+                <span><span className="qa-client-summary-print__dot" />{statusLine1}</span>
+                <span>{statusLine2}</span>
+              </div>
             </div>
           </header>
 
