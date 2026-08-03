@@ -380,12 +380,42 @@ export default function QABibliotecaDocumentosAdmin() {
               />
             </div>
           </div>
+          <div className="rounded-md border border-dashed p-2" style={{ borderColor: "hsl(220 15% 85%)" }}>
+            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Modelos de referência para o parser (2 ou mais)
+            </label>
+            <p className="text-[10px] text-slate-400 mb-1.5">
+              Envie exemplos reais deste documento. Cada arquivo é analisado de forma determinística
+              (texto + palavras-chave) e por IA (embedding) e fica salvo para comparação futura.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,image/*"
+                onChange={(e) => setModelosNovo(Array.from(e.target.files ?? []))}
+                className="text-[11px]"
+              />
+              {modelosNovo.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600">
+                  <Upload className="w-3 h-3" /> {modelosNovo.length} arquivo(s) selecionado(s)
+                </span>
+              )}
+            </div>
+            {modelosNovo.length === 1 && (
+              <p className="text-[10px] mt-1" style={{ color: "#B45309" }}>
+                Recomendado enviar pelo menos 2 modelos para o parser comparar variações.
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setNovo({ ...BLANK }); setCriandoNovo(false); }}>
+            <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setNovo({ ...BLANK }); setModelosNovo([]); setCriandoNovo(false); }}>
               Cancelar
             </Button>
-            <Button size="sm" onClick={criarNovo} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7">
-              <Plus className="w-3 h-3" /> Adicionar à biblioteca
+            <Button size="sm" onClick={criarNovo} disabled={treinandoNovo} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7">
+              {treinandoNovo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+              {treinandoNovo ? "Treinando modelos…" : "Adicionar à biblioteca"}
             </Button>
           </div>
         </div>
