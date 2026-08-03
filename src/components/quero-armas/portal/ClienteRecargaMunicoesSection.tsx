@@ -8,11 +8,12 @@ export default function ClienteRecargaMunicoesSection() {
   return (
     <section className="qa-alvo qa-recarga qa-client-summary-print">
       <style>{`
-         .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
-        .qa-alvo__head{position:relative;margin-bottom:16px;flex-shrink:0}
+        .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
+        .qa-alvo__head{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;flex-shrink:0}
+        .qa-alvo__row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
         .qa-alvo__head-main{min-width:0}
-        .qa-alvo__badge-slot{position:absolute;top:0;right:0;z-index:2}
-        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;padding-right:110px}
+        .qa-alvo__badge-slot{flex-shrink:0;position:static;z-index:2}
+        .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0;padding-right:0}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
         .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:clamp(17px,4.4vw,26px);line-height:1.06;margin:8px 0 0;letter-spacing:.03em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
         .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;width:100%;text-wrap:pretty}
@@ -31,7 +32,7 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}
-        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:16px}.qa-alvo__target{min-height:260px;height:auto}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo__kicker{padding-right:104px}}
+        @media (max-width:900px){.qa-alvo__grid{grid-template-columns:1fr;padding:16px}.qa-alvo__target{min-height:260px;height:auto}.qa-alvo__cards{grid-template-columns:1fr}.qa-alvo__kicker{padding-right:0}}
       `}</style>
 
       <div className="qa-alvo__head">
