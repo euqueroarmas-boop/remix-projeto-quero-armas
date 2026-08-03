@@ -11,6 +11,10 @@ type: feature
 - Tipos superados: `renda_cnpj_autonomo`, `renda_ficha_cadastral_jucesp` (desativados no catálogo).
 
 ## Regra crítica de roteamento
+
+## Multi-condição
+`qa_servicos_documentos.condicao_profissional` aceita **uma ou várias** condições separadas por vírgula (`autonomo,empresario`). Uma única exigência pode valer para vários perfis — não duplicar linhas. Fonte da regra: `parseCondicoes` / `condicaoCasa` em `src/lib/quero-armas/simuladorChecklist.ts`, espelhada em `qa-processo-set-condicao`. Vazio = exigido de todos.
+
 A pergunta `condicao_profissional` (`renda_definir_condicao`) **NUNCA** pode ser gravada por `qa-processo-responder-pergunta` — essa função só marca `dispensado_grupo` e fecha a ocupação lícita vazia (furo que indefere na PF).
 Sempre rotear para **`qa-processo-set-condicao`**, que remove o placeholder e injeta as exigências da condição escolhida.
 Travas ativas: guard no front (`checklistGuiadoEngine.responderPerguntaGuia` + portal) e HTTP 409 `use_set_condicao` no backend.
