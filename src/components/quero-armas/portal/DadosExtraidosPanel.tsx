@@ -64,7 +64,60 @@ function camposDoc(doc: any): Campo[] {
     { label: "Validade", valor: fmtDate(doc?.data_validade_efetiva || doc?.data_validade) },
     { label: "Observações", valor: doc?.observacoes || "—" },
   ];
-  return base;
+  return [...base, ...camposIA(doc)];
+}
+
+/* ── Campos lidos pela IA (ia_dados_extraidos.camposExtraidos) ───────────────
+   Antes só apareciam 5 campos fixos da tabela; todo o restante que a IA leu
+   do documento (nome, CPF, filiação, endereço, etc.) ficava invisível. */
+const IA_LABELS: Record<string, string> = {
+  nome_completo: "Nome completo",
+  cpf: "CPF",
+  rg: "RG",
+  data_nascimento: "Data de nascimento",
+  nacionalidade: "Nacionalidade",
+  naturalidade: "Naturalidade",
+  sexo: "Sexo",
+  filiacao_mae: "Filiação — mãe",
+  filiacao_pai: "Filiação — pai",
+  categoria_cnh: "Categoria",
+  numero_registro_cnh: "Nº de registro",
+  primeira_habilitacao: "1ª habilitação",
+  uf_emissor_rg: "UF emissora",
+  endereco_completo: "Endereço",
+  logradouro: "Logradouro",
+  bairro: "Bairro",
+  cidade: "Cidade",
+  uf: "UF",
+  cep: "CEP",
+  codigo_instalacao: "Código da instalação",
+  titular: "Titular",
+  empresa: "Empresa",
+  cnpj: "CNPJ",
+  profissao: "Profissão",
+  renda: "Renda",
+};
+
+/* chaves já exibidas nos campos base ou de uso interno */
+const IA_IGNORAR = new Set([
+  "numero_documento", "orgao_emissor", "data_emissao", "data_validade",
+  "observacoes", "tipo", "tipoDetectado", "confianca", "recomendacao",
+]);
+
+function humanizarChave(k: string): string {
+  return k.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
+function camposIA(doc: any): Campo[] {
+  const raw = doc?.ia_dados_extraidos?.camposExtraidos;
+  if (!raw || typeof raw !== "object") return [];
+  const out: Campo[] = [];
+  for (const [k, v] of Object.entries(raw as Record<string, any>)) {
+    if (IA_IGNORAR.has(k)) continue;
+    if (v === null || v === undefined || v === "" || typeof v === "object") continue;
+    out.push({ label: IA_LABELS[k] || humanizarChave(k), valor: String(v) });
+  }
+  return out;
 }
 
 function camposArma(doc: any): Campo[] | null {
