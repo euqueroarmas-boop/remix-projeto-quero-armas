@@ -1043,6 +1043,8 @@ function FeaturedContractCard({
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* ─────────── Modal de conclusão ─────────── */}
       {showDone && (
