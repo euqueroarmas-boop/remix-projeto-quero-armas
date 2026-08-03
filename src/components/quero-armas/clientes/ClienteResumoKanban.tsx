@@ -732,6 +732,8 @@ export default function ClienteResumoKanban({
 
         <div className="qa-client-summary-print__cards-scroll">
         {(() => {
+          // Mobile: sem documento crítico, não renderiza o banner vazio.
+          if (isMobile && !activeUrgent) return null;
           const isVencido = !!activeUrgent && activeUrgent.days < 0;
           const kicker = isVencido
             ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
