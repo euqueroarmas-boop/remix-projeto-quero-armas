@@ -2007,8 +2007,9 @@ export function ClienteDocsHubModal({
     }
     const isImage = target.type.startsWith("image/");
     const isPdf = target.type === "application/pdf";
-    if (!isImage && !isPdf) {
-      toast.error("Envie uma foto (JPG/PNG) ou PDF para a IA ler.");
+    // Segunda barreira da mesma regra: só a foto 3x4 pode ser imagem.
+    if (!isPdf && !(isImage && tipoAceitaImagem(form.tipo_documento))) {
+      toast.error(MSG_SOMENTE_PDF_ORIGINAL);
       return;
     }
 
