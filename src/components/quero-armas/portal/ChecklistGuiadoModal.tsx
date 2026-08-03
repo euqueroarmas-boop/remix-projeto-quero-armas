@@ -54,7 +54,7 @@ import {
   pickTemplateGuia,
   progressoGuia,
   responderPerguntaGuia,
-  tipoItemGuia,
+  tipoItemGuiaComRespostas,
 } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
@@ -617,7 +617,7 @@ export default function ChecklistGuiadoModal({
       setAvisoIrParaCertidao(null);
       const primeiroDoc = fila.find((d) => d.id === (resumeId ?? fila[0].id)) ?? fila[0];
       const cfg = wizardPendentePara(primeiroDoc, clienteDados, c.processo);
-      if (cfg && tipoItemGuia(primeiroDoc) === "documento") {
+      if (cfg && tipoItemGuiaComRespostas(primeiroDoc, c.respostas as any) === "documento") {
         setWizardPre({ open: true, doc: primeiroDoc, cfg, acaoPendente: { tipo: "continuar" } });
       }
       setFase("item");
@@ -708,7 +708,7 @@ export default function ChecklistGuiadoModal({
   // Bloco 12 — busca candidatos a reaproveitamento toda vez que o doc ativo
   // (de tipo "documento") mudar. Falha silenciosa: a UI segue funcionando.
   useEffect(() => {
-    if (!docAtivo || tipoItemGuia(docAtivo) !== "documento") {
+    if (!docAtivo || tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) !== "documento") {
       setCandidatosReuso([]);
       setContextoReuso(null);
       return;
@@ -1680,7 +1680,7 @@ export default function ChecklistGuiadoModal({
                 </div>
 
                 {/* PERGUNTA */}
-                {tipoItemGuia(docAtivo) === "pergunta" && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "pergunta" && (
                   <PerguntaView
                     doc={docAtivo}
                     salvando={salvando}
@@ -1689,7 +1689,7 @@ export default function ChecklistGuiadoModal({
                 )}
 
                 {/* CONDIÇÃO PROFISSIONAL */}
-                {tipoItemGuia(docAtivo) === "condicao" && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "condicao" && (
                   <div>
                     <h3 className="text-base font-bold text-slate-900">Qual é a sua condição profissional?</h3>
                     <p className="mt-1 text-sm text-slate-500">Isso define exatamente quais comprovantes de renda você precisará enviar. Você só anexa o que realmente se aplica a você.</p>
@@ -1742,7 +1742,7 @@ export default function ChecklistGuiadoModal({
                     anexar: ela é construída a partir das provas que ele tem e do
                     relato dele. Pedir um upload aqui é o que fazia essa pendência
                     travar sem que ninguém soubesse o motivo. */}
-                {tipoItemGuia(docAtivo) === "documento" && ehEfetivaNecessidade(docAtivo.tipo_documento) && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && ehEfetivaNecessidade(docAtivo.tipo_documento) && (
                   efetivaNecessidadePasso === "intro" ? (
                     <div className="space-y-5">
                       <div>
@@ -1812,7 +1812,7 @@ export default function ChecklistGuiadoModal({
                 )}
 
                 {/* DOCUMENTO */}
-                {tipoItemGuia(docAtivo) === "documento" && !ehEfetivaNecessidade(docAtivo.tipo_documento) && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && !ehEfetivaNecessidade(docAtivo.tipo_documento) && (
                   <>
                   {isDocDeArma(docAtivo.tipo_documento) && (
                     <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-3">
@@ -1886,7 +1886,7 @@ export default function ChecklistGuiadoModal({
                 )}
 
                 {/* Bloco 12 — sugestão de reaproveitamento */}
-                {tipoItemGuia(docAtivo) === "documento" && candidatosReuso.length > 0 && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && candidatosReuso.length > 0 && (
                   <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
                     <div className="flex items-start gap-2">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
@@ -1964,7 +1964,7 @@ export default function ChecklistGuiadoModal({
                     </div>
                   </div>
                 )}
-                {tipoItemGuia(docAtivo) === "documento" &&
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" &&
                   candidatosReuso.length === 0 &&
                   contextoReuso?.modoReaproveitamento === "assistido" &&
                   contextoReuso.mensagem && (
@@ -1985,7 +1985,7 @@ export default function ChecklistGuiadoModal({
                       </div>
                     </div>
                   )}
-                {tipoItemGuia(docAtivo) === "documento" && reusoCarregando && candidatosReuso.length === 0 && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && reusoCarregando && candidatosReuso.length === 0 && (
                   <div className="text-[10px] text-slate-400">Verificando se há documento reaproveitável…</div>
                 )}
 
@@ -1993,7 +1993,7 @@ export default function ChecklistGuiadoModal({
                     item já enviado e marcado como divergente/inválido. Sem
                     isto, documentos validados em versões anteriores da IA
                     (sem `divergencias_json`) ficam sem botões de ação. */}
-                {tipoItemGuia(docAtivo) === "documento" &&
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" &&
                   !!docAtivo.arquivo_storage_key &&
                   (docAtivo.status === "divergente" ||
                     docAtivo.status === "invalido" ||
@@ -2025,7 +2025,7 @@ export default function ChecklistGuiadoModal({
                 )}
 
                 {/* pular por agora (apenas documentos) */}
-                {tipoItemGuia(docAtivo) === "documento" && filaAtual.length > 1 && (
+                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && filaAtual.length > 1 && (
                   <button
                     onClick={() => continuarAposResultado({ pularAtual: true })}
                     className="mx-auto block text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600"

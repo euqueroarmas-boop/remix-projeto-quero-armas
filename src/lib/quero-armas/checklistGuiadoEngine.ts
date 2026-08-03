@@ -228,6 +228,31 @@ export function isPerguntaGuia(d: GuiaDoc): boolean {
   return !!(r && typeof r === "object" && r.tipo === "pergunta");
 }
 
+/**
+ * Pergunta HÍBRIDA: além de responder, o cliente precisa anexar o documento.
+ * Configurada no catálogo com `regra_validacao.exige_documento_quando`
+ * (string ou lista de valores). Ex.: laudo psicológico — pergunta "já fez?"
+ * e, respondendo "sim", o PDF do laudo passa a ser exigido na MESMA linha.
+ */
+export function perguntaExigeDocumento(
+  d: GuiaDoc,
+  respostas: Record<string, string>,
+): boolean {
+  if (!isPerguntaGuia(d)) return false;
+  const r: any = d.regra_validacao;
+  const gatilho = r?.exige_documento_quando;
+  if (gatilho == null) return false;
+  const chave = String(r?.chave ?? "").trim();
+  if (!chave) return false;
+  const resposta = respostas[chave];
+  if (resposta == null || resposta === "") return false;
+  const alvos = (Array.isArray(gatilho) ? gatilho : [gatilho]).map((v) =>
+    String(v).trim().toLowerCase(),
+  );
+  if (alvos.includes("*")) return true;
+  return alvos.includes(String(resposta).trim().toLowerCase());
+}
+
 export function isCondicaoGuia(d: GuiaDoc): boolean {
   return d.tipo_documento === "renda_definir_condicao";
 }
@@ -284,7 +309,12 @@ export function itemCumpridoGuia(d: GuiaDoc, respostas: Record<string, string>):
   if (isPerguntaGuia(d)) {
     const chave = (d.regra_validacao as any)?.chave as string | undefined;
     if (!chave) return false;
-    return respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
+    const respondida =
+      respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
+    if (!respondida) return false;
+    // Pergunta híbrida: só é cumprida quando o documento também chega.
+    if (perguntaExigeDocumento(d, respostas)) return isChecklistCumprido(d.status);
+    return true;
   }
   // Bloco 13: usa a mesma classificação do Admin (checklistMetrics).
   // Doc em revisão humana é "em análise", não "cumprido" — alinha o progresso
@@ -304,6 +334,16 @@ export type TipoItemGuia = "pergunta" | "condicao" | "documento";
 
 export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
   if (isPerguntaGuia(d)) return "pergunta";
+  if (isCondicaoGuia(d)) return "condicao";
+  return "documento";
+}
+
+/** Versão ciente das respostas: pergunta híbrida já respondida vira upload. */
+export function tipoItemGuiaComRespostas(
+  d: GuiaDoc,
+  respostas: Record<string, string>,
+): TipoItemGuia {
+  if (isPerguntaGuia(d)) return perguntaExigeDocumento(d, respostas) ? "documento" : "pergunta";
   if (isCondicaoGuia(d)) return "condicao";
   return "documento";
 }
@@ -332,7 +372,13 @@ export function isDocumentActionable(
   if (isPerguntaGuia(d)) {
     const chave = (d.regra_validacao as any)?.chave as string | undefined;
     if (!chave) return false;
-    return !(respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "");
+    const respondida =
+      respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
+    if (!respondida) return true;
+    if (!perguntaExigeDocumento(d, respostas)) return false;
+    // Respondida, mas ainda falta o arquivo.
+    const stp = String(d.status ?? "").toLowerCase();
+    return !STATUS_DOCS_NAO_ACIONAVEIS.has(stp);
   }
   if (isCondicaoGuia(d)) return true;
   const st = String(d.status ?? "").toLowerCase();
