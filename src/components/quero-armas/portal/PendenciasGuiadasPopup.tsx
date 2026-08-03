@@ -480,7 +480,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <p className="font-['Oswald',sans-serif] text-[10px] font-black uppercase tracking-[0.22em] text-[#8A1224]">
                   Checklist guiado
                 </p>
-                <h1 className="mt-1 font-['Oswald',sans-serif] text-[20px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
+                <h1 className="mt-1 font-['Oswald',sans-serif] text-[22px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
                   {primeiroNome
                     ? <>{primeiroNome}, você está nos devendo<br />enviar esses documentos!</>
                     : <>Você está nos devendo<br />enviar esses documentos!</>}
@@ -497,7 +497,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
                 cliente em que parte do processo ele estava. */}
-            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
               {activeGrupo}
               {/* Onde este grupo fica no processo inteiro. Sem isto o cliente
                   via só o nome do grupo e não tinha ideia de quantas frentes
@@ -513,11 +513,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 só — que é o caso comum — ele repete exatamente os números do
                 "Passo N de M" ao lado, e o cliente lê a mesma informação duas
                 vezes com nomes diferentes. */}
-            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
               {headerContexto}
             </span>
             {pendenciasGrupo > 0 ? (
-              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
                 {pendenciasGrupoLabel}
               </span>
             ) : null}

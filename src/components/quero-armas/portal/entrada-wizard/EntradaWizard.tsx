@@ -26,7 +26,7 @@ const SOFT = "#EFEFEF";
 const PAPER = "#FFFFFF";
 const BORDO = "#7A1F2B";
 const OSWALD = { fontFamily: "Oswald, sans-serif" } as const;
-const INTER = { fontFamily: "Inter, sans-serif" } as const;
+const INTER = { fontFamily: "Arial, Helvetica, sans-serif" } as const;
 
 /* =============================================================================
  * EntradaWizard — Assistente de Entrada do portal
@@ -182,7 +182,7 @@ function useEntradaWizardBody({
                 ? "Qual é a finalidade da arma?"
                 : "VOCE JA POSSUI ARMA DE FOGO REGISTRADA?"}
           </h2>
-          <p className="text-[12.5px] mt-1" style={{ ...INTER, color: SUB }}>
+          <p className="text-[12px] mt-1" style={{ ...INTER, color: SUB }}>
             {step === 1
               ? "Toque numa área pra começar — iremos te guiar pelo caminho certo."
               : passo2EhFinalidade
@@ -210,7 +210,7 @@ function useEntradaWizardBody({
                     </div>
                     <div>
                       <div className="text-[13px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{o.title}</div>
-                      <div className="mt-1 text-[10.5px] leading-snug" style={{ ...INTER, color: SUB }}>{o.sub}</div>
+                      <div className="mt-1 text-[10px] leading-snug" style={{ ...INTER, color: SUB }}>{o.sub}</div>
                     </div>
                   </button>
                 );
@@ -233,7 +233,7 @@ function useEntradaWizardBody({
                     <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: selected ? BORDO : `${BORDO}14` }}>
                       <p.icon className="h-5 w-5" style={{ color: selected ? "#fff" : BORDO }} />
                     </div>
-                    <div className="text-[12.5px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{p.label}</div>
+                    <div className="text-[12px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{p.label}</div>
                   </button>
                 );
               })}
@@ -255,7 +255,7 @@ function useEntradaWizardBody({
                     <div className="flex h-10 w-10 items-center justify-center rounded-sm" style={{ background: selected ? BORDO : `${BORDO}14` }}>
                       <f.icon className="h-5 w-5" style={{ color: selected ? "#fff" : BORDO }} />
                     </div>
-                    <div className="text-[12.5px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{f.label}</div>
+                    <div className="text-[12px] font-bold uppercase leading-tight" style={{ ...OSWALD, color: INK }}>{f.label}</div>
                   </button>
                 );
               })}
@@ -263,7 +263,7 @@ function useEntradaWizardBody({
           )}
 
           {step === 2 && (
-            <p className="mt-3 text-[10.5px] italic" style={{ ...INTER, color: SUB }}>
+            <p className="mt-3 text-[10px] italic" style={{ ...INTER, color: SUB }}>
               {passo2EhFinalidade
                 ? "Isso determina quais serviços aparecem (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal)."
                 : "Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer."}
@@ -285,7 +285,7 @@ function useEntradaWizardBody({
               type="button"
               disabled={salvando || (step === 1 ? !objetivo : !passo2Completo)}
               onClick={handleContinuar}
-              className="inline-flex items-center gap-1.5 rounded-sm px-4 py-2 text-[11.5px] font-bold uppercase text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-sm px-4 py-2 text-[11px] font-bold uppercase text-white disabled:opacity-50"
               style={{ ...OSWALD, background: BORDO }}
             >
               {salvando ? (

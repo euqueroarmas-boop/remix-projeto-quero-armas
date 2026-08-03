@@ -422,7 +422,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   }
 
   return (
-    <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="text-[#0A0A0A] flex flex-col h-full min-h-0" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
       <style>{`
         @media (max-width: 640px) {
           .qa-kpi-card {
@@ -927,7 +927,7 @@ function FeaturedContractCard({
                              : (isValidated ? fmtDateShort(contract.customer_signature_validated_at) : done ? "VIGENTE" : "—");
           return (
             <div key={lbl} className="flex-1 text-center">
-              <div className={`w-7 h-7 rounded-full border flex items-center justify-center mx-auto font-['Oswald'] font-semibold text-[11.5px] ${circBg}`}>
+              <div className={`w-7 h-7 rounded-full border flex items-center justify-center mx-auto font-['Oswald'] font-semibold text-[11px] ${circBg}`}>
                 {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : (i + 1)}
               </div>
               <div className="mt-2 text-[11px] text-[#0A0A0A] font-medium">{lbl}</div>
@@ -954,11 +954,11 @@ function FeaturedContractCard({
               {STEP_LABELS[step] || "—"} {step === 1 ? "GOV.BR" : ""}
             </div>
           </div>
-          <div className="mt-3.5 text-[11.5px]">
+          <div className="mt-3.5 text-[11px]">
             <b className="block text-[#0A0A0A] font-semibold">Prev. assinatura:</b>
             <span className="text-[#7A7A7A]">até {fmtDateLong(contract.issued_at)}</span>
           </div>
-          <div className="mt-2.5 text-[11.5px]">
+          <div className="mt-2.5 text-[11px]">
             <b className="block text-[#0A0A0A] font-semibold">Aberto há:</b>
             <span className="text-[#7A7A7A]">{openedDays !== null ? `${openedDays} DIA${openedDays === 1 ? "" : "S"}` : "—"}</span>
           </div>
@@ -995,7 +995,7 @@ function FeaturedContractCard({
             ))}
           </div>
           {nextAuto && (
-            <div className="mt-3.5 bg-[#FFF5DD] border border-[#F0DDA0] px-3.5 py-3 rounded-sm text-[11.5px] text-[#5a4410]">
+            <div className="mt-3.5 bg-[#FFF5DD] border border-[#F0DDA0] px-3.5 py-3 rounded-sm text-[11px] text-[#5a4410]">
               <b className="font-semibold">Próximo passo automático:</b> {nextAuto}
             </div>
           )}
@@ -1104,7 +1104,7 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
             </ul>
           </div>
 
-          <div className="mt-5 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3.5 py-3 text-[12.5px] text-[#5a5a5a] leading-relaxed">
+          <div className="mt-5 rounded-md border border-[#E4E4E4] bg-[#FAFAFA] px-3.5 py-3 text-[12px] text-[#5a5a5a] leading-relaxed">
             Guarde o contrato assinado (você pode rebaixar por <b>BAIXAR CONTRATO</b>). Ele ficará permanentemente disponível na área <b>Contratos</b>.
           </div>
         </div>
@@ -1278,7 +1278,7 @@ function ValidationSLAPanel({ contract, localProcessingSince }: { contract: Cont
             </div>
           </div>
           {overdue && (
-            <div className="mt-2 text-[11.5px] text-[#5a4410]">
+            <div className="mt-2 text-[11px] text-[#5a4410]">
               Passou do tempo previsto — se em alguns minutos o status não mudar, cairá em
               <b> revisão manual</b> automaticamente. Você não precisa fazer nada.
             </div>
@@ -1311,7 +1311,7 @@ function CompactContractCard({ contract }: { contract: Contract }) {
       <div className="grid grid-cols-4 gap-2.5 font-['Oswald'] text-[9.5px] tracking-[0.16em] text-[#7A7A7A] text-center font-semibold mb-3.5">
         {STEP_LABELS.map((l) => <div key={l}>{l.toUpperCase()}</div>)}
       </div>
-      <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
+      <div className="text-[11px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
         <span><b>Cliente:</b> {contract.customer_uploaded_at ? `assinou em ${fmtDateShort(contract.customer_uploaded_at)}` : "—"}</span>
         <span><b>Prev.:</b> {fmtDateLong(contract.issued_at)}</span>
       </div>
@@ -1339,7 +1339,7 @@ function ArchivedContractCard({ contract }: { contract: Contract }) {
           {contract.contract_number ? `CONTRATO ${contract.contract_number.replace(/\s+/g, "")}` : "—"}
         </div>
       </div>
-      <div className="text-[11.5px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
+      <div className="text-[11px] text-[#7A7A7A] flex flex-wrap gap-x-6 gap-y-1">
         <span>
           <b>Gerado:</b>{" "}
           {fmtDateLong(contract.issued_at)}

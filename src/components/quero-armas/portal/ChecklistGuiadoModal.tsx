@@ -1522,7 +1522,7 @@ export default function ChecklistGuiadoModal({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Assistente de documentação</div>
-                <h2 className="text-[19px] font-extrabold leading-tight text-slate-900">Vamos montar sua pasta, passo a passo</h2>
+                <h2 className="text-[22px] font-extrabold leading-tight text-slate-900">Vamos montar sua pasta, passo a passo</h2>
               </div>
               <button
                 type="button"
@@ -1767,7 +1767,7 @@ export default function ChecklistGuiadoModal({
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#E5C2C6] bg-[#FFF6F7] text-[13px] font-bold" style={{ color: MARROM }}>
                               {idx + 1}
                             </div>
-                            <p className="pt-1.5 text-[14px] leading-relaxed text-slate-700">{texto}</p>
+                            <p className="pt-1.5 text-[13px] leading-relaxed text-slate-700">{texto}</p>
                           </div>
                         ))}
                       </div>
@@ -2320,7 +2320,7 @@ export default function ChecklistGuiadoModal({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Declaração pronta</div>
-                <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
+                <h2 className="text-[16px] font-extrabold leading-tight text-slate-900">
                   Salve o arquivo no seu dispositivo
                 </h2>
                 <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
@@ -2399,7 +2399,7 @@ export default function ChecklistGuiadoModal({
                 <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
                   Antes de continuar
                 </div>
-                <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
+                <h2 className="text-[16px] font-extrabold leading-tight text-slate-900">
                   {wizardPre.cfg ? getWizardLabel(wizardPre.cfg.wizard_key) : ""}
                 </h2>
                 {wizardPre.doc?.nome_documento && (
