@@ -688,6 +688,9 @@ export default function QAClientePortalPage() {
           setMustChangePassword(true);
         }
 
+        // Aviso de novo acesso (IP, dispositivo, local) — 1x por sessão.
+        registrarLoginArsenal(String(user?.app_metadata?.provider || "senha"));
+
         const [{ data: profile }, { data: authLink }, { data: clienteDireto }] = await Promise.all([
           supabase
             .from("qa_usuarios_perfis" as any)
@@ -4207,6 +4210,7 @@ export default function QAClientePortalPage() {
               <button type="button" onClick={handleLogout} className="rounded-sm border border-[#E5E5E5] bg-white p-4 text-left hover:bg-[#FAFAFA] min-w-0"><div className="qa-h3">Sair com segurança</div><p className="qa-caption mt-1">Encerra a sessão neste dispositivo.</p></button>
             </div>
             <ProtocolosAtendimentoPanel clienteId={cliente?.id} onContinuarChat={() => setActiveSection("mensagens")} />
+            <ClienteSegurancaPanel />
 
             {/* Dados extraídos pela IA — movido de Documentos para Configurações */}
             <div className="mt-6 border-t border-[#E5E5E5] pt-5">
