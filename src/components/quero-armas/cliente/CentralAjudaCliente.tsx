@@ -681,7 +681,7 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
 
           <div
             ref={scrollRef}
-            className={`flex-1 min-h-0 overflow-y-auto py-4 ${mensagens.length === 0 && !initLoading ? "flex flex-col justify-end px-0" : "px-5 space-y-4"}`}
+            className={`flex-1 min-h-0 overflow-y-auto ${mensagens.length === 0 && !initLoading ? "flex flex-col px-0 pt-3 pb-2 overflow-x-hidden" : "py-4 px-5 space-y-4"}`}
             style={{ background: "#FFFFFF" }}
           >
             {initLoading ? (
