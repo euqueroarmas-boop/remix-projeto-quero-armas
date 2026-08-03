@@ -226,9 +226,10 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
             <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 10, letterSpacing: ".2em", color: "#7A7A7A", marginBottom: 10 }}>CHECKLIST · ETAPA ATUAL</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {d.checklist.map((c, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#F7F7F7", borderRadius: 3 }}>
+                <div key={i} className="z6-check-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, padding: "8px 10px", background: "#F7F7F7", borderRadius: 3 }}>
                   <span style={{ fontSize: 11.5 }}>{c.label}</span>
                   <span
+                    className="z6-check-badge"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -238,6 +239,8 @@ const ProcessoDetalhado: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
                       fontFamily: "Oswald, sans-serif",
                       letterSpacing: ".14em",
                       fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                       background: CHECK_TONE[c.tone].bg,
                       color: CHECK_TONE[c.tone].fg,
                     }}
@@ -312,14 +315,14 @@ const ProcessoCompacto: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
             )}
           </div>
         )}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, textAlign: "center" }}>
+        <div className="z6-barras" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 6, textAlign: "center" }}>
           {c.barras.map((b, i) => {
             const bg = b.tone === "done" ? "#2F8F4A" : b.tone === "current" ? "#D6A64B" : "#EDEDED";
             const color = b.tone === "current" ? "#D6A64B" : b.tone === "pending" ? "#999" : "#0A0A0A";
             return (
               <div key={i}>
                 <div style={{ height: 4, background: bg, borderRadius: 2 }} />
-                <div style={{ fontSize: 9.5, fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginTop: 6, color }}>{b.label}</div>
+                <div className="z6-barra-lab" style={{ fontSize: 9.5, fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginTop: 6, color }}>{b.label}</div>
               </div>
             );
           })}
@@ -387,7 +390,27 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-kpi-l span:last-child{white-space:normal !important}
           .z6-root .z6-kpi-v{font-size:19px !important;margin-top:6px !important}
           .z6-root .z6-kpi-s{font-size:9.5px !important}
-          .z6-root .z6-proc-title{font-size:11px !important;letter-spacing:.1em !important}
+          .z6-root .z6-proc-title{font-size:11.5px !important;letter-spacing:.04em !important;line-height:1.25 !important}
+
+          /* Bloco PROGRESSO: vira faixa horizontal compacta, sem vazio */
+          .z6-root .z6-proc-grid{gap:14px !important}
+          .z6-root .z6-proc-left{padding-bottom:12px !important;display:grid !important;grid-template-columns:auto 1fr !important;grid-template-areas:"pct etapa" "bar bar" "prev prev" !important;align-items:center !important;column-gap:14px !important;row-gap:8px !important}
+          .z6-root .z6-proc-left .z6-lab{display:none !important}
+          .z6-root .z6-proc-left .z6-pct{grid-area:pct !important;font-size:30px !important;margin-top:0 !important}
+          .z6-root .z6-proc-left .z6-pct small{font-size:13px !important}
+          .z6-root .z6-proc-left > div:nth-child(4){display:none !important} /* rótulo "Etapa atual" */
+          .z6-root .z6-proc-left .z6-etapa{grid-area:etapa !important;margin-top:0 !important;font-size:12px !important;letter-spacing:.04em !important}
+          .z6-root .z6-proc-left .z6-bar{grid-area:bar !important;margin-top:0 !important;height:5px !important}
+          .z6-root .z6-proc-left .z6-prev{grid-area:prev !important;margin-top:0 !important;display:flex !important;align-items:baseline !important;gap:6px !important;font-size:10.5px !important}
+          .z6-root .z6-proc-left .z6-prev:last-child{justify-self:end !important}
+          .z6-root .z6-proc-left .z6-prev b{display:inline !important;margin-top:0 !important;font-size:11.5px !important}
+
+          /* Sem quebras feias nos rótulos técnicos */
+          .z6-root .z6-item .z6-t{font-size:8px !important;letter-spacing:0 !important;overflow-wrap:normal !important;word-break:normal !important;hyphens:none !important}
+          .z6-root .z6-barra-lab{font-size:8px !important;letter-spacing:0 !important;overflow-wrap:normal !important;word-break:normal !important}
+          .z6-root .z6-check-badge{font-size:8.5px !important;letter-spacing:.06em !important;padding:3px 6px !important}
+          .z6-root .z6-check-row span:first-child{font-size:11px !important;line-height:1.25 !important}
+          .z6-root .z6-detalhe-grid{gap:14px !important}
         }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
         .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
