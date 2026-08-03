@@ -724,7 +724,8 @@ export default function ClienteResumoKanban({
     ? (CATEGORIA_LABELS[rawCategoria] || rawCategoria.replace(/_/g, " ").toUpperCase())
     : (temCR ? "TITULAR" : "SEM CATEGORIA");
   const processosEmAndamento = snapshot.activeProcessos.length || snapshot.activeItems.length;
-  const statusLine = `${categoriaLabel}${temCR ? ` · CR ${cadastro?.numero_cr}` : ""}${memberSince ? ` · MEMBRO DESDE ${memberSince}` : ""} · ${processosEmAndamento} PROCESSOS EM ANDAMENTO`;
+  const statusLine1 = `CPF · ${cpfFmt || "—"}${memberSince ? `   MEMBRO DESDE · ${memberSince}` : ""}`;
+  const statusLine2 = `${processosEmAndamento} PROCESSOS EM ANDAMENTO`;
   const filters: Array<{ key: "todos" | Urgent["frontKey"]; label: string }> = [
     { key: "todos", label: `TODOS ${snapshot.urgents.length}` },
     { key: "arsenal", label: `ARSENAL ${snapshot.urgents.filter((u) => u.frontKey === "arsenal").length}` },
