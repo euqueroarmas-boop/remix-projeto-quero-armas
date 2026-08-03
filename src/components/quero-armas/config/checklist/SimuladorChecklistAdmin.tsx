@@ -551,7 +551,7 @@ export default function SimuladorChecklistAdmin() {
                       <button
                         key={o.valor}
                         onClick={() => responder(sim.proximo!.chave as string, o.valor)}
-                        className="h-9 rounded-md border px-3 text-[12.5px] uppercase text-left hover:bg-slate-50"
+                        className="min-h-9 rounded-md border px-3 py-2 text-[12.5px] leading-snug uppercase text-left whitespace-normal break-words hover:bg-slate-50"
                         style={{ borderColor: LINE, color: INK }}
                       >
                         {o.label}
