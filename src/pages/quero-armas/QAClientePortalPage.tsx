@@ -343,7 +343,6 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
-  const [docsSubview, setDocsSubview] = useState<"lista" | "extraidos">("lista");
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
   // id para que o Hub Documental salve o novo como substituição (marca o
@@ -4024,24 +4023,7 @@ export default function QAClientePortalPage() {
 
         {activeSection === "documentos" && analysis && (
           <div className="flex h-full min-h-0 flex-col pt-[26px]">
-            <div className="no-print mb-3 mt-1 flex shrink-0 items-center gap-1 border border-[#E5E5E5] bg-white p-1 rounded w-fit" style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".18em" }}>
-              {(["lista", "extraidos"] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setDocsSubview(k)}
-                  className="px-3 py-1.5 text-[10px] font-black uppercase rounded-sm transition-colors"
-                  style={{
-                    background: docsSubview === k ? "#7A1F2B" : "transparent",
-                    color: docsSubview === k ? "#fff" : "#7A7A7A",
-                  }}
-                >
-                  {k === "lista" ? "Lista" : "Dados extraídos"}
-                </button>
-              ))}
-            </div>
-            {docsSubview === "lista" ? (
-              <div className="min-h-0 flex-1">
+            <div className="min-h-0 flex-1">
               <DocumentosCategoriaZ6V3Panel
                 cliente={cliente}
                 meusDocs={meusDocs}
@@ -4053,19 +4035,7 @@ export default function QAClientePortalPage() {
                   setShowAddDoc(true);
                 }}
               />
-              </div>
-            ) : (
-              <div className="min-h-0 flex-1 overflow-y-auto pb-6">
-              <DadosExtraidosPanel
-                cliente={cliente}
-                meusDocs={meusDocs}
-                onEditDoc={(d) => {
-                  setEditDocTipo(d?.tipo_documento || undefined);
-                  setShowAddDoc(true);
-                }}
-              />
-              </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -4157,6 +4127,31 @@ export default function QAClientePortalPage() {
               <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
             </div>
             <ProtocolosAtendimentoPanel clienteId={cliente?.id} onContinuarChat={() => setActiveSection("mensagens")} />
+
+            {/* Dados extraídos pela IA — movido de Documentos para Configurações */}
+            <div className="mt-6 border-t border-[#E5E5E5] pt-5">
+              <div className="no-print mb-3">
+                <div
+                  className="text-[10px] font-black uppercase text-[#7A1F2B]"
+                  style={{ fontFamily: "'Oswald','Arial Narrow',Arial,sans-serif", letterSpacing: ".22em" }}
+                >
+                  Meus dados
+                </div>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Campos lidos pela inteligência artificial nos documentos enviados. Você pode conferir, corrigir e imprimir o relatório completo.
+                </p>
+              </div>
+              <div className="rounded-xl bg-[#FAFAFA] p-3 md:p-4">
+                <DadosExtraidosPanel
+                  cliente={cliente}
+                  meusDocs={meusDocs}
+                  onEditDoc={(d) => {
+                    setEditDocTipo(d?.tipo_documento || undefined);
+                    setShowAddDoc(true);
+                  }}
+                />
+              </div>
+            </div>
           </SectionCard>
         )}
 
