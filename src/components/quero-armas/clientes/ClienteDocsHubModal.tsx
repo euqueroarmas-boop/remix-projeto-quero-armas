@@ -38,6 +38,12 @@ import {
   avaliarPdfIdentidade,
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
+import {
+  tipoAceitaImagem,
+  acceptPorTipo,
+  MSG_SOMENTE_PDF_ORIGINAL,
+  MSG_FOTO_SOMENTE_IMAGEM,
+} from "@/lib/quero-armas/somentePdfOriginal";
 import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
   isDocumentoEmpresa30Dias,
