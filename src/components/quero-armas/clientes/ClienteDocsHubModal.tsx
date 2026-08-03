@@ -38,6 +38,12 @@ import {
   avaliarPdfIdentidade,
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
+import {
+  tipoAceitaImagem,
+  acceptPorTipo,
+  MSG_SOMENTE_PDF_ORIGINAL,
+  MSG_FOTO_SOMENTE_IMAGEM,
+} from "@/lib/quero-armas/somentePdfOriginal";
 import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
   isDocumentoEmpresa30Dias,
@@ -2001,8 +2007,9 @@ export function ClienteDocsHubModal({
     }
     const isImage = target.type.startsWith("image/");
     const isPdf = target.type === "application/pdf";
-    if (!isImage && !isPdf) {
-      toast.error("Envie uma foto (JPG/PNG) ou PDF para a IA ler.");
+    // Segunda barreira da mesma regra: só a foto 3x4 pode ser imagem.
+    if (!isPdf && !(isImage && tipoAceitaImagem(form.tipo_documento))) {
+      toast.error(MSG_SOMENTE_PDF_ORIGINAL);
       return;
     }
 
@@ -2625,6 +2632,31 @@ export function ClienteDocsHubModal({
     setConferenciaLocal(null);
     setShowTipoOverride(false);
     if (!f) return;
+
+    // ── Trava global: PDF ORIGINAL em todas as fases ─────────────────────
+    // Print, foto de tela e digitalização não valem. A única exceção é a
+    // foto 3x4 do titular, que é imagem por natureza.
+    {
+      const aceitaImagem = tipoAceitaImagem(form.tipo_documento);
+      const ehPdf = f.type === "application/pdf";
+      const ehImagem = f.type.startsWith("image/");
+      if (!aceitaImagem && !ehPdf) {
+        const id = toast.error(MSG_SOMENTE_PDF_ORIGINAL, {
+          duration: Infinity,
+          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+        });
+        setFile(null);
+        return;
+      }
+      if (aceitaImagem && !ehImagem) {
+        const id = toast.error(MSG_FOTO_SOMENTE_IMAGEM, {
+          duration: Infinity,
+          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+        });
+        setFile(null);
+        return;
+      }
+    }
 
     // ── Trava: documento oficial de identidade só entra como PDF com QR Code
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
@@ -3634,7 +3666,9 @@ export function ClienteDocsHubModal({
                 Adicionar Documento
               </h2>
               <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-[#4A4A4A]">
-                Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
+                {tipoAceitaImagem(form.tipo_documento)
+                  ? "Envie a foto 3x4 já reenquadrada (JPG ou PNG) — a leitura automática confere e preenche os campos. Você só revisa antes de salvar."
+                  : "Anexe o PDF ORIGINAL emitido pelo órgão — print, foto ou digitalização não são aceitos. A leitura automática identifica o tipo e preenche os campos; você só revisa antes de salvar."}
               </p>
             </div>
 
@@ -3836,7 +3870,7 @@ export function ClienteDocsHubModal({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept={isTipoIdentidadeComQr(form.tipo_documento) ? "application/pdf" : "image/*,application/pdf"}
+                accept={acceptPorTipo(form.tipo_documento)}
                 onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
@@ -4106,6 +4140,7 @@ export function ClienteDocsHubModal({
               fileNameDisplay={file?.name}
               onPickFile={() => fileInputRef.current?.click()}
               onPickCamera={() => cameraInputRef.current?.click()}
+              permiteCamera={tipoAceitaImagem(form.tipo_documento)}
               onRemove={() => setFile(null)}
               onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
