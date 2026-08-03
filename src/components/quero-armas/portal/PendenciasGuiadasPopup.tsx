@@ -730,7 +730,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.max(0, i - 1))}
                   disabled={!podeVoltar}
-                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Anterior
                 </button>
@@ -738,7 +738,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
                   disabled={!podeAvancar}
-                  className="flex-1 py-3 px-4 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] font-bold text-[11px] uppercase tracking-widest bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
                 >
                   Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
