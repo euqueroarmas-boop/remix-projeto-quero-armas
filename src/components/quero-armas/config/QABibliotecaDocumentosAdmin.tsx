@@ -5,8 +5,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookMarked, Plus, Search, Loader2, RefreshCw, Save, Trash2,
-  ChevronDown, ChevronUp, Archive, X,
+  ChevronDown, ChevronUp, Archive, X, Upload,
 } from "lucide-react";
+import BibliotecaModelosParser, {
+  SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
+} from "./BibliotecaModelosParser";
+
+type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
 
 type BibliotecaItem = {
   id: string;
@@ -92,6 +97,13 @@ export default function QABibliotecaDocumentosAdmin() {
   const [criandoNovo, setCriandoNovo] = useState(false);
   const [novo, setNovo] = useState({ ...BLANK });
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
+  const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
+  const [modelosNovo, setModelosNovo] = useState<File[]>([]);
+  const [treinandoNovo, setTreinandoNovo] = useState(false);
+
+  async function recarregarResumo() {
+    try { setResumoModelos(await carregarResumoModelos()); } catch { /* silencioso */ }
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -121,7 +133,7 @@ export default function QABibliotecaDocumentosAdmin() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); void recarregarResumo(); }, []);
 
   const itensFiltrados = useMemo(() => {
     const b = busca.trim().toLowerCase();
@@ -217,9 +229,27 @@ export default function QABibliotecaDocumentosAdmin() {
       return;
     }
     toast.success(`"${novo.nome}" adicionado à biblioteca`);
+
+    if (modelosNovo.length > 0) {
+      setTreinandoNovo(true);
+      for (const f of modelosNovo) {
+        try {
+          const r = await treinarModeloArquivo(codigo, novo.nome.trim(), f);
+          toast.success(
+            `Modelo "${f.name}" treinado (${r?.deterministico ? "determinística ✓" : "determinística —"} · ${r?.ia ? "IA ✓" : "IA —"})`,
+          );
+        } catch (e: any) {
+          toast.error(`Falha no modelo "${f.name}": ${e?.message ?? "erro"}`);
+        }
+      }
+      setTreinandoNovo(false);
+    }
+
     setNovo({ ...BLANK });
+    setModelosNovo([]);
     setCriandoNovo(false);
     await carregar();
+    await recarregarResumo();
   }
 
   return (
@@ -350,12 +380,42 @@ export default function QABibliotecaDocumentosAdmin() {
               />
             </div>
           </div>
+          <div className="rounded-md border border-dashed p-2" style={{ borderColor: "hsl(220 15% 85%)" }}>
+            <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              Modelos de referência para o parser (2 ou mais)
+            </label>
+            <p className="text-[10px] text-slate-400 mb-1.5">
+              Envie exemplos reais deste documento. Cada arquivo é analisado de forma determinística
+              (texto + palavras-chave) e por IA (embedding) e fica salvo para comparação futura.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,image/*"
+                onChange={(e) => setModelosNovo(Array.from(e.target.files ?? []))}
+                className="text-[11px]"
+              />
+              {modelosNovo.length > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-600">
+                  <Upload className="w-3 h-3" /> {modelosNovo.length} arquivo(s) selecionado(s)
+                </span>
+              )}
+            </div>
+            {modelosNovo.length === 1 && (
+              <p className="text-[10px] mt-1" style={{ color: "#B45309" }}>
+                Recomendado enviar pelo menos 2 modelos para o parser comparar variações.
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-2">
-            <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setNovo({ ...BLANK }); setCriandoNovo(false); }}>
+            <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setNovo({ ...BLANK }); setModelosNovo([]); setCriandoNovo(false); }}>
               Cancelar
             </Button>
-            <Button size="sm" onClick={criarNovo} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7">
-              <Plus className="w-3 h-3" /> Adicionar à biblioteca
+            <Button size="sm" onClick={criarNovo} disabled={treinandoNovo} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7">
+              {treinandoNovo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+              {treinandoNovo ? "Treinando modelos…" : "Adicionar à biblioteca"}
             </Button>
           </div>
         </div>
@@ -382,6 +442,8 @@ export default function QABibliotecaDocumentosAdmin() {
                   <ItemBiblioteca
                     key={item.id}
                     item={item}
+                    resumoModelos={resumoModelos.get(item.codigo)}
+                    onModelosChanged={recarregarResumo}
                     aberto={abertoId === item.id}
                     onToggle={() => setAbertoId((v) => (v === item.id ? null : item.id))}
                     onSalvar={salvarItem}
@@ -400,7 +462,7 @@ export default function QABibliotecaDocumentosAdmin() {
 
 // ─── Linha da biblioteca (accordion editável) ─────────────────────────────
 function ItemBiblioteca({
-  item, aberto, onToggle, onSalvar, onArquivar, salvando,
+  item, aberto, onToggle, onSalvar, onArquivar, salvando, resumoModelos, onModelosChanged,
 }: {
   item: BibliotecaItem;
   aberto: boolean;
@@ -408,6 +470,8 @@ function ItemBiblioteca({
   onSalvar: (i: BibliotecaItem) => void;
   onArquivar: (i: BibliotecaItem) => void;
   salvando: boolean;
+  resumoModelos?: { total: number; deterministico: number; ia: number };
+  onModelosChanged?: () => void;
 }) {
   const [local, setLocal] = useState<BibliotecaItem>(item);
   useEffect(() => { setLocal(item); }, [item]);
@@ -436,6 +500,7 @@ function ItemBiblioteca({
                 arquivado
               </span>
             )}
+            <SeloModeloParser resumo={resumoModelos} />
           </div>
           <p className="text-[10px] font-mono truncate mt-0.5" style={{ color: "hsl(220 10% 60%)" }}>
             {item.codigo} · {labelCategoria(item.categoria)} · {labelValidade(item.validade_dias)} · {usoLabel}
@@ -539,6 +604,12 @@ function ItemBiblioteca({
               className="h-8 text-xs"
             />
           </div>
+
+          <BibliotecaModelosParser
+            codigo={item.codigo}
+            nomeDocumento={item.nome}
+            onChanged={onModelosChanged}
+          />
 
           <div className="flex justify-between items-center pt-1">
             <Button
