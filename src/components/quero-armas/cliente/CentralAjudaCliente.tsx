@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback, KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, MessageCircle, Pencil, AlertTriangle, Sparkles, ShieldCheck, ShieldAlert, ShieldX, ShoppingCart } from "lucide-react";
+import { IconPlus, IconMicrophone, IconPlayerStopFilled, IconArrowUp, IconX, IconFileText, IconPhoto } from "@tabler/icons-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "@/shared/cart/CartProvider";
 import { getServiceBySlug } from "@/shared/data/catalog";
+import { startWavRecording, type WavRecorder } from "@/lib/quero-armas/wavRecorder";
 
 const BRAND = "#7A1F2B";
 const INK = "#0A0A0A";
