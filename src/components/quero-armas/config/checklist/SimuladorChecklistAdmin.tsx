@@ -50,6 +50,12 @@ export default function SimuladorChecklistAdmin() {
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [entregues, setEntregues] = useState<Record<string, boolean>>({});
 
+  // ── Adicionar exigência (mesma biblioteca do Montar Checklist) ────────────
+  const [biblioteca, setBiblioteca] = useState<BibliotecaItem[]>([]);
+  const [buscaBib, setBuscaBib] = useState("");
+  const [condicaoNova, setCondicaoNova] = useState<string>("");
+  const [adicionando, setAdicionando] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -57,6 +63,14 @@ export default function SimuladorChecklistAdmin() {
         .select("id, nome_servico")
         .order("nome_servico");
       setServicos((data as any[])?.map((s) => ({ id: s.id, nome_servico: s.nome_servico })) ?? []);
+    })();
+    (async () => {
+      const { data } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .select("id, codigo, nome, categoria, validade_dias, formato_aceito, link_emissao, descricao_como_enviar, observacao_cliente")
+        .eq("ativo", true)
+        .order("nome");
+      setBiblioteca(((data as any[]) ?? []) as BibliotecaItem[]);
     })();
   }, []);
 
