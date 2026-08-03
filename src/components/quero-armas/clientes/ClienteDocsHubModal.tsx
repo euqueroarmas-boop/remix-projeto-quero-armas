@@ -174,6 +174,10 @@ const IA_TO_TIPO: Record<string, string> = {
   RECURSO_ADMINISTRATIVO: "recurso_administrativo_doc",
   MANDADO_SEGURANCA: "mandado_seguranca_doc",
   PROCURACAO_ASSINADA: "procuracao_assinada",
+  // Foto do requerente (imagem de rosto, sem texto)
+  FOTO_3X4: "foto_3x4",
+  FOTO: "foto_3x4",
+  RETRATO: "foto_3x4",
   // Fallback
   DESCONHECIDO: "outro",
 };
@@ -2140,7 +2144,29 @@ export function ClienteDocsHubModal({
         }),
       );
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
-      setCategoriaHub(categoriaIA);
+      // ── Foto 3x4 do requerente ───────────────────────────────────────────
+      // Retrato não tem texto: a IA sempre cai em "outro documento" e o slot
+      // acusava divergência indevida. Imagem de rosto num slot de foto 3x4 (ou
+      // classificada como retrato) é foto 3x4, ponto. Sem divergência.
+      const iaFalaDeFoto = /foto|retrato|rosto|3\s*[x×]\s*4/i.test(
+        `${ia.tipoDetectado || ""} ${ia.justificativa || ""} ${target.name}`,
+      );
+      const ehFoto3x4 =
+        isImage &&
+        (defaultTipoEfetivo === "foto_3x4" || tipoIA === "foto_3x4" ||
+          (tipoIA === "outro" && iaFalaDeFoto));
+      if (ehFoto3x4) {
+        tipoIA = "foto_3x4";
+        setClassificacao({
+          ...ia,
+          tipoDetectado: "FOTO_3X4",
+          confianca: Math.max(ia.confianca || 0, 0.95),
+          justificativa:
+            "Imagem de rosto do requerente, sem texto — classificada como Foto 3x4 (identificação civil).",
+        });
+      }
+      const categoriaIA2 = ehFoto3x4 ? "identificacao" : categoriaIA;
+      setCategoriaHub(categoriaIA2 as typeof categoriaIA);
       const camposIA = ia.camposExtraidos || {};
       // A IA devolve só os campos do schema dela — prestador e tomador da NFS-e
       // ficavam de fora, e por isso a conformidade não mostrava o tomador nem o
@@ -2174,6 +2200,42 @@ export function ClienteDocsHubModal({
         "REVISAR";
 
       const modeloExtraidoSeguro = safeExtractedModel(campos.arma_modelo);
+
+      // Foto 3x4: documento gerado pelo próprio sistema. Sem número oficial,
+      // sem órgão emissor externo — emitida hoje, válida por 5 anos.
+      if (ehFoto3x4) {
+        const hoje = new Date();
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        const val = new Date(hoje);
+        val.setFullYear(val.getFullYear() + 5);
+        const serie = `AI-3X4-${(refClienteCpf || "").replace(/\D/g, "").slice(-4) || "0000"}-${hoje.getFullYear()}${String(hoje.getMonth() + 1).padStart(2, "0")}${String(hoje.getDate()).padStart(2, "0")}`;
+        setForm((prev) => ({
+          ...prev,
+          tipo_documento: "foto_3x4",
+          numero_documento: prev.numero_documento || serie,
+          orgao_emissor: prev.orgao_emissor || "ARSENAL INTELIGENTE",
+          data_emissao: prev.data_emissao || iso(hoje),
+          data_validade: prev.data_validade || iso(val),
+        }));
+        setIaExtraido({
+          numero_documento: "",
+          numero_cad_sinarm: "",
+          numero_registro_sigma: "",
+          arma_numero_serie: "",
+          arma_marca: "",
+          arma_modelo: "",
+          arma_calibre: "",
+          data_validade: "",
+          sistema_registro: "REVISAR",
+        });
+        setConfirmados({});
+        setConformidade([]);
+        setTemApontamento(false);
+        setProfissionalExtraido({ nome: null, registro: null });
+        setConferenciaLaudo(null);
+        setExtracting(false);
+        return;
+      }
 
       setForm((prev) => ({
         ...prev,
