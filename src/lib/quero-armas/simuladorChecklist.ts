@@ -263,9 +263,13 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       return paraItem(l, entregues[l.tipo_documento] ? "cumprido" : "pendente");
     });
 
-  // Agrupamento na ordem em que o cliente vê (primeiro grupo com pendência primeiro).
+  // Agrupamento pelos grupos temáticos canônicos, na ordem oficial do sistema
+  // (identificação → endereço → antecedentes → ocupação → ... → requerimento).
   const ordemGrupos: string[] = [];
   for (const it of itens) if (!ordemGrupos.includes(it.grupo)) ordemGrupos.push(it.grupo);
+  ordemGrupos.sort(
+    (a, b) => ordemGrupo(a as PendenciaGrupoId) - ordemGrupo(b as PendenciaGrupoId),
+  );
 
   const grupos: GrupoSimulado[] = ordemGrupos.map((g) => {
     const doGrupo = itens.filter((i) => i.grupo === g);
