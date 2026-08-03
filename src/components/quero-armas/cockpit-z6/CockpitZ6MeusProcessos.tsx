@@ -371,6 +371,24 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
           .z6-root .z6-title{padding-left:0}
           .z6-root .z6-foco-body{padding-left:0}
         }
+        /* Mobile: densidade menor, nada estoura a tela. */
+        .z6-root{overflow-x:hidden}
+        .z6-root *{overflow-wrap:anywhere}
+        @media (max-width: 640px){
+          .z6-root .z6-title{font-size:18px !important;letter-spacing:.02em !important}
+          .z6-root .z6-foco-card{margin-top:12px !important}
+          .z6-root .z6-foco-card > div{padding:12px 13px !important;gap:10px !important}
+          .z6-root .z6-foco-kicker{font-size:9px !important;letter-spacing:.18em !important}
+          .z6-root .z6-foco-title{font-size:16px !important;line-height:1.2 !important;margin-top:6px !important}
+          .z6-root .z6-foco-desc{font-size:11.5px !important}
+          .z6-root .z6-foco-cta{padding:9px 12px !important;font-size:10px !important;letter-spacing:.14em !important;width:100%}
+          .z6-root .z6-kpi{padding:9px 10px !important}
+          .z6-root .z6-kpi-l{font-size:8.5px !important;letter-spacing:.1em !important;white-space:normal !important}
+          .z6-root .z6-kpi-l span:last-child{white-space:normal !important}
+          .z6-root .z6-kpi-v{font-size:19px !important;margin-top:6px !important}
+          .z6-root .z6-kpi-s{font-size:9.5px !important}
+          .z6-root .z6-proc-title{font-size:11px !important;letter-spacing:.1em !important}
+        }
         /* Cabeçalho fixo: tudo até o badge do Foco do Dia. */
         .z6-root .z6-sticky-header{position:sticky;position:-webkit-sticky;top:0;z-index:40;background:#F2F2F2}
       `}</style>
