@@ -38,8 +38,11 @@ const CATEGORIAS: Array<{ valor: string; label: string }> = [
   { valor: "certidoes",        label: "Certidões" },
   { valor: "laudos",           label: "Laudos" },
   { valor: "arma_acervo",      label: "Arma / Acervo" },
+  { valor: "cac_atividade",    label: "Atividade CAC / Habitualidade" },
   { valor: "declaracoes",      label: "Declarações" },
   { valor: "efetiva_necessidade", label: "Efetiva Necessidade" },
+  { valor: "documentos_processo", label: "Documentos do Processo" },
+  { valor: "juridico",         label: "Jurídico" },
   { valor: "outros",           label: "Outros" },
 ];
 
