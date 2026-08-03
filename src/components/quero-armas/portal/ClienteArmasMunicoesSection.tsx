@@ -676,7 +676,7 @@ export default function ClienteArmasMunicoesSection({ clienteId, meusDocs = [], 
           <div className="qa-av-label text-slate-950 md:text-[14px]">
             Armas e Munições
           </div>
-          <h1 className="qa-av-h1 mt-1 text-[36px] font-black leading-none text-slate-950 md:text-[46px]">{selected.titulo}</h1>
+          <h1 className="qa-av-h1 mt-1 text-[22px] font-black leading-none text-slate-950 md:text-[22px]">{selected.titulo}</h1>
           <p className="qa-av-body mt-2 max-w-none text-sm text-slate-600 md:whitespace-nowrap">
             Dados do CRAF, Hub de Documentos, catálogo técnico e fabricante, quando disponível.
           </p>

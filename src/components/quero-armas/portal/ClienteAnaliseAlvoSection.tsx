@@ -15,7 +15,7 @@ export default function ClienteAnaliseAlvoSection() {
         .qa-alvo__badge-slot{flex-shrink:0;position:static;z-index:2}
         .qa-alvo__kicker{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0;padding-right:0}
         .qa-alvo__dot{width:7px;height:7px;border-radius:999px;background:var(--bordo)}
-        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:clamp(28px,6.6vw,32px);line-height:1.06;margin:8px 0 0;letter-spacing:.01em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
+        .qa-alvo h1{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:22px;line-height:1.06;margin:8px 0 0;letter-spacing:.01em;color:var(--ink);text-transform:uppercase;white-space:nowrap}
         .qa-alvo__lead{font-family:Arial,sans-serif;font-size:13px;line-height:1.5;color:var(--muted);margin:8px 0 0;max-width:none;width:100%;text-wrap:pretty}
         .qa-alvo__grid{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:18px;background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;box-shadow:0 6px 14px rgba(17,17,17,.04);flex:1;min-height:0;align-items:stretch}
         .qa-alvo__target{position:relative;display:flex;align-items:center;justify-content:center;background:transparent;border:none;border-radius:3px;padding:0;min-height:300px;height:100%;overflow:hidden}

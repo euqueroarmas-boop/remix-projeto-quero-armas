@@ -466,7 +466,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       {/* ── Cabeçalho cliente-centric ── */}
       <header className="mb-5">
         <h1
-          className="text-[24px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0"
+          className="text-[22px] font-bold tracking-[0.04em] uppercase leading-[1.05] text-[#0A0A0A] m-0"
           style={{ fontFamily: "Oswald, 'Arial Narrow', Arial, sans-serif" }}
         >
           {primeiroNome}, ESSES SÃO SEUS CONTRATOS

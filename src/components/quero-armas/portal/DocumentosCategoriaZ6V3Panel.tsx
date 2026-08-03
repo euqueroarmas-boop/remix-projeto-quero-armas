@@ -397,7 +397,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     >
       <style>{`
         .qa-docsz6 .os{font-family:'Oswald','Arial Narrow',Arial,sans-serif}
-        .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:clamp(28px,6.6vw,32px);font-weight:700;letter-spacing:.03em;color:#0A0A0A;text-transform:uppercase;line-height:1.05;margin:0}
+        .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:22px;font-weight:700;letter-spacing:.03em;color:#0A0A0A;text-transform:uppercase;line-height:1.05;margin:0}
         .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;color:#6A6A6A;display:flex;gap:18px;flex-wrap:wrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
         .qa-docsz6 .focus{background:#fff;border:1px solid #E5E5E5;border-left:4px solid #D9342B;border-radius:3px;padding:16px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
