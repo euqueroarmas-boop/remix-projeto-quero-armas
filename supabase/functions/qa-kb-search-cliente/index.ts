@@ -606,7 +606,12 @@ Deno.serve(async (req) => {
         .trim();
     if (clienteId) {
       try {
-        const [{ data: vendas }, { data: processos }] = await Promise.all([
+        const [{ data: clienteRow }, { data: vendas }, { data: processos }] = await Promise.all([
+          supabase
+            .from("qa_clientes")
+            .select("id, nome_completo")
+            .eq("id", clienteId)
+            .maybeSingle(),
           supabase
             .from("qa_vendas")
             .select(
@@ -733,9 +738,22 @@ Deno.serve(async (req) => {
           console.warn("[contexto-cliente] docs falhou:", e);
         }
 
-        if (blocosVendas.length || blocosProcessos.length) {
+        const nomeCompleto = String((clienteRow as any)?.nome_completo ?? "").trim();
+        const primeiroNome = nomeCompleto
+          ? nomeCompleto.split(/\s+/)[0].toLowerCase().replace(/^./, (c) => c.toUpperCase())
+          : "";
+        const blocoIdentidade = nomeCompleto
+          ? `### Identidade do cliente (autoritativa)\n` +
+            `Nome completo: ${nomeCompleto}\nPrimeiro nome (use exatamente assim): ${primeiroNome}\n\n` +
+            `REGRA DE NOME: trate o cliente EXCLUSIVAMENTE por "${primeiroNome}". ` +
+            `É PROIBIDO usar qualquer outro nome, apelido, diminutivo ou variação — nunca invente nome.\n\n`
+          : `### Identidade do cliente\nNome não disponível. NUNCA chame o cliente por nenhum nome; ` +
+            `fale de forma neutra, sem vocativo.\n\n`;
+
+        if (blocoIdentidade || blocosVendas.length || blocosProcessos.length) {
           ctxCliente =
             "## DADOS REAIS DA CONTA DESTE CLIENTE (autoritativos)\n" +
+            blocoIdentidade +
             (blocosVendas.length
               ? `### Compras e pagamentos\n${blocosVendas.join("\n")}\n\n`
               : "") +
@@ -819,7 +837,7 @@ Deno.serve(async (req) => {
       "9. Faltando dado, faça UMA pergunta curta em vez de escrever hipóteses longas.\n" +
       "\nANTI-ROBÔ (regras de fala — valem sobre qualquer formatação):\n" +
       "A. Escreva SEMPRE em texto corrido de conversa. É proibido usar listas com marcadores, listas numeradas, títulos, negrito de seção, tabelas ou emojis. Se a ideia pedir vários pontos, ligue-os em frases (\"primeiro…, depois…\").\n" +
-      "B. Trate o cliente pelo primeiro nome quando ele for conhecido, no máximo uma vez na resposta, de forma natural — nunca em toda frase e nunca com o nome em maiúsculas.\n" +
+      "B. Use APENAS o primeiro nome informado no bloco 'Identidade do cliente (autoritativa)', no máximo uma vez na resposta, de forma natural — nunca em toda frase e nunca em maiúsculas. É PROIBIDO inventar, adivinhar, abreviar ou trocar o nome do cliente; se não houver nome no contexto, não use vocativo algum.\n" +
       "C. Fale na primeira pessoa do plural pela Quero Armas (\"a gente cuida disso\", \"nós damos entrada\") e na segunda pessoa com o cliente (\"você\"). Nada de terceira pessoa impessoal (\"o cliente deverá\", \"o requerente\").\n" +
       "D. Frases curtas, ritmo de conversa de WhatsApp bem-escrita. Pode usar contrações e conectivos falados (\"olha\", \"na prática\", \"o que acontece é que\").\n" +
       "E. Proibidas fórmulas de robô: \"prezado\", \"informamos que\", \"segue abaixo\", \"em caso de dúvidas, estamos à disposição\", \"espero ter ajudado\", \"como assistente\", \"de acordo com as informações fornecidas\".\n" +
