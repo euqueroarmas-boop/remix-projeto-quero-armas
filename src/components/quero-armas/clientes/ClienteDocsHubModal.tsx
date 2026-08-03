@@ -2217,6 +2217,22 @@ export function ClienteDocsHubModal({
           data_emissao: prev.data_emissao || iso(hoje),
           data_validade: prev.data_validade || iso(val),
         }));
+        setIaExtraido({
+          numero_documento: "",
+          numero_cad_sinarm: "",
+          numero_registro_sigma: "",
+          arma_numero_serie: "",
+          arma_marca: "",
+          arma_modelo: "",
+          arma_calibre: "",
+          data_validade: "",
+          sistema_registro: "REVISAR",
+        });
+        setConfirmados({});
+        setConformidade([]);
+        setTemApontamento(false);
+        setProfissionalExtraido({ nome: null, registro: null });
+        setConferenciaLaudo(null);
         setExtracting(false);
         return;
       }
