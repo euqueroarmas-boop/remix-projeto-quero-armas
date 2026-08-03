@@ -429,13 +429,13 @@ export default function QAConfiguracoesPage() {
   }
 
   return (
-    <div className="space-y-5 md:space-y-6 max-w-4xl mx-auto">
+    <div className="qa-config-surface space-y-5 md:space-y-6 max-w-4xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+        <h1 className="qa-h1 flex items-center gap-2">
           <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
         </h1>
-        <p className="text-sm mt-0.5" style={{ color: "hsl(220 12% 38%)" }}>Status do sistema, serviços e pesos de ranking</p>
+        <p className="qa-body qa-body--soft mt-1">Status do sistema, serviços e pesos de ranking</p>
       </div>
 
       <Tabs defaultValue="sistema" className="w-full">
