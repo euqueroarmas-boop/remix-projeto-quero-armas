@@ -4238,7 +4238,7 @@ export default function QAClientePortalPage() {
               ];
               return (
                 <>
-                  {/* Cabeçalho travado: H1 + metadados + KPIs (até o card PROCESSOS). */}
+                  {/* Cabeçalho travado: H1 + metadados + KPIs + filtro por processo. */}
                   <header className="shrink-0 pt-[26px] pb-4" style={{ maxWidth: "100%" }}>
                     <h1 className="qa-h1" style={{ overflowWrap: "anywhere" }}>{primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS</h1>
                     <div className="qa-meta qa-meta-lines">
@@ -4262,16 +4262,16 @@ export default function QAClientePortalPage() {
                       </div>
                     ))}
                     </div>
+                    <div className="mt-4 overflow-hidden">
+                      <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
+                    </div>
                   </header>
 
-                  {/* Área rolável: filtro + checklist. */}
+                  {/* Área rolável: checklist. */}
                   <div
                     className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar pb-6"
                     style={{ overscrollBehavior: "contain" }}
                   >
-                  <div className="mb-5 overflow-hidden">
-                    <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
-                  </div>
 
                   {docsFilt.length === 0 ? (
                     <div className="rounded-sm border border-[#E5E5E5] bg-white px-5 py-8 text-center">
