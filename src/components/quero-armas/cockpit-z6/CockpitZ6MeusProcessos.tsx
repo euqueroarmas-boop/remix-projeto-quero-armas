@@ -378,7 +378,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
         .z6-root{overflow-x:hidden}
         .z6-root *{overflow-wrap:anywhere}
         @media (max-width: 640px){
-          .z6-root .z6-title{font-size:clamp(28px,6.6vw,32px) !important;letter-spacing:.02em !important}
+          .z6-root .z6-title{font-size:22px !important;letter-spacing:.02em !important}
           .z6-root .z6-foco-card{margin-top:12px !important}
           .z6-root .z6-foco-card > div{padding:12px 13px !important;gap:10px !important}
           .z6-root .z6-foco-kicker{font-size:9px !important;letter-spacing:.18em !important}
@@ -419,7 +419,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
       {/* HEADER + FOCO DO DIA fixos no topo */}
       <div className="z6-sticky-header" style={{ paddingBottom: focoDoDia ? 16 : 20 }}>
         <div>
-          <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: "clamp(28px,6.6vw,32px)", fontWeight: 700, letterSpacing: ".03em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
+          <h1 className="z6-title" style={{ fontFamily: "'Oswald', sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: ".03em", color: "#0A0A0A", lineHeight: 1.05, margin: 0, textTransform: "uppercase" }}>
           {nomeCliente.toUpperCase()}, ESSES SÃO SEUS PROCESSOS
         </h1>
         <div style={{ marginTop: 11, fontSize: 10, fontWeight: 900, color: "#6A6A6A", display: "flex", gap: 18, flexWrap: "wrap", fontFamily: "'Arial Narrow', Arial, sans-serif", letterSpacing: ".22em", textTransform: "uppercase" }}>
