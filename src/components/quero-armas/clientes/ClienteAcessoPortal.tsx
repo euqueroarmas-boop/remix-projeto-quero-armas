@@ -685,7 +685,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       )}
 
-      <SuporteAcessoCard clienteId={cliente.id} clienteNome={(cliente as any).nome_completo} clienteEmail={cliente.email} />
+      <SuporteAcessoCard clienteId={String(cliente.id)} clienteNome={cliente.nome_completo} clienteEmail={cliente.email} />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center gap-2 mb-3">
