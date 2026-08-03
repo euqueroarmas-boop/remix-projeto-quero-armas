@@ -459,6 +459,32 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
     });
   }
 
+  /** Liga/desliga a exigência sem excluir — persiste na hora. */
+  async function toggleAtivo(row: ExigenciaRow) {
+    const novo = !row.ativo;
+    setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: novo } : r)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ ativo: novo })
+      .eq("id", row.id);
+    if (error) {
+      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ativo: !novo } : r)));
+      toast.error("FALHA AO ALTERAR STATUS — " + error.message.toUpperCase());
+      return;
+    }
+    setPatches((prev) => {
+      const atual = prev[row.id];
+      if (!atual || !("ativo" in atual)) return prev;
+      const { ativo: _a, ...rest } = atual as any;
+      if (Object.keys(rest).length === 0) {
+        const { [row.id]: _d, ...others } = prev;
+        return others;
+      }
+      return { ...prev, [row.id]: rest };
+    });
+    toast.success(novo ? "EXIGÊNCIA ATIVADA" : "EXIGÊNCIA DESATIVADA");
+  }
+
   async function moveRow(row: ExigenciaRow, dir: -1 | 1) {
     const idx = merged.findIndex((r) => r.id === row.id);
     const next = idx + dir;
@@ -706,6 +732,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                         onSave={() => void saveRow(row)}
                         onDuplicate={() => void addNew(row)}
                         onDelete={() => void removeRow(row)}
+                        onToggleAtivo={() => void toggleAtivo(row)}
                         onMoveUp={() => void moveRow(row, -1)}
                         onMoveDown={() => void moveRow(row, 1)}
                         onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
@@ -759,6 +786,7 @@ interface CardProps {
   onSave: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onToggleAtivo: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onUpload: (campo: "modelo_url" | "exemplo_url", file: File) => void;
@@ -1312,7 +1340,7 @@ interface SortableProps extends CardProps {
 }
 
 function SortableExigenciaItem(props: SortableProps) {
-  const { row, expanded, dirty, saving, canMoveUp, canMoveDown, onToggleExpand, onPatch, onMoveUp, onMoveDown, onDelete } = props;
+  const { row, expanded, dirty, saving, canMoveUp, canMoveDown, onToggleExpand, onPatch, onMoveUp, onMoveDown, onDelete, onToggleAtivo } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -1386,6 +1414,33 @@ function SortableExigenciaItem(props: SortableProps) {
         </div>
 
         <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onToggleAtivo}
+            title={row.ativo ? "Desativar exigência (sem excluir)" : "Ativar exigência"}
+            aria-pressed={!!row.ativo}
+            className={
+              "h-7 px-2 inline-flex items-center gap-1 rounded-full border text-[9px] font-bold uppercase tracking-wider transition-colors " +
+              (row.ativo
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100")
+            }
+          >
+            <span
+              className={
+                "inline-block h-3 w-5 rounded-full relative transition-colors " +
+                (row.ativo ? "bg-emerald-500" : "bg-slate-300")
+              }
+            >
+              <span
+                className={
+                  "absolute top-0.5 h-2 w-2 rounded-full bg-white transition-all " +
+                  (row.ativo ? "left-2.5" : "left-0.5")
+                }
+              />
+            </span>
+            {row.ativo ? "ATIVO" : "INATIVO"}
+          </button>
           <button
             type="button"
             onClick={onMoveUp}
