@@ -643,6 +643,7 @@ export default function SimuladorChecklistAdmin() {
                               onResponder={responder}
                               onLimparResposta={limparResposta}
                               onRemover={removerItem}
+                              onDefinirOrdem={definirOrdem}
                             />
                           ))}
                         </div>
