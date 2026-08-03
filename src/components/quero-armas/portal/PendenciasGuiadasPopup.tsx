@@ -626,6 +626,44 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             </div>
           ) : null}
 
+          {/* Modo página (granada): o card "Resolva um por vez" NÃO fica travado
+              no rodapé nem em fundo branco — ele rola junto com o conteúdo. */}
+          {asPage && resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
+            <div className="mt-4 border-t border-[#EFEFEF] pt-3">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                  Resolva um por vez
+                </span>
+                <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+                  {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
+                </span>
+              </div>
+              <p className="mt-1.5 text-[11px] text-[#6A6A6A]">
+                Ainda faltam{" "}
+                {resumoProcesso.documentosPendentes > 0 ? (
+                  <strong className="text-[#0A0A0A]">
+                    {resumoProcesso.documentosPendentes}{" "}
+                    {resumoProcesso.documentosPendentes === 1 ? "documento" : "documentos"}
+                  </strong>
+                ) : null}
+                {resumoProcesso.documentosPendentes > 0 && resumoProcesso.perguntasPendentes > 0 ? " e " : null}
+                {resumoProcesso.perguntasPendentes > 0 ? (
+                  <strong className="text-[#0A0A0A]">
+                    {resumoProcesso.perguntasPendentes}{" "}
+                    {resumoProcesso.perguntasPendentes === 1 ? "pergunta" : "perguntas"}
+                  </strong>
+                ) : null}{" "}
+                neste processo.
+              </p>
+              {grupoNoProcesso ? (
+                <p className="mt-1 text-[11px] text-[#6A6A6A]">
+                  Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
+                  {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
+                  {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {/* Footer */}
