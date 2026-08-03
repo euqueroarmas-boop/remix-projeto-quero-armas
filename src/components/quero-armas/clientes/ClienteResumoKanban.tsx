@@ -749,7 +749,16 @@ export default function ClienteResumoKanban({
          .qa-client-summary-print__v{font-size:18px}
          .qa-client-summary-print__v small{font-size:9px;margin-top:2px}
          .qa-client-summary-print__footer{margin-top:14px;font-size:8px}
-       }`}</style>
+        }
+        .qa-summary-merged .qa-client-summary-print__k{margin-bottom:6px}
+        .qa-summary-merged__body{display:flex;align-items:flex-start;gap:18px}
+        .qa-summary-merged__part{display:flex;flex-direction:column;min-width:0;position:relative}
+        .qa-summary-merged__part:first-child{padding-right:18px}
+        .qa-summary-merged__part:first-child:after{content:"";position:absolute;right:0;top:0;bottom:0;width:1px;background:var(--line)}
+        .qa-summary-merged__part .qa-client-summary-print__v{font-size:22px}
+        .qa-summary-merged__part small{font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:var(--muted);margin-top:4px;display:block;text-transform:none}
+        @media (max-width:768px){.qa-summary-merged__body{gap:12px}.qa-summary-merged__part:first-child{padding-right:12px}.qa-summary-merged__part .qa-client-summary-print__v{font-size:18px}.qa-summary-merged__part small{font-size:9px;margin-top:2px}}
+        `}</style>
       <div className="qa-client-summary-print__wrap">
         <div className="qa-client-summary-print__sticky">
           <header className="qa-client-summary-print__top">
