@@ -108,9 +108,13 @@ export default function SimuladorChecklistAdmin() {
   const bibliotecaFiltrada = useMemo(() => {
     const b = buscaBib.trim().toLowerCase();
     if (b.length < 2) return [] as (BibliotecaItem & { jaNoServico: boolean })[];
-    const usados = new Set(linhas.map((l) => l.tipo_documento));
+    // Só conta como "já está" o que estiver ATIVO. Linha desativada precisa
+    // poder voltar pela busca — senão o documento fica invisível no simulador
+    // e ao mesmo tempo bloqueado para adicionar.
+    const ativas = linhas.filter((l) => (l as any).ativo !== false);
+    const usados = new Set(ativas.map((l) => l.tipo_documento));
     const bibUsadas = new Set(
-      linhas.map((l) => (l as any).biblioteca_id as string | null).filter(Boolean) as string[],
+      ativas.map((l) => (l as any).biblioteca_id as string | null).filter(Boolean) as string[],
     );
     return biblioteca
       .filter((i) => i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b))
