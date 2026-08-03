@@ -120,11 +120,33 @@ interface CentralAjudaClienteProps {
   compact?: boolean;
 }
 
-const SUGESTOES = [
-  "O que preciso para comprar uma arma como policial civil?",
-  "Como consigo a posse de arma pra me defender e defender a minha família",
+const SUGESTOES_BASE = [
   "Como funciona o registro CAC?",
+  "Quanto tempo demora a análise da Polícia Federal?",
+  "Quais documentos ainda faltam no meu processo?",
+  "Posso comprar munição enquanto o processo corre?",
+  "Como consigo a posse pra defender minha família?",
+  "Qual a validade dos exames psicológico e de tiro?",
+  "O que muda entre posse e porte de arma?",
+  "Preciso renovar meu CR? Como faço?",
+  "Como declaro a guia de tráfego (GTE)?",
+  "Meu endereço mudou: o que preciso atualizar?",
 ];
+
+function montarSugestoes(servicos: string[], pendentes: number): string[] {
+  const pool: string[] = [];
+  servicos.slice(0, 3).forEach((s) => {
+    const nome = s.trim();
+    if (!nome) return;
+    pool.push(`Como está o andamento de ${nome.toLowerCase()}?`);
+    pool.push(`O que falta para concluir ${nome.toLowerCase()}?`);
+  });
+  if (pendentes > 0) {
+    pool.push(`Tenho ${pendentes} documento${pendentes > 1 ? "s" : ""} pendente${pendentes > 1 ? "s" : ""}. Como resolvo?`);
+    pool.push("Posso enviar foto do documento ou só PDF?");
+  }
+  return [...pool, ...SUGESTOES_BASE];
+}
 
 const NIVEL_META: Record<NivelConfianca, { label: string; icon: JSX.Element; fg: string; bg: string }> = {
   alta:  { label: "Confiança alta",  icon: <ShieldCheck className="h-3 w-3" />, fg: OK,    bg: OK_BG    },
@@ -157,6 +179,8 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [anexos, setAnexos] = useState<AnexoChat[]>([]);
   const [gravando, setGravando] = useState(false);
   const [transcrevendo, setTranscrevendo] = useState(false);
+  const [poolSugestoes, setPoolSugestoes] = useState<string[]>(SUGESTOES_BASE);
+  const [rotIndex, setRotIndex] = useState(0);
   const navigate = useNavigate();
   const { addItem } = useCart();
 
@@ -174,6 +198,45 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
     const t = setInterval(() => setNow(Date.now()), 30 * 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Sugestões personalizadas com base no perfil/processos do cliente
+  useEffect(() => {
+    if (!cliente) return;
+    let alive = true;
+    (async () => {
+      try {
+        const [proc, docs] = await Promise.all([
+          (supabase as any)
+            .from("qa_processos")
+            .select("servico_nome, status")
+            .eq("cliente_id", cliente.id)
+            .limit(5),
+          (supabase as any)
+            .from("qa_documentos_cliente")
+            .select("id", { count: "exact", head: true })
+            .eq("cliente_id", cliente.id)
+            .in("status", ["pendente", "aguardando", "rejeitado"]),
+        ]);
+        if (!alive) return;
+        const servicos = ((proc?.data ?? []) as any[])
+          .map((p) => (p?.servico_nome || "").toString())
+          .filter(Boolean);
+        setPoolSugestoes(montarSugestoes(servicos, docs?.count ?? 0));
+      } catch (_) { /* mantém base */ }
+    })();
+    return () => { alive = false; };
+  }, [cliente?.id]);
+
+  // Troca as 4 sugestões a cada 15s
+  useEffect(() => {
+    const t = setInterval(() => setRotIndex((i) => i + 4), 15000);
+    return () => clearInterval(t);
+  }, []);
+
+  const sugestoesVisiveis = (() => {
+    const p = poolSugestoes.length ? poolSugestoes : SUGESTOES_BASE;
+    return Array.from({ length: Math.min(4, p.length) }, (_, k) => p[(rotIndex + k) % p.length]);
+  })();
 
   const carregarAnteriores = useCallback(async (excludeId?: string) => {
     if (!cliente) return;
@@ -618,26 +681,30 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
 
           <div
             ref={scrollRef}
-            className={`flex-1 min-h-0 overflow-y-auto py-4 ${mensagens.length === 0 && !initLoading ? "flex flex-col justify-end px-0" : "px-5 space-y-4"}`}
+            className={`flex-1 min-h-0 overflow-y-auto ${mensagens.length === 0 && !initLoading ? "flex flex-col px-0 pt-3 pb-2 overflow-x-hidden" : "py-4 px-5 space-y-4"}`}
             style={{ background: "#FFFFFF" }}
           >
             {initLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
             ) : mensagens.length === 0 ? (
-              <div className="flex flex-col items-start text-left gap-3 pb-10">
+              <div className="flex flex-col h-full min-h-0 items-start text-left">
                 <h2
-                  className="text-left px-5"
+                  className="text-left px-5 pt-1"
                   style={{ fontFamily: OSWALD, fontWeight: 700, fontSize: 22, lineHeight: 1.1, letterSpacing: "0.01em", color: INK }}
                 >
                   Olá, <span style={{ color: BRAND }}>{primeiroNome}</span>
                 </h2>
-                <div className="w-full overflow-x-auto no-scrollbar">
-                  <div className="flex items-stretch gap-2 px-5 w-max">
-                    {SUGESTOES.map((s) => (
+                <div className="flex-1" />
+                <div
+                  className="w-full no-scrollbar pb-1"
+                  style={{ overflowX: "auto", touchAction: "pan-x", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain" }}
+                >
+                  <div className="flex items-stretch gap-1.5 px-5 w-max">
+                    {sugestoesVisiveis.map((s) => (
                       <button
                         key={s}
                         onClick={() => enviar(s)}
-                        className="shrink-0 max-w-[240px] text-left text-[11.5px] px-3 py-2 bg-white border transition-colors hover:bg-slate-50"
+                        className="shrink-0 max-w-[230px] text-left text-[11.5px] px-3 py-2 bg-white border transition-colors hover:bg-slate-50"
                         style={{ borderColor: CARD_BORDER, borderRadius: 999, color: INK_2, lineHeight: 1.3 }}
                       >
                         <span className="block truncate">{s}</span>
