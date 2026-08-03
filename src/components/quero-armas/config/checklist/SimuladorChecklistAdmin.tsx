@@ -22,7 +22,6 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
-import { ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
 
 type Servico = { id: number; nome_servico: string };
 
