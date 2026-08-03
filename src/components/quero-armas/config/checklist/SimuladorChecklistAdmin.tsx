@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import {
   simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   CONDICOES_CHECKLIST,
+  parseCondicoes, serializarCondicoes,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -270,8 +271,8 @@ export default function SimuladorChecklistAdmin() {
    * depois que o cliente responder aquela condição profissional. É o MESMO
    * campo lido pelo portal, pelo explodir_checklist e pelo simulador.
    */
-  async function definirCondicao(id: string, valor: string) {
-    const cond = valor || null;
+  async function definirCondicao(id: string, valores: string[]) {
+    const cond = serializarCondicoes(valores);
     const anteriores = linhas;
     setLinhas((p) => p.map((l) => (l.id === id ? { ...l, condicao_profissional: cond } : l)));
     const { error } = await supabase
@@ -283,7 +284,7 @@ export default function SimuladorChecklistAdmin() {
       toast.error("NÃO FOI POSSÍVEL SALVAR A CONDIÇÃO: " + (error.message ?? "ERRO"));
       return;
     }
-    toast.success(cond ? "CONDIÇÃO PROFISSIONAL APLICADA" : "EXIGÊNCIA AGORA VALE PARA TODOS");
+    toast.success(cond ? "CONDIÇÕES PROFISSIONAIS APLICADAS" : "EXIGÊNCIA AGORA VALE PARA TODOS");
   }
 
   /**
