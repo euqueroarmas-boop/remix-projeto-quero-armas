@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
-  Clock, AlertTriangle, ArrowRight, GripVertical, X,
+  Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
 } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor,
@@ -21,6 +21,19 @@ import {
 
 type Servico = { id: number; nome_servico: string };
 
+/** Item da BIBLIOTECA — mesma fonte usada por Montar Checklist e Catálogo. */
+type BibliotecaItem = {
+  id: string;
+  codigo: string;
+  nome: string;
+  categoria: string | null;
+  validade_dias: number | null;
+  formato_aceito: string | null;
+  link_emissao: string | null;
+  descricao_como_enviar: string | null;
+  observacao_cliente: string | null;
+};
+
 const INK = "hsl(220 20% 18%)";
 const MUTED = "hsl(220 10% 45%)";
 const LINE = "hsl(220 13% 91%)";
@@ -37,6 +50,12 @@ export default function SimuladorChecklistAdmin() {
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [entregues, setEntregues] = useState<Record<string, boolean>>({});
 
+  // ── Adicionar exigência (mesma biblioteca do Montar Checklist) ────────────
+  const [biblioteca, setBiblioteca] = useState<BibliotecaItem[]>([]);
+  const [buscaBib, setBuscaBib] = useState("");
+  const [condicaoNova, setCondicaoNova] = useState<string>("");
+  const [adicionando, setAdicionando] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -44,6 +63,14 @@ export default function SimuladorChecklistAdmin() {
         .select("id, nome_servico")
         .order("nome_servico");
       setServicos((data as any[])?.map((s) => ({ id: s.id, nome_servico: s.nome_servico })) ?? []);
+    })();
+    (async () => {
+      const { data } = await supabase
+        .from("qa_documentos_biblioteca" as any)
+        .select("id, codigo, nome, categoria, validade_dias, formato_aceito, link_emissao, descricao_como_enviar, observacao_cliente")
+        .eq("ativo", true)
+        .order("nome");
+      setBiblioteca(((data as any[]) ?? []) as BibliotecaItem[]);
     })();
   }, []);
 
@@ -67,6 +94,17 @@ export default function SimuladorChecklistAdmin() {
     [linhas, condicao, modalidade, respostas, entregues],
   );
 
+  /** Busca na biblioteca oficial, marcando o que já está neste serviço. */
+  const bibliotecaFiltrada = useMemo(() => {
+    const b = buscaBib.trim().toLowerCase();
+    if (b.length < 2) return [] as (BibliotecaItem & { jaNoServico: boolean })[];
+    const usados = new Set(linhas.map((l) => l.tipo_documento));
+    return biblioteca
+      .filter((i) => i.nome.toLowerCase().includes(b) || i.codigo.toLowerCase().includes(b))
+      .slice(0, 40)
+      .map((i) => ({ ...i, jaNoServico: usados.has(i.codigo) }));
+  }, [biblioteca, buscaBib, linhas]);
+
   function responder(chave: string, valor: string) {
     setRespostas((p) => ({ ...p, [chave]: valor }));
   }
@@ -83,6 +121,55 @@ export default function SimuladorChecklistAdmin() {
   function reiniciar() {
     setRespostas({});
     setEntregues({});
+  }
+
+  /**
+   * Adiciona uma exigência ao serviço a partir da BIBLIOTECA — exatamente a
+   * mesma tabela (qa_documentos_biblioteca) e a mesma gravação
+   * (qa_servicos_documentos) usadas por Montar Checklist / Catálogo de Preços.
+   * Não existe cadastro paralelo: o que é criado aqui aparece lá e vice-versa.
+   */
+  async function adicionarExigencia(item: BibliotecaItem) {
+    if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
+    setAdicionando(true);
+    try {
+      // Entra no fim do grupo temático a que o documento pertence, para já
+      // nascer na posição certa da lista que o cliente vê.
+      const grupo = grupoCanonico(item.codigo);
+      const doGrupo = linhas.filter((l) => grupoCanonico(l.tipo_documento) === grupo);
+      const base = doGrupo.length
+        ? Math.max(...doGrupo.map((l) => l.ordem ?? 0))
+        : Math.max(0, ...linhas.map((l) => l.ordem ?? 0));
+      const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+        servico_id: servicoId,
+        biblioteca_id: item.id,
+        tipo_documento: item.codigo,
+        nome_documento: item.nome,
+        etapa: "base",
+        obrigatorio: true,
+        condicao_profissional: condicaoNova || null,
+        validade_dias: item.validade_dias,
+        formato_aceito: item.formato_aceito,
+        link_emissao: item.link_emissao,
+        instrucoes: item.descricao_como_enviar,
+        observacoes_cliente: item.observacao_cliente,
+        ordem: base + 1,
+        ativo: true,
+      });
+      if (error) throw error;
+      toast.success(`"${item.nome.toUpperCase()}" ADICIONADO AO CHECKLIST`);
+      setBuscaBib("");
+      await carregar(servicoId);
+    } catch (e: any) {
+      const msg = String(e?.message ?? "");
+      toast.error(
+        msg.includes("duplicate")
+          ? "ESTE DOCUMENTO JÁ ESTÁ NO CHECKLIST DESTE SERVIÇO"
+          : "NÃO FOI POSSÍVEL ADICIONAR: " + (msg || "ERRO"),
+      );
+    } finally {
+      setAdicionando(false);
+    }
   }
 
   /**
@@ -428,6 +515,68 @@ export default function SimuladorChecklistAdmin() {
               catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
               processos e portal do cliente).
             </p>
+
+            {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
+            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
+                <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
+                  Adicionar exigência (biblioteca oficial)
+                </span>
+                {adicionando && <Loader2 className="h-3 w-3 animate-spin" style={{ color: BORDO }} />}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: MUTED }} />
+                  <input
+                    value={buscaBib}
+                    onChange={(e) => setBuscaBib(e.target.value)}
+                    placeholder="BUSCAR DOCUMENTO NA BIBLIOTECA..."
+                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[11px] uppercase"
+                    style={{ borderColor: LINE, color: INK }}
+                  />
+                </div>
+                <select
+                  value={condicaoNova}
+                  onChange={(e) => setCondicaoNova(e.target.value)}
+                  className="rounded border bg-white px-2 py-1.5 text-[10px] uppercase"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Exigir só para esta condição profissional"
+                >
+                  <option value="">TODAS AS CONDIÇÕES</option>
+                  {CONDICOES.map((c) => (
+                    <option key={c.valor} value={c.valor}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+              {buscaBib.trim().length >= 2 && (
+                <div className="mt-2 max-h-44 overflow-y-auto rounded border bg-white" style={{ borderColor: LINE }}>
+                  {bibliotecaFiltrada.length === 0 && (
+                    <div className="px-2 py-2 text-[10px] uppercase" style={{ color: MUTED }}>
+                      Nenhum documento na biblioteca com esse termo — cadastre-o em Biblioteca de Documentos.
+                    </div>
+                  )}
+                  {bibliotecaFiltrada.map((b) => (
+                    <button
+                      key={b.id}
+                      type="button"
+                      disabled={b.jaNoServico || adicionando}
+                      onClick={() => adicionarExigencia(b)}
+                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 disabled:opacity-40 hover:bg-slate-50"
+                      style={{ borderColor: "hsl(220 13% 95%)" }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[11px] leading-snug" style={{ color: INK }}>{b.nome}</span>
+                        <span className="block text-[9px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
+                      </span>
+                      <span className="shrink-0 text-[9px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
+                        {b.jaNoServico ? "já está" : "adicionar"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
