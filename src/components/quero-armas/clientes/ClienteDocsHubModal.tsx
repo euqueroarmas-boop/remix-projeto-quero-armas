@@ -311,6 +311,11 @@ function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_
 }
 
 function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
+  const contaConsumoImovel =
+    /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(hay) &&
+    /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(hay);
+  if (contaConsumoImovel) return "comprovante_residencia";
+
   if (tipoAtual === "antecedentes_estadual") {
     if (/EXECU|1448406/.test(hay)) return "antecedentes_estadual_execucoes";
     if (/DISTRIBUI|ACOES CRIMINAIS|A[CÇ][OÕ]ES CRIMINAIS|1448405/.test(hay)) return "antecedentes_estadual_distribuicao";

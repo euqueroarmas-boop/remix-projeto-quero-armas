@@ -207,6 +207,7 @@ const SYSTEM_PROMPT = [
   "",
   "=== RESIDÊNCIA / ENDEREÇO ===",
   "• COMPROVANTE_RESIDENCIA: conta de concessionária (luz, água, gás, telefone) ou extrato bancário com endereço.",
+  "  REGRA CRÍTICA: DANF3E/NF3e de ENERGIA ELÉTRICA, conta de água, gás ou telecom é COMPROVANTE_RESIDENCIA, mesmo contendo os termos DANFE, NOTA FISCAL, chave de acesso, CNPJ e tributos. NÃO classifique conta de consumo do imóvel como NOTA_FISCAL_AUTONOMO.",
   "  Extrair: nome_completo, cpf (se constar), endereco_completo, cep, orgao_emissor (ex.: CPFL, Sabesp, Claro), data_emissao.",
   "  OBRIGATÓRIO: extraia o CÓDIGO DE INSTALAÇÃO / UC / matrícula da conta no campo codigo_instalacao (somente dígitos, sem traços ou pontos).",
   "  Procure pelos rótulos: 'Código de Instalação', 'Número UC', 'UC', 'Instalação', 'Nº de Instalação', 'Nº UC', 'Matrícula'. Este é o identificador fixo do imóvel — um número de 8 a 15 dígitos, NÃO é o número da fatura nem o mês/ano.",
@@ -390,6 +391,69 @@ async function fetchFewShotBlock(supabase: any): Promise<string> {
   }
 }
 
+type BibliotecaMatch = {
+  tipo: Tipo;
+  tipoDocumento: string;
+  nomeModelo: string;
+  cobertura: number;
+  palavrasEncontradas: number;
+};
+
+/**
+ * Os modelos ensinados na Biblioteca são a referência canônica do parser.
+ * Uma conta de energia moderna é fiscalmente uma DANF3E e contém "nota fiscal",
+ * mas operacionalmente continua sendo COMPROVANTE_RESIDENCIA. Por isso, uma
+ * correspondência forte com modelo aprovado prevalece sobre a aparência fiscal.
+ */
+async function buscarModeloBiblioteca(
+  supabase: any,
+  textoPdf: string,
+): Promise<BibliotecaMatch | null> {
+  const texto = normalizarTexto(textoPdf);
+  if (texto.length < 80) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("qa_documentos_modelos_aprovados")
+      .select("tipo_documento, nome_modelo, palavras_chave_json")
+      .eq("ativo", true)
+      .not("palavras_chave_json", "is", null)
+      .limit(100);
+    if (error || !Array.isArray(data)) return null;
+
+    let melhor: BibliotecaMatch | null = null;
+    for (const modelo of data as Array<Record<string, unknown>>) {
+      const tipo = normalizeTipoSelecionado(String(modelo.tipo_documento || ""));
+      if (!tipo) continue;
+      const palavras = Array.isArray(modelo.palavras_chave_json)
+        ? modelo.palavras_chave_json
+            .map((p) => normalizarTexto(String(p)))
+            .filter((p) => p.length >= 4)
+        : [];
+      if (palavras.length < 8) continue;
+      const encontradas = palavras.filter((p) => texto.includes(p)).length;
+      const cobertura = encontradas / palavras.length;
+
+      // Exige vários sinais simultâneos para uma palavra genérica não dominar.
+      if (encontradas < 8 || cobertura < 0.35) continue;
+      if (!melhor || cobertura > melhor.cobertura ||
+          (cobertura === melhor.cobertura && encontradas > melhor.palavrasEncontradas)) {
+        melhor = {
+          tipo,
+          tipoDocumento: String(modelo.tipo_documento || ""),
+          nomeModelo: String(modelo.nome_modelo || modelo.tipo_documento || "MODELO APROVADO"),
+          cobertura,
+          palavrasEncontradas: encontradas,
+        };
+      }
+    }
+    return melhor;
+  } catch (e) {
+    console.warn("[qa-classificar] comparação com Biblioteca indisponível:", e);
+    return null;
+  }
+}
+
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t)
@@ -550,6 +614,16 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
 
+  const contaConsumoImovel =
+    /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(norm) &&
+    /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(norm);
+  if (contaConsumoImovel) {
+    parsed.tipoDetectado = "COMPROVANTE_RESIDENCIA";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    parsed.justificativa =
+      "Classificação determinística: conta de consumo do imóvel; DANF3E/NF3e de energia não é nota fiscal de ocupação/renda.";
+  }
+
   const isTJSP = norm.includes("TRIBUNAL DE JUSTICA DO ESTADO DE SAO PAULO") || norm.includes(" TJSP ") || norm.includes(" TJ SP ");
   const temExecucoes = /REGISTROS DE DISTRIBUICOES DE EXECUCOES CRIMINAIS|FEITOS DE EXECUCOES CRIMINAIS|\bEXECUCOES CRIMINAIS\b/.test(norm);
   const temAcoes = /REGISTROS DE DISTRIBUICOES DE ACOES CRIMINAIS|DISTRIBUICAO DE ACOES CRIMINAIS|\bACOES CRIMINAIS\b/.test(norm);
@@ -709,6 +783,7 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+    const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
@@ -761,6 +836,19 @@ Deno.serve(async (req) => {
       return json({ error: "Resposta da IA inválida" }, 500);
     }
     parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
+
+    if (modeloBiblioteca) {
+      parsed.tipoDetectado = modeloBiblioteca.tipo;
+      parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.98);
+      parsed.justificativa =
+        `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
+        `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis).`;
+      parsed.modelo_biblioteca = {
+        tipo_documento: modeloBiblioteca.tipoDocumento,
+        nome_modelo: modeloBiblioteca.nomeModelo,
+        cobertura: modeloBiblioteca.cobertura,
+      };
+    }
 
     const tipoDetectado = (TIPOS as readonly string[]).includes(parsed.tipoDetectado)
       ? (parsed.tipoDetectado as Tipo)
