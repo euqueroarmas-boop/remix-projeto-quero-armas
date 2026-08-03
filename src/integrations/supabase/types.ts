@@ -8349,6 +8349,39 @@ export type Database = {
           },
         ]
       }
+      qa_klal_persona: {
+        Row: {
+          atualizado_em: string
+          humor: number
+          id: number
+          max_caracteres: number
+          min_caracteres: number
+          preocupacao: number
+          regras_extras: string | null
+          seriedade: number
+        }
+        Insert: {
+          atualizado_em?: string
+          humor?: number
+          id?: number
+          max_caracteres?: number
+          min_caracteres?: number
+          preocupacao?: number
+          regras_extras?: string | null
+          seriedade?: number
+        }
+        Update: {
+          atualizado_em?: string
+          humor?: number
+          id?: number
+          max_caracteres?: number
+          min_caracteres?: number
+          preocupacao?: number
+          regras_extras?: string | null
+          seriedade?: number
+        }
+        Relationships: []
+      }
       qa_logs_auditoria: {
         Row: {
           acao: string
