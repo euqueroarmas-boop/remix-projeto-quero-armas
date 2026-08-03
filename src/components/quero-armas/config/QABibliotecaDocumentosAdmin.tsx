@@ -605,6 +605,12 @@ function ItemBiblioteca({
             />
           </div>
 
+          <BibliotecaModelosParser
+            codigo={item.codigo}
+            nomeDocumento={item.nome}
+            onChanged={onModelosChanged}
+          />
+
           <div className="flex justify-between items-center pt-1">
             <Button
               size="sm"
