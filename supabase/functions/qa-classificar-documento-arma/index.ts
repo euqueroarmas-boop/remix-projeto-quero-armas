@@ -861,6 +861,33 @@ Deno.serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    // Regras determinísticas sobre o texto nativo (conta de consumo, TJSP, TRF3,
+    // contrato de adesão...). Se o parser resolve sozinho, também não chama IA.
+    if (textoPdfNativo && textoPdfNativo.trim().length >= 80) {
+      const preParse = aplicarClassificacaoDeterministica(
+        { camposExtraidos: extrairCamposDeterministicos(textoPdfNativo) },
+        textoPdfNativo,
+      );
+      const tipoParser = (TIPOS as readonly string[]).includes(preParse?.tipoDetectado)
+        ? (preParse.tipoDetectado as Tipo)
+        : null;
+      if (tipoParser) {
+        const revisao = !!preParse.revisao_obrigatoria;
+        return json({
+          tipoDetectado: tipoParser,
+          confianca: Number(preParse.confianca || 0.97),
+          camposExtraidos: preParse.camposExtraidos || {},
+          justificativa: String(preParse.justificativa || "").slice(0, 500),
+          divergenciaComSelecaoManual: false,
+          tipoSelecionadoNormalizado: normalizeTipoSelecionado(tipoSelecionado),
+          recomendacao: revisao ? "revisao_obrigatoria" : "aceitar",
+          revisao_obrigatoria: revisao,
+          origemClassificacao: "parser_deterministico",
+        });
+      }
+    }
+
     if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
 
     const aiResp = await fetch(GATEWAY_URL, {
