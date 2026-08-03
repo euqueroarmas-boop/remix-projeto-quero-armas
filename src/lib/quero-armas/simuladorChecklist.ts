@@ -117,8 +117,22 @@ export function etapaSegura(etapa: string): string {
   return "base";
 }
 
+import { grupoDaPendencia, ordemGrupo, PENDENCIA_GRUPOS, type PendenciaGrupoId } from "./pendenciasGrupos";
+
+/**
+ * Grupo temático canônico do sistema (identificação, endereço, antecedentes,
+ * ocupação lícita, ...). É a MESMA classificação usada pelo portal do cliente
+ * (pendenciasGrupos.ts) — o simulador não inventa grupos próprios nem usa a
+ * `etapa` crua do catálogo.
+ */
+export function grupoCanonico(tipoDocumento: string): PendenciaGrupoId {
+  return grupoDaPendencia(tipoDocumento).id;
+}
+
 export function rotuloGrupo(grupo: string): string {
   const g = String(grupo || "").trim().toLowerCase();
+  const meta = (PENDENCIA_GRUPOS as any)[g];
+  if (meta) return String(meta.label).toUpperCase();
   if (g === "base") return "DOCUMENTOS BASE";
   if (g === "endereco" || g === "endereço") return "COMPROVAÇÃO DE ENDEREÇO";
   if (g === "condicao_profissional" || g === "renda") return "CONDIÇÃO PROFISSIONAL / RENDA";
@@ -194,7 +208,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
   const paraItem = (l: LinhaCatalogo, estado: EstadoItem, motivo?: string): ItemSimulado => {
     const rv = l.regra_validacao;
-    const grupo = String(l.etapa || "base").trim().toLowerCase();
+    const grupo = grupoCanonico(l.tipo_documento);
     return {
       id: l.id,
       tipo: ehPergunta(rv) ? "pergunta" : "documento",
@@ -249,9 +263,13 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       return paraItem(l, entregues[l.tipo_documento] ? "cumprido" : "pendente");
     });
 
-  // Agrupamento na ordem em que o cliente vê (primeiro grupo com pendência primeiro).
+  // Agrupamento pelos grupos temáticos canônicos, na ordem oficial do sistema
+  // (identificação → endereço → antecedentes → ocupação → ... → requerimento).
   const ordemGrupos: string[] = [];
   for (const it of itens) if (!ordemGrupos.includes(it.grupo)) ordemGrupos.push(it.grupo);
+  ordemGrupos.sort(
+    (a, b) => ordemGrupo(a as PendenciaGrupoId) - ordemGrupo(b as PendenciaGrupoId),
+  );
 
   const grupos: GrupoSimulado[] = ordemGrupos.map((g) => {
     const doGrupo = itens.filter((i) => i.grupo === g);

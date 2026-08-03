@@ -56,6 +56,23 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   const t = String(rawTipo || hubTipo || "").toLowerCase();
   if (!t) return GRUPOS.outros;
 
+  // Perguntas do checklist entram no MESMO grupo temático do assunto que elas
+  // destravam — nunca num bloco solto de "perguntas".
+  if (t.startsWith("pergunta_")) {
+    if (
+      t.includes("reside") ||
+      t.includes("endereco") ||
+      t.includes("comprovante_em_nome") ||
+      t.includes("imovel")
+    ) return GRUPOS.endereco;
+    if (t.includes("inquerito") || t.includes("criminal")) return GRUPOS.antecedentes;
+    if (t.includes("habitualidade") || t.includes("cac") || t.includes("clube")) return GRUPOS.habitualidade;
+    if (t.includes("renda") || t.includes("condicao") || t.includes("ocupacao")) return GRUPOS.ocupacao;
+    if (t.includes("arma") || t.includes("acervo")) return GRUPOS.arma;
+    return GRUPOS.perguntas;
+  }
+  if (t === "renda_definir_condicao") return GRUPOS.ocupacao;
+
   // Endereço
   if (
     t.startsWith("comprovante_endereco") ||

@@ -15,7 +15,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import {
-  simularChecklist, CONDICOES, MODALIDADES,
+  simularChecklist, CONDICOES, MODALIDADES, grupoCanonico,
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 
@@ -106,16 +106,23 @@ export default function SimuladorChecklistAdmin() {
   async function persistirGrupos(gruposNovos: { grupo: string; ids: string[] }[]) {
     const visiveis = new Set(gruposNovos.flatMap((g) => g.ids));
     const porOrdem = (a: LinhaCatalogo, b: LinhaCatalogo) => (a.ordem ?? 999) - (b.ordem ?? 999);
+    // O grupo é temático e vem do tipo de documento (mesma classificação do
+    // portal do cliente). A coluna `etapa` do catálogo é preservada como está.
     const etapaDe = (l: LinhaCatalogo) => String(l.etapa || "base").trim().toLowerCase();
+    const grupoDe = (l: LinhaCatalogo) => grupoCanonico(l.tipo_documento) as string;
+    const linhaPorId = new Map(linhas.map((l) => [l.id, l]));
 
     const sequencia: { id: string; etapa: string }[] = [];
     for (const g of gruposNovos) {
-      for (const id of g.ids) sequencia.push({ id, etapa: g.grupo });
+      for (const id of g.ids) {
+        const l = linhaPorId.get(id);
+        sequencia.push({ id, etapa: l ? etapaDe(l) : "base" });
+      }
       // variantes ocultas do mesmo grupo ficam logo abaixo, mantendo a ordem atual
       [...linhas]
-        .filter((l) => !visiveis.has(l.id) && etapaDe(l) === g.grupo)
+        .filter((l) => !visiveis.has(l.id) && grupoDe(l) === g.grupo)
         .sort(porOrdem)
-        .forEach((l) => sequencia.push({ id: l.id, etapa: g.grupo }));
+        .forEach((l) => sequencia.push({ id: l.id, etapa: etapaDe(l) }));
     }
     const incluidos = new Set(sequencia.map((s) => s.id));
     [...linhas]
