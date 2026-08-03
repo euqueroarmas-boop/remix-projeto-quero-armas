@@ -175,6 +175,8 @@ export function CentralAjudaCliente({ cliente, compact }: CentralAjudaClientePro
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, "sim" | "nao">>({});
+  const [feedbackSalvando, setFeedbackSalvando] = useState(false);
   const [initLoading, setInitLoading] = useState(true);
   const [proto, setProto] = useState<ProtocoloAtivo | null>(null);
   const [protocolosAnteriores, setProtocolosAnteriores] = useState<ProtocoloResumo[]>([]);
