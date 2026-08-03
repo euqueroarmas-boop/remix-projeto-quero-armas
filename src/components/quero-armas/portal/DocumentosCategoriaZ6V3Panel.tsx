@@ -465,9 +465,11 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
         <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
-        <div className="meta">
-          <span>CPF · <b>{cpfFmt}</b></span>
-          <span>MEMBRO DESDE · <b>{memberSince}</b></span>
+        <div className="meta qa-meta-lines">
+          <span>
+            <span>CPF · <b>{cpfFmt}</b></span>
+            <span>MEMBRO DESDE · <b>{memberSince}</b></span>
+          </span>
           <span><b>{kpis.total}</b> DOCUMENTOS ATIVOS</span>
         </div>
       </div>
