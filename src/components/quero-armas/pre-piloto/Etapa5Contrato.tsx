@@ -24,6 +24,23 @@ function formatBRL(v: number | null) {
 
 type FormaPagamento = "a_combinar" | "pix" | "boleto" | "cartao_debito" | "cartao_credito";
 
+type TipoAjuste =
+  | "promocao"
+  | "negociacao_individual"
+  | "cortesia_parcial"
+  | "complemento"
+  | "correcao"
+  | "outro";
+
+const TIPOS_AJUSTE_LABEL: Record<TipoAjuste, string> = {
+  promocao: "Promoção",
+  negociacao_individual: "Negociação individual",
+  cortesia_parcial: "Cortesia parcial",
+  complemento: "Complemento de valor",
+  correcao: "Correção de preço",
+  outro: "Outro",
+};
+
 export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: Props) {
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [q, setQ] = useState("");
@@ -38,6 +55,11 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
   const [jaPagou, setJaPagou] = useState<boolean>(false);
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("pix");
   const [parcelas, setParcelas] = useState<number>(1);
+  // Desconto / preço negociado por item (exceções comerciais).
+  const [precosNegociados, setPrecosNegociados] = useState<Record<string, string>>({});
+  const [tipoAjuste, setTipoAjuste] = useState<TipoAjuste>("negociacao_individual");
+  const [motivoAjuste, setMotivoAjuste] = useState("");
+  const [confirmadoAjuste, setConfirmadoAjuste] = useState(false);
 
   useEffect(() => {
     supabase
@@ -53,7 +75,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
     return !t || s.nome.toLowerCase().includes(t) || s.slug.includes(t);
   }).slice(0, 20);
 
-  const totalSelecionados = selecionados.reduce((acc, s) => acc + (s.preco ?? 0), 0);
+  function precoAplicado(s: Servico): number {
+    const raw = precosNegociados[s.id];
+    if (raw == null || String(raw).trim() === "") return s.preco ?? 0;
+    const n = Number(String(raw).replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) && n >= 0 ? n : (s.preco ?? 0);
+  }
+
+  const totalCatalogo = selecionados.reduce((acc, s) => acc + (s.preco ?? 0), 0);
+  const totalSelecionados = selecionados.reduce((acc, s) => acc + precoAplicado(s), 0);
+  const descontoTotal = Number((totalCatalogo - totalSelecionados).toFixed(2));
+  const temNegociacao = selecionados.some(
+    (s) => Math.abs(precoAplicado(s) - (s.preco ?? 0)) > 0.0049,
+  );
+  const negociacaoValida = !temNegociacao || (motivoAjuste.trim().length >= 20 && confirmadoAjuste);
 
   function toggleServico(s: Servico) {
     setSelecionados((prev) =>
@@ -63,6 +98,10 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
 
   async function gerarContrato() {
     if (selecionados.length === 0) return;
+    if (temNegociacao && !negociacaoValida) {
+      toast.error("Descreva o motivo do desconto (mín. 20 caracteres) e confirme o ajuste.");
+      return;
+    }
     setEnviando(true);
     try {
       // 1. Criar venda
@@ -70,7 +109,20 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         "qa-checkout-criar-venda",
         {
           body: {
-            cart: selecionados.map((s) => ({ servico_id: s.id, slug: s.slug, quantidade: 1, preco_negociado: s.preco })),
+            cart: selecionados.map((s) => ({
+              servico_id: s.id,
+              slug: s.slug,
+              quantidade: 1,
+              preco_negociado: precoAplicado(s),
+            })),
+            negociacao: temNegociacao
+              ? {
+                  tipo_ajuste: tipoAjuste,
+                  motivo: motivoAjuste.trim(),
+                  confirmado: true,
+                  origem: "central_adesao_desconto",
+                }
+              : undefined,
             target_qa_cliente_id: clienteSalvo.id,
             identificacao: {
               nome_completo: clienteSalvo.nome_completo,
