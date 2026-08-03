@@ -8,6 +8,7 @@ import {
   Send, AlertTriangle, Clock, History, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
+import SuporteAcessoCard from "./SuporteAcessoCard";
 
 interface Props {
   cliente: {
@@ -683,6 +684,8 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           </div>
         </div>
       )}
+
+      <SuporteAcessoCard clienteId={cliente.id} clienteNome={(cliente as any).nome_completo} clienteEmail={cliente.email} />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center gap-2 mb-3">
