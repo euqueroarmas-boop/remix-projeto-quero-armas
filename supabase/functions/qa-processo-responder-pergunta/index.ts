@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
 
     const { data: doc, error: docErr } = await admin
       .from("qa_processo_documentos")
-      .select("id, processo_id, tipo_documento, status")
+      .select("id, processo_id, tipo_documento, status, regra_validacao")
       .eq("id", documento_id)
       .maybeSingle();
     if (docErr) return json({ error: docErr.message }, 500);
@@ -112,11 +112,23 @@ Deno.serve(async (req) => {
       .eq("id", processo_id);
     if (upProcErr) return json({ error: upProcErr.message }, 500);
 
-    // 2) Marca a pergunta como respondida (dispensado_grupo).
+    // 2) Marca a pergunta como respondida.
+    // Pergunta HÍBRIDA (`regra_validacao.exige_documento_quando`): quando a
+    // resposta aciona o gatilho, a linha CONTINUA pendente porque o cliente
+    // ainda precisa anexar o arquivo (ex.: laudo psicológico).
+    const rvDoc: any = (doc as any)?.regra_validacao;
+    const gatilho = rvDoc?.exige_documento_quando;
+    let exigeArquivo = false;
+    if (gatilho != null) {
+      const alvos = (Array.isArray(gatilho) ? gatilho : [gatilho]).map((v: any) =>
+        String(v).trim().toLowerCase(),
+      );
+      exigeArquivo = alvos.includes("*") || alvos.includes(valor.trim().toLowerCase());
+    }
     const { error: upDocErr } = await admin
       .from("qa_processo_documentos")
       .update({
-        status: "dispensado_grupo",
+        status: exigeArquivo ? "pendente" : "dispensado_grupo",
         observacoes: `Resposta do cliente: ${valor.toUpperCase()} em ${new Date().toISOString()}`,
       })
       .eq("id", documento_id);
