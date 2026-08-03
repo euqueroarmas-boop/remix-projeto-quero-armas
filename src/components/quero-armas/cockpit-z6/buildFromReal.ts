@@ -195,10 +195,25 @@ function buildProcessoCard(args: {
     ? { badge: "AGUARDANDO PRÉ-REQUISITO", tone: "gray" as CockpitZ6Process["badgeTone"] }
     : badgeForStatus(proc.status);
 
-  // Etapa atual: a etapa do primeiro doc pendente/em_analise; fallback para o status
+  // Etapa atual: MENOR etapa numérica que ainda tem documento em aberto.
   const docsAbertos = docs.filter((d) => !isCumprido(d));
-  const etapasAbertas = Array.from(new Set(docsAbertos.map((d) => String(d.etapa || "").trim()).filter(Boolean)));
-  let etapaAtual = (etapasAbertas[0] || "").toUpperCase();
+  const numeroEtapa = (d: any) => etapaDoTipoDocumento(d.tipo_documento, d.etapa);
+  const etapaAtualNum = docsAbertos.length
+    ? Math.min(...docsAbertos.map(numeroEtapa))
+    : null;
+  const docsEtapaAtual =
+    etapaAtualNum == null ? [] : docs.filter((d) => numeroEtapa(d) === etapaAtualNum);
+  const abertosEtapaAtual = docsEtapaAtual.filter((d) => !isCumprido(d));
+  const rotuloEtapa = (n: number | null) =>
+    n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
+    : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
+    : n === 3 ? "ANTECEDENTES CRIMINAIS"
+    : n === 4 ? "DECLARAÇÕES"
+    : n === 5 ? "EXAMES TÉCNICOS"
+    : "";
+  let etapaAtual =
+    rotuloEtapa(etapaAtualNum) ||
+    String(docsAbertos[0]?.etapa || "").trim().toUpperCase();
   if (bloqueado) {
     etapaAtual = "AGUARDANDO PRÉ-REQUISITO";
   } else if (!etapaAtual) {
@@ -251,11 +266,11 @@ function buildProcessoCard(args: {
     base.detalhado = {
       stages: stagesFromStatus(proc.status),
       timeline: timelineFromEventos(eventos),
-      checklist: checklistFromDocs(docs),
+      checklist: checklistFromDocs(docsEtapaAtual.length ? docsEtapaAtual : docs),
       proximoPasso: bloqueado
         ? "Este processo só será liberado quando o pré-requisito for concluído (ex.: Autorização de Compra deferida)."
-        : docsAbertos.length
-          ? `${docsAbertos.length} documento(s) pendente(s). Conclua a etapa atual para liberar a próxima.`
+        : abertosEtapaAtual.length
+          ? `${abertosEtapaAtual.length} documento(s) pendente(s) nesta etapa (${docsAbertos.length} no processo todo). Conclua a etapa atual para liberar a próxima.`
           : "Aguardando ação da equipe Quero Armas.",
     };
   } else {
