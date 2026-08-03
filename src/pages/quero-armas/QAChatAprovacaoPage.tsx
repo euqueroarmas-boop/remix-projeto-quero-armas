@@ -35,6 +35,7 @@ type LinhaFila = {
   sessao_titulo: string | null;
   cliente_nome: string | null;
   conteudo_corrigido: string | null;
+  feedback_cliente: "sim" | "nao" | null;
 };
 
 type RefineMsg = { role: "user" | "assistant"; content: string };
@@ -76,7 +77,7 @@ export default function QAChatAprovacaoPage() {
     try {
       let query = supabase
         .from("qa_chat_mensagens")
-        .select("id, sessao_id, cliente_id, content, fontes, created_at, aprovada_kb, aprovada_em, doc_kb_id, conteudo_corrigido")
+        .select("id, sessao_id, cliente_id, content, fontes, created_at, aprovada_kb, aprovada_em, doc_kb_id, conteudo_corrigido, feedback_cliente")
         .eq("role", "assistant")
         .order("created_at", { ascending: false })
         .limit(200);
@@ -137,6 +138,7 @@ export default function QAChatAprovacaoPage() {
         aprovada_em: m.aprovada_em,
         doc_kb_id: m.doc_kb_id,
         conteudo_corrigido: m.conteudo_corrigido ?? null,
+        feedback_cliente: (m.feedback_cliente as "sim" | "nao" | null) ?? null,
         pergunta: perguntasByMsg.get(m.id) || "Pergunta não localizada",
         sessao_titulo: sessMap.get(m.sessao_id) ?? null,
         cliente_nome: cliMap.get(m.cliente_id) ?? null,
