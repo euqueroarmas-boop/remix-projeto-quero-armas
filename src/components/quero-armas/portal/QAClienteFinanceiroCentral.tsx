@@ -22,7 +22,7 @@ const CSS = `
 .qafin-central{--paper:#f6f5f1;--ink:#141414;--ink-soft:#4a4a4a;--line:#e3e0d8;
   --bordo:#7A1F2B;--bordo-soft:#f4e6e8;--amber:#a8741a;--danger:#8a1414;
   --ok:#1f4d2b;--card:#fff;background:var(--paper);color:var(--ink);
-  font-family:'Arial Narrow',Arial,sans-serif;padding:4px 0 24px}
+  font-family:'Arial Narrow',Arial,sans-serif;padding:0 0 24px}
 .qafin-central .eyebrow{font-family:Oswald,sans-serif;font-size:11px;
   letter-spacing:.22em;text-transform:uppercase;color:var(--bordo);font-weight:600}
 .qafin-central h1.qatitle{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:22px;
