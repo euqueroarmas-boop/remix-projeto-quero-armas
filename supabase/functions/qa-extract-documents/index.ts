@@ -359,6 +359,23 @@ OUTROS
 
 REGRAS: Decida pelo CONTEÚDO do documento, não pelo nome do arquivo. Leia o cabeçalho e o órgão emissor antes de escolher entre variantes. Extraia apenas dados visíveis.`;
 
+/**
+ * Extrai a camada de texto de um PDF (data URL) dentro do runtime edge.
+ * unpdf embarca o pdf.js compilado para ambientes serverless — sem worker,
+ * sem canvas. PDF digitalizado devolve string vazia, e nesse caso o chamador
+ * cai na rota multimodal.
+ */
+async function extrairTextoDePdf(dataUrl: string): Promise<string> {
+  const b64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const { extractText, getDocumentProxy } = await import("npm:unpdf@0.12.1");
+  const pdf = await getDocumentProxy(bytes);
+  const { text } = await extractText(pdf, { mergePages: true });
+  return Array.isArray(text) ? text.join("\n") : String(text ?? "");
+}
+
 async function classificarUmArquivo(dataUrl: string, mime: string, nome: string, apiKey: string) {
   // Guarda de tamanho: um data URL gigante estoura a memória do worker e derruba
   // a função inteira ("Failed to send a request to the Edge Function").
