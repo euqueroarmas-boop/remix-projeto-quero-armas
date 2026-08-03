@@ -5,8 +5,13 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
   BookMarked, Plus, Search, Loader2, RefreshCw, Save, Trash2,
-  ChevronDown, ChevronUp, Archive, X,
+  ChevronDown, ChevronUp, Archive, X, Upload,
 } from "lucide-react";
+import BibliotecaModelosParser, {
+  SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
+} from "./BibliotecaModelosParser";
+
+type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
 
 type BibliotecaItem = {
   id: string;
@@ -92,6 +97,13 @@ export default function QABibliotecaDocumentosAdmin() {
   const [criandoNovo, setCriandoNovo] = useState(false);
   const [novo, setNovo] = useState({ ...BLANK });
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
+  const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
+  const [modelosNovo, setModelosNovo] = useState<File[]>([]);
+  const [treinandoNovo, setTreinandoNovo] = useState(false);
+
+  async function recarregarResumo() {
+    try { setResumoModelos(await carregarResumoModelos()); } catch { /* silencioso */ }
+  }
 
   async function carregar() {
     setCarregando(true);
@@ -121,7 +133,7 @@ export default function QABibliotecaDocumentosAdmin() {
     }
   }
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => { carregar(); void recarregarResumo(); }, []);
 
   const itensFiltrados = useMemo(() => {
     const b = busca.trim().toLowerCase();
