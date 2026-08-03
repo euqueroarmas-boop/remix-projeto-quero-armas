@@ -117,6 +117,12 @@ function stagesFromStatus(status: string): CockpitZ6Stage[] {
 }
 
 function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
+  const CUMPRIDO = (st: string) =>
+    st === "aprovado" ||
+    st === "recebido" ||
+    st === "arquivado" ||
+    st.startsWith("dispensado") ||
+    st.includes("reaproveitamento");
   if (!docs.length) return [];
   // pega até 4 documentos da etapa atual / pendentes mais relevantes
   const sortable = [...docs].sort((a, b) => {
@@ -127,8 +133,12 @@ function checklistFromDocs(docs: any[]): CockpitZ6ChecklistItem[] {
   });
   return sortable.slice(0, 4).map((d) => {
     const st = String(d.status || "").toLowerCase();
-    if (st === "aprovado")
-      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "RECEBIDO", tone: "green" } as CockpitZ6ChecklistItem;
+    if (CUMPRIDO(st))
+      return {
+        label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(),
+        badge: st.startsWith("dispensado") || st.includes("reaproveitamento") ? "REAPROVEITADO" : "RECEBIDO",
+        tone: "green",
+      } as CockpitZ6ChecklistItem;
     if (st === "em_analise" || st === "enviado")
       return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "EM ANÁLISE", tone: "amber" } as CockpitZ6ChecklistItem;
     if (st === "rejeitado" || st === "reprovado")
@@ -173,7 +183,12 @@ function buildProcessoCard(args: {
   const { proc, docs, eventos, detalhado } = args;
   const bloqueado = proc?._bloqueadoPrerequisito === true;
   const docsObrig = docs.filter((d) => d.obrigatorio !== false);
-  const docsAprov = docsObrig.filter((d) => String(d.status || "").toLowerCase() === "aprovado");
+  // Documento cumprido = aprovado, recebido, arquivado ou dispensado/reaproveitado.
+  const isCumprido = (d: any) => {
+    const st = String(d.status || "").toLowerCase();
+    return st === "aprovado" || st === "recebido" || st === "arquivado" || st.startsWith("dispensado") || st.includes("reaproveitamento");
+  };
+  const docsAprov = docsObrig.filter(isCumprido);
   const totalObrig = docsObrig.length || 1;
   const progressoPct = Math.round((docsAprov.length / totalObrig) * 100);
 
@@ -182,7 +197,7 @@ function buildProcessoCard(args: {
     : badgeForStatus(proc.status);
 
   // Etapa atual: a etapa do primeiro doc pendente/em_analise; fallback para o status
-  const docsAbertos = docs.filter((d) => !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
+  const docsAbertos = docs.filter((d) => !isCumprido(d));
   const etapasAbertas = Array.from(new Set(docsAbertos.map((d) => String(d.etapa || "").trim()).filter(Boolean)));
   let etapaAtual = (etapasAbertas[0] || "").toUpperCase();
   if (bloqueado) {
