@@ -21,7 +21,7 @@ const AMBER = "#B45309";
 const AMBER_BG = "#FEF3C7";
 const RED = "#B91C1C";
 const RED_BG = "#FEE2E2";
-const OSWALD = "Oswald, 'Inter', sans-serif";
+const OSWALD = "Oswald, 'Arial Narrow', Arial, sans-serif";
 
 const INACTIVITY_MS = 30 * 60 * 1000;
 
