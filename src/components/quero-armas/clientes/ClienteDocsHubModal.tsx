@@ -174,6 +174,10 @@ const IA_TO_TIPO: Record<string, string> = {
   RECURSO_ADMINISTRATIVO: "recurso_administrativo_doc",
   MANDADO_SEGURANCA: "mandado_seguranca_doc",
   PROCURACAO_ASSINADA: "procuracao_assinada",
+  // Foto do requerente (imagem de rosto, sem texto)
+  FOTO_3X4: "foto_3x4",
+  FOTO: "foto_3x4",
+  RETRATO: "foto_3x4",
   // Fallback
   DESCONHECIDO: "outro",
 };
