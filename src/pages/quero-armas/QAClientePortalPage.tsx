@@ -3396,7 +3396,7 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || activeSection === "mensagens" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : `space-y-5 overflow-x-clip pb-6 ${activeSection === "financeiro" ? "pt-[24px]" : "pt-[26px]"}`}`}>
+      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${activeTab === "resumo" || activeSection === "contratos" || activeSection === "documentos" || activeSection === "mensagens" || activeSection === "financeiro" || (activeSection === "checklist_guiado" && isBelowLg) ? "h-dvh overflow-hidden py-0" : `space-y-5 overflow-x-clip pb-6 ${activeSection === "financeiro" ? "pt-[24px]" : "pt-[26px]"}`}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
@@ -4049,7 +4049,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "financeiro" && analysis && (
-          <div className="space-y-4">
+          <div className="h-full min-h-0 overflow-hidden pt-[24px]">
             {(() => {
               const servicoNomePorId: Record<number, string> = {};
               for (const [id, meta] of Object.entries(SERVICO_MAP || {})) {
