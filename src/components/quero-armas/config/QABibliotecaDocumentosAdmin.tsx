@@ -442,6 +442,8 @@ export default function QABibliotecaDocumentosAdmin() {
                   <ItemBiblioteca
                     key={item.id}
                     item={item}
+                    resumoModelos={resumoModelos.get(item.codigo)}
+                    onModelosChanged={recarregarResumo}
                     aberto={abertoId === item.id}
                     onToggle={() => setAbertoId((v) => (v === item.id ? null : item.id))}
                     onSalvar={salvarItem}
@@ -460,7 +462,7 @@ export default function QABibliotecaDocumentosAdmin() {
 
 // ─── Linha da biblioteca (accordion editável) ─────────────────────────────
 function ItemBiblioteca({
-  item, aberto, onToggle, onSalvar, onArquivar, salvando,
+  item, aberto, onToggle, onSalvar, onArquivar, salvando, resumoModelos, onModelosChanged,
 }: {
   item: BibliotecaItem;
   aberto: boolean;
@@ -468,6 +470,8 @@ function ItemBiblioteca({
   onSalvar: (i: BibliotecaItem) => void;
   onArquivar: (i: BibliotecaItem) => void;
   salvando: boolean;
+  resumoModelos?: { total: number; deterministico: number; ia: number };
+  onModelosChanged?: () => void;
 }) {
   const [local, setLocal] = useState<BibliotecaItem>(item);
   useEffect(() => { setLocal(item); }, [item]);
@@ -496,6 +500,7 @@ function ItemBiblioteca({
                 arquivado
               </span>
             )}
+            <SeloModeloParser resumo={resumoModelos} />
           </div>
           <p className="text-[10px] font-mono truncate mt-0.5" style={{ color: "hsl(220 10% 60%)" }}>
             {item.codigo} · {labelCategoria(item.categoria)} · {labelValidade(item.validade_dias)} · {usoLabel}
