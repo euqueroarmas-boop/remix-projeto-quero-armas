@@ -2,10 +2,7 @@ import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
-import {
-  AlertTriangle, CheckCircle, Clock, XCircle, PenTool,
-  ArrowRight, FileText, Shield, Users, ListChecks,
-} from "lucide-react";
+import { PenTool, ListChecks } from "lucide-react";
 
 import { LoadingState } from "@/components/quero-armas/LoadStates";
 import { useCadastroPendenciasCriticas } from "@/components/quero-armas/clientes/useCadastroPendenciasCriticas";
@@ -18,12 +15,8 @@ const PendenciasEssenciaisModal = lazyRetry(() => import("@/components/quero-arm
  * Gráficos analíticos e listas longas vivem em /operacao/monitoramento.
  */
 
-const DashboardExames                  = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardExames"), "DashboardExames");
-const DashboardProcessosMonitor        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"), "DashboardProcessosMonitor");
-const DashboardPrazosRecursais         = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
-const DashboardSlaClientesNovos        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"), "DashboardSlaClientesNovos");
-const DashboardNovosCadastrosRecebidos = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"), "DashboardNovosCadastrosRecebidos");
-const DashboardProntoProtocolar        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProntoProtocolar"), "DashboardProntoProtocolar");
+const DashboardPrazosRecursais  = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
+const DashboardProntoProtocolar = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProntoProtocolar"), "DashboardProntoProtocolar");
 
 interface Stats {
   documentos: number;
