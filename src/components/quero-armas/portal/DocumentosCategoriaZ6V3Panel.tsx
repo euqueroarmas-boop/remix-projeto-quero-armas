@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -253,6 +254,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
   const memberSince = formatMemberSince(cliente?.created_at || cliente?.data_cadastro);
 
   /* KPIs ---------------------------------------------------- */
+  const isMobile = useIsMobile();
   const kpis = useMemo(() => {
     const total = docsVisiveis.length;
     let aprov = 0, venc7 = 0, venc30 = 0, vencidos = 0, hoje = 0;
@@ -501,7 +503,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           { k: "venc30",   dot: "#D6A64B", l: "A VENCER 30D",     v: kpis.venc30,   s: "atenção",        vc: "#D6A64B" },
           { k: "vencidos", dot: "#D9342B", l: "VENCIDOS",         v: kpis.vencidos, s: "regularizar",    vc: "#D9342B" },
           { k: "hoje",     dot: "#2F8F4A", l: "ATUALIZADOS HOJE", v: kpis.hoje,     s: "últimas 24h",    vc: "#2F8F4A" },
-        ] as const).map((it) => (
+        ] as const)
+          // No mobile, exibe apenas os cards com valor > 0 (evita poluição visual)
+          .filter((it) => (isMobile ? Number(it.v) > 0 : true))
+          .map((it) => (
           <button
             key={it.k}
             type="button"
