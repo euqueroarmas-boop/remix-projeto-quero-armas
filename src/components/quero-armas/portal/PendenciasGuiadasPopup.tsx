@@ -116,6 +116,8 @@ interface Props {
      */
     grupos?: Array<{ id: string; label: string; total: number; concluidos: number }>;
   } | null;
+  /** Nome do cliente — usado no H1 de abertura do popup. */
+  nomeCliente?: string | null;
 }
 
 /**
@@ -155,7 +157,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
