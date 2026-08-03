@@ -477,10 +477,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <FileUp className="h-4 w-4 text-[#8A1224]" />
               </span>
               <div className="min-w-0">
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#8A1224]">
+                <p className="font-['Oswald',sans-serif] text-[10px] font-black uppercase tracking-[0.22em] text-[#8A1224]">
                   Checklist guiado
                 </p>
-                <h1 className="mt-1 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.2] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]">
+                <h1 className="mt-1 font-['Oswald',sans-serif] text-[20px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
                   {primeiroNome
                     ? <>{primeiroNome}, você está nos devendo enviar<br />esses documentos!</>
                     : <>Você está nos devendo enviar<br />esses documentos!</>}
