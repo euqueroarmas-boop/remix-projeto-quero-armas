@@ -124,36 +124,41 @@ export default function ClienteFotoUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={handleClose}
     >
       <div
-        className="bg-[#0F0F0F] border border-[#2a2a2a] rounded-xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden text-[#E8E8E8]"
+        className="relative w-full sm:max-w-md bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden text-[#0A0A0A] max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1a1a1a]">
-          <div className="flex items-center gap-2">
-            <Camera className="h-4 w-4 text-[#D6A64B]" />
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.14em]" style={{ fontFamily: "Oswald, sans-serif" }}>
-              Minha Foto
-            </h3>
+        <button
+          type="button"
+          onClick={handleClose}
+          disabled={busy}
+          aria-label="Fechar"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors disabled:opacity-50"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="px-6 pt-6 pb-4 pr-14 shrink-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+              Meu perfil
+            </span>
+            <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
+              JPG · PNG · WEBP até 5MB
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={busy}
-            className="h-7 w-7 inline-flex items-center justify-center rounded text-[#9a9a9a] hover:text-white hover:bg-[#1a1a1a] disabled:opacity-50"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <h2 className="text-2xl font-bold text-[#0A0A0A] leading-tight tracking-tight">Minha foto</h2>
         </div>
 
-        <div className="p-5 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-6 pb-2">
           {!imageSrc ? (
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="w-full border-2 border-dashed border-[#2a2a2a] hover:border-[#D6A64B] rounded-lg p-8 flex flex-col items-center justify-center gap-2 text-[#9a9a9a] hover:text-white transition"
+              className="w-full border-2 border-dashed border-[#E4E4E4] hover:border-[#8A1224] rounded-xl p-8 flex flex-col items-center justify-center gap-2 text-[#6A6A6A] hover:text-[#8A1224] transition"
             >
               <Upload className="h-6 w-6" />
               <span className="text-[12px] font-semibold uppercase tracking-[0.12em]">
@@ -163,7 +168,7 @@ export default function ClienteFotoUploadModal({
             </button>
           ) : (
             <>
-              <div className="relative w-full aspect-square bg-[#050505] rounded-lg overflow-hidden">
+              <div className="relative w-full aspect-square bg-[#111] rounded-xl overflow-hidden">
                 <Cropper
                   image={imageSrc}
                   crop={crop}
@@ -185,7 +190,7 @@ export default function ClienteFotoUploadModal({
                   step={0.01}
                   value={zoom}
                   onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-full accent-[#D6A64B]"
+                  className="w-full accent-[#8A1224]"
                   disabled={busy}
                 />
               </div>
@@ -193,7 +198,7 @@ export default function ClienteFotoUploadModal({
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={busy}
-                className="mt-2 text-[10.5px] uppercase tracking-[0.18em] text-[#9a9a9a] hover:text-white"
+                className="mt-2 text-[10.5px] uppercase tracking-[0.18em] text-[#6A6A6A] hover:text-[#0A0A0A]"
               >
                 Trocar imagem
               </button>
@@ -212,12 +217,12 @@ export default function ClienteFotoUploadModal({
           />
         </div>
 
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[#1a1a1a]">
+        <div className="shrink-0 flex items-center justify-end gap-2 px-6 py-4 border-t border-[#EEE] bg-white">
           <button
             type="button"
             onClick={handleClose}
             disabled={busy}
-            className="px-3 h-9 rounded text-[11px] uppercase tracking-[0.16em] font-semibold text-[#9a9a9a] hover:text-white disabled:opacity-50"
+            className="px-3 h-9 rounded-lg text-[11px] uppercase tracking-[0.16em] font-semibold text-[#6A6A6A] hover:text-[#0A0A0A] disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -225,7 +230,7 @@ export default function ClienteFotoUploadModal({
             type="button"
             onClick={handleSave}
             disabled={!imageSrc || !areaPx || busy}
-            className="inline-flex items-center gap-2 px-4 h-9 rounded bg-[#7A1F2B] hover:bg-[#8E2532] text-white text-[11px] uppercase tracking-[0.16em] font-bold disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[#7A1F2B] hover:bg-[#8E2532] text-white text-[11px] uppercase tracking-[0.16em] font-bold disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
             Salvar foto
