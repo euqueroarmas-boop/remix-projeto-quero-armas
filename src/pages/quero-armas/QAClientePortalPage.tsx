@@ -389,6 +389,11 @@ export default function QAClientePortalPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() =>
     typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false,
   );
+  const isLockedSection = (
+    activeTab === "resumo" ||
+    (["contratos", "documentos", "mensagens", "financeiro"] as string[]).includes(activeSection) ||
+    (activeSection === "checklist_guiado" && isBelowLg)
+  );
   const [themeCatalog, setThemeCatalog] = useState<QASidebarTheme[]>(QA_SIDEBAR_THEMES);
   const [globalDefaultKey, setGlobalDefaultKey] = useState<string | null>(null);
   const [sidebarTheme, setSidebarTheme] = useState<QASidebarTheme>(
