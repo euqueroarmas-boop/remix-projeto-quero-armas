@@ -116,6 +116,7 @@ import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboar
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
 import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.
@@ -1525,7 +1526,10 @@ function ClientePortalMirrorAdmin({
           </div>
         </aside>
       </div>
-      <div className="lg:hidden border-t border-slate-200 bg-white px-2 py-2 overflow-x-auto">
+      <div
+        className="lg:hidden border-t border-slate-200 bg-white px-2 py-2 overflow-x-auto overscroll-x-contain scrollbar-none"
+        style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+      >
         <div className="flex gap-1 min-w-max">
           {navItems.map((item) => {
             const active = activeSection === item.key;
@@ -1554,6 +1558,8 @@ export default function QAClientesPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
   const [tab, setTab] = useState("resumo");
+  const tabsScroll = useDragScroll<HTMLDivElement>();
+  useEffect(() => { tabsScroll.scrollActiveIntoView(); }, [tab]);
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
@@ -3203,7 +3209,11 @@ export default function QAClientesPage() {
 
         <Tabs value={tab} onValueChange={setTab}>
           {/* Scrollable tabs for mobile */}
-          <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
+          <div
+            ref={tabsScroll.ref as React.RefObject<HTMLDivElement>}
+            className="overflow-x-auto overscroll-x-contain -mx-0.5 px-0.5 scrollbar-none select-none max-w-full"
+            style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+          >
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
                 { value: "resumo", icon: TrendingUp, label: "Visão geral" },

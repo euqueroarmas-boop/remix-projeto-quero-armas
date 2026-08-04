@@ -342,3 +342,23 @@
   100% { transform: scale(1.75); opacity: 0; }
 }
 
+
+/* ===== Admin Quero Armas — responsividade mobile ===== */
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+@media (max-width: 767px) {
+  /* Nada dentro do admin pode estourar a largura da tela */
+  .qa-scope { overflow-x: hidden; }
+  .qa-scope img, .qa-scope video, .qa-scope canvas { max-width: 100%; height: auto; }
+  /* Palavras longas (e-mails, CPFs, protocolos) quebram em vez de empurrar o layout */
+  .qa-scope p, .qa-scope span, .qa-scope h1, .qa-scope h2,
+  .qa-scope h3, .qa-scope h4, .qa-scope td, .qa-scope th, .qa-scope li {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* Tabelas largas rolam em vez de sobrepor */
+  .qa-scope table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Barras horizontais roláveis com o dedo */
+  .qa-scope [class*="overflow-x-auto"] { touch-action: pan-x; -webkit-overflow-scrolling: touch; }
+}
