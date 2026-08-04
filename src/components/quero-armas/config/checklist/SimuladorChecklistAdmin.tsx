@@ -898,10 +898,19 @@ export default function SimuladorChecklistAdmin() {
                 <div className="grid min-w-0 gap-3 2xl:grid-cols-2">
                   {rotasVisuais.map((pergunta) => (
                     <div key={pergunta.chave} className="min-w-0 overflow-hidden rounded-md border bg-background">
-                      <div className="border-b bg-muted/30 px-4 py-3">
-                        <p className="break-words text-xs font-semibold uppercase leading-relaxed text-foreground">
+                      <div className="flex items-start gap-2 border-b bg-muted/30 px-4 py-3">
+                        <p className="min-w-0 flex-1 break-words text-xs font-semibold uppercase leading-relaxed text-foreground">
                           <span className="text-primary">SE:</span> {pergunta.nome}
                         </p>
+                        <button
+                          type="button"
+                          title="Excluir esta pergunta e todos os caminhos dela"
+                          disabled={salvandoRota}
+                          onClick={() => void excluirPergunta(pergunta.chave, pergunta.nome)}
+                          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                       <div className="divide-y">
                         {pergunta.respostas.map((resposta) => (
@@ -913,8 +922,16 @@ export default function SimuladorChecklistAdmin() {
                             {resposta.destinos.length ? (
                               <ul className="min-w-0 space-y-1.5">
                                 {resposta.destinos.map((destino) => (
-                                  <li key={destino.id} className="break-words text-[11px] leading-relaxed text-foreground">
-                                    {destino.nome_documento}
+                                  <li key={destino.id} className="flex items-start gap-1.5 text-[11px] leading-relaxed text-foreground">
+                                    <span className="min-w-0 flex-1 break-words">{destino.nome_documento}</span>
+                                    <button
+                                      type="button"
+                                      title="Remover este item desta resposta"
+                                      onClick={() => void removerRota(pergunta.chave, resposta.valor, destino.id)}
+                                      className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
                                   </li>
                                 ))}
                               </ul>
