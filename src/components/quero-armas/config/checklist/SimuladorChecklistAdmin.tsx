@@ -1383,22 +1383,42 @@ export default function SimuladorChecklistAdmin() {
                     </div>
                   )}
                   {bibliotecaFiltrada.map((b) => (
-                    <button
+                    <div
                       key={b.id}
-                      type="button"
-                      disabled={b.jaNoServico || adicionando}
-                      onClick={() => adicionarExigencia(b)}
-                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 disabled:opacity-40 hover:bg-slate-50"
+                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 last:border-b-0"
                       style={{ borderColor: "hsl(220 13% 95%)" }}
                     >
-                      <span className="min-w-0">
+                      <button
+                        type="button"
+                        disabled={b.jaNoServico || adicionando}
+                        onClick={() => adicionarExigencia(b)}
+                        className="min-w-0 flex-1 text-left disabled:opacity-40"
+                      >
                         <span className="block text-[12.5px] leading-snug" style={{ color: INK }}>{b.nome}</span>
                         <span className="block text-[11px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
-                      </span>
-                      <span className="shrink-0 text-[11px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
-                        {b.jaNoServico ? "já está" : "adicionar"}
-                      </span>
-                    </button>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={b.jaNoServico || adicionando}
+                          onClick={() => adicionarExigencia(b)}
+                          className="rounded px-1.5 py-1 text-[11px] uppercase disabled:opacity-40 hover:bg-slate-50"
+                          style={{ color: b.jaNoServico ? MUTED : BORDO }}
+                        >
+                          {b.jaNoServico ? "já está" : "adicionar"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={adicionando}
+                          onClick={() => adicionarEmTodosServicos(b)}
+                          title="Adicionar esta exigência em todos os serviços do catálogo"
+                          className="rounded border px-1.5 py-1 text-[10.5px] uppercase text-white disabled:opacity-40"
+                          style={{ backgroundColor: BORDO, borderColor: BORDO }}
+                        >
+                          todos
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
