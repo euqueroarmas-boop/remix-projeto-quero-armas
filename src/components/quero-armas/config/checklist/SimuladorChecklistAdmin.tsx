@@ -958,15 +958,18 @@ function BlocoGrupo({
         opacity: isDragging ? 0.65 : 1,
       }}
     >
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 mb-1.5"
+        style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 93%)" }}
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
           <button
             type="button"
             aria-label="Mover grupo inteiro"
             title="Arraste para mover o grupo inteiro"
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing touch-none"
+            className="cursor-grab active:cursor-grabbing touch-none shrink-0"
             style={{ color: BORDO }}
           >
             <GripVertical className="h-3.5 w-3.5" />
@@ -976,36 +979,36 @@ function BlocoGrupo({
             onClick={onAlternar}
             aria-expanded={aberto}
             title={aberto ? "Recolher grupo" : "Expandir grupo"}
-            className="flex items-center gap-1 text-left"
+            className="flex items-center gap-1 text-left min-w-0"
             style={{ color: BORDO }}
           >
-            {aberto ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-            <span className="text-[11.5px] font-semibold uppercase tracking-wider">
+            {aberto ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+            <span className="text-[11.5px] font-semibold uppercase tracking-wider truncate">
               {grupo.rotulo}
             </span>
           </button>
         </div>
-        <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
-          {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {aberto && (
+            <input
+              type="number"
+              min={1}
+              max={totalGrupos}
+              key={`${grupo.grupo}-${posicao}`}
+              defaultValue={posicao}
+              title="Posição do grupo"
+              onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              className="h-6 w-10 rounded border bg-white px-1 text-center text-[11px] font-mono"
+              style={{ borderColor: LINE, color: INK }}
+            />
+          )}
+          <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
+            {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
+          </span>
+        </div>
       </div>
-      {aberto && (
-      <div className="flex items-center gap-1">
-        <span className="text-[11px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
-        <input
-          type="number"
-          min={1}
-          max={totalGrupos}
-          key={`${grupo.grupo}-${posicao}`}
-          defaultValue={posicao}
-          onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
-          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-          className="h-5 w-10 rounded border bg-white px-1 text-center text-[11px] font-mono"
-          style={{ borderColor: LINE, color: INK }}
-        />
-      </div>
-      )}
-      {aberto && children}
+      {aberto && <div className="pl-1">{children}</div>}
     </div>
   );
 }
