@@ -227,7 +227,13 @@ export default function DashboardClientesOnline() {
           <span className="text-lg font-semibold tabular-nums" style={{ color: "hsl(220 20% 30%)" }}>
             {hoje}
           </span>
-          <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>acessos hoje</p>
+          <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>entradas hoje</p>
+        </div>
+        <div className="pb-1">
+          <span className="text-lg font-semibold tabular-nums" style={{ color: "hsl(220 20% 30%)" }}>
+            {acessosHoje.length}
+          </span>
+          <p className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>clientes únicos</p>
         </div>
       </div>
 
