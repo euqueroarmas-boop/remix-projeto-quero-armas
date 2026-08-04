@@ -443,20 +443,38 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
   // ── Diagnóstico estrutural do catálogo ────────────────────────────────────
   const alertas: Alerta[] = [];
-  const chavesPerguntas = new Set(
+  // Perguntas EXISTENTES no catálogo do serviço (independente de estarem
+  // visíveis nesta combinação). Sem isso o simulador acusava "não existe
+  // pergunta" só porque a pergunta ficou escondida pela condição escolhida.
+  const chavesNoCatalogo = new Set(
+    ativas
+      .filter((l) => ehPergunta(l.regra_validacao))
+      .map((l) => chavePergunta(l.regra_validacao, l.tipo_documento))
+      .filter(Boolean),
+  );
+  const chavesVisiveis = new Set(
     itens.filter((i) => i.tipo === "pergunta" && i.chave).map((i) => i.chave as string),
   );
 
+  const jaAvisado = new Set<string>();
   for (const i of itens) {
-    if (i.dependeDe && !chavesPerguntas.has(i.dependeDe.chave)) {
+    const dep = i.dependeDe;
+    if (!dep) continue;
+    if (!chavesNoCatalogo.has(dep.chave)) {
       alertas.push({
         nivel: "erro",
-        texto: `"${i.nome_documento}" depende da resposta "${i.dependeDe.chave}", mas esse serviço não tem nenhuma pergunta que grave essa chave — o item nunca vai aparecer para o cliente.`,
+        texto: `"${i.nome_documento}" depende da resposta "${dep.chave}", mas esse serviço não tem nenhuma pergunta que grave essa chave — o item nunca vai aparecer para o cliente.`,
+      });
+    } else if (!chavesVisiveis.has(dep.chave) && !jaAvisado.has(dep.chave)) {
+      jaAvisado.add(dep.chave);
+      alertas.push({
+        nivel: "aviso",
+        texto: `A pergunta "${dep.chave}" existe no checklist, mas não aparece nesta combinação simulada (condição profissional / modalidade escolhida). Os itens ligados a ela só surgem quando a pergunta for exibida.`,
       });
     }
   }
 
-  const temPerguntaCondicao = chavesPerguntas.has("condicao_profissional");
+  const temPerguntaCondicao = chavesVisiveis.has("condicao_profissional");
   const temDocsCondicao = ativas.some(
     (l) => l.condicao_profissional != null && condicaoCasa(l.condicao_profissional, condicao),
   );
