@@ -191,19 +191,47 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       setContratos(items);
 
       // Nota de rodapé discreta: último download feito pelo cliente.
+      // Os downloads do portal são registrados em qa_contract_events
+      // (evento contrato_baixado_cliente); a tabela qa_documento_downloads
+      // só recebe os downloads servidos por qa-serve-contract-pdf.
       try {
-        const { data: dls } = await supabase
-          .from("qa_documento_downloads" as any)
-          .select("documento_id, baixado_em, user_agent")
-          .eq("documento_tipo", "contrato")
-          .in("documento_id", items.map((i) => i.contrato_id))
-          .order("baixado_em", { ascending: false });
+        const ids = items.map((i) => i.contrato_id);
         const mapa: Record<string, DownloadCarimbo> = {};
+
+        const [{ data: evs }, { data: dls }] = await Promise.all([
+          supabase
+            .from("qa_contract_events" as any)
+            .select("contract_id, created_at, event_payload")
+            .eq("event_type", "contrato_baixado_cliente")
+            .in("contract_id", ids)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("qa_documento_downloads" as any)
+            .select("documento_id, baixado_em, user_agent")
+            .eq("documento_tipo", "contrato")
+            .in("documento_id", ids)
+            .order("baixado_em", { ascending: false }),
+        ]);
+
+        const registrar = (key: string, quando: string, ua: string | null) => {
+          if (mapa[key]) {
+            mapa[key].vezes += 1;
+            if (new Date(quando) > new Date(mapa[key].baixado_em)) {
+              const r = resumirUserAgent(ua);
+              mapa[key] = { ...mapa[key], baixado_em: quando, dispositivo: r.dispositivo, navegador: r.navegador };
+            }
+            return;
+          }
+          const { dispositivo, navegador } = resumirUserAgent(ua);
+          mapa[key] = { baixado_em: quando, dispositivo, navegador, vezes: 1 };
+        };
+
+        for (const e of ((evs ?? []) as any[])) {
+          const p = e.event_payload || {};
+          registrar(String(e.contract_id), p.recorded_at || e.created_at, p.user_agent ?? null);
+        }
         for (const d of ((dls ?? []) as any[])) {
-          const key = String(d.documento_id);
-          if (mapa[key]) { mapa[key].vezes += 1; continue; }
-          const { dispositivo, navegador } = resumirUserAgent(d.user_agent);
-          mapa[key] = { baixado_em: d.baixado_em, dispositivo, navegador, vezes: 1 };
+          registrar(String(d.documento_id), d.baixado_em, d.user_agent ?? null);
         }
         setDownloads(mapa);
       } catch { /* best effort */ }
