@@ -42,6 +42,17 @@ function fmt(iso: string) {
 }
 
 function statusLabel(s: string) {
+  return statusLabelImpl(s);
+}
+
+/** CPF formatado 000.000.000-00 para a linha de identificação do cliente. */
+function fmtCpf(cpf: string | null | undefined) {
+  const d = String(cpf ?? "").replace(/\D/g, "");
+  if (d.length !== 11) return cpf || null;
+  return `CPF ${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function statusLabelImpl(s: string) {
   const map: Record<string, { label: string; color: string }> = {
     generated_pending_company_signature: { label: "Aguardando assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
     pending_customer_signature: { label: "Aguardando assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
