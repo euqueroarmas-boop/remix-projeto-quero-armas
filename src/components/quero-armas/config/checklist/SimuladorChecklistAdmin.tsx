@@ -801,15 +801,34 @@ export default function SimuladorChecklistAdmin() {
             {rotasVisuais.length > 0 && (
               <div className="border-t bg-muted/20 px-4 py-3" style={{ borderColor: LINE }}>
                 <div className="mb-2 flex items-center gap-2"><Route className="h-3.5 w-3.5 text-primary" /><span className="qa-kpi-label">Mapa configurado</span></div>
-                <div className="grid gap-2 lg:grid-cols-2">
+                <div className="grid min-w-0 gap-3 2xl:grid-cols-2">
                   {rotasVisuais.map((pergunta) => (
-                    <div key={pergunta.chave} className="rounded-md border bg-background p-3">
-                      <p className="text-xs font-semibold uppercase text-foreground">SE: {pergunta.nome}</p>
-                      <div className="mt-2 space-y-1.5">
+                    <div key={pergunta.chave} className="min-w-0 overflow-hidden rounded-md border bg-background">
+                      <div className="border-b bg-muted/30 px-4 py-3">
+                        <p className="break-words text-xs font-semibold uppercase leading-relaxed text-foreground">
+                          <span className="text-primary">SE:</span> {pergunta.nome}
+                        </p>
+                      </div>
+                      <div className="divide-y">
                         {pergunta.respostas.map((resposta) => (
-                          <div key={resposta.valor} className="grid grid-cols-[72px_18px_1fr] gap-2 text-[11px] leading-snug">
-                            <strong className="text-primary">{resposta.label}</strong><ArrowRight className="h-3 w-3 text-muted-foreground" />
-                            <span className={resposta.destinos.length ? "text-foreground" : "text-destructive"}>{resposta.destinos.length ? resposta.destinos.map((d) => d.nome_documento).join(" · ") : "SEM CAMINHO CONFIGURADO"}</span>
+                          <div key={resposta.valor} className="grid min-w-0 gap-2 px-4 py-3 sm:grid-cols-[minmax(120px,180px)_18px_minmax(0,1fr)] sm:items-start">
+                            <strong className="min-w-0 break-words text-[11px] uppercase leading-relaxed text-primary">
+                              {resposta.label}
+                            </strong>
+                            <ArrowRight className="hidden h-3.5 w-3.5 shrink-0 text-muted-foreground sm:mt-0.5 sm:block" />
+                            {resposta.destinos.length ? (
+                              <ul className="min-w-0 space-y-1.5">
+                                {resposta.destinos.map((destino) => (
+                                  <li key={destino.id} className="break-words text-[11px] leading-relaxed text-foreground">
+                                    {destino.nome_documento}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <span className="break-words text-[11px] font-medium uppercase leading-relaxed text-destructive">
+                                Sem caminho configurado
+                              </span>
+                            )}
                           </div>
                         ))}
                       </div>
