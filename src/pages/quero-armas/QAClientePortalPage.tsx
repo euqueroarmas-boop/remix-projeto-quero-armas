@@ -4284,6 +4284,9 @@ export default function QAClientePortalPage() {
                 if (pb !== undefined) return 1;
                 return fallbackOrdem(a) - fallbackOrdem(b);
               });
+              // Somente o primeiro item da fila guiada está desbloqueado.
+              // Todos os demais ficam esmaecidos e sem interação até este ser entregue.
+              const atividadeAtualId = docsOrdenados.find(d => passoDe(d) !== undefined)?.id ?? null;
               const byProc = new Map<string, any[]>();
               for (const d of docsOrdenados) {
                 const key = String(d.processo_id);
@@ -4367,11 +4370,13 @@ export default function QAClientePortalPage() {
                                   const reprov = isReprov(d);
                                   const passo = ++contadorPasso;
                                   const foraDaFila = passoDe(d) === undefined;
+                                  const isAtiva = d.id === atividadeAtualId;
                                   return (
                                     <button
                                       key={d.id}
                                       type="button"
-                                      onClick={() => {
+                                      disabled={!isAtiva}
+                                      onClick={!isAtiva ? undefined : () => {
                                         // Abre exatamente a pendência clicada. Se ela não estiver
                                         // na fila guiada (gates/dedup), cai direto no Hub com o tipo
                                         // correto — antes o pin não era encontrado e a fila voltava
@@ -4393,7 +4398,7 @@ export default function QAClientePortalPage() {
                                         );
                                         setShowAddDoc(true);
                                       }}
-                                      className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition hover:bg-[#FAFAFA]"
+                                      className={`flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition${isAtiva ? " hover:bg-[#FAFAFA] cursor-pointer" : " opacity-40 cursor-not-allowed"}`}
                                     >
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-start gap-2">
@@ -4408,7 +4413,11 @@ export default function QAClientePortalPage() {
                                               {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
                                             </div>
                                             <div className="qa-kpi-sub mt-0.5">
-                                              {foraDaFila ? "LIBERA APÓS OS PASSOS ANTERIORES" : (d.etapa ? String(d.etapa).toUpperCase() : "—")}
+                                              {foraDaFila
+                                                ? "LIBERA APÓS OS PASSOS ANTERIORES"
+                                                : isAtiva
+                                                  ? (d.etapa ? String(d.etapa).toUpperCase() : "—")
+                                                  : "AGUARDA O PASSO ANTERIOR"}
                                             </div>
                                           </div>
                                         </div>
