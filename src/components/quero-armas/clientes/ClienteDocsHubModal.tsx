@@ -2042,6 +2042,38 @@ export function ClienteDocsHubModal({
     setExtracting(true);
     setAutoResult(null);
     try {
+      // ── REGRA FIXA: PDF COM TEXTO É DO PARSER, NÃO DA IA ───────────────────
+      // A IA existe só para imagem e PDF digitalizado (sem camada de texto).
+      // Se o PDF traz texto nativo, ele é lido byte a byte e o parser
+      // determinístico resolve — a IA nem é chamada.
+      if (isPdf) {
+        let textoNativo = String(textoLocalRef.current || "");
+        if (!textoNativo) {
+          try {
+            textoNativo = await extrairTextoPdf(target);
+            textoLocalRef.current = textoNativo;
+          } catch (e) {
+            console.warn("[parse-first] pdf.js falhou, IA assume:", e);
+          }
+        }
+        const limpo = textoNativo
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (limpo.length >= 80) {
+          try {
+            const docLocal = parseCertidao(textoNativo);
+            if (docLocal) {
+              const resolvido = await tentarLeituraLocal(target);
+              if (resolvido) return;
+            }
+          } catch (e) {
+            console.warn("[parse-first] parser não resolveu, IA assume:", e);
+          }
+        }
+      }
+
       const dataUrl = await fileToDataUrl(target);
 
       // 1) Classifica automaticamente (sem depender da seleção manual).
@@ -2282,6 +2314,31 @@ export function ClienteDocsHubModal({
           if (tipoPerecivel && ano && ano < anoAtual - 15) campos.data_emissao = "";
         }
       } catch { /* sem texto nativo, segue com o que a IA leu */ }
+
+      // ── O TEXTO NATIVO MANDA SOBRE A IA ────────────────────────────────────
+      // Mesmo quando o layout não é um dos parsers completos, tudo que o parser
+      // conseguir ler do texto real do PDF (nome, CPF, nascimento, nº, emissão)
+      // sobrescreve a leitura probabilística da IA. A IA só preenche o que o
+      // texto não trouxer.
+      try {
+        if (textoLocalRef.current) {
+          const docLocal = parseCertidao(textoLocalRef.current) as Record<string, any> | null;
+          if (docLocal) {
+            const brDe = (isoStr?: string) => {
+              const m = String(isoStr || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+              return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+            };
+            if (docLocal.nome_titular) (campos as any).nome_titular = docLocal.nome_titular;
+            if (docLocal.cpf) (campos as any).cpf = docLocal.cpf;
+            if (docLocal.nome_mae) (campos as any).nome_mae = docLocal.nome_mae;
+            if (docLocal.data_nascimento) (campos as any).data_nascimento = brDe(docLocal.data_nascimento);
+            if (docLocal.numero_documento) campos.numero_documento = docLocal.numero_documento;
+            if (docLocal.data_emissao) campos.data_emissao = brDe(docLocal.data_emissao);
+          }
+        }
+      } catch (e) {
+        console.warn("[parse-first] override determinístico falhou:", e);
+      }
 
       setForm((prev) => ({
         ...prev,
