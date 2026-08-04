@@ -35,8 +35,16 @@ export default function ClienteModoSuporte({ clienteId }: Props) {
       .eq("cliente_id", clienteId)
       .not("status", "in", '("cancelado","arquivado","indeferido")')
       .order("created_at", { ascending: false });
-    if (error) toast.error("Erro ao carregar processos: " + error.message);
-    else setProcessos((data ?? []) as any);
+    if (error) {
+      if (error.message?.includes("suporte_ativo")) {
+        toast.error("Migration pendente: faça o Publish no Lovable para ativar o Modo Suporte.");
+      } else {
+        toast.error("Erro ao carregar processos: " + error.message);
+      }
+      setLoading(false);
+      return;
+    }
+    setProcessos((data ?? []) as any);
     setLoading(false);
   }, [clienteId]);
 
