@@ -343,6 +343,12 @@ Deno.serve(async (req) => {
         status: "generated_pending_customer_signature",
         conteudo_renderizado: conteudo,
         outorgado_ate: outorgadoAte.toISOString().slice(0, 10),
+         // A regeneração altera o snapshot do documento. Nunca preserve o PDF
+         // canônico anterior, pois qa-serve-procuracao-pdf o reutiliza por ID.
+         original_pdf_path: null,
+         original_sha256: null,
+         sessao_geracao: null,
+         arquivo_gerado_path: null,
         arquivo_assinado_path: null,
         customer_signature_uploaded_at: null,
         validated_at: null,
