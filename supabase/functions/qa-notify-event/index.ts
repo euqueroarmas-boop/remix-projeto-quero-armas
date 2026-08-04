@@ -415,6 +415,33 @@ Deno.serve(async (req) => {
       } catch (err) {
         console.error("[qa-notify-event] popup verde:", err);
       }
+
+      // Espelho na Central de Notificação do ADMIN: recusas precisam chegar
+      // à equipe mesmo quando o documento é barrado no upload e, por isso,
+      // nunca é gravado (nenhum gatilho de tabela dispara nesse caminho).
+      if (body.evento === "documento_rejeitado" || body.evento === "certidao_rejeitada") {
+        try {
+          await supabase.from("qa_admin_notificacoes").insert({
+            tipo: "documento",
+            status: "rejeitado",
+            titulo: "Documento recusado no envio do cliente",
+            mensagem: `${nomeCli || "Cliente"} — ${body.documento || body.certidao || "Documento"}`,
+            cliente_id: body.cliente_id,
+            cliente_nome: nomeCli,
+            documento_nome: body.documento || body.certidao || null,
+            referencia_tabela: body.referencia_tabela || "qa_documentos_cliente",
+            referencia_id: String(body.referencia_id ?? ""),
+            link: `/clientes/${body.cliente_id}`,
+            metadata: {
+              motivo_rejeicao: body.motivo_rejeicao ?? null,
+              arquivo: body.arquivo ?? null,
+              detalhes: body.detalhes ?? body.problemas ?? null,
+            },
+          });
+        } catch (err) {
+          console.error("[qa-notify-event] admin rejeicao:", err);
+        }
+      }
       return new Response(JSON.stringify({ ok: true, verde: true, emailOk }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
