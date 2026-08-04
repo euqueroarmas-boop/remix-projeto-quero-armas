@@ -83,7 +83,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [excluindo, setExcluindo] = useState<string | null>(null);
   const [regenerando, setRegenerando] = useState<string | null>(null);
   const [revertendo, setRevertendo] = useState<string | null>(null);
-  const [semContrato, setSemContrato] = useState<{ venda_id: number; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
+  const [semContrato, setSemContrato] = useState<{ venda_id: number; venda_id_legado: number | null; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
   const [ordemSemContrato, setOrdemSemContrato] = useState<"az" | "za" | "novos" | "antigos">("novos");
   const [gerando, setGerando] = useState<number | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -132,6 +132,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           const map = Object.fromEntries(((cli ?? []) as any[]).map((c) => [c.id, c]));
           setSemContrato(orfas.map((v) => ({
             venda_id: Number(v.id),
+            venda_id_legado: v.id_legado != null ? Number(v.id_legado) : null,
             cliente_id: Number(v.cliente_id),
             cliente_nome: map[v.cliente_id]?.nome_completo ?? "—",
             cliente_email: map[v.cliente_id]?.email ?? null,
@@ -300,12 +301,14 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   }
 
   // Gera contrato do zero para uma venda paga que ficou sem contrato.
-  async function gerarParaVenda(vendaId: number, clienteNome: string) {
-    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaId}) com os dados atuais do cadastro?`)) return;
-    setGerando(vendaId);
+  // `vendaIdApi` é o id que a edge function espera (id_legado da venda);
+  // `vendaIdExibicao` é o número mostrado na tela.
+  async function gerarParaVenda(vendaIdApi: number, clienteNome: string, vendaIdExibicao = vendaIdApi) {
+    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
+    setGerando(vendaIdExibicao);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
-        body: { venda_id: vendaId, force: true, reenviar_email: true },
+        body: { venda_id: vendaIdApi, force: true, reenviar_email: true },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Falha ao gerar contrato");
       toast.success("Contrato gerado. Ele já aparece em 'Aguardando assinatura'.");
@@ -430,7 +433,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 size="sm"
                 className="text-xs gap-1 h-7 bg-[#7B1C2E] hover:bg-[#6a1827] text-white flex-shrink-0"
                 disabled={gerando === v.venda_id}
-                onClick={() => gerarParaVenda(v.venda_id, v.cliente_nome)}
+                onClick={() => gerarParaVenda(v.venda_id_legado ?? v.venda_id, v.cliente_nome, v.venda_id)}
               >
                 {gerando === v.venda_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FilePlus2 className="w-3 h-3" />}
                 Gerar contrato
