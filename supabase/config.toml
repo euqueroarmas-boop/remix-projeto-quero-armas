@@ -61,6 +61,10 @@ project_id = "ogkltfqvzweeqkfmrzts"
     verify_jwt = false
   [functions.qa-senha-gov]
     verify_jwt = false
+  # A autenticação administrativa é validada dentro da própria função por
+  # requireQAStaff. O gateway não deve rejeitar previamente os JWTs modernos.
+  [functions.qa-modelo-biblioteca-treinar]
+    verify_jwt = false
 
 [functions.send-transactional-email]
 verify_jwt = true
