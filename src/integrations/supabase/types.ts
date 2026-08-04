@@ -10889,6 +10889,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_sync_fila: {
+        Row: {
+          created_at: string
+          erro: string | null
+          id: string
+          origem: string
+          processado_em: string | null
+          processo_id: string
+          status: string
+          tentativas: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          erro?: string | null
+          id?: string
+          origem?: string
+          processado_em?: string | null
+          processo_id: string
+          status?: string
+          tentativas?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          erro?: string | null
+          id?: string
+          origem?: string
+          processado_em?: string | null
+          processo_id?: string
+          status?: string
+          tentativas?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_template_placeholder_config: {
         Row: {
           ativo: boolean
@@ -12936,6 +12972,8 @@ export type Database = {
           itens_atualizados: number
         }[]
       }
+      qa_sync_fila_enfileirar_abertos: { Args: never; Returns: number }
+      qa_sync_fila_processar: { Args: { p_limite?: number }; Returns: number }
       qa_trf_por_uf: { Args: { p_uf: string }; Returns: number }
       qa_uf_do_cliente: { Args: { p_cliente_id: number }; Returns: string }
       qa_venda_aprovar_valor: { Args: { p_venda_id: number }; Returns: Json }
