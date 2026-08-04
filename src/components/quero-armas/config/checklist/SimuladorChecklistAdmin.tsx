@@ -476,30 +476,34 @@ export default function SimuladorChecklistAdmin() {
     await carregar(servicoId);
   }
 
-  async function salvarRotaLeiga() {
-    if (!servicoId || !rotaPergunta || !rotaResposta || !rotaDestino) {
+  async function salvarRotaLeiga(
+    perguntaChave = rotaPergunta,
+    respostaValor = rotaResposta,
+    destinoSel = rotaDestino,
+  ) {
+    if (!servicoId || !perguntaChave || !respostaValor || !destinoSel) {
       toast.error("PREENCHA O SE, A RESPOSTA E O ENTÃO");
       return;
     }
-    const origem = perguntasPivo.find((p) => p.chave === rotaPergunta);
+    const origem = perguntasPivo.find((p) => p.chave === perguntaChave);
     if (!origem) return;
     setSalvandoRota(true);
     try {
-      if (rotaDestino.startsWith("linha:")) {
-        const id = rotaDestino.slice(6);
+      if (destinoSel.startsWith("linha:")) {
+        const id = destinoSel.slice(6);
         // Um mesmo documento pode servir a MAIS DE UMA resposta: acumulamos os
         // valores em lista em vez de sobrescrever o caminho anterior.
         const alvo = linhas.find((l) => l.id === id);
         const regraAtual: any = alvo?.regra_validacao ?? {};
         const exigeAtual: any = { ...(regraAtual.exige_quando ?? {}) };
-        const jaTem = exigeAtual[rotaPergunta];
+        const jaTem = exigeAtual[perguntaChave];
         const valores = Array.from(
           new Set([
             ...(Array.isArray(jaTem) ? jaTem.map(String) : jaTem != null ? [String(jaTem)] : []),
-            rotaResposta,
+            respostaValor,
           ]),
         );
-        exigeAtual[rotaPergunta] = valores.length === 1 ? valores[0] : valores;
+        exigeAtual[perguntaChave] = valores.length === 1 ? valores[0] : valores;
         const eraDocumentoComPergunta =
           regraAtual.tipo === "pergunta" && regraAtual.exige_documento_quando != null;
         await patchRegra(id, {
@@ -517,8 +521,8 @@ export default function SimuladorChecklistAdmin() {
             depende_de: null,
           } : {}),
         }, eraDocumentoComPergunta ? "ENVIO DO DOCUMENTO ACIONADO NESTE CAMINHO" : "CAMINHO SALVO");
-      } else if (rotaDestino.startsWith("bib:")) {
-        const item = biblioteca.find((b) => b.id === rotaDestino.slice(4));
+      } else if (destinoSel.startsWith("bib:")) {
+        const item = biblioteca.find((b) => b.id === destinoSel.slice(4));
         if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
         const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
         const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
@@ -527,13 +531,16 @@ export default function SimuladorChecklistAdmin() {
           validade_dias: item.validade_dias, formato_aceito: item.formato_aceito,
           link_emissao: item.link_emissao, instrucoes: item.descricao_como_enviar,
           observacoes_cliente: item.observacao_cliente,
-          regra_validacao: { exige_quando: { [rotaPergunta]: rotaResposta } },
+          regra_validacao: { exige_quando: { [perguntaChave]: respostaValor } },
         });
         if (error) throw error;
         toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
       }
       setRotaDestino("");
       setRotaBuscaDestino("");
+      setInlineDestino("");
+      setInlineBusca("");
+      setRotaInline(null);
       await carregar(servicoId);
     } catch (e: any) {
       toast.error("NÃO FOI POSSÍVEL SALVAR O CAMINHO: " + String(e?.message ?? "ERRO"));
