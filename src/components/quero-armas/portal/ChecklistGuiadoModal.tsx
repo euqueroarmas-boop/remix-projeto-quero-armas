@@ -2968,10 +2968,13 @@ function PerguntaView({
     return "border-slate-200 bg-white text-slate-800 hover:border-[#E5C2C6]";
   };
   return (
-    <div>
-      <h3 className="text-base font-bold text-slate-900">{enunciado}</h3>
-      {doc.instrucoes && <p className="mt-1 text-sm text-slate-500">{doc.instrucoes}</p>}
-      <div className="mt-3 grid grid-cols-1 gap-2">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-slate-200/80 bg-[#FAF6F1] p-4">
+        <span className="qa-eyebrow" style={{ color: MARROM }}>PERGUNTA</span>
+        <h3 className="qa-h2 mt-2">{enunciado}</h3>
+        {doc.instrucoes && <p className="mt-2 text-[13px] leading-relaxed text-slate-600">{doc.instrucoes}</p>}
+      </div>
+      <div className="grid grid-cols-1 gap-2">
         {opcoes.map((op) => (
           <button
             key={op.valor}
