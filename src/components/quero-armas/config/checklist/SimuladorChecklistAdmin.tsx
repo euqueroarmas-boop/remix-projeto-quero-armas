@@ -1414,7 +1414,14 @@ function BlocoGrupo({
   onAlternar,
   children,
 }: {
-  grupo: { grupo: string; rotulo: string; cumpridos: number; pendentes: number };
+  grupo: {
+    grupo: string;
+    rotulo: string;
+    cumpridos: number;
+    pendentes: number;
+    aguardando?: number;
+    total?: number;
+  };
   posicao: number;
   totalGrupos: number;
   onDefinirPosicao: (grupo: string, posicao: number) => void;
@@ -1479,8 +1486,21 @@ function BlocoGrupo({
               style={{ borderColor: LINE, color: INK }}
             />
           )}
-          <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
-            {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
+          {(grupo.aguardando ?? 0) > 0 && (
+            <span
+              className="text-[10px] uppercase tracking-wider"
+              style={{ color: "#D97706" }}
+              title="Itens deste grupo que só aparecem depois de uma resposta anterior"
+            >
+              {grupo.aguardando} aguarda resposta
+            </span>
+          )}
+          <span
+            className="text-[11.5px] font-mono tabular-nums"
+            style={{ color: MUTED }}
+            title="Cumpridos / total de itens exigidos neste grupo nesta combinação"
+          >
+            {grupo.cumpridos}/{grupo.total ?? grupo.cumpridos + grupo.pendentes}
           </span>
         </div>
       </div>
