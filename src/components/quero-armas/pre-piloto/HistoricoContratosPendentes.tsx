@@ -83,7 +83,8 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [excluindo, setExcluindo] = useState<string | null>(null);
   const [regenerando, setRegenerando] = useState<string | null>(null);
   const [revertendo, setRevertendo] = useState<string | null>(null);
-  const [semContrato, setSemContrato] = useState<{ venda_id: number; cliente_id: number; cliente_nome: string; cliente_email: string | null }[]>([]);
+  const [semContrato, setSemContrato] = useState<{ venda_id: number; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
+  const [ordemSemContrato, setOrdemSemContrato] = useState<"az" | "za" | "novos" | "antigos">("novos");
   const [gerando, setGerando] = useState<number | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
@@ -110,7 +111,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       try {
         const { data: todasVendas } = await supabase
           .from("qa_vendas" as any)
-          .select("id, cliente_id")
+          .select("id, id_legado, cliente_id, created_at")
           .eq("status", "PAGO")
           .order("id", { ascending: false })
           .limit(200);
@@ -118,8 +119,11 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           .from("qa_contracts" as any)
           .select("venda_id")
           .limit(1000);
+        // Contratos gravam o venda_id podendo ser o id atual OU o id_legado da venda.
         const comContrato = new Set(((todosContratos ?? []) as any[]).map((c) => Number(c.venda_id)));
-        const orfas = ((todasVendas ?? []) as any[]).filter((v) => !comContrato.has(Number(v.id)));
+        const orfas = ((todasVendas ?? []) as any[]).filter(
+          (v) => !comContrato.has(Number(v.id)) && !comContrato.has(Number(v.id_legado)),
+        );
         if (orfas.length) {
           const { data: cli } = await supabase
             .from("qa_clientes" as any)
@@ -131,6 +135,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
             cliente_id: Number(v.cliente_id),
             cliente_nome: map[v.cliente_id]?.nome_completo ?? "—",
             cliente_email: map[v.cliente_id]?.email ?? null,
+            criado_em: v.created_at ?? null,
           })));
         } else {
           setSemContrato([]);
