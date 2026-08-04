@@ -4,7 +4,7 @@ import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
   ListOrdered, ChevronRight, ChevronDown,
-  GitBranch, FileQuestion, Save, Route,
+  GitBranch, FileQuestion, Save, Route, Trash2,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
@@ -481,6 +481,82 @@ export default function SimuladorChecklistAdmin() {
     }
   }
 
+  /**
+   * Remove UM destino de UMA resposta. Se o item estava ligado por "SÓ APARECE
+   * SE", tiramos aquela resposta da lista (e se ficar vazia, o item volta a ser
+   * sempre visível). Se estava ligado por "SOME SE", adicionamos esta resposta
+   * à lista de dispensa — o efeito visto pelo usuário é o mesmo: sai do mapa.
+   */
+  async function removerRota(perguntaChave: string, respostaValor: string, linhaId: string) {
+    const alvo = linhas.find((l) => l.id === linhaId);
+    if (!alvo) return;
+    const regra: any = alvo.regra_validacao ?? {};
+    const lista = (v: any) => (Array.isArray(v) ? v.map(String) : v != null ? [String(v)] : []);
+    const compactar = (arr: string[]) => (arr.length === 0 ? undefined : arr.length === 1 ? arr[0] : arr);
+
+    const exige: any = { ...(regra.exige_quando ?? {}) };
+    const dispensa: any = { ...(regra.dispensa_quando ?? {}) };
+
+    if (exige[perguntaChave] != null) {
+      const restantes = lista(exige[perguntaChave]).filter((v) => v !== respostaValor);
+      const compacto = compactar(restantes);
+      if (compacto === undefined) delete exige[perguntaChave];
+      else exige[perguntaChave] = compacto;
+    } else {
+      const atuais = new Set(lista(dispensa[perguntaChave]));
+      atuais.add(respostaValor);
+      dispensa[perguntaChave] = compactar([...atuais]);
+    }
+
+    const patch: Record<string, any> = {
+      exige_quando: Object.keys(exige).length ? exige : null,
+      dispensa_quando: Object.keys(dispensa).length ? dispensa : null,
+    };
+    if (regra.depende_de?.chave === perguntaChave) patch.depende_de = null;
+    await patchRegra(linhaId, patch, "CAMINHO REMOVIDO");
+  }
+
+  /** Apaga a pergunta inteira e limpa todos os caminhos que dependiam dela. */
+  async function excluirPergunta(chave: string, nome: string) {
+    if (!servicoId) return;
+    if (!window.confirm(`EXCLUIR A PERGUNTA "${nome.toUpperCase()}" E TODOS OS CAMINHOS LIGADOS A ELA?`)) return;
+    const linhaPergunta = linhas.find((l) => (l.regra_validacao as any)?.chave === chave);
+    setSalvandoRota(true);
+    try {
+      for (const linha of linhas) {
+        const regra: any = linha.regra_validacao ?? {};
+        const usa =
+          regra.exige_quando?.[chave] != null ||
+          regra.dispensa_quando?.[chave] != null ||
+          regra.depende_de?.chave === chave;
+        if (!usa || linha.id === linhaPergunta?.id) continue;
+        const exige = { ...(regra.exige_quando ?? {}) };
+        const dispensa = { ...(regra.dispensa_quando ?? {}) };
+        delete exige[chave];
+        delete dispensa[chave];
+        await patchRegra(linha.id, {
+          exige_quando: Object.keys(exige).length ? exige : null,
+          dispensa_quando: Object.keys(dispensa).length ? dispensa : null,
+          depende_de: regra.depende_de?.chave === chave ? null : regra.depende_de,
+        }, "CAMINHO LIMPO");
+      }
+      if (linhaPergunta) {
+        const { error } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .delete()
+          .eq("id", linhaPergunta.id);
+        if (error) throw error;
+      }
+      toast.success("PERGUNTA EXCLUÍDA");
+      if (rotaPergunta === chave) { setRotaPergunta(""); setRotaResposta(""); }
+      await carregar(servicoId);
+    } catch (e: any) {
+      toast.error("NÃO FOI POSSÍVEL EXCLUIR: " + String(e?.message ?? "ERRO"));
+    } finally {
+      setSalvandoRota(false);
+    }
+  }
+
   const rotasVisuais = useMemo(() => perguntasPivo.map((pergunta) => ({
     ...pergunta,
     respostas: pergunta.opcoes.map((opcao) => ({
@@ -822,10 +898,19 @@ export default function SimuladorChecklistAdmin() {
                 <div className="grid min-w-0 gap-3 2xl:grid-cols-2">
                   {rotasVisuais.map((pergunta) => (
                     <div key={pergunta.chave} className="min-w-0 overflow-hidden rounded-md border bg-background">
-                      <div className="border-b bg-muted/30 px-4 py-3">
-                        <p className="break-words text-xs font-semibold uppercase leading-relaxed text-foreground">
+                      <div className="flex items-start gap-2 border-b bg-muted/30 px-4 py-3">
+                        <p className="min-w-0 flex-1 break-words text-xs font-semibold uppercase leading-relaxed text-foreground">
                           <span className="text-primary">SE:</span> {pergunta.nome}
                         </p>
+                        <button
+                          type="button"
+                          title="Excluir esta pergunta e todos os caminhos dela"
+                          disabled={salvandoRota}
+                          onClick={() => void excluirPergunta(pergunta.chave, pergunta.nome)}
+                          className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                       <div className="divide-y">
                         {pergunta.respostas.map((resposta) => (
@@ -837,8 +922,16 @@ export default function SimuladorChecklistAdmin() {
                             {resposta.destinos.length ? (
                               <ul className="min-w-0 space-y-1.5">
                                 {resposta.destinos.map((destino) => (
-                                  <li key={destino.id} className="break-words text-[11px] leading-relaxed text-foreground">
-                                    {destino.nome_documento}
+                                  <li key={destino.id} className="flex items-start gap-1.5 text-[11px] leading-relaxed text-foreground">
+                                    <span className="min-w-0 flex-1 break-words">{destino.nome_documento}</span>
+                                    <button
+                                      type="button"
+                                      title="Remover este item desta resposta"
+                                      onClick={() => void removerRota(pergunta.chave, resposta.valor, destino.id)}
+                                      className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
                                   </li>
                                 ))}
                               </ul>
