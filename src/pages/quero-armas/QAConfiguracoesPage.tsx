@@ -17,6 +17,7 @@ import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcura
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
 import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/MontarChecklistAdmin";
 import SimuladorChecklistAdmin from "@/components/quero-armas/config/checklist/SimuladorChecklistAdmin";
+import KanbanExigenciasAdmin from "@/components/quero-armas/config/checklist/KanbanExigenciasAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
 import MotoresApagadosAdmin from "@/components/quero-armas/config/MotoresApagadosAdmin";
@@ -59,7 +60,7 @@ const GRUPOS: GrupoConfig[] = [
     label: "Documentação",
     blocos: [
       { titulo: "Acervo", itens: [{ v: "biblioteca", label: "Biblioteca de Documentos", admin: true }] },
-      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
+      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "kanban", label: "Painel Kanban de Exigências", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
       { titulo: "Jurídico", itens: [{ v: "contrato", label: "Contrato Primário", admin: true }, { v: "procuracao", label: "Procuração", admin: true }] },
     ],
   },
@@ -749,6 +750,11 @@ export default function QAConfiguracoesPage() {
         <TabsContent value="simulador" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
           {/* Simulação passo a passo: mesma regra do motor real (explosão + perguntas) */}
           <SimuladorChecklistAdmin />
+        </TabsContent>
+
+        <TabsContent value="kanban" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
+          {/* Kanban de exigências por processo — rascunho + publicação */}
+          <KanbanExigenciasAdmin />
         </TabsContent>
         </>
       )}
