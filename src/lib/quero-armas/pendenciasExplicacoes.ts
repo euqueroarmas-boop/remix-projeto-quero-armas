@@ -1001,7 +1001,14 @@ export function getExplicacaoPendencia(
 ): ExplicacaoPendencia {
   const primary = String(rawTipo || "").trim().toLowerCase();
   const secondary = String(hubTipoFallback || "").trim().toLowerCase();
-  const hit = EXPLICACOES_REGISTRO[primary] || (secondary ? EXPLICACOES_REGISTRO[secondary] : undefined);
+  // FONTE ÚNICA: a Biblioteca de documentos (banco) vence sempre. O registro
+  // estático abaixo é apenas rede de segurança para códigos ainda não
+  // cadastrados na biblioteca.
+  const hit =
+    EXPLICACOES_BIBLIOTECA.get(primary) ||
+    (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
+    EXPLICACOES_REGISTRO[primary] ||
+    (secondary ? EXPLICACOES_REGISTRO[secondary] : undefined);
   if (hit) return hit;
   const titulo = fallbackNome && fallbackNome.trim()
     ? fallbackNome.trim()
