@@ -99,35 +99,62 @@ export default function DashboardClientesOnline() {
         unicos.push({ ...l, entradas_hoje: contagemHoje.get(chave) ?? 1 });
       }
 
-      const ids = unicos.map((u) => u.qa_cliente_id).filter(Boolean) as any[];
-      if (ids.length) {
-        const [clientesRes, processosRes] = await Promise.allSettled([
-          supabase.from("qa_clientes" as any).select("id,nome_completo").in("id", ids),
-          supabase
+      // O evento de login nem sempre grava qa_cliente_id (login por e-mail /
+      // OAuth grava só user_id + email). Sem resolver por user_id/e-mail, todo
+      // mundo aparecia como "sem processo ativo". Resolvemos o cliente pelos
+      // três caminhos antes de buscar processos.
+      const idsDiretos = unicos.map((u) => u.qa_cliente_id).filter(Boolean).map(String);
+      const userIds = [...new Set(unicos.map((u) => u.user_id).filter(Boolean) as string[])];
+      const emails = [...new Set(unicos.map((u) => (u.email || "").toLowerCase()).filter(Boolean))];
+
+      const filtros: string[] = [];
+      if (idsDiretos.length) filtros.push(`id.in.(${idsDiretos.join(",")})`);
+      if (userIds.length) filtros.push(`user_id.in.(${userIds.join(",")})`);
+      if (emails.length) filtros.push(`email.in.(${emails.map((e) => `"${e}"`).join(",")})`);
+
+      if (filtros.length) {
+        const { data: clientesData } = await supabase
+          .from("qa_clientes" as any)
+          .select("id,nome_completo,email,user_id")
+          .or(filtros.join(","));
+        const clientes = ((clientesData ?? []) as any[]);
+
+        const porId = new Map<string, any>();
+        const porUser = new Map<string, any>();
+        const porEmail = new Map<string, any>();
+        for (const c of clientes) {
+          porId.set(String(c.id), c);
+          if (c.user_id) porUser.set(String(c.user_id), c);
+          if (c.email) porEmail.set(String(c.email).toLowerCase(), c);
+        }
+
+        const resolvidos = unicos.map((u) => {
+          const c =
+            (u.qa_cliente_id ? porId.get(String(u.qa_cliente_id)) : null) ||
+            (u.user_id ? porUser.get(String(u.user_id)) : null) ||
+            (u.email ? porEmail.get(u.email.toLowerCase()) : null) ||
+            null;
+          return { acesso: u, cliente: c };
+        });
+
+        const idsCliente = [...new Set(resolvidos.map((r) => r.cliente?.id).filter((v) => v != null))];
+        const procs = new Map<string, { nome: string; status: string | null }[]>();
+        if (idsCliente.length) {
+          const { data: processos } = await supabase
             .from("qa_processos" as any)
             .select("cliente_id,servico_nome,status,created_at")
-            .in("cliente_id", ids)
-            .order("created_at", { ascending: false }),
-        ]);
-        const nomes = new Map<string, string>();
-        if (clientesRes.status === "fulfilled") {
-          for (const c of (((clientesRes.value as any)?.data ?? []) as any[])) {
-            nomes.set(String(c.id), c.nome_completo);
-          }
-        }
-        const procs = new Map<string, { nome: string; status: string | null }[]>();
-        if (processosRes.status === "fulfilled") {
-          for (const p of (((processosRes.value as any)?.data ?? []) as any[])) {
+            .in("cliente_id", idsCliente as any[])
+            .order("created_at", { ascending: false });
+          for (const p of (((processos ?? []) as any[]))) {
             const k = String(p.cliente_id);
             const arr = procs.get(k) ?? [];
             arr.push({ nome: p.servico_nome || "Serviço", status: p.status ?? null });
             procs.set(k, arr);
           }
         }
-        for (const u of unicos) {
-          const k = String(u.qa_cliente_id ?? "");
-          u.nome = nomes.get(k) ?? null;
-          u.processos = procs.get(k) ?? [];
+        for (const { acesso, cliente } of resolvidos) {
+          acesso.nome = cliente?.nome_completo ?? null;
+          acesso.processos = cliente ? procs.get(String(cliente.id)) ?? [] : [];
         }
       }
       setAcessosHoje(unicos);
