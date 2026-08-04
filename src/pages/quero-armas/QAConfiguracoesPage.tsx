@@ -27,16 +27,59 @@ interface Servico { id: number; nome_servico: string; valor_servico: number; is_
 
 type ServicoTab = "catalogo" | "internos";
 
-// ── Estilo premium das abas (rail vertical no desktop, scroll horizontal no mobile) ──
+// ── Sub-navegação densa (coluna esquerda dentro do grupo ativo) ───────────────
 const QA_TABS_LIST =
-  "h-auto w-full gap-1 bg-transparent p-0 mb-3 lg:mb-0 " +
+  "h-auto w-full gap-0.5 bg-transparent p-0 mb-3 lg:mb-0 " +
   "flex overflow-x-auto flex-nowrap justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
-  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-24 lg:rounded-2xl lg:border lg:border-[hsl(220_13%_90%)] lg:bg-white lg:p-2 lg:shadow-[0_1px_2px_rgba(16,24,40,.04)]";
+  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-[104px] lg:p-3 " +
+  "lg:border-r lg:border-[#EDEBE6] lg:bg-[#FCFCFB]";
 
 const QA_TAB =
-  "shrink-0 lg:w-full lg:justify-start rounded-lg px-3 py-2 text-[12.5px] font-semibold tracking-[.02em] " +
-  "text-[#4A5361] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-[hsl(220_20%_96%)] " +
-  "data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white data-[state=active]:shadow-none";
+  "shrink-0 rounded-none lg:w-full lg:justify-start px-3 py-2 text-[13px] font-normal " +
+  "text-[#5A5A5A] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-white hover:text-[#0A0A0A] " +
+  "border-l-2 border-transparent " +
+  "data-[state=active]:bg-white data-[state=active]:text-[#0A0A0A] data-[state=active]:font-semibold " +
+  "data-[state=active]:border-l-[#7A1F2B] data-[state=active]:shadow-none";
+
+// ── Grupos de configuração (abas superiores) ─────────────────────────────────
+type SecaoConfig = { v: string; label: string; admin?: boolean };
+type GrupoConfig = { id: string; label: string; blocos: { titulo: string; itens: SecaoConfig[] }[] };
+
+const GRUPOS: GrupoConfig[] = [
+  {
+    id: "geral",
+    label: "Geral & Aparência",
+    blocos: [
+      { titulo: "Sistema", itens: [{ v: "sistema", label: "Status do Sistema" }, { v: "monitoramento", label: "Monitoramento", admin: true }] },
+      { titulo: "Identidade", itens: [{ v: "perfil", label: "Perfil" }, { v: "aparencia", label: "Aparência", admin: true }, { v: "favicon", label: "Favicon", admin: true }] },
+    ],
+  },
+  {
+    id: "documentacao",
+    label: "Documentação",
+    blocos: [
+      { titulo: "Acervo", itens: [{ v: "biblioteca", label: "Biblioteca de Documentos", admin: true }] },
+      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
+      { titulo: "Jurídico", itens: [{ v: "contrato", label: "Contrato Primário", admin: true }, { v: "procuracao", label: "Procuração", admin: true }] },
+    ],
+  },
+  {
+    id: "operacional",
+    label: "Operacional",
+    blocos: [
+      { titulo: "Catálogo", itens: [{ v: "servicos", label: "Serviços", admin: true }, { v: "status", label: "Status dos Serviços", admin: true }] },
+      { titulo: "Comunicação", itens: [{ v: "notificacoes", label: "Notificações", admin: true }, { v: "klal", label: "Klal", admin: true }] },
+    ],
+  },
+  {
+    id: "avancado",
+    label: "Avançado",
+    blocos: [
+      { titulo: "Motores", itens: [{ v: "apagar", label: "Apagar", admin: true }] },
+      { titulo: "Ranking", itens: [{ v: "ranking", label: "Pesos de Ranking" }] },
+    ],
+  },
+];
 
 // ── Banner de redeploy de edge functions ──────────────────────────────────────
 const REDEPLOY_KEY = "qa_redeploy_banner_dismissed_v1";
@@ -431,6 +474,8 @@ export default function QAConfiguracoesPage() {
   };
 
   const isAdmin = profile?.perfil === "administrador";
+  const [grupo, setGrupo] = useState<string>("geral");
+  const [secao, setSecao] = useState<string>("sistema");
 
   if (loading) {
     return (
@@ -440,35 +485,75 @@ export default function QAConfiguracoesPage() {
     );
   }
 
-  return (
-    <div className="qa-config-surface w-full max-w-[1440px] mx-auto px-1 sm:px-2">
-      {/* Header */}
-      <div className="sticky top-0 z-20 -mx-1 sm:-mx-2 px-4 sm:px-5 py-3 mb-4 border-b bg-[#FAFAF8]/95 backdrop-blur supports-[backdrop-filter]:bg-[#FAFAF8]/80"
-        style={{ borderColor: "hsl(220 13% 88%)" }}>
-        <h1 className="qa-h1 flex items-center gap-2">
-          <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
-        </h1>
-        <p className="qa-body qa-body--soft mt-0.5">Status do sistema, serviços e pesos de ranking</p>
-      </div>
+  const visivel = (i: SecaoConfig) => !i.admin || isAdmin;
+  const gruposVisiveis = GRUPOS
+    .map((g) => ({ ...g, blocos: g.blocos.map((b) => ({ ...b, itens: b.itens.filter(visivel) })).filter((b) => b.itens.length > 0) }))
+    .filter((g) => g.blocos.length > 0);
+  const grupoAtivo = gruposVisiveis.find((g) => g.id === grupo) ?? gruposVisiveis[0];
+  const itensGrupo = grupoAtivo?.blocos.flatMap((b) => b.itens) ?? [];
+  const secaoAtiva = itensGrupo.some((i) => i.v === secao) ? secao : (itensGrupo[0]?.v ?? "sistema");
+  const secaoLabel = itensGrupo.find((i) => i.v === secaoAtiva)?.label ?? "";
 
-      <Tabs defaultValue="sistema" className="w-full lg:grid lg:grid-cols-[228px_minmax(0,1fr)] lg:gap-6 lg:items-start">
+  return (
+    <div className="qa-config-surface w-full max-w-[1440px] mx-auto px-1 sm:px-4 py-2 sm:py-4">
+      <div className="w-full bg-white border border-[#E6E4DF] shadow-[0_1px_2px_rgba(10,10,10,.04)]">
+        {/* Header + abas de grupo */}
+        <div className="sticky top-0 z-20 border-b border-[#E6E4DF] bg-white/95 backdrop-blur px-5 sm:px-8 pt-5">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+            <div className="min-w-0">
+              <h1 className="qa-h1 flex items-center gap-2 leading-none">
+                <Settings className="h-5 w-5 shrink-0" style={{ color: "#7A1F2B" }} /> Configurações
+              </h1>
+              <p className="qa-body qa-body--soft mt-1">
+                {grupoAtivo?.label}{secaoLabel ? ` · ${secaoLabel}` : ""}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-6 sm:gap-8 overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {gruposVisiveis.map((g) => {
+              const ativo = g.id === grupoAtivo?.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => {
+                    setGrupo(g.id);
+                    setSecao(g.blocos[0].itens[0].v);
+                  }}
+                  className={`shrink-0 pb-3 -mb-px border-b-2 text-[13px] uppercase tracking-[.06em] transition-colors ${
+                    ativo
+                      ? "border-[#7A1F2B] text-[#7A1F2B] font-semibold"
+                      : "border-transparent text-[#9A9A9A] hover:text-[#0A0A0A] font-medium"
+                  }`}
+                  style={{ fontFamily: "Oswald, sans-serif" }}
+                >
+                  {g.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+      <Tabs
+        value={secaoAtiva}
+        onValueChange={setSecao}
+        className="w-full lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-stretch lg:min-h-[560px] [&>[role=tabpanel]]:p-4 sm:[&>[role=tabpanel]]:p-6"
+      >
         <TabsList className={QA_TABS_LIST}>
-          <TabsTrigger value="sistema" className={QA_TAB}>Sistema</TabsTrigger>
-          {isAdmin && <TabsTrigger value="servicos" className={QA_TAB}>Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="contrato" className={QA_TAB}>Contrato Primário</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="procuracao" className={QA_TAB}>Procuração</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="biblioteca" className={QA_TAB}>Biblioteca de Documentos</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="checklist" className={QA_TAB}>Montar Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="simulador" className={QA_TAB}>Simulador do Checklist</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="status" className={QA_TAB}>Status dos Serviços</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="notificacoes" className={QA_TAB}>Notificações</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="klal" className={QA_TAB}>Klal</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="apagar" className={QA_TAB}>Apagar</TabsTrigger>}
-          <TabsTrigger value="ranking" className={QA_TAB}>Pesos de Ranking</TabsTrigger>
-          <TabsTrigger value="perfil" className={QA_TAB}>Perfil</TabsTrigger>
-          {isAdmin && <TabsTrigger value="monitoramento" className={QA_TAB}>Monitoramento</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="aparencia" className={QA_TAB}>Aparência</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="favicon" className={QA_TAB}>Favicon</TabsTrigger>}
+          {grupoAtivo?.blocos.map((bloco) => (
+            <div key={bloco.titulo} className="contents lg:block lg:w-full lg:mb-3">
+              <span
+                className="hidden lg:block px-3 pb-1 text-[10px] uppercase tracking-[.14em] text-[#A3A3A3] font-bold"
+                style={{ fontFamily: "Oswald, sans-serif" }}
+              >
+                {bloco.titulo}
+              </span>
+              {bloco.itens.map((i) => (
+                <TabsTrigger key={i.v} value={i.v} className={QA_TAB}>{i.label}</TabsTrigger>
+              ))}
+            </div>
+          ))}
         </TabsList>
 
         {isAdmin && (
@@ -908,6 +993,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
       )}
       </Tabs>
+      </div>
     </div>
   );
 }
