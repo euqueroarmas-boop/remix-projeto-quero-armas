@@ -116,7 +116,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
 
       const { data: contratoRows } = await supabase
         .from("qa_contracts" as any)
-        .select("id, status, venda_id, cliente_id, created_at")
+        .select("id, status, venda_id, cliente_id, created_at, aceite_user_agent")
         .in("status", [...STATUS_AGUARDANDO, ...STATUS_ASSINADO])
         .order("created_at", { ascending: false })
         .limit(200);
@@ -198,7 +198,11 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         const ids = items.map((i) => i.contrato_id);
         const mapa: Record<string, DownloadCarimbo> = {};
 
-        const [{ data: evs }, { data: dls }] = await Promise.all([
+        const uaContrato: Record<string, string | null> = Object.fromEntries(
+          ((contratoRows ?? []) as any[]).map((c) => [String(c.id), c.aceite_user_agent ?? null]),
+        );
+
+        const [{ data: evs }, { data: dls }, { data: evsPortal }] = await Promise.all([
           supabase
             .from("qa_contract_events" as any)
             .select("contract_id, created_at, event_payload")
@@ -211,6 +215,14 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
             .eq("documento_tipo", "contrato")
             .in("documento_id", ids)
             .order("baixado_em", { ascending: false }),
+          // Downloads do portal ANTES da assinatura: o carimbo de aceite é
+          // gravado no primeiro download do contrato aguardando assinatura.
+          supabase
+            .from("qa_contract_events" as any)
+            .select("contract_id, created_at, event_payload")
+            .eq("event_type", "aceite_eletronico_registrado_download_portal")
+            .in("contract_id", ids)
+            .order("created_at", { ascending: false }),
         ]);
 
         const registrar = (key: string, quando: string, ua: string | null) => {
@@ -232,6 +244,11 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         }
         for (const d of ((dls ?? []) as any[])) {
           registrar(String(d.documento_id), d.baixado_em, d.user_agent ?? null);
+        }
+        for (const e of ((evsPortal ?? []) as any[])) {
+          const p = e.event_payload || {};
+          const key = String(e.contract_id);
+          registrar(key, p.aceite_eletronico_data || e.created_at, p.user_agent ?? uaContrato[key] ?? null);
         }
         setDownloads(mapa);
       } catch { /* best effort */ }
