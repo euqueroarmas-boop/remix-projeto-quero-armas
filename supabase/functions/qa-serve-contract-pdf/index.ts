@@ -971,6 +971,9 @@ Deno.serve(async (req) => {
           );
         }
 
+        await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+          sha256: canon.sha256,
+        });
         return jsonResp({
           url: signed.signedUrl,
           filename: fname,
@@ -979,6 +982,10 @@ Deno.serve(async (req) => {
         });
       }
 
+      await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+        sha256: canon.sha256,
+        tamanho_bytes: (canon.bytes as Uint8Array)?.byteLength ?? null,
+      });
       return new Response(canon.bytes as BodyInit, {
         status: 200,
         headers: {
@@ -1035,6 +1042,7 @@ Deno.serve(async (req) => {
         500,
       );
     }
+    await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff);
     return jsonResp({ url: signed.signedUrl, filename: signedFname, expires_in: 600 });
   }
   const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
@@ -1051,6 +1059,9 @@ Deno.serve(async (req) => {
 
   const bytes = await file.arrayBuffer();
   const fname = contractDownloadFilename(auditedContract, "pdf");
+  await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+    tamanho_bytes: bytes.byteLength,
+  });
   return new Response(bytes, {
     status: 200,
     headers: {
