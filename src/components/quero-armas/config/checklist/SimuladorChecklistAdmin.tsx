@@ -4,6 +4,7 @@ import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
   ListOrdered, ChevronRight, ChevronDown,
+  GitBranch, FileQuestion, Save, Route,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
@@ -22,6 +23,7 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { Button } from "@/components/ui/button";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -64,6 +66,13 @@ export default function SimuladorChecklistAdmin() {
   const [buscaBib, setBuscaBib] = useState("");
   const [condicaoNova, setCondicaoNova] = useState<string>("");
   const [adicionando, setAdicionando] = useState(false);
+  const [mostrarNovaPergunta, setMostrarNovaPergunta] = useState(false);
+  const [novaPergunta, setNovaPergunta] = useState("");
+  const [novasOpcoes, setNovasOpcoes] = useState("SIM\nNÃO");
+  const [rotaPergunta, setRotaPergunta] = useState("");
+  const [rotaResposta, setRotaResposta] = useState("");
+  const [rotaDestino, setRotaDestino] = useState("");
+  const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -380,6 +389,98 @@ export default function SimuladorChecklistAdmin() {
     [linhas],
   );
 
+  const slugRegra = (valor: string) =>
+    valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 52);
+
+  async function criarPergunta() {
+    if (!servicoId || !novaPergunta.trim()) return;
+    const chaveBase = slugRegra(novaPergunta);
+    const chave = chaveBase || `pergunta_${Date.now()}`;
+    if (perguntasPivo.some((p) => p.chave === chave)) {
+      toast.error("JÁ EXISTE UMA PERGUNTA IGUAL NESTE CHECKLIST");
+      return;
+    }
+    const opcoes = novasOpcoes.split("\n").map((linha) => linha.trim()).filter(Boolean).map((label) => ({
+      label: label.toUpperCase(), valor: slugRegra(label),
+    }));
+    if (opcoes.length < 2) {
+      toast.error("INFORME PELO MENOS DUAS RESPOSTAS, UMA POR LINHA");
+      return;
+    }
+    setSalvandoRota(true);
+    const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
+    const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+      servico_id: servicoId,
+      tipo_documento: `pergunta_${chave}`,
+      nome_documento: novaPergunta.trim(),
+      etapa: "base",
+      obrigatorio: true,
+      ordem,
+      ativo: true,
+      regra_validacao: { tipo: "pergunta", chave, entrada: "opcoes", opcoes },
+    });
+    setSalvandoRota(false);
+    if (error) { toast.error("NÃO FOI POSSÍVEL CRIAR A PERGUNTA: " + error.message); return; }
+    toast.success("PERGUNTA CRIADA — AGORA DEFINA O CAMINHO DE CADA RESPOSTA");
+    setNovaPergunta("");
+    setNovasOpcoes("SIM\nNÃO");
+    setMostrarNovaPergunta(false);
+    await carregar(servicoId);
+  }
+
+  async function salvarRotaLeiga() {
+    if (!servicoId || !rotaPergunta || !rotaResposta || !rotaDestino) {
+      toast.error("PREENCHA O SE, A RESPOSTA E O ENTÃO");
+      return;
+    }
+    const origem = perguntasPivo.find((p) => p.chave === rotaPergunta);
+    if (!origem) return;
+    setSalvandoRota(true);
+    try {
+      if (rotaDestino.startsWith("linha:")) {
+        const id = rotaDestino.slice(6);
+        await patchRegra(id, {
+          exige_quando: { [rotaPergunta]: rotaResposta },
+          dispensa_quando: null,
+        }, "CAMINHO SALVO");
+      } else if (rotaDestino.startsWith("bib:")) {
+        const item = biblioteca.find((b) => b.id === rotaDestino.slice(4));
+        if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
+        const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
+        const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+          servico_id: servicoId, biblioteca_id: item.id, tipo_documento: item.codigo,
+          nome_documento: item.nome, etapa: "base", obrigatorio: true, ordem, ativo: true,
+          validade_dias: item.validade_dias, formato_aceito: item.formato_aceito,
+          link_emissao: item.link_emissao, instrucoes: item.descricao_como_enviar,
+          observacoes_cliente: item.observacao_cliente,
+          regra_validacao: { exige_quando: { [rotaPergunta]: rotaResposta } },
+        });
+        if (error) throw error;
+        toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
+      }
+      setRotaDestino("");
+      await carregar(servicoId);
+    } catch (e: any) {
+      toast.error("NÃO FOI POSSÍVEL SALVAR O CAMINHO: " + String(e?.message ?? "ERRO"));
+    } finally {
+      setSalvandoRota(false);
+    }
+  }
+
+  const rotasVisuais = useMemo(() => perguntasPivo.map((pergunta) => ({
+    ...pergunta,
+    respostas: pergunta.opcoes.map((opcao) => ({
+      ...opcao,
+      destinos: linhas.filter((linha) => {
+        if ((linha as any).ativo === false || linha.id === linhas.find((l) => (l.regra_validacao as any)?.chave === pergunta.chave)?.id) return false;
+        const regra: any = linha.regra_validacao ?? {};
+        return regra.exige_quando?.[pergunta.chave] === opcao.valor ||
+          (regra.depende_de?.chave === pergunta.chave && regra.depende_de?.valor === opcao.valor);
+      }),
+    })),
+  })), [linhas, perguntasPivo]);
+
   /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
    * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
@@ -622,7 +723,104 @@ export default function SimuladorChecklistAdmin() {
       )}
 
       {!loading && servicoId && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+        <div className="space-y-4">
+          <section className="qa-card overflow-hidden">
+            <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: LINE }}>
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                  <GitBranch className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="qa-h3">Matriz de caminhos</h3>
+                  <p className="qa-caption mt-1">Monte cada decisão lendo uma frase simples: SE o cliente responder X, ENTÃO o sistema pede Y.</p>
+                </div>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => setMostrarNovaPergunta((v) => !v)}>
+                <FileQuestion className="h-4 w-4" /> Nova pergunta
+              </Button>
+            </div>
+
+            {mostrarNovaPergunta && (
+              <div className="grid gap-3 border-b bg-muted/30 p-4 md:grid-cols-[minmax(0,1.5fr)_minmax(220px,1fr)_auto]" style={{ borderColor: LINE }}>
+                <label className="min-w-0">
+                  <span className="qa-kpi-label mb-1.5 block">O que deseja perguntar?</span>
+                  <input value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)} placeholder="EX.: VOCÊ PERTENCE À SEGURANÇA PÚBLICA?" className="h-9 w-full rounded-md border bg-background px-3 text-xs uppercase" />
+                </label>
+                <label className="min-w-0">
+                  <span className="qa-kpi-label mb-1.5 block">Respostas · uma por linha</span>
+                  <textarea value={novasOpcoes} onChange={(e) => setNovasOpcoes(e.target.value)} className="min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-xs uppercase" />
+                </label>
+                <Button type="button" size="sm" className="self-end" disabled={salvandoRota || !novaPergunta.trim()} onClick={() => void criarPergunta()}>
+                  {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Criar
+                </Button>
+              </div>
+            )}
+
+            <div className="p-4">
+              {perguntasPivo.length === 0 ? (
+                <div className="rounded-md border border-dashed p-5 text-center">
+                  <p className="text-sm font-semibold text-foreground">Comece criando a primeira pergunta de decisão.</p>
+                  <p className="qa-caption mt-1">Exemplo: “Você pertence à Segurança Pública?” com as respostas “Sim” e “Não”.</p>
+                </div>
+              ) : (
+                <div className="grid gap-2 md:grid-cols-[minmax(190px,1fr)_minmax(160px,.7fr)_32px_minmax(250px,1.2fr)_auto] md:items-end">
+                  <label className="min-w-0">
+                    <span className="qa-kpi-label mb-1.5 block">SE esta pergunta</span>
+                    <select value={rotaPergunta} onChange={(e) => { setRotaPergunta(e.target.value); setRotaResposta(""); }} className="h-10 w-full rounded-md border bg-background px-2 text-xs">
+                      <option value="">ESCOLHA A PERGUNTA...</option>
+                      {perguntasPivo.map((p) => <option key={p.chave} value={p.chave}>{p.nome}</option>)}
+                    </select>
+                  </label>
+                  <label className="min-w-0">
+                    <span className="qa-kpi-label mb-1.5 block">Receber a resposta</span>
+                    <select value={rotaResposta} disabled={!rotaPergunta} onChange={(e) => setRotaResposta(e.target.value)} className="h-10 w-full rounded-md border bg-background px-2 text-xs disabled:opacity-50">
+                      <option value="">ESCOLHA...</option>
+                      {(perguntasPivo.find((p) => p.chave === rotaPergunta)?.opcoes ?? []).map((o) => <option key={o.valor} value={o.valor}>{o.label}</option>)}
+                    </select>
+                  </label>
+                  <div className="hidden h-10 items-center justify-center md:flex"><ArrowRight className="h-4 w-4 text-primary" /></div>
+                  <label className="min-w-0">
+                    <span className="qa-kpi-label mb-1.5 block">ENTÃO pedir ou mostrar</span>
+                    <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="h-10 w-full rounded-md border bg-background px-2 text-xs">
+                      <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
+                      <optgroup label="PERGUNTAS E DOCUMENTOS QUE JÁ ESTÃO NO CHECKLIST">
+                        {linhas.filter((l) => (l as any).ativo !== false && (l.regra_validacao as any)?.chave !== rotaPergunta).map((l) => <option key={l.id} value={`linha:${l.id}`}>{(l.regra_validacao as any)?.tipo === "pergunta" ? "PERGUNTAR: " : "PEDIR DOCUMENTO: "}{l.nome_documento}</option>)}
+                      </optgroup>
+                      <optgroup label="ADICIONAR DOCUMENTO DA BIBLIOTECA">
+                        {biblioteca.filter((b) => !linhas.some((l) => (l as any).ativo !== false && (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id))).map((b) => <option key={b.id} value={`bib:${b.id}`}>PEDIR DOCUMENTO: {b.nome}</option>)}
+                      </optgroup>
+                    </select>
+                  </label>
+                  <Button type="button" className="h-10" disabled={salvandoRota || !rotaPergunta || !rotaResposta || !rotaDestino} onClick={() => void salvarRotaLeiga()}>
+                    {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar caminho
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {rotasVisuais.length > 0 && (
+              <div className="border-t bg-muted/20 px-4 py-3" style={{ borderColor: LINE }}>
+                <div className="mb-2 flex items-center gap-2"><Route className="h-3.5 w-3.5 text-primary" /><span className="qa-kpi-label">Mapa configurado</span></div>
+                <div className="grid gap-2 lg:grid-cols-2">
+                  {rotasVisuais.map((pergunta) => (
+                    <div key={pergunta.chave} className="rounded-md border bg-background p-3">
+                      <p className="text-xs font-semibold uppercase text-foreground">SE: {pergunta.nome}</p>
+                      <div className="mt-2 space-y-1.5">
+                        {pergunta.respostas.map((resposta) => (
+                          <div key={resposta.valor} className="grid grid-cols-[72px_18px_1fr] gap-2 text-[11px] leading-snug">
+                            <strong className="text-primary">{resposta.label}</strong><ArrowRight className="h-3 w-3 text-muted-foreground" />
+                            <span className={resposta.destinos.length ? "text-foreground" : "text-destructive"}>{resposta.destinos.length ? resposta.destinos.map((d) => d.nome_documento).join(" · ") : "SEM CAMINHO CONFIGURADO"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           {/* Coluna 1 — passo atual */}
           <div className="qa-card p-5 xl:sticky xl:top-4">
             <div className="flex items-center justify-between gap-3 mb-3">
@@ -893,8 +1091,6 @@ export default function SimuladorChecklistAdmin() {
                               onMoverGrupo={moverItemParaGrupo}
                               onDefinirCondicao={definirCondicao}
                               onRenomear={renomearItem}
-                              perguntas={perguntasPivo}
-                              onDefinirRamificacao={definirRamificacao}
                               onAlternarHibrida={alternarPerguntaHibrida}
                             />
                           ))}
@@ -923,6 +1119,7 @@ export default function SimuladorChecklistAdmin() {
               )}
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>
@@ -1023,8 +1220,6 @@ function LinhaItem({
   onMoverGrupo,
   onDefinirCondicao,
   onRenomear,
-  perguntas,
-  onDefinirRamificacao,
   onAlternarHibrida,
 }: {
   item: ItemSimulado;
@@ -1036,8 +1231,6 @@ function LinhaItem({
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
-  perguntas: { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[];
-  onDefinirRamificacao: (id: string, modo: "sempre" | "aparece" | "some", chave?: string, valor?: string) => void;
   onAlternarHibrida: (id: string, ligado: boolean) => void;
 }) {
   const cfg = {
@@ -1052,14 +1245,6 @@ function LinhaItem({
   const [editandoNome, setEditandoNome] = useState(false);
 
   const regra: any = (item.linha as any)?.regra_validacao ?? {};
-  const ramExige = regra.exige_quando && typeof regra.exige_quando === "object" ? regra.exige_quando : null;
-  const ramDispensa = regra.dispensa_quando && typeof regra.dispensa_quando === "object" ? regra.dispensa_quando : null;
-  const ramModo: "sempre" | "aparece" | "some" = ramExige ? "aparece" : ramDispensa ? "some" : "sempre";
-  const ramChave = String(Object.keys(ramExige ?? ramDispensa ?? {})[0] ?? "");
-  const ramValor = String((ramExige ?? ramDispensa ?? {})[ramChave] ?? "");
-  // Só faz sentido amarrar a OUTRA pergunta, nunca a si mesma.
-  const gatilhos = perguntas.filter((p) => p.chave !== item.chave);
-  const opcoesGatilho = gatilhos.find((p) => p.chave === ramChave)?.opcoes ?? [];
   const hibrida = regra.exige_documento_quando != null;
 
   return (
@@ -1172,61 +1357,6 @@ function LinhaItem({
             ))}
           </select>
         </div>
-
-        {/* RAMIFICAÇÃO — o "reloginho": amarra esta exigência à resposta de uma pergunta */}
-        {gatilhos.length > 0 && (
-          <div className="mt-1 flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <span className="text-[11px] uppercase" style={{ color: MUTED }}>quando</span>
-            <select
-              value={ramModo}
-              onChange={(e) => {
-                const modo = e.currentTarget.value as "sempre" | "aparece" | "some";
-                if (modo === "sempre") onDefinirRamificacao(item.id, "sempre");
-                else {
-                  const p = gatilhos.find((x) => x.chave === ramChave) ?? gatilhos[0];
-                  onDefinirRamificacao(item.id, modo, p.chave, ramValor || p.opcoes[0]?.valor);
-                }
-              }}
-              className="h-5 rounded border bg-white px-1 text-[11px] uppercase"
-              style={{ borderColor: LINE, color: INK }}
-              title="Aparece sempre, ou só depois de uma resposta específica do cliente"
-            >
-              <option value="sempre">SEMPRE APARECE</option>
-              <option value="aparece">SÓ APARECE SE…</option>
-              <option value="some">SOME SE…</option>
-            </select>
-            {ramModo !== "sempre" && (
-              <>
-                <select
-                  value={ramChave || gatilhos[0].chave}
-                  onChange={(e) => {
-                    const p = gatilhos.find((x) => x.chave === e.currentTarget.value)!;
-                    onDefinirRamificacao(item.id, ramModo, p.chave, p.opcoes[0]?.valor);
-                  }}
-                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
-                  style={{ borderColor: LINE, color: INK }}
-                  title="Pergunta que controla esta exigência"
-                >
-                  {gatilhos.map((p) => (
-                    <option key={p.chave} value={p.chave}>{p.nome}</option>
-                  ))}
-                </select>
-                <span className="text-[11px] uppercase" style={{ color: MUTED }}>for</span>
-                <select
-                  value={ramValor}
-                  onChange={(e) => onDefinirRamificacao(item.id, ramModo, ramChave || gatilhos[0].chave, e.currentTarget.value)}
-                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
-                  style={{ borderColor: LINE, color: INK }}
-                  title="Resposta que dispara a regra"
-                >
-                  {(opcoesGatilho.length ? opcoesGatilho : gatilhos[0].opcoes).map((o) => (
-                    <option key={o.valor} value={o.valor}>{o.label}</option>
-                  ))}
-                </select>
-              </>
-            )}
-          </div>
-        )}
 
         {/* PERGUNTA HÍBRIDA — responde E anexa o arquivo na mesma linha */}
         {item.tipo === "pergunta" && !!item.chave && (
