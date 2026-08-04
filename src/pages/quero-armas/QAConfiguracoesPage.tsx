@@ -474,6 +474,8 @@ export default function QAConfiguracoesPage() {
   };
 
   const isAdmin = profile?.perfil === "administrador";
+  const [grupo, setGrupo] = useState<string>("geral");
+  const [secao, setSecao] = useState<string>("sistema");
 
   if (loading) {
     return (
