@@ -126,10 +126,26 @@ Deno.serve(async (req) => {
       const local = await localPorIp(ip);
       const quando = fmtData();
 
+      // Resolve o cliente pelo user_id (ou e-mail) e grava o vínculo no
+      // evento — sem isso o painel do admin não consegue ligar o acesso ao
+      // processo do cliente e mostra "sem processo ativo".
+      let qaClienteId: number | null = null;
+      try {
+        const { data: cliUser } = await admin
+          .from("qa_clientes").select("id").eq("user_id", uid).maybeSingle();
+        if ((cliUser as any)?.id != null) qaClienteId = (cliUser as any).id;
+        else if (email) {
+          const { data: cliEmail } = await admin
+            .from("qa_clientes").select("id").ilike("email", email).maybeSingle();
+          if ((cliEmail as any)?.id != null) qaClienteId = (cliEmail as any).id;
+        }
+      } catch { /* não bloqueia o login */ }
+
       const { data: evento } = await admin
         .from("qa_cliente_login_eventos")
         .insert({
           user_id: uid,
+          qa_cliente_id: qaClienteId,
           email,
           ip,
           user_agent: String(body?.userAgent || ua).slice(0, 500),
