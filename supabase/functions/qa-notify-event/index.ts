@@ -84,8 +84,8 @@ interface Payload {
   /** Recusa no upload: avisa SÓ a equipe (sem e-mail nem popup do cliente). */
   somente_admin?: boolean;
   detalhes?: Array<{ label: string; valor: string }>;
-  /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
-  campos_alterados?: Array<{ label: string; valor: string }>;
+  /** Para cadastro_atualizado: campo a campo, com rótulo, valor novo e anterior. */
+  campos_alterados?: Array<{ label: string; valor: string; anterior?: string }>;
   alterado_por?: string;
   /** Para certidao_rejeitada. */
   certidao?: string;
@@ -386,7 +386,15 @@ Deno.serve(async (req) => {
         ? (body.validade ? `Em dia até ${brDate(body.validade)}.` : "Cadastrado com sucesso.")
         : body.evento === "cadastro_atualizado"
           ? (nCampos
-              ? `${nCampos === 1 ? "1 informação foi atualizada" : `${nCampos} informações foram atualizadas`}: ${(body.campos_alterados || []).map((c) => c.label).join(", ")}.`
+              ? `${nCampos === 1 ? "1 informação foi atualizada" : `${nCampos} informações foram atualizadas`}: ${(body.campos_alterados || [])
+                  .map((c) => {
+                    const novo = String(c.valor ?? "").trim() || "(vazio)";
+                    const antes = String(c.anterior ?? "").trim();
+                    return antes && antes !== novo
+                      ? `${c.label}: "${antes}" → "${novo}"`
+                      : `${c.label}: "${novo}"`;
+                  })
+                  .join(" · ")}.`
               : "Seu cadastro foi atualizado.")
           : body.evento === "certidao_rejeitada"
             ? `Divergência em: ${(body.problemas || []).map((x) => x.label).join(", ") || "dados do documento"}. Emita novamente e reenvie.`
