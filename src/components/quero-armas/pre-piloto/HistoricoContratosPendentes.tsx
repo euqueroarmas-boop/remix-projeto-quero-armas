@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, RefreshCw, Play, Loader2, FileText, CheckCircle2, Clock,
-  ChevronDown, ChevronUp, ExternalLink, Trash2, Mail,
+  ChevronDown, ChevronUp, ExternalLink, Trash2, Mail, Undo2, FilePlus2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,6 +82,9 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [enviando, setEnviando] = useState(false);
   const [excluindo, setExcluindo] = useState<string | null>(null);
   const [regenerando, setRegenerando] = useState<string | null>(null);
+  const [revertendo, setRevertendo] = useState<string | null>(null);
+  const [semContrato, setSemContrato] = useState<{ venda_id: number; cliente_id: number; cliente_nome: string; cliente_email: string | null }[]>([]);
+  const [gerando, setGerando] = useState<number | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
@@ -102,6 +105,37 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         .in("status", [...STATUS_AGUARDANDO, ...STATUS_ASSINADO])
         .order("created_at", { ascending: false })
         .limit(200);
+
+      // Vendas pagas que ficaram SEM nenhum contrato (ex.: contrato excluído).
+      try {
+        const { data: todasVendas } = await supabase
+          .from("qa_vendas" as any)
+          .select("id, cliente_id")
+          .eq("status", "PAGO")
+          .order("id", { ascending: false })
+          .limit(200);
+        const { data: todosContratos } = await supabase
+          .from("qa_contracts" as any)
+          .select("venda_id")
+          .limit(1000);
+        const comContrato = new Set(((todosContratos ?? []) as any[]).map((c) => Number(c.venda_id)));
+        const orfas = ((todasVendas ?? []) as any[]).filter((v) => !comContrato.has(Number(v.id)));
+        if (orfas.length) {
+          const { data: cli } = await supabase
+            .from("qa_clientes" as any)
+            .select("id, nome_completo, email")
+            .in("id", [...new Set(orfas.map((v) => v.cliente_id))]);
+          const map = Object.fromEntries(((cli ?? []) as any[]).map((c) => [c.id, c]));
+          setSemContrato(orfas.map((v) => ({
+            venda_id: Number(v.id),
+            cliente_id: Number(v.cliente_id),
+            cliente_nome: map[v.cliente_id]?.nome_completo ?? "—",
+            cliente_email: map[v.cliente_id]?.email ?? null,
+          })));
+        } else {
+          setSemContrato([]);
+        }
+      } catch { /* best effort */ }
 
       if (!contratoRows?.length) { setContratos([]); setCarregando(false); return; }
 
@@ -235,6 +269,47 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       toast.error(e?.message || "Erro ao regenerar contrato");
     } finally {
       setRegenerando(null);
+    }
+  }
+
+  // Volta um contrato ASSINADO para "aguardando assinatura", preservando o
+  // registro e liberando a regeneração com o cadastro corrigido.
+  async function reverterAssinatura(contratoId: string, clienteNome: string) {
+    if (!window.confirm(
+      `Voltar o contrato de ${clienteNome} para "Aguardando assinatura"?\n\nA assinatura enviada será desvinculada (o registro e o histórico permanecem) e você poderá regenerar o contrato com os dados corrigidos.`,
+    )) return;
+    setRevertendo(contratoId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-contrato-reverter-assinatura", {
+        body: { contrato_id: contratoId },
+      });
+      if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao reverter");
+      toast.success("Contrato voltou para 'Aguardando assinatura'. Agora você pode regenerar.");
+      setFiltro("aguardando");
+      await carregar();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao reverter assinatura");
+    } finally {
+      setRevertendo(null);
+    }
+  }
+
+  // Gera contrato do zero para uma venda paga que ficou sem contrato.
+  async function gerarParaVenda(vendaId: number, clienteNome: string) {
+    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaId}) com os dados atuais do cadastro?`)) return;
+    setGerando(vendaId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
+        body: { venda_id: vendaId, force: true, reenviar_email: true },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Falha ao gerar contrato");
+      toast.success("Contrato gerado. Ele já aparece em 'Aguardando assinatura'.");
+      setFiltro("aguardando");
+      await carregar();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao gerar contrato");
+    } finally {
+      setGerando(null);
     }
   }
 
