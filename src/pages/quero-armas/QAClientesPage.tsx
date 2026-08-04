@@ -2999,6 +2999,57 @@ export default function QAClientesPage() {
     }
   };
 
+  const purgeDialog = (
+    <Dialog
+      open={purgeModal.open}
+      onOpenChange={(o) => { if (!o && !purgeModal.loading) setPurgeModal({ open: false, cliente: null, texto: "", loading: false }); }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[13px] font-bold uppercase tracking-wider text-red-700">
+            Exclusão LGPD definitiva
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-[12px] leading-relaxed text-slate-600">
+            <strong className="text-slate-900 uppercase">{purgeModal.cliente?.nome_completo}</strong> e TODOS os rastros
+            (vendas, contratos, cobranças, processos, documentos, formulários e arsenal) serão apagados de forma
+            irreversível.
+          </p>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              Digite EXCLUIR para confirmar
+            </label>
+            <Input
+              autoFocus
+              value={purgeModal.texto}
+              onChange={(e) => setPurgeModal(p => ({ ...p, texto: e.target.value }))}
+              placeholder="EXCLUIR"
+              className="mt-1 h-9 uppercase"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              className="h-9 px-4 text-[11px] font-bold uppercase tracking-wider border border-slate-200"
+              disabled={purgeModal.loading}
+              onClick={() => setPurgeModal({ open: false, cliente: null, texto: "", loading: false })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="h-9 px-4 text-[11px] font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white"
+              disabled={purgeModal.loading || purgeModal.texto.trim().toUpperCase() !== "EXCLUIR"}
+              onClick={() => void confirmarExclusaoLgpd()}
+            >
+              {purgeModal.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Excluir tudo"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   // Aplica antes o filtro Ativos/Arquivados/Todos.
   const clientesPorArquivamento = clientes.filter((c: any) =>
     archivedFilter === "todos" ? true
