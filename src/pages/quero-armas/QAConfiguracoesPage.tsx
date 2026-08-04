@@ -27,16 +27,59 @@ interface Servico { id: number; nome_servico: string; valor_servico: number; is_
 
 type ServicoTab = "catalogo" | "internos";
 
-// ── Estilo premium das abas (rail vertical no desktop, scroll horizontal no mobile) ──
+// ── Sub-navegação densa (coluna esquerda dentro do grupo ativo) ───────────────
 const QA_TABS_LIST =
-  "h-auto w-full gap-1 bg-transparent p-0 mb-3 lg:mb-0 " +
+  "h-auto w-full gap-0.5 bg-transparent p-0 mb-3 lg:mb-0 " +
   "flex overflow-x-auto flex-nowrap justify-start [scrollbar-width:none] [&::-webkit-scrollbar]:hidden " +
-  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-24 lg:rounded-2xl lg:border lg:border-[hsl(220_13%_90%)] lg:bg-white lg:p-2 lg:shadow-[0_1px_2px_rgba(16,24,40,.04)]";
+  "lg:flex-col lg:flex-wrap lg:overflow-visible lg:sticky lg:top-[104px] lg:p-3 " +
+  "lg:border-r lg:border-[#EDEBE6] lg:bg-[#FCFCFB]";
 
 const QA_TAB =
-  "shrink-0 lg:w-full lg:justify-start rounded-lg px-3 py-2 text-[12.5px] font-semibold tracking-[.02em] " +
-  "text-[#4A5361] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-[hsl(220_20%_96%)] " +
-  "data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white data-[state=active]:shadow-none";
+  "shrink-0 rounded-none lg:w-full lg:justify-start px-3 py-2 text-[13px] font-normal " +
+  "text-[#5A5A5A] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-white hover:text-[#0A0A0A] " +
+  "border-l-2 border-transparent " +
+  "data-[state=active]:bg-white data-[state=active]:text-[#0A0A0A] data-[state=active]:font-semibold " +
+  "data-[state=active]:border-l-[#7A1F2B] data-[state=active]:shadow-none";
+
+// ── Grupos de configuração (abas superiores) ─────────────────────────────────
+type SecaoConfig = { v: string; label: string; admin?: boolean };
+type GrupoConfig = { id: string; label: string; blocos: { titulo: string; itens: SecaoConfig[] }[] };
+
+const GRUPOS: GrupoConfig[] = [
+  {
+    id: "geral",
+    label: "Geral & Aparência",
+    blocos: [
+      { titulo: "Sistema", itens: [{ v: "sistema", label: "Status do Sistema" }, { v: "monitoramento", label: "Monitoramento", admin: true }] },
+      { titulo: "Identidade", itens: [{ v: "perfil", label: "Perfil" }, { v: "aparencia", label: "Aparência", admin: true }, { v: "favicon", label: "Favicon", admin: true }] },
+    ],
+  },
+  {
+    id: "documentacao",
+    label: "Documentação",
+    blocos: [
+      { titulo: "Acervo", itens: [{ v: "biblioteca", label: "Biblioteca de Documentos", admin: true }] },
+      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
+      { titulo: "Jurídico", itens: [{ v: "contrato", label: "Contrato Primário", admin: true }, { v: "procuracao", label: "Procuração", admin: true }] },
+    ],
+  },
+  {
+    id: "operacional",
+    label: "Operacional",
+    blocos: [
+      { titulo: "Catálogo", itens: [{ v: "servicos", label: "Serviços", admin: true }, { v: "status", label: "Status dos Serviços", admin: true }] },
+      { titulo: "Comunicação", itens: [{ v: "notificacoes", label: "Notificações", admin: true }, { v: "klal", label: "Klal", admin: true }] },
+    ],
+  },
+  {
+    id: "avancado",
+    label: "Avançado",
+    blocos: [
+      { titulo: "Motores", itens: [{ v: "apagar", label: "Apagar", admin: true }] },
+      { titulo: "Ranking", itens: [{ v: "ranking", label: "Pesos de Ranking" }] },
+    ],
+  },
+];
 
 // ── Banner de redeploy de edge functions ──────────────────────────────────────
 const REDEPLOY_KEY = "qa_redeploy_banner_dismissed_v1";
