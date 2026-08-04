@@ -42,6 +42,7 @@ import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/Histori
 import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteDestravarCadastro";
+import ClienteModoSuporte from "@/components/quero-armas/clientes/ClienteModoSuporte";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
@@ -4007,7 +4008,16 @@ export default function QAClientesPage() {
                 <ClienteAcessoPortal cliente={c} />
               </TabsContent>
               <TabsContent value="destravar" className="mt-3">
-                <ClienteDestravarCadastro cliente={c} />
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">Modo Suporte — Checklist</h3>
+                    <ClienteModoSuporte clienteId={c.id} />
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">Destravar Cadastro</h3>
+                    <ClienteDestravarCadastro cliente={c} />
+                  </div>
+                </div>
               </TabsContent>
             </>
           )}

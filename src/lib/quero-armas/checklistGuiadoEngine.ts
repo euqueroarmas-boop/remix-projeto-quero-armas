@@ -43,6 +43,7 @@ export interface GuiaProcesso {
   respostas_questionario_json?: Record<string, string> | null;
   condicao_profissional?: string | null;
   modalidade?: string | null;
+  suporte_ativo?: boolean | null;
   venda_id?: number | null;
 }
 
@@ -507,7 +508,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
     .select(
-      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, modalidade, venda_id",
+      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, modalidade, suporte_ativo, venda_id",
     )
     .eq("id", processoId)
     .maybeSingle();
@@ -523,7 +524,10 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
 
   const processo = p as unknown as GuiaProcesso;
   const respostas = (processo.respostas_questionario_json ?? {}) as Record<string, string>;
-  const etapaLiberada = Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
+  // Modo suporte: equipe desbloqueou visualização livre — todas as etapas abertas.
+  const etapaLiberada = processo.suporte_ativo
+    ? 5
+    : Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
   const { data: cli } = await supabase
     .from("qa_clientes")
     .select("nome_completo, profissao, categoria_titular")

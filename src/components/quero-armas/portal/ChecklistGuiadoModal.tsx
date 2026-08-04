@@ -16,6 +16,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import {
   AlertTriangle,
   ArrowRight,
+  MonitorCheck,
   BookOpen,
   Building2,
   CalendarClock,
@@ -1547,6 +1548,30 @@ export default function ChecklistGuiadoModal({
                 <X className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Banner modo suporte */}
+            {carga?.processo.suporte_ativo && fase !== "alerta_modalidade" && (() => {
+              const msgWA = encodeURIComponent(
+                "Olá! Estou vendo algo diferente no meu checklist. Pode me ajudar?"
+              );
+              return (
+                <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2">
+                  <MonitorCheck className="h-4 w-4 shrink-0 text-amber-600" />
+                  <span className="flex-1 text-[11px] font-semibold text-amber-800">
+                    A equipe Arsenal Inteligente está em modo de suporte neste processo.
+                    Se algo parecer errado, avise.
+                  </span>
+                  <a
+                    href={`https://wa.me/5512978136556?text=${msgWA}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-bold text-white"
+                  >
+                    Avisar equipe
+                  </a>
+                </div>
+              );
+            })()}
 
             {/* Barra de progresso (somente quando há um processo carregado) */}
             {carga && fase !== "escolher_processo" && fase !== "vazio" && (
