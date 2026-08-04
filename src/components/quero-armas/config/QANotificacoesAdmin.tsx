@@ -91,6 +91,8 @@ function fmt(iso: string) {
 
 export default function QANotificacoesAdmin() {
   const [notificacoes, setNotificacoes] = useState<NotificacaoRow[]>([]);
+  // Valores atuais no cadastro dos clientes citados em avisos de cadastro.
+  const [cadastroAtual, setCadastroAtual] = useState<Record<number, Record<string, any>>>({});
   const [carregando, setCarregando] = useState(true);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas");
   const [resolvendo, setResolvendo] = useState<string | null>(null);
@@ -129,6 +131,16 @@ export default function QANotificacoesAdmin() {
         : { data: [] as any[] };
       const nomeMap = new Map(((clientes ?? []) as any[]).map((c) => [c.id, c.nome_completo]));
       setNotificacoes(rows.map((r) => ({ ...r, cliente_nome: nomeMap.get(r.cliente_id) ?? `Cliente #${r.cliente_id}` })));
+
+      // Para avisos de cadastro, carrega o registro completo do cliente para
+      // exibir o que está gravado hoje em cada campo citado.
+      const idsCadastro = [...new Set(rows.filter((r) => r.categoria === "cadastro_atualizado").map((r) => r.cliente_id))];
+      if (idsCadastro.length) {
+        const { data: full } = await supabase.from("qa_clientes" as any).select("*").in("id", idsCadastro);
+        const mapa: Record<number, Record<string, any>> = {};
+        for (const c of ((full ?? []) as any[])) mapa[c.id] = c;
+        setCadastroAtual(mapa);
+      }
     } catch (e: any) {
       toast.error("Erro ao carregar notificações: " + (e?.message || ""));
     } finally {
