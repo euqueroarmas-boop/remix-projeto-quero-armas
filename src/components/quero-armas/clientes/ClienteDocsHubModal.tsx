@@ -1734,6 +1734,23 @@ export function ClienteDocsHubModal({
     if (motivoCarimbadoRef.current === motivoRejeicao) return;
     motivoCarimbadoRef.current = motivoRejeicao;
     setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
+    // A recusa acontece ANTES de qualquer gravação, então nenhum gatilho de
+    // banco dispara: avisamos a Central de Notificação do admin na hora.
+    if (qaClienteId) {
+      supabase.functions.invoke("qa-notify-event", {
+        body: {
+          evento: "documento_rejeitado",
+          somente_admin: true,
+          cliente_id: qaClienteId,
+          motivo_rejeicao: motivoRejeicao,
+          documento:
+            expectedTipoMeta?.label ||
+            getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),
+          arquivo: file?.name || "",
+          referencia_id: `${form.tipo_documento || "doc"}-${Date.now()}`,
+        },
+      }).catch(() => {});
+    }
   }, [motivoRejeicao]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────

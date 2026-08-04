@@ -81,6 +81,8 @@ interface Payload {
   exigencia?: string;
   /** Para documento_rejeitado. */
   motivo_rejeicao?: "parentesco" | "titular" | "duplicidade" | "tipo";
+  /** Recusa no upload: avisa SÓ a equipe (sem e-mail nem popup do cliente). */
+  somente_admin?: boolean;
   detalhes?: Array<{ label: string; valor: string }>;
   /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
   campos_alterados?: Array<{ label: string; valor: string }>;
@@ -322,7 +324,7 @@ Deno.serve(async (req) => {
       const emailCli = (cli as any)?.email ?? null;
       const mapped = mapEventoToTemplate(body, { nome: nomeCli }, body.processo || body.documento || "");
       let emailOk = false;
-      if (mapped && emailCli) {
+      if (mapped && emailCli && !body.somente_admin) {
         // A chave de idempotência precisa distinguir CADA alteração: se dois
         // campos diferentes gerassem a mesma chave, o segundo aviso seria
         // engolido como duplicata e o cliente não saberia do que mudou.
@@ -398,7 +400,7 @@ Deno.serve(async (req) => {
               ? `Motivo: ${body.motivo_rejeicao === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_rejeicao === "titular" ? "documento de outro titular" : body.motivo_rejeicao === "duplicidade" ? "documento já entregue" : "documento diferente do exigido"}. Enviamos os detalhes no seu e-mail.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
-        await supabase.from("qa_notificacoes_cliente").upsert({
+        if (!body.somente_admin) await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,
           categoria,
           urgencia: body.evento === "certidao_rejeitada" || body.evento === "documento_rejeitado" ? "alta" : "normal",
@@ -414,6 +416,33 @@ Deno.serve(async (req) => {
         }, { onConflict: "cliente_id,categoria,referencia_tabela,referencia_id" });
       } catch (err) {
         console.error("[qa-notify-event] popup verde:", err);
+      }
+
+      // Espelho na Central de Notificação do ADMIN: recusas precisam chegar
+      // à equipe mesmo quando o documento é barrado no upload e, por isso,
+      // nunca é gravado (nenhum gatilho de tabela dispara nesse caminho).
+      if (body.evento === "documento_rejeitado" || body.evento === "certidao_rejeitada") {
+        try {
+          await supabase.from("qa_admin_notificacoes").insert({
+            tipo: "documento",
+            status: "rejeitado",
+            titulo: "Documento recusado no envio do cliente",
+            mensagem: `${nomeCli || "Cliente"} — ${body.documento || body.certidao || "Documento"}`,
+            cliente_id: body.cliente_id,
+            cliente_nome: nomeCli,
+            documento_nome: body.documento || body.certidao || null,
+            referencia_tabela: body.referencia_tabela || "qa_documentos_cliente",
+            referencia_id: String(body.referencia_id ?? ""),
+            link: `/clientes/${body.cliente_id}`,
+            metadata: {
+              motivo_rejeicao: body.motivo_rejeicao ?? null,
+              arquivo: body.arquivo ?? null,
+              detalhes: body.detalhes ?? body.problemas ?? null,
+            },
+          });
+        } catch (err) {
+          console.error("[qa-notify-event] admin rejeicao:", err);
+        }
       }
       return new Response(JSON.stringify({ ok: true, verde: true, emailOk }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
