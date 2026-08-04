@@ -10,7 +10,8 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, FileUp, Upload, X } from "lucide-react";
-import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
+import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
+import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   resolveLinkAntecedentePorUf,
