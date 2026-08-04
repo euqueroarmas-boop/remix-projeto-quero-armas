@@ -45,13 +45,6 @@ function statusLabel(s: string) {
   return statusLabelImpl(s);
 }
 
-/** CPF formatado 000.000.000-00 para a linha de identificação do cliente. */
-function fmtCpf(cpf: string | null | undefined) {
-  const d = String(cpf ?? "").replace(/\D/g, "");
-  if (d.length !== 11) return cpf || null;
-  return `CPF ${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
-}
-
 function statusLabelImpl(s: string) {
   const map: Record<string, { label: string; color: string }> = {
     generated_pending_company_signature: { label: "Aguardando assinatura", color: "text-amber-700 bg-amber-50 border-amber-200" },
@@ -538,11 +531,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{c.cliente_nome}</p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {[c.servico_nome, fmt(c.gerado_em)].filter(Boolean).join(" · ")}
-                    {[fmtCpf(c.cliente_cpf), c.cliente_email, c.venda_id ? `Venda #${c.venda_id_legado ?? c.venda_id}` : null]
-                      .filter(Boolean)
-                      .map((v) => ` — ${v}`)
-                      .join("")}
+                    {[c.servico_nome, c.gerado_em ? `Gerado em ${fmt(c.gerado_em)}` : null].filter(Boolean).join(" · ")}
                   </p>
                   {dl && (
                     <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
