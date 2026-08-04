@@ -2042,6 +2042,38 @@ export function ClienteDocsHubModal({
     setExtracting(true);
     setAutoResult(null);
     try {
+      // ── REGRA FIXA: PDF COM TEXTO É DO PARSER, NÃO DA IA ───────────────────
+      // A IA existe só para imagem e PDF digitalizado (sem camada de texto).
+      // Se o PDF traz texto nativo, ele é lido byte a byte e o parser
+      // determinístico resolve — a IA nem é chamada.
+      if (isPdf) {
+        let textoNativo = String(textoLocalRef.current || "");
+        if (!textoNativo) {
+          try {
+            textoNativo = await extrairTextoPdf(target);
+            textoLocalRef.current = textoNativo;
+          } catch (e) {
+            console.warn("[parse-first] pdf.js falhou, IA assume:", e);
+          }
+        }
+        const limpo = textoNativo
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (limpo.length >= 80) {
+          try {
+            const docLocal = parseCertidao(textoNativo);
+            if (docLocal) {
+              const resolvido = await tentarLeituraLocal(target);
+              if (resolvido) return;
+            }
+          } catch (e) {
+            console.warn("[parse-first] parser não resolveu, IA assume:", e);
+          }
+        }
+      }
+
       const dataUrl = await fileToDataUrl(target);
 
       // 1) Classifica automaticamente (sem depender da seleção manual).
