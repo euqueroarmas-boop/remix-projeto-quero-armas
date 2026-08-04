@@ -261,7 +261,19 @@ export default function DashboardClientesOnline() {
                     <span className="truncate font-semibold uppercase" style={{ color: "hsl(220 20% 25%)" }}>
                       {a.nome || a.email || "CLIENTE"}
                     </span>
-                    <span style={{ color: "hsl(220 10% 62%)" }}>
+                    <span className="flex items-center gap-1.5 flex-shrink-0" style={{ color: "hsl(220 10% 62%)" }}>
+                      <span
+                        className="px-1.5 py-[1px] rounded-full text-[10px] tabular-nums"
+                        style={{ background: "hsl(220 14% 95%)", color: "hsl(220 10% 45%)" }}
+                        title="Entradas hoje · total histórico"
+                      >
+                        {a.entradas_hoje ?? 1}x hoje
+                        {(() => {
+                          const k = String(a.qa_cliente_id || a.user_id || a.email || "");
+                          const r = resumo.find((x) => x.chave === k);
+                          return r ? ` · ${r.total} total` : "";
+                        })()}
+                      </span>
                       {new Date(a.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
@@ -289,6 +301,33 @@ export default function DashboardClientesOnline() {
         <p className="mt-3 text-[10px]" style={{ color: "hsl(220 10% 70%)" }}>
           Atualizado às {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
         </p>
+      )}
+
+      {resumo.length > 0 && (
+        <div className="mt-2 border-t pt-2" style={{ borderColor: "hsl(220 14% 92%)" }}>
+          <button
+            type="button"
+            onClick={() => setVerHistorico((v) => !v)}
+            className="flex items-center gap-1 text-[10px] font-semibold hover:opacity-80"
+            style={{ color: "hsl(220 10% 55%)" }}
+          >
+            {verHistorico ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            HISTÓRICO DE ENTRADAS POR CLIENTE ({resumo.length})
+          </button>
+          {verHistorico && (
+            <ul className="mt-2 space-y-1">
+              {resumo.map((r) => (
+                <li key={r.chave} className="flex items-center justify-between gap-2 text-[10px]">
+                  <span className="truncate" style={{ color: "hsl(220 20% 30%)" }}>{r.rotulo}</span>
+                  <span className="flex-shrink-0 tabular-nums" style={{ color: "hsl(220 10% 60%)" }}>
+                    {r.total}x · {new Date(r.primeiro).toLocaleDateString("pt-BR")} → {new Date(r.ultimo).toLocaleDateString("pt-BR")}{" "}
+                    {new Date(r.ultimo).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
