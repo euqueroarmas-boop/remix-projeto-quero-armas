@@ -283,6 +283,28 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
 
   const ativas = entrada.linhas.filter((l) => l.ativo);
 
+  // Perguntas de rota são infraestrutura do checklist, não conteúdo de IA.
+  // Se um documento aplicável nesta combinação depende de uma chave, a pergunta
+  // que grava essa chave precisa entrar junto, mesmo que tenha herdado uma
+  // condição profissional/modalidade antiga. A aplicabilidade continua sendo
+  // determinada pelos documentos ligados à rota, configurados pelo administrador.
+  const chavesDeRotaNecessarias = new Set(
+    ativas
+      .filter((l) => {
+        if (ehPergunta(l.regra_validacao)) return false;
+        const cpOk =
+          l.condicao_profissional == null ||
+          !condicao ||
+          condicao === "indefinido" ||
+          condicaoCasa(l.condicao_profissional, condicao);
+        const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
+        const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
+        return cpOk && modOk;
+      })
+      .map((l) => extrairDependencia(l.regra_validacao)?.chave)
+      .filter(Boolean) as string[],
+  );
+
   const filtradas = ativas.filter((l) => {
     // Sem condição definida ainda, as linhas amarradas a uma condição NÃO somem:
     // ficam visíveis como "aguardando a resposta" (igual ao grupo de endereço).
@@ -293,6 +315,10 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       condicaoCasa(l.condicao_profissional, condicao);
     const mods = Array.isArray(l.condicao_modalidade) ? l.condicao_modalidade : null;
     const modOk = !mods || mods.length === 0 || !modalidade || mods.includes(modalidade);
+    const chave = ehPergunta(l.regra_validacao)
+      ? chavePergunta(l.regra_validacao, l.tipo_documento)
+      : "";
+    if (chave && chavesDeRotaNecessarias.has(chave)) return true;
     if (!cpOk || !modOk) return false;
     // BLINDAGEM: exigência de renda/ocupação cadastrada SEM condição no catálogo
     // não pode vazar para todas as condições (ex.: CTD aparecendo para servidor
