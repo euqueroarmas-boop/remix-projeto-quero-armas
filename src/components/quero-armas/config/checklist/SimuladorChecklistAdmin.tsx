@@ -233,6 +233,77 @@ export default function SimuladorChecklistAdmin() {
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
    */
   async function removerItem(id: string, nome: string) {
+    return removerItemInterno(id, nome);
+  }
+
+  /**
+   * Adiciona a MESMA exigência de uma vez em TODOS os serviços do catálogo,
+   * respeitando a mesma regra do botão individual: se já existir desativada,
+   * reativa; se já existir ativa, ignora; senão insere no fim do grupo.
+   */
+  async function adicionarEmTodosServicos(item: BibliotecaItem) {
+    if (!servicos.length) { toast.error("NENHUM SERVIÇO CADASTRADO"); return; }
+    if (!confirm(`Adicionar "${item.nome}" em TODOS os ${servicos.length} serviços do catálogo?`)) return;
+    setAdicionando(true);
+    let inseridos = 0, reativados = 0, jaTinham = 0, falhas = 0;
+    try {
+      const { data } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .select("id, servico_id, tipo_documento, biblioteca_id, ativo, ordem, regra_validacao");
+      const todas = ((data as any[]) ?? []) as any[];
+      for (const s of servicos) {
+        const doServico = todas.filter((l) => l.servico_id === s.id);
+        const existente = doServico.find(
+          (l) => l.tipo_documento === item.codigo || l.biblioteca_id === item.id,
+        );
+        if (existente && existente.ativo !== false) { jaTinham++; continue; }
+        if (existente) {
+          const { error } = await supabase
+            .from("qa_servicos_documentos" as any)
+            .update({ ativo: true })
+            .eq("id", existente.id);
+          if (error) falhas++; else reativados++;
+          continue;
+        }
+        const grupo = grupoCanonico(item.codigo);
+        const doGrupo = doServico.filter(
+          (l) => grupoCanonico(l.tipo_documento, l.regra_validacao) === grupo,
+        );
+        const base = doGrupo.length
+          ? Math.max(...doGrupo.map((l) => l.ordem ?? 0))
+          : Math.max(0, ...doServico.map((l) => l.ordem ?? 0));
+        const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+          servico_id: s.id,
+          biblioteca_id: item.id,
+          tipo_documento: item.codigo,
+          nome_documento: item.nome,
+          etapa: "base",
+          obrigatorio: true,
+          condicao_profissional: condicaoNova || null,
+          validade_dias: item.validade_dias,
+          formato_aceito: item.formato_aceito,
+          link_emissao: item.link_emissao,
+          instrucoes: item.descricao_como_enviar,
+          observacoes_cliente: item.observacao_cliente,
+          ordem: base + 1,
+          ativo: true,
+        });
+        if (error) falhas++; else inseridos++;
+      }
+      toast.success(
+        `"${item.nome.toUpperCase()}" SINCRONIZADO · ${inseridos} ADICIONADO(S), ${reativados} REATIVADO(S), ${jaTinham} JÁ TINHAM` +
+          (falhas ? ` · ${falhas} FALHA(S)` : ""),
+      );
+      setBuscaBib("");
+      if (servicoId) await carregar(servicoId);
+    } catch (e: any) {
+      toast.error("NÃO FOI POSSÍVEL SINCRONIZAR: " + (e?.message || "ERRO"));
+    } finally {
+      setAdicionando(false);
+    }
+  }
+
+  async function removerItemInterno(id: string, nome: string) {
     const anteriores = linhas;
     setLinhas((p) => p.filter((l) => l.id !== id));
     const { error } = await supabase
@@ -1312,22 +1383,42 @@ export default function SimuladorChecklistAdmin() {
                     </div>
                   )}
                   {bibliotecaFiltrada.map((b) => (
-                    <button
+                    <div
                       key={b.id}
-                      type="button"
-                      disabled={b.jaNoServico || adicionando}
-                      onClick={() => adicionarExigencia(b)}
-                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 text-left last:border-b-0 disabled:opacity-40 hover:bg-slate-50"
+                      className="flex w-full items-start justify-between gap-2 border-b px-2 py-1.5 last:border-b-0"
                       style={{ borderColor: "hsl(220 13% 95%)" }}
                     >
-                      <span className="min-w-0">
+                      <button
+                        type="button"
+                        disabled={b.jaNoServico || adicionando}
+                        onClick={() => adicionarExigencia(b)}
+                        className="min-w-0 flex-1 text-left disabled:opacity-40"
+                      >
                         <span className="block text-[12.5px] leading-snug" style={{ color: INK }}>{b.nome}</span>
                         <span className="block text-[11px] font-mono" style={{ color: MUTED }}>{b.codigo}</span>
-                      </span>
-                      <span className="shrink-0 text-[11px] uppercase" style={{ color: b.jaNoServico ? MUTED : BORDO }}>
-                        {b.jaNoServico ? "já está" : "adicionar"}
-                      </span>
-                    </button>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          disabled={b.jaNoServico || adicionando}
+                          onClick={() => adicionarExigencia(b)}
+                          className="rounded px-1.5 py-1 text-[11px] uppercase disabled:opacity-40 hover:bg-slate-50"
+                          style={{ color: b.jaNoServico ? MUTED : BORDO }}
+                        >
+                          {b.jaNoServico ? "já está" : "adicionar"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={adicionando}
+                          onClick={() => adicionarEmTodosServicos(b)}
+                          title="Adicionar esta exigência em todos os serviços do catálogo"
+                          className="rounded border px-1.5 py-1 text-[10.5px] uppercase text-white disabled:opacity-40"
+                          style={{ backgroundColor: BORDO, borderColor: BORDO }}
+                        >
+                          todos
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
