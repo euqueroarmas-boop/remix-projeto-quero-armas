@@ -25,7 +25,6 @@ export interface AdminNotificacao {
 }
 
 const MAX_PILHA = 4;
-const TEMPO_VISIVEL = 9000;
 
 const ESTILO_STATUS: Record<string, { cor: string; fundo: string; Icone: typeof CheckCircle2; rotulo: string }> = {
   aprovado: { cor: "#0F7A45", fundo: "#F1FAF4", Icone: CheckCircle2, rotulo: "Aprovado" },
