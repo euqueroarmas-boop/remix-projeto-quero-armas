@@ -4,7 +4,7 @@ import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
   ListOrdered, ChevronRight, ChevronDown,
-  GitBranch, FileQuestion, Save, Route,
+  GitBranch, FileQuestion, Save, Route, Trash2,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
