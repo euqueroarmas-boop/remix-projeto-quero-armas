@@ -352,7 +352,7 @@ export default function QABibliotecaDocumentosAdmin() {
           className="h-7 text-xs gap-1 text-[#7A1F2B]"
         >
           {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-          Importar passo a passo do assistente
+          Sincronizar passo a passo com o portal do cliente
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
