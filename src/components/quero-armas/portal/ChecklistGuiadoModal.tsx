@@ -378,6 +378,7 @@ type Fase =
   | "resultado_demorando"
   | "concluido"
   | "contrato_pendente"
+  | "alerta_modalidade"
   | "vazio";
 
 interface Props {
@@ -550,6 +551,16 @@ export default function ChecklistGuiadoModal({
       setFase("carregando");
       setAvisoRetomada(null);
       const c = await recarregarCarga(pid);
+
+      // Guard: processo sem modalidade num serviço que filtra por modalidade →
+      // o cliente receberia exigências de todas as modalidades ao mesmo tempo.
+      // Bloqueia e pede que ele acione o suporte imediatamente.
+      if (c.alertaModalidadeIndefinida) {
+        setCarga(c);
+        setFase("alerta_modalidade");
+        return;
+      }
+
       // Foco explícito (ex.: pendência clicada) tem prioridade sobre o
       // progresso salvo. Se o doc focado não existir mais na fila, o
       // resolveResumeDocId cai naturalmente no primeiro acionável.
@@ -1601,6 +1612,47 @@ export default function ChecklistGuiadoModal({
                 </button>
               </div>
             )}
+
+            {fase === "alerta_modalidade" && carga && (() => {
+              const codigoErro = `MOD-NULL-S${carga.processo.servico_id ?? "X"}-${carga.processo.id.slice(0, 8).toUpperCase()}`;
+              const msgWA = encodeURIComponent(
+                `Olá! Preciso de ajuda com meu processo na Quero Armas. Código de erro: ${codigoErro}`,
+              );
+              return (
+                <div className="flex flex-col items-center justify-center gap-5 px-4 py-12 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50">
+                    <AlertTriangle className="h-7 w-7 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Serviço não configurado</h3>
+                    <p className="mt-1.5 max-w-xs text-sm text-slate-500">
+                      Identificamos uma inconsistência no seu processo. Por favor, entre em
+                      contato com o suporte imediatamente — <strong>não envie documentos agora</strong>.
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-6 py-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Código de erro</span>
+                    <span className="select-all font-mono text-sm font-bold text-slate-700">{codigoErro}</span>
+                  </div>
+                  <a
+                    href={`https://wa.me/5512978136556?text=${msgWA}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white shadow"
+                    style={{ background: "#25D366" }}
+                  >
+                    Falar com o suporte no WhatsApp
+                    <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <button
+                    onClick={onClose}
+                    className="text-xs text-slate-400 underline underline-offset-2"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              );
+            })()}
 
             {fase === "escolher_processo" && (
               <div className="space-y-3">

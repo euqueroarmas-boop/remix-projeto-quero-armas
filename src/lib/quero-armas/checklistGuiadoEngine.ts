@@ -42,6 +42,7 @@ export interface GuiaProcesso {
   etapa_liberada_ate?: number | null;
   respostas_questionario_json?: Record<string, string> | null;
   condicao_profissional?: string | null;
+  modalidade?: string | null;
   venda_id?: number | null;
 }
 
@@ -474,6 +475,8 @@ export interface CargaProcesso {
   sugestaoCondicao?: { id: CondicaoGuiaId; motivo: string } | null;
   /** Contrato pendente de assinatura do cliente. Null quando validado ou inexistente. */
   contratoPendente: ContratoPendente | null;
+  /** true quando modalidade = NULL e o catálogo do serviço tem itens filtrados por modalidade. */
+  alertaModalidadeIndefinida: boolean;
 }
 
 /**
@@ -504,7 +507,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
     .select(
-      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, venda_id",
+      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, modalidade, venda_id",
     )
     .eq("id", processoId)
     .maybeSingle();
@@ -527,6 +530,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     .eq("id", processo.cliente_id)
     .maybeSingle();
 
+  let alertaModalidadeIndefinida = false;
   // Mapa de ordem definido no admin (qa_servicos_documentos) — usado para
   // ordenar a fila do assistente respeitando a sequência configurada por serviço.
   let ordemMap = new Map<string, number>();
@@ -552,7 +556,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     try {
       const { data: tpl } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("tipo_documento, ordem, regra_validacao, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, modelo_url, exemplo_url, prazo_recomendado_dias")
+        .select("tipo_documento, ordem, regra_validacao, condicao_modalidade, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, modelo_url, exemplo_url, prazo_recomendado_dias")
         .eq("servico_id", processo.servico_id);
       if (tpl) {
         for (const t of tpl as any[]) {
@@ -570,6 +574,14 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
             exemplo_url:            t.exemplo_url            ?? null,
             prazo_recomendado_dias: t.prazo_recomendado_dias ?? null,
           });
+        }
+        // Alerta quando modalidade não foi definida no processo mas o catálogo
+        // tem itens filtrados por modalidade — evita que o cliente veja exigências
+        // de todas as modalidades ao mesmo tempo (checklist "completo" indesejado).
+        if (processo.modalidade == null) {
+          alertaModalidadeIndefinida = (tpl as any[]).some(
+            (t: any) => Array.isArray(t.condicao_modalidade) && t.condicao_modalidade.length > 0,
+          );
         }
       }
     } catch { /* fallback silencioso para ordenação alfabética */ }
@@ -699,6 +711,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     clienteNome: (cli as any)?.nome_completo ?? null,
     sugestaoCondicao: sugerirCondicaoDoCliente(cli as any),
     contratoPendente,
+    alertaModalidadeIndefinida,
   };
 }
 
