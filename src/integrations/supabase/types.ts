@@ -9657,6 +9657,9 @@ export type Database = {
           servico_nome: string
           solicitacao_id: string | null
           status: string
+          suporte_ativado_em: string | null
+          suporte_ativado_por: string | null
+          suporte_ativo: boolean
           updated_at: string
           venda_id: number | null
         }
@@ -9682,6 +9685,9 @@ export type Database = {
           servico_nome: string
           solicitacao_id?: string | null
           status?: string
+          suporte_ativado_em?: string | null
+          suporte_ativado_por?: string | null
+          suporte_ativo?: boolean
           updated_at?: string
           venda_id?: number | null
         }
@@ -9707,6 +9713,9 @@ export type Database = {
           servico_nome?: string
           solicitacao_id?: string | null
           status?: string
+          suporte_ativado_em?: string | null
+          suporte_ativado_por?: string | null
+          suporte_ativo?: boolean
           updated_at?: string
           venda_id?: number | null
         }
