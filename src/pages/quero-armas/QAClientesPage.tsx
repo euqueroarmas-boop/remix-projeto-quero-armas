@@ -39,6 +39,7 @@ import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/Sub
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
+import { HistoricoDocumentosAdmin } from "@/components/quero-armas/clientes/HistoricoDocumentosAdmin";
 import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteDestravarCadastro";
@@ -3994,8 +3995,18 @@ export default function QAClientesPage() {
               {/* ACESSO AO PORTAL */}
               <TabsContent value="historico" className="mt-3 space-y-3">
                 <BlocoSecao
+                  icon={FileText}
+                  titulo="Eventos de Documentos"
+                  statusTone="error"
+                  statusLabel="Rejeições / Aprovações"
+                >
+                  <div className="qa-card p-4 md:p-5">
+                    <HistoricoDocumentosAdmin clienteId={c.id} />
+                  </div>
+                </BlocoSecao>
+                <BlocoSecao
                   icon={Clock}
-                  titulo="Linha do Tempo / Auditoria"
+                  titulo="Linha do Tempo / Auditoria de Cadastro"
                   statusTone="info"
                   statusLabel="Histórico"
                 >
