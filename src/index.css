@@ -349,8 +349,8 @@
 
 @media (max-width: 767px) {
   /* Nada dentro do admin pode estourar a largura da tela */
-  .qa-scope, .qa-scope * { max-width: 100%; }
   .qa-scope { overflow-x: hidden; }
+  .qa-scope img, .qa-scope video, .qa-scope canvas { max-width: 100%; height: auto; }
   /* Palavras longas (e-mails, CPFs, protocolos) quebram em vez de empurrar o layout */
   .qa-scope p, .qa-scope span, .qa-scope h1, .qa-scope h2,
   .qa-scope h3, .qa-scope h4, .qa-scope td, .qa-scope th, .qa-scope li {
