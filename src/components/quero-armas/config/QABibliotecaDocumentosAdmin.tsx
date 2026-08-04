@@ -107,15 +107,22 @@ export default function QABibliotecaDocumentosAdmin() {
   const [treinandoNovo, setTreinandoNovo] = useState(false);
   const [importando, setImportando] = useState(false);
 
-  // Traz para a biblioteca (fonte única) o passo a passo que hoje está escrito
-  // no módulo do assistente do cliente. Só preenche o que está EM BRANCO —
-  // nunca sobrescreve texto já editado pela equipe.
+  // Traz para a biblioteca (fonte única) o passo a passo que o portal do cliente
+  // já mostra. Preenche o que está EM BRANCO e também atualiza os textos que
+  // ficaram MAIS CURTOS que o do assistente (era o caso das certidões: a
+  // biblioteca tinha 1 linha resumida e o cliente via o passo a passo completo).
   async function importarTextosDoAssistente() {
-    const alvos = itens.filter(
-      (i) => !((i.descricao_como_enviar ?? "").trim()) && EXPLICACOES_REGISTRO[i.codigo]?.passos?.length,
-    );
-    if (alvos.length === 0) { toast.info("Nada a importar — todos os documentos já têm passo a passo escrito aqui."); return; }
-    if (!confirm(`Importar o passo a passo do assistente para ${alvos.length} documento(s) sem texto? Nada que já foi escrito aqui será sobrescrito.`)) return;
+    const desatualizado = (i: BibliotecaItem) => {
+      const passos = EXPLICACOES_REGISTRO[i.codigo]?.passos ?? [];
+      if (!passos.length) return false;
+      const atual = (i.descricao_como_enviar ?? "").trim();
+      if (!atual) return true;
+      const linhasAtuais = atual.split("\n").map((l) => l.trim()).filter(Boolean);
+      return linhasAtuais.length < passos.length;
+    };
+    const alvos = itens.filter(desatualizado);
+    if (alvos.length === 0) { toast.info("Tudo sincronizado — a biblioteca já mostra o mesmo passo a passo do cliente."); return; }
+    if (!confirm(`Sincronizar ${alvos.length} documento(s) com o passo a passo completo que o cliente vê? Textos mais curtos serão substituídos pela versão completa.`)) return;
     setImportando(true);
     let ok = 0;
     for (const item of alvos) {
@@ -345,7 +352,7 @@ export default function QABibliotecaDocumentosAdmin() {
           className="h-7 text-xs gap-1 text-[#7A1F2B]"
         >
           {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-          Importar passo a passo do assistente
+          Sincronizar passo a passo com o portal do cliente
         </Button>
       </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
