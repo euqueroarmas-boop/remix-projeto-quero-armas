@@ -2937,11 +2937,10 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
-    // Assinatura pendente é obrigação bloqueante: reabre sempre, ignorando
-    // qualquer dispensa anterior do cliente.
+    // Assinaturas pendentes seguem a mesma regra de dispensa: se o cliente
+    // clicou no X, a sessão está marcada e o popup não reabre automaticamente.
     if (pendingSignatureCount > 0) {
-      sessionStorage.removeItem("qa:pendencias-dismissed");
-      setPendenciasGuiadasDismissed(false);
+      if (pendenciasGuiadasDismissed) return;
       setShowContratoPopup(true);
       return;
     }
