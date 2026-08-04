@@ -490,6 +490,10 @@ export default function SimuladorChecklistAdmin() {
         const regra: any = linha.regra_validacao ?? {};
         const casa = (v: any) =>
           Array.isArray(v) ? v.map(String).includes(opcao.valor) : String(v ?? "") === opcao.valor;
+        // Item ligado por "SOME SE" (dispensa_quando): ele É exigido em todas as
+        // respostas MENOS nas dispensadas — por isso aparece no mapa das outras.
+        const dispensado = regra.dispensa_quando?.[pergunta.chave];
+        if (dispensado != null) return !casa(dispensado);
         return casa(regra.exige_quando?.[pergunta.chave]) ||
           (regra.depende_de?.chave === pergunta.chave && casa(regra.depende_de?.valor));
       }),
