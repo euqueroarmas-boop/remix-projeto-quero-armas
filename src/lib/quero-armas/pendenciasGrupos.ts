@@ -158,6 +158,12 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "cnh" ||
     t === "passaporte" ||
     t === "cpf" ||
+    // Identidade funcional / credencial digital do órgão é documento de
+    // IDENTIFICAÇÃO. Sem esta regra caía em "outros" (ordem 99) e o popup
+    // mostrava "GRUPO 9 DE 9" no meio do checklist.
+    t.includes("identidade_funcional") ||
+    t.includes("credencial_digital") ||
+    t.includes("funcional_digital") ||
     // A foto 3x4 é peça de IDENTIFICAÇÃO. Caindo em "outros" (ordem 99) ela ia
     // para o fim da fila e o portal pedia certidões antes — contrariando a
     // ordem do catálogo (Montar Checklist), onde a foto é ordem 2.
