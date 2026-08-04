@@ -112,7 +112,7 @@ export default function QABibliotecaDocumentosAdmin() {
   // ficaram MAIS CURTOS que o do assistente (era o caso das certidões: a
   // biblioteca tinha 1 linha resumida e o cliente via o passo a passo completo).
   async function importarTextosDoAssistente() {
-    const desatualizado = (i: ItemBiblioteca) => {
+    const desatualizado = (i: BibliotecaItem) => {
       const passos = EXPLICACOES_REGISTRO[i.codigo]?.passos ?? [];
       if (!passos.length) return false;
       const atual = (i.descricao_como_enviar ?? "").trim();
