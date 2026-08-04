@@ -4049,6 +4049,69 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_checklist_grupos: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          servico_id: number | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          servico_id?: number | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          servico_id?: number | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_checklist_rascunhos: {
+        Row: {
+          atualizado_por: string | null
+          created_at: string
+          itens: Json
+          publicado_em: string | null
+          servico_id: number
+          updated_at: string
+        }
+        Insert: {
+          atualizado_por?: string | null
+          created_at?: string
+          itens?: Json
+          publicado_em?: string | null
+          servico_id: number
+          updated_at?: string
+        }
+        Update: {
+          atualizado_por?: string | null
+          created_at?: string
+          itens?: Json
+          publicado_em?: string | null
+          servico_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_chunks_conhecimento: {
         Row: {
           created_at: string
@@ -10332,6 +10395,7 @@ export type Database = {
           etapa: string
           exemplo_url: string | null
           formato_aceito: string[]
+          grupo_id: string | null
           id: string
           instrucoes: string | null
           link_emissao: string | null
@@ -10360,6 +10424,7 @@ export type Database = {
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
+          grupo_id?: string | null
           id?: string
           instrucoes?: string | null
           link_emissao?: string | null
@@ -10388,6 +10453,7 @@ export type Database = {
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
+          grupo_id?: string | null
           id?: string
           instrucoes?: string | null
           link_emissao?: string | null
@@ -10411,6 +10477,13 @@ export type Database = {
             columns: ["biblioteca_id"]
             isOneToOne: false
             referencedRelation: "qa_documentos_biblioteca"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_servicos_documentos_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_checklist_grupos"
             referencedColumns: ["id"]
           },
           {
