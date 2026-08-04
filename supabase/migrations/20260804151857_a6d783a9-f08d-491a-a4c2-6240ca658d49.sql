@@ -1,0 +1,1 @@
+DELETE FROM public.qa_procuracoes WHERE id = '638e6fa8-96fa-496b-abe2-2fc638dc3c42';
