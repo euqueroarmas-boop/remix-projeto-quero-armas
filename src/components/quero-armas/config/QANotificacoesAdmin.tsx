@@ -35,8 +35,55 @@ const CATEGORIA_LABEL: Record<string, string> = {
   craf: "CRAF",
   gte: "GTE",
   autorizacao_compra: "Autorização de compra",
+  cadastro_atualizado: "Cadastro atualizado",
   custom: "Manual",
 };
+
+/**
+ * Rótulo → coluna em qa_clientes. Espelha ROTULO_CAMPO da função
+ * qa-cliente-atualizar-cadastro. Permite mostrar, na tela da equipe, o que o
+ * cliente efetivamente escreveu em cada campo antes de excluir o aviso.
+ */
+const ROTULO_PARA_COLUNA: Record<string, string> = {
+  "Nome": "nome_completo",
+  "Nome completo": "nome_completo",
+  "Data de nascimento": "data_nascimento",
+  "Sexo": "sexo",
+  "Estado civil": "estado_civil",
+  "Nacionalidade": "nacionalidade",
+  "Naturalidade — município": "naturalidade_municipio",
+  "Naturalidade — UF": "naturalidade_uf",
+  "Naturalidade": "naturalidade",
+  "Nome da mãe": "nome_mae",
+  "Nome do pai": "nome_pai",
+  "Celular": "celular",
+  "CEP": "cep",
+  "Logradouro": "endereco",
+  "Número": "numero",
+  "Complemento": "complemento",
+  "Bairro": "bairro",
+  "Cidade": "cidade",
+  "Estado (UF)": "estado",
+  "Profissão": "profissao",
+  "Escolaridade": "escolaridade",
+  "RG / CIN": "rg",
+  "Órgão emissor do RG": "emissor_rg",
+  "UF do emissor do RG": "uf_emissor_rg",
+  "Data de expedição do RG": "expedicao_rg",
+  "Tipo do documento de identidade": "tipo_documento_identidade",
+  "Título de eleitor": "titulo_eleitor",
+};
+
+/** Extrai os rótulos citados na mensagem "…foi atualizada: A, B." */
+function rotulosDaMensagem(mensagem: string): string[] {
+  const corpo = mensagem.split(":").slice(1).join(":");
+  if (!corpo) return [];
+  return corpo
+    .replace(/\.$/, "")
+    .split(/·|,/)
+    .map((p) => p.split("→")[0].split(":")[0].replace(/"/g, "").trim())
+    .filter(Boolean);
+}
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
