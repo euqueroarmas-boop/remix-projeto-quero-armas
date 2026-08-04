@@ -375,7 +375,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   // registro e liberando a regeneração com o cadastro corrigido.
   async function reverterAssinatura(contratoId: string, clienteNome: string) {
     if (!window.confirm(
-      `Voltar o contrato de ${clienteNome} para "Aguardando assinatura"?\n\nA assinatura enviada será desvinculada (o registro e o histórico permanecem) e você poderá regenerar o contrato com os dados corrigidos.`,
+      `Voltar o contrato de ${clienteNome} para "Aguardando assinatura"?\n\nA assinatura enviada será desvinculada (o registro e o histórico permanecem) e a PROCURAÇÃO será regenerada automaticamente com os dados corrigidos.`,
     )) return;
     setRevertendo(contratoId);
     try {
@@ -397,14 +397,14 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   // `vendaIdApi` é o id que a edge function espera (id_legado da venda);
   // `vendaIdExibicao` é o número mostrado na tela.
   async function gerarParaVenda(vendaIdApi: number, clienteNome: string, vendaIdExibicao = vendaIdApi) {
-    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
+    if (!window.confirm(`Gerar um novo contrato + procuração para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
     setGerando(vendaIdExibicao);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
         body: { venda_id: vendaIdApi, force: true, reenviar_email: true },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Falha ao gerar contrato");
-      toast.success("Contrato gerado. Ele já aparece em 'Aguardando assinatura'.");
+      toast.success("Contrato + procuração gerados. Já aparecem em 'Aguardando assinatura'.");
       setFiltro("aguardando");
       await carregar();
     } catch (e: any) {
@@ -445,7 +445,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     { id: "aguardando", label: "Aguardando assinatura", count: totalAguardando },
     { id: "assinados", label: "Assinados", count: totalAssinados },
     { id: "todos", label: "Todos", count: contratos.length },
-    { id: "gerar", label: "Gerar contrato", count: semContrato.length },
+    { id: "gerar", label: "Gerar contrato + procuração", count: semContrato.length },
   ];
 
   const abaGerar = filtro === "gerar";
@@ -561,7 +561,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 onClick={() => gerarParaVenda(v.venda_id_legado ?? v.venda_id, v.cliente_nome, v.venda_id)}
               >
                 {gerando === v.venda_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FilePlus2 className="w-3 h-3" />}
-                Gerar contrato
+                Gerar contrato + procuração
               </Button>
             </div>
           ))}
@@ -713,7 +713,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                       {regenerando === c.contrato_id
                         ? <Loader2 className="w-3 h-3 animate-spin" />
                         : <Mail className="w-3 h-3" />}
-                      Regenerar e reenviar
+                      Regenerar contrato + procuração
                     </Button>
                     <Button
                       size="sm"
