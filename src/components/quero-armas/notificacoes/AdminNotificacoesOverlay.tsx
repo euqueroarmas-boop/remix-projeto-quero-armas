@@ -25,7 +25,6 @@ export interface AdminNotificacao {
 }
 
 const MAX_PILHA = 4;
-const TEMPO_VISIVEL = 9000;
 
 const ESTILO_STATUS: Record<string, { cor: string; fundo: string; Icone: typeof CheckCircle2; rotulo: string }> = {
   aprovado: { cor: "#0F7A45", fundo: "#F1FAF4", Icone: CheckCircle2, rotulo: "Aprovado" },
@@ -55,8 +54,8 @@ export default function AdminNotificacoesOverlay() {
       if (atual.some((x) => x.id === n.id)) return atual;
       return [n, ...atual].slice(0, MAX_PILHA);
     });
-    timers.current[n.id] = window.setTimeout(() => remover(n.id), TEMPO_VISIVEL);
-  }, [remover]);
+    // Persistente: só sai quando o administrador clicar no X.
+  }, []);
 
   useEffect(() => {
     const canal = supabase
@@ -140,7 +139,7 @@ export default function AdminNotificacoesOverlay() {
                   role="button"
                   tabIndex={-1}
                   onClick={(e) => { e.stopPropagation(); remover(n.id); }}
-                  className="shrink-0 rounded-md p-1 text-[#B0B0B0] hover:text-[#7A1F2B] hover:bg-[#FDF4F5] transition-colors"
+                  className="absolute -top-2 -left-2 z-10 h-6 w-6 rounded-full border border-[#E7E5E0] bg-white shadow-[0_2px_6px_rgba(10,10,10,0.12)] flex items-center justify-center text-[#7A1F2B] hover:bg-[#FDF4F5] transition-colors"
                   aria-label="Dispensar notificação"
                 >
                   <X className="h-3.5 w-3.5" />
