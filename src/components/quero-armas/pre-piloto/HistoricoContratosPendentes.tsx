@@ -66,7 +66,7 @@ function isAssinado(status: string) {
   return STATUS_ASSINADO.includes(status);
 }
 
-type Filtro = "aguardando" | "assinados" | "todos";
+type Filtro = "aguardando" | "assinados" | "todos" | "gerar";
 
 export type HistoricoContratosPendentesHandle = { carregar: () => void };
 
