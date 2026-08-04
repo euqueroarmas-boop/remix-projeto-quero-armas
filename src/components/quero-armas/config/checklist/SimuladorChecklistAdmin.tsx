@@ -876,6 +876,9 @@ export default function SimuladorChecklistAdmin() {
                 <label className="min-w-0">
                   <span className="qa-kpi-label mb-1.5 block">Respostas · uma por linha</span>
                   <textarea value={novasOpcoes} onChange={(e) => setNovasOpcoes(e.target.value)} className="min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-xs uppercase" />
+                  <span className="qa-caption mt-1 block">
+                    As respostas são livres: pode ser SIM/NÃO, mas também “SOU DA SEGURANÇA PÚBLICA”, “SOU MILITAR”, “JÁ FIZ”, “AINDA NÃO FIZ”. Cada linha vira um caminho diferente.
+                  </span>
                 </label>
                 <Button type="button" size="sm" className="w-full justify-center" disabled={salvandoRota || !novaPergunta.trim()} onClick={() => void criarPergunta()}>
                   {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Criar
@@ -893,6 +896,9 @@ export default function SimuladorChecklistAdmin() {
                 <div className="grid min-w-0 grid-cols-1 gap-3">
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">SE esta pergunta</span>
+                    <span className="qa-caption mb-1.5 block">
+                      Itens marcados como DOCUMENTO (COM PERGUNTA) aparecem aqui porque também fazem uma pergunta ao cliente antes do envio — use-os como decisão só se fizer sentido.
+                    </span>
                     <select value={rotaPergunta} onChange={(e) => { setRotaPergunta(e.target.value); setRotaResposta(""); }} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
                       <option value="">ESCOLHA A PERGUNTA...</option>
                       {perguntasPivo.map((p) => <option key={p.chave} value={p.chave}>{p.nome}</option>)}
