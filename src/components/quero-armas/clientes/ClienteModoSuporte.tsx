@@ -33,7 +33,7 @@ export default function ClienteModoSuporte({ clienteId }: Props) {
       .from("qa_processos")
       .select("id, servico_nome, status, suporte_ativo, suporte_ativado_em, suporte_ativado_por")
       .eq("cliente_id", clienteId)
-      .in("status", ["em_andamento", "aguardando_documentacao", "em_analise", "pendente", "ativo"])
+      .not("status", "in", '("cancelado","arquivado","indeferido")')
       .order("created_at", { ascending: false });
     if (error) toast.error("Erro ao carregar processos: " + error.message);
     else setProcessos((data ?? []) as any);
