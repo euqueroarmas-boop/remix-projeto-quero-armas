@@ -1526,7 +1526,10 @@ function ClientePortalMirrorAdmin({
           </div>
         </aside>
       </div>
-      <div className="lg:hidden border-t border-slate-200 bg-white px-2 py-2 overflow-x-auto">
+      <div
+        className="lg:hidden border-t border-slate-200 bg-white px-2 py-2 overflow-x-auto overscroll-x-contain scrollbar-none"
+        style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+      >
         <div className="flex gap-1 min-w-max">
           {navItems.map((item) => {
             const active = activeSection === item.key;
