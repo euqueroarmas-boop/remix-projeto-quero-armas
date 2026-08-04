@@ -14,3 +14,10 @@ Comportamento:
 - Simulador (`simuladorChecklist.ts`) mostra "RESPONDIDO: X — FALTA ANEXAR O DOCUMENTO".
 
 Aplicado a `laudo_psicologico`.
+
+## Como o admin cria isso (sem SQL)
+No Simulador de Checklist, cada item tem:
+- **QUANDO** → `SEMPRE APARECE` / `SÓ APARECE SE…` (exige_quando) / `SOME SE…` (dispensa_quando), escolhendo a pergunta-pivô e a resposta. É o item com "reloginho".
+- **TAMBÉM PEDE O ARQUIVO** (só em perguntas) → grava `exige_documento_quando: "*"`.
+
+PROIBIDO: painel "Blocos prontos (ramificações)" / receitas prontas — removido a pedido do usuário. Não recriar.

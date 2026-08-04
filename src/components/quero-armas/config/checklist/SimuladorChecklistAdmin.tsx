@@ -22,7 +22,6 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
-import { RECEITAS, aplicarReceita, type ReceitaChecklist } from "@/lib/quero-armas/receitasChecklist";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -209,25 +208,6 @@ export default function SimuladorChecklistAdmin() {
 
   /**
    * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
-   */
-  async function aplicarBloco(receita: ReceitaChecklist) {
-    if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
-    setAdicionando(true);
-    try {
-      const r = await aplicarReceita(receita, servicoId);
-      toast.success(
-        `BLOCO APLICADO — ${r.criadas} CRIADA(S), ${r.atualizadas} AJUSTADA(S)`,
-      );
-      await carregar(servicoId);
-    } catch (e: any) {
-      toast.error("NÃO FOI POSSÍVEL APLICAR O BLOCO: " + (e?.message ?? "ERRO"));
-    } finally {
-      setAdicionando(false);
-    }
-  }
-
-  /**
-   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
    * (`ativo = false`), que é o mesmo mecanismo do Montar Checklist — o item
    * some do simulador, do portal do cliente e de todos os motores, e pode ser
    * reativado a qualquer momento (inclusive pelo DESFAZER do toast).
@@ -328,6 +308,77 @@ export default function SimuladorChecklistAdmin() {
     }
     toast.success(cond ? "CONDIÇÕES PROFISSIONAIS APLICADAS" : "EXIGÊNCIA AGORA VALE PARA TODOS");
   }
+
+  /** Grava um pedaço novo dentro de regra_validacao, preservando o resto. */
+  async function patchRegra(id: string, patch: Record<string, any>, msg: string) {
+    const anteriores = linhas;
+    const atual = linhas.find((l) => l.id === id);
+    const regra: Record<string, any> = { ...((atual?.regra_validacao as any) ?? {}) };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined || v === null) delete regra[k];
+      else regra[k] = v;
+    }
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, regra_validacao: regra } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ regra_validacao: regra })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success(msg);
+  }
+
+  /**
+   * RAMIFICAÇÃO (o "reloginho"): amarra a exigência à resposta de uma pergunta
+   * do próprio checklist. `aparece` = exige_quando (só aparece se responder X);
+   * `some` = dispensa_quando (some se responder X). Sem chave = sempre aparece.
+   */
+  function definirRamificacao(
+    id: string,
+    modo: "sempre" | "aparece" | "some",
+    chave?: string,
+    valor?: string,
+  ) {
+    if (modo === "sempre" || !chave || !valor) {
+      return patchRegra(id, { exige_quando: null, dispensa_quando: null }, "EXIGÊNCIA SEMPRE VISÍVEL");
+    }
+    const cond = { [chave]: valor };
+    return modo === "aparece"
+      ? patchRegra(id, { exige_quando: cond, dispensa_quando: null }, "SÓ APARECE COM ESSA RESPOSTA")
+      : patchRegra(id, { dispensa_quando: cond, exige_quando: null }, "SOME COM ESSA RESPOSTA");
+  }
+
+  /** Pergunta híbrida: além de responder, o cliente também anexa o documento. */
+  function alternarPerguntaHibrida(id: string, ligado: boolean) {
+    return patchRegra(
+      id,
+      { exige_documento_quando: ligado ? "*" : null },
+      ligado ? "AGORA TAMBÉM PEDE O ARQUIVO" : "AGORA É SÓ PERGUNTA",
+    );
+  }
+
+  /** Perguntas deste serviço que podem servir de gatilho de ramificação. */
+  const perguntasPivo = useMemo(
+    () =>
+      linhas
+        .filter((l) => (l as any).ativo !== false)
+        .map((l) => {
+          const r: any = l.regra_validacao ?? {};
+          const chave = r.chave as string | undefined;
+          const opcoes = Array.isArray(r.opcoes) ? r.opcoes : [];
+          if (!chave || opcoes.length === 0) return null;
+          return {
+            chave,
+            nome: l.nome_documento,
+            opcoes: opcoes.map((o: any) => ({ label: String(o.label ?? o.valor), valor: String(o.valor) })),
+          };
+        })
+        .filter(Boolean) as { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[],
+    [linhas],
+  );
 
   /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
@@ -799,37 +850,6 @@ export default function SimuladorChecklistAdmin() {
             </div>
 
 
-            {/* Blocos prontos — cria/repara ramificações inteiras com 1 clique */}
-            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(45 60% 97%)" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  Blocos prontos (ramificações)
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {RECEITAS.map((r) => (
-                  <div key={r.id} className="rounded border bg-white p-2" style={{ borderColor: LINE }}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold uppercase leading-snug" style={{ color: INK }}>{r.nome}</p>
-                        <p className="text-[11px] leading-snug mt-0.5" style={{ color: MUTED }}>{r.descricao}</p>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={adicionando || !servicoId}
-                        onClick={() => aplicarBloco(r)}
-                        className="shrink-0 rounded-md px-2.5 h-7 text-[11px] font-semibold uppercase tracking-wider text-white disabled:opacity-40"
-                        style={{ background: BORDO }}
-                      >
-                        Aplicar
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext
                 sensors={sensors}
@@ -873,6 +893,9 @@ export default function SimuladorChecklistAdmin() {
                               onMoverGrupo={moverItemParaGrupo}
                               onDefinirCondicao={definirCondicao}
                               onRenomear={renomearItem}
+                              perguntas={perguntasPivo}
+                              onDefinirRamificacao={definirRamificacao}
+                              onAlternarHibrida={alternarPerguntaHibrida}
                             />
                           ))}
                         </div>
@@ -997,6 +1020,9 @@ function LinhaItem({
   onMoverGrupo,
   onDefinirCondicao,
   onRenomear,
+  perguntas,
+  onDefinirRamificacao,
+  onAlternarHibrida,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
@@ -1007,6 +1033,9 @@ function LinhaItem({
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
+  perguntas: { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[];
+  onDefinirRamificacao: (id: string, modo: "sempre" | "aparece" | "some", chave?: string, valor?: string) => void;
+  onAlternarHibrida: (id: string, ligado: boolean) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -1018,6 +1047,17 @@ function LinhaItem({
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const [editandoNome, setEditandoNome] = useState(false);
+
+  const regra: any = (item.linha as any)?.regra_validacao ?? {};
+  const ramExige = regra.exige_quando && typeof regra.exige_quando === "object" ? regra.exige_quando : null;
+  const ramDispensa = regra.dispensa_quando && typeof regra.dispensa_quando === "object" ? regra.dispensa_quando : null;
+  const ramModo: "sempre" | "aparece" | "some" = ramExige ? "aparece" : ramDispensa ? "some" : "sempre";
+  const ramChave = String(Object.keys(ramExige ?? ramDispensa ?? {})[0] ?? "");
+  const ramValor = String((ramExige ?? ramDispensa ?? {})[ramChave] ?? "");
+  // Só faz sentido amarrar a OUTRA pergunta, nunca a si mesma.
+  const gatilhos = perguntas.filter((p) => p.chave !== item.chave);
+  const opcoesGatilho = gatilhos.find((p) => p.chave === ramChave)?.opcoes ?? [];
+  const hibrida = regra.exige_documento_quando != null;
 
   return (
     <div
@@ -1129,6 +1169,79 @@ function LinhaItem({
             ))}
           </select>
         </div>
+
+        {/* RAMIFICAÇÃO — o "reloginho": amarra esta exigência à resposta de uma pergunta */}
+        {gatilhos.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <span className="text-[11px] uppercase" style={{ color: MUTED }}>quando</span>
+            <select
+              value={ramModo}
+              onChange={(e) => {
+                const modo = e.currentTarget.value as "sempre" | "aparece" | "some";
+                if (modo === "sempre") onDefinirRamificacao(item.id, "sempre");
+                else {
+                  const p = gatilhos.find((x) => x.chave === ramChave) ?? gatilhos[0];
+                  onDefinirRamificacao(item.id, modo, p.chave, ramValor || p.opcoes[0]?.valor);
+                }
+              }}
+              className="h-5 rounded border bg-white px-1 text-[11px] uppercase"
+              style={{ borderColor: LINE, color: INK }}
+              title="Aparece sempre, ou só depois de uma resposta específica do cliente"
+            >
+              <option value="sempre">SEMPRE APARECE</option>
+              <option value="aparece">SÓ APARECE SE…</option>
+              <option value="some">SOME SE…</option>
+            </select>
+            {ramModo !== "sempre" && (
+              <>
+                <select
+                  value={ramChave || gatilhos[0].chave}
+                  onChange={(e) => {
+                    const p = gatilhos.find((x) => x.chave === e.currentTarget.value)!;
+                    onDefinirRamificacao(item.id, ramModo, p.chave, p.opcoes[0]?.valor);
+                  }}
+                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Pergunta que controla esta exigência"
+                >
+                  {gatilhos.map((p) => (
+                    <option key={p.chave} value={p.chave}>{p.nome}</option>
+                  ))}
+                </select>
+                <span className="text-[11px] uppercase" style={{ color: MUTED }}>for</span>
+                <select
+                  value={ramValor}
+                  onChange={(e) => onDefinirRamificacao(item.id, ramModo, ramChave || gatilhos[0].chave, e.currentTarget.value)}
+                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Resposta que dispara a regra"
+                >
+                  {(opcoesGatilho.length ? opcoesGatilho : gatilhos[0].opcoes).map((o) => (
+                    <option key={o.valor} value={o.valor}>{o.label}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* PERGUNTA HÍBRIDA — responde E anexa o arquivo na mesma linha */}
+        {item.tipo === "pergunta" && !!item.chave && (
+          <label
+            className="mt-1 flex items-center gap-1.5 text-[11px] uppercase"
+            style={{ color: MUTED }}
+            onClick={(e) => e.stopPropagation()}
+            title="Marque para o cliente responder E enviar o arquivo nesta mesma exigência (ex.: laudo psicológico)"
+          >
+            <input
+              type="checkbox"
+              checked={hibrida}
+              onChange={(e) => onAlternarHibrida(item.id, e.currentTarget.checked)}
+              className="h-3 w-3 accent-[#7A1F2B]"
+            />
+            também pede o arquivo (responder + anexar)
+          </label>
+        )}
 
         {item.tipo !== "pergunta" && (() => {
           const selecionadas = parseCondicoes(item.linha?.condicao_profissional);
