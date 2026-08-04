@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, RefreshCw } from "lucide-react";
+import { Users, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
 /**
  * Card "Clientes na Área do Cliente".
@@ -21,12 +21,24 @@ const JANELA_MIN = 30;
 interface AcessoHoje extends Acesso {
   nome?: string | null;
   processos?: { nome: string; status: string | null }[];
+  entradas_hoje?: number;
+  entradas_total?: number;
+}
+
+interface ResumoCliente {
+  chave: string;
+  rotulo: string;
+  total: number;
+  primeiro: string;
+  ultimo: string;
 }
 
 export default function DashboardClientesOnline() {
   const [online, setOnline] = useState<Acesso[]>([]);
   const [hoje, setHoje] = useState(0);
   const [acessosHoje, setAcessosHoje] = useState<AcessoHoje[]>([]);
+  const [resumo, setResumo] = useState<ResumoCliente[]>([]);
+  const [verHistorico, setVerHistorico] = useState(false);
   const [loading, setLoading] = useState(true);
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
 
@@ -74,11 +86,17 @@ export default function DashboardClientesOnline() {
       const linhas = ((eventosHoje ?? []) as any[]) as Acesso[];
       const vistos = new Set<string>();
       const unicos: AcessoHoje[] = [];
+      const contagemHoje = new Map<string, number>();
+      for (const l of linhas) {
+        const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
+        if (!chave) continue;
+        contagemHoje.set(chave, (contagemHoje.get(chave) ?? 0) + 1);
+      }
       for (const l of linhas) {
         const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
         if (!chave || vistos.has(chave)) continue;
         vistos.add(chave);
-        unicos.push({ ...l });
+        unicos.push({ ...l, entradas_hoje: contagemHoje.get(chave) ?? 1 });
       }
 
       const ids = unicos.map((u) => u.qa_cliente_id).filter(Boolean) as any[];
@@ -113,6 +131,39 @@ export default function DashboardClientesOnline() {
         }
       }
       setAcessosHoje(unicos);
+    } catch {
+      /* silencioso */
+    }
+
+    // Resumo histórico (todas as entradas por cliente)
+    try {
+      const { data: todos } = await supabase
+        .from("qa_cliente_login_eventos" as any)
+        .select("qa_cliente_id,user_id,email,created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+
+      const mapa = new Map<string, ResumoCliente>();
+      for (const l of (((todos ?? []) as any[]) as Acesso[])) {
+        const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
+        if (!chave) continue;
+        const atual = mapa.get(chave);
+        if (!atual) {
+          mapa.set(chave, {
+            chave,
+            rotulo: l.email ?? "cliente",
+            total: 1,
+            primeiro: l.created_at,
+            ultimo: l.created_at,
+          });
+        } else {
+          atual.total += 1;
+          if (l.created_at < atual.primeiro) atual.primeiro = l.created_at;
+          if (l.created_at > atual.ultimo) atual.ultimo = l.created_at;
+          if (!atual.rotulo || atual.rotulo === "cliente") atual.rotulo = l.email ?? atual.rotulo;
+        }
+      }
+      setResumo([...mapa.values()].sort((a, b) => b.total - a.total));
     } catch {
       /* silencioso */
     }
@@ -210,7 +261,19 @@ export default function DashboardClientesOnline() {
                     <span className="truncate font-semibold uppercase" style={{ color: "hsl(220 20% 25%)" }}>
                       {a.nome || a.email || "CLIENTE"}
                     </span>
-                    <span style={{ color: "hsl(220 10% 62%)" }}>
+                    <span className="flex items-center gap-1.5 flex-shrink-0" style={{ color: "hsl(220 10% 62%)" }}>
+                      <span
+                        className="px-1.5 py-[1px] rounded-full text-[10px] tabular-nums"
+                        style={{ background: "hsl(220 14% 95%)", color: "hsl(220 10% 45%)" }}
+                        title="Entradas hoje · total histórico"
+                      >
+                        {a.entradas_hoje ?? 1}x hoje
+                        {(() => {
+                          const k = String(a.qa_cliente_id || a.user_id || a.email || "");
+                          const r = resumo.find((x) => x.chave === k);
+                          return r ? ` · ${r.total} total` : "";
+                        })()}
+                      </span>
                       {new Date(a.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
@@ -238,6 +301,33 @@ export default function DashboardClientesOnline() {
         <p className="mt-3 text-[10px]" style={{ color: "hsl(220 10% 70%)" }}>
           Atualizado às {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
         </p>
+      )}
+
+      {resumo.length > 0 && (
+        <div className="mt-2 border-t pt-2" style={{ borderColor: "hsl(220 14% 92%)" }}>
+          <button
+            type="button"
+            onClick={() => setVerHistorico((v) => !v)}
+            className="flex items-center gap-1 text-[10px] font-semibold hover:opacity-80"
+            style={{ color: "hsl(220 10% 55%)" }}
+          >
+            {verHistorico ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            HISTÓRICO DE ENTRADAS POR CLIENTE ({resumo.length})
+          </button>
+          {verHistorico && (
+            <ul className="mt-2 space-y-1">
+              {resumo.map((r) => (
+                <li key={r.chave} className="flex items-center justify-between gap-2 text-[10px]">
+                  <span className="truncate" style={{ color: "hsl(220 20% 30%)" }}>{r.rotulo}</span>
+                  <span className="flex-shrink-0 tabular-nums" style={{ color: "hsl(220 10% 60%)" }}>
+                    {r.total}x · {new Date(r.primeiro).toLocaleDateString("pt-BR")} → {new Date(r.ultimo).toLocaleDateString("pt-BR")}{" "}
+                    {new Date(r.ultimo).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
