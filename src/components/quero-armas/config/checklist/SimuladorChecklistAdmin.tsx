@@ -741,7 +741,7 @@ export default function SimuladorChecklistAdmin() {
             </div>
 
             {mostrarNovaPergunta && (
-              <div className="grid gap-3 border-b bg-muted/30 p-4 md:grid-cols-[minmax(0,1.5fr)_minmax(220px,1fr)_auto]" style={{ borderColor: LINE }}>
+              <div className="grid min-w-0 gap-3 border-b bg-muted/30 p-4" style={{ borderColor: LINE }}>
                 <label className="min-w-0">
                   <span className="qa-kpi-label mb-1.5 block">O que deseja perguntar?</span>
                   <input value={novaPergunta} onChange={(e) => setNovaPergunta(e.target.value)} placeholder="EX.: VOCÊ PERTENCE À SEGURANÇA PÚBLICA?" className="h-9 w-full rounded-md border bg-background px-3 text-xs uppercase" />
@@ -750,7 +750,7 @@ export default function SimuladorChecklistAdmin() {
                   <span className="qa-kpi-label mb-1.5 block">Respostas · uma por linha</span>
                   <textarea value={novasOpcoes} onChange={(e) => setNovasOpcoes(e.target.value)} className="min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-xs uppercase" />
                 </label>
-                <Button type="button" size="sm" className="self-end" disabled={salvandoRota || !novaPergunta.trim()} onClick={() => void criarPergunta()}>
+                <Button type="button" size="sm" className="w-full justify-center" disabled={salvandoRota || !novaPergunta.trim()} onClick={() => void criarPergunta()}>
                   {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Criar
                 </Button>
               </div>
@@ -763,25 +763,24 @@ export default function SimuladorChecklistAdmin() {
                   <p className="qa-caption mt-1">Exemplo: “Você pertence à Segurança Pública?” com as respostas “Sim” e “Não”.</p>
                 </div>
               ) : (
-                <div className="grid gap-2 md:grid-cols-[minmax(190px,1fr)_minmax(160px,.7fr)_32px_minmax(250px,1.2fr)_auto] md:items-end">
+                <div className="grid min-w-0 grid-cols-1 gap-3">
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">SE esta pergunta</span>
-                    <select value={rotaPergunta} onChange={(e) => { setRotaPergunta(e.target.value); setRotaResposta(""); }} className="h-10 w-full rounded-md border bg-background px-2 text-xs">
+                    <select value={rotaPergunta} onChange={(e) => { setRotaPergunta(e.target.value); setRotaResposta(""); }} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
                       <option value="">ESCOLHA A PERGUNTA...</option>
                       {perguntasPivo.map((p) => <option key={p.chave} value={p.chave}>{p.nome}</option>)}
                     </select>
                   </label>
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">Receber a resposta</span>
-                    <select value={rotaResposta} disabled={!rotaPergunta} onChange={(e) => setRotaResposta(e.target.value)} className="h-10 w-full rounded-md border bg-background px-2 text-xs disabled:opacity-50">
+                    <select value={rotaResposta} disabled={!rotaPergunta} onChange={(e) => setRotaResposta(e.target.value)} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs disabled:opacity-50">
                       <option value="">ESCOLHA...</option>
                       {(perguntasPivo.find((p) => p.chave === rotaPergunta)?.opcoes ?? []).map((o) => <option key={o.valor} value={o.valor}>{o.label}</option>)}
                     </select>
                   </label>
-                  <div className="hidden h-10 items-center justify-center md:flex"><ArrowRight className="h-4 w-4 text-primary" /></div>
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">ENTÃO pedir ou mostrar</span>
-                    <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="h-10 w-full rounded-md border bg-background px-2 text-xs">
+                    <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
                       <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
                       <optgroup label="PERGUNTAS E DOCUMENTOS QUE JÁ ESTÃO NO CHECKLIST">
                         {linhas.filter((l) => (l as any).ativo !== false && (l.regra_validacao as any)?.chave !== rotaPergunta).map((l) => <option key={l.id} value={`linha:${l.id}`}>{(l.regra_validacao as any)?.tipo === "pergunta" ? "PERGUNTAR: " : "PEDIR DOCUMENTO: "}{l.nome_documento}</option>)}
@@ -791,7 +790,7 @@ export default function SimuladorChecklistAdmin() {
                       </optgroup>
                     </select>
                   </label>
-                  <Button type="button" className="h-10" disabled={salvandoRota || !rotaPergunta || !rotaResposta || !rotaDestino} onClick={() => void salvarRotaLeiga()}>
+                  <Button type="button" className="h-10 w-full justify-center" disabled={salvandoRota || !rotaPergunta || !rotaResposta || !rotaDestino} onClick={() => void salvarRotaLeiga()}>
                     {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar caminho
                   </Button>
                 </div>
