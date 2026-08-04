@@ -71,11 +71,11 @@ export default function SimuladorChecklistAdmin() {
   const [novasOpcoes, setNovasOpcoes] = useState("SIM\nNÃO");
   const [rotaPergunta, setRotaPergunta] = useState("");
   const [rotaResposta, setRotaResposta] = useState("");
-  const [rotaDestino, setRotaDestino] = useState("");
+  const [rotaDestinos, setRotaDestinos] = useState<string[]>([]);
   const [rotaBuscaDestino, setRotaBuscaDestino] = useState("");
   const [rotaInline, setRotaInline] = useState<{ chave: string; valor: string } | null>(null);
   const [inlineBusca, setInlineBusca] = useState("");
-  const [inlineDestino, setInlineDestino] = useState("");
+  const [inlineDestinos, setInlineDestinos] = useState<string[]>([]);
   const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
@@ -397,43 +397,44 @@ export default function SimuladorChecklistAdmin() {
   );
 
   /** Lista de destinos possíveis para um caminho (usada no formulário e no mapa). */
-  function calcularDestinos(perguntaChave: string, busca: string, destinoSel: string) {
+  function calcularDestinos(perguntaChave: string, busca: string, destinosSel: string[]) {
     const termo = busca.trim().toLocaleLowerCase("pt-BR");
     const casaBusca = (nome: string, codigo: string) =>
       !termo || nome.toLocaleLowerCase("pt-BR").includes(termo) || codigo.toLocaleLowerCase("pt-BR").includes(termo);
     const existentes = linhas.filter((l) =>
       (l as any).ativo !== false &&
       (l.regra_validacao as any)?.chave !== perguntaChave &&
-      (casaBusca(l.nome_documento, l.tipo_documento) || destinoSel === `linha:${l.id}`)
+      (casaBusca(l.nome_documento, l.tipo_documento) || destinosSel.includes(`linha:${l.id}`))
     );
     const novos = biblioteca.filter((b) =>
       !linhas.some((l) =>
         (l as any).ativo !== false &&
         (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id),
       ) &&
-      (casaBusca(b.nome, b.codigo) || destinoSel === `bib:${b.id}`)
+      (casaBusca(b.nome, b.codigo) || destinosSel.includes(`bib:${b.id}`))
     );
     return { existentes, novos };
   }
 
   const destinosRota = useMemo(
-    () => calcularDestinos(rotaPergunta, rotaBuscaDestino, rotaDestino),
+    () => calcularDestinos(rotaPergunta, rotaBuscaDestino, rotaDestinos),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta],
+    [biblioteca, linhas, rotaBuscaDestino, rotaDestinos, rotaPergunta],
   );
 
   const destinosInline = useMemo(
-    () => calcularDestinos(rotaInline?.chave ?? "", inlineBusca, inlineDestino),
+    () => calcularDestinos(rotaInline?.chave ?? "", inlineBusca, inlineDestinos),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [biblioteca, linhas, inlineBusca, inlineDestino, rotaInline],
+    [biblioteca, linhas, inlineBusca, inlineDestinos, rotaInline],
   );
 
   function rotuloDestinoExistente(linha: LinhaCatalogo): string {
-    const regra: any = linha.regra_validacao ?? {};
-    if (regra.tipo === "pergunta" && regra.exige_documento_quando != null) {
-      return `ACIONAR ENVIO DO DOCUMENTO: ${linha.nome_documento}`;
-    }
-    return `${regra.tipo === "pergunta" ? "PERGUNTAR" : "PEDIR DOCUMENTO"}: ${linha.nome_documento}`;
+    return `SOLICITAR DOCUMENTO: ${linha.nome_documento}`;
+  }
+
+  function alternarDestino(valor: string, escopo: "principal" | "inline") {
+    const setter = escopo === "principal" ? setRotaDestinos : setInlineDestinos;
+    setter((atuais) => atuais.includes(valor) ? atuais.filter((v) => v !== valor) : [...atuais, valor]);
   }
 
   const slugRegra = (valor: string) =>
@@ -479,9 +480,9 @@ export default function SimuladorChecklistAdmin() {
   async function salvarRotaLeiga(
     perguntaChave = rotaPergunta,
     respostaValor = rotaResposta,
-    destinoSel = rotaDestino,
+    destinosSel: string[] = rotaDestinos,
   ) {
-    if (!servicoId || !perguntaChave || !respostaValor || !destinoSel) {
+    if (!servicoId || !perguntaChave || !respostaValor || destinosSel.length === 0) {
       toast.error("PREENCHA O SE, A RESPOSTA E O ENTÃO");
       return;
     }
@@ -489,7 +490,8 @@ export default function SimuladorChecklistAdmin() {
     if (!origem) return;
     setSalvandoRota(true);
     try {
-      if (destinoSel.startsWith("linha:")) {
+      for (const destinoSel of destinosSel) {
+       if (destinoSel.startsWith("linha:")) {
         const id = destinoSel.slice(6);
         // Um mesmo documento pode servir a MAIS DE UMA resposta: acumulamos os
         // valores em lista em vez de sobrescrever o caminho anterior.
@@ -521,7 +523,7 @@ export default function SimuladorChecklistAdmin() {
             depende_de: null,
           } : {}),
         }, eraDocumentoComPergunta ? "ENVIO DO DOCUMENTO ACIONADO NESTE CAMINHO" : "CAMINHO SALVO");
-      } else if (destinoSel.startsWith("bib:")) {
+       } else if (destinoSel.startsWith("bib:")) {
         const item = biblioteca.find((b) => b.id === destinoSel.slice(4));
         if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
         const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
@@ -534,11 +536,12 @@ export default function SimuladorChecklistAdmin() {
           regra_validacao: { exige_quando: { [perguntaChave]: respostaValor } },
         });
         if (error) throw error;
-        toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
+       }
       }
-      setRotaDestino("");
+      toast.success(destinosSel.length > 1 ? `${destinosSel.length} DOCUMENTOS SOLICITADOS NESTE CAMINHO` : "DOCUMENTO SOLICITADO NESTE CAMINHO");
+      setRotaDestinos([]);
       setRotaBuscaDestino("");
-      setInlineDestino("");
+      setInlineDestinos([]);
       setInlineBusca("");
       setRotaInline(null);
       await carregar(servicoId);
