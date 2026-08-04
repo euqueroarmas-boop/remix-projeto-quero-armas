@@ -893,6 +893,9 @@ export default function SimuladorChecklistAdmin() {
                               onMoverGrupo={moverItemParaGrupo}
                               onDefinirCondicao={definirCondicao}
                               onRenomear={renomearItem}
+                              perguntas={perguntasPivo}
+                              onDefinirRamificacao={definirRamificacao}
+                              onAlternarHibrida={alternarPerguntaHibrida}
                             />
                           ))}
                         </div>
