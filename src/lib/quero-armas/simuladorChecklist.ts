@@ -60,7 +60,7 @@ export type ItemSimulado = {
   motivo?: string;
   chave?: string;
   opcoes?: OpcaoPergunta[];
-  dependeDe?: { chave: string; valor: string };
+  dependeDe?: { chave: string; valores: string[] };
   linha: LinhaCatalogo;
 };
 
@@ -222,20 +222,26 @@ function opcoesPergunta(rv: any, tipoDocumento?: string): OpcaoPergunta[] | unde
   return undefined;
 }
 
+/** Normaliza um valor de condição para lista (aceita string ou array). */
+function valoresCondicao(v: any): string[] {
+  if (Array.isArray(v)) return v.map((x) => String(x));
+  return [String(v ?? "")];
+}
+
 /** Extrai a dependência do item nos dois formatos legados aceitos no banco. */
-function extrairDependencia(rv: any): { chave: string; valor: string } | null {
+function extrairDependencia(rv: any): { chave: string; valores: string[] } | null {
   if (!rv || typeof rv !== "object") return null;
   if (rv.depende_de && typeof rv.depende_de === "object" && rv.depende_de.chave) {
-    return { chave: String(rv.depende_de.chave), valor: String(rv.depende_de.valor ?? "") };
+    return { chave: String(rv.depende_de.chave), valores: valoresCondicao(rv.depende_de.valor) };
   }
   if (rv.exige_quando && typeof rv.exige_quando === "object") {
     const chaves = Object.keys(rv.exige_quando);
     if (chaves.length === 1) {
-      return { chave: chaves[0], valor: String(rv.exige_quando[chaves[0]] ?? "") };
+      return { chave: chaves[0], valores: valoresCondicao(rv.exige_quando[chaves[0]]) };
     }
   }
   if (rv.condicional && typeof rv.condicional === "object" && rv.condicional.depende_de) {
-    return { chave: String(rv.condicional.depende_de), valor: String(rv.condicional.valor ?? "") };
+    return { chave: String(rv.condicional.depende_de), valores: valoresCondicao(rv.condicional.valor) };
   }
   return null;
 }
@@ -348,13 +354,16 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       // (ex.: servidor de segurança pública usa os exames da instituição).
       const disp = (rv as any)?.dispensa_quando;
       if (disp && typeof disp === "object") {
-        const entradas = Object.entries(disp as Record<string, string>);
-        if (entradas.length > 0 && entradas.every(([k, v]) => respostas[k] === v)) {
+        const entradas = Object.entries(disp as Record<string, any>);
+        if (
+          entradas.length > 0 &&
+          entradas.every(([k, v]) => valoresCondicao(v).includes(String(respostas[k])))
+        ) {
           const [k, v] = entradas[0];
           return paraItem(
             l,
             "dispensado",
-            `DISPENSADO PORQUE "${k.toUpperCase()}" = ${String(v).toUpperCase()}`,
+            `DISPENSADO PORQUE "${k.toUpperCase()}" = ${valoresCondicao(v).join(" OU ").toUpperCase()}`,
           );
         }
       }
@@ -372,7 +381,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
         if (resposta == null) {
           return paraItem(l, "aguardando", `AGUARDA A RESPOSTA DE "${dep.chave.toUpperCase()}"`);
         }
-        if (resposta !== dep.valor) {
+        if (!dep.valores.includes(String(resposta))) {
           return paraItem(
             l,
             "dispensado",
