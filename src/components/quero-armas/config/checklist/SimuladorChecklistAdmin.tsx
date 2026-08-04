@@ -72,6 +72,7 @@ export default function SimuladorChecklistAdmin() {
   const [rotaPergunta, setRotaPergunta] = useState("");
   const [rotaResposta, setRotaResposta] = useState("");
   const [rotaDestino, setRotaDestino] = useState("");
+  const [rotaBuscaDestino, setRotaBuscaDestino] = useState("");
   const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
@@ -389,6 +390,33 @@ export default function SimuladorChecklistAdmin() {
     [linhas],
   );
 
+  const destinosRota = useMemo(() => {
+    const termo = rotaBuscaDestino.trim().toLocaleLowerCase("pt-BR");
+    const casaBusca = (nome: string, codigo: string) =>
+      !termo || nome.toLocaleLowerCase("pt-BR").includes(termo) || codigo.toLocaleLowerCase("pt-BR").includes(termo);
+    const existentes = linhas.filter((l) =>
+      (l as any).ativo !== false &&
+      (l.regra_validacao as any)?.chave !== rotaPergunta &&
+      (casaBusca(l.nome_documento, l.tipo_documento) || rotaDestino === `linha:${l.id}`)
+    );
+    const novos = biblioteca.filter((b) =>
+      !linhas.some((l) =>
+        (l as any).ativo !== false &&
+        (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id),
+      ) &&
+      (casaBusca(b.nome, b.codigo) || rotaDestino === `bib:${b.id}`)
+    );
+    return { existentes, novos };
+  }, [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta]);
+
+  function rotuloDestinoExistente(linha: LinhaCatalogo): string {
+    const regra: any = linha.regra_validacao ?? {};
+    if (regra.tipo === "pergunta" && regra.exige_documento_quando != null) {
+      return `PEDIR DOCUMENTO (RESPONDER + ANEXAR): ${linha.nome_documento}`;
+    }
+    return `${regra.tipo === "pergunta" ? "PERGUNTAR" : "PEDIR DOCUMENTO"}: ${linha.nome_documento}`;
+  }
+
   const slugRegra = (valor: string) =>
     valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
       .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 52);
@@ -473,6 +501,7 @@ export default function SimuladorChecklistAdmin() {
         toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
       }
       setRotaDestino("");
+      setRotaBuscaDestino("");
       await carregar(servicoId);
     } catch (e: any) {
       toast.error("NÃO FOI POSSÍVEL SALVAR O CAMINHO: " + String(e?.message ?? "ERRO"));
@@ -875,15 +904,28 @@ export default function SimuladorChecklistAdmin() {
                   </label>
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">ENTÃO pedir ou mostrar</span>
+                    <div className="relative mb-2">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        value={rotaBuscaDestino}
+                        onChange={(e) => setRotaBuscaDestino(e.target.value)}
+                        placeholder="BUSQUE: LAUDO PSICOLÓGICO, CERTIDÃO..."
+                        className="h-10 w-full rounded-md border bg-background pl-9 pr-3 text-xs uppercase"
+                        aria-label="Buscar documento ou pergunta para adicionar ao caminho"
+                      />
+                    </div>
                     <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
                       <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
                       <optgroup label="PERGUNTAS E DOCUMENTOS QUE JÁ ESTÃO NO CHECKLIST">
-                        {linhas.filter((l) => (l as any).ativo !== false && (l.regra_validacao as any)?.chave !== rotaPergunta).map((l) => <option key={l.id} value={`linha:${l.id}`}>{(l.regra_validacao as any)?.tipo === "pergunta" ? "PERGUNTAR: " : "PEDIR DOCUMENTO: "}{l.nome_documento}</option>)}
+                        {destinosRota.existentes.map((l) => <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>)}
                       </optgroup>
                       <optgroup label="ADICIONAR DOCUMENTO DA BIBLIOTECA">
-                        {biblioteca.filter((b) => !linhas.some((l) => (l as any).ativo !== false && (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id))).map((b) => <option key={b.id} value={`bib:${b.id}`}>PEDIR DOCUMENTO: {b.nome}</option>)}
+                        {destinosRota.novos.map((b) => <option key={b.id} value={`bib:${b.id}`}>PEDIR DOCUMENTO: {b.nome}</option>)}
                       </optgroup>
                     </select>
+                    {rotaBuscaDestino.trim() && destinosRota.existentes.length === 0 && destinosRota.novos.length === 0 && (
+                      <span className="mt-1.5 block text-xs text-destructive">NENHUM DOCUMENTO ENCONTRADO COM ESSE NOME.</span>
+                    )}
                   </label>
                   <Button type="button" className="h-10 w-full justify-center" disabled={salvandoRota || !rotaPergunta || !rotaResposta || !rotaDestino} onClick={() => void salvarRotaLeiga()}>
                     {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar caminho
