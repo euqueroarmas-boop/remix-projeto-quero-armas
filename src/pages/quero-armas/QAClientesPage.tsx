@@ -1584,6 +1584,9 @@ export default function QAClientesPage() {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string; mode?: "delete" | "archive" }>({ open: false, table: "", id: 0, title: "", desc: "" });
+  // Exclusão LGPD definitiva — modal in-app (substitui window.confirm/prompt,
+  // bloqueados no Safari mobile e em navegação privada).
+  const [purgeModal, setPurgeModal] = useState<{ open: boolean; cliente: any | null; texto: string; loading: boolean }>({ open: false, cliente: null, texto: "", loading: false });
   const [deleting, setDeleting] = useState(false);
   // Filtro de arquivamento — Ativos por padrão.
   const [archivedFilter, setArchivedFilter] = useState<"ativos" | "arquivados" | "todos">("ativos");
