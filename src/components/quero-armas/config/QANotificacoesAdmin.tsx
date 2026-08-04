@@ -318,6 +318,29 @@ export default function QANotificacoesAdmin() {
                   </div>
                   <p className="text-[12px] font-medium mt-0.5" style={{ color: "hsl(220 20% 25%)" }}>{n.titulo}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{n.mensagem}</p>
+                  {n.categoria === "cadastro_atualizado" && (() => {
+                    const cli = cadastroAtual[n.cliente_id];
+                    const rotulos = rotulosDaMensagem(n.mensagem).filter((r) => ROTULO_PARA_COLUNA[r]);
+                    if (!cli || rotulos.length === 0) return null;
+                    return (
+                      <div className="mt-1.5 rounded-md border bg-slate-50/70 px-2 py-1.5" style={{ borderColor: "hsl(220 13% 91%)" }}>
+                        <p className="text-[9px] uppercase tracking-[0.14em] mb-1" style={{ color: "hsl(220 10% 62%)" }}>
+                          O que está gravado hoje no cadastro
+                        </p>
+                        <div className="space-y-0.5">
+                          {rotulos.map((r) => {
+                            const valor = cli[ROTULO_PARA_COLUNA[r]];
+                            return (
+                              <p key={r} className="text-[11px]" style={{ color: "hsl(220 20% 25%)" }}>
+                                <span style={{ color: "hsl(220 10% 55%)" }}>{r}: </span>
+                                <span className="font-medium">{valor === null || valor === undefined || valor === "" ? "—" : String(valor)}</span>
+                              </p>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <p className="text-[10px] mt-1" style={{ color: "hsl(220 10% 70%)" }}>
                     Criada: {fmt(n.created_at)}
                     {n.expira_em ? ` · Expira: ${fmt(n.expira_em)}` : " · Sem prazo (até resolver)"}
