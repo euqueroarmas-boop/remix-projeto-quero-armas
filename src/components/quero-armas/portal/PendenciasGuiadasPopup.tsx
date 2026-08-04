@@ -307,12 +307,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     : [];
   const passosRegistro = Array.isArray(explicBase.passos) ? explicBase.passos : [];
+  // Se o passo a passo veio da Biblioteca de documentos, ele é definitivo:
+  // é lá que o admin gerencia o texto (fonte única). O catálogo do serviço
+  // (qa_servicos_documentos) só entra quando a biblioteca não tem nada.
+  const daBiblioteca =
+    !isSignature && bibliotecaCarregada &&
+    temExplicacaoBiblioteca(active.rawTipo || active.tipo, active.tipo);
   const usarCatalogo =
     !isSignature &&
+    !daBiblioteca &&
     passosCatalogo.length > 0 &&
     (passosRegistro.length === 0 || passosCatalogo.length >= passosRegistro.length);
   const mesclarCatalogo =
-    !isSignature && passosCatalogo.length > 0 && !usarCatalogo;
+    !isSignature && !daBiblioteca && passosCatalogo.length > 0 && !usarCatalogo;
   const explic = usarCatalogo
     ? {
         ...explicBase,
