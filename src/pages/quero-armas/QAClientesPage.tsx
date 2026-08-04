@@ -116,6 +116,7 @@ import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboar
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
 import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.
@@ -1554,6 +1555,8 @@ export default function QAClientesPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
   const [tab, setTab] = useState("resumo");
+  const tabsScroll = useDragScroll<HTMLDivElement>();
+  useEffect(() => { tabsScroll.scrollActiveIntoView(); }, [tab]);
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
