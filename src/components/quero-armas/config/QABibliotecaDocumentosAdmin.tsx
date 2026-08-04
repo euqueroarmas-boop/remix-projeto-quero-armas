@@ -304,22 +304,11 @@ export default function QABibliotecaDocumentosAdmin() {
           <RefreshCw className="w-3 h-3" /> Atualizar
         </Button>
       </div>
-      <div className="flex justify-end mb-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={importarTextosDoAssistente}
-          disabled={importando || carregando}
-          className="h-7 text-xs gap-1 text-[#7A1F2B]"
-        >
-          {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-          Sincronizar passo a passo com o portal do cliente
-        </Button>
-      </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Fonte única de todos os documentos que os serviços podem exigir do cliente. Cada item aqui traz o
-        <b> passo a passo </b> que aparece no portal do cliente. Ao criar um serviço novo, você não escreve
-        nada de novo — só marca quais documentos da biblioteca esse serviço consome.
+        Fonte única de todos os documentos que os serviços podem exigir do cliente. O que você escreve aqui
+        em <b>“Como enviar”</b> é exatamente o <b>passo a passo que o cliente vê</b> no portal — não existe
+        outro lugar para editar esse texto. Ao criar um serviço novo, você não escreve nada de novo, só marca
+        quais documentos da biblioteca esse serviço consome.
       </p>
 
       {/* Toolbar de busca */}
