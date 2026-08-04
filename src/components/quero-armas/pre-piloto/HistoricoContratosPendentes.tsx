@@ -18,6 +18,7 @@ type ContratoItem = {
   cliente_id: number;
   cliente_nome: string;
   cliente_email: string | null;
+  cliente_cpf: string | null;
   servico_nome: string | null;
   gerado_em: string;
   link_assinatura: string | null;
@@ -39,16 +40,41 @@ function statusLabel(s: string) {
     signed_pending_validation: { label: "Assinado — validando", color: "text-blue-700 bg-blue-50 border-blue-200" },
     validated: { label: "Validado", color: "text-green-700 bg-green-50 border-green-200" },
     signed: { label: "Assinado", color: "text-green-700 bg-green-50 border-green-200" },
+    customer_signature_uploaded: { label: "Assinado — validando", color: "text-green-700 bg-green-50 border-green-200" },
+    validating: { label: "Assinado — validando", color: "text-green-700 bg-green-50 border-green-200" },
+    arquivado_template_legado: { label: "Arquivado (template legado)", color: "text-muted-foreground bg-muted border-muted" },
+    rejected: { label: "Rejeitado", color: "text-red-700 bg-red-50 border-red-200" },
     cancelled: { label: "Cancelado", color: "text-red-700 bg-red-50 border-red-200" },
   };
   return map[s] ?? { label: s, color: "text-muted-foreground bg-muted border-muted" };
 }
+
+const STATUS_AGUARDANDO = [
+  "generated_pending_company_signature",
+  "pending_customer_signature",
+  "pending_company_signature",
+];
+const STATUS_ASSINADO = [
+  "customer_signature_uploaded",
+  "validating",
+  "signed_pending_validation",
+  "signed",
+  "validated",
+];
+
+function isAssinado(status: string) {
+  return STATUS_ASSINADO.includes(status);
+}
+
+type Filtro = "aguardando" | "assinados" | "todos";
 
 export type HistoricoContratosPendentesHandle = { carregar: () => void };
 
 const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle>(function HistoricoContratosPendentes(_, ref) {
   const navigate = useNavigate();
   const [contratos, setContratos] = useState<ContratoItem[]>([]);
+  const [filtro, setFiltro] = useState<Filtro>("aguardando");
+  const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [expandido, setExpandido] = useState<string | null>(null);
   const [uploadArquivo, setUploadArquivo] = useState<File | null>(null);
@@ -73,21 +99,16 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       const { data: contratoRows } = await supabase
         .from("qa_contracts" as any)
         .select("id, status, venda_id, cliente_id, created_at")
-        .in("status", [
-          "generated_pending_company_signature",
-          "pending_customer_signature",
-          "customer_signature_uploaded",
-          "validating",
-        ])
+        .in("status", [...STATUS_AGUARDANDO, ...STATUS_ASSINADO])
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(200);
 
       if (!contratoRows?.length) { setContratos([]); setCarregando(false); return; }
 
       const clienteIds = [...new Set((contratoRows as any[]).map((c) => c.cliente_id))];
       const { data: clientes } = await supabase
         .from("qa_clientes" as any)
-        .select("id, nome_completo, email")
+        .select("id, nome_completo, email, cpf")
         .in("id", clienteIds);
 
       const clienteMap = Object.fromEntries(((clientes ?? []) as any[]).map((c) => [c.id, c]));
@@ -106,6 +127,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           cliente_id: c.cliente_id,
           cliente_nome: cli.nome_completo ?? det.cliente_nome ?? "—",
           cliente_email: cli.email ?? null,
+          cliente_cpf: cli.cpf ?? null,
           servico_nome: det.servico_nome ?? null,
           gerado_em: c.created_at,
           link_assinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${c.id}`,
@@ -153,6 +175,13 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   }
 
   async function excluirPermanente(contratoId: string, clienteNome: string) {
+    const contrato = contratos.find((x) => x.contrato_id === contratoId);
+    if (contrato && isAssinado(contrato.contrato_status)) {
+      const okAssinado = window.confirm(
+        `ATENÇÃO: o contrato de ${clienteNome} JÁ FOI ASSINADO.\n\nExcluir apaga o rastro jurídico da assinatura. O recomendado é gerar um novo contrato (Regenerar) e manter este no histórico.\n\nDeseja mesmo continuar com a exclusão?`,
+      );
+      if (!okAssinado) return;
+    }
     const confirm1 = window.confirm(
       `Excluir permanentemente o contrato de ${clienteNome}?\n\nEsta ação é IRREVERSÍVEL — remove o contrato, assinaturas, itens, aceites e eventos vinculados.`,
     );
@@ -217,24 +246,70 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     );
   }
 
-  if (contratos.length === 0) {
+  const termo = busca.trim().toLowerCase();
+  const termoDigitos = termo.replace(/\D/g, "");
+  const listaFiltrada = contratos.filter((c) => {
+    if (filtro === "aguardando" && isAssinado(c.contrato_status)) return false;
+    if (filtro === "assinados" && !isAssinado(c.contrato_status)) return false;
+    if (!termo) return true;
+    const cpfDigitos = (c.cliente_cpf ?? "").replace(/\D/g, "");
     return (
-      <div className="text-center py-8 text-xs text-muted-foreground italic">
-        Nenhum contrato gerado via Pré-Piloto ainda.
-      </div>
+      c.cliente_nome.toLowerCase().includes(termo) ||
+      (c.cliente_email ?? "").toLowerCase().includes(termo) ||
+      c.contrato_id.toLowerCase().includes(termo) ||
+      String(c.venda_id_legado ?? c.venda_id).includes(termoDigitos || termo) ||
+      (!!termoDigitos && cpfDigitos.includes(termoDigitos))
     );
-  }
+  });
+
+  const totalAguardando = contratos.filter((c) => !isAssinado(c.contrato_status)).length;
+  const totalAssinados = contratos.filter((c) => isAssinado(c.contrato_status)).length;
+
+  const abas: { id: Filtro; label: string; count: number }[] = [
+    { id: "aguardando", label: "Aguardando assinatura", count: totalAguardando },
+    { id: "assinados", label: "Assinados", count: totalAssinados },
+    { id: "todos", label: "Todos", count: contratos.length },
+  ];
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-muted-foreground">{contratos.length} contrato(s) encontrado(s)</p>
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {abas.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => setFiltro(a.id)}
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              filtro === a.id
+                ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+            }`}
+          >
+            {a.label} ({a.count})
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, CPF, e-mail, nº da venda ou ID do contrato"
+          className="text-xs h-8 flex-1"
+        />
         <Button variant="ghost" size="sm" onClick={carregar} className="text-xs gap-1 h-7">
           <RefreshCw className="w-3 h-3" /> Atualizar
         </Button>
       </div>
 
-      {contratos.map((c) => {
+      <p className="text-xs text-muted-foreground">{listaFiltrada.length} contrato(s) encontrado(s)</p>
+
+      {listaFiltrada.length === 0 && (
+        <div className="text-center py-8 text-xs text-muted-foreground italic">
+          Nenhum contrato encontrado para este filtro.
+        </div>
+      )}
+
+      {listaFiltrada.map((c) => {
         const st = statusLabel(c.contrato_status);
         const aberto = expandido === c.contrato_id;
         const pendente = c.contrato_status === "generated_pending_company_signature";

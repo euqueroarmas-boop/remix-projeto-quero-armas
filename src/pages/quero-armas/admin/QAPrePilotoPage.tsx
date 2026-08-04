@@ -33,9 +33,9 @@ export default function QAPrePilotoPage() {
       {/* Histórico de contratos pendentes */}
       <div className="max-w-4xl mx-auto px-4 pb-8">
         <div className="border-t pt-6">
-          <h2 className="text-sm font-semibold text-foreground mb-1">Histórico — Contratos Aguardando Assinatura</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-1">Histórico — Contratos (aguardando e assinados)</h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Contratos gerados via Pré-Piloto. Faça upload do PDF assinado quando o cliente devolver por WhatsApp.
+            Todos os contratos gerados. Faça upload do PDF assinado quando o cliente devolver por WhatsApp, ou regenere/exclua um contrato a partir do cadastro corrigido.
           </p>
           <HistoricoContratosPendentes ref={historicoRef} />
         </div>
