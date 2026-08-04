@@ -554,6 +554,7 @@ export default function QABibliotecaDocumentosAdmin() {
                     onSalvar={salvarItem}
                     onArquivar={arquivarItem}
                     onDuplicar={duplicarItem}
+                    onSincronizar={(i) => sincronizarItem(i).catch(() => {})}
                     salvando={salvandoId === item.id}
                   />
                 ))}
@@ -568,7 +569,7 @@ export default function QABibliotecaDocumentosAdmin() {
 
 // ─── Linha da biblioteca (accordion editável) ─────────────────────────────
 function ItemBiblioteca({
-  item, aberto, onToggle, onSalvar, onArquivar, onDuplicar, salvando, resumoModelos, onModelosChanged,
+  item, aberto, onToggle, onSalvar, onArquivar, onDuplicar, onSincronizar, salvando, resumoModelos, onModelosChanged,
 }: {
   item: BibliotecaItem;
   aberto: boolean;
@@ -576,6 +577,7 @@ function ItemBiblioteca({
   onSalvar: (i: BibliotecaItem) => void;
   onArquivar: (i: BibliotecaItem) => void;
   onDuplicar: (i: BibliotecaItem) => void;
+  onSincronizar: (i: BibliotecaItem) => void;
   salvando: boolean;
   resumoModelos?: { total: number; deterministico: number; ia: number };
   onModelosChanged?: () => void;
@@ -760,6 +762,15 @@ Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
                 className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
               >
                 <Copy className="w-3 h-3" /> Duplicar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onSincronizar(local)}
+                title="Aplicar este cadastro em todos os serviços que exigem este documento"
+                className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
+              >
+                <RefreshCw className="w-3 h-3" /> Sincronizar serviços
               </Button>
             </div>
             <Button
