@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { resumirUserAgent } from "@/lib/quero-armas/userAgentResumo";
 
 type ContratoItem = {
   contrato_id: string;
@@ -22,6 +23,14 @@ type ContratoItem = {
   servico_nome: string | null;
   gerado_em: string;
   link_assinatura: string | null;
+};
+
+/** Carimbo enxuto de download: quando o cliente baixou, em que aparelho e navegador. */
+type DownloadCarimbo = {
+  baixado_em: string;
+  dispositivo: string;
+  navegador: string;
+  vezes: number;
 };
 
 function fmt(iso: string) {
