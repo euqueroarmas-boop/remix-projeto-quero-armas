@@ -246,24 +246,70 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     );
   }
 
-  if (contratos.length === 0) {
+  const termo = busca.trim().toLowerCase();
+  const termoDigitos = termo.replace(/\D/g, "");
+  const listaFiltrada = contratos.filter((c) => {
+    if (filtro === "aguardando" && isAssinado(c.contrato_status)) return false;
+    if (filtro === "assinados" && !isAssinado(c.contrato_status)) return false;
+    if (!termo) return true;
+    const cpfDigitos = (c.cliente_cpf ?? "").replace(/\D/g, "");
     return (
-      <div className="text-center py-8 text-xs text-muted-foreground italic">
-        Nenhum contrato gerado via Pré-Piloto ainda.
-      </div>
+      c.cliente_nome.toLowerCase().includes(termo) ||
+      (c.cliente_email ?? "").toLowerCase().includes(termo) ||
+      c.contrato_id.toLowerCase().includes(termo) ||
+      String(c.venda_id_legado ?? c.venda_id).includes(termoDigitos || termo) ||
+      (!!termoDigitos && cpfDigitos.includes(termoDigitos))
     );
-  }
+  });
+
+  const totalAguardando = contratos.filter((c) => !isAssinado(c.contrato_status)).length;
+  const totalAssinados = contratos.filter((c) => isAssinado(c.contrato_status)).length;
+
+  const abas: { id: Filtro; label: string; count: number }[] = [
+    { id: "aguardando", label: "Aguardando assinatura", count: totalAguardando },
+    { id: "assinados", label: "Assinados", count: totalAssinados },
+    { id: "todos", label: "Todos", count: contratos.length },
+  ];
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-muted-foreground">{contratos.length} contrato(s) encontrado(s)</p>
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {abas.map((a) => (
+          <button
+            key={a.id}
+            onClick={() => setFiltro(a.id)}
+            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
+              filtro === a.id
+                ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+            }`}
+          >
+            {a.label} ({a.count})
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, CPF, e-mail, nº da venda ou ID do contrato"
+          className="text-xs h-8 flex-1"
+        />
         <Button variant="ghost" size="sm" onClick={carregar} className="text-xs gap-1 h-7">
           <RefreshCw className="w-3 h-3" /> Atualizar
         </Button>
       </div>
 
-      {contratos.map((c) => {
+      <p className="text-xs text-muted-foreground">{listaFiltrada.length} contrato(s) encontrado(s)</p>
+
+      {listaFiltrada.length === 0 && (
+        <div className="text-center py-8 text-xs text-muted-foreground italic">
+          Nenhum contrato encontrado para este filtro.
+        </div>
+      )}
+
+      {listaFiltrada.map((c) => {
         const st = statusLabel(c.contrato_status);
         const aberto = expandido === c.contrato_id;
         const pendente = c.contrato_status === "generated_pending_company_signature";
