@@ -15,6 +15,18 @@ export interface ExplicacaoPendencia {
   siteUrl?: string;
 }
 
+/**
+ * Overlay vindo de Configurações › Biblioteca de documentos
+ * (`qa_documentos_biblioteca`). É a FONTE ÚNICA de gestão: o que estiver aqui
+ * substitui o registro estático abaixo. Preenchido por
+ * `carregarExplicacoesBiblioteca()`.
+ */
+let EXPLICACOES_BIBLIOTECA: Map<string, ExplicacaoPendencia> = new Map();
+
+export function setExplicacoesBiblioteca(mapa: Map<string, ExplicacaoPendencia>) {
+  EXPLICACOES_BIBLIOTECA = mapa;
+}
+
 export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
   // ────────────────────────────────────────────────────────────────────────
   // Requerimento / formulários do processo
