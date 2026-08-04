@@ -10,7 +10,8 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, FileUp, Upload, X } from "lucide-react";
-import { getExplicacaoPendencia } from "@/lib/quero-armas/pendenciasExplicacoes";
+import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
+import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   resolveLinkAntecedentePorUf,
@@ -205,6 +206,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const atual = Math.min(indice, total - 1);
   const active = pendencias[atual];
+  // Biblioteca de documentos = fonte única do passo a passo. Carrega uma vez
+  // (cacheado) e força re-render quando chega, para o cliente ver o texto
+  // gerenciado pelo admin, não o fallback estático.
+  const [bibliotecaCarregada, setBibliotecaCarregada] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let vivo = true;
+    void carregarExplicacoesBiblioteca().then(() => { if (vivo) setBibliotecaCarregada(true); });
+    return () => { vivo = false; };
+  }, [open]);
   const activeGrupo = active.grupoLabel || grupoDaPendencia(active.rawTipo, active.tipo).label;
   const activeGrupoId = active.grupoId || grupoDaPendencia(active.rawTipo, active.tipo).id;
   const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
@@ -296,12 +307,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     : [];
   const passosRegistro = Array.isArray(explicBase.passos) ? explicBase.passos : [];
+  // Se o passo a passo veio da Biblioteca de documentos, ele é definitivo:
+  // é lá que o admin gerencia o texto (fonte única). O catálogo do serviço
+  // (qa_servicos_documentos) só entra quando a biblioteca não tem nada.
+  const daBiblioteca =
+    !isSignature && bibliotecaCarregada &&
+    temExplicacaoBiblioteca(active.rawTipo || active.tipo, active.tipo);
   const usarCatalogo =
     !isSignature &&
+    !daBiblioteca &&
     passosCatalogo.length > 0 &&
     (passosRegistro.length === 0 || passosCatalogo.length >= passosRegistro.length);
   const mesclarCatalogo =
-    !isSignature && passosCatalogo.length > 0 && !usarCatalogo;
+    !isSignature && !daBiblioteca && passosCatalogo.length > 0 && !usarCatalogo;
   const explic = usarCatalogo
     ? {
         ...explicBase,

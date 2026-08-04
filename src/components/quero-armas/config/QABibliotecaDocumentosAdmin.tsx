@@ -10,8 +10,6 @@ import {
 import BibliotecaModelosParser, {
   SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
 } from "./BibliotecaModelosParser";
-import { EXPLICACOES_REGISTRO } from "@/lib/quero-armas/pendenciasExplicacoes";
-
 type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
 
 type BibliotecaItem = {
@@ -105,43 +103,6 @@ export default function QABibliotecaDocumentosAdmin() {
   const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
   const [modelosNovo, setModelosNovo] = useState<File[]>([]);
   const [treinandoNovo, setTreinandoNovo] = useState(false);
-  const [importando, setImportando] = useState(false);
-
-  // Traz para a biblioteca (fonte única) o passo a passo que o portal do cliente
-  // já mostra. Preenche o que está EM BRANCO e também atualiza os textos que
-  // ficaram MAIS CURTOS que o do assistente (era o caso das certidões: a
-  // biblioteca tinha 1 linha resumida e o cliente via o passo a passo completo).
-  async function importarTextosDoAssistente() {
-    const desatualizado = (i: BibliotecaItem) => {
-      const passos = EXPLICACOES_REGISTRO[i.codigo]?.passos ?? [];
-      if (!passos.length) return false;
-      const atual = (i.descricao_como_enviar ?? "").trim();
-      if (!atual) return true;
-      const linhasAtuais = atual.split("\n").map((l) => l.trim()).filter(Boolean);
-      return linhasAtuais.length < passos.length;
-    };
-    const alvos = itens.filter(desatualizado);
-    if (alvos.length === 0) { toast.info("Tudo sincronizado — a biblioteca já mostra o mesmo passo a passo do cliente."); return; }
-    if (!confirm(`Sincronizar ${alvos.length} documento(s) com o passo a passo completo que o cliente vê? Textos mais curtos serão substituídos pela versão completa.`)) return;
-    setImportando(true);
-    let ok = 0;
-    for (const item of alvos) {
-      const e = EXPLICACOES_REGISTRO[item.codigo];
-      const { error } = await supabase
-        .from("qa_documentos_biblioteca" as any)
-        .update({
-          descricao_como_enviar: e.passos.join("\n"),
-          observacao_cliente: item.observacao_cliente || e.observacao || null,
-          link_emissao: item.link_emissao || e.siteUrl || null,
-        })
-        .eq("id", item.id);
-      if (!error) ok++;
-    }
-    setImportando(false);
-    toast.success(`${ok} documento(s) atualizados com o passo a passo do assistente.`);
-    await carregar();
-  }
-
   async function recarregarResumo() {
     try { setResumoModelos(await carregarResumoModelos()); } catch { /* silencioso */ }
   }
@@ -343,22 +304,11 @@ export default function QABibliotecaDocumentosAdmin() {
           <RefreshCw className="w-3 h-3" /> Atualizar
         </Button>
       </div>
-      <div className="flex justify-end mb-1">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={importarTextosDoAssistente}
-          disabled={importando || carregando}
-          className="h-7 text-xs gap-1 text-[#7A1F2B]"
-        >
-          {importando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
-          Sincronizar passo a passo com o portal do cliente
-        </Button>
-      </div>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 62%)" }}>
-        Fonte única de todos os documentos que os serviços podem exigir do cliente. Cada item aqui traz o
-        <b> passo a passo </b> que aparece no portal do cliente. Ao criar um serviço novo, você não escreve
-        nada de novo — só marca quais documentos da biblioteca esse serviço consome.
+        Fonte única de todos os documentos que os serviços podem exigir do cliente. O que você escreve aqui
+        em <b>“Como enviar”</b> é exatamente o <b>passo a passo que o cliente vê</b> no portal — não existe
+        outro lugar para editar esse texto. Ao criar um serviço novo, você não escreve nada de novo, só marca
+        quais documentos da biblioteca esse serviço consome.
       </p>
 
       {/* Toolbar de busca */}
