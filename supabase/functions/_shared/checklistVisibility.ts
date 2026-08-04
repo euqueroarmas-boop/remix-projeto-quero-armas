@@ -22,10 +22,14 @@ export interface ChecklistItemLike {
 
 export function matchCondicaoGuia(
   respostas: Respostas,
-  cond: Record<string, string> | undefined | null,
+  cond: Record<string, any> | undefined | null,
 ): boolean {
   if (!cond || typeof cond !== "object") return true;
-  return Object.entries(cond).every(([k, v]) => respostas[k] === v);
+  return Object.entries(cond).every(([k, v]) =>
+    Array.isArray(v)
+      ? v.map((x) => String(x)).includes(String(respostas[k]))
+      : respostas[k] === v,
+  );
 }
 
 // Espelho de itemVisivel: respeita depende_de e exige_quando.
@@ -39,7 +43,10 @@ export function itemVisivelGuia(
     if (matchCondicaoGuia(respostas, r.dispensa_quando)) return false;
   }
   if (r.depende_de && typeof r.depende_de === "object") {
-    const ok = respostas[r.depende_de.chave] === r.depende_de.valor;
+    const alvo = r.depende_de.valor;
+    const ok = Array.isArray(alvo)
+      ? alvo.map((x: any) => String(x)).includes(String(respostas[r.depende_de.chave]))
+      : respostas[r.depende_de.chave] === alvo;
     if (!ok) return false;
   }
   if (r.exige_quando && typeof r.exige_quando === "object") {

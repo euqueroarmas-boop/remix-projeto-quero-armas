@@ -440,8 +440,21 @@ export default function SimuladorChecklistAdmin() {
     try {
       if (rotaDestino.startsWith("linha:")) {
         const id = rotaDestino.slice(6);
+        // Um mesmo documento pode servir a MAIS DE UMA resposta: acumulamos os
+        // valores em lista em vez de sobrescrever o caminho anterior.
+        const alvo = linhas.find((l) => l.id === id);
+        const regraAtual: any = alvo?.regra_validacao ?? {};
+        const exigeAtual: any = { ...(regraAtual.exige_quando ?? {}) };
+        const jaTem = exigeAtual[rotaPergunta];
+        const valores = Array.from(
+          new Set([
+            ...(Array.isArray(jaTem) ? jaTem.map(String) : jaTem != null ? [String(jaTem)] : []),
+            rotaResposta,
+          ]),
+        );
+        exigeAtual[rotaPergunta] = valores.length === 1 ? valores[0] : valores;
         await patchRegra(id, {
-          exige_quando: { [rotaPergunta]: rotaResposta },
+          exige_quando: exigeAtual,
           dispensa_quando: null,
         }, "CAMINHO SALVO");
       } else if (rotaDestino.startsWith("bib:")) {
@@ -475,8 +488,10 @@ export default function SimuladorChecklistAdmin() {
       destinos: linhas.filter((linha) => {
         if ((linha as any).ativo === false || linha.id === linhas.find((l) => (l.regra_validacao as any)?.chave === pergunta.chave)?.id) return false;
         const regra: any = linha.regra_validacao ?? {};
-        return regra.exige_quando?.[pergunta.chave] === opcao.valor ||
-          (regra.depende_de?.chave === pergunta.chave && regra.depende_de?.valor === opcao.valor);
+        const casa = (v: any) =>
+          Array.isArray(v) ? v.map(String).includes(opcao.valor) : String(v ?? "") === opcao.valor;
+        return casa(regra.exige_quando?.[pergunta.chave]) ||
+          (regra.depende_de?.chave === pergunta.chave && casa(regra.depende_de?.valor));
       }),
     })),
   })), [linhas, perguntasPivo]);
