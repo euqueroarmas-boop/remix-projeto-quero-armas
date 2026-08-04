@@ -556,21 +556,21 @@ export default function SimuladorChecklistAdmin() {
   return (
     <div className="space-y-4">
       {/* Cabeçalho / seleção */}
-      <div className="qa-card p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <PlayCircle className="h-4 w-4" style={{ color: BORDO }} />
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-            Simulador do Checklist
-          </span>
+      <div className="qa-card overflow-hidden">
+        <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          <div className="flex items-center gap-2">
+            <PlayCircle className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
+            <h2 className="qa-h2">Simulador do Checklist</h2>
+          </div>
+          <p className="qa-caption mt-1.5 max-w-[68ch]">
+            Avance respondendo como o cliente responderia. O resultado usa exatamente as
+            exigências cadastradas em Preços e Serviços / Montar Checklist — nada é inventado aqui.
+          </p>
         </div>
-        <p className="text-[12.5px] mb-4" style={{ color: MUTED }}>
-          Avance respondendo como o cliente responderia. O resultado usa exatamente as
-          exigências cadastradas em Preços e Serviços / Montar Checklist — nada é inventado aqui.
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
-          <div className="md:col-span-7">
-            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Serviço</label>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-5">
+          <div className="md:col-span-7 min-w-0">
+            <label className="qa-kpi-label block mb-1.5">Serviço</label>
             <select
               value={servicoId ?? ""}
               onChange={(e) => {
@@ -588,8 +588,8 @@ export default function SimuladorChecklistAdmin() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-3">
-            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Modalidade</label>
+          <div className="md:col-span-3 min-w-0">
+            <label className="qa-kpi-label block mb-1.5">Modalidade</label>
             <select
               value={modalidade ?? ""}
               onChange={(e) => setModalidade(e.target.value || null)}
@@ -602,14 +602,14 @@ export default function SimuladorChecklistAdmin() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-2 flex items-end">
+          <div className="md:col-span-2 flex md:items-end">
             <button
               onClick={reiniciar}
               disabled={!servicoId}
-              className="h-9 w-full rounded-md border text-[12.5px] uppercase flex items-center justify-center gap-1 disabled:opacity-40"
+              className="h-9 w-full rounded-md border qa-btn-label flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-slate-50 transition-colors"
               style={{ borderColor: LINE, color: INK }}
             >
-              <RotateCcw className="h-3 w-3" /> Reiniciar
+              <RotateCcw className="h-3 w-3 shrink-0" /> Reiniciar
             </button>
           </div>
         </div>
