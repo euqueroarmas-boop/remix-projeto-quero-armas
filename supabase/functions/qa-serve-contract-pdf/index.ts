@@ -802,6 +802,7 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
       aceite_eletronico_data: aceiteData,
       aceite_ip: aceiteIp,
       user_agent_present: !!aceiteUserAgent,
+      user_agent: aceiteUserAgent,
       aceite_hash: aceiteHash,
     },
   });
