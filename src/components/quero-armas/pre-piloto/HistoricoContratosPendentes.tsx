@@ -352,31 +352,53 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     { id: "aguardando", label: "Aguardando assinatura", count: totalAguardando },
     { id: "assinados", label: "Assinados", count: totalAssinados },
     { id: "todos", label: "Todos", count: contratos.length },
+    { id: "gerar", label: "Gerar contrato", count: semContrato.length },
   ];
+
+  const abaGerar = filtro === "gerar";
+  const semContratoFiltrado = semContrato.filter((v) => {
+    if (!termo) return true;
+    return (
+      v.cliente_nome.toLowerCase().includes(termo) ||
+      (v.cliente_email ?? "").toLowerCase().includes(termo) ||
+      String(v.venda_id).includes(termoDigitos || termo) ||
+      String(v.venda_id_legado ?? "").includes(termoDigitos || termo)
+    );
+  });
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2 mb-2">
-        {abas.map((a) => (
-          <button
-            key={a.id}
-            onClick={() => setFiltro(a.id)}
-            className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
-              filtro === a.id
-                ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
-                : "bg-background text-muted-foreground border-border hover:bg-muted/50"
-            }`}
-          >
-            {a.label} ({a.count})
-          </button>
-        ))}
+      <div className="mb-3 flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/40 p-1">
+        {abas.map((a) => {
+          const ativo = filtro === a.id;
+          return (
+            <button
+              key={a.id}
+              onClick={() => setFiltro(a.id)}
+              className={`flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition-all ${
+                ativo
+                  ? "bg-[#7B1C2E] text-white shadow-sm"
+                  : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              }`}
+            >
+              {a.label}
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                  ativo ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {a.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between gap-2 mb-3">
         <Input
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar por nome, CPF, e-mail, nº da venda ou ID do contrato"
+          placeholder={abaGerar ? "Buscar por nome, e-mail ou nº da venda" : "Buscar por nome, CPF, e-mail, nº da venda ou ID do contrato"}
           className="text-xs h-8 flex-1"
         />
         <Button variant="ghost" size="sm" onClick={carregar} className="text-xs gap-1 h-7">
@@ -384,9 +406,19 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         </Button>
       </div>
 
-      <p className="text-xs text-muted-foreground">{listaFiltrada.length} contrato(s) encontrado(s)</p>
+      <p className="text-xs text-muted-foreground">
+        {abaGerar
+          ? `${semContratoFiltrado.length} venda(s) paga(s) sem contrato`
+          : `${listaFiltrada.length} contrato(s) encontrado(s)`}
+      </p>
 
-      {semContrato.length > 0 && (
+      {abaGerar && semContrato.length === 0 && (
+        <div className="py-8 text-center text-xs italic text-muted-foreground">
+          Nenhuma venda paga sem contrato.
+        </div>
+      )}
+
+      {abaGerar && semContrato.length > 0 && (
         <div className="border border-amber-200 bg-amber-50/60 rounded-lg p-3 space-y-2">
           <p className="text-[11px] font-semibold text-amber-900 uppercase tracking-wide">
             Vendas pagas sem contrato ({semContrato.length})
