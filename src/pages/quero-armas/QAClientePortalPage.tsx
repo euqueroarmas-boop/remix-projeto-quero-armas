@@ -2282,19 +2282,12 @@ export default function QAClientePortalPage() {
     for (const d of reprovados) empurrar(d);
     for (const d of pendentes) empurrar(d);
 
-    // ─── Ordenar por GRUPO temático ────────────────────────────────────────
-    // Anexa grupoId/grupoLabel a cada item e reordena mantendo a ordem
-    // relativa original dentro de cada grupo (stable sort). Assinaturas e
-    // perguntas mantêm prioridade natural via `ordem` do grupo.
-    // Ordenação final:
-    //   1) Assinaturas primeiro (sem serviço).
-    //   2) Depois, agrupado POR SERVIÇO CONTRATADO (ordem_no_pacote →
-    //      data_criacao), para o cliente resolver um serviço por vez.
-    //   3) Dentro do serviço, perguntas-pivot antes das exigências.
-    //   4) Dentro disso, GRUPO temático (identificação → endereço →
-    //      antecedentes → ocupação → habitualidade → saúde → arma →
-    //      declarações → outros).
-    //   5) Estável no idx original como desempate.
+    // ─── Ordenação final ────────────────────────────────────────────────────
+    // O simulador/admin é a única fonte da sequência do checklist. Grupos são
+    // apenas metadados visuais: nunca podem mover perguntas ou documentos para
+    // antes/depois da posição salva em qa_servicos_documentos.ordem.
+    // Assinaturas continuam primeiro; depois respeitamos serviço/pacote e a
+    // ordem exata configurada dentro de cada serviço.
     const decorados = items.map((it, idx) => {
       const catalogoGrupo = it.kind === "documento" && it.servicoId != null
         ? catalogoDocInfo.get(`${it.servicoId}:${String(it.rawTipo || "").toLowerCase()}`)
@@ -2317,13 +2310,17 @@ export default function QAClientePortalPage() {
         it.kind === "signature"
           ? [-1, -1]
           : rankProcesso(String((it as any).__processoId || ""));
+      const ordemConfigurada = it.kind === "signature"
+        ? -1
+        : (it.servicoId != null
+            ? catalogoDocOrdem.get(`${it.servicoId}:${String(it.rawTipo || "").toLowerCase()}`)
+            : undefined) ?? 9_999;
       return {
         it: { ...it, grupoId: g.id, grupoLabel: g.label },
         tier,
         servicoOrdem,
         servicoCriacao,
-        grupoOrdem: (g as any).ordem ?? ordemGrupoHelper(g.id),
-        subTier: it.kind === "pergunta" ? 0 : 1,
+        ordemConfigurada,
         idx,
       };
     });
@@ -2331,8 +2328,7 @@ export default function QAClientePortalPage() {
       (a.tier - b.tier) ||
       (a.servicoOrdem - b.servicoOrdem) ||
       (a.servicoCriacao - b.servicoCriacao) ||
-      (a.subTier - b.subTier) ||
-      (a.grupoOrdem - b.grupoOrdem) ||
+      (a.ordemConfigurada - b.ordemConfigurada) ||
       (a.idx - b.idx),
     );
     // O processo comprado precisa mostrar todas as exigências abertas no
