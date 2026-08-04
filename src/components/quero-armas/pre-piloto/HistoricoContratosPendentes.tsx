@@ -18,6 +18,7 @@ type ContratoItem = {
   cliente_id: number;
   cliente_nome: string;
   cliente_email: string | null;
+  cliente_cpf: string | null;
   servico_nome: string | null;
   gerado_em: string;
   link_assinatura: string | null;
@@ -126,6 +127,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           cliente_id: c.cliente_id,
           cliente_nome: cli.nome_completo ?? det.cliente_nome ?? "—",
           cliente_email: cli.email ?? null,
+          cliente_cpf: cli.cpf ?? null,
           servico_nome: det.servico_nome ?? null,
           gerado_em: c.created_at,
           link_assinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${c.id}`,
