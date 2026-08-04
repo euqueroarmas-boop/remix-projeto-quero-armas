@@ -70,6 +70,10 @@ export type GrupoSimulado = {
   itens: ItemSimulado[];
   pendentes: number;
   cumpridos: number;
+  /** Itens que ainda dependem de uma resposta anterior nesta simulação. */
+  aguardando: number;
+  /** Itens que existem no grupo e não foram dispensados nesta combinação. */
+  total: number;
 };
 
 export type Alerta = { nivel: "erro" | "aviso"; texto: string };
@@ -466,6 +470,8 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       itens: doGrupo,
       pendentes: doGrupo.filter((i) => i.estado === "pendente").length,
       cumpridos: doGrupo.filter((i) => i.estado === "cumprido").length,
+      aguardando: doGrupo.filter((i) => i.estado === "aguardando").length,
+      total: doGrupo.filter((i) => i.estado !== "dispensado").length,
     };
   });
 
