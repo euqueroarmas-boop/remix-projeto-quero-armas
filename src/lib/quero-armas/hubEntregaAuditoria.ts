@@ -7,6 +7,7 @@
  * possível troca de certidão (o cliente manda um antecedente no lugar de outro).
  */
 import { ehDocumentoIdentidade } from "./identidadeUnica";
+import { toHubTipoCompartilhado } from "./hubTipoMap";
 
 export interface EntregaDocLike {
   id: string;
@@ -72,10 +73,15 @@ export function montarLinhaEntrega(
     return ta - tb;
   });
 
+  // Mapa indexado pelo tipo do Hub — qa_documentos_cliente usa tipos do Hub (ex: "antecedentes_eleitoral"),
+  // enquanto qa_processo_documentos usa tipos do catálogo (ex: "certidao_crimes_eleitorais_tse").
+  // Inserimos as duas chaves para cobrir documentos armazenados com qualquer namespace.
   const exigenciasPorTipo = new Map<string, ExigenciaLike>();
   exigencias.forEach((e) => {
-    const t = norm(e.tipo_documento);
-    if (t && !exigenciasPorTipo.has(t)) exigenciasPorTipo.set(t, e);
+    const tRaw = norm(e.tipo_documento);
+    const tHub = toHubTipoCompartilhado(tRaw);
+    if (tHub && !exigenciasPorTipo.has(tHub)) exigenciasPorTipo.set(tHub, e);
+    if (tRaw && tRaw !== tHub && !exigenciasPorTipo.has(tRaw)) exigenciasPorTipo.set(tRaw, e);
   });
 
   // Exigências obrigatórias com ordem definida, para detectar "atropelo".
