@@ -80,7 +80,24 @@ Deno.serve(async (req) => {
       detalhes_json: { ...snapshot, motivo, origem: "central_adesao_historico" },
     });
 
-    return json({ ok: true, status: "generated_pending_company_signature" });
+    // Regenera a PROCURAÇÃO junto com a reversão do contrato: se o contrato
+    // voltou para assinatura é porque os dados do cadastro mudaram, e a
+    // procuração antiga carrega o snapshot errado.
+    let procuracao: unknown = null;
+    try {
+      const { data: pRes, error: pErr } = await admin.functions.invoke("qa-gerar-procuracao", {
+        body: {
+          cliente_id: contrato.cliente_id,
+          venda_id: contrato.venda_id,
+          force_regenerate: true,
+        },
+      });
+      procuracao = pErr ? { ok: false, error: pErr.message } : pRes;
+    } catch (e) {
+      procuracao = { ok: false, error: (e as Error).message };
+    }
+
+    return json({ ok: true, status: "generated_pending_company_signature", procuracao });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
