@@ -1020,6 +1020,9 @@ function LinhaItem({
   onMoverGrupo,
   onDefinirCondicao,
   onRenomear,
+  perguntas,
+  onDefinirRamificacao,
+  onAlternarHibrida,
 }: {
   item: ItemSimulado;
   onToggle: (tipo: string) => void;
@@ -1030,6 +1033,9 @@ function LinhaItem({
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
+  perguntas: { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[];
+  onDefinirRamificacao: (id: string, modo: "sempre" | "aparece" | "some", chave?: string, valor?: string) => void;
+  onAlternarHibrida: (id: string, ligado: boolean) => void;
 }) {
   const cfg = {
     cumprido:   { icon: CheckCircle2, cor: "#059669", label: "OK" },
@@ -1041,6 +1047,17 @@ function LinhaItem({
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const [editandoNome, setEditandoNome] = useState(false);
+
+  const regra: any = (item.linha as any)?.regra_validacao ?? {};
+  const ramExige = regra.exige_quando && typeof regra.exige_quando === "object" ? regra.exige_quando : null;
+  const ramDispensa = regra.dispensa_quando && typeof regra.dispensa_quando === "object" ? regra.dispensa_quando : null;
+  const ramModo: "sempre" | "aparece" | "some" = ramExige ? "aparece" : ramDispensa ? "some" : "sempre";
+  const ramChave = String(Object.keys(ramExige ?? ramDispensa ?? {})[0] ?? "");
+  const ramValor = String((ramExige ?? ramDispensa ?? {})[ramChave] ?? "");
+  // Só faz sentido amarrar a OUTRA pergunta, nunca a si mesma.
+  const gatilhos = perguntas.filter((p) => p.chave !== item.chave);
+  const opcoesGatilho = gatilhos.find((p) => p.chave === ramChave)?.opcoes ?? [];
+  const hibrida = regra.exige_documento_quando != null;
 
   return (
     <div
