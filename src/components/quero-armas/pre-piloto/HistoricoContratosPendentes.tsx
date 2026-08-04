@@ -447,7 +447,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
               </button>
             ))}
           </div>
-          {[...semContrato]
+          {[...semContratoFiltrado]
             .sort((a, b) => {
               if (ordemSemContrato === "az") return a.cliente_nome.localeCompare(b.cliente_nome, "pt-BR");
               if (ordemSemContrato === "za") return b.cliente_nome.localeCompare(a.cliente_nome, "pt-BR");
@@ -475,13 +475,13 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         </div>
       )}
 
-      {listaFiltrada.length === 0 && (
+      {!abaGerar && listaFiltrada.length === 0 && (
         <div className="text-center py-8 text-xs text-muted-foreground italic">
           Nenhum contrato encontrado para este filtro.
         </div>
       )}
 
-      {listaFiltrada.map((c) => {
+      {!abaGerar && listaFiltrada.map((c) => {
         const st = statusLabel(c.contrato_status);
         const aberto = expandido === c.contrato_id;
         const pendente = c.contrato_status === "generated_pending_company_signature";
