@@ -534,7 +534,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Header */}
         <div className={asPage ? "px-0 pt-4 pb-4 shrink-0 sm:pt-5" : "px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5"}>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[44px] flex items-center gap-2 flex-wrap"}>
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
@@ -565,43 +565,45 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
           </div>
           <div className="mt-4 mb-1 h-px bg-[#F0F0F0]" />
-          <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
-            {explic.titulo}
-          </h2>
+          <div className={asPage ? "" : "pl-[44px]"}>
+            <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+              {explic.titulo}
+            </h2>
 
-          {active.detalheContexto ? (
-            <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
-              {active.detalheContexto}
-            </p>
-          ) : null}
+            {active.detalheContexto ? (
+              <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
+                {active.detalheContexto}
+              </p>
+            ) : null}
 
-          {/* Link fixo para o site oficial — permanece abaixo do título,
-              independentemente da rolagem do conteúdo. */}
-          {!isSignature && !isPergunta && linkEmissaoFinal ? (
-            <p className="qa-body qa-body--soft mt-3">
-              {(() => {
-                const t = explic.titulo || "";
-                const i = t.indexOf("—");
-                const nome = i >= 0 ? t.slice(i + 1).trim() : activeGrupo;
-                return nome
-                  ? `Acesse o site oficial da ${nome} para baixar: `
-                  : `Acesse o site oficial para baixar: `;
-              })()}
-              {/* URL por extenso, como ela é. Tentei encurtar para o nome do
-                  órgão e o resultado foi pior: com o título "TRF3 — Regional"
-                  o link virou só "REGIONAL", que não diz nada e não dá para
-                  copiar. O cliente precisa ver o endereço para conferir que
-                  está indo ao site oficial. */}
-              <a
-                href={linkEmissaoFinal}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
-              >
-                {linkEmissaoFinal}
-              </a>
-            </p>
-          ) : null}
+            {/* Link fixo para o site oficial — permanece abaixo do título,
+                independentemente da rolagem do conteúdo. */}
+            {!isSignature && !isPergunta && linkEmissaoFinal ? (
+              <p className="qa-body qa-body--soft mt-3">
+                {(() => {
+                  const t = explic.titulo || "";
+                  const i = t.indexOf("—");
+                  const nome = i >= 0 ? t.slice(i + 1).trim() : activeGrupo;
+                  return nome
+                    ? `Acesse o site oficial da ${nome} para baixar: `
+                    : `Acesse o site oficial para baixar: `;
+                })()}
+                {/* URL por extenso, como ela é. Tentei encurtar para o nome do
+                    órgão e o resultado foi pior: com o título "TRF3 — Regional"
+                    o link virou só "REGIONAL", que não diz nada e não dá para
+                    copiar. O cliente precisa ver o endereço para conferir que
+                    está indo ao site oficial. */}
+                <a
+                  href={linkEmissaoFinal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
+                >
+                  {linkEmissaoFinal}
+                </a>
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {/* Scrollable body */}
