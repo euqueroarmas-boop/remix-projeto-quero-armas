@@ -454,17 +454,15 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button — some no modo bloqueante (assinatura obrigatória) e no modo página */}
-        {bloqueante || asPage ? null : (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
+        {/* Close button — sempre visível para o cliente dispensar a tela */}
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+          aria-label="Fechar"
+        >
+          <X className="h-4 w-4" />
+        </button>
 
         {/* Abertura pessoal — bloco limpo, no mesmo papel branco das demais
             páginas. Sem gradiente: só o filete bordô e a tipografia fazem a

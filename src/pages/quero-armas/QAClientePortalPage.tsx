@@ -543,9 +543,10 @@ export default function QAClientePortalPage() {
     setShowContratoPopup(true);
   };
   const dismissPendenciasGuiadas = () => {
-    // Contrato/procuração pendentes são obrigações bloqueantes: o popup não
-    // pode ser dispensado até a assinatura ser enviada.
-    if (pendingContractsLoaded && pendingSignatureDocs.length > 0) return;
+    // O cliente pode dispensar o popup a qualquer momento pelo X. A chave de
+    // sessão impede reabertura automática até que ele clique numa pendência
+    // específica ou num botão "Enviar" (ações manuais limpam a chave).
+    sessionStorage.setItem("qa:pendencias-dismissed", "true");
     setPendenciasGuiadasDismissed(true);
     setShowContratoPopup(false);
     setPinnedPendenciaId(null);
@@ -2936,11 +2937,10 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
-    // Assinatura pendente é obrigação bloqueante: reabre sempre, ignorando
-    // qualquer dispensa anterior do cliente.
+    // Assinaturas pendentes seguem a mesma regra de dispensa: se o cliente
+    // clicou no X, a sessão está marcada e o popup não reabre automaticamente.
     if (pendingSignatureCount > 0) {
-      sessionStorage.removeItem("qa:pendencias-dismissed");
-      setPendenciasGuiadasDismissed(false);
+      if (pendenciasGuiadasDismissed) return;
       setShowContratoPopup(true);
       return;
     }
