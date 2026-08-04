@@ -991,6 +991,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
       )}
       </Tabs>
+      </div>
     </div>
   );
 }
