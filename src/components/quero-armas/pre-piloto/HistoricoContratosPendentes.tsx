@@ -95,6 +95,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [semContrato, setSemContrato] = useState<{ venda_id: number; venda_id_legado: number | null; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
   const [ordemSemContrato, setOrdemSemContrato] = useState<"az" | "za" | "novos" | "antigos">("novos");
   const [gerando, setGerando] = useState<number | null>(null);
+  const [downloads, setDownloads] = useState<Record<string, DownloadCarimbo>>({});
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
@@ -184,6 +185,24 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       });
 
       setContratos(items);
+
+      // Nota de rodapé discreta: último download feito pelo cliente.
+      try {
+        const { data: dls } = await supabase
+          .from("qa_documento_downloads" as any)
+          .select("documento_id, baixado_em, user_agent")
+          .eq("documento_tipo", "contrato")
+          .in("documento_id", items.map((i) => i.contrato_id))
+          .order("baixado_em", { ascending: false });
+        const mapa: Record<string, DownloadCarimbo> = {};
+        for (const d of ((dls ?? []) as any[])) {
+          const key = String(d.documento_id);
+          if (mapa[key]) { mapa[key].vezes += 1; continue; }
+          const { dispositivo, navegador } = resumirUserAgent(d.user_agent);
+          mapa[key] = { baixado_em: d.baixado_em, dispositivo, navegador, vezes: 1 };
+        }
+        setDownloads(mapa);
+      } catch { /* best effort */ }
     } catch (e: any) {
       toast.error("Erro ao carregar histórico: " + (e?.message || ""));
     } finally {
