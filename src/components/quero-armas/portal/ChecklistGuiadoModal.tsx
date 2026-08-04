@@ -2104,15 +2104,28 @@ export default function ChecklistGuiadoModal({
                   <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-[12px] text-red-800">{erroAcao}</div>
                 )}
 
-                {/* pular por agora (apenas documentos) */}
-                {tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any) === "documento" && filaAtual.length > 1 && (
-                  <button
-                    onClick={() => continuarAposResultado({ pularAtual: true })}
-                    className="mx-auto block text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600"
-                  >
-                    Pular este item por agora →
-                  </button>
-                )}
+                {/* pular por agora */}
+                {(() => {
+                  const tipoItem = tipoItemGuiaComRespostas(docAtivo, (carga?.respostas ?? {}) as any);
+                  const ehDocumento = tipoItem === "documento";
+                  const ehPergunta = tipoItem === "pergunta" || tipoItem === "condicao";
+                  const modoSuporteAtivo = !!carga?.processo.suporte_ativo;
+                  const podeParar = ehDocumento && filaAtual.length > 1;
+                  const podePararSuporte = modoSuporteAtivo && (ehDocumento || ehPergunta);
+                  if (!podeParar && !podePararSuporte) return null;
+                  return (
+                    <button
+                      onClick={() => continuarAposResultado({ pularAtual: true })}
+                      className={
+                        modoSuporteAtivo
+                          ? "mx-auto flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-700 hover:bg-amber-100"
+                          : "mx-auto block text-[11px] font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-600"
+                      }
+                    >
+                      {modoSuporteAtivo ? "⚡ Suporte: pular este item →" : "Pular este item por agora →"}
+                    </button>
+                  );
+                })()}
               </div>
             )}
 
