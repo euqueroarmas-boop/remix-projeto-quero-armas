@@ -4614,14 +4614,15 @@ export default function QAClientePortalPage() {
           !declResidenciaAberta &&
           !(isBelowLg && activeSection === "checklist_guiado") &&
           (showContratoPopup ||
-            (pendingContractsLoaded &&
+            (!pendenciasGuiadasDismissed &&
+              pendingContractsLoaded &&
               pendingSignatureCount > 0 &&
               !showAddDoc &&
               !showCadastroModal &&
               !showChecklistCadastral)) &&
           pendenciasGuiadasCount > 0
         }
-        bloqueante={pendingContractsLoaded && pendingSignatureCount > 0}
+        bloqueante={false}
         pendencias={pendenciasGuiadas}
         pinnedId={
           // Assinatura pendente = fila travada no contrato/procuração.

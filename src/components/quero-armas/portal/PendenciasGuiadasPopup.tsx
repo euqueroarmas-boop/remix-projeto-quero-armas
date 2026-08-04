@@ -502,10 +502,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 {primeiroNome ? (
                   <>
                     <span style={{ color: "#7A1F2B" }}>{primeiroNome.toUpperCase()}</span>, ESTÁ NOS DEVENDO
-                    <br />ENVIAR ESSES DOCUMENTOS!
+                    <br />{total === 1 ? "ENVIAR ESTE DOCUMENTO!" : "ENVIAR ESSES DOCUMENTOS!"}
                   </>
                 ) : (
-                  <>ESTÁ NOS DEVENDO<br />ENVIAR ESSES DOCUMENTOS!</>
+                  <>ESTÁ NOS DEVENDO<br />{total === 1 ? "ENVIAR ESTE DOCUMENTO!" : "ENVIAR ESSES DOCUMENTOS!"}</>
                 )}
               </h1>
             </div>
@@ -520,8 +520,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 </p>
                 <h1 className="mt-1 font-['Oswald',sans-serif] text-[22px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
                   {primeiroNome
-                    ? <>{primeiroNome}, você está nos devendo<br />enviar esses documentos!</>
-                    : <>Você está nos devendo<br />enviar esses documentos!</>}
+                    ? <>{primeiroNome}, você está nos devendo<br />{total === 1 ? "enviar este documento!" : "enviar esses documentos!"}</>
+                    : <>Você está nos devendo<br />{total === 1 ? "enviar este documento!" : "enviar esses documentos!"}</>}
                 </h1>
               </div>
             </div>
@@ -560,7 +560,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <h2 className="qa-editorial mt-2">
+          <h2 className="qa-h1 mt-2" style={{ letterSpacing: ".02em" }}>
             {explic.titulo}
           </h2>
 
