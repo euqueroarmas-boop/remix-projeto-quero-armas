@@ -83,7 +83,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [excluindo, setExcluindo] = useState<string | null>(null);
   const [regenerando, setRegenerando] = useState<string | null>(null);
   const [revertendo, setRevertendo] = useState<string | null>(null);
-  const [semContrato, setSemContrato] = useState<{ venda_id: number; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
+  const [semContrato, setSemContrato] = useState<{ venda_id: number; venda_id_legado: number | null; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
   const [ordemSemContrato, setOrdemSemContrato] = useState<"az" | "za" | "novos" | "antigos">("novos");
   const [gerando, setGerando] = useState<number | null>(null);
   const inputFileRef = useRef<HTMLInputElement>(null);
@@ -132,6 +132,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           const map = Object.fromEntries(((cli ?? []) as any[]).map((c) => [c.id, c]));
           setSemContrato(orfas.map((v) => ({
             venda_id: Number(v.id),
+            venda_id_legado: v.id_legado != null ? Number(v.id_legado) : null,
             cliente_id: Number(v.cliente_id),
             cliente_nome: map[v.cliente_id]?.nome_completo ?? "—",
             cliente_email: map[v.cliente_id]?.email ?? null,
