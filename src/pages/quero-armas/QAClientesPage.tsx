@@ -3203,7 +3203,11 @@ export default function QAClientesPage() {
 
         <Tabs value={tab} onValueChange={setTab}>
           {/* Scrollable tabs for mobile */}
-          <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
+          <div
+            ref={tabsScroll.ref as React.RefObject<HTMLDivElement>}
+            className="overflow-x-auto overscroll-x-contain -mx-0.5 px-0.5 scrollbar-none select-none max-w-full"
+            style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+          >
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
                 { value: "resumo", icon: TrendingUp, label: "Visão geral" },
