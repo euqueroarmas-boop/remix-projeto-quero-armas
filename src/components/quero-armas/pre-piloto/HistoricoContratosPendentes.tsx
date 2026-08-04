@@ -378,6 +378,34 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
 
       <p className="text-xs text-muted-foreground">{listaFiltrada.length} contrato(s) encontrado(s)</p>
 
+      {semContrato.length > 0 && (
+        <div className="border border-amber-200 bg-amber-50/60 rounded-lg p-3 space-y-2">
+          <p className="text-[11px] font-semibold text-amber-900 uppercase tracking-wide">
+            Vendas pagas sem contrato ({semContrato.length})
+          </p>
+          <p className="text-[11px] text-amber-800">
+            O contrato foi excluído ou nunca foi gerado. Gere um novo com os dados atuais do cadastro.
+          </p>
+          {semContrato.map((v) => (
+            <div key={v.venda_id} className="flex items-center justify-between gap-2 bg-white border rounded px-2.5 py-1.5">
+              <div className="min-w-0">
+                <p className="text-xs font-medium truncate">{v.cliente_nome}</p>
+                <p className="text-[11px] text-muted-foreground truncate">Venda #{v.venda_id} · {v.cliente_email || "—"}</p>
+              </div>
+              <Button
+                size="sm"
+                className="text-xs gap-1 h-7 bg-[#7B1C2E] hover:bg-[#6a1827] text-white flex-shrink-0"
+                disabled={gerando === v.venda_id}
+                onClick={() => gerarParaVenda(v.venda_id, v.cliente_nome)}
+              >
+                {gerando === v.venda_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FilePlus2 className="w-3 h-3" />}
+                Gerar contrato
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {listaFiltrada.length === 0 && (
         <div className="text-center py-8 text-xs text-muted-foreground italic">
           Nenhum contrato encontrado para este filtro.
@@ -492,6 +520,20 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                     Excluir permanentemente
                   </Button>
                   <div className="flex gap-2">
+                    {isAssinado(c.contrato_status) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs gap-1 h-7 border-amber-300 text-amber-800 hover:bg-amber-50"
+                        disabled={revertendo === c.contrato_id}
+                        onClick={() => reverterAssinatura(c.contrato_id, c.cliente_nome)}
+                      >
+                        {revertendo === c.contrato_id
+                          ? <Loader2 className="w-3 h-3 animate-spin" />
+                          : <Undo2 className="w-3 h-3" />}
+                        Voltar p/ aguardando
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
