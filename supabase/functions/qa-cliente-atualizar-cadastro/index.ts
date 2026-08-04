@@ -271,12 +271,15 @@ Deno.serve(async (req) => {
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
-    // Carrega campo_origens atual para mesclar.
+    // Carrega o registro atual: campo_origens (para mesclar) e os valores
+    // ANTIGOS dos campos alterados — sem isso a notificação só diz qual campo
+    // mudou, e a equipe não consegue conferir o que o cliente escreveu.
     const { data: clienteFull } = await admin
       .from("qa_clientes")
-      .select("campo_origens")
+      .select("*")
       .eq("id", cliente.id)
       .maybeSingle();
+    const anteriores: Record<string, unknown> = (clienteFull as any) || {};
     const origens = ((clienteFull as any)?.campo_origens || {}) as Record<string, { source: string; at?: string }>;
     const agora = new Date().toISOString();
     for (const col of Object.keys(updates)) {
