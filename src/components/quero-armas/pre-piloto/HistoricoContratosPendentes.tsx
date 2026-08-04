@@ -332,7 +332,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   // servir o conteúdo corrigido assim que regenerado — não há necessidade
   // de invalidar o link antigo, só de avisar o cliente de novo.
   async function regenerarEReenviar(contratoId: string, vendaId: number, clienteNome: string) {
-    if (!window.confirm(`Regenerar o contrato de ${clienteNome} com o template vigente e reenviar o e-mail de assinatura?`)) return;
+    if (!window.confirm(`Regenerar o contrato E a procuração de ${clienteNome} com o template vigente e reenviar o e-mail de assinatura?`)) return;
     setRegenerando(contratoId);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
@@ -341,11 +341,12 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       if (error || (data as any)?.error) {
         throw new Error((data as any)?.error || error?.message || "Falha ao regenerar contrato");
       }
+      await regenerarProcuracao(vendaId);
       const emailDispatch = (data as any)?.email_dispatch;
       if (emailDispatch?.ok === false) {
-        toast.warning(emailDispatch.error || "Contrato regenerado, mas o e-mail não foi confirmado.");
+        toast.warning(emailDispatch.error || "Contrato + procuração regenerados, mas o e-mail não foi confirmado.");
       } else {
-        toast.success("Contrato regenerado e e-mail reenviado ao cliente.");
+        toast.success("Contrato + procuração regenerados e e-mail reenviado ao cliente.");
       }
       await carregar();
     } catch (e: any) {
@@ -355,11 +356,26 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     }
   }
 
+  // A procuração acompanha o contrato: sempre que o contrato é (re)gerado ou
+  // volta para "aguardando assinatura", a procuração é refeita com os dados
+  // atuais do cadastro.
+  async function regenerarProcuracao(vendaId: number) {
+    try {
+      const item = contratos.find((x) => Number(x.venda_id) === Number(vendaId));
+      if (!item?.cliente_id) return;
+      await supabase.functions.invoke("qa-gerar-procuracao", {
+        body: { cliente_id: item.cliente_id, venda_id: vendaId, force_regenerate: true },
+      });
+    } catch {
+      toast.warning("Contrato atualizado, mas a procuração não pôde ser regenerada automaticamente.");
+    }
+  }
+
   // Volta um contrato ASSINADO para "aguardando assinatura", preservando o
   // registro e liberando a regeneração com o cadastro corrigido.
   async function reverterAssinatura(contratoId: string, clienteNome: string) {
     if (!window.confirm(
-      `Voltar o contrato de ${clienteNome} para "Aguardando assinatura"?\n\nA assinatura enviada será desvinculada (o registro e o histórico permanecem) e você poderá regenerar o contrato com os dados corrigidos.`,
+      `Voltar o contrato de ${clienteNome} para "Aguardando assinatura"?\n\nA assinatura enviada será desvinculada (o registro e o histórico permanecem) e a PROCURAÇÃO será regenerada automaticamente com os dados corrigidos.`,
     )) return;
     setRevertendo(contratoId);
     try {
@@ -367,7 +383,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         body: { contrato_id: contratoId },
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao reverter");
-      toast.success("Contrato voltou para 'Aguardando assinatura'. Agora você pode regenerar.");
+      toast.success("Contrato voltou para 'Aguardando assinatura' e a procuração foi regenerada automaticamente.");
       setFiltro("aguardando");
       await carregar();
     } catch (e: any) {
@@ -381,14 +397,14 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   // `vendaIdApi` é o id que a edge function espera (id_legado da venda);
   // `vendaIdExibicao` é o número mostrado na tela.
   async function gerarParaVenda(vendaIdApi: number, clienteNome: string, vendaIdExibicao = vendaIdApi) {
-    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
+    if (!window.confirm(`Gerar um novo contrato + procuração para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
     setGerando(vendaIdExibicao);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
         body: { venda_id: vendaIdApi, force: true, reenviar_email: true },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Falha ao gerar contrato");
-      toast.success("Contrato gerado. Ele já aparece em 'Aguardando assinatura'.");
+      toast.success("Contrato + procuração gerados. Já aparecem em 'Aguardando assinatura'.");
       setFiltro("aguardando");
       await carregar();
     } catch (e: any) {
@@ -429,7 +445,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
     { id: "aguardando", label: "Aguardando assinatura", count: totalAguardando },
     { id: "assinados", label: "Assinados", count: totalAssinados },
     { id: "todos", label: "Todos", count: contratos.length },
-    { id: "gerar", label: "Gerar contrato", count: semContrato.length },
+    { id: "gerar", label: "Gerar contrato + procuração", count: semContrato.length },
   ];
 
   const abaGerar = filtro === "gerar";
@@ -545,7 +561,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 onClick={() => gerarParaVenda(v.venda_id_legado ?? v.venda_id, v.cliente_nome, v.venda_id)}
               >
                 {gerando === v.venda_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FilePlus2 className="w-3 h-3" />}
-                Gerar contrato
+                Gerar contrato + procuração
               </Button>
             </div>
           ))}
@@ -697,7 +713,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                       {regenerando === c.contrato_id
                         ? <Loader2 className="w-3 h-3 animate-spin" />
                         : <Mail className="w-3 h-3" />}
-                      Regenerar e reenviar
+                      Regenerar contrato + procuração
                     </Button>
                     <Button
                       size="sm"
