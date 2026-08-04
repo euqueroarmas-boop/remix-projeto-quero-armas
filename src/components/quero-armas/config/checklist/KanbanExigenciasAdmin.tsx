@@ -17,6 +17,11 @@ import {
   Upload, RotateCcw, GripVertical, Copy, AlertTriangle,
 } from "lucide-react";
 import {
+  DndContext, DragOverlay, closestCenter, PointerSensor,
+  useSensor, useSensors, useDraggable, useDroppable,
+  type DragEndEvent, type DragStartEvent,
+} from "@dnd-kit/core";
+import {
   KanbanGrupo, KanbanItem, carregarGrupos, carregarRascunho, carregarPublicado,
   descartarRascunho, gruposDoServico, novoUid, publicarRascunho, salvarRascunho,
   assinaturaItens,
@@ -135,21 +140,31 @@ export default function KanbanExigenciasAdmin() {
     toast.success("Rascunho descartado");
   }
 
-  // ── drag & drop ─────────────────────────────────────────────────────────
-  function onDragStart(e: React.DragEvent, servicoId: number, uid: string) {
-    e.dataTransfer.setData("application/qa-kanban", JSON.stringify({ servicoId, uid }));
-    e.dataTransfer.effectAllowed = "copyMove";
+  // ── drag & drop (@dnd-kit) ──────────────────────────────────────────────
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const [dragging, setDragging] = useState<{ servicoId: number; item: KanbanItem } | null>(null);
+
+  function onDragStart(e: DragStartEvent) {
+    const data = e.active.data.current as { servicoId: number; uid: string } | undefined;
+    if (!data) return;
+    const item = estado[data.servicoId]?.itens.find((i) => i.uid === data.uid);
+    if (item) setDragging({ servicoId: data.servicoId, item });
   }
 
-  function onDrop(e: React.DragEvent, destServicoId: number, grupoSlug: string) {
-    e.preventDefault();
-    const raw = e.dataTransfer.getData("application/qa-kanban");
-    if (!raw) return;
-    const { servicoId: origem, uid } = JSON.parse(raw) as { servicoId: number; uid: string };
+  function onDragEnd(e: DragEndEvent) {
+    setDragging(null);
+    const { active, over } = e;
+    if (!over) return;
+    const activeData = active.data.current as { servicoId: number; uid: string } | undefined;
+    const overData = over.data.current as { servicoId: number; grupoSlug: string } | undefined;
+    if (!activeData || !overData) return;
+    const { servicoId: origem, uid } = activeData;
+    const { servicoId: destServicoId, grupoSlug } = overData;
     const item = estado[origem]?.itens.find((i) => i.uid === uid);
     if (!item) return;
 
     if (origem === destServicoId) {
+      if (item.grupo_slug === grupoSlug) return;
       mutar(destServicoId, (itens) =>
         itens.map((i) => (i.uid === uid ? { ...i, grupo_slug: grupoSlug } : i)),
       );
@@ -245,153 +260,100 @@ export default function KanbanExigenciasAdmin() {
         </div>
       )}
 
-      {/* Quadros */}
-      <div className="flex gap-4 overflow-x-auto pb-3">
-        {quadros.map((servicoId) => {
-          const st = estado[servicoId];
-          const cols = gruposDoServico(grupos, servicoId);
-          const alterado = st ? assinaturaItens(st.itens) !== st.publicadoSig : false;
-          return (
-            <div
-              key={servicoId}
-              className="min-w-[320px] flex-1 rounded-xl border border-[#E3DED5] bg-[#FAF6F1] p-3"
-            >
-              <div className="mb-3 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate text-[12px] font-bold uppercase tracking-[0.1em] text-[#0A0A0A]">
-                    {nomeServico(servicoId)}
+      {/* Quadros — um por processo, colunas (grupos) lado a lado */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <div className="space-y-5">
+          {quadros.map((servicoId) => {
+            const st = estado[servicoId];
+            const cols = gruposDoServico(grupos, servicoId);
+            const alterado = st ? assinaturaItens(st.itens) !== st.publicadoSig : false;
+            return (
+              <div key={servicoId} className="rounded-xl border border-[#E3DED5] bg-[#FAF6F1] p-3">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-[12px] font-bold uppercase tracking-[0.1em] text-[#0A0A0A]">
+                      {nomeServico(servicoId)}
+                    </div>
+                    <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+                      {st?.itens.length ?? 0} exigências
+                      {alterado && (
+                        <span className="ml-2 inline-flex items-center gap-1 text-[#7A1F2B]">
+                          <AlertTriangle className="h-3 w-3" /> não publicado
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
-                    {st?.itens.length ?? 0} exigências
-                    {alterado && (
-                      <span className="ml-2 inline-flex items-center gap-1 text-[#7A1F2B]">
-                        <AlertTriangle className="h-3 w-3" /> não publicado
-                      </span>
-                    )}
+                  <button type="button" onClick={() => fecharQuadro(servicoId)} className="text-slate-400 hover:text-[#7A1F2B]">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => persistir(servicoId)}
+                    disabled={salvando === servicoId}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3DED5] bg-white px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-50"
+                  >
+                    {salvando === servicoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Salvar rascunho
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => publicar(servicoId)}
+                    disabled={publicando === servicoId}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7A1F2B] px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white hover:bg-[#631a23]"
+                  >
+                    {publicando === servicoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Publicar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => descartar(servicoId)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3DED5] bg-white px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-slate-50"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Descartar
+                  </button>
+                </div>
+
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {cols.map((g) => (
+                    <KanbanColuna
+                      key={g.id}
+                      servicoId={servicoId}
+                      grupo={g}
+                      cards={(st?.itens ?? []).filter((i) => i.grupo_slug === g.slug)}
+                      onAdd={() => { setBusca(""); setPicker({ servicoId, grupoSlug: g.slug }); }}
+                      onToggleObrig={(uid) =>
+                        mutar(servicoId, (itens) =>
+                          itens.map((x) => (x.uid === uid ? { ...x, obrigatorio: !x.obrigatorio } : x)),
+                        )
+                      }
+                      onRemove={(uid) => mutar(servicoId, (itens) => itens.filter((x) => x.uid !== uid))}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <DragOverlay>
+          {dragging ? (
+            <div className={`${CARD_BASE} w-[260px] shadow-lg`}>
+              <div className="flex items-start gap-1.5">
+                <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-300" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[11px] font-semibold leading-snug text-[#0A0A0A]">
+                    {dragging.item.nome_documento}
+                  </div>
+                  <div className="mt-0.5 truncate text-[9px] uppercase tracking-wider text-slate-400">
+                    {dragging.item.tipo_documento}
                   </div>
                 </div>
-                <button type="button" onClick={() => fecharQuadro(servicoId)} className="text-slate-400 hover:text-[#7A1F2B]">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => persistir(servicoId)}
-                  disabled={salvando === servicoId}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3DED5] bg-white px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-50"
-                >
-                  {salvando === servicoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Salvar rascunho
-                </button>
-                <button
-                  type="button"
-                  onClick={() => publicar(servicoId)}
-                  disabled={publicando === servicoId}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7A1F2B] px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white hover:bg-[#631a23]"
-                >
-                  {publicando === servicoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Publicar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => descartar(servicoId)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-[#E3DED5] bg-white px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 hover:bg-slate-50"
-                >
-                  <RotateCcw className="h-3 w-3" /> Descartar
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {cols.map((g) => {
-                  const cards = (st?.itens ?? []).filter((i) => i.grupo_slug === g.slug);
-                  return (
-                    <div
-                      key={g.id}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => onDrop(e, servicoId, g.slug)}
-                      className="rounded-lg border border-[#E9E4DB] bg-white/70 p-2"
-                    >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full" style={{ background: g.cor }} />
-                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700">
-                            {g.nome}
-                          </span>
-                          <span className="text-[10px] text-slate-400">({cards.length})</span>
-                          {g.servico_id !== null && (
-                            <span className="rounded bg-[#7A1F2B]/10 px-1 text-[9px] font-bold uppercase text-[#7A1F2B]">extra</span>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => { setBusca(""); setPicker({ servicoId, grupoSlug: g.slug }); }}
-                          className="text-slate-400 hover:text-[#7A1F2B]"
-                          title="Adicionar exigência neste grupo"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      {cards.length === 0 && (
-                        <div className="rounded border border-dashed border-[#E9E4DB] px-2 py-3 text-center text-[10px] text-slate-400">
-                          Arraste uma exigência para cá
-                        </div>
-                      )}
-
-                      <div className="space-y-1.5">
-                        {cards.map((it) => (
-                          <div
-                            key={it.uid}
-                            draggable
-                            onDragStart={(e) => onDragStart(e, servicoId, it.uid)}
-                            className={CARD_BASE}
-                          >
-                            <div className="flex items-start gap-1.5">
-                              <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-grab text-slate-300" />
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[11px] font-semibold leading-snug text-[#0A0A0A]">
-                                  {it.nome_documento}
-                                </div>
-                                <div className="mt-0.5 truncate text-[9px] uppercase tracking-wider text-slate-400">
-                                  {it.tipo_documento}
-                                </div>
-                              </div>
-                              <div className="flex shrink-0 items-center gap-1">
-                                <button
-                                  type="button"
-                                  title={it.obrigatorio ? "Obrigatória" : "Opcional"}
-                                  onClick={() =>
-                                    mutar(servicoId, (itens) =>
-                                      itens.map((x) => (x.uid === it.uid ? { ...x, obrigatorio: !x.obrigatorio } : x)),
-                                    )
-                                  }
-                                  className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
-                                    it.obrigatorio ? "bg-[#7A1F2B] text-white" : "bg-slate-100 text-slate-500"
-                                  }`}
-                                >
-                                  {it.obrigatorio ? "obrig." : "opc."}
-                                </button>
-                                <button
-                                  type="button"
-                                  title="Remover do processo"
-                                  onClick={() => mutar(servicoId, (itens) => itens.filter((x) => x.uid !== it.uid))}
-                                  className="text-slate-300 hover:text-[#7A1F2B]"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
             </div>
-          );
-        })}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       {quadros.length > 1 && (
         <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-500">
@@ -453,6 +415,131 @@ export default function KanbanExigenciasAdmin() {
           onChanged={async () => setGrupos(await carregarGrupos())}
         />
       )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Coluna (grupo) — área onde os cards podem ser soltos
+// ============================================================================
+function KanbanColuna({
+  servicoId, grupo, cards, onAdd, onToggleObrig, onRemove,
+}: {
+  servicoId: number;
+  grupo: KanbanGrupo;
+  cards: KanbanItem[];
+  onAdd: () => void;
+  onToggleObrig: (uid: string) => void;
+  onRemove: (uid: string) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${servicoId}::${grupo.slug}`,
+    data: { servicoId, grupoSlug: grupo.slug },
+  });
+
+  return (
+    <div className="flex w-[260px] shrink-0 flex-col rounded-lg border border-[#E9E4DB] bg-white/70">
+      <div className="flex items-center justify-between gap-2 border-b border-[#E9E4DB] px-2 py-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: grupo.cor }} />
+          <span className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-slate-700">
+            {grupo.nome}
+          </span>
+          <span className="shrink-0 text-[10px] text-slate-400">({cards.length})</span>
+          {grupo.servico_id !== null && (
+            <span className="shrink-0 rounded bg-[#7A1F2B]/10 px-1 text-[9px] font-bold uppercase text-[#7A1F2B]">extra</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onAdd}
+          className="shrink-0 text-slate-400 hover:text-[#7A1F2B]"
+          title="Adicionar exigência neste grupo"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div
+        ref={setNodeRef}
+        style={{ minHeight: 72 }}
+        className={`flex-1 space-y-1.5 p-2 transition-colors ${
+          isOver ? "bg-[#7A1F2B]/5 ring-2 ring-inset ring-[#7A1F2B]/30" : ""
+        }`}
+      >
+        {cards.length === 0 && (
+          <div className="rounded border border-dashed border-[#E9E4DB] px-2 py-3 text-center text-[10px] text-slate-400">
+            Arraste uma exigência para cá
+          </div>
+        )}
+        {cards.map((it) => (
+          <KanbanCard
+            key={it.uid}
+            servicoId={servicoId}
+            item={it}
+            onToggleObrig={() => onToggleObrig(it.uid)}
+            onRemove={() => onRemove(it.uid)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Card — exigência arrastável
+// ============================================================================
+function KanbanCard({
+  servicoId, item, onToggleObrig, onRemove,
+}: {
+  servicoId: number;
+  item: KanbanItem;
+  onToggleObrig: () => void;
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: item.uid,
+    data: { servicoId, uid: item.uid },
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.4 : 1 }
+    : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style} className={CARD_BASE}>
+      <div className="flex items-start gap-1.5">
+        <span
+          {...listeners}
+          {...attributes}
+          role="button"
+          tabIndex={0}
+          aria-label="Arrastar exigência"
+          className="mt-0.5 shrink-0 cursor-grab touch-none text-slate-300 hover:text-slate-500"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[11px] font-semibold leading-snug text-[#0A0A0A]">{item.nome_documento}</div>
+          <div className="mt-0.5 truncate text-[9px] uppercase tracking-wider text-slate-400">
+            {item.tipo_documento}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            title={item.obrigatorio ? "Obrigatória" : "Opcional"}
+            onClick={onToggleObrig}
+            className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
+              item.obrigatorio ? "bg-[#7A1F2B] text-white" : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            {item.obrigatorio ? "obrig." : "opc."}
+          </button>
+          <button type="button" title="Remover do processo" onClick={onRemove} className="text-slate-300 hover:text-[#7A1F2B]">
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
