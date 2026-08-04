@@ -431,7 +431,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 size="sm"
                 className="text-xs gap-1 h-7 bg-[#7B1C2E] hover:bg-[#6a1827] text-white flex-shrink-0"
                 disabled={gerando === v.venda_id}
-                onClick={() => gerarParaVenda(v.venda_id, v.cliente_nome)}
+                onClick={() => gerarParaVenda(v.venda_id_legado ?? v.venda_id, v.cliente_nome, v.venda_id)}
               >
                 {gerando === v.venda_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <FilePlus2 className="w-3 h-3" />}
                 Gerar contrato
