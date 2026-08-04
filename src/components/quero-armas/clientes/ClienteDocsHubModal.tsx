@@ -2315,6 +2315,31 @@ export function ClienteDocsHubModal({
         }
       } catch { /* sem texto nativo, segue com o que a IA leu */ }
 
+      // ── O TEXTO NATIVO MANDA SOBRE A IA ────────────────────────────────────
+      // Mesmo quando o layout não é um dos parsers completos, tudo que o parser
+      // conseguir ler do texto real do PDF (nome, CPF, nascimento, nº, emissão)
+      // sobrescreve a leitura probabilística da IA. A IA só preenche o que o
+      // texto não trouxer.
+      try {
+        if (textoLocalRef.current) {
+          const docLocal = parseCertidao(textoLocalRef.current) as Record<string, any> | null;
+          if (docLocal) {
+            const brDe = (isoStr?: string) => {
+              const m = String(isoStr || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+              return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+            };
+            if (docLocal.nome_titular) (campos as any).nome_titular = docLocal.nome_titular;
+            if (docLocal.cpf) (campos as any).cpf = docLocal.cpf;
+            if (docLocal.nome_mae) (campos as any).nome_mae = docLocal.nome_mae;
+            if (docLocal.data_nascimento) (campos as any).data_nascimento = brDe(docLocal.data_nascimento);
+            if (docLocal.numero_documento) campos.numero_documento = docLocal.numero_documento;
+            if (docLocal.data_emissao) campos.data_emissao = brDe(docLocal.data_emissao);
+          }
+        }
+      } catch (e) {
+        console.warn("[parse-first] override determinístico falhou:", e);
+      }
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
