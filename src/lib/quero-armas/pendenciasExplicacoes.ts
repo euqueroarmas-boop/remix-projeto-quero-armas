@@ -676,6 +676,30 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). O TSE às vezes fica fora do ar à noite — se der erro, tente pela manhã.",
   },
 
+  // Documentos funcionais (servidor/militar)
+  identidade_funcional_digital: {
+    titulo: "Identidade Funcional Digital",
+    passos: [
+      "Acesse o app ou portal do seu órgão (SIGEPE, app da PF, SINESP, portal da PM/PC etc.) com seu login funcional.",
+      "Procure por \"Identidade Funcional\" ou \"Credencial Digital\" e exporte em PDF ou salve a imagem com boa resolução.",
+      "Confira que aparecem nome completo, matrícula, cargo/patente, órgão e data de validade.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o arquivo original.",
+    ],
+    observacao: "Precisa ser a versão digital oficial (PDF ou imagem do app do órgão). Foto de cartão físico é aceita se todos os dados estiverem legíveis.",
+  },
+  contra_cheque_digital: {
+    titulo: "Contracheque Digital",
+    passos: [
+      "Acesse o sistema de RH do seu órgão: SIGEPE (federal), SIGRH (estadual) ou o portal do servidor do seu município.",
+      "Faça login com sua matrícula e senha (ou Gov.br, conforme o órgão).",
+      "Vá em \"Contracheque\", \"Ficha Financeira\" ou \"Recibo de Pagamento\" e selecione o mês vigente.",
+      "Clique em \"Baixar PDF\" — o arquivo vem assinado digitalmente pelo órgão.",
+      "Confira que aparecem nome, CPF, matrícula, órgão/lotação e valor líquido.",
+      "Volte aqui e clique em \"Entregar documento\" para enviar o PDF original.",
+    ],
+    observacao: "Aceitamos o mês atual ou o anterior. Prints de tela e fotos de contracheque físico são reprovados — envie o PDF baixado do sistema oficial.",
+  },
+
   // Renda
   renda_holerite_mes_atual: {
     titulo: "Holerite atual",
@@ -1027,7 +1051,9 @@ export function getExplicacaoPendencia(
     EXPLICACOES_BIBLIOTECA.get(primary) ||
     (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
     EXPLICACOES_REGISTRO[primary] ||
-    (secondary ? EXPLICACOES_REGISTRO[secondary] : undefined);
+    // Não cai no genérico "outro" se há fallbackNome — assim documentos sem
+    // entrada estática mostram o nome real em vez de "Documento adicional".
+    (secondary && secondary !== "outro" ? EXPLICACOES_REGISTRO[secondary] : undefined);
   if (hit) return hit;
   const titulo = fallbackNome && fallbackNome.trim()
     ? fallbackNome.trim()

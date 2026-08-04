@@ -53,6 +53,13 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   ccmei: "renda_ccmei",
   certificado_mei: "renda_ccmei",
   renda_ficha_cadastral_jucesp: "renda_contrato_social",
+  // Documentos funcionais de servidor/militar: sem slot próprio no Hub,
+  // mapeados para os equivalentes semânticos mais próximos.
+  identidade_funcional_digital: "documento_complementar_caso",
+  contra_cheque_digital: "renda_holerite_mes_atual",
+  // Certidão TRF3 longa (gerada por qa_explodir_checklist_processo com
+  // o nome completo da seção — mesmo documento que certidao_federal_trf3_sjsp_jef).
+  certidao_federal_trf_3_regiao_abrangencia_da_secao_judiciaria_e_juizado_especial_federal_de_sao_paulo: "antecedentes_federal_sjsp_jef",
 };
 
 const HUB_TIPOS_VALIDOS = new Set([
