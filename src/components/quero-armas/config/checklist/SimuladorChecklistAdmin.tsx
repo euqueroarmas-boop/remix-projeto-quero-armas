@@ -622,14 +622,12 @@ export default function SimuladorChecklistAdmin() {
       )}
 
       {!loading && servicoId && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           {/* Coluna 1 — passo atual */}
-          <div className="qa-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                Passo atual do cliente
-              </span>
-              <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
+          <div className="qa-card p-5 xl:sticky xl:top-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="qa-h3">Passo atual do cliente</h3>
+              <span className="text-[11.5px] font-mono tabular-nums shrink-0" style={{ color: MUTED }}>
                 {sim.totalCumpridos}/{sim.totalCumpridos + sim.totalPendentes}
               </span>
             </div>
