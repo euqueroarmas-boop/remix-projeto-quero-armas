@@ -380,9 +380,12 @@ export default function SimuladorChecklistAdmin() {
           const chave = r.chave as string | undefined;
           const opcoes = Array.isArray(r.opcoes) ? r.opcoes : [];
           if (!chave || opcoes.length === 0) return null;
+          const ehDocumento = r.tipo !== "pergunta" || r.exige_documento_quando != null;
           return {
             chave,
-            nome: l.nome_documento,
+            nome: ehDocumento
+              ? `DOCUMENTO (COM PERGUNTA): ${l.nome_documento}`
+              : `PERGUNTA: ${l.nome_documento}`,
             opcoes: opcoes.map((o: any) => ({ label: String(o.label ?? o.valor), valor: String(o.valor) })),
           };
         })
@@ -432,8 +435,8 @@ export default function SimuladorChecklistAdmin() {
     const opcoes = novasOpcoes.split("\n").map((linha) => linha.trim()).filter(Boolean).map((label) => ({
       label: label.toUpperCase(), valor: slugRegra(label),
     }));
-    if (opcoes.length < 2) {
-      toast.error("INFORME PELO MENOS DUAS RESPOSTAS, UMA POR LINHA");
+    if (opcoes.length < 1) {
+      toast.error("INFORME PELO MENOS UMA RESPOSTA");
       return;
     }
     setSalvandoRota(true);
