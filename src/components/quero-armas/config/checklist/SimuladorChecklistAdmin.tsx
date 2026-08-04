@@ -4,6 +4,7 @@ import {
   Loader2, PlayCircle, RotateCcw, CheckCircle2, CircleDashed, MinusCircle,
   Clock, AlertTriangle, ArrowRight, GripVertical, X, Plus, Search,
   ListOrdered, ChevronRight, ChevronDown,
+  GitBranch, FileQuestion, Save, Route,
 } from "lucide-react";
 import {
   DndContext, DragOverlay, closestCenter, PointerSensor, KeyboardSensor,
@@ -22,6 +23,7 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { Button } from "@/components/ui/button";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -64,6 +66,13 @@ export default function SimuladorChecklistAdmin() {
   const [buscaBib, setBuscaBib] = useState("");
   const [condicaoNova, setCondicaoNova] = useState<string>("");
   const [adicionando, setAdicionando] = useState(false);
+  const [mostrarNovaPergunta, setMostrarNovaPergunta] = useState(false);
+  const [novaPergunta, setNovaPergunta] = useState("");
+  const [novasOpcoes, setNovasOpcoes] = useState("SIM\nNÃO");
+  const [rotaPergunta, setRotaPergunta] = useState("");
+  const [rotaResposta, setRotaResposta] = useState("");
+  const [rotaDestino, setRotaDestino] = useState("");
+  const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -379,6 +388,98 @@ export default function SimuladorChecklistAdmin() {
         .filter(Boolean) as { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[],
     [linhas],
   );
+
+  const slugRegra = (valor: string) =>
+    valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 52);
+
+  async function criarPergunta() {
+    if (!servicoId || !novaPergunta.trim()) return;
+    const chaveBase = slugRegra(novaPergunta);
+    const chave = chaveBase || `pergunta_${Date.now()}`;
+    if (perguntasPivo.some((p) => p.chave === chave)) {
+      toast.error("JÁ EXISTE UMA PERGUNTA IGUAL NESTE CHECKLIST");
+      return;
+    }
+    const opcoes = novasOpcoes.split("\n").map((linha) => linha.trim()).filter(Boolean).map((label) => ({
+      label: label.toUpperCase(), valor: slugRegra(label),
+    }));
+    if (opcoes.length < 2) {
+      toast.error("INFORME PELO MENOS DUAS RESPOSTAS, UMA POR LINHA");
+      return;
+    }
+    setSalvandoRota(true);
+    const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
+    const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+      servico_id: servicoId,
+      tipo_documento: `pergunta_${chave}`,
+      nome_documento: novaPergunta.trim(),
+      etapa: "base",
+      obrigatorio: true,
+      ordem,
+      ativo: true,
+      regra_validacao: { tipo: "pergunta", chave, entrada: "opcoes", opcoes },
+    });
+    setSalvandoRota(false);
+    if (error) { toast.error("NÃO FOI POSSÍVEL CRIAR A PERGUNTA: " + error.message); return; }
+    toast.success("PERGUNTA CRIADA — AGORA DEFINA O CAMINHO DE CADA RESPOSTA");
+    setNovaPergunta("");
+    setNovasOpcoes("SIM\nNÃO");
+    setMostrarNovaPergunta(false);
+    await carregar(servicoId);
+  }
+
+  async function salvarRotaLeiga() {
+    if (!servicoId || !rotaPergunta || !rotaResposta || !rotaDestino) {
+      toast.error("PREENCHA O SE, A RESPOSTA E O ENTÃO");
+      return;
+    }
+    const origem = perguntasPivo.find((p) => p.chave === rotaPergunta);
+    if (!origem) return;
+    setSalvandoRota(true);
+    try {
+      if (rotaDestino.startsWith("linha:")) {
+        const id = rotaDestino.slice(6);
+        await patchRegra(id, {
+          exige_quando: { [rotaPergunta]: rotaResposta },
+          dispensa_quando: null,
+        }, "CAMINHO SALVO");
+      } else if (rotaDestino.startsWith("bib:")) {
+        const item = biblioteca.find((b) => b.id === rotaDestino.slice(4));
+        if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
+        const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
+        const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
+          servico_id: servicoId, biblioteca_id: item.id, tipo_documento: item.codigo,
+          nome_documento: item.nome, etapa: "base", obrigatorio: true, ordem, ativo: true,
+          validade_dias: item.validade_dias, formato_aceito: item.formato_aceito,
+          link_emissao: item.link_emissao, instrucoes: item.descricao_como_enviar,
+          observacoes_cliente: item.observacao_cliente,
+          regra_validacao: { exige_quando: { [rotaPergunta]: rotaResposta } },
+        });
+        if (error) throw error;
+        toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
+      }
+      setRotaDestino("");
+      await carregar(servicoId);
+    } catch (e: any) {
+      toast.error("NÃO FOI POSSÍVEL SALVAR O CAMINHO: " + String(e?.message ?? "ERRO"));
+    } finally {
+      setSalvandoRota(false);
+    }
+  }
+
+  const rotasVisuais = useMemo(() => perguntasPivo.map((pergunta) => ({
+    ...pergunta,
+    respostas: pergunta.opcoes.map((opcao) => ({
+      ...opcao,
+      destinos: linhas.filter((linha) => {
+        if ((linha as any).ativo === false || linha.id === linhas.find((l) => (l.regra_validacao as any)?.chave === pergunta.chave)?.id) return false;
+        const regra: any = linha.regra_validacao ?? {};
+        return regra.exige_quando?.[pergunta.chave] === opcao.valor ||
+          (regra.depende_de?.chave === pergunta.chave && regra.depende_de?.valor === opcao.valor);
+      }),
+    })),
+  })), [linhas, perguntasPivo]);
 
   /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
