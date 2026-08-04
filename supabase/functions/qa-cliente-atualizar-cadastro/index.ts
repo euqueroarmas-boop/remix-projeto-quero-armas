@@ -297,6 +297,23 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (upErr) return json({ error: upErr.message }, 500);
 
+    // Histórico com valor anterior e novo — é o que permite à equipe conferir
+    // exatamente o que o cliente escreveu em cada campo.
+    const changedFields = Object.entries(updates).map(([k, v]) => ({
+      field: k,
+      label: ROTULO_CAMPO[k] ?? k,
+      old: anteriores[k] ?? null,
+      new: v ?? null,
+    }));
+    try {
+      await admin.from("qa_cliente_historico_atualizacoes").insert({
+        cliente_id: cliente.id,
+        origem: "portal_cliente",
+        autor: "cliente",
+        changed_fields: changedFields,
+      } as any);
+    } catch { /* opcional */ }
+
     // Auditoria best-effort (não bloqueia se a tabela não existir).
     try {
       await admin.from("qa_processo_eventos").insert({
@@ -317,9 +334,10 @@ Deno.serve(async (req) => {
           evento: "cadastro_atualizado",
           cliente_id: cliente.id,
           alterado_por: "Você, pelo portal do cliente",
-          campos_alterados: Object.entries(updates).map(([k, v]) => ({
-            label: ROTULO_CAMPO[k] ?? k,
-            valor: String(v ?? ""),
+          campos_alterados: changedFields.map((c) => ({
+            label: c.label,
+            valor: String(c.new ?? ""),
+            anterior: c.old === null || c.old === undefined ? "" : String(c.old),
           })),
         },
       });
