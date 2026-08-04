@@ -19,6 +19,9 @@ import {
 } from "@/lib/quero-armas/documentosAgrupamento";
 import { logSistema } from "@/lib/logSistema";
 import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/documentosHubCatalogo";
+import {
+  montarLinhaEntrega, contarAnotacoes, type EntregaItem,
+} from "@/lib/quero-armas/hubEntregaAuditoria";
 
 interface Props {
   cliente: any;
@@ -160,6 +163,26 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   });
 
   const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
+
+  // Exigências reais do cliente — base para auditar a ordem de entrega.
+  const { data: exigencias = [] } = useQuery({
+    queryKey: ["cliente-exigencias-entrega", clienteId],
+    enabled: Boolean(clienteId),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("qa_processo_documentos" as any)
+        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio")
+        .eq("cliente_id", clienteId);
+      return ((data as any[]) || []);
+    },
+  });
+
+  const [modo, setModo] = useState<"familia" | "entrega">("entrega");
+  const linhaEntrega = useMemo(
+    () => montarLinhaEntrega(docs as any[], exigencias as any[]),
+    [docs, exigencias],
+  );
+  const totalAnotacoes = useMemo(() => contarAnotacoes(linhaEntrega), [linhaEntrega]);
 
   // Agrupa por família documental (Bloco: empilhamento visual).
   const grupos = useMemo(
@@ -378,16 +401,42 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             {grupos.length} família(s) · {docs.length} documento(s)
           </span>
         </div>
-        {pendentes > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setModo("entrega")}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "entrega" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+            >
+              Ordem de entrega
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo("familia")}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "familia" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+            >
+              Por família
+            </button>
+          </div>
+          {totalAnotacoes > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 border border-red-200 text-[10px] font-bold uppercase tracking-wider text-red-700">
+              <ShieldAlert className="h-3 w-3" /> {totalAnotacoes} anotação(ões)
+            </span>
+          )}
+          {pendentes > 0 && (
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200">
             <Clock className="h-3 w-3 text-amber-600" />
             <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
               {pendentes} pendente(s)
             </span>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {modo === "entrega" && <LinhaEntrega itens={linhaEntrega} onViewFile={handleViewFile} />}
+
+      {modo === "familia" && (
       <div className="grid gap-2">
         {grupos.map((grupo) => (
           <GrupoCard
@@ -412,6 +461,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           />
         ))}
       </div>
+      )}
       <DocumentoViewerModal
         open={viewer.open}
         onClose={viewer.fechar}
@@ -425,6 +475,78 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 // ============================================================================
 // GrupoCard — renderiza principal + histórico recolhido
 // ============================================================================
+function LinhaEntrega({ itens, onViewFile }: { itens: EntregaItem[]; onViewFile: (path: string) => void }) {
+  if (itens.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+        Linha do tempo de entrega · {itens.length} documento(s)
+      </div>
+      <ol className="space-y-2">
+        {itens.map((it) => {
+          const d: any = it.doc;
+          const critico = it.anotacoes.some((a) => a.severidade === "critico");
+          const atencao = it.anotacoes.some((a) => a.severidade === "atencao");
+          const cls = critico
+            ? "border-red-200 bg-red-50/40"
+            : atencao
+              ? "border-amber-200 bg-amber-50/40"
+              : "border-slate-200 bg-white";
+          return (
+            <li key={d.id} className={`rounded-lg border p-2.5 ${cls}`}>
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 h-5 w-5 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">
+                  {it.sequencia}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800 truncate">
+                      {String(d.tipo_documento || d.nome_documento || "—").replace(/_/g, " ")}
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${it.origemLabel === "VIA PORTAL" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-slate-100 border-slate-200 text-slate-600"}`}>
+                      {it.origemLabel}
+                    </span>
+                    <span className="text-[10px] text-slate-500">
+                      {it.quando ? it.quando.toLocaleString("pt-BR") : "—"}
+                    </span>
+                    {d.arquivo_storage_key && (
+                      <button
+                        type="button"
+                        onClick={() => onViewFile(d.arquivo_storage_key)}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#7A1F2B]"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Abrir
+                      </button>
+                    )}
+                  </div>
+                  {it.anotacoes.length > 0 && (
+                    <ul className="mt-1.5 space-y-1">
+                      {it.anotacoes.map((a, i) => (
+                        <li
+                          key={i}
+                          className={`rounded border px-2 py-1 text-[10px] leading-snug ${
+                            a.severidade === "critico"
+                              ? "border-red-200 bg-red-50 text-red-800"
+                              : a.severidade === "atencao"
+                                ? "border-amber-200 bg-amber-50 text-amber-800"
+                                : "border-slate-200 bg-slate-50 text-slate-600"
+                          }`}
+                        >
+                          <strong className="uppercase tracking-wider">{a.titulo}</strong> — {a.detalhe}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
 interface GrupoCardProps {
   grupo: GrupoDocumental<any>;
   reprovandoId: string | null;
