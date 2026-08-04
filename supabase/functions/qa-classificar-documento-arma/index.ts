@@ -319,6 +319,8 @@ const SYSTEM_PROMPT = [
   "• CAMPO MODELO: só preencha arma_modelo quando o modelo comercial estiver escrito explicitamente no documento. Nunca deduza por nº de série, marca, calibre, catálogo ou parser. TIPO/espécie ('PISTOLA', 'REVÓLVER', 'CARABINA', etc.) NÃO é modelo; nesses casos deixe arma_modelo vazio e use arma_especie se aplicável.",
   "• Se um caractere estiver ilegível, deixe o campo INTEIRO vazio (não substitua por '?', '_' ou aproximação).",
   "• Datas em DD/MM/AAAA exatamente como aparecem (se faltar dia, mês ou ano, deixe vazio).",
+  "• DATA DE EMISSÃO: use SOMENTE a data que acompanha 'emitida em' / 'emitido em' / 'expedida em' / assinatura do órgão. NUNCA use a data de nascimento citada na qualificação do interessado ('...e data de nascimento DD/MM/AAAA...'), nem datas de abrangência da pesquisa ('abrange registros desde ...'). Se não houver data de emissão explícita, deixe data_emissao VAZIO.",
+  "• data_emissao NUNCA pode ser igual a data_nascimento. Se for, deixe data_emissao vazio.",
   "• Em caso de dúvida, prefira deixar vazio a inventar.",
   "REGRA SINARM × SIGMA (CRÍTICA):",
   "• PROCURE ATIVAMENTE o rótulo 'Nº Cad. SINARM' (também aceito: 'Nº Cadastro SINARM', 'No. Cad. SINARM', 'Nº CAD SINARM', 'Cadastro SINARM nº'). Esse rótulo é o IDENTIFICADOR PRINCIPAL de um CRAF SINARM e quase sempre aparece próximo do cabeçalho 'Departamento de Polícia Federal / SINARM'.",
