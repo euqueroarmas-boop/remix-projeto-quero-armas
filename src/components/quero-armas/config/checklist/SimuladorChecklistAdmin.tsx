@@ -847,8 +847,7 @@ export default function SimuladorChecklistAdmin() {
               >
                 CHECKLIST COMPLETO — o cliente não tem mais nenhuma exigência aberta nesta
                 combinação de respostas.
-          </div>
-        </div>
+              </div>
             )}
 
             {sim.proximo && (
@@ -1122,6 +1121,7 @@ export default function SimuladorChecklistAdmin() {
               )}
             </div>
           </div>
+        </div>
         </div>
       )}
     </div>
