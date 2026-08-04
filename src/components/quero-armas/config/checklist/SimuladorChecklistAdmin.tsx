@@ -1030,6 +1030,71 @@ export default function SimuladorChecklistAdmin() {
                                 Sem caminho configurado
                               </span>
                             )}
+                            <div className="min-w-0 sm:col-start-3">
+                              {rotaInline?.chave === pergunta.chave && rotaInline?.valor === resposta.valor ? (
+                                <div className="mt-2 min-w-0 rounded-md border bg-muted/30 p-2.5">
+                                  <p className="qa-caption mb-2 break-words uppercase">
+                                    Configurando: {resposta.label}
+                                  </p>
+                                  <div className="relative mb-2">
+                                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <input
+                                      autoFocus
+                                      value={inlineBusca}
+                                      onChange={(e) => setInlineBusca(e.target.value)}
+                                      placeholder="BUSQUE: LAUDO PSICOLÓGICO, CERTIDÃO..."
+                                      className="h-9 w-full rounded-md border bg-background pl-9 pr-3 text-xs uppercase"
+                                      aria-label="Buscar documento para esta resposta"
+                                    />
+                                  </div>
+                                  <select
+                                    value={inlineDestino}
+                                    onChange={(e) => setInlineDestino(e.target.value)}
+                                    className="mb-2 block h-9 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs"
+                                  >
+                                    <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
+                                    <optgroup label="ACIONAR ITEM QUE JÁ ESTÁ NO CHECKLIST">
+                                      {destinosInline.existentes.map((l) => (
+                                        <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>
+                                      ))}
+                                    </optgroup>
+                                    <optgroup label="CRIAR PEDIDO COM DOCUMENTO DA BIBLIOTECA">
+                                      {destinosInline.novos.map((b) => (
+                                        <option key={b.id} value={`bib:${b.id}`}>CRIAR E ACIONAR ENVIO: {b.nome}</option>
+                                      ))}
+                                    </optgroup>
+                                  </select>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8"
+                                      disabled={salvandoRota || !inlineDestino}
+                                      onClick={() => void salvarRotaLeiga(pergunta.chave, resposta.valor, inlineDestino)}
+                                    >
+                                      {salvandoRota ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Salvar aqui
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8"
+                                      onClick={() => { setRotaInline(null); setInlineBusca(""); setInlineDestino(""); }}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => { setRotaInline({ chave: pergunta.chave, valor: resposta.valor }); setInlineBusca(""); setInlineDestino(""); }}
+                                  className="mt-1.5 inline-flex items-center gap-1 rounded border border-dashed px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                                >
+                                  <Plus className="h-3 w-3" /> Adicionar documento neste caminho
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
