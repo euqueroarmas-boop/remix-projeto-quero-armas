@@ -27,6 +27,13 @@ export function setExplicacoesBiblioteca(mapa: Map<string, ExplicacaoPendencia>)
   EXPLICACOES_BIBLIOTECA = mapa;
 }
 
+/** true quando o passo a passo veio da Biblioteca de documentos (banco). */
+export function temExplicacaoBiblioteca(rawTipo: string, hubTipoFallback?: string | null): boolean {
+  const primary = String(rawTipo || "").trim().toLowerCase();
+  const secondary = String(hubTipoFallback || "").trim().toLowerCase();
+  return EXPLICACOES_BIBLIOTECA.has(primary) || (!!secondary && EXPLICACOES_BIBLIOTECA.has(secondary));
+}
+
 export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
   // ────────────────────────────────────────────────────────────────────────
   // Requerimento / formulários do processo
