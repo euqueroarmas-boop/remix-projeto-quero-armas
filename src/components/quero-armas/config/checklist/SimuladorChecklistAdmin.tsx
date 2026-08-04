@@ -183,6 +183,8 @@ export default function SimuladorChecklistAdmin() {
       // Entra no fim do grupo temático a que o documento pertence, para já
       // nascer na posição certa da lista que o cliente vê.
       const grupo = grupoCanonico(item.codigo);
+      const rotuloDestino =
+        (PENDENCIA_GRUPOS as any)[grupo]?.label ?? String(grupo).toUpperCase();
       const doGrupo = linhas.filter((l) => grupoCanonico(l.tipo_documento, l.regra_validacao) === grupo);
       const base = doGrupo.length
         ? Math.max(...doGrupo.map((l) => l.ordem ?? 0))
@@ -204,7 +206,12 @@ export default function SimuladorChecklistAdmin() {
         ativo: true,
       });
       if (error) throw error;
-      toast.success(`"${item.nome.toUpperCase()}" ADICIONADO AO CHECKLIST`);
+      // Abre o grupo de destino para o item recém-criado ficar visível na hora.
+      setGruposAbertos((prev) => (prev.includes(grupo) ? prev : [...prev, grupo]));
+      toast.success(
+        `"${item.nome.toUpperCase()}" ADICIONADO EM ${String(rotuloDestino).toUpperCase()}` +
+          (condicaoNova ? " · SÓ APARECE NA CONDIÇÃO PROFISSIONAL ESCOLHIDA" : ""),
+      );
       setBuscaBib("");
       await carregar(servicoId);
     } catch (e: any) {
