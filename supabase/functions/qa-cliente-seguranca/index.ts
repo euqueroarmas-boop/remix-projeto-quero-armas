@@ -126,6 +126,9 @@ Deno.serve(async (req) => {
       const local = await localPorIp(ip);
       const quando = fmtData();
 
+      // Obs.: qa_cliente_login_eventos.qa_cliente_id é uuid e não comporta o id
+      // numérico de qa_clientes; o vínculo é resolvido no painel por
+      // user_id / e-mail.
       const { data: evento } = await admin
         .from("qa_cliente_login_eventos")
         .insert({
