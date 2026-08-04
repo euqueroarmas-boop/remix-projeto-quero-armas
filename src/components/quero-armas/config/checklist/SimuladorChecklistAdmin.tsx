@@ -309,6 +309,77 @@ export default function SimuladorChecklistAdmin() {
     toast.success(cond ? "CONDIÇÕES PROFISSIONAIS APLICADAS" : "EXIGÊNCIA AGORA VALE PARA TODOS");
   }
 
+  /** Grava um pedaço novo dentro de regra_validacao, preservando o resto. */
+  async function patchRegra(id: string, patch: Record<string, any>, msg: string) {
+    const anteriores = linhas;
+    const atual = linhas.find((l) => l.id === id);
+    const regra: Record<string, any> = { ...((atual?.regra_validacao as any) ?? {}) };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined || v === null) delete regra[k];
+      else regra[k] = v;
+    }
+    setLinhas((p) => p.map((l) => (l.id === id ? { ...l, regra_validacao: regra } : l)));
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ regra_validacao: regra })
+      .eq("id", id);
+    if (error) {
+      setLinhas(anteriores);
+      toast.error("NÃO FOI POSSÍVEL SALVAR: " + (error.message ?? "ERRO"));
+      return;
+    }
+    toast.success(msg);
+  }
+
+  /**
+   * RAMIFICAÇÃO (o "reloginho"): amarra a exigência à resposta de uma pergunta
+   * do próprio checklist. `aparece` = exige_quando (só aparece se responder X);
+   * `some` = dispensa_quando (some se responder X). Sem chave = sempre aparece.
+   */
+  function definirRamificacao(
+    id: string,
+    modo: "sempre" | "aparece" | "some",
+    chave?: string,
+    valor?: string,
+  ) {
+    if (modo === "sempre" || !chave || !valor) {
+      return patchRegra(id, { exige_quando: null, dispensa_quando: null }, "EXIGÊNCIA SEMPRE VISÍVEL");
+    }
+    const cond = { [chave]: valor };
+    return modo === "aparece"
+      ? patchRegra(id, { exige_quando: cond, dispensa_quando: null }, "SÓ APARECE COM ESSA RESPOSTA")
+      : patchRegra(id, { dispensa_quando: cond, exige_quando: null }, "SOME COM ESSA RESPOSTA");
+  }
+
+  /** Pergunta híbrida: além de responder, o cliente também anexa o documento. */
+  function alternarPerguntaHibrida(id: string, ligado: boolean) {
+    return patchRegra(
+      id,
+      { exige_documento_quando: ligado ? "*" : null },
+      ligado ? "AGORA TAMBÉM PEDE O ARQUIVO" : "AGORA É SÓ PERGUNTA",
+    );
+  }
+
+  /** Perguntas deste serviço que podem servir de gatilho de ramificação. */
+  const perguntasPivo = useMemo(
+    () =>
+      linhas
+        .filter((l) => (l as any).ativo !== false)
+        .map((l) => {
+          const r: any = l.regra_validacao ?? {};
+          const chave = r.chave as string | undefined;
+          const opcoes = Array.isArray(r.opcoes) ? r.opcoes : [];
+          if (!chave || opcoes.length === 0) return null;
+          return {
+            chave,
+            nome: l.nome_documento,
+            opcoes: opcoes.map((o: any) => ({ label: String(o.label ?? o.valor), valor: String(o.valor) })),
+          };
+        })
+        .filter(Boolean) as { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[],
+    [linhas],
+  );
+
   /**
    * Renumera tudo em 10, 20, 30… seguindo exatamente a sequência que o cliente
    * vê agora. Resolve os "buracos" (ex.: endereço em 160 depois de 40) sem
