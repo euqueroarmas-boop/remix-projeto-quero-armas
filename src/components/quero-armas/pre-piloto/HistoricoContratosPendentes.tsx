@@ -527,7 +527,11 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 <div className="min-w-0">
                   <p className="text-xs font-medium truncate">{c.cliente_nome}</p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {c.servico_nome} · {fmt(c.gerado_em)}
+                    {[c.servico_nome, fmt(c.gerado_em)].filter(Boolean).join(" · ")}
+                    {[fmtCpf(c.cliente_cpf), c.cliente_email, c.venda_id ? `Venda #${c.venda_id_legado ?? c.venda_id}` : null]
+                      .filter(Boolean)
+                      .map((v) => ` — ${v}`)
+                      .join("")}
                   </p>
                   {dl && (
                     <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
