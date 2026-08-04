@@ -201,6 +201,51 @@ export default function QABibliotecaDocumentosAdmin() {
     }
   }
 
+  /**
+   * Empurra o cadastro da biblioteca (nome, passo a passo, validade, formato,
+   * link e observação) para TODAS as linhas de checklist que usam este
+   * documento — em todos os serviços de uma vez, sem precisar abrir um por um.
+   */
+  async function sincronizarItem(item: BibliotecaItem, silencioso = false): Promise<number> {
+    const payload = {
+      biblioteca_id: item.id,
+      nome_documento: item.nome,
+      validade_dias: item.validade_dias,
+      formato_aceito: item.formato_aceito,
+      link_emissao: item.link_emissao || null,
+      instrucoes: item.descricao_como_enviar || null,
+      observacoes_cliente: item.observacao_cliente || null,
+    };
+    const { data, error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update(payload)
+      .or(`biblioteca_id.eq.${item.id},tipo_documento.eq.${item.codigo}`)
+      .select("id");
+    if (error) {
+      if (!silencioso) toast.error(error.message);
+      throw error;
+    }
+    const n = ((data as any[]) ?? []).length;
+    if (!silencioso) {
+      toast.success(n ? `"${item.nome}" sincronizado em ${n} serviço(s)` : `"${item.nome}" ainda não é exigido em nenhum serviço`);
+    }
+    return n;
+  }
+
+  /** Sincroniza TODOS os documentos ativos da biblioteca de uma só vez. */
+  async function sincronizarTodos() {
+    const alvo = itens.filter((i) => i.ativo);
+    if (!alvo.length) return;
+    if (!confirm(`Sincronizar os ${alvo.length} documentos ativos da biblioteca com todos os serviços? O passo a passo, validade, formato e links do checklist passam a ser exatamente os desta tela.`)) return;
+    setSincronizandoTudo(true);
+    let linhas = 0, falhas = 0;
+    for (const i of alvo) {
+      try { linhas += await sincronizarItem(i, true); } catch { falhas++; }
+    }
+    setSincronizandoTudo(false);
+    toast.success(`${alvo.length} documentos sincronizados · ${linhas} exigência(s) atualizada(s)` + (falhas ? ` · ${falhas} falha(s)` : ""));
+  }
+
   async function arquivarItem(item: BibliotecaItem) {
     if (item.usado_em_servicos && item.usado_em_servicos > 0) {
       if (!confirm(`Este documento está sendo usado em ${item.usado_em_servicos} serviço(s). Arquivar mesmo assim? Os serviços continuarão funcionando mas você não poderá adicioná-lo em novos serviços.`)) return;
