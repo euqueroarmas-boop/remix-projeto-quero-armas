@@ -1170,6 +1170,79 @@ function LinhaItem({
           </select>
         </div>
 
+        {/* RAMIFICAÇÃO — o "reloginho": amarra esta exigência à resposta de uma pergunta */}
+        {gatilhos.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <span className="text-[11px] uppercase" style={{ color: MUTED }}>quando</span>
+            <select
+              value={ramModo}
+              onChange={(e) => {
+                const modo = e.currentTarget.value as "sempre" | "aparece" | "some";
+                if (modo === "sempre") onDefinirRamificacao(item.id, "sempre");
+                else {
+                  const p = gatilhos.find((x) => x.chave === ramChave) ?? gatilhos[0];
+                  onDefinirRamificacao(item.id, modo, p.chave, ramValor || p.opcoes[0]?.valor);
+                }
+              }}
+              className="h-5 rounded border bg-white px-1 text-[11px] uppercase"
+              style={{ borderColor: LINE, color: INK }}
+              title="Aparece sempre, ou só depois de uma resposta específica do cliente"
+            >
+              <option value="sempre">SEMPRE APARECE</option>
+              <option value="aparece">SÓ APARECE SE…</option>
+              <option value="some">SOME SE…</option>
+            </select>
+            {ramModo !== "sempre" && (
+              <>
+                <select
+                  value={ramChave || gatilhos[0].chave}
+                  onChange={(e) => {
+                    const p = gatilhos.find((x) => x.chave === e.currentTarget.value)!;
+                    onDefinirRamificacao(item.id, ramModo, p.chave, p.opcoes[0]?.valor);
+                  }}
+                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Pergunta que controla esta exigência"
+                >
+                  {gatilhos.map((p) => (
+                    <option key={p.chave} value={p.chave}>{p.nome}</option>
+                  ))}
+                </select>
+                <span className="text-[11px] uppercase" style={{ color: MUTED }}>for</span>
+                <select
+                  value={ramValor}
+                  onChange={(e) => onDefinirRamificacao(item.id, ramModo, ramChave || gatilhos[0].chave, e.currentTarget.value)}
+                  className="h-5 max-w-[220px] rounded border bg-white px-1 text-[11px]"
+                  style={{ borderColor: LINE, color: INK }}
+                  title="Resposta que dispara a regra"
+                >
+                  {(opcoesGatilho.length ? opcoesGatilho : gatilhos[0].opcoes).map((o) => (
+                    <option key={o.valor} value={o.valor}>{o.label}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* PERGUNTA HÍBRIDA — responde E anexa o arquivo na mesma linha */}
+        {item.tipo === "pergunta" && !!item.chave && (
+          <label
+            className="mt-1 flex items-center gap-1.5 text-[11px] uppercase"
+            style={{ color: MUTED }}
+            onClick={(e) => e.stopPropagation()}
+            title="Marque para o cliente responder E enviar o arquivo nesta mesma exigência (ex.: laudo psicológico)"
+          >
+            <input
+              type="checkbox"
+              checked={hibrida}
+              onChange={(e) => onAlternarHibrida(item.id, e.currentTarget.checked)}
+              className="h-3 w-3 accent-[#7A1F2B]"
+            />
+            também pede o arquivo (responder + anexar)
+          </label>
+        )}
+
         {item.tipo !== "pergunta" && (() => {
           const selecionadas = parseCondicoes(item.linha?.condicao_profissional);
           const alternar = (valor: string) => {
