@@ -100,6 +100,7 @@ export default function QABibliotecaDocumentosAdmin() {
   const [criandoNovo, setCriandoNovo] = useState(false);
   const [novo, setNovo] = useState({ ...BLANK });
   const [salvandoId, setSalvandoId] = useState<string | null>(null);
+  const [sincronizandoTudo, setSincronizandoTudo] = useState(false);
   const [resumoModelos, setResumoModelos] = useState<ResumoModelos>(new Map());
   const [modelosNovo, setModelosNovo] = useState<File[]>([]);
   const [treinandoNovo, setTreinandoNovo] = useState(false);
