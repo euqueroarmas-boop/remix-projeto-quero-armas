@@ -1223,7 +1223,14 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     }
     const respostas = (p.respostas_questionario_json ?? {}) as Record<string, string>;
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-    const carga: CargaProcesso = { processo: p, docs: docsHidratados, respostas, etapaLiberada, contratoPendente: null };
+    const carga: CargaProcesso = {
+      processo: p,
+      docs: docsHidratados,
+      respostas,
+      etapaLiberada,
+      contratoPendente: null,
+      alertaModalidadeIndefinida: false,
+    };
     const resumo = calcularResumoProcessoAssistente(carga, clienteRow as any);
     // `pendentes` agora reflete o que o cliente pode resolver AGORA:
     // documentos acionáveis (não bloqueados por wizard) + perguntas/wizards pendentes.
