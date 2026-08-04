@@ -39,16 +39,41 @@ function statusLabel(s: string) {
     signed_pending_validation: { label: "Assinado — validando", color: "text-blue-700 bg-blue-50 border-blue-200" },
     validated: { label: "Validado", color: "text-green-700 bg-green-50 border-green-200" },
     signed: { label: "Assinado", color: "text-green-700 bg-green-50 border-green-200" },
+    customer_signature_uploaded: { label: "Assinado — validando", color: "text-green-700 bg-green-50 border-green-200" },
+    validating: { label: "Assinado — validando", color: "text-green-700 bg-green-50 border-green-200" },
+    arquivado_template_legado: { label: "Arquivado (template legado)", color: "text-muted-foreground bg-muted border-muted" },
+    rejected: { label: "Rejeitado", color: "text-red-700 bg-red-50 border-red-200" },
     cancelled: { label: "Cancelado", color: "text-red-700 bg-red-50 border-red-200" },
   };
   return map[s] ?? { label: s, color: "text-muted-foreground bg-muted border-muted" };
 }
+
+const STATUS_AGUARDANDO = [
+  "generated_pending_company_signature",
+  "pending_customer_signature",
+  "pending_company_signature",
+];
+const STATUS_ASSINADO = [
+  "customer_signature_uploaded",
+  "validating",
+  "signed_pending_validation",
+  "signed",
+  "validated",
+];
+
+function isAssinado(status: string) {
+  return STATUS_ASSINADO.includes(status);
+}
+
+type Filtro = "aguardando" | "assinados" | "todos";
 
 export type HistoricoContratosPendentesHandle = { carregar: () => void };
 
 const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle>(function HistoricoContratosPendentes(_, ref) {
   const navigate = useNavigate();
   const [contratos, setContratos] = useState<ContratoItem[]>([]);
+  const [filtro, setFiltro] = useState<Filtro>("aguardando");
+  const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [expandido, setExpandido] = useState<string | null>(null);
   const [uploadArquivo, setUploadArquivo] = useState<File | null>(null);
@@ -73,21 +98,16 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       const { data: contratoRows } = await supabase
         .from("qa_contracts" as any)
         .select("id, status, venda_id, cliente_id, created_at")
-        .in("status", [
-          "generated_pending_company_signature",
-          "pending_customer_signature",
-          "customer_signature_uploaded",
-          "validating",
-        ])
+        .in("status", [...STATUS_AGUARDANDO, ...STATUS_ASSINADO])
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(200);
 
       if (!contratoRows?.length) { setContratos([]); setCarregando(false); return; }
 
       const clienteIds = [...new Set((contratoRows as any[]).map((c) => c.cliente_id))];
       const { data: clientes } = await supabase
         .from("qa_clientes" as any)
-        .select("id, nome_completo, email")
+        .select("id, nome_completo, email, cpf")
         .in("id", clienteIds);
 
       const clienteMap = Object.fromEntries(((clientes ?? []) as any[]).map((c) => [c.id, c]));
@@ -153,6 +173,13 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   }
 
   async function excluirPermanente(contratoId: string, clienteNome: string) {
+    const contrato = contratos.find((x) => x.contrato_id === contratoId);
+    if (contrato && isAssinado(contrato.contrato_status)) {
+      const okAssinado = window.confirm(
+        `ATENÇÃO: o contrato de ${clienteNome} JÁ FOI ASSINADO.\n\nExcluir apaga o rastro jurídico da assinatura. O recomendado é gerar um novo contrato (Regenerar) e manter este no histórico.\n\nDeseja mesmo continuar com a exclusão?`,
+      );
+      if (!okAssinado) return;
+    }
     const confirm1 = window.confirm(
       `Excluir permanentemente o contrato de ${clienteNome}?\n\nEsta ação é IRREVERSÍVEL — remove o contrato, assinaturas, itens, aceites e eventos vinculados.`,
     );
