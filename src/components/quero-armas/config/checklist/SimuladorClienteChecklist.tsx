@@ -228,6 +228,8 @@ export default function SimuladorClienteChecklist() {
     }
   }, [fase, pendencias.length, docs.length]);
 
+  const semDocs = fase === "simulando" && docs.length === 0;
+
   const reiniciar = () => {
     setEntregues(new Set());
     setFase("simulando");
@@ -392,14 +394,29 @@ export default function SimuladorClienteChecklist() {
       </div>
 
       {/* O popup real */}
-      <PendenciasGuiadasPopup
-        open={true}
-        pendencias={pendencias}
-        onDismiss={() => {}}
-        bloqueante={false}
-        asPage={true}
-        nomeCliente="[Cliente de Teste]"
-      />
+      {semDocs ? (
+        <div className="flex flex-col items-center justify-center flex-1 gap-3 px-6 py-12 text-center">
+          <AlertTriangle className="h-8 w-8 text-amber-500" />
+          <p className="text-sm font-semibold text-slate-700">Nenhum documento encontrado</p>
+          <p className="text-xs text-slate-500 max-w-xs">
+            O(s) serviço(s) selecionado(s) não têm documentos cadastrados em{" "}
+            <code className="font-mono bg-slate-100 px-1 rounded">qa_servicos_documentos</code>{" "}
+            com <code className="font-mono bg-slate-100 px-1 rounded">ativo = true</code>.
+          </p>
+          <p className="text-[11px] text-slate-400">
+            IDs buscados: {selecionados.join(", ")}
+          </p>
+        </div>
+      ) : (
+        <PendenciasGuiadasPopup
+          open={true}
+          pendencias={pendencias}
+          onDismiss={() => {}}
+          bloqueante={false}
+          asPage={true}
+          nomeCliente="[Cliente de Teste]"
+        />
+      )}
     </div>
   );
 }

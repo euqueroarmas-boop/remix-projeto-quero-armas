@@ -534,7 +534,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Header */}
         <div className={asPage ? "px-0 pt-4 pb-4 shrink-0 sm:pt-5" : "px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5"}>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
@@ -564,7 +564,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <h2 className="qa-h1 mt-2" style={{ letterSpacing: ".02em" }}>
+          <div className="mt-4 mb-1 h-px bg-[#F0F0F0]" />
+          <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
             {explic.titulo}
           </h2>
 
