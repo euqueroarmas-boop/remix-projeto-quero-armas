@@ -754,61 +754,63 @@ export default function SimuladorChecklistAdmin() {
 
           {/* Coluna 2 — checklist projetado */}
           <div className="qa-card p-5">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <ArrowRight className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  O que o cliente vê — {servicoNome}
-                </span>
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 mb-2">
+              <div className="flex items-start gap-2 min-w-0 flex-1">
+                <ArrowRight className="h-3.5 w-3.5 mt-[2px] shrink-0" style={{ color: BORDO }} />
+                <div className="min-w-0">
+                  <h3 className="qa-h3">O que o cliente vê</h3>
+                  <p className="qa-meta mt-1 truncate">{servicoNome}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
                 <button
                   type="button"
                   onClick={renumerar}
                   disabled={salvandoOrdem || sim.grupos.length === 0}
                   title="Renumerar tudo em 10, 20, 30… na sequência atual"
-                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[11px] font-semibold uppercase tracking-wider disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-md border px-2.5 h-8 text-[11px] font-semibold uppercase tracking-wider disabled:opacity-40 hover:bg-slate-50 transition-colors"
                   style={{ borderColor: LINE, color: BORDO }}
                 >
                   <ListOrdered className="h-3 w-3" /> Renumerar
                 </button>
               </div>
             </div>
-            <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>
-              Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
-              título do grupo para mover o grupo inteiro. A nova ordem é gravada no
-              catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
-              processos e portal do cliente).
-              <br />
-              Você também pode digitar o número de ordem direto no campo de cada linha —
-              e usar RENUMERAR para fechar os buracos (10, 20, 30…) sem mudar nada de lugar.
-            </p>
+            <details className="mb-3 rounded-lg border" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider select-none" style={{ color: BORDO }}>
+                Como reordenar
+              </summary>
+              <ul className="px-3 pb-3 pt-0.5 space-y-1.5 qa-caption list-disc pl-7">
+                <li>Arraste pelo punho ⠿ do item para reordenar dentro ou entre grupos.</li>
+                <li>Arraste o punho do título do grupo para mover o grupo inteiro.</li>
+                <li>Ou digite o número de ordem direto no campo de cada linha.</li>
+                <li>RENUMERAR fecha os buracos (10, 20, 30…) sem mudar nada de lugar.</li>
+                <li>A nova ordem vale em todos os motores: Preços e Serviços, Montar Checklist, processos e portal do cliente.</li>
+              </ul>
+            </details>
 
             {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
-            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  Adicionar exigência (biblioteca oficial)
-                </span>
+            <div className="mb-3 rounded-lg border p-3" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Plus className="h-3.5 w-3.5 shrink-0" style={{ color: BORDO }} />
+                <span className="qa-kpi-label">Adicionar exigência · biblioteca oficial</span>
                 {adicionando && <Loader2 className="h-3 w-3 animate-spin" style={{ color: BORDO }} />}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative flex-1 min-w-[180px]">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                <div className="relative min-w-0">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: MUTED }} />
                   <input
                     value={buscaBib}
                     onChange={(e) => setBuscaBib(e.target.value)}
                     placeholder="BUSCAR DOCUMENTO NA BIBLIOTECA..."
-                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[12.5px] uppercase"
+                    className="h-9 w-full rounded-md border bg-white pl-7 pr-2 text-[12.5px] uppercase"
                     style={{ borderColor: LINE, color: INK }}
                   />
                 </div>
                 <select
                   value={condicaoNova}
                   onChange={(e) => setCondicaoNova(e.target.value)}
-                  className="rounded border bg-white px-2 py-1.5 text-[11.5px] uppercase"
+                  className="h-9 rounded-md border bg-white px-2 text-[11.5px] uppercase max-w-full sm:max-w-[220px]"
                   style={{ borderColor: LINE, color: INK }}
                   title="Exigir só para esta condição profissional"
                 >
