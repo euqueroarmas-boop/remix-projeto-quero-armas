@@ -19,6 +19,9 @@ import {
 } from "@/lib/quero-armas/documentosAgrupamento";
 import { logSistema } from "@/lib/logSistema";
 import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/documentosHubCatalogo";
+import {
+  montarLinhaEntrega, contarAnotacoes, type EntregaItem,
+} from "@/lib/quero-armas/hubEntregaAuditoria";
 
 interface Props {
   cliente: any;
@@ -160,6 +163,26 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   });
 
   const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
+
+  // Exigências reais do cliente — base para auditar a ordem de entrega.
+  const { data: exigencias = [] } = useQuery({
+    queryKey: ["cliente-exigencias-entrega", clienteId],
+    enabled: Boolean(clienteId),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("qa_processo_documentos" as any)
+        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio")
+        .eq("cliente_id", clienteId);
+      return ((data as any[]) || []);
+    },
+  });
+
+  const [modo, setModo] = useState<"familia" | "entrega">("entrega");
+  const linhaEntrega = useMemo(
+    () => montarLinhaEntrega(docs as any[], exigencias as any[]),
+    [docs, exigencias],
+  );
+  const totalAnotacoes = useMemo(() => contarAnotacoes(linhaEntrega), [linhaEntrega]);
 
   // Agrupa por família documental (Bloco: empilhamento visual).
   const grupos = useMemo(
@@ -378,16 +401,42 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             {grupos.length} família(s) · {docs.length} documento(s)
           </span>
         </div>
-        {pendentes > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setModo("entrega")}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "entrega" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+            >
+              Ordem de entrega
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo("familia")}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "familia" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+            >
+              Por família
+            </button>
+          </div>
+          {totalAnotacoes > 0 && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 border border-red-200 text-[10px] font-bold uppercase tracking-wider text-red-700">
+              <ShieldAlert className="h-3 w-3" /> {totalAnotacoes} anotação(ões)
+            </span>
+          )}
+          {pendentes > 0 && (
           <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200">
             <Clock className="h-3 w-3 text-amber-600" />
             <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">
               {pendentes} pendente(s)
             </span>
           </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {modo === "entrega" && <LinhaEntrega itens={linhaEntrega} onViewFile={handleViewFile} />}
+
+      {modo === "familia" && (
       <div className="grid gap-2">
         {grupos.map((grupo) => (
           <GrupoCard
@@ -412,6 +461,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           />
         ))}
       </div>
+      )}
       <DocumentoViewerModal
         open={viewer.open}
         onClose={viewer.fechar}
