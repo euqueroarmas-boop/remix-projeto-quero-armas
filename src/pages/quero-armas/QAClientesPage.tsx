@@ -43,7 +43,6 @@ import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteDestravarCadastro";
 import ClienteModoSuporte from "@/components/quero-armas/clientes/ClienteModoSuporte";
-import ClienteNotificarCorrecao from "@/components/quero-armas/clientes/ClienteNotificarCorrecao";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
@@ -3301,14 +3300,6 @@ export default function QAClientesPage() {
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
-                <div className="flex justify-end">
-                  <ClienteNotificarCorrecao
-                    clienteId={c.id}
-                    clienteNome={c.nome_completo ?? ""}
-                    clienteEmail={c.email}
-                  />
-                </div>
-
                 <DadosFormularioPublicoSection
                     cliente={c as any}
                     cadastroInterno={{

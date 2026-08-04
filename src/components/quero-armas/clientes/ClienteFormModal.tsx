@@ -103,6 +103,36 @@ function sanitizeEmailForDb(value: unknown): string | null {
   return emailRegex.test(normalized) ? normalized : null;
 }
 
+const CAMPOS_NOTIFICACAO: Record<string, string> = {
+  nome_completo: "Nome completo",
+  cpf: "CPF",
+  rg: "RG",
+  emissor_rg: "Órgão emissor do RG",
+  uf_emissor_rg: "UF do emissor",
+  expedicao_rg: "Data de expedição do RG",
+  data_nascimento: "Data de nascimento",
+  naturalidade: "Naturalidade",
+  naturalidade_municipio: "Município de nascimento",
+  naturalidade_uf: "UF de nascimento",
+  nacionalidade: "Nacionalidade",
+  nome_mae: "Nome da mãe",
+  nome_pai: "Nome do pai",
+  estado_civil: "Estado civil",
+  profissao: "Profissão",
+  escolaridade: "Escolaridade",
+  email: "E-mail",
+  celular: "Celular",
+  titulo_eleitor: "Título de eleitor",
+  endereco: "Endereço",
+  numero: "Número",
+  complemento: "Complemento",
+  bairro: "Bairro",
+  cidade: "Cidade",
+  estado: "Estado/UF",
+  cep: "CEP",
+  sexo: "Sexo",
+};
+
 const EMPTY_FORM = {
   nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
   data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
@@ -823,6 +853,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
         savedId = cliente.id;
+        // Notificação automática ao cliente sobre campos alterados
+        if (cliente.email) {
+          const norm = (v: unknown) => String(v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+          const camposAlterados = Object.entries(CAMPOS_NOTIFICACAO).flatMap(([key, label]) => {
+            const original = key === "expedicao_rg" || key === "data_nascimento"
+              ? formatDateForDisplay((cliente as any)[key] || "")
+              : String((cliente as any)[key] ?? "").trim();
+            const novo = String((f as any)[key] ?? "").trim();
+            if (norm(original) === norm(novo)) return [];
+            return [{ campo: label, era: original || "—", agora: novo || "—" }];
+          });
+          if (camposAlterados.length > 0) {
+            supabase.functions.invoke("qa-notificar-correcao-cadastro", {
+              body: { clienteId: cliente.id, campos: camposAlterados },
+            }).catch(() => {});
+          }
+        }
         toast.success("Cliente atualizado");
       } else {
         // Marca origem='manual' para distinguir cadastros feitos pela equipe
