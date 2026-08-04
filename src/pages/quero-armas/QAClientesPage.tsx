@@ -27,6 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
@@ -1583,6 +1584,9 @@ export default function QAClientesPage() {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string; mode?: "delete" | "archive" }>({ open: false, table: "", id: 0, title: "", desc: "" });
+  // Exclusão LGPD definitiva — modal in-app (substitui window.confirm/prompt,
+  // bloqueados no Safari mobile e em navegação privada).
+  const [purgeModal, setPurgeModal] = useState<{ open: boolean; cliente: any | null; texto: string; loading: boolean }>({ open: false, cliente: null, texto: "", loading: false });
   const [deleting, setDeleting] = useState(false);
   // Filtro de arquivamento — Ativos por padrão.
   const [archivedFilter, setArchivedFilter] = useState<"ativos" | "arquivados" | "todos">("ativos");
@@ -2963,31 +2967,88 @@ export default function QAClientesPage() {
   // Exclusão LGPD definitiva — apaga TODOS os rastros (vendas, contratos,
   // cobranças, processos, documentos, cadastros públicos, arsenal etc.).
   // Exige cliente já ARQUIVADO e dupla confirmação (digitar EXCLUIR).
-  const excluirDefinitivamenteCliente = async (c: any) => {
+  // IMPORTANTE: nunca usar window.confirm/window.prompt aqui — Safari mobile e
+  // navegação privada bloqueiam diálogos nativos e o botão parecia "não fazer nada".
+  const excluirDefinitivamenteCliente = (c: any) => {
     if (!c?.arquivado) {
       toast.error("Arquive o cliente antes de excluí-lo definitivamente.");
       return;
     }
-    const ok1 = window.confirm(
-      `EXCLUSÃO LGPD DEFINITIVA\n\n"${c.nome_completo}" e TODOS os rastros (vendas, contratos, cobranças, processos, documentos, formulários, arsenal) serão APAGADOS irreversivelmente.\n\nContinuar?`
-    );
-    if (!ok1) return;
-    const confirma = window.prompt('Para confirmar, digite EXCLUIR em maiúsculas:');
-    if ((confirma || "").trim() !== "EXCLUIR") {
-      toast.message("Operação cancelada.");
+    setPurgeModal({ open: true, cliente: c, texto: "", loading: false });
+  };
+
+  const confirmarExclusaoLgpd = async () => {
+    const c = purgeModal.cliente;
+    if (!c) return;
+    if (purgeModal.texto.trim().toUpperCase() !== "EXCLUIR") {
+      toast.error('Digite EXCLUIR para confirmar.');
       return;
     }
+    setPurgeModal(p => ({ ...p, loading: true }));
     try {
       const { error } = await supabase.rpc("qa_cliente_excluir_total_v2" as any, { p_cliente_id: c.id });
       if (error) throw error;
       toast.success("Cliente e todos os rastros foram excluídos.");
+      setPurgeModal({ open: false, cliente: null, texto: "", loading: false });
       setSelected(null);
       setClientes(prev => prev.filter(x => x.id !== c.id));
       await Promise.all([loadClientes(archivedFilter), loadCadastrosPublicos()]);
     } catch (e: any) {
+      setPurgeModal(p => ({ ...p, loading: false }));
       toast.error(`Falha na exclusão definitiva: ${e?.message || e}`);
     }
   };
+
+  const purgeDialog = (
+    <Dialog
+      open={purgeModal.open}
+      onOpenChange={(o) => { if (!o && !purgeModal.loading) setPurgeModal({ open: false, cliente: null, texto: "", loading: false }); }}
+    >
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-[13px] font-bold uppercase tracking-wider text-red-700">
+            Exclusão LGPD definitiva
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <p className="text-[12px] leading-relaxed text-slate-600">
+            <strong className="text-slate-900 uppercase">{purgeModal.cliente?.nome_completo}</strong> e TODOS os rastros
+            (vendas, contratos, cobranças, processos, documentos, formulários e arsenal) serão apagados de forma
+            irreversível.
+          </p>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              Digite EXCLUIR para confirmar
+            </label>
+            <Input
+              autoFocus
+              value={purgeModal.texto}
+              onChange={(e) => setPurgeModal(p => ({ ...p, texto: e.target.value }))}
+              placeholder="EXCLUIR"
+              className="mt-1 h-9 uppercase"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              className="h-9 px-4 text-[11px] font-bold uppercase tracking-wider border border-slate-200"
+              disabled={purgeModal.loading}
+              onClick={() => setPurgeModal({ open: false, cliente: null, texto: "", loading: false })}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="h-9 px-4 text-[11px] font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white"
+              disabled={purgeModal.loading || purgeModal.texto.trim().toUpperCase() !== "EXCLUIR"}
+              onClick={() => void confirmarExclusaoLgpd()}
+            >
+              {purgeModal.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Excluir tudo"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 
   // Aplica antes o filtro Ativos/Arquivados/Todos.
   const clientesPorArquivamento = clientes.filter((c: any) =>
@@ -3962,6 +4023,7 @@ export default function QAClientesPage() {
           solicitacaoId={vendaModal.solicitacaoId ?? null}
         />
         <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} mode={deleteModal.mode} />
+        {purgeDialog}
       </div>
     );
   }
@@ -4983,6 +5045,7 @@ export default function QAClientesPage() {
         loading={deleting}
         mode={deleteModal.mode}
       />
+      {purgeDialog}
     </div>
   );
 }
@@ -5320,7 +5383,8 @@ function ClienteHeaderCard({
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
         style={{ background: statusTone }}
       />
-      <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+      <div className="relative flex flex-col md:flex-row md:items-center gap-3 px-4 py-4 md:px-5">
+        <div className="flex items-start gap-3 w-full min-w-0">
         <Button
           variant="ghost"
           size="sm"
@@ -5362,7 +5426,8 @@ function ClienteHeaderCard({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        </div>
+        <div className="flex items-center justify-end flex-wrap gap-1.5 shrink-0 w-full md:w-auto">
           <Button
             variant="ghost"
             size="sm"
