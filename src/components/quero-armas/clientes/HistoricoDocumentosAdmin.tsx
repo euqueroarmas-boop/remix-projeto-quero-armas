@@ -47,27 +47,50 @@ export function HistoricoDocumentosAdmin({ clienteId }: Props) {
   const [loading, setLoading] = useState(true);
   const [expandidoId, setExpandidoId] = useState<string | null>(null);
 
+  const carregar = async (vivo: { ok: boolean }) => {
+    try {
+      const { data, error } = await supabase
+        .from("qa_admin_notificacoes" as any)
+        .select("id, tipo, status, titulo, mensagem, documento_nome, metadata, created_at")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      if (vivo.ok) setEventos((data as unknown as EventoDoc[]) ?? []);
+    } catch (e) {
+      console.error("[HistoricoDocumentosAdmin] erro:", e);
+      if (vivo.ok) setEventos([]);
+    } finally {
+      if (vivo.ok) setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let vivo = true;
-    (async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("qa_admin_notificacoes" as any)
-          .select("id, tipo, status, titulo, mensagem, documento_nome, metadata, created_at")
-          .eq("cliente_id", clienteId)
-          .order("created_at", { ascending: false })
-          .limit(100);
-        if (error) throw error;
-        if (vivo) setEventos((data as unknown as EventoDoc[]) ?? []);
-      } catch (e) {
-        console.error("[HistoricoDocumentosAdmin] erro:", e);
-        if (vivo) setEventos([]);
-      } finally {
-        if (vivo) setLoading(false);
-      }
-    })();
-    return () => { vivo = false; };
+    const vivo = { ok: true };
+    setLoading(true);
+    carregar(vivo);
+
+    // Realtime: novos eventos aparecem automaticamente sem reload
+    const canal = supabase
+      .channel(`historico-docs-${clienteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "qa_admin_notificacoes",
+          filter: `cliente_id=eq.${clienteId}`,
+        },
+        (payload) => {
+          setEventos((prev) => [payload.new as EventoDoc, ...prev]);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      vivo.ok = false;
+      supabase.removeChannel(canal);
+    };
   }, [clienteId]);
 
   if (loading) {
