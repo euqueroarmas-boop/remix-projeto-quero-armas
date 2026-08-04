@@ -73,6 +73,9 @@ export default function SimuladorChecklistAdmin() {
   const [rotaResposta, setRotaResposta] = useState("");
   const [rotaDestino, setRotaDestino] = useState("");
   const [rotaBuscaDestino, setRotaBuscaDestino] = useState("");
+  const [rotaInline, setRotaInline] = useState<{ chave: string; valor: string } | null>(null);
+  const [inlineBusca, setInlineBusca] = useState("");
+  const [inlineDestino, setInlineDestino] = useState("");
   const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
@@ -393,24 +396,37 @@ export default function SimuladorChecklistAdmin() {
     [linhas],
   );
 
-  const destinosRota = useMemo(() => {
-    const termo = rotaBuscaDestino.trim().toLocaleLowerCase("pt-BR");
+  /** Lista de destinos possíveis para um caminho (usada no formulário e no mapa). */
+  function calcularDestinos(perguntaChave: string, busca: string, destinoSel: string) {
+    const termo = busca.trim().toLocaleLowerCase("pt-BR");
     const casaBusca = (nome: string, codigo: string) =>
       !termo || nome.toLocaleLowerCase("pt-BR").includes(termo) || codigo.toLocaleLowerCase("pt-BR").includes(termo);
     const existentes = linhas.filter((l) =>
       (l as any).ativo !== false &&
-      (l.regra_validacao as any)?.chave !== rotaPergunta &&
-      (casaBusca(l.nome_documento, l.tipo_documento) || rotaDestino === `linha:${l.id}`)
+      (l.regra_validacao as any)?.chave !== perguntaChave &&
+      (casaBusca(l.nome_documento, l.tipo_documento) || destinoSel === `linha:${l.id}`)
     );
     const novos = biblioteca.filter((b) =>
       !linhas.some((l) =>
         (l as any).ativo !== false &&
         (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id),
       ) &&
-      (casaBusca(b.nome, b.codigo) || rotaDestino === `bib:${b.id}`)
+      (casaBusca(b.nome, b.codigo) || destinoSel === `bib:${b.id}`)
     );
     return { existentes, novos };
-  }, [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta]);
+  }
+
+  const destinosRota = useMemo(
+    () => calcularDestinos(rotaPergunta, rotaBuscaDestino, rotaDestino),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta],
+  );
+
+  const destinosInline = useMemo(
+    () => calcularDestinos(rotaInline?.chave ?? "", inlineBusca, inlineDestino),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [biblioteca, linhas, inlineBusca, inlineDestino, rotaInline],
+  );
 
   function rotuloDestinoExistente(linha: LinhaCatalogo): string {
     const regra: any = linha.regra_validacao ?? {};
@@ -460,30 +476,34 @@ export default function SimuladorChecklistAdmin() {
     await carregar(servicoId);
   }
 
-  async function salvarRotaLeiga() {
-    if (!servicoId || !rotaPergunta || !rotaResposta || !rotaDestino) {
+  async function salvarRotaLeiga(
+    perguntaChave = rotaPergunta,
+    respostaValor = rotaResposta,
+    destinoSel = rotaDestino,
+  ) {
+    if (!servicoId || !perguntaChave || !respostaValor || !destinoSel) {
       toast.error("PREENCHA O SE, A RESPOSTA E O ENTÃO");
       return;
     }
-    const origem = perguntasPivo.find((p) => p.chave === rotaPergunta);
+    const origem = perguntasPivo.find((p) => p.chave === perguntaChave);
     if (!origem) return;
     setSalvandoRota(true);
     try {
-      if (rotaDestino.startsWith("linha:")) {
-        const id = rotaDestino.slice(6);
+      if (destinoSel.startsWith("linha:")) {
+        const id = destinoSel.slice(6);
         // Um mesmo documento pode servir a MAIS DE UMA resposta: acumulamos os
         // valores em lista em vez de sobrescrever o caminho anterior.
         const alvo = linhas.find((l) => l.id === id);
         const regraAtual: any = alvo?.regra_validacao ?? {};
         const exigeAtual: any = { ...(regraAtual.exige_quando ?? {}) };
-        const jaTem = exigeAtual[rotaPergunta];
+        const jaTem = exigeAtual[perguntaChave];
         const valores = Array.from(
           new Set([
             ...(Array.isArray(jaTem) ? jaTem.map(String) : jaTem != null ? [String(jaTem)] : []),
-            rotaResposta,
+            respostaValor,
           ]),
         );
-        exigeAtual[rotaPergunta] = valores.length === 1 ? valores[0] : valores;
+        exigeAtual[perguntaChave] = valores.length === 1 ? valores[0] : valores;
         const eraDocumentoComPergunta =
           regraAtual.tipo === "pergunta" && regraAtual.exige_documento_quando != null;
         await patchRegra(id, {
@@ -501,8 +521,8 @@ export default function SimuladorChecklistAdmin() {
             depende_de: null,
           } : {}),
         }, eraDocumentoComPergunta ? "ENVIO DO DOCUMENTO ACIONADO NESTE CAMINHO" : "CAMINHO SALVO");
-      } else if (rotaDestino.startsWith("bib:")) {
-        const item = biblioteca.find((b) => b.id === rotaDestino.slice(4));
+      } else if (destinoSel.startsWith("bib:")) {
+        const item = biblioteca.find((b) => b.id === destinoSel.slice(4));
         if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
         const ordem = Math.max(0, ...linhas.map((l) => l.ordem ?? 0)) + 10;
         const { error } = await supabase.from("qa_servicos_documentos" as any).insert({
@@ -511,13 +531,16 @@ export default function SimuladorChecklistAdmin() {
           validade_dias: item.validade_dias, formato_aceito: item.formato_aceito,
           link_emissao: item.link_emissao, instrucoes: item.descricao_como_enviar,
           observacoes_cliente: item.observacao_cliente,
-          regra_validacao: { exige_quando: { [rotaPergunta]: rotaResposta } },
+          regra_validacao: { exige_quando: { [perguntaChave]: respostaValor } },
         });
         if (error) throw error;
         toast.success("DOCUMENTO ADICIONADO AO CAMINHO");
       }
       setRotaDestino("");
       setRotaBuscaDestino("");
+      setInlineDestino("");
+      setInlineBusca("");
+      setRotaInline(null);
       await carregar(servicoId);
     } catch (e: any) {
       toast.error("NÃO FOI POSSÍVEL SALVAR O CAMINHO: " + String(e?.message ?? "ERRO"));
@@ -1007,6 +1030,71 @@ export default function SimuladorChecklistAdmin() {
                                 Sem caminho configurado
                               </span>
                             )}
+                            <div className="min-w-0 sm:col-start-3">
+                              {rotaInline?.chave === pergunta.chave && rotaInline?.valor === resposta.valor ? (
+                                <div className="mt-2 min-w-0 rounded-md border bg-muted/30 p-2.5">
+                                  <p className="qa-caption mb-2 break-words uppercase">
+                                    Configurando: {resposta.label}
+                                  </p>
+                                  <div className="relative mb-2">
+                                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <input
+                                      autoFocus
+                                      value={inlineBusca}
+                                      onChange={(e) => setInlineBusca(e.target.value)}
+                                      placeholder="BUSQUE: LAUDO PSICOLÓGICO, CERTIDÃO..."
+                                      className="h-9 w-full rounded-md border bg-background pl-9 pr-3 text-xs uppercase"
+                                      aria-label="Buscar documento para esta resposta"
+                                    />
+                                  </div>
+                                  <select
+                                    value={inlineDestino}
+                                    onChange={(e) => setInlineDestino(e.target.value)}
+                                    className="mb-2 block h-9 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs"
+                                  >
+                                    <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
+                                    <optgroup label="ACIONAR ITEM QUE JÁ ESTÁ NO CHECKLIST">
+                                      {destinosInline.existentes.map((l) => (
+                                        <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>
+                                      ))}
+                                    </optgroup>
+                                    <optgroup label="CRIAR PEDIDO COM DOCUMENTO DA BIBLIOTECA">
+                                      {destinosInline.novos.map((b) => (
+                                        <option key={b.id} value={`bib:${b.id}`}>CRIAR E ACIONAR ENVIO: {b.nome}</option>
+                                      ))}
+                                    </optgroup>
+                                  </select>
+                                  <div className="flex flex-wrap gap-2">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8"
+                                      disabled={salvandoRota || !inlineDestino}
+                                      onClick={() => void salvarRotaLeiga(pergunta.chave, resposta.valor, inlineDestino)}
+                                    >
+                                      {salvandoRota ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Salvar aqui
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8"
+                                      onClick={() => { setRotaInline(null); setInlineBusca(""); setInlineDestino(""); }}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => { setRotaInline({ chave: pergunta.chave, valor: resposta.valor }); setInlineBusca(""); setInlineDestino(""); }}
+                                  className="mt-1.5 inline-flex items-center gap-1 rounded border border-dashed px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                                >
+                                  <Plus className="h-3 w-3" /> Adicionar documento neste caminho
+                                </button>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
