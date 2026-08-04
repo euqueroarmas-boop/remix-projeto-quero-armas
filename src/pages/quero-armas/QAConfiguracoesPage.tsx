@@ -16,7 +16,7 @@ import QAContratoPrimarioAdmin from "@/components/quero-armas/config/QAContratoP
 import QAProcuracaoPrimarioAdmin from "@/components/quero-armas/config/QAProcuracaoPrimarioAdmin";
 import QABibliotecaDocumentosAdmin from "@/components/quero-armas/config/QABibliotecaDocumentosAdmin";
 import MontarChecklistAdmin from "@/components/quero-armas/config/checklist/MontarChecklistAdmin";
-import SimuladorChecklistAdmin from "@/components/quero-armas/config/checklist/SimuladorChecklistAdmin";
+import SimuladorClienteChecklist from "@/components/quero-armas/config/checklist/SimuladorClienteChecklist";
 import KanbanExigenciasAdmin from "@/components/quero-armas/config/checklist/KanbanExigenciasAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
@@ -748,8 +748,7 @@ export default function QAConfiguracoesPage() {
         </TabsContent>
 
         <TabsContent value="simulador" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
-          {/* Simulação passo a passo: mesma regra do motor real (explosão + perguntas) */}
-          <SimuladorChecklistAdmin />
+          <SimuladorClienteChecklist />
         </TabsContent>
 
         <TabsContent value="kanban" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
