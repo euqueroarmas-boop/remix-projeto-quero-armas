@@ -766,7 +766,7 @@ Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => onSincronizar(local)}
+                onClick={() => onSincronizar(item)}
                 title="Aplicar este cadastro em todos os serviços que exigem este documento"
                 className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
               >
