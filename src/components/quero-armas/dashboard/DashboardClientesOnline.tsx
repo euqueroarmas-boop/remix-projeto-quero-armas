@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, RefreshCw } from "lucide-react";
+import { Users, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
 /**
  * Card "Clientes na Área do Cliente".
@@ -21,12 +21,24 @@ const JANELA_MIN = 30;
 interface AcessoHoje extends Acesso {
   nome?: string | null;
   processos?: { nome: string; status: string | null }[];
+  entradas_hoje?: number;
+  entradas_total?: number;
+}
+
+interface ResumoCliente {
+  chave: string;
+  rotulo: string;
+  total: number;
+  primeiro: string;
+  ultimo: string;
 }
 
 export default function DashboardClientesOnline() {
   const [online, setOnline] = useState<Acesso[]>([]);
   const [hoje, setHoje] = useState(0);
   const [acessosHoje, setAcessosHoje] = useState<AcessoHoje[]>([]);
+  const [resumo, setResumo] = useState<ResumoCliente[]>([]);
+  const [verHistorico, setVerHistorico] = useState(false);
   const [loading, setLoading] = useState(true);
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
 
@@ -74,11 +86,17 @@ export default function DashboardClientesOnline() {
       const linhas = ((eventosHoje ?? []) as any[]) as Acesso[];
       const vistos = new Set<string>();
       const unicos: AcessoHoje[] = [];
+      const contagemHoje = new Map<string, number>();
+      for (const l of linhas) {
+        const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
+        if (!chave) continue;
+        contagemHoje.set(chave, (contagemHoje.get(chave) ?? 0) + 1);
+      }
       for (const l of linhas) {
         const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
         if (!chave || vistos.has(chave)) continue;
         vistos.add(chave);
-        unicos.push({ ...l });
+        unicos.push({ ...l, entradas_hoje: contagemHoje.get(chave) ?? 1 });
       }
 
       const ids = unicos.map((u) => u.qa_cliente_id).filter(Boolean) as any[];
@@ -113,6 +131,39 @@ export default function DashboardClientesOnline() {
         }
       }
       setAcessosHoje(unicos);
+    } catch {
+      /* silencioso */
+    }
+
+    // Resumo histórico (todas as entradas por cliente)
+    try {
+      const { data: todos } = await supabase
+        .from("qa_cliente_login_eventos" as any)
+        .select("qa_cliente_id,user_id,email,created_at")
+        .order("created_at", { ascending: false })
+        .limit(2000);
+
+      const mapa = new Map<string, ResumoCliente>();
+      for (const l of (((todos ?? []) as any[]) as Acesso[])) {
+        const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
+        if (!chave) continue;
+        const atual = mapa.get(chave);
+        if (!atual) {
+          mapa.set(chave, {
+            chave,
+            rotulo: l.email ?? "cliente",
+            total: 1,
+            primeiro: l.created_at,
+            ultimo: l.created_at,
+          });
+        } else {
+          atual.total += 1;
+          if (l.created_at < atual.primeiro) atual.primeiro = l.created_at;
+          if (l.created_at > atual.ultimo) atual.ultimo = l.created_at;
+          if (!atual.rotulo || atual.rotulo === "cliente") atual.rotulo = l.email ?? atual.rotulo;
+        }
+      }
+      setResumo([...mapa.values()].sort((a, b) => b.total - a.total));
     } catch {
       /* silencioso */
     }
