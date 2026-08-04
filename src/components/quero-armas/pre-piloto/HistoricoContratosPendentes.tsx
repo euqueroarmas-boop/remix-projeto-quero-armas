@@ -301,12 +301,14 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   }
 
   // Gera contrato do zero para uma venda paga que ficou sem contrato.
-  async function gerarParaVenda(vendaId: number, clienteNome: string) {
-    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaId}) com os dados atuais do cadastro?`)) return;
-    setGerando(vendaId);
+  // `vendaIdApi` é o id que a edge function espera (id_legado da venda);
+  // `vendaIdExibicao` é o número mostrado na tela.
+  async function gerarParaVenda(vendaIdApi: number, clienteNome: string, vendaIdExibicao = vendaIdApi) {
+    if (!window.confirm(`Gerar um novo contrato para ${clienteNome} (venda #${vendaIdExibicao}) com os dados atuais do cadastro?`)) return;
+    setGerando(vendaIdExibicao);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
-        body: { venda_id: vendaId, force: true, reenviar_email: true },
+        body: { venda_id: vendaIdApi, force: true, reenviar_email: true },
       });
       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Falha ao gerar contrato");
       toast.success("Contrato gerado. Ele já aparece em 'Aguardando assinatura'.");
