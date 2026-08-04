@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { resumirUserAgent } from "@/lib/quero-armas/userAgentResumo";
 
 type ContratoItem = {
   contrato_id: string;
@@ -22,6 +23,14 @@ type ContratoItem = {
   servico_nome: string | null;
   gerado_em: string;
   link_assinatura: string | null;
+};
+
+/** Carimbo enxuto de download: quando o cliente baixou, em que aparelho e navegador. */
+type DownloadCarimbo = {
+  baixado_em: string;
+  dispositivo: string;
+  navegador: string;
+  vezes: number;
 };
 
 function fmt(iso: string) {
@@ -86,6 +95,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   const [semContrato, setSemContrato] = useState<{ venda_id: number; venda_id_legado: number | null; cliente_id: number; cliente_nome: string; cliente_email: string | null; criado_em: string | null }[]>([]);
   const [ordemSemContrato, setOrdemSemContrato] = useState<"az" | "za" | "novos" | "antigos">("novos");
   const [gerando, setGerando] = useState<number | null>(null);
+  const [downloads, setDownloads] = useState<Record<string, DownloadCarimbo>>({});
   const inputFileRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
@@ -175,6 +185,24 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       });
 
       setContratos(items);
+
+      // Nota de rodapé discreta: último download feito pelo cliente.
+      try {
+        const { data: dls } = await supabase
+          .from("qa_documento_downloads" as any)
+          .select("documento_id, baixado_em, user_agent")
+          .eq("documento_tipo", "contrato")
+          .in("documento_id", items.map((i) => i.contrato_id))
+          .order("baixado_em", { ascending: false });
+        const mapa: Record<string, DownloadCarimbo> = {};
+        for (const d of ((dls ?? []) as any[])) {
+          const key = String(d.documento_id);
+          if (mapa[key]) { mapa[key].vezes += 1; continue; }
+          const { dispositivo, navegador } = resumirUserAgent(d.user_agent);
+          mapa[key] = { baixado_em: d.baixado_em, dispositivo, navegador, vezes: 1 };
+        }
+        setDownloads(mapa);
+      } catch { /* best effort */ }
     } catch (e: any) {
       toast.error("Erro ao carregar histórico: " + (e?.message || ""));
     } finally {
@@ -485,6 +513,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         const st = statusLabel(c.contrato_status);
         const aberto = expandido === c.contrato_id;
         const pendente = c.contrato_status === "generated_pending_company_signature";
+        const dl = downloads[c.contrato_id];
 
         return (
           <div key={c.contrato_id} className="border rounded-lg overflow-hidden">
@@ -500,6 +529,12 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                   <p className="text-[11px] text-muted-foreground truncate">
                     {c.servico_nome} · {fmt(c.gerado_em)}
                   </p>
+                  {dl && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                      Baixado pelo cliente · {fmt(dl.baixado_em)} · {dl.dispositivo} · {dl.navegador}
+                      {dl.vezes > 1 ? ` · ${dl.vezes}×` : ""}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">

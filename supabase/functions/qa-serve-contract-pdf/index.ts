@@ -445,6 +445,39 @@ function requestIp(req: Request): string | null {
   );
 }
 
+/**
+ * Carimbo de download (nota de rodapé da venda): append-only, uma linha por
+ * clique do CLIENTE. Nunca registra downloads da equipe interna, senão o
+ * histórico deixa de responder "quando o cliente baixou".
+ */
+async function registrarDownloadContrato(
+  sb: any,
+  req: Request,
+  contract: Record<string, any>,
+  user: { userId: string } | null,
+  isStaff: boolean,
+  extra?: { sha256?: string | null; tamanho_bytes?: number | null },
+) {
+  if (isStaff) return;
+  try {
+    await sb.from("qa_documento_downloads").insert({
+      documento_tipo: "contrato",
+      documento_id: contract.id,
+      numero: contract.contract_number ?? null,
+      cliente_id: contract.cliente_id ?? null,
+      usuario_id: user?.userId ?? null,
+      ip: requestIp(req),
+      user_agent: req.headers.get("user-agent"),
+      idioma: req.headers.get("accept-language"),
+      referer: req.headers.get("referer"),
+      sha256: extra?.sha256 ?? null,
+      tamanho_bytes: extra?.tamanho_bytes ?? null,
+    });
+  } catch (e) {
+    console.warn("[qa-serve-contract-pdf] falha ao registrar download", e);
+  }
+}
+
 function fileSafeName(value: string | null | undefined): string {
   return String(value || "")
     .normalize("NFKC")
@@ -938,6 +971,9 @@ Deno.serve(async (req) => {
           );
         }
 
+        await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+          sha256: canon.sha256,
+        });
         return jsonResp({
           url: signed.signedUrl,
           filename: fname,
@@ -946,6 +982,10 @@ Deno.serve(async (req) => {
         });
       }
 
+      await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+        sha256: canon.sha256,
+        tamanho_bytes: (canon.bytes as Uint8Array)?.byteLength ?? null,
+      });
       return new Response(canon.bytes as BodyInit, {
         status: 200,
         headers: {
@@ -1002,6 +1042,7 @@ Deno.serve(async (req) => {
         500,
       );
     }
+    await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff);
     return jsonResp({ url: signed.signedUrl, filename: signedFname, expires_in: 600 });
   }
   const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
@@ -1018,6 +1059,9 @@ Deno.serve(async (req) => {
 
   const bytes = await file.arrayBuffer();
   const fname = contractDownloadFilename(auditedContract, "pdf");
+  await registrarDownloadContrato(sb, req, auditedContract as any, user, isStaff, {
+    tamanho_bytes: bytes.byteLength,
+  });
   return new Response(bytes, {
     status: 200,
     headers: {
