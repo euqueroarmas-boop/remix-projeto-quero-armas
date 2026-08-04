@@ -391,7 +391,36 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
           <p className="text-[11px] text-amber-800">
             O contrato foi excluído ou nunca foi gerado. Gere um novo com os dados atuais do cadastro.
           </p>
-          {semContrato.map((v) => (
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className="text-[10px] uppercase tracking-wide text-amber-900/70">Ordenar:</span>
+            {([
+              { id: "az", label: "A → Z" },
+              { id: "za", label: "Z → A" },
+              { id: "novos", label: "Mais novos" },
+              { id: "antigos", label: "Mais antigos" },
+            ] as const).map((o) => (
+              <button
+                key={o.id}
+                onClick={() => setOrdemSemContrato(o.id)}
+                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                  ordemSemContrato === o.id
+                    ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                    : "bg-white text-amber-900 border-amber-200 hover:bg-amber-100/60"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          {[...semContrato]
+            .sort((a, b) => {
+              if (ordemSemContrato === "az") return a.cliente_nome.localeCompare(b.cliente_nome, "pt-BR");
+              if (ordemSemContrato === "za") return b.cliente_nome.localeCompare(a.cliente_nome, "pt-BR");
+              const ta = a.criado_em ? new Date(a.criado_em).getTime() : a.venda_id;
+              const tb = b.criado_em ? new Date(b.criado_em).getTime() : b.venda_id;
+              return ordemSemContrato === "novos" ? tb - ta : ta - tb;
+            })
+            .map((v) => (
             <div key={v.venda_id} className="flex items-center justify-between gap-2 bg-white border rounded px-2.5 py-1.5">
               <div className="min-w-0">
                 <p className="text-xs font-medium truncate">{v.cliente_nome}</p>
