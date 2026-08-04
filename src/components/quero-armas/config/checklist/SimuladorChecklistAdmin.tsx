@@ -779,37 +779,6 @@ export default function SimuladorChecklistAdmin() {
             </div>
 
 
-            {/* Blocos prontos — cria/repara ramificações inteiras com 1 clique */}
-            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(45 60% 97%)" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  Blocos prontos (ramificações)
-                </span>
-              </div>
-              <div className="space-y-1.5">
-                {RECEITAS.map((r) => (
-                  <div key={r.id} className="rounded border bg-white p-2" style={{ borderColor: LINE }}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[12px] font-semibold uppercase leading-snug" style={{ color: INK }}>{r.nome}</p>
-                        <p className="text-[11px] leading-snug mt-0.5" style={{ color: MUTED }}>{r.descricao}</p>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={adicionando || !servicoId}
-                        onClick={() => aplicarBloco(r)}
-                        className="shrink-0 rounded-md px-2.5 h-7 text-[11px] font-semibold uppercase tracking-wider text-white disabled:opacity-40"
-                        style={{ background: BORDO }}
-                      >
-                        Aplicar
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="space-y-4 max-h-[560px] overflow-y-auto pr-1">
               <DndContext
                 sensors={sensors}
