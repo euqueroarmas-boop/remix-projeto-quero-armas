@@ -415,7 +415,7 @@ export default function SimuladorChecklistAdmin() {
   function rotuloDestinoExistente(linha: LinhaCatalogo): string {
     const regra: any = linha.regra_validacao ?? {};
     if (regra.tipo === "pergunta" && regra.exige_documento_quando != null) {
-      return `PEDIR DOCUMENTO (RESPONDER + ANEXAR): ${linha.nome_documento}`;
+      return `ACIONAR ENVIO DO DOCUMENTO: ${linha.nome_documento}`;
     }
     return `${regra.tipo === "pergunta" ? "PERGUNTAR" : "PEDIR DOCUMENTO"}: ${linha.nome_documento}`;
   }
@@ -484,10 +484,23 @@ export default function SimuladorChecklistAdmin() {
           ]),
         );
         exigeAtual[rotaPergunta] = valores.length === 1 ? valores[0] : valores;
+        const eraDocumentoComPergunta =
+          regraAtual.tipo === "pergunta" && regraAtual.exige_documento_quando != null;
         await patchRegra(id, {
           exige_quando: exigeAtual,
           dispensa_quando: null,
-        }, "CAMINHO SALVO");
+          // Quando um documento híbrido é escolhido como AÇÃO de uma rota, ele
+          // deixa de fazer uma segunda pergunta. A resposta da pergunta-pivô já
+          // é a decisão; o cliente recebe diretamente o campo para anexar.
+          ...(eraDocumentoComPergunta ? {
+            tipo: null,
+            chave: null,
+            entrada: null,
+            opcoes: null,
+            exige_documento_quando: null,
+            depende_de: null,
+          } : {}),
+        }, eraDocumentoComPergunta ? "ENVIO DO DOCUMENTO ACIONADO NESTE CAMINHO" : "CAMINHO SALVO");
       } else if (rotaDestino.startsWith("bib:")) {
         const item = biblioteca.find((b) => b.id === rotaDestino.slice(4));
         if (!item) throw new Error("DOCUMENTO NÃO ENCONTRADO NA BIBLIOTECA");
@@ -913,6 +926,9 @@ export default function SimuladorChecklistAdmin() {
                   </label>
                   <label className="min-w-0">
                     <span className="qa-kpi-label mb-1.5 block">ENTÃO pedir ou mostrar</span>
+                    <span className="qa-caption mb-1.5 block">
+                      Escolha um documento da biblioteca ou do checklist. O sistema abrirá diretamente o envio do arquivo quando o cliente der a resposta acima — sem criar outra pergunta.
+                    </span>
                     <div className="relative mb-2">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input
@@ -925,11 +941,11 @@ export default function SimuladorChecklistAdmin() {
                     </div>
                     <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
                       <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
-                      <optgroup label="PERGUNTAS E DOCUMENTOS QUE JÁ ESTÃO NO CHECKLIST">
+                      <optgroup label="ACIONAR ITEM QUE JÁ ESTÁ NO CHECKLIST">
                         {destinosRota.existentes.map((l) => <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>)}
                       </optgroup>
-                      <optgroup label="ADICIONAR DOCUMENTO DA BIBLIOTECA">
-                        {destinosRota.novos.map((b) => <option key={b.id} value={`bib:${b.id}`}>PEDIR DOCUMENTO: {b.nome}</option>)}
+                      <optgroup label="CRIAR PEDIDO COM DOCUMENTO DA BIBLIOTECA">
+                        {destinosRota.novos.map((b) => <option key={b.id} value={`bib:${b.id}`}>CRIAR E ACIONAR ENVIO: {b.nome}</option>)}
                       </optgroup>
                     </select>
                     {rotaBuscaDestino.trim() && destinosRota.existentes.length === 0 && destinosRota.novos.length === 0 && (
