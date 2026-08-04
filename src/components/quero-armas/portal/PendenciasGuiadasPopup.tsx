@@ -206,6 +206,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const atual = Math.min(indice, total - 1);
   const active = pendencias[atual];
+  // Biblioteca de documentos = fonte única do passo a passo. Carrega uma vez
+  // (cacheado) e força re-render quando chega, para o cliente ver o texto
+  // gerenciado pelo admin, não o fallback estático.
+  const [bibliotecaCarregada, setBibliotecaCarregada] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    let vivo = true;
+    void carregarExplicacoesBiblioteca().then(() => { if (vivo) setBibliotecaCarregada(true); });
+    return () => { vivo = false; };
+  }, [open]);
   const activeGrupo = active.grupoLabel || grupoDaPendencia(active.rawTipo, active.tipo).label;
   const activeGrupoId = active.grupoId || grupoDaPendencia(active.rawTipo, active.tipo).id;
   const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
