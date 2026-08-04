@@ -72,6 +72,24 @@ export default function ClienteSelfieAvatar({
         const p = (row as any)?.selfie_path;
         if (p) return p as string;
       }
+      // 3) Última fonte: foto 3x4 APROVADA no acervo documental.
+      //    É a foto que vai para a PF; quando o cadastro ainda não tem
+      //    imagem própria, ela ocupa o lugar. Trocar avatar pessoal nunca
+      //    substitui o documento — são caminhos separados.
+      if (clienteId) {
+        const { data: doc } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("arquivo_storage_path")
+          .eq("qa_cliente_id", clienteId)
+          .eq("tipo_documento", "foto_3x4")
+          .eq("status", "aprovado")
+          .not("arquivo_storage_path", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const p = (doc as any)?.arquivo_storage_path;
+        if (p) return p as string;
+      }
       return null;
     },
   });
