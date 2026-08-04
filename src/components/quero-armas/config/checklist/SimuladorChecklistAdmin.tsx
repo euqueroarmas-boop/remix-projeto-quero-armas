@@ -73,6 +73,9 @@ export default function SimuladorChecklistAdmin() {
   const [rotaResposta, setRotaResposta] = useState("");
   const [rotaDestino, setRotaDestino] = useState("");
   const [rotaBuscaDestino, setRotaBuscaDestino] = useState("");
+  const [rotaInline, setRotaInline] = useState<{ chave: string; valor: string } | null>(null);
+  const [inlineBusca, setInlineBusca] = useState("");
+  const [inlineDestino, setInlineDestino] = useState("");
   const [salvandoRota, setSalvandoRota] = useState(false);
 
   useEffect(() => {
