@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
       const emailCli = (cli as any)?.email ?? null;
       const mapped = mapEventoToTemplate(body, { nome: nomeCli }, body.processo || body.documento || "");
       let emailOk = false;
-      if (mapped && emailCli) {
+      if (mapped && emailCli && !body.somente_admin) {
         // A chave de idempotência precisa distinguir CADA alteração: se dois
         // campos diferentes gerassem a mesma chave, o segundo aviso seria
         // engolido como duplicata e o cliente não saberia do que mudou.
@@ -400,7 +400,7 @@ Deno.serve(async (req) => {
               ? `Motivo: ${body.motivo_rejeicao === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_rejeicao === "titular" ? "documento de outro titular" : body.motivo_rejeicao === "duplicidade" ? "documento já entregue" : "documento diferente do exigido"}. Enviamos os detalhes no seu e-mail.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
-        await supabase.from("qa_notificacoes_cliente").upsert({
+        if (!body.somente_admin) await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,
           categoria,
           urgencia: body.evento === "certidao_rejeitada" || body.evento === "documento_rejeitado" ? "alta" : "normal",
