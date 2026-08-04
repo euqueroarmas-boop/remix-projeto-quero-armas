@@ -332,7 +332,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
   // servir o conteúdo corrigido assim que regenerado — não há necessidade
   // de invalidar o link antigo, só de avisar o cliente de novo.
   async function regenerarEReenviar(contratoId: string, vendaId: number, clienteNome: string) {
-    if (!window.confirm(`Regenerar o contrato de ${clienteNome} com o template vigente e reenviar o e-mail de assinatura?`)) return;
+    if (!window.confirm(`Regenerar o contrato E a procuração de ${clienteNome} com o template vigente e reenviar o e-mail de assinatura?`)) return;
     setRegenerando(contratoId);
     try {
       const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
@@ -341,17 +341,33 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
       if (error || (data as any)?.error) {
         throw new Error((data as any)?.error || error?.message || "Falha ao regenerar contrato");
       }
+      await regenerarProcuracao(vendaId);
       const emailDispatch = (data as any)?.email_dispatch;
       if (emailDispatch?.ok === false) {
-        toast.warning(emailDispatch.error || "Contrato regenerado, mas o e-mail não foi confirmado.");
+        toast.warning(emailDispatch.error || "Contrato + procuração regenerados, mas o e-mail não foi confirmado.");
       } else {
-        toast.success("Contrato regenerado e e-mail reenviado ao cliente.");
+        toast.success("Contrato + procuração regenerados e e-mail reenviado ao cliente.");
       }
       await carregar();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao regenerar contrato");
     } finally {
       setRegenerando(null);
+    }
+  }
+
+  // A procuração acompanha o contrato: sempre que o contrato é (re)gerado ou
+  // volta para "aguardando assinatura", a procuração é refeita com os dados
+  // atuais do cadastro.
+  async function regenerarProcuracao(vendaId: number) {
+    try {
+      const item = contratos.find((x) => Number(x.venda_id) === Number(vendaId));
+      if (!item?.cliente_id) return;
+      await supabase.functions.invoke("qa-gerar-procuracao", {
+        body: { cliente_id: item.cliente_id, venda_id: vendaId, force_regenerate: true },
+      });
+    } catch {
+      toast.warning("Contrato atualizado, mas a procuração não pôde ser regenerada automaticamente.");
     }
   }
 
@@ -367,7 +383,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         body: { contrato_id: contratoId },
       });
       if (error || !(data as any)?.ok) throw new Error((data as any)?.error || error?.message || "Falha ao reverter");
-      toast.success("Contrato voltou para 'Aguardando assinatura'. Agora você pode regenerar.");
+      toast.success("Contrato voltou para 'Aguardando assinatura' e a procuração foi regenerada automaticamente.");
       setFiltro("aguardando");
       await carregar();
     } catch (e: any) {
