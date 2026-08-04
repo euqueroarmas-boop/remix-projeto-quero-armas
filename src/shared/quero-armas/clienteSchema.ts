@@ -53,9 +53,18 @@ export function isValidEmail(value: string | null | undefined): boolean {
   return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/i.test(value.trim());
 }
 
-/** Telefone BR aceitável: 10 ou 11 dígitos. */
+/** Normaliza telefone BR: remove DDI 55 e zeros de operadora, devolve 10/11 dígitos. */
+export function normalizeTelefoneBR(value: string | null | undefined): string {
+  let d = onlyDigits(value);
+  if (d.length > 11 && d.startsWith("0")) d = d.replace(/^0+/, "");
+  if (d.length > 11 && d.startsWith("55")) d = d.slice(2);
+  if (d.length > 11) d = d.slice(-11);
+  return d;
+}
+
+/** Telefone BR aceitável: 10 ou 11 dígitos (aceita formatos com +55). */
 export function isValidTelefone(value: string | null | undefined): boolean {
-  const d = onlyDigits(value);
+  const d = normalizeTelefoneBR(value);
   return d.length === 10 || d.length === 11;
 }
 
