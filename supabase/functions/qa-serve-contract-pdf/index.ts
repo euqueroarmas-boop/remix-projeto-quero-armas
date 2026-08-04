@@ -445,6 +445,39 @@ function requestIp(req: Request): string | null {
   );
 }
 
+/**
+ * Carimbo de download (nota de rodapé da venda): append-only, uma linha por
+ * clique do CLIENTE. Nunca registra downloads da equipe interna, senão o
+ * histórico deixa de responder "quando o cliente baixou".
+ */
+async function registrarDownloadContrato(
+  sb: any,
+  req: Request,
+  contract: Record<string, any>,
+  user: { userId: string } | null,
+  isStaff: boolean,
+  extra?: { sha256?: string | null; tamanho_bytes?: number | null },
+) {
+  if (isStaff) return;
+  try {
+    await sb.from("qa_documento_downloads").insert({
+      documento_tipo: "contrato",
+      documento_id: contract.id,
+      numero: contract.contract_number ?? null,
+      cliente_id: contract.cliente_id ?? null,
+      usuario_id: user?.userId ?? null,
+      ip: requestIp(req),
+      user_agent: req.headers.get("user-agent"),
+      idioma: req.headers.get("accept-language"),
+      referer: req.headers.get("referer"),
+      sha256: extra?.sha256 ?? null,
+      tamanho_bytes: extra?.tamanho_bytes ?? null,
+    });
+  } catch (e) {
+    console.warn("[qa-serve-contract-pdf] falha ao registrar download", e);
+  }
+}
+
 function fileSafeName(value: string | null | undefined): string {
   return String(value || "")
     .normalize("NFKC")
