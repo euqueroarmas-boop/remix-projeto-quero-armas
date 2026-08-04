@@ -560,7 +560,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <h2 className="qa-editorial mt-2">
+          <h2 className="qa-h1 mt-2" style={{ letterSpacing: ".02em" }}>
             {explic.titulo}
           </h2>
 
