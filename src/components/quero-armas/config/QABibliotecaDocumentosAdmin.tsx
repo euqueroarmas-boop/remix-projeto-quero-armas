@@ -381,6 +381,17 @@ export default function QABibliotecaDocumentosAdmin() {
         </select>
         <Button
           size="sm"
+          variant="outline"
+          onClick={sincronizarTodos}
+          disabled={sincronizandoTudo}
+          title="Aplicar o cadastro de todos os documentos ativos em todos os serviços de uma vez"
+          className="text-xs gap-1 h-8"
+        >
+          {sincronizandoTudo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          Sincronizar todos os serviços
+        </Button>
+        <Button
+          size="sm"
           onClick={() => setCriandoNovo((v) => !v)}
           className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8"
         >
