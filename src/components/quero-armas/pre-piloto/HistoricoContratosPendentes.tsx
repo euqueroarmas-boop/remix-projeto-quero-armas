@@ -513,6 +513,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
         const st = statusLabel(c.contrato_status);
         const aberto = expandido === c.contrato_id;
         const pendente = c.contrato_status === "generated_pending_company_signature";
+        const dl = downloads[c.contrato_id];
 
         return (
           <div key={c.contrato_id} className="border rounded-lg overflow-hidden">
@@ -528,6 +529,12 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                   <p className="text-[11px] text-muted-foreground truncate">
                     {c.servico_nome} · {fmt(c.gerado_em)}
                   </p>
+                  {dl && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                      Baixado pelo cliente · {fmt(dl.baixado_em)} · {dl.dispositivo} · {dl.navegador}
+                      {dl.vezes > 1 ? ` · ${dl.vezes}×` : ""}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
