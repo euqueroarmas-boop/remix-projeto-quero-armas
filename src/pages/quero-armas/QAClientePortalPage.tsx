@@ -4458,7 +4458,7 @@ export default function QAClientePortalPage() {
 
         {/* MOBILE: checklist guiado como PÁGINA (mesmo conteúdo do pop-up). */}
         {activeSection === "checklist_guiado" && isBelowLg && (
-          <div id="qa-portal-checklist-guiado" tabIndex={-1} className="outline-none h-full min-h-0 pt-[26px] pb-1 flex flex-col">
+          <div id="qa-portal-checklist-guiado" tabIndex={-1} className="outline-none h-full min-h-0 pt-[6px] pb-1 flex flex-col">
             {pendenciasGuiadas.length > 0 ? (
               <PendenciasGuiadasPopup
                 asPage
