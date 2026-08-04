@@ -2257,6 +2257,32 @@ export function ClienteDocsHubModal({
         return;
       }
 
+      // ── Blindagem da DATA DE EMISSÃO ───────────────────────────────────────
+      // A IA às vezes confunde a data de nascimento citada no corpo da certidão
+      // ("...e data de nascimento 09/01/1975...") com a data de emissão, e aí a
+      // validade (emissão + 90 dias) nascia em 1975 e o documento aparecia
+      // "vencido" logo após ser emitido. O texto nativo do PDF manda: se houver
+      // "emitida/emitido em DD/MM/AAAA", essa é a emissão.
+      try {
+        const textoLocal = String(textoLocalRef.current || "");
+        const semAcento = textoLocal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const emitidaEm = semAcento.match(/emitid[ao][^\n]{0,40}?em:?\s*(\d{2}\/\d{2}\/\d{4})/i)?.[1];
+        const nasc = String((campos as any).data_nascimento || "").trim();
+        const emissaoIA = String(campos.data_emissao || "").trim();
+        if (emitidaEm) {
+          campos.data_emissao = emitidaEm;
+        } else if (emissaoIA && nasc && emissaoIA === nasc) {
+          // Emissão idêntica à data de nascimento é sempre leitura errada.
+          campos.data_emissao = "";
+        } else if (emissaoIA) {
+          const ano = Number(emissaoIA.slice(-4));
+          const anoAtual = new Date().getFullYear();
+          // Certidões/laudos/comprovantes não são emitidos há mais de 15 anos.
+          const tipoPerecivel = /certidao|antecedentes|comprovante|laudo|exame|declaracao/i.test(tipoIA);
+          if (tipoPerecivel && ano && ano < anoAtual - 15) campos.data_emissao = "";
+        }
+      } catch { /* sem texto nativo, segue com o que a IA leu */ }
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
