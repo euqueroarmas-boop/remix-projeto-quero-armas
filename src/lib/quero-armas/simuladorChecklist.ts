@@ -474,7 +474,7 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
     }
   }
 
-  const temPerguntaCondicao = chavesPerguntas.has("condicao_profissional");
+  const temPerguntaCondicao = chavesVisiveis.has("condicao_profissional");
   const temDocsCondicao = ativas.some(
     (l) => l.condicao_profissional != null && condicaoCasa(l.condicao_profissional, condicao),
   );
