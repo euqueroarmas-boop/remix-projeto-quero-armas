@@ -18,9 +18,15 @@ interface Acesso {
 
 const JANELA_MIN = 30;
 
+interface AcessoHoje extends Acesso {
+  nome?: string | null;
+  processos?: { nome: string; status: string | null }[];
+}
+
 export default function DashboardClientesOnline() {
   const [online, setOnline] = useState<Acesso[]>([]);
   const [hoje, setHoje] = useState(0);
+  const [acessosHoje, setAcessosHoje] = useState<AcessoHoje[]>([]);
   const [loading, setLoading] = useState(true);
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
 
@@ -55,6 +61,61 @@ export default function DashboardClientesOnline() {
       setOnline(unicos);
     }
     if (doDia.status === "fulfilled") setHoje((doDia.value as any)?.count ?? 0);
+
+    // Clientes que acessaram hoje (sessão do dia) + processo de cada um
+    try {
+      const { data: eventosHoje } = await supabase
+        .from("qa_cliente_login_eventos" as any)
+        .select("qa_cliente_id,user_id,email,dispositivo,created_at")
+        .gte("created_at", inicioDia.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(300);
+
+      const linhas = ((eventosHoje ?? []) as any[]) as Acesso[];
+      const vistos = new Set<string>();
+      const unicos: AcessoHoje[] = [];
+      for (const l of linhas) {
+        const chave = String(l.qa_cliente_id || l.user_id || l.email || "");
+        if (!chave || vistos.has(chave)) continue;
+        vistos.add(chave);
+        unicos.push({ ...l });
+      }
+
+      const ids = unicos.map((u) => u.qa_cliente_id).filter(Boolean) as any[];
+      if (ids.length) {
+        const [clientesRes, processosRes] = await Promise.allSettled([
+          supabase.from("qa_clientes" as any).select("id,nome_completo").in("id", ids),
+          supabase
+            .from("qa_processos" as any)
+            .select("cliente_id,servico_nome,status,created_at")
+            .in("cliente_id", ids)
+            .order("created_at", { ascending: false }),
+        ]);
+        const nomes = new Map<string, string>();
+        if (clientesRes.status === "fulfilled") {
+          for (const c of (((clientesRes.value as any)?.data ?? []) as any[])) {
+            nomes.set(String(c.id), c.nome_completo);
+          }
+        }
+        const procs = new Map<string, { nome: string; status: string | null }[]>();
+        if (processosRes.status === "fulfilled") {
+          for (const p of (((processosRes.value as any)?.data ?? []) as any[])) {
+            const k = String(p.cliente_id);
+            const arr = procs.get(k) ?? [];
+            arr.push({ nome: p.servico_nome || "Serviço", status: p.status ?? null });
+            procs.set(k, arr);
+          }
+        }
+        for (const u of unicos) {
+          const k = String(u.qa_cliente_id ?? "");
+          u.nome = nomes.get(k) ?? null;
+          u.processos = procs.get(k) ?? [];
+        }
+      }
+      setAcessosHoje(unicos);
+    } catch {
+      /* silencioso */
+    }
 
     setAtualizadoEm(new Date());
     setLoading(false);
@@ -136,6 +197,41 @@ export default function DashboardClientesOnline() {
             <li className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>+{total - 6} outros</li>
           )}
         </ul>
+      )}
+
+      {atualizadoEm && (
+        acessosHoje.length > 0 && (
+          <div className="mt-4 border-t pt-3" style={{ borderColor: "hsl(220 14% 92%)" }}>
+            <p className="qa-h2 text-[11px]">CLIENTES QUE ACESSARAM HOJE</p>
+            <ul className="mt-2 space-y-2">
+              {acessosHoje.slice(0, 10).map((a, i) => (
+                <li key={`h-${a.qa_cliente_id ?? a.user_id ?? a.email ?? i}`} className="text-[11px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-semibold uppercase" style={{ color: "hsl(220 20% 25%)" }}>
+                      {a.nome || a.email || "CLIENTE"}
+                    </span>
+                    <span style={{ color: "hsl(220 10% 62%)" }}>
+                      {new Date(a.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <div className="mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                    {a.processos && a.processos.length > 0
+                      ? a.processos
+                          .slice(0, 3)
+                          .map((p) => `${p.nome}${p.status ? ` · ${p.status}` : ""}`)
+                          .join(" | ")
+                      : "sem processo ativo"}
+                  </div>
+                </li>
+              ))}
+              {acessosHoje.length > 10 && (
+                <li className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>
+                  +{acessosHoje.length - 10} outros
+                </li>
+              )}
+            </ul>
+          </div>
+        )
       )}
 
       {atualizadoEm && (
