@@ -1091,7 +1091,6 @@ export default function SimuladorChecklistAdmin() {
                               onMoverGrupo={moverItemParaGrupo}
                               onDefinirCondicao={definirCondicao}
                               onRenomear={renomearItem}
-                              perguntas={perguntasPivo}
                               onAlternarHibrida={alternarPerguntaHibrida}
                             />
                           ))}
@@ -1221,7 +1220,6 @@ function LinhaItem({
   onMoverGrupo,
   onDefinirCondicao,
   onRenomear,
-  perguntas,
   onAlternarHibrida,
 }: {
   item: ItemSimulado;
@@ -1233,7 +1231,6 @@ function LinhaItem({
   onMoverGrupo: (id: string, grupo: PendenciaGrupoId) => void;
   onDefinirCondicao: (id: string, valores: string[]) => void;
   onRenomear: (id: string, novoNome: string) => void;
-  perguntas: { chave: string; nome: string; opcoes: { label: string; valor: string }[] }[];
   onAlternarHibrida: (id: string, ligado: boolean) => void;
 }) {
   const cfg = {
