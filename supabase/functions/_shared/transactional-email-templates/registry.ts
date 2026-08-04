@@ -65,6 +65,7 @@ import { template as documentoExcluido } from './documento-excluido.tsx'
 import { template as documentoReaproveitado } from './documento-reaproveitado.tsx'
 import { template as documentoRejeitado } from './documento-rejeitado.tsx'
 import { template as documentoStatusCliente } from './documento-status-cliente.tsx'
+import { template as correcaoCadastroAdmin } from './correcao-cadastro-admin.tsx'
 
 // Habitualidade — 12 novos alertas (mockup visual — NÃO conectados a motor ainda)
 import { template as habitualidadeProgressoNivel } from './habitualidade-progresso-nivel.tsx'
@@ -167,6 +168,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'documento-reaproveitado': documentoReaproveitado,
   'documento-rejeitado': documentoRejeitado,
   'documento-status-cliente': documentoStatusCliente,
+  'correcao-cadastro-admin': correcaoCadastroAdmin,
 
   // Habitualidade — 12 novos alertas (mockup — sem motor ainda)
   'habitualidade-progresso-nivel': habitualidadeProgressoNivel,
