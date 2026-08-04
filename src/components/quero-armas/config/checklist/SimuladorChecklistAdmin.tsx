@@ -951,7 +951,7 @@ export default function SimuladorChecklistAdmin() {
                     </select>
                   </label>
                   <label className="min-w-0">
-                    <span className="qa-kpi-label mb-1.5 block">ENTÃO pedir ou mostrar</span>
+                    <span className="qa-kpi-label mb-1.5 block">ENTÃO solicitar estes documentos</span>
                     <span className="qa-caption mb-1.5 block">
                       Escolha um documento da biblioteca ou do checklist. O sistema abrirá diretamente o envio do arquivo quando o cliente der a resposta acima — sem criar outra pergunta.
                     </span>
@@ -965,20 +965,20 @@ export default function SimuladorChecklistAdmin() {
                         aria-label="Buscar documento ou pergunta para adicionar ao caminho"
                       />
                     </div>
-                    <select value={rotaDestino} onChange={(e) => setRotaDestino(e.target.value)} className="block h-10 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs">
-                      <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
-                      <optgroup label="ACIONAR ITEM QUE JÁ ESTÁ NO CHECKLIST">
-                        {destinosRota.existentes.map((l) => <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>)}
-                      </optgroup>
-                      <optgroup label="CRIAR PEDIDO COM DOCUMENTO DA BIBLIOTECA">
-                        {destinosRota.novos.map((b) => <option key={b.id} value={`bib:${b.id}`}>CRIAR E ACIONAR ENVIO: {b.nome}</option>)}
-                      </optgroup>
-                    </select>
+                    <div className="max-h-48 overflow-y-auto rounded-md border bg-background p-2">
+                      {[...destinosRota.existentes.map((l) => ({ value: `linha:${l.id}`, label: rotuloDestinoExistente(l) })), ...destinosRota.novos.map((b) => ({ value: `bib:${b.id}`, label: `SOLICITAR DOCUMENTO: ${b.nome}` }))].map((opcao) => (
+                        <label key={opcao.value} className="flex cursor-pointer items-start gap-2 rounded px-2 py-2 text-xs hover:bg-muted/50">
+                          <input type="checkbox" checked={rotaDestinos.includes(opcao.value)} onChange={() => alternarDestino(opcao.value, "principal")} className="mt-0.5 h-4 w-4 accent-primary" />
+                          <span className="min-w-0 break-words">{opcao.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {rotaDestinos.length > 0 && <span className="mt-1.5 block text-xs font-semibold text-primary">{rotaDestinos.length} DOCUMENTO(S) SELECIONADO(S)</span>}
                     {rotaBuscaDestino.trim() && destinosRota.existentes.length === 0 && destinosRota.novos.length === 0 && (
                       <span className="mt-1.5 block text-xs text-destructive">NENHUM DOCUMENTO ENCONTRADO COM ESSE NOME.</span>
                     )}
                   </label>
-                  <Button type="button" className="h-10 w-full justify-center" disabled={salvandoRota || !rotaPergunta || !rotaResposta || !rotaDestino} onClick={() => void salvarRotaLeiga()}>
+                  <Button type="button" className="h-10 w-full justify-center" disabled={salvandoRota || !rotaPergunta || !rotaResposta || rotaDestinos.length === 0} onClick={() => void salvarRotaLeiga()}>
                     {salvandoRota ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar caminho
                   </Button>
                 </div>
@@ -1050,30 +1050,21 @@ export default function SimuladorChecklistAdmin() {
                                       aria-label="Buscar documento para esta resposta"
                                     />
                                   </div>
-                                  <select
-                                    value={inlineDestino}
-                                    onChange={(e) => setInlineDestino(e.target.value)}
-                                    className="mb-2 block h-9 w-full min-w-0 max-w-full truncate rounded-md border bg-background px-2 text-xs"
-                                  >
-                                    <option value="">ESCOLHA A PRÓXIMA AÇÃO...</option>
-                                    <optgroup label="ACIONAR ITEM QUE JÁ ESTÁ NO CHECKLIST">
-                                      {destinosInline.existentes.map((l) => (
-                                        <option key={l.id} value={`linha:${l.id}`}>{rotuloDestinoExistente(l)}</option>
-                                      ))}
-                                    </optgroup>
-                                    <optgroup label="CRIAR PEDIDO COM DOCUMENTO DA BIBLIOTECA">
-                                      {destinosInline.novos.map((b) => (
-                                        <option key={b.id} value={`bib:${b.id}`}>CRIAR E ACIONAR ENVIO: {b.nome}</option>
-                                      ))}
-                                    </optgroup>
-                                  </select>
+                                  <div className="mb-2 max-h-44 overflow-y-auto rounded-md border bg-background p-1.5">
+                                    {[...destinosInline.existentes.map((l) => ({ value: `linha:${l.id}`, label: rotuloDestinoExistente(l) })), ...destinosInline.novos.map((b) => ({ value: `bib:${b.id}`, label: `SOLICITAR DOCUMENTO: ${b.nome}` }))].map((opcao) => (
+                                      <label key={opcao.value} className="flex cursor-pointer items-start gap-2 rounded px-2 py-2 text-xs hover:bg-muted/50">
+                                        <input type="checkbox" checked={inlineDestinos.includes(opcao.value)} onChange={() => alternarDestino(opcao.value, "inline")} className="mt-0.5 h-4 w-4 accent-primary" />
+                                        <span className="min-w-0 break-words">{opcao.label}</span>
+                                      </label>
+                                    ))}
+                                  </div>
                                   <div className="flex flex-wrap gap-2">
                                     <Button
                                       type="button"
                                       size="sm"
                                       className="h-8"
-                                      disabled={salvandoRota || !inlineDestino}
-                                      onClick={() => void salvarRotaLeiga(pergunta.chave, resposta.valor, inlineDestino)}
+                                      disabled={salvandoRota || inlineDestinos.length === 0}
+                                      onClick={() => void salvarRotaLeiga(pergunta.chave, resposta.valor, inlineDestinos)}
                                     >
                                       {salvandoRota ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Salvar aqui
                                     </Button>
@@ -1082,7 +1073,7 @@ export default function SimuladorChecklistAdmin() {
                                       size="sm"
                                       variant="ghost"
                                       className="h-8"
-                                      onClick={() => { setRotaInline(null); setInlineBusca(""); setInlineDestino(""); }}
+                                      onClick={() => { setRotaInline(null); setInlineBusca(""); setInlineDestinos([]); }}
                                     >
                                       Cancelar
                                     </Button>
@@ -1091,10 +1082,10 @@ export default function SimuladorChecklistAdmin() {
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() => { setRotaInline({ chave: pergunta.chave, valor: resposta.valor }); setInlineBusca(""); setInlineDestino(""); }}
+                                  onClick={() => { setRotaInline({ chave: pergunta.chave, valor: resposta.valor }); setInlineBusca(""); setInlineDestinos([]); }}
                                   className="mt-1.5 inline-flex items-center gap-1 rounded border border-dashed px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                                 >
-                                  <Plus className="h-3 w-3" /> Adicionar documento neste caminho
+                                  <Plus className="h-3 w-3" /> Solicitar documentos neste caminho
                                 </button>
                               )}
                             </div>
