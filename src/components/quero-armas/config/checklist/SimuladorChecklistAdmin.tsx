@@ -22,7 +22,6 @@ import {
   type LinhaCatalogo, type ItemSimulado,
 } from "@/lib/quero-armas/simuladorChecklist";
 import { PENDENCIA_GRUPOS, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
-import { RECEITAS, aplicarReceita, type ReceitaChecklist } from "@/lib/quero-armas/receitasChecklist";
 
 type Servico = { id: number; nome_servico: string };
 
@@ -202,25 +201,6 @@ export default function SimuladorChecklistAdmin() {
           ? "ESTE DOCUMENTO JÁ ESTÁ NO CHECKLIST DESTE SERVIÇO"
           : "NÃO FOI POSSÍVEL ADICIONAR: " + (msg || "ERRO"),
       );
-    } finally {
-      setAdicionando(false);
-    }
-  }
-
-  /**
-   * Remove a exigência do checklist. Não apaga a linha do catálogo: desativa
-   */
-  async function aplicarBloco(receita: ReceitaChecklist) {
-    if (!servicoId) { toast.error("ESCOLHA UM SERVIÇO PRIMEIRO"); return; }
-    setAdicionando(true);
-    try {
-      const r = await aplicarReceita(receita, servicoId);
-      toast.success(
-        `BLOCO APLICADO — ${r.criadas} CRIADA(S), ${r.atualizadas} AJUSTADA(S)`,
-      );
-      await carregar(servicoId);
-    } catch (e: any) {
-      toast.error("NÃO FOI POSSÍVEL APLICAR O BLOCO: " + (e?.message ?? "ERRO"));
     } finally {
       setAdicionando(false);
     }
