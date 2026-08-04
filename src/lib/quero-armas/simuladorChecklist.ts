@@ -487,8 +487,13 @@ export function simularChecklist(entrada: EntradaSimulacao): ResultadoSimulacao 
       .map((l) => chavePergunta(l.regra_validacao, l.tipo_documento))
       .filter(Boolean),
   );
+  // A presença da pergunta é definida pela linha visível do catálogo, não pelo
+  // tipo de ação renderizado. Uma pergunta híbrida respondida vira upload na UI,
+  // mas continua sendo a origem válida da rota e não pode gerar aviso falso.
   const chavesVisiveis = new Set(
-    itens.filter((i) => i.tipo === "pergunta" && i.chave).map((i) => i.chave as string),
+    itens
+      .filter((i) => i.estado !== "dispensado" && ehPergunta(i.linha.regra_validacao) && i.chave)
+      .map((i) => i.chave as string),
   );
 
   const jaAvisado = new Set<string>();
