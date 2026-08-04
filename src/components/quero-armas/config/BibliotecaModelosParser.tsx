@@ -43,14 +43,28 @@ export async function treinarModeloArquivo(codigo: string, nomeDocumento: string
     .from("qa-processo-docs")
     .upload(path, file, { upsert: false, contentType: file.type || undefined });
   if (upErr) throw upErr;
-  const { data, error } = await supabase.functions.invoke("qa-modelo-biblioteca-treinar", {
-    body: {
-      codigo,
-      nome_modelo: file.name.replace(/\.[^.]+$/, "").toUpperCase(),
-      storage_path: path,
-      observacoes: `MODELO DE REFERÊNCIA — ${nomeDocumento.toUpperCase()}`,
-    },
+  const body = {
+    codigo,
+    nome_modelo: file.name.replace(/\.[^.]+$/, "").toUpperCase(),
+    storage_path: path,
+    observacoes: `MODELO DE REFERÊNCIA — ${nomeDocumento.toUpperCase()}`,
+  };
+  const invocar = async (accessToken: string) => supabase.functions.invoke("qa-modelo-biblioteca-treinar", {
+    body,
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
+  const { data: sessaoAtual } = await supabase.auth.getSession();
+  let accessToken = sessaoAtual.session?.access_token;
+  if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente para adicionar modelos.");
+  let { data, error } = await invocar(accessToken);
+  if (error && String((error as any)?.context?.status ?? "") === "401") {
+    const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
+    accessToken = renovada.session?.access_token;
+    if (refreshError || !accessToken) {
+      throw new Error("Sua sessão administrativa expirou. Entre novamente para adicionar modelos.");
+    }
+    ({ data, error } = await invocar(accessToken));
+  }
   if (error) throw error;
   if ((data as any)?.error) throw new Error((data as any).error);
   return data as { deterministico?: boolean; ia?: boolean };
