@@ -4023,6 +4023,7 @@ export default function QAClientesPage() {
           solicitacaoId={vendaModal.solicitacaoId ?? null}
         />
         <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} mode={deleteModal.mode} />
+        {purgeDialog}
       </div>
     );
   }
@@ -5044,6 +5045,7 @@ export default function QAClientesPage() {
         loading={deleting}
         mode={deleteModal.mode}
       />
+      {purgeDialog}
     </div>
   );
 }
