@@ -5383,7 +5383,8 @@ function ClienteHeaderCard({
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
         style={{ background: statusTone }}
       />
-      <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+      <div className="relative flex flex-col md:flex-row md:items-center gap-3 px-4 py-4 md:px-5">
+        <div className="flex items-start gap-3 w-full min-w-0">
         <Button
           variant="ghost"
           size="sm"
@@ -5425,7 +5426,8 @@ function ClienteHeaderCard({
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        </div>
+        <div className="flex items-center justify-end flex-wrap gap-1.5 shrink-0 w-full md:w-auto">
           <Button
             variant="ghost"
             size="sm"
