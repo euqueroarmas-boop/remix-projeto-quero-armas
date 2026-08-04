@@ -81,6 +81,8 @@ interface Payload {
   exigencia?: string;
   /** Para documento_rejeitado. */
   motivo_rejeicao?: "parentesco" | "titular" | "duplicidade" | "tipo";
+  /** Recusa no upload: avisa SÓ a equipe (sem e-mail nem popup do cliente). */
+  somente_admin?: boolean;
   detalhes?: Array<{ label: string; valor: string }>;
   /** Para cadastro_atualizado: campo a campo, com rótulo e valor novo. */
   campos_alterados?: Array<{ label: string; valor: string }>;
