@@ -538,7 +538,7 @@ export default function QAConfiguracoesPage() {
       <Tabs
         value={secaoAtiva}
         onValueChange={setSecao}
-        className="w-full lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start"
+        className="w-full lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:items-stretch lg:min-h-[560px] [&>[role=tabpanel]]:p-4 sm:[&>[role=tabpanel]]:p-6"
       >
         <TabsList className={QA_TABS_LIST}>
           {grupoAtivo?.blocos.map((bloco) => (
