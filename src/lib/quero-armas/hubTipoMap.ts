@@ -60,6 +60,16 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // Certidão TRF3 longa (gerada por qa_explodir_checklist_processo com
   // o nome completo da seção — mesmo documento que certidao_federal_trf3_sjsp_jef).
   certidao_federal_trf_3_regiao_abrangencia_da_secao_judiciaria_e_juizado_especial_federal_de_sao_paulo: "antecedentes_federal_sjsp_jef",
+  // Variante truncada que aparece em alguns processos (limite de tamanho do campo):
+  certidao_federal_trf_3_regiao_abrangencia_da_secao_judiciari: "antecedentes_federal_sjsp_jef",
+  // Laudos de instituição (psicólogo e instrutor de tiro cadastrados):
+  atestado_aptidao_psicologica_instituicao: "laudo_psicologico",
+  atestado_capacidade_tecnica_instituicao: "laudo_capacidade_tecnica",
+  // Certidão estadual Polícia Civil (antecedentes criminais estaduais):
+  certidao_estadual_policia_civil: "antecedentes_criminais",
+  // Declarações de endereço/acervo e necessidade efetiva:
+  declaracao_endereco_acervo: "declaracao_guarda_acervo_1endereco",
+  declaracao_necessidade_efetiva: "comprovante_efetiva_necessidade",
 };
 
 const HUB_TIPOS_VALIDOS = new Set([
