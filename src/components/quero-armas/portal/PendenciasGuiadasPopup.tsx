@@ -283,18 +283,40 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       }
     : getExplicacaoPendencia(active.rawTipo || active.tipo, active.fallbackNome, active.tipo);
 
-  // Regra (03/08/2026): a FONTE ÚNICA é o texto cadastrado pela equipe —
-  // Biblioteca de Documentos ou catálogo do serviço. Quando ele existe, vence
-  // o REGISTRO estático do código, que passa a ser apenas fallback para
-  // documentos ainda sem passo a passo cadastrado.
+  // Regra (04/08/2026 — CORREÇÃO): o texto da Biblioteca só substitui o passo a
+  // passo do REGISTRO quando ele é REALMENTE um passo a passo. Antes, uma linha
+  // solta cadastrada pela equipe ("Emita no site do TSE e envie o PDF
+  // original.") apagava as 5–8 etapas detalhadas que o cliente precisa para
+  // conseguir emitir a certidão. Agora:
+  //   - catálogo com MAIS passos que o registro → catálogo vence (é mais rico);
+  //   - registro sem passos → catálogo vence (único conteúdo existente);
+  //   - caso contrário → mantém o passo a passo detalhado e a linha do
+  //     catálogo entra como primeira etapa/resumo, sem destruir o resto.
   const passosCatalogo = active.instrucoesCatalogo
     ? active.instrucoesCatalogo.split(/\n+/).map((l) => l.trim()).filter(Boolean)
     : [];
-  const usarCatalogo = !isSignature && passosCatalogo.length > 0;
+  const passosRegistro = Array.isArray(explicBase.passos) ? explicBase.passos : [];
+  const usarCatalogo =
+    !isSignature &&
+    passosCatalogo.length > 0 &&
+    (passosRegistro.length === 0 || passosCatalogo.length >= passosRegistro.length);
+  const mesclarCatalogo =
+    !isSignature && passosCatalogo.length > 0 && !usarCatalogo;
   const explic = usarCatalogo
     ? {
         ...explicBase,
         passos: passosCatalogo,
+        observacao: active.observacoesCatalogo || explicBase.observacao,
+      }
+    : mesclarCatalogo
+    ? {
+        ...explicBase,
+        passos: [
+          ...passosCatalogo.filter(
+            (p) => !passosRegistro.some((r) => r.trim().toLowerCase() === p.toLowerCase()),
+          ),
+          ...passosRegistro,
+        ],
         observacao: active.observacoesCatalogo || explicBase.observacao,
       }
     : {
