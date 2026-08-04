@@ -556,21 +556,21 @@ export default function SimuladorChecklistAdmin() {
   return (
     <div className="space-y-4">
       {/* Cabeçalho / seleção */}
-      <div className="qa-card p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <PlayCircle className="h-4 w-4" style={{ color: BORDO }} />
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-            Simulador do Checklist
-          </span>
+      <div className="qa-card overflow-hidden">
+        <div className="px-5 pt-5 pb-4 border-b" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          <div className="flex items-center gap-2">
+            <PlayCircle className="h-4 w-4 shrink-0" style={{ color: BORDO }} />
+            <h2 className="qa-h2">Simulador do Checklist</h2>
+          </div>
+          <p className="qa-caption mt-1.5 max-w-[68ch]">
+            Avance respondendo como o cliente responderia. O resultado usa exatamente as
+            exigências cadastradas em Preços e Serviços / Montar Checklist — nada é inventado aqui.
+          </p>
         </div>
-        <p className="text-[12.5px] mb-4" style={{ color: MUTED }}>
-          Avance respondendo como o cliente responderia. O resultado usa exatamente as
-          exigências cadastradas em Preços e Serviços / Montar Checklist — nada é inventado aqui.
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
-          <div className="md:col-span-7">
-            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Serviço</label>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-5">
+          <div className="md:col-span-7 min-w-0">
+            <label className="qa-kpi-label block mb-1.5">Serviço</label>
             <select
               value={servicoId ?? ""}
               onChange={(e) => {
@@ -588,8 +588,8 @@ export default function SimuladorChecklistAdmin() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-3">
-            <label className="text-[11.5px] uppercase block mb-1" style={{ color: MUTED }}>Modalidade</label>
+          <div className="md:col-span-3 min-w-0">
+            <label className="qa-kpi-label block mb-1.5">Modalidade</label>
             <select
               value={modalidade ?? ""}
               onChange={(e) => setModalidade(e.target.value || null)}
@@ -602,14 +602,14 @@ export default function SimuladorChecklistAdmin() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-2 flex items-end">
+          <div className="md:col-span-2 flex md:items-end">
             <button
               onClick={reiniciar}
               disabled={!servicoId}
-              className="h-9 w-full rounded-md border text-[12.5px] uppercase flex items-center justify-center gap-1 disabled:opacity-40"
+              className="h-9 w-full rounded-md border qa-btn-label flex items-center justify-center gap-1.5 disabled:opacity-40 hover:bg-slate-50 transition-colors"
               style={{ borderColor: LINE, color: INK }}
             >
-              <RotateCcw className="h-3 w-3" /> Reiniciar
+              <RotateCcw className="h-3 w-3 shrink-0" /> Reiniciar
             </button>
           </div>
         </div>
@@ -622,14 +622,12 @@ export default function SimuladorChecklistAdmin() {
       )}
 
       {!loading && servicoId && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
           {/* Coluna 1 — passo atual */}
-          <div className="qa-card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                Passo atual do cliente
-              </span>
-              <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
+          <div className="qa-card p-5 xl:sticky xl:top-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="qa-h3">Passo atual do cliente</h3>
+              <span className="text-[11.5px] font-mono tabular-nums shrink-0" style={{ color: MUTED }}>
                 {sim.totalCumpridos}/{sim.totalCumpridos + sim.totalPendentes}
               </span>
             </div>
@@ -756,61 +754,63 @@ export default function SimuladorChecklistAdmin() {
 
           {/* Coluna 2 — checklist projetado */}
           <div className="qa-card p-5">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2">
-                <ArrowRight className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  O que o cliente vê — {servicoNome}
-                </span>
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 mb-2">
+              <div className="flex items-start gap-2 min-w-0 flex-1">
+                <ArrowRight className="h-3.5 w-3.5 mt-[2px] shrink-0" style={{ color: BORDO }} />
+                <div className="min-w-0">
+                  <h3 className="qa-h3">O que o cliente vê</h3>
+                  <p className="qa-meta mt-1 truncate">{servicoNome}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {salvandoOrdem && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: BORDO }} />}
                 <button
                   type="button"
                   onClick={renumerar}
                   disabled={salvandoOrdem || sim.grupos.length === 0}
                   title="Renumerar tudo em 10, 20, 30… na sequência atual"
-                  className="inline-flex items-center gap-1 rounded-md border px-2 h-7 text-[11px] font-semibold uppercase tracking-wider disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-md border px-2.5 h-8 text-[11px] font-semibold uppercase tracking-wider disabled:opacity-40 hover:bg-slate-50 transition-colors"
                   style={{ borderColor: LINE, color: BORDO }}
                 >
                   <ListOrdered className="h-3 w-3" /> Renumerar
                 </button>
               </div>
             </div>
-            <p className="text-[11.5px] mb-3" style={{ color: MUTED }}>
-              Arraste pelo punho ⠿ do item para reordenar dentro/entre grupos, ou pelo punho do
-              título do grupo para mover o grupo inteiro. A nova ordem é gravada no
-              catálogo e passa a valer em todos os motores (Preços e Serviços, Montar Checklist,
-              processos e portal do cliente).
-              <br />
-              Você também pode digitar o número de ordem direto no campo de cada linha —
-              e usar RENUMERAR para fechar os buracos (10, 20, 30…) sem mudar nada de lugar.
-            </p>
+            <details className="mb-3 rounded-lg border" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider select-none" style={{ color: BORDO }}>
+                Como reordenar
+              </summary>
+              <ul className="px-3 pb-3 pt-0.5 space-y-1.5 qa-caption list-disc pl-7">
+                <li>Arraste pelo punho ⠿ do item para reordenar dentro ou entre grupos.</li>
+                <li>Arraste o punho do título do grupo para mover o grupo inteiro.</li>
+                <li>Ou digite o número de ordem direto no campo de cada linha.</li>
+                <li>RENUMERAR fecha os buracos (10, 20, 30…) sem mudar nada de lugar.</li>
+                <li>A nova ordem vale em todos os motores: Preços e Serviços, Montar Checklist, processos e portal do cliente.</li>
+              </ul>
+            </details>
 
             {/* Adicionar exigência — mesma biblioteca do Montar Checklist */}
-            <div className="mb-3 rounded-lg border p-2.5" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <Plus className="h-3.5 w-3.5" style={{ color: BORDO }} />
-                <span className="text-[11.5px] font-semibold uppercase tracking-wider" style={{ color: MUTED }}>
-                  Adicionar exigência (biblioteca oficial)
-                </span>
+            <div className="mb-3 rounded-lg border p-3" style={{ borderColor: LINE, background: "hsl(220 20% 98%)" }}>
+              <div className="flex items-center gap-1.5 mb-2.5">
+                <Plus className="h-3.5 w-3.5 shrink-0" style={{ color: BORDO }} />
+                <span className="qa-kpi-label">Adicionar exigência · biblioteca oficial</span>
                 {adicionando && <Loader2 className="h-3 w-3 animate-spin" style={{ color: BORDO }} />}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative flex-1 min-w-[180px]">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                <div className="relative min-w-0">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: MUTED }} />
                   <input
                     value={buscaBib}
                     onChange={(e) => setBuscaBib(e.target.value)}
                     placeholder="BUSCAR DOCUMENTO NA BIBLIOTECA..."
-                    className="w-full rounded border bg-white pl-7 pr-2 py-1.5 text-[12.5px] uppercase"
+                    className="h-9 w-full rounded-md border bg-white pl-7 pr-2 text-[12.5px] uppercase"
                     style={{ borderColor: LINE, color: INK }}
                   />
                 </div>
                 <select
                   value={condicaoNova}
                   onChange={(e) => setCondicaoNova(e.target.value)}
-                  className="rounded border bg-white px-2 py-1.5 text-[11.5px] uppercase"
+                  className="h-9 rounded-md border bg-white px-2 text-[11.5px] uppercase max-w-full sm:max-w-[220px]"
                   style={{ borderColor: LINE, color: INK }}
                   title="Exigir só para esta condição profissional"
                 >
@@ -958,15 +958,18 @@ function BlocoGrupo({
         opacity: isDragging ? 0.65 : 1,
       }}
     >
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 mb-1.5"
+        style={{ background: "hsl(220 20% 97%)", border: "1px solid hsl(220 13% 93%)" }}
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
           <button
             type="button"
             aria-label="Mover grupo inteiro"
             title="Arraste para mover o grupo inteiro"
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing touch-none"
+            className="cursor-grab active:cursor-grabbing touch-none shrink-0"
             style={{ color: BORDO }}
           >
             <GripVertical className="h-3.5 w-3.5" />
@@ -976,36 +979,36 @@ function BlocoGrupo({
             onClick={onAlternar}
             aria-expanded={aberto}
             title={aberto ? "Recolher grupo" : "Expandir grupo"}
-            className="flex items-center gap-1 text-left"
+            className="flex items-center gap-1 text-left min-w-0"
             style={{ color: BORDO }}
           >
-            {aberto ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-            <span className="text-[11.5px] font-semibold uppercase tracking-wider">
+            {aberto ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
+            <span className="text-[11.5px] font-semibold uppercase tracking-wider truncate">
               {grupo.rotulo}
             </span>
           </button>
         </div>
-        <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
-          {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {aberto && (
+            <input
+              type="number"
+              min={1}
+              max={totalGrupos}
+              key={`${grupo.grupo}-${posicao}`}
+              defaultValue={posicao}
+              title="Posição do grupo"
+              onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+              className="h-6 w-10 rounded border bg-white px-1 text-center text-[11px] font-mono"
+              style={{ borderColor: LINE, color: INK }}
+            />
+          )}
+          <span className="text-[11.5px] font-mono tabular-nums" style={{ color: MUTED }}>
+            {grupo.cumpridos}/{grupo.cumpridos + grupo.pendentes}
+          </span>
+        </div>
       </div>
-      {aberto && (
-      <div className="flex items-center gap-1">
-        <span className="text-[11px] uppercase" style={{ color: MUTED }}>posição do grupo</span>
-        <input
-          type="number"
-          min={1}
-          max={totalGrupos}
-          key={`${grupo.grupo}-${posicao}`}
-          defaultValue={posicao}
-          onBlur={(e) => onDefinirPosicao(grupo.grupo, Number(e.currentTarget.value))}
-          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-          className="h-5 w-10 rounded border bg-white px-1 text-center text-[11px] font-mono"
-          style={{ borderColor: LINE, color: INK }}
-        />
-      </div>
-      )}
-      {aberto && children}
+      {aberto && <div className="pl-1">{children}</div>}
     </div>
   );
 }
