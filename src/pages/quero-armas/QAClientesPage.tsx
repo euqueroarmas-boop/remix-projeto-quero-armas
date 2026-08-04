@@ -27,6 +27,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
