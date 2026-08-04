@@ -393,24 +393,37 @@ export default function SimuladorChecklistAdmin() {
     [linhas],
   );
 
-  const destinosRota = useMemo(() => {
-    const termo = rotaBuscaDestino.trim().toLocaleLowerCase("pt-BR");
+  /** Lista de destinos possíveis para um caminho (usada no formulário e no mapa). */
+  function calcularDestinos(perguntaChave: string, busca: string, destinoSel: string) {
+    const termo = busca.trim().toLocaleLowerCase("pt-BR");
     const casaBusca = (nome: string, codigo: string) =>
       !termo || nome.toLocaleLowerCase("pt-BR").includes(termo) || codigo.toLocaleLowerCase("pt-BR").includes(termo);
     const existentes = linhas.filter((l) =>
       (l as any).ativo !== false &&
-      (l.regra_validacao as any)?.chave !== rotaPergunta &&
-      (casaBusca(l.nome_documento, l.tipo_documento) || rotaDestino === `linha:${l.id}`)
+      (l.regra_validacao as any)?.chave !== perguntaChave &&
+      (casaBusca(l.nome_documento, l.tipo_documento) || destinoSel === `linha:${l.id}`)
     );
     const novos = biblioteca.filter((b) =>
       !linhas.some((l) =>
         (l as any).ativo !== false &&
         (l.tipo_documento === b.codigo || (l as any).biblioteca_id === b.id),
       ) &&
-      (casaBusca(b.nome, b.codigo) || rotaDestino === `bib:${b.id}`)
+      (casaBusca(b.nome, b.codigo) || destinoSel === `bib:${b.id}`)
     );
     return { existentes, novos };
-  }, [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta]);
+  }
+
+  const destinosRota = useMemo(
+    () => calcularDestinos(rotaPergunta, rotaBuscaDestino, rotaDestino),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [biblioteca, linhas, rotaBuscaDestino, rotaDestino, rotaPergunta],
+  );
+
+  const destinosInline = useMemo(
+    () => calcularDestinos(rotaInline?.chave ?? "", inlineBusca, inlineDestino),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [biblioteca, linhas, inlineBusca, inlineDestino, rotaInline],
+  );
 
   function rotuloDestinoExistente(linha: LinhaCatalogo): string {
     const regra: any = linha.regra_validacao ?? {};
