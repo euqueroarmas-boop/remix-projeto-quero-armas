@@ -534,18 +534,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // não é exigência real e foi descontinuado. Apenas slots reais por ano
   // (comprovante_endereco_ano_YYYY) compõem o checklist.
 
-  const baixarArquivo = async (key: string | null, modo: "visualizar" | "baixar" = "visualizar") => {
+  const baixarArquivo = async (
+    key: string | null,
+    modo: "visualizar" | "baixar" = "visualizar",
+    bucket: string = "qa-processo-docs",
+  ) => {
     if (!key) return;
     const fileName = key.split("/").pop() || "documento";
     if (modo === "visualizar") {
-      // Abre dentro do app — sem expor URL do Supabase ao usuário
-      viewer.abrirStorage("qa-processo-docs", key, { fileName, title: fileName });
+      viewer.abrirStorage(bucket, key, { fileName, title: fileName });
       return;
     }
     try {
-      const { data, error } = await supabase.storage
-        .from("qa-processo-docs")
-        .download(key);
+      const { data, error } = await supabase.storage.from(bucket).download(key);
       if (error) throw error;
       const blobUrl = URL.createObjectURL(data);
       const a = document.createElement("a");
@@ -2456,81 +2457,111 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     {docs.map((doc) => {
                       const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                       const reaproveitado = isDocReaproveitado(doc);
+                      // Reaproveitados têm arquivo no Hub (qa-documentos), não no processo
+                      const bucket = reaproveitado ? "qa-documentos" : "qa-processo-docs";
+                      const temArquivo = !!doc.arquivo_storage_key;
                       return (
-                        <li key={doc.id} className="py-2.5 flex flex-wrap items-center gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[11px] font-bold uppercase text-slate-800 truncate">
-                              {doc.nome_documento}
-                            </div>
-                            <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
-                              {doc.tipo_documento} · {doc.etapa}
-                            </div>
-                            {reaproveitado && (
-                              <div className="mt-0.5 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-                                <Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL
-                              </div>
-                            )}
-                            {doc.motivo_rejeicao && (
-                              <div className="text-[10px] text-red-700 mt-0.5 leading-snug">
-                                MOTIVO: {doc.motivo_rejeicao}
-                              </div>
-                            )}
-                          </div>
+                        <li
+                          key={doc.id}
+                          className={`py-3 flex items-start gap-3 transition-colors${highlightedDocId === doc.id ? " bg-amber-50 -mx-4 px-4 rounded-lg" : ""}`}
+                        >
+                          {/* Status — coluna esquerda */}
                           <span
-                            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                            className="mt-0.5 shrink-0 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider whitespace-nowrap"
                             style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}
                           >
                             {ds.label}
                           </span>
-                          {doc.arquivo_storage_key && (
-                            <>
-                              <button
-                                onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar")}
-                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
-                              >
-                                <Eye className="h-3 w-3" /> VER
-                              </button>
-                              <button
-                                onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar")}
-                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
-                              >
-                                <Download className="h-3 w-3" /> BAIXAR
-                              </button>
+
+                          {/* Informações */}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-bold uppercase text-slate-800 leading-tight">
+                              {doc.nome_documento}
+                            </div>
+                            <div className="text-[9.5px] uppercase tracking-wider text-slate-400 mt-0.5">
+                              {doc.tipo_documento}{doc.etapa ? ` · ${doc.etapa}` : ""}
+                            </div>
+                            {reaproveitado && (
+                              <span className="mt-1 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                                <Database className="h-2.5 w-2.5" /> CENTRAL
+                              </span>
+                            )}
+                            {doc.motivo_rejeicao && (
+                              <p className="text-[10px] text-red-700 mt-1 leading-snug">
+                                ↳ {doc.motivo_rejeicao}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Ações — coluna direita */}
+                          <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
+                            {/* VER + BAIXAR unidos (split button) — bucket correto por tipo */}
+                            {temArquivo && (
+                              <div className="inline-flex rounded border border-slate-200 overflow-hidden">
+                                <button
+                                  onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar", bucket)}
+                                  className="h-7 px-2.5 inline-flex items-center gap-1 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-50 border-r border-slate-200"
+                                >
+                                  <Eye className="h-3 w-3" /> VER
+                                </button>
+                                <button
+                                  onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar", bucket)}
+                                  title="Baixar arquivo"
+                                  className="h-7 px-2 inline-flex items-center bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                >
+                                  <Download className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+
+                            {/* REPROCESSAR IA — apenas docs com arquivo próprio (não reaproveitados) */}
+                            {temArquivo && !reaproveitado && (
                               <button
                                 onClick={() => reprocessarIA(doc)}
                                 disabled={reprocessandoId === doc.id}
-                                className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                                title="Reprocessar validação IA"
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                               >
                                 <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
-                                {reprocessandoId === doc.id ? "..." : "REPROCESSAR"}
+                                {reprocessandoId === doc.id ? "..." : "IA"}
                               </button>
-                            </>
-                          )}
-                          {!doc.arquivo_storage_key && (
-                            <button
-                              onClick={() => reprocessarReaproveitamento(doc)}
-                              disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
-                              className="h-7 px-2 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 text-[10px] uppercase tracking-wider font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                            >
-                              <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} /> CENTRAL
-                            </button>
-                          )}
-                          {!isChecklistCumprido(doc.status) && (
-                            <button
-                              onClick={() => abrirAprovacao(doc)}
-                              className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600"
-                            >
-                              <CheckCircle className="h-3 w-3" /> APROVAR
-                            </button>
-                          )}
-                          {doc.status !== "invalido" && (
-                            <button
-                              onClick={() => abrirRejeicao(doc)}
-                              className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600"
-                            >
-                              <XCircle className="h-3 w-3" /> REJEITAR
-                            </button>
-                          )}
+                            )}
+
+                            {/* CENTRAL — reaproveitados (re-disparar busca) ou docs sem arquivo */}
+                            {(reaproveitado || !temArquivo) && (
+                              <button
+                                onClick={() => reprocessarReaproveitamento(doc)}
+                                disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
+                                title="Buscar na Central de Documentos"
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 text-[10px] uppercase tracking-wider font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-40"
+                              >
+                                <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} />
+                                {reaproveitandoId === doc.id ? "..." : "CENTRAL"}
+                              </button>
+                            )}
+
+                            {/* APROVAR */}
+                            {!isChecklistCumprido(doc.status) && (
+                              <button
+                                onClick={() => abrirAprovacao(doc)}
+                                title="Aprovar documento"
+                                className="h-7 px-2.5 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600"
+                              >
+                                <CheckCircle className="h-3 w-3" /> OK
+                              </button>
+                            )}
+
+                            {/* REJEITAR */}
+                            {doc.status !== "invalido" && (
+                              <button
+                                onClick={() => abrirRejeicao(doc)}
+                                title="Rejeitar documento"
+                                className="h-7 px-2 inline-flex items-center rounded text-[10px] font-bold text-white bg-red-500 hover:bg-red-600"
+                              >
+                                <XCircle className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
                         </li>
                       );
                     })}
