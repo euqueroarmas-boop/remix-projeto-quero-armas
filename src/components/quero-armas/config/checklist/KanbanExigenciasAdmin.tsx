@@ -61,7 +61,22 @@ export default function KanbanExigenciasAdmin() {
       setLoading(true);
       const [gs, sv, bib] = await Promise.all([
         carregarGrupos(),
-        supabase.from("qa_servicos" as any).select("id, nome_servico").order("nome_servico"),
+        (async () => {
+          const { data: catRows } = await supabase
+            .from("qa_servicos_catalogo" as any)
+            .select("servico_id, nome, display_order")
+            .eq("ativo", true)
+            .not("servico_id", "is", null)
+            .order("display_order", { ascending: true })
+            .order("nome", { ascending: true });
+          const dedup = new Map<number, Servico>();
+          ((catRows as any[]) ?? []).forEach((r: any) => {
+            const id = Number(r.servico_id);
+            if (Number.isFinite(id) && !dedup.has(id))
+              dedup.set(id, { id, nome_servico: String(r.nome || "").trim() });
+          });
+          return { data: Array.from(dedup.values()), error: null };
+        })(),
         supabase
           .from("qa_documentos_biblioteca" as any)
           .select("id, codigo, nome, categoria, descricao_como_enviar, observacao_cliente, validade_dias, formato_aceito, link_emissao")

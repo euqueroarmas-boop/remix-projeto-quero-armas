@@ -41,7 +41,7 @@ type ChecklistItem = {
   observacoes_cliente: string | null;
 };
 
-type Servico = { id: number; nome_servico: string; valor_servico: number };
+type Servico = { id: number; nome_servico: string; valor_servico: number | null };
 
 const CATEGORIAS: Array<{ valor: string; label: string }> = [
   { valor: "identificacao",    label: "Identificação" },
@@ -201,8 +201,21 @@ export default function MontarChecklistAdmin() {
   }
 
   async function carregarServicos() {
-    const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico, valor_servico").order("nome_servico");
-    setServicos(((data as any[]) ?? []) as Servico[]);
+    // Trava de catálogo: só serviços ativos em qa_servicos_catalogo
+    const { data: catRows } = await supabase
+      .from("qa_servicos_catalogo" as any)
+      .select("servico_id, nome, display_order")
+      .eq("ativo", true)
+      .not("servico_id", "is", null)
+      .order("display_order", { ascending: true })
+      .order("nome", { ascending: true });
+    const dedup = new Map<number, Servico>();
+    ((catRows as any[]) ?? []).forEach((r: any) => {
+      const id = Number(r.servico_id);
+      if (Number.isFinite(id) && !dedup.has(id))
+        dedup.set(id, { id, nome_servico: String(r.nome || "").trim(), valor_servico: null });
+    });
+    setServicos(Array.from(dedup.values()));
   }
 
   async function carregarChecklist(id: number) {

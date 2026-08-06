@@ -73,6 +73,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── TRAVA DE CATÁLOGO (segurança) ────────────────────────────────────────
+    // Processos só podem ser criados para serviços presentes e ATIVOS no
+    // catálogo de preços (qa_servicos_catalogo). Serviços de teste, legados ou
+    // que foram desativados são bloqueados aqui sem exceção.
+    const { data: catalogoEntry } = await supabase
+      .from("qa_servicos_catalogo")
+      .select("id")
+      .eq("servico_id", servico_id)
+      .eq("ativo", true)
+      .limit(1)
+      .maybeSingle();
+    if (!catalogoEntry) {
+      await logSistemaBackend({
+        tipo: "erro",
+        status: "error",
+        mensagem: "qa-processo-criar BLOQUEADO: serviço não consta no catálogo de preços ativo",
+        payload: { cliente_id, servico_id: Number(servico_id), servico_nome: servico.nome_servico },
+      });
+      return json(
+        {
+          error: `Serviço "${servico.nome_servico}" (id=${servico_id}) não está no catálogo de preços ativo. Processos só podem ser abertos para serviços do catálogo.`,
+          code: "SERVICO_FORA_DO_CATALOGO",
+        },
+        409,
+      );
+    }
+
     // ── BLINDAGEM DE INTEGRIDADE Posse↔Porte (Fase de Hardening) ──
     // Se uma venda foi informada, o servico_id do processo DEVE bater com o
     // servico_id de pelo menos um item da venda. Sem fallback, sem similaridade.

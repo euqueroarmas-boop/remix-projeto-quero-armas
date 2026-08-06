@@ -142,6 +142,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // após uma ação da equipe. O drawer NUNCA fecha sozinho; só destacamos e
   // rolamos suavemente até o próximo item para a equipe operar em sequência.
   const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
+  const [servicoForaDoCatalogo, setServicoForaDoCatalogo] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const viewer = useDocumentoViewer();
 
@@ -165,7 +166,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo")
+        .select("id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
@@ -182,6 +183,21 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       const docsAtualizados = (dList ?? []) as DocRow[];
       setDocs(docsAtualizados);
       setEventos((evs ?? []) as Evento[]);
+
+      // Verifica se o serviço do processo está no catálogo de preços ativo
+      const servicoId = (p as any).servico_id ?? null;
+      if (servicoId != null) {
+        const { data: catEntry } = await supabase
+          .from("qa_servicos_catalogo" as any)
+          .select("id")
+          .eq("servico_id", servicoId)
+          .eq("ativo", true)
+          .limit(1)
+          .maybeSingle();
+        setServicoForaDoCatalogo(!catEntry);
+      } else {
+        setServicoForaDoCatalogo(false);
+      }
 
       // Carrega documentos do CADASTRO PÚBLICO do cliente (selfie / identidade /
       // endereço). Eles passam a contar no % e aparecem como CUMPRIDOS no
@@ -2425,6 +2441,20 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Alerta: serviço fora do catálogo de preços ativo */}
+              {servicoForaDoCatalogo && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
+                  <span className="text-amber-600 mt-0.5 text-lg leading-none">⚠️</span>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                      SERVIÇO FORA DO CATÁLOGO DE PREÇOS
+                    </p>
+                    <p className="text-[11px] text-amber-700 mt-0.5 leading-snug">
+                      O serviço <strong>{processo?.servico_nome}</strong> não está no catálogo de preços ativo. Este processo foi criado em modo de teste. Exclua o cadastro manualmente e gere novamente com um serviço do catálogo.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="bg-white border border-slate-200 rounded-xl p-4">
                 <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">ALTERAR STATUS DO PROCESSO</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">

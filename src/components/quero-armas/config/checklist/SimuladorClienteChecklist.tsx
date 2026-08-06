@@ -120,15 +120,31 @@ export default function SimuladorClienteChecklist() {
   const [carregando, setCarregando] = useState(false);
   const [carregandoLista, setCarregandoLista] = useState(true);
 
-  // Carrega lista de processos ativos
+  // Carrega lista de processos cujo serviço está no catálogo de preços ativo.
+  // Processos de teste com serviços fora do catálogo não aparecem aqui.
   useEffect(() => {
     (async () => {
       setCarregandoLista(true);
       try {
+        // Passo 1: IDs válidos do catálogo
+        const { data: catalogoRows } = await supabase
+          .from("qa_servicos_catalogo" as any)
+          .select("servico_id")
+          .eq("ativo", true)
+          .not("servico_id", "is", null);
+
+        const idsCatalogo = ((catalogoRows as any[]) ?? [])
+          .map((r: any) => Number(r.servico_id))
+          .filter((n: number) => Number.isFinite(n));
+
+        if (idsCatalogo.length === 0) return;
+
+        // Passo 2: processos filtrando pelos IDs válidos
         const { data } = await supabase
           .from("qa_processos" as any)
           .select("id, servico_nome, status, cliente_id, data_criacao, qa_clientes(nome_completo)")
           .not("status", "in", "(deferido,indeferido,finalizado,cancelado)")
+          .in("servico_id", idsCatalogo)
           .order("data_criacao", { ascending: false })
           .limit(200);
 

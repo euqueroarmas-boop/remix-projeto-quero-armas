@@ -1998,8 +1998,21 @@ export default function QAClientesPage() {
   }, [clientes, searchParams]);
 
   const loadServicos = async () => {
-    const { data } = await supabase.from("qa_servicos" as any).select("id, nome_servico").order("id");
-    if (data) setServicos(data as any[]);
+    // Trava de catálogo: apenas serviços ativos em qa_servicos_catalogo
+    const { data: catRows } = await supabase
+      .from("qa_servicos_catalogo" as any)
+      .select("servico_id, nome, display_order")
+      .eq("ativo", true)
+      .not("servico_id", "is", null)
+      .order("display_order", { ascending: true })
+      .order("nome", { ascending: true });
+    const dedup = new Map<number, { id: number; nome_servico: string }>();
+    ((catRows as any[]) ?? []).forEach((r: any) => {
+      const id = Number(r.servico_id);
+      if (Number.isFinite(id) && !dedup.has(id))
+        dedup.set(id, { id, nome_servico: String(r.nome || "").trim() });
+    });
+    setServicos(Array.from(dedup.values()));
   };
 
   const loadClientes = async (archivedOverride?: "ativos" | "arquivados" | "todos") => {
