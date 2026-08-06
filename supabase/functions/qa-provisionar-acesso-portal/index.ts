@@ -104,30 +104,6 @@ async function findAuthUserByEmail(admin: any, email: string): Promise<any | nul
   return null;
 }
 
-async function sendWelcomeEmail(admin: any, opts: {
-  email: string;
-  nome: string;
-  isNewUser: boolean;
-}) {
-  try {
-    const { sendTransactional } = await import("../_shared/sendTransactional.ts");
-    const res = await sendTransactional({
-      templateName: "acesso-liberado-portal",
-      recipientEmail: opts.email,
-      idempotencyKey: `acesso-liberado-${opts.email}-${opts.isNewUser ? "new" : "existing"}`,
-      templateData: {
-        nome: opts.nome,
-        isNewUser: opts.isNewUser,
-        portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
-      },
-    });
-    return res.ok ? { ok: true } : { ok: false, reason: "send_failed", message: res.error };
-  } catch (e) {
-    console.error("[qa-provisionar-acesso-portal] acesso-liberado-portal error:", (e as Error)?.message);
-    return { ok: false, reason: "send_threw", message: (e as Error)?.message };
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
