@@ -270,7 +270,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <div>
           <h2 className="text-sm font-semibold mb-1">Confirmar geração do contrato</h2>
           <p className="text-xs text-muted-foreground">
-            Uma venda será criada e o contrato gerado. O cliente receberá um e-mail com o link para baixar, assinar e devolver.
+            Uma venda será criada e o contrato gerado. O contrato fica disponível no Arsenal Inteligente do cliente para baixar, assinar e devolver (não é enviado por e-mail).
           </p>
         </div>
 
@@ -312,7 +312,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
 
         {!clienteSalvo.email && (
           <div className="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-800">
-            Atenção: o cliente não tem e-mail cadastrado. O contrato será gerado mas o link não será enviado automaticamente.
+            Atenção: o cliente não tem e-mail cadastrado. O contrato será gerado normalmente e ficará disponível no Arsenal Inteligente.
           </div>
         )}
 
@@ -327,7 +327,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
           >
             {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-            {enviando ? "Gerando..." : "Gerar contrato e enviar e-mail"}
+            {enviando ? "Gerando..." : "Gerar contrato"}
           </Button>
         </div>
       </div>
