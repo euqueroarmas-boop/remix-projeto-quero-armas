@@ -381,8 +381,11 @@ function parseTrfRegional(texto: string): CamposCertidao {
   // As duas certidões do TRF vêm do mesmo órgão mas têm abrangências distintas:
   //   "Abrangência - Regional"                              → cobre SP + MS + 2º Grau
   //   "Abrangência - Seção Judiciária e Juizado Especial…"  → cobre só a seção local
-  // O cabeçalho é a única diferença estrutural — por isso o slug depende dele.
-  const tipoDocumento = /ABRANGENCIA\s*[-–]\s*SECAO JUDICIARIA/i.test(corrido)
+  // "Secao Judiciaria" (após norm) aparece APENAS na certidão da seção local —
+  // a Regional nunca contém essa frase, então basta checar a presença dela.
+  // A regex anterior exigia o traço específico "Abrangência - Seção", que pode
+  // não aparecer em todos os layouts de PDF extraídos.
+  const tipoDocumento = /SECAO\s+JUDICIARIA/i.test(corrido)
     ? "antecedentes_federal_sjsp_jef"
     : "antecedentes_federal_trf3_regional";
 
