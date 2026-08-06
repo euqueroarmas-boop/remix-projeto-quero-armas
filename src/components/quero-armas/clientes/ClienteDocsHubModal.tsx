@@ -3231,17 +3231,19 @@ export function ClienteDocsHubModal({
             if (qaClienteId) {
               await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
             }
-            toast.success(
-              `Você já havia enviado este ${tipoLabel}. Aproveitamos o documento que está no seu Hub e a exigência foi marcada como cumprida.`,
-            );
+            setResultadoCarimbo({
+              tipo: "aprovado",
+              mensagem: `${tipoLabel} — já estava no seu Hub e foi aproveitado · exigência atendida`,
+            });
             onSaved();
           } catch (e: any) {
             // Se a revalidação falhar, o documento existe do mesmo jeito —
             // o cliente não pode ficar preso por causa disso.
             console.error("[hub-dup] falha ao reaproveitar documento existente", e);
-            toast.warning(
-              `Este ${tipoLabel} já está no seu Hub. Nossa equipe foi avisada para liberar a exigência.`,
-            );
+            setResultadoCarimbo({
+              tipo: "analise",
+              mensagem: `${tipoLabel} — já está no seu Hub · nossa equipe foi avisada para liberar a exigência`,
+            });
           }
           setSaving(false);
           return;
