@@ -3235,7 +3235,9 @@ export function ClienteDocsHubModal({
               tipo: "aprovado",
               mensagem: `${tipoLabel} — já estava no seu Hub e foi aproveitado · exigência atendida`,
             });
-            onSaved();
+            // NÃO chamar onSaved() aqui: o pai recarrega/fecha o Hub e o
+            // carimbo some antes de o cliente ver. O onSaved() acontece no
+            // onDone do carimbo, junto com o fechamento.
           } catch (e: any) {
             // Se a revalidação falhar, o documento existe do mesmo jeito —
             // o cliente não pode ficar preso por causa disso.
