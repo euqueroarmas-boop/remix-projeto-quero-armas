@@ -44,7 +44,7 @@ export const PORTAL_NAV_ITEMS: PortalNavItem[] = [
   { key: "contratos", label: "Contratos", icon: IconFileCertificate, path: "/area-do-cliente/contratos", group: "primary" },
   { key: "documentos", label: "Documentos", icon: IconFolders, path: "/area-do-cliente/documentos", group: "primary" },
   { key: "processos", label: "Meus Processos", icon: IconLayoutKanban, path: "/area-do-cliente/processos", group: "primary" },
-  { key: "pendencias", label: "Pendências", icon: IconBellRinging2, path: "/area-do-cliente/pendencias", group: "primary" },
+  // { key: "pendencias", label: "Pendências", icon: IconBellRinging2, path: "/area-do-cliente/pendencias", group: "primary" },
   { key: "analise_alvo", label: "Análise de Alvo", icon: IconTargetArrow, path: "/area-do-cliente/analise-de-alvo", group: "primary" },
   { key: "recarga_municoes", label: "Recarga de Munições", icon: IconPackages, path: "/area-do-cliente/recarga-de-municoes", group: "primary" },
   { key: "financeiro", label: "Financeiro", icon: IconCreditCardPay, path: "/area-do-cliente/financeiro", group: "primary" },
