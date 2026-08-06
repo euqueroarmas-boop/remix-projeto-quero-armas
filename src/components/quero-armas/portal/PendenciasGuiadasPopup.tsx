@@ -576,17 +576,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </p>
             ) : null}
 
-            {/* Botão de acesso ao site oficial — sem exibir a URL crua,
-                que quebrava em várias linhas e ficava feia no mobile. */}
+            {/* Link de acesso ao site oficial — sem retângulo; somente o texto. */}
             {!isSignature && !isPergunta && linkEmissaoFinal ? (
               <a
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex items-center gap-2 rounded-lg border border-[#8A1224]/20 bg-[#FFF7F8] px-3 py-2.5 text-sm font-semibold text-[#8A1224] hover:bg-[#ffeef0] transition-colors"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2"
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
-                Acessar site de emissão
+                Acessar site pra emissão
               </a>
             ) : null}
           </div>
