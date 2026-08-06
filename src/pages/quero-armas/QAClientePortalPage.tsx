@@ -2955,6 +2955,9 @@ export default function QAClientePortalPage() {
     if (showContratoPopup) return;
     if (showAddDoc) return;
     if (showCadastroModal) return;
+    // Em mobile na seção de checklist o asPage já está visível — abrir o modal
+    // por cima duplicaria o popup. Deixa o asPage responder sozinho.
+    if (isBelowLg && activeSection === "checklist_guiado") return;
     // Assinaturas pendentes seguem a mesma regra de dispensa: se o cliente
     // clicou no X, a sessão está marcada e o popup não reabre automaticamente.
     if (pendingSignatureCount > 0) {
@@ -2969,7 +2972,7 @@ export default function QAClientePortalPage() {
     if (showChecklistCadastral || cadastroCrucialIncompleto) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
-  }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed]);
+  }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed, isBelowLg, activeSection]);
 
   // Handler para o overlay de notificações: ao clicar "Ver detalhes" em
   // "Assinatura de contrato pendente", reabre o popup de assinaturas.

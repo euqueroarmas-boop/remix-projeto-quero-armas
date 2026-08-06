@@ -378,14 +378,22 @@ function parseTrfRegional(texto: string): CamposCertidao {
   const t = norm(texto);
   const corrido = flat(t);
 
-  // As duas certidões do TRF vêm do mesmo órgão mas têm abrangências distintas:
-  //   "Abrangência - Regional"                              → cobre SP + MS + 2º Grau
-  //   "Abrangência - Seção Judiciária e Juizado Especial…"  → cobre só a seção local
-  // "Secao Judiciaria" (após norm) aparece APENAS na certidão da seção local —
-  // a Regional nunca contém essa frase, então basta checar a presença dela.
-  // A regex anterior exigia o traço específico "Abrangência - Seção", que pode
-  // não aparecer em todos os layouts de PDF extraídos.
-  const tipoDocumento = /SECAO\s+JUDICIARIA/i.test(corrido)
+  // Discriminador entre as duas certidões do TRF:
+  //   "Abrangência - Regional"                              → antecedentes_federal_trf3_regional
+  //   "Abrangência - Seção Judiciária e Juizado Especial…"  → antecedentes_federal_sjsp_jef
+  //
+  // Critério primário: "JUIZADO ESPECIAL FEDERAL" — sem nenhum acento, imune a
+  // qualquer falha de encoding do pdf.js. Aparece APENAS na certidão de Seção
+  // Judiciária ("Abrangência - Seção Judiciária e Juizado Especial Federal de
+  // São Paulo"). A certidão Regional diz apenas "Abrangência - Regional".
+  // Critérios secundários: "SECAO JUDICIARIA" (após norm) e regex tolerante a
+  // variações tipográficas no texto original — usados como fallback.
+  const corrUp = corrido.toUpperCase();
+  const ehSecaoJudiciaria =
+    corrUp.includes("JUIZADO ESPECIAL FEDERAL") ||
+    corrUp.includes("SECAO JUDICIARIA") ||
+    /SE[CÇ][ÃA]O\s*JUDICI[ÁA]RIA/i.test(texto);
+  const tipoDocumento = ehSecaoJudiciaria
     ? "antecedentes_federal_sjsp_jef"
     : "antecedentes_federal_trf3_regional";
 
