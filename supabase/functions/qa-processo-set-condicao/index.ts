@@ -379,13 +379,33 @@ Deno.serve(async (req) => {
       .eq("processo_id", processo_id)
       .eq("tipo_documento", "renda_definir_condicao");
 
-    // 3) Carrega itens de renda existentes
+    // 3) Determina o conjunto COMPLETO de tipos condicionais para limpeza:
+    //    - todos os tipos do catálogo com condicao_profissional definida (qualquer condição)
+    //    - mais todos os tipos hardcoded de rendaPara() (fallback para serviços sem catálogo)
+    //    Isso evita que docs como identidade_funcional_digital, contra_cheque_digital etc.
+    //    fiquem órfãos quando a condição é reaplicada (bug do filtro renda_% que só removia
+    //    os tipos começando com "renda_").
+    let tiposCondicionais: string[] = [];
+    if (processo.servico_id != null) {
+      const { data: todosCondicionais } = await supabase
+        .from("qa_servicos_documentos")
+        .select("tipo_documento")
+        .eq("servico_id", processo.servico_id)
+        .eq("ativo", true)
+        .not("condicao_profissional", "is", null)
+        .neq("condicao_profissional", "");
+      tiposCondicionais = [...new Set((todosCondicionais ?? []).map((d: any) => String(d.tipo_documento)))];
+    }
+    // Inclui tipos hardcoded de TODAS as condições como garantia extra
+    const tiposRendaHardcoded = VALID_CONDS.flatMap(rendaPara).map((d) => d.tipo_documento);
+    const tiposParaLimpar = [...new Set([...tiposCondicionais, ...tiposRendaHardcoded])];
+
     const { data: existentes, error: errExist } = await supabase
       .from("qa_processo_documentos")
       .select("id, tipo_documento, status")
       .eq("processo_id", processo_id)
-      .like("tipo_documento", "renda_%");
-    console.log("[set-condicao] existentes renda_*:", JSON.stringify(existentes), "err:", errExist);
+      .in("tipo_documento", tiposParaLimpar.length > 0 ? tiposParaLimpar : ["__noop__"]);
+    console.log("[set-condicao] existentes condicionais:", JSON.stringify(existentes), "err:", errExist);
 
     const aprovados = new Set((existentes ?? []).filter((d: any) => d.status === "aprovado").map((d: any) => d.tipo_documento));
     const aRemover = (existentes ?? []).filter((d: any) =>
@@ -409,7 +429,7 @@ Deno.serve(async (req) => {
       .from("qa_processo_documentos")
       .select("tipo_documento")
       .eq("processo_id", processo_id)
-      .like("tipo_documento", "renda_%");
+      .in("tipo_documento", tiposParaLimpar.length > 0 ? tiposParaLimpar : ["__noop__"]);
     const presentesSet = new Set((aindaPresentes ?? []).map((d: any) => d.tipo_documento));
 
     // FONTE ÚNICA: o catálogo (Preços e Serviços → qa_servicos_documentos) manda.
