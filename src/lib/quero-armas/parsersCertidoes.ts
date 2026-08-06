@@ -377,13 +377,22 @@ function trfRegiao(texto: string): number | undefined {
 function parseTrfRegional(texto: string): CamposCertidao {
   const t = norm(texto);
   const corrido = flat(t);
+
+  // As duas certidões do TRF vêm do mesmo órgão mas têm abrangências distintas:
+  //   "Abrangência - Regional"                              → cobre SP + MS + 2º Grau
+  //   "Abrangência - Seção Judiciária e Juizado Especial…"  → cobre só a seção local
+  // O cabeçalho é a única diferença estrutural — por isso o slug depende dele.
+  const tipoDocumento = /ABRANGENCIA\s*[-–]\s*SECAO JUDICIARIA/i.test(corrido)
+    ? "antecedentes_federal_sjsp_jef"
+    : "antecedentes_federal_trf3_regional";
+
   // "contra: NOME (nome da mãe MAE e data de nascimento dd/mm/aaaa) ou CPF nº x"
   const m = corrido.match(
     /CRIMINAIS contra:\s*(.+?)\s*\(nome da mae\s*(.+?)\s*e data de nascimento\s*([\d/]+)\)\s*ou\s*CPF n.\s*([\d.\-]+)/i,
   );
   return {
     orgao: "trf_regional",
-    tipoDocumento: "antecedentes_federal_trf3_regional",
+    tipoDocumento,
     nome_titular: upperOrUndef(m?.[1]),
     nome_mae: upperOrUndef(m?.[2]),
     data_nascimento: iso(m?.[3]),
