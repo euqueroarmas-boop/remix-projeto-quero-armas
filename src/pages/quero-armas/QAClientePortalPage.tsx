@@ -73,7 +73,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
-import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS } from "@/lib/quero-armas/pendenciasGrupos";
+import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
   QA_SIDEBAR_THEMES,
@@ -2316,9 +2316,9 @@ export default function QAClientePortalPage() {
         // Perguntas e documentos usam classificação temática (ex.: pergunta de
         // endereço → "Identificação residencial"; pergunta sem tema → "Cadastros").
         : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
-      const grupoOverride = catalogoGrupo?.grupo_checklist;
+      const grupoOverride = normalizarGrupoId(catalogoGrupo?.grupo_checklist);
       const metaOverride = grupoOverride
-        ? PENDENCIA_GRUPOS[grupoOverride as keyof typeof PENDENCIA_GRUPOS]
+        ? PENDENCIA_GRUPOS[grupoOverride]
         : undefined;
       const g = grupoOverride
         && metaOverride
@@ -2577,8 +2577,8 @@ export default function QAClientePortalPage() {
       const catGrupo = processo?.servico_id != null
         ? catalogoDocInfo.get(`${processo.servico_id}:${String(d?.tipo_documento || "").toLowerCase()}`)
         : undefined;
-      const metaGrupo = catGrupo?.grupo_checklist
-        ? PENDENCIA_GRUPOS[catGrupo.grupo_checklist as keyof typeof PENDENCIA_GRUPOS]
+      const metaGrupo = normalizarGrupoId(catGrupo?.grupo_checklist)
+        ? PENDENCIA_GRUPOS[normalizarGrupoId(catGrupo?.grupo_checklist)!]
         : undefined;
       const g = metaGrupo
         ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }

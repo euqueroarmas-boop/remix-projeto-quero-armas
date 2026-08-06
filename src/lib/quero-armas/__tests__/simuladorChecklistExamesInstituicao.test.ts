@@ -30,27 +30,27 @@ const linhas: LinhaCatalogo[] = [
       { label: "SIM", valor: "sim" },
       { label: "NÃO", valor: "nao" },
     ],
-    grupo_checklist: "saude",
+    grupo_checklist: "laudos",
     ordem_grupo_checklist: 60,
   }, "seguranca_publica"),
   linha("psico-inst", "atestado_aptidao_psicologica_instituicao", "Psicológico da instituição", 491, {
     exige_quando: { exames_instituicao: "sim" },
-    grupo_checklist: "saude",
+    grupo_checklist: "laudos",
     ordem_grupo_checklist: 60,
   }, "seguranca_publica"),
   linha("tiro-inst", "atestado_capacidade_tecnica_instituicao", "Tiro da instituição", 492, {
     exige_quando: { exames_instituicao: "sim" },
-    grupo_checklist: "saude",
+    grupo_checklist: "laudos",
     ordem_grupo_checklist: 60,
   }, "seguranca_publica"),
   linha("psico-pf", "laudo_psicologico", "Laudo psicológico", 493, {
     exige_quando: { exames_instituicao: "nao" },
-    grupo_checklist: "saude",
+    grupo_checklist: "laudos",
     ordem_grupo_checklist: 60,
   }),
   linha("tiro-pf", "laudo_capacidade_tecnica", "Laudo de tiro", 494, {
     exige_quando: { exames_instituicao: "nao" },
-    grupo_checklist: "saude",
+    grupo_checklist: "laudos",
     ordem_grupo_checklist: 60,
   }),
   linha("req", "requerimento_posse", "Requerimento", 500, {

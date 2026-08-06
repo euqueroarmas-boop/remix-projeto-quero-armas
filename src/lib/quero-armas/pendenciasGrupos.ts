@@ -17,7 +17,7 @@ export type PendenciaGrupoId =
   | "habitualidade"
   | "declaracoes"
   | "efetiva_necessidade"
-  | "saude"
+  | "laudos"
   | "requerimento"
   | "arma"
   | "outros";
@@ -46,10 +46,20 @@ const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
   // o cliente só marca os exames depois de saber que o caso se sustenta.
   // O requerimento fecha o processo — é a peça que consolida tudo.
   efetiva_necessidade: { id: "efetiva_necessidade", label: "Efetiva necessidade", ordem: 80 },
-  saude:         { id: "saude",         label: "Laudos",                   ordem: 90 },
+  laudos:        { id: "laudos",        label: "Laudos",                   ordem: 90 },
   requerimento:  { id: "requerimento",  label: "Requerimento",             ordem: 95 },
   outros:        { id: "outros",        label: "Fechamento",               ordem: 99 },
 };
+
+/**
+ * Normaliza IDs legados que possam ter sido gravados no banco antes da renomeação.
+ * "saude" → "laudos" (renomeado em 06/08/2026 — laudo de tiro ≠ saúde).
+ */
+export function normalizarGrupoId(raw: string | null | undefined): PendenciaGrupoId | null {
+  if (!raw) return null;
+  if (raw === "saude") return "laudos";
+  return GRUPOS[raw as PendenciaGrupoId] ? (raw as PendenciaGrupoId) : null;
+}
 
 /**
  * Classifica uma pendência pelo `rawTipo` (tipo_documento cru do checklist)
@@ -137,13 +147,13 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     return GRUPOS.habitualidade;
   }
 
-  // Saúde / aptidão
+  // Laudos (psicológico, capacidade técnica, tiro)
   if (
     t.startsWith("laudo_psicologico") ||
     t.startsWith("laudo_capacidade_tecnica") ||
     t.startsWith("exame_")
   ) {
-    return GRUPOS.saude;
+    return GRUPOS.laudos;
   }
 
   // Documentos da arma
