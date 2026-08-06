@@ -133,6 +133,7 @@ async function carregarConfigTipo(
 const TIPO_DOC_PROMPTS: Record<string, string> = {
   // === IDENTIFICAÇÃO (FASE 2: extração ampliada) ===
   rg: "RG (Registro Geral). Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('rg'), numero_documento, rg, data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD se houver). Tudo o que enxergar e tiver utilidade documental.",
+  identidade_funcional: "Identidade Funcional emitida por órgão público (PM, PCSP, Exército, Marinha, Aeronáutica, PF, PRF, Corpo de Bombeiros, etc.). É um documento de identificação VÁLIDO e EQUIVALENTE ao RG/CIN/CNH para fins de checklist — NÃO rejeite por 'não ser RG ou CNH'. Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('identidade_funcional'), numero_documento (matrícula funcional ou número de registro), orgao_emissor (corporação/instituição), cargo_funcional (se visível), data_nascimento (YYYY-MM-DD se houver), data_emissao (YYYY-MM-DD se houver), validade (YYYY-MM-DD se houver), uf_emissao. NÃO exija QR Code: identidade funcional não segue o padrão gov.br/CIN — o documento físico ou digital emitido pela corporação é válido por si só.",
   cin: "CIN (Carteira de Identidade Nacional). Extraia TODOS os dados: nome_completo, cpf, tipo_documento_detectado ('cin'), numero_documento (pode ser igual ao CPF — isso é normal na CIN, NÃO marque divergência), rg (se ainda exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD).",
   cnh: "CNH (Carteira Nacional de Habilitação). Extraia TODOS: nome_completo, cpf, tipo_documento_detectado ('cnh'), numero_documento (n. registro), rg (se exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao/primeira_habilitacao (YYYY-MM-DD), validade (YYYY-MM-DD), categoria_cnh, registro_cnh, numero_espelho (se houver).",
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
@@ -180,6 +181,7 @@ function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
   const docHint = TIPO_DOC_PROMPTS[tipoDoc] ||
     "Documento administrativo. Extraia nome_titular, cpf, datas, números identificadores.";
   const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
+  const isIdentidadeFuncional = tipoDoc === "identidade_funcional";
   const isComprovanteEnd = tipoDoc === "comprovante_residencia";
   const isAlteracaoNome = tipoDoc === "certidao_alteracao_nome";
   const isCertidaoCivil =
@@ -209,6 +211,7 @@ ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false
 10. BLOCO DE ENDEREÇO AUTORITATIVO: se o documento contiver múltiplos blocos de endereço (ex.: contas EDP/DANF3E com bloco de faturamento e bloco "ENDEREÇO DE ENTREGA"), use EXCLUSIVAMENTE o bloco rotulado "ENDEREÇO DE ENTREGA", "LOCAL DE ENTREGA" ou "ENDEREÇO DE CORRESPONDÊNCIA". Ignore qualquer outro bloco de endereço — ele pode estar truncado pelo sistema de faturamento e ter número/complemento errado.
 11. ORIENTAÇÕES PARA DIVERGÊNCIA DE ENDEREÇO: se o endereço extraído divergir do cadastro em complemento, numero ou logradouro, preencha orientacoes_cliente com as DUAS opções concretas abaixo — nunca deixe o cliente sem uma saída clara:
   "O endereço neste comprovante não confere com o registrado no seu cadastro. Você tem duas opções: (1) Solicite à sua concessionária (EDP, SABESP, CPFL, Enel etc.) a atualização do complemento/número no cadastro deles e reenvie o comprovante quando estiver corrigido; ou (2) Envie outro comprovante de residência do mesmo imóvel — conta de água, gás, internet fixa, telefone fixo ou IPTU — que contenha o endereço completo com o complemento correto."` : ""}
+${isIdentidadeFuncional ? `8. IDENTIDADE FUNCIONAL: documento emitido por corporação/órgão público (PM, PC, Exército, Marinha, Aeronáutica, PF, PRF, Bombeiros, etc.). É um documento de identidade VÁLIDO — NÃO marque tipo_correto=false por "não ser RG ou CNH". NÃO exija QR Code gov.br: identidades funcionais são emitidas pela corporação, não pelo gov.br. Extraia o máximo possível: nome_completo, cpf, numero_documento (matrícula/registro), orgao_emissor, cargo_funcional, data_nascimento, data_emissao, validade, uf_emissao.` : ""}
 ${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
 ${isCertidaoCivil ? `8b. CERTIDÃO CIVIL (nascimento/casamento/averbação): NÃO tem prazo de validade neste fluxo — NUNCA marque "vencido" e NUNCA cite "data de validade" em motivo_rejeicao. Regras por estado civil do cliente (estado_civil_cliente="${estadoCivil}"):
   - SOLTEIRO → documento civil base esperado: certidão de NASCIMENTO. Certidão de nascimento com averbação de alteração de nome é aceita como comprovação de alteração.
@@ -511,7 +514,8 @@ function campoEhNome(campo: any): boolean {
 
 function ehDocumentoIdentidadeChecklist(tipo: any): boolean {
   const t = String(tipo || "").toLowerCase();
-  return ["rg", "cin", "cnh", "rg_com_cpf", "documento_identidade", "identidade"].includes(t) ||
+  return ["rg", "cin", "cnh", "rg_com_cpf", "documento_identidade", "identidade", "identidade_funcional",
+    "documento_identidade_nacional", "carteira_identidade_nacional", "cedula_identidade_rg_com_cpf"].includes(t) ||
     t.includes("identidade") || t.includes("identificacao") || t.includes("identificação");
 }
 

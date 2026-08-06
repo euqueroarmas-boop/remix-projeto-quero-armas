@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { itemVisivelGuia, filtrarIdentidadeUnica, ehDocumentoIdentidade } from "../_shared/checklistVisibility.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -177,9 +178,15 @@ Deno.serve(async (req) => {
       }
     }
 
-    const docsEtapa = lista.filter(
+    const docsEtapaRaw = lista.filter(
       (d) => etapaDoTipo(d.tipo_documento, d.etapa) === etapaAtual && d.obrigatorio !== false,
     );
+    // Aplica regra de identidade única: se alguma identidade (CIN/RG/CNH/funcional)
+    // já está cumprida, remove as demais da contagem — espelha o front-end.
+    const docsEtapa = filtrarIdentidadeUnica(docsEtapaRaw, {
+      tipo: (d) => d.tipo_documento,
+      cumprido: (d) => CUMPRIDO.has(String(d.status || "").toLowerCase()),
+    });
 
     // GUARD anti-avanço fantasma: se o processo NÃO possui checklist
     // materializado, jamais avança automaticamente. Antes desta guarda,
@@ -201,7 +208,10 @@ Deno.serve(async (req) => {
     if (docsEtapa.length > 0) {
       for (const d of docsEtapa) {
         // Item condicional oculto → não aplicável → não bloqueia.
-        if (ocultoPorCondicao(d, respostas)) continue;
+        // Cobre DOIS formatos de condição usados no DB:
+        //   (a) regra_validacao.condicional.depende_de  (string — legacy)
+        //   (b) regra_validacao.depende_de / exige_quando / dispensa_quando (objeto — shared)
+        if (ocultoPorCondicao(d, respostas) || !itemVisivelGuia(d, respostas)) continue;
 
         if (isPergunta(d)) {
           const chave = d?.regra_validacao?.chave;
