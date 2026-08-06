@@ -3995,7 +3995,7 @@ export default function QAClientesPage() {
                 <BlocoSecao
                   icon={FileText}
                   titulo="Eventos de Documentos"
-                  statusTone="error"
+                  statusTone="danger"
                   statusLabel="Rejeições / Aprovações"
                 >
                   <div className="qa-card p-4 md:p-5">

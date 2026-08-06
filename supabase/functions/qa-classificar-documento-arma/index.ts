@@ -687,11 +687,24 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     /TRF3|TRF_3|TRF\s*3|TRIBUNAL REGIONAL FEDERAL(?:\s+DA)?\s+3(?:A|O)?\s+REGIAO|3(?:A|O)?\s+REGIAO|TERCEIRA REGIAO/.test(norm) ||
     (/TRIBUNAL REGIONAL FEDERAL/.test(norm) && /EMISSAO DE CERTIDOES|CERTIDAO/.test(norm) && /\b3\b/.test(norm));
   if (isTrf3) {
-    parsed.tipoDetectado = "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
+    // Discriminador entre as DUAS certidões do TRF3 — são documentos
+    // diferentes e ocupam slots diferentes no Hub:
+    //   "Abrangência - Regional"                             → TRF3 Regional
+    //   "Abrangência - Seção Judiciária e Juizado Especial…" → SJSP/JEF
+    const ehSecaoJudiciaria =
+      /JUIZADO ESPECIAL FEDERAL|SECAO JUDICIARIA|\bSJSP\b|\bJEF\b/.test(norm);
+    parsed.tipoDetectado = ehSecaoJudiciaria
+      ? "ANTECEDENTES_FEDERAL_SJSP_JEF"
+      : "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
     parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
-    campos.tipo_certidao = "trf3_regional";
-    campos.finalidade_certidao = campos.finalidade_certidao || "federal_regional";
-    campos.nome_documento = campos.nome_documento || "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+    campos.tipo_certidao = ehSecaoJudiciaria ? "trf3_sjsp_jef" : "trf3_regional";
+    campos.finalidade_certidao =
+      campos.finalidade_certidao || (ehSecaoJudiciaria ? "federal_secao_judiciaria_jef" : "federal_regional");
+    campos.nome_documento =
+      campos.nome_documento ||
+      (ehSecaoJudiciaria
+        ? "Certidão Judicial Criminal Negativa — Seção Judiciária e Juizado Especial Federal de São Paulo"
+        : "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região");
     campos.orgao_emissor = campos.orgao_emissor || "Tribunal Regional Federal da 3ª Região";
     campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
     campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
@@ -703,8 +716,9 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
       parsed.justificativa =
         "Classificação determinística: página de autenticação/QR do TRF3. Pertence à certidão federal TRF3, mas deve ser conferida junto ao PDF completo.";
     } else {
-      parsed.justificativa =
-        "Classificação determinística: cabeçalho/texto nativo identifica certidão federal do TRF da 3ª Região.";
+      parsed.justificativa = ehSecaoJudiciaria
+        ? "Classificação determinística: abrangência informa Seção Judiciária e Juizado Especial Federal de São Paulo (não é a certidão Regional do TRF3)."
+        : "Classificação determinística: cabeçalho/texto nativo identifica certidão federal do TRF da 3ª Região (abrangência Regional).";
     }
     return parsed;
   }
