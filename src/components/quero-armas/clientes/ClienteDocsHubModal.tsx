@@ -1716,10 +1716,22 @@ export function ClienteDocsHubModal({
 
   // O carimbo de rejeição não fica mais colado no documento: ele aparece por
   // 3 segundos no centro da tela, como o carimbo de aprovação.
+  const duplicidadeLabelCurto = (() => {
+    if (!docDuplicado || !form.tipo_documento) return null;
+    const meta = getTipoDocumentoMeta(form.tipo_documento);
+    const nome = meta?.short || getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento");
+    // Remove prefixos genéricos para caber no carimbo (≤22 chars no rótulo)
+    const curto = nome
+      .replace(/^Certidão\s+(Federal\s+[-–]?\s*|de\s+Distribuição\s+|Criminal\s+[-–]?\s*)/i, "")
+      .replace(/^Documento\s+/i, "")
+      .trim()
+      .slice(0, 22);
+    return curto || null;
+  })();
   const MOTIVO_CARIMBO: Record<string, string> = {
     titular: "Documento de outro titular",
     parentesco: "Grau de parentesco · mesmo endereço",
-    duplicidade: "Documento em duplicidade",
+    duplicidade: duplicidadeLabelCurto ? `Já aprovado: ${duplicidadeLabelCurto}` : "Documento em duplicidade",
     tipo: "Documento incorreto",
   };
   useEffect(() => {
