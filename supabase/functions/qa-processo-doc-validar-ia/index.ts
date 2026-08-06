@@ -135,7 +135,7 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   cin: "CIN (Carteira de Identidade Nacional). Extraia TODOS os dados: nome_completo, cpf, tipo_documento_detectado ('cin'), numero_documento (pode ser igual ao CPF — isso é normal na CIN, NÃO marque divergência), rg (se ainda exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD).",
   cnh: "CNH (Carteira Nacional de Habilitação). Extraia TODOS: nome_completo, cpf, tipo_documento_detectado ('cnh'), numero_documento (n. registro), rg (se exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao/primeira_habilitacao (YYYY-MM-DD), validade (YYYY-MM-DD), categoria_cnh, registro_cnh, numero_espelho (se houver).",
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
-  comprovante_residencia: "Comprovante de residência ACEITO APENAS se for: conta de energia elétrica, água, gás, internet fixa, telefone fixo ou IPTU. NÃO aceite: fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato bancário, ou qualquer documento sem vínculo claro com o imóvel — nesses casos marque tipo_correto=false e cite em motivo_rejeicao. Quando válido, extraia TODOS: nome_titular, cpf_cnpj_titular (apenas dígitos), endereco_completo, logradouro, numero, complemento, bairro, cidade, uf, cep (apenas dígitos), data_emissao (YYYY-MM-DD), mes_referencia (YYYY-MM), tipo_conta (energia/agua/gas/internet/telefone_fixo/iptu), empresa_emissora, codigo_instalacao (SEMPRE apenas dígitos, sem pontos/traços). REGRA CRÍTICA DE UC — LEIA COM ATENÇÃO: `codigo_instalacao` é a UNIDADE CONSUMIDORA da conta — geralmente rotulada no PDF como 'UC', 'Nº DA UC', 'NÚMERO DA UC', 'Código de Instalação', 'Nº Instalação', 'Matrícula' ou 'Nº do Cliente'. Em contas EDP costuma aparecer no formato '0.000.XXX.XXX.XXX-XX'. É SEMPRE o mesmo número mês após mês para o mesmo imóvel. NUNCA CONFUNDA com: número da Nota Fiscal (ex.: 'NOTA FISCAL Nº021.024.229'), Chave de Acesso (44 dígitos do DANFE/NFe), Código de Barras da fatura (44+ dígitos), Protocolo de Autorização, Nº do Medidor, CPF do titular, mês/ano de referência, valor, código de bandeira tarifária. Esses valores MUDAM a cada fatura — a UC NÃO muda. REGRA OBRIGATÓRIA: `numero_documento` DEVE ser IGUAL ao `codigo_instalacao` (UC), apenas dígitos. Se você NÃO conseguir localizar com 100% de certeza a UC/Código de Instalação, deixe `codigo_instalacao` e `numero_documento` VAZIOS (string vazia) — NUNCA invente, NUNCA use Nota Fiscal/Chave/Protocolo/Medidor como substituto. Se o nome_titular for diferente do nome do cliente cadastrado, NÃO trate como divergência: preencha endereco_em_nome_de_terceiro=true e os campos titular_comprovante_*; o endereço deve ser extraído normalmente.",
+  comprovante_residencia: "Comprovante de residência ACEITO APENAS se for: conta de energia elétrica, água, gás, internet fixa, telefone fixo ou IPTU. NÃO aceite: fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato bancário, ou qualquer documento sem vínculo claro com o imóvel — nesses casos marque tipo_correto=false e cite em motivo_rejeicao. Quando válido, extraia TODOS: nome_titular, cpf_cnpj_titular (apenas dígitos), endereco_completo, logradouro, numero, complemento, bairro, cidade, uf, cep (apenas dígitos), data_emissao (YYYY-MM-DD), mes_referencia (YYYY-MM), tipo_conta (energia/agua/gas/internet/telefone_fixo/iptu), empresa_emissora, codigo_instalacao (SEMPRE apenas dígitos, sem pontos/traços). REGRA CRÍTICA DE ENDEREÇO — LEIA COM ATENÇÃO: Muitas contas de energia (ex.: EDP/DANF3E) exibem o endereço em MÚLTIPLOS BLOCOS na mesma página: (a) bloco de faturamento/dados do cliente (à esquerda) e (b) bloco rotulado 'ENDEREÇO DE ENTREGA', 'LOCAL DE ENTREGA' ou 'ENDEREÇO DE CORRESPONDÊNCIA' (geralmente à direita ou abaixo). O bloco rotulado com esses títulos é SEMPRE o correto e autoritativo — use-o para extrair logradouro, numero, complemento e bairro. IGNORE o bloco de faturamento (que pode ter dados truncados, linhas cortadas ou número de apto errado por limitação de caracteres do sistema de faturamento). Se não houver rótulo explícito de 'ENDEREÇO DE ENTREGA', use o endereço com mais campos completos (logradouro + número + complemento + bairro). REGRA CRÍTICA DE UC — LEIA COM ATENÇÃO: `codigo_instalacao` é a UNIDADE CONSUMIDORA da conta — geralmente rotulada no PDF como 'UC', 'Nº DA UC', 'NÚMERO DA UC', 'Código de Instalação', 'Nº Instalação', 'Matrícula' ou 'Nº do Cliente'. Em contas EDP costuma aparecer no formato '0.000.XXX.XXX.XXX-XX'. É SEMPRE o mesmo número mês após mês para o mesmo imóvel. NUNCA CONFUNDA com: número da Nota Fiscal (ex.: 'NOTA FISCAL Nº021.024.229'), Chave de Acesso (44 dígitos do DANFE/NFe), Código de Barras da fatura (44+ dígitos), Protocolo de Autorização, Nº do Medidor, CPF do titular, mês/ano de referência, valor, código de bandeira tarifária. Esses valores MUDAM a cada fatura — a UC NÃO muda. REGRA OBRIGATÓRIA: `numero_documento` DEVE ser IGUAL ao `codigo_instalacao` (UC), apenas dígitos. Se você NÃO conseguir localizar com 100% de certeza a UC/Código de Instalação, deixe `codigo_instalacao` e `numero_documento` VAZIOS (string vazia) — NUNCA invente, NUNCA use Nota Fiscal/Chave/Protocolo/Medidor como substituto. Se o nome_titular for diferente do nome do cliente cadastrado, NÃO trate como divergência: preencha endereco_em_nome_de_terceiro=true e os campos titular_comprovante_*; o endereço deve ser extraído normalmente.",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
   renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   renda_cnpj_autonomo: "Cartão CNPJ de autônomo/MEI emitido pela Receita Federal. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), situacao_cadastral, data_abertura (YYYY-MM-DD se houver), atividade_principal, endereco_sede, cidade_sede e uf_sede. NÃO exija 'nome_titular': cartão CNPJ identifica empresa por razão social/CNPJ.",
@@ -204,7 +204,8 @@ REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo):
 ${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos RG, CIN (Carteira de Identidade Nacional) ou CNH — incluindo VERSÕES DIGITAIS compartilhadas pelo aplicativo gov.br. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).
 REGRA CRÍTICA gov.br: Um PDF gerado pelo app gov.br contendo a Carteira de Identidade Nacional é DOCUMENTO DE IDENTIDADE VÁLIDO. NÃO classifique como "capa", "página de instruções", "tela do aplicativo" ou similar quando houver imagem da CIN (frente/verso), QR Code de verificação, MRZ, ou os dados pessoais (nome, CPF, filiação, data de nascimento). A presença do cabeçalho gov.br, do aviso "Compartilhado pelo aplicativo gov.br" ou do QR Code de verificação NÃO é motivo para rejeição. Só marque tipo_correto=false se NÃO houver nem imagem/dados da identidade nem nenhum dado pessoal extraível.` : ""}
 ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
-9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
+9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.
+10. BLOCO DE ENDEREÇO AUTORITATIVO: se o documento contiver múltiplos blocos de endereço (ex.: contas EDP/DANF3E com bloco de faturamento e bloco "ENDEREÇO DE ENTREGA"), use EXCLUSIVAMENTE o bloco rotulado "ENDEREÇO DE ENTREGA", "LOCAL DE ENTREGA" ou "ENDEREÇO DE CORRESPONDÊNCIA". Ignore qualquer outro bloco de endereço — ele pode estar truncado pelo sistema de faturamento e ter número/complemento errado.` : ""}
 ${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
 ${isCertidaoCivil ? `8b. CERTIDÃO CIVIL (nascimento/casamento/averbação): NÃO tem prazo de validade neste fluxo — NUNCA marque "vencido" e NUNCA cite "data de validade" em motivo_rejeicao. Regras por estado civil do cliente (estado_civil_cliente="${estadoCivil}"):
   - SOLTEIRO → documento civil base esperado: certidão de NASCIMENTO. Certidão de nascimento com averbação de alteração de nome é aceita como comprovação de alteração.
@@ -287,12 +288,22 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
  * tem Poppler/Ghostscript. Quando não há texto, o caller encaminha para
  * revisão humana.
  */
-async function extractPdfText(supabase: any, path: string): Promise<string> {
+async function extractPdfText(supabase: any, path: string, paginasMaximas?: number): Promise<string> {
   try {
     const { data, error } = await supabase.storage.from("qa-processo-docs").download(path);
     if (error || !data) return "";
     const arr = new Uint8Array(await data.arrayBuffer());
     const pdf = await getDocumentProxy(arr);
+    // Para documentos onde só a página 1 importa (ex.: comprovante de residência),
+    // extraímos página por página e descartamos o restante. Isso evita que dados
+    // de páginas subsequentes (histórico de consumo, blocos de faturamento de outras
+    // instalações) confundam a IA e gerem extração de endereço errado.
+    if (paginasMaximas && paginasMaximas > 0) {
+      const { text } = await extractText(pdf, { mergePages: false });
+      const pages: string[] = Array.isArray(text) ? text : [String(text ?? "")];
+      const limited = pages.slice(0, paginasMaximas);
+      return limited.join("\n").trim();
+    }
     const { text } = await extractText(pdf, { mergePages: true });
     const out = Array.isArray(text) ? text.join("\n") : String(text ?? "");
     return out.trim();
@@ -687,17 +698,25 @@ Deno.serve(async (req) => {
     //    revisão humana caso a IA também não consiga ler.
     //  - Imagens (JPG/PNG): sempre image_url.
     const isPdf = mime === "application/pdf" || /\.pdf$/i.test(path);
+    // Comprovante de residência: só a página 1 contém dados do titular e
+    // endereço de entrega. Páginas seguintes são histórico de consumo e
+    // podem conter blocos de faturamento com dados truncados que confundem a IA.
+    const paginasMaximas = doc.tipo_documento === "comprovante_residencia" ? 1 : undefined;
     let pdfTexto = "";
     if (isPdf) {
-      pdfTexto = await extractPdfText(supabase, path);
+      pdfTexto = await extractPdfText(supabase, path, paginasMaximas);
     }
     const usandoTextoPdf = isPdf && pdfTexto.length >= 40;
     const modelo = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+    const prefixoPagina1 = paginasMaximas === 1
+      ? "ATENÇÃO: Este texto é extraído SOMENTE DA PÁGINA 1 do PDF (as demais páginas foram descartadas por conter apenas histórico de consumo).\n"
+      : "";
 
     const userContent: any[] = usandoTextoPdf
       ? [{
           type: "text",
           text:
+            prefixoPagina1 +
             "Este é o TEXTO EXTRAÍDO de um PDF nativo (provavelmente emitido por órgão público como Receita Federal). " +
             "Use APENAS este texto para preencher os campos solicitados e em seguida chame validar_documento.\n\n" +
             "===== INÍCIO DO TEXTO DO PDF =====\n" +
