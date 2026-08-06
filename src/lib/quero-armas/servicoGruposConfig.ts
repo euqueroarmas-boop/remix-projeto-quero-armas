@@ -1,91 +1,136 @@
 // ============================================================================
 // servicoGruposConfig.ts
 // ----------------------------------------------------------------------------
-// Define quais GRUPOS de exigências NÃO se aplicam a cada serviço.
-// Regra: se um documento cai num grupo excluído para aquele serviço,
-// ele é filtrado do checklist do popup guiado do cliente.
+// Define quais GRUPOS de exigências pertencem a cada serviço (whitelist).
 //
-// Por que blacklist (excluídos) e não whitelist (permitidos)?
-// Porque é mais seguro: se um documento novo aparecer no banco com um
-// grupo ainda não mapeado, ele aparece em "Fechamento" em vez de sumir.
+// Regra: se um documento cai num grupo não listado para aquele serviço,
+// ele é filtrado do popup guiado do cliente.
 //
-// Como manter: sempre que um novo serviço for adicionado ou um grupo de
-// exigências mudar, atualize o registro desse serviço neste arquivo.
+// Se um serviço não estiver mapeado aqui, nenhuma filtragem é aplicada
+// (todos os grupos aparecem) — comportamento seguro para serviços novos.
+//
+// Como manter: sempre que um novo serviço for adicionado ou os grupos de um
+// serviço existente mudarem, atualize o registro desse serviço aqui.
 // ============================================================================
 
 import type { PendenciaGrupoId } from "./pendenciasGrupos";
 
-const VAZIO = new Set<PendenciaGrupoId>();
-
 /**
- * Mapa declarativo: slug do serviço → conjunto de grupos excluídos.
+ * Mapa declarativo: slug do serviço → conjunto de grupos permitidos.
  *
- * Serviços ausentes = sem exclusões (todos os grupos aparecem).
+ * Apenas os grupos listados aparecem no popup guiado para aquele serviço.
+ * Serviços ausentes = sem restrição (todos os grupos aparecem).
  */
-const GRUPOS_EXCLUIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
+const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Autorização de compra / posse civil ────────────────────────────────
-  // Sem habitualidade (exigida só em CAC/porte).
-  // Sem "Documentos da arma" — a arma ainda não existe; CRAF e nota fiscal
-  // são do processo de REGISTRO, que ocorre após a autorização.
-  "posse-arma-fogo":                           new Set(["habitualidade", "arma"]),
-  "posse-de-arma-de-fogo":                     new Set(["habitualidade", "arma"]),
+  "posse-arma-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "requerimento", "outros",
+  ]),
+  "posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "requerimento", "outros",
+  ]),
 
-  // Pacote completo (compra + registro + posse): arma entra porque o CRAF
-  // é gerado dentro deste mesmo processo.
-  "aquisicao-registro-posse-de-arma-de-fogo":  new Set(["habitualidade"]),
+  // Pacote completo (compra + registro + posse): inclui documentos da arma.
+  "aquisicao-registro-posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
   // ── Renovação de posse ──────────────────────────────────────────────────
-  // Sem habitualidade; arma presente (CRAF sendo renovado).
-  "renovacao-posse-de-arma-de-fogo":           new Set(["habitualidade"]),
+  "renovacao-posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
   // ── Porte de arma ───────────────────────────────────────────────────────
-  // Habitualidade obrigatória (atividade de tiro comprovada).
-  // Arma pode aparecer (CRAF existente a registrar no porte).
-  "porte-arma-fogo":                           VAZIO,
-  "renovacao-de-porte-de-arma-de-fogo":        VAZIO,
+  "porte-arma-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade", "efetiva_necessidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
+  "renovacao-de-porte-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade", "efetiva_necessidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
   // ── CR (Certificado de Registro — Exército) ─────────────────────────────
-  // Sem habitualidade (CR não exige vínculo com clube).
-  // Sem "Documentos da arma" (CR é habilitação pessoal, não autorização de compra).
-  "concessao-cr":                              new Set(["habitualidade", "arma"]),
-  "renovacao-cr":                              new Set(["habitualidade", "arma"]),
+  "concessao-cr": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "requerimento", "outros",
+  ]),
+  "renovacao-cr": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "laudos", "requerimento", "outros",
+  ]),
 
   // ── Registro / Apostilamento ────────────────────────────────────────────
-  // Focado nos documentos da arma (CRAF, nota fiscal).
-  // Sem habitualidade, sem efetiva necessidade (já comprovada na posse original).
-  "registro-arma-fogo":                        new Set(["habitualidade", "efetiva_necessidade"]),
-  "apostilamento-atualizacao":                 new Set(["habitualidade", "efetiva_necessidade"]),
+  "registro-arma-fogo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "laudos", "arma", "requerimento", "outros",
+  ]),
+  "apostilamento-atualizacao": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "laudos", "arma", "requerimento", "outros",
+  ]),
 
-  // Registro/Apostilamento CAC: habitualidade SIM (clube obrigatório para CAC).
-  "registro-e-apostilamento-de-arma-de-fogo-cac": new Set(["efetiva_necessidade"]),
+  // Registro/Apostilamento CAC: habitualidade é obrigatória.
+  "registro-e-apostilamento-de-arma-de-fogo-cac": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
   // ── CAC — Atiradores / Caçadores ────────────────────────────────────────
-  // Habitualidade SIM (filiação e frequência ao clube são pré-requisito).
-  // Arma SIM (autorização de compra refere-se a um item específico).
-  // Efetiva necessidade NÃO (CAC não usa esse critério — o vínculo é o clube).
-  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": new Set(["efetiva_necessidade"]),
-  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac":       new Set(["efetiva_necessidade"]),
+  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
+  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
-  // GTE (Guia de Tráfego Especial CAC): focado em habitualidade e arma.
-  "guia-de-trafego-especial-cac":              new Set(["efetiva_necessidade"]),
+  // GTE (Guia de Tráfego Especial CAC)
+  "guia-de-trafego-especial-cac": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "endereco",
+    "ocupacao", "antecedentes", "habitualidade",
+    "laudos", "arma", "requerimento", "outros",
+  ]),
 
   // ── Recursos e vias judiciais ───────────────────────────────────────────
-  // Processo jurídico — centrado em declarações e requerimento.
-  "recurso-administrativo":                    new Set(["habitualidade", "arma", "efetiva_necessidade", "laudos"]),
-  "mandado-de-seguranca":                      new Set(["habitualidade", "arma", "efetiva_necessidade", "laudos"]),
+  "recurso-administrativo": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "declaracoes", "requerimento", "outros",
+  ]),
+  "mandado-de-seguranca": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "declaracoes", "requerimento", "outros",
+  ]),
 
   // ── Cursos / treinamento ────────────────────────────────────────────────
-  // Apenas identificação e laudos básicos de aptidão para o curso.
-  "operador-de-pistola-nivel-i":               new Set(["habitualidade", "arma", "efetiva_necessidade", "antecedentes", "endereco", "ocupacao"]),
-  "vip-operador-de-pistola-nivel-i":           new Set(["habitualidade", "arma", "efetiva_necessidade", "antecedentes", "endereco", "ocupacao"]),
+  "operador-de-pistola-nivel-i": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "laudos", "requerimento", "outros",
+  ]),
+  "vip-operador-de-pistola-nivel-i": new Set<PendenciaGrupoId>([
+    "assinaturas", "perguntas", "identificacao", "laudos", "requerimento", "outros",
+  ]),
 };
 
 /**
- * Retorna o conjunto de grupos excluídos para o slug informado.
- * Serviços não mapeados retornam conjunto vazio (nenhuma exclusão).
+ * Retorna o conjunto de grupos permitidos para o slug informado.
+ * Retorna null para serviços não mapeados (sem restrição — todos os grupos aparecem).
  */
-export function gruposExcluidosPorServico(slug: string | null | undefined): ReadonlySet<PendenciaGrupoId> {
-  if (!slug) return VAZIO;
-  return GRUPOS_EXCLUIDOS[slug] ?? VAZIO;
+export function gruposPermitidosPorServico(slug: string | null | undefined): ReadonlySet<PendenciaGrupoId> | null {
+  if (!slug) return null;
+  return GRUPOS_PERMITIDOS[slug] ?? null;
 }

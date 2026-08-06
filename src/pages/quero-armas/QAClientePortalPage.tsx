@@ -74,7 +74,7 @@ import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
-import { gruposExcluidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
+import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
   QA_SIDEBAR_THEMES,
@@ -1914,15 +1914,16 @@ export default function QAClientePortalPage() {
         if (ac !== bc) return ac - bc;
         return rankDoc(a) - rankDoc(b);
       });
-    // Regra de negócio: cada serviço tem o seu checklist.
-    // Os grupos excluídos por serviço estão declarados em servicoGruposConfig.ts.
+    // Regra de negócio: cada serviço tem o seu próprio checklist de grupos.
+    // Os grupos permitidos por serviço estão declarados em servicoGruposConfig.ts.
+    // Documentos cujo grupo não consta na lista do serviço não aparecem no popup.
     const ehDocGrupoBloqueado = (d: any): boolean => {
       const p = procById.get(String(d?.processo_id));
       const slug = catalogoByServicoId[Number(p?.servico_id)]?.service_slug ?? "";
-      const excluidos = gruposExcluidosPorServico(slug);
-      if (excluidos.size === 0) return false;
+      const permitidos = gruposPermitidosPorServico(slug);
+      if (!permitidos) return false; // serviço não mapeado — sem filtro
       const rawTipoD = String(d?.tipo_documento || "").toLowerCase();
-      return excluidos.has(grupoDaPendenciaHelper(rawTipoD, null).id);
+      return !permitidos.has(grupoDaPendenciaHelper(rawTipoD, null).id);
     };
 
     const jaAdicionados = new Set<string>();
