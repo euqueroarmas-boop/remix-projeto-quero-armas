@@ -60,6 +60,28 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
   const [tipoAjuste, setTipoAjuste] = useState<TipoAjuste>("negociacao_individual");
   const [motivoAjuste, setMotivoAjuste] = useState("");
   const [confirmadoAjuste, setConfirmadoAjuste] = useState(false);
+  const [enderecoCliente, setEnderecoCliente] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    supabase
+      .from("qa_clientes" as any)
+      .select("endereco, numero, complemento, bairro, cidade, estado, cep")
+      .eq("id", clienteSalvo.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!ativo || !data) return;
+        const c = data as any;
+        const linha1 = [c.endereco, c.numero, c.complemento].filter(Boolean).join(", ");
+        const linha2 = [c.bairro, [c.cidade, c.estado].filter(Boolean).join("/")]
+          .filter(Boolean)
+          .join(" — ");
+        const cep = c.cep ? `CEP ${c.cep}` : "";
+        const full = [linha1, linha2, cep].filter(Boolean).join(" — ");
+        setEnderecoCliente(full ? full.toUpperCase() : null);
+      });
+    return () => { ativo = false; };
+  }, [clienteSalvo.id]);
 
   useEffect(() => {
     supabase
@@ -258,6 +280,10 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
           <p><span className="font-medium">CPF:</span> {clienteSalvo.cpf || "—"}</p>
           <p><span className="font-medium">E-mail:</span> {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}</p>
+          <p>
+            <span className="font-medium">Endereço:</span>{" "}
+            {enderecoCliente || <span className="text-amber-700">Não cadastrado</span>}
+          </p>
           <p className="font-medium">Serviço(s):</p>
           <ul className="list-disc list-inside ml-2 space-y-0.5">
             {selecionados.map((s) => (
