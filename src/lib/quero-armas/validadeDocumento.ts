@@ -205,8 +205,11 @@ function isResidenciaDoc(doc: DocValidadeInput): boolean {
 }
 
 export function isCertidao90Dias(tipo?: string | null): boolean {
-  const t = String(tipo ?? "").toLowerCase();
-  return [
+  const t = String(tipo ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const exatos = [
     "certidao_federal_trf3_regional",
     "certidao_federal_trf3",
     "certidao_federal_trf",
@@ -219,7 +222,16 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
     "certidao_estadual_justica_militar",
     "antecedentes_militar",
     "antecedentes_militar_estadual",
-  ].includes(t);
+  ];
+  if (exatos.includes(t)) return true;
+  // Justiça Federal (TRF de qualquer região, Seção Judiciária e JEF):
+  // certidões emitidas com validade oficial de 90 dias.
+  if (/trf\d?/.test(t) || t.includes("tribunal_regional_federal")) return true;
+  if (t.includes("secao_judiciar") || t.includes("sjsp") || /(^|_)jef(_|$)/.test(t)) return true;
+  if (t.includes("justica_federal")) return true;
+  // Justiça Militar (STM / TJM estaduais) também seguem 90 dias.
+  if (t.includes("justica_militar") || t.includes("crimes_militares") || t.includes("tjm")) return true;
+  return false;
 }
 
 /**
