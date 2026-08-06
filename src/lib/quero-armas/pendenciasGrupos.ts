@@ -124,6 +124,7 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "declaracao_ocupacao_licita" ||
     t === "carteira_trabalho" ||
     t === "contracheque" ||
+    t === "contra_cheque_digital" ||
     t === "declaracao_imposto_renda" ||
     t === "contrato_social" ||
     t === "cartao_cnpj" ||
@@ -151,7 +152,10 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   if (
     t.startsWith("laudo_psicologico") ||
     t.startsWith("laudo_capacidade_tecnica") ||
-    t.startsWith("exame_")
+    t.startsWith("exame_") ||
+    t.startsWith("exames_") ||
+    t.startsWith("atestado_aptidao") ||
+    t.startsWith("atestado_capacidade_tecnica")
   ) {
     return GRUPOS.laudos;
   }
