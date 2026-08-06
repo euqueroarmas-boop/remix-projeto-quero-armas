@@ -3901,7 +3901,11 @@ export function ClienteDocsHubModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-3 sm:px-6 sm:py-4 [-webkit-overflow-scrolling:touch]">
           {/* R43 — Ficha catalográfica: DOSSIÊ · PREVIEW · DADOS */}
-          <div className="space-y-5 pb-4 md:space-y-0 md:grid md:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,360px)] md:gap-4 md:items-stretch lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,420px)] lg:gap-5">
+          {/* Em mobile: flex-col para poder reordenar upload zone e observações via CSS order.
+              Quando não há arquivo: upload zone sobe (order-2) e observações desce (order-3).
+              Quando há arquivo: mantém a ordem natural (observações-order-2, preview-order-3).
+              Em desktop (md+): grid de 3 colunas, order não é usado. */}
+          <div className="flex flex-col gap-5 pb-4 md:grid md:grid-cols-[minmax(0,260px)_minmax(0,1fr)_minmax(0,360px)] md:gap-4 md:items-stretch lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(0,420px)] lg:gap-5 [&>*]:md:[order:0]">
           {/* ───────── COL 1 · DOSSIÊ ───────── */}
           <div className="space-y-3 md:flex md:flex-col md:border-r md:border-[#EFEFEF] md:pr-4 lg:pr-5">
             <div className="flex items-baseline justify-between gap-2">
@@ -4314,8 +4318,8 @@ export function ClienteDocsHubModal({
               </div>
             )}
 
-            {/* Observações — movido para o Dossiê (col 1) para liberar altura na col 3 */}
-            <div className="space-y-1.5 pt-1 md:flex md:flex-1 md:flex-col md:min-h-0">
+            {/* Observações — desktop only (mobile fica abaixo do upload zone) */}
+            <div className="hidden md:flex md:flex-1 md:flex-col md:min-h-0 md:space-y-1.5 md:pt-1">
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
                 Observações
               </div>
@@ -4330,7 +4334,12 @@ export function ClienteDocsHubModal({
           </div>
 
           {/* ───────── COL 2 · PREVIEW (R43) ───────── */}
-          <div className="flex min-h-[360px] flex-col md:h-full md:min-h-0 md:overflow-y-auto">
+          {/* Em mobile sem arquivo: sobe (order-2) para ficar antes de Observações.
+              Em mobile com arquivo: desce (order-3) para manter layout atual. */}
+          <div className={cn(
+            "flex flex-col md:h-full md:min-h-0 md:overflow-y-auto",
+            file ? "order-3 min-h-[360px]" : "order-2 min-h-[160px] md:min-h-[360px]",
+          )}>
             <HubDocPreviewSlot
               file={file}
               confianca={classificacao?.confianca ?? null}
@@ -4350,8 +4359,27 @@ export function ClienteDocsHubModal({
             />
           </div>
 
+          {/* Observações — mobile only, exibida entre upload zone e dados.
+              Sem arquivo: desce (order-3) para ficar abaixo do upload zone.
+              Com arquivo: sobe (order-2) para manter layout atual (obs antes do preview). */}
+          <div className={cn(
+            "md:hidden space-y-1.5",
+            file ? "order-2" : "order-3",
+          )}>
+            <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A7A7A]">
+              Observações
+            </div>
+            <Textarea
+              value={form.observacoes}
+              onChange={(event) => update("observacoes", event.target.value)}
+              rows={4}
+              placeholder="Se necessário, adicione detalhes complementares."
+              className="min-h-[100px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none w-full"
+            />
+          </div>
+
           {/* ───────── COL 3 · DADOS ───────── */}
-          <div className="space-y-4 md:border-l md:border-[#EFEFEF] md:pl-4 lg:pl-5">
+          <div className="order-4 space-y-4 md:border-l md:border-[#EFEFEF] md:pl-4 lg:pl-5">
           <div className="space-y-4">
             <SectionTitle title="Dados do documento" />
 

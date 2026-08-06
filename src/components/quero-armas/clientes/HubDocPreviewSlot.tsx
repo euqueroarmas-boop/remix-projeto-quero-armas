@@ -143,16 +143,16 @@ export default function HubDocPreviewSlot({
             onDragLeave={onDragLeave}
             onDrop={onDrop}
             className={cn(
-              "flex min-h-[320px] flex-1 cursor-pointer flex-col items-center justify-center gap-4 border-2 border-dashed bg-[#FAFAFA] p-8 text-center transition-all",
+              "flex min-h-[140px] md:min-h-[320px] flex-1 cursor-pointer flex-col items-center justify-center gap-3 md:gap-4 border-2 border-dashed bg-[#FAFAFA] p-5 md:p-8 text-center transition-all",
               dragOver ? "border-[#7A1F2B] bg-[#7A1F2B]/[0.04]" : "border-[#E5E5E5] hover:border-[#7A1F2B]/60 hover:bg-[#7A1F2B]/[0.02]",
             )}
             style={{ borderRadius: 2 }}
           >
             <div
-              className="flex h-16 w-16 items-center justify-center rounded-full"
+              className="flex h-10 w-10 md:h-16 md:w-16 items-center justify-center rounded-full"
               style={{ background: "rgba(122,31,43,0.08)", color: BORDO }}
             >
-              <Upload className="h-7 w-7" />
+              <Upload className="h-5 w-5 md:h-7 md:w-7" />
             </div>
             <div>
               <div className="font-heading text-[13px] font-bold uppercase tracking-[0.24em] text-[#0A0A0A]">
