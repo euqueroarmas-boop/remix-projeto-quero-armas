@@ -886,51 +886,25 @@ Deno.serve(async (req) => {
     },
   });
 
-  // Lovable Emails: avisa cliente que o contrato está pronto para assinatura.
-  // Gated pela política de notificação (notificacao_policy). Se o operador
-  // marcou "não notificar", registramos a decisão em qa_notificacao_eventos
-  // e pulamos o envio de e-mail (mesmo comportamento para portal/WhatsApp).
+  // Notificação portal: o contrato está disponível para assinatura no Arsenal
+  // Inteligente. Não enviamos mais e-mail automático de contrato — o cliente
+  // baixa o documento diretamente na área do cliente.
   try {
-    const { data: cliEmail } = await sb
-      .from("qa_clientes")
-      .select("email, nome_completo")
-      .or(`id_legado.eq.${venda.cliente_id},id.eq.${venda.cliente_id}`)
-      .limit(1)
-      .maybeSingle();
-    const podeEnviarEmail =
-      notifPolicy.notificar_cliente && (notifPolicy.canais?.email ?? true);
-    if (podeEnviarEmail && cliEmail?.email && /^\S+@\S+\.\S+$/.test(String(cliEmail.email))) {
-      const { sendTransactional } = await import("../_shared/sendTransactional.ts");
-      await sendTransactional({
-        templateName: "contrato-pronto-assinatura",
-        recipientEmail: String(cliEmail.email).toLowerCase(),
-        idempotencyKey: `contrato-pronto-${contract.id}`,
-        templateData: {
-          nome: cliEmail.nome_completo || undefined,
-          contrato: contractNumber,
-          linkAssinatura: `https://www.euqueroarmas.com.br/area-do-cliente/contratos/${contract.id}`,
-        },
-      });
-    }
-    // Registra a decisão (portal + auditoria). Não reenvia e-mail: aqui só
-    // fecha a trilha, para que quem consultar qa_notificacao_eventos veja
-    // o motivo de "não notificar" ou o canal usado.
-    try {
-      await aplicarPolicyNotificacao(notifPolicy, {
-        acao: "contrato_pronto_assinatura",
-        cliente_id: venda.cliente_id ?? null,
-        venda_id: vendaId,
-        contrato_id: contract.id,
-        origem: "qa-generate-contract",
-        titulo_portal: "Contrato pronto para assinatura",
-        mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
-        link_portal: `/area-do-cliente/contratos/${contract.id}`,
-        payload_resumo: { contract_number: contractNumber, email_ja_enviado: !!podeEnviarEmail },
-      });
-    } catch (_) { /* best effort */ }
+    await aplicarPolicyNotificacao(notifPolicy, {
+      acao: "contrato_pronto_assinatura",
+      cliente_id: venda.cliente_id ?? null,
+      venda_id: vendaId,
+      contrato_id: contract.id,
+      origem: "qa-generate-contract",
+      titulo_portal: "Contrato pronto para assinatura",
+      mensagem_portal: `Seu contrato ${contractNumber} está disponível para assinatura na área do cliente.`,
+      link_portal: `/area-do-cliente/contratos/${contract.id}`,
+      payload_resumo: { contract_number: contractNumber, email_ja_enviado: false },
+    });
   } catch (e) {
-    console.error("[qa-generate-contract] contrato-pronto-assinatura email error:", (e as Error)?.message);
+    console.error("[qa-generate-contract] notificação portal contrato error:", (e as Error)?.message);
   }
+
 
   return jsonResp({
     ok: true,
