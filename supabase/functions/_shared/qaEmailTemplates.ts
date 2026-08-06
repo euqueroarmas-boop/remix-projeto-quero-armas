@@ -156,7 +156,7 @@ function diagRow(label: string, value: string, opts: { mono?: boolean; tone?: "d
       <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-weight:700;">${label}</div>
     </td>
     <td style="padding:14px 18px;${opts.last ? "" : `border-bottom:1px solid ${HAIRLINE};`}vertical-align:middle;text-align:right;">
-      <div style="font-family:${fontFamily};font-size:14px;color:${toneColor};font-weight:700;">${value}</div>
+      <div style="font-family:${fontFamily};font-size:${opts.mono ? "12px" : "14px"};color:${toneColor};font-weight:700;white-space:nowrap;word-break:keep-all;letter-spacing:0;">${value}</div>
     </td>
   </tr>`;
 }
