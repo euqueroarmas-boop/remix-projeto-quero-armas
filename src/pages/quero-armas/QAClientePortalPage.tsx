@@ -2296,11 +2296,10 @@ export default function QAClientePortalPage() {
       }
     }
 
-    // Entrega de documentos desativada na guia de pendências.
-    // Os documentos devem ser entregues exclusivamente pelo hub documental.
-    // As arrays reprovados/pendentes ainda existem para futuro reuso (ex.: contadores).
-    // for (const d of reprovados) empurrar(d);
-    // for (const d of pendentes) empurrar(d);
+    // Depois das perguntas vêm as exigências documentais (reprovados primeiro).
+    // Clicar em "Entregar" no popup abre o hub documental — entrega sempre pelo hub.
+    for (const d of reprovados) empurrar(d);
+    for (const d of pendentes) empurrar(d);
 
     // ─── Ordenação final ────────────────────────────────────────────────────
     // O simulador/admin é a única fonte da sequência do checklist. Grupos são
@@ -2313,10 +2312,10 @@ export default function QAClientePortalPage() {
         ? catalogoDocInfo.get(`${it.servicoId}:${String(it.rawTipo || "").toLowerCase()}`)
         : undefined;
       const gBase = it.kind === "signature"
-        ? { id: "assinaturas" as const, label: "Assinaturas", ordem: 10 }
-        : it.kind === "pergunta"
-          ? { id: "perguntas" as const, label: "Perguntas rápidas", ordem: 20 }
-          : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
+        ? { id: "assinaturas" as const, label: "Contratos", ordem: 10 }
+        // Perguntas e documentos usam classificação temática (ex.: pergunta de
+        // endereço → "Identificação residencial"; pergunta sem tema → "Cadastros").
+        : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
       const grupoOverride = catalogoGrupo?.grupo_checklist;
       const metaOverride = grupoOverride
         ? PENDENCIA_GRUPOS[grupoOverride as keyof typeof PENDENCIA_GRUPOS]

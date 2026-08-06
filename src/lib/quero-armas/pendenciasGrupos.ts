@@ -28,24 +28,27 @@ export interface PendenciaGrupoMeta {
   ordem: number;
 }
 
+// Sequência canônica para compra/posse (e demais serviços civis):
+// Contratos → Cadastros → Ident. civil → Ident. residencial → Ocupação lícita
+// → Idoneidade → Efetiva necessidade → Laudos → Requerimento → Fechamento
+// Habitualidade fica entre Idoneidade e Arma, mas é filtrada para compra/posse.
 const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
-  assinaturas:   { id: "assinaturas",   label: "Assinaturas",              ordem: 10 },
-  perguntas:     { id: "perguntas",     label: "Perguntas rápidas",        ordem: 20 },
-  identificacao: { id: "identificacao", label: "Identificação",            ordem: 30 },
-  endereco:      { id: "endereco",      label: "Comprovação de endereço",  ordem: 40 },
-  ocupacao:      { id: "ocupacao",      label: "Ocupação lícita e renda",  ordem: 50 },
-  antecedentes:  { id: "antecedentes",  label: "Antecedentes criminais",   ordem: 60 },
+  assinaturas:   { id: "assinaturas",   label: "Contratos",                ordem: 10 },
+  perguntas:     { id: "perguntas",     label: "Cadastros",                ordem: 20 },
+  identificacao: { id: "identificacao", label: "Identificação civil",      ordem: 30 },
+  endereco:      { id: "endereco",      label: "Identificação residencial", ordem: 40 },
+  ocupacao:      { id: "ocupacao",      label: "Ocupação lícita",          ordem: 50 },
+  antecedentes:  { id: "antecedentes",  label: "Idoneidade",               ordem: 60 },
   habitualidade: { id: "habitualidade", label: "Habitualidade e clube",    ordem: 70 },
   arma:          { id: "arma",          label: "Documentos da arma",       ordem: 72 },
   declaracoes:   { id: "declaracoes",   label: "Declarações do processo",  ordem: 75 },
-  // ─── Os três últimos, nesta ordem (usuário, 01/08/2026) ───────────────
-  // A efetiva necessidade PRECEDE os laudos: é ela que justifica o pedido, e
+  // Efetiva necessidade PRECEDE os laudos: é ela que justifica o pedido, e
   // o cliente só marca os exames depois de saber que o caso se sustenta.
   // O requerimento fecha o processo — é a peça que consolida tudo.
   efetiva_necessidade: { id: "efetiva_necessidade", label: "Efetiva necessidade", ordem: 80 },
-  saude:         { id: "saude",         label: "Aptidão psicológica e técnica", ordem: 90 },
+  saude:         { id: "saude",         label: "Laudos",                   ordem: 90 },
   requerimento:  { id: "requerimento",  label: "Requerimento",             ordem: 95 },
-  outros:        { id: "outros",        label: "Outros documentos",        ordem: 99 },
+  outros:        { id: "outros",        label: "Fechamento",               ordem: 99 },
 };
 
 /**
