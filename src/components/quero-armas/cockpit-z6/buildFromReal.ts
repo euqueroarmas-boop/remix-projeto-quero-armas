@@ -141,7 +141,7 @@ function checklistFromDocs(
     if (pa !== pb) return pa - pb;
     return ordemDoc(a) - ordemDoc(b);
   });
-  return sortable.slice(0, 6).map((d) => {
+  return sortable.map((d) => {
     const st = String(d.status || "").toLowerCase();
     if (CUMPRIDO(st))
       return {
