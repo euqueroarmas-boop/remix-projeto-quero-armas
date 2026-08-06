@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, FileUp, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, Upload, X } from "lucide-react";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -578,32 +578,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </p>
             ) : null}
 
-            {/* Link fixo para o site oficial — permanece abaixo do título,
-                independentemente da rolagem do conteúdo. */}
+            {/* Botão de acesso ao site oficial — sem exibir a URL crua,
+                que quebrava em várias linhas e ficava feia no mobile. */}
             {!isSignature && !isPergunta && linkEmissaoFinal ? (
-              <p className="qa-body qa-body--soft mt-3">
-                {(() => {
-                  const t = explic.titulo || "";
-                  const i = t.indexOf("—");
-                  const nome = i >= 0 ? t.slice(i + 1).trim() : activeGrupo;
-                  return nome
-                    ? `Acesse o site oficial da ${nome} para baixar: `
-                    : `Acesse o site oficial para baixar: `;
-                })()}
-                {/* URL por extenso, como ela é. Tentei encurtar para o nome do
-                    órgão e o resultado foi pior: com o título "TRF3 — Regional"
-                    o link virou só "REGIONAL", que não diz nada e não dá para
-                    copiar. O cliente precisa ver o endereço para conferir que
-                    está indo ao site oficial. */}
-                <a
-                  href={linkEmissaoFinal}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-[#8A1224] underline underline-offset-2 break-all"
-                >
-                  {linkEmissaoFinal}
-                </a>
-              </p>
+              <a
+                href={linkEmissaoFinal}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-2 rounded-lg border border-[#8A1224]/20 bg-[#FFF7F8] px-3 py-2.5 text-sm font-semibold text-[#8A1224] hover:bg-[#ffeef0] transition-colors"
+              >
+                <ExternalLink className="h-4 w-4 shrink-0" />
+                Acessar site de emissão
+              </a>
             ) : null}
           </div>
         </div>
