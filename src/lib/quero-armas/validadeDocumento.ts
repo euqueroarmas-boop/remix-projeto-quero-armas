@@ -23,6 +23,38 @@ export interface DocValidadeInput {
   data_validade?: string | null;
   ano_competencia?: number | string | null;
   regra_validacao?: any;
+  /** Documento cuja validade é explicitamente INDETERMINADA (não vence). */
+  validade_indeterminada?: boolean | null;
+  ia_dados_extraidos?: any;
+  observacoes?: string | null;
+}
+
+/**
+ * Regra canônica: quando o próprio documento declara validade INDETERMINADA
+ * (ex.: identidade funcional "VALIDADE: INDETERM."), ele NÃO tem prazo de
+ * vencimento — nunca pode ser reprovado por vencimento e o Hub Documental
+ * exibe "Sem vencimento".
+ */
+export const RX_VALIDADE_INDETERMINADA =
+  /indetermin|prazo\s+indeterminado|sem\s+prazo\s+de\s+validade|sem\s+validade|vital[ií]ci|validade\s*:?\s*permanente/i;
+
+export function textoIndicaValidadeIndeterminada(...valores: unknown[]): boolean {
+  return valores.some((v) => typeof v === "string" && RX_VALIDADE_INDETERMINADA.test(v));
+}
+
+export function docTemValidadeIndeterminada(doc: any): boolean {
+  if (!doc || typeof doc !== "object") return false;
+  if (doc.validade_indeterminada === true) return true;
+  const campos = doc.ia_dados_extraidos?.camposExtraidos || {};
+  if (campos?.validade_indeterminada === true || campos?.validade_indeterminada === "true") return true;
+  if (doc.ia_dados_extraidos?.validade_indeterminada === true) return true;
+  if (doc.regra_validacao?.validade_indeterminada === true) return true;
+  return textoIndicaValidadeIndeterminada(
+    campos?.data_validade,
+    campos?.validade,
+    campos?.observacoes,
+    doc.observacoes,
+  );
 }
 
 export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido" | "historico";
@@ -407,6 +439,19 @@ export function calcularValidadeEfetiva(
  * Retorna o pacote completo de validade para a UI.
  */
 export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()): ValidadeInfo {
+  // 0-) Validade explicitamente INDETERMINADA no próprio documento:
+  //     não conta prazo, nunca vence, nunca reprova.
+  if (docTemValidadeIndeterminada(doc)) {
+    return {
+      iso: null,
+      label: "Sem vencimento (validade indeterminada)",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0a) Certidão civil (nascimento/casamento/averbação) NÃO tem vencimento
   //     para este fluxo. Curto-circuito antes de qualquer cálculo de prazo.
   if (isCertidaoCivilSemVencimento(doc.tipo_documento)) {

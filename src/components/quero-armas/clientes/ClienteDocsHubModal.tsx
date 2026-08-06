@@ -48,6 +48,7 @@ import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
   isDocumentoEmpresa30Dias,
   isNotaFiscalSemVencimento,
+  textoIndicaValidadeIndeterminada,
 } from "@/lib/quero-armas/validadeDocumento";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
@@ -1940,7 +1941,26 @@ export function ClienteDocsHubModal({
 
   // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
   const hoje = new Date().toISOString().slice(0, 10);
-  const docExpirado = !!form.data_validade && form.data_validade < hoje;
+  // Validade INDETERMINADA declarada no próprio documento (ex.: identidade
+  // funcional "VALIDADE: INDETERM."): não conta prazo, nunca reprova por
+  // vencimento e entra no Hub sem data de vencimento.
+  const campos: any = (classificacao as any)?.camposExtraidos || {};
+  const validadeIndeterminada =
+    campos?.validade_indeterminada === true ||
+    campos?.validade_indeterminada === "true" ||
+    textoIndicaValidadeIndeterminada(
+      campos?.data_validade,
+      campos?.validade,
+      campos?.observacoes,
+      form.observacoes,
+    );
+  const docExpirado = !validadeIndeterminada && !!form.data_validade && form.data_validade < hoje;
+
+  // Documento sem prazo: limpa qualquer validade inferida por regra de tipo.
+  useEffect(() => {
+    if (!validadeIndeterminada) return;
+    setForm((prev) => (prev.data_validade ? { ...prev, data_validade: "" } : prev));
+  }, [validadeIndeterminada]);
   const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
 
   // Busca psicólogos próximos APENAS quando laudo está vencido e temos CEP do cliente.
@@ -3368,7 +3388,7 @@ export function ClienteDocsHubModal({
           : (form.numero_documento || null),
         orgao_emissor: form.orgao_emissor || null,
         data_emissao: form.data_emissao || null,
-        data_validade: form.data_validade || null,
+        data_validade: validadeIndeterminada ? null : (form.data_validade || null),
         validade_filiacao: form.tipo_documento === "comprovante_clube_tiro" ? (form.validade_filiacao || null) : null,
         observacoes: form.observacoes || null,
         arma_marca: showArmaFields ? form.arma_marca || null : null,
@@ -3389,6 +3409,7 @@ export function ClienteDocsHubModal({
               confianca: classificacao.confianca,
               recomendacao: classificacao.recomendacao,
               camposExtraidos: classificacao.camposExtraidos || {},
+              validade_indeterminada: validadeIndeterminada || undefined,
               avaliado_em: new Date().toISOString(),
               origem_fluxo: "arsenal_hub_documental",
               auto_cadastro: false,
@@ -4403,6 +4424,18 @@ export function ClienteDocsHubModal({
             )}
 
             {/* ── Alerta de documento expirado ── */}
+            {validadeIndeterminada && (
+              <div className="rounded-2xl border border-[#7A1F2B]/25 bg-[#FAF6F1] p-3 text-xs text-[#3A3A3A]">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+                  Validade indeterminada
+                </div>
+                <p className="mt-1 text-[10px]">
+                  Este documento declara validade <b>indeterminada</b> — não tem prazo de
+                  vencimento. Ele é registrado no Hub Documental <b>sem data de vencimento</b> e
+                  não é reprovado por validade.
+                </p>
+              </div>
+            )}
             {docExpirado && (
               (() => {
                 return (
