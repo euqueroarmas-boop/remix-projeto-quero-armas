@@ -48,6 +48,7 @@ import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
   isDocumentoEmpresa30Dias,
   isNotaFiscalSemVencimento,
+  textoIndicaValidadeIndeterminada,
 } from "@/lib/quero-armas/validadeDocumento";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
