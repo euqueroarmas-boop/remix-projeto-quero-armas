@@ -48,7 +48,7 @@ const TIPOS = [
   "CR","CRAF","SINARM","GT","GTE","GUIA_TRANSITO","AUTORIZACAO_COMPRA","NOTA_FISCAL_ARMA",
   "RG_COM_CPF","CIN","CNH","CPF",
   "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
-  "CTPS","HOLERITE","CARTAO_CNPJ","QSA","CCMEI","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
+  "CTPS","HOLERITE","IDENTIDADE_FUNCIONAL","CARTAO_CNPJ","QSA","CCMEI","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
   "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
   "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
@@ -77,7 +77,7 @@ const tool = {
             "CR=Certificado de Registro CAC (Exército). CRAF=Certificado de Registro de Arma de Fogo. SINARM=Registro/Posse/Porte PF. GT=Guia de Tráfego. GTE=Guia de Tráfego Especial. GUIA_TRANSITO=Guia de Trânsito SINARM/PF. AUTORIZACAO_COMPRA=Autorização de Compra arma/munição. NOTA_FISCAL_ARMA=NF-e de arma/munição. " +
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
-            "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal (Comprovante de Inscrição e Situação Cadastral). QSA=Quadro de Sócios e Administradores da Receita Federal — lista sócios e participação; é documento PRÓPRIO, não confundir com cartão CNPJ nem com contrato social. CCMEI=Certificado da Condição de Microempreendedor Individual, emitido pelo Portal do Empreendedor. CONTRATO_SOCIAL=contrato ou estatuto social de empresa, ou requerimento de empresário. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
+            "CTPS=Carteira de Trabalho (física ou digital). IDENTIDADE_FUNCIONAL=carteira/cédula de identidade FUNCIONAL de servidor público, militar ou policial (PMESP, Polícia Militar, Polícia Civil, Polícia Federal, Forças Armadas), com posto/graduação, RE/matrícula, quadro e data de admissão — NUNCA classifique como RG_COM_CPF, mesmo trazendo número de RG. HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal (Comprovante de Inscrição e Situação Cadastral). QSA=Quadro de Sócios e Administradores da Receita Federal — lista sócios e participação; é documento PRÓPRIO, não confundir com cartão CNPJ nem com contrato social. CCMEI=Certificado da Condição de Microempreendedor Individual, emitido pelo Portal do Empreendedor. CONTRATO_SOCIAL=contrato ou estatuto social de empresa, ou requerimento de empresário. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
             "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
@@ -195,7 +195,9 @@ const SYSTEM_PROMPT = [
   "",
   "=== IDENTIFICAÇÃO CIVIL ===",
   "REGRA DE VALIDADE OFICIAL — documentos de identificação civil (RG, RG_COM_CPF, CIN, CNH, PASSAPORTE): a validade é sempre a DATA DE EXPEDIÇÃO + 10 ANOS. Se o documento não trouxer 'validade' explícita, calcule data_validade = data_emissao + 10 anos (DD/MM/AAAA). NUNCA deixe data_validade em branco quando data_emissao existir.",
-  "• RG_COM_CPF: carteira de identidade estadual (RG) com CPF impresso; órgãos SSP, DETRAN, IIRGD.",
+  "• RG_COM_CPF: carteira de identidade estadual (RG) com CPF impresso; órgãos SSP, DETRAN, IIRGD. NÃO é identidade funcional.",
+  "• IDENTIDADE_FUNCIONAL: cédula/carteira de identidade FUNCIONAL emitida por órgão público ao servidor (PMESP, PM, Polícia Civil, PF, Forças Armadas, prefeituras, tribunais). Sinais: nome do órgão no cabeçalho, POSTO OU GRADUAÇÃO, QUADRO, RE/matrícula funcional, DATA DE ADMISSÃO, brasão do estado, expressões 'identidade funcional', 'credencial funcional', 'FÉ PÚBLICA'. Mesmo trazendo um número de RG, o tipo é IDENTIDADE_FUNCIONAL — ela comprova OCUPAÇÃO LÍCITA e não substitui documento civil.",
+  "  Extrair: nome_completo, numero_documento (nº da identidade funcional), orgao_emissor (órgão/corporação), data_emissao, data_validade (se indeterminada, deixe em branco), filiacao_mae, filiacao_pai, data_nascimento, naturalidade.",
   "  Extrair: nome_completo, cpf, data_nascimento, numero_documento (nº RG), orgao_emissor, uf_emissor_rg, data_emissao (data de expedição), data_validade (= data_emissao + 10 anos), filiacao_mae, filiacao_pai, naturalidade, nacionalidade, sexo.",
   "• CIN: Carteira de Identidade Nacional — cabeçalho 'CARTEIRA DE IDENTIDADE NACIONAL'; QR-Code; número de 9 dígitos; emitida a partir de 2023.",
   "  Extrair: nome_completo, cpf, data_nascimento, numero_documento (nº CIN 9 dígitos), orgao_emissor, uf_emissor_rg, data_emissao (data de expedição), data_validade (se ausente, calcule = data_emissao + 10 anos), filiacao_mae, filiacao_pai, naturalidade, nacionalidade, sexo.",
@@ -474,6 +476,12 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("TRANSITO") || x.includes("TRÂNSITO") || x === "GUIA_TRANSITO") return "GUIA_TRANSITO";
   if (x.includes("AUTORIZ") || x === "AC") return "AUTORIZACAO_COMPRA";
   if ((x.includes("NOTA") || x === "NF" || x === "NFE" || x === "DANFE") && x.includes("ARMA")) return "NOTA_FISCAL_ARMA";
+  if (
+    x.includes("FUNCIONAL") ||
+    x.includes("CREDENCIAL") ||
+    x.includes("POLICIA_MILITAR") ||
+    x.includes("PMESP")
+  ) return "IDENTIDADE_FUNCIONAL";
   if (x === "RG_COM_CPF" || x === "RG") return "RG_COM_CPF";
   if (x === "CIN") return "CIN";
   if (x === "CNH") return "CNH";

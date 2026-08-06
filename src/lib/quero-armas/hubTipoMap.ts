@@ -53,9 +53,15 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   ccmei: "renda_ccmei",
   certificado_mei: "renda_ccmei",
   renda_ficha_cadastral_jucesp: "renda_contrato_social",
-  // Documentos funcionais de servidor/militar: sem slot próprio no Hub,
-  // mapeados para os equivalentes semânticos mais próximos.
-  identidade_funcional_digital: "documento_complementar_caso",
+  // Documentos funcionais de servidor/militar: o Hub já tem o slot
+  // "Carteira funcional (servidor público)". Antes a identidade funcional caía
+  // em "outro"/"documento complementar" e a leitura acabava classificando o
+  // cartão como RG — o que disparava rejeição por duplicidade contra o RG já
+  // aprovado. Agora ela tem destino próprio dentro de ocupação lícita.
+  identidade_funcional: "renda_carteira_funcional",
+  identidade_funcional_digital: "renda_carteira_funcional",
+  carteira_funcional: "renda_carteira_funcional",
+  carteira_identidade_funcional: "renda_carteira_funcional",
   contra_cheque_digital: "renda_holerite_mes_atual",
   // Certidão TRF3 longa (gerada por qa_explodir_checklist_processo com
   // o nome completo da seção — mesmo documento que certidao_federal_trf3_sjsp_jef).
