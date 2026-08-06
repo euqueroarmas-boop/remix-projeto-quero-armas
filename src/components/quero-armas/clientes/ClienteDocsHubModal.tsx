@@ -3830,7 +3830,7 @@ export function ClienteDocsHubModal({
         // tem a barra lateral em z-50 e outros modais em z-[125]. Empatando,
         // quem vem depois no DOM ganha — era por isso que o avatar do cliente
         // e o botão de fechar apareciam POR CIMA do modal.
-        className="z-[130] w-[calc(100vw-1rem)] max-w-xl md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1400px] rounded-md border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
+        className="z-[130] w-[calc(100vw-1rem)] max-w-xl md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1400px] rounded-2xl border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
         <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <div className="flex items-start gap-3">
