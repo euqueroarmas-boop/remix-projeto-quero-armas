@@ -188,7 +188,7 @@ export default function SimuladorClienteChecklist() {
         .eq("processo_id", selecionado.id)
         .order("ordem_grupo_checklist", { ascending: true });
 
-      setDocs((data as DocProcesso[]) ?? []);
+      setDocs((data as unknown as DocProcesso[]) ?? []);
       setEntregues(new Set());
       setFase("simulando");
     } finally {
