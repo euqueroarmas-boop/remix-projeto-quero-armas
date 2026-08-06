@@ -209,7 +209,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
 
       setVendaGerada({ id: vendaId, legado: vendaLegado });
       setEtapa("ok");
-      toast.success("Contrato gerado e e-mail enviado ao cliente!");
+      toast.success("Contrato gerado e disponível no Arsenal Inteligente do cliente!");
     } catch (e: any) {
       toast.error(e?.message || "Erro ao gerar contrato");
     } finally {
@@ -223,7 +223,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         <div className="bg-green-50 border border-green-200 rounded-lg p-5 space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
-            <p className="text-sm font-semibold text-green-800">Contrato gerado e enviado!</p>
+            <p className="text-sm font-semibold text-green-800">Contrato gerado!</p>
           </div>
           <div className="text-xs text-green-700 space-y-1">
             <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
@@ -231,19 +231,17 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             <ul className="list-disc list-inside ml-2 space-y-0.5">
               {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
             </ul>
-            {clienteSalvo.email && (
-              <p className="flex items-center gap-1">
-                <Mail className="w-3.5 h-3.5" />
-                E-mail enviado para <strong>{clienteSalvo.email}</strong> com link do contrato
-              </p>
-            )}
+            <p className="flex items-center gap-1">
+              <Mail className="w-3.5 h-3.5" />
+              Disponível para download no Arsenal Inteligente do cliente (sem envio por e-mail)
+            </p>
           </div>
         </div>
 
         <div className="bg-muted/40 rounded p-3 text-xs text-muted-foreground space-y-1">
           <p className="font-medium text-foreground">Próximos passos</p>
           <ul className="list-disc list-inside space-y-0.5">
-            <li>Cliente baixa o contrato pelo link do e-mail</li>
+            <li>Cliente baixa o contrato no Arsenal Inteligente</li>
             <li>Assina pelo GOV.BR e devolve por WhatsApp</li>
             <li>Você faz upload do contrato assinado no Histórico abaixo</li>
             <li>Depois confirma o pagamento no Piloto Real</li>
@@ -342,7 +340,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
       <div>
         <h2 className="text-sm font-semibold mb-1">Etapa 5 — Contrato</h2>
         <p className="text-xs text-muted-foreground">
-          Selecione o serviço contratado. O contrato será gerado e enviado por e-mail para o cliente assinar antes do pagamento.
+          Selecione o serviço contratado. O contrato será gerado e ficará disponível no Arsenal Inteligente do cliente para assinatura antes do pagamento.
         </p>
       </div>
 
