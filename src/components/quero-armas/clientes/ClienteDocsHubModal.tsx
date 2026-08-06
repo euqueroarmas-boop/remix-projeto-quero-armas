@@ -1955,6 +1955,12 @@ export function ClienteDocsHubModal({
       form.observacoes,
     );
   const docExpirado = !validadeIndeterminada && !!form.data_validade && form.data_validade < hoje;
+
+  // Documento sem prazo: limpa qualquer validade inferida por regra de tipo.
+  useEffect(() => {
+    if (!validadeIndeterminada) return;
+    setForm((prev) => (prev.data_validade ? { ...prev, data_validade: "" } : prev));
+  }, [validadeIndeterminada]);
   const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
 
   // Busca psicólogos próximos APENAS quando laudo está vencido e temos CEP do cliente.
