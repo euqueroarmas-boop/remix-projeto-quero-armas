@@ -106,6 +106,7 @@ const tool = {
             uf_emissor_rg: { type: "string", description: "UF do órgão emissor do RG/CIN/CNH, em 2 letras, quando o documento trouxer UF explícita, órgão com /UF ou -UF, cabeçalho do estado emissor ou estado por extenso." },
             data_emissao: { type: "string", description: "Data de emissão DD/MM/AAAA" },
             data_validade: { type: "string", description: "Data de validade DD/MM/AAAA" },
+            validade_indeterminada: { type: "boolean", description: "true quando o documento declara explicitamente validade INDETERMINADA / INDETERM. / PRAZO INDETERMINADO / VITALÍCIA / PERMANENTE. Nesse caso deixe data_validade vazio." },
             nome_completo: { type: "string", description: "Nome completo do titular do documento" },
             cpf: { type: "string", description: "CPF do titular (somente dígitos ou com pontuação original)" },
             data_nascimento: { type: "string", description: "Data de nascimento DD/MM/AAAA" },
