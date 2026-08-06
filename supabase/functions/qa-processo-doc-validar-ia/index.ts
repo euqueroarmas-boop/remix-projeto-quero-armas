@@ -17,6 +17,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 // humana — nunca rejeita como "campo faltando".
 // @ts-ignore esm.sh fornece tipos mínimos
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
+import { parseDanf3e, formatarContextoDanf3e, type DanF3eExtraido } from "../_shared/danf3eParser.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -712,10 +713,20 @@ Deno.serve(async (req) => {
       ? "ATENÇÃO: Este texto é extraído SOMENTE DA PÁGINA 1 do PDF (as demais páginas foram descartadas por conter apenas histórico de consumo).\n"
       : "";
 
+    // Parser determinístico DANF3E: extrai nome, CPF, UC, endereço de entrega
+    // e data da próxima leitura diretamente da estrutura do PDF, sem IA.
+    // Resultado é injetado no prompt como contexto prioritário.
+    let danf3e: DanF3eExtraido = { detectado: false };
+    if (usandoTextoPdf && doc.tipo_documento === "comprovante_residencia") {
+      danf3e = parseDanf3e(pdfTexto);
+    }
+    const contextoDanf3e = danf3e.detectado ? formatarContextoDanf3e(danf3e) : "";
+
     const userContent: any[] = usandoTextoPdf
       ? [{
           type: "text",
           text:
+            (contextoDanf3e ? contextoDanf3e + "\n\n" : "") +
             prefixoPagina1 +
             "Este é o TEXTO EXTRAÍDO de um PDF nativo (provavelmente emitido por órgão público como Receita Federal). " +
             "Use APENAS este texto para preencher os campos solicitados e em seguida chame validar_documento.\n\n" +
@@ -900,6 +911,41 @@ Deno.serve(async (req) => {
         cx.numero_documento = "";
         cx.codigo_instalacao = "";
       }
+      // ── Reforço determinístico DANF3E ──────────────────────────────────
+      // Quando o parser detectou o documento como DANF3E, os campos
+      // extraídos deterministicamente sobrescrevem os campos da IA nos
+      // pontos onde a IA costuma alucinar (endereço, UC, nome, CPF).
+      // Campos que o parser NÃO encontrou ficam como a IA retornou.
+      if (danf3e.detectado) {
+        // Endereço de entrega: sempre usar o bloco rotulado, nunca o de faturamento
+        if (danf3e.endereco_entrega) {
+          const ee = danf3e.endereco_entrega;
+          if (ee.logradouro)      cx.logradouro = ee.logradouro;
+          if (ee.numero)          cx.numero = ee.numero;
+          if (ee.complemento)     cx.complemento = ee.complemento;
+          if (ee.bairro)          cx.bairro = ee.bairro;
+          if (ee.cidade)          cx.cidade = ee.cidade;
+          if (ee.uf)              cx.uf = ee.uf;
+          if (ee.cep)             cx.cep = ee.cep;
+          if (ee.endereco_completo) cx.endereco_completo = ee.endereco_completo;
+        }
+        // UC: sobreescreve sempre que o parser encontrou (mais confiável que a IA)
+        if (danf3e.uc) {
+          cx.codigo_instalacao = danf3e.uc;
+          cx.numero_documento = danf3e.uc;
+        }
+        // Nome e CPF: preenche se a IA não extraiu, ou força se há alta confiança
+        if (danf3e.nome_titular && !cx.nome_titular) cx.nome_titular = danf3e.nome_titular;
+        if (danf3e.cpf_titular && !cx.cpf_cnpj_titular) cx.cpf_cnpj_titular = danf3e.cpf_titular;
+        // Datas: preserva em campos_complementares para cálculo de validade
+        if (danf3e.data_proxima_leitura) cx._danf3e_proxima_leitura = danf3e.data_proxima_leitura;
+        if (danf3e.data_vencimento)      cx._danf3e_vencimento_fatura = danf3e.data_vencimento;
+        if (danf3e.empresa_emissora && !cx.empresa_emissora) cx.empresa_emissora = danf3e.empresa_emissora;
+        if (danf3e.mes_referencia && !cx.mes_referencia) cx.mes_referencia = danf3e.mes_referencia;
+        if (danf3e.numero_nota && !cx.numero_nota) cx.numero_nota = danf3e.numero_nota;
+      }
+      // ────────────────────────────────────────────────────────────────────
+
       const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
       const nomeCadastro = String(cliente?.nome_completo ?? cliente?.nome ?? "").trim();
       const flagIA = cx.endereco_em_nome_de_terceiro === true || cx.endereco_em_nome_de_terceiro === "true";
@@ -1355,6 +1401,29 @@ Deno.serve(async (req) => {
 
     // ===== FASE 2: separar campos para os novos slots aditivos =====
     const camposExtraidosFinal: Record<string, any> = parsed.campos_extraidos || {};
+
+    // Extrai campos DANF3E do bloco de campos (foram guardados com prefixo _danf3e_)
+    const danf3eProximaLeitura: string | null = camposExtraidosFinal._danf3e_proxima_leitura ?? null;
+    const danf3eVencimentoFatura: string | null = camposExtraidosFinal._danf3e_vencimento_fatura ?? null;
+    // Remove campos internos do payload final salvo no banco
+    delete camposExtraidosFinal._danf3e_proxima_leitura;
+    delete camposExtraidosFinal._danf3e_vencimento_fatura;
+
+    // Para DANF3E, usar data_proxima_leitura como âncora de validade do comprovante:
+    // o comprovante é válido até a data da próxima leitura + 30 dias (tempo para o
+    // cliente receber e subir o próximo comprovante). Nunca ultrapassa 90 dias.
+    if (danf3eProximaLeitura && doc.tipo_documento === "comprovante_residencia") {
+      const proxLeit = new Date(danf3eProximaLeitura);
+      if (!isNaN(proxLeit.getTime())) {
+        proxLeit.setDate(proxLeit.getDate() + 30);
+        const dataValDanf3e = proxLeit.toISOString().slice(0, 10);
+        // Usa a MENOR data entre a regra-padrão e a DANF3E (mais conservador)
+        if (!dataValidade || dataValDanf3e < dataValidade) {
+          dataValidade = dataValDanf3e;
+        }
+      }
+    }
+
     const titularNome = camposExtraidosFinal.titular_comprovante_nome ?? null;
     const titularDoc = camposExtraidosFinal.titular_comprovante_documento ?? null;
     const enderecoTerceiro = camposExtraidosFinal.endereco_em_nome_de_terceiro === true;
@@ -1364,6 +1433,10 @@ Deno.serve(async (req) => {
       ...(parsed.tipo_documento_detectado ? { tipo_documento_detectado: parsed.tipo_documento_detectado } : {}),
       ...(parsed.orientacoes_cliente ? { orientacoes_cliente: parsed.orientacoes_cliente } : {}),
       ...(doc.tipo_documento === "certidao_alteracao_nome" ? { incluir_no_dossie: true } : {}),
+      // Dados DANF3E para cálculo de validade e notificações de reenvio
+      ...(danf3eProximaLeitura ? { data_proxima_leitura: danf3eProximaLeitura } : {}),
+      ...(danf3eVencimentoFatura ? { data_vencimento_fatura: danf3eVencimentoFatura } : {}),
+      ...(danf3e.detectado ? { fonte_parser: "danf3e" } : {}),
     };
 
     await supabase.from("qa_processo_documentos")
