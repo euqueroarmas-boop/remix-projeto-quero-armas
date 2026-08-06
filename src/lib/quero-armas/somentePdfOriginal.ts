@@ -15,6 +15,12 @@ const TIPOS_IMAGEM_PERMITIDA = new Set<string>([
   "foto",
   "foto_titular",
   "fotografia",
+  // Identidade funcional é um cartão físico da corporação: não existe PDF
+  // original emitido por site. Vale a imagem da frente e do verso (ou o PDF
+  // exportado do app funcional, quando houver).
+  "renda_carteira_funcional",
+  "identidade_funcional",
+  "identidade_funcional_digital",
 ]);
 
 export function tipoAceitaImagem(tipo: string | null | undefined): boolean {
