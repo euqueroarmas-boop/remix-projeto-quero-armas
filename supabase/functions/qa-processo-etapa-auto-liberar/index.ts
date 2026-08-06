@@ -44,7 +44,7 @@ function etapaDoTipo(tipo: string | null, etapaRaw: string | null): number {
   if (raw === "declaracoes" || raw === "declaracao" || raw === "compromissos") return 4;
   if (raw === "tecnico" || raw === "exames" || raw === "laudo" || raw === "psicologico") return 5;
   const t = String(tipo || "").toLowerCase();
-  if (t === "renda_definir_condicao" || t.startsWith("renda_")) return 2;
+  if (t === "renda_definir_condicao" || t.startsWith("renda_") || t === "identidade_funcional") return 2;
   if (t.startsWith("certidao") || t.includes("antecedentes")) return 3;
   if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 5;
   if (

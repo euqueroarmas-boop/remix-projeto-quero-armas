@@ -83,11 +83,13 @@ const TIPOS_IDENTIDADE_SET = new Set([
   "documento_identidade_nacional",
   "carteira_identidade_nacional",
   "cedula_identidade_rg_com_cpf",
-  "identidade_funcional",
 ]);
 
 export function ehDocumentoIdentidade(tipo?: string | null, nome?: string | null): boolean {
   const t = String(tipo || "").trim().toLowerCase();
+  // identidade_funcional prova vínculo institucional (etapa 2 — ocupação lícita),
+  // não substitui documento civil (RG/CIN/CNH). Exclusão explícita antes do includes.
+  if (t === "identidade_funcional") return false;
   const n = String(nome || "").trim().toLowerCase();
   if (TIPOS_IDENTIDADE_SET.has(t)) return true;
   if (t.includes("identidade") || t.includes("identificacao")) return true;
