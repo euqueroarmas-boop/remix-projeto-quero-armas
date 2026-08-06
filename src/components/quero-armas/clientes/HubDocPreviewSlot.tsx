@@ -285,8 +285,8 @@ export default function HubDocPreviewSlot({
           <button
             type="button"
             onClick={onRemove}
-            className="pointer-events-auto absolute flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-lg transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40"
-            style={{ borderRadius: 4, right: "-10mm", top: "-10mm", zIndex: 2001 }}
+            className="pointer-events-auto absolute right-1 top-1 flex h-9 w-9 shrink-0 items-center justify-center border-2 border-[#DC2626] bg-white text-[#DC2626] shadow-lg transition-colors hover:bg-[#DC2626] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DC2626]/40 md:-right-3 md:-top-3"
+            style={{ borderRadius: 4, zIndex: 2001 }}
             aria-label="Excluir arquivo"
             title="Excluir arquivo"
           >
