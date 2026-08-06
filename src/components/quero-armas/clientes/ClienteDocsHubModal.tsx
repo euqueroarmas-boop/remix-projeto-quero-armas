@@ -4424,6 +4424,18 @@ export function ClienteDocsHubModal({
             )}
 
             {/* ── Alerta de documento expirado ── */}
+            {validadeIndeterminada && (
+              <div className="rounded-2xl border border-[#7A1F2B]/25 bg-[#FAF6F1] p-3 text-xs text-[#3A3A3A]">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+                  Validade indeterminada
+                </div>
+                <p className="mt-1 text-[10px]">
+                  Este documento declara validade <b>indeterminada</b> — não tem prazo de
+                  vencimento. Ele é registrado no Hub Documental <b>sem data de vencimento</b> e
+                  não é reprovado por validade.
+                </p>
+              </div>
+            )}
             {docExpirado && (
               (() => {
                 return (
