@@ -33,8 +33,8 @@ const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
   perguntas:     { id: "perguntas",     label: "Perguntas rápidas",        ordem: 20 },
   identificacao: { id: "identificacao", label: "Identificação",            ordem: 30 },
   endereco:      { id: "endereco",      label: "Comprovação de endereço",  ordem: 40 },
-  antecedentes:  { id: "antecedentes",  label: "Antecedentes criminais",   ordem: 50 },
-  ocupacao:      { id: "ocupacao",      label: "Ocupação lícita e renda",  ordem: 60 },
+  ocupacao:      { id: "ocupacao",      label: "Ocupação lícita e renda",  ordem: 50 },
+  antecedentes:  { id: "antecedentes",  label: "Antecedentes criminais",   ordem: 60 },
   habitualidade: { id: "habitualidade", label: "Habitualidade e clube",    ordem: 70 },
   arma:          { id: "arma",          label: "Documentos da arma",       ordem: 72 },
   declaracoes:   { id: "declaracoes",   label: "Declarações do processo",  ordem: 75 },
@@ -80,6 +80,7 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "comprovante_de_endereco" ||
     t === "declaracao_residencia_titular" ||
     t.startsWith("declaracao_titular") ||
+    t === "declaracao_responsavel_imovel" ||
     t === "documento_identificacao_terceiro" ||
     t.startsWith("titular_comprovante")
   ) {
@@ -102,6 +103,8 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   }
 
   // Ocupação lícita / renda
+  // identidade_funcional prova vínculo institucional (PM/PF/etc.) — é documento
+  // de ocupação lícita (etapa 2), não substitui identidade civil (RG/CIN/CNH).
   if (
     t.startsWith("renda_") ||
     t === "comprovante_renda" ||
@@ -110,7 +113,11 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "contracheque" ||
     t === "declaracao_imposto_renda" ||
     t === "contrato_social" ||
-    t === "cartao_cnpj"
+    t === "cartao_cnpj" ||
+    t === "identidade_funcional" ||
+    t.includes("identidade_funcional") ||
+    t.includes("credencial_digital") ||
+    t.includes("funcional_digital")
   ) {
     return GRUPOS.ocupacao;
   }
@@ -158,12 +165,6 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "cnh" ||
     t === "passaporte" ||
     t === "cpf" ||
-    // Identidade funcional / credencial digital do órgão é documento de
-    // IDENTIFICAÇÃO. Sem esta regra caía em "outros" (ordem 99) e o popup
-    // mostrava "GRUPO 9 DE 9" no meio do checklist.
-    t.includes("identidade_funcional") ||
-    t.includes("credencial_digital") ||
-    t.includes("funcional_digital") ||
     // A foto 3x4 é peça de IDENTIFICAÇÃO. Caindo em "outros" (ordem 99) ela ia
     // para o fim da fila e o portal pedia certidões antes — contrariando a
     // ordem do catálogo (Montar Checklist), onde a foto é ordem 2.
