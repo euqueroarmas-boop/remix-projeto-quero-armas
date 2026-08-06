@@ -439,6 +439,19 @@ export function calcularValidadeEfetiva(
  * Retorna o pacote completo de validade para a UI.
  */
 export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()): ValidadeInfo {
+  // 0-) Validade explicitamente INDETERMINADA no próprio documento:
+  //     não conta prazo, nunca vence, nunca reprova.
+  if (docTemValidadeIndeterminada(doc)) {
+    return {
+      iso: null,
+      label: "Sem vencimento (validade indeterminada)",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0a) Certidão civil (nascimento/casamento/averbação) NÃO tem vencimento
   //     para este fluxo. Curto-circuito antes de qualquer cálculo de prazo.
   if (isCertidaoCivilSemVencimento(doc.tipo_documento)) {
