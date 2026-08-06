@@ -69,41 +69,6 @@ function jsonResp(body: unknown, status = 200) {
   });
 }
 
-async function processEmailQueueNow(sb: ReturnType<typeof svc>): Promise<unknown> {
-  const { data, error } = await sb.functions.invoke("process-email-queue", {
-    body: { source: "qa-generate-contract", reason: "contrato_regenerado_reenvio_manual" },
-  });
-  if (error) {
-    throw new Error(`E-mail enfileirado, mas falhou ao processar a fila: ${error.message}`);
-  }
-  const stopped = (data as any)?.stopped;
-  if (stopped) {
-    throw new Error(`E-mail enfileirado, mas a fila parou antes do envio: ${stopped}`);
-  }
-  if (typeof (data as any)?.processed === "number" && (data as any).processed < 1) {
-    throw new Error("E-mail enfileirado, mas a fila não processou nenhum envio.");
-  }
-  return data;
-}
-
-async function recordEmailDispatchFailure(
-  sb: ReturnType<typeof svc>,
-  contractId: string,
-  contractNumber: string,
-  email: string | null | undefined,
-  error: string,
-) {
-  await sb.from("qa_contract_events").insert({
-    contract_id: contractId,
-    event_type: "contrato_email_reenvio_falhou",
-    event_payload: {
-      contract_number: contractNumber,
-      email: email ? String(email).toLowerCase() : null,
-      template: "contrato-regenerado-assinatura",
-      error,
-    },
-  });
-}
 
 function esc(s: string | null | undefined): string {
   return String(s ?? "")
