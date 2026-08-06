@@ -456,19 +456,17 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         }
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button — sempre visível para o cliente dispensar a tela */}
+        {/* Close button — apenas no pop-up. No modo página (granada) não há X. */}
+        {!asPage && (
         <button
           type="button"
           onClick={onDismiss}
-          className={
-            asPage
-              ? "absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
-              : "absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
-          }
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
           aria-label="Fechar"
         >
           <X className="h-4 w-4" />
         </button>
+        )}
 
         {/* Abertura pessoal — bloco limpo, no mesmo papel branco das demais
             páginas. Sem gradiente: só o filete bordô e a tipografia fazem a
@@ -478,7 +476,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div
           className={
             asPage
-              ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-0 pb-4 pr-12 sm:pr-14"
+              ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-0 pb-4"
               : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14"
           }
         >
