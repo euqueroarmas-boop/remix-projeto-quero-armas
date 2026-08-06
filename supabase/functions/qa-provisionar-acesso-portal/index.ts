@@ -304,14 +304,10 @@ Deno.serve(async (req) => {
     console.warn("[qa-provisionar-acesso-portal] falha ao garantir cliente_auth_links:", e);
   }
 
-  // 8) Envia e-mail (boas-vindas / aviso de pagamento+contrato)
-  const mail = await sendWelcomeEmail(admin, {
-    email,
-    nome: cliente.nome_completo || email.split("@")[0],
-    isNewUser,
-  });
-
-  // Lovable Emails: dispara template credenciais-portal com senha provisória.
+  // 8) E-mail único de boas-vindas: credenciais-portal (login + senha provisória).
+  // O antigo "acesso-liberado-portal" foi removido por duplicidade — o pop-up guiado
+  // no portal já orienta o download do contrato e da procuração.
+  let mailOk = false;
   try {
     const { sendTransactional } = await import("../_shared/sendTransactional.ts");
     const { data: clienteAtualizado } = await admin
@@ -319,7 +315,7 @@ Deno.serve(async (req) => {
       .select("senha_temporaria")
       .eq("id", cliente.id)
       .maybeSingle();
-    await sendTransactional({
+    const res = await sendTransactional({
       templateName: "credenciais-portal",
       recipientEmail: email,
       idempotencyKey: `credenciais-${authUser.id}-${vendaId ?? "x"}`,
@@ -330,6 +326,7 @@ Deno.serve(async (req) => {
         portalUrl: "https://www.euqueroarmas.com.br/area-do-cliente",
       },
     });
+    mailOk = !!res?.ok;
   } catch (e) {
     console.error("[qa-provisionar-acesso-portal] credenciais-portal error:", (e as Error)?.message);
   }
@@ -339,13 +336,13 @@ Deno.serve(async (req) => {
     `Acesso ao portal preparado após pagamento (venda ${vendaId ?? "?"}). Novo usuário: ${isNewUser ? "sim" : "não"}.`);
   await logEvento(admin, cliente.id,
     isNewUser ? "convite_acesso_enviado" : "convite_acesso_reutilizado",
-    `E-mail ${mail.ok ? "enviado" : "FALHOU"} para ${email} (venda ${vendaId ?? "?"}).`);
+    `E-mail ${mailOk ? "enviado" : "FALHOU"} para ${email} (venda ${vendaId ?? "?"}).`);
 
   return json({
     ok: true,
     user_id: authUser.id,
     new_user: isNewUser,
-    email_sent: mail.ok,
+    email_sent: mailOk,
     venda_id: vendaId,
   });
 });
