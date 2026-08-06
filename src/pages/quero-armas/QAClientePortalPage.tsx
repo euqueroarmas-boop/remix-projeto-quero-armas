@@ -74,6 +74,7 @@ import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { gruposExcluidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
   QA_SIDEBAR_THEMES,
@@ -1914,19 +1915,14 @@ export default function QAClientePortalPage() {
         return rankDoc(a) - rankDoc(b);
       });
     // Regra de negócio: cada serviço tem o seu checklist.
-    // Habitualidade (clube/filiação/treino) NÃO é exigida para autorização de
-    // compra / posse de arma de fogo — só CAC e Porte requerem esse grupo.
-    const SLUGS_SEM_HABITUALIDADE = new Set([
-      "posse-arma-fogo",
-      "aquisicao-registro-posse-de-arma-de-fogo",
-      "renovacao-posse-de-arma-de-fogo",
-    ]);
-    const ehDocHabitualidadeBloqueada = (d: any): boolean => {
+    // Os grupos excluídos por serviço estão declarados em servicoGruposConfig.ts.
+    const ehDocGrupoBloqueado = (d: any): boolean => {
       const p = procById.get(String(d?.processo_id));
       const slug = catalogoByServicoId[Number(p?.servico_id)]?.service_slug ?? "";
-      if (!SLUGS_SEM_HABITUALIDADE.has(slug)) return false;
+      const excluidos = gruposExcluidosPorServico(slug);
+      if (excluidos.size === 0) return false;
       const rawTipoD = String(d?.tipo_documento || "").toLowerCase();
-      return grupoDaPendenciaHelper(rawTipoD, null).id === "habitualidade";
+      return excluidos.has(grupoDaPendenciaHelper(rawTipoD, null).id);
     };
 
     const jaAdicionados = new Set<string>();
@@ -2038,7 +2034,7 @@ export default function QAClientePortalPage() {
         ) return false;
         const st = String(d.status || "").toLowerCase();
         if (!["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st)) return false;
-        if (ehDocHabitualidadeBloqueada(d)) return false;
+        if (ehDocGrupoBloqueado(d)) return false;
         return true;
       }),
     );
@@ -2052,7 +2048,7 @@ export default function QAClientePortalPage() {
           temIdentificacaoPessoalAprovadaNoHub &&
           ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
         ) return false;
-        if (ehDocHabitualidadeBloqueada(d)) return false;
+        if (ehDocGrupoBloqueado(d)) return false;
         return isChecklistPendente(d.status);
       }),
     );
