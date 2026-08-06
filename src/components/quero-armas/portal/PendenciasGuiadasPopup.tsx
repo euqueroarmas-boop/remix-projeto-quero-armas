@@ -451,7 +451,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       <div
         className={
           asPage
-            ? "relative w-full h-full min-h-0 bg-white rounded-t-2xl shadow-[0_-6px_24px_rgba(0,0,0,0.10)] overflow-hidden flex flex-col"
+            ? "relative w-full h-full min-h-0 overflow-hidden flex flex-col"
             : "relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]"
         }
         onClick={(e) => e.stopPropagation()}
