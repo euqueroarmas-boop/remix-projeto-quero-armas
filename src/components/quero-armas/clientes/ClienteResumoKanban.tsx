@@ -6,7 +6,7 @@ import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta, isTipoDocumentoMonitoravelNoHub, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
-import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+
 import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
@@ -388,7 +388,7 @@ export default function ClienteResumoKanban({
             // Abre SEMPRE o assistente de documentação já focado neste
             // processo — é ele quem exibe o passo pendente (contrato,
             // documento, exame etc.) do processo clicado.
-            abrirChecklistGuiado({ processoId: item?.id ? String(item.id) : null });
+            onOpenChecklist?.();
           },
         };
       }

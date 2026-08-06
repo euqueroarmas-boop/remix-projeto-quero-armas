@@ -38,8 +38,6 @@ import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
-import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
-import { abrirChecklistGuiado, onAbrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 import { baixarProcuracaoCanonica } from "@/lib/quero-armas/procuracaoPdfDownload";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
@@ -1805,11 +1803,11 @@ export default function QAClientePortalPage() {
         onClick: () => goSection("documentos"),
       };
     } else if (checklistReproc) {
-      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => abrirChecklistGuiado({ processoId: checklistReproc.processo_id, focusDocId: checklistReproc.id }) };
+      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => abrirPendenciasGuiadas({ pinnedId: checklistReproc.id ? `doc:${checklistReproc.id}` : null }) };
     } else if (docsHubReprovados > 0) {
       proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam de correção.`, icon: FileText, onClick: () => setShowAddDoc(true) };
     } else if (checklistPend) {
-      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => abrirChecklistGuiado({ processoId: checklistPend.processo_id, focusDocId: checklistPend.id }) };
+      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => abrirPendenciasGuiadas({ pinnedId: checklistPend.id ? `doc:${checklistPend.id}` : null }) };
     } else if (cadastroIncompleto) {
       proximaAcao = { titulo: "Completar seu cadastro", descricao: resumoFaltantesCadastro(cliente) || "Dados básicos faltando.", icon: User, onClick: () => setShowCadastroModal(true) };
     } else if (docsHubEmAnalise > 0) {
@@ -1965,7 +1963,7 @@ export default function QAClientePortalPage() {
         onEntregar: () => {
           // Efetiva necessidade fica no fluxo guiado já existente.
           if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {
-            abrirChecklistGuiado({ processoId: doc.processo_id, focusDocId: doc.id });
+            abrirPendenciasGuiadas({ pinnedId: doc.id ? `doc:${doc.id}` : null });
             setShowContratoPopup(false);
             return;
           }
@@ -2981,19 +2979,6 @@ export default function QAClientePortalPage() {
     return () => window.removeEventListener("qa:portal-ir-para-secao", handler);
   }, []);
 
-  // Fase 2 — o wizard antigo (ChecklistGuiadoModal) foi aposentado. Todos os
-  // gatilhos (Speed Dial, kanban, botão "Enviar X", auto-open pós assinatura)
-  // agora abrem o PendenciasGuiadasPopup unificado. Ao receber um `focusDocId`,
-  // marcamos a pendência correspondente (`doc:<id>`) como pinada para o popup
-  // saltar direto para ela. Reabrir por ação manual limpa o status de dispensado.
-  useEffect(() => {
-    const off = onAbrirChecklistGuiado((payload) => {
-      const focus = payload?.focusDocId ? `doc:${payload.focusDocId}` : null;
-      abrirPendenciasGuiadas({ pinnedId: focus });
-    });
-    return off;
-  }, []);
-
   // Carrega assinaturas pós-pagamento pendentes: contrato primeiro, procuração depois.
   // A abertura do popup é feita pelo orquestrador de entrada, para não concorrer
   // com o assistente de compra/documentação.
@@ -3685,7 +3670,7 @@ export default function QAClientePortalPage() {
           onNavigate={(tab) => setActiveSection(tab as any)}
           onOpenCadastro={() => setShowCadastroModal(true)}
           onOpenComprar={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
-          onOpenChecklist={() => abrirChecklistGuiado()}
+          onOpenChecklist={() => abrirPendenciasGuiadas()}
           onOpenDocsHub={() => setShowAddDoc(true)}
           onLogout={handleLogout}
           onOpenKlal={() => setActiveSection("mensagens" as any)}
@@ -3814,7 +3799,11 @@ export default function QAClientePortalPage() {
                     </div>
                     <div className="shrink-0">
                       {acaoChecklistBotao && acaoDoc ? (
-                        <ChecklistGuiadoBotao processoId={acaoDoc.processo_id} focusDocId={acaoDoc.id} />
+                        <button type="button"
+                          onClick={() => abrirPendenciasGuiadas({ pinnedId: acaoDoc.id ? `doc:${acaoDoc.id}` : null })}
+                          className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold transition">
+                          Resolver <ChevronRight className="h-3 w-3" />
+                        </button>
                       ) : acaoOnClick ? (
                         <button type="button" onClick={acaoOnClick}
                           className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold transition">
@@ -4354,7 +4343,14 @@ export default function QAClientePortalPage() {
                   ) : (
                     <>
                       <div className="qa-eyebrow pb-2.5">CHECKLIST · DOCUMENTOS OBRIGATÓRIOS</div>
-                      <div className="mb-5"><ChecklistGuiadoBotao /></div>
+                      <div className="mb-5">
+                        <button type="button"
+                          onClick={() => abrirPendenciasGuiadas()}
+                          className="inline-flex items-center gap-2 rounded-sm px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-[#1a1a1a]"
+                          style={{ background: "#0A0A0A" }}>
+                          Enviar documentos
+                        </button>
+                      </div>
                       <div className="space-y-4">
                         {procsOrdenados.map(([procId, lista]) => {
                           const proc = processos.find((p) => String(p.id) === procId);

@@ -32,7 +32,7 @@ import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/compo
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import { PORTAL_NAV_ITEMS } from "@/components/quero-armas/portal/portalNavItems";
-import { IconBuildingStore, IconBomb } from "@tabler/icons-react";
+import { IconBuildingStore } from "@tabler/icons-react";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
@@ -61,7 +61,7 @@ import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClient
 import { CockpitZ6MeusProcessos, buildCockpitZ6FromReal } from "@/components/quero-armas/cockpit-z6";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import { isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
-import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+
 import { QA_SIDEBAR_THEMES } from "@/components/quero-armas/portal/sidebarThemes";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
@@ -1264,7 +1264,7 @@ function ClientePortalMirrorAdmin({
             setActiveSection("resumo");
           }}
           onOpenDocsHub={() => setActiveSection("documentos")}
-          onOpenChecklist={() => abrirChecklistGuiado()}
+          onOpenChecklist={() => {}}
         />
       );
     }
@@ -1402,11 +1402,9 @@ function ClientePortalMirrorAdmin({
                   {lista.map((d: any) => {
                     const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
                     return (
-                      <button
+                      <div
                         key={d.id}
-                        type="button"
-                        onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
-                        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition"
+                        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left"
                       >
                         <div className="min-w-0">
                           <div className="text-[12px] font-semibold text-slate-800 truncate">
@@ -1417,7 +1415,7 @@ function ClientePortalMirrorAdmin({
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
                           {reprov ? "Reenviar" : "Pendente"}
                         </span>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -1493,19 +1491,6 @@ function ClientePortalMirrorAdmin({
               <IconBuildingStore className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
             </button>
 
-            {/* Checklist guiado — abre em modo visualização */}
-            <button
-              type="button"
-              onClick={() => abrirChecklistGuiado()}
-              title="Checklist guiado (visualização)"
-              aria-label="Checklist guiado (visualização)"
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
-              style={{ color: `${railIconColor}88` }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = railIconColor; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = `${railIconColor}88`; }}
-            >
-              <IconBomb className="h-[18px] w-[18px] shrink-0" stroke={1.6} />
-            </button>
 
             {navItems.filter((i) => i.key === "mensagens" || i.key === "configuracoes").map((item) => {
               const Icon = item.icon;

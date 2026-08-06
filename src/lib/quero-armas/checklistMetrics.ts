@@ -14,7 +14,7 @@ export interface ChecklistMetrics {
 // ---------------------------------------------------------------------------
 // FONTE ÚNICA DE CLASSIFICAÇÃO DE STATUS — Admin + Cliente
 // ---------------------------------------------------------------------------
-// Bloco 13: Admin (ProcessoDetalheDrawer) e Cliente (ChecklistGuiadoModal /
+// Bloco 13: Admin (ProcessoDetalheDrawer) e Cliente (PendenciasGuiadasPopup /
 // ClienteProcessosSection / QAClientePortalPage) devem usar EXATAMENTE estes
 // conjuntos para classificar um documento do checklist. Qualquer outro lugar
 // que precise saber "este doc é pendência? em análise? cumprido?" deve
@@ -137,7 +137,7 @@ export interface ChecklistOrderableDoc {
 
 /**
  * Ordenação canônica usada por Admin (ProcessoDetalheDrawer) e Cliente
- * (checklistGuiadoEngine / ChecklistGuiadoModal). Não muta o array de entrada.
+ * (checklistGuiadoEngine / PendenciasGuiadasPopup). Não muta o array de entrada.
  */
 export function ordenarDocumentosChecklist<T extends ChecklistOrderableDoc>(docs: T[]): T[] {
   return [...docs].sort((a, b) => {

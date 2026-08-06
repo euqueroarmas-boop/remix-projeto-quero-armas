@@ -1448,7 +1448,7 @@ export function ClienteDocsHubModal({
     setDocsAprovadosFetched([]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Busca docs aprovados quando o prop vier vazio (ex: abertura via ChecklistGuiado)
+  // Busca docs aprovados quando o prop vier vazio (ex: abertura via PendenciasGuiadasPopup)
   useEffect(() => {
     if (!open || !qaClienteId || docsAprovados.length > 0) { setDocsAprovadosFetched([]); return; }
     let cancelled = false;

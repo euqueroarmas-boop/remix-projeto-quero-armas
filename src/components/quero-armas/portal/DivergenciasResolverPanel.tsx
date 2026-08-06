@@ -1,8 +1,8 @@
 // ============================================================================
 // DivergenciasResolverPanel
 // ----------------------------------------------------------------------------
-// Painel exibido na fase "resultado_erro" do ChecklistGuiadoModal quando a
-// IA detectou divergências entre o documento e o cadastro do cliente.
+// Painel exibido quando a IA detecta divergências entre o documento e o
+// cadastro do cliente (ex: durante revisão no PendenciasGuiadasPopup).
 //
 // Separa as divergências por GRUPO (nome, endereço, RG, CPF, data de
 // nascimento, telefone/e-mail e outros) e mostra para cada grupo as ações
