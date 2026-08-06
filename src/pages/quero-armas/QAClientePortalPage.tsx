@@ -2553,6 +2553,8 @@ export default function QAClientePortalPage() {
         || st === "dispensado_grupo"
         || st === "dispensado_por_reaproveitamento";
     };
+    const ehReaproveitado = (d: any) =>
+      String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
     const abertos = obrigatorios.filter((d: any) => !concluido(d));
 
     // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
@@ -2594,6 +2596,7 @@ export default function QAClientePortalPage() {
       perguntasPendentes: abertos.filter(ehPergunta).length,
       totalObrigatorios: obrigatorios.length,
       concluidos: obrigatorios.length - abertos.length,
+      reaproveitados: obrigatorios.filter(ehReaproveitado).length,
       grupos,
     };
   }, [processoDocs, processos, catalogoDocInfo]);

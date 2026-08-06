@@ -109,6 +109,8 @@ interface Props {
     perguntasPendentes: number;
     totalObrigatorios: number;
     concluidos: number;
+    /** Documentos dispensados automaticamente por reaproveitamento do histórico. */
+    reaproveitados?: number;
     /**
      * Grupos do PROCESSO INTEIRO, na ordem em que o cliente vai encontrá-los —
      * incluindo os que ainda não foram liberados na fila. Sem isto o popup só
@@ -707,6 +709,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
                 </p>
               ) : null}
+              {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
+                <p className="qa-caption mt-2 text-emerald-700 font-medium">
+                  ✓{" "}
+                  {resumoProcesso.reaproveitados === 1
+                    ? "1 documento já reconhecido do seu histórico."
+                    : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -753,6 +763,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
                   {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
                   {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
+                </p>
+              ) : null}
+              {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
+                <p className="mt-2 text-[11px] text-emerald-700 font-medium">
+                  ✓{" "}
+                  {resumoProcesso.reaproveitados === 1
+                    ? "1 documento já reconhecido do seu histórico."
+                    : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
                 </p>
               ) : null}
             </div>
