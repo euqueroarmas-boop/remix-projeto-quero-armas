@@ -29,7 +29,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
       <div>
         <h2 className="text-sm font-semibold mb-1">Etapa 6 — Pronto</h2>
         <p className="text-xs text-muted-foreground">
-          Contrato enviado. Aguarde a assinatura do cliente e siga pelo histórico abaixo ou inicie o Piloto Real agora.
+          Contrato gerado e disponível no Arsenal Inteligente do cliente. Aguarde a assinatura e siga pelo histórico abaixo ou inicie o Piloto Real agora.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
             <p className="text-green-500 mt-0.5">
               {clienteSalvo.existia ? "Cadastro atualizado" : "Novo cadastro criado"} — ID {clienteSalvo.id}
             </p>
-            {vendaId && <p className="text-green-500">Venda #{vendaId} criada · Contrato enviado por e-mail</p>}
+            {vendaId && <p className="text-green-500">Venda #{vendaId} criada · Contrato disponível no Arsenal Inteligente</p>}
           </div>
         </div>
       </div>
