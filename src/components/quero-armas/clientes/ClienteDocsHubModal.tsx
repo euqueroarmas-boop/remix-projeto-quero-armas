@@ -1941,7 +1941,20 @@ export function ClienteDocsHubModal({
 
   // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
   const hoje = new Date().toISOString().slice(0, 10);
-  const docExpirado = !!form.data_validade && form.data_validade < hoje;
+  // Validade INDETERMINADA declarada no próprio documento (ex.: identidade
+  // funcional "VALIDADE: INDETERM."): não conta prazo, nunca reprova por
+  // vencimento e entra no Hub sem data de vencimento.
+  const campos: any = (classificacao as any)?.camposExtraidos || {};
+  const validadeIndeterminada =
+    campos?.validade_indeterminada === true ||
+    campos?.validade_indeterminada === "true" ||
+    textoIndicaValidadeIndeterminada(
+      campos?.data_validade,
+      campos?.validade,
+      campos?.observacoes,
+      form.observacoes,
+    );
+  const docExpirado = !validadeIndeterminada && !!form.data_validade && form.data_validade < hoje;
   const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
 
   // Busca psicólogos próximos APENAS quando laudo está vencido e temos CEP do cliente.
