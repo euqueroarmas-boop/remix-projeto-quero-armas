@@ -7949,6 +7949,87 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_identidades_funcionais: {
+        Row: {
+          corporacao: string | null
+          cpf: string | null
+          created_at: string
+          dados_extraidos: Json
+          data_admissao: string | null
+          data_emissao: string | null
+          data_nascimento: string | null
+          data_validade: string | null
+          documento_id: string | null
+          id: string
+          nome_completo: string | null
+          nome_mae: string | null
+          nome_pai: string | null
+          numero_documento: string | null
+          orgao_emissor: string | null
+          origem: string
+          posto_graduacao: string | null
+          qa_cliente_id: string
+          quadro: string | null
+          re_matricula: string | null
+          rg: string | null
+          situacao_funcional: string | null
+          unidade: string | null
+          updated_at: string
+        }
+        Insert: {
+          corporacao?: string | null
+          cpf?: string | null
+          created_at?: string
+          dados_extraidos?: Json
+          data_admissao?: string | null
+          data_emissao?: string | null
+          data_nascimento?: string | null
+          data_validade?: string | null
+          documento_id?: string | null
+          id?: string
+          nome_completo?: string | null
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero_documento?: string | null
+          orgao_emissor?: string | null
+          origem?: string
+          posto_graduacao?: string | null
+          qa_cliente_id: string
+          quadro?: string | null
+          re_matricula?: string | null
+          rg?: string | null
+          situacao_funcional?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Update: {
+          corporacao?: string | null
+          cpf?: string | null
+          created_at?: string
+          dados_extraidos?: Json
+          data_admissao?: string | null
+          data_emissao?: string | null
+          data_nascimento?: string | null
+          data_validade?: string | null
+          documento_id?: string | null
+          id?: string
+          nome_completo?: string | null
+          nome_mae?: string | null
+          nome_pai?: string | null
+          numero_documento?: string | null
+          orgao_emissor?: string | null
+          origem?: string
+          posto_graduacao?: string | null
+          qa_cliente_id?: string
+          quadro?: string | null
+          re_matricula?: string | null
+          rg?: string | null
+          situacao_funcional?: string | null
+          unidade?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_itens_venda: {
         Row: {
           calibre: string | null
