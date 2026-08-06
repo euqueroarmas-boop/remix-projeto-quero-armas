@@ -7968,7 +7968,7 @@ export type Database = {
           orgao_emissor: string | null
           origem: string
           posto_graduacao: string | null
-          qa_cliente_id: string
+          qa_cliente_id: number
           quadro: string | null
           re_matricula: string | null
           rg: string | null
@@ -7994,7 +7994,7 @@ export type Database = {
           orgao_emissor?: string | null
           origem?: string
           posto_graduacao?: string | null
-          qa_cliente_id: string
+          qa_cliente_id: number
           quadro?: string | null
           re_matricula?: string | null
           rg?: string | null
@@ -8020,7 +8020,7 @@ export type Database = {
           orgao_emissor?: string | null
           origem?: string
           posto_graduacao?: string | null
-          qa_cliente_id?: string
+          qa_cliente_id?: number
           quadro?: string | null
           re_matricula?: string | null
           rg?: string | null
@@ -8028,7 +8028,15 @@ export type Database = {
           unidade?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_identidades_funcionais_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_itens_venda: {
         Row: {
