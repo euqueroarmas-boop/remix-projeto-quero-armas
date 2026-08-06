@@ -1913,6 +1913,22 @@ export default function QAClientePortalPage() {
         if (ac !== bc) return ac - bc;
         return rankDoc(a) - rankDoc(b);
       });
+    // Regra de negócio: cada serviço tem o seu checklist.
+    // Habitualidade (clube/filiação/treino) NÃO é exigida para autorização de
+    // compra / posse de arma de fogo — só CAC e Porte requerem esse grupo.
+    const SLUGS_SEM_HABITUALIDADE = new Set([
+      "posse-arma-fogo",
+      "aquisicao-registro-posse-de-arma-de-fogo",
+      "renovacao-posse-de-arma-de-fogo",
+    ]);
+    const ehDocHabitualidadeBloqueada = (d: any): boolean => {
+      const p = procById.get(String(d?.processo_id));
+      const slug = catalogoByServicoId[Number(p?.servico_id)]?.service_slug ?? "";
+      if (!SLUGS_SEM_HABITUALIDADE.has(slug)) return false;
+      const rawTipoD = String(d?.tipo_documento || "").toLowerCase();
+      return grupoDaPendenciaHelper(rawTipoD, null).id === "habitualidade";
+    };
+
     const jaAdicionados = new Set<string>();
     const empurrar = (doc: any) => {
       const rawTipo = String(doc?.tipo_documento || "").toLowerCase();
@@ -2021,7 +2037,9 @@ export default function QAClientePortalPage() {
           ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
         ) return false;
         const st = String(d.status || "").toLowerCase();
-        return ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st);
+        if (!["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(st)) return false;
+        if (ehDocHabitualidadeBloqueada(d)) return false;
+        return true;
       }),
     );
     const pendentes = ordenar(
@@ -2034,6 +2052,7 @@ export default function QAClientePortalPage() {
           temIdentificacaoPessoalAprovadaNoHub &&
           ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
         ) return false;
+        if (ehDocHabitualidadeBloqueada(d)) return false;
         return isChecklistPendente(d.status);
       }),
     );
@@ -2277,9 +2296,11 @@ export default function QAClientePortalPage() {
       }
     }
 
-    // Depois das perguntas vêm as exigências documentais (reprovados primeiro).
-    for (const d of reprovados) empurrar(d);
-    for (const d of pendentes) empurrar(d);
+    // Entrega de documentos desativada na guia de pendências.
+    // Os documentos devem ser entregues exclusivamente pelo hub documental.
+    // As arrays reprovados/pendentes ainda existem para futuro reuso (ex.: contadores).
+    // for (const d of reprovados) empurrar(d);
+    // for (const d of pendentes) empurrar(d);
 
     // ─── Ordenação final ────────────────────────────────────────────────────
     // O simulador/admin é a única fonte da sequência do checklist. Grupos são
