@@ -10808,7 +10808,8 @@ export type Database = {
           observacoes: string | null
           origem: string
           pendente_classificacao: boolean
-          processo_id: number | null
+          processo_id: string | null
+          processo_id_legacy_int: number | null
           sem_checklist_configurado: boolean
           service_name: string
           service_slug: string
@@ -10834,7 +10835,8 @@ export type Database = {
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
-          processo_id?: number | null
+          processo_id?: string | null
+          processo_id_legacy_int?: number | null
           sem_checklist_configurado?: boolean
           service_name: string
           service_slug: string
@@ -10860,7 +10862,8 @@ export type Database = {
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
-          processo_id?: number | null
+          processo_id?: string | null
+          processo_id_legacy_int?: number | null
           sem_checklist_configurado?: boolean
           service_name?: string
           service_slug?: string
@@ -10872,7 +10875,15 @@ export type Database = {
           updated_at?: string
           venda_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_solicitacoes_servico_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_status_eventos: {
         Row: {
