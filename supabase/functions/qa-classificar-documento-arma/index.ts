@@ -49,7 +49,7 @@ const TIPOS = [
   "RG_COM_CPF","CIN","CNH","CPF",
   "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
   "CTPS","HOLERITE","IDENTIDADE_FUNCIONAL","CARTAO_CNPJ","QSA","CCMEI","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
-  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
+  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_MILITAR_ESTADUAL","ANTECEDENTES_ELEITORAL",
   "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
   "COMPROVANTE_EFETIVA_NECESSIDADE","DOCUMENTO_COMPLEMENTAR",
@@ -78,7 +78,7 @@ const tool = {
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
             "CTPS=Carteira de Trabalho (física ou digital). IDENTIDADE_FUNCIONAL=carteira/cédula de identidade FUNCIONAL de servidor público, militar ou policial (PMESP, Polícia Militar, Polícia Civil, Polícia Federal, Forças Armadas), com posto/graduação, RE/matrícula, quadro e data de admissão — NUNCA classifique como RG_COM_CPF, mesmo trazendo número de RG. HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal (Comprovante de Inscrição e Situação Cadastral). QSA=Quadro de Sócios e Administradores da Receita Federal — lista sócios e participação; é documento PRÓPRIO, não confundir com cartão CNPJ nem com contrato social. CCMEI=Certificado da Condição de Microempreendedor Individual, emitido pelo Portal do Empreendedor. CONTRATO_SOCIAL=contrato ou estatuto social de empresa, ou requerimento de empresário. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
-            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
+            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão criminal da JUSTIÇA MILITAR DA UNIÃO (STM) — ramo próprio, NUNCA classificar como Justiça Federal/TRF. ANTECEDENTES_MILITAR_ESTADUAL=certidão criminal da JUSTIÇA MILITAR ESTADUAL (TJM). ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
             "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
@@ -261,7 +261,7 @@ const SYSTEM_PROMPT = [
   "  Se o corpo disser 'EXECUÇÕES CRIMINAIS' ou 'feitos de Execuções Criminais', classifique como ANTECEDENTES_ESTADUAL_EXECUCOES, mesmo que o cabeçalho diga 'Distribuições Criminais'.",
   "  Se o corpo disser 'AÇÕES CRIMINAIS', classifique como ANTECEDENTES_ESTADUAL_DISTRIBUICAO.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao, tipo_certidao, nome_documento, finalidade_certidao.",
-  "• ANTECEDENTES_MILITAR: certidão de tribunal militar (TJM, STM). Validade: 3 meses após a data de emissão.",
+  "• ANTECEDENTES_MILITAR: certidão da Justiça Militar da UNIÃO (STM). ANTECEDENTES_MILITAR_ESTADUAL: certidão da Justiça Militar ESTADUAL (TJM). Justiça Militar NÃO é Justiça Federal comum (TRF). Validade: 3 meses após a data de emissão.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_ELEITORAL: certidão de crimes eleitorais TSE ou TRE. NÃO classifique como quitação eleitoral quando o cabeçalho indicar crimes eleitorais.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, numero_documento (número do título de eleitor — campo 'Número do Título' ou 'Título de Eleitor n.'), orgao_emissor (ex.: 'TSE'), data_emissao, data_validade, resultado_certidao.",
@@ -520,6 +520,7 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("EXECUCOES") || x.includes("EXECUÇÕES")) return "ANTECEDENTES_ESTADUAL_EXECUCOES";
   if (x.includes("ACOES_CRIMINAIS") || x.includes("AÇÕES_CRIMINAIS") || x.includes("DISTRIBUICAO") || x.includes("DISTRIBUIÇÃO")) return "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
+  if (x.includes("MIL") && (x.includes("ESTADUAL") || x.includes("TJM"))) return "ANTECEDENTES_MILITAR_ESTADUAL";
   if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
   if (x.includes("NAO_INQUERITO") || x.includes("NÃO_INQUERITO")) return "DECLARACAO_NAO_INQUERITO";
@@ -896,9 +897,18 @@ Deno.serve(async (req) => {
           `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis). Sem uso de IA.`,
       };
       parsedParser = aplicarClassificacaoDeterministica(parsedParser, textoPdfNativo);
-      // O modelo aprovado prevalece sobre qualquer heurística.
-      parsedParser.tipoDetectado = modeloBiblioteca.tipo;
-      parsedParser.confianca = 0.99;
+      // O modelo aprovado NÃO prevalece sobre a leitura determinística do
+      // próprio documento: casamento por palavras-chave já confundiu certidões
+      // de famílias diferentes (STM x TRF3). Se o determinístico apontou outro
+      // tipo, ele vence e a confiança cai para revisão.
+      const deterministicoDivergeParser =
+        parsedParser.tipoDetectado && parsedParser.tipoDetectado !== modeloBiblioteca.tipo;
+      if (!deterministicoDivergeParser) {
+        parsedParser.tipoDetectado = modeloBiblioteca.tipo;
+        parsedParser.confianca = 0.99;
+      } else {
+        parsedParser.confianca = 0.8;
+      }
       parsedParser.modelo_biblioteca = {
         tipo_documento: modeloBiblioteca.tipoDocumento,
         nome_modelo: modeloBiblioteca.nomeModelo,
@@ -1000,8 +1010,7 @@ Deno.serve(async (req) => {
     }
     parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
 
-    if (modeloBiblioteca) {
-      parsed.tipoDetectado = modeloBiblioteca.tipo;
+    if (modeloBiblioteca && parsed.tipoDetectado === modeloBiblioteca.tipo) {
       parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.98);
       parsed.justificativa =
         `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
