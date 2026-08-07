@@ -263,6 +263,16 @@ export async function buscarCandidatosReaproveitamento(
     };
   }
   const escopoDestino = getDocumentoEscopo(destino);
+  // Teoria dos conjuntos: exigência exclusiva de um regime nunca é atendida
+  // por documento do outro regime (nem exibida como candidata).
+  if (!tipoCompativelComRegime(tipo, opts.regimeServico ?? null)) {
+    return {
+      candidatos: [],
+      modoReaproveitamento: "desabilitado",
+      mensagem: null,
+      validadeDias: null,
+    };
+  }
   // "processo" nunca reaproveita automaticamente (regra canônica).
   if (escopoDestino === "processo") {
     return {
