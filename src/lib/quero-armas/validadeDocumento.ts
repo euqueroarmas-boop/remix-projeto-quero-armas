@@ -99,6 +99,28 @@ export function docTemValidadeIndeterminada(doc: any): boolean {
 
 export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido" | "historico";
 
+/**
+ * Validade DECLARADA no próprio documento (lida pelo parser/IA ou gravada
+ * manualmente). Tem precedência sobre qualquer prazo do catálogo do banco:
+ * se a certidão diz "válida por 30 dias" (ou 60/90), é essa data que vale.
+ */
+export function getValidadeDeclarada(doc: DocValidadeInput): string | null {
+  const campos = (doc as any)?.ia_dados_extraidos?.camposExtraidos || {};
+  const candidatos = [
+    campos?.data_validade,
+    campos?.validade,
+    (doc as any)?.regra_validacao?.data_validade_declarada,
+    doc.data_validade,
+  ];
+  for (const c of candidatos) {
+    if (typeof c !== "string" || !c.trim()) continue;
+    if (RX_VALIDADE_INDETERMINADA.test(c)) return null;
+    const p = parseFlexibleDate(c) ?? parseISODate(c);
+    if (p) return toISO(p);
+  }
+  return null;
+}
+
 export interface ValidadeInfo {
   /** ISO yyyy-mm-dd da data de validade efetiva calculada. Null se desconhecida. */
   iso: string | null;
@@ -562,9 +584,16 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
     }
   }
 
-  // 1) Preferência: recálculo a partir da data de emissão/referência (regra oficial).
-  let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao || getDataEmissaoDocumentoHub(doc));
-  let origem: ValidadeInfo["origem"] = iso ? "regra_negocio" : "indefinido";
+  // 1) Precedência máxima: validade DECLARADA no próprio documento.
+  let iso = getValidadeDeclarada(doc);
+  let origem: ValidadeInfo["origem"] = iso ? "backend" : "indefinido";
+
+  // 1a) Sem validade declarada → prazo do catálogo do banco (fonte única),
+  //     calculado sobre a data de emissão.
+  if (!iso) {
+    iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao || getDataEmissaoDocumentoHub(doc));
+    origem = iso ? "regra_negocio" : "indefinido";
+  }
 
   // 2) Fallback: valor já gravado pelo backend.
   if (!iso) {
@@ -575,6 +604,18 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
         iso = toISO(parsed);
         origem = "backend";
       }
+    }
+  }
+
+  // 3) Último recurso: documento sem validade declarada e sem regra no
+  //    catálogo → prazo padrão de 30 dias sobre a emissão.
+  if (!iso) {
+    const emi = parseISODate(doc.data_emissao || getDataEmissaoDocumentoHub(doc) || null);
+    if (emi) {
+      const v = new Date(emi.getTime());
+      v.setUTCDate(v.getUTCDate() + 30);
+      iso = toISO(v);
+      origem = "regra_negocio";
     }
   }
 
