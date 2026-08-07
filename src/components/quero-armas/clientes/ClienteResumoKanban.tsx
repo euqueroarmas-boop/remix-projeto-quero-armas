@@ -965,14 +965,14 @@ export default function ClienteResumoKanban({
                     style={{ cursor: "pointer" }}
                     key={`${front.key}-${index}-${item.label}`}
                   >
-                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status} style={{ textDecoration: "underline" }}>{item.status}</strong>
+                    <span title={item.label}>{item.label}</span><PrazoBadge item={item} underline />
                   </div>
                 ) : (
                   <div
                     className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
                     key={`${front.key}-${index}-${item.label}`}
                   >
-                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
+                    <span title={item.label}>{item.label}</span><PrazoBadge item={item} />
                   </div>
                 )
               ))}
