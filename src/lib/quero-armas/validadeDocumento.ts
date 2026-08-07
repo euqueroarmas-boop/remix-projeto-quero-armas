@@ -99,6 +99,28 @@ export function docTemValidadeIndeterminada(doc: any): boolean {
 
 export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido" | "historico";
 
+/**
+ * Validade DECLARADA no próprio documento (lida pelo parser/IA ou gravada
+ * manualmente). Tem precedência sobre qualquer prazo do catálogo do banco:
+ * se a certidão diz "válida por 30 dias" (ou 60/90), é essa data que vale.
+ */
+export function getValidadeDeclarada(doc: DocValidadeInput): string | null {
+  const campos = (doc as any)?.ia_dados_extraidos?.camposExtraidos || {};
+  const candidatos = [
+    campos?.data_validade,
+    campos?.validade,
+    (doc as any)?.regra_validacao?.data_validade_declarada,
+    doc.data_validade,
+  ];
+  for (const c of candidatos) {
+    if (typeof c !== "string" || !c.trim()) continue;
+    if (RX_VALIDADE_INDETERMINADA.test(c)) return null;
+    const p = parseISODate(c);
+    if (p) return toISO(p);
+  }
+  return null;
+}
+
 export interface ValidadeInfo {
   /** ISO yyyy-mm-dd da data de validade efetiva calculada. Null se desconhecida. */
   iso: string | null;
