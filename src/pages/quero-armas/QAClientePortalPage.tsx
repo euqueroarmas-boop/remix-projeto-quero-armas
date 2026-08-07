@@ -2551,7 +2551,8 @@ export default function QAClientePortalPage() {
       const st = String(d?.status ?? "").toLowerCase();
       return st === "aprovado"
         || st === "dispensado_grupo"
-        || st === "dispensado_por_reaproveitamento";
+        || st === "dispensado_por_reaproveitamento"
+        || st === "nao_aplicavel";
     };
     const ehReaproveitado = (d: any) =>
       String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
