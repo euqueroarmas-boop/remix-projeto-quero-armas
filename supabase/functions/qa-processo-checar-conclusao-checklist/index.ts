@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
       .from("qa_processos")
       .update({
         status: "pronto_para_protocolar",
-        respostas_questionario_json: { ...respostas, notificacoes: novasNotificacoes },
+        respostas_questionario_json: { ...respostasProcesso, notificacoes: novasNotificacoes },
         updated_at: agora,
       })
       .eq("id", processoId)
