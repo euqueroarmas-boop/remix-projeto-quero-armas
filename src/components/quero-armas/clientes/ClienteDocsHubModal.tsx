@@ -3345,6 +3345,9 @@ export function ClienteDocsHubModal({
             if (qaClienteId) {
               await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
             }
+            // Exigências atendidas pelo documento já existente: avisa o cliente
+            // de que o processo andou, mesmo sem novo upload.
+            void notificarReaproveitamentosPendentes(qaClienteId);
             setResultadoCarimbo({
               tipo: "aprovado",
               mensagem: `${tipoLabel} — já estava no seu Hub e foi aproveitado · exigência atendida`,
