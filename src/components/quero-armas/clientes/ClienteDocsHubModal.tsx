@@ -79,10 +79,16 @@ import {
 } from "@/lib/quero-armas/documentosHubCatalogo";
 async function notificarDocumentoHubAprovado(documentoId?: string | null) {
   if (!documentoId) return;
-  const { error } = await supabase.functions.invoke("qa-documento-cliente-notificar", {
-    body: { documento_id: documentoId, status: "aprovado" },
-  });
-  if (error) throw new Error(`Falha ao notificar aprovação do documento do Hub: ${error.message}`);
+  try {
+    const { error } = await supabase.functions.invoke("qa-documento-cliente-notificar", {
+      body: { documento_id: documentoId, status: "aprovado" },
+    });
+    if (error) console.warn("Falha ao notificar aprovação do documento do Hub:", error);
+  } catch (error) {
+    // O documento já foi salvo. Uma indisponibilidade do canal de e-mail não
+    // pode transformar uma aprovação válida em aparente falha de salvamento.
+    console.warn("Falha ao notificar aprovação do documento do Hub:", error);
+  }
 }
 
 /**
