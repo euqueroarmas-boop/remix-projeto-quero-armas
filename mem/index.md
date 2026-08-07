@@ -57,3 +57,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Checklist: validade e cadastro](mem://tech/quero-armas/checklist-fonte-validade-e-cadastro) — Trigger de validade pelo catálogo + respostas derivadas do cadastro (categoria_titular, profissão)
 - [Aprovado exige arquivo](mem://tech/quero-armas/trava-aprovado-exige-arquivo) — Trava de banco: nada fica aprovado sem arquivo próprio nem reaproveitando arquivo de outro tipo
 - [Tipos sem órfãos](mem://tech/quero-armas/tipos-documento-orfaos) — qa_tipos_documento_catalogo é vocabulário fechado; perguntas usam escopo 'pergunta'
+- [Sensor Processos](mem://features/quero-armas/sensor-movimento-processos) — Verde/amarelo(7d)/vermelho(15d) por dias sem movimentação; entrega de documento zera. Rótulo de prazo sem "FALTAM" e sem bolinha.
