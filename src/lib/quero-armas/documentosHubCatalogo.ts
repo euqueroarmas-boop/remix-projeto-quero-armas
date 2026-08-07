@@ -495,6 +495,9 @@ export function getNomeDocumentoDisplay(doc: Record<string, unknown> | null | un
   // o nome canônico SEMPRE prevalece sobre o título literal extraído pela IA
   // (que costuma vir em UPPERCASE e com sufixos variáveis como "Nº 0005/2025").
   // Isso garante o mesmo padrão visual em todos os documentos do hub.
+  // Tipos com nome canônico obrigatório (renda/ocupação): o rótulo do catálogo
+  // sempre vence, inclusive sobre o título inferido do texto do documento.
+  if (meta?.label && shouldReplaceNomeCertidao(explicit || inferred || "", tipo)) return meta.label;
   if (inferred) return inferred;
   if (explicit && !shouldReplaceNomeCertidao(explicit, tipo)) return explicit;
   // `short` é a sigla para chips e badges ("CNPJ", "QSA", "END"), nunca o nome
