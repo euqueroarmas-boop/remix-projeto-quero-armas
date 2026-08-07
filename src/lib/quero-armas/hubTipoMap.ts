@@ -42,6 +42,18 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   certidao_federal_trf3_sjsp_jef: "antecedentes_federal_sjsp_jef",
   certidao_tjsp_distribuicao_criminal: "antecedentes_estadual_distribuicao",
   certidao_tjsp_execucoes_criminais: "antecedentes_estadual_execucoes",
+  // ── CERTIDÕES — LEGADO a partir do Bloco 2B (20260807230000) ────────────
+  // Os slugs de certidão do processo foram renomeados para o tipo do Hub, e
+  // exigência e documento passaram a ter o MESMO nome: o casamento é por
+  // identidade e não precisa de tradução.
+  //
+  // As entradas abaixo ficam para processos ENCERRADOS, que mantêm o slug da
+  // época — histórico não se reescreve. Elas dizem exatamente o mesmo que
+  // qa_tipo_documento_aliases, então não há divergência possível.
+  // Nenhuma delas reescreve um tipo válido do Hub em outro tipo válido, que
+  // era o padrão perigoso (rg_com_cpf→cin, JUCESP→contrato social,
+  // contra-cheque→holerite CLT).
+
   // Variantes canônicas usadas pelo qa_explodir_checklist_processo:
   certidao_antecedentes_criminais_eleitoral: "antecedentes_eleitoral",
   certidao_antecedentes_criminais_estadual: "antecedentes_estadual",

@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 2B de 7 — CERTIDÕES: o slug do processo passa a SER o tipo do Hub
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar SOMENTE depois dos Blocos 1 e 2A.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 2B de 7 — CERTIDÕES: o slug do processo passa a SER o tipo do Hub
 --
@@ -42,6 +33,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── Mapa único: slug antigo → tipo do Hub (que vira o novo slug) ────────
 CREATE TEMP TABLE _mapa_certidoes (slug_antigo text PRIMARY KEY, slug_novo text NOT NULL) ON COMMIT DROP;
