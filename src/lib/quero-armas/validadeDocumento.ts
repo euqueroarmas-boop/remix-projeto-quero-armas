@@ -115,7 +115,7 @@ export function getValidadeDeclarada(doc: DocValidadeInput): string | null {
   for (const c of candidatos) {
     if (typeof c !== "string" || !c.trim()) continue;
     if (RX_VALIDADE_INDETERMINADA.test(c)) return null;
-    const p = parseISODate(c);
+    const p = parseFlexibleDate(c) ?? parseISODate(c);
     if (p) return toISO(p);
   }
   return null;
