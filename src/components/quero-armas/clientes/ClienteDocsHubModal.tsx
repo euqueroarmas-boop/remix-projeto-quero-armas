@@ -1318,6 +1318,10 @@ export function ClienteDocsHubModal({
   substituirDocumentoId = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
+  // BLOCO 4 — fonte única de validade: catálogo do banco antes de qualquer cálculo.
+  useEffect(() => {
+    carregarCatalogoValidade();
+  }, []);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
   const [categoriaHub, setCategoriaHub] = useState<HubCategoria>(inferHubCategoriaFromTipo(defaultTipoEfetivo));
   const [file, setFile] = useState<File | null>(null);
