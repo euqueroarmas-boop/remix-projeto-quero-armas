@@ -190,7 +190,11 @@ export function isReaproveitamento(raw?: string | null): boolean {
 
 /** True quando a dispensa vem da lei/categoria do titular, não de reaproveitamento. */
 export function isDispensadoPorLei(raw?: string | null): boolean {
-  return normalizarStatusDocumento(raw) === "dispensado" && !isReaproveitamento(raw);
+  return (
+    normalizarStatusDocumento(raw) === "dispensado" &&
+    !isReaproveitamento(raw) &&
+    !isNaoSeAplica(raw)
+  );
 }
 
 /* -----------------------------------------------------------------------------
