@@ -417,6 +417,8 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
  * (90 → 45 → 30 → 15 → 7 → hoje → vencida).
  */
 export function limiarAlertaDias(tipo?: string | null): number {
+  const regra = getRegraValidade(tipo);
+  if (regra && regra.alerta_dias > 0) return regra.alerta_dias;
   if (isProcuracao(tipo)) return 90;
   return 7;
 }
@@ -427,6 +429,16 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  // 1º) Catálogo do banco (fonte única). Só cai nas regras locais quando o
+  //     tipo não está cadastrado ou o catálogo ainda não carregou.
+  const regra = getRegraValidade(tipo);
+  if (regra) {
+    if (regra.perpetuo || regra.validade_dias <= 0) return null;
+    if (regra.unidade === "meses") return toISO(addCalendarMonths(emi, regra.validade_dias));
+    const v = new Date(emi.getTime());
+    v.setUTCDate(v.getUTCDate() + regra.validade_dias);
+    return toISO(v);
+  }
   // Nota fiscal: validade perpétua — nunca calcula vencimento.
   if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
