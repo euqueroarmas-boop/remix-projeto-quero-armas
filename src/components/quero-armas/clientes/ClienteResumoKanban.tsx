@@ -1035,7 +1035,7 @@ export default function ClienteResumoKanban({
                 <div className="qa-front-card__legend" onClick={(e) => e.stopPropagation()}>
                   <span><i style={{ background: "var(--red)" }} />vencido ou até 10 dias</span>
                   <span><i style={{ background: "var(--amber)" }} />11 a 30 dias</span>
-                  <span><i style={{ background: "var(--green)" }} />mais de 30 dias</span>
+                  <span><i style={{ background: "var(--green)" }} />mais de 30 dias para vencer</span>
                 </div>
               )}
             </article>
