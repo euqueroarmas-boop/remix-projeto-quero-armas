@@ -518,6 +518,8 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
   if (x.includes("EXECUCOES") || x.includes("EXECUÇÕES")) return "ANTECEDENTES_ESTADUAL_EXECUCOES";
   if (x.includes("ACOES_CRIMINAIS") || x.includes("AÇÕES_CRIMINAIS") || x.includes("DISTRIBUICAO") || x.includes("DISTRIBUIÇÃO")) return "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
+  if (x.includes("MILITAR") && (x.includes("ESTADUAL") || x.includes("TJM"))) return "ANTECEDENTES_MILITAR_ESTADUAL";
+  if (x.includes("MILITAR") && (x.includes("UNIAO") || x.includes("STM"))) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
   if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
