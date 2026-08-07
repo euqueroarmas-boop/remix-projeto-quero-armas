@@ -54,3 +54,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Pergunta Híbrida](mem://features/quero-armas/pergunta-hibrida-documento) — `exige_documento_quando` faz a pergunta do checklist virar upload na mesma linha (laudo psicológico)
 - [Exames Instituição](mem://features/quero-armas/exames-instituicao-seguranca-publica) — Segurança pública usa laudo psicológico/tiro da própria instituição (Portaria Conjunta 1/2024, art. 3º, II) via dispensa_quando
 - [Profissão selecionável](mem://features/quero-armas/profissao-campo-selecionavel) — Profissão/estado civil sempre select, catálogo cruzado do banco, mismatch semântica preservada
+- [Checklist: validade e cadastro](mem://tech/quero-armas/checklist-fonte-validade-e-cadastro) — Trigger de validade pelo catálogo + respostas derivadas do cadastro (categoria_titular, profissão)
