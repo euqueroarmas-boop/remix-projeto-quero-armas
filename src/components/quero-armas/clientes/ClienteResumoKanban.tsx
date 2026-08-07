@@ -171,7 +171,8 @@ function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean 
   }
   const vencido = d < 0;
   const abs = Math.abs(d);
-  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "FALTAM";
+  // "FALTAM" saiu: a legenda de cores no rodapé do card já explica a leitura.
+  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "";
   const valor = d === 0 ? "HOJE" : `${abs} ${abs === 1 ? "dia" : "dias"}`;
   const titulo = vencido
     ? `Documento vencido há ${abs} ${abs === 1 ? "dia" : "dias"}`
@@ -180,9 +181,8 @@ function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean 
       : `Faltam ${abs} ${abs === 1 ? "dia" : "dias"} para vencer`;
   return (
     <strong className={`qa-prazo ${item.tone}`} title={titulo}>
-      <span className="qa-prazo__k">{kicker}</span>
+      {kicker ? <span className="qa-prazo__k">{kicker}</span> : null}
       <span className={`qa-prazo__v${underline ? " is-link" : ""}`}>
-        <i className="qa-prazo__dot" aria-hidden="true" />
         {valor}
       </span>
     </strong>
@@ -223,6 +223,33 @@ function titleCaseServico(value: string, fallback: string): string {
 function firstName(cliente: any) {
   const nome = String(cliente?.nome_completo || cliente?.nome || cliente?.name || "WILLIAN").trim();
   return (nome.split(/\s+/)[0] || "WILLIAN").toUpperCase();
+}
+
+/**
+ * SENSOR DE MOVIMENTO DOS PROCESSOS (regra global, definida em 07/08/2026 e
+ * persistida em public.qa_config):
+ *
+ *   0 a 6 dias sem movimentação   → VERDE  (processo andando normalmente)
+ *   7 a 14 dias sem movimentação  → AMARELO
+ *   15 dias ou mais               → VERMELHO
+ *
+ * Qualquer entrega de documento pelo cliente zera o contador (volta ao verde).
+ */
+export const PROCESSO_SENSOR_AMARELO_DIAS = 7;
+export const PROCESSO_SENSOR_VERMELHO_DIAS = 15;
+
+function diasDesde(value?: string | null): number | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function sensorMovimento(diasSemMovimento: number | null): FrontItem["tone"] {
+  if (diasSemMovimento === null) return "ok";
+  if (diasSemMovimento >= PROCESSO_SENSOR_VERMELHO_DIAS) return "bad";
+  if (diasSemMovimento >= PROCESSO_SENSOR_AMARELO_DIAS) return "warn";
+  return "ok";
 }
 
 function serviceProgress(item: any) {
@@ -404,8 +431,23 @@ export default function ClienteResumoKanban({
     const baseProcessoItems = activeProcessos.length
       ? [...activeProcessos, ...processosBloqueados]
       : (activeItems.length ? activeItems : processosBloqueados);
+    // Última movimentação do cliente: qualquer documento entregue (hub ou
+    // processo) zera o contador do sensor. Sem entrega, vale a última
+    // atualização do próprio processo.
+    const marcosMovimento: number[] = [];
+    for (const d of [...meusDocs, ...processoDocs]) {
+      const t = new Date(String(d?.created_at || d?.updated_at || "")).getTime();
+      if (!Number.isNaN(t)) marcosMovimento.push(t);
+    }
+    const ultimaEntregaMs = marcosMovimento.length ? Math.max(...marcosMovimento) : null;
     const processoItems = baseProcessoItems.map((item: any) => {
       const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
+      const procMs = [item?.updated_at, item?.data_ultima_atualizacao, item?.created_at]
+        .map((v) => new Date(String(v || "")).getTime())
+        .filter((t) => !Number.isNaN(t));
+      const refMs = Math.max(ultimaEntregaMs ?? 0, ...(procMs.length ? procMs : [0]));
+      const diasSemMovimento = refMs > 0 ? Math.floor((Date.now() - refMs) / 86400000) : null;
+      const toneSensor = sensorMovimento(diasSemMovimento);
       const prazo = prazosProc.find((p: any) =>
         p.id === item.id ||
         p.servicoId === item.servico_id ||
@@ -422,7 +464,7 @@ export default function ClienteResumoKanban({
         return {
           label: nomeProcesso,
           status: "Clique aqui",
-          tone: "warn" as const,
+          tone: toneSensor,
           onClick: () => {
             // Abre SEMPRE o assistente de documentação já focado neste
             // processo — é ele quem exibe o passo pendente (contrato,
@@ -432,12 +474,12 @@ export default function ClienteResumoKanban({
         };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
-        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Processo em preparação", tone: toneSensor };
       }
       if (prazo?.diasRestantes !== undefined) {
         return { label: nomeProcesso, status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
-      return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
+      return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: toneSensor };
     });
 
     // ── Documentos consolidados por FAMÍLIA ────────────────────────────
@@ -833,7 +875,7 @@ export default function ClienteResumoKanban({
         @media (max-width:768px){.qa-summary-merged__body{gap:12px}.qa-summary-merged__part:first-child{padding-right:12px}.qa-summary-merged__part .qa-client-summary-print__v{font-size:18px}.qa-summary-merged__part small{font-size:9px;margin-top:2px}}
         .qa-front-card__item strong.qa-prazo{display:flex;flex-direction:column;align-items:flex-end;gap:2px;max-width:none}
         .qa-prazo__k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:8px;font-weight:900;letter-spacing:.16em;color:#9a9a9f;line-height:1;white-space:nowrap}
-        .qa-prazo__v{display:inline-flex;align-items:center;gap:5px;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:900;line-height:1;letter-spacing:.02em;white-space:nowrap}
+        .qa-prazo__v{display:inline-flex;align-items:center;justify-content:flex-end;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:11px;font-weight:900;line-height:1.22;letter-spacing:.02em;white-space:nowrap}
         .qa-prazo__v.is-link{text-decoration:underline}
         .qa-prazo__dot{width:6px;height:6px;border-radius:999px;background:currentColor;display:inline-block;flex:0 0 auto}
         .qa-prazo.bad .qa-prazo__k{color:var(--red)}
@@ -841,7 +883,7 @@ export default function ClienteResumoKanban({
         .qa-front-card__legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid #f1f1f1;font-family:Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:0;text-transform:none;color:#9a9a9f}
         .qa-front-card__legend span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
         .qa-front-card__legend i{width:6px;height:6px;border-radius:999px;display:inline-block}
-        @media (max-width:768px){.qa-prazo__k{font-size:7.5px}.qa-prazo__v{font-size:12px}.qa-front-card__legend{font-size:8px;gap:8px}}
+        @media (max-width:768px){.qa-prazo__k{font-size:7.5px}.qa-prazo__v{font-size:11px}.qa-front-card__legend{font-size:8px;gap:8px}}
         `}</style>
       <div className="qa-client-summary-print__wrap">
         <div className="qa-client-summary-print__sticky">
