@@ -150,10 +150,10 @@ function checklistFromDocs(
         tone: "green",
       } as CockpitZ6ChecklistItem;
     if (st === "em_analise" || st === "enviado")
-      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "EM ANÁLISE", tone: "amber" } as CockpitZ6ChecklistItem;
+      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: labelStatusDocumentoCliente("em_analise"), tone: "amber" } as CockpitZ6ChecklistItem;
     if (st === "rejeitado" || st === "reprovado")
-      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "REENVIAR", tone: "red" } as CockpitZ6ChecklistItem;
-    return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: "PENDENTE", tone: "gray" } as CockpitZ6ChecklistItem;
+      return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: labelStatusDocumentoCliente("reprovado"), tone: "red" } as CockpitZ6ChecklistItem;
+    return { label: String(d.nome_documento || d.tipo_documento || "Documento").toUpperCase(), badge: labelStatusDocumentoCliente("pendente"), tone: "gray" } as CockpitZ6ChecklistItem;
   });
 }
 
