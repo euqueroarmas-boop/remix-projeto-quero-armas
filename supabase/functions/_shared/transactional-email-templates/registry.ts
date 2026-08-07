@@ -64,6 +64,7 @@ import { template as provaRecebida } from './prova-recebida.tsx'
 import { template as documentoExcluido } from './documento-excluido.tsx'
 import { template as documentoReaproveitado } from './documento-reaproveitado.tsx'
 import { template as documentoRejeitado } from './documento-rejeitado.tsx'
+import { template as documentosReaproveitados } from './documentos-reaproveitados.tsx'
 import { template as documentoStatusCliente } from './documento-status-cliente.tsx'
 import { template as correcaoCadastroAdmin } from './correcao-cadastro-admin.tsx'
 
@@ -167,6 +168,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'documento-excluido': documentoExcluido,
   'documento-reaproveitado': documentoReaproveitado,
   'documento-rejeitado': documentoRejeitado,
+  'documentos-reaproveitados': documentosReaproveitados,
   'documento-status-cliente': documentoStatusCliente,
   'correcao-cadastro-admin': correcaoCadastroAdmin,
 
