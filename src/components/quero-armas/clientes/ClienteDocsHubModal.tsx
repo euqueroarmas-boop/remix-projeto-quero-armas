@@ -700,6 +700,7 @@ function calcularConformidade(
   docsAprovados: any[],
   dataAvaliacaoDoc?: string | null,
   tipoDocumentoAtual?: string | null,
+  clienteNaturalidade?: string | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -723,11 +724,21 @@ function calcularConformidade(
   // e servem de "verdade" inicial). Comprovantes e demais docs só entram como
   // fallback quando o dado não existe no documento de identificação.
   const IDENTIDADE_PRIMARIA = new Set(["cin", "rg_com_cpf", "cnh"]);
-  // A CNH (principalmente o modelo antigo) NÃO informa naturalidade — o que
-  // aparece no documento é o local/UF de EMISSÃO. Usar isso como referência de
-  // naturalidade gera divergência falsa em toda certidão. Só documentos que
-  // realmente declaram o local de nascimento servem de referência para esse campo.
-  const SEM_NATURALIDADE_CONFIAVEL = new Set(["cnh", "comprovante_residencia"]);
+  // Naturalidade = LOCAL DE NASCIMENTO. Quase nenhum documento traz esse dado:
+  // a CNH traz o local/UF de EMISSÃO, as certidões (TSE, TJSP, TRF, STM/TJM)
+  // trazem o DOMICÍLIO ELEITORAL ou a comarca/seção judiciária. Usar qualquer um
+  // deles como referência produz divergência falsa (ex.: certidão do TSE fixando
+  // "JACAREI / SP" contra a naturalidade real "FAXINAL / PR").
+  // Por isso a regra é uma LISTA BRANCA: só documentos que efetivamente declaram
+  // o local de nascimento servem de referência para esse campo.
+  const COM_NATURALIDADE_CONFIAVEL = new Set([
+    "cin",
+    "rg_com_cpf",
+    "certidao_nascimento",
+    "certidao_casamento",
+    "passaporte",
+    "certidao_alteracao_nome",
+  ]);
   const sorted = [...docsAprovados]
     .filter(d => {
       if (NAO_SERVEM_COMO_REFERENCIA.has(d.tipo_documento)) return false;
@@ -760,7 +771,7 @@ function calcularConformidade(
     trySet("data_nascimento", c.data_nascimento);
     trySet("filiacao_mae", c.filiacao_mae);
     trySet("filiacao_pai", c.filiacao_pai);
-    if (!SEM_NATURALIDADE_CONFIAVEL.has(doc.tipo_documento)) {
+    if (COM_NATURALIDADE_CONFIAVEL.has(doc.tipo_documento)) {
       trySet("naturalidade", c.naturalidade);
     }
     trySet("sexo", c.sexo);
@@ -781,6 +792,9 @@ function calcularConformidade(
   setFromCadastro("cpf", clienteCpf);
   setFromCadastro("data_nascimento", clienteDataNascimento);
   setFromCadastro("filiacao_mae", clienteNomeMae);
+  // Naturalidade do cadastro (Central de Adesão, lida do documento de identidade)
+  // é a referência válida quando nenhum documento primário declara o nascimento.
+  setFromCadastro("naturalidade", clienteNaturalidade);
 
   const items: ConformidadeItem[] = [];
 
@@ -2596,6 +2610,7 @@ export function ClienteDocsHubModal({
         docsEfetivos,
         (campos as any).data_avaliacao || campos.data_emissao || null,
         tipoIA,
+        clienteAutoFetch.naturalidade_municipio,
       );
       setConformidade(items);
 

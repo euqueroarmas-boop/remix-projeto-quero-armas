@@ -58,3 +58,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Aprovado exige arquivo](mem://tech/quero-armas/trava-aprovado-exige-arquivo) — Trava de banco: nada fica aprovado sem arquivo próprio nem reaproveitando arquivo de outro tipo
 - [Tipos sem órfãos](mem://tech/quero-armas/tipos-documento-orfaos) — qa_tipos_documento_catalogo é vocabulário fechado; perguntas usam escopo 'pergunta'
 - [Sensor Processos](mem://features/quero-armas/sensor-movimento-processos) — Verde/amarelo(7d)/vermelho(15d) por dias sem movimentação; entrega de documento zera. Rótulo de prazo sem "FALTAM" e sem bolinha.
+- [Naturalidade Fonte](mem://features/quero-armas/naturalidade-fonte-de-verdade) — Lista branca de documentos que valem como referência de naturalidade; certidões e CNH nunca.
