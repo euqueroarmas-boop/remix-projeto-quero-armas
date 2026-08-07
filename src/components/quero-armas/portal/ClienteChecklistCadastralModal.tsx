@@ -18,8 +18,7 @@ import { createPortal } from "react-dom";
 import { Loader2, ArrowRight, Check, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CAMPOS_CADASTRO, type CampoCadastro } from "@/lib/quero-armas/cadastroCompleteness";
-
-const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+import { UFS_BR, fetchMunicipiosUF } from "@/lib/quero-armas/localidadesBr";
 
 interface Props {
   open: boolean;
@@ -94,6 +93,11 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
   // Respondidos nesta sessão — evita depender do refetch do cliente para
   // avançar de pergunta. O banco já tem o valor; isto é só a UI.
   const [respondidos, setRespondidos] = useState<Set<string>>(new Set());
+  // Respostas desta sessão. A cidade depende da UF respondida agora — sem isso
+  // seria preciso esperar o refetch do cliente para carregar a lista.
+  const [respostas, setRespostas] = useState<Record<string, string>>({});
+  const [municipios, setMunicipios] = useState<string[]>([]);
+  const [carregandoMunicipios, setCarregandoMunicipios] = useState(false);
 
   // Pendências = campos obrigatórios ainda vazios, na ordem do catálogo.
   const pendentes = useMemo<CampoCadastro[]>(() => {
@@ -104,10 +108,25 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
   }, [cliente, respondidos]);
 
   const atual = pendentes[0] ?? null;
+  const ufDependencia =
+    atual?.tipo === "municipio"
+      ? String(respostas[atual.dependeDeUf ?? ""] ?? cliente?.[atual.dependeDeUf ?? ""] ?? "").toUpperCase()
+      : "";
   const totalObrigatorios = CAMPOS_CADASTRO.filter((c) => c.crucial && !c.somenteEquipe).length;
   const jaPreenchidos = totalObrigatorios - pendentes.length;
 
   useEffect(() => { setValor(""); setErro(null); }, [atual?.key]);
+
+  // Carrega os municípios da UF escolhida (IBGE, com fallback e cache).
+  useEffect(() => {
+    let vivo = true;
+    if (atual?.tipo !== "municipio" || !ufDependencia) { setMunicipios([]); return; }
+    setCarregandoMunicipios(true);
+    fetchMunicipiosUF(ufDependencia)
+      .then((l) => { if (vivo) setMunicipios(l); })
+      .finally(() => { if (vivo) setCarregandoMunicipios(false); });
+    return () => { vivo = false; };
+  }, [atual?.tipo, ufDependencia]);
 
   // Sem pendências: o cadastro está completo, segue para o processual.
   //
@@ -153,6 +172,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
     setSalvando(false);
     if (!r.ok) { setErro(r.erro ?? "Não foi possível salvar."); return; }
     // Salvo no banco — esta pergunta não volta, mesmo que ele feche agora.
+    setRespostas((prev) => ({ ...prev, [atual.key]: paraSalvar }));
     setRespondidos((prev) => new Set(prev).add(atual.key));
   }
 
@@ -248,8 +268,36 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
                 className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-[14px] focus:border-[#7A1F2B] focus:outline-none"
               >
                 <option value="">Selecione o estado…</option>
-                {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+                {UFS_BR.map((uf) => (
+                  <option key={uf.sigla} value={uf.sigla}>{uf.sigla} — {uf.nome}</option>
+                ))}
               </select>
+            ) : atual.tipo === "municipio" ? (
+              <div>
+                <select
+                  autoFocus
+                  value={valor}
+                  disabled={!ufDependencia || carregandoMunicipios || municipios.length === 0}
+                  onChange={(e) => setValor(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-200 px-4 py-3 text-[14px] focus:border-[#7A1F2B] focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-400"
+                >
+                  <option value="">
+                    {!ufDependencia
+                      ? "Selecione antes o estado…"
+                      : carregandoMunicipios
+                        ? "Carregando cidades…"
+                        : municipios.length === 0
+                          ? "Não foi possível carregar as cidades"
+                          : "Selecione a cidade…"}
+                  </option>
+                  {municipios.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {ufDependencia && (
+                  <p className="mt-1.5 text-[11px] text-zinc-500">
+                    Cidades de {ufDependencia}, na ordem alfabética — lista oficial do IBGE.
+                  </p>
+                )}
+              </div>
             ) : (
               <input
                 autoFocus
