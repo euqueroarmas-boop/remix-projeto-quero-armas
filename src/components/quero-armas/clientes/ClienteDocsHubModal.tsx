@@ -92,6 +92,28 @@ async function notificarDocumentoHubAprovado(documentoId?: string | null) {
 }
 
 /**
+ * Cardinalidade documental: o mesmo documento válido do Hub atende exigências
+ * de vários processos. Quando o motor de reaproveitamento preenche essas
+ * exigências, elas ficam com status `dispensado_por_reaproveitamento` — que é
+ * cumprimento, e não passa por `aprovado`. Nenhum notificador antigo disparava
+ * nesse caminho, então o cliente via o processo andar sem receber nada.
+ *
+ * Esta chamada varre o que foi reaproveitado e ainda não foi comunicado e
+ * manda UM e-mail-resumo por processo (idempotente no backend).
+ */
+async function notificarReaproveitamentosPendentes(clienteId?: number | null) {
+  if (!clienteId) return;
+  try {
+    const { error } = await supabase.functions.invoke("qa-reaproveitamento-notificar", {
+      body: { cliente_id: clienteId },
+    });
+    if (error) console.warn("Falha ao notificar reaproveitamentos:", error);
+  } catch (error) {
+    console.warn("Falha ao notificar reaproveitamentos:", error);
+  }
+}
+
+/**
  * Avisa a EQUIPE — nunca o cliente — quando a conferência do laudo levantou
  * algo que só nós podemos resolver (hoje: credenciado não localizado no
  * cadastro da PF).
