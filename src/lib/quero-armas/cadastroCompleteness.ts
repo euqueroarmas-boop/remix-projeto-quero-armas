@@ -131,6 +131,19 @@ export function cadastroEstaIncompleto(cliente: any): boolean {
   return getCamposCruciaisFaltantes(cliente).length > 0;
 }
 
+/**
+ * Campos obrigatórios que o CLIENTE precisa preencher (exclui os que só a
+ * equipe altera, como e-mail/CPF). É a fonte única da pendência cadastral:
+ * enquanto sobrar item aqui, o portal não avança para o checklist do processo.
+ */
+export function getCamposObrigatoriosCliente(cliente: any): CampoCadastro[] {
+  return getCamposCruciaisFaltantes(cliente).filter((c) => !c.somenteEquipe);
+}
+
+export function cadastroObrigatorioIncompleto(cliente: any): boolean {
+  return getCamposObrigatoriosCliente(cliente).length > 0;
+}
+
 /** Percentual 0-100 de campos preenchidos (todos os campos, não só cruciais). */
 export function calcularProgressoCadastro(cliente: any): number {
   const total = CAMPOS_CADASTRO.length;
