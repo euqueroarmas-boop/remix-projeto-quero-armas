@@ -152,7 +152,33 @@ const LABELS: Record<StatusDocCanonico, string> = {
 
 /** Label UPPERCASE único para badges, carimbos e KPIs. */
 export function labelStatusDocumento(raw?: string | null): string {
-  return LABELS[normalizarStatusDocumento(raw)];
+  const status = normalizarStatusDocumento(raw);
+  if (status === "dispensado") {
+    return isReaproveitamento(raw) ? "REAPROVEITADO" : "DISPENSADO POR LEI";
+  }
+  return LABELS[status];
+}
+
+/**
+ * Dentro de "dispensado" existem duas histórias diferentes:
+ *  - reaproveitamento (o documento já existe no Hub);
+ *  - dispensa legal (a categoria do titular não exige o documento).
+ * A tela precisa dizer qual é.
+ */
+const ALIAS_REAPROVEITAMENTO = new Set([
+  "reaproveitado",
+  "hub_reaproveitado",
+  "dispensado_por_reaproveitamento",
+  "dispensado_grupo",
+]);
+
+export function isReaproveitamento(raw?: string | null): boolean {
+  return ALIAS_REAPROVEITAMENTO.has(normalizarChaveStatus(raw));
+}
+
+/** True quando a dispensa vem da lei/categoria do titular, não de reaproveitamento. */
+export function isDispensadoPorLei(raw?: string | null): boolean {
+  return normalizarStatusDocumento(raw) === "dispensado" && !isReaproveitamento(raw);
 }
 
 /* -----------------------------------------------------------------------------
@@ -173,7 +199,11 @@ const LABELS_CLIENTE: Record<StatusDocCanonico, string> = {
 
 /** Label UPPERCASE para telas do portal do cliente. */
 export function labelStatusDocumentoCliente(raw?: string | null): string {
-  return LABELS_CLIENTE[normalizarStatusDocumento(raw)];
+  const status = normalizarStatusDocumento(raw);
+  if (status === "dispensado") {
+    return isReaproveitamento(raw) ? "JÁ RESOLVIDO" : "DISPENSADO POR LEI";
+  }
+  return LABELS_CLIENTE[status];
 }
 
 const CLASSES: Record<StatusDocCanonico, string> = {
@@ -194,7 +224,7 @@ export function badgeStatusDocumento(
   const status = normalizarStatusDocumento(raw);
   return {
     status,
-    label: audiencia === "cliente" ? LABELS_CLIENTE[status] : LABELS[status],
+    label: audiencia === "cliente" ? labelStatusDocumentoCliente(raw) : labelStatusDocumento(raw),
     cls: CLASSES[status],
     cor: CORES[status],
   };
