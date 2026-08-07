@@ -38,6 +38,46 @@ export interface DocValidadeInput {
 export const RX_VALIDADE_INDETERMINADA =
   /indetermin|prazo\s+indeterminado|sem\s+prazo\s+de\s+validade|sem\s+validade|vital[ií]ci|validade\s*:?\s*permanente/i;
 
+// ─── BLOCO 4 — FONTE ÚNICA DE VALIDADE ───────────────────────────────────────
+// A tabela `public.qa_validade_documentos` é a fonte oficial dos prazos.
+// `carregarCatalogoValidade()` (catalogoValidade.ts) registra o catálogo aqui
+// e, a partir daí, TODA regra de prazo passa a sair do banco. As funções
+// `isCertidao90Dias`, `isDocumentoEmpresa30Dias` etc. continuam existindo
+// apenas como fallback para quando o catálogo ainda não carregou ou o tipo
+// não está cadastrado — nunca sobrepõem o banco.
+
+export interface RegraValidade {
+  tipo_documento: string;
+  validade_dias: number;
+  unidade: "dias" | "meses";
+  perpetuo: boolean;
+  alerta_dias: number;
+}
+
+let CATALOGO_VALIDADE: Record<string, RegraValidade> = {};
+
+export function setCatalogoValidade(regras: RegraValidade[]) {
+  const map: Record<string, RegraValidade> = {};
+  for (const r of regras) {
+    if (!r?.tipo_documento) continue;
+    map[String(r.tipo_documento).trim().toLowerCase()] = {
+      ...r,
+      unidade: r.unidade === "meses" ? "meses" : "dias",
+    };
+  }
+  CATALOGO_VALIDADE = map;
+}
+
+export function getRegraValidade(tipo?: string | null): RegraValidade | null {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  if (!t) return null;
+  return CATALOGO_VALIDADE[t] ?? null;
+}
+
+export function catalogoValidadeCarregado(): boolean {
+  return Object.keys(CATALOGO_VALIDADE).length > 0;
+}
+
 export function textoIndicaValidadeIndeterminada(...valores: unknown[]): boolean {
   return valores.some((v) => typeof v === "string" && RX_VALIDADE_INDETERMINADA.test(v));
 }
@@ -377,6 +417,8 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
  * (90 → 45 → 30 → 15 → 7 → hoje → vencida).
  */
 export function limiarAlertaDias(tipo?: string | null): number {
+  const regra = getRegraValidade(tipo);
+  if (regra && regra.alerta_dias > 0) return regra.alerta_dias;
   if (isProcuracao(tipo)) return 90;
   return 7;
 }
@@ -387,6 +429,16 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  // 1º) Catálogo do banco (fonte única). Só cai nas regras locais quando o
+  //     tipo não está cadastrado ou o catálogo ainda não carregou.
+  const regra = getRegraValidade(tipo);
+  if (regra) {
+    if (regra.perpetuo || regra.validade_dias <= 0) return null;
+    if (regra.unidade === "meses") return toISO(addCalendarMonths(emi, regra.validade_dias));
+    const v = new Date(emi.getTime());
+    v.setUTCDate(v.getUTCDate() + regra.validade_dias);
+    return toISO(v);
+  }
   // Nota fiscal: validade perpétua — nunca calcula vencimento.
   if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
@@ -468,6 +520,19 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   // 0b) Nota fiscal: validade perpétua (Ocupação Lícita). Ignora qualquer
   //     data_validade legada gravada no backend.
   if (isNotaFiscalSemVencimento(doc.tipo_documento)) {
+    return {
+      iso: null,
+      label: "Sem vencimento",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
+  // 0c) Catálogo do banco marca o tipo como perpétuo → nunca vence.
+  const regraCatalogo = getRegraValidade(doc.tipo_documento);
+  if (regraCatalogo && (regraCatalogo.perpetuo || regraCatalogo.validade_dias <= 0)) {
     return {
       iso: null,
       label: "Sem vencimento",

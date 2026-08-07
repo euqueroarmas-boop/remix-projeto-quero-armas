@@ -15,6 +15,7 @@ import {
   Boxes, PackageOpen, Download,
 } from "lucide-react";
 import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
@@ -402,6 +403,8 @@ export default function QAClientePortalPage() {
   // Carrega temas do banco e cor do rail direito
   useEffect(() => {
     let alive = true;
+    // BLOCO 4 — fonte única de validade: registra o catálogo do banco.
+    carregarCatalogoValidade();
     (async () => {
       const [{ themes: dbThemes, globalDefaultKey: gk }, railRow] = await Promise.all([
         fetchSidebarThemesFromDb(),

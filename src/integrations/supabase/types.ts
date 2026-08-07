@@ -11450,23 +11450,38 @@ export type Database = {
       }
       qa_validade_documentos: {
         Row: {
+          alerta_dias: number
+          ativo: boolean
           base_legal: string | null
           observacao: string | null
+          perpetuo: boolean
+          rotulo: string | null
           tipo_documento: string
+          unidade: string
           updated_at: string
           validade_dias: number
         }
         Insert: {
+          alerta_dias?: number
+          ativo?: boolean
           base_legal?: string | null
           observacao?: string | null
+          perpetuo?: boolean
+          rotulo?: string | null
           tipo_documento: string
+          unidade?: string
           updated_at?: string
           validade_dias: number
         }
         Update: {
+          alerta_dias?: number
+          ativo?: boolean
           base_legal?: string | null
           observacao?: string | null
+          perpetuo?: boolean
+          rotulo?: string | null
           tipo_documento?: string
+          unidade?: string
           updated_at?: string
           validade_dias?: number
         }
@@ -12734,6 +12749,10 @@ export type Database = {
           x_valido: number
           y: number
         }[]
+      }
+      qa_calcular_validade: {
+        Args: { _data_emissao: string; _tipo_documento: string }
+        Returns: string
       }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
       qa_chat_sessao_por_assunto: {
