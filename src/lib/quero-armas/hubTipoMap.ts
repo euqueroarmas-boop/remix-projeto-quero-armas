@@ -43,7 +43,10 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   certidao_estadual_segundo_grau_execucoes_criminais: "antecedentes_estadual_execucoes",
   comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
   declaracao_habitualidade_clube: "comprovante_habitualidade",
-  declaracao_compromisso_habitualidade: "comprovante_habitualidade",
+  // declaracao_compromisso_habitualidade NÃO é traduzida. É documento próprio,
+  // com finalidade própria, e tem tipo próprio no Hub — não se confunde com o
+  // comprovante de habitualidade. O banco já havia desfeito essa equivalência
+  // em 20260729010000; o frontend é que continuava juntando os dois.
   declaracao_compromisso_treino: "declaracao_correlata",
   renda_nf_empresa: "renda_nf_recente",
   // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
@@ -66,7 +69,10 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   identidade_funcional_digital: "renda_carteira_funcional",
   carteira_funcional: "renda_carteira_funcional",
   carteira_identidade_funcional: "renda_carteira_funcional",
-  contra_cheque_digital: "renda_holerite_mes_atual",
+  // Contra-cheque é o holerite do SERVIDOR PÚBLICO; holerite (mês atual) é o do
+  // CLT. São ocupações lícitas diferentes e o Hub já tem um tipo para cada.
+  // Estava apontado para o balde do CLT, jogando servidor público na caixa errada.
+  contra_cheque_digital: "renda_holerite_funcionario_publico",
   // Certidão TRF3 longa (gerada por qa_explodir_checklist_processo com
   // o nome completo da seção — mesmo documento que certidao_federal_trf3_sjsp_jef).
   certidao_federal_trf_3_regiao_abrangencia_da_secao_judiciaria_e_juizado_especial_federal_de_sao_paulo: "antecedentes_federal_sjsp_jef",
