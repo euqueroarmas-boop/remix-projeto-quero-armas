@@ -700,6 +700,7 @@ function calcularConformidade(
   docsAprovados: any[],
   dataAvaliacaoDoc?: string | null,
   tipoDocumentoAtual?: string | null,
+  clienteNaturalidade?: string | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -791,6 +792,9 @@ function calcularConformidade(
   setFromCadastro("cpf", clienteCpf);
   setFromCadastro("data_nascimento", clienteDataNascimento);
   setFromCadastro("filiacao_mae", clienteNomeMae);
+  // Naturalidade do cadastro (Central de Adesão, lida do documento de identidade)
+  // é a referência válida quando nenhum documento primário declara o nascimento.
+  setFromCadastro("naturalidade", clienteNaturalidade);
 
   const items: ConformidadeItem[] = [];
 
@@ -2606,6 +2610,7 @@ export function ClienteDocsHubModal({
         docsEfetivos,
         (campos as any).data_avaliacao || campos.data_emissao || null,
         tipoIA,
+        clienteAutoFetch.naturalidade_municipio,
       );
       setConformidade(items);
 
