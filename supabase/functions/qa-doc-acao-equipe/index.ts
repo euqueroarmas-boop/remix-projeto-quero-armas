@@ -224,6 +224,9 @@ Deno.serve(async (req) => {
         if (doc.usado_como_modelo) {
           return json({ error: "Documento já usado como modelo." }, 409);
         }
+        if (!String(doc.arquivo_storage_key ?? "").trim()) {
+          return json({ error: "Não é possível aprovar sem arquivo anexado." }, 400);
+        }
         // 1) Aprova primeiro (idempotente)
         if (doc.status !== "aprovado") {
           await supabase.from("qa_processo_documentos").update({
