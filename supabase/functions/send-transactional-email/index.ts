@@ -293,6 +293,16 @@ Deno.serve(async (req) => {
       ? template.subject(templateData)
       : template.subject
 
+  // O envio final passa o assunto por um header HTTP (ByteString). Caracteres
+  // tipográficos acima de U+00FF (travessão, aspas curvas, reticências) quebram
+  // o fetch no Deno. Normaliza aqui, na origem, além do saneamento no worker.
+  const headerSafeSubject = String(resolvedSubject ?? '')
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/[^\u0009\u0020-\u00FF]/g, '')
+
   // 5. Enqueue the pre-rendered email for async processing by the dispatcher.
   // The dispatcher (process-email-queue) handles sending, retries, and rate-limit backoff.
 
@@ -332,7 +342,7 @@ Deno.serve(async (req) => {
       to: effectiveRecipient,
       from: `${SITE_NAME} <${FROM_LOCAL_PART}@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: resolvedSubject,
+      subject: headerSafeSubject,
       html,
       text: plainText,
       purpose: 'transactional',
