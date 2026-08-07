@@ -26,6 +26,8 @@ interface ClienteFormModalProps {
   cliente?: any;
 }
 
+import { profissaoOptionsCom } from "@/lib/quero-armas/profissoesCatalogo";
+
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RS","SC","SE","SP","TO"];
 const SEXO_OPTIONS = [
@@ -35,7 +37,6 @@ const SEXO_OPTIONS = [
 ];
 
 const estadoCivilOptions = ESTADOS_CIVIS.map(e => ({ value: e, label: e }));
-const profissaoOptionsBase = PROFISSAO_OPTIONS;
 const ufOptions = UFS.map(u => ({ value: u, label: u }));
 const statusOptions = [
   { value: "ATIVO", label: "Ativo" },
