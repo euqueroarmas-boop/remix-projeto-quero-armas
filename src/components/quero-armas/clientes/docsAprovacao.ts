@@ -9,6 +9,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
+import { badgeStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 
 export type DocStatus =
   | "pendente_aprovacao"
@@ -161,20 +162,12 @@ export async function excluirDocumentoLogico(docId: string) {
   void auditarStatusDoc({ docId, prev, novo: "excluido", origem: "equipe", contexto: "excluirDocumentoLogico" });
 }
 
-/** Label PT-BR + classes Tailwind para badges de status. */
+/**
+ * BLOCO 5 — Label + classes vêm do dicionário canônico (statusDocumento.ts).
+ * Nada de vocabulário próprio nesta camada.
+ */
 export function statusBadge(status: DocStatus | string | null | undefined) {
-  switch (status) {
-    case "aprovado":
-      return { label: "APROVADO", cls: "bg-emerald-100 text-emerald-700 border-emerald-300" };
-    case "reprovado":
-      return { label: "REPROVADO", cls: "bg-red-100 text-red-700 border-red-300" };
-    case "pendente_aprovacao":
-      return { label: "AGUARDANDO ANÁLISE", cls: "bg-amber-100 text-amber-700 border-amber-300" };
-    case "substituido":
-      return { label: "SUBSTITUÍDO", cls: "bg-slate-100 text-slate-600 border-slate-300" };
-    case "excluido":
-      return { label: "EXCLUÍDO", cls: "bg-slate-200 text-slate-500 border-slate-300" };
-    default:
-      return { label: "—", cls: "bg-slate-100 text-slate-600 border-slate-300" };
-  }
+  if (!status) return { label: "—", cls: "bg-slate-100 text-slate-600 border-slate-300" };
+  const b = badgeStatusDocumento(status);
+  return { label: b.label, cls: b.cls };
 }
