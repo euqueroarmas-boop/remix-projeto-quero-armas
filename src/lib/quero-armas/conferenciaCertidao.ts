@@ -27,6 +27,7 @@
  * ============================================================================= */
 
 import type { CamposCertidao, OrgaoCertidao } from "./parsersCertidoes";
+import { SIGLAS_UF } from "./localidadesBr";
 
 export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente";
 
