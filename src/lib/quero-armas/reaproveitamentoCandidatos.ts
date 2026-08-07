@@ -19,6 +19,11 @@ import {
   type EscopoDocumento,
   type DocEscopavel,
 } from "./documentoEscopo";
+import {
+  getRegimeDocumento,
+  tipoCompativelComRegime,
+  type RegimeDocumento,
+} from "./regimeDocumento";
 
 export interface DestinoReaproveitavel extends DocEscopavel {
   id: string;
@@ -92,6 +97,11 @@ export interface BuscarCandidatosOpts {
   servicoId?: number | null;
   /** evita propor o próprio doc como candidato a si mesmo */
   excluirIds?: string[];
+  /**
+   * Regime do processo de destino ("defesa_pessoal" | "cac"). Documentos da
+   * interseção (regime "comum") atravessam a fronteira; exclusivos, não.
+   */
+  regimeServico?: RegimeDocumento | null;
   /** arma atualmente selecionada no fluxo, para casar docs do hub com segurança */
   armaSelecionada?: {
     arma_uid: string;
