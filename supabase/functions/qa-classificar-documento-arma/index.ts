@@ -443,7 +443,10 @@ async function buscarModeloBiblioteca(
       const cobertura = encontradas / palavras.length;
 
       // Exige vários sinais simultâneos para uma palavra genérica não dominar.
-      if (encontradas < 8 || cobertura < 0.35) continue;
+      // Limiar endurecido: 8 palavras / 35% de cobertura era fraco demais e
+      // fazia certidões diferentes (STM x TRF3) casarem com o mesmo modelo,
+      // recebendo confiança 0,99 por bag-of-words.
+      if (encontradas < 12 || cobertura < 0.6) continue;
       if (!melhor || cobertura > melhor.cobertura ||
           (cobertura === melhor.cobertura && encontradas > melhor.palavrasEncontradas)) {
         melhor = {
