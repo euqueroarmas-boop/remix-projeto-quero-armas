@@ -661,6 +661,11 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
       ? { ainda_reside_imovel: "sim" }
       : {}),
   };
+  // O cadastro do cliente é fonte derivada de resposta: categoria do titular e
+  // profissão já gravadas não podem voltar a ser perguntadas no checklist, e
+  // regras condicionadas à categoria (ex.: exames da instituição) precisam
+  // enxergar esse valor. Nunca sobrescreve resposta dada no processo.
+  const respostasComCadastro = mesclarRespostasCadastro(respostasEfetivas, cli as any);
 
   // Busca contrato pendente de assinatura do cliente para este processo.
   // Contrato "pendente" = existe, mas o cliente ainda não enviou o arquivo assinado.
@@ -710,7 +715,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   return {
     processo,
     docs: docsComOrdem as GuiaDoc[],
-    respostas: respostasEfetivas,
+    respostas: respostasComCadastro,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
     sugestaoCondicao: sugerirCondicaoDoCliente(cli as any),
