@@ -123,12 +123,26 @@ const HUB_TIPOS_VALIDOS = new Set([
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_ccmei","renda_qsa",
   "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
+  // Faltava aqui, e o efeito era pior do que parece: em 20260807160000 eu tirei
+  // a tradução `renda_ficha_cadastral_jucesp -> renda_contrato_social` dizendo
+  // que passaria a casar por identidade, sem conferir se o tipo constava desta
+  // lista. Não constava — então o documento deixava de ser gravado com tipo
+  // errado e passava a ser gravado como "outro", sem tipo nenhum.
+  "renda_ficha_cadastral_jucesp",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
   "antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
   "antecedentes_estadual_distribuicao","antecedentes_estadual_execucoes",
   "declaracao_sem_inquerito_processo_criminal","declaracao_guarda_responsavel",
   "declaracao_correlata","declaracao_guarda_acervo_1endereco",
+  // Cinco tipos que o CHECK do banco aceita e esta lista não conhecia. O
+  // documento chegava, era rebaixado para "outro" e perdia o tipo — mesmo
+  // efeito da JUCESP, sem erro nenhum para denunciar.
+  // `declaracao_nao_possuir_segundo_endereco` sequer existe em migration
+  // alguma do repositório: entrou no banco por fora.
+  "declaracao_guarda_acervo_2enderecos","declaracao_endereco_acervo",
+  "dsa_declaracao_seguranca_acervo","declaracao_nao_possuir_segundo_endereco",
+  "declaracao_homonimia",
   "laudo_psicologico","laudo_capacidade_tecnica",
   "comprovante_efetiva_necessidade","documento_complementar_caso",
   "comprovante_habitualidade","comprovante_clube_tiro","comprovante_competicao",
