@@ -659,6 +659,44 @@ function cpfComDigitosVerificadores(valor: unknown): string {
   return `${base}${d1}${d2}`;
 }
 
+/**
+ * Identifica, SÓ pelo texto do documento, se a certidão é da Justiça Militar —
+ * e de qual ramo. União (STM) e Estadual (TJM) são documentos distintos,
+ * exigidos em slots distintos pela PF.
+ */
+function detectarCertidaoMilitar(
+  textoPdf: string,
+): { tipo: Tipo; nomeDocumento: string; orgao: string; justificativa: string } | null {
+  const t = normalizarTexto(textoPdf || "");
+  if (!t) return null;
+
+  const uniao =
+    /JUSTICA MILITAR DA UNIAO|SUPERIOR TRIBUNAL MILITAR|\bSTM\b|WWW\.STM\.JUS\.BR/.test(t);
+  const estadual =
+    /TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL|\bTJM\b|\bTJME\b|WWW\.TJM/.test(t);
+
+  if (uniao) {
+    return {
+      tipo: "ANTECEDENTES_MILITAR",
+      nomeDocumento: "Certidão Criminal Militar — Justiça Militar da União (STM)",
+      orgao: "Superior Tribunal Militar",
+      justificativa:
+        "Classificação determinística pelo texto do documento: Justiça Militar da União / Superior Tribunal Militar (STM). " +
+        "A Justiça Militar da União é ramo próprio do Judiciário — não é Justiça Federal comum (TRF).",
+    };
+  }
+  if (estadual) {
+    return {
+      tipo: "ANTECEDENTES_MILITAR_ESTADUAL",
+      nomeDocumento: "Certidão Criminal Militar — Justiça Militar Estadual (TJM)",
+      orgao: "Tribunal de Justiça Militar do Estado",
+      justificativa:
+        "Classificação determinística pelo texto do documento: Tribunal de Justiça Militar ESTADUAL (TJM).",
+    };
+  }
+  return null;
+}
+
 function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any {
   const campos = parsed.camposExtraidos && typeof parsed.camposExtraidos === "object" ? parsed.camposExtraidos : {};
   parsed.camposExtraidos = campos;
