@@ -1752,7 +1752,9 @@ export function ClienteDocsHubModal({
     // dispensamos a exigência do processo e mostramos sucesso — o cliente
     // não precisa fazer nada, o documento já está válido no Hub.
     if (motivoRejeicao === "duplicidade" && qaClienteId) {
-      supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId }).catch(() => {});
+      void Promise.resolve(
+        supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId }),
+      ).catch(() => {});
       const label = duplicidadeLabelCurto || "Documento";
       setResultadoCarimbo({ tipo: "aprovado", mensagem: `${label} já aprovado no Hub · exigência atendida` });
       return;
