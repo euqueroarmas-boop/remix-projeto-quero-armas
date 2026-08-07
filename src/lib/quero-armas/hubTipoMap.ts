@@ -52,7 +52,11 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   renda_cnpj_autonomo: "renda_ccmei",
   ccmei: "renda_ccmei",
   certificado_mei: "renda_ccmei",
-  renda_ficha_cadastral_jucesp: "renda_contrato_social",
+  // renda_ficha_cadastral_jucesp NÃO é traduzida: virou tipo próprio do Hub
+  // em 20260731100000. Rebaixá-la para renda_contrato_social gravava o
+  // documento sob outro tipo e o slot do processo — que pede
+  // `renda_ficha_cadastral_jucesp` — nunca era satisfeito, porque não existe
+  // apelido ligando os dois. Sem entrada aqui, o match é por identidade.
   // Documentos funcionais de servidor/militar: o Hub já tem o slot
   // "Carteira funcional (servidor público)". Antes a identidade funcional caía
   // em "outro"/"documento complementar" e a leitura acabava classificando o
