@@ -63,7 +63,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import ClienteChecklistCadastralModal from "@/components/quero-armas/portal/ClienteChecklistCadastralModal";
 import { CAMPOS_CADASTRO } from "@/lib/quero-armas/cadastroCompleteness";
-import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
+import { cadastroEstaIncompleto, resumoFaltantesCadastro, getCamposObrigatoriosCliente } from "@/lib/quero-armas/cadastroCompleteness";
 import { EntradaWizardPagina, type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
 import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
@@ -2916,22 +2916,6 @@ export default function QAClientePortalPage() {
     showChecklistCadastral,
     revisarChecklistsSilenciosamente,
   ]);
-
-  // ── Ordem do portal: assinaturas → cadastro → checklist do processo ───────
-  // Contrato e procuração aparecem juntos na fila e o cliente resolve um a um.
-  // O cadastro só entra depois das duas: os dados para elaborar contrato e
-  // procuração já vieram do fechamento da venda, então não há por que travar
-  // a assinatura esperando cadastro completo.
-  // Fonte única da verdade da 2ª prioridade: cadastro crucial incompleto.
-  const cadastroCrucialIncompleto = useMemo(() => {
-    if (!cliente) return false;
-    return CAMPOS_CADASTRO.some(
-      (c) =>
-        c.crucial &&
-        !c.somenteEquipe &&
-        String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
-    );
-  }, [cliente]);
 
   useEffect(() => {
     if (mustChangePassword) return;
