@@ -154,6 +154,7 @@ const LABELS: Record<StatusDocCanonico, string> = {
 export function labelStatusDocumento(raw?: string | null): string {
   const status = normalizarStatusDocumento(raw);
   if (status === "dispensado") {
+    if (isNaoSeAplica(raw)) return "NÃO SE APLICA";
     return isReaproveitamento(raw) ? "REAPROVEITADO" : "DISPENSADO POR LEI";
   }
   return LABELS[status];
@@ -212,6 +213,7 @@ const LABELS_CLIENTE: Record<StatusDocCanonico, string> = {
 export function labelStatusDocumentoCliente(raw?: string | null): string {
   const status = normalizarStatusDocumento(raw);
   if (status === "dispensado") {
+    if (isNaoSeAplica(raw)) return "NÃO SE APLICA";
     return isReaproveitamento(raw) ? "JÁ RESOLVIDO" : "DISPENSADO POR LEI";
   }
   return LABELS_CLIENTE[status];
