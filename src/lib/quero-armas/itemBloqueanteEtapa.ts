@@ -31,20 +31,9 @@ export interface ContextoBloqueio {
   docsDoProcesso?: ItemDoc[];
 }
 
-const STATUS_CUMPRIDO = new Set([
-  "aprovado",
-  "validado",
-  "concluido",
-  "concluído",
-  "dispensado",
-  "dispensado_grupo",
-  "dispensado_por_reaproveitamento",
-  "nao_aplicavel",
-  "hub_reaproveitado",
-]);
-
 export function isStatusCumprido(status: string | null | undefined): boolean {
-  return STATUS_CUMPRIDO.has(String(status ?? "").trim().toLowerCase());
+  // Bloco 2 — dicionário canônico único (statusDocumento.ts).
+  return isDocCumprido(status);
 }
 
 export function isPerguntaPivot(doc: ItemDoc): boolean {

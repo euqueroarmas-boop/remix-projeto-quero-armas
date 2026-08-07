@@ -53,6 +53,7 @@ const ALIAS_STATUS_DOC: Record<string, StatusDocCanonico> = {
   dispensado_por_reaproveitamento: "dispensado",
   nao_aplicavel: "dispensado",
   reaproveitado: "dispensado",
+  hub_reaproveitado: "dispensado",
 
   // ── em análise ────────────────────────────────────────────────────────────
   em_analise: "em_analise",

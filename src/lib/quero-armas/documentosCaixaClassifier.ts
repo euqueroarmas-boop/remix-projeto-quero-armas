@@ -120,15 +120,6 @@ function itemVisivel(doc: DocClassificavel, respostas: Record<string, any>): boo
   return true;
 }
 
-const STATUS_CUMPRIDO = new Set([
-  "aprovado", "validado", "concluido", "concluído",
-  "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento", "nao_aplicavel",
-]);
-const STATUS_EM_ANALISE = new Set([
-  "em_analise", "enviado", "fila", "processando",
-  "revisao_humana", "em_revisao_humana", "pendente_aprovacao", "aguardando_equipe",
-]);
-
 function ehReutilizadoHub(doc: DocClassificavel): boolean {
   const s = String(doc?.status ?? "").toLowerCase();
   if (s === "dispensado_por_reaproveitamento") return true;
@@ -156,10 +147,10 @@ export function contarPorCaixaComStatus(
     const b = out.porCaixa[c];
     b.total++;
     if (!itemVisivel(d, respostas)) { b.ocultos++; continue; }
-    const s = String(d?.status ?? "").toLowerCase();
     if (ehReutilizadoHub(d)) { b.resolvidos++; b.reutilizados_hub++; continue; }
-    if (STATUS_CUMPRIDO.has(s)) { b.resolvidos++; continue; }
-    if (STATUS_EM_ANALISE.has(s)) { b.em_analise++; continue; }
+    // Bloco 2 — dicionário canônico único (statusDocumento.ts).
+    if (isDocCumprido(d?.status)) { b.resolvidos++; continue; }
+    if (isDocEmAnalise(d?.status)) { b.em_analise++; continue; }
     b.pendentes++;
   }
   return out;
