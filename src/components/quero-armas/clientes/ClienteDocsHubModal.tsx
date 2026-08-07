@@ -150,6 +150,7 @@ const IA_TO_TIPO: Record<string, string> = {
   ANTECEDENTES_ESTADUAL_DISTRIBUICAO: "antecedentes_estadual_distribuicao",
   ANTECEDENTES_ESTADUAL_EXECUCOES: "antecedentes_estadual_execucoes",
   ANTECEDENTES_MILITAR: "antecedentes_militar",
+  ANTECEDENTES_MILITAR_ESTADUAL: "antecedentes_militar_estadual",
   ANTECEDENTES_ELEITORAL: "antecedentes_eleitoral",
   // Declarações
   DECLARACAO_NAO_INQUERITO: "declaracao_sem_inquerito_processo_criminal",
@@ -291,14 +292,40 @@ function buildDocumentoHaystack(input: {
     input.orgaoEmissor,
     input.numeroDocumento,
     input.classificacao?.tipoDetectado,
-    input.classificacao?.justificativa,
     input.classificacao?.camposExtraidos,
     input.campos,
   ]);
   return normalizeStr(parts.join(" "));
 }
 
+/**
+ * JUSTIÇA MILITAR ≠ JUSTIÇA FEDERAL COMUM.
+ * A Justiça Militar da União (STM) e a Justiça Militar Estadual (TJM) são
+ * ramos próprios do Judiciário. Suas certidões citam "Justiça Federal"?
+ * Não — mas citam "União", "Militar" e "Tribunal", o que fazia a heurística
+ * federal capturá-las por engano. Este detector roda ANTES da federal e tem
+ * precedência absoluta.
+ */
+function detectaCertidaoMilitar(hay: string): "antecedentes_militar" | "antecedentes_militar_estadual" | null {
+  const ehMilitar =
+    /JUSTICA MILITAR|TRIBUNAL MILITAR|AUDITORIA MILITAR|ACOES PENAIS MILITARES|CRIMES MILITARES|\bSTM\b|\bTJM\b/.test(hay);
+  if (!ehMilitar) return null;
+  const ehUniao =
+    /JUSTICA MILITAR DA UNIAO|SUPERIOR TRIBUNAL MILITAR|\bSTM\b/.test(hay);
+  const ehEstadual =
+    /JUSTICA MILITAR ESTADUAL|JUSTICA MILITAR DO ESTADO|TRIBUNAL DE JUSTICA MILITAR|\bTJM\b/.test(hay);
+  if (ehUniao && !ehEstadual) return "antecedentes_militar";
+  if (ehEstadual && !ehUniao) return "antecedentes_militar_estadual";
+  // Ambos os sinais (ou nenhum discriminante): a União prevalece só quando o
+  // texto nomeia o STM explicitamente; caso contrário deixa como está para o
+  // operador decidir, em vez de chutar o slot errado.
+  if (ehUniao && /SUPERIOR TRIBUNAL MILITAR|JUSTICA MILITAR DA UNIAO/.test(hay)) return "antecedentes_militar";
+  return null;
+}
+
 function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_regional" | "antecedentes_federal_sjsp_jef" | "antecedentes_federal" | null {
+  // Certidão militar nunca é certidão da Justiça Federal comum.
+  if (detectaCertidaoMilitar(hay)) return null;
   const isCertidaoFederal =
     /\bTRF\b|\bTRF3\b|TRIBUNAL REGIONAL FEDERAL|JUSTICA FEDERAL|SECAO JUDICIARIA|JEF/.test(hay);
   if (!isCertidaoFederal) return null;
@@ -322,6 +349,11 @@ function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(hay) &&
     /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(hay);
   if (contaConsumoImovel) return "comprovante_residencia";
+
+  // Militar tem precedência: STM e TJM ocupam slots próprios e não podem ser
+  // absorvidos pela heurística de certidão federal.
+  const subtipoMilitar = detectaCertidaoMilitar(hay);
+  if (subtipoMilitar) return subtipoMilitar;
 
   if (tipoAtual === "antecedentes_estadual") {
     if (/EXECU|1448406/.test(hay)) return "antecedentes_estadual_execucoes";
@@ -1586,11 +1618,15 @@ export function ClienteDocsHubModal({
     pendingSet.has(form.tipo_documento)
   );
   // Cliente mandou algo que não é pedido em lugar nenhum do processo.
+  // FAIL-CLOSED: se a lista de pendências não chegou (`pendingHubTipos` vazio),
+  // NÃO se pode presumir que o documento cobre outra exigência. Antes esta
+  // condição exigia `pendingSet.size > 0` e, como nenhum call site passava a
+  // prop, a trava ficava permanentemente desligada — o aviso "documento
+  // divergente" aparecia na tela e o SALVAR continuava habilitado.
   const certidaoIncorreta = !!(
     tipoDivergenteExigencia &&
     form.tipo_documento &&
-    pendingSet.size > 0 &&
-    !pendingSet.has(form.tipo_documento)
+    !cobreOutraPendencia
   );
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na

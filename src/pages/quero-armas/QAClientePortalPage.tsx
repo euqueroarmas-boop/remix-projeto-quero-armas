@@ -4529,6 +4529,10 @@ export default function QAClientePortalPage() {
           clienteDataNascimento={cliente?.data_nascimento || null}
           clienteNomeMae={cliente?.nome_mae || null}
           docsAprovados={meusDocs.filter((d: any) => d.status === "aprovado")}
+          pendingHubTipos={pendenciasGuiadas
+            .filter((p: any) => p.kind === "documento")
+            .map((p: any) => String(p.tipo || ""))
+            .filter(Boolean)}
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
