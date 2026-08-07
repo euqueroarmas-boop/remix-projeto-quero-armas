@@ -4,14 +4,32 @@
  * REPROVADO, porém em escala reduzida e sem estourar a tela.
  */
 import { AlertTriangle, Check, Clock } from "lucide-react";
+import { corStatusDocumento, labelStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 
 export type DocResultadoTipo = "aprovado" | "analise" | "reprovado";
 
-const CORES: Record<DocResultadoTipo, { cor: string; bg: string; titulo: string; sub: string }> = {
-  aprovado: { cor: "#15803D", bg: "rgba(21,128,61,0.10)", titulo: "APROVADO", sub: "PARABÉNS · VAMOS PARA A PRÓXIMA EXIGÊNCIA" },
-  analise: { cor: "#B45309", bg: "rgba(180,83,9,0.10)", titulo: "EM ANÁLISE", sub: "SERÁ ANALISADO PELO NOSSO TIME" },
-  reprovado: { cor: "#B91C1C", bg: "rgba(185,28,28,0.10)", titulo: "REPROVADO", sub: "NÃO PODE SER ACEITO" },
+/** BLOCO 5 — título e cor vêm do dicionário canônico; aqui só o subtítulo. */
+const CANONICO: Record<DocResultadoTipo, string> = {
+  aprovado: "aprovado",
+  analise: "em_analise",
+  reprovado: "reprovado",
 };
+const SUBTITULOS: Record<DocResultadoTipo, string> = {
+  aprovado: "PARABÉNS · VAMOS PARA A PRÓXIMA EXIGÊNCIA",
+  analise: "SERÁ ANALISADO PELO NOSSO TIME",
+  reprovado: "NÃO PODE SER ACEITO",
+};
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const n = parseInt(h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+const CORES: Record<DocResultadoTipo, { cor: string; bg: string; titulo: string; sub: string }> =
+  (Object.keys(CANONICO) as DocResultadoTipo[]).reduce((acc, tipo) => {
+    const cor = corStatusDocumento(CANONICO[tipo]);
+    acc[tipo] = { cor, bg: hexToRgba(cor, 0.1), titulo: labelStatusDocumento(CANONICO[tipo]), sub: SUBTITULOS[tipo] };
+    return acc;
+  }, {} as Record<DocResultadoTipo, { cor: string; bg: string; titulo: string; sub: string }>);
 
 function quebrarMensagem(msg: string): string[] {
   if (!msg) return [];

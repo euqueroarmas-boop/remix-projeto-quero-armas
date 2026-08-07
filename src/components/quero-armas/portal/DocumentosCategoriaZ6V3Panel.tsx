@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -584,20 +585,22 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                   ehResidencia && titular ? `titular ${titular}` : null,
                   dataEmissao ? `emitido ${formatDate(dataEmissao)}` : null,
                 ].filter(Boolean).join(" · ") || "emitido recente";
-                const pillCls = d.status === "aprovado" ? "pill pill-aprov" : d.status === "reprovado" ? "pill pill-repr" : "pill pill-pend";
+                const statusCanon = normalizarStatusDocumento(d.status);
+                const pillCls =
+                  statusCanon === "aprovado" || statusCanon === "dispensado"
+                    ? "pill pill-aprov"
+                    : statusCanon === "reprovado" || statusCanon === "vencido"
+                      ? "pill pill-repr"
+                      : "pill pill-pend";
                 // Comprovante em nome de terceiro não está "em análise": ele
                 // aguarda a Declaração do Responsável pelo Imóvel assinada.
                 const aguardaDeclaracao =
                   d.status !== "aprovado" &&
                   d.status !== "reprovado" &&
                   Boolean((d as any)?.ia_dados_extraidos?.aguardando_declaracao_responsavel);
-                const pillTxt = d.status === "aprovado"
-                  ? "APROVADO"
-                  : d.status === "reprovado"
-                    ? "REPROVADO"
-                    : aguardaDeclaracao
-                      ? "AGUARDANDO ASSINATURA DO RESPONSÁVEL DO IMÓVEL"
-                      : "EM ANÁLISE";
+                const pillTxt = aguardaDeclaracao
+                  ? "AGUARDANDO ASSINATURA DO RESPONSÁVEL DO IMÓVEL"
+                  : labelStatusDocumentoCliente(d.status);
                 const temArquivo = Boolean(d.arquivo_storage_path);
                 return (
                   <div className="row" key={d.id}>
