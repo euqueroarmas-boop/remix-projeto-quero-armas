@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 2C de 7 — CERTIDÕES: o "segundo grau" deixa de ser exigência
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois dos Blocos 1, 2A e 2B.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 2C de 7 — CERTIDÕES: o "segundo grau" deixa de ser exigência
 --
@@ -37,6 +28,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── 1) Some do catálogo — nenhum checklist novo volta a pedir ───────────
 UPDATE public.qa_servicos_documentos

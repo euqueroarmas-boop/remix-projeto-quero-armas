@@ -378,18 +378,16 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
     ],
     observacao: "Validade de 30 dias a partir da emissão (o próprio documento não declara prazo — regra Quero Armas). Diferente da certidão de Distribuição — o que muda no e-SAJ é o campo \"Modelo\": aqui use \"Certidão de Execução Criminal\". Não existe campo \"Foro\" nesse fluxo. Se enviar o modelo errado, a IA reprova.",
   },
-  certidao_estadual_segundo_grau_acoes_criminais: {
-    titulo: "Estadual — Segundo grau, ações criminais",
-    passos: [
-      "Emita a certidão de segundo grau (Tribunal) para ações criminais.",
-    ],
-  },
-  certidao_estadual_segundo_grau_execucoes_criminais: {
-    titulo: "Estadual — Segundo grau, execuções criminais",
-    passos: [
-      "Emita a certidão de segundo grau (Tribunal) para execuções criminais.",
-    ],
-  },
+  // As instruções de "segundo grau" foram removidas em 20260807240000.
+  // A PF não exige essa certidão — os códigos certidao_estadual_segundo_grau_*
+  // nasceram de premissa errada e já haviam sido eliminados em 22/07/2026
+  // (ver o cabeçalho de certidoesAbrangencia.ts). O que sobrava aqui era o
+  // último lugar que ainda mandava o cliente EMITIR o documento: se algum
+  // checklist antigo exibisse o slot, ele lia "Emita a certidão de segundo
+  // grau" e ia atrás de um papel que ninguém confere.
+  //
+  // Os apelidos no banco permanecem de propósito, para que exigência de
+  // checklist antigo feche sozinha em vez de ficar órfã.
   certidao_federal_trf3_regional: {
     titulo: "Tribunal Regional Federal — TRF 3ª Região",
     passos: [
