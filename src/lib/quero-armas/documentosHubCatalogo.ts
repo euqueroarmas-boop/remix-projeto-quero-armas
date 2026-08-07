@@ -121,9 +121,9 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "declaracao_responsavel_imovel", label: "Declaração do responsável pelo imóvel", short: "DECL. IMÓVEL", categoria: "endereco", escopo: "permanente" },
   { value: "documento_identificacao_terceiro", label: "Identificação do titular do comprovante (terceiro)", short: "ID TERCEIRO", categoria: "endereco", escopo: "permanente", aceitaIA: true },
   { value: "ctps", label: "Carteira de Trabalho (CTPS)", short: "CTPS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
-  { value: "renda_holerite_mes_atual", label: "Holerite mais recente", short: "HOLERITE", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "renda_holerite_funcionario_publico", label: "Holerite recente (servidor público)", short: "HOL. SERVIDOR", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "renda_carteira_funcional", label: "Carteira funcional (servidor público)", short: "CART. FUNCIONAL", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_holerite_mes_atual", label: "Demonstrativo de Pagamento — Contracheque", short: "HOLERITE", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_holerite_funcionario_publico", label: "Demonstrativo de Pagamento — Contracheque (servidor público)", short: "HOL. SERVIDOR", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_carteira_funcional", label: "Identidade Funcional", short: "IDENT. FUNCIONAL", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_cartao_cnpj", label: "Comprovante de Inscrição e de Situação Cadastral do CNPJ", short: "CNPJ", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_qsa", label: "QSA — Quadro de Sócios e Administradores", short: "QSA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_contrato_social", label: "Contrato Social / Requerimento de Empresário", short: "CONTRATO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
@@ -435,6 +435,12 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
 
 function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | undefined): boolean {
   const tipo = String(tipoDocumento || "").trim().toLowerCase();
+  // Renda / ocupação: o título literal impresso no documento varia por órgão e
+  // é ilegível para o cliente ("FÉ PÚBLICA DECRETO 14.298 DE 21/11/79 POLÍCIA
+  // MILITAR DO ESTADO DE SÃO PAULO"). Nesses tipos o nome canônico do catálogo
+  // sempre prevalece — o cliente precisa reconhecer o que enviou, não decorar o
+  // cabeçalho do emissor.
+  if (tipo === "renda_carteira_funcional" || tipo.startsWith("renda_holerite")) return true;
   const elegivelInferencia =
     tipo.startsWith("antecedentes_") ||
     tipo === "rg_com_cpf" ||
