@@ -910,7 +910,7 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
-    let modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
+    let modeloBiblioteca: BibliotecaMatch | null = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
     // A Biblioteca casa por bag-of-words e, quando casa, ASSUME 0.99 e pula a
     // IA. Termos jurídicos genéricos ("poder judiciário", "ações criminais",
