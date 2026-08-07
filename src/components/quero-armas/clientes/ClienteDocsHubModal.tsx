@@ -329,6 +329,18 @@ function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_
   const isCertidaoFederal =
     /\bTRF\b|\bTRF3\b|TRIBUNAL REGIONAL FEDERAL|JUSTICA FEDERAL|SECAO JUDICIARIA|JEF/.test(hay);
   if (!isCertidaoFederal) return null;
+  // Sinal de MAIOR PESO: o campo "Abrangência" impresso na própria certidão.
+  // "Abrangência - Regional"            → certidão Regional do TRF3
+  // "Abrangência - Seção Judiciária..." → certidão SJSP/JEF
+  // Menções a Seção Judiciária/JEF em rodapé, endereço ou instruções NÃO
+  // podem reclassificar o documento (causa do falso "duplicidade").
+  const abrangencia = hay.match(/ABRANGENCIA\s*[-:]?\s*([^\n]{0,80})/)?.[1] ?? "";
+  if (abrangencia) {
+    if (/REGIONAL/.test(abrangencia)) return "antecedentes_federal_trf3_regional";
+    if (/SECAO JUDICIARIA|JUIZADO ESPECIAL|\bJEF\b|LOCAL/.test(abrangencia)) {
+      return "antecedentes_federal_sjsp_jef";
+    }
+  }
   if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SECAO JUDICIARIA DE SAO PAULO/.test(hay)) {
     return "antecedentes_federal_sjsp_jef";
   }
