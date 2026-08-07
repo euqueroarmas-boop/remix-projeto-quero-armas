@@ -172,6 +172,17 @@ const ALIAS_REAPROVEITAMENTO = new Set([
   "dispensado_grupo",
 ]);
 
+/**
+ * `nao_aplicavel` não é dispensa legal: é caminho não escolhido no checklist
+ * (ex.: quem vai apresentar laudo particular não precisa do laudo da
+ * instituição, e vice-versa). Rotular como "dispensado por lei" seria mentira.
+ */
+const ALIAS_NAO_SE_APLICA = new Set(["nao_aplicavel"]);
+
+export function isNaoSeAplica(raw?: string | null): boolean {
+  return ALIAS_NAO_SE_APLICA.has(normalizarChaveStatus(raw));
+}
+
 export function isReaproveitamento(raw?: string | null): boolean {
   return ALIAS_REAPROVEITAMENTO.has(normalizarChaveStatus(raw));
 }
