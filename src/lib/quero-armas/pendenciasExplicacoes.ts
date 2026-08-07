@@ -649,17 +649,40 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
     ],
     observacao: "Cuidado: esta é a certidão de EXECUÇÕES. A de DISTRIBUIÇÃO é emitida no mesmo portal, mas é outro passo do checklist.",
   },
+  // As duas certidões militares são exigências SEPARADAS desde 31/07/2026
+  // (migration 20260731120000). A PF cobra as duas de quem mora em SP, MG ou
+  // RS; uma não substitui a outra. O texto antigo mandava escolher entre elas
+  // ("STM ou TJM, conforme o que a PF solicitou"), que era o enquadramento de
+  // antes do split.
   antecedentes_militar: {
-    titulo: "Justiça Militar",
+    titulo: "Justiça Militar da União — STM",
     passos: [
-      "Abra o portal do STM (federal) ou TJM-SP (estadual) pelo botão \"Acessar site de emissão\", conforme o que a PF solicitou.",
+      "Abra o portal do Superior Tribunal Militar pelo botão \"Acessar site de emissão\". Esta NÃO é a certidão do Tribunal de Justiça Militar do seu estado — são documentos diferentes e a PF exige os dois.",
       "Clique em \"Certidão Negativa\" no menu do topo.",
       "Preencha CPF, nome completo, nome da mãe e data de nascimento exatamente como no RG.",
       "Marque \"Não sou robô\" e clique em \"Emitir Certidão\".",
       "Baixe o PDF pelo ícone de download e confira o resultado \"NADA CONSTA\".",
       "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
     ],
-    observacao: "Validade de 90 dias. Envie o PDF original com assinatura digital.",
+    observacao: "Validade de 90 dias. Cobre crimes militares contra a União em todo o Brasil. Envie o PDF original com assinatura digital.",
+  },
+  // Chave nova, criada junto com o Bloco 2B (20260807230000). O rename levou
+  // certidao_antecedentes_criminais_militar, certidao_criminal_tjmsp e
+  // certidao_estadual_justica_militar todos para antecedentes_militar_estadual
+  // — e sem esta entrada os três cairiam num lookup vazio, deixando o cliente
+  // com a exigência na tela e nenhuma instrução de como emitir.
+  antecedentes_militar_estadual: {
+    titulo: "Justiça Militar Estadual — TJM",
+    passos: [
+      "Abra o portal do Tribunal de Justiça Militar do seu estado pelo botão \"Acessar site de emissão\". Esta NÃO é a certidão do STM — são documentos diferentes e a PF exige os dois.",
+      "Clique em \"Certidão Negativa\" no menu do topo.",
+      "Preencha CPF, nome completo, nome da mãe e data de nascimento exatamente como no RG.",
+      "Marque \"Não sou robô\" e clique em \"Emitir Certidão\".",
+      "A certidão abre em PDF em nova aba — baixe pelo ícone de download.",
+      "Confira que aparece seu nome, CPF e o resultado \"NADA CONSTA\".",
+      "Volte aqui, clique em \"Entregar documento\" e envie o PDF exatamente como baixado.",
+    ],
+    observacao: "Validade de 90 dias. Só existe em São Paulo, Minas Gerais e Rio Grande do Sul, e a certidão de um estado não vale para outro. Não imprima e escaneie — envie o PDF original com a assinatura digital.",
   },
   antecedentes_eleitoral: {
     titulo: "Crimes eleitorais — TSE",

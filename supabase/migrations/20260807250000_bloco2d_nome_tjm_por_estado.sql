@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 2D de 7 — A certidão militar estadual nomeia o tribunal e o estado
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois dos Blocos 1, 2A, 2B e 2C.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 2D de 7 — CERTIDÕES: a certidão militar estadual passa a nomear o
 --                            tribunal e o estado
@@ -36,6 +27,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── Mapa dos três tribunais ─────────────────────────────────────────────
 CREATE TEMP TABLE _tjm (uf char(2) PRIMARY KEY, estado text, nome_doc text, orgao text) ON COMMIT DROP;
