@@ -1,8 +1,8 @@
 -- ############################################################################
--- BLOCO 2D de 7 — A certidão militar estadual nomeia o tribunal e o estado
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois dos Blocos 1, 2A, 2B e 2C.
+-- BLOCO 2D de 7 (CORRIGIDO) — nome do TJM com tribunal e estado
+-- A versão anterior falhava com 42703: a coluna condicao_uf não existe no
+-- banco, porque o segundo bloco da migration 20260730160000 nunca foi aplicado.
+-- Colar inteiro e rodar de uma vez. Seguro para repetir.
 -- ############################################################################
 
 BEGIN;
@@ -91,40 +91,23 @@ UPDATE public.qa_documentos_biblioteca
        updated_at = now()
  WHERE codigo = 'antecedentes_militar_estadual';
 
--- ─── 3) Catálogo: uma linha por estado ───────────────────────────────────
--- Clona a linha existente para MG e RS antes de renomear a original para SP,
--- para que as três nasçam com a mesma etapa, ordem e obrigatoriedade.
-INSERT INTO public.qa_servicos_documentos (
-  servico_id, tipo_documento, nome_documento, etapa, ordem, obrigatorio,
-  obrigatorio_etapa02, emissor, escopo, formato_aceito, validade_dias,
-  instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias,
-  condicao_profissional, condicao_uf, link_emissao, biblioteca_id, ativo
-)
-SELECT sd.servico_id, sd.tipo_documento, t.nome_doc, sd.etapa, sd.ordem, sd.obrigatorio,
-       sd.obrigatorio_etapa02, sd.emissor, sd.escopo, sd.formato_aceito, sd.validade_dias,
-       sd.instrucoes, sd.observacoes_cliente, t.orgao, sd.prazo_recomendado_dias,
-       sd.condicao_profissional, ARRAY[t.uf]::text[], sd.link_emissao, sd.biblioteca_id, sd.ativo
-  FROM public.qa_servicos_documentos sd
- CROSS JOIN _tjm t
- WHERE sd.tipo_documento = 'antecedentes_militar_estadual'
-   AND t.uf <> 'SP'
-   AND NOT EXISTS (
-     SELECT 1 FROM public.qa_servicos_documentos x
-      WHERE x.servico_id = sd.servico_id
-        AND x.tipo_documento = 'antecedentes_militar_estadual'
-        AND x.condicao_uf = ARRAY[t.uf]::text[]
-        AND COALESCE(x.condicao_profissional,'') = COALESCE(sd.condicao_profissional,'')
-   );
-
--- A linha original vira a de São Paulo.
+-- ─── 3) Catálogo ─────────────────────────────────────────────────────────
+-- Aqui NÃO se divide o catálogo por estado, embora fosse o certo.
+--
+-- A divisão exige a coluna `condicao_uf` e a versão de
+-- `qa_explodir_checklist_processo` que filtra por ela — as duas nascem na
+-- 20260730160000, cujo SEGUNDO bloco transacional nunca foi aplicado no banco.
+-- Sem o filtro, as três linhas (SP, MG, RS) entrariam no checklist de todo
+-- mundo e a deduplicação por tipo_documento escolheria uma qualquer: o cliente
+-- de Minas poderia receber o nome do tribunal de São Paulo.
+--
+-- Então o catálogo recebe o nome genérico, e é o passo 4 que dá a cada cliente
+-- o nome do seu tribunal. Quando a 20260730160000 for aplicada por inteiro, a
+-- divisão por estado vira um bloco curto.
 UPDATE public.qa_servicos_documentos
-   SET nome_documento = (SELECT nome_doc FROM _tjm WHERE uf = 'SP'),
-       orgao_emissor  = (SELECT orgao    FROM _tjm WHERE uf = 'SP'),
-       condicao_uf    = ARRAY['SP']::text[],
+   SET nome_documento = 'Certidão Criminal — Tribunal de Justiça Militar (TJM)',
        updated_at     = now()
- WHERE tipo_documento = 'antecedentes_militar_estadual'
-   AND (condicao_uf IS NULL OR condicao_uf @> ARRAY['SP']::text[])
-   AND COALESCE(array_length(condicao_uf, 1), 0) <> 1;
+ WHERE tipo_documento = 'antecedentes_militar_estadual';
 
 -- ─── 4) Exigências já montadas ───────────────────────────────────────────
 -- O checklist do cliente passa a dizer qual tribunal ele precisa procurar.
