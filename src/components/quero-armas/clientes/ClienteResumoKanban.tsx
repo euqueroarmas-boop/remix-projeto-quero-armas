@@ -151,6 +151,45 @@ function compactStatus(days: number | null, percent?: number | null) {
 }
 
 function shortName(value: string, fallback: string) {
+  return shortNameImpl(value, fallback);
+}
+
+/**
+ * Prazo legível: o cliente precisa entender de bate-pronto se o número de dias
+ * é "falta X para vencer" ou "já venceu há X". Antes mostrávamos só "13 dias",
+ * o que não comunicava nada. Agora sai um bloco com rótulo + valor + bolinha
+ * de cor na mesma faixa (vermelho <=10, amarelo <=30, verde acima).
+ */
+function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean }) {
+  const d = item.dias;
+  if (typeof d !== "number" || Number.isNaN(d)) {
+    return (
+      <strong className={item.tone} title={item.status} style={underline ? { textDecoration: "underline" } : undefined}>
+        {item.status}
+      </strong>
+    );
+  }
+  const vencido = d < 0;
+  const abs = Math.abs(d);
+  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "FALTAM";
+  const valor = d === 0 ? "HOJE" : `${abs} ${abs === 1 ? "dia" : "dias"}`;
+  const titulo = vencido
+    ? `Documento vencido há ${abs} ${abs === 1 ? "dia" : "dias"}`
+    : d === 0
+      ? "Vence hoje"
+      : `Faltam ${abs} ${abs === 1 ? "dia" : "dias"} para vencer`;
+  return (
+    <strong className={`qa-prazo ${item.tone}`} title={titulo}>
+      <span className="qa-prazo__k">{kicker}</span>
+      <span className={`qa-prazo__v${underline ? " is-link" : ""}`}>
+        <i className="qa-prazo__dot" aria-hidden="true" />
+        {valor}
+      </span>
+    </strong>
+  );
+}
+
+function shortNameImpl(value: string, fallback: string) {
   const raw = String(value || fallback).replace(/_/g, " ").replace(/\s+/g, " ").trim();
   const letters = raw.replace(/[^a-zA-ZÀ-ú]/g, "");
   const isAllCaps = letters.length > 0 && letters === letters.toUpperCase();
@@ -792,6 +831,17 @@ export default function ClienteResumoKanban({
         .qa-summary-merged__part .qa-client-summary-print__v{font-size:22px}
         .qa-summary-merged__part small{font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:var(--muted);margin-top:4px;display:block;text-transform:none}
         @media (max-width:768px){.qa-summary-merged__body{gap:12px}.qa-summary-merged__part:first-child{padding-right:12px}.qa-summary-merged__part .qa-client-summary-print__v{font-size:18px}.qa-summary-merged__part small{font-size:9px;margin-top:2px}}
+        .qa-front-card__item strong.qa-prazo{display:flex;flex-direction:column;align-items:flex-end;gap:2px;max-width:none}
+        .qa-prazo__k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:8px;font-weight:900;letter-spacing:.16em;color:#9a9a9f;line-height:1;white-space:nowrap}
+        .qa-prazo__v{display:inline-flex;align-items:center;gap:5px;font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:900;line-height:1;letter-spacing:.02em;white-space:nowrap}
+        .qa-prazo__v.is-link{text-decoration:underline}
+        .qa-prazo__dot{width:6px;height:6px;border-radius:999px;background:currentColor;display:inline-block;flex:0 0 auto}
+        .qa-prazo.bad .qa-prazo__k{color:var(--red)}
+        .qa-prazo.warn .qa-prazo__k{color:var(--amber)}
+        .qa-front-card__legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid #f1f1f1;font-family:Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:0;text-transform:none;color:#9a9a9f}
+        .qa-front-card__legend span{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+        .qa-front-card__legend i{width:6px;height:6px;border-radius:999px;display:inline-block}
+        @media (max-width:768px){.qa-prazo__k{font-size:7.5px}.qa-prazo__v{font-size:12px}.qa-front-card__legend{font-size:8px;gap:8px}}
         `}</style>
       <div className="qa-client-summary-print__wrap">
         <div className="qa-client-summary-print__sticky">
@@ -926,18 +976,25 @@ export default function ClienteResumoKanban({
                     style={{ cursor: "pointer" }}
                     key={`${front.key}-${index}-${item.label}`}
                   >
-                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status} style={{ textDecoration: "underline" }}>{item.status}</strong>
+                    <span title={item.label}>{item.label}</span><PrazoBadge item={item} underline />
                   </div>
                 ) : (
                   <div
                     className={`qa-front-card__item${item.stack ? " qa-front-card__item--stack" : ""}`}
                     key={`${front.key}-${index}-${item.label}`}
                   >
-                    <span title={item.label}>{item.label}</span><strong className={item.tone} title={item.status}>{item.status}</strong>
+                    <span title={item.label}>{item.label}</span><PrazoBadge item={item} />
                   </div>
                 )
               ))}
               </div>
+              {front.items.some((i) => typeof i.dias === "number") && (
+                <div className="qa-front-card__legend" onClick={(e) => e.stopPropagation()}>
+                  <span><i style={{ background: "var(--red)" }} />vencido ou até 10 dias</span>
+                  <span><i style={{ background: "var(--amber)" }} />11 a 30 dias</span>
+                  <span><i style={{ background: "var(--green)" }} />mais de 30 dias</span>
+                </div>
+              )}
             </article>
           ))}
         </section>
