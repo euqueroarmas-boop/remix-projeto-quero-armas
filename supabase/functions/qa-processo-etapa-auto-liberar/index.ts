@@ -12,6 +12,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { itemVisivelGuia, filtrarIdentidadeUnica, ehDocumentoIdentidade } from "../_shared/checklistVisibility.ts";
+import { mesclarRespostasCadastro } from "../_shared/respostasCadastro.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

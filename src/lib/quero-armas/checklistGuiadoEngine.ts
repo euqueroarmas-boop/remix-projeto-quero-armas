@@ -30,6 +30,7 @@ import {
 import { wizardPendentePara } from "./checklistWizardGate";
 import { ordemGrupoChecklist } from "./simuladorChecklist";
 import { filtrarIdentidadeUnica } from "./identidadeUnica";
+import { mesclarRespostasCadastro } from "./respostasCadastro";
 
 export interface GuiaProcesso {
   id: string;
