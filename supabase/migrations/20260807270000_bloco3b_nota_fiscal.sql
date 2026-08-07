@@ -1,13 +1,3 @@
--- ############################################################################
--- BLOCO 3B de 7 — A nota fiscal deixa de precisar ser "recente"
--- renda_nf_recente -> renda_nf_empresa
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois do Bloco 3.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 3B de 7 — RENDA: a nota fiscal deixa de precisar ser "recente"
 --
@@ -39,6 +29,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── 1) O tipo novo entra no CHECK ───────────────────────────────────────
 DO $$

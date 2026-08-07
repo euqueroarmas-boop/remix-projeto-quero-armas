@@ -126,7 +126,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_ccmei","renda_qsa",
-  "renda_nf_recente","renda_comprovante_beneficio","renda_extrato_inss",
+  "renda_nf_empresa","renda_comprovante_beneficio","renda_extrato_inss",
   // Faltava aqui, e o efeito era pior do que parece: em 20260807160000 eu tirei
   // a tradução `renda_ficha_cadastral_jucesp -> renda_contrato_social` dizendo
   // que passaria a casar por identidade, sem conferir se o tipo constava desta
