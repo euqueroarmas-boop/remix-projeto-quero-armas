@@ -72,11 +72,9 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // comprovante de habitualidade. O banco já havia desfeito essa equivalência
   // em 20260729010000; o frontend é que continuava juntando os dois.
   declaracao_compromisso_treino: "declaracao_correlata",
-  renda_nf_empresa: "renda_nf_recente",
   // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
   // no cartão CNPJ, senão o slot do QSA nunca é cumprido.
   // Tipos legados de MEI passam a cair no CCMEI, que é o documento oficial.
-  renda_cnpj_autonomo: "renda_ccmei",
   ccmei: "renda_ccmei",
   certificado_mei: "renda_ccmei",
   // renda_ficha_cadastral_jucesp NÃO é traduzida: virou tipo próprio do Hub
@@ -90,13 +88,19 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // cartão como RG — o que disparava rejeição por duplicidade contra o RG já
   // aprovado. Agora ela tem destino próprio dentro de ocupação lícita.
   identidade_funcional: "renda_carteira_funcional",
-  identidade_funcional_digital: "renda_carteira_funcional",
   carteira_funcional: "renda_carteira_funcional",
   carteira_identidade_funcional: "renda_carteira_funcional",
-  // Contra-cheque é o holerite do SERVIDOR PÚBLICO; holerite (mês atual) é o do
-  // CLT. São ocupações lícitas diferentes e o Hub já tem um tipo para cada.
-  // Estava apontado para o balde do CLT, jogando servidor público na caixa errada.
-  contra_cheque_digital: "renda_holerite_funcionario_publico",
+  // contra_cheque_digital e identidade_funcional_digital saíram daqui no Bloco 3
+  // (20260807260000): foram renomeados para renda_contra_cheque_mes_atual e
+  // renda_carteira_funcional, então casam por identidade. As grafias sem
+  // "_digital" acima permanecem porque nenhum catálogo as produz — servem só a
+  // processo encerrado que ainda as carregue.
+  //
+  // renda_cnpj_autonomo também saiu: é tipo PRÓPRIO do Hub, e traduzi-lo para
+  // renda_ccmei era o mesmo padrão destrutivo do RG virando CIN — grava um
+  // documento válido sob outro tipo válido, sem erro nenhum para denunciar.
+  // Tinha zero uso em catálogo, processo e Hub.
+
   // Certidão TRF3 longa (gerada por qa_explodir_checklist_processo com
   // o nome completo da seção — mesmo documento que certidao_federal_trf3_sjsp_jef).
   certidao_federal_trf_3_regiao_abrangencia_da_secao_judiciaria_e_juizado_especial_federal_de_sao_paulo: "antecedentes_federal_sjsp_jef",
@@ -128,7 +132,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   // que passaria a casar por identidade, sem conferir se o tipo constava desta
   // lista. Não constava — então o documento deixava de ser gravado com tipo
   // errado e passava a ser gravado como "outro", sem tipo nenhum.
-  "renda_ficha_cadastral_jucesp",
+  "renda_ficha_cadastral_jucesp","renda_contra_cheque_mes_atual",
   "antecedentes_criminais","antecedentes_federal","antecedentes_estadual",
   "antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",

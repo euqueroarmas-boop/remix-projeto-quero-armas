@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 3 de 7 — RENDA E OCUPAÇÃO LÍCITA
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois do Bloco 1 e de todo o Bloco 2.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 3 de 7 — RENDA E OCUPAÇÃO LÍCITA
 --
@@ -52,6 +43,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── Tipo novo no CHECK ──────────────────────────────────────────────────
 DO $$
