@@ -199,7 +199,9 @@ Deno.serve(async (req) => {
     const result = await sendTransactional({
       templateName: "documento-status-cliente",
       recipientEmail: cliente.email,
-      idempotencyKey: `${traceId}-${documentoId}-${status}`,
+      // Uma mudança de estado gera no máximo um e-mail, mesmo se o navegador
+      // repetir a chamada após timeout ou reconexão.
+      idempotencyKey: `documento-status-${documentoId}-${status}`,
       templateData: {
         nome: cliente.nome_completo || "cliente",
         documento: nomeDocumento(doc),
