@@ -21,6 +21,7 @@ import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { filtrarIdentidadeUnica } from "@/lib/quero-armas/identidadeUnica";
 import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
+import { labelStatusDocumentoCliente } from "@/lib/quero-armas/statusDocumento";
 import {
   grupoCanonico,
   ordemGrupoChecklist,
