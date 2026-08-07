@@ -124,6 +124,20 @@ function tipoCompatKey(tipo?: string | null): string {
     return "comprovante_residencia";
   }
   if (t === "certidao_antecedentes_policia_civil_sp") return "antecedentes_criminais";
+  // Contracheque e holerite são o MESMO comprovante de ocupação lícita: o
+  // catálogo pede `renda_contra_cheque_mes_atual`, mas o Hub grava o arquivo
+  // como `renda_holerite_mes_atual` (ou a variante de servidor público). Sem
+  // esta colapsagem o cliente entregava o holerite, ele era aprovado no Hub e
+  // a exigência do processo continuava pendente — foi o que aconteceu no
+  // cadastro do Anthony (07/08/2026).
+  if (
+    t === "renda_holerite_mes_atual" ||
+    t === "renda_holerite_funcionario_publico" ||
+    t === "contra_cheque_digital" ||
+    t === "holerite"
+  ) {
+    return "renda_contra_cheque_mes_atual";
+  }
   if (t === "certidao_crimes_eleitorais_tse") return "antecedentes_eleitoral";
   if (t === "certidao_crimes_militares_stm") return "antecedentes_militar";
   if (t === "certidao_criminal_tjmsp" || t === "certidao_antecedentes_criminais_militar" || t === "certidao_estadual_justica_militar") return "antecedentes_militar_estadual";
