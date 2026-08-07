@@ -65,9 +65,16 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // (o cliente envia como "distribuição/execuções"; a instrução do popup explica o 2º grau).
   certidao_estadual_segundo_grau_acoes_criminais: "antecedentes_estadual_distribuicao",
   certidao_estadual_segundo_grau_execucoes_criminais: "antecedentes_estadual_execucoes",
-  // comprovante_filiacao_entidade_tiro saiu no Bloco 4 (20260807280000):
-  // o destino comprovante_clube_tiro foi removido do Hub junto com todo o
-  // conceito de habitualidade, que não pertence a este fluxo.
+  // comprovante_filiacao_entidade_tiro voltou ao Hub como tipo PRÓPRIO: ela é
+  // exigência legítima do regime CAC (atirador esportivo, concessão e
+  // renovação de CR), e não do fluxo de defesa pessoal. Enquanto esteve fora,
+  // o comprovante enviado virava "outro" e a exigência nunca fechava.
+  comprovante_clube_tiro: "comprovante_filiacao_entidade_tiro",
+  comprovante_filiacao_ativa_entidade_tiro: "comprovante_filiacao_entidade_tiro",
+  // Erro de digitação que veio do catálogo ("tigital"). A grafia errada ficou
+  // 15 usos no ar rebaixando a CTPS para "outro".
+  carteira_de_trabalho_tigital: "ctps",
+  carteira_de_trabalho_digital: "ctps",
   // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
   // no cartão CNPJ, senão o slot do QSA nunca é cumprido.
   // Tipos legados de MEI passam a cair no CCMEI, que é o documento oficial.
@@ -128,6 +135,9 @@ const HUB_TIPOS_VALIDOS = new Set([
   // com a JUCESP — sem erro nenhum para denunciar, e o slot de ocupação
   // lícita nunca fechava.
   "renda_holerite_funcionario_publico",
+  // Filiação a entidade de tiro: tipo próprio do regime CAC (ver comentário
+  // no mapa de apelidos acima).
+  "comprovante_filiacao_entidade_tiro",
   "renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_ccmei","renda_qsa",
