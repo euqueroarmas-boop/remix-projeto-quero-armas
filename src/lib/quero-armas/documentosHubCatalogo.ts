@@ -435,6 +435,12 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
 
 function shouldReplaceNomeCertidao(nome: string, tipoDocumento: string | null | undefined): boolean {
   const tipo = String(tipoDocumento || "").trim().toLowerCase();
+  // Renda / ocupação: o título literal impresso no documento varia por órgão e
+  // é ilegível para o cliente ("FÉ PÚBLICA DECRETO 14.298 DE 21/11/79 POLÍCIA
+  // MILITAR DO ESTADO DE SÃO PAULO"). Nesses tipos o nome canônico do catálogo
+  // sempre prevalece — o cliente precisa reconhecer o que enviou, não decorar o
+  // cabeçalho do emissor.
+  if (tipo === "renda_carteira_funcional" || tipo.startsWith("renda_holerite")) return true;
   const elegivelInferencia =
     tipo.startsWith("antecedentes_") ||
     tipo === "rg_com_cpf" ||
