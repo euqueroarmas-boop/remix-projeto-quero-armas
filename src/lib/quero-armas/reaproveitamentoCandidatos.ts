@@ -19,6 +19,10 @@ import {
   type EscopoDocumento,
   type DocEscopavel,
 } from "./documentoEscopo";
+import {
+  tipoCompativelComRegime,
+  type RegimeDocumento,
+} from "./regimeDocumento";
 
 export interface DestinoReaproveitavel extends DocEscopavel {
   id: string;
@@ -92,6 +96,11 @@ export interface BuscarCandidatosOpts {
   servicoId?: number | null;
   /** evita propor o próprio doc como candidato a si mesmo */
   excluirIds?: string[];
+  /**
+   * Regime do processo de destino ("defesa_pessoal" | "cac"). Documentos da
+   * interseção (regime "comum") atravessam a fronteira; exclusivos, não.
+   */
+  regimeServico?: RegimeDocumento | null;
   /** arma atualmente selecionada no fluxo, para casar docs do hub com segurança */
   armaSelecionada?: {
     arma_uid: string;
@@ -253,6 +262,16 @@ export async function buscarCandidatosReaproveitamento(
     };
   }
   const escopoDestino = getDocumentoEscopo(destino);
+  // Teoria dos conjuntos: exigência exclusiva de um regime nunca é atendida
+  // por documento do outro regime (nem exibida como candidata).
+  if (!tipoCompativelComRegime(tipo, opts.regimeServico ?? null)) {
+    return {
+      candidatos: [],
+      modoReaproveitamento: "desabilitado",
+      mensagem: null,
+      validadeDias: null,
+    };
+  }
   // "processo" nunca reaproveita automaticamente (regra canônica).
   if (escopoDestino === "processo") {
     return {
