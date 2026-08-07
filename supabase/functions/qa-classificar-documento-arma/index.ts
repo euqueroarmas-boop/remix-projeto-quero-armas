@@ -1044,18 +1044,9 @@ Deno.serve(async (req) => {
     }
     parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
 
-    if (modeloBiblioteca) {
-      parsed.tipoDetectado = modeloBiblioteca.tipo;
-      parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.98);
-      parsed.justificativa =
-        `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
-        `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis).`;
-      parsed.modelo_biblioteca = {
-        tipo_documento: modeloBiblioteca.tipoDocumento,
-        nome_modelo: modeloBiblioteca.nomeModelo,
-        cobertura: modeloBiblioteca.cobertura,
-      };
-    }
+    // Nota: quando há modelo da Biblioteca a função já retornou acima
+    // (caminho "parser_biblioteca"), então aqui `modeloBiblioteca` é sempre
+    // nulo — o bloco que reaplicava o modelo era código morto e foi removido.
 
     const tipoDetectado = (TIPOS as readonly string[]).includes(parsed.tipoDetectado)
       ? (parsed.tipoDetectado as Tipo)
