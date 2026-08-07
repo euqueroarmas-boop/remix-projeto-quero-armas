@@ -8,10 +8,22 @@
 // ============================================================================
 
 export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
-  rg_com_cpf: "cin",
-  documento_identidade_nacional: "cin",
-  carteira_identidade_nacional: "cin",
-  cedula_identidade_rg_com_cpf: "cin",
+  // ── IDENTIFICAÇÃO — Bloco 1 (07/08/2026) ─────────────────────────────────
+  // Nada aqui é traduzido. O vocabulário tem três nomes — `cin`, `rg_com_cpf`,
+  // `cnh` — e cada documento é gravado no Hub COMO O QUE ELE É.
+  //
+  // Antes, `rg_com_cpf` era reescrito para `cin`: o cliente enviava um RG e o
+  // Hub arquivava um CIN. O tipo verdadeiro se perdia na gravação, e nenhuma
+  // constraint pega isso, porque `cin` é um tipo perfeitamente válido.
+  //
+  // A dispensa mútua (um dos três satisfaz a exigência dos outros dois) é
+  // regra de NEGÓCIO e vive em qa_tipo_documento_aliases, onde pode ser
+  // auditada. Não é regra de gravação.
+  //
+  // As grafias legadas (documento_identidade_nacional, carteira_identidade_
+  // nacional, cedula_identidade_rg_com_cpf, documento_identidade, identidade,
+  // rg) saíram daqui: nenhum catálogo as produz, e exigência antiga que ainda
+  // as carregue fecha pelos apelidos criados em 20260807200000.
   comprovante_endereco_ano_2022: "comprovante_residencia",
   comprovante_endereco_ano_2023: "comprovante_residencia",
   comprovante_endereco_ano_2024: "comprovante_residencia",
@@ -90,7 +102,9 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
 
 const HUB_TIPOS_VALIDOS = new Set([
   "cr","craf","sinarm","gt","gte","autorizacao_compra","nota_fiscal_arma",
-  "rg_com_cpf","cin","cnh","cpf",
+  // `cpf` saiu do vocabulário em 20260807200000: o número consta do próprio
+  // RG/CIN/CNH e não existe exigência de documento CPF avulso.
+  "rg_com_cpf","cin","cnh",
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
   "renda_carteira_funcional",
