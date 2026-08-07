@@ -34,6 +34,19 @@ function getRetryAfterSeconds(error: unknown): number {
   return 60
 }
 
+// email-js currently forwards the subject through a Fetch header. Deno headers
+// only accept ByteString characters, so typographic punctuation such as an em
+// dash (U+2014) aborts the request before it reaches the provider. Preserve
+// Portuguese Latin-1 characters and normalize only code points above U+00FF.
+function toHeaderSafeSubject(value: unknown): string {
+  return String(value ?? '')
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/[^\u0009\u0020-\u00FF]/g, '')
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length < 2) {
@@ -255,7 +268,7 @@ Deno.serve(async (req) => {
             to: payload.to,
             from: payload.from,
             sender_domain: payload.sender_domain,
-            subject: payload.subject,
+            subject: toHeaderSafeSubject(payload.subject),
             html: payload.html,
             text: payload.text,
             purpose: payload.purpose,
