@@ -328,13 +328,16 @@ export default function ResidenciaTerceiroModal({
                     <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
                       Profissão de {titular}
                     </span>
-                    <input
+                    <select
                       value={profissao}
-                      onChange={(e) => setProfissao(e.target.value.toUpperCase())}
-                      placeholder="EX.: EMPRESÁRIO"
-                      autoComplete="off"
+                      onChange={(e) => setProfissao(e.target.value)}
                       className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
-                    />
+                    >
+                      <option value="">SELECIONE</option>
+                      {profissaoOptionsCom(profissao).map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
                   </label>
                   <label className="block sm:col-span-2">
                     <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-[#6A6A6A]">
