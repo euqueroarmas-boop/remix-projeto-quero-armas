@@ -3719,6 +3719,11 @@ export function ClienteDocsHubModal({
         }
       }
 
+      // Vale para envio do cliente E da equipe: o gatilho do Hub reaproveita o
+      // documento nas exigências dos processos abertos, e é esse lote que
+      // precisa virar aviso — sem ele o cliente acha que nada aconteceu.
+      void notificarReaproveitamentosPendentes(qaClienteId);
+
       // Substituição: marca o documento antigo como 'substituido' e vincula
       // o novo. Assim o antigo sai das listagens e o histórico fica
       // preservado (soft delete com trilha).
