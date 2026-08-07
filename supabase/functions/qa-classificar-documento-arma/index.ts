@@ -737,8 +737,13 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     // diferentes e ocupam slots diferentes no Hub:
     //   "Abrangência - Regional"                             → TRF3 Regional
     //   "Abrangência - Seção Judiciária e Juizado Especial…" → SJSP/JEF
-    const ehSecaoJudiciaria =
-      /JUIZADO ESPECIAL FEDERAL|SECAO JUDICIARIA|\bSJSP\b|\bJEF\b/.test(norm);
+    // O campo "Abrangência" impresso na certidão é o sinal de MAIOR PESO.
+    // Menções soltas a Seção Judiciária/JEF (rodapé, endereço, instruções)
+    // não podem reclassificar uma certidão de abrangência Regional.
+    const abrangencia = norm.match(/ABRANGENCIA\s*[-:]?\s*([^\n]{0,80})/)?.[1] ?? "";
+    const ehSecaoJudiciaria = abrangencia
+      ? /SECAO JUDICIARIA|JUIZADO ESPECIAL|\bJEF\b|LOCAL/.test(abrangencia) && !/REGIONAL/.test(abrangencia)
+      : /JUIZADO ESPECIAL FEDERAL|SECAO JUDICIARIA|\bSJSP\b|\bJEF\b/.test(norm);
     parsed.tipoDetectado = ehSecaoJudiciaria
       ? "ANTECEDENTES_FEDERAL_SJSP_JEF"
       : "ANTECEDENTES_FEDERAL_TRF3_REGIONAL";
