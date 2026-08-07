@@ -2997,11 +2997,12 @@ export default function QAClientePortalPage() {
       setShowContratoPopup(true);
       return;
     }
-    // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) cadastro
-    // completo, 3) checklist do processo. Sem assinatura pendente, o checklist
-    // NUNCA nasce enquanto houver campo crucial do cadastro em branco — mesmo
-    // que o modal cadastral ainda não tenha sido aberto ou tenha sido fechado.
-    if (showChecklistCadastral || cadastroCrucialIncompleto) return;
+    // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) dados
+    // cadastrais, 3) checklist do processo. Com cadastro incompleto a fila
+    // contém APENAS a pendência cadastral (montada em `pendenciasGuiadas`),
+    // então o popup pode abrir — o checklist do processo continua bloqueado.
+    // Se o wizard cadastral já está na tela, não empilha popup por cima.
+    if (showChecklistCadastral) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
   }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed, isBelowLg, activeSection]);
