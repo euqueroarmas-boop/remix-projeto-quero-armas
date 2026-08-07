@@ -65,11 +65,9 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // (o cliente envia como "distribuição/execuções"; a instrução do popup explica o 2º grau).
   certidao_estadual_segundo_grau_acoes_criminais: "antecedentes_estadual_distribuicao",
   certidao_estadual_segundo_grau_execucoes_criminais: "antecedentes_estadual_execucoes",
-  comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
-  // Habitualidade e treino saíram no Bloco 4 (20260807280000):
-  // declaracao_habitualidade_clube, declaracao_compromisso_treino e
-  // declaracao_compromisso_habitualidade não pertencem ao processo. Não é
-  // fusão de tipos — a exigência deixou de existir neste fluxo.
+  // comprovante_filiacao_entidade_tiro saiu no Bloco 4 (20260807280000):
+  // o destino comprovante_clube_tiro foi removido do Hub junto com todo o
+  // conceito de habitualidade, que não pertence a este fluxo.
   // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
   // no cartão CNPJ, senão o slot do QSA nunca é cumprido.
   // Tipos legados de MEI passam a cair no CCMEI, que é o documento oficial.
@@ -150,7 +148,9 @@ const HUB_TIPOS_VALIDOS = new Set([
   "declaracao_homonimia",
   "laudo_psicologico","laudo_capacidade_tecnica",
   "comprovante_efetiva_necessidade","documento_complementar_caso",
-  "comprovante_habitualidade","comprovante_clube_tiro","comprovante_competicao",
+  // comprovante_habitualidade e comprovante_clube_tiro removidos no Bloco 4
+  // (20260807280000): o conceito de habitualidade não pertence ao processo.
+  "comprovante_competicao",
   "protocolo_processo","oficio","despacho","exigencia","indeferimento",
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
   "certidao_alteracao_nome",
