@@ -15,6 +15,7 @@ import {
   Boxes, PackageOpen, Download,
 } from "lucide-react";
 import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
