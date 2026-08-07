@@ -584,6 +584,24 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
     };
   }
 
+  // 0d) Identidade/carteira funcional (Fé Pública, PM/PC/Bombeiros) e
+  //     documentos constitutivos: validade INDETERMINADA por natureza.
+  //     Guarda local — vale mesmo quando o catálogo do banco não carregou.
+  if (
+    isIdentidadeFuncionalPerpetua(doc.tipo_documento) ||
+    isDocumentoConstitutivoPerpetuo(doc.tipo_documento) ||
+    textoIndicaValidadeIndeterminada((doc as any)?.nome_documento)
+  ) {
+    return {
+      iso: null,
+      label: "Sem vencimento",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0) Comprovante de residência HISTÓRICO → não vence.
   //    Distinção sem coluna nova: usa regra_validacao.ano_competencia / ano_competencia
   //    contra o ano corrente. Canônico sem ano = corrente.
