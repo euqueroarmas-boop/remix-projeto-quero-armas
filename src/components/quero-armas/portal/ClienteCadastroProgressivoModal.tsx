@@ -20,6 +20,7 @@ import {
   CAMPOS_CADASTRO, CampoCadastro, CadastroGrupo, GRUPO_LABELS,
   calcularProgressoCadastro, getCamposFaltantesCadastro,
 } from "@/lib/quero-armas/cadastroCompleteness";
+import { UfSelect, MunicipioSelect } from "@/components/quero-armas/portal/CampoLocalidadeSelect";
 import {
   listarProcessosElegiveisGuia, carregarProcessoGuia,
   itensObrigatoriosGuia, itemPendenteAcaoGuia, enviarDocumentoGuia,
@@ -272,6 +273,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     else if (campo.tipo === "tel") v = maskTel(raw);
     else if (campo.tipo === "date") v = maskDate(raw);
     else if (campo.tipo === "uf") v = raw.toUpperCase().slice(0, 2);
+    else if (campo.tipo === "municipio") v = raw.toUpperCase();
     else if (campo.tipo === "text" || campo.tipo == null) v = raw.toUpperCase();
     setValores((prev) => ({ ...prev, [campo.key]: v }));
     setSavingState((prev) => ({ ...prev, [campo.key]: "idle" }));
@@ -447,7 +449,20 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
           {campo.label}
         </div>
         <div className="relative">
-          {campo.tipo === "select" ? (
+          {campo.tipo === "uf" ? (
+            <UfSelect
+              className={`${inputBase} ${inputBorder}`}
+              value={v}
+              onChange={(val) => onChangeCampo(campo, val)}
+            />
+          ) : campo.tipo === "municipio" ? (
+            <MunicipioSelect
+              className={`${inputBase} ${inputBorder}`}
+              uf={String(valorAtual({ ...campo, key: campo.dependeDeUf ?? "naturalidade_uf", tipo: "uf" }) || "").toUpperCase()}
+              value={v}
+              onChange={(val) => onChangeCampo(campo, val)}
+            />
+          ) : campo.tipo === "select" ? (
             <select
               className={`${inputBase} ${inputBorder}`}
               value={v}
@@ -512,7 +527,16 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       <div className={campo.colSpan === 2 ? "sm:col-span-2" : ""}>
         <label className="font-heading text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A]">{campo.label}</label>
         <div className="relative mt-1">
-          {campo.tipo === "select" ? (
+          {campo.tipo === "uf" ? (
+            <UfSelect className={baseClass} value={v} onChange={(val) => onChangeCampo(campo, val)} />
+          ) : campo.tipo === "municipio" ? (
+            <MunicipioSelect
+              className={baseClass}
+              uf={String(valorAtual({ ...campo, key: campo.dependeDeUf ?? "naturalidade_uf", tipo: "uf" }) || "").toUpperCase()}
+              value={v}
+              onChange={(val) => onChangeCampo(campo, val)}
+            />
+          ) : campo.tipo === "select" ? (
             <select className={baseClass} value={v} onChange={(e) => onChangeCampo(campo, e.target.value)}>
               <option value="">Selecione…</option>
               {(campo.opcoes ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

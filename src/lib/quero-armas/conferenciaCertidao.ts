@@ -322,9 +322,22 @@ export function conferirCertidao(
   // quem digitou no portal do órgão — divergência aqui é erro de digitação
   // dele, e a PF não aceita.
   if (doc.naturalidade && cadastro.naturalidade_municipio) {
-    const noDoc = chaveCidade(doc.naturalidade).replace(/\s+SP$/, "").trim();
+    // O órgão emite a naturalidade com a UF colada ("Faxinal - PR", "FAXINAL/PR")
+    // enquanto o cadastro guarda município e UF em campos separados. Comparar
+    // as strings cruas reprovava cadastros corretos (caso MIZAEL · FAXINAL/PR).
+    // Aqui removemos a UF do texto do documento antes de comparar o município,
+    // e só reprovamos quando o município realmente diverge — ou quando a UF do
+    // documento contradiz a UF do cadastro.
+    const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+    const brutoDoc = chaveCidade(doc.naturalidade);
+    const partes = brutoDoc.split(" ");
+    const ufDoc = partes.length > 1 && UFS.includes(partes[partes.length - 1]) ? partes[partes.length - 1] : null;
+    const noDoc = (ufDoc ? partes.slice(0, -1).join(" ") : brutoDoc).trim();
     const noCad = chaveCidade(cadastro.naturalidade_municipio);
-    if (noDoc !== noCad) {
+    const ufCad = chaveCidade(cadastro.naturalidade_uf);
+    const municipioDiverge = noDoc !== noCad;
+    const ufDiverge = !!(ufDoc && ufCad && ufDoc !== ufCad);
+    if (municipioDiverge || ufDiverge) {
       achados.push({
         campo: "naturalidade",
         label: LABEL.naturalidade,

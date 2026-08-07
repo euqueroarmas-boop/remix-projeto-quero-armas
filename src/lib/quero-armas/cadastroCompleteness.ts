@@ -37,7 +37,13 @@ export interface CampoCadastro {
    */
   links?: Array<{ label: string; url: string }>;
   /** Tipo de input para a UI. */
-  tipo?: "text" | "date" | "select" | "tel" | "cep" | "uf";
+  tipo?: "text" | "date" | "select" | "tel" | "cep" | "uf" | "municipio";
+  /**
+   * Para `tipo: "municipio"`: chave do campo de UF que define a lista de
+   * cidades. Cidade digitada à mão divergia da certidão (FAXINAL x
+   * "Faxinal - PR"); com UF → cidade em select, a grafia vem do IBGE.
+   */
+  dependeDeUf?: string;
   /** Opções para select. */
   opcoes?: Array<{ value: string; label: string }>;
   /** Placeholder/exemplo. */
@@ -58,8 +64,8 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
     { value: "União estável", label: "União estável" },
   ], colSpan: 1 },
   { key: "nacionalidade", label: "Nacionalidade", grupo: "pessoais", crucial: true, pergunta: "Qual é a sua nacionalidade?", ajuda: "Normalmente Brasileiro(a).", tipo: "text", placeholder: "Brasileiro(a)", colSpan: 1 },
-  { key: "naturalidade_municipio", label: "Naturalidade — município", grupo: "pessoais", crucial: true, pergunta: "Em qual cidade você nasceu?", ajuda: "Só o município — a UF vem na próxima.", tipo: "text", colSpan: 1 },
-  { key: "naturalidade_uf", label: "Naturalidade — UF", grupo: "pessoais", crucial: true, pergunta: "Em qual estado você nasceu?", tipo: "uf", colSpan: 1 },
+  { key: "naturalidade_uf", label: "Naturalidade — UF", grupo: "pessoais", crucial: true, pergunta: "Em qual estado você nasceu?", ajuda: "Selecione o estado — a lista de cidades abre depois.", tipo: "uf", colSpan: 1 },
+  { key: "naturalidade_municipio", label: "Naturalidade — município", grupo: "pessoais", crucial: true, pergunta: "Em qual cidade você nasceu?", ajuda: "Escolha na lista oficial do IBGE do estado selecionado.", tipo: "municipio", dependeDeUf: "naturalidade_uf", colSpan: 1 },
   { key: "nome_mae", label: "Nome da mãe", grupo: "pessoais", crucial: true, pergunta: "Qual é o nome completo da sua mãe?", ajuda: "Exatamente como está no seu documento — a Polícia Federal confere letra por letra.", tipo: "text", colSpan: 2 },
   { key: "nome_pai", label: "Nome do pai", grupo: "pessoais", crucial: true, pergunta: "Qual é o nome completo do seu pai?", ajuda: "Se não constar no seu documento, escreva como você souber.", tipo: "text", colSpan: 2 },
 
