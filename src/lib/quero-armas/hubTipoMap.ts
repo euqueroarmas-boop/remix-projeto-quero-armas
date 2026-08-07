@@ -122,6 +122,12 @@ const HUB_TIPOS_VALIDOS = new Set([
   "rg_com_cpf","cin","cnh",
   "comprovante_residencia","declaracao_responsavel_imovel",
   "ctps","renda_holerite_mes_atual",
+  // Bloco 3: o CHECK do banco aceita `renda_holerite_funcionario_publico`
+  // desde sempre, mas esta lista não conhecia o tipo. O holerite do servidor
+  // público chegava e era rebaixado para "outro", exatamente como acontecia
+  // com a JUCESP — sem erro nenhum para denunciar, e o slot de ocupação
+  // lícita nunca fechava.
+  "renda_holerite_funcionario_publico",
   "renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_ccmei","renda_qsa",
@@ -136,6 +142,25 @@ const HUB_TIPOS_VALIDOS = new Set([
   "antecedentes_militar","antecedentes_militar_estadual","antecedentes_eleitoral",
   "antecedentes_federal_trf3_regional","antecedentes_federal_sjsp_jef",
   "antecedentes_estadual_distribuicao","antecedentes_estadual_execucoes",
+  // ── Bloco 3 (07/08/2026) — certidões fora de São Paulo ───────────────────
+  // O catálogo (qa_tipos_documento_catalogo) já oferecia certidão criminal
+  // estadual das 27 unidades da federação e as regiões federais TRF1, TRF2,
+  // TRF4, TRF5 e TRF6. Nem esta lista nem o CHECK do banco as conheciam: o
+  // cliente de fora de SP entregava a certidão certa e ela era gravada como
+  // "outro". A exigência ficava aberta e ele era mandado emitir de novo.
+  // O CHECK foi ampliado na mesma leva; esta lista agora o espelha.
+  "antecedentes_estadual_ac","antecedentes_estadual_al","antecedentes_estadual_am",
+  "antecedentes_estadual_ap","antecedentes_estadual_ba","antecedentes_estadual_ce",
+  "antecedentes_estadual_df","antecedentes_estadual_es","antecedentes_estadual_go",
+  "antecedentes_estadual_ma","antecedentes_estadual_mg","antecedentes_estadual_ms",
+  "antecedentes_estadual_mt","antecedentes_estadual_pa","antecedentes_estadual_pb",
+  "antecedentes_estadual_pe","antecedentes_estadual_pi","antecedentes_estadual_pr",
+  "antecedentes_estadual_rj","antecedentes_estadual_rn","antecedentes_estadual_ro",
+  "antecedentes_estadual_rr","antecedentes_estadual_rs","antecedentes_estadual_sc",
+  "antecedentes_estadual_se","antecedentes_estadual_sp","antecedentes_estadual_to",
+  "antecedentes_federal_trf1_regional","antecedentes_federal_trf2_regional",
+  "antecedentes_federal_trf4_regional","antecedentes_federal_trf5_regional",
+  "antecedentes_federal_trf6_regional",
   "declaracao_sem_inquerito_processo_criminal","declaracao_guarda_responsavel",
   "declaracao_correlata","declaracao_guarda_acervo_1endereco",
   // Cinco tipos que o CHECK do banco aceita e esta lista não conhecia. O
