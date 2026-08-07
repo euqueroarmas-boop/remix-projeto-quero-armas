@@ -12,6 +12,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { itemVisivelGuia, filtrarIdentidadeUnica, ehDocumentoIdentidade } from "../_shared/checklistVisibility.ts";
+import { mesclarRespostasCadastro } from "../_shared/respostasCadastro.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,7 +145,14 @@ Deno.serve(async (req) => {
       .eq("processo_id", processoId);
 
     const lista = (docs || []) as any[];
-    const respostas = (processo as any).respostas_questionario_json || {};
+    const respostasProcesso = (processo as any).respostas_questionario_json || {};
+    const { data: clienteCad } = await admin
+      .from("qa_clientes")
+      .select("categoria_titular, profissao")
+      .eq("id", (processo as any).cliente_id)
+      .maybeSingle();
+    // Cadastro como fonte derivada de resposta (espelha o front).
+    const respostas = mesclarRespostasCadastro(respostasProcesso, clienteCad as any);
 
     // ----------------------------------------------------------------------
     // RECONCILIAÇÃO INLINE de perguntas-pivot: se a resposta já existe em

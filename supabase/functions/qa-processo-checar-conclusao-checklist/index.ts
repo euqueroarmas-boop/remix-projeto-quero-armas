@@ -19,6 +19,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { itemContaParaConclusao } from "../_shared/checklistVisibility.ts";
+import { mesclarRespostasCadastro } from "../_shared/respostasCadastro.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -127,7 +128,14 @@ Deno.serve(async (req) => {
     if (!processo) return json({ error: "processo_not_found" }, 404);
 
     const statusAtual = String((processo as any).status || "").toLowerCase();
-    const respostas = (processo as any).respostas_questionario_json || {};
+    const respostasProcesso = (processo as any).respostas_questionario_json || {};
+    const { data: clienteCad } = await admin
+      .from("qa_clientes")
+      .select("categoria_titular, profissao")
+      .eq("id", (processo as any).cliente_id)
+      .maybeSingle();
+    // Cadastro como fonte derivada de resposta (espelha o front).
+    const respostas = mesclarRespostasCadastro(respostasProcesso, clienteCad as any);
     const notificacoes = (respostas?.notificacoes || {}) as Record<string, any>;
     const jaNotificadoEm = notificacoes?.pronto_para_protocolar_enviado_em || null;
 
@@ -188,7 +196,7 @@ Deno.serve(async (req) => {
       .from("qa_processos")
       .update({
         status: "pronto_para_protocolar",
-        respostas_questionario_json: { ...respostas, notificacoes: novasNotificacoes },
+        respostas_questionario_json: { ...respostasProcesso, notificacoes: novasNotificacoes },
         updated_at: agora,
       })
       .eq("id", processoId)
