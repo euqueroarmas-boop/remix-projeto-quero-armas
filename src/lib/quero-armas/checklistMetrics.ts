@@ -1,3 +1,9 @@
+import {
+  isDocCumprido,
+  isDocEmAnalise,
+  isDocPendencia,
+} from "./statusDocumento";
+
 export interface ChecklistMetricDoc {
   status: string | null;
 }
@@ -61,16 +67,17 @@ const STATUS_ANALISE = STATUS_CHECKLIST_EM_ANALISE;
 const STATUS_PENDENTE = STATUS_CHECKLIST_PENDENTE;
 
 export function isChecklistCumprido(status: string | null | undefined): boolean {
-  return STATUS_CUMPRIDO.has(String(status ?? "").toLowerCase());
+  // Bloco 2: o dicionário canônico (statusDocumento.ts) é a única tradução.
+  // Os Sets acima ficam apenas como referência/compatibilidade de imports.
+  return isDocCumprido(status);
 }
 
 export function isChecklistEmAnalise(status: string | null | undefined): boolean {
-  return STATUS_ANALISE.has(String(status ?? "").toLowerCase());
+  return isDocEmAnalise(status);
 }
 
 export function isChecklistPendente(status: string | null | undefined): boolean {
-  const normalized = String(status ?? "").toLowerCase();
-  return STATUS_PENDENTE.has(normalized) || (!STATUS_CUMPRIDO.has(normalized) && !STATUS_ANALISE.has(normalized));
+  return isDocPendencia(status);
 }
 
 export function computeChecklistMetrics<T extends ChecklistMetricDoc>(docs: T[]): ChecklistMetrics {
