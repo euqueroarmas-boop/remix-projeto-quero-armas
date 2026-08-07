@@ -1617,11 +1617,15 @@ export function ClienteDocsHubModal({
     pendingSet.has(form.tipo_documento)
   );
   // Cliente mandou algo que não é pedido em lugar nenhum do processo.
+  // FAIL-CLOSED: se a lista de pendências não chegou (`pendingHubTipos` vazio),
+  // NÃO se pode presumir que o documento cobre outra exigência. Antes esta
+  // condição exigia `pendingSet.size > 0` e, como nenhum call site passava a
+  // prop, a trava ficava permanentemente desligada — o aviso "documento
+  // divergente" aparecia na tela e o SALVAR continuava habilitado.
   const certidaoIncorreta = !!(
     tipoDivergenteExigencia &&
     form.tipo_documento &&
-    pendingSet.size > 0 &&
-    !pendingSet.has(form.tipo_documento)
+    !cobreOutraPendencia
   );
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
