@@ -150,6 +150,7 @@ const IA_TO_TIPO: Record<string, string> = {
   ANTECEDENTES_ESTADUAL_DISTRIBUICAO: "antecedentes_estadual_distribuicao",
   ANTECEDENTES_ESTADUAL_EXECUCOES: "antecedentes_estadual_execucoes",
   ANTECEDENTES_MILITAR: "antecedentes_militar",
+  ANTECEDENTES_MILITAR_ESTADUAL: "antecedentes_militar_estadual",
   ANTECEDENTES_ELEITORAL: "antecedentes_eleitoral",
   // Declarações
   DECLARACAO_NAO_INQUERITO: "declaracao_sem_inquerito_processo_criminal",
