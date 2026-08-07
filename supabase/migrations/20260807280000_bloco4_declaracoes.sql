@@ -9,29 +9,15 @@
 --        comprovante_habitualidade e comprovante_clube_tiro,
 --        pergunta_anexar_habitualidade_cac"
 --
--- O conceito de habitualidade não pertence a este fluxo: declarações,
--- comprovantes e perguntas sobre ele saem juntos. Isso encerra também
--- a discussão de 07/08 sobre fundir `declaracao_compromisso_habitualidade`
--- com `comprovante_habitualidade` — não se funde o que não é para ser pedido.
---
--- ─── O que sai ───────────────────────────────────────────────────────────
---   declaracao_habitualidade_clube        4 catálogo · 3 processos · fora do CHECK
---   declaracao_compromisso_treino         3 catálogo · 3 processos · fora do CHECK
---   declaracao_compromisso_habitualidade  2 catálogo · 3 processos · no CHECK
---   comprovante_habitualidade             0 catálogo · ? processos · no CHECK
---   comprovante_clube_tiro                0 catálogo · ? processos · no CHECK
---   pergunta_anexar_habitualidade_cac     1 catálogo · ? processos · fora do CHECK
---
--- Os três primeiros não são documento próprio nem viram outra coisa.
--- Os dois comprovantes têm zero catálogo e zero uso — ninguém os pede.
--- A pergunta oferecia anexar o que não é mais exigido.
+-- ─── Estado do CHECK antes deste bloco (pg_get_constraintdef 07/08/2026 08:24) ─
+-- declaracao_compromisso_habitualidade: JÁ AUSENTE (removido em 20260807180000).
+-- comprovante_habitualidade: presente → removido aqui.
+-- comprovante_clube_tiro: presente → removido aqui.
+-- Abordagem: DDL direto com lista hardcoded (sem EXECUTE + replace),
+-- que é mais confiável em Supabase.
 --
 -- ─── Efetiva necessidade: um documento, dois nomes ───────────────────────
--- Confirmado pelo usuário: `declaracao_necessidade_efetiva` é o MESMO
--- documento que `comprovante_efetiva_necessidade`. O primeiro nunca foi tipo
--- do Hub — 1 linha de catálogo e 5 exigências ativas apontando para um slug
--- que só existia do lado do processo. Passa a usar o nome do Hub, e o
--- casamento vira identidade.
+-- `declaracao_necessidade_efetiva` = `comprovante_efetiva_necessidade` (confirmado).
 --
 -- Idempotente.
 -- =============================================================================
@@ -46,13 +32,11 @@ INSERT INTO _fora_do_processo (slug) VALUES
   ('declaracao_compromisso_treino'),
   ('declaracao_compromisso_habitualidade');
 
--- Catálogo deixa de emitir
 UPDATE public.qa_servicos_documentos sd
    SET ativo = false, updated_at = now()
   FROM _fora_do_processo f
  WHERE sd.tipo_documento = f.slug;
 
--- Exigências em aberto encerram
 UPDATE public.qa_processo_documentos pd
    SET status = 'nao_aplicavel',
        observacoes = COALESCE(pd.observacoes, '') ||
@@ -66,47 +50,27 @@ UPDATE public.qa_processo_documentos pd
    AND pd.status NOT IN ('aprovado','nao_aplicavel')
    AND COALESCE(p.status, '') NOT IN ('finalizado','deferido','indeferido','cancelado');
 
--- Biblioteca
 DELETE FROM public.qa_documentos_biblioteca b
  USING _fora_do_processo f
  WHERE b.codigo = f.slug;
 
--- Apelidos
 DELETE FROM public.qa_tipo_documento_aliases a
  USING _fora_do_processo f
  WHERE a.processo_tipo = f.slug OR a.hub_tipo = f.slug;
 
--- ─── 5) declaracao_compromisso_habitualidade sai do CHECK ────────────────
--- É o único dos três que é tipo do Hub.
+-- ─── 5) Guard: declaracao_compromisso_habitualidade já não está no CHECK ──
+-- Já foi removido pela migration 20260807180000. Apenas confirma zero docs.
 DO $$
-DECLARE
-  v_def text;
-  v_qtd bigint;
+DECLARE v_qtd bigint;
 BEGIN
-  SELECT count(*) INTO v_qtd
-    FROM public.qa_documentos_cliente
+  SELECT count(*) INTO v_qtd FROM public.qa_documentos_cliente
    WHERE tipo_documento = 'declaracao_compromisso_habitualidade';
-
   IF v_qtd > 0 THEN
     RAISE EXCEPTION
-      'Abortado: % documento(s) com tipo declaracao_compromisso_habitualidade no Hub. '
-      'Reclassifique antes de remover o tipo da constraint.', v_qtd;
+      'Abortado: % doc(s) com tipo declaracao_compromisso_habitualidade no Hub. '
+      'Reclassifique antes de continuar.', v_qtd;
   END IF;
-
-  SELECT pg_get_constraintdef(oid) INTO v_def
-    FROM pg_constraint WHERE conname = 'qa_doc_cliente_tipo_check';
-
-  IF v_def NOT LIKE '%declaracao_compromisso_habitualidade%' THEN
-    RAISE NOTICE 'declaracao_compromisso_habitualidade já não consta do CHECK.';
-  ELSE
-    v_def := replace(v_def, '''declaracao_compromisso_habitualidade''::text, ', '');
-    v_def := replace(v_def, ', ''declaracao_compromisso_habitualidade''::text', '');
-    IF v_def LIKE '%declaracao_compromisso_habitualidade%' THEN
-      RAISE EXCEPTION 'Não consegui remover o tipo do CHECK — formato inesperado.';
-    END IF;
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente DROP CONSTRAINT qa_doc_cliente_tipo_check';
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente ADD CONSTRAINT qa_doc_cliente_tipo_check ' || v_def;
-  END IF;
+  RAISE NOTICE 'declaracao_compromisso_habitualidade: 0 doc(s) no Hub. OK.';
 END $$;
 
 -- ─── 6) declaracao_necessidade_efetiva → comprovante_efetiva_necessidade ──
@@ -169,13 +133,10 @@ UPDATE public.qa_documentos_biblioteca
    SET ativo = false, updated_at = now()
  WHERE codigo = 'declaracao_necessidade_efetiva';
 
--- O apelido permanece: processo encerrado mantém o slug da época e sem ele
--- ficaria órfão.
+-- O apelido permanece: processo encerrado mantém o slug da época.
 
--- ─── 7) comprovante_habitualidade e comprovante_clube_tiro saem do processo
--- e do Hub (têm zero uso no catálogo; o conceito inteiro não pertence ao fluxo).
--- pergunta_anexar_habitualidade_cac era a pergunta que oferecia anexar o que
--- já não é exigido — sai do catálogo e dos processos, não é tipo do Hub.
+-- ─── 7) comprovante_habitualidade, comprovante_clube_tiro e ──────────────
+--         pergunta_anexar_habitualidade_cac saem do processo
 CREATE TEMP TABLE _fora_hab (slug text PRIMARY KEY) ON COMMIT DROP;
 
 INSERT INTO _fora_hab (slug) VALUES
@@ -209,61 +170,111 @@ DELETE FROM public.qa_tipo_documento_aliases a
  USING _fora_hab f
  WHERE a.processo_tipo = f.slug OR a.hub_tipo = f.slug;
 
--- comprovante_habitualidade e comprovante_clube_tiro saem do CHECK
--- (pergunta_anexar_habitualidade_cac nunca foi tipo do Hub)
+-- ─── 8) comprovante_habitualidade e comprovante_clube_tiro saem do CHECK ──
+-- Guard: aborta se qualquer doc no Hub ainda usar esses tipos.
+-- DDL direto (sem EXECUTE + replace) — lista hardcoded do estado real do
+-- banco em 07/08/2026 08:24, com os dois tipos removidos.
 DO $$
-DECLARE
-  v_def text;
-  v_qtd bigint;
+DECLARE v_qtd bigint;
 BEGIN
-  -- comprovante_habitualidade
-  SELECT count(*) INTO v_qtd
-    FROM public.qa_documentos_cliente
+  SELECT count(*) INTO v_qtd FROM public.qa_documentos_cliente
    WHERE tipo_documento = 'comprovante_habitualidade';
   IF v_qtd > 0 THEN
     RAISE EXCEPTION
-      'Abortado: % documento(s) com tipo comprovante_habitualidade no Hub. '
-      'Reclassifique antes de remover o tipo da constraint.', v_qtd;
-  END IF;
-  SELECT pg_get_constraintdef(oid) INTO v_def
-    FROM pg_constraint WHERE conname = 'qa_doc_cliente_tipo_check';
-  IF v_def NOT LIKE '%comprovante_habitualidade%' THEN
-    RAISE NOTICE 'comprovante_habitualidade já não consta do CHECK.';
-  ELSE
-    v_def := replace(v_def, '''comprovante_habitualidade''::text, ', '');
-    v_def := replace(v_def, ', ''comprovante_habitualidade''::text', '');
-    IF v_def LIKE '%comprovante_habitualidade%' THEN
-      RAISE EXCEPTION 'Não consegui remover comprovante_habitualidade do CHECK — formato inesperado.';
-    END IF;
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente DROP CONSTRAINT qa_doc_cliente_tipo_check';
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente ADD CONSTRAINT qa_doc_cliente_tipo_check ' || v_def;
+      'Abortado: % doc(s) com tipo comprovante_habitualidade no Hub. '
+      'Reclassifique antes de remover da constraint.', v_qtd;
   END IF;
 
-  -- comprovante_clube_tiro
-  SELECT count(*) INTO v_qtd
-    FROM public.qa_documentos_cliente
+  SELECT count(*) INTO v_qtd FROM public.qa_documentos_cliente
    WHERE tipo_documento = 'comprovante_clube_tiro';
   IF v_qtd > 0 THEN
     RAISE EXCEPTION
-      'Abortado: % documento(s) com tipo comprovante_clube_tiro no Hub. '
-      'Reclassifique antes de remover o tipo da constraint.', v_qtd;
+      'Abortado: % doc(s) com tipo comprovante_clube_tiro no Hub. '
+      'Reclassifique antes de remover da constraint.', v_qtd;
   END IF;
-  SELECT pg_get_constraintdef(oid) INTO v_def
-    FROM pg_constraint WHERE conname = 'qa_doc_cliente_tipo_check';
-  IF v_def NOT LIKE '%comprovante_clube_tiro%' THEN
-    RAISE NOTICE 'comprovante_clube_tiro já não consta do CHECK.';
-  ELSE
-    v_def := replace(v_def, '''comprovante_clube_tiro''::text, ', '');
-    v_def := replace(v_def, ', ''comprovante_clube_tiro''::text', '');
-    IF v_def LIKE '%comprovante_clube_tiro%' THEN
-      RAISE EXCEPTION 'Não consegui remover comprovante_clube_tiro do CHECK — formato inesperado.';
-    END IF;
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente DROP CONSTRAINT qa_doc_cliente_tipo_check';
-    EXECUTE 'ALTER TABLE public.qa_documentos_cliente ADD CONSTRAINT qa_doc_cliente_tipo_check ' || v_def;
-  END IF;
+
+  RAISE NOTICE 'Guards OK: 0 doc(s) com comprovante_habitualidade e comprovante_clube_tiro no Hub.';
 END $$;
 
--- ─── 8) Reavalia ─────────────────────────────────────────────────────────
+ALTER TABLE public.qa_documentos_cliente
+  DROP CONSTRAINT IF EXISTS qa_doc_cliente_tipo_check;
+
+ALTER TABLE public.qa_documentos_cliente
+  ADD CONSTRAINT qa_doc_cliente_tipo_check
+  CHECK (tipo_documento = ANY (ARRAY[
+    'rg_com_cpf'::text,
+    'cin'::text,
+    'cnh'::text,
+    'certidao_alteracao_nome'::text,
+    'comprovante_residencia'::text,
+    'declaracao_responsavel_imovel'::text,
+    'documento_identificacao_terceiro'::text,
+    'ctps'::text,
+    'renda_holerite_mes_atual'::text,
+    'renda_holerite_funcionario_publico'::text,
+    'renda_carteira_funcional'::text,
+    'renda_cartao_cnpj'::text,
+    'renda_qsa'::text,
+    'renda_contrato_social'::text,
+    'renda_ccmei'::text,
+    'renda_cnpj_autonomo'::text,
+    'renda_comprovante_beneficio'::text,
+    'renda_extrato_inss'::text,
+    'antecedentes_criminais'::text,
+    'antecedentes_federal'::text,
+    'antecedentes_estadual'::text,
+    'antecedentes_federal_trf3_regional'::text,
+    'antecedentes_federal_sjsp_jef'::text,
+    'antecedentes_estadual_distribuicao'::text,
+    'antecedentes_estadual_execucoes'::text,
+    'antecedentes_militar'::text,
+    'antecedentes_eleitoral'::text,
+    'declaracao_sem_inquerito_processo_criminal'::text,
+    'declaracao_guarda_responsavel'::text,
+    'declaracao_correlata'::text,
+    'declaracao_guarda_acervo_1endereco'::text,
+    'declaracao_guarda_acervo_2enderecos'::text,
+    'declaracao_endereco_acervo'::text,
+    'dsa_declaracao_seguranca_acervo'::text,
+    'declaracao_nao_possuir_segundo_endereco'::text,
+    'declaracao_homonimia'::text,
+    'laudo_psicologico'::text,
+    'laudo_capacidade_tecnica'::text,
+    'comprovante_efetiva_necessidade'::text,
+    'documento_complementar_caso'::text,
+    'cr'::text,
+    'craf'::text,
+    'sinarm'::text,
+    'gt'::text,
+    'gte'::text,
+    'autorizacao_compra'::text,
+    'nota_fiscal_arma'::text,
+    -- 'comprovante_habitualidade' REMOVIDO — habitualidade não pertence ao processo
+    -- 'comprovante_clube_tiro'    REMOVIDO — idem
+    'habilitacao_cacador_ibama'::text,
+    'comprovante_competicao'::text,
+    'comprovante_pagamento'::text,
+    'requerimento_de_posse_de_arma_de_fogo'::text,
+    'protocolo_processo'::text,
+    'oficio'::text,
+    'despacho'::text,
+    'exigencia'::text,
+    'indeferimento'::text,
+    'procuracao'::text,
+    'procuracao_assinada'::text,
+    'contrato_assinado'::text,
+    'recurso_administrativo_doc'::text,
+    'mandado_seguranca_doc'::text,
+    'outro'::text,
+    'renda_nf_empresa'::text,
+    'renda_contra_cheque_mes_atual'::text,
+    'boletim_ocorrencia'::text,
+    'foto_3x4'::text,
+    'renda_ficha_cadastral_jucesp'::text,
+    'antecedentes_militar_estadual'::text
+  ]));
+
+-- ─── 9) Reavalia ─────────────────────────────────────────────────────────
 SELECT public.qa_reaproveitar_documentos_hub_processo(p.id, 'bloco4_declaracoes')
   FROM public.qa_processos p
  WHERE COALESCE(p.status, 'ativo') NOT IN ('finalizado','deferido','indeferido','cancelado','arquivado')
@@ -272,9 +283,7 @@ SELECT public.qa_reaproveitar_documentos_hub_processo(p.id, 'bloco4_declaracoes'
       WHERE pd.processo_id = p.id
         AND pd.status IN ('pendente','rejeitado','enviado','em_analise','revisao_humana')
         AND (pd.tipo_documento LIKE 'declaracao%' OR pd.tipo_documento LIKE 'dsa_%'
-          OR pd.tipo_documento = 'comprovante_efetiva_necessidade'
-          OR pd.tipo_documento IN ('comprovante_habitualidade','comprovante_clube_tiro',
-                                    'pergunta_anexar_habitualidade_cac'))
+          OR pd.tipo_documento = 'comprovante_efetiva_necessidade')
    );
 
 COMMIT;
