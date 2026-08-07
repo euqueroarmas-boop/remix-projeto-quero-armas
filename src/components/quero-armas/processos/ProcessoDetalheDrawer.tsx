@@ -379,11 +379,33 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       // ============================================================
       const { data: docDb, error: errFetch } = await supabase
         .from("qa_processo_documentos")
-        .select("status, motivo_rejeicao, nome_documento, tipo_documento")
+        .select("status, motivo_rejeicao, nome_documento, tipo_documento, arquivo_url, arquivo_storage_key")
         .eq("id", docId)
         .maybeSingle();
       if (errFetch) throw errFetch;
       if (!docDb) throw new Error("Documento não encontrado.");
+
+      // ============================================================
+      // TRAVA — APROVADO EXIGE ARQUIVO
+      // Espelha o gatilho do banco (qa_trava_aprovado_exige_arquivo_processo).
+      // Perguntas de checklist nunca são "aprovado": elas são respostas.
+      // ============================================================
+      if (novoStatus === "aprovado") {
+        const ehPergunta =
+          (docDb.tipo_documento ?? "").startsWith("pergunta_") ||
+          docDb.tipo_documento === "renda_definir_condicao";
+        if (ehPergunta) {
+          toast.error("Este item é uma pergunta do checklist — responda em vez de aprovar.");
+          return;
+        }
+        const temArquivo =
+          Boolean((docDb.arquivo_storage_key ?? "").trim()) ||
+          Boolean((docDb.arquivo_url ?? "").trim());
+        if (!temArquivo) {
+          toast.error("Não é possível aprovar sem arquivo anexado. Peça o envio do documento ao cliente.");
+          return;
+        }
+      }
 
       const norm = (s?: string | null) => (s ?? "").trim().toUpperCase();
       const motivoNovo = novoStatus === "aprovado" ? null : (motivo ?? null);
