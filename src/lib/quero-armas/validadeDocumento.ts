@@ -414,6 +414,23 @@ export function isDocumentoConstitutivoPerpetuo(tipo?: string | null): boolean {
 }
 
 /**
+ * IDENTIDADE FUNCIONAL / carteira funcional (PM, PC, Bombeiros, Fé Pública
+ * Decreto 14.298/79, magistratura, etc.): o próprio documento traz
+ * "VALIDADE: INDETERMINADA". Não vence — nunca calcular 30 dias sobre a
+ * data de expedição.
+ */
+export function isIdentidadeFuncionalPerpetua(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return (
+    t === "renda_carteira_funcional" ||
+    t.includes("carteira_funcional") ||
+    t.includes("identidade_funcional") ||
+    t.includes("funcional_militar") ||
+    t.includes("fe_publica")
+  );
+}
+
+/**
  * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
  * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
  * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
@@ -424,6 +441,7 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   const t = String(tipo || "").toLowerCase();
   if (isNotaFiscalSemVencimento(t)) return false;
   if (isDocumentoConstitutivoPerpetuo(t)) return false;
+  if (isIdentidadeFuncionalPerpetua(t)) return false;
   return (
     t.startsWith("renda_") ||
     t.startsWith("ocupacao_licita") ||
@@ -464,6 +482,7 @@ export function calcularValidadeEfetiva(
   // Nota fiscal: validade perpétua — nunca calcula vencimento.
   if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
+  if (isIdentidadeFuncionalPerpetua(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
