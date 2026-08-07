@@ -155,6 +155,67 @@ export function labelStatusDocumento(raw?: string | null): string {
   return LABELS[normalizarStatusDocumento(raw)];
 }
 
+/* -----------------------------------------------------------------------------
+ * BLOCO 5 — Vocabulário exibido ao CLIENTE
+ *
+ * A equipe fala "PENDENTE/REPROVADO"; o cliente precisa de instrução, não de
+ * jargão interno. Este é o único lugar onde a tradução para o portal existe.
+ * --------------------------------------------------------------------------- */
+const LABELS_CLIENTE: Record<StatusDocCanonico, string> = {
+  pendente: "TE AGUARDANDO",
+  em_analise: "EM ANÁLISE",
+  aprovado: "APROVADO",
+  reprovado: "REENVIAR",
+  dispensado: "JÁ RESOLVIDO",
+  vencido: "VENCIDO",
+  arquivado: "ARQUIVADO",
+};
+
+/** Label UPPERCASE para telas do portal do cliente. */
+export function labelStatusDocumentoCliente(raw?: string | null): string {
+  return LABELS_CLIENTE[normalizarStatusDocumento(raw)];
+}
+
+const CLASSES: Record<StatusDocCanonico, string> = {
+  pendente: "bg-[#7A1F2B]/10 text-[#7A1F2B] border-[#7A1F2B]/30",
+  em_analise: "bg-amber-100 text-amber-700 border-amber-300",
+  aprovado: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  reprovado: "bg-red-100 text-red-700 border-red-300",
+  dispensado: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  vencido: "bg-red-100 text-red-700 border-red-300",
+  arquivado: "bg-slate-100 text-slate-600 border-slate-300",
+};
+
+/** Badge canônico (label + classes + cor) — evita mapas locais por tela. */
+export function badgeStatusDocumento(
+  raw?: string | null,
+  audiencia: "equipe" | "cliente" = "equipe",
+): { status: StatusDocCanonico; label: string; cls: string; cor: string } {
+  const status = normalizarStatusDocumento(raw);
+  return {
+    status,
+    label: audiencia === "cliente" ? LABELS_CLIENTE[status] : LABELS[status],
+    cls: CLASSES[status],
+    cor: CORES[status],
+  };
+}
+
+/** Tom visual canônico usado por listas e cockpit. */
+export function toneStatusDocumento(raw?: string | null): "green" | "amber" | "red" | "gray" {
+  switch (normalizarStatusDocumento(raw)) {
+    case "aprovado":
+    case "dispensado":
+      return "green";
+    case "em_analise":
+      return "amber";
+    case "reprovado":
+    case "vencido":
+      return "red";
+    default:
+      return "gray";
+  }
+}
+
 const CORES: Record<StatusDocCanonico, string> = {
   pendente: "#7A1F2B",
   em_analise: "#B45309",
