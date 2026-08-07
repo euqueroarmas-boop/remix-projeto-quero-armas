@@ -415,6 +415,18 @@ type BibliotecaMatch = {
  * mas operacionalmente continua sendo COMPROVANTE_RESIDENCIA. Por isso, uma
  * correspondência forte com modelo aprovado prevalece sobre a aparência fiscal.
  */
+/**
+ * Palavras que aparecem em QUALQUER certidão brasileira. Contadas como "sinal
+ * compatível", elas fizeram a certidão do STM casar 14/40 com o modelo do TRF3.
+ * Não identificam órgão nenhum, então não valem como prova de modelo.
+ */
+const PALAVRAS_GENERICAS_BIBLIOTECA = new Set([
+  "CERTIDAO","CERTIDOES","DATA","NOME","PODER","JUDICIARIO","JUSTICA","CRIMINAL","CRIMINAIS",
+  "PROCESSO","PROCESSOS","PROCESSUAIS","PRESENTE","BASE","PESQUISA","CONSULTA","INFORMADO",
+  "INTERESSADO","EMITIDA","EMISSAO","NEGATIVA","ABRANGE","ABRANGENCIA","SISTEMA","ELETRONICO",
+  "RESOLUCAO","EXECUCAO","JUDICIAL","GRAU","HTTPS","PAULO","2020","2026",
+]);
+
 async function buscarModeloBiblioteca(
   supabase: any,
   textoPdf: string,
@@ -438,14 +450,15 @@ async function buscarModeloBiblioteca(
       const palavras = Array.isArray(modelo.palavras_chave_json)
         ? modelo.palavras_chave_json
             .map((p) => normalizarTexto(String(p)))
-            .filter((p) => p.length >= 4)
+            .filter((p) => p.length >= 4 && !PALAVRAS_GENERICAS_BIBLIOTECA.has(p))
         : [];
       if (palavras.length < 8) continue;
       const encontradas = palavras.filter((p) => texto.includes(p)).length;
       const cobertura = encontradas / palavras.length;
 
-      // Exige vários sinais simultâneos para uma palavra genérica não dominar.
-      if (encontradas < 8 || cobertura < 0.35) continue;
+      // Só palavras discriminantes contam, e a maioria delas precisa estar
+      // presente — 35% de cobertura aceitava documento de outro órgão.
+      if (encontradas < 8 || cobertura < 0.6) continue;
       if (!melhor || cobertura > melhor.cobertura ||
           (cobertura === melhor.cobertura && encontradas > melhor.palavrasEncontradas)) {
         melhor = {
