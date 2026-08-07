@@ -77,13 +77,18 @@ import {
   type EscopoDocumental,
   type HubCategoria,
 } from "@/lib/quero-armas/documentosHubCatalogo";
-function notificarDocumentoHubAprovado(documentoId?: string | null) {
+async function notificarDocumentoHubAprovado(documentoId?: string | null) {
   if (!documentoId) return;
-  void supabase.functions.invoke("qa-documento-cliente-notificar", {
-    body: { documento_id: documentoId, status: "aprovado" },
-  }).then(({ error }) => {
+  try {
+    const { error } = await supabase.functions.invoke("qa-documento-cliente-notificar", {
+      body: { documento_id: documentoId, status: "aprovado" },
+    });
     if (error) console.warn("Falha ao notificar aprovação do documento do Hub:", error);
-  }).catch((e) => console.warn("Falha ao notificar aprovação do documento do Hub:", e));
+  } catch (error) {
+    // O documento já foi salvo. Uma indisponibilidade do canal de e-mail não
+    // pode transformar uma aprovação válida em aparente falha de salvamento.
+    console.warn("Falha ao notificar aprovação do documento do Hub:", error);
+  }
 }
 
 /**
@@ -3313,7 +3318,7 @@ export function ClienteDocsHubModal({
                 .from("qa_documentos_cliente" as any)
                 .update({ status: "aprovado", validado_admin: true, aprovado_em: new Date().toISOString() })
                 .eq("id", dup.id);
-              notificarDocumentoHubAprovado(dup.id);
+              await notificarDocumentoHubAprovado(dup.id);
             }
             if (qaClienteId) {
               await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
@@ -3679,7 +3684,7 @@ export function ClienteDocsHubModal({
         });
       }
       if (isStaff && novoDocId) {
-        notificarDocumentoHubAprovado(novoDocId);
+        await notificarDocumentoHubAprovado(novoDocId);
         if (conferenciaLaudo?.veredicto === "aprovado_com_alerta_interno") {
           alertarEquipeSobreLaudo(
             novoDocId,
