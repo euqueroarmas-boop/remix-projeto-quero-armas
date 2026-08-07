@@ -111,8 +111,11 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   atestado_capacidade_tecnica_instituicao: "laudo_capacidade_tecnica",
   // Certidão estadual Polícia Civil (antecedentes criminais estaduais):
   certidao_estadual_policia_civil: "antecedentes_criminais",
-  // Declarações de endereço/acervo e necessidade efetiva:
-  declaracao_endereco_acervo: "declaracao_guarda_acervo_1endereco",
+  // declaracao_endereco_acervo NÃO é traduzida. É tipo próprio do Hub e tem 5
+  // linhas ativas no catálogo, enquanto o destino antigo —
+  // declaracao_guarda_acervo_1endereco — tem ZERO uso. A tradução mandava um
+  // slug real para um tipo que ninguém usa, gravando o documento sob outro
+  // nome: mesmo padrão do RG virando CIN e da JUCESP virando contrato social.
   declaracao_necessidade_efetiva: "comprovante_efetiva_necessidade",
 };
 
