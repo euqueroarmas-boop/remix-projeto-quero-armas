@@ -171,7 +171,8 @@ function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean 
   }
   const vencido = d < 0;
   const abs = Math.abs(d);
-  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "FALTAM";
+  // "FALTAM" saiu: a legenda de cores no rodapé do card já explica a leitura.
+  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "";
   const valor = d === 0 ? "HOJE" : `${abs} ${abs === 1 ? "dia" : "dias"}`;
   const titulo = vencido
     ? `Documento vencido há ${abs} ${abs === 1 ? "dia" : "dias"}`
@@ -180,9 +181,8 @@ function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean 
       : `Faltam ${abs} ${abs === 1 ? "dia" : "dias"} para vencer`;
   return (
     <strong className={`qa-prazo ${item.tone}`} title={titulo}>
-      <span className="qa-prazo__k">{kicker}</span>
+      {kicker ? <span className="qa-prazo__k">{kicker}</span> : null}
       <span className={`qa-prazo__v${underline ? " is-link" : ""}`}>
-        <i className="qa-prazo__dot" aria-hidden="true" />
         {valor}
       </span>
     </strong>
