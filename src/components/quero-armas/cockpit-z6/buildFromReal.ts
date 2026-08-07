@@ -497,7 +497,7 @@ export function buildCockpitZ6FromReal(input: BuildCockpitZ6FromRealInput): Cock
       cta: { label: "ASSINAR CONTRATO →", onClick: onFocoCta },
     };
   } else if (procDocs) {
-    const docsAbertos = processoDocs.filter((d) => d.processo_id === procDocs.id && !["aprovado","arquivado"].includes(String(d.status || "").toLowerCase()));
+    const docsAbertos = processoDocs.filter((d) => d.processo_id === procDocs.id && !isChecklistCumprido(d.status) && String(d.status || "").toLowerCase() !== "arquivado");
     focoDoDia = {
       titulo: `${docsAbertos.length} ${docsAbertos.length === 1 ? "documento pendente" : "documentos pendentes"} · ${formatServicoAmigavel(procDocs.servico_nome)}`,
       descricao: "Conclua a etapa atual para liberar o próximo passo do seu processo.",
