@@ -1841,6 +1841,13 @@ export default function QAClientePortalPage() {
   // abre o Hub Documental focado no tipo correto. O wizard antigo (Assistente
   // Guiado) continua disponível pelo Speed Dial e pelo bus.
   // ==========================================================================
+  // ── Ordem canônica do portal: 1) contrato/procuração, 2) dados cadastrais,
+  // 3) checklist do processo. Fonte única da 2ª prioridade.
+  const cadastroCrucialIncompleto = useMemo(
+    () => getCamposObrigatoriosCliente(cliente).length > 0,
+    [cliente],
+  );
+
   const pendenciasGuiadas = useMemo<PendenciaItem[]>(() => {
     const items: PendenciaItem[] = [];
     // Pendência cadastral explícita (prioridade 2). Calculada aqui para
