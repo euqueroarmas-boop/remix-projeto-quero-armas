@@ -510,6 +510,17 @@ Deno.serve(async (req) => {
         prazo_recomendado_dias: d.prazo_recomendado_dias ?? null,
       }));
       await supabase.from("qa_processo_documentos").insert(rows);
+
+      // Dispara reaproveitamento para os docs recém-inseridos: o Hub do cliente
+      // pode já ter documentos aprovados que satisfazem essas exigências (ex.:
+      // holerite aprovado cobrindo contra_cheque_digital). Sem esse disparo, o
+      // doc fica pendente e o cliente é bloqueado ao tentar enviar de novo.
+      try {
+        await supabase.rpc("qa_reaproveitar_documentos_hub_processo", {
+          p_processo_id: processo_id,
+          p_origem: "set_condicao_auto",
+        });
+      } catch (_) { /* best-effort — não bloqueia o fluxo principal */ }
     }
 
     // 5) Evento
