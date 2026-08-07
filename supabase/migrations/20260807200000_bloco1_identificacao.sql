@@ -68,13 +68,22 @@ UPDATE public.qa_servicos_documentos
    SET ativo = false, updated_at = now()
  WHERE tipo_documento = 'cpf';
 
--- Remove exigências de CPF ainda em aberto nos processos em andamento.
+-- Encerra as exigências de CPF ainda em aberto nos processos em andamento.
+-- MARCA como nao_aplicavel em vez de apagar: a linha é histórico de um
+-- processo real e `nao_aplicavel` já conta como cumprida em checklistMetrics,
+-- então some da contagem de pendências sem destruir o registro.
 -- Processo já encerrado fica como está — histórico não se reescreve.
-DELETE FROM public.qa_processo_documentos pd
- USING public.qa_processos p
+UPDATE public.qa_processo_documentos pd
+   SET status = 'nao_aplicavel',
+       observacoes = COALESCE(pd.observacoes, '') ||
+         CASE WHEN COALESCE(pd.observacoes,'') = '' THEN '' ELSE E'\n' END ||
+         '[' || to_char(now() AT TIME ZONE 'America/Sao_Paulo','YYYY-MM-DD HH24:MI') ||
+         '] CPF deixou de ser documento exigido: o número consta do próprio RG/CIN/CNH.',
+       updated_at = now()
+  FROM public.qa_processos p
  WHERE p.id = pd.processo_id
    AND pd.tipo_documento = 'cpf'
-   AND pd.status <> 'aprovado'
+   AND pd.status NOT IN ('aprovado','nao_aplicavel')
    AND COALESCE(p.status, '') NOT IN ('finalizado','deferido','indeferido','cancelado');
 
 -- Só então tira do CHECK, e apenas se de fato não houver documento gravado.
