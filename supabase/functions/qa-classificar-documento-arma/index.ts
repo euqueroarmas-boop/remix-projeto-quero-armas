@@ -910,7 +910,21 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
-    const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
+    let modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
+
+    // A Biblioteca casa por bag-of-words e, quando casa, ASSUME 0.99 e pula a
+    // IA. Termos jurídicos genéricos ("poder judiciário", "ações criminais",
+    // "nada consta", "âmbito nacional") fizeram a certidão do STM casar com o
+    // modelo do TRF3. Quando o texto do próprio documento identifica o órgão de
+    // forma inequívoca, o órgão vence a Biblioteca.
+    const orgaoInequivoco = detectarCertidaoMilitar(textoPdfNativo);
+    if (modeloBiblioteca && orgaoInequivoco && modeloBiblioteca.tipo !== orgaoInequivoco.tipo) {
+      console.warn(
+        "[qa-classificar] modelo da Biblioteca descartado por conflito com o órgão emissor lido no PDF",
+        { modelo: modeloBiblioteca.tipo, orgao: orgaoInequivoco.tipo },
+      );
+      modeloBiblioteca = null;
+    }
 
     // === DOCUMENTO PARSEADO: SEM IA ===
     // Se o texto nativo casa com um modelo aprovado da Biblioteca, o parser já
