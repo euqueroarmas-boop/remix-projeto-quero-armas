@@ -154,6 +154,7 @@ const LABELS: Record<StatusDocCanonico, string> = {
 export function labelStatusDocumento(raw?: string | null): string {
   const status = normalizarStatusDocumento(raw);
   if (status === "dispensado") {
+    if (isNaoSeAplica(raw)) return "NÃO SE APLICA";
     return isReaproveitamento(raw) ? "REAPROVEITADO" : "DISPENSADO POR LEI";
   }
   return LABELS[status];
@@ -172,13 +173,28 @@ const ALIAS_REAPROVEITAMENTO = new Set([
   "dispensado_grupo",
 ]);
 
+/**
+ * `nao_aplicavel` não é dispensa legal: é caminho não escolhido no checklist
+ * (ex.: quem vai apresentar laudo particular não precisa do laudo da
+ * instituição, e vice-versa). Rotular como "dispensado por lei" seria mentira.
+ */
+const ALIAS_NAO_SE_APLICA = new Set(["nao_aplicavel"]);
+
+export function isNaoSeAplica(raw?: string | null): boolean {
+  return ALIAS_NAO_SE_APLICA.has(normalizarChaveStatus(raw));
+}
+
 export function isReaproveitamento(raw?: string | null): boolean {
   return ALIAS_REAPROVEITAMENTO.has(normalizarChaveStatus(raw));
 }
 
 /** True quando a dispensa vem da lei/categoria do titular, não de reaproveitamento. */
 export function isDispensadoPorLei(raw?: string | null): boolean {
-  return normalizarStatusDocumento(raw) === "dispensado" && !isReaproveitamento(raw);
+  return (
+    normalizarStatusDocumento(raw) === "dispensado" &&
+    !isReaproveitamento(raw) &&
+    !isNaoSeAplica(raw)
+  );
 }
 
 /* -----------------------------------------------------------------------------
@@ -201,6 +217,7 @@ const LABELS_CLIENTE: Record<StatusDocCanonico, string> = {
 export function labelStatusDocumentoCliente(raw?: string | null): string {
   const status = normalizarStatusDocumento(raw);
   if (status === "dispensado") {
+    if (isNaoSeAplica(raw)) return "NÃO SE APLICA";
     return isReaproveitamento(raw) ? "JÁ RESOLVIDO" : "DISPENSADO POR LEI";
   }
   return LABELS_CLIENTE[status];
