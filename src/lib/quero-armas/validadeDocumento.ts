@@ -530,6 +530,19 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
     };
   }
 
+  // 0c) Catálogo do banco marca o tipo como perpétuo → nunca vence.
+  const regraCatalogo = getRegraValidade(doc.tipo_documento);
+  if (regraCatalogo && (regraCatalogo.perpetuo || regraCatalogo.validade_dias <= 0)) {
+    return {
+      iso: null,
+      label: "Sem vencimento",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0) Comprovante de residência HISTÓRICO → não vence.
   //    Distinção sem coluna nova: usa regra_validacao.ano_competencia / ano_competencia
   //    contra o ano corrente. Canônico sem ano = corrente.
