@@ -565,10 +565,11 @@ export default function ClienteResumoKanban({
       detalhe?: string,
     ) => {
       const days = daysUntil(date);
-      // O banner de ação imediata acompanha a faixa vermelha: se o documento
-      // já está crítico, ele aparece aqui. Antes a janela era de 7 dias e
-      // ficava fora de sincronia com a cor do card.
-      if (days === null || days > PRAZO_CRITICO_DIAS) return;
+      // Sincronizado com a página DOCUMENTOS: a janela de atenção é a mesma
+      // usada nos KPIs "A VENCER 7D / 30D" (até 30 dias). Antes o banner e os
+      // chips usavam 10 dias e mostravam "Nenhum documento crítico" enquanto
+      // a página já apontava um documento vencendo em 13 dias.
+      if (days === null || days > PRAZO_ATENCAO_DIAS) return;
       urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo, detalhe });
     };
     if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
