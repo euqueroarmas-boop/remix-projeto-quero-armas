@@ -668,6 +668,27 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
 
+  // === JUSTIÇA MILITAR — PRECEDÊNCIA ABSOLUTA ────────────────────────────────
+  // A Justiça Militar da União (STM) é ramo PRÓPRIO do Judiciário: não é
+  // Justiça Federal comum e nunca é TRF. Sem esta trava, a certidão do STM
+  // (que cita "Poder Judiciário", "Ações Criminais", "âmbito nacional") caía
+  // na regra do TRF3 / na Biblioteca e era rotulada como Certidão Federal.
+  // Roda ANTES de TJSP/TRF3 e usa SOMENTE o texto do PDF — nunca a
+  // justificativa da IA, para não validar a IA com a própria IA.
+  const militar = detectarCertidaoMilitar(textoPdf);
+  if (militar) {
+    parsed.tipoDetectado = militar.tipo;
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.tipo_certidao = militar.tipo === "ANTECEDENTES_MILITAR" ? "militar_uniao_stm" : "militar_estadual_tjm";
+    campos.nome_documento = campos.nome_documento || militar.nomeDocumento;
+    campos.orgao_emissor = campos.orgao_emissor || militar.orgao;
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
+    if (!campos.resultado_certidao && /NADA CONSTAR|NADA CONSTA/.test(norm)) campos.resultado_certidao = "nada_consta";
+    parsed.justificativa = militar.justificativa;
+    return parsed;
+  }
+
   const contaConsumoImovel =
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(norm) &&
     /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(norm);
