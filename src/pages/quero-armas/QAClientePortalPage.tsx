@@ -63,7 +63,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import ClienteChecklistCadastralModal from "@/components/quero-armas/portal/ClienteChecklistCadastralModal";
 import { CAMPOS_CADASTRO } from "@/lib/quero-armas/cadastroCompleteness";
-import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
+import { cadastroEstaIncompleto, resumoFaltantesCadastro, getCamposObrigatoriosCliente } from "@/lib/quero-armas/cadastroCompleteness";
 import { EntradaWizardPagina, type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import QAClienteFinanceiroCentral from "@/components/quero-armas/portal/QAClienteFinanceiroCentral";
 import ArsenalPremiumGate from "@/components/quero-armas/portal/ArsenalPremiumGate";
@@ -1841,8 +1841,19 @@ export default function QAClientePortalPage() {
   // abre o Hub Documental focado no tipo correto. O wizard antigo (Assistente
   // Guiado) continua disponível pelo Speed Dial e pelo bus.
   // ==========================================================================
+  // ── Ordem canônica do portal: 1) contrato/procuração, 2) dados cadastrais,
+  // 3) checklist do processo. Fonte única da 2ª prioridade.
+  const cadastroCrucialIncompleto = useMemo(
+    () => getCamposObrigatoriosCliente(cliente).length > 0,
+    [cliente],
+  );
+
   const pendenciasGuiadas = useMemo<PendenciaItem[]>(() => {
     const items: PendenciaItem[] = [];
+    // Pendência cadastral explícita (prioridade 2). Calculada aqui para
+    // entrar na MESMA fila do popup guiado — cadastro incompleto deixa de ser
+    // uma checagem silenciosa e vira pendência visível para todos os clientes.
+    const camposCadastroFaltantes = getCamposObrigatoriosCliente(cliente);
 
     // 1) Assinaturas pendentes primeiro (mantém prioridade atual do portal).
     for (const sig of pendingSignatureDocs) {
@@ -1873,6 +1884,39 @@ export default function QAClientePortalPage() {
           setShowContratoPopup(false);
         },
       });
+    }
+
+    // 1.5) Dados cadastrais — pendência EXPLÍCITA, prioridade imediatamente
+    // após contrato e procuração. Enquanto houver campo obrigatório em branco
+    // o cliente NÃO avança para o checklist do processo: a fila termina aqui.
+    if (camposCadastroFaltantes.length > 0) {
+      const nomes = camposCadastroFaltantes.map((c) => c.label);
+      items.push({
+        id: "cadastro:dados-obrigatorios",
+        kind: "documento",
+        label: "Completar seus dados cadastrais",
+        tipo: "cadastro_dados_obrigatorios",
+        rawTipo: "cadastro_dados_obrigatorios",
+        fallbackNome: "Dados cadastrais",
+        contexto: `${nomes.length} campo(s) obrigatório(s) em branco`,
+        instrucoesCatalogo:
+          "Seus dados cadastrais alimentam todas as peças e conferências do processo: certidões, declarações e a checagem automática dos documentos que você envia. Enquanto houver campo obrigatório em branco, a conferência fica incompleta e o checklist do processo não é liberado. Faltam: " +
+          nomes.join(", ") +
+          ".",
+        entregarLabel: "Completar cadastro",
+        primaryLabel: "Completar cadastro",
+        onPrimary: () => {
+          setShowContratoPopup(false);
+          checklistCadastralAbertoRef.current = true;
+          setShowChecklistCadastral(true);
+        },
+        onEntregar: () => {
+          setShowContratoPopup(false);
+          checklistCadastralAbertoRef.current = true;
+          setShowChecklistCadastral(true);
+        },
+      });
+      return items;
     }
 
     // 2) Exigências documentais do checklist (obrigatórias) — reprovadas
@@ -2354,7 +2398,7 @@ export default function QAClientePortalPage() {
     // popup guiado. A sequência por grupo continua na ordenação, mas sem
     // esconder os demais grupos atrás de uma fila paralela.
     return decorados.map((d) => d.it);
-  }, [pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub]);
+  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
@@ -2917,22 +2961,6 @@ export default function QAClientePortalPage() {
     revisarChecklistsSilenciosamente,
   ]);
 
-  // ── Ordem do portal: assinaturas → cadastro → checklist do processo ───────
-  // Contrato e procuração aparecem juntos na fila e o cliente resolve um a um.
-  // O cadastro só entra depois das duas: os dados para elaborar contrato e
-  // procuração já vieram do fechamento da venda, então não há por que travar
-  // a assinatura esperando cadastro completo.
-  // Fonte única da verdade da 2ª prioridade: cadastro crucial incompleto.
-  const cadastroCrucialIncompleto = useMemo(() => {
-    if (!cliente) return false;
-    return CAMPOS_CADASTRO.some(
-      (c) =>
-        c.crucial &&
-        !c.somenteEquipe &&
-        String((cliente as Record<string, unknown>)?.[c.key] ?? "").trim() === "",
-    );
-  }, [cliente]);
-
   useEffect(() => {
     if (mustChangePassword) return;
     if (!reconciliouCadastro) return;
@@ -2969,11 +2997,12 @@ export default function QAClientePortalPage() {
       setShowContratoPopup(true);
       return;
     }
-    // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) cadastro
-    // completo, 3) checklist do processo. Sem assinatura pendente, o checklist
-    // NUNCA nasce enquanto houver campo crucial do cadastro em branco — mesmo
-    // que o modal cadastral ainda não tenha sido aberto ou tenha sido fechado.
-    if (showChecklistCadastral || cadastroCrucialIncompleto) return;
+    // Ordem obrigatória: 1) assinaturas (contrato/procuração), 2) dados
+    // cadastrais, 3) checklist do processo. Com cadastro incompleto a fila
+    // contém APENAS a pendência cadastral (montada em `pendenciasGuiadas`),
+    // então o popup pode abrir — o checklist do processo continua bloqueado.
+    // Se o wizard cadastral já está na tela, não empilha popup por cima.
+    if (showChecklistCadastral) return;
     if (pendenciasGuiadasDismissed) return;
     abrirPendenciasGuiadas();
   }, [mustChangePassword, pendenciasGuiadasCount, pendingContractsLoaded, pendingSignatureCount, showContratoPopup, showAddDoc, showCadastroModal, showChecklistCadastral, cadastroCrucialIncompleto, pendenciasGuiadasDismissed, isBelowLg, activeSection]);
