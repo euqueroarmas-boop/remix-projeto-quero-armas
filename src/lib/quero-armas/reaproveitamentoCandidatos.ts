@@ -20,7 +20,6 @@ import {
   type DocEscopavel,
 } from "./documentoEscopo";
 import {
-  getRegimeDocumento,
   tipoCompativelComRegime,
   type RegimeDocumento,
 } from "./regimeDocumento";
