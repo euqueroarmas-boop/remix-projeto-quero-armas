@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 2A de 7 — CERTIDÕES: TRF3 e os dois apelidos confirmados
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar SOMENTE depois do Bloco 1.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 2A de 7 — CERTIDÕES: TRF3 e os dois apelidos confirmados
 --
@@ -43,6 +34,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 -- ─── 1) Migra as exigências das grafias variantes para o canônico ────────
 -- Caso A: o processo NÃO tem o canônico — a exigência é renomeada.
