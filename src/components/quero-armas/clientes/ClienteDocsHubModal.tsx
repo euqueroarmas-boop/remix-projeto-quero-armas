@@ -1747,6 +1747,17 @@ export function ClienteDocsHubModal({
     if (docSalvoRef.current) return;
     if (motivoCarimbadoRef.current === motivoRejeicao) return;
     motivoCarimbadoRef.current = motivoRejeicao;
+
+    // Duplicidade: Hub já tem este documento aprovado. Em vez de REPROVADO,
+    // dispensamos a exigência do processo e mostramos sucesso — o cliente
+    // não precisa fazer nada, o documento já está válido no Hub.
+    if (motivoRejeicao === "duplicidade" && qaClienteId) {
+      supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId }).catch(() => {});
+      const label = duplicidadeLabelCurto || "Documento";
+      setResultadoCarimbo({ tipo: "aprovado", mensagem: `${label} já aprovado no Hub · exigência atendida` });
+      return;
+    }
+
     setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
     // A recusa acontece ANTES de qualquer gravação, então nenhum gatilho de
     // banco dispara: avisamos a Central de Notificação do admin na hora.
