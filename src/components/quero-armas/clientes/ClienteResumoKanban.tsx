@@ -431,8 +431,23 @@ export default function ClienteResumoKanban({
     const baseProcessoItems = activeProcessos.length
       ? [...activeProcessos, ...processosBloqueados]
       : (activeItems.length ? activeItems : processosBloqueados);
+    // Última movimentação do cliente: qualquer documento entregue (hub ou
+    // processo) zera o contador do sensor. Sem entrega, vale a última
+    // atualização do próprio processo.
+    const marcosMovimento: number[] = [];
+    for (const d of [...meusDocs, ...processoDocs]) {
+      const t = new Date(String(d?.created_at || d?.updated_at || "")).getTime();
+      if (!Number.isNaN(t)) marcosMovimento.push(t);
+    }
+    const ultimaEntregaMs = marcosMovimento.length ? Math.max(...marcosMovimento) : null;
     const processoItems = baseProcessoItems.map((item: any) => {
       const nome = SERVICO_MAP[item.servico_id] || item.servico_nome || `Serviço #${item.servico_id || ""}`;
+      const procMs = [item?.updated_at, item?.data_ultima_atualizacao, item?.created_at]
+        .map((v) => new Date(String(v || "")).getTime())
+        .filter((t) => !Number.isNaN(t));
+      const refMs = Math.max(ultimaEntregaMs ?? 0, ...(procMs.length ? procMs : [0]));
+      const diasSemMovimento = refMs > 0 ? Math.floor((Date.now() - refMs) / 86400000) : null;
+      const toneSensor = sensorMovimento(diasSemMovimento);
       const prazo = prazosProc.find((p: any) =>
         p.id === item.id ||
         p.servicoId === item.servico_id ||
@@ -449,7 +464,7 @@ export default function ClienteResumoKanban({
         return {
           label: nomeProcesso,
           status: "Clique aqui",
-          tone: "warn" as const,
+          tone: toneSensor,
           onClick: () => {
             // Abre SEMPRE o assistente de documentação já focado neste
             // processo — é ele quem exibe o passo pendente (contrato,
@@ -459,12 +474,12 @@ export default function ClienteResumoKanban({
         };
       }
       if (activeProcessos.length && (statusProcesso === "aguardando_pagamento" || statusProcesso === "em_preparacao" || statusProcesso === "preparando")) {
-        return { label: nomeProcesso, status: "Processo em preparação", tone: "warn" as const };
+        return { label: nomeProcesso, status: "Processo em preparação", tone: toneSensor };
       }
       if (prazo?.diasRestantes !== undefined) {
         return { label: nomeProcesso, status: compactStatus(Number(prazo.diasRestantes)), tone: frontStatus(Number(prazo.diasRestantes)) };
       }
-      return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: "warn" as const };
+      return { label: nomeProcesso, status: compactStatus(null, serviceProgress(item)), tone: toneSensor };
     });
 
     // ── Documentos consolidados por FAMÍLIA ────────────────────────────
