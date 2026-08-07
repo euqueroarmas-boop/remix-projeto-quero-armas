@@ -151,6 +151,45 @@ function compactStatus(days: number | null, percent?: number | null) {
 }
 
 function shortName(value: string, fallback: string) {
+  return shortNameImpl(value, fallback);
+}
+
+/**
+ * Prazo legível: o cliente precisa entender de bate-pronto se o número de dias
+ * é "falta X para vencer" ou "já venceu há X". Antes mostrávamos só "13 dias",
+ * o que não comunicava nada. Agora sai um bloco com rótulo + valor + bolinha
+ * de cor na mesma faixa (vermelho <=10, amarelo <=30, verde acima).
+ */
+function PrazoBadge({ item, underline }: { item: FrontItem; underline?: boolean }) {
+  const d = item.dias;
+  if (typeof d !== "number" || Number.isNaN(d)) {
+    return (
+      <strong className={item.tone} title={item.status} style={underline ? { textDecoration: "underline" } : undefined}>
+        {item.status}
+      </strong>
+    );
+  }
+  const vencido = d < 0;
+  const abs = Math.abs(d);
+  const kicker = vencido ? "VENCIDO HÁ" : d === 0 ? "VENCE" : "FALTAM";
+  const valor = d === 0 ? "HOJE" : `${abs} ${abs === 1 ? "dia" : "dias"}`;
+  const titulo = vencido
+    ? `Documento vencido há ${abs} ${abs === 1 ? "dia" : "dias"}`
+    : d === 0
+      ? "Vence hoje"
+      : `Faltam ${abs} ${abs === 1 ? "dia" : "dias"} para vencer`;
+  return (
+    <strong className={`qa-prazo ${item.tone}`} title={titulo}>
+      <span className="qa-prazo__k">{kicker}</span>
+      <span className={`qa-prazo__v${underline ? " is-link" : ""}`}>
+        <i className="qa-prazo__dot" aria-hidden="true" />
+        {valor}
+      </span>
+    </strong>
+  );
+}
+
+function shortNameImpl(value: string, fallback: string) {
   const raw = String(value || fallback).replace(/_/g, " ").replace(/\s+/g, " ").trim();
   const letters = raw.replace(/[^a-zA-ZÀ-ú]/g, "");
   const isAllCaps = letters.length > 0 && letters === letters.toUpperCase();
