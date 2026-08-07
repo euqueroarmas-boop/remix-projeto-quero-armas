@@ -55,3 +55,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Exames Instituição](mem://features/quero-armas/exames-instituicao-seguranca-publica) — Segurança pública usa laudo psicológico/tiro da própria instituição (Portaria Conjunta 1/2024, art. 3º, II) via dispensa_quando
 - [Profissão selecionável](mem://features/quero-armas/profissao-campo-selecionavel) — Profissão/estado civil sempre select, catálogo cruzado do banco, mismatch semântica preservada
 - [Checklist: validade e cadastro](mem://tech/quero-armas/checklist-fonte-validade-e-cadastro) — Trigger de validade pelo catálogo + respostas derivadas do cadastro (categoria_titular, profissão)
+- [Aprovado exige arquivo](mem://tech/quero-armas/trava-aprovado-exige-arquivo) — Trava de banco: nada fica aprovado sem arquivo próprio nem reaproveitando arquivo de outro tipo
