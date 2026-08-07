@@ -1843,6 +1843,10 @@ export default function QAClientePortalPage() {
   // ==========================================================================
   const pendenciasGuiadas = useMemo<PendenciaItem[]>(() => {
     const items: PendenciaItem[] = [];
+    // Pendência cadastral explícita (prioridade 2). Calculada aqui para
+    // entrar na MESMA fila do popup guiado — cadastro incompleto deixa de ser
+    // uma checagem silenciosa e vira pendência visível para todos os clientes.
+    const camposCadastroFaltantes = getCamposObrigatoriosCliente(cliente);
 
     // 1) Assinaturas pendentes primeiro (mantém prioridade atual do portal).
     for (const sig of pendingSignatureDocs) {
