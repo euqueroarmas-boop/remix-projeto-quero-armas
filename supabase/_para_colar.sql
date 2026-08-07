@@ -1,5 +1,6 @@
 -- ############################################################################
--- BLOCO 4 de 7 — DECLARAÇÕES: habitualidade e treino saem do processo
+-- BLOCO 4 de 7 — DECLARAÇÕES
+-- Habitualidade e treino saem do processo; efetiva necessidade unifica.
 -- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
 -- Seguro para rodar mais de uma vez. Tudo em UMA transação.
 -- Rodar depois dos Blocos 1, 2 e 3.
@@ -39,10 +40,12 @@ BEGIN;
 -- habitualidade não pertence ao processo, uma pergunta que oferece anexá-la
 -- provavelmente também não — mas isso é decisão do usuário, não dedução minha.
 --
--- ─── Ainda em aberto ─────────────────────────────────────────────────────
--- `declaracao_necessidade_efetiva` (1 catálogo · 5 processos ativos) segue
--- fora deste bloco até se saber se é o mesmo documento que
--- `comprovante_efetiva_necessidade` ou peça distinta.
+-- ─── Efetiva necessidade: um documento, dois nomes ───────────────────────
+-- Confirmado pelo usuário: `declaracao_necessidade_efetiva` é o MESMO
+-- documento que `comprovante_efetiva_necessidade`. O primeiro nunca foi tipo
+-- do Hub — 1 linha de catálogo e 5 exigências ativas apontando para um slug
+-- que só existia do lado do processo. Passa a usar o nome do Hub, e o
+-- casamento vira identidade.
 --
 -- Idempotente.
 -- =============================================================================
@@ -118,5 +121,80 @@ BEGIN
     EXECUTE 'ALTER TABLE public.qa_documentos_cliente ADD CONSTRAINT qa_doc_cliente_tipo_check ' || v_def;
   END IF;
 END $$;
+
+-- ─── 6) declaracao_necessidade_efetiva → comprovante_efetiva_necessidade ──
+UPDATE public.qa_processo_documentos pd
+   SET tipo_documento = 'comprovante_efetiva_necessidade',
+       observacoes = COALESCE(pd.observacoes, '') ||
+         CASE WHEN COALESCE(pd.observacoes,'') = '' THEN '' ELSE E'\n' END ||
+         '[' || to_char(now() AT TIME ZONE 'America/Sao_Paulo','YYYY-MM-DD HH24:MI') ||
+         '] Slug normalizado: declaracao_necessidade_efetiva → comprovante_efetiva_necessidade.',
+       updated_at = now()
+  FROM public.qa_processos p
+ WHERE pd.processo_id = p.id
+   AND pd.tipo_documento = 'declaracao_necessidade_efetiva'
+   AND COALESCE(p.status, '') NOT IN ('finalizado','deferido','indeferido','cancelado')
+   AND NOT EXISTS (
+     SELECT 1 FROM public.qa_processo_documentos x
+      WHERE x.processo_id = pd.processo_id
+        AND x.tipo_documento = 'comprovante_efetiva_necessidade'
+   );
+
+UPDATE public.qa_processo_documentos pd
+   SET status = 'nao_aplicavel',
+       observacoes = COALESCE(pd.observacoes, '') ||
+         CASE WHEN COALESCE(pd.observacoes,'') = '' THEN '' ELSE E'\n' END ||
+         '[' || to_char(now() AT TIME ZONE 'America/Sao_Paulo','YYYY-MM-DD HH24:MI') ||
+         '] Duplicata: comprovante_efetiva_necessidade já existe neste processo.',
+       updated_at = now()
+  FROM public.qa_processos p
+ WHERE pd.processo_id = p.id
+   AND pd.tipo_documento = 'declaracao_necessidade_efetiva'
+   AND COALESCE(p.status, '') NOT IN ('finalizado','deferido','indeferido','cancelado')
+   AND pd.status NOT IN ('aprovado','nao_aplicavel');
+
+UPDATE public.qa_servicos_documentos sd
+   SET tipo_documento = 'comprovante_efetiva_necessidade',
+       biblioteca_id  = COALESCE(
+         (SELECT b.id FROM public.qa_documentos_biblioteca b
+           WHERE b.codigo = 'comprovante_efetiva_necessidade'),
+         sd.biblioteca_id),
+       updated_at = now()
+ WHERE sd.tipo_documento = 'declaracao_necessidade_efetiva'
+   AND NOT EXISTS (
+     SELECT 1 FROM public.qa_servicos_documentos x
+      WHERE x.servico_id = sd.servico_id
+        AND x.tipo_documento = 'comprovante_efetiva_necessidade'
+        AND COALESCE(x.condicao_profissional,'') = COALESCE(sd.condicao_profissional,'')
+   );
+
+UPDATE public.qa_servicos_documentos
+   SET ativo = false, updated_at = now()
+ WHERE tipo_documento = 'declaracao_necessidade_efetiva';
+
+UPDATE public.qa_documentos_biblioteca
+   SET codigo = 'comprovante_efetiva_necessidade', updated_at = now()
+ WHERE codigo = 'declaracao_necessidade_efetiva'
+   AND NOT EXISTS (SELECT 1 FROM public.qa_documentos_biblioteca y
+                    WHERE y.codigo = 'comprovante_efetiva_necessidade');
+
+UPDATE public.qa_documentos_biblioteca
+   SET ativo = false, updated_at = now()
+ WHERE codigo = 'declaracao_necessidade_efetiva';
+
+-- O apelido permanece: processo encerrado mantém o slug da época e sem ele
+-- ficaria órfão.
+
+-- ─── 7) Reavalia ─────────────────────────────────────────────────────────
+SELECT public.qa_reaproveitar_documentos_hub_processo(p.id, 'bloco4_declaracoes')
+  FROM public.qa_processos p
+ WHERE COALESCE(p.status, 'ativo') NOT IN ('finalizado','deferido','indeferido','cancelado','arquivado')
+   AND EXISTS (
+     SELECT 1 FROM public.qa_processo_documentos pd
+      WHERE pd.processo_id = p.id
+        AND pd.status IN ('pendente','rejeitado','enviado','em_analise','revisao_humana')
+        AND (pd.tipo_documento LIKE 'declaracao%' OR pd.tipo_documento LIKE 'dsa_%'
+          OR pd.tipo_documento = 'comprovante_efetiva_necessidade')
+   );
 
 COMMIT;
