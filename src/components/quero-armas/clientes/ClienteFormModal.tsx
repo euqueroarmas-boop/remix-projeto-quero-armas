@@ -35,6 +35,7 @@ const SEXO_OPTIONS = [
 ];
 
 const estadoCivilOptions = ESTADOS_CIVIS.map(e => ({ value: e, label: e }));
+const profissaoOptionsBase = PROFISSAO_OPTIONS;
 const ufOptions = UFS.map(u => ({ value: u, label: u }));
 const statusOptions = [
   { value: "ATIVO", label: "Ativo" },
