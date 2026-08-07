@@ -402,6 +402,8 @@ export default function QAClientePortalPage() {
   // Carrega temas do banco e cor do rail direito
   useEffect(() => {
     let alive = true;
+    // BLOCO 4 — fonte única de validade: registra o catálogo do banco.
+    carregarCatalogoValidade();
     (async () => {
       const [{ themes: dbThemes, globalDefaultKey: gk }, railRow] = await Promise.all([
         fetchSidebarThemesFromDb(),
