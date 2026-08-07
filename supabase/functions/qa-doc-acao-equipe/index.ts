@@ -157,6 +157,16 @@ Deno.serve(async (req) => {
       }
 
       case "aprovar": {
+        // TRAVA — APROVADO EXIGE ARQUIVO (espelha o gatilho do banco).
+        if (
+          (doc.tipo_documento ?? "").startsWith("pergunta_") ||
+          doc.tipo_documento === "renda_definir_condicao"
+        ) {
+          return json({ error: "Item é uma pergunta do checklist — deve ser respondido, não aprovado." }, 400);
+        }
+        if (!String(doc.arquivo_storage_key ?? "").trim()) {
+          return json({ error: "Não é possível aprovar sem arquivo anexado." }, 400);
+        }
         const mudouStatus = doc.status !== "aprovado";
         await supabase.from("qa_processo_documentos").update({
           status: "aprovado",
@@ -213,6 +223,9 @@ Deno.serve(async (req) => {
       case "aprovar_e_modelar": {
         if (doc.usado_como_modelo) {
           return json({ error: "Documento já usado como modelo." }, 409);
+        }
+        if (!String(doc.arquivo_storage_key ?? "").trim()) {
+          return json({ error: "Não é possível aprovar sem arquivo anexado." }, 400);
         }
         // 1) Aprova primeiro (idempotente)
         if (doc.status !== "aprovado") {
