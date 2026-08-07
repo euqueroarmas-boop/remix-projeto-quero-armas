@@ -31,6 +31,8 @@ export type ResidenciaTerceiroPayload = {
   declarado_em: string;
 };
 
+import { profissaoOptionsCom } from "@/lib/quero-armas/profissoesCatalogo";
+
 const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)", "UNIÃO ESTÁVEL"];
 
 function normNome(s: string | null | undefined) {
