@@ -663,7 +663,11 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   parsed.camposExtraidos = campos;
   if (campos.cpf) campos.cpf = cpfComDigitosVerificadores(campos.cpf);
   if (campos.cpf_declarante) campos.cpf_declarante = cpfComDigitosVerificadores(campos.cpf_declarante);
-  const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
+  // NÃO incluir `parsed.justificativa`: o texto que a IA escreveu para explicar
+  // o próprio palpite realimentava as heurísticas abaixo (raciocínio circular).
+  // A justificativa de um STM cita "Justiça Federal" para NEGAR a equivalência,
+  // e essa menção fazia o detector federal classificá-lo como TRF3.
+  const combinado = [textoPdf, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
 
@@ -698,9 +702,35 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
       : "Classificação determinística: o corpo da certidão TJSP informa registros de distribuições de AÇÕES CRIMINAIS.";
   }
 
-  const isTrf3 =
+  // ── JUSTIÇA MILITAR (precedência sobre a Justiça Federal comum) ──────────
+  // A Justiça Militar da União (STM) é ramo próprio do Judiciário e NÃO é
+  // Justiça Federal comum (TRF). Rodar antes do bloco federal e travá-lo.
+  const ehJusticaMilitar =
+    /JUSTICA MILITAR|TRIBUNAL MILITAR|AUDITORIA MILITAR|ACOES PENAIS MILITARES|CRIMES MILITARES|\bSTM\b|\bTJM\b/.test(norm);
+  const ehMilitarUniao =
+    /JUSTICA MILITAR DA UNIAO|SUPERIOR TRIBUNAL MILITAR|\bSTM\b/.test(norm);
+  const ehMilitarEstadual =
+    /JUSTICA MILITAR ESTADUAL|JUSTICA MILITAR DO ESTADO|TRIBUNAL DE JUSTICA MILITAR|\bTJM\b/.test(norm);
+  if (ehJusticaMilitar && (ehMilitarUniao || ehMilitarEstadual)) {
+    const uniao = ehMilitarUniao && !ehMilitarEstadual;
+    parsed.tipoDetectado = uniao ? "ANTECEDENTES_MILITAR" : "ANTECEDENTES_MILITAR_ESTADUAL";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.97);
+    campos.tipo_certidao = uniao ? "justica_militar_uniao_stm" : "justica_militar_estadual_tjm";
+    campos.nome_documento = campos.nome_documento ||
+      (uniao
+        ? "Certidão Criminal Militar — Justiça Militar da União (STM)"
+        : "Certidão Criminal Militar — Justiça Militar Estadual (TJM)");
+    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
+    campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
+    parsed.justificativa = uniao
+      ? "Classificação determinística: certidão da Justiça Militar da União (STM) — ramo próprio do Judiciário, não é Justiça Federal comum (TRF)."
+      : "Classificação determinística: certidão da Justiça Militar Estadual (TJM) — não é Justiça Federal nem Justiça Estadual comum.";
+  }
+
+  const isTrf3 = !ehJusticaMilitar && (
     /TRF3|TRF_3|TRF\s*3|TRIBUNAL REGIONAL FEDERAL(?:\s+DA)?\s+3(?:A|O)?\s+REGIAO|3(?:A|O)?\s+REGIAO|TERCEIRA REGIAO/.test(norm) ||
-    (/TRIBUNAL REGIONAL FEDERAL/.test(norm) && /EMISSAO DE CERTIDOES|CERTIDAO/.test(norm) && /\b3\b/.test(norm));
+    (/TRIBUNAL REGIONAL FEDERAL/.test(norm) && /EMISSAO DE CERTIDOES|CERTIDAO/.test(norm) && /\b3\b/.test(norm))
+  );
   if (isTrf3) {
     // Discriminador entre as DUAS certidões do TRF3 — são documentos
     // diferentes e ocupam slots diferentes no Hub:
