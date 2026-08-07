@@ -196,6 +196,45 @@ BEGIN
   RAISE NOTICE 'Guards OK: 0 doc(s) com comprovante_habitualidade e comprovante_clube_tiro no Hub.';
 END $$;
 
+-- Guard geral: qualquer tipo no Hub que não conste da lista nova faria o
+-- ALTER falhar com 23514 (erro genérico, sem dizer qual valor). Este bloco
+-- nomeia o(s) valor(es) causador(es) antes de tentar, para não haver mais
+-- tentativa às cegas.
+DO $$
+DECLARE v_ofensores text;
+BEGIN
+  SELECT string_agg(DISTINCT tipo_documento, ', ') INTO v_ofensores
+    FROM public.qa_documentos_cliente
+   WHERE tipo_documento <> ALL (ARRAY[
+     'rg_com_cpf','cin','cnh','certidao_alteracao_nome','comprovante_residencia',
+     'declaracao_responsavel_imovel','documento_identificacao_terceiro','ctps',
+     'renda_holerite_mes_atual','renda_holerite_funcionario_publico','renda_carteira_funcional',
+     'renda_cartao_cnpj','renda_qsa','renda_contrato_social','renda_ccmei','renda_cnpj_autonomo',
+     'renda_comprovante_beneficio','renda_extrato_inss','antecedentes_criminais','antecedentes_federal',
+     'antecedentes_estadual','antecedentes_federal_trf3_regional','antecedentes_federal_sjsp_jef',
+     'antecedentes_estadual_distribuicao','antecedentes_estadual_execucoes','antecedentes_militar',
+     'antecedentes_eleitoral','declaracao_sem_inquerito_processo_criminal','declaracao_guarda_responsavel',
+     'declaracao_correlata','declaracao_guarda_acervo_1endereco','declaracao_guarda_acervo_2enderecos',
+     'declaracao_endereco_acervo','dsa_declaracao_seguranca_acervo','declaracao_nao_possuir_segundo_endereco',
+     'declaracao_homonimia','laudo_psicologico','laudo_capacidade_tecnica','comprovante_efetiva_necessidade',
+     'documento_complementar_caso','cr','craf','sinarm','gt','gte','autorizacao_compra','nota_fiscal_arma',
+     'habilitacao_cacador_ibama','comprovante_competicao','comprovante_pagamento',
+     'requerimento_de_posse_de_arma_de_fogo','protocolo_processo','oficio','despacho','exigencia',
+     'indeferimento','procuracao','procuracao_assinada','contrato_assinado','recurso_administrativo_doc',
+     'mandado_seguranca_doc','outro','renda_nf_empresa','renda_contra_cheque_mes_atual','boletim_ocorrencia',
+     'foto_3x4','renda_ficha_cadastral_jucesp','antecedentes_militar_estadual'
+   ]);
+
+  IF v_ofensores IS NOT NULL THEN
+    RAISE EXCEPTION
+      'Abortado: documento(s) no Hub com tipo(s) fora da nova lista do CHECK: %. '
+      'Inclua esse(s) tipo(s) na lista ou reclassifique os documentos antes de continuar.',
+      v_ofensores;
+  END IF;
+
+  RAISE NOTICE 'Guard geral OK: todo tipo_documento do Hub está coberto pela nova lista.';
+END $$;
+
 ALTER TABLE public.qa_documentos_cliente
   DROP CONSTRAINT IF EXISTS qa_doc_cliente_tipo_check;
 
@@ -285,5 +324,66 @@ SELECT public.qa_reaproveitar_documentos_hub_processo(p.id, 'bloco4_declaracoes'
         AND (pd.tipo_documento LIKE 'declaracao%' OR pd.tipo_documento LIKE 'dsa_%'
           OR pd.tipo_documento = 'comprovante_efetiva_necessidade')
    );
+
+COMMIT;
+
+-- =============================================================================
+-- BLOCO 4B — Autorização de Compra/Posse de Arma de Fogo para Defesa Pessoal:
+-- remove exigências de documentos que não pertencem a este serviço
+--
+-- Decisão do usuário (07/08/2026): os tipos abaixo são de outros fluxos —
+-- acervo de coleção e CAC (colecionador/atirador/caçador) — e não deveriam
+-- ser exigidos no serviço de compra/posse de arma de fogo para defesa pessoal:
+--   declaracao_guarda_acervo_1endereco       (acervo de coleção)
+--   declaracao_guarda_acervo_2enderecos      (acervo de coleção)
+--   declaracao_nao_possuir_segundo_endereco  (acervo de coleção)
+--   gte                                      (guia de trânsito especial — CAC)
+--   habilitacao_cacador_ibama                (CAC caçador)
+--   comprovante_competicao                   (CAC atirador)
+--   outro                                    (genérico, sem função neste serviço)
+--
+-- Os sete tipos continuam válidos no CHECK do Hub — outros serviços/processos
+-- (CAC, acervo) seguem usando-os. Este bloco só os tira do CATÁLOGO e das
+-- EXIGÊNCIAS do serviço "Autorização de Compra/Posse de Arma de Fogo para
+-- Defesa Pessoal" especificamente.
+--
+-- Idempotente.
+-- =============================================================================
+
+BEGIN;
+
+CREATE TEMP TABLE _tipos_indevidos_defesa_pessoal (slug text PRIMARY KEY) ON COMMIT DROP;
+INSERT INTO _tipos_indevidos_defesa_pessoal (slug) VALUES
+  ('declaracao_guarda_acervo_1endereco'),
+  ('declaracao_guarda_acervo_2enderecos'),
+  ('declaracao_nao_possuir_segundo_endereco'),
+  ('gte'),
+  ('habilitacao_cacador_ibama'),
+  ('comprovante_competicao'),
+  ('outro');
+
+-- Catálogo do serviço deixa de exigir estes tipos
+UPDATE public.qa_servicos_documentos sd
+   SET ativo = false, updated_at = now()
+  FROM _tipos_indevidos_defesa_pessoal t, public.qa_servicos s
+ WHERE sd.tipo_documento = t.slug
+   AND sd.servico_id = s.id
+   AND s.nome_servico = 'Autorização de Compra/Posse de Arma de Fogo para Defesa Pessoal';
+
+-- Exigências abertas em processos ativos deste serviço encerram
+UPDATE public.qa_processo_documentos pd
+   SET status = 'nao_aplicavel',
+       observacoes = COALESCE(pd.observacoes, '') ||
+         CASE WHEN COALESCE(pd.observacoes,'') = '' THEN '' ELSE E'\n' END ||
+         '[' || to_char(now() AT TIME ZONE 'America/Sao_Paulo','YYYY-MM-DD HH24:MI') ||
+         '] Exigência removida: este documento não pertence ao serviço de defesa pessoal.',
+       updated_at = now()
+  FROM _tipos_indevidos_defesa_pessoal t, public.qa_processos p, public.qa_servicos s
+ WHERE pd.tipo_documento = t.slug
+   AND p.id = pd.processo_id
+   AND p.servico_id = s.id
+   AND s.nome_servico = 'Autorização de Compra/Posse de Arma de Fogo para Defesa Pessoal'
+   AND pd.status NOT IN ('aprovado','nao_aplicavel')
+   AND COALESCE(p.status, '') NOT IN ('finalizado','deferido','indeferido','cancelado');
 
 COMMIT;

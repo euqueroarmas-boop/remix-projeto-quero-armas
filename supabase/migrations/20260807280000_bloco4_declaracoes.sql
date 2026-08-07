@@ -196,6 +196,45 @@ BEGIN
   RAISE NOTICE 'Guards OK: 0 doc(s) com comprovante_habitualidade e comprovante_clube_tiro no Hub.';
 END $$;
 
+-- Guard geral: qualquer tipo no Hub que não conste da lista nova faria o
+-- ALTER falhar com 23514 (erro genérico, sem dizer qual valor). Este bloco
+-- nomeia o(s) valor(es) causador(es) antes de tentar, para não haver mais
+-- tentativa às cegas.
+DO $$
+DECLARE v_ofensores text;
+BEGIN
+  SELECT string_agg(DISTINCT tipo_documento, ', ') INTO v_ofensores
+    FROM public.qa_documentos_cliente
+   WHERE tipo_documento <> ALL (ARRAY[
+     'rg_com_cpf','cin','cnh','certidao_alteracao_nome','comprovante_residencia',
+     'declaracao_responsavel_imovel','documento_identificacao_terceiro','ctps',
+     'renda_holerite_mes_atual','renda_holerite_funcionario_publico','renda_carteira_funcional',
+     'renda_cartao_cnpj','renda_qsa','renda_contrato_social','renda_ccmei','renda_cnpj_autonomo',
+     'renda_comprovante_beneficio','renda_extrato_inss','antecedentes_criminais','antecedentes_federal',
+     'antecedentes_estadual','antecedentes_federal_trf3_regional','antecedentes_federal_sjsp_jef',
+     'antecedentes_estadual_distribuicao','antecedentes_estadual_execucoes','antecedentes_militar',
+     'antecedentes_eleitoral','declaracao_sem_inquerito_processo_criminal','declaracao_guarda_responsavel',
+     'declaracao_correlata','declaracao_guarda_acervo_1endereco','declaracao_guarda_acervo_2enderecos',
+     'declaracao_endereco_acervo','dsa_declaracao_seguranca_acervo','declaracao_nao_possuir_segundo_endereco',
+     'declaracao_homonimia','laudo_psicologico','laudo_capacidade_tecnica','comprovante_efetiva_necessidade',
+     'documento_complementar_caso','cr','craf','sinarm','gt','gte','autorizacao_compra','nota_fiscal_arma',
+     'habilitacao_cacador_ibama','comprovante_competicao','comprovante_pagamento',
+     'requerimento_de_posse_de_arma_de_fogo','protocolo_processo','oficio','despacho','exigencia',
+     'indeferimento','procuracao','procuracao_assinada','contrato_assinado','recurso_administrativo_doc',
+     'mandado_seguranca_doc','outro','renda_nf_empresa','renda_contra_cheque_mes_atual','boletim_ocorrencia',
+     'foto_3x4','renda_ficha_cadastral_jucesp','antecedentes_militar_estadual'
+   ]);
+
+  IF v_ofensores IS NOT NULL THEN
+    RAISE EXCEPTION
+      'Abortado: documento(s) no Hub com tipo(s) fora da nova lista do CHECK: %. '
+      'Inclua esse(s) tipo(s) na lista ou reclassifique os documentos antes de continuar.',
+      v_ofensores;
+  END IF;
+
+  RAISE NOTICE 'Guard geral OK: todo tipo_documento do Hub está coberto pela nova lista.';
+END $$;
+
 ALTER TABLE public.qa_documentos_cliente
   DROP CONSTRAINT IF EXISTS qa_doc_cliente_tipo_check;
 
