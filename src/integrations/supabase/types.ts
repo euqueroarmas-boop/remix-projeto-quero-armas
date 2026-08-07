@@ -11283,6 +11283,7 @@ export type Database = {
           label_publico: string
           ordem: number
           reaproveitavel_global: boolean
+          regime: string
           revisao_humana_obrigatoria: boolean
           subcategoria_hub: string | null
           tipo_documento: string
@@ -11301,6 +11302,7 @@ export type Database = {
           label_publico: string
           ordem?: number
           reaproveitavel_global?: boolean
+          regime?: string
           revisao_humana_obrigatoria?: boolean
           subcategoria_hub?: string | null
           tipo_documento: string
@@ -11319,6 +11321,7 @@ export type Database = {
           label_publico?: string
           ordem?: number
           reaproveitavel_global?: boolean
+          regime?: string
           revisao_humana_obrigatoria?: boolean
           subcategoria_hub?: string | null
           tipo_documento?: string
