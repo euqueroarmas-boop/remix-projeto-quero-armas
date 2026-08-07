@@ -24,13 +24,12 @@ BEGIN;
 -- CLT — documentos distintos, e o contra-cheque ganha tipo próprio.
 -- 15 linhas de catálogo e 1 exigência em processo ativo dependem disso.
 --
--- OBSERVAÇÃO PARA O USUÁRIO: `renda_holerite_funcionario_publico` já existe
--- no CHECK, com o nome "Holerite recente (servidor público)" — que pela regra
--- acima é uma contradição, porque servidor não recebe holerite. Ele tem ZERO
--- uso (não aparece em nenhuma linha de catálogo). Fica marcado como obsoleto
--- na biblioteca, mas NÃO sai do CHECK: enquanto estiver lá, um documento
--- eventualmente gravado com esse tipo continua válido, e a remoção pode ser
--- feita depois com segurança.
+-- `renda_holerite_funcionario_publico` SAI DO BANCO. O nome era uma
+-- contradição — "holerite do servidor público", quando servidor recebe
+-- contra-cheque — e tinha zero uso em catálogo, processo e Hub. Decisão do
+-- usuário: "Não vamos contaminar o banco." Sai do CHECK e da biblioteca, não
+-- apenas desativado. O bloco confere que não há documento gravado antes de
+-- mexer na constraint e aborta se houver.
 --
 -- ─── 2) identidade_funcional_digital → renda_carteira_funcional ──────────
 -- Mesmo documento: a credencial que prova vínculo de servidor dentro da
@@ -38,8 +37,12 @@ BEGIN;
 -- Não é identidade civil — `identidadeUnica.ts` exclui a funcional
 -- explicitamente, e isso continua valendo.
 --
--- ─── 3) renda_nf_empresa → renda_nf_recente ──────────────────────────────
--- Apelido que já existia desde 18/06; o rename apenas o torna desnecessário.
+-- ─── FORA DO BLOCO: o par renda_nf_* ─────────────────────────────────────
+-- O rename `renda_nf_empresa → renda_nf_recente` foi retirado. O usuário
+-- informou que `renda_nf_recente` também não existe como documento real, e
+-- renomear para um destino inválido é pior do que não renomear. Os dois têm
+-- uso (8 e 7 linhas de catálogo, 1 exigência ativa cada) e a decisão sobre
+-- qual nome fica — ou se os dois saem — precisa vir antes.
 --
 -- ─── O que NÃO entra ─────────────────────────────────────────────────────
 -- `renda_definir_condicao` (8 no catálogo, 7 em processos ativos) não é
@@ -95,21 +98,47 @@ ON CONFLICT (codigo) DO UPDATE
       observacao_cliente = EXCLUDED.observacao_cliente,
       ativo = true, updated_at = now();
 
--- Tipo mal nomeado e sem uso: sinalizado, não removido.
-UPDATE public.qa_documentos_biblioteca
-   SET ativo = false,
-       observacao_cliente = 'Obsoleto desde 07/08/2026: servidor público recebe contra-cheque, '
-                         || 'não holerite. Use renda_contra_cheque_mes_atual.',
-       updated_at = now()
+-- ─── renda_holerite_funcionario_publico sai do banco ─────────────────────
+DELETE FROM public.qa_documentos_biblioteca
  WHERE codigo = 'renda_holerite_funcionario_publico';
+
+DO $$
+DECLARE
+  v_def text;
+  v_qtd bigint;
+BEGIN
+  SELECT count(*) INTO v_qtd
+    FROM public.qa_documentos_cliente
+   WHERE tipo_documento = 'renda_holerite_funcionario_publico';
+
+  IF v_qtd > 0 THEN
+    RAISE EXCEPTION
+      'Abortado: % documento(s) com tipo renda_holerite_funcionario_publico no Hub. '
+      'Reclassifique para renda_contra_cheque_mes_atual antes de remover o tipo.', v_qtd;
+  END IF;
+
+  SELECT pg_get_constraintdef(oid) INTO v_def
+    FROM pg_constraint WHERE conname = 'qa_doc_cliente_tipo_check';
+
+  IF v_def NOT LIKE '%renda_holerite_funcionario_publico%' THEN
+    RAISE NOTICE 'renda_holerite_funcionario_publico já não consta do CHECK.';
+  ELSE
+    v_def := replace(v_def, '''renda_holerite_funcionario_publico''::text, ', '');
+    v_def := replace(v_def, ', ''renda_holerite_funcionario_publico''::text', '');
+    IF v_def LIKE '%renda_holerite_funcionario_publico%' THEN
+      RAISE EXCEPTION 'Não consegui remover o tipo do CHECK — formato inesperado.';
+    END IF;
+    EXECUTE 'ALTER TABLE public.qa_documentos_cliente DROP CONSTRAINT qa_doc_cliente_tipo_check';
+    EXECUTE 'ALTER TABLE public.qa_documentos_cliente ADD CONSTRAINT qa_doc_cliente_tipo_check ' || v_def;
+  END IF;
+END $$;
 
 -- ─── Mapa dos renames ────────────────────────────────────────────────────
 CREATE TEMP TABLE _mapa_renda (slug_antigo text PRIMARY KEY, slug_novo text NOT NULL, nome_novo text) ON COMMIT DROP;
 
 INSERT INTO _mapa_renda (slug_antigo, slug_novo, nome_novo) VALUES
   ('contra_cheque_digital',        'renda_contra_cheque_mes_atual', 'Contra-cheque do mês atual (servidor público)'),
-  ('identidade_funcional_digital', 'renda_carteira_funcional',      NULL),
-  ('renda_nf_empresa',             'renda_nf_recente',              NULL);
+  ('identidade_funcional_digital', 'renda_carteira_funcional',      NULL);
 
 DO $$
 DECLARE v_faltando text;

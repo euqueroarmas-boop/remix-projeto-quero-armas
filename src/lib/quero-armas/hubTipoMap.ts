@@ -122,7 +122,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   // RG/CIN/CNH e não existe exigência de documento CPF avulso.
   "rg_com_cpf","cin","cnh",
   "comprovante_residencia","declaracao_responsavel_imovel",
-  "ctps","renda_holerite_mes_atual","renda_holerite_funcionario_publico",
+  "ctps","renda_holerite_mes_atual",
   "renda_carteira_funcional",
   "renda_cartao_cnpj","renda_cnpj_autonomo","renda_contrato_social",
   "renda_ccmei","renda_qsa",
