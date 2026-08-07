@@ -38,6 +38,46 @@ export interface DocValidadeInput {
 export const RX_VALIDADE_INDETERMINADA =
   /indetermin|prazo\s+indeterminado|sem\s+prazo\s+de\s+validade|sem\s+validade|vital[ií]ci|validade\s*:?\s*permanente/i;
 
+// ─── BLOCO 4 — FONTE ÚNICA DE VALIDADE ───────────────────────────────────────
+// A tabela `public.qa_validade_documentos` é a fonte oficial dos prazos.
+// `carregarCatalogoValidade()` (catalogoValidade.ts) registra o catálogo aqui
+// e, a partir daí, TODA regra de prazo passa a sair do banco. As funções
+// `isCertidao90Dias`, `isDocumentoEmpresa30Dias` etc. continuam existindo
+// apenas como fallback para quando o catálogo ainda não carregou ou o tipo
+// não está cadastrado — nunca sobrepõem o banco.
+
+export interface RegraValidade {
+  tipo_documento: string;
+  validade_dias: number;
+  unidade: "dias" | "meses";
+  perpetuo: boolean;
+  alerta_dias: number;
+}
+
+let CATALOGO_VALIDADE: Record<string, RegraValidade> = {};
+
+export function setCatalogoValidade(regras: RegraValidade[]) {
+  const map: Record<string, RegraValidade> = {};
+  for (const r of regras) {
+    if (!r?.tipo_documento) continue;
+    map[String(r.tipo_documento).trim().toLowerCase()] = {
+      ...r,
+      unidade: r.unidade === "meses" ? "meses" : "dias",
+    };
+  }
+  CATALOGO_VALIDADE = map;
+}
+
+export function getRegraValidade(tipo?: string | null): RegraValidade | null {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  if (!t) return null;
+  return CATALOGO_VALIDADE[t] ?? null;
+}
+
+export function catalogoValidadeCarregado(): boolean {
+  return Object.keys(CATALOGO_VALIDADE).length > 0;
+}
+
 export function textoIndicaValidadeIndeterminada(...valores: unknown[]): boolean {
   return valores.some((v) => typeof v === "string" && RX_VALIDADE_INDETERMINADA.test(v));
 }
