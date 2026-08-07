@@ -1,3 +1,4 @@
+import { isDocCumprido, isDocEmAnalise } from "./statusDocumento";
 /* =============================================================================
  * Bloco 11 — Classificador "3 Caixas" para documentos de processo.
  *
