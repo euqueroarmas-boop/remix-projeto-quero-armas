@@ -1886,6 +1886,39 @@ export default function QAClientePortalPage() {
       });
     }
 
+    // 1.5) Dados cadastrais — pendência EXPLÍCITA, prioridade imediatamente
+    // após contrato e procuração. Enquanto houver campo obrigatório em branco
+    // o cliente NÃO avança para o checklist do processo: a fila termina aqui.
+    if (camposCadastroFaltantes.length > 0) {
+      const nomes = camposCadastroFaltantes.map((c) => c.label);
+      items.push({
+        id: "cadastro:dados-obrigatorios",
+        kind: "documento",
+        label: "Completar seus dados cadastrais",
+        tipo: "cadastro_dados_obrigatorios",
+        rawTipo: "cadastro_dados_obrigatorios",
+        fallbackNome: "Dados cadastrais",
+        contexto: `${nomes.length} campo(s) obrigatório(s) em branco`,
+        instrucoesCatalogo:
+          "Seus dados cadastrais alimentam todas as peças e conferências do processo: certidões, declarações e a checagem automática dos documentos que você envia. Enquanto houver campo obrigatório em branco, a conferência fica incompleta e o checklist do processo não é liberado. Faltam: " +
+          nomes.join(", ") +
+          ".",
+        entregarLabel: "Completar cadastro",
+        primaryLabel: "Completar cadastro",
+        onPrimary: () => {
+          setShowContratoPopup(false);
+          checklistCadastralAbertoRef.current = true;
+          setShowChecklistCadastral(true);
+        },
+        onEntregar: () => {
+          setShowContratoPopup(false);
+          checklistCadastralAbertoRef.current = true;
+          setShowChecklistCadastral(true);
+        },
+      });
+      return items;
+    }
+
     // 2) Exigências documentais do checklist (obrigatórias) — reprovadas
     // primeiro, pendentes depois. Deduplica por hub_tipo para não repetir o
     // mesmo tipo em processos diferentes.
