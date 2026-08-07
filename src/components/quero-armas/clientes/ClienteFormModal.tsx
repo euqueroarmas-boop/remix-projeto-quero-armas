@@ -26,6 +26,8 @@ interface ClienteFormModalProps {
   cliente?: any;
 }
 
+import { profissaoOptionsCom } from "@/lib/quero-armas/profissoesCatalogo";
+
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RS","SC","SE","SP","TO"];
 const SEXO_OPTIONS = [
@@ -1193,7 +1195,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FSelect label="Estado Civil *" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Obrigatório" : undefined} />
-                <FInput label="Profissão *" value={f.profissao} onChange={v => set("profissao", v)} error={requiredErrors.profissao ? "Obrigatório" : undefined} />
+                <FSelect label="Profissão *" value={f.profissao} onChange={v => set("profissao", v)} options={profissaoOptionsCom(f.profissao)} error={requiredErrors.profissao ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <FInput label="Escolaridade *" value={f.escolaridade} onChange={v => set("escolaridade", v)} error={requiredErrors.escolaridade ? "Obrigatório" : undefined} />
@@ -1383,7 +1385,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FSelect label="Estado Civil *" value={f.responsavel_endereco_estado_civil} onChange={v => set("responsavel_endereco_estado_civil", v)} options={estadoCivilOptions} />
-                    <FInput label="Profissão *" value={f.responsavel_endereco_profissao} onChange={v => set("responsavel_endereco_profissao", v)} />
+                    <FSelect label="Profissão *" value={f.responsavel_endereco_profissao} onChange={v => set("responsavel_endereco_profissao", v)} options={profissaoOptionsCom(f.responsavel_endereco_profissao)} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />

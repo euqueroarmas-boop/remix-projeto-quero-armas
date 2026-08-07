@@ -39,6 +39,7 @@ import {
   type CategoriaTitular,
 } from "@/shared/quero-armas/clienteSchema";
 import { trackTelemetria } from "@/shared/quero-armas/telemetria";
+import { profissaoOptionsCom } from "@/lib/quero-armas/profissoesCatalogo";
 
 /* =========================================================================
  * Cadastro do Cliente — Fluxo guiado em 6 etapas
@@ -1862,9 +1863,11 @@ function Step3Review({
                 value={(data as any).responsavel_endereco_data_nascimento || ""}
                 onChange={(v) => set("responsavel_endereco_data_nascimento" as any, v)}
                 placeholder="DD/MM/AAAA" required />
-              <ReviewField label="Profissão"
+              <ReviewSelect label="Profissão"
                 value={(data as any).responsavel_endereco_profissao || ""}
-                onChange={(v) => set("responsavel_endereco_profissao" as any, v)} required />
+                onChange={(v) => set("responsavel_endereco_profissao" as any, v)}
+                options={[{ value: "", label: "—" }, ...profissaoOptionsCom((data as any).responsavel_endereco_profissao)]}
+                required />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <ReviewField label="Naturalidade"
@@ -1876,9 +1879,10 @@ function Step3Review({
                 onChange={(v) => set("responsavel_endereco_nacionalidade" as any, v)}
                 placeholder="Brasileira" required />
             </div>
-            <ReviewField label="Estado civil"
+            <ReviewSelect label="Estado civil"
               value={(data as any).responsavel_endereco_estado_civil || ""}
-              onChange={(v) => set("responsavel_endereco_estado_civil" as any, v)} required />
+              onChange={(v) => set("responsavel_endereco_estado_civil" as any, v)}
+              options={ESTADO_CIVIL_OPTS} required />
             <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900 pt-1">
               Endereço do imóvel comprovado pelo responsável
             </div>
@@ -1940,13 +1944,13 @@ function Step3Review({
           options={CATEGORIA_OPTS as any}
           status={data.categoria_titular ? "validado" : "normal"}
         />
-        <ReviewField
+        <ReviewSelect
           label="Profissão / Atividade lícita exercida"
-          value={data.profissao}
+          value={data.profissao || ""}
           onChange={(v) => set("profissao", v)}
+          options={[{ value: "", label: "SELECIONE A PROFISSÃO…" }, ...profissaoOptionsCom(data.profissao)]}
           required={required.has("profissao")}
           status={statusOf("profissao")}
-          placeholder="Ex.: Médico, Advogado, Servidor Público, Empresário…"
         />
         <p className="-mt-1 text-[10px] leading-snug" style={{ color: "hsl(220 12% 50%)" }}>
           Informe <strong>exatamente</strong> como sua atividade é exercida.
