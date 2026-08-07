@@ -66,12 +66,10 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   certidao_estadual_segundo_grau_acoes_criminais: "antecedentes_estadual_distribuicao",
   certidao_estadual_segundo_grau_execucoes_criminais: "antecedentes_estadual_execucoes",
   comprovante_filiacao_entidade_tiro: "comprovante_clube_tiro",
-  declaracao_habitualidade_clube: "comprovante_habitualidade",
-  // declaracao_compromisso_habitualidade NÃO é traduzida. É documento próprio,
-  // com finalidade própria, e tem tipo próprio no Hub — não se confunde com o
-  // comprovante de habitualidade. O banco já havia desfeito essa equivalência
-  // em 20260729010000; o frontend é que continuava juntando os dois.
-  declaracao_compromisso_treino: "declaracao_correlata",
+  // Habitualidade e treino saíram no Bloco 4 (20260807280000):
+  // declaracao_habitualidade_clube, declaracao_compromisso_treino e
+  // declaracao_compromisso_habitualidade não pertencem ao processo. Não é
+  // fusão de tipos — a exigência deixou de existir neste fluxo.
   // QSA é exigência PRÓPRIA (matriz de ocupação lícita) — não pode colapsar
   // no cartão CNPJ, senão o slot do QSA nunca é cumprido.
   // Tipos legados de MEI passam a cair no CCMEI, que é o documento oficial.
@@ -158,7 +156,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "certidao_alteracao_nome",
   "documento_identificacao_terceiro","foto_3x4","boletim_ocorrencia",
   "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento",
-  "habilitacao_cacador_ibama","declaracao_compromisso_habitualidade",
+  "habilitacao_cacador_ibama",
   "contrato_assinado","procuracao_assinada",
   "outro",
 ]);

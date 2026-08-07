@@ -1,12 +1,3 @@
--- ############################################################################
--- BLOCO 4 de 7 — DECLARAÇÕES: habitualidade e treino saem do processo
--- Colar inteiro no SQL Editor do Supabase e rodar de uma vez.
--- Seguro para rodar mais de uma vez. Tudo em UMA transação.
--- Rodar depois dos Blocos 1, 2 e 3.
--- ############################################################################
-
-BEGIN;
-
 -- =============================================================================
 -- BLOCO 4 de 7 — DECLARAÇÕES: habitualidade e treino saem do processo
 --
@@ -46,6 +37,8 @@ BEGIN;
 --
 -- Idempotente.
 -- =============================================================================
+
+BEGIN;
 
 CREATE TEMP TABLE _fora_do_processo (slug text PRIMARY KEY) ON COMMIT DROP;
 
