@@ -225,6 +225,33 @@ function firstName(cliente: any) {
   return (nome.split(/\s+/)[0] || "WILLIAN").toUpperCase();
 }
 
+/**
+ * SENSOR DE MOVIMENTO DOS PROCESSOS (regra global, definida em 07/08/2026 e
+ * persistida em public.qa_config):
+ *
+ *   0 a 6 dias sem movimentação   → VERDE  (processo andando normalmente)
+ *   7 a 14 dias sem movimentação  → AMARELO
+ *   15 dias ou mais               → VERMELHO
+ *
+ * Qualquer entrega de documento pelo cliente zera o contador (volta ao verde).
+ */
+export const PROCESSO_SENSOR_AMARELO_DIAS = 7;
+export const PROCESSO_SENSOR_VERMELHO_DIAS = 15;
+
+function diasDesde(value?: string | null): number | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function sensorMovimento(diasSemMovimento: number | null): FrontItem["tone"] {
+  if (diasSemMovimento === null) return "ok";
+  if (diasSemMovimento >= PROCESSO_SENSOR_VERMELHO_DIAS) return "bad";
+  if (diasSemMovimento >= PROCESSO_SENSOR_AMARELO_DIAS) return "warn";
+  return "ok";
+}
+
 function serviceProgress(item: any) {
   const marks = [!!item?.data_protocolo, !!item?.numero_processo, !!item?.data_ultima_atualizacao, !!item?.data_deferimento];
   return Math.round((marks.filter(Boolean).length / marks.length) * 100);
