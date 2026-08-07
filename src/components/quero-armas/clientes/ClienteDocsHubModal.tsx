@@ -292,7 +292,10 @@ function buildDocumentoHaystack(input: {
     input.orgaoEmissor,
     input.numeroDocumento,
     input.classificacao?.tipoDetectado,
-    input.classificacao?.justificativa,
+    // A justificativa é texto livre gerado pelo próprio modelo: usá-la como
+    // sinal para "confirmar" a classificação do modelo é raciocínio circular
+    // (foi assim que a menção a "Justiça Federal" na prosa da IA reforçou o
+    // subtipo TRF3 num documento do STM). Só entram dados lidos do documento.
     input.classificacao?.camposExtraidos,
     input.campos,
   ]);
