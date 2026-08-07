@@ -1,50 +1,25 @@
 /**
- * Catálogo de profissões — fonte única.
+ * Catálogo de profissão — fonte única.
  *
- * REGRA: a lista abaixo é o cruzamento EXATO das profissões já gravadas em
- * `public.qa_clientes.profissao`. Nada foi inventado e nada foi fundido:
- * variantes semanticamente equivalentes ("EMPRESÁRIO" / "EMPRESARIO" /
- * "EMPRESÁRIA", "GUARDA MUNICIPAL" / "GUARDA CIVIL MUNICIPAL") são
- * preservadas de propósito — a mismatch semântica é mantida para não
- * reescrever cadastro histórico nem quebrar cruzamentos já existentes.
+ * REGRA: profissão NÃO é cargo livre ("açougueiro", "policial militar").
+ * O que importa para o processo é a CONDIÇÃO DE OCUPAÇÃO LÍCITA, porque é
+ * ela que ramifica o checklist e define qual comprovante de renda/ocupação
+ * o cliente precisa entregar (CTPS, contracheque, DECORE, contrato social,
+ * extrato do INSS...). Por isso o select espelha exatamente as condições
+ * canônicas de `CONDICOES_CHECKLIST` (src/lib/quero-armas/simuladorChecklist.ts).
  *
- * O campo de profissão é SELECIONÁVEL: não se digita profissão livre.
+ * A mismatch semântica é preservada onde ela tem efeito jurídico:
+ * "SERVIDOR PÚBLICO (ÁREA GERAL)" ≠ "SERVIDOR DE SEGURANÇA PÚBLICA", pois
+ * apenas o segundo abre a trilha institucional (Portaria Conjunta 1/2024).
  */
-export const PROFISSOES_CATALOGO: string[] = [
-  "ADMINISTRADOR",
-  "AGENTE SOCIOEDUCATIVO",
-  "APOSENTAD0",
-  "ASSESSOR PARLAMEN",
-  "AUXILIAR TÉCNICO EM INFORMÁTICA TI",
-  "COORDENADOR DE PRODUÇÃO",
-  "DIRETOR INDUSTRIAL",
-  "ECONOMISTA",
-  "ELETRICISTA",
-  "EMPRESARIO",
-  "EMPRESÁRIA",
-  "EMPRESÁRIO",
-  "EMPRESÁRIO/ ADMINISTRADOR",
-  "ENGENHEIRO",
-  "ENGENHEIRO AGRONÔMO",
-  "ENGENHEIRO CIVIL",
-  "GERENTE DE LOJA",
-  "GESTOR DE SEGURANÇA",
-  "GUARDA CIVIL MUNICIPAL",
-  "GUARDA MUNICIPAL",
-  "INVESTIGADOR DE POLÍCIA",
-  "MEI",
-  "MICRO EMPREENDEDOR INDIVIDUAL",
-  "MILITAR FORÇA AÉREA/ 3º SARGENTO",
-  "MOTORISTA DE CAMINHÃO",
-  "OURIVES",
-  "PERITO FORENSE",
-  "PERITO JUDICIAL TI",
-  "POLICIAL MILITAR",
-  "QUÍMICO",
-  "TÉCNICO MECÂNICO",
-  "VIGILANTE",
-  "VIGLIANTE SEGURANÇA PESSOAL PRIVADO",
-];
+import { CONDICOES_CHECKLIST } from "./simuladorChecklist";
+
+export const PROFISSOES_CATALOGO: string[] = CONDICOES_CHECKLIST.map((c) => c.label);
+
+/** label da condição -> valor canônico usado em `condicao_profissional`. */
+export const PROFISSAO_PARA_CONDICAO: Record<string, string> = Object.fromEntries(
+  CONDICOES_CHECKLIST.map((c) => [c.label, c.valor]),
+);
 
 export const PROFISSAO_OPTIONS = PROFISSOES_CATALOGO.map((p) => ({ value: p, label: p }));
 
