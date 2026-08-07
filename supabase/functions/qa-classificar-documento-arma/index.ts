@@ -49,7 +49,7 @@ const TIPOS = [
   "RG_COM_CPF","CIN","CNH","CPF",
   "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
   "CTPS","HOLERITE","IDENTIDADE_FUNCIONAL","CARTAO_CNPJ","QSA","CCMEI","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
-  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_MILITAR_ESTADUAL","ANTECEDENTES_ELEITORAL",
+  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_FEDERAL_TRF3_REGIONAL","ANTECEDENTES_FEDERAL_SJSP_JEF","ANTECEDENTES_ESTADUAL","ANTECEDENTES_ESTADUAL_DISTRIBUICAO","ANTECEDENTES_ESTADUAL_EXECUCOES","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
   "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
   "COMPROVANTE_EFETIVA_NECESSIDADE","DOCUMENTO_COMPLEMENTAR",
@@ -78,7 +78,7 @@ const tool = {
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
             "CTPS=Carteira de Trabalho (física ou digital). IDENTIDADE_FUNCIONAL=carteira/cédula de identidade FUNCIONAL de servidor público, militar ou policial (PMESP, Polícia Militar, Polícia Civil, Polícia Federal, Forças Armadas), com posto/graduação, RE/matrícula, quadro e data de admissão — NUNCA classifique como RG_COM_CPF, mesmo trazendo número de RG. HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal (Comprovante de Inscrição e Situação Cadastral). QSA=Quadro de Sócios e Administradores da Receita Federal — lista sócios e participação; é documento PRÓPRIO, não confundir com cartão CNPJ nem com contrato social. CCMEI=Certificado da Condição de Microempreendedor Individual, emitido pelo Portal do Empreendedor. CONTRATO_SOCIAL=contrato ou estatuto social de empresa, ou requerimento de empresário. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
-            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão criminal da JUSTIÇA MILITAR DA UNIÃO (STM/Superior Tribunal Militar) — Justiça Militar da União NÃO é Justiça Federal comum e nunca é TRF. ANTECEDENTES_MILITAR_ESTADUAL=certidão criminal de Tribunal de Justiça Militar ESTADUAL (TJM/TJME). ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
+            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão federal genérica. ANTECEDENTES_FEDERAL_TRF3_REGIONAL=TRF 3ª Região regional. ANTECEDENTES_FEDERAL_SJSP_JEF=Seção Judiciária SP/JEF. ANTECEDENTES_ESTADUAL=certidão criminal estadual genérica. ANTECEDENTES_ESTADUAL_DISTRIBUICAO=TJSP distribuição de AÇÕES CRIMINAIS. ANTECEDENTES_ESTADUAL_EXECUCOES=TJSP EXECUÇÕES CRIMINAIS. ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de crimes eleitorais. " +
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
             "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
@@ -261,9 +261,7 @@ const SYSTEM_PROMPT = [
   "  Se o corpo disser 'EXECUÇÕES CRIMINAIS' ou 'feitos de Execuções Criminais', classifique como ANTECEDENTES_ESTADUAL_EXECUCOES, mesmo que o cabeçalho diga 'Distribuições Criminais'.",
   "  Se o corpo disser 'AÇÕES CRIMINAIS', classifique como ANTECEDENTES_ESTADUAL_DISTRIBUICAO.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor (ex.: 'TJ-SP'), data_emissao, data_validade, resultado_certidao, tipo_certidao, nome_documento, finalidade_certidao.",
-  "• ANTECEDENTES_MILITAR: certidão criminal da JUSTIÇA MILITAR DA UNIÃO — Superior Tribunal Militar (STM). Validade: 3 meses após a data de emissão.",
-  "• ANTECEDENTES_MILITAR_ESTADUAL: certidão criminal de Tribunal de Justiça Militar ESTADUAL (TJM/TJME de SP, MG ou RS).",
-  "  REGRA CRÍTICA MILITAR: 'JUSTIÇA MILITAR DA UNIÃO', 'SUPERIOR TRIBUNAL MILITAR' ou 'STM' ⇒ SEMPRE ANTECEDENTES_MILITAR. NUNCA classifique esse documento como ANTECEDENTES_FEDERAL, ANTECEDENTES_FEDERAL_TRF3_REGIONAL ou ANTECEDENTES_FEDERAL_SJSP_JEF: a Justiça Militar da União é um ramo próprio do Judiciário e não pertence à Justiça Federal comum (TRF). 'TRIBUNAL DE JUSTIÇA MILITAR DO ESTADO' ou 'TJM' ⇒ ANTECEDENTES_MILITAR_ESTADUAL.",
+  "• ANTECEDENTES_MILITAR: certidão de tribunal militar (TJM, STM). Validade: 3 meses após a data de emissão.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, orgao_emissor, data_emissao, data_validade, resultado_certidao.",
   "• ANTECEDENTES_ELEITORAL: certidão de crimes eleitorais TSE ou TRE. NÃO classifique como quitação eleitoral quando o cabeçalho indicar crimes eleitorais.",
   "  Extrair: nome_completo, cpf, data_nascimento, filiacao_mae, filiacao_pai, naturalidade, sexo, numero_documento (número do título de eleitor — campo 'Número do Título' ou 'Título de Eleitor n.'), orgao_emissor (ex.: 'TSE'), data_emissao, data_validade, resultado_certidao.",
@@ -415,18 +413,6 @@ type BibliotecaMatch = {
  * mas operacionalmente continua sendo COMPROVANTE_RESIDENCIA. Por isso, uma
  * correspondência forte com modelo aprovado prevalece sobre a aparência fiscal.
  */
-/**
- * Palavras que aparecem em QUALQUER certidão brasileira. Contadas como "sinal
- * compatível", elas fizeram a certidão do STM casar 14/40 com o modelo do TRF3.
- * Não identificam órgão nenhum, então não valem como prova de modelo.
- */
-const PALAVRAS_GENERICAS_BIBLIOTECA = new Set([
-  "CERTIDAO","CERTIDOES","DATA","NOME","PODER","JUDICIARIO","JUSTICA","CRIMINAL","CRIMINAIS",
-  "PROCESSO","PROCESSOS","PROCESSUAIS","PRESENTE","BASE","PESQUISA","CONSULTA","INFORMADO",
-  "INTERESSADO","EMITIDA","EMISSAO","NEGATIVA","ABRANGE","ABRANGENCIA","SISTEMA","ELETRONICO",
-  "RESOLUCAO","EXECUCAO","JUDICIAL","GRAU","HTTPS","PAULO","2020","2026",
-]);
-
 async function buscarModeloBiblioteca(
   supabase: any,
   textoPdf: string,
@@ -450,15 +436,14 @@ async function buscarModeloBiblioteca(
       const palavras = Array.isArray(modelo.palavras_chave_json)
         ? modelo.palavras_chave_json
             .map((p) => normalizarTexto(String(p)))
-            .filter((p) => p.length >= 4 && !PALAVRAS_GENERICAS_BIBLIOTECA.has(p))
+            .filter((p) => p.length >= 4)
         : [];
       if (palavras.length < 8) continue;
       const encontradas = palavras.filter((p) => texto.includes(p)).length;
       const cobertura = encontradas / palavras.length;
 
-      // Só palavras discriminantes contam, e a maioria delas precisa estar
-      // presente — 35% de cobertura aceitava documento de outro órgão.
-      if (encontradas < 8 || cobertura < 0.6) continue;
+      // Exige vários sinais simultâneos para uma palavra genérica não dominar.
+      if (encontradas < 8 || cobertura < 0.35) continue;
       if (!melhor || cobertura > melhor.cobertura ||
           (cobertura === melhor.cobertura && encontradas > melhor.palavrasEncontradas)) {
         melhor = {
@@ -531,8 +516,6 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
   if (x.includes("EXECUCOES") || x.includes("EXECUÇÕES")) return "ANTECEDENTES_ESTADUAL_EXECUCOES";
   if (x.includes("ACOES_CRIMINAIS") || x.includes("AÇÕES_CRIMINAIS") || x.includes("DISTRIBUICAO") || x.includes("DISTRIBUIÇÃO")) return "ANTECEDENTES_ESTADUAL_DISTRIBUICAO";
-  if (x.includes("MILITAR") && (x.includes("ESTADUAL") || x.includes("TJM"))) return "ANTECEDENTES_MILITAR_ESTADUAL";
-  if (x.includes("MILITAR") && (x.includes("UNIAO") || x.includes("STM"))) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
   if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
@@ -672,44 +655,6 @@ function cpfComDigitosVerificadores(valor: unknown): string {
   return `${base}${d1}${d2}`;
 }
 
-/**
- * Identifica, SÓ pelo texto do documento, se a certidão é da Justiça Militar —
- * e de qual ramo. União (STM) e Estadual (TJM) são documentos distintos,
- * exigidos em slots distintos pela PF.
- */
-function detectarCertidaoMilitar(
-  textoPdf: string,
-): { tipo: Tipo; nomeDocumento: string; orgao: string; justificativa: string } | null {
-  const t = normalizarTexto(textoPdf || "");
-  if (!t) return null;
-
-  const uniao =
-    /JUSTICA MILITAR DA UNIAO|SUPERIOR TRIBUNAL MILITAR|\bSTM\b|WWW\.STM\.JUS\.BR/.test(t);
-  const estadual =
-    /TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL|\bTJM\b|\bTJME\b|WWW\.TJM/.test(t);
-
-  if (uniao) {
-    return {
-      tipo: "ANTECEDENTES_MILITAR",
-      nomeDocumento: "Certidão Criminal Militar — Justiça Militar da União (STM)",
-      orgao: "Superior Tribunal Militar",
-      justificativa:
-        "Classificação determinística pelo texto do documento: Justiça Militar da União / Superior Tribunal Militar (STM). " +
-        "A Justiça Militar da União é ramo próprio do Judiciário — não é Justiça Federal comum (TRF).",
-    };
-  }
-  if (estadual) {
-    return {
-      tipo: "ANTECEDENTES_MILITAR_ESTADUAL",
-      nomeDocumento: "Certidão Criminal Militar — Justiça Militar Estadual (TJM)",
-      orgao: "Tribunal de Justiça Militar do Estado",
-      justificativa:
-        "Classificação determinística pelo texto do documento: Tribunal de Justiça Militar ESTADUAL (TJM).",
-    };
-  }
-  return null;
-}
-
 function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any {
   const campos = parsed.camposExtraidos && typeof parsed.camposExtraidos === "object" ? parsed.camposExtraidos : {};
   parsed.camposExtraidos = campos;
@@ -718,27 +663,6 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const combinado = [textoPdf, parsed.justificativa, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
-
-  // === JUSTIÇA MILITAR — PRECEDÊNCIA ABSOLUTA ────────────────────────────────
-  // A Justiça Militar da União (STM) é ramo PRÓPRIO do Judiciário: não é
-  // Justiça Federal comum e nunca é TRF. Sem esta trava, a certidão do STM
-  // (que cita "Poder Judiciário", "Ações Criminais", "âmbito nacional") caía
-  // na regra do TRF3 / na Biblioteca e era rotulada como Certidão Federal.
-  // Roda ANTES de TJSP/TRF3 e usa SOMENTE o texto do PDF — nunca a
-  // justificativa da IA, para não validar a IA com a própria IA.
-  const militar = detectarCertidaoMilitar(textoPdf);
-  if (militar) {
-    parsed.tipoDetectado = militar.tipo;
-    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
-    campos.tipo_certidao = militar.tipo === "ANTECEDENTES_MILITAR" ? "militar_uniao_stm" : "militar_estadual_tjm";
-    campos.nome_documento = campos.nome_documento || militar.nomeDocumento;
-    campos.orgao_emissor = campos.orgao_emissor || militar.orgao;
-    campos.data_emissao = campos.data_emissao || primeiraDataBR(textoPdf);
-    campos.numero_documento = campos.numero_documento || numeroCertidao(textoPdf);
-    if (!campos.resultado_certidao && /NADA CONSTAR|NADA CONSTA/.test(norm)) campos.resultado_certidao = "nada_consta";
-    parsed.justificativa = militar.justificativa;
-    return parsed;
-  }
 
   const contaConsumoImovel =
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(norm) &&
@@ -923,21 +847,7 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
-    let modeloBiblioteca: BibliotecaMatch | null = await buscarModeloBiblioteca(supabase, textoPdfNativo);
-
-    // A Biblioteca casa por bag-of-words e, quando casa, ASSUME 0.99 e pula a
-    // IA. Termos jurídicos genéricos ("poder judiciário", "ações criminais",
-    // "nada consta", "âmbito nacional") fizeram a certidão do STM casar com o
-    // modelo do TRF3. Quando o texto do próprio documento identifica o órgão de
-    // forma inequívoca, o órgão vence a Biblioteca.
-    const orgaoInequivoco = detectarCertidaoMilitar(textoPdfNativo);
-    if (modeloBiblioteca && orgaoInequivoco && modeloBiblioteca.tipo !== orgaoInequivoco.tipo) {
-      console.warn(
-        "[qa-classificar] modelo da Biblioteca descartado por conflito com o órgão emissor lido no PDF",
-        { modelo: modeloBiblioteca.tipo, orgao: orgaoInequivoco.tipo },
-      );
-      modeloBiblioteca = null;
-    }
+    const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
     // === DOCUMENTO PARSEADO: SEM IA ===
     // Se o texto nativo casa com um modelo aprovado da Biblioteca, o parser já
@@ -1057,9 +967,18 @@ Deno.serve(async (req) => {
     }
     parsed = aplicarClassificacaoDeterministica(parsed, textoPdfNativo);
 
-    // Nota: quando há modelo da Biblioteca a função já retornou acima
-    // (caminho "parser_biblioteca"), então aqui `modeloBiblioteca` é sempre
-    // nulo — o bloco que reaplicava o modelo era código morto e foi removido.
+    if (modeloBiblioteca) {
+      parsed.tipoDetectado = modeloBiblioteca.tipo;
+      parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.98);
+      parsed.justificativa =
+        `Classificação pelo modelo aprovado da Biblioteca “${modeloBiblioteca.nomeModelo}” ` +
+        `(${modeloBiblioteca.palavrasEncontradas} sinais compatíveis).`;
+      parsed.modelo_biblioteca = {
+        tipo_documento: modeloBiblioteca.tipoDocumento,
+        nome_modelo: modeloBiblioteca.nomeModelo,
+        cobertura: modeloBiblioteca.cobertura,
+      };
+    }
 
     const tipoDetectado = (TIPOS as readonly string[]).includes(parsed.tipoDetectado)
       ? (parsed.tipoDetectado as Tipo)

@@ -150,7 +150,6 @@ const IA_TO_TIPO: Record<string, string> = {
   ANTECEDENTES_ESTADUAL_DISTRIBUICAO: "antecedentes_estadual_distribuicao",
   ANTECEDENTES_ESTADUAL_EXECUCOES: "antecedentes_estadual_execucoes",
   ANTECEDENTES_MILITAR: "antecedentes_militar",
-  ANTECEDENTES_MILITAR_ESTADUAL: "antecedentes_militar_estadual",
   ANTECEDENTES_ELEITORAL: "antecedentes_eleitoral",
   // Declarações
   DECLARACAO_NAO_INQUERITO: "declaracao_sem_inquerito_processo_criminal",
@@ -292,10 +291,7 @@ function buildDocumentoHaystack(input: {
     input.orgaoEmissor,
     input.numeroDocumento,
     input.classificacao?.tipoDetectado,
-    // A justificativa é texto livre gerado pelo próprio modelo: usá-la como
-    // sinal para "confirmar" a classificação do modelo é raciocínio circular
-    // (foi assim que a menção a "Justiça Federal" na prosa da IA reforçou o
-    // subtipo TRF3 num documento do STM). Só entram dados lidos do documento.
+    input.classificacao?.justificativa,
     input.classificacao?.camposExtraidos,
     input.campos,
   ]);
@@ -303,9 +299,6 @@ function buildDocumentoHaystack(input: {
 }
 
 function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_regional" | "antecedentes_federal_sjsp_jef" | "antecedentes_federal" | null {
-  // Justiça Militar (União ou Estadual) NÃO é Justiça Federal comum. Sem este
-  // corte, a certidão do STM caía no subtipo TRF3 por citar termos genéricos.
-  if (/JUSTICA MILITAR|SUPERIOR TRIBUNAL MILITAR|\bSTM\b|\bTJM\b/.test(hay)) return null;
   const isCertidaoFederal =
     /\bTRF\b|\bTRF3\b|TRIBUNAL REGIONAL FEDERAL|JUSTICA FEDERAL|SECAO JUDICIARIA|JEF/.test(hay);
   if (!isCertidaoFederal) return null;
@@ -329,14 +322,6 @@ function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(hay) &&
     /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(hay);
   if (contaConsumoImovel) return "comprovante_residencia";
-
-  // Órgão inequívoco vence qualquer heurística posterior.
-  if (/JUSTICA MILITAR DA UNIAO|SUPERIOR TRIBUNAL MILITAR|\bSTM\b|STM\.JUS\.BR/.test(hay)) {
-    return "antecedentes_militar";
-  }
-  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL|\bTJM\b|\bTJME\b/.test(hay)) {
-    return "antecedentes_militar_estadual";
-  }
 
   if (tipoAtual === "antecedentes_estadual") {
     if (/EXECU|1448406/.test(hay)) return "antecedentes_estadual_execucoes";
