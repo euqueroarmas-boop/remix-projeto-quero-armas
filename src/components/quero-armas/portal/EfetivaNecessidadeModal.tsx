@@ -20,7 +20,7 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight } from "lucide-react";
+import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
@@ -113,6 +113,14 @@ export default function EfetivaNecessidadeModal({
   const [contexto, setContexto] = useState("");
   const [provas, setProvas] = useState<Prova[]>([]);
   const [enviandoTipo, setEnviandoTipo] = useState<TipoProva | null>(null);
+  /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
+  const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
+  const [narrativa, setNarrativa] = useState("");
+  const [gerando, setGerando] = useState(false);
+  const [editandoNarrativa, setEditandoNarrativa] = useState(false);
+  const [narrativaTocada, setNarrativaTocada] = useState(false);
+  const [aprovando, setAprovando] = useState(false);
+  const [salvandoCampo, setSalvandoCampo] = useState<null | "salvando" | "salvo">(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tipoAlvoRef = useRef<TipoProva>("boletim_ocorrencia");
 
@@ -148,6 +156,7 @@ export default function EfetivaNecessidadeModal({
         });
         setRelato(reg.relato_cliente ?? "");
         setContexto(reg.contexto_risco ?? "");
+        setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
 
         const { data: ps } = await supabase
           .from("qa_efetiva_necessidade_provas" as any)
@@ -186,6 +195,74 @@ export default function EfetivaNecessidadeModal({
       .update({ [campo]: valor, updated_at: new Date().toISOString() })
       .eq("id", registroId);
   }, [registroId]);
+
+  /* ── Autosave enquanto digita — nada de esperar o foco sair ─────────────
+   * O cliente escreve num celular, troca de app, volta. Se o texto só
+   * gravasse no blur, ele perderia o relato justamente na hora em que mais
+   * escreveu. 800 ms depois da última tecla, grava sozinho.                */
+  useEffect(() => {
+    if (!registroId || carregando) return;
+    setSalvandoCampo("salvando");
+    const t = setTimeout(async () => {
+      await salvarTexto("relato_cliente", relato);
+      setSalvandoCampo("salvo");
+    }, 800);
+    return () => clearTimeout(t);
+  }, [relato, registroId, carregando, salvarTexto]);
+
+  useEffect(() => {
+    if (!registroId || carregando) return;
+    const t = setTimeout(() => void salvarTexto("contexto_risco", contexto), 800);
+    return () => clearTimeout(t);
+  }, [contexto, registroId, carregando, salvarTexto]);
+
+  /* ── Parte B: a IA monta o relato em primeira pessoa ────────────────── */
+  const gerarNarrativa = useCallback(async () => {
+    if (!registroId) return;
+    setGerando(true);
+    try {
+      await salvarTexto("relato_cliente", relato);
+      await salvarTexto("contexto_risco", contexto);
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-narrativa", {
+        body: { registro_id: registroId },
+      });
+      if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
+      setNarrativa(String(data.narrativa));
+      setNarrativaTocada(false);
+      setEditandoNarrativa(false);
+      setEtapa("narrativa");
+    } catch (e) {
+      console.error("[efetiva necessidade] narrativa:", e);
+      toast.error(e instanceof Error ? e.message : "Não foi possível montar o relato agora.");
+    } finally {
+      setGerando(false);
+    }
+  }, [registroId, relato, contexto, salvarTexto]);
+
+  const aprovarNarrativa = useCallback(async () => {
+    if (!registroId || narrativa.trim().length < 200) return;
+    setAprovando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-aprovar", {
+        body: {
+          registro_id: registroId,
+          texto_final: narrativa.trim(),
+          editado: narrativaTocada,
+          user_agent: navigator.userAgent,
+          accept_language: navigator.language,
+        },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Falha ao registrar a aprovação");
+      toast.success("Relato aprovado. Enviamos o arquivo completo para o seu e-mail e liberamos o agendamento dos exames.");
+      onConcluido?.();
+      onClose();
+    } catch (e) {
+      console.error("[efetiva necessidade] aprovação:", e);
+      toast.error(e instanceof Error ? e.message : "Não foi possível registrar a sua aprovação.");
+    } finally {
+      setAprovando(false);
+    }
+  }, [registroId, narrativa, narrativaTocada, onConcluido, onClose]);
 
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
   const receberArquivo = useCallback(async (file: File) => {
@@ -318,6 +395,68 @@ export default function EfetivaNecessidadeModal({
           <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abrindo…
           </div>
+        ) : etapa === "narrativa" ? (
+          <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                Leia com atenção
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                Montamos abaixo o seu relato, em primeira pessoa, cruzando as suas respostas, os
+                documentos que você enviou e os dados do seu cadastro (profissão, rotina e
+                endereço). <strong>Você pode editar o texto</strong>, pedir para refazer, e só
+                depois aprovar. Ao aprovar, este texto passa a ser a base da sua defesa.
+              </p>
+            </div>
+
+            {editandoNarrativa ? (
+              <textarea
+                value={narrativa}
+                onChange={(e) => { setNarrativa(e.target.value); setNarrativaTocada(true); }}
+                rows={22}
+                className="w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-3 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
+              />
+            ) : (
+              <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-4">
+                {narrativa.split("\n").filter((l) => l.trim()).map((l, i) => (
+                  <p key={i} className="text-[13px] leading-relaxed text-zinc-800">{l}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setEditandoNarrativa((v) => !v)}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                {editandoNarrativa ? "Concluir edição" : "Editar o texto"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void gerarNarrativa()}
+                disabled={gerando}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              >
+                {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Refazer o relato
+              </button>
+              <button
+                type="button"
+                onClick={() => setEtapa("provas")}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                Voltar e corrigir provas
+              </button>
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-zinc-500">
+              Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único
+              arquivo assinado com este relato, as suas respostas e todos os anexos, e enviamos
+              para o seu e-mail. Depois disso, o agendamento dos exames é liberado.
+            </p>
+          </div>
         ) : (
           <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
             {PERGUNTAS.map((q) => (
@@ -439,32 +578,36 @@ export default function EfetivaNecessidadeModal({
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
           <p className="text-[10px] leading-tight text-zinc-400">
-            Cada resposta é salva na hora.<br />Pode parar e continuar quando quiser.
+            {etapa === "narrativa"
+              ? <>Você é quem aprova.<br />Nada é enviado sem a sua concordância.</>
+              : <>
+                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+                  <br />Pode parar e continuar quando quiser.
+                </>}
           </p>
-          <button
-            type="button"
-            disabled={!podeConcluir || salvando}
-            onClick={async () => {
-              if (!registroId) return;
-              setSalvando(true);
-              await salvarTexto("relato_cliente", relato);
-              await salvarTexto("contexto_risco", contexto);
-              await supabase
-                .from("qa_efetiva_necessidade" as any)
-                .update({ status: "aguardando_aprovacao", updated_at: new Date().toISOString() })
-                .eq("id", registroId);
-              setSalvando(false);
-              toast.success("Material enviado. Nossa equipe vai analisar e montar a sua defesa.");
-              onConcluido?.();
-              onClose();
-            }}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
-          >
-            {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : podeConcluir ? <Check className="h-3.5 w-3.5" />
-              : <ArrowRight className="h-3.5 w-3.5" />}
-            Enviar para a equipe
-          </button>
+          {etapa === "narrativa" ? (
+            <button
+              type="button"
+              disabled={aprovando || narrativa.trim().length < 200}
+              onClick={() => void aprovarNarrativa()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              Concordo e aprovo
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!podeConcluir || salvando || gerando}
+              onClick={() => void gerarNarrativa()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              {gerando || salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : podeConcluir ? <Check className="h-3.5 w-3.5" />
+                : <ArrowRight className="h-3.5 w-3.5" />}
+              {gerando ? "Montando seu relato…" : "Gerar meu relato"}
+            </button>
+          )}
         </div>
 
         <input
