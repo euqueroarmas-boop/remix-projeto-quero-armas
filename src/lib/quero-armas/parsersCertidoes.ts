@@ -430,11 +430,14 @@ function parseTjmSp(texto: string): CamposCertidao {
   return {
     orgao: "tjm_sp",
     tipoDocumento: "antecedentes_militar_estadual",
-    nome_titular: upperOrUndef(g(/em nome de:\s*\n+\s*(.+?)\s*\n/i)),
+    // O PDF às vezes sai com o nome na linha seguinte, às vezes na mesma
+    // linha. Em ambos os casos corta no primeiro rótulo seguinte / salto de
+    // coluna — sem isso o valor engolia a certidão inteira.
+    nome_titular: upperOrUndef(cortarCampo(g(/em nome de:\s*\n*\s*(.+)/i))),
     cpf: cpf11(g(/CPF:\s*([\d.\-]+)/i)),
     data_nascimento: iso(g(/Data de Nascimento:\s*([\d/]+)/i)),
-    nome_mae: upperOrUndef(g(/Mae:\s*(.+?)\s*$/im)),
-    nome_pai: upperOrUndef(g(/Pai:\s*(.+?)\s*$/im)),
+    nome_mae: upperOrUndef(cortarCampo(g(/M[ãa]e:\s*(.+)/i))),
+    nome_pai: upperOrUndef(cortarCampo(g(/Pai:\s*(.+)/i))),
     // Naturalidade aqui é digitada por quem PEDE a certidão, não pelo tribunal.
     // Num cliente veio "JACAREI - SP" e no outro "3750 - SP" — este segundo é
     // erro de digitação do próprio requerente. Por isso o campo É comparado e,
@@ -577,6 +580,25 @@ function naturalidadeTjm(t: string): string | undefined {
 function upperOrUndef(v: string | undefined): string | undefined {
   const s = (v ?? "").trim();
   return s.length > 1 ? upper(s) : undefined;
+}
+
+/**
+ * Corta o valor de um campo rotulado no primeiro rótulo seguinte, quebra de
+ * linha ou salto de coluna (2+ espaços). Sem isso, "Mãe: FULANA  Pai: …"
+ * devolve o resto da certidão inteira dentro do nome da mãe — foi essa a causa
+ * de certidões corretas serem barradas por "divergência".
+ */
+const PARADAS_CAMPO =
+  /\s(?:Pai|M[ãa]e|Nome|Naturalidade|Sexo|G[êe]nero|Estado civil|Documento|RG|CPF|[ÓO]rg[ãa]o|Data|Validade|Finalidade|Certid|Observa|Registro|Filia)\b/i;
+
+function cortarCampo(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  let s = v.split("\n")[0];
+  s = s.split(/\s{2,}/)[0];
+  const p = s.search(PARADAS_CAMPO);
+  if (p > 0) s = s.slice(0, p);
+  s = s.replace(/[.;,:]+$/, "").trim();
+  return s.length > 1 ? s : undefined;
 }
 function numOrUndef(v: string | undefined): number | undefined {
   const n = Number(v);
