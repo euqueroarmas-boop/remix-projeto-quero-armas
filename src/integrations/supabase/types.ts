@@ -6763,13 +6763,22 @@ export type Database = {
       }
       qa_efetiva_necessidade: {
         Row: {
+          aprovacao_accept_language: string | null
+          aprovacao_hash: string | null
+          aprovacao_ip: string | null
+          aprovacao_user_agent: string | null
           aprovado_cliente: boolean
           aprovado_cliente_em: string | null
           cliente_id: number
           contexto_risco: string | null
           created_at: string
+          dossie_gerado_em: string | null
+          dossie_storage_path: string | null
           enviado_equipe_em: string | null
+          exames_liberados_em: string | null
           id: string
+          narrativa_editada_pelo_cliente: boolean
+          narrativa_final: string | null
           narrativa_gerada: string | null
           narrativa_gerada_em: string | null
           processo_id: string
@@ -6782,13 +6791,22 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aprovacao_accept_language?: string | null
+          aprovacao_hash?: string | null
+          aprovacao_ip?: string | null
+          aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
           cliente_id: number
           contexto_risco?: string | null
           created_at?: string
+          dossie_gerado_em?: string | null
+          dossie_storage_path?: string | null
           enviado_equipe_em?: string | null
+          exames_liberados_em?: string | null
           id?: string
+          narrativa_editada_pelo_cliente?: boolean
+          narrativa_final?: string | null
           narrativa_gerada?: string | null
           narrativa_gerada_em?: string | null
           processo_id: string
@@ -6801,13 +6819,22 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aprovacao_accept_language?: string | null
+          aprovacao_hash?: string | null
+          aprovacao_ip?: string | null
+          aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
           cliente_id?: number
           contexto_risco?: string | null
           created_at?: string
+          dossie_gerado_em?: string | null
+          dossie_storage_path?: string | null
           enviado_equipe_em?: string | null
+          exames_liberados_em?: string | null
           id?: string
+          narrativa_editada_pelo_cliente?: boolean
+          narrativa_final?: string | null
           narrativa_gerada?: string | null
           narrativa_gerada_em?: string | null
           processo_id?: string
