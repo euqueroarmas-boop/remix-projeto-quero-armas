@@ -196,6 +196,74 @@ export default function EfetivaNecessidadeModal({
       .eq("id", registroId);
   }, [registroId]);
 
+  /* ── Autosave enquanto digita — nada de esperar o foco sair ─────────────
+   * O cliente escreve num celular, troca de app, volta. Se o texto só
+   * gravasse no blur, ele perderia o relato justamente na hora em que mais
+   * escreveu. 800 ms depois da última tecla, grava sozinho.                */
+  useEffect(() => {
+    if (!registroId || carregando) return;
+    setSalvandoCampo("salvando");
+    const t = setTimeout(async () => {
+      await salvarTexto("relato_cliente", relato);
+      setSalvandoCampo("salvo");
+    }, 800);
+    return () => clearTimeout(t);
+  }, [relato, registroId, carregando, salvarTexto]);
+
+  useEffect(() => {
+    if (!registroId || carregando) return;
+    const t = setTimeout(() => void salvarTexto("contexto_risco", contexto), 800);
+    return () => clearTimeout(t);
+  }, [contexto, registroId, carregando, salvarTexto]);
+
+  /* ── Parte B: a IA monta o relato em primeira pessoa ────────────────── */
+  const gerarNarrativa = useCallback(async () => {
+    if (!registroId) return;
+    setGerando(true);
+    try {
+      await salvarTexto("relato_cliente", relato);
+      await salvarTexto("contexto_risco", contexto);
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-narrativa", {
+        body: { registro_id: registroId },
+      });
+      if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
+      setNarrativa(String(data.narrativa));
+      setNarrativaTocada(false);
+      setEditandoNarrativa(false);
+      setEtapa("narrativa");
+    } catch (e) {
+      console.error("[efetiva necessidade] narrativa:", e);
+      toast.error(e instanceof Error ? e.message : "Não foi possível montar o relato agora.");
+    } finally {
+      setGerando(false);
+    }
+  }, [registroId, relato, contexto, salvarTexto]);
+
+  const aprovarNarrativa = useCallback(async () => {
+    if (!registroId || narrativa.trim().length < 200) return;
+    setAprovando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-aprovar", {
+        body: {
+          registro_id: registroId,
+          texto_final: narrativa.trim(),
+          editado: narrativaTocada,
+          user_agent: navigator.userAgent,
+          accept_language: navigator.language,
+        },
+      });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "Falha ao registrar a aprovação");
+      toast.success("Relato aprovado. Enviamos o arquivo completo para o seu e-mail e liberamos o agendamento dos exames.");
+      onConcluido?.();
+      onClose();
+    } catch (e) {
+      console.error("[efetiva necessidade] aprovação:", e);
+      toast.error(e instanceof Error ? e.message : "Não foi possível registrar a sua aprovação.");
+    } finally {
+      setAprovando(false);
+    }
+  }, [registroId, narrativa, narrativaTocada, onConcluido, onClose]);
+
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
   const receberArquivo = useCallback(async (file: File) => {
     if (!registroId) return;
