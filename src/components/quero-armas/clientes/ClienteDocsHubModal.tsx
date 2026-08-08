@@ -3421,7 +3421,10 @@ export function ClienteDocsHubModal({
       const ehResidencia =
         categoriaHub === "endereco" || /residenc|endereco|endereço/i.test(form.tipo_documento || "");
       const mensagemReprovado = ehResidencia
-        ? `Comprovante de endereço vencido${venc ? ` em ${venc}` : ""}. Existe uma emissão mais recente — envie a última emissão (últimos 30 dias).`
+        ? mensagemComprovanteVencido(
+            datasConsumo ?? { data_emissao: form.data_emissao, data_vencimento: form.data_validade },
+            form.data_validade,
+          )
         : `${rotulo} vencido${venc ? ` em ${venc}` : ""}. Envie a via atualizada deste documento.`;
       setResultadoCarimbo({
         tipo: "reprovado",
