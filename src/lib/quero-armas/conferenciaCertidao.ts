@@ -75,6 +75,63 @@ const chaveCidade = (v: unknown) =>
     .toUpperCase();
 
 /**
+ * Nome do estado por extenso → sigla. O documento pode trazer "SAO PAULO - SP",
+ * "Faxinal ( PR )" ou "JACAREI / SAO PAULO"; o cadastro guarda município e UF
+ * em campos separados. Só se compara sigla com sigla.
+ */
+const ESTADO_PARA_UF: Record<string, string> = {
+  ACRE: "AC", ALAGOAS: "AL", AMAPA: "AP", AMAZONAS: "AM", BAHIA: "BA",
+  CEARA: "CE", "DISTRITO FEDERAL": "DF", "ESPIRITO SANTO": "ES", GOIAS: "GO",
+  MARANHAO: "MA", "MATO GROSSO DO SUL": "MS", "MATO GROSSO": "MT",
+  "MINAS GERAIS": "MG", PARA: "PA", PARAIBA: "PB", PARANA: "PR",
+  PERNAMBUCO: "PE", PIAUI: "PI", "RIO DE JANEIRO": "RJ",
+  "RIO GRANDE DO NORTE": "RN", "RIO GRANDE DO SUL": "RS", RONDONIA: "RO",
+  RORAIMA: "RR", "SANTA CATARINA": "SC", "SAO PAULO": "SP", SERGIPE: "SE",
+  TOCANTINS: "TO",
+};
+
+/**
+ * REGRA CANÔNICA — separa município e UF de um texto livre de naturalidade.
+ * Vale para TODOS os clientes e para todos os pontos do sistema: existe UM
+ * comparador de naturalidade, e é este.
+ */
+export function separarMunicipioUf(v: unknown): { municipio: string; uf: string | null } {
+  let t = chaveCidade(v);
+  if (!t) return { municipio: "", uf: null };
+  // Estado por extenso no fim ("JACAREI SAO PAULO") vira sigla.
+  for (const nome of Object.keys(ESTADO_PARA_UF).sort((a, b) => b.length - a.length)) {
+    if (t.endsWith(` ${nome}`)) {
+      t = `${t.slice(0, -nome.length).trim()} ${ESTADO_PARA_UF[nome]}`;
+      break;
+    }
+  }
+  const partes = t.split(" ");
+  const ultima = partes[partes.length - 1];
+  if (partes.length > 1 && SIGLAS_UF.includes(ultima)) {
+    return { municipio: partes.slice(0, -1).join(" ").trim(), uf: ultima };
+  }
+  return { municipio: t, uf: null };
+}
+
+/**
+ * Compara a naturalidade do documento com a do cadastro. UF só reprova quando
+ * os DOIS lados a trazem — ausência não é divergência.
+ */
+export function naturalidadeConfere(
+  valorDocumento: unknown,
+  cadastroMunicipio: unknown,
+  cadastroUf?: unknown,
+): boolean {
+  const doc = separarMunicipioUf(valorDocumento);
+  const cad = separarMunicipioUf(cadastroMunicipio);
+  const ufCad = cad.uf ?? (chaveCidade(cadastroUf) || null);
+  if (!doc.municipio || !cad.municipio) return true; // sem base para comparar
+  if (doc.municipio !== cad.municipio) return false;
+  if (doc.uf && ufCad && doc.uf !== ufCad) return false;
+  return true;
+}
+
+/**
  * Campos EXIGIDOS para a certidão ser aceita.
  *
  * Regra do usuário (30/07/2026, corrigindo a versão anterior): exigir SOMENTE
@@ -323,20 +380,9 @@ export function conferirCertidao(
   // quem digitou no portal do órgão — divergência aqui é erro de digitação
   // dele, e a PF não aceita.
   if (doc.naturalidade && cadastro.naturalidade_municipio) {
-    // REGRA CANÔNICA — vale para TODOS os clientes, sem exceção.
-    // A certidão traz a naturalidade com a UF colada ("Faxinal - PR",
-    // "SÃO PAULO/SP") enquanto o cadastro guarda município e UF em campos
-    // separados. A comparação normaliza os dois lados: separa a UF do texto do
-    // documento, compara município com município e UF com UF.
-    const brutoDoc = chaveCidade(doc.naturalidade);
-    const partes = brutoDoc.split(" ");
-    const ufDoc = partes.length > 1 && SIGLAS_UF.includes(partes[partes.length - 1]) ? partes[partes.length - 1] : null;
-    const noDoc = (ufDoc ? partes.slice(0, -1).join(" ") : brutoDoc).trim();
-    const noCad = chaveCidade(cadastro.naturalidade_municipio);
-    const ufCad = chaveCidade(cadastro.naturalidade_uf);
-    const municipioDiverge = noDoc !== noCad;
-    const ufDiverge = !!(ufDoc && ufCad && ufDoc !== ufCad);
-    if (municipioDiverge || ufDiverge) {
+    // REGRA CANÔNICA — comparador único (`naturalidadeConfere`), usado também
+    // pelo motor de conformidade do Hub. Município com município, UF com UF.
+    if (!naturalidadeConfere(doc.naturalidade, cadastro.naturalidade_municipio, cadastro.naturalidade_uf)) {
       achados.push({
         campo: "naturalidade",
         label: LABEL.naturalidade,
