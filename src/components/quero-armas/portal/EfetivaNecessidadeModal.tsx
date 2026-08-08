@@ -20,7 +20,7 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight } from "lucide-react";
+import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
@@ -113,6 +113,14 @@ export default function EfetivaNecessidadeModal({
   const [contexto, setContexto] = useState("");
   const [provas, setProvas] = useState<Prova[]>([]);
   const [enviandoTipo, setEnviandoTipo] = useState<TipoProva | null>(null);
+  /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
+  const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
+  const [narrativa, setNarrativa] = useState("");
+  const [gerando, setGerando] = useState(false);
+  const [editandoNarrativa, setEditandoNarrativa] = useState(false);
+  const [narrativaTocada, setNarrativaTocada] = useState(false);
+  const [aprovando, setAprovando] = useState(false);
+  const [salvandoCampo, setSalvandoCampo] = useState<null | "salvando" | "salvo">(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tipoAlvoRef = useRef<TipoProva>("boletim_ocorrencia");
 
@@ -148,6 +156,7 @@ export default function EfetivaNecessidadeModal({
         });
         setRelato(reg.relato_cliente ?? "");
         setContexto(reg.contexto_risco ?? "");
+        setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
 
         const { data: ps } = await supabase
           .from("qa_efetiva_necessidade_provas" as any)
