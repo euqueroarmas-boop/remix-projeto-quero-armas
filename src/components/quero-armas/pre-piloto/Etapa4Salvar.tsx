@@ -167,6 +167,22 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
 
   const cpfNorm = dadosRevisados.cpf?.replace(/\D/g, "") ?? null;
 
+  // Endereço completo do cliente para o resumo da compra (logradouro, número,
+  // complemento, bairro, cidade/UF e CEP) — só entra o que foi extraído.
+  const enderecoResumo = [
+    [dadosRevisados.logradouro || dadosRevisados.endereco, dadosRevisados.numero]
+      .filter((v) => campoPreenchido(v))
+      .join(", "),
+    dadosRevisados.complemento,
+    dadosRevisados.bairro,
+    [dadosRevisados.cidade, dadosRevisados.estado]
+      .filter((v) => campoPreenchido(v))
+      .join("/"),
+    campoPreenchido(dadosRevisados.cep) ? `CEP ${dadosRevisados.cep}` : "",
+  ]
+    .filter((v) => campoPreenchido(v))
+    .join(" — ");
+
   async function verificarDuplicata() {
     const erroMinimo = validarDadosMinimos(dadosRevisados, cpfNorm);
     if (erroMinimo) {
