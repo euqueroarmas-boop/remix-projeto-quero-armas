@@ -395,6 +395,68 @@ export default function EfetivaNecessidadeModal({
           <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abrindo…
           </div>
+        ) : etapa === "narrativa" ? (
+          <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                Leia com atenção
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                Montamos abaixo o seu relato, em primeira pessoa, cruzando as suas respostas, os
+                documentos que você enviou e os dados do seu cadastro (profissão, rotina e
+                endereço). <strong>Você pode editar o texto</strong>, pedir para refazer, e só
+                depois aprovar. Ao aprovar, este texto passa a ser a base da sua defesa.
+              </p>
+            </div>
+
+            {editandoNarrativa ? (
+              <textarea
+                value={narrativa}
+                onChange={(e) => { setNarrativa(e.target.value); setNarrativaTocada(true); }}
+                rows={22}
+                className="w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-3 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
+              />
+            ) : (
+              <div className="space-y-3 rounded-lg border border-zinc-200 bg-white p-4">
+                {narrativa.split("\n").filter((l) => l.trim()).map((l, i) => (
+                  <p key={i} className="text-[13px] leading-relaxed text-zinc-800">{l}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setEditandoNarrativa((v) => !v)}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                {editandoNarrativa ? "Concluir edição" : "Editar o texto"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void gerarNarrativa()}
+                disabled={gerando}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+              >
+                {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Refazer o relato
+              </button>
+              <button
+                type="button"
+                onClick={() => setEtapa("provas")}
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+              >
+                Voltar e corrigir provas
+              </button>
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-zinc-500">
+              Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único
+              arquivo assinado com este relato, as suas respostas e todos os anexos, e enviamos
+              para o seu e-mail. Depois disso, o agendamento dos exames é liberado.
+            </p>
+          </div>
         ) : (
           <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
             {PERGUNTAS.map((q) => (
