@@ -3116,6 +3116,7 @@ export function ClienteDocsHubModal({
     setAvaliacaoTitular(null);
     setCpfConfrontado(null);
     setCpfConfrontoAberto(false);
+    setDatasConsumo(null);
     setCpfConfrontoErro(null);
     if (!f) return;
 
