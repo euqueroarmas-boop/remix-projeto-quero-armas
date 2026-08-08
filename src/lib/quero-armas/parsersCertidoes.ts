@@ -570,7 +570,10 @@ function parseBoletimOcorrencia(texto: string): CamposCertidao {
  */
 function naturalidadeTjm(t: string): string | undefined {
   const linha = t.match(/Naturalidade:\s*([^\n]+)/i)?.[1] ?? "";
-  const valor = linha.split(/\s{2,}|\s+Pai:/i)[0]?.trim();
+  // Mesmo cortador canônico dos demais campos: sem ele, uma coluna vizinha
+  // separada por UM espaço ("FAXINAL - PR Mae: ELIANA …") entrava inteira na
+  // naturalidade e reprovava certidões corretas.
+  const valor = cortarCampo(linha);
   if (!valor || valor.length < 2) return undefined;
   // Código de município em vez do nome — devolve, mas sinalizado como não
   // comparável pelo formato puramente numérico.
