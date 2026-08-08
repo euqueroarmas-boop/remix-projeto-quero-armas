@@ -168,8 +168,8 @@ Deno.serve(async (req) => {
     if (!doc.arquivo_storage_path) return json({ error: "documento sem arquivo no storage" }, 400);
 
     const [{ data: isStaff }, { data: ownerClienteId }] = await Promise.all([
-      admin.rpc("qa_is_active_staff", { _user_id: userId }) as any,
-      admin.rpc("qa_current_cliente_id", { _user_id: userId }) as any,
+      admin.rpc("qa_is_active_staff", { _uid: userId }) as any,
+      admin.rpc("qa_current_cliente_id", { _uid: userId }) as any,
     ]);
     const allowed = isStaff === true || Number(ownerClienteId) === Number(doc.qa_cliente_id);
     if (!allowed) return json({ error: "forbidden" }, 403);
