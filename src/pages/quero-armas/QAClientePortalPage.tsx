@@ -34,6 +34,7 @@ import ClienteArmasMunicoesSection from "@/components/quero-armas/portal/Cliente
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
+import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
@@ -346,6 +347,9 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
+  // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
+  // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
+  const [efetivaNecessidadeProcessoId, setEfetivaNecessidadeProcessoId] = useState<string | null>(null);
   // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
   // id para que o Hub Documental salve o novo como substituição (marca o
   // antigo como `substituido`).
@@ -2021,9 +2025,10 @@ export default function QAClientePortalPage() {
         onPrimary: () => {},
         entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Resolver efetiva necessidade" : undefined,
         onEntregar: () => {
-          // Efetiva necessidade fica no fluxo guiado já existente.
+          // Efetiva necessidade abre o questionário dedicado (provas primeiro,
+          // narrativa depois) em vez de voltar para a lista guiada.
           if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {
-            abrirPendenciasGuiadas({ pinnedId: doc.id ? `doc:${doc.id}` : null });
+            setEfetivaNecessidadeProcessoId(String(doc.processo_id));
             setShowContratoPopup(false);
             return;
           }
@@ -4565,6 +4570,19 @@ export default function QAClientePortalPage() {
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
+
+      {cliente?.id && efetivaNecessidadeProcessoId ? (
+        <EfetivaNecessidadeModal
+          open={!mustChangePassword}
+          processoId={efetivaNecessidadeProcessoId}
+          clienteId={Number(cliente.id)}
+          onClose={() => setEfetivaNecessidadeProcessoId(null)}
+          onConcluido={() => {
+            setEfetivaNecessidadeProcessoId(null);
+            setDocsReloadKey((k) => k + 1);
+          }}
+        />
+      ) : null}
 
       {cliente?.id ? (
         <ClienteChecklistCadastralModal
