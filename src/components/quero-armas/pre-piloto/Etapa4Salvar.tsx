@@ -167,6 +167,22 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
 
   const cpfNorm = dadosRevisados.cpf?.replace(/\D/g, "") ?? null;
 
+  // Endereço completo do cliente para o resumo da compra (logradouro, número,
+  // complemento, bairro, cidade/UF e CEP) — só entra o que foi extraído.
+  const enderecoResumo = [
+    [dadosRevisados.logradouro || dadosRevisados.endereco, dadosRevisados.numero]
+      .filter((v) => campoPreenchido(v))
+      .join(", "),
+    dadosRevisados.complemento,
+    dadosRevisados.bairro,
+    [dadosRevisados.cidade, dadosRevisados.estado]
+      .filter((v) => campoPreenchido(v))
+      .join("/"),
+    campoPreenchido(dadosRevisados.cep) ? `CEP ${dadosRevisados.cep}` : "",
+  ]
+    .filter((v) => campoPreenchido(v))
+    .join(" — ");
+
   async function verificarDuplicata() {
     const erroMinimo = validarDadosMinimos(dadosRevisados, cpfNorm);
     if (erroMinimo) {
@@ -275,7 +291,15 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           { body: { cliente_id: clienteId, campos: camposCanonicos } },
         );
         if (saveError || !saveResult?.ok) {
-          throw new Error(saveResult?.error || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
+          // A mensagem padrão do supabase-js ("non-2xx status code") esconde o
+          // motivo real; lemos o corpo da resposta para o operador saber o que
+          // corrigir (permissão, campo obrigatório etc.).
+          let motivo = saveResult?.error as string | undefined;
+          const ctx: any = (saveError as any)?.context;
+          if (!motivo && ctx?.json) {
+            try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+          }
+          throw new Error(motivo || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
         }
         const salvo = saveResult.cliente;
         const enderecoEsperado = String(camposCanonicos.endereco || "").trim();
@@ -546,6 +570,9 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         <p><span className="font-medium">CPF:</span> {formatCpf(cpfNorm) || "(não informado)"}</p>
         {dadosRevisados.email && <p><span className="font-medium">E-mail:</span> {dadosRevisados.email}</p>}
         {dadosRevisados.celular && <p><span className="font-medium">Celular:</span> {dadosRevisados.celular}</p>}
+        {enderecoResumo && (
+          <p><span className="font-medium">Endereço:</span> {enderecoResumo}</p>
+        )}
         {senhagov && (
           <p className="flex items-center gap-1 text-green-700">
             <ShieldCheck className="w-3.5 h-3.5" /> Senha GOV.BR será salva (criptografada)

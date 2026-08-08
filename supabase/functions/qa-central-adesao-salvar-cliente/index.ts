@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const { data: isStaff, error: staffError } = await admin.rpc(
       "qa_is_active_staff",
-      { _user_id: userData.user.id },
+      { _uid: userData.user.id },
     );
     if (staffError || isStaff !== true) return json({ error: "forbidden" }, 403);
 
