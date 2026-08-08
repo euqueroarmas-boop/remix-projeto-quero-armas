@@ -31,6 +31,7 @@ import HubDocPreviewSlot from "./HubDocPreviewSlot";
 import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
 import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal";
+import ConfrontoCpfComprovanteModal from "./ConfrontoCpfComprovanteModal";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
@@ -63,6 +64,13 @@ import {
   parseComprovanteEndereco,
   type ResultadoEndereco,
 } from "@/lib/quero-armas/parserComprovanteEndereco";
+import { parseDanf3e } from "@/lib/quero-armas/parserComprovanteResidencia";
+import {
+  avaliarTitularidadeComprovante,
+  confrontarCpfParcial,
+  lerCpfDocumento,
+  type AvaliacaoTitularidade,
+} from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import {
   HUB_CATEGORIAS,
@@ -931,8 +939,24 @@ function calcularConformidade(
   pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
   // Comparação de CPF tolerante a erro de leitura dos dígitos verificadores:
   // a base de 9 dígitos é o que identifica a pessoa; DV é reconstruído.
-  pushItem("cpf",             "CPF",                campos.cpf,             (a, b) =>
-    normCpf(a) === normCpf(b) || cpfComDigitosVerificadores(a) === cpfComDigitosVerificadores(b));
+  // CPF-01: CPF mascarado ou ilegível NÃO é divergência — é ausência de
+  // leitura. Divergir aqui fazia falha de OCR virar "documento de terceiro".
+  {
+    const cpfLidoDoc = lerCpfDocumento(campos.cpf);
+    if (cpfLidoDoc.estado === "valido") {
+      pushItem("cpf", "CPF", campos.cpf, (a, b) =>
+        normCpf(a) === normCpf(b) || cpfComDigitosVerificadores(a) === cpfComDigitosVerificadores(b));
+    } else if (campos.cpf) {
+      items.push({
+        campo: "cpf",
+        label: cpfLidoDoc.estado === "mascarado" ? "CPF (mascarado no documento)" : "CPF (ilegível no documento)",
+        valorCertidao: String(campos.cpf),
+        valorReferencia: ref["cpf"]?.valor ?? null,
+        fonteReferencia: ref["cpf"]?.fonte ?? null,
+        status: "sem_referencia",
+      });
+    }
+  }
   // Pula data_nascimento quando: é string de idade ("34 anos") OU
   // quando dia/mês coincidem com a data de avaliação — sinal de que a IA
   // calculou a data subtraindo a idade da data de avaliação (resultado impreciso).
@@ -1445,6 +1469,17 @@ export function ClienteDocsHubModal({
   const [confirmados, setConfirmados] = useState<Partial<Record<SensitiveKey, boolean>>>({});
   /** Conformidade cruzada para certidões de antecedentes. */
   const [conformidade, setConformidade] = useState<ConformidadeItem[]>([]);
+  /**
+   * CPF-01 — comprovante de endereço com CPF ausente ou mascarado.
+   * Guarda a avaliação determinística de titularidade e a resposta do cliente
+   * ao confronto dos dígitos visíveis. Enquanto não houver resposta, o
+   * documento fica PENDENTE — nunca reprovado, nunca tratado como de terceiro.
+   */
+  const [avaliacaoTitular, setAvaliacaoTitular] = useState<AvaliacaoTitularidade | null>(null);
+  const [cpfConfrontoAberto, setCpfConfrontoAberto] = useState(false);
+  const [cpfConfrontoInput, setCpfConfrontoInput] = useState("");
+  const [cpfConfrontoErro, setCpfConfrontoErro] = useState<string | null>(null);
+  const [cpfConfrontado, setCpfConfrontado] = useState<string | null>(null);
   /** true quando a certidão tem resultado_certidao = "consta_apontamento". */
   const [temApontamento, setTemApontamento] = useState(false);
   /** null = não respondido; "sim" = reconhece; "nao" = não reconhece (homônimo). */
@@ -1700,12 +1735,26 @@ export function ClienteDocsHubModal({
   // ── TITULAR DIVERGENTE ──────────────────────────────────────────────────
   // O documento é de OUTRA pessoa: nome completo e/ou CPF lidos no documento
   // não batem com o interessado. Rejeição imediata (não é duplicidade).
-  const titularDivergente = conformidade.some(
+  const titularDivergenteBruto = conformidade.some(
     (i) =>
       (i.campo === "nome_completo" || i.campo === "cpf") &&
       i.status === "divergente" &&
       !!i.valorReferencia,
   );
+  // CPF-01: no comprovante de endereço quem decide titularidade é a avaliação
+  // determinística (parser + DV do CPF), nunca a soma de divergências de
+  // string. Mascarado/ausente = "indeterminada" → pergunta, não acusa.
+  const ehComprovanteResidencia = form.tipo_documento === "comprovante_residencia";
+  const titularDivergente =
+    ehComprovanteResidencia && avaliacaoTitular
+      ? avaliacaoTitular.resultado === "terceiro"
+      : titularDivergenteBruto;
+  /** Confronto pendente: comprovante com CPF ilegível e cliente ainda sem responder. */
+  const precisaConfrontoCpf =
+    ehComprovanteResidencia &&
+    !!avaliacaoTitular &&
+    avaliacaoTitular.resultado === "indeterminada" &&
+    !cpfConfrontado;
   // ── PARENTESCO ──────────────────────────────────────────────────────────
   // O titular do documento é outra pessoa, MAS carrega o sobrenome da família
   // do interessado (pai, filho, cônjuge, irmão). Rejeição específica.
@@ -2204,7 +2253,11 @@ export function ClienteDocsHubModal({
         if (limpo.length >= 80) {
           try {
             const docLocal = parseCertidao(textoNativo);
-            if (docLocal) {
+            // PARSE-01: o gate deixava passar só certidão. Comprovante de
+            // endereço (DANF3E / fatura de concessionária) é igualmente
+            // parseável — e por isso ia parar na IA sem necessidade.
+            const danfeLocal = parseDanf3e(textoNativo);
+            if (docLocal || danfeLocal.detectado) {
               const resolvido = await tentarLeituraLocal(target);
               if (resolvido) return;
             }
@@ -2895,6 +2948,106 @@ export function ClienteDocsHubModal({
       setCategoriaHub("antecedentes_regularidade");
       return true;
     }
+    // ── PARSE-01 · COMPROVANTE DE ENDEREÇO ────────────────────────────────
+    // Fatura de concessionária é documento estruturado: quem lê é o parser,
+    // não a IA. Titular, CPF, UC e datas saem daqui, de forma determinística.
+    const danfe = parseDanf3e(texto);
+    if (danfe.detectado) {
+      setConferenciaLocal(null);
+      const emissao =
+        danfe.data_emissao ||
+        (danfe.mes_referencia ? `${danfe.mes_referencia}-01` : "") ||
+        danfe.data_vencimento ||
+        "";
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: "comprovante_residencia",
+        nome_documento:
+          prev.nome_documento ||
+          "Comprovante de endereço — conta de consumo do imóvel",
+        numero_documento: danfe.uc || danfe.numero_nota || prev.numero_documento,
+        orgao_emissor: danfe.empresa_emissora || prev.orgao_emissor,
+        data_emissao: emissao || prev.data_emissao,
+        data_validade:
+          calcularValidadeHubPorTipo("comprovante_residencia", emissao) ||
+          prev.data_validade,
+      }));
+      setCategoriaHub(inferHubCategoriaFromTipo("comprovante_residencia"));
+
+      // Classificação registrada como leitura de PARSER (confiança 1) — a IA
+      // não foi consultada e não pode aparecer como autora da leitura.
+      const camposParser: Record<string, string | undefined> = {
+        nome_completo: danfe.nome_titular || undefined,
+        cpf: danfe.cpf_titular || undefined,
+      };
+      setClassificacao({
+        tipoDetectado: "comprovante_residencia",
+        confianca: 1,
+        justificativa: "Leitura determinística (parser DANF3E) — sem IA.",
+        camposExtraidos: camposParser,
+        recomendacao: "aceitar",
+      });
+
+      // ── CPF-01 · titularidade ───────────────────────────────────────────
+      const avaliacao = avaliarTitularidadeComprovante({
+        nomeDoc: danfe.nome_titular,
+        cpfDoc: danfe.cpf_titular,
+        nomeRef: refClienteNome,
+        cpfRef: refClienteCpf,
+      });
+      setAvaliacaoTitular(avaliacao);
+      setCpfConfrontado(null);
+      setCpfConfrontoInput("");
+      setCpfConfrontoErro(null);
+
+      const itens: ConformidadeItem[] = [];
+      if (danfe.nome_titular) {
+        itens.push({
+          campo: "nome_completo",
+          label: "Titular da conta",
+          valorCertidao: danfe.nome_titular,
+          valorReferencia: refClienteNome ?? null,
+          fonteReferencia: refClienteNome ? "Cadastro (Central de Adesão)" : null,
+          status:
+            avaliacao.resultado === "propria"
+              ? "conforme"
+              : avaliacao.resultado === "terceiro"
+                ? "divergente"
+                : "sem_referencia",
+        });
+      }
+      if (danfe.cpf_titular) {
+        itens.push({
+          campo: "cpf",
+          label:
+            avaliacao.cpf.estado === "mascarado"
+              ? "CPF do titular (mascarado pela concessionária)"
+              : "CPF do titular",
+          valorCertidao: danfe.cpf_titular,
+          valorReferencia: refClienteCpf ?? null,
+          fonteReferencia: refClienteCpf ? "Cadastro (Central de Adesão)" : null,
+          // CPF ilegível NUNCA vira divergência: é ausência de prova, não prova
+          // em contrário.
+          status:
+            avaliacao.cpf.estado !== "valido"
+              ? "sem_referencia"
+              : avaliacao.resultado === "propria"
+                ? "conforme"
+                : "divergente",
+        });
+      }
+      setConformidade(itens);
+
+      if (avaliacao.resultado === "propria") {
+        toast.success("Comprovante de endereço lido e conferido com o seu cadastro.");
+      } else if (avaliacao.resultado === "terceiro") {
+        toast.info("Este comprovante está no nome de outra pessoa. Vamos pedir a declaração do responsável pelo imóvel.");
+      } else {
+        setCpfConfrontoAberto(true);
+      }
+      return true;
+    }
+
     const doc = parseCertidao(texto);
     if (!doc) return false;
 
@@ -2942,6 +3095,10 @@ export function ClienteDocsHubModal({
     setClassificacao(null);
     setConferenciaLocal(null);
     setShowTipoOverride(false);
+    setAvaliacaoTitular(null);
+    setCpfConfrontado(null);
+    setCpfConfrontoAberto(false);
+    setCpfConfrontoErro(null);
     if (!f) return;
 
     // ── Trava global: PDF ORIGINAL em todas as fases ─────────────────────
@@ -3208,6 +3365,14 @@ export function ClienteDocsHubModal({
         return;
       }
       toast.error("Documento rejeitado: os dados não são do titular deste processo.");
+      return;
+    }
+
+    // CPF-01: comprovante com CPF ilegível fica PENDENTE de resposta — nunca
+    // reprovado e nunca salvo em silêncio como se fosse do cliente.
+    if (precisaConfrontoCpf) {
+      setCpfConfrontoAberto(true);
+      toast.info("Confirme o CPF que aparece no comprovante para concluirmos a conferência.");
       return;
     }
 
@@ -3528,13 +3693,25 @@ export function ClienteDocsHubModal({
                 const cpfDoc = String(classificacao.camposExtraidos?.cpf || "").replace(/\D/g, "");
                 const cpfCliente = String(clienteCpf || "").replace(/\D/g, "");
                 const titularNome = classificacao.camposExtraidos?.nome_completo || null;
-                const emNomeDoCliente = !!(cpfDoc && cpfCliente && cpfDoc === cpfCliente);
+                const leituraCpf = lerCpfDocumento(classificacao.camposExtraidos?.cpf);
+                // CPF-01: quando o CPF vem mascarado, a titularidade é a que o
+                // cliente confirmou pelo confronto dos dígitos visíveis.
+                const emNomeDoCliente = avaliacaoTitular
+                  ? avaliacaoTitular.resultado === "propria"
+                  : !!(cpfDoc && cpfCliente && cpfDoc === cpfCliente);
                 return {
                   comprovante_residencia_cpf_titular: cpfDoc || null,
+                  comprovante_residencia_cpf_estado_leitura: leituraCpf.estado,
+                  comprovante_residencia_cpf_padrao_impresso: leituraCpf.padrao,
+                  comprovante_residencia_cpf_confirmado_cliente: cpfConfrontado,
+                  comprovante_residencia_titularidade: avaliacaoTitular?.resultado ?? null,
+                  comprovante_residencia_titularidade_motivo: avaliacaoTitular?.motivo ?? null,
+                  comprovante_residencia_origem_leitura: avaliacaoTitular ? "parser" : "ia",
                   comprovante_residencia_em_nome_do_cliente: emNomeDoCliente,
                   comprovante_residencia_nome_titular: titularNome,
                   // Se não está no nome do cliente, declaracao_responsavel_imovel será exigida ao iniciar serviço
-                  comprovante_residencia_exige_declaracao_responsavel: !emNomeDoCliente && !!(cpfDoc),
+                  comprovante_residencia_exige_declaracao_responsavel:
+                    !emNomeDoCliente && (avaliacaoTitular?.resultado === "terceiro" || !!cpfDoc),
                 };
               })() : {}),
               revisao_humana: true,
@@ -5358,6 +5535,53 @@ export function ClienteDocsHubModal({
           }}
           onValidada={() => {
             onSaved();
+          }}
+        />
+        <ConfrontoCpfComprovanteModal
+          open={cpfConfrontoAberto}
+          cpfLido={avaliacaoTitular?.cpf ?? null}
+          titularLido={titularComprovanteLido}
+          erro={cpfConfrontoErro}
+          onFechar={() => {
+            // Fechar não reprova nada: o documento apenas continua pendente.
+            setCpfConfrontoAberto(false);
+            setCpfConfrontoErro(null);
+          }}
+          onConfirmar={(cpf) => {
+            if (!avaliacaoTitular) return;
+            const res = confrontarCpfParcial(avaliacaoTitular.cpf, cpf);
+            if (!res.ok) {
+              setCpfConfrontoErro(res.motivo ?? "Não foi possível confirmar o CPF.");
+              return;
+            }
+            const refCpf = String(refClienteCpf || "").replace(/\D/g, "");
+            setCpfConfrontado(cpf);
+            setCpfConfrontoErro(null);
+            setCpfConfrontoAberto(false);
+            if (refCpf && refCpf === cpf) {
+              setAvaliacaoTitular({
+                ...avaliacaoTitular,
+                resultado: "propria",
+                pedirConfrontoCpf: false,
+                motivo: "CPF confirmado pelo cliente e conferido com o cadastro.",
+              });
+              setConformidade((prev) =>
+                prev.map((i) =>
+                  i.campo === "cpf" || i.campo === "nome_completo"
+                    ? { ...i, status: "conforme" as const, valorReferencia: i.valorReferencia ?? refClienteCpf ?? null }
+                    : i,
+                ),
+              );
+              toast.success("Titularidade confirmada pelos dígitos visíveis do comprovante.");
+            } else {
+              setAvaliacaoTitular({
+                ...avaliacaoTitular,
+                resultado: "terceiro",
+                pedirConfrontoCpf: false,
+                motivo: "O CPF informado não é o do interessado — o imóvel é de terceiro.",
+              });
+              toast.info("A conta é de outra pessoa. Vamos pedir a declaração do responsável pelo imóvel.");
+            }
           }}
         />
       </DialogContent>
