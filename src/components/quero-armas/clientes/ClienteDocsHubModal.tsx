@@ -55,6 +55,7 @@ import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
 import { conferirCertidao, naturalidadeConfere } from "@/lib/quero-armas/conferenciaCertidao";
+import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 import {
   conferirLaudo,
   type ResultadoLaudo,
