@@ -581,6 +581,25 @@ function upperOrUndef(v: string | undefined): string | undefined {
   const s = (v ?? "").trim();
   return s.length > 1 ? upper(s) : undefined;
 }
+
+/**
+ * Corta o valor de um campo rotulado no primeiro rótulo seguinte, quebra de
+ * linha ou salto de coluna (2+ espaços). Sem isso, "Mãe: FULANA  Pai: …"
+ * devolve o resto da certidão inteira dentro do nome da mãe — foi essa a causa
+ * de certidões corretas serem barradas por "divergência".
+ */
+const PARADAS_CAMPO =
+  /\s(?:Pai|M[ãa]e|Nome|Naturalidade|Sexo|G[êe]nero|Estado civil|Documento|RG|CPF|[ÓO]rg[ãa]o|Data|Validade|Finalidade|Certid|Observa|Registro|Filia)\b/i;
+
+function cortarCampo(v: string | undefined): string | undefined {
+  if (!v) return undefined;
+  let s = v.split("\n")[0];
+  s = s.split(/\s{2,}/)[0];
+  const p = s.search(PARADAS_CAMPO);
+  if (p > 0) s = s.slice(0, p);
+  s = s.replace(/[.;,:]+$/, "").trim();
+  return s.length > 1 ? s : undefined;
+}
 function numOrUndef(v: string | undefined): number | undefined {
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? n : undefined;
