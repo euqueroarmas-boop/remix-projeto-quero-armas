@@ -66,6 +66,11 @@ import {
 } from "@/lib/quero-armas/parserComprovanteEndereco";
 import { parseDanf3e } from "@/lib/quero-armas/parserComprovanteResidencia";
 import {
+  validadeComprovanteConsumo,
+  mensagemComprovanteVencido,
+  type DatasComprovanteConsumo,
+} from "@/lib/quero-armas/cicloComprovanteConsumo";
+import {
   avaliarTitularidadeComprovante,
   confrontarCpfParcial,
   lerCpfDocumento,
@@ -1476,6 +1481,9 @@ export function ClienteDocsHubModal({
    * documento fica PENDENTE — nunca reprovado, nunca tratado como de terceiro.
    */
   const [avaliacaoTitular, setAvaliacaoTitular] = useState<AvaliacaoTitularidade | null>(null);
+  // Datas do ciclo da conta de consumo (próxima leitura / vencimento / emissão).
+  // Ficam guardadas para calcular validade e o mês de referência a exigir.
+  const [datasConsumo, setDatasConsumo] = useState<DatasComprovanteConsumo | null>(null);
   const [cpfConfrontoAberto, setCpfConfrontoAberto] = useState(false);
   const [cpfConfrontoInput, setCpfConfrontoInput] = useState("");
   const [cpfConfrontoErro, setCpfConfrontoErro] = useState<string | null>(null);
@@ -2959,6 +2967,15 @@ export function ClienteDocsHubModal({
         (danfe.mes_referencia ? `${danfe.mes_referencia}-01` : "") ||
         danfe.data_vencimento ||
         "";
+      // Validade do comprovante sai do CICLO, não da emissão da NF-e:
+      // próxima leitura → vencimento → emissão + 30 dias.
+      const datasCiclo: DatasComprovanteConsumo = {
+        data_proxima_leitura: danfe.data_proxima_leitura,
+        data_vencimento: danfe.data_vencimento,
+        data_emissao: emissao,
+      };
+      setDatasConsumo(datasCiclo);
+      const validadeCiclo = validadeComprovanteConsumo(datasCiclo);
       setForm((prev) => ({
         ...prev,
         tipo_documento: "comprovante_residencia",
@@ -2969,6 +2986,7 @@ export function ClienteDocsHubModal({
         orgao_emissor: danfe.empresa_emissora || prev.orgao_emissor,
         data_emissao: emissao || prev.data_emissao,
         data_validade:
+          validadeCiclo ||
           calcularValidadeHubPorTipo("comprovante_residencia", emissao) ||
           prev.data_validade,
       }));
