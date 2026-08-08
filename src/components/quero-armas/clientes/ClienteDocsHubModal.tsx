@@ -3859,6 +3859,24 @@ export function ClienteDocsHubModal({
           .filter((i) => i.status === "divergente")
           .map((i) => explicarDivergencia(i))
           .join(" ");
+        // RASTRO: sem isto, um bloqueio de prévia não deixava nenhum registro e
+        // só era diagnosticável por print do cliente.
+        trackTelemetria({
+          event_type: "divergencia_confirmada",
+          payload: {
+            origem: "hub_documental",
+            tipo_documento: form.tipo_documento || null,
+            apontamento: !!temApontamento,
+            campos: conformidade
+              .filter((i) => i.status === "divergente")
+              .map((i) => ({
+                campo: i.campo,
+                no_documento: i.valorCertidao,
+                na_referencia: i.valorReferencia,
+                fonte: i.fonteReferencia,
+              })),
+          },
+        });
         throw new Error(
           temApontamento
             ? `${tipoLabel} apresenta apontamento. Regularize ou registre a declaração de homonímia antes de enviar.`
