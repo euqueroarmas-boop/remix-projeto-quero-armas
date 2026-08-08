@@ -4571,6 +4571,19 @@ export default function QAClientePortalPage() {
         />
       )}
 
+      {cliente?.id && efetivaNecessidadeProcessoId ? (
+        <EfetivaNecessidadeModal
+          open={!mustChangePassword}
+          processoId={efetivaNecessidadeProcessoId}
+          clienteId={Number(cliente.id)}
+          onClose={() => setEfetivaNecessidadeProcessoId(null)}
+          onConcluido={() => {
+            setEfetivaNecessidadeProcessoId(null);
+            setDocsReloadKey((k) => k + 1);
+          }}
+        />
+      ) : null}
+
       {cliente?.id ? (
         <ClienteChecklistCadastralModal
           open={!mustChangePassword && showChecklistCadastral}
