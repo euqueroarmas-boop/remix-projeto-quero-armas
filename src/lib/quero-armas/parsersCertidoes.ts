@@ -430,11 +430,14 @@ function parseTjmSp(texto: string): CamposCertidao {
   return {
     orgao: "tjm_sp",
     tipoDocumento: "antecedentes_militar_estadual",
-    nome_titular: upperOrUndef(g(/em nome de:\s*\n+\s*(.+?)\s*\n/i)),
+    // O PDF às vezes sai com o nome na linha seguinte, às vezes na mesma
+    // linha. Em ambos os casos corta no primeiro rótulo seguinte / salto de
+    // coluna — sem isso o valor engolia a certidão inteira.
+    nome_titular: upperOrUndef(cortarCampo(g(/em nome de:\s*\n*\s*(.+)/i))),
     cpf: cpf11(g(/CPF:\s*([\d.\-]+)/i)),
     data_nascimento: iso(g(/Data de Nascimento:\s*([\d/]+)/i)),
-    nome_mae: upperOrUndef(g(/Mae:\s*(.+?)\s*$/im)),
-    nome_pai: upperOrUndef(g(/Pai:\s*(.+?)\s*$/im)),
+    nome_mae: upperOrUndef(cortarCampo(g(/M[ãa]e:\s*(.+)/i))),
+    nome_pai: upperOrUndef(cortarCampo(g(/Pai:\s*(.+)/i))),
     // Naturalidade aqui é digitada por quem PEDE a certidão, não pelo tribunal.
     // Num cliente veio "JACAREI - SP" e no outro "3750 - SP" — este segundo é
     // erro de digitação do próprio requerente. Por isso o campo É comparado e,
