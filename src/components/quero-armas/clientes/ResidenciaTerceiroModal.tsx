@@ -419,6 +419,7 @@ export default function ResidenciaTerceiroModal({
             </div>
           )}
         </div>
+        </div>
 
         {/* Rodapé — mesmo padrão do pop-up de pendências */}
         <div className="mt-auto border-t border-[#E4E4E4] bg-white shrink-0">
