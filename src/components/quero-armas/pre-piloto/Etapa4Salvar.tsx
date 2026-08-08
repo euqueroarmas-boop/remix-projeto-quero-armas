@@ -546,6 +546,9 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         <p><span className="font-medium">CPF:</span> {formatCpf(cpfNorm) || "(não informado)"}</p>
         {dadosRevisados.email && <p><span className="font-medium">E-mail:</span> {dadosRevisados.email}</p>}
         {dadosRevisados.celular && <p><span className="font-medium">Celular:</span> {dadosRevisados.celular}</p>}
+        {enderecoResumo && (
+          <p><span className="font-medium">Endereço:</span> {enderecoResumo}</p>
+        )}
         {senhagov && (
           <p className="flex items-center gap-1 text-green-700">
             <ShieldCheck className="w-3.5 h-3.5" /> Senha GOV.BR será salva (criptografada)
