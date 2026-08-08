@@ -59,7 +59,7 @@ const PERGUNTAS: Array<{
   {
     campo: "tem_bo",
     pergunta: "Você já registrou algum boletim de ocorrência?",
-    ajuda: "Ameaça, furto, roubo, invasão de propriedade, violência, perseguição ou qualquer outro fato registrado pela polícia. Se tiver mais de um BO, envie todos: cada fato ajuda a demonstrar melhor a sua situação. O boletim não precisa estar obrigatoriamente em seu nome: ele também pode envolver familiares próximos, como pai, mãe, esposa, marido, companheira(o), filhos ou pessoas que moram com você, desde que o fato tenha relação com a sua segurança, sua rotina, sua residência, seu trabalho ou tenha colocado você e sua família em risco.",
+    ajuda: "Ameaça, furto, roubo, invasão, violência, perseguição — qualquer fato que a polícia registrou. Tem mais de um? Envie todos. Cada boletim é uma prova a mais do seu lado. Não precisa estar no seu nome: se aconteceu com pai, mãe, esposa, marido, companheira(o), filhos ou quem mora com você, e isso mexeu com a sua segurança, sua casa, sua rotina ou seu trabalho, conta do mesmo jeito. E conta também o que aconteceu no trabalho, ou por causa dele: ameaça de cliente, paciente, aluno, detento, colega, fornecedor ou de alguém insatisfeito; abordagem no expediente, no trajeto, na ronda, na entrega, no atendimento externo, no plantão. Se o risco vem da sua atividade, ele entra aqui.",
     tipoProva: "boletim_ocorrencia",
   },
   {
