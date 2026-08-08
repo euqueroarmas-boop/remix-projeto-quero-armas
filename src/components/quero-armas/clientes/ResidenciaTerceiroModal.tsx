@@ -278,8 +278,11 @@ export default function ResidenciaTerceiroModal({
           </p>
         </div>
 
-        {/* Corpo rolável */}
-        <div className="flex-1 overflow-y-auto px-6 pb-2">
+        {/* Corpo rolável (com fade suave no topo/base para o corte não parecer borda) */}
+        <div className="relative flex-1 min-h-0">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-5 z-10 bg-gradient-to-b from-white to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 z-10 bg-gradient-to-t from-white to-transparent" />
+          <div className="h-full overflow-y-auto px-6 pt-2 pb-4">
           {etapa === "pergunta" ? (
             <div className="relative">
               <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
@@ -415,6 +418,7 @@ export default function ResidenciaTerceiroModal({
               </section>
             </div>
           )}
+        </div>
         </div>
 
         {/* Rodapé — mesmo padrão do pop-up de pendências */}
