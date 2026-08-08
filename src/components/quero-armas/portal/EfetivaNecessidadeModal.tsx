@@ -578,32 +578,36 @@ export default function EfetivaNecessidadeModal({
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
           <p className="text-[10px] leading-tight text-zinc-400">
-            Cada resposta é salva na hora.<br />Pode parar e continuar quando quiser.
+            {etapa === "narrativa"
+              ? <>Você é quem aprova.<br />Nada é enviado sem a sua concordância.</>
+              : <>
+                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+                  <br />Pode parar e continuar quando quiser.
+                </>}
           </p>
-          <button
-            type="button"
-            disabled={!podeConcluir || salvando}
-            onClick={async () => {
-              if (!registroId) return;
-              setSalvando(true);
-              await salvarTexto("relato_cliente", relato);
-              await salvarTexto("contexto_risco", contexto);
-              await supabase
-                .from("qa_efetiva_necessidade" as any)
-                .update({ status: "aguardando_aprovacao", updated_at: new Date().toISOString() })
-                .eq("id", registroId);
-              setSalvando(false);
-              toast.success("Material enviado. Nossa equipe vai analisar e montar a sua defesa.");
-              onConcluido?.();
-              onClose();
-            }}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
-          >
-            {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              : podeConcluir ? <Check className="h-3.5 w-3.5" />
-              : <ArrowRight className="h-3.5 w-3.5" />}
-            Enviar para a equipe
-          </button>
+          {etapa === "narrativa" ? (
+            <button
+              type="button"
+              disabled={aprovando || narrativa.trim().length < 200}
+              onClick={() => void aprovarNarrativa()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              Concordo e aprovo
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!podeConcluir || salvando || gerando}
+              onClick={() => void gerarNarrativa()}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              {gerando || salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : podeConcluir ? <Check className="h-3.5 w-3.5" />
+                : <ArrowRight className="h-3.5 w-3.5" />}
+              {gerando ? "Montando seu relato…" : "Gerar meu relato"}
+            </button>
+          )}
         </div>
 
         <input
