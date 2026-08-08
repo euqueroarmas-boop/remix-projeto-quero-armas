@@ -291,7 +291,15 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           { body: { cliente_id: clienteId, campos: camposCanonicos } },
         );
         if (saveError || !saveResult?.ok) {
-          throw new Error(saveResult?.error || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
+          // A mensagem padrão do supabase-js ("non-2xx status code") esconde o
+          // motivo real; lemos o corpo da resposta para o operador saber o que
+          // corrigir (permissão, campo obrigatório etc.).
+          let motivo = saveResult?.error as string | undefined;
+          const ctx: any = (saveError as any)?.context;
+          if (!motivo && ctx?.json) {
+            try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+          }
+          throw new Error(motivo || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
         }
         const salvo = saveResult.cliente;
         const enderecoEsperado = String(camposCanonicos.endereco || "").trim();
