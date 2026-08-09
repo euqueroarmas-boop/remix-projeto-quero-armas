@@ -226,7 +226,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
         </div>
 
         {/* A pergunta */}
-        <div className="px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <h2 className="text-[19px] font-semibold leading-snug text-zinc-900">
             {atual.pergunta ?? atual.label}
           </h2>
