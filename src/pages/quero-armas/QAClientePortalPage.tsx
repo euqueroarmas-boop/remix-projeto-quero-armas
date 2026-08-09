@@ -2674,6 +2674,12 @@ export default function QAClientePortalPage() {
     const ehReaproveitado = (d: any) =>
       String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
     const abertos = obrigatorios.filter((d: any) => !concluido(d));
+    // A efetiva necessidade vale pelos seus passos, não por 1 documento.
+    const passosDoDoc = (d: any): EfetivaPasso[] | null => {
+      if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return null;
+      const ps = efetivaPassos[String(d?.processo_id ?? "")];
+      return ps && ps.length > 0 ? ps : null;
+    };
 
     // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
     //
@@ -2701,23 +2707,39 @@ export default function QAClientePortalPage() {
         ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
         : gBase;
       const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
-      cur.total += 1;
-      if (concluido(d)) cur.concluidos += 1;
+      const ps = passosDoDoc(d);
+      if (ps) {
+        cur.total += ps.length;
+        cur.concluidos += ps.filter((p) => p.concluido).length;
+      } else {
+        cur.total += 1;
+        if (concluido(d)) cur.concluidos += 1;
+      }
       mapaGrupos.set(g.id, cur);
     }
     const grupos = [...mapaGrupos.entries()]
       .map(([id, v]) => ({ id, ...v }))
       .sort((a, b) => a.ordem - b.ordem);
 
+    // Totais do processo também contam passo a passo.
+    const extraTotal = obrigatorios.reduce((acc: number, d: any) => {
+      const ps = passosDoDoc(d);
+      return ps ? acc + ps.length - 1 : acc;
+    }, 0);
+    const extraConcluidos = obrigatorios.reduce((acc: number, d: any) => {
+      const ps = passosDoDoc(d);
+      if (!ps) return acc;
+      return acc + ps.filter((p) => p.concluido).length - (concluido(d) ? 1 : 0);
+    }, 0);
     return {
       documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
       perguntasPendentes: abertos.filter(ehPergunta).length,
-      totalObrigatorios: obrigatorios.length,
-      concluidos: obrigatorios.length - abertos.length,
+      totalObrigatorios: obrigatorios.length + extraTotal,
+      concluidos: obrigatorios.length - abertos.length + extraConcluidos,
       reaproveitados: obrigatorios.filter(ehReaproveitado).length,
       grupos,
     };
-  }, [processoDocs, processos, catalogoDocInfo]);
+  }, [processoDocs, processos, catalogoDocInfo, efetivaPassos]);
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
