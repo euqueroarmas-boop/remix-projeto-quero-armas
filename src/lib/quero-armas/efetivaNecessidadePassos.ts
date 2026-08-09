@@ -78,15 +78,16 @@ export interface EfetivaProvaLike {
 
 /**
  * Lista viva de passos com o estado de cumprimento de cada um.
- * Os três passos de BO só existem quando a IA gerou o texto de BO.
+ * A efetiva necessidade tem SEMPRE 10 passos: os 7 do questionário +
+ * os 3 do boletim de ocorrência (registrar, enviar, defesa final).
+ * Os passos de BO já nascem concluídos quando o cliente entregou o BO.
  */
 export function calcularPassosEfetiva(
   registro: EfetivaRegistroLike | null | undefined,
   provas: EfetivaProvaLike[] = [],
 ): EfetivaPasso[] {
   const reg = registro ?? {};
-  const temTextoBo = String(reg.texto_bo ?? "").trim().length > 0;
-  const ids = temTextoBo ? [...PASSOS_BASE, ...PASSOS_BO] : PASSOS_BASE;
+  const ids = [...PASSOS_BASE, ...PASSOS_BO];
 
   const relato = String(reg.relato_cliente ?? "").trim();
   const contexto = String(reg.contexto_risco ?? "").trim();
