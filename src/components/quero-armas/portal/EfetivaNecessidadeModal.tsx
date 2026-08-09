@@ -1168,7 +1168,9 @@ export default function EfetivaNecessidadeModal({
           </div>
         )}
 
-        <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
+        <div className={embedded
+          ? "mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-4"
+          : "shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4"}>
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -1179,12 +1181,12 @@ export default function EfetivaNecessidadeModal({
               <ChevronLeft className="h-3.5 w-3.5" /> Anterior
             </button>
             <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
-              {passoIndex === PASSO_REVISAO && narrativa
+              {passoFinal && narrativa
                 ? "Você é quem aprova."
                 : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
             </p>
           </div>
-          {passoIndex === PASSO_REVISAO && narrativa ? (
+          {passoFinal && narrativa ? (
             <button
               type="button"
               disabled={aprovando || narrativa.trim().length < 200}
@@ -1194,7 +1196,7 @@ export default function EfetivaNecessidadeModal({
               {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
               Concordo e aprovo
             </button>
-          ) : passoIndex === PASSO_REVISAO ? (
+          ) : passo?.tipo === "revisao" && !narrativa ? (
             <button
               type="button"
               disabled={!podeConcluir || salvando || gerando}
@@ -1230,6 +1232,13 @@ export default function EfetivaNecessidadeModal({
           }}
         />
       </div>
+  );
+
+  if (embedded) return conteudo;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      {conteudo}
     </div>,
     document.body,
   );
