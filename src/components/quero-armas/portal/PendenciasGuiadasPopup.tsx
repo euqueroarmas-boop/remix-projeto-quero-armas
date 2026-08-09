@@ -487,7 +487,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           className={
             asPage
               ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-0 pb-4"
-              : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-4 pr-12 sm:px-6 sm:pr-14"
+              : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-2 pr-12 sm:px-6 sm:pr-14"
           }
         >
           {asPage ? (
@@ -548,7 +548,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Header */}
-        <div className={asPage ? "px-0 pt-4 pb-4 shrink-0 sm:pt-5" : "px-5 pt-4 pb-4 shrink-0 sm:px-6 sm:pt-5"}>
+        <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-2 pb-4 shrink-0 sm:px-6 sm:pt-2"}>
           <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[44px] flex items-center gap-2 flex-wrap"}>
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
