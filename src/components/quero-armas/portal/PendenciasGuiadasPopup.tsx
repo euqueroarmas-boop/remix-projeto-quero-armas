@@ -532,10 +532,15 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <p className="font-['Oswald',sans-serif] text-[10px] font-black uppercase tracking-[0.22em] text-[#8A1224]">
                   Checklist guiado
                 </p>
-                <h1 className="mt-1 font-['Oswald',sans-serif] text-[22px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]">
-                  {primeiroNome
-                    ? <>{primeiroNome}, você está nos devendo<br />{total === 1 ? "enviar este documento!" : "enviar esses documentos!"}</>
-                    : <>Você está nos devendo<br />{total === 1 ? "enviar este documento!" : "enviar esses documentos!"}</>}
+                {/* Sem quebra de linha forçada: em telas estreitas ela produzia
+                    "Fabio, você está nos / devendo / enviar este documento!".
+                    O balanceamento nativo distribui as linhas sem cortar frase. */}
+                <h1
+                  className="mt-1 font-['Oswald',sans-serif] text-[22px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]"
+                  style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
+                >
+                  {primeiroNome ? `${primeiroNome}, você está nos devendo ` : "Você está nos devendo "}
+                  {total === 1 ? "enviar este documento!" : "enviar esses documentos!"}
                 </h1>
               </div>
             </div>
