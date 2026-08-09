@@ -290,6 +290,8 @@ export default function EfetivaNecessidadeModal({
   const [salvandoCampo, setSalvandoCampo] = useState<null | "salvando" | "salvo">(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tipoAlvoRef = useRef<TipoProva>("boletim_ocorrencia");
+  /** Último item da fila já posicionado — evita re-sincronizar a cada render. */
+  const passoIdSincronizadoRef = useRef<string | null>(null);
 
   /* ── Carrega ou cria o questionário do processo ───────────────────────── */
   useEffect(() => {
