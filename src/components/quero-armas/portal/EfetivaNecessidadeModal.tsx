@@ -557,6 +557,13 @@ export default function EfetivaNecessidadeModal({
     irPara(passoIndex + 1);
   }, [passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
 
+  /** Cada etapa mostra apenas as provas que ela mesma pediu. */
+  const provasDoPasso = useMemo(() => {
+    if (passo?.tipo === "revisao") return provas;
+    if (!perguntaAtual?.tipoProva) return [];
+    return provas.filter((p) => p.tipo === perguntaAtual.tipoProva);
+  }, [provas, passo, perguntaAtual]);
+
   if (!open) return null;
 
   return createPortal(
