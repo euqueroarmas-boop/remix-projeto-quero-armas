@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox } from "lucide-react";
+import { trilhaDoProcesso, trilhaCompacta } from "@/lib/quero-armas/trilhaChecklist";
 
 /**
  * Painel editorial de progresso por cliente.
@@ -51,13 +52,34 @@ export default function DashboardProgressoClientes() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("dias_parado");
   const [asc, setAsc] = useState(false);
+  const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
+  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const { data } = await supabase.rpc("qa_painel_progresso_clientes" as any);
-        if (!cancelled) setRows(((data as any[]) ?? []) as Row[]);
+        const lista = ((data as any[]) ?? []) as Row[];
+        if (cancelled) return;
+        setRows(lista);
+
+        const ids = lista.map((r) => r.processo_id).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: docs } = await supabase
+            .from("qa_processo_documentos")
+            .select("processo_id, tipo_documento")
+            .in("processo_id", ids);
+          const porProcesso: Record<string, string[]> = {};
+          for (const d of ((docs as any[]) ?? [])) {
+            (porProcesso[d.processo_id] ||= []).push(d.tipo_documento);
+          }
+          const mapa: Record<string, string[]> = {};
+          for (const [pid, tipos] of Object.entries(porProcesso)) {
+            mapa[pid] = trilhaDoProcesso(tipos);
+          }
+          if (!cancelled) setTrilhas(mapa);
+        }
       } catch (e) {
         console.warn("[DashboardProgressoClientes]", e);
         if (!cancelled) setRows([]);
@@ -67,6 +89,17 @@ export default function DashboardProgressoClientes() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const trilhasDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(trilhas).forEach((ls) => ls.forEach((l) => set.add(l)));
+    return [...set].sort();
+  }, [trilhas]);
+
+  const filtradas = useMemo(
+    () => (filtroTrilha ? rows.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha)) : rows),
+    [rows, trilhas, filtroTrilha],
+  );
 
   const ordenadas = useMemo(() => {
     const val = (r: Row) => {
@@ -78,12 +111,12 @@ export default function DashboardProgressoClientes() {
         default: return String((r as any)[sortKey] ?? "").toLowerCase();
       }
     };
-    return [...rows].sort((a, b) => {
+    return [...filtradas].sort((a, b) => {
       const va = val(a); const vb = val(b);
       if (va === vb) return 0;
       return (va > vb ? 1 : -1) * (asc ? 1 : -1);
     });
-  }, [rows, sortKey, asc]);
+  }, [filtradas, sortKey, asc]);
 
   const toggle = (k: SortKey) => {
     if (k === sortKey) setAsc(v => !v);
