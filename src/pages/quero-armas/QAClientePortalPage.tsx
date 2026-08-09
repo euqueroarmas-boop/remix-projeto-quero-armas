@@ -2018,6 +2018,52 @@ export default function QAClientePortalPage() {
         ? catalogoDocInfoByTipo.get(rawTipo)
         : undefined;
       const catFinal = catInfo && (catInfo.instrucoes || catInfo.link_emissao) ? catInfo : catInfoFallback;
+      // ── EFETIVA NECESSIDADE — um item da fila POR PASSO ─────────────────
+      // Regra do usuário: os passos internos precisam contar no grupo. Cada
+      // passo pendente vira um item próprio, com o wizard travado nele.
+      const passosEfetiva = ehTipoEfetivaNecessidade(rawTipo)
+        ? efetivaPassos[String(doc?.processo_id ?? "")]
+        : null;
+      if (passosEfetiva && passosEfetiva.length > 0 && doc?.processo_id && cliente?.id) {
+        const pendentes = passosEfetiva.filter((p) => !p.concluido);
+        for (const passo of pendentes) {
+          items.push({
+            id: `efetiva:${doc.processo_id}:${passo.id}`,
+            kind: "documento",
+            servicoId: p?.servico_id ?? null,
+            servicoLabel,
+            // @ts-expect-error usado apenas para ordenação por processo
+            __processoId: doc.processo_id ?? null,
+            label: `Efetiva necessidade — ${passo.label}`,
+            tipo: hubTipo,
+            rawTipo,
+            fallbackNome: passo.label,
+            contexto: "Exigência do processo",
+            instrucoesCatalogo: catFinal?.instrucoes ?? null,
+            linkEmissao: catFinal?.link_emissao ?? null,
+            observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
+            onPrimary: () => {},
+            entregarLabel: "Iniciar efetiva necessidade",
+            corpo: (
+              <EfetivaNecessidadeModal
+                embedded
+                open
+                passoId={passo.id}
+                processoId={String(doc.processo_id)}
+                clienteId={Number(cliente.id)}
+                onClose={() => setShowContratoPopup(false)}
+                onPassoConcluido={() => setEfetivaReloadKey((k) => k + 1)}
+                onConcluido={() => {
+                  setEfetivaReloadKey((k) => k + 1);
+                  setDocsReloadKey((k) => k + 1);
+                }}
+              />
+            ),
+            onEntregar: () => {},
+          });
+        }
+        return;
+      }
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
