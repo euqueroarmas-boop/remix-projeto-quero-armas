@@ -2690,6 +2690,17 @@ export default function QAClientePortalPage() {
     let vivo = true;
     (async () => {
       const mapa: Record<string, EfetivaPasso[]> = {};
+      // Ciência da explicação do BO — passo obrigatório antes da delegacia.
+      let cienciaBo = false;
+      if (cliente?.id) {
+        const { data: ci } = await supabase
+          .from("qa_cliente_ciencias" as any)
+          .select("id")
+          .eq("cliente_id", cliente.id)
+          .eq("termo_codigo", "bo_efetiva_necessidade")
+          .limit(1);
+        cienciaBo = ((ci as any[]) ?? []).length > 0;
+      }
       for (const pid of processosEfetiva) {
         try {
           const { data: reg } = await supabase
@@ -2705,7 +2716,7 @@ export default function QAClientePortalPage() {
               .eq("efetiva_necessidade_id", (reg as any).id);
             provas = (pv as any[]) ?? [];
           }
-          mapa[pid] = calcularPassosEfetiva(reg as any, provas);
+          mapa[pid] = calcularPassosEfetiva(reg as any, provas, cienciaBo);
         } catch (e) {
           console.warn("[portal] efetiva necessidade: leitura falhou", e);
           mapa[pid] = calcularPassosEfetiva(null, []);
@@ -2714,7 +2725,7 @@ export default function QAClientePortalPage() {
       if (vivo) setEfetivaPassos(mapa);
     })();
     return () => { vivo = false; };
-  }, [processoDocs, docsReloadKey, efetivaReloadKey]);
+  }, [processoDocs, docsReloadKey, efetivaReloadKey, cliente?.id]);
 
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
