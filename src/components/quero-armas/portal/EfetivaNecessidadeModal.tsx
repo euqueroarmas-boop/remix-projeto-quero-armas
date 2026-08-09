@@ -290,6 +290,8 @@ export default function EfetivaNecessidadeModal({
   const [salvandoCampo, setSalvandoCampo] = useState<null | "salvando" | "salvo">(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tipoAlvoRef = useRef<TipoProva>("boletim_ocorrencia");
+  /** Último item da fila já posicionado — evita re-sincronizar a cada render. */
+  const passoIdSincronizadoRef = useRef<string | null>(null);
 
   /* ── Carrega ou cria o questionário do processo ───────────────────────── */
   useEffect(() => {
@@ -673,14 +675,16 @@ export default function EfetivaNecessidadeModal({
   const irPara = useCallback((i: number) => {
     const destino = Math.max(0, Math.min(passos.length - 1, i));
     setAvisoAnexo(null);
-    setPassoIndex(destino);
+    setPassoIndex((atual) => {
+      // Voltar não pode disparar recontagem/remontagem do item da fila —
+      // era isso que jogava o cliente de volta para a tela da frente.
+      if (passoId && destino > atual) onPassoConcluido?.();
+      return destino;
+    });
     setMaxVisitado((m) => Math.max(m, destino));
     // O rodapé do pop-up guiado acompanha o passo em tela — inclusive quando
     // o cliente volta uma página.
     onPassoAtualChange?.(String(passos[destino]?.id ?? ""));
-    // Modo "um passo por item da fila": quem navega é o pop-up guiado, então
-    // o portal precisa recontar os itens concluídos do grupo.
-    if (passoId) onPassoConcluido?.();
   }, [passos, passoId, onPassoConcluido, onPassoAtualChange]);
 
   /**
@@ -689,8 +693,12 @@ export default function EfetivaNecessidadeModal({
    */
   useEffect(() => {
     if (!passoId) return;
+    // Só reposiciona quando o item da fila realmente muda. Sem esta trava o
+    // efeito reexecutava a cada render do portal e desfazia o "Anterior".
+    if (passoIdSincronizadoRef.current === passoId) return;
     const i = passos.findIndex((p) => p.id === passoId);
     if (i < 0) return;
+    passoIdSincronizadoRef.current = passoId;
     setPassoIndex(i);
     setMaxVisitado((m) => Math.max(m, i));
     onPassoAtualChange?.(String(passoId));
