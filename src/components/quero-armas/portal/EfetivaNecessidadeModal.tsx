@@ -1189,20 +1189,30 @@ export default function EfetivaNecessidadeModal({
 
             {passo?.tipo === "revisao" && (
               <div className="space-y-4">
-                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                     Confira antes de gerar
                   </p>
-                  <ul className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-zinc-700">
-                    {PERGUNTAS.map((q) => (
-                      <li key={q.campo}>
-                        <strong>{TRILHA_ROTULO[q.campo]}:</strong>{" "}
-                        {respostas[q.campo] === true ? "sim" : respostas[q.campo] === false ? "não" : "sem resposta"}
-                      </li>
+                  <p className="mt-1.5 text-[12px] leading-snug text-zinc-700">
+                    {[
+                      ...PERGUNTAS.map((q) => ({
+                        rotulo: TRILHA_ROTULO[q.campo],
+                        valor:
+                          respostas[q.campo] === true
+                            ? "sim"
+                            : respostas[q.campo] === false
+                              ? "não"
+                              : "sem resposta",
+                      })),
+                      { rotulo: "Provas anexadas", valor: String(provas.length) },
+                      { rotulo: "Relato", valor: `${relato.trim().length} caracteres` },
+                    ].map((item, i, arr) => (
+                      <span key={item.rotulo}>
+                        <strong>{item.rotulo}:</strong> {item.valor}
+                        {i < arr.length - 1 ? ", " : "."}
+                      </span>
                     ))}
-                    <li><strong>Provas anexadas:</strong> {provas.length}</li>
-                    <li><strong>Relato:</strong> {relato.trim().length} caracteres</li>
-                  </ul>
+                  </p>
                 </div>
                 {!podeConcluir && (
                   <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
