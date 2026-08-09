@@ -1123,6 +1123,91 @@ export default function EfetivaNecessidadeModal({
           <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
             {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
 
+            {/* ── Entenda o BO: explicação obrigatória antes da delegacia ── */}
+            {passo?.tipo === "entender_bo" && (
+              <div className="space-y-3">
+                <p className="text-[12px] leading-relaxed text-zinc-600">
+                  Antes de você ir à delegacia, leia com calma. Muita gente evita registrar
+                  boletim por achar que vai “criar problema” com alguém. Não é isso que acontece.
+                </p>
+
+                {BLOCOS_EXPLICACAO_BO.map((b) => (
+                  <div
+                    key={b.titulo}
+                    className={
+                      b.destaque
+                        ? "rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04] p-4"
+                        : "rounded-lg border border-zinc-200 bg-white p-4"
+                    }
+                  >
+                    <p className={`text-[12px] font-semibold ${b.destaque ? "text-[#7A1F2B]" : "text-zinc-900"}`}>
+                      {b.titulo}
+                    </p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">{b.texto}</p>
+                  </div>
+                ))}
+
+                <div className="rounded-lg border border-zinc-200 p-4">
+                  <p className="text-[12px] font-semibold text-zinc-900">
+                    Quem está te deixando preocupado? (opcional, mas recomendado)
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                    Informe se souber. Nada acontece contra a pessoa por causa disso — o registro
+                    apenas fica mais forte.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <input
+                      value={ameacadorNome}
+                      onChange={(e) => setAmeacadorNome(e.target.value)}
+                      disabled={cienciaBoAceita}
+                      placeholder="Nome completo"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] focus:border-[#7A1F2B] focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500"
+                    />
+                    <input
+                      value={ameacadorCpf}
+                      onChange={(e) => setAmeacadorCpf(e.target.value)}
+                      disabled={cienciaBoAceita}
+                      inputMode="numeric"
+                      placeholder="CPF (se souber)"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] focus:border-[#7A1F2B] focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500"
+                    />
+                  </div>
+                </div>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${
+                    cienciaBoAceita
+                      ? "border-emerald-300 bg-emerald-50"
+                      : "border-[#7A1F2B]/40 bg-[#7A1F2B]/[0.03]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={cienciaBoAceita}
+                    disabled={cienciaBoAceita || salvandoCiencia}
+                    onChange={() => void registrarCienciaBo()}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#7A1F2B]"
+                  />
+                  <span className="text-[12px] leading-relaxed text-zinc-700">
+                    {TERMO_BO_TEXTO}
+                  </span>
+                </label>
+
+                {salvandoCiencia && (
+                  <p className="flex items-center gap-2 text-[11px] text-zinc-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Registrando a sua ciência…
+                  </p>
+                )}
+                {cienciaBoAceita && cienciaBoEm && (
+                  <p className="flex items-center gap-2 text-[11px] text-emerald-700">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Ciência registrada em {new Date(cienciaBoEm).toLocaleString("pt-BR")} com o
+                    carimbo da sua conexão.
+                  </p>
+                )}
+              </div>
+            )}
+
             {passo?.tipo === "enviar_bo" && (
               <div className="rounded-lg border border-zinc-200 p-4">
                 <p className="text-[14px] font-semibold text-zinc-900">
