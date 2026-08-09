@@ -68,6 +68,26 @@ const LABEL: Record<string, string> = {
   outro: "Documento complementar",
 };
 
+/** Limite duro do texto de BO. Corta na última frase inteira que couber. */
+const LIMITE_BO = 500;
+function limitarBo(texto: string): string {
+  const limpo = texto.replace(/\s+\n/g, "\n").trim();
+  if (limpo.length <= LIMITE_BO) return limpo;
+  const corte = limpo.slice(0, LIMITE_BO);
+  const ultimoPonto = Math.max(corte.lastIndexOf("."), corte.lastIndexOf("!"), corte.lastIndexOf("?"));
+  return (ultimoPonto > 200 ? corte.slice(0, ultimoPonto + 1) : corte).trim();
+}
+
+/** A IA devolve os dois textos separados por marcadores literais. */
+function separarBlocos(bruto: string): { narrativa: string; textoBo: string } {
+  const m = bruto.match(/===\s*RELATO\s*===([\s\S]*?)===\s*BO\s*===([\s\S]*)$/i);
+  if (m) {
+    return { narrativa: m[1].trim(), textoBo: limitarBo(m[2]) };
+  }
+  // Sem marcadores: tudo vira relato e o texto de BO fica para a próxima rodada.
+  return { narrativa: bruto.replace(/^===\s*RELATO\s*===/i, "").trim(), textoBo: "" };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
