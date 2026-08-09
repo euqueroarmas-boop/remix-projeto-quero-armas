@@ -224,7 +224,21 @@ export default function EfetivaNecessidadeModal({
         setContexto(reg.contexto_risco ?? "");
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
         setTextoBo(reg.texto_bo ?? "");
-        if (reg.narrativa_final || reg.narrativa_gerada) setEtapa("narrativa");
+        if (reg.narrativa_final || reg.narrativa_gerada) {
+          setEtapa("narrativa");
+          setPassoIndex(PASSO_REVISAO);
+          setMaxVisitado(PASSO_REVISAO);
+        } else {
+          // Retoma na primeira etapa ainda não respondida.
+          const iPergunta = PERGUNTAS.findIndex(
+            (q) => typeof (reg as any)[q.campo] !== "boolean",
+          );
+          const destino = iPergunta >= 0
+            ? iPergunta
+            : String(reg.relato_cliente ?? "").trim() ? PASSOS.length - 2 : PASSOS.length - 3;
+          setPassoIndex(destino);
+          setMaxVisitado(destino);
+        }
 
         const { data: acs } = await supabase
           .from("qa_efetiva_necessidade_acrescimos" as any)
