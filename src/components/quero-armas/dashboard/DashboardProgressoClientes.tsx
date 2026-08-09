@@ -108,7 +108,67 @@ export default function DashboardProgressoClientes() {
           <Inbox className="h-3.5 w-3.5" /> NENHUM PROCESSO ATIVO
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        {/* MOBILE: lista compacta */}
+        <div className="md:hidden">
+          <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            {COLS.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => toggle(c.key)}
+                className={`shrink-0 inline-flex items-center gap-1 text-[9px] uppercase tracking-[0.12em] font-bold px-2 py-1 rounded-full border transition-colors ${
+                  sortKey === c.key
+                    ? "border-slate-800 text-slate-800"
+                    : "border-slate-200 text-slate-400"
+                }`}
+              >
+                {c.label}
+                {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
+              </button>
+            ))}
+          </div>
+          {ordenadas.map((r) => {
+            const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
+            return (
+              <Link
+                key={r.processo_id}
+                to={`/quero-armas/clientes/${r.cliente_id}`}
+                className="block px-4 py-3 border-b border-slate-50 active:bg-slate-50"
+              >
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[12px] font-semibold uppercase text-slate-800 truncate flex-1">
+                    {r.cliente_nome ?? "—"}
+                  </span>
+                  <span className="text-[11px] font-semibold tabular-nums" style={{ color: corSensor(r.dias_parado) }}>
+                    {r.dias_parado}d
+                  </span>
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
+                  {r.servico_nome ?? "—"}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
+                    {r.entregues}/{r.total_docs}
+                  </span>
+                  <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "hsl(220 12% 45%)" }} />
+                  </div>
+                  <span className="text-[9.5px] uppercase tracking-wider text-slate-400">{r.fase}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-[10px] uppercase text-slate-500">
+                  <span className="truncate flex-1">{r.proximo_doc ?? "—"}</span>
+                  {r.cobrancas > 0 && (
+                    <span className="shrink-0 tabular-nums text-slate-400">{r.cobrancas} COB.</span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* DESKTOP: tabela */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-slate-100">
@@ -172,6 +232,7 @@ export default function DashboardProgressoClientes() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       <div className="px-4 py-2 border-t border-slate-100 text-[9.5px] uppercase tracking-[0.12em] text-slate-400">
