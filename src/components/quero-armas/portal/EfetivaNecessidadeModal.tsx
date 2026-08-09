@@ -555,6 +555,16 @@ export default function EfetivaNecessidadeModal({
 
       setProvas((p) => [...p, prova as unknown as Prova]);
 
+      // O boletim que faltava chegou: o passo "registrar o BO" se encerra e a
+      // defesa final é liberada.
+      if (tipo === "boletim_ocorrencia" && boPendenteRegistro) {
+        setBoPendenteRegistro(false);
+        void supabase
+          .from("qa_efetiva_necessidade" as any)
+          .update({ bo_pendente_registro: false, updated_at: new Date().toISOString() })
+          .eq("id", registroId);
+      }
+
       // 4) E-mail específico, citando o que foi lido. Best-effort: falha de
       //    e-mail não desfaz o envio da prova.
       void supabase.functions.invoke("qa-notify-event", {
@@ -584,7 +594,7 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setEnviandoTipo(null);
     }
-  }, [registroId, clienteId, provas.length]);
+  }, [registroId, clienteId, provas.length, boPendenteRegistro]);
 
   const abrirSeletor = (tipo: TipoProva) => {
     tipoAlvoRef.current = tipo;
