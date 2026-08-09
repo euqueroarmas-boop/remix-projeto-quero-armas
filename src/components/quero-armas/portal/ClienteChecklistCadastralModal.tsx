@@ -198,7 +198,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh] flex flex-col">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl h-[calc(100dvh-1.5rem)] sm:h-[min(90dvh,760px)] flex flex-col">
         {/* Cabeçalho com progresso */}
         <div className="shrink-0 border-b border-zinc-200 px-6 pt-5 pb-4 pr-14">
           <div className="flex items-start justify-between gap-3">
@@ -226,7 +226,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
         </div>
 
         {/* A pergunta */}
-        <div className="px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <h2 className="text-[19px] font-semibold leading-snug text-zinc-900">
             {atual.pergunta ?? atual.label}
           </h2>

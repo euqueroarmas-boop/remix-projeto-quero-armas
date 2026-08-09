@@ -63,7 +63,7 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
-      <div className="relative w-full sm:max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]">
+      <div className="relative w-full sm:max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden flex flex-col h-[calc(100dvh-1.5rem)] sm:h-[min(90dvh,760px)]">
         <div className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
