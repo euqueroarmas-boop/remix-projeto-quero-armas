@@ -730,7 +730,9 @@ function PreviewModal({
               border: "1px solid #e5e5e5",
               borderRadius: 4,
               width: "min(1100px, 96vw)",
-              height: "min(92vh, 900px)",
+              height: "min(90dvh, 900px)",
+              maxHeight: "90dvh",
+              maxWidth: "96vw",
               display: "flex",
               flexDirection: "column",
               boxShadow: "0 20px 50px rgba(0,0,0,.35)",
@@ -806,10 +808,10 @@ function PreviewModal({
                 </button>
               </div>
             </div>
-            <div ref={containerRef} style={{ flex: 1, background: "#1c1c1c", overflow: "auto" }}>
+            <div ref={containerRef} style={{ flex: 1, minHeight: 0, background: "#1c1c1c", overflow: "auto" }}>
               {isImage ? (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 12 }}>
-                  <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                <div style={{ width: "100%", minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: 12, boxSizing: "border-box" }}>
+                  <img src={preview.url} alt={preview.nome} style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block" }} />
                 </div>
               ) : isPdf ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: 16 }}>
