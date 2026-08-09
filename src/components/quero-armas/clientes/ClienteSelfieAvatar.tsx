@@ -30,7 +30,7 @@ export default function ClienteSelfieAvatar({
   // cliente e nas linhas da lista para ter foto retrato proeminente.
   const dim =
     size === "xl"
-      ? "h-24 aspect-[3/4]"
+      ? "h-24 w-[72px]"
       : size === "lg"
       ? "w-16 h-16"
       : size === "sm"
