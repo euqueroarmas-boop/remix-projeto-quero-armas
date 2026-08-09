@@ -2057,6 +2057,13 @@ export default function QAClientePortalPage() {
                 processoId={String(doc.processo_id)}
                 clienteId={Number(cliente.id)}
                 onClose={() => setShowContratoPopup(false)}
+                onPassoAtualChange={(pid) =>
+                  setEfetivaPassoAtual((m) =>
+                    m[String(doc.processo_id)] === pid
+                      ? m
+                      : { ...m, [String(doc.processo_id)]: pid },
+                  )
+                }
                 onPassoConcluido={() => setEfetivaReloadKey((k) => k + 1)}
                 onConcluido={() => {
                   setEfetivaReloadKey((k) => k + 1);
