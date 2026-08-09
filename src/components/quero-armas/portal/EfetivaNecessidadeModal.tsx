@@ -1144,14 +1144,19 @@ export default function EfetivaNecessidadeModal({
                 locais, pessoas envolvidas, o que aconteceu, o que foi dito ou feito, se houve
                 ameaça direta ou indireta, e por que isso ainda representa risco para você hoje.
               </p>
-              <textarea
-                value={relato}
-                onChange={(e) => setRelato(e.target.value)}
-                onBlur={() => void salvarTexto("relato_cliente", relato)}
-                rows={10}
-                placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
-                className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
-              />
+              <div className="mt-2 rounded-lg border border-zinc-200 focus-within:border-[#7A1F2B]">
+                <textarea
+                  value={relato}
+                  onChange={(e) => setRelato(e.target.value)}
+                  onBlur={() => void salvarTexto("relato_cliente", relato)}
+                  rows={10}
+                  placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
+                  className="w-full resize-y rounded-t-lg border-0 bg-transparent px-3 py-2 text-[13px] leading-relaxed focus:outline-none"
+                />
+                <p className="px-3 pb-1.5 text-left text-[10px] leading-tight text-zinc-400">
+                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+                </p>
+              </div>
               {semProvaNenhuma && relato.trim().length < RELATO_MINIMO && (
                 <p className="mt-1 text-[11px] text-amber-700">
                   Faltam {RELATO_MINIMO - relato.trim().length} caracteres. Sem prova documental,
@@ -1167,14 +1172,19 @@ export default function EfetivaNecessidadeModal({
                 Descreva o dia a dia que te expõe: trajetos, horários, local de trabalho,
                 valores transportados e com quem você mora.
               </p>
-              <textarea
-                value={contexto}
-                onChange={(e) => setContexto(e.target.value)}
-                onBlur={() => void salvarTexto("contexto_risco", contexto)}
-                rows={7}
-                placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
-                className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
-              />
+              <div className="mt-2 rounded-lg border border-zinc-200 focus-within:border-[#7A1F2B]">
+                <textarea
+                  value={contexto}
+                  onChange={(e) => setContexto(e.target.value)}
+                  onBlur={() => void salvarTexto("contexto_risco", contexto)}
+                  rows={7}
+                  placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
+                  className="w-full resize-y rounded-t-lg border-0 bg-transparent px-3 py-2 text-[13px] leading-relaxed focus:outline-none"
+                />
+                <p className="px-3 pb-1.5 text-left text-[10px] leading-tight text-zinc-400">
+                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+                </p>
+              </div>
             </div>
             )}
 
@@ -1257,14 +1267,7 @@ export default function EfetivaNecessidadeModal({
           )}
         </div>
 
-        {/* Aviso de salvamento: colado na aresta inferior esquerda da caixa. */}
-        <p className={embedded
-          ? "-mb-1 mt-2 text-left text-[10px] leading-tight text-zinc-400"
-          : "shrink-0 px-6 pb-2 text-left text-[10px] leading-tight text-zinc-400"}>
-          {passoFinal && narrativa
-            ? "Você é quem aprova."
-            : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
-        </p>
+        {/* Aviso de salvamento agora vive dentro das próprias caixas de texto. */}
 
         <input
           ref={inputRef}
