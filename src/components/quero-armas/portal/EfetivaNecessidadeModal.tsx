@@ -565,15 +565,17 @@ export default function EfetivaNecessidadeModal({
         <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5 pr-14">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
-              Efetiva necessidade
+              Efetiva necessidade · Passo {passoIndex + 1} de {PASSOS.length}
             </p>
             <h2 className="mt-1 text-[18px] font-semibold text-zinc-900">
-              Vamos reunir as provas do seu caso
+              {passo?.titulo ?? "Vamos reunir as provas do seu caso"}
             </h2>
-            <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
-              Nossa equipe usa esse material para escrever a peça que fundamenta, perante a
-              Polícia Federal, por que você precisa da arma. Quanto mais concreto, mais forte.
-            </p>
+            {passoIndex === 0 && (
+              <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
+                Nossa equipe usa esse material para escrever a peça que fundamenta, perante a
+                Polícia Federal, por que você precisa da arma. Quanto mais concreto, mais forte.
+              </p>
+            )}
           </div>
           <button
             type="button"
