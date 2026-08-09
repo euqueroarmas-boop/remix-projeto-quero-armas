@@ -20,6 +20,7 @@ export type EfetivaPassoId =
   | "relato"
   | "contexto"
   | "revisao"
+  | "entender_bo"
   | "registrar_bo"
   | "enviar_bo"
   | "defesa_final";
@@ -38,6 +39,7 @@ export const EFETIVA_PASSO_ROTULO: Record<EfetivaPassoId, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração do relato",
+  entender_bo: "Antes de ir à delegacia, entenda o boletim",
   registrar_bo: "Registrar o boletim na delegacia",
   enviar_bo: "Enviar o boletim registrado",
   defesa_final: "Defesa final e aprovação",
@@ -53,7 +55,12 @@ const PASSOS_BASE: EfetivaPassoId[] = [
   "revisao",
 ];
 
-const PASSOS_BO: EfetivaPassoId[] = ["registrar_bo", "enviar_bo", "defesa_final"];
+const PASSOS_BO: EfetivaPassoId[] = [
+  "entender_bo",
+  "registrar_bo",
+  "enviar_bo",
+  "defesa_final",
+];
 
 /** Mesmo mínimo aplicado no wizard quando não há nenhuma prova documental. */
 export const EFETIVA_RELATO_MINIMO = 1000;
@@ -85,6 +92,8 @@ export interface EfetivaProvaLike {
 export function calcularPassosEfetiva(
   registro: EfetivaRegistroLike | null | undefined,
   provas: EfetivaProvaLike[] = [],
+  /** Ciência do BO já registrada (tabela `qa_cliente_ciencias`). */
+  cienciaBoAceita = false,
 ): EfetivaPasso[] {
   const reg = registro ?? {};
   const ids = [...PASSOS_BASE, ...PASSOS_BO];
@@ -113,6 +122,8 @@ export function calcularPassosEfetiva(
         return contexto.length > 0;
       case "revisao":
         return narrativa.length > 0;
+      case "entender_bo":
+        return cienciaBoAceita || boEntregue;
       case "registrar_bo":
         return boEntregue;
       case "enviar_bo":
