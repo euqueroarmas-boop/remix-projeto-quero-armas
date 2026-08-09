@@ -2970,6 +2970,36 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_bo_links_uf: {
+        Row: {
+          created_at: string
+          nome_orgao: string | null
+          observacao: string | null
+          uf: string
+          updated_at: string
+          url_abrir: string | null
+          url_acompanhar: string | null
+        }
+        Insert: {
+          created_at?: string
+          nome_orgao?: string | null
+          observacao?: string | null
+          uf: string
+          updated_at?: string
+          url_abrir?: string | null
+          url_acompanhar?: string | null
+        }
+        Update: {
+          created_at?: string
+          nome_orgao?: string | null
+          observacao?: string | null
+          uf?: string
+          updated_at?: string
+          url_abrir?: string | null
+          url_acompanhar?: string | null
+        }
+        Relationships: []
+      }
       qa_branding: {
         Row: {
           chave: string
@@ -6769,6 +6799,7 @@ export type Database = {
           aprovacao_user_agent: string | null
           aprovado_cliente: boolean
           aprovado_cliente_em: string | null
+          bo_pendente_registro: boolean
           cliente_id: number
           contexto_risco: string | null
           created_at: string
@@ -6788,7 +6819,11 @@ export type Database = {
           tem_acao_criminal: boolean | null
           tem_bo: boolean | null
           tem_inquerito: boolean | null
+          texto_bo: string | null
+          texto_bo_editado_pelo_cliente: boolean
+          texto_bo_gerado_em: string | null
           updated_at: string
+          versao: number
         }
         Insert: {
           aprovacao_accept_language?: string | null
@@ -6797,6 +6832,7 @@ export type Database = {
           aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
+          bo_pendente_registro?: boolean
           cliente_id: number
           contexto_risco?: string | null
           created_at?: string
@@ -6816,7 +6852,11 @@ export type Database = {
           tem_acao_criminal?: boolean | null
           tem_bo?: boolean | null
           tem_inquerito?: boolean | null
+          texto_bo?: string | null
+          texto_bo_editado_pelo_cliente?: boolean
+          texto_bo_gerado_em?: string | null
           updated_at?: string
+          versao?: number
         }
         Update: {
           aprovacao_accept_language?: string | null
@@ -6825,6 +6865,7 @@ export type Database = {
           aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
+          bo_pendente_registro?: boolean
           cliente_id?: number
           contexto_risco?: string | null
           created_at?: string
@@ -6844,7 +6885,11 @@ export type Database = {
           tem_acao_criminal?: boolean | null
           tem_bo?: boolean | null
           tem_inquerito?: boolean | null
+          texto_bo?: string | null
+          texto_bo_editado_pelo_cliente?: boolean
+          texto_bo_gerado_em?: string | null
           updated_at?: string
+          versao?: number
         }
         Relationships: [
           {
@@ -6852,6 +6897,44 @@ export type Database = {
             columns: ["processo_id"]
             isOneToOne: true
             referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_efetiva_necessidade_acrescimos: {
+        Row: {
+          created_at: string
+          efetiva_necessidade_id: string
+          id: string
+          ordem: number
+          origem: string
+          texto: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          efetiva_necessidade_id: string
+          id?: string
+          ordem?: number
+          origem?: string
+          texto: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          efetiva_necessidade_id?: string
+          id?: string
+          ordem?: number
+          origem?: string
+          texto?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_efetiva_necessidade_acrescimos_efetiva_necessidade_id_fkey"
+            columns: ["efetiva_necessidade_id"]
+            isOneToOne: false
+            referencedRelation: "qa_efetiva_necessidade"
             referencedColumns: ["id"]
           },
         ]
