@@ -49,6 +49,7 @@ import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarPro
 import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
 import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/ConfirmarPagamentoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
+import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
@@ -3222,6 +3223,7 @@ export default function QAClientesPage() {
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
                 { value: "exames", icon: HeartPulse, label: `Exames (${examesAtuais.length})` },
+                { value: "efetiva", icon: ShieldCheck, label: "Efetiva necessidade" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
@@ -3982,6 +3984,9 @@ export default function QAClientesPage() {
                 <ClienteExames cliente={c} onChanged={async () => { await loadSubData(c); }} />
               </TabsContent>
               {/* PEÇAS JURÍDICAS */}
+              <TabsContent value="efetiva" className="mt-3">
+                <ClienteEfetivaNecessidade cliente={c} />
+              </TabsContent>
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
               </TabsContent>
