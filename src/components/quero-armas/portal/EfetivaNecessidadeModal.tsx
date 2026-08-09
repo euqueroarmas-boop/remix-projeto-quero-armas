@@ -152,6 +152,58 @@ const TRILHA_ROTULO: Record<string, string> = {
 
 const PASSO_REVISAO = PASSOS.length - 1;
 
+/**
+ * Trilha numerada — mesma linguagem visual da lista de passos do pop-up
+ * guiado: marcador circular, linha vertical e check no que já foi cumprido.
+ */
+function Trilha({
+  passoIndex, maxVisitado, passoConcluido, irPara,
+}: {
+  passoIndex: number;
+  maxVisitado: number;
+  passoConcluido: (i: number) => boolean;
+  irPara: (i: number) => void;
+}) {
+  return (
+    <ol className="relative space-y-1.5 border-l border-zinc-200 pl-4">
+      {PASSOS.map((p, i) => {
+        const atual = i === passoIndex;
+        const feito = passoConcluido(i);
+        const liberado = i <= maxVisitado;
+        return (
+          <li key={p.id} className="relative">
+            <span
+              className={`absolute -left-[1.4rem] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-[9px] font-bold ${
+                atual
+                  ? "border-[#7A1F2B] bg-[#7A1F2B] text-white"
+                  : feito
+                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    : "border-zinc-300 bg-white text-zinc-400"
+              }`}
+            >
+              {feito && !atual ? <Check className="h-2.5 w-2.5" /> : i + 1}
+            </span>
+            <button
+              type="button"
+              disabled={!liberado}
+              onClick={() => irPara(i)}
+              className={`text-left text-[11px] uppercase tracking-[0.08em] transition-colors ${
+                atual
+                  ? "font-bold text-[#7A1F2B]"
+                  : liberado
+                    ? "text-zinc-500 hover:text-zinc-800"
+                    : "text-zinc-300"
+              }`}
+            >
+              {TRILHA_ROTULO[p.id] ?? p.titulo}
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const dataBR = (iso: string | null | undefined) => {
   const m = String(iso ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
