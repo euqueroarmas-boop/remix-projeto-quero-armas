@@ -1221,11 +1221,6 @@ export default function EfetivaNecessidadeModal({
             >
               <ChevronLeft className="h-3.5 w-3.5" /> Anterior
             </button>
-            <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
-              {passoFinal && narrativa
-                ? "Você é quem aprova."
-                : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
-            </p>
           </div>
           {passoFinal && narrativa ? (
             <button
@@ -1260,6 +1255,15 @@ export default function EfetivaNecessidadeModal({
             </button>
           )}
         </div>
+
+        {/* Aviso de salvamento: colado na aresta inferior esquerda da caixa. */}
+        <p className={embedded
+          ? "-mb-1 mt-2 text-left text-[10px] leading-tight text-zinc-400"
+          : "shrink-0 px-6 pb-2 text-left text-[10px] leading-tight text-zinc-400"}>
+          {passoFinal && narrativa
+            ? "Você é quem aprova."
+            : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+        </p>
 
         <input
           ref={inputRef}
