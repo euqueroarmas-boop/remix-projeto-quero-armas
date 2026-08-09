@@ -115,6 +115,12 @@ Deno.serve(async (req) => {
       .eq("id", reg.cliente_id)
       .maybeSingle();
 
+    const { data: linkBo } = await sb
+      .from("qa_bo_links_uf")
+      .select("uf, nome_orgao, url_abrir, url_acompanhar, observacao")
+      .eq("uf", String(cliente?.estado ?? "").toUpperCase())
+      .maybeSingle();
+
     const { data: provas } = await sb
       .from("qa_efetiva_necessidade_provas")
       .select("tipo, numero, orgao, data_fato, naturezas, arquivo_nome, arquivo_storage_path")
@@ -333,11 +339,26 @@ Deno.serve(async (req) => {
           Registro de sessão nos termos da MP 2.200-2/2001. O link do arquivo expira em 30 dias; ele continua disponível na sua área do cliente.
         </p>
         <p style="font-size:13px;color:#111;margin-top:16px"><strong>Próximo passo:</strong> o agendamento dos seus exames (psicológico e de tiro) já está liberado na área do cliente.</p>`;
+      const blocoBo = textoBo
+        ? `
+        <div style="margin:22px 0;padding:16px;border:1px solid #e5e5e5;border-radius:8px">
+          <p style="margin:0 0 8px;font-size:13px;color:#111"><strong>Texto para você registrar o boletim de ocorrência</strong></p>
+          <p style="margin:0 0 12px;font-size:12px;color:#555">Copie o texto abaixo e use no registro da ocorrência. Depois, envie o boletim de volta na sua área do cliente.</p>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#222;background:#faf7f7;padding:12px;border-left:3px solid #7A1F2B">${esc(textoBo)}</p>
+          ${linkBo?.url_abrir
+            ? `<p style="margin:0 0 6px;font-size:12px;color:#333">Registrar (${esc(linkBo.uf)}): <a href="${esc(linkBo.url_abrir)}">${esc(linkBo.nome_orgao ?? linkBo.url_abrir)}</a></p>`
+            : `<p style="margin:0 0 6px;font-size:12px;color:#333">Procure a delegacia eletrônica da Polícia Civil do seu estado para registrar.</p>`}
+          ${linkBo?.url_acompanhar
+            ? `<p style="margin:0 0 6px;font-size:12px;color:#333">Acompanhar andamento: <a href="${esc(linkBo.url_acompanhar)}">${esc(linkBo.url_acompanhar)}</a></p>`
+            : ""}
+          ${linkBo?.observacao ? `<p style="margin:0;font-size:11px;color:#777">${esc(linkBo.observacao)}</p>` : ""}
+        </div>`
+        : "";
       await sendTransactional({
         templateName: "arsenal-generic",
         recipientEmail: cliente.email,
         idempotencyKey: `efetiva-aprovada-${registroId}`,
-        templateData: { subject: "Seu relato de efetiva necessidade foi aprovado", html },
+        templateData: { subject: "Seu relato de efetiva necessidade foi aprovado", html: html + blocoBo },
       });
     }
 

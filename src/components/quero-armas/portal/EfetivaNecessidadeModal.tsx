@@ -20,7 +20,7 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck } from "lucide-react";
+import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck, Copy, Plus, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
@@ -45,6 +45,23 @@ interface Prova {
   arquivo_nome: string | null;
   leitura_por: string | null;
 }
+
+interface Acrescimo {
+  id: string;
+  texto: string;
+  created_at: string;
+}
+
+interface LinkBo {
+  uf: string;
+  nome_orgao: string | null;
+  url_abrir: string | null;
+  url_acompanhar: string | null;
+  observacao: string | null;
+}
+
+/** Limite do texto que o cliente leva à delegacia. Regra do usuário. */
+const LIMITE_BO = 500;
 
 /**
  * As perguntas, na ordem em que reduzem o esforço do cliente: primeiro o que
@@ -116,6 +133,14 @@ export default function EfetivaNecessidadeModal({
   /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
   const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
   const [narrativa, setNarrativa] = useState("");
+  const [textoBo, setTextoBo] = useState("");
+  const [textoBoTocado, setTextoBoTocado] = useState(false);
+  const [editandoBo, setEditandoBo] = useState(false);
+  const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
+  const [novoAcrescimo, setNovoAcrescimo] = useState("");
+  const [campoAcrescimoAberto, setCampoAcrescimoAberto] = useState(false);
+  const [salvandoAcrescimo, setSalvandoAcrescimo] = useState(false);
+  const [linkBo, setLinkBo] = useState<LinkBo | null>(null);
   const [gerando, setGerando] = useState(false);
   const [editandoNarrativa, setEditandoNarrativa] = useState(false);
   const [narrativaTocada, setNarrativaTocada] = useState(false);
@@ -157,6 +182,30 @@ export default function EfetivaNecessidadeModal({
         setRelato(reg.relato_cliente ?? "");
         setContexto(reg.contexto_risco ?? "");
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
+        setTextoBo(reg.texto_bo ?? "");
+        if (reg.narrativa_final || reg.narrativa_gerada) setEtapa("narrativa");
+
+        const { data: acs } = await supabase
+          .from("qa_efetiva_necessidade_acrescimos" as any)
+          .select("id, texto, created_at")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("ordem");
+        if (!cancelado) setAcrescimos((acs ?? []) as unknown as Acrescimo[]);
+
+        const { data: cli } = await supabase
+          .from("qa_clientes" as any)
+          .select("estado")
+          .eq("id", clienteId)
+          .maybeSingle();
+        const uf = String((cli as any)?.estado ?? "").toUpperCase();
+        if (uf) {
+          const { data: lk } = await supabase
+            .from("qa_bo_links_uf" as any)
+            .select("uf, nome_orgao, url_abrir, url_acompanhar, observacao")
+            .eq("uf", uf)
+            .maybeSingle();
+          if (!cancelado) setLinkBo((lk as unknown as LinkBo) ?? null);
+        }
 
         const { data: ps } = await supabase
           .from("qa_efetiva_necessidade_provas" as any)
@@ -228,6 +277,11 @@ export default function EfetivaNecessidadeModal({
       });
       if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
       setNarrativa(String(data.narrativa));
+      setTextoBo(String(data.texto_bo ?? ""));
+      setTextoBoTocado(false);
+      setEditandoBo(false);
+      setCampoAcrescimoAberto(false);
+      setNovoAcrescimo("");
       setNarrativaTocada(false);
       setEditandoNarrativa(false);
       setEtapa("narrativa");
@@ -239,6 +293,44 @@ export default function EfetivaNecessidadeModal({
     }
   }, [registroId, relato, contexto, salvarTexto]);
 
+  /* ── Fatos novos: nada é sobrescrito, tudo vira histórico ─────────────── */
+  const adicionarAcrescimo = useCallback(async () => {
+    const texto = novoAcrescimo.trim();
+    if (!registroId || texto.length < 20) return;
+    setSalvandoAcrescimo(true);
+    try {
+      const { data, error } = await supabase
+        .from("qa_efetiva_necessidade_acrescimos" as any)
+        .insert({
+          efetiva_necessidade_id: registroId,
+          texto,
+          ordem: acrescimos.length + 1,
+          origem: "cliente",
+        })
+        .select("id, texto, created_at")
+        .single();
+      if (error) throw error;
+      setAcrescimos((p) => [...p, data as unknown as Acrescimo]);
+      setNovoAcrescimo("");
+      setCampoAcrescimoAberto(false);
+      toast.success("Fato registrado. Agora refaça o relato para ele entrar no texto.");
+    } catch (e) {
+      console.error("[efetiva necessidade] acréscimo:", e);
+      toast.error("Não foi possível salvar este fato. Tente novamente.");
+    } finally {
+      setSalvandoAcrescimo(false);
+    }
+  }, [registroId, novoAcrescimo, acrescimos.length]);
+
+  const copiar = useCallback(async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Texto copiado.");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto e copie manualmente.");
+    }
+  }, []);
+
   const aprovarNarrativa = useCallback(async () => {
     if (!registroId || narrativa.trim().length < 200) return;
     setAprovando(true);
@@ -248,6 +340,8 @@ export default function EfetivaNecessidadeModal({
           registro_id: registroId,
           texto_final: narrativa.trim(),
           editado: narrativaTocada,
+          texto_bo: textoBo.trim().slice(0, LIMITE_BO),
+          texto_bo_editado: textoBoTocado,
           user_agent: navigator.userAgent,
           accept_language: navigator.language,
         },
@@ -262,7 +356,7 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setAprovando(false);
     }
-  }, [registroId, narrativa, narrativaTocada, onConcluido, onClose]);
+  }, [registroId, narrativa, narrativaTocada, textoBo, textoBoTocado, onConcluido, onClose]);
 
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
   const receberArquivo = useCallback(async (file: File) => {
