@@ -1221,11 +1221,6 @@ export default function EfetivaNecessidadeModal({
             >
               <ChevronLeft className="h-3.5 w-3.5" /> Anterior
             </button>
-            <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
-              {passoFinal && narrativa
-                ? "Você é quem aprova."
-                : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
-            </p>
           </div>
           {passoFinal && narrativa ? (
             <button
