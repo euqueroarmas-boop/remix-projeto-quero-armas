@@ -593,6 +593,8 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : etapa === "narrativa" ? (
           <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
+            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+          <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                 Leia com atenção
