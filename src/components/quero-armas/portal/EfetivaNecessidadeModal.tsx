@@ -20,7 +20,7 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck, Copy, Plus, ExternalLink } from "lucide-react";
+import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck, Copy, Plus, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
@@ -114,6 +114,96 @@ const LABEL_TIPO: Record<TipoProva, string> = {
   outro: "Documento complementar",
 };
 
+/**
+ * A fila de etapas — um bloco por tela, no mesmo padrão do pop-up guiado.
+ *
+ * Antes tudo vinha empilhado num scroll único e o cliente pulava campo. Aqui
+ * cada bloco vira um passo navegável (Anterior / Próximo), com contador,
+ * trilha numerada e o rodapé fixo do padrão guiado.
+ */
+type PassoTipo = "pergunta" | "relato" | "contexto" | "revisao";
+
+const PASSOS: Array<{
+  id: string;
+  tipo: PassoTipo;
+  titulo: string;
+  campo?: (typeof PERGUNTAS)[number]["campo"];
+}> = [
+  ...PERGUNTAS.map((q) => ({
+    id: q.campo,
+    tipo: "pergunta" as const,
+    titulo: q.pergunta,
+    campo: q.campo,
+  })),
+  { id: "relato", tipo: "relato", titulo: "Conte o que está acontecendo" },
+  { id: "contexto", tipo: "contexto", titulo: "O que, na sua rotina, aumenta o risco?" },
+  { id: "revisao", tipo: "revisao", titulo: "Revisão e geração do relato" },
+];
+
+const TRILHA_ROTULO: Record<string, string> = {
+  tem_bo: "Boletim de ocorrência",
+  tem_inquerito: "Inquérito policial",
+  tem_acao_criminal: "Ação criminal",
+  sofre_ameaca: "Ameaça atual",
+  relato: "Seu relato",
+  contexto: "Rotina de risco",
+  revisao: "Revisão e geração",
+};
+
+const PASSO_REVISAO = PASSOS.length - 1;
+
+/**
+ * Trilha numerada — mesma linguagem visual da lista de passos do pop-up
+ * guiado: marcador circular, linha vertical e check no que já foi cumprido.
+ */
+function Trilha({
+  passoIndex, maxVisitado, passoConcluido, irPara,
+}: {
+  passoIndex: number;
+  maxVisitado: number;
+  passoConcluido: (i: number) => boolean;
+  irPara: (i: number) => void;
+}) {
+  return (
+    <ol className="relative space-y-1.5 border-l border-zinc-200 pl-4">
+      {PASSOS.map((p, i) => {
+        const atual = i === passoIndex;
+        const feito = passoConcluido(i);
+        const liberado = i <= maxVisitado;
+        return (
+          <li key={p.id} className="relative">
+            <span
+              className={`absolute -left-[1.4rem] top-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-[9px] font-bold ${
+                atual
+                  ? "border-[#7A1F2B] bg-[#7A1F2B] text-white"
+                  : feito
+                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    : "border-zinc-300 bg-white text-zinc-400"
+              }`}
+            >
+              {feito && !atual ? <Check className="h-2.5 w-2.5" /> : i + 1}
+            </span>
+            <button
+              type="button"
+              disabled={!liberado}
+              onClick={() => irPara(i)}
+              className={`text-left text-[11px] uppercase tracking-[0.08em] transition-colors ${
+                atual
+                  ? "font-bold text-[#7A1F2B]"
+                  : liberado
+                    ? "text-zinc-500 hover:text-zinc-800"
+                    : "text-zinc-300"
+              }`}
+            >
+              {TRILHA_ROTULO[p.id] ?? p.titulo}
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 const dataBR = (iso: string | null | undefined) => {
   const m = String(iso ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
@@ -132,6 +222,9 @@ export default function EfetivaNecessidadeModal({
   const [enviandoTipo, setEnviandoTipo] = useState<TipoProva | null>(null);
   /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
   const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
+  const [passoIndex, setPassoIndex] = useState(0);
+  const [maxVisitado, setMaxVisitado] = useState(0);
+  const [avisoAnexo, setAvisoAnexo] = useState<string | null>(null);
   const [narrativa, setNarrativa] = useState("");
   const [textoBo, setTextoBo] = useState("");
   const [textoBoTocado, setTextoBoTocado] = useState(false);
@@ -183,7 +276,21 @@ export default function EfetivaNecessidadeModal({
         setContexto(reg.contexto_risco ?? "");
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
         setTextoBo(reg.texto_bo ?? "");
-        if (reg.narrativa_final || reg.narrativa_gerada) setEtapa("narrativa");
+        if (reg.narrativa_final || reg.narrativa_gerada) {
+          setEtapa("narrativa");
+          setPassoIndex(PASSO_REVISAO);
+          setMaxVisitado(PASSO_REVISAO);
+        } else {
+          // Retoma na primeira etapa ainda não respondida.
+          const iPergunta = PERGUNTAS.findIndex(
+            (q) => typeof (reg as any)[q.campo] !== "boolean",
+          );
+          const destino = iPergunta >= 0
+            ? iPergunta
+            : String(reg.relato_cliente ?? "").trim() ? PASSOS.length - 2 : PASSOS.length - 3;
+          setPassoIndex(destino);
+          setMaxVisitado(destino);
+        }
 
         const { data: acs } = await supabase
           .from("qa_efetiva_necessidade_acrescimos" as any)
@@ -457,6 +564,58 @@ export default function EfetivaNecessidadeModal({
   const todasRespondidas = PERGUNTAS.every((q) => typeof respostas[q.campo] === "boolean");
   const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= RELATO_MINIMO);
 
+  const passo = PASSOS[passoIndex];
+  const perguntaAtual = passo?.campo
+    ? PERGUNTAS.find((q) => q.campo === passo.campo) ?? null
+    : null;
+
+  /** Uma etapa está concluída quando o que ela pede já foi entregue. */
+  const passoConcluido = useCallback((i: number) => {
+    const p = PASSOS[i];
+    if (!p) return false;
+    if (p.tipo === "pergunta") return typeof respostas[p.campo!] === "boolean";
+    if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
+    if (p.tipo === "contexto") return contexto.trim().length > 0;
+    return false;
+  }, [respostas, relato, contexto, semProvaNenhuma]);
+
+  /** O "Próximo" só trava onde a regra de negócio já travava antes. */
+  const podeAvancar = useMemo(() => {
+    if (!passo) return false;
+    if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
+    if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
+    return true;
+  }, [passo, respostas, relato, semProvaNenhuma]);
+
+  const irPara = useCallback((i: number) => {
+    const destino = Math.max(0, Math.min(PASSOS.length - 1, i));
+    setAvisoAnexo(null);
+    setPassoIndex(destino);
+    setMaxVisitado((m) => Math.max(m, destino));
+  }, []);
+
+  const avancar = useCallback(() => {
+    const p = PASSOS[passoIndex];
+    // Marcou "sim" e não anexou nada: avisa uma vez, mas não bloqueia.
+    if (p?.tipo === "pergunta" && perguntaAtual?.tipoProva && respostas[p.campo!] === true) {
+      const temAnexo = provas.some((pr) => pr.tipo === perguntaAtual.tipoProva);
+      if (!temAnexo && !avisoAnexo) {
+        setAvisoAnexo(
+          "Você marcou que tem. Anexe o arquivo agora ou volte e marque “Não” — sem o documento, o fato vira apenas alegação.",
+        );
+        return;
+      }
+    }
+    irPara(passoIndex + 1);
+  }, [passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
+
+  /** Cada etapa mostra apenas as provas que ela mesma pediu. */
+  const provasDoPasso = useMemo(() => {
+    if (passo?.tipo === "revisao") return provas;
+    if (!perguntaAtual?.tipoProva) return [];
+    return provas.filter((p) => p.tipo === perguntaAtual.tipoProva);
+  }, [provas, passo, perguntaAtual]);
+
   if (!open) return null;
 
   return createPortal(
@@ -465,15 +624,17 @@ export default function EfetivaNecessidadeModal({
         <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5 pr-14">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
-              Efetiva necessidade
+              Efetiva necessidade · Passo {passoIndex + 1} de {PASSOS.length}
             </p>
             <h2 className="mt-1 text-[18px] font-semibold text-zinc-900">
-              Vamos reunir as provas do seu caso
+              {passo?.titulo ?? "Vamos reunir as provas do seu caso"}
             </h2>
-            <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
-              Nossa equipe usa esse material para escrever a peça que fundamenta, perante a
-              Polícia Federal, por que você precisa da arma. Quanto mais concreto, mais forte.
-            </p>
+            {passoIndex === 0 && (
+              <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
+                Nossa equipe usa esse material para escrever a peça que fundamenta, perante a
+                Polícia Federal, por que você precisa da arma. Quanto mais concreto, mais forte.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -489,8 +650,9 @@ export default function EfetivaNecessidadeModal({
           <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abrindo…
           </div>
-        ) : etapa === "narrativa" ? (
+        ) : passoIndex === PASSO_REVISAO && narrativa ? (
           <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
+            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                 Leia com atenção
@@ -717,19 +879,21 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : (
           <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
-            {PERGUNTAS.map((q) => (
-              <div key={q.campo} className="rounded-lg border border-zinc-200 p-4">
-                <p className="text-[14px] font-semibold text-zinc-900">{q.pergunta}</p>
-                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">{q.ajuda}</p>
+            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+
+            {passo?.tipo === "pergunta" && perguntaAtual && (
+              <div className="rounded-lg border border-zinc-200 p-4">
+                <p className="text-[14px] font-semibold text-zinc-900">{perguntaAtual.pergunta}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">{perguntaAtual.ajuda}</p>
 
                 <div className="mt-3 flex gap-2">
                   {[true, false].map((v) => (
                     <button
                       key={String(v)}
                       type="button"
-                      onClick={() => void responder(q.campo, v)}
+                      onClick={() => { setAvisoAnexo(null); void responder(perguntaAtual.campo, v); }}
                       className={`rounded-lg border px-4 py-2 text-[12px] font-semibold transition-colors ${
-                        respostas[q.campo] === v
+                        respostas[perguntaAtual.campo] === v
                           ? "border-[#7A1F2B] bg-[#7A1F2B]/5 text-[#7A1F2B]"
                           : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
                       }`}
@@ -739,29 +903,35 @@ export default function EfetivaNecessidadeModal({
                   ))}
                 </div>
 
-                {respostas[q.campo] === true && q.tipoProva && (
+                {respostas[perguntaAtual.campo] === true && perguntaAtual.tipoProva && (
                   <button
                     type="button"
-                    onClick={() => abrirSeletor(q.tipoProva!)}
+                    onClick={() => abrirSeletor(perguntaAtual.tipoProva!)}
                     disabled={enviandoTipo !== null}
                     className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
                   >
-                    {enviandoTipo === q.tipoProva
+                    {enviandoTipo === perguntaAtual.tipoProva
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       : <Upload className="h-3.5 w-3.5" />}
-                    Anexar {LABEL_TIPO[q.tipoProva].toLowerCase()}
+                    Anexar {LABEL_TIPO[perguntaAtual.tipoProva].toLowerCase()}
                   </button>
                 )}
-              </div>
-            ))}
 
-            {provas.length > 0 && (
+                {avisoAnexo && (
+                  <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    {avisoAnexo}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {provasDoPasso.length > 0 && (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                  Provas recebidas ({provas.length})
+                  Provas recebidas ({provasDoPasso.length})
                 </p>
                 <ul className="mt-2 space-y-2">
-                  {provas.map((pr) => (
+                  {provasDoPasso.map((pr) => (
                     <li key={pr.id} className="flex items-start gap-2 text-[12px] text-emerald-900">
                       <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>
@@ -779,7 +949,7 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
-            {semProvaNenhuma && (
+            {passo?.tipo === "relato" && semProvaNenhuma && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <div className="flex items-start gap-2">
                   <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
@@ -792,6 +962,7 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {passo?.tipo === "relato" && (
             <div>
               <label className="text-[12px] font-semibold text-zinc-800">
                 Conte o que está acontecendo
@@ -806,7 +977,7 @@ export default function EfetivaNecessidadeModal({
                 value={relato}
                 onChange={(e) => setRelato(e.target.value)}
                 onBlur={() => void salvarTexto("relato_cliente", relato)}
-                rows={6}
+                rows={10}
                 placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
                 className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
@@ -817,7 +988,9 @@ export default function EfetivaNecessidadeModal({
                 </p>
               )}
             </div>
+            )}
 
+            {passo?.tipo === "contexto" && (
             <div>
               <label className="text-[12px] font-semibold text-zinc-800">
                 O que, na sua rotina, aumenta o risco?
@@ -826,24 +999,62 @@ export default function EfetivaNecessidadeModal({
                 value={contexto}
                 onChange={(e) => setContexto(e.target.value)}
                 onBlur={() => void salvarTexto("contexto_risco", contexto)}
-                rows={3}
+                rows={5}
                 placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
                 className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
             </div>
+            )}
+
+            {passo?.tipo === "revisao" && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                    Confira antes de gerar
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-zinc-700">
+                    {PERGUNTAS.map((q) => (
+                      <li key={q.campo}>
+                        <strong>{TRILHA_ROTULO[q.campo]}:</strong>{" "}
+                        {respostas[q.campo] === true ? "sim" : respostas[q.campo] === false ? "não" : "sem resposta"}
+                      </li>
+                    ))}
+                    <li><strong>Provas anexadas:</strong> {provas.length}</li>
+                    <li><strong>Relato:</strong> {relato.trim().length} caracteres</li>
+                  </ul>
+                </div>
+                {!podeConcluir && (
+                  <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    Ainda falta responder alguma pergunta ou detalhar o relato. Volte pelas etapas
+                    acima — sem isso não conseguimos montar o seu texto.
+                  </p>
+                )}
+                <p className="text-[11px] leading-relaxed text-zinc-500">
+                  Ao gerar, montamos o seu relato em primeira pessoa e o texto que você leva à
+                  delegacia. Você lê tudo antes e só então aprova.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
-          <p className="text-[10px] leading-tight text-zinc-400">
-            {etapa === "narrativa"
-              ? <>Você é quem aprova.<br />Nada é enviado sem a sua concordância.</>
-              : <>
-                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
-                  <br />Pode parar e continuar quando quiser.
-                </>}
-          </p>
-          {etapa === "narrativa" ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              disabled={passoIndex === 0}
+              onClick={() => irPara(passoIndex - 1)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+            </button>
+            <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
+              {passoIndex === PASSO_REVISAO && narrativa
+                ? "Você é quem aprova."
+                : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+            </p>
+          </div>
+          {passoIndex === PASSO_REVISAO && narrativa ? (
             <button
               type="button"
               disabled={aprovando || narrativa.trim().length < 200}
@@ -853,7 +1064,7 @@ export default function EfetivaNecessidadeModal({
               {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
               Concordo e aprovo
             </button>
-          ) : (
+          ) : passoIndex === PASSO_REVISAO ? (
             <button
               type="button"
               disabled={!podeConcluir || salvando || gerando}
@@ -864,6 +1075,15 @@ export default function EfetivaNecessidadeModal({
                 : podeConcluir ? <Check className="h-3.5 w-3.5" />
                 : <ArrowRight className="h-3.5 w-3.5" />}
               {gerando ? "Montando seu relato…" : "Gerar meu relato"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!podeAvancar}
+              onClick={avancar}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              Próximo <ChevronRight className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
