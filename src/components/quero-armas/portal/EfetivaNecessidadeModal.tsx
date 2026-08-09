@@ -956,15 +956,60 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {passo?.tipo === "registrar_bo" ? (
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-[12px] leading-relaxed text-zinc-600">
+                  Depois de registrar, volte aqui e envie o boletim. Sem esse documento a sua
+                  defesa final não é fechada — é ele que transforma o seu relato em fato registrado.
+                </p>
+                <button
+                  type="button"
+                  onClick={confirmarRegistroBo}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f]"
+                >
+                  <Check className="h-3.5 w-3.5" /> Já registrei o boletim
+                </button>
+              </div>
+            ) : (
             <p className="text-[11px] leading-relaxed text-zinc-500">
               Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único
               arquivo assinado com este relato, as suas respostas e todos os anexos, e enviamos
               para o seu e-mail. Depois disso, o agendamento dos exames é liberado.
             </p>
+            )}
           </div>
         ) : (
-          <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
-            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+          <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
+            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+
+            {passo?.tipo === "enviar_bo" && (
+              <div className="rounded-lg border border-zinc-200 p-4">
+                <p className="text-[14px] font-semibold text-zinc-900">
+                  Envie o boletim de ocorrência registrado
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
+                  Assim que a delegacia liberar o documento, anexe aqui o PDF original. Nós lemos o
+                  número, a data e a natureza do fato e juntamos tudo à sua defesa.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => abrirSeletor("boletim_ocorrencia")}
+                  disabled={enviandoTipo !== null}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
+                >
+                  {enviandoTipo === "boletim_ocorrencia"
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Upload className="h-3.5 w-3.5" />}
+                  Anexar boletim de ocorrência
+                </button>
+                {!boEntregue && (
+                  <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    Este passo fica aberto até o boletim chegar. Você pode fechar e voltar quando
+                    tiver o documento em mãos — nada do que você já escreveu se perde.
+                  </p>
+                )}
+              </div>
+            )}
 
             {passo?.tipo === "pergunta" && perguntaAtual && (
               <div className="rounded-lg border border-zinc-200 p-4">
