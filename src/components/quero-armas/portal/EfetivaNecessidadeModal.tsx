@@ -820,19 +820,21 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : (
           <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
-            {PERGUNTAS.map((q) => (
-              <div key={q.campo} className="rounded-lg border border-zinc-200 p-4">
-                <p className="text-[14px] font-semibold text-zinc-900">{q.pergunta}</p>
-                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">{q.ajuda}</p>
+            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+
+            {passo?.tipo === "pergunta" && perguntaAtual && (
+              <div className="rounded-lg border border-zinc-200 p-4">
+                <p className="text-[14px] font-semibold text-zinc-900">{perguntaAtual.pergunta}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">{perguntaAtual.ajuda}</p>
 
                 <div className="mt-3 flex gap-2">
                   {[true, false].map((v) => (
                     <button
                       key={String(v)}
                       type="button"
-                      onClick={() => void responder(q.campo, v)}
+                      onClick={() => { setAvisoAnexo(null); void responder(perguntaAtual.campo, v); }}
                       className={`rounded-lg border px-4 py-2 text-[12px] font-semibold transition-colors ${
-                        respostas[q.campo] === v
+                        respostas[perguntaAtual.campo] === v
                           ? "border-[#7A1F2B] bg-[#7A1F2B]/5 text-[#7A1F2B]"
                           : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
                       }`}
@@ -842,29 +844,35 @@ export default function EfetivaNecessidadeModal({
                   ))}
                 </div>
 
-                {respostas[q.campo] === true && q.tipoProva && (
+                {respostas[perguntaAtual.campo] === true && perguntaAtual.tipoProva && (
                   <button
                     type="button"
-                    onClick={() => abrirSeletor(q.tipoProva!)}
+                    onClick={() => abrirSeletor(perguntaAtual.tipoProva!)}
                     disabled={enviandoTipo !== null}
                     className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
                   >
-                    {enviandoTipo === q.tipoProva
+                    {enviandoTipo === perguntaAtual.tipoProva
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       : <Upload className="h-3.5 w-3.5" />}
-                    Anexar {LABEL_TIPO[q.tipoProva].toLowerCase()}
+                    Anexar {LABEL_TIPO[perguntaAtual.tipoProva].toLowerCase()}
                   </button>
                 )}
-              </div>
-            ))}
 
-            {provas.length > 0 && (
+                {avisoAnexo && (
+                  <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    {avisoAnexo}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {provasDoPasso.length > 0 && (
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                  Provas recebidas ({provas.length})
+                  Provas recebidas ({provasDoPasso.length})
                 </p>
                 <ul className="mt-2 space-y-2">
-                  {provas.map((pr) => (
+                  {provasDoPasso.map((pr) => (
                     <li key={pr.id} className="flex items-start gap-2 text-[12px] text-emerald-900">
                       <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>
@@ -882,7 +890,7 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
-            {semProvaNenhuma && (
+            {passo?.tipo === "relato" && semProvaNenhuma && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <div className="flex items-start gap-2">
                   <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
@@ -895,6 +903,7 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {passo?.tipo === "relato" && (
             <div>
               <label className="text-[12px] font-semibold text-zinc-800">
                 Conte o que está acontecendo
@@ -909,7 +918,7 @@ export default function EfetivaNecessidadeModal({
                 value={relato}
                 onChange={(e) => setRelato(e.target.value)}
                 onBlur={() => void salvarTexto("relato_cliente", relato)}
-                rows={6}
+                rows={10}
                 placeholder="Descreva os fatos em ordem: datas, locais, pessoas envolvidas, o que foi dito ou feito."
                 className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
@@ -920,7 +929,9 @@ export default function EfetivaNecessidadeModal({
                 </p>
               )}
             </div>
+            )}
 
+            {passo?.tipo === "contexto" && (
             <div>
               <label className="text-[12px] font-semibold text-zinc-800">
                 O que, na sua rotina, aumenta o risco?
@@ -929,11 +940,42 @@ export default function EfetivaNecessidadeModal({
                 value={contexto}
                 onChange={(e) => setContexto(e.target.value)}
                 onBlur={() => void salvarTexto("contexto_risco", contexto)}
-                rows={3}
+                rows={5}
                 placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
                 className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
             </div>
+            )}
+
+            {passo?.tipo === "revisao" && (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                    Confira antes de gerar
+                  </p>
+                  <ul className="mt-2 space-y-1.5 text-[12px] leading-relaxed text-zinc-700">
+                    {PERGUNTAS.map((q) => (
+                      <li key={q.campo}>
+                        <strong>{TRILHA_ROTULO[q.campo]}:</strong>{" "}
+                        {respostas[q.campo] === true ? "sim" : respostas[q.campo] === false ? "não" : "sem resposta"}
+                      </li>
+                    ))}
+                    <li><strong>Provas anexadas:</strong> {provas.length}</li>
+                    <li><strong>Relato:</strong> {relato.trim().length} caracteres</li>
+                  </ul>
+                </div>
+                {!podeConcluir && (
+                  <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    Ainda falta responder alguma pergunta ou detalhar o relato. Volte pelas etapas
+                    acima — sem isso não conseguimos montar o seu texto.
+                  </p>
+                )}
+                <p className="text-[11px] leading-relaxed text-zinc-500">
+                  Ao gerar, montamos o seu relato em primeira pessoa e o texto que você leva à
+                  delegacia. Você lê tudo antes e só então aprova.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
