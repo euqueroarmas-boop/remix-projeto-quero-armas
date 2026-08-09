@@ -672,10 +672,11 @@ export default function EfetivaNecessidadeModal({
     if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (p.tipo === "contexto") return contexto.trim().length > 0;
     if (p.tipo === "revisao") return narrativa.trim().length > 0;
+    if (p.tipo === "entender_bo") return cienciaBoAceita;
     if (p.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
     if (p.tipo === "enviar_bo") return boEntregue;
     return false;
-  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
+  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
 
   /** O "Próximo" só trava onde a regra de negócio já travava antes. */
   const podeAvancar = useMemo(() => {
@@ -683,11 +684,13 @@ export default function EfetivaNecessidadeModal({
     if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
     if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (passo.tipo === "revisao") return narrativa.trim().length > 0;
+    // Trava dura: sem a ciência marcada, não se manda ninguém à delegacia.
+    if (passo.tipo === "entender_bo") return cienciaBoAceita;
     if (passo.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
     // Trava dura: sem o boletim registrado em mãos, a defesa final não abre.
     if (passo.tipo === "enviar_bo") return boEntregue;
     return true;
-  }, [passo, respostas, relato, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
+  }, [passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
 
   const irPara = useCallback((i: number) => {
     const destino = Math.max(0, Math.min(passos.length - 1, i));
