@@ -470,7 +470,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       {/* BLOCO FIXO — header + foco do dia + KPIs + filtro ativo */}
       <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
-        <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
+        <div className="hdr-top">
+          <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
+          <button className="add" type="button" onClick={() => onOpenAdd()}>
+            <Plus className="h-3 w-3" /> ADICIONAR
+          </button>
+        </div>
         <div className="meta qa-meta-lines">
           <span>
             <span>CPF · <b>{cpfFmt}</b></span>
@@ -543,9 +548,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       {/* LISTA AGRUPADA POR CATEGORIA */}
       <div className="listhead">
         <div className="ttl">DOCUMENTOS · AGRUPADO POR CATEGORIA <span className="cnt">{kpis.total}</span></div>
-        <button className="add" type="button" onClick={() => onOpenAdd()}>
-          <Plus className="h-3 w-3" /> ADICIONAR
-        </button>
       </div>
 
       {grupos.length === 0 ? (
