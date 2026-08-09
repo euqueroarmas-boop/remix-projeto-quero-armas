@@ -294,6 +294,12 @@ export default function EfetivaNecessidadeModal({
   const [campoAcrescimoAberto, setCampoAcrescimoAberto] = useState(false);
   const [salvandoAcrescimo, setSalvandoAcrescimo] = useState(false);
   const [linkBo, setLinkBo] = useState<LinkBo | null>(null);
+  /* ── Ciência do BO: o cliente lê a explicação e marca que entendeu ─────── */
+  const [cienciaBoAceita, setCienciaBoAceita] = useState(false);
+  const [cienciaBoEm, setCienciaBoEm] = useState<string | null>(null);
+  const [salvandoCiencia, setSalvandoCiencia] = useState(false);
+  const [ameacadorNome, setAmeacadorNome] = useState("");
+  const [ameacadorCpf, setAmeacadorCpf] = useState("");
   const [gerando, setGerando] = useState(false);
   const [editandoNarrativa, setEditandoNarrativa] = useState(false);
   const [narrativaTocada, setNarrativaTocada] = useState(false);
