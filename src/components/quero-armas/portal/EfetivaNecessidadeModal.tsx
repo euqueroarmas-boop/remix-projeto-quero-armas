@@ -25,6 +25,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import {
+  BLOCOS_EXPLICACAO_BO,
+  TERMO_BO_CODIGO,
+  TERMO_BO_TEXTO,
+  TERMO_BO_TITULO,
+  TERMO_BO_VERSAO,
+  montarTextoTermoBo,
+} from "@/lib/quero-armas/boExplicacao";
 
 interface Props {
   open: boolean;
@@ -147,6 +155,7 @@ type PassoTipo =
   | "relato"
   | "contexto"
   | "revisao"
+  | "entender_bo"
   | "registrar_bo"
   | "enviar_bo"
   | "defesa_final";
@@ -176,6 +185,7 @@ const PASSOS_BASE: Passo[] = [
  * defesa final é fechada com esse fato dentro.
  */
 const PASSOS_BO: Passo[] = [
+  { id: "entender_bo", tipo: "entender_bo", titulo: "Antes de ir à delegacia, entenda o boletim" },
   { id: "registrar_bo", tipo: "registrar_bo", titulo: "Registrar o boletim na delegacia" },
   { id: "enviar_bo", tipo: "enviar_bo", titulo: "Enviar o boletim registrado" },
   { id: "defesa_final", tipo: "defesa_final", titulo: "Defesa final e aprovação" },
@@ -189,6 +199,7 @@ const TRILHA_ROTULO: Record<string, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração",
+  entender_bo: "Entenda o BO",
   registrar_bo: "Registrar o BO",
   enviar_bo: "Enviar o BO",
   defesa_final: "Defesa final",
