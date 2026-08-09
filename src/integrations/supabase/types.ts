@@ -4367,6 +4367,66 @@ export type Database = {
           },
         ]
       }
+      qa_cliente_ciencias: {
+        Row: {
+          accept_language: string | null
+          aceito_em: string
+          cadastro_publico_id: number | null
+          cliente_id: number | null
+          created_at: string
+          id: string
+          ip: string | null
+          metadados: Json
+          origem: string
+          processo_id: number | null
+          referer: string | null
+          termo_codigo: string
+          termo_hash: string
+          termo_texto: string
+          termo_titulo: string
+          termo_versao: string
+          user_agent: string | null
+        }
+        Insert: {
+          accept_language?: string | null
+          aceito_em?: string
+          cadastro_publico_id?: number | null
+          cliente_id?: number | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadados?: Json
+          origem?: string
+          processo_id?: number | null
+          referer?: string | null
+          termo_codigo: string
+          termo_hash: string
+          termo_texto: string
+          termo_titulo: string
+          termo_versao: string
+          user_agent?: string | null
+        }
+        Update: {
+          accept_language?: string | null
+          aceito_em?: string
+          cadastro_publico_id?: number | null
+          cliente_id?: number | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          metadados?: Json
+          origem?: string
+          processo_id?: number | null
+          referer?: string | null
+          termo_codigo?: string
+          termo_hash?: string
+          termo_texto?: string
+          termo_titulo?: string
+          termo_versao?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       qa_cliente_credenciais: {
         Row: {
           cadastro_cr_id: number | null
