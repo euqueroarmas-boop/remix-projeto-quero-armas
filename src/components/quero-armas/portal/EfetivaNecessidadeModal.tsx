@@ -170,6 +170,9 @@ export default function EfetivaNecessidadeModal({
   const [enviandoTipo, setEnviandoTipo] = useState<TipoProva | null>(null);
   /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
   const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
+  const [passoIndex, setPassoIndex] = useState(0);
+  const [maxVisitado, setMaxVisitado] = useState(0);
+  const [avisoAnexo, setAvisoAnexo] = useState<string | null>(null);
   const [narrativa, setNarrativa] = useState("");
   const [textoBo, setTextoBo] = useState("");
   const [textoBoTocado, setTextoBoTocado] = useState(false);
