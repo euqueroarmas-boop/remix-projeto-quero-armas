@@ -32,6 +32,7 @@ REGRAS ABSOLUTAS:
 - Termine com um parágrafo em que eu explico, com os meus próprios fatos, por que continuo em risco hoje.
 - Entre 2.500 e 6.000 caracteres. Parágrafos curtos. Sem títulos, sem marcadores, sem markdown.
 - Se houver FATOS ACRESCENTADOS DEPOIS, incorpore-os ao relato no lugar cronológico correto. NUNCA descarte fatos já narrados: o relato novo contém tudo o que havia antes MAIS o que foi acrescentado.
+- BOLETINS ANTIGOS = REITERAÇÃO. Amarre-os no relato como sequência ("desde DD/MM/AAAA venho registrando ocorrências..."), demonstrando que o problema se repete há tempo. Destaque o FATO MAIS RECENTE narrado pelo cliente e correlacione-o expressamente aos boletins anteriores. NUNCA afirme que um boletim antigo, sozinho, comprova ameaça atual.
 
 VOCÊ PRODUZ DOIS TEXTOS, nesta ordem exata e com estes marcadores literais em linha própria:
 
