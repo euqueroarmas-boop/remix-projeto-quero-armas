@@ -1163,16 +1163,17 @@ export default function EfetivaNecessidadeModal({
 
             {passo?.tipo === "contexto" && (
             <div>
-              <label className="text-[12px] font-semibold text-zinc-800">
-                O que, na sua rotina, aumenta o risco?
-              </label>
+              <p className="text-[11px] leading-relaxed text-zinc-500">
+                Descreva o dia a dia que te expõe: trajetos, horários, local de trabalho,
+                valores transportados e com quem você mora.
+              </p>
               <textarea
                 value={contexto}
                 onChange={(e) => setContexto(e.target.value)}
                 onBlur={() => void salvarTexto("contexto_risco", contexto)}
-                rows={5}
+                rows={7}
                 placeholder="Ex.: moro em zona rural isolada, transporto valores, trabalho à noite, resido sozinho com idosos."
-                className="mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+                className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
               />
             </div>
             )}
