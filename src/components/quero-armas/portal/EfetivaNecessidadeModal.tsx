@@ -545,6 +545,170 @@ export default function EfetivaNecessidadeModal({
               </button>
             </div>
 
+            {/* ── Fatos novos: abre um campo, guarda no histórico e refaz ─── */}
+            <div className="rounded-lg border border-zinc-200 p-4">
+              <p className="text-[12px] font-semibold text-zinc-900">Aconteceu mais alguma coisa?</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                Se você lembrou de outro fato, ou algo novo aconteceu depois, escreva aqui. Nada do
+                que você já contou é apagado: o relato é reescrito somando o fato novo.
+              </p>
+
+              {acrescimos.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {acrescimos.map((a, i) => (
+                    <li key={a.id} className="rounded-md bg-zinc-50 p-3 text-[12px] leading-relaxed text-zinc-700">
+                      <span className="mr-1 font-semibold text-zinc-500">{i + 1}.</span>
+                      {a.texto}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {campoAcrescimoAberto ? (
+                <div className="mt-3">
+                  <textarea
+                    value={novoAcrescimo}
+                    onChange={(e) => setNovoAcrescimo(e.target.value)}
+                    rows={4}
+                    placeholder="Conte o fato novo: quando foi, onde, quem estava envolvido e o que foi dito ou feito."
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={salvandoAcrescimo || novoAcrescimo.trim().length < 20}
+                      onClick={() => void adicionarAcrescimo()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-40"
+                    >
+                      {salvandoAcrescimo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Guardar este fato
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCampoAcrescimoAberto(false); setNovoAcrescimo(""); }}
+                      className="rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCampoAcrescimoAberto(true)}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Adicionar um fato novo
+                </button>
+              )}
+
+              {acrescimos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void gerarNarrativa()}
+                  disabled={gerando}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Refazer o relato com os fatos novos
+                </button>
+              )}
+            </div>
+
+            {/* ── Texto pronto para o cliente registrar o BO ───────────────── */}
+            {textoBo && (
+              <div className="rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  Texto para você registrar o boletim de ocorrência
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                  O que você contou traz fatos que não estão em nenhum boletim. Leve o texto abaixo
+                  à delegacia — ele descreve, com as suas palavras, a situação de risco em que você
+                  se encontra hoje. Leia antes: você é quem assina o registro.
+                </p>
+
+                {editandoBo ? (
+                  <textarea
+                    value={textoBo}
+                    onChange={(e) => { setTextoBo(e.target.value.slice(0, LIMITE_BO)); setTextoBoTocado(true); }}
+                    rows={7}
+                    className="mt-3 w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-2 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
+                  />
+                ) : (
+                  <p className="mt-3 rounded-lg border border-zinc-200 bg-white p-3 text-[13px] leading-relaxed text-zinc-800">
+                    {textoBo}
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-zinc-400">{textoBo.length}/{LIMITE_BO} caracteres</span>
+                  <button
+                    type="button"
+                    onClick={() => void copiar(textoBo)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copiar o texto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditandoBo((v) => !v)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> {editandoBo ? "Concluir edição" : "Ajustar"}
+                  </button>
+                </div>
+
+                {/* Como abrir o BO — passo a passo, no padrão do pop-up guiado */}
+                <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    Como registrar o seu boletim
+                  </p>
+                  <ol className="mt-2 space-y-2 text-[12px] leading-relaxed text-zinc-700">
+                    <li><strong>1.</strong> Copie o texto acima.</li>
+                    <li>
+                      <strong>2.</strong> Abra a delegacia eletrônica
+                      {linkBo?.url_abrir ? (
+                        <>
+                          {" "}da <strong>{linkBo.nome_orgao ?? linkBo.uf}</strong> e escolha comunicar ocorrência.{" "}
+                          <a
+                            href={linkBo.url_abrir}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-[#7A1F2B] underline"
+                          >
+                            Abrir agora <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      ) : (
+                        <> da Polícia Civil do seu estado e escolha comunicar ocorrência. Se preferir,
+                          vá pessoalmente à delegacia mais próxima.</>
+                      )}
+                    </li>
+                    <li><strong>3.</strong> Cole o texto no campo do relato e confira os seus dados antes de enviar.</li>
+                    <li>
+                      <strong>4.</strong> Guarde o número do protocolo. Para acompanhar o andamento você
+                      precisa do <strong>número do protocolo ou do boletim</strong>, do{" "}
+                      <strong>ano do registro</strong> e do <strong>CPF do declarante</strong>.
+                      {linkBo?.url_acompanhar && (
+                        <>
+                          {" "}
+                          <a
+                            href={linkBo.url_acompanhar}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-[#7A1F2B] underline"
+                          >
+                            Acompanhar andamento <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      )}
+                    </li>
+                    <li><strong>5.</strong> Quando o boletim sair, volte aqui e anexe o PDF como nova prova.</li>
+                  </ol>
+                </div>
+              </div>
+            )}
+
             <p className="text-[11px] leading-relaxed text-zinc-500">
               Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único
               arquivo assinado com este relato, as suas respostas e todos os anexos, e enviamos
