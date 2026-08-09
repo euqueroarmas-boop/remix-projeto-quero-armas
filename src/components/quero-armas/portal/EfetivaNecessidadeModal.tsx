@@ -256,7 +256,7 @@ const dataBR = (iso: string | null | undefined) => {
 
 export default function EfetivaNecessidadeModal({
   open, processoId, clienteId, onClose, onConcluido, embedded = false,
-  passoId, onPassoConcluido,
+  passoId, onPassoConcluido, onPassoAtualChange,
 }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
