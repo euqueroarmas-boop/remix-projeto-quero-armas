@@ -8065,6 +8065,48 @@ export type Database = {
           },
         ]
       }
+      qa_inatividade_cobrancas: {
+        Row: {
+          canal: string
+          cliente_id: number
+          created_at: string
+          destinatario: string | null
+          detalhes: Json
+          dias_parado: number
+          erro_mensagem: string | null
+          id: string
+          processo_id: string
+          semana_num: number
+          status: string
+        }
+        Insert: {
+          canal?: string
+          cliente_id: number
+          created_at?: string
+          destinatario?: string | null
+          detalhes?: Json
+          dias_parado?: number
+          erro_mensagem?: string | null
+          id?: string
+          processo_id: string
+          semana_num: number
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number
+          created_at?: string
+          destinatario?: string | null
+          detalhes?: Json
+          dias_parado?: number
+          erro_mensagem?: string | null
+          id?: string
+          processo_id?: string
+          semana_num?: number
+          status?: string
+        }
+        Relationships: []
+      }
       qa_itens_venda: {
         Row: {
           calibre: string | null
@@ -13074,6 +13116,25 @@ export type Database = {
       qa_notificacao_marcar_vista: {
         Args: { p_id: string }
         Returns: undefined
+      }
+      qa_painel_progresso_clientes: {
+        Args: never
+        Returns: {
+          cliente_email: string
+          cliente_id: number
+          cliente_nome: string
+          cobrancas: number
+          criado_em: string
+          dias_parado: number
+          entregues: number
+          fase: string
+          processo_id: string
+          proximo_doc: string
+          servico_nome: string
+          status: string
+          total_docs: number
+          ultima_atividade: string
+        }[]
       }
       qa_parse_date_safe: { Args: { v: string }; Returns: string }
       qa_pos_pagamento_protocolar: {
