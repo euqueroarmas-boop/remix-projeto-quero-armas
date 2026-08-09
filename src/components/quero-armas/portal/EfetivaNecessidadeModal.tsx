@@ -686,6 +686,9 @@ export default function EfetivaNecessidadeModal({
   const narrativaNaTela =
     !!narrativa && (passo?.tipo === "revisao" || passo?.tipo === "defesa_final" || passo?.tipo === "registrar_bo");
 
+  /** Último passo do caminho — é onde a aprovação acontece. */
+  const passoFinal = passoIndex === passos.length - 1;
+
   const conteudo = (
       <div
         className={
