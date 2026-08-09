@@ -25,6 +25,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import {
+  BLOCOS_EXPLICACAO_BO,
+  TERMO_BO_CODIGO,
+  TERMO_BO_TEXTO,
+  TERMO_BO_TITULO,
+  TERMO_BO_VERSAO,
+  montarTextoTermoBo,
+} from "@/lib/quero-armas/boExplicacao";
 
 interface Props {
   open: boolean;
@@ -147,6 +155,7 @@ type PassoTipo =
   | "relato"
   | "contexto"
   | "revisao"
+  | "entender_bo"
   | "registrar_bo"
   | "enviar_bo"
   | "defesa_final";
@@ -176,6 +185,7 @@ const PASSOS_BASE: Passo[] = [
  * defesa final é fechada com esse fato dentro.
  */
 const PASSOS_BO: Passo[] = [
+  { id: "entender_bo", tipo: "entender_bo", titulo: "Antes de ir à delegacia, entenda o boletim" },
   { id: "registrar_bo", tipo: "registrar_bo", titulo: "Registrar o boletim na delegacia" },
   { id: "enviar_bo", tipo: "enviar_bo", titulo: "Enviar o boletim registrado" },
   { id: "defesa_final", tipo: "defesa_final", titulo: "Defesa final e aprovação" },
@@ -189,6 +199,7 @@ const TRILHA_ROTULO: Record<string, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração",
+  entender_bo: "Entenda o BO",
   registrar_bo: "Registrar o BO",
   enviar_bo: "Enviar o BO",
   defesa_final: "Defesa final",
@@ -283,6 +294,12 @@ export default function EfetivaNecessidadeModal({
   const [campoAcrescimoAberto, setCampoAcrescimoAberto] = useState(false);
   const [salvandoAcrescimo, setSalvandoAcrescimo] = useState(false);
   const [linkBo, setLinkBo] = useState<LinkBo | null>(null);
+  /* ── Ciência do BO: o cliente lê a explicação e marca que entendeu ─────── */
+  const [cienciaBoAceita, setCienciaBoAceita] = useState(false);
+  const [cienciaBoEm, setCienciaBoEm] = useState<string | null>(null);
+  const [salvandoCiencia, setSalvandoCiencia] = useState(false);
+  const [ameacadorNome, setAmeacadorNome] = useState("");
+  const [ameacadorCpf, setAmeacadorCpf] = useState("");
   const [gerando, setGerando] = useState(false);
   const [editandoNarrativa, setEditandoNarrativa] = useState(false);
   const [narrativaTocada, setNarrativaTocada] = useState(false);
@@ -655,10 +672,11 @@ export default function EfetivaNecessidadeModal({
     if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (p.tipo === "contexto") return contexto.trim().length > 0;
     if (p.tipo === "revisao") return narrativa.trim().length > 0;
+    if (p.tipo === "entender_bo") return cienciaBoAceita;
     if (p.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
     if (p.tipo === "enviar_bo") return boEntregue;
     return false;
-  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
+  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
 
   /** O "Próximo" só trava onde a regra de negócio já travava antes. */
   const podeAvancar = useMemo(() => {
@@ -666,11 +684,13 @@ export default function EfetivaNecessidadeModal({
     if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
     if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (passo.tipo === "revisao") return narrativa.trim().length > 0;
+    // Trava dura: sem a ciência marcada, não se manda ninguém à delegacia.
+    if (passo.tipo === "entender_bo") return cienciaBoAceita;
     if (passo.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
     // Trava dura: sem o boletim registrado em mãos, a defesa final não abre.
     if (passo.tipo === "enviar_bo") return boEntregue;
     return true;
-  }, [passo, respostas, relato, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
+  }, [passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
 
   const irPara = useCallback((i: number) => {
     const destino = Math.max(0, Math.min(passos.length - 1, i));
@@ -724,6 +744,68 @@ export default function EfetivaNecessidadeModal({
     setBoRegistradoConfirmado(true);
     irPara(passoIndex + 1);
   }, [irPara, passoIndex]);
+
+  /* ── Ciência do BO ───────────────────────────────────────────────────────
+   * O aceite é permanente: fica no cadastro do cliente com o texto integral
+   * que estava na tela, o hash desse texto e o carimbo da conexão. Se já
+   * existe aceite desta versão, a tela abre marcada e não pede de novo.
+   * ---------------------------------------------------------------------- */
+  useEffect(() => {
+    if (!open || !clienteId) return;
+    let cancelado = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_cliente_ciencias" as any)
+        .select("aceito_em, metadados")
+        .eq("cliente_id", clienteId)
+        .eq("termo_codigo", TERMO_BO_CODIGO)
+        .eq("termo_versao", TERMO_BO_VERSAO)
+        .order("aceito_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelado || !data) return;
+      const meta = ((data as any).metadados ?? {}) as Record<string, unknown>;
+      setCienciaBoAceita(true);
+      setCienciaBoEm(String((data as any).aceito_em ?? ""));
+      if (typeof meta.ameacador_nome === "string") setAmeacadorNome(meta.ameacador_nome);
+      if (typeof meta.ameacador_cpf === "string") setAmeacadorCpf(meta.ameacador_cpf);
+    })();
+    return () => { cancelado = true; };
+  }, [open, clienteId]);
+
+  const registrarCienciaBo = useCallback(async () => {
+    if (cienciaBoAceita || salvandoCiencia) return;
+    setSalvandoCiencia(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-registrar-ciencia", {
+        body: {
+          cliente_id: clienteId,
+          processo_id: processoId ? Number(processoId) || null : null,
+          termo_codigo: TERMO_BO_CODIGO,
+          termo_versao: TERMO_BO_VERSAO,
+          termo_titulo: TERMO_BO_TITULO,
+          termo_texto: montarTextoTermoBo(),
+          origem: "portal_cliente_efetiva_necessidade",
+          metadados: {
+            ameacador_nome: ameacadorNome.trim() || null,
+            ameacador_cpf: ameacadorCpf.replace(/\D/g, "") || null,
+            tela: "efetiva_necessidade/entender_bo",
+            fuso: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            tela_px: `${window.screen?.width ?? 0}x${window.screen?.height ?? 0}`,
+          },
+        },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error ?? error?.message);
+      setCienciaBoAceita(true);
+      setCienciaBoEm((data as any)?.ciencia?.aceito_em ?? new Date().toISOString());
+      onPassoConcluido?.();
+    } catch (e) {
+      toast.error("Não consegui registrar a sua ciência. Tente de novo.");
+      console.error(e);
+    } finally {
+      setSalvandoCiencia(false);
+    }
+  }, [cienciaBoAceita, salvandoCiencia, clienteId, processoId, ameacadorNome, ameacadorCpf, onPassoConcluido]);
 
   /** Cada etapa mostra apenas as provas que ela mesma pediu. */
   const provasDoPasso = useMemo(() => {
@@ -1040,6 +1122,91 @@ export default function EfetivaNecessidadeModal({
         ) : (
           <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
             {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
+
+            {/* ── Entenda o BO: explicação obrigatória antes da delegacia ── */}
+            {passo?.tipo === "entender_bo" && (
+              <div className="space-y-3">
+                <p className="text-[12px] leading-relaxed text-zinc-600">
+                  Antes de você ir à delegacia, leia com calma. Muita gente evita registrar
+                  boletim por achar que vai “criar problema” com alguém. Não é isso que acontece.
+                </p>
+
+                {BLOCOS_EXPLICACAO_BO.map((b) => (
+                  <div
+                    key={b.titulo}
+                    className={
+                      b.destaque
+                        ? "rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04] p-4"
+                        : "rounded-lg border border-zinc-200 bg-white p-4"
+                    }
+                  >
+                    <p className={`text-[12px] font-semibold ${b.destaque ? "text-[#7A1F2B]" : "text-zinc-900"}`}>
+                      {b.titulo}
+                    </p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">{b.texto}</p>
+                  </div>
+                ))}
+
+                <div className="rounded-lg border border-zinc-200 p-4">
+                  <p className="text-[12px] font-semibold text-zinc-900">
+                    Quem está te deixando preocupado? (opcional, mas recomendado)
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                    Informe se souber. Nada acontece contra a pessoa por causa disso — o registro
+                    apenas fica mais forte.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <input
+                      value={ameacadorNome}
+                      onChange={(e) => setAmeacadorNome(e.target.value)}
+                      disabled={cienciaBoAceita}
+                      placeholder="Nome completo"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] focus:border-[#7A1F2B] focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500"
+                    />
+                    <input
+                      value={ameacadorCpf}
+                      onChange={(e) => setAmeacadorCpf(e.target.value)}
+                      disabled={cienciaBoAceita}
+                      inputMode="numeric"
+                      placeholder="CPF (se souber)"
+                      className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] focus:border-[#7A1F2B] focus:outline-none disabled:bg-zinc-50 disabled:text-zinc-500"
+                    />
+                  </div>
+                </div>
+
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${
+                    cienciaBoAceita
+                      ? "border-emerald-300 bg-emerald-50"
+                      : "border-[#7A1F2B]/40 bg-[#7A1F2B]/[0.03]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={cienciaBoAceita}
+                    disabled={cienciaBoAceita || salvandoCiencia}
+                    onChange={() => void registrarCienciaBo()}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#7A1F2B]"
+                  />
+                  <span className="text-[12px] leading-relaxed text-zinc-700">
+                    {TERMO_BO_TEXTO}
+                  </span>
+                </label>
+
+                {salvandoCiencia && (
+                  <p className="flex items-center gap-2 text-[11px] text-zinc-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Registrando a sua ciência…
+                  </p>
+                )}
+                {cienciaBoAceita && cienciaBoEm && (
+                  <p className="flex items-center gap-2 text-[11px] text-emerald-700">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Ciência registrada em {new Date(cienciaBoEm).toLocaleString("pt-BR")} com o
+                    carimbo da sua conexão.
+                  </p>
+                )}
+              </div>
+            )}
 
             {passo?.tipo === "enviar_bo" && (
               <div className="rounded-lg border border-zinc-200 p-4">
