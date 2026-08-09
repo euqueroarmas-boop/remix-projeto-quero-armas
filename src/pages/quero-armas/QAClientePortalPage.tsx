@@ -35,6 +35,11 @@ import { ClienteProcessosSection } from "@/components/quero-armas/processos/Clie
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
+import {
+  calcularPassosEfetiva,
+  ehTipoEfetivaNecessidade,
+  type EfetivaPasso,
+} from "@/lib/quero-armas/efetivaNecessidadePassos";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
@@ -360,6 +365,13 @@ export default function QAClientePortalPage() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [pinnedPendenciaId, setPinnedPendenciaId] = useState<string | null>(null);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
+  /**
+   * EFETIVA NECESSIDADE — passos como itens reais do checklist.
+   * Regra do usuário (09/08/2026): "passo 7 de 7" tem de contar no grupo. Aqui
+   * guardamos, por processo, o estado de cada passo lido do banco.
+   */
+  const [efetivaPassos, setEfetivaPassos] = useState<Record<string, EfetivaPasso[]>>({});
+  const [efetivaReloadKey, setEfetivaReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
   const [pendingSignatureDocs, setPendingSignatureDocs] = useState<PendingSignatureDoc[]>([]);
