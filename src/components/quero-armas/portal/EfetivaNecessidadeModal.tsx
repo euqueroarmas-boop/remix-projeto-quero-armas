@@ -39,6 +39,14 @@ interface Props {
    * checklist guiado e os seus passos contam como itens do grupo.
    */
   embedded?: boolean;
+  /**
+   * Quando o pop-up guiado quebra a efetiva necessidade em itens da fila, cada
+   * item renderiza este componente travado em UM passo. O wizard deixa de ser
+   * um fluxo paralelo: ele é o corpo do item atual do checklist.
+   */
+  passoId?: string;
+  /** Avisa o portal que o estado do passo mudou (recontar a fila/grupo). */
+  onPassoConcluido?: () => void;
 }
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
@@ -242,6 +250,7 @@ const dataBR = (iso: string | null | undefined) => {
 
 export default function EfetivaNecessidadeModal({
   open, processoId, clienteId, onClose, onConcluido, embedded = false,
+  passoId, onPassoConcluido,
 }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -660,7 +669,10 @@ export default function EfetivaNecessidadeModal({
     setAvisoAnexo(null);
     setPassoIndex(destino);
     setMaxVisitado((m) => Math.max(m, destino));
-  }, [passos.length]);
+    // Modo "um passo por item da fila": quem navega é o pop-up guiado, então
+    // o portal precisa recontar os itens concluídos do grupo.
+    if (passoId) onPassoConcluido?.();
+  }, [passos.length, passoId, onPassoConcluido]);
 
   const avancar = useCallback(() => {
     const p = passos[passoIndex];
