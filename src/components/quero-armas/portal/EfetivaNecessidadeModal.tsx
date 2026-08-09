@@ -1039,15 +1039,22 @@ export default function EfetivaNecessidadeModal({
         )}
 
         <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
-          <p className="text-[10px] leading-tight text-zinc-400">
-            {etapa === "narrativa"
-              ? <>Você é quem aprova.<br />Nada é enviado sem a sua concordância.</>
-              : <>
-                  {salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
-                  <br />Pode parar e continuar quando quiser.
-                </>}
-          </p>
-          {etapa === "narrativa" ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              disabled={passoIndex === 0}
+              onClick={() => irPara(passoIndex - 1)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+            </button>
+            <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
+              {passoIndex === PASSO_REVISAO && narrativa
+                ? "Você é quem aprova."
+                : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
+            </p>
+          </div>
+          {passoIndex === PASSO_REVISAO && narrativa ? (
             <button
               type="button"
               disabled={aprovando || narrativa.trim().length < 200}
@@ -1057,7 +1064,7 @@ export default function EfetivaNecessidadeModal({
               {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
               Concordo e aprovo
             </button>
-          ) : (
+          ) : passoIndex === PASSO_REVISAO ? (
             <button
               type="button"
               disabled={!podeConcluir || salvando || gerando}
@@ -1068,6 +1075,15 @@ export default function EfetivaNecessidadeModal({
                 : podeConcluir ? <Check className="h-3.5 w-3.5" />
                 : <ArrowRight className="h-3.5 w-3.5" />}
               {gerando ? "Montando seu relato…" : "Gerar meu relato"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!podeAvancar}
+              onClick={avancar}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+            >
+              Próximo <ChevronRight className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
