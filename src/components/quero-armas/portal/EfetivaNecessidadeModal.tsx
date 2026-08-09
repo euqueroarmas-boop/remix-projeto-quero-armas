@@ -39,6 +39,14 @@ interface Props {
    * checklist guiado e os seus passos contam como itens do grupo.
    */
   embedded?: boolean;
+  /**
+   * Quando o pop-up guiado quebra a efetiva necessidade em itens da fila, cada
+   * item renderiza este componente travado em UM passo. O wizard deixa de ser
+   * um fluxo paralelo: ele é o corpo do item atual do checklist.
+   */
+  passoId?: string;
+  /** Avisa o portal que o estado do passo mudou (recontar a fila/grupo). */
+  onPassoConcluido?: () => void;
 }
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
@@ -242,6 +250,7 @@ const dataBR = (iso: string | null | undefined) => {
 
 export default function EfetivaNecessidadeModal({
   open, processoId, clienteId, onClose, onConcluido, embedded = false,
+  passoId, onPassoConcluido,
 }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -660,7 +669,22 @@ export default function EfetivaNecessidadeModal({
     setAvisoAnexo(null);
     setPassoIndex(destino);
     setMaxVisitado((m) => Math.max(m, destino));
-  }, [passos.length]);
+    // Modo "um passo por item da fila": quem navega é o pop-up guiado, então
+    // o portal precisa recontar os itens concluídos do grupo.
+    if (passoId) onPassoConcluido?.();
+  }, [passos.length, passoId, onPassoConcluido]);
+
+  /**
+   * Travado no passo que o item da fila representa. Sem isto o wizard
+   * retomaria pelo estado interno e ignoraria qual item o cliente abriu.
+   */
+  useEffect(() => {
+    if (!passoId) return;
+    const i = passos.findIndex((p) => p.id === passoId);
+    if (i < 0) return;
+    setPassoIndex(i);
+    setMaxVisitado((m) => Math.max(m, i));
+  }, [passoId, passos]);
 
   const avancar = useCallback(() => {
     const p = passos[passoIndex];
@@ -746,7 +770,7 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : narrativaNaTela ? (
           <div className={embedded ? "space-y-4" : "no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5"}>
-            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+            {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
             {passo?.tipo === "registrar_bo" ? null : (
             <>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
@@ -993,7 +1017,7 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : (
           <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
-            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+            {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
 
             {passo?.tipo === "enviar_bo" && (
               <div className="rounded-lg border border-zinc-200 p-4">

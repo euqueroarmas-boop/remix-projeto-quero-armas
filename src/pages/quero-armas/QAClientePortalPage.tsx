@@ -35,6 +35,11 @@ import { ClienteProcessosSection } from "@/components/quero-armas/processos/Clie
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
+import {
+  calcularPassosEfetiva,
+  ehTipoEfetivaNecessidade,
+  type EfetivaPasso,
+} from "@/lib/quero-armas/efetivaNecessidadePassos";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
@@ -360,6 +365,13 @@ export default function QAClientePortalPage() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [pinnedPendenciaId, setPinnedPendenciaId] = useState<string | null>(null);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
+  /**
+   * EFETIVA NECESSIDADE — passos como itens reais do checklist.
+   * Regra do usuário (09/08/2026): "passo 7 de 7" tem de contar no grupo. Aqui
+   * guardamos, por processo, o estado de cada passo lido do banco.
+   */
+  const [efetivaPassos, setEfetivaPassos] = useState<Record<string, EfetivaPasso[]>>({});
+  const [efetivaReloadKey, setEfetivaReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
   const [pendingSignatureDocs, setPendingSignatureDocs] = useState<PendingSignatureDoc[]>([]);
@@ -2006,6 +2018,52 @@ export default function QAClientePortalPage() {
         ? catalogoDocInfoByTipo.get(rawTipo)
         : undefined;
       const catFinal = catInfo && (catInfo.instrucoes || catInfo.link_emissao) ? catInfo : catInfoFallback;
+      // ── EFETIVA NECESSIDADE — um item da fila POR PASSO ─────────────────
+      // Regra do usuário: os passos internos precisam contar no grupo. Cada
+      // passo pendente vira um item próprio, com o wizard travado nele.
+      const passosEfetiva = ehTipoEfetivaNecessidade(rawTipo)
+        ? efetivaPassos[String(doc?.processo_id ?? "")]
+        : null;
+      if (passosEfetiva && passosEfetiva.length > 0 && doc?.processo_id && cliente?.id) {
+        const pendentes = passosEfetiva.filter((p) => !p.concluido);
+        for (const passo of pendentes) {
+          items.push({
+            id: `efetiva:${doc.processo_id}:${passo.id}`,
+            kind: "documento",
+            servicoId: p?.servico_id ?? null,
+            servicoLabel,
+            // @ts-expect-error usado apenas para ordenação por processo
+            __processoId: doc.processo_id ?? null,
+            label: `Efetiva necessidade — ${passo.label}`,
+            tipo: hubTipo,
+            rawTipo,
+            fallbackNome: passo.label,
+            contexto: "Exigência do processo",
+            instrucoesCatalogo: catFinal?.instrucoes ?? null,
+            linkEmissao: catFinal?.link_emissao ?? null,
+            observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
+            onPrimary: () => {},
+            entregarLabel: "Iniciar efetiva necessidade",
+            corpo: (
+              <EfetivaNecessidadeModal
+                embedded
+                open
+                passoId={passo.id}
+                processoId={String(doc.processo_id)}
+                clienteId={Number(cliente.id)}
+                onClose={() => setShowContratoPopup(false)}
+                onPassoConcluido={() => setEfetivaReloadKey((k) => k + 1)}
+                onConcluido={() => {
+                  setEfetivaReloadKey((k) => k + 1);
+                  setDocsReloadKey((k) => k + 1);
+                }}
+              />
+            ),
+            onEntregar: () => {},
+          });
+        }
+        return;
+      }
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
@@ -2409,7 +2467,7 @@ export default function QAClientePortalPage() {
     // popup guiado. A sequência por grupo continua na ordenação, mas sem
     // esconder os demais grupos atrás de uma fila paralela.
     return decorados.map((d) => d.it);
-  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub]);
+  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
@@ -2599,6 +2657,53 @@ export default function QAClientePortalPage() {
     toast.info("Nenhuma pendência no momento.");
   };
 
+  // ==========================================================================
+  // Carrega o estado dos passos da efetiva necessidade (um por processo que
+  // tem a exigência). É esta leitura que faz cada passo virar item da fila e
+  // entrar na contagem "N de M concluídos" do grupo.
+  // ==========================================================================
+  useEffect(() => {
+    const processosEfetiva = Array.from(
+      new Set(
+        (processoDocs ?? [])
+          .filter((d: any) => d?.obrigatorio && ehTipoEfetivaNecessidade(d?.tipo_documento))
+          .map((d: any) => String(d?.processo_id ?? ""))
+          .filter(Boolean),
+      ),
+    );
+    if (processosEfetiva.length === 0) {
+      setEfetivaPassos({});
+      return;
+    }
+    let vivo = true;
+    (async () => {
+      const mapa: Record<string, EfetivaPasso[]> = {};
+      for (const pid of processosEfetiva) {
+        try {
+          const { data: reg } = await supabase
+            .from("qa_efetiva_necessidade" as any)
+            .select("*")
+            .eq("processo_id", pid)
+            .maybeSingle();
+          let provas: any[] = [];
+          if ((reg as any)?.id) {
+            const { data: pv } = await supabase
+              .from("qa_efetiva_necessidade_provas" as any)
+              .select("tipo")
+              .eq("efetiva_necessidade_id", (reg as any).id);
+            provas = (pv as any[]) ?? [];
+          }
+          mapa[pid] = calcularPassosEfetiva(reg as any, provas);
+        } catch (e) {
+          console.warn("[portal] efetiva necessidade: leitura falhou", e);
+          mapa[pid] = calcularPassosEfetiva(null, []);
+        }
+      }
+      if (vivo) setEfetivaPassos(mapa);
+    })();
+    return () => { vivo = false; };
+  }, [processoDocs, docsReloadKey, efetivaReloadKey]);
+
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
     const ehPergunta = (d: any) => {
@@ -2615,6 +2720,12 @@ export default function QAClientePortalPage() {
     const ehReaproveitado = (d: any) =>
       String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
     const abertos = obrigatorios.filter((d: any) => !concluido(d));
+    // A efetiva necessidade vale pelos seus passos, não por 1 documento.
+    const passosDoDoc = (d: any): EfetivaPasso[] | null => {
+      if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return null;
+      const ps = efetivaPassos[String(d?.processo_id ?? "")];
+      return ps && ps.length > 0 ? ps : null;
+    };
 
     // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
     //
@@ -2642,23 +2753,39 @@ export default function QAClientePortalPage() {
         ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
         : gBase;
       const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
-      cur.total += 1;
-      if (concluido(d)) cur.concluidos += 1;
+      const ps = passosDoDoc(d);
+      if (ps) {
+        cur.total += ps.length;
+        cur.concluidos += ps.filter((p) => p.concluido).length;
+      } else {
+        cur.total += 1;
+        if (concluido(d)) cur.concluidos += 1;
+      }
       mapaGrupos.set(g.id, cur);
     }
     const grupos = [...mapaGrupos.entries()]
       .map(([id, v]) => ({ id, ...v }))
       .sort((a, b) => a.ordem - b.ordem);
 
+    // Totais do processo também contam passo a passo.
+    const extraTotal = obrigatorios.reduce((acc: number, d: any) => {
+      const ps = passosDoDoc(d);
+      return ps ? acc + ps.length - 1 : acc;
+    }, 0);
+    const extraConcluidos = obrigatorios.reduce((acc: number, d: any) => {
+      const ps = passosDoDoc(d);
+      if (!ps) return acc;
+      return acc + ps.filter((p) => p.concluido).length - (concluido(d) ? 1 : 0);
+    }, 0);
     return {
       documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
       perguntasPendentes: abertos.filter(ehPergunta).length,
-      totalObrigatorios: obrigatorios.length,
-      concluidos: obrigatorios.length - abertos.length,
+      totalObrigatorios: obrigatorios.length + extraTotal,
+      concluidos: obrigatorios.length - abertos.length + extraConcluidos,
       reaproveitados: obrigatorios.filter(ehReaproveitado).length,
       grupos,
     };
-  }, [processoDocs, processos, catalogoDocInfo]);
+  }, [processoDocs, processos, catalogoDocInfo, efetivaPassos]);
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
