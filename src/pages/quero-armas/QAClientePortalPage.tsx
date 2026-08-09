@@ -4582,7 +4582,29 @@ export default function QAClientePortalPage() {
           open={!mustChangePassword && showChecklistCadastral}
           cliente={cliente as Record<string, unknown>}
           onClose={() => setShowChecklistCadastral(false)}
-          onConcluido={() => {
+          onCampoSalvo={(key, valor) => {
+            // O portal só carregava o cliente uma vez por sessão. Cada resposta
+            // gravada precisa refletir aqui, senão a pendência cadastral fica
+            // eterna e o pop-up guiado devolve a mesma tela.
+            setCliente((prev: any) => (prev ? { ...prev, [key]: valor } : prev));
+          }}
+          onConcluido={async () => {
+            // Recarrega o registro real antes de liberar o checklist do
+            // processo: campos preenchidos por máscara/normalização da edge
+            // function podem diferir do que foi digitado.
+            const cid = Number((cliente as any)?.id) || null;
+            if (cid) {
+              try {
+                const { data: fresco } = await supabase
+                  .from("qa_clientes" as any)
+                  .select("*")
+                  .eq("id", cid)
+                  .maybeSingle();
+                if (fresco) setCliente(fresco);
+              } catch (e) {
+                console.warn("[portal] refetch do cadastro falhou", e);
+              }
+            }
             // Só fecha. NÃO recarrega o portal aqui: era o setDocsReloadKey
             // deste ponto que realimentava o efeito de abertura e derrubava a
             // página. O checklist do processo abre pelo efeito próprio dele.

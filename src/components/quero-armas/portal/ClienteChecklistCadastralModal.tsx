@@ -26,6 +26,15 @@ interface Props {
   /** Chamado quando não resta nenhuma pendência cadastral. */
   onConcluido: () => void;
   onClose: () => void;
+  /**
+   * Avisa o portal do campo que ACABOU de ser gravado no banco.
+   *
+   * Sem isto o portal seguia com o cliente carregado no início da sessão: o
+   * campo já estava salvo, mas a pendência cadastral continuava na fila e o
+   * cliente voltava para o mesmo pop-up ("clico em completar cadastro e não
+   * vai").
+   */
+  onCampoSalvo?: (key: string, valor: string) => void;
 }
 
 function vazio(v: unknown): boolean {
@@ -86,7 +95,7 @@ async function salvarCampo(key: string, valor: string): Promise<{ ok: boolean; e
   }
 }
 
-export default function ClienteChecklistCadastralModal({ open, cliente, onConcluido, onClose }: Props) {
+export default function ClienteChecklistCadastralModal({ open, cliente, onConcluido, onClose, onCampoSalvo }: Props) {
   const [valor, setValor] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -174,6 +183,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
     // Salvo no banco — esta pergunta não volta, mesmo que ele feche agora.
     setRespostas((prev) => ({ ...prev, [atual.key]: paraSalvar }));
     setRespondidos((prev) => new Set(prev).add(atual.key));
+    onCampoSalvo?.(atual.key, paraSalvar);
   }
 
   const aplicarMascara = (v: string) => {
