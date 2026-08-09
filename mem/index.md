@@ -61,3 +61,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Naturalidade Fonte](mem://features/quero-armas/naturalidade-fonte-de-verdade) — Lista branca de documentos que valem como referência de naturalidade; certidões e CNH nunca.
 - [Ciclo Comprovante Consumo](mem://features/quero-armas/comprovante-consumo-ciclo) — Validade pela próxima leitura e mês de referência exigido na recusa
 - [Cobrança Inatividade](mem://features/quero-armas/cobranca-inatividade) — 15 dias parado + cobrança semanal (e-mail + central de notificações) e painel de progresso ordenável no dashboard
+- [Texto BO Efetiva Necessidade](mem://features/quero-armas/texto-bo-efetiva-necessidade) — 2º texto (máx. 500 caracteres, humanizado) para o cliente abrir BO, histórico de fatos novos somados ao relato e guia de registro por UF. PENDÊNCIA: cadastrar links de BO das demais UFs em `qa_bo_links_uf` (só SP existe).
