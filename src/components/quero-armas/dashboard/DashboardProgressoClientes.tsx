@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox } from "lucide-react";
+import { trilhaDoProcesso, trilhaCompacta } from "@/lib/quero-armas/trilhaChecklist";
 
 /**
  * Painel editorial de progresso por cliente.
@@ -51,13 +52,34 @@ export default function DashboardProgressoClientes() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("dias_parado");
   const [asc, setAsc] = useState(false);
+  const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
+  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const { data } = await supabase.rpc("qa_painel_progresso_clientes" as any);
-        if (!cancelled) setRows(((data as any[]) ?? []) as Row[]);
+        const lista = ((data as any[]) ?? []) as Row[];
+        if (cancelled) return;
+        setRows(lista);
+
+        const ids = lista.map((r) => r.processo_id).filter(Boolean);
+        if (ids.length > 0) {
+          const { data: docs } = await supabase
+            .from("qa_processo_documentos")
+            .select("processo_id, tipo_documento")
+            .in("processo_id", ids);
+          const porProcesso: Record<string, string[]> = {};
+          for (const d of ((docs as any[]) ?? [])) {
+            (porProcesso[d.processo_id] ||= []).push(d.tipo_documento);
+          }
+          const mapa: Record<string, string[]> = {};
+          for (const [pid, tipos] of Object.entries(porProcesso)) {
+            mapa[pid] = trilhaDoProcesso(tipos);
+          }
+          if (!cancelled) setTrilhas(mapa);
+        }
       } catch (e) {
         console.warn("[DashboardProgressoClientes]", e);
         if (!cancelled) setRows([]);
@@ -67,6 +89,17 @@ export default function DashboardProgressoClientes() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  const trilhasDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    Object.values(trilhas).forEach((ls) => ls.forEach((l) => set.add(l)));
+    return [...set].sort();
+  }, [trilhas]);
+
+  const filtradas = useMemo(
+    () => (filtroTrilha ? rows.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha)) : rows),
+    [rows, trilhas, filtroTrilha],
+  );
 
   const ordenadas = useMemo(() => {
     const val = (r: Row) => {
@@ -78,12 +111,12 @@ export default function DashboardProgressoClientes() {
         default: return String((r as any)[sortKey] ?? "").toLowerCase();
       }
     };
-    return [...rows].sort((a, b) => {
+    return [...filtradas].sort((a, b) => {
       const va = val(a); const vb = val(b);
       if (va === vb) return 0;
       return (va > vb ? 1 : -1) * (asc ? 1 : -1);
     });
-  }, [rows, sortKey, asc]);
+  }, [filtradas, sortKey, asc]);
 
   const toggle = (k: SortKey) => {
     if (k === sortKey) setAsc(v => !v);
@@ -99,9 +132,29 @@ export default function DashboardProgressoClientes() {
           PROGRESSO DOS CLIENTES
         </h3>
         <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-          {rows.length} ATIVOS
+          {filtroTrilha ? `${filtradas.length} DE ${rows.length}` : `${rows.length} ATIVOS`}
         </span>
       </div>
+
+      {trilhasDisponiveis.length > 0 && (
+        <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-slate-300 mr-1">TRILHA</span>
+          {trilhasDisponiveis.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
+              className={`shrink-0 text-[9px] uppercase tracking-[0.12em] px-2 py-1 rounded-full border transition-colors ${
+                filtroTrilha === t
+                  ? "border-slate-800 text-slate-800 font-bold"
+                  : "border-slate-200 text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="px-4 py-6 text-center text-[11px] uppercase tracking-wider text-slate-400 inline-flex items-center justify-center gap-2 w-full">
@@ -162,6 +215,11 @@ export default function DashboardProgressoClientes() {
                     <span className="shrink-0 tabular-nums text-slate-400">{r.cobrancas} COB.</span>
                   )}
                 </div>
+                {(trilhas[r.processo_id] ?? []).length > 0 && (
+                  <div className="mt-1 text-[9px] uppercase tracking-[0.12em] text-slate-300 truncate">
+                    {trilhaCompacta(trilhas[r.processo_id]).join(" · ")}
+                  </div>
+                )}
               </Link>
             );
           })}
@@ -199,6 +257,11 @@ export default function DashboardProgressoClientes() {
                         <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
                           {r.servico_nome ?? "—"}
                         </div>
+                        {(trilhas[r.processo_id] ?? []).length > 0 && (
+                          <div className="text-[9px] uppercase tracking-[0.12em] text-slate-300 truncate">
+                            {(trilhas[r.processo_id] ?? []).join(" · ")}
+                          </div>
+                        )}
                       </Link>
                     </td>
                     <td className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
