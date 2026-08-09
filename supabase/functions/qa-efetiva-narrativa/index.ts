@@ -30,7 +30,24 @@ REGRAS ABSOLUTAS:
 - Descreva a rotina de risco: profissão, se ela é reconhecidamente exposta (transporte de valores, atendimento noturno, zona rural isolada, manuseio de dinheiro, atividade em local ermo), horários, deslocamentos e vulnerabilidade da residência.
 - Pode mencionar de forma descritiva que a atividade é considerada de risco na prática cotidiana, mas sem construir tese jurídica.
 - Termine com um parágrafo em que eu explico, com os meus próprios fatos, por que continuo em risco hoje.
-- Entre 2.500 e 6.000 caracteres. Parágrafos curtos. Sem títulos, sem marcadores, sem markdown.`;
+- Entre 2.500 e 6.000 caracteres. Parágrafos curtos. Sem títulos, sem marcadores, sem markdown.
+- Se houver FATOS ACRESCENTADOS DEPOIS, incorpore-os ao relato no lugar cronológico correto. NUNCA descarte fatos já narrados: o relato novo contém tudo o que havia antes MAIS o que foi acrescentado.
+
+VOCÊ PRODUZ DOIS TEXTOS, nesta ordem exata e com estes marcadores literais em linha própria:
+
+===RELATO===
+(o relato completo descrito acima)
+
+===BO===
+(o texto para o requerente registrar boletim de ocorrência)
+
+REGRAS DO TEXTO ===BO=== (completamente diferentes das acima):
+- MÁXIMO 500 CARACTERES, contados. Se passar, corte fatos secundários até caber.
+- Primeira pessoa, frases curtas, palavras do dia a dia. Tem de parecer escrito à mão pelo próprio cidadão, com naturalidade — jamais parecer texto de IA, de advogado ou de formulário.
+- PROIBIDO: "outrossim", "venho por meio deste", "supracitado", "consoante", citação de lei ou artigo, pedido de deferimento, menção a arma de fogo, a porte, a posse, a processo na Polícia Federal ou a este sistema.
+- Conteúdo, nesta ordem: quem eu sou e o que faço; o que está acontecendo agora ou acabou de acontecer (o fato NOVO, o mais recente e concreto); por que temo pela minha vida, pela minha integridade ou pela da minha família; e que estou comunicando à delegacia para que sejam tomadas as providências cabíveis.
+- Deve transmitir situação de risco atual e prestes a se consumar — medo, pânico, temor real — sem exagero teatral e sem inventar fato nenhum.
+- Um único bloco de texto corrido, sem títulos, sem marcadores, sem markdown, sem assinatura.`;
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), {
@@ -50,6 +67,26 @@ const LABEL: Record<string, string> = {
   acao_criminal: "Ação criminal",
   outro: "Documento complementar",
 };
+
+/** Limite duro do texto de BO. Corta na última frase inteira que couber. */
+const LIMITE_BO = 500;
+function limitarBo(texto: string): string {
+  const limpo = texto.replace(/\s+\n/g, "\n").trim();
+  if (limpo.length <= LIMITE_BO) return limpo;
+  const corte = limpo.slice(0, LIMITE_BO);
+  const ultimoPonto = Math.max(corte.lastIndexOf("."), corte.lastIndexOf("!"), corte.lastIndexOf("?"));
+  return (ultimoPonto > 200 ? corte.slice(0, ultimoPonto + 1) : corte).trim();
+}
+
+/** A IA devolve os dois textos separados por marcadores literais. */
+function separarBlocos(bruto: string): { narrativa: string; textoBo: string } {
+  const m = bruto.match(/===\s*RELATO\s*===([\s\S]*?)===\s*BO\s*===([\s\S]*)$/i);
+  if (m) {
+    return { narrativa: m[1].trim(), textoBo: limitarBo(m[2]) };
+  }
+  // Sem marcadores: tudo vira relato e o texto de BO fica para a próxima rodada.
+  return { narrativa: bruto.replace(/^===\s*RELATO\s*===/i, "").trim(), textoBo: "" };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -75,6 +112,12 @@ Deno.serve(async (req) => {
       .select("tipo, numero, orgao, data_fato, local_fato, naturezas, vitima_nome, relato, arquivo_nome")
       .eq("efetiva_necessidade_id", registro_id)
       .order("data_fato", { ascending: true, nullsFirst: false });
+
+    const { data: acrescimos } = await sb
+      .from("qa_efetiva_necessidade_acrescimos")
+      .select("texto, ordem, created_at")
+      .eq("efetiva_necessidade_id", registro_id)
+      .order("ordem", { ascending: true });
 
     const { data: cliente } = await sb
       .from("qa_clientes")
@@ -128,7 +171,16 @@ Deno.serve(async (req) => {
       "CONTEXTO DE RISCO INFORMADO:",
       reg.contexto_risco || "(não informado)",
       "",
-      "Redija agora o relato em primeira pessoa seguindo as regras.",
+      ...((acrescimos ?? []).length
+        ? [
+          "FATOS ACRESCENTADOS DEPOIS PELO CLIENTE (em ordem de envio — todos devem entrar no relato):",
+          ...(acrescimos ?? []).map((a: any, i: number) =>
+            `(${i + 1}) em ${dataBR(String(a.created_at).slice(0, 10))}: ${a.texto}`
+          ),
+          "",
+        ]
+        : []),
+      "Produza agora os DOIS textos, com os marcadores ===RELATO=== e ===BO===.",
     ].filter((l) => l !== "").join("\n");
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
@@ -156,7 +208,10 @@ Deno.serve(async (req) => {
     }
 
     const payload = await aiResp.json();
-    const narrativa = String(payload?.choices?.[0]?.message?.content ?? "").trim();
+    const bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
+    if (!bruto) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
+
+    const { narrativa, textoBo } = separarBlocos(bruto);
     if (!narrativa) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
     await sb
@@ -164,12 +219,17 @@ Deno.serve(async (req) => {
       .update({
         narrativa_gerada: narrativa,
         narrativa_gerada_em: new Date().toISOString(),
+        texto_bo: textoBo || null,
+        texto_bo_gerado_em: textoBo ? new Date().toISOString() : null,
+        texto_bo_editado_pelo_cliente: false,
+        bo_pendente_registro: Boolean(textoBo),
+        versao: Number(reg.versao ?? 1) + ((acrescimos ?? []).length ? 1 : 0),
         status: "narrativa_pronta",
         updated_at: new Date().toISOString(),
       })
       .eq("id", registro_id);
 
-    return json({ ok: true, narrativa });
+    return json({ ok: true, narrativa, texto_bo: textoBo });
   } catch (e) {
     console.error("[qa-efetiva-narrativa]", e);
     return json({ error: e instanceof Error ? e.message : "Erro inesperado" }, 500);

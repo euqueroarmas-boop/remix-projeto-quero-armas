@@ -20,7 +20,7 @@
 // ============================================================================
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck } from "lucide-react";
+import { Loader2, X, Upload, Check, FileText, ShieldAlert, ArrowRight, Pencil, RefreshCw, ShieldCheck, Copy, Plus, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
@@ -45,6 +45,23 @@ interface Prova {
   arquivo_nome: string | null;
   leitura_por: string | null;
 }
+
+interface Acrescimo {
+  id: string;
+  texto: string;
+  created_at: string;
+}
+
+interface LinkBo {
+  uf: string;
+  nome_orgao: string | null;
+  url_abrir: string | null;
+  url_acompanhar: string | null;
+  observacao: string | null;
+}
+
+/** Limite do texto que o cliente leva à delegacia. Regra do usuário. */
+const LIMITE_BO = 500;
 
 /**
  * As perguntas, na ordem em que reduzem o esforço do cliente: primeiro o que
@@ -116,6 +133,14 @@ export default function EfetivaNecessidadeModal({
   /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
   const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
   const [narrativa, setNarrativa] = useState("");
+  const [textoBo, setTextoBo] = useState("");
+  const [textoBoTocado, setTextoBoTocado] = useState(false);
+  const [editandoBo, setEditandoBo] = useState(false);
+  const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
+  const [novoAcrescimo, setNovoAcrescimo] = useState("");
+  const [campoAcrescimoAberto, setCampoAcrescimoAberto] = useState(false);
+  const [salvandoAcrescimo, setSalvandoAcrescimo] = useState(false);
+  const [linkBo, setLinkBo] = useState<LinkBo | null>(null);
   const [gerando, setGerando] = useState(false);
   const [editandoNarrativa, setEditandoNarrativa] = useState(false);
   const [narrativaTocada, setNarrativaTocada] = useState(false);
@@ -157,6 +182,30 @@ export default function EfetivaNecessidadeModal({
         setRelato(reg.relato_cliente ?? "");
         setContexto(reg.contexto_risco ?? "");
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
+        setTextoBo(reg.texto_bo ?? "");
+        if (reg.narrativa_final || reg.narrativa_gerada) setEtapa("narrativa");
+
+        const { data: acs } = await supabase
+          .from("qa_efetiva_necessidade_acrescimos" as any)
+          .select("id, texto, created_at")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("ordem");
+        if (!cancelado) setAcrescimos((acs ?? []) as unknown as Acrescimo[]);
+
+        const { data: cli } = await supabase
+          .from("qa_clientes" as any)
+          .select("estado")
+          .eq("id", clienteId)
+          .maybeSingle();
+        const uf = String((cli as any)?.estado ?? "").toUpperCase();
+        if (uf) {
+          const { data: lk } = await supabase
+            .from("qa_bo_links_uf" as any)
+            .select("uf, nome_orgao, url_abrir, url_acompanhar, observacao")
+            .eq("uf", uf)
+            .maybeSingle();
+          if (!cancelado) setLinkBo((lk as unknown as LinkBo) ?? null);
+        }
 
         const { data: ps } = await supabase
           .from("qa_efetiva_necessidade_provas" as any)
@@ -228,6 +277,11 @@ export default function EfetivaNecessidadeModal({
       });
       if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
       setNarrativa(String(data.narrativa));
+      setTextoBo(String(data.texto_bo ?? ""));
+      setTextoBoTocado(false);
+      setEditandoBo(false);
+      setCampoAcrescimoAberto(false);
+      setNovoAcrescimo("");
       setNarrativaTocada(false);
       setEditandoNarrativa(false);
       setEtapa("narrativa");
@@ -239,6 +293,44 @@ export default function EfetivaNecessidadeModal({
     }
   }, [registroId, relato, contexto, salvarTexto]);
 
+  /* ── Fatos novos: nada é sobrescrito, tudo vira histórico ─────────────── */
+  const adicionarAcrescimo = useCallback(async () => {
+    const texto = novoAcrescimo.trim();
+    if (!registroId || texto.length < 20) return;
+    setSalvandoAcrescimo(true);
+    try {
+      const { data, error } = await supabase
+        .from("qa_efetiva_necessidade_acrescimos" as any)
+        .insert({
+          efetiva_necessidade_id: registroId,
+          texto,
+          ordem: acrescimos.length + 1,
+          origem: "cliente",
+        })
+        .select("id, texto, created_at")
+        .single();
+      if (error) throw error;
+      setAcrescimos((p) => [...p, data as unknown as Acrescimo]);
+      setNovoAcrescimo("");
+      setCampoAcrescimoAberto(false);
+      toast.success("Fato registrado. Agora refaça o relato para ele entrar no texto.");
+    } catch (e) {
+      console.error("[efetiva necessidade] acréscimo:", e);
+      toast.error("Não foi possível salvar este fato. Tente novamente.");
+    } finally {
+      setSalvandoAcrescimo(false);
+    }
+  }, [registroId, novoAcrescimo, acrescimos.length]);
+
+  const copiar = useCallback(async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success("Texto copiado.");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto e copie manualmente.");
+    }
+  }, []);
+
   const aprovarNarrativa = useCallback(async () => {
     if (!registroId || narrativa.trim().length < 200) return;
     setAprovando(true);
@@ -248,6 +340,8 @@ export default function EfetivaNecessidadeModal({
           registro_id: registroId,
           texto_final: narrativa.trim(),
           editado: narrativaTocada,
+          texto_bo: textoBo.trim().slice(0, LIMITE_BO),
+          texto_bo_editado: textoBoTocado,
           user_agent: navigator.userAgent,
           accept_language: navigator.language,
         },
@@ -262,7 +356,7 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setAprovando(false);
     }
-  }, [registroId, narrativa, narrativaTocada, onConcluido, onClose]);
+  }, [registroId, narrativa, narrativaTocada, textoBo, textoBoTocado, onConcluido, onClose]);
 
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
   const receberArquivo = useCallback(async (file: File) => {
@@ -450,6 +544,170 @@ export default function EfetivaNecessidadeModal({
                 Voltar e corrigir provas
               </button>
             </div>
+
+            {/* ── Fatos novos: abre um campo, guarda no histórico e refaz ─── */}
+            <div className="rounded-lg border border-zinc-200 p-4">
+              <p className="text-[12px] font-semibold text-zinc-900">Aconteceu mais alguma coisa?</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                Se você lembrou de outro fato, ou algo novo aconteceu depois, escreva aqui. Nada do
+                que você já contou é apagado: o relato é reescrito somando o fato novo.
+              </p>
+
+              {acrescimos.length > 0 && (
+                <ul className="mt-3 space-y-2">
+                  {acrescimos.map((a, i) => (
+                    <li key={a.id} className="rounded-md bg-zinc-50 p-3 text-[12px] leading-relaxed text-zinc-700">
+                      <span className="mr-1 font-semibold text-zinc-500">{i + 1}.</span>
+                      {a.texto}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {campoAcrescimoAberto ? (
+                <div className="mt-3">
+                  <textarea
+                    value={novoAcrescimo}
+                    onChange={(e) => setNovoAcrescimo(e.target.value)}
+                    rows={4}
+                    placeholder="Conte o fato novo: quando foi, onde, quem estava envolvido e o que foi dito ou feito."
+                    className="w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] leading-relaxed focus:border-[#7A1F2B] focus:outline-none"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={salvandoAcrescimo || novoAcrescimo.trim().length < 20}
+                      onClick={() => void adicionarAcrescimo()}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-3 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-40"
+                    >
+                      {salvandoAcrescimo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      Guardar este fato
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCampoAcrescimoAberto(false); setNovoAcrescimo(""); }}
+                      className="rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCampoAcrescimoAberto(true)}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Adicionar um fato novo
+                </button>
+              )}
+
+              {acrescimos.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => void gerarNarrativa()}
+                  disabled={gerando}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Refazer o relato com os fatos novos
+                </button>
+              )}
+            </div>
+
+            {/* ── Texto pronto para o cliente registrar o BO ───────────────── */}
+            {textoBo && (
+              <div className="rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.03] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  Texto para você registrar o boletim de ocorrência
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                  O que você contou traz fatos que não estão em nenhum boletim. Leve o texto abaixo
+                  à delegacia — ele descreve, com as suas palavras, a situação de risco em que você
+                  se encontra hoje. Leia antes: você é quem assina o registro.
+                </p>
+
+                {editandoBo ? (
+                  <textarea
+                    value={textoBo}
+                    onChange={(e) => { setTextoBo(e.target.value.slice(0, LIMITE_BO)); setTextoBoTocado(true); }}
+                    rows={7}
+                    className="mt-3 w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-2 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
+                  />
+                ) : (
+                  <p className="mt-3 rounded-lg border border-zinc-200 bg-white p-3 text-[13px] leading-relaxed text-zinc-800">
+                    {textoBo}
+                  </p>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] text-zinc-400">{textoBo.length}/{LIMITE_BO} caracteres</span>
+                  <button
+                    type="button"
+                    onClick={() => void copiar(textoBo)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copiar o texto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditandoBo((v) => !v)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> {editandoBo ? "Concluir edição" : "Ajustar"}
+                  </button>
+                </div>
+
+                {/* Como abrir o BO — passo a passo, no padrão do pop-up guiado */}
+                <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
+                    Como registrar o seu boletim
+                  </p>
+                  <ol className="mt-2 space-y-2 text-[12px] leading-relaxed text-zinc-700">
+                    <li><strong>1.</strong> Copie o texto acima.</li>
+                    <li>
+                      <strong>2.</strong> Abra a delegacia eletrônica
+                      {linkBo?.url_abrir ? (
+                        <>
+                          {" "}da <strong>{linkBo.nome_orgao ?? linkBo.uf}</strong> e escolha comunicar ocorrência.{" "}
+                          <a
+                            href={linkBo.url_abrir}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-[#7A1F2B] underline"
+                          >
+                            Abrir agora <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      ) : (
+                        <> da Polícia Civil do seu estado e escolha comunicar ocorrência. Se preferir,
+                          vá pessoalmente à delegacia mais próxima.</>
+                      )}
+                    </li>
+                    <li><strong>3.</strong> Cole o texto no campo do relato e confira os seus dados antes de enviar.</li>
+                    <li>
+                      <strong>4.</strong> Guarde o número do protocolo. Para acompanhar o andamento você
+                      precisa do <strong>número do protocolo ou do boletim</strong>, do{" "}
+                      <strong>ano do registro</strong> e do <strong>CPF do declarante</strong>.
+                      {linkBo?.url_acompanhar && (
+                        <>
+                          {" "}
+                          <a
+                            href={linkBo.url_acompanhar}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-[#7A1F2B] underline"
+                          >
+                            Acompanhar andamento <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      )}
+                    </li>
+                    <li><strong>5.</strong> Quando o boletim sair, volte aqui e anexe o PDF como nova prova.</li>
+                  </ol>
+                </div>
+              </div>
+            )}
 
             <p className="text-[11px] leading-relaxed text-zinc-500">
               Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único

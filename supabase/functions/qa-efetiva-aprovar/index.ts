@@ -90,6 +90,8 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const registroId = body?.registro_id as string | undefined;
     const textoFinal = String(body?.texto_final ?? "").trim();
+    const textoBo = String(body?.texto_bo ?? "").trim().slice(0, 500);
+    const textoBoEditado = Boolean(body?.texto_bo_editado);
     const editado = Boolean(body?.editado);
     if (!registroId || textoFinal.length < 200) {
       return json({ error: "registro_id e texto_final são obrigatórios" }, 400);
@@ -113,11 +115,23 @@ Deno.serve(async (req) => {
       .eq("id", reg.cliente_id)
       .maybeSingle();
 
+    const { data: linkBo } = await sb
+      .from("qa_bo_links_uf")
+      .select("uf, nome_orgao, url_abrir, url_acompanhar, observacao")
+      .eq("uf", String(cliente?.estado ?? "").toUpperCase())
+      .maybeSingle();
+
     const { data: provas } = await sb
       .from("qa_efetiva_necessidade_provas")
       .select("tipo, numero, orgao, data_fato, naturezas, arquivo_nome, arquivo_storage_path")
       .eq("efetiva_necessidade_id", registroId)
       .order("created_at");
+
+    const { data: acrescimos } = await sb
+      .from("qa_efetiva_necessidade_acrescimos")
+      .select("texto, created_at")
+      .eq("efetiva_necessidade_id", registroId)
+      .order("ordem");
 
     /* ── 1) Carimbo da conexão ─────────────────────────────────────────── */
     const agora = new Date();
@@ -184,7 +198,25 @@ Deno.serve(async (req) => {
     escrever("3. RELATO APROVADO PELO REQUERENTE", { size: 11.5, bold: true, gap: 4 });
     escrever(textoFinal, { size: 10.5, gap: 14 });
 
-    escrever("4. REGISTRO DE SESSAO - MP 2.200-2/2001", { size: 11.5, bold: true, gap: 4 });
+    let secao = 4;
+    if ((acrescimos ?? []).length) {
+      escrever(`${secao}. FATOS ACRESCENTADOS PELO REQUERENTE`, { size: 11.5, bold: true, gap: 4 });
+      escrever(
+        (acrescimos ?? []).map((a: any, i: number) =>
+          `${i + 1}. (${brt(new Date(a.created_at))}) ${a.texto}`
+        ).join("\n\n"),
+        { size: 10, gap: 12 },
+      );
+      secao += 1;
+    }
+
+    if (textoBo) {
+      escrever(`${secao}. TEXTO PARA REGISTRO DE BOLETIM DE OCORRENCIA`, { size: 11.5, bold: true, gap: 4 });
+      escrever(textoBo, { size: 10.5, gap: 12 });
+      secao += 1;
+    }
+
+    escrever(`${secao}. REGISTRO DE SESSAO - MP 2.200-2/2001`, { size: 11.5, bold: true, gap: 4 });
     escrever(
       `DATA/HORA (BRT): ${brt(agora)}\n` +
         `IP: ${ip ?? "-"}\n` +
@@ -271,6 +303,9 @@ Deno.serve(async (req) => {
     await sb.from("qa_efetiva_necessidade").update({
       narrativa_final: textoFinal,
       narrativa_editada_pelo_cliente: editado,
+      texto_bo: textoBo || null,
+      texto_bo_editado_pelo_cliente: textoBoEditado,
+      bo_pendente_registro: Boolean(textoBo),
       aprovado_cliente: true,
       aprovado_cliente_em: agora.toISOString(),
       aprovacao_ip: ip,
@@ -304,11 +339,26 @@ Deno.serve(async (req) => {
           Registro de sessão nos termos da MP 2.200-2/2001. O link do arquivo expira em 30 dias; ele continua disponível na sua área do cliente.
         </p>
         <p style="font-size:13px;color:#111;margin-top:16px"><strong>Próximo passo:</strong> o agendamento dos seus exames (psicológico e de tiro) já está liberado na área do cliente.</p>`;
+      const blocoBo = textoBo
+        ? `
+        <div style="margin:22px 0;padding:16px;border:1px solid #e5e5e5;border-radius:8px">
+          <p style="margin:0 0 8px;font-size:13px;color:#111"><strong>Texto para você registrar o boletim de ocorrência</strong></p>
+          <p style="margin:0 0 12px;font-size:12px;color:#555">Copie o texto abaixo e use no registro da ocorrência. Depois, envie o boletim de volta na sua área do cliente.</p>
+          <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#222;background:#faf7f7;padding:12px;border-left:3px solid #7A1F2B">${esc(textoBo)}</p>
+          ${linkBo?.url_abrir
+            ? `<p style="margin:0 0 6px;font-size:12px;color:#333">Registrar (${esc(linkBo.uf)}): <a href="${esc(linkBo.url_abrir)}">${esc(linkBo.nome_orgao ?? linkBo.url_abrir)}</a></p>`
+            : `<p style="margin:0 0 6px;font-size:12px;color:#333">Procure a delegacia eletrônica da Polícia Civil do seu estado para registrar.</p>`}
+          ${linkBo?.url_acompanhar
+            ? `<p style="margin:0 0 6px;font-size:12px;color:#333">Acompanhar andamento: <a href="${esc(linkBo.url_acompanhar)}">${esc(linkBo.url_acompanhar)}</a></p>`
+            : ""}
+          ${linkBo?.observacao ? `<p style="margin:0;font-size:11px;color:#777">${esc(linkBo.observacao)}</p>` : ""}
+        </div>`
+        : "";
       await sendTransactional({
         templateName: "arsenal-generic",
         recipientEmail: cliente.email,
         idempotencyKey: `efetiva-aprovada-${registroId}`,
-        templateData: { subject: "Seu relato de efetiva necessidade foi aprovado", html },
+        templateData: { subject: "Seu relato de efetiva necessidade foi aprovado", html: html + blocoBo },
       });
     }
 

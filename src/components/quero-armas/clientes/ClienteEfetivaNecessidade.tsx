@@ -46,6 +46,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
   const [loading, setLoading] = useState(true);
   const [registro, setRegistro] = useState<Registro | null>(null);
   const [provas, setProvas] = useState<Prova[]>([]);
+  const [acrescimos, setAcrescimos] = useState<Registro[]>([]);
 
   useEffect(() => {
     let vivo = true;
@@ -67,8 +68,15 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           .eq("efetiva_necessidade_id", reg.id)
           .order("created_at", { ascending: true });
         if (vivo) setProvas((pv as Prova[]) ?? []);
+        const { data: ac } = await supabase
+          .from("qa_efetiva_necessidade_acrescimos" as any)
+          .select("*")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("ordem", { ascending: true });
+        if (vivo) setAcrescimos((ac as Registro[]) ?? []);
       } else {
         setProvas([]);
+        setAcrescimos([]);
       }
       if (vivo) setLoading(false);
     })();
@@ -199,6 +207,36 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           </>
         ) : (
           <p className="text-[11px] text-slate-400">Narrativa ainda não gerada.</p>
+        )}
+      </Bloco>
+
+      {acrescimos.length > 0 && (
+        <Bloco titulo={`Fatos acrescentados pelo cliente (${acrescimos.length})`}>
+          <div className="space-y-2">
+            {acrescimos.map((a, i) => (
+              <div key={a.id} className="border border-slate-200 rounded-lg p-3">
+                <div className="text-[9px] uppercase tracking-[0.12em] text-slate-400">
+                  #{i + 1} · {dataHoraBR(a.created_at)}
+                </div>
+                <p className="mt-1 text-[12px] leading-relaxed text-slate-700 whitespace-pre-wrap">{a.texto}</p>
+              </div>
+            ))}
+          </div>
+        </Bloco>
+      )}
+
+      <Bloco titulo="Texto para registro de boletim de ocorrência">
+        {registro.texto_bo ? (
+          <>
+            <p className="text-[12px] leading-relaxed text-slate-700 whitespace-pre-wrap">{registro.texto_bo}</p>
+            <div className="mt-3 text-[10px] text-slate-400">
+              {String(registro.texto_bo).length}/500 caracteres · gerado em {dataHoraBR(registro.texto_bo_gerado_em)}
+              {registro.texto_bo_editado_pelo_cliente ? " · ajustado pelo cliente" : ""}
+              {registro.bo_pendente_registro ? " · aguardando o BO novo" : ""}
+            </div>
+          </>
+        ) : (
+          <p className="text-[11px] text-slate-400">Texto de BO ainda não gerado.</p>
         )}
       </Bloco>
 
