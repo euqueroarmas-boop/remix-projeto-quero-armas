@@ -512,6 +512,51 @@ export default function EfetivaNecessidadeModal({
   const todasRespondidas = PERGUNTAS.every((q) => typeof respostas[q.campo] === "boolean");
   const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= RELATO_MINIMO);
 
+  const passo = PASSOS[passoIndex];
+  const perguntaAtual = passo?.campo
+    ? PERGUNTAS.find((q) => q.campo === passo.campo) ?? null
+    : null;
+
+  /** Uma etapa está concluída quando o que ela pede já foi entregue. */
+  const passoConcluido = useCallback((i: number) => {
+    const p = PASSOS[i];
+    if (!p) return false;
+    if (p.tipo === "pergunta") return typeof respostas[p.campo!] === "boolean";
+    if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
+    if (p.tipo === "contexto") return contexto.trim().length > 0;
+    return false;
+  }, [respostas, relato, contexto, semProvaNenhuma]);
+
+  /** O "Próximo" só trava onde a regra de negócio já travava antes. */
+  const podeAvancar = useMemo(() => {
+    if (!passo) return false;
+    if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
+    if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
+    return true;
+  }, [passo, respostas, relato, semProvaNenhuma]);
+
+  const irPara = useCallback((i: number) => {
+    const destino = Math.max(0, Math.min(PASSOS.length - 1, i));
+    setAvisoAnexo(null);
+    setPassoIndex(destino);
+    setMaxVisitado((m) => Math.max(m, destino));
+  }, []);
+
+  const avancar = useCallback(() => {
+    const p = PASSOS[passoIndex];
+    // Marcou "sim" e não anexou nada: avisa uma vez, mas não bloqueia.
+    if (p?.tipo === "pergunta" && perguntaAtual?.tipoProva && respostas[p.campo!] === true) {
+      const temAnexo = provas.some((pr) => pr.tipo === perguntaAtual.tipoProva);
+      if (!temAnexo && !avisoAnexo) {
+        setAvisoAnexo(
+          "Você marcou que tem. Anexe o arquivo agora ou volte e marque “Não” — sem o documento, o fato vira apenas alegação.",
+        );
+        return;
+      }
+    }
+    irPara(passoIndex + 1);
+  }, [passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
+
   if (!open) return null;
 
   return createPortal(
