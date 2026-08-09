@@ -32,6 +32,13 @@ interface Props {
   clienteId: number;
   onClose: () => void;
   onConcluido?: () => void;
+  /**
+   * Modo embutido: o fluxo roda DENTRO do pop-up guiado (sem overlay, sem
+   * header e sem X próprios). Regra do usuário (09/08/2026): a efetiva
+   * necessidade não abre um segundo pop-up — ela substitui o conteúdo do
+   * checklist guiado e os seus passos contam como itens do grupo.
+   */
+  embedded?: boolean;
 }
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
@@ -121,14 +128,23 @@ const LABEL_TIPO: Record<TipoProva, string> = {
  * cada bloco vira um passo navegável (Anterior / Próximo), com contador,
  * trilha numerada e o rodapé fixo do padrão guiado.
  */
-type PassoTipo = "pergunta" | "relato" | "contexto" | "revisao";
+type PassoTipo =
+  | "pergunta"
+  | "relato"
+  | "contexto"
+  | "revisao"
+  | "registrar_bo"
+  | "enviar_bo"
+  | "defesa_final";
 
-const PASSOS: Array<{
+type Passo = {
   id: string;
   tipo: PassoTipo;
   titulo: string;
   campo?: (typeof PERGUNTAS)[number]["campo"];
-}> = [
+};
+
+const PASSOS_BASE: Passo[] = [
   ...PERGUNTAS.map((q) => ({
     id: q.campo,
     tipo: "pergunta" as const,
@@ -140,6 +156,17 @@ const PASSOS: Array<{
   { id: "revisao", tipo: "revisao", titulo: "Revisão e geração do relato" },
 ];
 
+/**
+ * Passos que só existem quando a IA concluiu que há fatos fora de qualquer
+ * boletim: o cliente precisa registrar o BO, trazer o documento e só então a
+ * defesa final é fechada com esse fato dentro.
+ */
+const PASSOS_BO: Passo[] = [
+  { id: "registrar_bo", tipo: "registrar_bo", titulo: "Registrar o boletim na delegacia" },
+  { id: "enviar_bo", tipo: "enviar_bo", titulo: "Enviar o boletim registrado" },
+  { id: "defesa_final", tipo: "defesa_final", titulo: "Defesa final e aprovação" },
+];
+
 const TRILHA_ROTULO: Record<string, string> = {
   tem_bo: "Boletim de ocorrência",
   tem_inquerito: "Inquérito policial",
@@ -148,17 +175,21 @@ const TRILHA_ROTULO: Record<string, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração",
+  registrar_bo: "Registrar o BO",
+  enviar_bo: "Enviar o BO",
+  defesa_final: "Defesa final",
 };
 
-const PASSO_REVISAO = PASSOS.length - 1;
+const PASSO_REVISAO = PASSOS_BASE.length - 1;
 
 /**
  * Trilha numerada — mesma linguagem visual da lista de passos do pop-up
  * guiado: marcador circular, linha vertical e check no que já foi cumprido.
  */
 function Trilha({
-  passoIndex, maxVisitado, passoConcluido, irPara,
+  passos, passoIndex, maxVisitado, passoConcluido, irPara,
 }: {
+  passos: Passo[];
   passoIndex: number;
   maxVisitado: number;
   passoConcluido: (i: number) => boolean;
@@ -166,7 +197,7 @@ function Trilha({
 }) {
   return (
     <ol className="relative space-y-1.5 border-l border-zinc-200 pl-4">
-      {PASSOS.map((p, i) => {
+      {passos.map((p, i) => {
         const atual = i === passoIndex;
         const feito = passoConcluido(i);
         const liberado = i <= maxVisitado;
@@ -210,7 +241,7 @@ const dataBR = (iso: string | null | undefined) => {
 };
 
 export default function EfetivaNecessidadeModal({
-  open, processoId, clienteId, onClose, onConcluido,
+  open, processoId, clienteId, onClose, onConcluido, embedded = false,
 }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -227,6 +258,9 @@ export default function EfetivaNecessidadeModal({
   const [avisoAnexo, setAvisoAnexo] = useState<string | null>(null);
   const [narrativa, setNarrativa] = useState("");
   const [textoBo, setTextoBo] = useState("");
+  /** BO ainda por registrar na delegacia (coluna `bo_pendente_registro`). */
+  const [boPendenteRegistro, setBoPendenteRegistro] = useState(false);
+  const [boRegistradoConfirmado, setBoRegistradoConfirmado] = useState(false);
   const [textoBoTocado, setTextoBoTocado] = useState(false);
   const [editandoBo, setEditandoBo] = useState(false);
   const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
@@ -276,6 +310,7 @@ export default function EfetivaNecessidadeModal({
         setContexto(reg.contexto_risco ?? "");
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
         setTextoBo(reg.texto_bo ?? "");
+        setBoPendenteRegistro(Boolean(reg.bo_pendente_registro));
         if (reg.narrativa_final || reg.narrativa_gerada) {
           setEtapa("narrativa");
           setPassoIndex(PASSO_REVISAO);
@@ -287,7 +322,7 @@ export default function EfetivaNecessidadeModal({
           );
           const destino = iPergunta >= 0
             ? iPergunta
-            : String(reg.relato_cliente ?? "").trim() ? PASSOS.length - 2 : PASSOS.length - 3;
+            : String(reg.relato_cliente ?? "").trim() ? PASSOS_BASE.length - 2 : PASSOS_BASE.length - 3;
           setPassoIndex(destino);
           setMaxVisitado(destino);
         }
@@ -520,6 +555,16 @@ export default function EfetivaNecessidadeModal({
 
       setProvas((p) => [...p, prova as unknown as Prova]);
 
+      // O boletim que faltava chegou: o passo "registrar o BO" se encerra e a
+      // defesa final é liberada.
+      if (tipo === "boletim_ocorrencia" && boPendenteRegistro) {
+        setBoPendenteRegistro(false);
+        void supabase
+          .from("qa_efetiva_necessidade" as any)
+          .update({ bo_pendente_registro: false, updated_at: new Date().toISOString() })
+          .eq("id", registroId);
+      }
+
       // 4) E-mail específico, citando o que foi lido. Best-effort: falha de
       //    e-mail não desfaz o envio da prova.
       void supabase.functions.invoke("qa-notify-event", {
@@ -549,7 +594,7 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setEnviandoTipo(null);
     }
-  }, [registroId, clienteId, provas.length]);
+  }, [registroId, clienteId, provas.length, boPendenteRegistro]);
 
   const abrirSeletor = (tipo: TipoProva) => {
     tipoAlvoRef.current = tipo;
@@ -564,38 +609,61 @@ export default function EfetivaNecessidadeModal({
   const todasRespondidas = PERGUNTAS.every((q) => typeof respostas[q.campo] === "boolean");
   const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= RELATO_MINIMO);
 
-  const passo = PASSOS[passoIndex];
+  /**
+   * A fila viva de passos. Quando a IA devolve um texto de BO, o caminho ganha
+   * três itens — registrar, enviar e fechar a defesa — e eles passam a contar
+   * como itens do grupo, exatamente como qualquer outra exigência do checklist.
+   */
+  const passos = useMemo<Passo[]>(
+    () => (textoBo.trim() ? [...PASSOS_BASE, ...PASSOS_BO] : PASSOS_BASE),
+    [textoBo],
+  );
+
+  const provasBo = useMemo(
+    () => provas.filter((p) => p.tipo === "boletim_ocorrencia"),
+    [provas],
+  );
+  const boEntregue = !boPendenteRegistro && provasBo.length > 0;
+
+  const passo = passos[Math.min(passoIndex, passos.length - 1)];
   const perguntaAtual = passo?.campo
     ? PERGUNTAS.find((q) => q.campo === passo.campo) ?? null
     : null;
 
   /** Uma etapa está concluída quando o que ela pede já foi entregue. */
   const passoConcluido = useCallback((i: number) => {
-    const p = PASSOS[i];
+    const p = passos[i];
     if (!p) return false;
     if (p.tipo === "pergunta") return typeof respostas[p.campo!] === "boolean";
     if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (p.tipo === "contexto") return contexto.trim().length > 0;
+    if (p.tipo === "revisao") return narrativa.trim().length > 0;
+    if (p.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
+    if (p.tipo === "enviar_bo") return boEntregue;
     return false;
-  }, [respostas, relato, contexto, semProvaNenhuma]);
+  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
 
   /** O "Próximo" só trava onde a regra de negócio já travava antes. */
   const podeAvancar = useMemo(() => {
     if (!passo) return false;
     if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
     if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
+    if (passo.tipo === "revisao") return narrativa.trim().length > 0;
+    if (passo.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
+    // Trava dura: sem o boletim registrado em mãos, a defesa final não abre.
+    if (passo.tipo === "enviar_bo") return boEntregue;
     return true;
-  }, [passo, respostas, relato, semProvaNenhuma]);
+  }, [passo, respostas, relato, semProvaNenhuma, narrativa, boRegistradoConfirmado, boEntregue]);
 
   const irPara = useCallback((i: number) => {
-    const destino = Math.max(0, Math.min(PASSOS.length - 1, i));
+    const destino = Math.max(0, Math.min(passos.length - 1, i));
     setAvisoAnexo(null);
     setPassoIndex(destino);
     setMaxVisitado((m) => Math.max(m, destino));
-  }, []);
+  }, [passos.length]);
 
   const avancar = useCallback(() => {
-    const p = PASSOS[passoIndex];
+    const p = passos[passoIndex];
     // Marcou "sim" e não anexou nada: avisa uma vez, mas não bloqueia.
     if (p?.tipo === "pergunta" && perguntaAtual?.tipoProva && respostas[p.campo!] === true) {
       const temAnexo = provas.some((pr) => pr.tipo === perguntaAtual.tipoProva);
@@ -607,24 +675,48 @@ export default function EfetivaNecessidadeModal({
       }
     }
     irPara(passoIndex + 1);
-  }, [passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
+  }, [passos, passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
+
+  /** "Já registrei o boletim" — some da tela e libera o envio do documento. */
+  const confirmarRegistroBo = useCallback(() => {
+    setBoRegistradoConfirmado(true);
+    irPara(passoIndex + 1);
+  }, [irPara, passoIndex]);
 
   /** Cada etapa mostra apenas as provas que ela mesma pediu. */
   const provasDoPasso = useMemo(() => {
     if (passo?.tipo === "revisao") return provas;
+    if (passo?.tipo === "enviar_bo") return provasBo;
     if (!perguntaAtual?.tipoProva) return [];
     return provas.filter((p) => p.tipo === perguntaAtual.tipoProva);
-  }, [provas, passo, perguntaAtual]);
+  }, [provas, provasBo, passo, perguntaAtual]);
 
   if (!open) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
-      <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[90dvh]">
-        <div className="shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5 pr-14">
+  const narrativaNaTela =
+    !!narrativa && (passo?.tipo === "revisao" || passo?.tipo === "defesa_final" || passo?.tipo === "registrar_bo");
+
+  /** Último passo do caminho — é onde a aprovação acontece. */
+  const passoFinal = passoIndex === passos.length - 1;
+
+  const conteudo = (
+      <div
+        className={
+          embedded
+            ? "relative flex w-full flex-col"
+            : "relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:max-h-[90dvh]"
+        }
+      >
+        <div
+          className={
+            embedded
+              ? "shrink-0 pb-4"
+              : "shrink-0 flex items-start justify-between gap-3 border-b border-zinc-200 px-6 py-5 pr-14"
+          }
+        >
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
-              Efetiva necessidade · Passo {passoIndex + 1} de {PASSOS.length}
+              Efetiva necessidade · Passo {passoIndex + 1} de {passos.length}
             </p>
             <h2 className="mt-1 text-[18px] font-semibold text-zinc-900">
               {passo?.titulo ?? "Vamos reunir as provas do seu caso"}
@@ -636,6 +728,7 @@ export default function EfetivaNecessidadeModal({
               </p>
             )}
           </div>
+          {embedded ? null : (
           <button
             type="button"
             onClick={onClose}
@@ -644,15 +737,18 @@ export default function EfetivaNecessidadeModal({
           >
             <X className="h-4 w-4" />
           </button>
+          )}
         </div>
 
         {carregando ? (
           <div className="flex min-h-0 flex-1 items-center justify-center gap-2 px-6 py-16 text-[13px] text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" /> Abrindo…
           </div>
-        ) : passoIndex === PASSO_REVISAO && narrativa ? (
-          <div className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
-            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+        ) : narrativaNaTela ? (
+          <div className={embedded ? "space-y-4" : "no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5"}>
+            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+            {passo?.tipo === "registrar_bo" ? null : (
+            <>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                 Leia com atenção
@@ -776,9 +872,11 @@ export default function EfetivaNecessidadeModal({
                 </button>
               )}
             </div>
+            </>
+            )}
 
             {/* ── Texto pronto para o cliente registrar o BO ───────────────── */}
-            {textoBo && (
+            {textoBo && passo?.tipo !== "revisao" && (
               <div className="rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                   Texto para você registrar o boletim de ocorrência
@@ -871,15 +969,60 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {passo?.tipo === "registrar_bo" ? (
+              <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-[12px] leading-relaxed text-zinc-600">
+                  Depois de registrar, volte aqui e envie o boletim. Sem esse documento a sua
+                  defesa final não é fechada — é ele que transforma o seu relato em fato registrado.
+                </p>
+                <button
+                  type="button"
+                  onClick={confirmarRegistroBo}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f]"
+                >
+                  <Check className="h-3.5 w-3.5" /> Já registrei o boletim
+                </button>
+              </div>
+            ) : (
             <p className="text-[11px] leading-relaxed text-zinc-500">
               Ao aprovar, registramos a data, a hora e o carimbo da sua conexão, geramos um único
               arquivo assinado com este relato, as suas respostas e todos os anexos, e enviamos
               para o seu e-mail. Depois disso, o agendamento dos exames é liberado.
             </p>
+            )}
           </div>
         ) : (
-          <div className="no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5">
-            <Trilha passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+          <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
+            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+
+            {passo?.tipo === "enviar_bo" && (
+              <div className="rounded-lg border border-zinc-200 p-4">
+                <p className="text-[14px] font-semibold text-zinc-900">
+                  Envie o boletim de ocorrência registrado
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
+                  Assim que a delegacia liberar o documento, anexe aqui o PDF original. Nós lemos o
+                  número, a data e a natureza do fato e juntamos tudo à sua defesa.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => abrirSeletor("boletim_ocorrencia")}
+                  disabled={enviandoTipo !== null}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-2 text-[12px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
+                >
+                  {enviandoTipo === "boletim_ocorrencia"
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Upload className="h-3.5 w-3.5" />}
+                  Anexar boletim de ocorrência
+                </button>
+                {!boEntregue && (
+                  <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    Este passo fica aberto até o boletim chegar. Você pode fechar e voltar quando
+                    tiver o documento em mãos — nada do que você já escreveu se perde.
+                  </p>
+                )}
+              </div>
+            )}
 
             {passo?.tipo === "pergunta" && perguntaAtual && (
               <div className="rounded-lg border border-zinc-200 p-4">
@@ -1038,7 +1181,9 @@ export default function EfetivaNecessidadeModal({
           </div>
         )}
 
-        <div className="shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4">
+        <div className={embedded
+          ? "mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 pt-4"
+          : "shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4"}>
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -1049,12 +1194,12 @@ export default function EfetivaNecessidadeModal({
               <ChevronLeft className="h-3.5 w-3.5" /> Anterior
             </button>
             <p className="hidden text-[10px] leading-tight text-zinc-400 sm:block">
-              {passoIndex === PASSO_REVISAO && narrativa
+              {passoFinal && narrativa
                 ? "Você é quem aprova."
                 : salvandoCampo === "salvando" ? "Salvando…" : "Tudo é salvo enquanto você digita."}
             </p>
           </div>
-          {passoIndex === PASSO_REVISAO && narrativa ? (
+          {passoFinal && narrativa ? (
             <button
               type="button"
               disabled={aprovando || narrativa.trim().length < 200}
@@ -1064,7 +1209,7 @@ export default function EfetivaNecessidadeModal({
               {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
               Concordo e aprovo
             </button>
-          ) : passoIndex === PASSO_REVISAO ? (
+          ) : passo?.tipo === "revisao" && !narrativa ? (
             <button
               type="button"
               disabled={!podeConcluir || salvando || gerando}
@@ -1100,6 +1245,13 @@ export default function EfetivaNecessidadeModal({
           }}
         />
       </div>
+  );
+
+  if (embedded) return conteudo;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+      {conteudo}
     </div>,
     document.body,
   );

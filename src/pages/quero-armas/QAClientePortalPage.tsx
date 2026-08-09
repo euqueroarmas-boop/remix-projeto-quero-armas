@@ -349,7 +349,6 @@ export default function QAClientePortalPage() {
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
   // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
-  const [efetivaNecessidadeProcessoId, setEfetivaNecessidadeProcessoId] = useState<string | null>(null);
   // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
   // id para que o Hub Documental salve o novo como substituição (marca o
   // antigo como `substituido`).
@@ -2024,14 +2023,21 @@ export default function QAClientePortalPage() {
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
         entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Iniciar efetiva necessidade" : undefined,
+        // A efetiva necessidade roda DENTRO do pop-up guiado: os seus passos
+        // são itens do mesmo checklist, não um segundo pop-up por cima.
+        corpo:
+          ehEfetivaNecessidade(rawTipo) && doc?.processo_id && cliente?.id ? (
+            <EfetivaNecessidadeModal
+              embedded
+              open
+              processoId={String(doc.processo_id)}
+              clienteId={Number(cliente.id)}
+              onClose={() => setShowContratoPopup(false)}
+              onConcluido={() => setDocsReloadKey((k) => k + 1)}
+            />
+          ) : undefined,
         onEntregar: () => {
-          // Efetiva necessidade abre o questionário dedicado (provas primeiro,
-          // narrativa depois) em vez de voltar para a lista guiada.
-          if (ehEfetivaNecessidade(rawTipo) && doc?.processo_id) {
-            setEfetivaNecessidadeProcessoId(String(doc.processo_id));
-            setShowContratoPopup(false);
-            return;
-          }
+          if (ehEfetivaNecessidade(rawTipo)) return;
           setEditDocTipo(hubTipo);
           setShowAddDoc(true);
           setShowContratoPopup(false);
@@ -4570,19 +4576,6 @@ export default function QAClientePortalPage() {
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
-
-      {cliente?.id && efetivaNecessidadeProcessoId ? (
-        <EfetivaNecessidadeModal
-          open={!mustChangePassword}
-          processoId={efetivaNecessidadeProcessoId}
-          clienteId={Number(cliente.id)}
-          onClose={() => setEfetivaNecessidadeProcessoId(null)}
-          onConcluido={() => {
-            setEfetivaNecessidadeProcessoId(null);
-            setDocsReloadKey((k) => k + 1);
-          }}
-        />
-      ) : null}
 
       {cliente?.id ? (
         <ClienteChecklistCadastralModal

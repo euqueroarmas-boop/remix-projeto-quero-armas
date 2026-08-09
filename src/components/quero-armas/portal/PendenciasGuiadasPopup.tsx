@@ -74,6 +74,16 @@ export interface PendenciaItem {
    * QUAL imóvel. O cliente não tem como saber a que endereço nos referimos.
    */
   detalheContexto?: string | null;
+  /**
+ * Conteúdo próprio da pendência, renderizado DENTRO do pop-up guiado.
+ *
+ * Regra do usuário (09/08/2026): nenhum fluxo pode abrir um segundo pop-up por
+ * cima do guiado. A Efetiva Necessidade entrega aqui os seus passos — o cliente
+ * segue no mesmo checklist, com o mesmo header, o mesmo X bordô e os mesmos
+ * contadores. Quando `corpo` existe, o passo a passo padrão e os botões de
+ * ação do rodapé saem de cena: quem manda é o fluxo embutido.
+ */
+  corpo?: React.ReactNode;
 }
 
 interface Props {
@@ -595,6 +605,10 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pb-2"}>
 
 
+          {active.corpo ? (
+            <div className="pt-1">{active.corpo}</div>
+          ) : (
+          <>
           {/* Step list with vertical timeline */}
           <div className="relative">
             <div className="absolute left-[15px] top-3 bottom-3 w-px bg-[#E4E4E4]" />
@@ -655,6 +669,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               ) : null}
             </div>
           ) : null}
+          </>
+          )}
 
           {/* Modo página (granada): o card "Resolva um por vez" NÃO fica travado
               no rodapé nem em fundo branco — ele rola junto com o conteúdo. */}
@@ -768,6 +784,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             </div>
           ) : null}
 
+          {active.corpo ? null : (
           <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-6 py-4 flex flex-col gap-3"}>
             {total > 1 && podeVoltar ? (
               <div className="flex gap-3">
@@ -819,6 +836,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
