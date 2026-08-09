@@ -400,6 +400,10 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       <style>{`
         .qa-docsz6 .os{font-family:'Oswald','Arial Narrow',Arial,sans-serif}
         .qa-docsz6 .hdr h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:22px;font-weight:700;letter-spacing:.03em;color:#0A0A0A;text-transform:uppercase;line-height:1.05;margin:0}
+       .qa-docsz6 .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+       .qa-docsz6 .hdr-top h1{flex:1 1 auto;min-width:0}
+       .qa-docsz6 .hdr .add{display:inline-flex;align-items:center;gap:3px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:3px 7px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:8.5px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase;flex:0 0 auto;white-space:nowrap}
+       .qa-docsz6 .hdr .add:hover{border-color:#7A1F2B;color:#7A1F2B}
         .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;line-height:1.4;color:#6A6A6A;display:flex;flex-direction:column;gap:4px;flex-wrap:nowrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
         .qa-docsz6 .hdr .meta > span{display:flex;align-items:center;gap:18px;white-space:nowrap}
         @media (max-width:520px){.qa-docsz6 .hdr .meta{font-size:9px;letter-spacing:.12em;gap:3px}.qa-docsz6 .hdr .meta > span{gap:10px}}
@@ -470,7 +474,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       {/* BLOCO FIXO — header + foco do dia + KPIs + filtro ativo */}
       <div style={{ flexShrink: 0 }}>
       <div className="hdr" style={{ marginBottom: 20 }}>
-        <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
+        <div className="hdr-top">
+          <h1>{nomePrimeiro}, ESSES SÃO SEUS DOCUMENTOS</h1>
+          <button className="add" type="button" onClick={() => onOpenAdd()}>
+            <Plus className="h-3 w-3" /> ADICIONAR
+          </button>
+        </div>
         <div className="meta qa-meta-lines">
           <span>
             <span>CPF · <b>{cpfFmt}</b></span>
@@ -543,9 +552,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       {/* LISTA AGRUPADA POR CATEGORIA */}
       <div className="listhead">
         <div className="ttl">DOCUMENTOS · AGRUPADO POR CATEGORIA <span className="cnt">{kpis.total}</span></div>
-        <button className="add" type="button" onClick={() => onOpenAdd()}>
-          <Plus className="h-3 w-3" /> ADICIONAR
-        </button>
       </div>
 
       {grupos.length === 0 ? (
