@@ -739,10 +739,14 @@ export default function EfetivaNecessidadeModal({
           }
         >
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
-              Efetiva necessidade · Passo {passoIndex + 1} de {passos.length}
-            </p>
-            <h2 className="mt-1 text-[18px] font-semibold text-zinc-900">
+            {/* Em modo item da fila, o pop-up guiado já mostra grupo e
+                contadores — repetir "Passo N de M" confundia o cliente. */}
+            {passoId ? null : (
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
+                Efetiva necessidade · Passo {passoIndex + 1} de {passos.length}
+              </p>
+            )}
+            <h2 className={`text-[18px] font-semibold text-zinc-900 ${passoId ? "" : "mt-1"}`}>
               {passo?.titulo ?? "Vamos reunir as provas do seu caso"}
             </h2>
             {passoIndex === 0 && (
