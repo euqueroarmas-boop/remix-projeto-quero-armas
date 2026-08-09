@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, FileText, ShieldCheck, ExternalLink } from "lucide-react";
+import { Loader2, ShieldCheck, ExternalLink } from "lucide-react";
 
 type Registro = Record<string, any>;
 type Prova = Record<string, any>;
@@ -223,5 +223,3 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
     </div>
   );
 }
-
-export { FileText };
