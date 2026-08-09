@@ -247,7 +247,7 @@ export default function DeclaracaoResponsavelImovelModal({
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[90dvh]">
+      <div className="relative w-full sm:max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[calc(100dvh-1.5rem)] sm:h-[min(90dvh,760px)]">
         <button
           type="button"
           onClick={onFechar}
