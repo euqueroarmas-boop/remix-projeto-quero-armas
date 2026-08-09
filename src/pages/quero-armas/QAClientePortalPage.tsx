@@ -2736,7 +2736,13 @@ export default function QAClientePortalPage() {
     const passosDoDoc = (d: any): EfetivaPasso[] | null => {
       if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return null;
       const ps = efetivaPassos[String(d?.processo_id ?? "")];
-      return ps && ps.length > 0 ? ps : null;
+      if (!ps || ps.length === 0) return null;
+      // Voltar uma página volta a contagem: nada à frente do passo em tela
+      // conta como concluído.
+      const atual = efetivaPassoAtual[String(d?.processo_id ?? "")];
+      const i = atual ? ps.findIndex((p) => p.id === atual) : -1;
+      if (i < 0) return ps;
+      return ps.map((p, idx) => (idx > i ? { ...p, concluido: false } : p));
     };
 
     // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
@@ -2797,7 +2803,7 @@ export default function QAClientePortalPage() {
       reaproveitados: obrigatorios.filter(ehReaproveitado).length,
       grupos,
     };
-  }, [processoDocs, processos, catalogoDocInfo, efetivaPassos]);
+  }, [processoDocs, processos, catalogoDocInfo, efetivaPassos, efetivaPassoAtual]);
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.
