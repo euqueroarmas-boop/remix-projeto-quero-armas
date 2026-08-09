@@ -47,6 +47,12 @@ interface Props {
   passoId?: string;
   /** Avisa o portal que o estado do passo mudou (recontar a fila/grupo). */
   onPassoConcluido?: () => void;
+  /**
+   * Avisa o portal QUAL passo está em tela agora. Ao voltar uma página, a
+   * contagem "N de M concluídos" do grupo precisa voltar junto — sem isso o
+   * rodapé fica travado no ponto mais avançado que o cliente já atingiu.
+   */
+  onPassoAtualChange?: (passoId: string) => void;
 }
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
