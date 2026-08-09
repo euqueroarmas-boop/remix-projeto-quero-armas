@@ -2467,7 +2467,7 @@ export default function QAClientePortalPage() {
     // popup guiado. A sequência por grupo continua na ordenação, mas sem
     // esconder os demais grupos atrás de uma fila paralela.
     return decorados.map((d) => d.it);
-  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub]);
+  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
