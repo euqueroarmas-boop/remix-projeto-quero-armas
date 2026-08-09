@@ -371,6 +371,11 @@ export default function QAClientePortalPage() {
    * guardamos, por processo, o estado de cada passo lido do banco.
    */
   const [efetivaPassos, setEfetivaPassos] = useState<Record<string, EfetivaPasso[]>>({});
+  /**
+   * Passo em tela agora, por processo. Voltar uma página tem que devolver a
+   * contagem do grupo: os passos à frente do atual não contam como concluídos.
+   */
+  const [efetivaPassoAtual, setEfetivaPassoAtual] = useState<Record<string, string>>({});
   const [efetivaReloadKey, setEfetivaReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
   const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
