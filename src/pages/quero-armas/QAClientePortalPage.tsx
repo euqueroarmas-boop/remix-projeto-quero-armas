@@ -349,7 +349,6 @@ export default function QAClientePortalPage() {
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
   // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
-  const [efetivaNecessidadeProcessoId, setEfetivaNecessidadeProcessoId] = useState<string | null>(null);
   // Se o cliente clicou em "Renovar" em um documento existente, guardamos o
   // id para que o Hub Documental salve o novo como substituição (marca o
   // antigo como `substituido`).
