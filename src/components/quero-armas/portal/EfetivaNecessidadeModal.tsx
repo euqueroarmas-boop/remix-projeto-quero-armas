@@ -657,7 +657,16 @@ export default function EfetivaNecessidadeModal({
     () => provas.filter((p) => p.tipo === "boletim_ocorrencia"),
     [provas],
   );
-  const boEntregue = !boPendenteRegistro && provasBo.length > 0;
+  /**
+   * Boletim antigo prova reiteração. Só exigimos registro novo quando não há
+   * nada recente — regra do usuário (09/08/2026).
+   */
+  const suficienciaBo = useMemo(
+    () => avaliarSuficienciaBo(provas, relato),
+    [provas, relato],
+  );
+  const boEntregue =
+    provasBo.length > 0 && (!suficienciaBo.exigeNovoBo || !boPendenteRegistro);
 
   const passo = passos[Math.min(passoIndex, passos.length - 1)];
   const perguntaAtual = passo?.campo
