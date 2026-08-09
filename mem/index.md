@@ -60,3 +60,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Sensor Processos](mem://features/quero-armas/sensor-movimento-processos) — Verde/amarelo(7d)/vermelho(15d) por dias sem movimentação; entrega de documento zera. Rótulo de prazo sem "FALTAM" e sem bolinha.
 - [Naturalidade Fonte](mem://features/quero-armas/naturalidade-fonte-de-verdade) — Lista branca de documentos que valem como referência de naturalidade; certidões e CNH nunca.
 - [Ciclo Comprovante Consumo](mem://features/quero-armas/comprovante-consumo-ciclo) — Validade pela próxima leitura e mês de referência exigido na recusa
+- [Cobrança Inatividade](mem://features/quero-armas/cobranca-inatividade) — 15 dias parado + cobrança semanal (e-mail + central de notificações) e painel de progresso ordenável no dashboard

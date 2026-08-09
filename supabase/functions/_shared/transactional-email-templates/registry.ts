@@ -57,6 +57,7 @@ import { template as municaoLimiteAlerta } from './municao-limite-alerta.tsx'
 import { template as acervoInconsistente } from './acervo-inconsistente.tsx'
 import { template as acervoConforme } from './acervo-conforme.tsx'
 import { template as documentoEmDia } from './documento-em-dia.tsx'
+import { template as processoParadoCobranca } from './processo-parado-cobranca.tsx'
 import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
 import { template as cadastroAtualizado } from './cadastro-atualizado.tsx'
 import { template as certidaoRejeitada } from './certidao-rejeitada.tsx'
@@ -161,6 +162,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'acervo-inconsistente': acervoInconsistente,
   'acervo-conforme': acervoConforme,
   'documento-em-dia': documentoEmDia,
+  'processo-parado-cobranca': processoParadoCobranca,
   'exigencia-cumprida': exigenciaCumprida,
   'cadastro-atualizado': cadastroAtualizado,
   'certidao-rejeitada': certidaoRejeitada,

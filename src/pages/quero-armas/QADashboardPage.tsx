@@ -18,6 +18,7 @@ const PendenciasEssenciaisModal = lazyRetry(() => import("@/components/quero-arm
 const DashboardPrazosRecursais  = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
 const DashboardProntoProtocolar = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProntoProtocolar"), "DashboardProntoProtocolar");
 const DashboardClientesOnline   = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardClientesOnline"), "DashboardClientesOnline");
+const DashboardProgressoClientes = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProgressoClientes"), "DashboardProgressoClientes");
 
 interface Stats {
   documentos: number;
@@ -155,6 +156,11 @@ export default function QADashboardPage() {
       {/* Processos prontos para protocolar — alerta operacional para a equipe */}
       <Suspense fallback={<Spinner />}>
         <DashboardProntoProtocolar />
+      </Suspense>
+
+      {/* Progresso por cliente — lista ordenável de todos os processos ativos */}
+      <Suspense fallback={<Spinner />}>
+        <DashboardProgressoClientes />
       </Suspense>
 
       {/* Clientes logados agora na área do cliente */}
