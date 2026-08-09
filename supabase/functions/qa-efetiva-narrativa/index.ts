@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
     const { narrativa, textoBo } = separarBlocos(bruto);
     if (!narrativa) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
-    await sb
+    const { error: erroUpdate } = await sb
       .from("qa_efetiva_necessidade")
       .update({
         narrativa_gerada: narrativa,
@@ -224,10 +224,14 @@ Deno.serve(async (req) => {
         texto_bo_editado_pelo_cliente: false,
         bo_pendente_registro: Boolean(textoBo),
         versao: Number(reg.versao ?? 1) + ((acrescimos ?? []).length ? 1 : 0),
-        status: "narrativa_pronta",
+        status: "aguardando_aprovacao",
         updated_at: new Date().toISOString(),
       })
       .eq("id", registro_id);
+    if (erroUpdate) {
+      console.error("[qa-efetiva-narrativa] update:", erroUpdate.message);
+      return json({ error: "Não foi possível salvar o relato gerado." }, 500);
+    }
 
     return json({ ok: true, narrativa, texto_bo: textoBo });
   } catch (e) {
