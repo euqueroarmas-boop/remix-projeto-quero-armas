@@ -2611,6 +2611,53 @@ export default function QAClientePortalPage() {
     toast.info("Nenhuma pendência no momento.");
   };
 
+  // ==========================================================================
+  // Carrega o estado dos passos da efetiva necessidade (um por processo que
+  // tem a exigência). É esta leitura que faz cada passo virar item da fila e
+  // entrar na contagem "N de M concluídos" do grupo.
+  // ==========================================================================
+  useEffect(() => {
+    const processosEfetiva = Array.from(
+      new Set(
+        (processoDocs ?? [])
+          .filter((d: any) => d?.obrigatorio && ehTipoEfetivaNecessidade(d?.tipo_documento))
+          .map((d: any) => String(d?.processo_id ?? ""))
+          .filter(Boolean),
+      ),
+    );
+    if (processosEfetiva.length === 0) {
+      setEfetivaPassos({});
+      return;
+    }
+    let vivo = true;
+    (async () => {
+      const mapa: Record<string, EfetivaPasso[]> = {};
+      for (const pid of processosEfetiva) {
+        try {
+          const { data: reg } = await supabase
+            .from("qa_efetiva_necessidade" as any)
+            .select("*")
+            .eq("processo_id", pid)
+            .maybeSingle();
+          let provas: any[] = [];
+          if ((reg as any)?.id) {
+            const { data: pv } = await supabase
+              .from("qa_efetiva_necessidade_provas" as any)
+              .select("tipo")
+              .eq("efetiva_necessidade_id", (reg as any).id);
+            provas = (pv as any[]) ?? [];
+          }
+          mapa[pid] = calcularPassosEfetiva(reg as any, provas);
+        } catch (e) {
+          console.warn("[portal] efetiva necessidade: leitura falhou", e);
+          mapa[pid] = calcularPassosEfetiva(null, []);
+        }
+      }
+      if (vivo) setEfetivaPassos(mapa);
+    })();
+    return () => { vivo = false; };
+  }, [processoDocs, docsReloadKey, efetivaReloadKey]);
+
   const resumoProcesso = useMemo(() => {
     const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
     const ehPergunta = (d: any) => {
