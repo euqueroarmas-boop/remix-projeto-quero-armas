@@ -554,7 +554,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
                 cliente em que parte do processo ele estava. */}
-            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-1" style={{ color: "#7A1F2B" }}>
+            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2 py-0.5 text-[9px] tracking-[0.14em]" style={{ color: "#7A1F2B" }}>
               {activeGrupo}
               {/* Onde este grupo fica no processo inteiro. Sem isto o cliente
                   via só o nome do grupo e não tinha ideia de quantas frentes
@@ -570,20 +570,24 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 só — que é o caso comum — ele repete exatamente os números do
                 "Passo N de M" ao lado, e o cliente lê a mesma informação duas
                 vezes com nomes diferentes. */}
-            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-1">
+            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2 py-0.5 text-[9px] tracking-[0.14em]">
               {headerContexto}
             </span>
             {pendenciasGrupo > 0 ? (
-              <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2.5 py-1">
+              <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2 py-0.5 text-[9px] tracking-[0.14em]">
                 {pendenciasGrupoLabel}
               </span>
             ) : null}
           </div>
           <div className="mt-4 mb-1 h-px bg-[#F0F0F0]" />
           <div className={asPage ? "" : "pl-[44px]"}>
-            <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
-              {explic.titulo}
-            </h2>
+            {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
+                título da etapa — o título grande repetiria o nome do grupo. */}
+            {active.corpo ? null : (
+              <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+                {explic.titulo}
+              </h2>
+            )}
 
             {active.detalheContexto ? (
               <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
