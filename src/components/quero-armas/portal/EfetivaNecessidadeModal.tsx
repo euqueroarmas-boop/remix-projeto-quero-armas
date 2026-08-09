@@ -1054,8 +1054,7 @@ export default function EfetivaNecessidadeModal({
 
             {passo?.tipo === "pergunta" && perguntaAtual && (
               <div className="rounded-lg border border-zinc-200 p-4">
-                <p className="text-[14px] font-semibold text-zinc-900">{perguntaAtual.pergunta}</p>
-                <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">{perguntaAtual.ajuda}</p>
+                <p className="text-[12px] leading-relaxed text-zinc-500">{perguntaAtual.ajuda}</p>
 
                 <div className="mt-3 flex gap-2">
                   {[true, false].map((v) => (
