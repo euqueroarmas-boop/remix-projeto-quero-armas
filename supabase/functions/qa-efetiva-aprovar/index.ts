@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
       dossie_gerado_em: agora.toISOString(),
       exames_liberados_em: agora.toISOString(),
       enviado_equipe_em: agora.toISOString(),
-      status: "aprovada",
+      status: "aprovado",
       updated_at: agora.toISOString(),
     }).eq("id", registroId);
 
