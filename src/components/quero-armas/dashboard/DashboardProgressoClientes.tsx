@@ -257,6 +257,11 @@ export default function DashboardProgressoClientes() {
                         <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
                           {r.servico_nome ?? "—"}
                         </div>
+                        {(trilhas[r.processo_id] ?? []).length > 0 && (
+                          <div className="text-[9px] uppercase tracking-[0.12em] text-slate-300 truncate">
+                            {(trilhas[r.processo_id] ?? []).join(" · ")}
+                          </div>
+                        )}
                       </Link>
                     </td>
                     <td className="px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-slate-500">
