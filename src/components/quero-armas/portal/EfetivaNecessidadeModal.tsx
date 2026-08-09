@@ -770,7 +770,7 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : narrativaNaTela ? (
           <div className={embedded ? "space-y-4" : "no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5"}>
-            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+            {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
             {passo?.tipo === "registrar_bo" ? null : (
             <>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
@@ -1017,7 +1017,7 @@ export default function EfetivaNecessidadeModal({
           </div>
         ) : (
           <div className={embedded ? "space-y-5" : "no-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-6 py-5"}>
-            <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />
+            {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
 
             {passo?.tipo === "enviar_bo" && (
               <div className="rounded-lg border border-zinc-200 p-4">
