@@ -674,6 +674,18 @@ export default function EfetivaNecessidadeModal({
     if (passoId) onPassoConcluido?.();
   }, [passos.length, passoId, onPassoConcluido]);
 
+  /**
+   * Travado no passo que o item da fila representa. Sem isto o wizard
+   * retomaria pelo estado interno e ignoraria qual item o cliente abriu.
+   */
+  useEffect(() => {
+    if (!passoId) return;
+    const i = passos.findIndex((p) => p.id === passoId);
+    if (i < 0) return;
+    setPassoIndex(i);
+    setMaxVisitado((m) => Math.max(m, i));
+  }, [passoId, passos]);
+
   const avancar = useCallback(() => {
     const p = passos[passoIndex];
     // Marcou "sim" e não anexou nada: avisa uma vez, mas não bloqueia.
