@@ -114,6 +114,44 @@ const LABEL_TIPO: Record<TipoProva, string> = {
   outro: "Documento complementar",
 };
 
+/**
+ * A fila de etapas — um bloco por tela, no mesmo padrão do pop-up guiado.
+ *
+ * Antes tudo vinha empilhado num scroll único e o cliente pulava campo. Aqui
+ * cada bloco vira um passo navegável (Anterior / Próximo), com contador,
+ * trilha numerada e o rodapé fixo do padrão guiado.
+ */
+type PassoTipo = "pergunta" | "relato" | "contexto" | "revisao";
+
+const PASSOS: Array<{
+  id: string;
+  tipo: PassoTipo;
+  titulo: string;
+  campo?: (typeof PERGUNTAS)[number]["campo"];
+}> = [
+  ...PERGUNTAS.map((q) => ({
+    id: q.campo,
+    tipo: "pergunta" as const,
+    titulo: q.pergunta,
+    campo: q.campo,
+  })),
+  { id: "relato", tipo: "relato", titulo: "Conte o que está acontecendo" },
+  { id: "contexto", tipo: "contexto", titulo: "O que, na sua rotina, aumenta o risco?" },
+  { id: "revisao", tipo: "revisao", titulo: "Revisão e geração do relato" },
+];
+
+const TRILHA_ROTULO: Record<string, string> = {
+  tem_bo: "Boletim de ocorrência",
+  tem_inquerito: "Inquérito policial",
+  tem_acao_criminal: "Ação criminal",
+  sofre_ameaca: "Ameaça atual",
+  relato: "Seu relato",
+  contexto: "Rotina de risco",
+  revisao: "Revisão e geração",
+};
+
+const PASSO_REVISAO = PASSOS.length - 1;
+
 const dataBR = (iso: string | null | undefined) => {
   const m = String(iso ?? "").match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
