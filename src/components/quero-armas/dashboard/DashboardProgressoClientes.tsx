@@ -215,6 +215,11 @@ export default function DashboardProgressoClientes() {
                     <span className="shrink-0 tabular-nums text-slate-400">{r.cobrancas} COB.</span>
                   )}
                 </div>
+                {(trilhas[r.processo_id] ?? []).length > 0 && (
+                  <div className="mt-1 text-[9px] uppercase tracking-[0.12em] text-slate-300 truncate">
+                    {trilhaCompacta(trilhas[r.processo_id]).join(" · ")}
+                  </div>
+                )}
               </Link>
             );
           })}
