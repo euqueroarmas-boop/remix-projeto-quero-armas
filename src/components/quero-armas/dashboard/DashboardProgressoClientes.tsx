@@ -132,9 +132,29 @@ export default function DashboardProgressoClientes() {
           PROGRESSO DOS CLIENTES
         </h3>
         <span className="ml-auto text-[10px] uppercase tracking-wider font-semibold text-slate-500">
-          {rows.length} ATIVOS
+          {filtroTrilha ? `${filtradas.length} DE ${rows.length}` : `${rows.length} ATIVOS`}
         </span>
       </div>
+
+      {trilhasDisponiveis.length > 0 && (
+        <div className="px-4 py-2 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-slate-300 mr-1">TRILHA</span>
+          {trilhasDisponiveis.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
+              className={`shrink-0 text-[9px] uppercase tracking-[0.12em] px-2 py-1 rounded-full border transition-colors ${
+                filtroTrilha === t
+                  ? "border-slate-800 text-slate-800 font-bold"
+                  : "border-slate-200 text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="px-4 py-6 text-center text-[11px] uppercase tracking-wider text-slate-400 inline-flex items-center justify-center gap-2 w-full">
