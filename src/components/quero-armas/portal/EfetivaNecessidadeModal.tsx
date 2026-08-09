@@ -33,6 +33,7 @@ import {
   TERMO_BO_VERSAO,
   montarTextoTermoBo,
 } from "@/lib/quero-armas/boExplicacao";
+import { avaliarSuficienciaBo } from "@/lib/quero-armas/efetivaNecessidadePassos";
 
 interface Props {
   open: boolean;
