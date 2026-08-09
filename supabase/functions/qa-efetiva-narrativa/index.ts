@@ -50,6 +50,50 @@ REGRAS DO TEXTO ===BO=== (completamente diferentes das acima):
 - Deve transmitir situação de risco atual e prestes a se consumar — medo, pânico, temor real — sem exagero teatral e sem inventar fato nenhum.
 - Um único bloco de texto corrido, sem títulos, sem marcadores, sem markdown, sem assinatura.`;
 
+/** Prazo legal de representação — abaixo disso o boletim sustenta sozinho. */
+const BO_PRAZO_MS = 6 * 30.44 * 24 * 60 * 60 * 1000;
+const MARCADORES_FATO_RECENTE =
+  /\b(hoje|ontem|anteontem|esta semana|essa semana|semana passada|este m[êe]s|esse m[êe]s|m[êe]s passado|recentemente|nos [úu]ltimos dias|h[áa] poucos dias|agora h[áa] pouco|ainda ontem|nesta semana)\b/i;
+
+function relatoTemFatoRecente(relato: string | null | undefined, agora: number): boolean {
+  const texto = String(relato ?? "");
+  if (!texto.trim()) return false;
+  if (MARCADORES_FATO_RECENTE.test(texto)) return true;
+  const datas = texto.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g) ?? [];
+  return datas.some((d) => {
+    const [dia, mes, ano] = d.split("/");
+    const t = Date.parse(`${ano}-${mes}-${dia}T12:00:00Z`);
+    return Number.isFinite(t) && agora - t <= BO_PRAZO_MS && t <= agora + 86400000;
+  });
+}
+
+/**
+ * Boletim antigo prova REITERAÇÃO. Só exigimos registro novo quando não há
+ * nada recente: um único boletim antigo e nenhum fato recente no relato.
+ */
+function exigeNovoBo(provas: any[], relato: string | null | undefined, agora: number): boolean {
+  const bos = (provas ?? []).filter((p) => p?.tipo === "boletim_ocorrencia");
+  if (bos.length === 0) return true;
+  const temRecente = bos.some((p) => {
+    const t = Date.parse(String(p.data_fato ?? p.created_at ?? ""));
+    return Number.isFinite(t) && agora - t <= BO_PRAZO_MS;
+  });
+  if (temRecente) return false;
+  if (bos.length > 1) return false;
+  return !relatoTemFatoRecente(relato, agora);
+}
+
+/** Idade do boletim, para a IA saber o que é reiteração e o que é fato atual. */
+function idadeBoletim(iso: string | null | undefined): string {
+  const t = Date.parse(String(iso ?? ""));
+  if (!Number.isFinite(t)) return "";
+  const meses = Math.floor((Date.now() - t) / (30.44 * 24 * 60 * 60 * 1000));
+  if (meses <= 0) return "registro deste mês (fato atual)";
+  return meses < 6
+    ? `registrado há ${meses} ${meses === 1 ? "mês" : "meses"} (dentro do prazo legal — fato atual)`
+    : `registrado há ${meses} meses (histórico — usar como reiteração)`;
+}
+
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), {
     status,
@@ -110,7 +154,7 @@ Deno.serve(async (req) => {
 
     const { data: provas } = await sb
       .from("qa_efetiva_necessidade_provas")
-      .select("tipo, numero, orgao, data_fato, local_fato, naturezas, vitima_nome, relato, arquivo_nome")
+      .select("tipo, numero, orgao, data_fato, local_fato, naturezas, vitima_nome, relato, arquivo_nome, created_at")
       .eq("efetiva_necessidade_id", registro_id)
       .order("data_fato", { ascending: true, nullsFirst: false });
 
@@ -135,6 +179,7 @@ Deno.serve(async (req) => {
         p.numero ? `nº ${p.numero}` : "",
         p.orgao ? `órgão: ${p.orgao}` : "",
         p.data_fato ? `fato em ${dataBR(p.data_fato)}` : "",
+        p.tipo === "boletim_ocorrencia" ? idadeBoletim(p.data_fato ?? p.created_at) : "",
         p.local_fato ? `local: ${p.local_fato}` : "",
         p.naturezas?.length ? `natureza: ${p.naturezas.join(", ")}` : "",
         p.vitima_nome ? `vítima: ${p.vitima_nome}` : "",
@@ -212,7 +257,11 @@ Deno.serve(async (req) => {
     const bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
     if (!bruto) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
-    const { narrativa, textoBo } = separarBlocos(bruto);
+    const { narrativa, textoBo: textoBoBruto } = separarBlocos(bruto);
+    // Boletim antigo vale como reiteração: só entregamos texto para registrar
+    // um BO novo quando a regra realmente exige.
+    const precisaNovoBo = exigeNovoBo(provas ?? [], reg.relato_cliente, Date.now());
+    const textoBo = precisaNovoBo ? textoBoBruto : "";
     if (!narrativa) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
     const { error: erroUpdate } = await sb
