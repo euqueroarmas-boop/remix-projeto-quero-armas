@@ -2023,7 +2023,7 @@ export default function QAClientePortalPage() {
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
-        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Resolver efetiva necessidade" : undefined,
+        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Iniciar efetiva necessidade" : undefined,
         onEntregar: () => {
           // Efetiva necessidade abre o questionário dedicado (provas primeiro,
           // narrativa depois) em vez de voltar para a lista guiada.
