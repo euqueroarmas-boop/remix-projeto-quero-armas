@@ -47,6 +47,12 @@ interface Props {
   passoId?: string;
   /** Avisa o portal que o estado do passo mudou (recontar a fila/grupo). */
   onPassoConcluido?: () => void;
+  /**
+   * Avisa o portal QUAL passo está em tela agora. Ao voltar uma página, a
+   * contagem "N de M concluídos" do grupo precisa voltar junto — sem isso o
+   * rodapé fica travado no ponto mais avançado que o cliente já atingiu.
+   */
+  onPassoAtualChange?: (passoId: string) => void;
 }
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
@@ -250,7 +256,7 @@ const dataBR = (iso: string | null | undefined) => {
 
 export default function EfetivaNecessidadeModal({
   open, processoId, clienteId, onClose, onConcluido, embedded = false,
-  passoId, onPassoConcluido,
+  passoId, onPassoConcluido, onPassoAtualChange,
 }: Props) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
@@ -669,10 +675,13 @@ export default function EfetivaNecessidadeModal({
     setAvisoAnexo(null);
     setPassoIndex(destino);
     setMaxVisitado((m) => Math.max(m, destino));
+    // O rodapé do pop-up guiado acompanha o passo em tela — inclusive quando
+    // o cliente volta uma página.
+    onPassoAtualChange?.(String(passos[destino]?.id ?? ""));
     // Modo "um passo por item da fila": quem navega é o pop-up guiado, então
     // o portal precisa recontar os itens concluídos do grupo.
     if (passoId) onPassoConcluido?.();
-  }, [passos.length, passoId, onPassoConcluido]);
+  }, [passos, passoId, onPassoConcluido, onPassoAtualChange]);
 
   /**
    * Travado no passo que o item da fila representa. Sem isto o wizard
@@ -684,7 +693,8 @@ export default function EfetivaNecessidadeModal({
     if (i < 0) return;
     setPassoIndex(i);
     setMaxVisitado((m) => Math.max(m, i));
-  }, [passoId, passos]);
+    onPassoAtualChange?.(String(passoId));
+  }, [passoId, passos, onPassoAtualChange]);
 
   const avancar = useCallback(() => {
     const p = passos[passoIndex];
