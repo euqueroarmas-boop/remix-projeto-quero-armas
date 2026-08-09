@@ -81,6 +81,105 @@ export interface EfetivaRegistroLike {
 
 export interface EfetivaProvaLike {
   tipo?: string | null;
+  data_fato?: string | null;
+  created_at?: string | null;
+}
+
+/** Prazo legal de representação. Abaixo disso, o boletim sustenta sozinho. */
+export const BO_PRAZO_MESES = 6;
+const BO_PRAZO_MS = BO_PRAZO_MESES * 30.44 * 24 * 60 * 60 * 1000;
+
+const MARCADORES_FATO_RECENTE =
+  /\b(hoje|ontem|anteontem|esta semana|essa semana|semana passada|este m[êe]s|esse m[êe]s|m[êe]s passado|recentemente|nos [úu]ltimos dias|h[áa] poucos dias|agora h[áa] pouco|ainda ontem|nesta semana)\b/i;
+
+function idadeMs(iso: string | null | undefined, agora: number): number | null {
+  const t = Date.parse(String(iso ?? ""));
+  return Number.isFinite(t) ? agora - t : null;
+}
+
+/** O relato traz fato recente? Data dentro do prazo ou marcador temporal. */
+export function relatoTemFatoRecente(relato: string | null | undefined, agora = Date.now()): boolean {
+  const texto = String(relato ?? "");
+  if (!texto.trim()) return false;
+  if (MARCADORES_FATO_RECENTE.test(texto)) return true;
+  const datas = texto.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g) ?? [];
+  return datas.some((d) => {
+    const [dia, mes, ano] = d.split("/");
+    const t = Date.parse(`${ano}-${mes}-${dia}T12:00:00Z`);
+    return Number.isFinite(t) && agora - t <= BO_PRAZO_MS && t <= agora + 86400000;
+  });
+}
+
+export interface SuficienciaBo {
+  /** Precisa registrar um boletim novo na delegacia? */
+  exigeNovoBo: boolean;
+  /** Motivo em linguagem de cliente — vai para a tela. */
+  motivo: string;
+  totalBo: number;
+  temBoRecente: boolean;
+}
+
+/**
+ * Regra do usuário (09/08/2026): boletim antigo prova REITERAÇÃO. Só pedimos
+ * registro novo quando não há nada recente — um único boletim antigo e nenhum
+ * fato recente no relato do cliente.
+ */
+export function avaliarSuficienciaBo(
+  provas: EfetivaProvaLike[] = [],
+  relato: string | null | undefined,
+  agora = Date.now(),
+): SuficienciaBo {
+  const bos = (provas ?? []).filter((p) => String(p?.tipo ?? "") === "boletim_ocorrencia");
+  const totalBo = bos.length;
+  const temBoRecente = bos.some((p) => {
+    const idade = idadeMs(p.data_fato ?? p.created_at, agora);
+    return idade !== null && idade <= BO_PRAZO_MS;
+  });
+  const fatoRecente = relatoTemFatoRecente(relato, agora);
+
+  if (totalBo === 0) {
+    return {
+      exigeNovoBo: true,
+      motivo:
+        "Você ainda não enviou nenhum boletim de ocorrência. Registre o boletim na delegacia e volte aqui para anexá-lo.",
+      totalBo,
+      temBoRecente,
+    };
+  }
+  if (temBoRecente) {
+    return {
+      exigeNovoBo: false,
+      motivo:
+        "Você já tem boletim registrado há menos de seis meses. Ele está dentro do prazo legal e sustenta a ameaça atual — não é preciso registrar outro.",
+      totalBo,
+      temBoRecente,
+    };
+  }
+  if (totalBo > 1) {
+    return {
+      exigeNovoBo: false,
+      motivo:
+        "Você enviou mais de um boletim. O conjunto demonstra a reiteração das ameaças ao longo do tempo — não é preciso registrar outro agora.",
+      totalBo,
+      temBoRecente,
+    };
+  }
+  if (fatoRecente) {
+    return {
+      exigeNovoBo: false,
+      motivo:
+        "O seu relato traz fato recente que tem correlação com o boletim que você enviou. O relato traz o fato atual e o boletim anterior comprova que já vinha de antes — não é preciso registrar outro.",
+      totalBo,
+      temBoRecente,
+    };
+  }
+  return {
+    exigeNovoBo: true,
+    motivo:
+      "Você tem apenas um boletim, com mais de seis meses, e o seu relato não traz fato recente. Nesse caso precisamos de um registro novo dizendo que o risco continua.",
+    totalBo,
+    temBoRecente,
+  };
 }
 
 /**
@@ -107,7 +206,11 @@ export function calcularPassosEfetiva(
     reg.tem_inquerito === false &&
     reg.tem_acao_criminal === false &&
     (provas?.length ?? 0) === 0;
-  const boEntregue = !reg.bo_pendente_registro && provasBo.length > 0;
+  const suficiencia = avaliarSuficienciaBo(provas, reg.relato_cliente);
+  // Boletim antigo continua valendo: se o conjunto já sustenta o pedido, os
+  // passos de registro/envio não ficam travados esperando documento novo.
+  const boEntregue =
+    provasBo.length > 0 && (!suficiencia.exigeNovoBo || !reg.bo_pendente_registro);
 
   const concluido = (id: EfetivaPassoId): boolean => {
     switch (id) {

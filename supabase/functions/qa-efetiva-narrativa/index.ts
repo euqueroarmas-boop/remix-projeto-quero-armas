@@ -32,6 +32,7 @@ REGRAS ABSOLUTAS:
 - Termine com um parágrafo em que eu explico, com os meus próprios fatos, por que continuo em risco hoje.
 - Entre 2.500 e 6.000 caracteres. Parágrafos curtos. Sem títulos, sem marcadores, sem markdown.
 - Se houver FATOS ACRESCENTADOS DEPOIS, incorpore-os ao relato no lugar cronológico correto. NUNCA descarte fatos já narrados: o relato novo contém tudo o que havia antes MAIS o que foi acrescentado.
+- BOLETINS ANTIGOS = REITERAÇÃO. Amarre-os no relato como sequência ("desde DD/MM/AAAA venho registrando ocorrências..."), demonstrando que o problema se repete há tempo. Destaque o FATO MAIS RECENTE narrado pelo cliente e correlacione-o expressamente aos boletins anteriores. NUNCA afirme que um boletim antigo, sozinho, comprova ameaça atual.
 
 VOCÊ PRODUZ DOIS TEXTOS, nesta ordem exata e com estes marcadores literais em linha própria:
 
@@ -48,6 +49,50 @@ REGRAS DO TEXTO ===BO=== (completamente diferentes das acima):
 - Conteúdo, nesta ordem: quem eu sou e o que faço; o que está acontecendo agora ou acabou de acontecer (o fato NOVO, o mais recente e concreto); por que temo pela minha vida, pela minha integridade ou pela da minha família; e que estou comunicando à delegacia para que sejam tomadas as providências cabíveis.
 - Deve transmitir situação de risco atual e prestes a se consumar — medo, pânico, temor real — sem exagero teatral e sem inventar fato nenhum.
 - Um único bloco de texto corrido, sem títulos, sem marcadores, sem markdown, sem assinatura.`;
+
+/** Prazo legal de representação — abaixo disso o boletim sustenta sozinho. */
+const BO_PRAZO_MS = 6 * 30.44 * 24 * 60 * 60 * 1000;
+const MARCADORES_FATO_RECENTE =
+  /\b(hoje|ontem|anteontem|esta semana|essa semana|semana passada|este m[êe]s|esse m[êe]s|m[êe]s passado|recentemente|nos [úu]ltimos dias|h[áa] poucos dias|agora h[áa] pouco|ainda ontem|nesta semana)\b/i;
+
+function relatoTemFatoRecente(relato: string | null | undefined, agora: number): boolean {
+  const texto = String(relato ?? "");
+  if (!texto.trim()) return false;
+  if (MARCADORES_FATO_RECENTE.test(texto)) return true;
+  const datas = texto.match(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g) ?? [];
+  return datas.some((d) => {
+    const [dia, mes, ano] = d.split("/");
+    const t = Date.parse(`${ano}-${mes}-${dia}T12:00:00Z`);
+    return Number.isFinite(t) && agora - t <= BO_PRAZO_MS && t <= agora + 86400000;
+  });
+}
+
+/**
+ * Boletim antigo prova REITERAÇÃO. Só exigimos registro novo quando não há
+ * nada recente: um único boletim antigo e nenhum fato recente no relato.
+ */
+function exigeNovoBo(provas: any[], relato: string | null | undefined, agora: number): boolean {
+  const bos = (provas ?? []).filter((p) => p?.tipo === "boletim_ocorrencia");
+  if (bos.length === 0) return true;
+  const temRecente = bos.some((p) => {
+    const t = Date.parse(String(p.data_fato ?? p.created_at ?? ""));
+    return Number.isFinite(t) && agora - t <= BO_PRAZO_MS;
+  });
+  if (temRecente) return false;
+  if (bos.length > 1) return false;
+  return !relatoTemFatoRecente(relato, agora);
+}
+
+/** Idade do boletim, para a IA saber o que é reiteração e o que é fato atual. */
+function idadeBoletim(iso: string | null | undefined): string {
+  const t = Date.parse(String(iso ?? ""));
+  if (!Number.isFinite(t)) return "";
+  const meses = Math.floor((Date.now() - t) / (30.44 * 24 * 60 * 60 * 1000));
+  if (meses <= 0) return "registro deste mês (fato atual)";
+  return meses < 6
+    ? `registrado há ${meses} ${meses === 1 ? "mês" : "meses"} (dentro do prazo legal — fato atual)`
+    : `registrado há ${meses} meses (histórico — usar como reiteração)`;
+}
 
 function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), {
@@ -109,7 +154,7 @@ Deno.serve(async (req) => {
 
     const { data: provas } = await sb
       .from("qa_efetiva_necessidade_provas")
-      .select("tipo, numero, orgao, data_fato, local_fato, naturezas, vitima_nome, relato, arquivo_nome")
+      .select("tipo, numero, orgao, data_fato, local_fato, naturezas, vitima_nome, relato, arquivo_nome, created_at")
       .eq("efetiva_necessidade_id", registro_id)
       .order("data_fato", { ascending: true, nullsFirst: false });
 
@@ -134,6 +179,7 @@ Deno.serve(async (req) => {
         p.numero ? `nº ${p.numero}` : "",
         p.orgao ? `órgão: ${p.orgao}` : "",
         p.data_fato ? `fato em ${dataBR(p.data_fato)}` : "",
+        p.tipo === "boletim_ocorrencia" ? idadeBoletim(p.data_fato ?? p.created_at) : "",
         p.local_fato ? `local: ${p.local_fato}` : "",
         p.naturezas?.length ? `natureza: ${p.naturezas.join(", ")}` : "",
         p.vitima_nome ? `vítima: ${p.vitima_nome}` : "",
@@ -211,7 +257,11 @@ Deno.serve(async (req) => {
     const bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
     if (!bruto) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
-    const { narrativa, textoBo } = separarBlocos(bruto);
+    const { narrativa, textoBo: textoBoBruto } = separarBlocos(bruto);
+    // Boletim antigo vale como reiteração: só entregamos texto para registrar
+    // um BO novo quando a regra realmente exige.
+    const precisaNovoBo = exigeNovoBo(provas ?? [], reg.relato_cliente, Date.now());
+    const textoBo = precisaNovoBo ? textoBoBruto : "";
     if (!narrativa) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
     const { error: erroUpdate } = await sb

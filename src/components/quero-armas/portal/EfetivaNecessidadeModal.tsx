@@ -33,6 +33,7 @@ import {
   TERMO_BO_VERSAO,
   montarTextoTermoBo,
 } from "@/lib/quero-armas/boExplicacao";
+import { avaliarSuficienciaBo } from "@/lib/quero-armas/efetivaNecessidadePassos";
 
 interface Props {
   open: boolean;
@@ -105,7 +106,7 @@ const PERGUNTAS: Array<{
   {
     campo: "tem_bo",
     pergunta: "Você já registrou algum boletim de ocorrência?",
-    ajuda: "Ameaça, furto, roubo, invasão, violência, perseguição — qualquer fato que a polícia registrou. Tem mais de um? Envie todos. Cada boletim é uma prova a mais do seu lado. Não precisa estar no seu nome: se aconteceu com pai, mãe, esposa, marido, companheira(o), filhos ou quem mora com você, e isso mexeu com a sua segurança, sua casa, sua rotina ou seu trabalho, conta do mesmo jeito. E conta também o que aconteceu no trabalho, ou por causa dele: ameaça de cliente, paciente, aluno, detento, colega, fornecedor ou de alguém insatisfeito; abordagem no expediente, no trajeto, na ronda, na entrega, no atendimento externo, no plantão. Se o risco vem da sua atividade, ele entra aqui.",
+    ajuda: "Ameaça, furto, roubo, invasão, violência, perseguição — qualquer fato que a polícia registrou. Tem mais de um? Envie todos, um por um, inclusive os antigos: boletim antigo prova reiteração — mostra que isso não é episódio isolado e soma a favor do seu pedido. Cada boletim é uma prova a mais do seu lado. Não precisa estar no seu nome: se aconteceu com pai, mãe, esposa, marido, companheira(o), filhos ou quem mora com você, e isso mexeu com a sua segurança, sua casa, sua rotina ou seu trabalho, conta do mesmo jeito. E conta também o que aconteceu no trabalho, ou por causa dele: ameaça de cliente, paciente, aluno, detento, colega, fornecedor ou de alguém insatisfeito; abordagem no expediente, no trajeto, na ronda, na entrega, no atendimento externo, no plantão. Se o risco vem da sua atividade, ele entra aqui.",
     tipoProva: "boletim_ocorrencia",
   },
   {
@@ -657,7 +658,16 @@ export default function EfetivaNecessidadeModal({
     () => provas.filter((p) => p.tipo === "boletim_ocorrencia"),
     [provas],
   );
-  const boEntregue = !boPendenteRegistro && provasBo.length > 0;
+  /**
+   * Boletim antigo prova reiteração. Só exigimos registro novo quando não há
+   * nada recente — regra do usuário (09/08/2026).
+   */
+  const suficienciaBo = useMemo(
+    () => avaliarSuficienciaBo(provas, relato),
+    [provas, relato],
+  );
+  const boEntregue =
+    provasBo.length > 0 && (!suficienciaBo.exigeNovoBo || !boPendenteRegistro);
 
   const passo = passos[Math.min(passoIndex, passos.length - 1)];
   const perguntaAtual = passo?.campo
@@ -1099,17 +1109,35 @@ export default function EfetivaNecessidadeModal({
 
             {passo?.tipo === "registrar_bo" ? (
               <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
-                <p className="text-[12px] leading-relaxed text-zinc-600">
-                  Depois de registrar, volte aqui e envie o boletim. Sem esse documento a sua
-                  defesa final não é fechada — é ele que transforma o seu relato em fato registrado.
-                </p>
-                <button
-                  type="button"
-                  onClick={confirmarRegistroBo}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f]"
-                >
-                  <Check className="h-3.5 w-3.5" /> Já registrei o boletim
-                </button>
+                <p className="text-[12px] leading-relaxed text-zinc-600">{suficienciaBo.motivo}</p>
+                {suficienciaBo.exigeNovoBo ? (
+                  <>
+                    <p className="mt-2 text-[12px] leading-relaxed text-zinc-600">
+                      Depois de registrar, volte aqui e envie o boletim. Sem esse documento a sua
+                      defesa final não é fechada — é ele que transforma o seu relato em fato registrado.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={confirmarRegistroBo}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f]"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Já registrei o boletim
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-2 text-[12px] font-semibold leading-relaxed text-[#7A1F2B]">
+                      Seus boletins já sustentam o pedido. Você pode seguir para a defesa final.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={confirmarRegistroBo}
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-white"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Quero registrar um novo boletim mesmo assim
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
             <p className="text-[11px] leading-relaxed text-zinc-500">

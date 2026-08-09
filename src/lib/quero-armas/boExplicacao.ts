@@ -12,7 +12,7 @@
 // ============================================================================
 
 export const TERMO_BO_CODIGO = "bo_efetiva_necessidade";
-export const TERMO_BO_VERSAO = "v1-2026-08-09";
+export const TERMO_BO_VERSAO = "v2-2026-08-09";
 export const TERMO_BO_TITULO =
   "Ciência sobre o registro do boletim de ocorrência";
 
@@ -40,9 +40,24 @@ export const BLOCOS_EXPLICACAO_BO: BlocoExplicacao[] = [
       "O boletim registra hoje, com data e diante de uma autoridade, que você está sob ameaça. Se um dia você precisar se defender, a investigação encontra esse registro anterior. É o que sustenta a legítima defesa do art. 25 do Código Penal: repelir injusta agressão, atual ou iminente, a direito seu ou de outrem, usando meios moderados. E ameaça é crime (art. 147 do Código Penal): o caminho legal contra ela é o boletim e a representação — nunca a arma.",
   },
   {
-    titulo: "Boletim antigo não sustenta ameaça atual",
+    titulo: "Envie todos os boletins que você tiver, mesmo os antigos",
     texto:
-      "O prazo legal de representação é de seis meses. Um boletim de anos atrás não prova que o risco existe hoje. Por isso pedimos um registro novo, dizendo que aquele fato ainda prevalece e que você segue temendo pela sua segurança.",
+      "Boletim antigo não é boletim inútil: ele prova reiteração — que isso não é um episódio isolado, e sim uma sequência que vem se repetindo. Cada registro anterior soma. Por isso queremos todos, um por um, sem exceção.",
+  },
+  {
+    titulo: "Boletim com menos de seis meses",
+    texto:
+      "Está dentro do prazo legal de representação e sustenta a ameaça atual. Nesse caso usamos o registro que você já tem e não pedimos nenhum boletim novo.",
+  },
+  {
+    titulo: "Boletim com mais de seis meses",
+    texto:
+      "Continua valendo como histórico. Ele sustenta o seu pedido quando existe mais de um registro, ou quando o que você conta no seu relato tem correlação com aquele boletim e inclui fato recente, próximo da data de hoje. Aí o relato traz o fato atual e o boletim anterior comprova que o problema já vem de antes.",
+  },
+  {
+    titulo: "Quando pedimos um registro novo",
+    texto:
+      "Só quando não há nada recente: um único boletim antigo e nenhum fato novo no seu relato. Nessa situação o registro de hoje é o que prova que o risco continua existindo.",
   },
   {
     titulo: "Informe nome e CPF, se você souber",
@@ -58,7 +73,7 @@ export const BLOCOS_EXPLICACAO_BO: BlocoExplicacao[] = [
 
 /** O texto que o cliente marca. É ele que vai para a auditoria, na íntegra. */
 export const TERMO_BO_TEXTO =
-  "Li e entendi a explicação sobre o boletim de ocorrência. Declaro estar ciente de que o boletim é uma comunicação minha, feita por mim, perante a autoridade policial, com fatos que eu mesmo declaro e pelos quais respondo. A Quero Armas apenas me orientou sobre como proceder e organizou o meu relato: não registra o boletim em meu nome, não me representa perante a delegacia e não responde pelo conteúdo por mim declarado. Estou ciente também de que registrar o boletim não instaura inquérito nem acusa ninguém, e de que a representação, se eu quiser fazê-la, é ato exclusivamente meu, dentro do prazo legal.";
+  "Li e entendi a explicação sobre o boletim de ocorrência. Declaro estar ciente de que o boletim é uma comunicação minha, feita por mim, perante a autoridade policial, com fatos que eu mesmo declaro e pelos quais respondo. A Quero Armas apenas me orientou sobre como proceder e organizou o meu relato: não registra o boletim em meu nome, não me representa perante a delegacia e não responde pelo conteúdo por mim declarado. Estou ciente também de que registrar o boletim não instaura inquérito nem acusa ninguém, e de que a representação, se eu quiser fazê-la, é ato exclusivamente meu, dentro do prazo legal. Estou ciente, ainda, de que devo enviar todos os boletins que eu possuir, inclusive os antigos, porque eles demonstram a reiteração das ameaças, e de que o registro de um boletim novo só é exigido quando não houver registro recente nem fato novo correlato no meu relato.";
 
 /** Texto integral guardado na auditoria: explicação lida + termo aceito. */
 export function montarTextoTermoBo(): string {
