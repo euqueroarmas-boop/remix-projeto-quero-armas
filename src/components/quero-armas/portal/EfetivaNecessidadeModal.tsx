@@ -745,6 +745,68 @@ export default function EfetivaNecessidadeModal({
     irPara(passoIndex + 1);
   }, [irPara, passoIndex]);
 
+  /* ── Ciência do BO ───────────────────────────────────────────────────────
+   * O aceite é permanente: fica no cadastro do cliente com o texto integral
+   * que estava na tela, o hash desse texto e o carimbo da conexão. Se já
+   * existe aceite desta versão, a tela abre marcada e não pede de novo.
+   * ---------------------------------------------------------------------- */
+  useEffect(() => {
+    if (!open || !clienteId) return;
+    let cancelado = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_cliente_ciencias" as any)
+        .select("aceito_em, metadados")
+        .eq("cliente_id", clienteId)
+        .eq("termo_codigo", TERMO_BO_CODIGO)
+        .eq("termo_versao", TERMO_BO_VERSAO)
+        .order("aceito_em", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelado || !data) return;
+      const meta = ((data as any).metadados ?? {}) as Record<string, unknown>;
+      setCienciaBoAceita(true);
+      setCienciaBoEm(String((data as any).aceito_em ?? ""));
+      if (typeof meta.ameacador_nome === "string") setAmeacadorNome(meta.ameacador_nome);
+      if (typeof meta.ameacador_cpf === "string") setAmeacadorCpf(meta.ameacador_cpf);
+    })();
+    return () => { cancelado = true; };
+  }, [open, clienteId]);
+
+  const registrarCienciaBo = useCallback(async () => {
+    if (cienciaBoAceita || salvandoCiencia) return;
+    setSalvandoCiencia(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-registrar-ciencia", {
+        body: {
+          cliente_id: clienteId,
+          processo_id: processoId ? Number(processoId) || null : null,
+          termo_codigo: TERMO_BO_CODIGO,
+          termo_versao: TERMO_BO_VERSAO,
+          termo_titulo: TERMO_BO_TITULO,
+          termo_texto: montarTextoTermoBo(),
+          origem: "portal_cliente_efetiva_necessidade",
+          metadados: {
+            ameacador_nome: ameacadorNome.trim() || null,
+            ameacador_cpf: ameacadorCpf.replace(/\D/g, "") || null,
+            tela: "efetiva_necessidade/entender_bo",
+            fuso: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            tela_px: `${window.screen?.width ?? 0}x${window.screen?.height ?? 0}`,
+          },
+        },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error ?? error?.message);
+      setCienciaBoAceita(true);
+      setCienciaBoEm((data as any)?.ciencia?.aceito_em ?? new Date().toISOString());
+      onPassoConcluido?.();
+    } catch (e) {
+      toast.error("Não consegui registrar a sua ciência. Tente de novo.");
+      console.error(e);
+    } finally {
+      setSalvandoCiencia(false);
+    }
+  }, [cienciaBoAceita, salvandoCiencia, clienteId, processoId, ameacadorNome, ameacadorCpf, onPassoConcluido]);
+
   /** Cada etapa mostra apenas as provas que ela mesma pediu. */
   const provasDoPasso = useMemo(() => {
     if (passo?.tipo === "revisao") return provas;
