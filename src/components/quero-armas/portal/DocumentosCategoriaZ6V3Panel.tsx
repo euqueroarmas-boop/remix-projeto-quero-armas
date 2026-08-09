@@ -422,7 +422,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
         .qa-docsz6 .listhead{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #E5E5E5;border-radius:4px 4px 0 0;padding:12px 16px;border-bottom:0;gap:12px}
         .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:13px;letter-spacing:.24em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
-        .qa-docsz6 .listhead .ttl .cnt{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.18em}
+        .qa-docsz6 .listhead .ttl .cnt{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.18em;white-space:nowrap;overflow-wrap:normal;word-break:keep-all;flex:0 0 auto;align-self:center}
         .qa-docsz6 .listhead .add{display:inline-flex;align-items:center;gap:3px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:3px 7px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:8.5px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase}
         .qa-docsz6 .listhead .add:hover{border-color:#7A1F2B;color:#7A1F2B}
         
@@ -458,6 +458,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           .qa-docsz6 .focus .msg{font-size:16px;line-height:1.2}
           .qa-docsz6 .grp-h .gt{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .listhead .ttl{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
+          .qa-docsz6 .listhead .ttl .cnt{overflow-wrap:normal;word-break:keep-all;white-space:nowrap}
           .qa-docsz6 .row{grid-template-columns:14px 1fr;gap:10px;row-gap:8px;padding:14px 16px;border-bottom:3px solid #F2F2F2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
