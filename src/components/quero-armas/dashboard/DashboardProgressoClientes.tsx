@@ -18,6 +18,7 @@ interface Row {
   fase: string;
   total_docs: number;
   entregues: number;
+  dispensados: number;
   proximo_doc: string | null;
   dias_parado: number;
   cobrancas: number;
@@ -204,6 +205,11 @@ export default function DashboardProgressoClientes() {
                   <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                     {r.entregues}/{r.total_docs}
                   </span>
+                  {r.dispensados > 0 && (
+                    <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
+                      {r.dispensados} DISP.
+                    </span>
+                  )}
                   <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "hsl(220 12% 45%)" }} />
                   </div>
@@ -272,6 +278,11 @@ export default function DashboardProgressoClientes() {
                         <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                           {r.entregues}/{r.total_docs}
                         </span>
+                        {r.dispensados > 0 && (
+                          <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
+                            {r.dispensados} DISP.
+                          </span>
+                        )}
                         <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "hsl(220 12% 45%)" }} />
                         </div>
