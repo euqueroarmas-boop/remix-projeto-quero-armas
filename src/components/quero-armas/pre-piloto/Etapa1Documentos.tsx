@@ -34,7 +34,8 @@ const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
   { grupo: "Laudos e Exames", tipos: ["laudo_psicologico", "laudo_capacidade_tecnica"] },
   { grupo: "Arma e Acervo", tipos: ["cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma"] },
   { grupo: "CAC / Atividade", tipos: ["comprovante_clube_tiro", "comprovante_habitualidade", "declaracao_compromisso_habitualidade", "comprovante_competicao", "habilitacao_cacador_ibama", "declaracao_nao_possuir_segundo_endereco"] },
-  { grupo: "Processo", tipos: ["requerimento_de_posse_de_arma_de_fogo", "comprovante_pagamento", "procuracao_assinada", "documento_complementar_caso"] },
+  { grupo: "Processo", tipos: ["requerimento_de_posse_de_arma_de_fogo", "gru", "documento_complementar_caso"] },
+  { grupo: "Contrato", tipos: ["contrato_assinado", "comprovante_pagamento", "procuracao_assinada"] },
   { grupo: "Outros", tipos: ["gov_br", "outro"] },
 ];
 
