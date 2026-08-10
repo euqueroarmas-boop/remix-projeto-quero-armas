@@ -32,6 +32,7 @@ import {
   valorDoCadastroPresenteNoTexto,
   cpfDoCadastroPresenteNoTexto,
 } from "./leituraCamposPdf";
+import { detectarEscopoCertidao, mensagemCertidaoCivel } from "./escopoCertidao";
 
 export type VeredictoCertidao =
   | "aprovado"
@@ -299,6 +300,36 @@ export function conferirCertidao(
   textoDocumento?: string,
 ): ResultadoConferencia {
   const achados: AchadoConferencia[] = [];
+
+  // ── 0) TRAVA DE ESCOPO — certidão CÍVEL nunca é aceita ─────────────────
+  //
+  // Vale para TODOS os órgãos (TJM/SP, STM, TJSP, TRF, TSE, Polícia Civil).
+  // Roda ANTES de qualquer conferência de campos, inclusive antes do resgate
+  // determinístico do titular — senão o nome do cliente, impresso na certidão
+  // errada, "salvava" um documento que não serve ao processo.
+  const escopo =
+    doc.orgao === "tjm_sp_civel"
+      ? "civel"
+      : textoDocumento
+        ? detectarEscopoCertidao(textoDocumento)
+        : "indefinido";
+  if (escopo === "civel") {
+    const mensagem = mensagemCertidaoCivel(textoDocumento ?? "");
+    return {
+      veredicto: "rejeitado",
+      achados: [
+        {
+          campo: "escopo",
+          label: "Tipo de certidão",
+          noDocumento: "Certidão cível",
+          noCadastro: "Certidão criminal",
+          problema: "divergente",
+          mensagem,
+        },
+      ],
+      mensagemCliente: `Esta certidão não pode ser aceita:\n\n• Tipo de certidão: ${mensagem}`,
+    };
+  }
 
   // ── 1) O documento trouxe tudo o que precisa? ──────────────────────────
   for (const campo of OBRIGATORIOS[doc.orgao]) {
