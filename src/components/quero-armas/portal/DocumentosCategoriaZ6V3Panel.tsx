@@ -3,7 +3,8 @@ import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } fro
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { diasAteBRT, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -56,14 +57,8 @@ const formatDate = (d: string | null) => {
   return `${String(p.getUTCDate()).padStart(2, "0")}/${String(p.getUTCMonth() + 1).padStart(2, "0")}/${p.getUTCFullYear()}`;
 };
 
-const daysUntil = (d: string | null): number | null => {
-  if (!d) return null;
-  const p = parseDateUTC(d);
-  if (!p) return null;
-  const now = new Date();
-  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((p.getTime() - todayUTC) / 86400000);
-};
+// Fonte única de prazo (America/Sao_Paulo) — igual ao resumo e ao banco.
+const daysUntil = (d: string | null): number | null => diasAteBRT(d);
 
 const formatCPF = (cpf: string | null | undefined) => {
   const d = String(cpf || "").replace(/\D/g, "");
