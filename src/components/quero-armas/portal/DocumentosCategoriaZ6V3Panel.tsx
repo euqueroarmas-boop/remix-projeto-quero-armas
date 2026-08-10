@@ -158,16 +158,16 @@ async function abrirArquivo(doc: any, modo: "visualizado" | "baixado") {
       }
       signedUrl = data.signedUrl;
     }
-    if (modo === "baixado") {
-      const a = document.createElement("a");
-      a.href = signedUrl!;
-      a.download = doc.arquivo_nome || "documento";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } else {
-      window.open(signedUrl!, "_blank", "noopener,noreferrer");
+    // Nunca expor URL do storage: baixa como blob e entrega local.
+    const resp = await fetch(signedUrl!);
+    if (!resp.ok) {
+      toast.error("Não foi possível abrir o arquivo.");
+      return;
     }
+    const blob = await resp.blob();
+    await saveOrShareBlob(blob, doc.arquivo_nome || "documento", {
+      preferShare: modo === "visualizado" ? false : undefined,
+    });
     await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, modo, { path: doc.arquivo_storage_path });
   } catch (e) {
     toast.error("Erro ao acessar arquivo.");
