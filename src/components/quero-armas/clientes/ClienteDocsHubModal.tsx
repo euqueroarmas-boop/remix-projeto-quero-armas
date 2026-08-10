@@ -4901,7 +4901,7 @@ export function ClienteDocsHubModal({
                 className={
                   conferenciaLocal.conf.veredicto === "rejeitado"
                     ? "rounded-md border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04] p-3"
-                    : conferenciaLocal.conf.veredicto === "cadastro_pendente"
+                    : conferenciaLocal.conf.veredicto !== "aprovado"
                       ? "rounded-md border border-amber-300 bg-amber-50 p-3"
                       : "rounded-md border border-emerald-300 bg-emerald-50 p-3"
                 }
@@ -4914,7 +4914,7 @@ export function ClienteDocsHubModal({
                     "mt-1 text-[13px] font-semibold " +
                     (conferenciaLocal.conf.veredicto === "rejeitado"
                       ? "text-[#7A1F2B]"
-                      : conferenciaLocal.conf.veredicto === "cadastro_pendente"
+                      : conferenciaLocal.conf.veredicto !== "aprovado"
                         ? "text-amber-800"
                         : "text-emerald-800")
                   }
@@ -4923,7 +4923,9 @@ export function ClienteDocsHubModal({
                     ? "Certidão recusada — não pode ser salva"
                     : conferenciaLocal.conf.veredicto === "cadastro_pendente"
                       ? "Certidão correta — falta dado no cadastro"
-                      : "Certidão conferida — todos os dados batem"}
+                      : conferenciaLocal.conf.veredicto === "revisao_humana"
+                        ? "Documento em conferência — leitura automática incompleta"
+                        : "Certidão conferida — todos os dados batem"}
                 </p>
                 {conferenciaLocal.conf.achados.length > 0 && (
                   <ul className="mt-2 space-y-2">
