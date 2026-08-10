@@ -26,9 +26,27 @@ const MARCADORES: MarcadorTrilha[] = [
   { label: "INQUÉRITO", ordem: 8, match: (t) => t === "declaracao_sem_inquerito_processo_criminal" },
 ];
 
-/** Deduz os rótulos de trilha a partir dos tipos de documento do processo. */
-export function trilhaDoProcesso(tipos: string[]): string[] {
-  const norm = tipos.map((t) => String(t || "").toLowerCase());
+/**
+ * Status que indicam exigência materializada mas com a condição INATIVA
+ * (o motor cria o item e dispensa quando a ramificação não se aplica).
+ * Esses itens não podem gerar rótulo de trilha — era o que fazia
+ * "IMÓVEL DE TERCEIRO" aparecer para todo mundo.
+ */
+const STATUS_CONDICAO_INATIVA = new Set([
+  "dispensado_grupo",
+  "dispensado_por_grupo",
+  "dispensado_condicao",
+  "nao_aplicavel",
+]);
+
+export type DocTrilha = { tipo_documento: string | null; status?: string | null };
+
+/** Deduz os rótulos de trilha a partir dos documentos do processo. */
+export function trilhaDoProcesso(docs: Array<string | DocTrilha>): string[] {
+  const norm = docs
+    .map((d) => (typeof d === "string" ? { tipo_documento: d, status: null } : d))
+    .filter((d) => !STATUS_CONDICAO_INATIVA.has(String(d.status ?? "").toLowerCase()))
+    .map((d) => String(d.tipo_documento || "").toLowerCase());
   const achados = MARCADORES.filter((m) => norm.some((t) => m.match(t)));
   // Se caiu em SERVIDOR/INSTITUIÇÃO, o rótulo de renda comum vira redundante.
   const temInstituicao = achados.some((a) => a.label === "SERVIDOR/INSTITUIÇÃO");
