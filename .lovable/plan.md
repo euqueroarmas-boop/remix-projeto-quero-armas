@@ -95,6 +95,20 @@ Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_de
 
 ## Detalhes técnicos
 
+## Parte 6 — Voltar a um passo anterior e reentregar (recálculo total)
+
+O cliente pode estar no passo 8 e voltar ao passo 1 para trocar um documento. Isso é direito dele e o checklist não trava.
+
+Como funciona:
+- Todo passo já concluído continua clicável e mostra o que foi entregue, com a opção **SUBSTITUIR DOCUMENTO**.
+- Ao substituir, o novo documento passa pela mesma leitura/validação de sempre e o processo **recalcula tudo do zero**: grupos, contadores, etapas liberadas, dispensas por categoria e passos condicionais que dependiam daquela resposta.
+- Se a troca muda uma resposta-pivot (por exemplo, o comprovante deixa de estar no nome do cliente), os passos que dependiam dela voltam a aparecer como pendentes e os que deixaram de fazer sentido são marcados como não aplicáveis — sem apagar histórico.
+- O documento anterior não some: fica na linha do tempo como versão substituída, com data e autor da troca.
+
+**Trava de coerência final:** o processo só pode ser concluído se o conjunto final de documentos bater com os dados cadastrais do cliente (nome, CPF, filiação, data de nascimento, endereço e categoria/corporação). Se a reentrega criar divergência — por exemplo, um comprovante com endereço diferente do cadastro —, o sistema não conclui: aponta a divergência exata, oferece atualizar o cadastro ou corrigir o documento, e só libera depois que os dois lados coincidem.
+
+Vale tanto na área do cliente (pop-up guiado) quanto no admin, com o mesmo recálculo e a mesma trava.
+
 - Migração: `public.qa_regras_categoria` (`servico_id` nullable, `categoria`, `corporacao` nullable, `grupo_id`/`tipo_documento`, `modo` em exigido/alternativo/dispensado, `base_legal`, `registro` em sinarm/sigma, `ativo`), com GRANTs para `authenticated` e `service_role`, RLS de leitura para autenticados e escrita só para administradores. Seed em rascunho, inativo até revisão.
 - `supabase/functions/qa-processo-set-condicao/index.ts`: mesclar `regra_validacao` do catálogo (`{ ...regraCatalogo, exige, label_botao, checklist_operador }`), respeitar `etapa`/`ordem`, e aplicar a matriz gravando `status = 'dispensado'` + `regra_validacao.dispensa = { base_legal, categoria }` nos itens dispensados; registrar em `qa_processo_eventos`.
 - Migração de dados separada para o backfill de `regra_validacao` nos processos pendentes.
@@ -102,6 +116,7 @@ Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_de
 - `QAClientePortalPage.tsx`: contar itens dispensados como cumpridos, tratar `dispensa_quando` como ramo exclusivo (hoje só `exige_quando`), passar categoria/corporação ao pop-up.
 - `src/components/quero-armas/clientes/categoriaTitular.ts`: a matriz fixa atual vira fallback; a fonte passa a ser a tabela. Hoje esse arquivo marca `seguranca_publica` como dispensada de laudo e exame — o que a matriz vai refinar por corporação e por serviço.
 - `QAConfiguracoesPage.tsx` + novo componente de matriz, reaproveitando `pendenciasGrupos.ts` e `CONDICOES_CHECKLIST`.
+- Recálculo: reexecutar a explosão do checklist (`qa_explodir_checklist_processo` + regras condicionais) após cada substituição, preservando `qa_processo_documentos` antigos como versões (`status = 'substituido'`) e registrando evento em `qa_processo_eventos`. Reaproveitar `respostasCadastro.ts` para a trava de coerência, comparando `extracao_ia_json` de cada documento cumprido com os campos de `qa_clientes`.
 
 ## Verificação
 
