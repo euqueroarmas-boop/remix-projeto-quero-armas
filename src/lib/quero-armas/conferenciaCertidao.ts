@@ -286,6 +286,9 @@ export function conferirCertidao(
         if (campo === "nome_titular" && valorDoCadastroPresenteNoTexto(textoDocumento, cadastro.nome_completo)) continue;
         if (campo === "cpf" && cpfDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { cpf?: unknown }).cpf)) continue;
         if (campo === "nome_mae" && valorDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { nome_mae?: unknown }).nome_mae)) continue;
+        if (campo === "nome_pai" && valorDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { nome_pai?: unknown }).nome_pai)) continue;
+        if (campo === "rg" && rgDoCadastroPresenteNoTexto(textoDocumento, cadastro.rg)) continue;
+        if (campo === "data_nascimento" && dataDoCadastroPresenteNoTexto(textoDocumento, cadastro.data_nascimento)) continue;
       }
       achados.push({
         campo: String(campo),
