@@ -6188,6 +6188,54 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documento_acessos: {
+        Row: {
+          acao: string
+          cliente_id: number | null
+          created_at: string
+          detalhes: Json
+          documento_id: string | null
+          documento_nome: string | null
+          documento_tipo: string | null
+          id: string
+          ip: string | null
+          notificado_em: string | null
+          quantidade: number
+          user_agent: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          acao: string
+          cliente_id?: number | null
+          created_at?: string
+          detalhes?: Json
+          documento_id?: string | null
+          documento_nome?: string | null
+          documento_tipo?: string | null
+          id?: string
+          ip?: string | null
+          notificado_em?: string | null
+          quantidade?: number
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          acao?: string
+          cliente_id?: number | null
+          created_at?: string
+          detalhes?: Json
+          documento_id?: string | null
+          documento_nome?: string | null
+          documento_tipo?: string | null
+          id?: string
+          ip?: string | null
+          notificado_em?: string | null
+          quantidade?: number
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       qa_documento_downloads: {
         Row: {
           baixado_em: string

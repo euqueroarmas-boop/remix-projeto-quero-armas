@@ -6,7 +6,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import {
   Loader2, FileText, CheckCircle2, AlertCircle, ExternalLink,
   Trash2, ShieldCheck, Clock, XCircle, MessageSquareWarning,
-  ChevronDown, ChevronRight, Layers, ShieldAlert, Tags,
+  ChevronDown, ChevronRight, Layers, ShieldAlert, Tags, Download, Eye, Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,9 @@ import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/document
 import {
   montarLinhaEntrega, contarAnotacoes, type EntregaItem,
 } from "@/lib/quero-armas/hubEntregaAuditoria";
+import {
+  posicaoProtocolo, compararProtocolo, nomeArquivoDossie, GRUPOS_PROTOCOLO,
+} from "@/lib/quero-armas/ordemProtocolo";
 
 interface Props {
   cliente: any;
@@ -290,9 +293,100 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     }
   };
 
-  const handleViewFile = (path: string) => {
+  /**
+   * Toda leitura/baixa da equipe vira rastro em qa_documento_acessos e aviso
+   * ao cliente (janela de 6h por documento, para não virar spam).
+   */
+  const registrarAcesso = (
+    acao: "visualizado" | "baixado" | "baixado_lote",
+    doc?: any,
+    extra?: Record<string, unknown>,
+  ) => {
+    if (!clienteId) return;
+    void supabase.functions.invoke("qa-doc-acesso-registrar", {
+      body: {
+        cliente_id: clienteId,
+        acao,
+        documento_id: doc?.id ?? null,
+        documento_tipo: doc?.tipo_documento ?? null,
+        documento_nome: doc?.nome_documento ?? doc?.arquivo_nome ?? null,
+        ...extra,
+      },
+    });
+  };
+
+  const handleViewFile = (path: string, doc?: any) => {
     const fileName = path.split("/").pop() || "documento";
     viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
+    registrarAcesso("visualizado", doc);
+  };
+
+  /** Download individual — via Blob, para nunca expor a URL do storage. */
+  const handleBaixarDoc = async (doc: any) => {
+    const path = doc?.arquivo_storage_path;
+    if (!path) { toast.error("Documento sem arquivo."); return; }
+    try {
+      const { data, error } = await supabase.storage.from("qa-documentos").download(path);
+      if (error || !data) throw error || new Error("Falha ao baixar");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nomeArquivoDossie(doc);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      registrarAcesso("baixado", doc);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao baixar o documento.");
+    }
+  };
+
+  /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
+  const [baixandoZip, setBaixandoZip] = useState(false);
+  const handleBaixarTudo = async () => {
+    const comArquivo = (docs as any[]).filter((d) => d.arquivo_storage_path);
+    if (comArquivo.length === 0) { toast.error("Nenhum arquivo para baixar."); return; }
+    setBaixandoZip(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const usados = new Map<string, number>();
+      const ordenados = [...comArquivo].sort(compararProtocolo);
+      let ok = 0;
+      for (const doc of ordenados) {
+        const { data, error } = await supabase.storage
+          .from("qa-documentos").download(doc.arquivo_storage_path);
+        if (error || !data) continue;
+        const pos = posicaoProtocolo(doc.tipo_documento, doc.nome_documento);
+        const pasta = `${pos.grupo}. ${pos.grupoNome}`;
+        let nome = nomeArquivoDossie(doc);
+        const chave = `${pasta}/${nome}`;
+        const n = usados.get(chave) ?? 0;
+        usados.set(chave, n + 1);
+        if (n > 0) nome = nomeArquivoDossie(doc, n + 1);
+        zip.folder(pasta)!.file(nome, data);
+        ok += 1;
+      }
+      if (ok === 0) throw new Error("Não foi possível baixar os arquivos.");
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const nomeCliente = String(cliente?.nome_completo || cliente?.nome || "cliente")
+        .replace(/[\\/:*?"<>|]/g, "-").trim();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Dossie - ${nomeCliente}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 6000);
+      registrarAcesso("baixado_lote", undefined, { quantidade: ok });
+      toast.success(`Dossiê com ${ok} documento(s) baixado na ordem do protocolo.`);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao gerar o dossiê.");
+    } finally {
+      setBaixandoZip(false);
+    }
   };
 
   /**
@@ -402,6 +496,15 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBaixarTudo}
+            disabled={baixandoZip}
+            className="inline-flex items-center gap-1 rounded-md border border-[#7A1F2B] bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
+          >
+            {baixandoZip ? <Loader2 className="h-3 w-3 animate-spin" /> : <Archive className="h-3 w-3" />}
+            Baixar tudo (ZIP)
+          </button>
           <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
             <button
               type="button"
@@ -434,7 +537,20 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
         </div>
       </div>
 
-      {modo === "entrega" && <LinhaEntrega itens={linhaEntrega} onViewFile={handleViewFile} />}
+      {modo === "entrega" && (
+        <LinhaEntrega
+          itens={linhaEntrega}
+          onViewFile={handleViewFile}
+          onBaixar={handleBaixarDoc}
+          onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
+          onDelete={handleDelete}
+          reprovandoId={reprovandoId}
+          motivoTmp={motivoTmp}
+          setMotivoTmp={setMotivoTmp}
+          confirmarReprovar={handleReprovar}
+          cancelarReprovar={() => setReprovandoId(null)}
+        />
+      )}
 
       {modo === "familia" && (
       <div className="grid gap-2">
@@ -475,7 +591,23 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 // ============================================================================
 // GrupoCard — renderiza principal + histórico recolhido
 // ============================================================================
-function LinhaEntrega({ itens, onViewFile }: { itens: EntregaItem[]; onViewFile: (path: string) => void }) {
+interface LinhaEntregaProps {
+  itens: EntregaItem[];
+  onViewFile: (path: string, doc?: any) => void;
+  onBaixar: (doc: any) => void;
+  onReprovar: (id: string) => void;
+  onDelete: (id: string) => void;
+  reprovandoId: string | null;
+  motivoTmp: string;
+  setMotivoTmp: (v: string) => void;
+  confirmarReprovar: (id: string) => void;
+  cancelarReprovar: () => void;
+}
+
+function LinhaEntrega({
+  itens, onViewFile, onBaixar, onReprovar, onDelete,
+  reprovandoId, motivoTmp, setMotivoTmp, confirmarReprovar, cancelarReprovar,
+}: LinhaEntregaProps) {
   if (itens.length === 0) return null;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
@@ -485,6 +617,7 @@ function LinhaEntrega({ itens, onViewFile }: { itens: EntregaItem[]; onViewFile:
       <ol className="space-y-2">
         {itens.map((it) => {
           const d: any = it.doc;
+          const pos = posicaoProtocolo(d.tipo_documento, d.nome_documento);
           const critico = it.anotacoes.some((a) => a.severidade === "critico");
           const atencao = it.anotacoes.some((a) => a.severidade === "atencao");
           const cls = critico
@@ -503,22 +636,82 @@ function LinhaEntrega({ itens, onViewFile }: { itens: EntregaItem[]; onViewFile:
                     <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800 truncate">
                       {String(d.tipo_documento || d.nome_documento || "—").replace(/_/g, " ")}
                     </span>
+                    <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] font-bold uppercase text-slate-600">
+                      {pos.numero} · Grupo {pos.grupo} — {pos.grupoNome}
+                    </span>
                     <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${it.origemLabel === "VIA PORTAL" ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-slate-100 border-slate-200 text-slate-600"}`}>
                       {it.origemLabel}
                     </span>
                     <span className="text-[10px] text-slate-500">
                       {it.quando ? it.quando.toLocaleString("pt-BR") : "—"}
                     </span>
-                    {d.arquivo_storage_key && (
-                      <button
-                        type="button"
-                        onClick={() => onViewFile(d.arquivo_storage_key)}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase text-[#7A1F2B]"
-                      >
-                        <ExternalLink className="h-3 w-3" /> Abrir
-                      </button>
-                    )}
                   </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {d.arquivo_storage_path ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onViewFile(d.arquivo_storage_path, d)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                        >
+                          <Eye className="h-3 w-3" /> Visualizar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onBaixar(d)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                        >
+                          <Download className="h-3 w-3" /> Baixar
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                        Sem arquivo anexado
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onReprovar(d.id)}
+                      className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-700"
+                    >
+                      <XCircle className="h-3 w-3" /> Rejeitar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(d.id)}
+                      className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-red-700"
+                    >
+                      <Trash2 className="h-3 w-3" /> Excluir
+                    </button>
+                  </div>
+                  {reprovandoId === d.id && (
+                    <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2">
+                      <textarea
+                        value={motivoTmp}
+                        onChange={(e) => setMotivoTmp(e.target.value)}
+                        rows={2}
+                        placeholder="POR QUE ESTÁ SENDO REJEITADO? O CLIENTE RECEBE ESTA EXPLICAÇÃO."
+                        className="w-full rounded border border-amber-200 bg-white p-2 text-[11px] text-slate-800"
+                      />
+                      <div className="mt-1.5 flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => confirmarReprovar(d.id)}
+                          disabled={motivoTmp.trim().length < 5}
+                          className="rounded bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-50"
+                        >
+                          Confirmar rejeição
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelarReprovar}
+                          className="rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {it.anotacoes.length > 0 && (
                     <ul className="mt-1.5 space-y-1">
                       {it.anotacoes.map((a, i) => (
