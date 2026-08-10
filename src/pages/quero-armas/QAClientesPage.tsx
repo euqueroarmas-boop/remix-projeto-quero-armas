@@ -10,6 +10,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
+  ScanText,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
   ShoppingCart, RefreshCw, Landmark, LayoutDashboard, Files, FolderKanban, BellDot,
   ScrollText, CreditCard, Headphones, SlidersHorizontal, Target, PackageOpen,
