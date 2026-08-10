@@ -33,7 +33,17 @@ import {
   cpfDoCadastroPresenteNoTexto,
 } from "./leituraCamposPdf";
 
-export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente";
+export type VeredictoCertidao =
+  | "aprovado"
+  | "rejeitado"
+  | "cadastro_pendente"
+  /**
+   * O documento parece legítimo, mas a LEITURA não conseguiu localizar um
+   * campo exigido e o valor do cadastro também não aparece literalmente no
+   * texto. Falha de leitura nunca vira acusação contra o cliente: o documento
+   * fica em conferência humana em vez de ser recusado.
+   */
+  | "revisao_humana";
 
 export interface CadastroConferencia {
   nome_completo?: string | null;
@@ -69,6 +79,29 @@ const chaveNome = (v: unknown) =>
   semAcento(v).replace(/[^A-Za-z\s]/g, " ").replace(/\s+/g, " ").trim().toUpperCase();
 
 const digitos = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+
+/**
+ * O RG do cadastro está impresso, em dígitos, no texto do PDF?
+ *
+ * Igualdade por dígitos (o documento pode imprimir com ou sem pontuação e com
+ * ou sem dígito verificador separado). Nunca por semelhança.
+ */
+function rgDoCadastroPresenteNoTexto(texto: string, rgCadastro: unknown): boolean {
+  const alvo = String(rgCadastro ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  if (alvo.length < 5) return false;
+  const t = String(texto ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  return t.includes(alvo);
+}
+
+/** A data de nascimento do cadastro aparece no texto, em dd/mm/aaaa? */
+function dataDoCadastroPresenteNoTexto(texto: string, dataCadastro: unknown): boolean {
+  const iso = String(dataCadastro ?? "").slice(0, 10);
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const br = `${m[3]}/${m[2]}/${m[1]}`;
+  const t = String(texto ?? "");
+  return t.includes(br) || t.replace(/\D/g, "").includes(`${m[3]}${m[2]}${m[1]}`);
+}
 
 /** "Ferraz de Vasconcelos - SP" e "FERRAZ DE VASCONCELOS/SP" viram a mesma coisa. */
 const chaveCidade = (v: unknown) =>
@@ -276,6 +309,9 @@ export function conferirCertidao(
         if (campo === "nome_titular" && valorDoCadastroPresenteNoTexto(textoDocumento, cadastro.nome_completo)) continue;
         if (campo === "cpf" && cpfDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { cpf?: unknown }).cpf)) continue;
         if (campo === "nome_mae" && valorDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { nome_mae?: unknown }).nome_mae)) continue;
+        if (campo === "nome_pai" && valorDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { nome_pai?: unknown }).nome_pai)) continue;
+        if (campo === "rg" && rgDoCadastroPresenteNoTexto(textoDocumento, cadastro.rg)) continue;
+        if (campo === "data_nascimento" && dataDoCadastroPresenteNoTexto(textoDocumento, cadastro.data_nascimento)) continue;
       }
       achados.push({
         campo: String(campo),
@@ -451,24 +487,36 @@ export function conferirCertidao(
   }
 
   // ── 3) Veredicto ───────────────────────────────────────────────────────
-  const bloqueia = achados.filter(
-    (a) => a.problema === "divergente" || a.problema === "ausente_no_documento",
-  );
-  const soCadastro = achados.length > 0 && bloqueia.length === 0;
+  //
+  // POLÍTICA DE FALHA SEGURA (regra global, 10/08/2026): só REJEITA o que foi
+  // provado errado — valor lido diferente do cadastro ou resultado positivo.
+  // Campo que não foi encontrado é falha de LEITURA nossa até prova em
+  // contrário, e vira conferência humana. Recusar o cliente porque um layout
+  // novo não casou com um rótulo já custou reemissões indevidas.
+  const bloqueia = achados.filter((a) => a.problema === "divergente");
+  const naoLido = achados.filter((a) => a.problema === "ausente_no_documento");
+  const soCadastro =
+    achados.length > 0 && bloqueia.length === 0 && naoLido.length === 0;
   const veredicto: VeredictoCertidao = bloqueia.length
     ? "rejeitado"
-    : soCadastro
-      ? "cadastro_pendente"
-      : "aprovado";
+    : naoLido.length
+      ? "revisao_humana"
+      : soCadastro
+        ? "cadastro_pendente"
+        : "aprovado";
 
   const listaAchados = bloqueia.map((a) => `• ${a.label}: ${a.mensagem}`).join("\n\n");
+  const listaNaoLido = naoLido.map((a) => `• ${a.label}`).join("\n");
 
   const mensagemCliente =
     veredicto === "aprovado"
       ? "Certidão conferida: todos os dados batem com o seu cadastro."
       : veredicto === "cadastro_pendente"
         ? "A certidão está correta, mas faltam dados no seu cadastro para a conferência completa. Complete o cadastro para seguir."
-        : `Esta certidão não pode ser aceita:\n\n${listaAchados}`;
+        : veredicto === "revisao_humana"
+          ? "Documento recebido. Nossa leitura automática não conseguiu localizar alguns campos deste modelo, então a equipe vai conferir manualmente — você não precisa emitir novamente por enquanto.\n\nCampos em conferência:\n" +
+            listaNaoLido
+          : `Esta certidão não pode ser aceita:\n\n${listaAchados}`;
 
   return { veredicto, achados, mensagemCliente };
 }
