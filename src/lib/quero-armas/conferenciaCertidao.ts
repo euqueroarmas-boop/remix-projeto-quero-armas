@@ -487,24 +487,36 @@ export function conferirCertidao(
   }
 
   // ── 3) Veredicto ───────────────────────────────────────────────────────
-  const bloqueia = achados.filter(
-    (a) => a.problema === "divergente" || a.problema === "ausente_no_documento",
-  );
-  const soCadastro = achados.length > 0 && bloqueia.length === 0;
+  //
+  // POLÍTICA DE FALHA SEGURA (regra global, 10/08/2026): só REJEITA o que foi
+  // provado errado — valor lido diferente do cadastro ou resultado positivo.
+  // Campo que não foi encontrado é falha de LEITURA nossa até prova em
+  // contrário, e vira conferência humana. Recusar o cliente porque um layout
+  // novo não casou com um rótulo já custou reemissões indevidas.
+  const bloqueia = achados.filter((a) => a.problema === "divergente");
+  const naoLido = achados.filter((a) => a.problema === "ausente_no_documento");
+  const soCadastro =
+    achados.length > 0 && bloqueia.length === 0 && naoLido.length === 0;
   const veredicto: VeredictoCertidao = bloqueia.length
     ? "rejeitado"
-    : soCadastro
-      ? "cadastro_pendente"
-      : "aprovado";
+    : naoLido.length
+      ? "revisao_humana"
+      : soCadastro
+        ? "cadastro_pendente"
+        : "aprovado";
 
   const listaAchados = bloqueia.map((a) => `• ${a.label}: ${a.mensagem}`).join("\n\n");
+  const listaNaoLido = naoLido.map((a) => `• ${a.label}`).join("\n");
 
   const mensagemCliente =
     veredicto === "aprovado"
       ? "Certidão conferida: todos os dados batem com o seu cadastro."
       : veredicto === "cadastro_pendente"
         ? "A certidão está correta, mas faltam dados no seu cadastro para a conferência completa. Complete o cadastro para seguir."
-        : `Esta certidão não pode ser aceita:\n\n${listaAchados}`;
+        : veredicto === "revisao_humana"
+          ? "Documento recebido. Nossa leitura automática não conseguiu localizar alguns campos deste modelo, então a equipe vai conferir manualmente — você não precisa emitir novamente por enquanto.\n\nCampos em conferência:\n" +
+            listaNaoLido
+          : `Esta certidão não pode ser aceita:\n\n${listaAchados}`;
 
   return { veredicto, achados, mensagemCliente };
 }
