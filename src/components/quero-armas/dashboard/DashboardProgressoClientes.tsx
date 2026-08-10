@@ -268,6 +268,23 @@ export default function DashboardProgressoClientes() {
     return rows.some((r) => r.online) ? ["ONLINE", ...lista] : lista;
   }, [trilhas, rows]);
 
+  /** Processos bloqueados não têm documentos — herdam a trilha dos outros processos do mesmo cliente. */
+  const trilhasEfetivas = useMemo(() => {
+    const porCliente: Record<number, Set<string>> = {};
+    for (const r of rows) {
+      const ls = trilhas[r.processo_id] ?? [];
+      if (ls.length === 0) continue;
+      (porCliente[r.cliente_id] ||= new Set()).forEach(() => {});
+      porCliente[r.cliente_id] = new Set([...(porCliente[r.cliente_id] ?? []), ...ls]);
+    }
+    const mapa: Record<string, string[]> = {};
+    for (const r of rows) {
+      const proprias = trilhas[r.processo_id] ?? [];
+      mapa[r.processo_id] = proprias.length > 0 ? proprias : [...(porCliente[r.cliente_id] ?? [])];
+    }
+    return mapa;
+  }, [rows, trilhas]);
+
   const contadores = useMemo(() => {
     const pronto = rows.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
     const analise = rows.filter((r) => (r.em_analise ?? 0) > 0).length;
@@ -280,7 +297,7 @@ export default function DashboardProgressoClientes() {
   const filtradas = useMemo(() => {
     let base = rows;
     if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
-    else if (filtroTrilha) base = base.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha));
+    else if (filtroTrilha) base = base.filter((r) => (trilhasEfetivas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
@@ -290,7 +307,7 @@ export default function DashboardProgressoClientes() {
       default: break;
     }
     return base;
-  }, [rows, trilhas, filtroTrilha, contador]);
+  }, [rows, trilhasEfetivas, filtroTrilha, contador]);
 
   const ordenadas = useMemo(() => {
     const val = (r: Row) => {
