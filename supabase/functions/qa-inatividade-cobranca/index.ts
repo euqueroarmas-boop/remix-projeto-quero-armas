@@ -63,9 +63,9 @@ serve(async (req) => {
     if (error) throw error;
 
     const candidatos = ((linhas || []) as any[]).filter((r) =>
-      r.fase === "DOCUMENTOS" &&
+      !r.bloqueado_por_prerequisito &&
       Number(r.dias_parado) >= primeira &&
-      Number(r.total_docs) > Number(r.entregues)
+      Number(r.documentos_pendentes) + Number(r.perguntas_pendentes) > 0
     );
 
     const previews: any[] = [];
@@ -105,7 +105,7 @@ serve(async (req) => {
         categoria: "inatividade_processo",
         urgencia: dias >= primeira + intervalo * 2 ? "urgente" : "atencao",
         titulo: `Seu processo está parado há ${dias} dias`,
-        mensagem: `Faltam ${Number(r.total_docs) - Number(r.entregues)} documento(s) para seguir com ${r.servico_nome || "seu processo"}. Próximo: ${r.proximo_doc || "documento pendente"}.`,
+        mensagem: `Faltam ${Number(r.documentos_pendentes)} documento(s) e ${Number(r.perguntas_pendentes)} pergunta(s) para seguir com ${r.servico_nome || "seu processo"}. Próximo: ${r.proximo_doc || "item pendente"}.`,
         link: "/area-do-cliente",
         referencia_tabela: "qa_processos",
         referencia_id: r.processo_id,

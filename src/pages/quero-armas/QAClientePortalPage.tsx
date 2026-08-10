@@ -66,6 +66,7 @@ import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthB
 import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import { projetarChecklist } from "@/lib/quero-armas/checklistProjecao";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import ClienteChecklistCadastralModal from "@/components/quero-armas/portal/ClienteChecklistCadastralModal";
 import { CAMPOS_CADASTRO } from "@/lib/quero-armas/cadastroCompleteness";
@@ -2727,94 +2728,15 @@ export default function QAClientePortalPage() {
     return () => { vivo = false; };
   }, [processoDocs, docsReloadKey, efetivaReloadKey, cliente?.id]);
 
-  const resumoProcesso = useMemo(() => {
-    const obrigatorios = (processoDocs ?? []).filter((d: any) => d?.obrigatorio);
-    const ehPergunta = (d: any) => {
-      const rv = d?.regra_validacao;
-      return !!rv && typeof rv === "object" && rv.tipo === "pergunta";
-    };
-    const concluido = (d: any) => {
-      const st = String(d?.status ?? "").toLowerCase();
-      return st === "aprovado"
-        || st === "dispensado_grupo"
-        || st === "dispensado_por_reaproveitamento"
-        || st === "nao_aplicavel";
-    };
-    const ehReaproveitado = (d: any) =>
-      String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
-    const abertos = obrigatorios.filter((d: any) => !concluido(d));
-    // A efetiva necessidade vale pelos seus passos, não por 1 documento.
-    const passosDoDoc = (d: any): EfetivaPasso[] | null => {
-      if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return null;
-      const ps = efetivaPassos[String(d?.processo_id ?? "")];
-      if (!ps || ps.length === 0) return null;
-      // Voltar uma página volta a contagem: nada à frente do passo em tela
-      // conta como concluído.
-      const atual = efetivaPassoAtual[String(d?.processo_id ?? "")];
-      const i = atual ? ps.findIndex((p) => p.id === atual) : -1;
-      if (i < 0) return ps;
-      return ps.map((p, idx) => (idx > i ? { ...p, concluido: false } : p));
-    };
-
-    // ── Grupos do PROCESSO INTEIRO, não só da fila liberada ───────────────
-    //
-    // O popup só recebia a fila do momento, então dizia "Passo 1 de 6" sem o
-    // cliente saber quantas frentes ainda existem. Aqui os grupos são
-    // calculados sobre TODAS as exigências obrigatórias do processo — as
-    // liberadas e as que ainda vão abrir.
-    //
-    // A ordem é a mesma da fila (`ordem` de pendenciasGrupos), para o número
-    // do grupo bater com a sequência em que o cliente vai encontrá-los.
-    const mapaGrupos = new Map<string, { label: string; ordem: number; total: number; concluidos: number }>();
-    for (const d of obrigatorios) {
-      const gBase = grupoDaPendenciaHelper(
-        String(d?.tipo_documento || ""),
-        toHubTipoCompartilhado(String(d?.tipo_documento || "")),
-      );
-      const processo = (processos ?? []).find((p: any) => String(p?.id) === String(d?.processo_id || ""));
-      const catGrupo = processo?.servico_id != null
-        ? catalogoDocInfo.get(`${processo.servico_id}:${String(d?.tipo_documento || "").toLowerCase()}`)
-        : undefined;
-      const metaGrupo = normalizarGrupoId(catGrupo?.grupo_checklist)
-        ? PENDENCIA_GRUPOS[normalizarGrupoId(catGrupo?.grupo_checklist)!]
-        : undefined;
-      const g = metaGrupo
-        ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
-        : gBase;
-      const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
-      const ps = passosDoDoc(d);
-      if (ps) {
-        cur.total += ps.length;
-        cur.concluidos += ps.filter((p) => p.concluido).length;
-      } else {
-        cur.total += 1;
-        if (concluido(d)) cur.concluidos += 1;
-      }
-      mapaGrupos.set(g.id, cur);
-    }
-    const grupos = [...mapaGrupos.entries()]
-      .map(([id, v]) => ({ id, ...v }))
-      .sort((a, b) => a.ordem - b.ordem);
-
-    // Totais do processo também contam passo a passo.
-    const extraTotal = obrigatorios.reduce((acc: number, d: any) => {
-      const ps = passosDoDoc(d);
-      return ps ? acc + ps.length - 1 : acc;
-    }, 0);
-    const extraConcluidos = obrigatorios.reduce((acc: number, d: any) => {
-      const ps = passosDoDoc(d);
-      if (!ps) return acc;
-      return acc + ps.filter((p) => p.concluido).length - (concluido(d) ? 1 : 0);
-    }, 0);
-    return {
-      documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
-      perguntasPendentes: abertos.filter(ehPergunta).length,
-      totalObrigatorios: obrigatorios.length + extraTotal,
-      concluidos: obrigatorios.length - abertos.length + extraConcluidos,
-      reaproveitados: obrigatorios.filter(ehReaproveitado).length,
-      grupos,
-    };
-  }, [processoDocs, processos, catalogoDocInfo, efetivaPassos, efetivaPassoAtual]);
+  const resumoProcesso = useMemo(
+    () => projetarChecklist({
+      docs: processoDocs as any[],
+      processos,
+      efetivaPassos,
+      catalogoGrupo: catalogoDocInfo,
+    }),
+    [processoDocs, processos, catalogoDocInfo, efetivaPassos],
+  );
 
   // ==========================================================================
   // Auto-resposta de perguntas-pivot com base em dados já extraídos pela IA.

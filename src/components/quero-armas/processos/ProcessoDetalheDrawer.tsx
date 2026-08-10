@@ -93,6 +93,15 @@ interface ProcessoFull {
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
+interface ProjecaoProcessoAdmin {
+  total_docs: number;
+  entregues: number;
+  reaproveitados: number;
+  grupo_atual: string | null;
+  grupo_total: number;
+  grupo_concluidos: number;
+}
+
 interface Evento {
   id: string;
   tipo_evento: string;
@@ -143,6 +152,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // rolamos suavemente até o próximo item para a equipe operar em sequência.
   const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
   const [servicoForaDoCatalogo, setServicoForaDoCatalogo] = useState(false);
+  const [projecaoProcesso, setProjecaoProcesso] = useState<ProjecaoProcessoAdmin | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const viewer = useDocumentoViewer();
 
@@ -183,6 +193,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       const docsAtualizados = (dList ?? []) as DocRow[];
       setDocs(docsAtualizados);
       setEventos((evs ?? []) as Evento[]);
+      const { data: projecoes } = await supabase.rpc("qa_painel_progresso_clientes" as any);
+      const projecaoAtual = ((projecoes as any[]) ?? []).find((r) => String(r.processo_id) === processoId);
+      setProjecaoProcesso(projecaoAtual ?? null);
 
       // Verifica se o serviço do processo está no catálogo de preços ativo
       const servicoId = (p as any).servico_id ?? null;
@@ -1323,9 +1336,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     }
   }
 
-  const totalExigencias = metrics.total;
-  const cumpridos = metrics.cumpridos;
-  const progresso = metrics.progresso;
+  const totalExigencias = projecaoProcesso?.total_docs ?? metrics.total;
+  const cumpridos = projecaoProcesso?.entregues ?? metrics.cumpridos;
+  const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
 
   const docsPendencias = docsChecklist.filter(isPendenciaCliente);
   const docsAnalise = docsChecklist.filter(isEmAnalise);
