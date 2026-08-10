@@ -102,6 +102,9 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
 
   // Antecedentes criminais / certidões
   if (
+    // Catálogo real usa o prefixo `antecedentes_` (eleitoral, militar, federal,
+    // estadual, criminais…). Sem esta regra tudo caía em "Fechamento".
+    t.startsWith("antecedentes") ||
     t.startsWith("certidao_antecedentes") ||
     t.startsWith("certidao_crimes") ||
     t.startsWith("certidao_criminal") ||
@@ -110,7 +113,12 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t.startsWith("certidao_tjsp") ||
     t.startsWith("certidao_militar") ||
     t.startsWith("certidao_policia") ||
-    t === "pergunta_responde_inquerito_criminal"
+    t === "pergunta_responde_inquerito_criminal" ||
+    // Declaração de não responder inquérito/processo criminal é IDONEIDADE,
+    // não uma declaração genérica do processo.
+    t.startsWith("declaracao_sem_inquerito") ||
+    t.startsWith("declaracao_idoneidade") ||
+    t.includes("inquerito")
   ) {
     return GRUPOS.antecedentes;
   }
@@ -123,6 +131,7 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t === "comprovante_renda" ||
     t === "declaracao_ocupacao_licita" ||
     t === "carteira_trabalho" ||
+    t === "ctps" ||
     t === "contracheque" ||
     t === "contra_cheque_digital" ||
     t === "declaracao_imposto_renda" ||
@@ -166,7 +175,12 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t.startsWith("craf_") ||
     t.startsWith("nota_fiscal_arma") ||
     t.startsWith("guia_transito") ||
-    t.startsWith("autorizacao_")
+    t.startsWith("autorizacao_") ||
+    // Acervo (universo CAC): DSA, DEGA e guarda responsável.
+    t.startsWith("dsa_") ||
+    t === "declaracao_endereco_acervo" ||
+    t === "declaracao_guarda_responsavel" ||
+    t.includes("acervo")
   ) {
     return GRUPOS.arma;
   }
@@ -208,6 +222,22 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   // Requerimento — último grupo. Também sai das declarações genéricas.
   if (t.startsWith("requerimento_") || t === "requerimento" || t.includes("sinarm_requerimento")) {
     return GRUPOS.requerimento;
+  }
+
+  // Contratos / procurações — peças de adesão, primeiro grupo.
+  if (
+    t.startsWith("procuracao") ||
+    t.startsWith("contrato_") ||
+    t === "contrato" ||
+    t === "contrato_assinado" ||
+    t === "comprovante_pagamento"
+  ) {
+    return GRUPOS.assinaturas;
+  }
+
+  // Segundo endereço de guarda — pertence à identificação residencial.
+  if (t.includes("segundo_endereco")) {
+    return GRUPOS.endereco;
   }
 
   // Declarações do processo (as genéricas que sobraram)
