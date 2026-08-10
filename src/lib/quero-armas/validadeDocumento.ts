@@ -431,6 +431,15 @@ export function isIdentidadeFuncionalPerpetua(tipo?: string | null): boolean {
 }
 
 /**
+ * Comprovante de pagamento do contrato: recibo de um fato passado (pagamento
+ * já realizado). Pertence ao CONTRATO e NÃO vence — nunca calcular validade.
+ */
+export function isComprovantePagamentoContrato(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return t === "comprovante_pagamento" || t === "comprovante_pagamento_contrato";
+}
+
+/**
  * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
  * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
  * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
