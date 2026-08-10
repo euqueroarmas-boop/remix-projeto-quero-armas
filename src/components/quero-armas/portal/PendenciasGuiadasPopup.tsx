@@ -601,14 +601,25 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-2.5 h-px bg-[#F0F0F0]"} />
+          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-4 h-px bg-[#F0F0F0]"} />
           <div className={asPage ? "" : "pl-[36px]"}>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
                 título da etapa — o título grande repetiria o nome do grupo. */}
             {active.corpo ? null : (
-              <h2 className={asPage ? "qa-h1 mt-4" : "qa-h1 mt-2.5"} style={{ letterSpacing: ".02em" }}>
-                {explic.titulo}
-              </h2>
+              asPage ? (
+                <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+                  {explic.titulo}
+                </h2>
+              ) : (
+                /* Mesma escala do H1 do header (18/20px). Antes usava `qa-h1`
+                   (22px) e ficava MAIOR que o título principal do pop-up. */
+                <h2
+                  className="mt-4 font-['Oswald',sans-serif] text-[18px] font-bold uppercase leading-[1.15] tracking-[0.02em] text-[#0A0A0A] sm:text-[20px]"
+                  style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
+                >
+                  {explic.titulo}
+                </h2>
+              )
             )}
 
             {active.detalheContexto ? (
