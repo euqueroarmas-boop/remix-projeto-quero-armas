@@ -744,7 +744,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
 
           {/* Observation */}
-          {explic.observacao && activeGrupoId !== "antecedentes" ? (
+          {explic.observacao && activeGrupoId !== "antecedentes" && !tipoCredenciado ? (
             <div className="mt-6 p-4 bg-[#FFF7F8] rounded-sm border border-[#8A1224]/10">
               <p className="qa-caption" style={{ color: "#7A1F2B" }}>
                 <TextoComLinks texto={explic.observacao} />
@@ -794,6 +794,11 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   ? "Você optou por fazer os exames fora da instituição. Escolha um psicólogo credenciado pela Polícia Federal perto de você."
                   : "Escolha um instrutor de tiro credenciado pela Polícia Federal perto de você."}
               </p>
+              {explic.observacao ? (
+                <p className="qa-caption mt-2" style={{ color: "#7A1F2B" }}>
+                  <TextoComLinks texto={explic.observacao} />
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setExameModal(tipoCredenciado)}
