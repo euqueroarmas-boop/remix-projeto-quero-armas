@@ -13269,6 +13269,7 @@ export type Database = {
           cobrancas: number
           criado_em: string
           dias_parado: number
+          dispensados: number
           entregues: number
           fase: string
           processo_id: string
