@@ -3603,7 +3603,7 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 left-0 z-50 h-[800px] max-h-dvh w-[200px] max-w-[200px] flex-col text-[#E8E8E8] overflow-hidden"
+        className="hidden lg:flex fixed top-0 bottom-0 left-0 z-50 w-[200px] max-w-[200px] flex-col text-[#E8E8E8] overflow-hidden"
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
