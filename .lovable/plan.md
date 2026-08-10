@@ -24,3 +24,12 @@ Na linha do tempo de entrega (`ClienteDocsEnviados.tsx`), o botão REJEITAR é s
 - Arquivo principal: `src/components/quero-armas/clientes/ClienteDocsEnviados.tsx` (componentes `LinhaEntrega` e `handleBaixarTudo`).
 - Histórico: leitura de `qa_documento_status_producao` / auditoria de status já gravada por `auditarStatusDoc` em `docsAprovacao.ts`, filtrando eventos com `novo = reprovado`.
 - Sem mudança de schema; nenhuma alteração no fluxo do cliente.
+
+### 4. Bolinha numerada com semáforo de status
+Na linha do tempo, o círculo com o número da sequência passa a indicar o status do documento por cor:
+- Verde — documento aprovado
+- Amarelo — em análise / pendente de aprovação
+- Vermelho (bordô) — rejeitado
+- Cinza — sem status definido
+
+A numeração continua a mesma, muda apenas a cor de fundo do círculo, com legenda discreta no topo da lista e `title` acessível em cada bolinha.
