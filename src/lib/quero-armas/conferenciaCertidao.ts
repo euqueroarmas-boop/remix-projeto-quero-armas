@@ -158,14 +158,16 @@ export function naturalidadeConfere(
  * resultado. Tudo o mais é comparado quando presente, nunca exigido no escuro.
  */
 const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
-  stm: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
-  // TSE e IIRGD não trazem CPF: identificam por título de eleitor e por RG.
-  tse: ["nome_titular", "titulo_eleitor", "data_nascimento", "data_emissao", "resultado"],
-  iirgd: ["nome_titular", "rg", "data_nascimento", "data_emissao", "resultado"],
-  tjsp_distribuicao: ["nome_titular", "cpf", "rg", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
-  tjsp_execucoes: ["nome_titular", "cpf", "rg", "data_nascimento", "nome_mae", "data_emissao", "resultado"],
-  trf_regional: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
-  tjm_sp: ["nome_titular", "cpf", "data_nascimento", "data_emissao", "resultado"],
+  // Extrai e compara todos os qualificadores que o modelo oficial imprimir.
+  // A ausência de CPF/RG/filiação/nascimento em um layout que não os contém
+  // não invalida a certidão; titular e resultado são requisitos universais.
+  stm: ["nome_titular", "resultado"],
+  tse: ["nome_titular", "resultado"],
+  iirgd: ["nome_titular", "resultado"],
+  tjsp_distribuicao: ["nome_titular", "resultado"],
+  tjsp_execucoes: ["nome_titular", "resultado"],
+  trf_regional: ["nome_titular", "resultado"],
+  tjm_sp: ["nome_titular", "resultado"],
 
   // CR — não é certidão de antecedentes, mas passa pelo mesmo parser. Exige o
   // mínimo que prova de quem é e até quando vale.

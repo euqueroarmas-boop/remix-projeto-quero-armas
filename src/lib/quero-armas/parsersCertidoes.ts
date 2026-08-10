@@ -192,7 +192,7 @@ function cpf11(v: string | undefined): string | undefined {
   return d.length === 11 ? d : undefined;
 }
 
-const NADA = /NADA\s*CONSTAR?|NAO\s+CONSTAR?|NAO\s+EXISTE\s+REGISTRO/i;
+const NADA = /NADA\s+CONSTA|NAO\s+(?:CONSTA(?:R|M)?|FOI\s+LOCALIZAD[AO]|EXISTE\s+REGISTRO)|NEGATIV[AO]\s+DE\s+ANTECEDENTES|SEM\s+REGISTROS?/i;
 
 function resultado(t: string): "NADA_CONSTA" | "CONSTA" | undefined {
   if (NADA.test(t)) return "NADA_CONSTA";
@@ -518,7 +518,10 @@ function parseTjmSp(texto: string): CamposCertidao {
     // O PDF às vezes sai com o nome na linha seguinte, às vezes na mesma
     // linha. Em ambos os casos corta no primeiro rótulo seguinte / salto de
     // coluna — sem isso o valor engolia a certidão inteira.
-    nome_titular: upperOrUndef(cortarCampo(g(/em nome de:\s*\n*\s*(.+)/i))),
+    nome_titular: (() => {
+      const candidato = upperOrUndef(cortarCampo(g(/em nome de:\s*\n*\s*(.+)/i)));
+      return pareceNomePessoa(candidato) ? candidato : undefined;
+    })(),
     cpf: cpf11(g(/CPF:\s*([\d.\-]+)/i)),
     data_nascimento: iso(g(/Data de Nascimento:\s*([\d/]+)/i)),
     nome_mae: upperOrUndef(cortarCampo(g(/M[ãa]e:\s*(.+)/i))),
@@ -694,8 +697,11 @@ function numOrUndef(v: string | undefined): number | undefined {
 }
 
 import {
+  lerCampoRotulado,
   lerNomeRotulado,
   pareceNomePessoa,
+  pareceCpf,
+  pareceData,
   cpfDoCadastroPresenteNoTexto,
 } from "./leituraCamposPdf";
 
@@ -757,6 +763,29 @@ function resgatarTitular(campos: CamposCertidao, texto: string): CamposCertidao 
       },
     };
   }
+
+  // Resgate canônico dos demais dados de qualificação. O valor só entra se o
+  // documento o imprimir e ele passar pelo validador semântico; não há inferência.
+  const cpfLido = lerCampoRotulado(texto, ["CPF", "CPF do pesquisado", "CPF da pessoa pesquisada"], {
+    validar: pareceCpf,
+  }).valor;
+  const rgLido = lerCampoRotulado(texto, ["RG", "N[º°.]? RG", "Registro Geral", "Identidade"], {
+    validar: (v) => /\d/.test(v) && v.replace(/[^0-9A-Za-z]/g, "").length >= 5,
+  }).valor;
+  const nascimentoLido = lerCampoRotulado(texto, ["Data de nascimento", "Nascimento"], {
+    validar: pareceData,
+  }).valor;
+  const maeLida = lerNomeRotulado(texto, ["Nome da m[aã]e", "M[aã]e"]).valor;
+  const paiLido = lerNomeRotulado(texto, ["Nome do pai", "Pai"]).valor;
+
+  out = {
+    ...out,
+    cpf: out.cpf ?? cpf11(cpfLido),
+    rg: out.rg ?? rgLido?.replace(/[^0-9A-Za-z]/g, "").toUpperCase(),
+    data_nascimento: out.data_nascimento ?? iso(nascimentoLido),
+    nome_mae: out.nome_mae ?? upperOrUndef(maeLida),
+    nome_pai: out.nome_pai ?? upperOrUndef(paiLido),
+  };
 
   // CPF só é "campo sem valor" quando o layout do documento imprime CPF.
   const naoAplicaveis = out.leitura?.campos_nao_aplicaveis ?? [];
