@@ -158,6 +158,18 @@ export interface CamposCertidao {
     nome_resgatado?: boolean;
     /** Campos críticos que continuaram sem valor após todas as tentativas. */
     campos_vazios?: string[];
+    /**
+     * Campos que o LAYOUT do documento simplesmente não imprime.
+     *
+     * Existe para separar duas coisas que a auditoria mostrava iguais: "o
+     * parser não achou o CPF" (defeito de leitura) e "esta certidão não traz
+     * CPF" (a do TSE identifica o eleitor por título, não por CPF). Sem essa
+     * distinção o administrador via "CAMPOS SEM VALOR: CPF" e concluía que a
+     * leitura falhou, quando não havia nada a ler.
+     */
+    campos_nao_aplicaveis?: string[];
+    /** De onde saíram os nomes de filiação. */
+    filiacao_fonte?: string;
   };
 }
 
