@@ -509,9 +509,9 @@ export default function DashboardProgressoClientes() {
                   {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
                   <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
                 </div>
-                {(trilhas[r.processo_id] ?? []).length > 0 && (
+                {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
                   <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
-                    {trilhaCompacta(trilhas[r.processo_id]).join(" · ")}
+                    {trilhaCompacta(trilhasEfetivas[r.processo_id]).join(" · ")}
                   </div>
                 )}
               </Link>
@@ -528,11 +528,11 @@ export default function DashboardProgressoClientes() {
             <thead>
               <tr className="border-b border-[#DADADA] bg-[#FAFAFA]">
                 {colunas.map((c) => (
-                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom" title={c.titulo}>
+                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom border-r border-[#EFEFEF] last:border-r-0" title={c.titulo}>
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors text-left"
+                      className="flex w-full items-end justify-start gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors text-left leading-[1.15]"
                     >
                       {c.label}
                       {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
@@ -621,14 +621,14 @@ export default function DashboardProgressoClientes() {
                   ),
                   progresso: (
                     <>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11.5px] font-bold tabular-nums w-12" style={{ color: TINTA }}>
+                       <div className="flex w-full min-w-0 items-center gap-2">
+                        <span className="shrink-0 text-[11.5px] font-bold tabular-nums" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
                         </span>
-                        <div className="flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
+                        <div className="min-w-0 flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
-                        <span className="text-[10px] font-bold tabular-nums w-8 text-right" style={{ color: TINTA_2 }}>{pct}%</span>
+                        <span className="shrink-0 w-8 text-[10px] font-bold tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -685,7 +685,7 @@ export default function DashboardProgressoClientes() {
                     style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
                   >
                     {colunas.map((c) => (
-                      <td key={c.key} className="px-3 py-3 align-top overflow-hidden">
+                      <td key={c.key} className="px-3 py-3 align-top overflow-hidden border-r border-[#F3F3F3] last:border-r-0">
                         {celulas[c.key]}
                       </td>
                     ))}
