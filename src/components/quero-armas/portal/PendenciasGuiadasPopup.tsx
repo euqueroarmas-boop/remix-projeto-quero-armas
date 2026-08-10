@@ -685,6 +685,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {active.corpo ? (
             <div className="pt-1">{active.corpo}</div>
+          ) : isDispensado ? (
+            /* ─── Carimbo de dispensa legal ───
+               O passo permanece visível: o cliente enxerga o benefício que a
+               profissão dele garante, com a base legal citada. */
+            <div className="pt-1">
+              <div className="rounded-sm border-2 border-emerald-600/40 bg-emerald-50 p-4">
+                <div className="qa-eyebrow text-emerald-800">Dispensado por lei</div>
+                {dispensa?.base_legal ? (
+                  <p className="qa-body mt-2 font-semibold text-emerald-900">{dispensa.base_legal}</p>
+                ) : null}
+                {dispensa?.categoria_label ? (
+                  <p className="qa-caption mt-1 text-emerald-800">{dispensa.categoria_label}</p>
+                ) : null}
+                <p className="qa-body qa-body--soft mt-3">
+                  Você não precisa entregar este documento por causa da sua categoria
+                  profissional. Já marcamos esta exigência como cumprida no seu processo —
+                  o registro da dispensa e da base legal fica no seu histórico.
+                </p>
+              </div>
+            </div>
           ) : (
           <>
           {/* Step list with vertical timeline */}
