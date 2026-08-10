@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2 } from "lucide-react";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
  * Painel editorial de progresso por cliente.
@@ -38,19 +39,35 @@ interface Row {
   dispensados?: number | null;
   reaproveitados?: number | null;
   bloqueado_por_prerequisito?: boolean | null;
+  /** Novas leituras operacionais. */
+  online?: boolean | null;
+  ultimo_acesso?: string | null;
+  efetiva_status?: string | null;
+  protocolo_numero?: string | null;
 }
 
-type SortKey = "cliente_nome" | "servico_nome" | "fase" | "progresso" | "proximo_doc" | "dias_parado" | "cobrancas" | "criado_em";
+type SortKey =
+  | "cliente_nome" | "servico_nome" | "fase" | "progresso" | "proximo_doc"
+  | "dias_parado" | "cobrancas" | "criado_em"
+  | "online" | "efetiva" | "protocolo";
 
-const COLS: { key: SortKey; label: string; className?: string }[] = [
-  { key: "cliente_nome", label: "CLIENTE", className: "min-w-[220px]" },
-  { key: "fase", label: "ETAPA ATUAL", className: "w-[190px]" },
-  { key: "progresso", label: "PROGRESSO", className: "w-[190px]" },
-  { key: "proximo_doc", label: "PRÓXIMO PASSO", className: "min-w-[200px] max-w-[240px]" },
-  { key: "criado_em", label: "ABERTO EM", className: "w-[104px]" },
-  { key: "cobrancas", label: "COBRANÇAS", className: "w-[96px]" },
-  { key: "dias_parado", label: "PARADO", className: "w-[84px]" },
+type ColDef = { key: SortKey; label: string; largura: number; titulo?: string };
+
+const COLS: ColDef[] = [
+  { key: "cliente_nome", label: "CLIENTE", largura: 260 },
+  { key: "online", label: "ONLINE", largura: 110, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
+  { key: "fase", label: "ETAPA ATUAL", largura: 200 },
+  { key: "progresso", label: "PROGRESSO", largura: 200 },
+  { key: "proximo_doc", label: "PRÓXIMO PASSO", largura: 220 },
+  { key: "efetiva", label: "EF. NECESSIDADE", largura: 150, titulo: "Situação da narrativa de efetiva necessidade" },
+  { key: "protocolo", label: "PROTOCOLO", largura: 150, titulo: "Número do protocolo emitido para este serviço" },
+  { key: "criado_em", label: "ABERTO EM", largura: 110 },
+  { key: "cobrancas", label: "COBRANÇAS", largura: 110, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
+  { key: "dias_parado", label: "PARADO", largura: 96 },
 ];
+
+const LS_LARGURAS = "qa_painel_progresso_larguras";
+const LS_VISIVEIS = "qa_painel_progresso_visiveis";
 
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
