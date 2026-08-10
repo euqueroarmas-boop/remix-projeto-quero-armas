@@ -487,7 +487,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           className={
             asPage
               ? "shrink-0 border-b border-[#EFEFEF] px-0 pt-0 pb-4"
-              : "shrink-0 border-b border-[#EFEFEF] px-5 pt-5 pb-2 pr-12 sm:px-6 sm:pr-14"
+              : "shrink-0 border-b border-[#EFEFEF] px-5 pt-3.5 pb-1.5 pr-12 sm:px-6 sm:pr-14"
           }
         >
           {asPage ? (
@@ -524,19 +524,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </h1>
             </div>
           ) : (
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8]">
-                <FileUp className="h-4 w-4 text-[#8A1224]" />
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-lg border border-[#8A1224]/15 bg-[#FFF7F8]">
+                <FileUp className="h-3.5 w-3.5 text-[#8A1224]" />
               </span>
               <div className="min-w-0">
-                <p className="font-['Oswald',sans-serif] text-[10px] font-black uppercase tracking-[0.22em] text-[#8A1224]">
+                <p className="font-['Oswald',sans-serif] text-[9px] font-black uppercase tracking-[0.2em] text-[#8A1224]">
                   Checklist guiado
                 </p>
                 {/* Sem quebra de linha forçada: em telas estreitas ela produzia
                     "Fabio, você está nos / devendo / enviar este documento!".
                     O balanceamento nativo distribui as linhas sem cortar frase. */}
                 <h1
-                  className="mt-1 font-['Oswald',sans-serif] text-[22px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A]"
+                  className="mt-0.5 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.1] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]"
                   style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
                 >
                   {primeiroNome ? `${primeiroNome}, você está nos devendo ` : "Você está nos devendo "}
@@ -548,8 +548,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Header */}
-        <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-2 pb-4 shrink-0 sm:px-6 sm:pt-2"}>
-          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[44px] flex items-center gap-2 flex-wrap"}>
+        <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-1.5 pb-2 shrink-0 sm:px-6"}>
+          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[36px] flex items-center gap-1.5 flex-wrap"}>
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
@@ -579,18 +579,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <div className="mt-4 mb-1 h-px bg-[#F0F0F0]" />
-          <div className={asPage ? "" : "pl-[44px]"}>
+          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-2.5 h-px bg-[#F0F0F0]"} />
+          <div className={asPage ? "" : "pl-[36px]"}>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
                 título da etapa — o título grande repetiria o nome do grupo. */}
             {active.corpo ? null : (
-              <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+              <h2 className={asPage ? "qa-h1 mt-4" : "qa-h1 mt-2.5"} style={{ letterSpacing: ".02em" }}>
                 {explic.titulo}
               </h2>
             )}
 
             {active.detalheContexto ? (
-              <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
+              <p className={`qa-body qa-body--soft rounded-sm border border-[#E5E5E5] bg-white px-3 py-2 ${asPage ? "mt-3" : "mt-2"}`}>
                 {active.detalheContexto}
               </p>
             ) : null}
@@ -601,7 +601,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2"
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2 ${asPage ? "mt-3" : "mt-2"}`}
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
                 Acessar site pra emissão
@@ -740,16 +740,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           {/* Números do PROCESSO, não da fila. A fila mostra o que está
               liberado agora; o cliente precisa saber o tamanho do caminho. */}
           {asPage ? null : resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
-            <div className="px-6 py-3 border-b border-[#F0F0F0]">
+            <div className="px-5 py-2 border-b border-[#F0F0F0] sm:px-6">
               <div className="flex justify-between items-baseline">
-                <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                   Resolva um por vez
                 </span>
-                <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+                <span className="text-[9px] font-bold text-[#8A1224] tracking-widest uppercase">
                   {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
                 </span>
               </div>
-              <p className="mt-1.5 text-[11px] text-[#6A6A6A]">
+              {/* Linha única: falta no processo + andamento do grupo + histórico
+                  reaproveitado. Antes eram três parágrafos empilhados que
+                  comiam a área de trabalho do cliente. */}
+              <p className="mt-1 text-[10.5px] leading-[1.35] text-[#6A6A6A]">
                 Ainda faltam{" "}
                 {resumoProcesso.documentosPendentes > 0 ? (
                   <strong className="text-[#0A0A0A]">
@@ -765,43 +768,44 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   </strong>
                 ) : null}{" "}
                 neste processo.
+                {grupoNoProcesso ? (
+                  <>
+                    {" · "}
+                    <strong className="text-[#0A0A0A]">{activeGrupo}</strong>:{" "}
+                    {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
+                    {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
+                  </>
+                ) : null}
+                {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
+                  <span className="font-medium text-emerald-700">
+                    {" · ✓ "}
+                    {resumoProcesso.reaproveitados === 1
+                      ? "1 documento já reconhecido do seu histórico."
+                      : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
+                  </span>
+                ) : null}
               </p>
-              {grupoNoProcesso ? (
-                <p className="mt-1 text-[11px] text-[#6A6A6A]">
-                  Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
-                  {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
-                  {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
-                </p>
-              ) : null}
-              {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
-                <p className="mt-2 text-[11px] text-emerald-700 font-medium">
-                  ✓{" "}
-                  {resumoProcesso.reaproveitados === 1
-                    ? "1 documento já reconhecido do seu histórico."
-                    : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
-                </p>
-              ) : null}
             </div>
           ) : total > 1 ? (
-            <div className="px-6 py-3 flex justify-between items-center">
-              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+            <div className="px-5 py-2 flex justify-between items-center sm:px-6">
+              <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                 Resolva um por vez
               </span>
-              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+              <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                 Faltam {faltam} após esta
               </span>
             </div>
           ) : null}
 
           {active.corpo ? null : (
-          <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-6 py-4 flex flex-col gap-3"}>
+          <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-5 py-2.5 flex flex-col gap-2 sm:px-6"}>
             {total > 1 && podeVoltar ? (
-              <div className="flex gap-3">
+              <div className={asPage ? "flex gap-3" : "flex gap-2"}>
                 <button
                   type="button"
                   onClick={() => setIndice((i) => Math.max(0, i - 1))}
                   disabled={!podeVoltar}
-                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className={`qa-btn-label flex-1 px-3 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-3 px-4" : "h-10"}`}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Anterior
                 </button>
@@ -809,19 +813,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
                   disabled={!podeAvancar}
-                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className={`qa-btn-label flex-1 px-3 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-3 px-4" : "h-10"}`}
                 >
                   Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2">
+            <div className={`grid grid-cols-1 md:grid-cols-2 items-stretch ${asPage ? "gap-2" : "gap-2 sm:grid-cols-2"}`}>
               {isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
-                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A0A0A] px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-white transition-colors hover:bg-[#1a1a1a] ${asPage ? "h-14 text-[11px] rounded-xl px-4" : "h-11 text-[10.5px]"}`}
                 >
                   <Download className="h-3.5 w-3.5 shrink-0" />
                   {primaryLabel}
@@ -833,7 +837,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <button
                   type="button"
                   onClick={active.onEntregar}
-                  className={`inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
+                  className={`inline-flex w-full items-center justify-center gap-2 px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] transition-colors ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  } ${
                     isSignature
                       ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
                       : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
