@@ -78,6 +78,7 @@ import {
   type AvaliacaoTitularidade,
 } from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
+import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -1711,7 +1712,11 @@ export function ClienteDocsHubModal({
     form.tipo_documento !== expectedTipoMeta.value
   );
   // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
-  const pendingSet = new Set((pendingHubTipos || []).map((t) => String(t)));
+  const pendingSet = new Set(
+    (pendingHubTipos || [])
+      .map((t) => toHubTipoCompartilhado(String(t).toLowerCase()))
+      .filter(Boolean),
+  );
   // Cliente mandou uma certidão diferente, mas ela cobre outra pendência do
   // checklist — reaproveitar automaticamente é a decisão correta.
   const cobreOutraPendencia = !!(
@@ -1894,6 +1899,12 @@ export function ClienteDocsHubModal({
     duplicidade: duplicidadeLabelCurto ? `Já aprovado: ${duplicidadeLabelCurto}` : "Documento em duplicidade",
     tipo: "Documento incorreto",
   };
+  const motivoRejeicaoDetalhado = motivoRejeicao === "tipo"
+    ? `O documento foi identificado como ${getNomeDocumentoDisplay(
+        { tipo_documento: form.tipo_documento },
+        "documento",
+      )}, mas o envio aberto exigia ${expectedTipoMeta?.label || "outro documento"}.`
+    : MOTIVO_CARIMBO[motivoRejeicao || ""] || "Documento rejeitado na conferência.";
   useEffect(() => {
     if (!motivoRejeicao) {
       motivoCarimbadoRef.current = null;
@@ -1918,7 +1929,7 @@ export function ClienteDocsHubModal({
       return;
     }
 
-    setResultadoCarimbo({ tipo: "reprovado", mensagem: MOTIVO_CARIMBO[motivoRejeicao] });
+    setResultadoCarimbo({ tipo: "reprovado", mensagem: motivoRejeicaoDetalhado });
     // A recusa acontece ANTES de qualquer gravação, então nenhum gatilho de
     // banco dispara: avisamos a Central de Notificação do admin na hora.
     if (qaClienteId) {
@@ -1927,7 +1938,8 @@ export function ClienteDocsHubModal({
           evento: "documento_rejeitado",
           somente_admin: true,
           cliente_id: qaClienteId,
-          motivo_rejeicao: motivoRejeicao,
+          motivo_rejeicao: motivoRejeicaoDetalhado,
+          motivo_codigo: motivoRejeicao,
           documento:
             expectedTipoMeta?.label ||
             getNomeDocumentoDisplay({ tipo_documento: form.tipo_documento }, "Documento"),

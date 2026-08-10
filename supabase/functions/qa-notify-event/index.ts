@@ -80,7 +80,8 @@ interface Payload {
   processo?: string;
   exigencia?: string;
   /** Para documento_rejeitado. */
-  motivo_rejeicao?: "parentesco" | "titular" | "duplicidade" | "tipo";
+  motivo_rejeicao?: string;
+  motivo_codigo?: "parentesco" | "titular" | "duplicidade" | "tipo";
   /** Recusa no upload: avisa SÓ a equipe (sem e-mail nem popup do cliente). */
   somente_admin?: boolean;
   detalhes?: Array<{ label: string; valor: string }>;
@@ -275,7 +276,7 @@ function mapEventoToTemplate(
           nome,
           documento: p.documento || "O documento enviado",
           arquivo: p.arquivo || "",
-          motivo: (p.motivo_rejeicao || p.motivo || "tipo") as string,
+          motivo: (p.motivo_rejeicao || p.motivo || "Documento rejeitado na conferência automática.") as string,
           detalhes: Array.isArray(p.detalhes) ? p.detalhes : [],
           portalUrl,
         },
@@ -405,7 +406,7 @@ Deno.serve(async (req) => {
             : body.evento === "documento_reaproveitado"
               ? `Aproveitado em "${body.exigencia_cumprida || "outra exigência"}". Ainda falta: ${body.exigencia_pedida || "-"}.`
             : body.evento === "documento_rejeitado"
-              ? `Motivo: ${body.motivo_rejeicao === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_rejeicao === "titular" ? "documento de outro titular" : body.motivo_rejeicao === "duplicidade" ? "documento já entregue" : "documento diferente do exigido"}. Enviamos os detalhes no seu e-mail.`
+              ? `Motivo: ${body.motivo_rejeicao || (body.motivo_codigo === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_codigo === "titular" ? "documento de outro titular" : body.motivo_codigo === "duplicidade" ? "documento já entregue" : "documento diferente do exigido")}. Enviamos os detalhes no seu e-mail.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         if (!body.somente_admin) await supabase.from("qa_notificacoes_cliente").upsert({
@@ -443,7 +444,8 @@ Deno.serve(async (req) => {
             referencia_id: String(body.referencia_id ?? ""),
             link: `/clientes/${body.cliente_id}`,
             metadata: {
-              motivo_rejeicao: body.motivo_rejeicao ?? null,
+              motivo_rejeicao: body.motivo_rejeicao ?? "Documento rejeitado na conferência automática.",
+              motivo_codigo: body.motivo_codigo ?? null,
               arquivo: body.arquivo ?? null,
               detalhes: body.detalhes ?? body.problemas ?? null,
             },
