@@ -167,6 +167,31 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 
   const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
 
+  /**
+   * Histórico de rejeições: cada evento de mudança para "reprovado" com o
+   * motivo alegado. Serve de trilha de auditoria na linha do tempo — não só o
+   * último motivo gravado no documento.
+   */
+  const docIds = useMemo(() => (docs as any[]).map((d) => d.id), [docs]);
+  const { data: historicoReprovas = {} } = useQuery({
+    queryKey: ["cliente-docs-reprovas", clienteId, docIds.length],
+    enabled: docIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("qa_status_eventos" as any)
+        .select("documento_id, motivo, created_at, status_novo")
+        .in("documento_id", docIds)
+        .eq("status_novo", "reprovado")
+        .order("created_at", { ascending: true });
+      const mapa: Record<string, { motivo: string | null; quando: string }[]> = {};
+      for (const ev of ((data as any[]) || [])) {
+        if (!ev.documento_id) continue;
+        (mapa[ev.documento_id] ||= []).push({ motivo: ev.motivo ?? null, quando: ev.created_at });
+      }
+      return mapa;
+    },
+  });
+
   // Exigências reais do cliente — base para auditar a ordem de entrega.
   const { data: exigencias = [] } = useQuery({
     queryKey: ["cliente-exigencias-entrega", clienteId],
@@ -392,8 +417,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
   const [baixandoZip, setBaixandoZip] = useState(false);
   const handleBaixarTudo = async () => {
-    const comArquivo = [...(docs as any[]), ...provasComoDocs].filter((d) => d.arquivo_storage_path);
-    if (comArquivo.length === 0) { toast.error("Nenhum arquivo para baixar."); return; }
+    // Documentos rejeitados foram tirados do processo — nunca entram no dossiê.
+    const comArquivo = [...(docs as any[]), ...provasComoDocs]
+      .filter((d) => d.arquivo_storage_path)
+      .filter((d) => d.status !== "reprovado" && d.status !== "excluido");
+    if (comArquivo.length === 0) {
+      toast.error("Nenhum documento válido para o dossiê — os enviados estão rejeitados ou sem arquivo.");
+      return;
+    }
     setBaixandoZip(true);
     try {
       const JSZip = (await import("jszip")).default;
@@ -588,6 +619,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       {modo === "entrega" && (
         <LinhaEntrega
           itens={linhaEntrega}
+          historicoReprovas={historicoReprovas as any}
           onViewFile={handleViewFile}
           onBaixar={handleBaixarDoc}
           onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
@@ -689,6 +721,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 // ============================================================================
 interface LinhaEntregaProps {
   itens: EntregaItem[];
+  historicoReprovas?: Record<string, { motivo: string | null; quando: string }[]>;
   onViewFile: (path: string, doc?: any) => void;
   onBaixar: (doc: any) => void;
   onReprovar: (id: string) => void;
@@ -701,30 +734,60 @@ interface LinhaEntregaProps {
 }
 
 function LinhaEntrega({
-  itens, onViewFile, onBaixar, onReprovar, onDelete,
+  itens, historicoReprovas = {}, onViewFile, onBaixar, onReprovar, onDelete,
   reprovandoId, motivoTmp, setMotivoTmp, confirmarReprovar, cancelarReprovar,
 }: LinhaEntregaProps) {
   if (itens.length === 0) return null;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-        Linha do tempo de entrega · {itens.length} documento(s)
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          Linha do tempo de entrega · {itens.length} documento(s)
+        </span>
+        <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Aprovado</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Em análise</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#7A1F2B]" /> Rejeitado</span>
+        </span>
       </div>
       <ol className="space-y-2">
         {itens.map((it) => {
           const d: any = it.doc;
           const pos = posicaoProtocolo(d.tipo_documento, d.nome_documento);
+          const isReprovado = d.status === "reprovado";
+          const isAprovado = d.status === "aprovado";
+          const isAnalise = d.status === "pendente_aprovacao" || d.status === "em_analise";
+          const bolinha = isReprovado
+            ? "bg-[#7A1F2B]"
+            : isAprovado
+              ? "bg-emerald-600"
+              : isAnalise
+                ? "bg-amber-500"
+                : "bg-slate-400";
+          const bolinhaTitulo = isReprovado
+            ? "Documento rejeitado"
+            : isAprovado
+              ? "Documento aprovado"
+              : isAnalise
+                ? "Em análise"
+                : "Sem status definido";
+          const reprovas = historicoReprovas[d.id] || [];
           const critico = it.anotacoes.some((a) => a.severidade === "critico");
           const atencao = it.anotacoes.some((a) => a.severidade === "atencao");
-          const cls = critico
-            ? "border-red-200 bg-red-50/40"
-            : atencao
-              ? "border-amber-200 bg-amber-50/40"
-              : "border-slate-200 bg-white";
+          const cls = isReprovado
+            ? "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04]"
+            : critico
+              ? "border-red-200 bg-red-50/40"
+              : atencao
+                ? "border-amber-200 bg-amber-50/40"
+                : "border-slate-200 bg-white";
           return (
             <li key={d.id} className={`rounded-lg border p-2.5 ${cls}`}>
               <div className="flex items-start gap-2">
-                <span className="shrink-0 h-5 w-5 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">
+                <span
+                  title={bolinhaTitulo}
+                  className={`shrink-0 h-5 w-5 rounded-full ${bolinha} text-white text-[9px] font-bold flex items-center justify-center`}
+                >
                   {it.sequencia}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -767,10 +830,16 @@ function LinhaEntrega({
                     )}
                     <button
                       type="button"
-                      onClick={() => onReprovar(d.id)}
-                      className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-700"
+                      disabled={isReprovado}
+                      onClick={() => { if (!isReprovado) onReprovar(d.id); }}
+                      title={isReprovado ? "Este documento já foi rejeitado." : "Rejeitar com motivo"}
+                      className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                        isReprovado
+                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed"
+                          : "border-amber-200 bg-amber-50 text-amber-700"
+                      }`}
                     >
-                      <XCircle className="h-3 w-3" /> Rejeitar
+                      <XCircle className="h-3 w-3" /> {isReprovado ? "Rejeitado" : "Rejeitar"}
                     </button>
                     <button
                       type="button"
@@ -780,7 +849,29 @@ function LinhaEntrega({
                       <Trash2 className="h-3 w-3" /> Excluir
                     </button>
                   </div>
-                  {reprovandoId === d.id && (
+                  {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
+                    <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
+                      <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                        Motivo da rejeição
+                      </div>
+                      <ul className="mt-1 space-y-0.5">
+                        {(reprovas.length > 0
+                          ? reprovas
+                          : [{ motivo: d.motivo_reprovacao, quando: d.reprovado_em }]
+                        ).map((r, i) => (
+                          <li key={i} className="text-[10px] leading-snug text-[#7A1F2B]">
+                            {r.quando && (
+                              <span className="font-bold">
+                                {new Date(r.quando).toLocaleString("pt-BR")} ·{" "}
+                              </span>
+                            )}
+                            {r.motivo || "Motivo não informado."}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {reprovandoId === d.id && !isReprovado && (
                     <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2">
                       <textarea
                         value={motivoTmp}
