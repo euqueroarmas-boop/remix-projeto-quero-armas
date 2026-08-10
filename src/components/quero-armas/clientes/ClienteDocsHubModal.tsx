@@ -3119,6 +3119,10 @@ export function ClienteDocsHubModal({
     if (conf.veredicto === "rejeitado") {
       toast.error("Certidão recusada na conferência. Veja o motivo no painel.");
       void notificarCertidaoRejeitada(doc, conf);
+    } else if (conf.veredicto === "revisao_humana") {
+      // Falha de LEITURA não recusa o cliente: o documento é salvo e a equipe
+      // confere manualmente. Nada de e-mail de rejeição aqui.
+      toast.info("Documento recebido. Alguns campos deste modelo não puderam ser lidos automaticamente e a equipe vai conferir.");
     } else {
       toast.success("Certidão lida e conferida com o seu cadastro.");
     }
