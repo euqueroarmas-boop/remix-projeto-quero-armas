@@ -319,13 +319,51 @@ export default function DashboardProgressoClientes() {
 
   return (
     <div className="qa-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
+      <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
         <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
         </h3>
-        <span className="ml-auto text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
+        <button
+          type="button"
+          aria-label="Escolher colunas"
+          title="Escolher colunas"
+          onClick={() => setConfigAberta((v) => !v)}
+          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+        <span className="ml-auto self-start text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
           {filtradas.length === rows.length ? `${rows.length} ATIVOS` : `${filtradas.length} DE ${rows.length}`}
         </span>
+
+        {configAberta && (
+          <div className="absolute left-4 top-[44px] z-30 w-[240px] rounded-sm border border-[#DADADA] bg-white p-3 shadow-lg">
+            <div className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: TINTA_3 }}>
+              COLUNAS VISÍVEIS
+            </div>
+            <div className="space-y-1.5">
+              {COLS.filter((c) => c.key !== "cliente_nome").map((c) => (
+                <label key={c.key} className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: TINTA_2 }}>
+                  <input
+                    type="checkbox"
+                    checked={visiveis[c.key] !== false}
+                    onChange={(e) => setVisiveis((v) => ({ ...v, [c.key]: e.target.checked }))}
+                    className="h-3 w-3 accent-[#7A1F2B]"
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLarguras({}); setVisiveis({}); }}
+              className="mt-3 w-full rounded-sm border border-[#DADADA] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[#0A0A0A]"
+              style={{ color: TINTA_2 }}
+            >
+              RESTAURAR PADRÃO
+            </button>
+          </div>
+        )}
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
@@ -358,7 +396,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {trilhasDisponiveis.length > 0 && (
-        <div className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
           <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] mr-1" style={{ color: TINTA_3 }}>TRILHA</span>
           {trilhasDisponiveis.map((t) => (
             <button
