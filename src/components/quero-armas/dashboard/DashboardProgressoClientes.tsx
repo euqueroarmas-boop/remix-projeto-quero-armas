@@ -107,6 +107,26 @@ function fmtData(d: string | null) {
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return "—"; }
 }
 
+/** Rota real da ficha do cliente: aba Clientes abre o cadastro via ?cliente=ID. */
+function rotaCadastroCliente(clienteId: number) {
+  return `/clientes?cliente=${clienteId}&tab=dados`;
+}
+
+/** "GRUPO 4 DE 7 · FALTAM 4" — leitura de quanto falta para terminar o processo. */
+function LinhaGrupos({ r }: { r: Row }) {
+  const total = r.grupos_total ?? 0;
+  if (total <= 0) return null;
+  const indice = r.grupo_indice ?? 0;
+  const restantes = r.grupos_restantes ?? 0;
+  return (
+    <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+      {indice > 0 ? `GRUPO ${indice} DE ${total}` : `${total} GRUPOS`}
+      {" · "}
+      {restantes > 0 ? `FALTAM ${restantes}` : "TODOS CONCLUÍDOS"}
+    </div>
+  );
+}
+
 export default function DashboardProgressoClientes() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
