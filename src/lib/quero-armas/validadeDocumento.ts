@@ -492,6 +492,7 @@ export function calcularValidadeEfetiva(
   if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
   if (isIdentidadeFuncionalPerpetua(tipo)) return null;
+  if (isComprovantePagamentoContrato(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
@@ -599,6 +600,7 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   if (
     isIdentidadeFuncionalPerpetua(doc.tipo_documento) ||
     isDocumentoConstitutivoPerpetuo(doc.tipo_documento) ||
+    isComprovantePagamentoContrato(doc.tipo_documento) ||
     textoIndicaValidadeIndeterminada((doc as any)?.nome_documento)
   ) {
     return {
