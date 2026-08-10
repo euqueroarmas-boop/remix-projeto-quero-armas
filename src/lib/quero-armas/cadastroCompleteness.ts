@@ -37,7 +37,7 @@ export interface CampoCadastro {
    */
   links?: Array<{ label: string; url: string }>;
   /** Tipo de input para a UI. */
-  tipo?: "text" | "date" | "select" | "tel" | "cep" | "uf" | "municipio";
+  tipo?: "text" | "date" | "select" | "tel" | "cep" | "uf" | "municipio" | "titulo_eleitor";
   /**
    * Para `tipo: "municipio"`: chave do campo de UF que define a lista de
    * cidades. Cidade digitada à mão divergia da certidão (FAXINAL x
@@ -83,7 +83,7 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
   { key: "celular", label: "Celular (com DDD)", grupo: "contato", crucial: true, pergunta: "Qual é o seu celular com WhatsApp?", ajuda: "É por onde vamos te avisar do andamento.", tipo: "tel", placeholder: "(11) 99999-9999", colSpan: 2 },
 
   { key: "email", label: "E-mail", grupo: "contato", crucial: true, somenteEquipe: true, tipo: "text", placeholder: "voce@email.com", colSpan: 2, pergunta: "Qual é o seu e-mail?", ajuda: "Identidade de acesso do cliente — alterável apenas pela equipe." },
-  { key: "titulo_eleitor", label: "Título de eleitor", grupo: "identidade", crucial: true, tipo: "text", colSpan: 1, pergunta: "Qual é o número do seu título de eleitor?", ajuda: "Está no seu título, no app e-Título ou na Certidão de Crimes Eleitorais emitida pelo TSE — nela o número do título vem impresso.", links: [
+  { key: "titulo_eleitor", label: "Título de eleitor", grupo: "identidade", crucial: true, tipo: "titulo_eleitor", placeholder: "1111 2222 3333", colSpan: 1, pergunta: "Qual é o número do seu título de eleitor?", ajuda: "São 12 números, no formato 1111 2222 3333 (sem letras). Está no seu título, no app e-Título ou na Certidão de Crimes Eleitorais emitida pelo TSE — nela o número do título vem impresso.", links: [
     { label: "Consultar título no autoatendimento do TSE", url: "https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral" },
     { label: "Emitir Certidão de Crimes Eleitorais (TSE)", url: "https://www.tse.jus.br/servicos-eleitorais/certidoes/certidao-de-crimes-eleitorais" },
   ] },
