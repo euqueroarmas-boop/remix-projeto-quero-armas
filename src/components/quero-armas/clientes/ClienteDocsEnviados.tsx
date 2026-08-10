@@ -496,6 +496,15 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBaixarTudo}
+            disabled={baixandoZip}
+            className="inline-flex items-center gap-1 rounded-md border border-[#7A1F2B] bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
+          >
+            {baixandoZip ? <Loader2 className="h-3 w-3 animate-spin" /> : <Archive className="h-3 w-3" />}
+            Baixar tudo (ZIP)
+          </button>
           <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
             <button
               type="button"
@@ -528,7 +537,20 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
         </div>
       </div>
 
-      {modo === "entrega" && <LinhaEntrega itens={linhaEntrega} onViewFile={handleViewFile} />}
+      {modo === "entrega" && (
+        <LinhaEntrega
+          itens={linhaEntrega}
+          onViewFile={handleViewFile}
+          onBaixar={handleBaixarDoc}
+          onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
+          onDelete={handleDelete}
+          reprovandoId={reprovandoId}
+          motivoTmp={motivoTmp}
+          setMotivoTmp={setMotivoTmp}
+          confirmarReprovar={handleReprovar}
+          cancelarReprovar={() => setReprovandoId(null)}
+        />
+      )}
 
       {modo === "familia" && (
       <div className="grid gap-2">
