@@ -19,6 +19,13 @@ Escopo: apenas o **modo pop-up** do checklist guiado. O modo página (ícone da 
 - Botões Anterior/Próximo com altura um pouco menor e menos respiro em volta, mantendo área de toque confortável no celular.
 - Mantido: todos os números e o aviso verde de documentos reconhecidos do histórico.
 
+## Botão "Entregar documento" — discreto
+
+- Hoje o botão bordô ocupa cerca de 1/6 da tela. Passa a ser uma barra de ação compacta: altura fixa menor (cerca de 44px), texto em corpo menor e menos padding interno, mantendo o bordô #7A1F2B e o ícone.
+- Mesma regra para todos os botões de ação do rodapé em todas as etapas do pop-up guiado (Entregar documento, Assinar, Anterior, Próximo, Concluir): mesma altura, mesma tipografia, mesmo espaçamento.
+- Quando houver Anterior + ação principal na mesma linha, os dois dividem a linha em vez de empilhar, economizando mais uma faixa de altura.
+- Continua sendo o elemento mais destacado do rodapé, só que proporcional — sem bloco gigante.
+
 ## Área de trabalho
 
 - O ganho de altura (estimado 120 a 160px no celular) vai todo para a região rolável do meio, onde ficam a explicação, a linha do tempo de passos, os campos de texto e os botões Sim/Não.
@@ -26,6 +33,6 @@ Escopo: apenas o **modo pop-up** do checklist guiado. O modo página (ícone da 
 
 ## Detalhes técnicos
 
-- Arquivo único: `src/components/quero-armas/portal/PendenciasGuiadasPopup.tsx`, nos ramos onde `asPage === false`.
+- Arquivo único: `src/components/quero-armas/portal/PendenciasGuiadasPopup.tsx`, nos ramos onde `asPage === false`. Nada fora do pop-up guiado é alterado.
 - Nenhuma mudança de lógica, dados, contagem de passos ou regras de agrupamento — só densidade visual (tamanhos de fonte, padding, gap).
 - Preservadas as regras já congeladas: zona do botão de fechar (X), tamanho fixo do modal (42rem x 90dvh) com rolagem interna, e o layout do modo página.
