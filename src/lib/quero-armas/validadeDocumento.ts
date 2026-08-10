@@ -478,6 +478,8 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  // Comprovante de pagamento do contrato nunca vence — precede o catálogo.
+  if (isComprovantePagamentoContrato(tipo)) return null;
   // 1º) Catálogo do banco (fonte única). Só cai nas regras locais quando o
   //     tipo não está cadastrado ou o catálogo ainda não carregou.
   const regra = getRegraValidade(tipo);
