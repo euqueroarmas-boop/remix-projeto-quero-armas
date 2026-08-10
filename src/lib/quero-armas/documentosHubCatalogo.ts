@@ -68,8 +68,8 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "laudos_exames",
-    label: "Laudos e exames",
-    description: "Laudos psicológicos, capacidade técnica e exames correlatos.",
+    label: "Laudos psicológico / tiro",
+    description: "Laudo psicológico, atestado de capacidade técnica (tiro) e laudos institucionais equivalentes.",
     escopoPadrao: "permanente",
   },
   {
@@ -226,6 +226,7 @@ const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
   [/^antecedentes_/, "antecedentes_regularidade"],
   [/^declaracao_/, "declaracoes"],
   [/^laudo_/, "laudos_exames"],
+  [/^atestado_(aptidao_psicologica|capacidade_tecnica)/, "laudos_exames"],
 ];
 
 export function getHubCategoriaMeta(categoria: HubCategoria): HubCategoriaMeta {
