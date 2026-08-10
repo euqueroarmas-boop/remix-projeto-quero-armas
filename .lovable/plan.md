@@ -40,6 +40,7 @@ A página lista 14 documentos, 4 a vencer em 30 dias, comprovante em 10 dias. O 
 4. Fechar a efetiva necessidade: quando o cliente aprova a narrativa e o conjunto de BOs é suficiente, a linha `comprovante_efetiva_necessidade` passa a cumprida.
 5. Espelhar as provas da efetiva (BO, inquérito, ação) no hub de documentos, com prazo de 6 meses do BO, para entrarem em vencimentos e no ZIP.
 6. Resumo x Documentos: usar a MESMA fonte e a mesma janela (30 dias) para card, chips das abas e banner de próximo vencimento.
+7. Categoria **LAUDOS PSICOLÓGICO / TIRO** no hub de documentos: a categoria `laudos_exames` passa a se chamar "Laudos psicológico / tiro" e passa a agrupar também os atestados institucionais (`atestado_aptidao_psicologica_instituicao`, `atestado_capacidade_tecnica_instituicao`). Aparece na lista "DOCUMENTOS · AGRUPADO POR CATEGORIA" assim que houver laudo enviado, na ordem do dossiê (após Residência / Renda / Certidões).
 
 ### Admin
 7. Coluna PRÓXIMO PASSO com `min-w-0` + `overflow-hidden` — fim da sobreposição.
