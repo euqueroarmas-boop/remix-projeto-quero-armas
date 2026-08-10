@@ -1199,7 +1199,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <FInput label="Escolaridade *" value={f.escolaridade} onChange={v => set("escolaridade", v)} error={requiredErrors.escolaridade ? "Obrigatório" : undefined} />
-                <FInput label="Título de Eleitor *" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v.replace(/\D/g, "").slice(0, 12))} inputMode="numeric" maxLength={12} placeholder="000000000000" error={requiredErrors.titulo_eleitor ? "Obrigatório" : undefined} />
+                {/* Sempre em blocos 4-4-4 (1111 2222 3333): é assim que o número
+                    aparece no e-Título e na certidão do TSE, e é assim que a
+                    equipe confere. O valor salvo continua só com os 12 dígitos. */}
+                <FInput label="Título de Eleitor *" value={mascaraTituloEleitor(f.titulo_eleitor)} onChange={v => set("titulo_eleitor", tituloEleitorDigitos(v))} inputMode="numeric" maxLength={14} placeholder={TITULO_ELEITOR_PLACEHOLDER} error={requiredErrors.titulo_eleitor ? "Obrigatório" : undefined} />
                 <FInput label="CNH" value={f.cnh} onChange={v => set("cnh", v)} />
                 <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
               </div>
