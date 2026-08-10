@@ -69,6 +69,26 @@ export interface PendenciaItem {
   /** Frase que reforça o que acontece após responder (contexto pedagógico). */
   perguntaAjudaPos?: string | null;
   /**
+   * Exigência DISPENSADA POR LEI para a categoria profissional do titular.
+   *
+   * O passo continua no checklist de propósito (usuário, 10/08/2026): remover
+   * escondia do cliente o benefício que a profissão dele garante. Ele aparece
+   * já cumprido, com o carimbo e a base legal, e só precisa de "Avançar".
+   */
+  dispensa?: {
+    base_legal?: string | null;
+    categoria_label?: string | null;
+    grupo_label?: string | null;
+  } | null;
+  /** Confirma a ciência da dispensa e tira o passo da fila. */
+  onDispensaAvancar?: () => Promise<void> | void;
+  /**
+   * Via ALTERNATIVA (ex.: GCM/segurança pública com laudo da própria
+   * corporação): divide o rodapé em "Não" + "Entregar documento". O "Não"
+   * abre a escolha de credenciado da PF sem sair do pop-up.
+   */
+  recusaAlternativa?: { label: string; onClick: () => void } | null;
+  /**
    * Dado concreto que a pergunta está questionando — hoje, o endereço.
    *
    * "Você ainda reside neste imóvel?" é impossível de responder sem dizer
@@ -276,6 +296,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const isSignature = active.kind === "signature";
   const isPergunta = active.kind === "pergunta";
+  const dispensa = active.dispensa ?? null;
+  const isDispensado = !!dispensa;
   const doc = active.tipo === "contract" ? "contrato" : "procuracao";
   const explicBase = isSignature
     ? {
@@ -391,6 +413,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   useEffect(() => {
     setRespondendo(null);
   }, [active.id]);
+
+  const [avancandoDispensa, setAvancandoDispensa] = useState(false);
+  useEffect(() => { setAvancandoDispensa(false); }, [active.id]);
 
   // ─── Escolha de profissional credenciado pela PF ───
   // Regra (10/08/2026): quem responde NÃO na pergunta dos exames da instituição
@@ -660,6 +685,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {active.corpo ? (
             <div className="pt-1">{active.corpo}</div>
+          ) : isDispensado ? (
+            /* ─── Carimbo de dispensa legal ───
+               O passo permanece visível: o cliente enxerga o benefício que a
+               profissão dele garante, com a base legal citada. */
+            <div className="pt-1">
+              <div className="rounded-sm border-2 border-emerald-600/40 bg-emerald-50 p-4">
+                <div className="qa-eyebrow text-emerald-800">Dispensado por lei</div>
+                {dispensa?.base_legal ? (
+                  <p className="qa-body mt-2 font-semibold text-emerald-900">{dispensa.base_legal}</p>
+                ) : null}
+                {dispensa?.categoria_label ? (
+                  <p className="qa-caption mt-1 text-emerald-800">{dispensa.categoria_label}</p>
+                ) : null}
+                <p className="qa-body qa-body--soft mt-3">
+                  Você não precisa entregar este documento por causa da sua categoria
+                  profissional. Já marcamos esta exigência como cumprida no seu processo —
+                  o registro da dispensa e da base legal fica no seu histórico.
+                </p>
+              </div>
+            </div>
           ) : (
           <>
           {/* Step list with vertical timeline */}
@@ -884,7 +929,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
 
             <div className={`grid grid-cols-1 md:grid-cols-2 items-stretch ${asPage ? "gap-2" : "gap-2 sm:grid-cols-2"}`}>
-              {isPergunta ? null : isSignature ? (
+              {isDispensado ? (
+                <button
+                  type="button"
+                  disabled={avancandoDispensa}
+                  onClick={async () => {
+                    setAvancandoDispensa(true);
+                    try {
+                      await active.onDispensaAvancar?.();
+                    } finally {
+                      setAvancandoDispensa(false);
+                    }
+                  }}
+                  className={`inline-flex w-full items-center justify-center gap-2 bg-emerald-700 px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-white transition-colors hover:bg-emerald-800 disabled:opacity-50 md:col-span-2 ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  }`}
+                >
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  {avancandoDispensa ? "..." : "Avançar"}
+                </button>
+              ) : isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
@@ -893,10 +957,22 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   <Download className="h-3.5 w-3.5 shrink-0" />
                   {primaryLabel}
                 </button>
+              ) : active.recusaAlternativa ? (
+                /* Via institucional: "Não" abre a escolha de credenciado da PF
+                   sem tirar o cliente do checklist guiado. */
+                <button
+                  type="button"
+                  onClick={active.recusaAlternativa.onClick}
+                  className={`inline-flex w-full items-center justify-center gap-2 border-2 border-[#8A1224] bg-white px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  }`}
+                >
+                  {active.recusaAlternativa.label}
+                </button>
               ) : (
                 <div className="hidden md:block" />
               )}
-              {isPergunta ? null : (
+              {isPergunta || isDispensado ? null : (
                 <button
                   type="button"
                   onClick={active.onEntregar}
@@ -905,7 +981,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   } ${
                     isSignature
                       ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
-                      : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
+                      : active.recusaAlternativa
+                        ? "bg-[#8A1224] text-white hover:bg-[#6f0f1e]"
+                        : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
                   }`}
                 >
                   <Upload className="h-3.5 w-3.5 shrink-0" />

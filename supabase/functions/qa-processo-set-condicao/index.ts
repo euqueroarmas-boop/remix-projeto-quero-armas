@@ -441,7 +441,7 @@ Deno.serve(async (req) => {
     if (processo.servico_id != null) {
       const { data: catalogoBruto } = await supabase
         .from("qa_servicos_documentos")
-        .select("tipo_documento, nome_documento, obrigatorio, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias, regra_validacao, ordem, condicao_profissional")
+        .select("tipo_documento, nome_documento, obrigatorio, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, prazo_recomendado_dias, regra_validacao, ordem, etapa, condicao_profissional")
         .eq("servico_id", processo.servico_id)
         .eq("ativo", true)
         .order("ordem", { ascending: true });
@@ -469,6 +469,14 @@ Deno.serve(async (req) => {
           checklist_operador: Array.isArray(c.regra_validacao?.checklist_operador)
             ? c.regra_validacao.checklist_operador
             : [],
+          // CAUSA RAIZ: a regra do catálogo era DESCARTADA aqui. Perguntas-pivot
+          // (`tipo: "pergunta"`, `chave`, `opcoes`) chegavam no processo como
+          // documento comum — o cliente via "ENTREGAR DOCUMENTO" no lugar do
+          // Sim/Não e as duas trilhas exclusivas de laudo contavam juntas.
+          regra_catalogo:
+            c.regra_validacao && typeof c.regra_validacao === "object" ? c.regra_validacao : null,
+          etapa_catalogo: c.etapa ?? null,
+          ordem_catalogo: typeof c.ordem === "number" ? c.ordem : null,
         }));
       }
     }
@@ -481,25 +489,29 @@ Deno.serve(async (req) => {
         cliente_id: processo.cliente_id,
         tipo_documento: d.tipo_documento,
         nome_documento: d.nome_documento,
-        etapa: "complementar",
+        etapa: (d as any).etapa_catalogo ?? "complementar",
         // Ordem explícita — garante que o popup de pendências apresente os
         // documentos na sequência natural (ex.: Cartão CNPJ → QSA → Contrato
         // Social → NF da empresa). Sem `ordem` explícito, a fila cai no rank
         // fallback (9999) e a UI reordena de forma imprevisível.
-        ordem: 100 + idx,
+        ordem: (d as any).ordem_catalogo ?? 100 + idx,
         obrigatorio: d.obrigatorio,
         status: "pendente",
         validade_dias: d.prazo_recomendado_dias ?? null,
         formato_aceito: ["pdf", "jpg", "jpeg", "png"],
         regra_validacao: {
+          // Regra do catálogo primeiro (tipo/chave/opcoes/exige_quando/
+          // dispensa_quando/ajuda); os campos operacionais complementam.
+          ...(((d as any).regra_catalogo ?? {}) as Record<string, unknown>),
           // Documentos de PESSOA JURÍDICA não têm "nome_titular" único —
           // listam SÓCIOS / dados da EMPRESA ou NF emitida pela empresa.
           // Exigimos identificação empresarial ao invés de nome_titular,
           // evitando bloqueio indevido na validação IA.
           exige:
-            ["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
+            (d as any).regra_catalogo?.exige ??
+            (["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
               ? ["razao_social"]
-              : ["nome_titular"],
+              : ["nome_titular"]),
           label_botao: d.label_botao,
           checklist_operador: d.checklist_operador ?? [],
         },

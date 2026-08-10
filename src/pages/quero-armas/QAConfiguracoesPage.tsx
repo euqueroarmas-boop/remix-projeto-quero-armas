@@ -20,6 +20,7 @@ import SimuladorClienteChecklist from "@/components/quero-armas/config/checklist
 import KanbanExigenciasAdmin from "@/components/quero-armas/config/checklist/KanbanExigenciasAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
+import QARegrasCategoriaAdmin from "@/components/quero-armas/config/QARegrasCategoriaAdmin";
 import MotoresApagadosAdmin from "@/components/quero-armas/config/MotoresApagadosAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -60,7 +61,7 @@ const GRUPOS: GrupoConfig[] = [
     label: "Documentação",
     blocos: [
       { titulo: "Acervo", itens: [{ v: "biblioteca", label: "Biblioteca de Documentos", admin: true }] },
-      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "kanban", label: "Painel Kanban de Exigências", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
+      { titulo: "Checklist", itens: [{ v: "checklist", label: "Montar Checklist", admin: true }, { v: "dispensas", label: "Dispensas por Categoria", admin: true }, { v: "kanban", label: "Painel Kanban de Exigências", admin: true }, { v: "simulador", label: "Simulador do Checklist", admin: true }] },
       { titulo: "Jurídico", itens: [{ v: "contrato", label: "Contrato Primário", admin: true }, { v: "procuracao", label: "Procuração", admin: true }] },
     ],
   },
@@ -560,6 +561,12 @@ export default function QAConfiguracoesPage() {
         {isAdmin && (
           <TabsContent value="klal" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
             <QAKlalPersonaAdmin />
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="dispensas" className="mt-0 min-w-0 w-full max-w-full overflow-x-hidden">
+            <QARegrasCategoriaAdmin />
           </TabsContent>
         )}
 

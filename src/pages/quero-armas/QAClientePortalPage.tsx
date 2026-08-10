@@ -1095,6 +1095,25 @@ export default function QAClientePortalPage() {
         setProcessos(procsEnriched);
         if (procsList.length > 0) {
           const procIds = procsList.map((p) => p.id);
+          // Matriz Categoria × Exigência: carimba as exigências dispensadas por
+          // lei ANTES de montar o checklist. Idempotente e silenciosa — se a
+          // matriz estiver vazia, nada muda.
+          try {
+            const aplicacoes = await Promise.all(
+              procIds.map((pid) =>
+                supabase.functions.invoke("qa-processo-dispensas", {
+                  body: { action: "aplicar", processo_id: pid },
+                }),
+              ),
+            );
+            const aplicados = aplicacoes.reduce(
+              (acc, r: any) => acc + Number(r?.data?.aplicados ?? 0),
+              0,
+            );
+            if (aplicados > 0) console.info("[Portal] dispensas por categoria aplicadas:", aplicados);
+          } catch (e) {
+            console.warn("[Portal] falha ao aplicar dispensas por categoria:", e);
+          }
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
             .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at, regra_validacao, titular_comprovante_nome, endereco_em_nome_de_terceiro, dados_extraidos_json")
@@ -2308,6 +2327,71 @@ export default function QAClientePortalPage() {
 
     // ─── Mini-questionário do titular (só quando comprovante NÃO está no
     // nome do requerente). Roda antes de pedir o documento do titular. ───
+    // ─── Exigências DISPENSADAS POR LEI (matriz Categoria × Exigência) ───
+    // O passo continua no checklist de propósito: em vez de sumir, aparece
+    // carimbado com a base legal e um botão "Avançar". O cliente enxerga o
+    // benefício que a profissão dele garante; o processo já conta como cumprido.
+    const dispensadosCientePendente = ordenar(
+      processoDocs.filter((d) => {
+        if (!d?.obrigatorio) return false;
+        if (String(d.status || "").toLowerCase() !== "dispensado_grupo") return false;
+        const disp = (d as any)?.regra_validacao?.dispensa;
+        return !!disp?.base_legal && disp?.ciente !== true;
+      }),
+    );
+    for (const doc of dispensadosCientePendente) {
+      const rawTipo = String(doc.tipo_documento || "").toLowerCase();
+      const nomeFallback = doc.nome_documento
+        ? String(doc.nome_documento)
+        : rawTipo.replace(/_/g, " ").toUpperCase();
+      const disp = (doc as any).regra_validacao.dispensa as Record<string, any>;
+      const pProc = procById.get(String(doc.processo_id));
+      const servicoLabel = pProc
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(pProc.servico_id)],
+            servico_id: pProc.servico_id,
+            servico_nome: pProc.servico_nome,
+          }) || pProc.servico_nome || null)
+        : null;
+      items.push({
+        id: `dispensa:${doc.id}`,
+        kind: "documento",
+        servicoId: pProc?.servico_id ?? null,
+        servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: doc.processo_id ?? null,
+        label: nomeFallback,
+        tipo: toHubTipoCompartilhado(rawTipo),
+        rawTipo,
+        fallbackNome: nomeFallback,
+        contexto: "Dispensado por lei",
+        dispensa: {
+          base_legal: disp?.base_legal ?? null,
+          categoria_label: disp?.categoria
+            ? String(disp.categoria).replace(/_/g, " ").toUpperCase()
+            : null,
+          grupo_label: disp?.grupo_label ?? null,
+        },
+        onPrimary: () => {},
+        onEntregar: () => {},
+        onDispensaAvancar: async () => {
+          try {
+            const { error } = await supabase.functions.invoke("qa-processo-dispensas", {
+              body: { action: "ciente", processo_id: doc.processo_id, documento_id: doc.id },
+            });
+            if (error) {
+              toast.error("Não foi possível avançar. Tente novamente.");
+              return;
+            }
+            setDocsReloadKey((k) => k + 1);
+          } catch (e) {
+            console.error("[portal] dispensa-ciente:", e);
+            toast.error("Erro ao avançar.");
+          }
+        },
+      });
+    }
+
     // Usa o mesmo docId da pergunta-pivot como âncora (o responder aceita
     // gravar chaves extras em respostas_questionario_json).
     const perguntasTitularPivotPorProcesso = new Map<string, any>();
