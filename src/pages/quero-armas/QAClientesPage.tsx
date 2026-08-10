@@ -3231,6 +3231,9 @@ export default function QAClientesPage() {
                 { value: "exames", icon: HeartPulse, label: `Exames (${examesAtuais.length})` },
                 { value: "efetiva", icon: ShieldCheck, label: "Efetiva necessidade" },
                 { value: "ciencias", icon: ShieldCheck, label: "Ciências e aceites" },
+                ...(ehAdministrador
+                  ? [{ value: "auditoria_leitura", icon: ScanText, label: "Auditoria de leitura" }]
+                  : []),
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
