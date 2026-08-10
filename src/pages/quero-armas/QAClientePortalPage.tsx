@@ -4701,6 +4701,8 @@ export default function QAClientePortalPage() {
                 ufCliente={(cliente as any)?.estado ?? null}
                 onDismiss={dismissPendenciasGuiadas}
                 nomeCliente={(cliente as any)?.nome_completo ?? null}
+                cepCliente={(cliente as any)?.cep ?? null}
+                cidadeCliente={(cliente as any)?.cidade ?? null}
                 resumoProcesso={resumoProcesso}
               />
             ) : (
@@ -4887,6 +4889,8 @@ export default function QAClientePortalPage() {
         ufCliente={(cliente as any)?.estado ?? null}
         onDismiss={dismissPendenciasGuiadas}
         nomeCliente={(cliente as any)?.nome_completo ?? null}
+        cepCliente={(cliente as any)?.cep ?? null}
+        cidadeCliente={(cliente as any)?.cidade ?? null}
                 resumoProcesso={resumoProcesso}
         />
       <DeclaracaoResponsavelImovelModal
