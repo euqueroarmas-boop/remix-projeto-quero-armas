@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2 } from "lucide-react";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
+import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
  * Painel editorial de progresso por cliente.
@@ -38,19 +39,35 @@ interface Row {
   dispensados?: number | null;
   reaproveitados?: number | null;
   bloqueado_por_prerequisito?: boolean | null;
+  /** Novas leituras operacionais. */
+  online?: boolean | null;
+  ultimo_acesso?: string | null;
+  efetiva_status?: string | null;
+  protocolo_numero?: string | null;
 }
 
-type SortKey = "cliente_nome" | "servico_nome" | "fase" | "progresso" | "proximo_doc" | "dias_parado" | "cobrancas" | "criado_em";
+type SortKey =
+  | "cliente_nome" | "servico_nome" | "fase" | "progresso" | "proximo_doc"
+  | "dias_parado" | "cobrancas" | "criado_em"
+  | "online" | "efetiva" | "protocolo";
 
-const COLS: { key: SortKey; label: string; className?: string }[] = [
-  { key: "cliente_nome", label: "CLIENTE", className: "min-w-[220px]" },
-  { key: "fase", label: "ETAPA ATUAL", className: "w-[190px]" },
-  { key: "progresso", label: "PROGRESSO", className: "w-[190px]" },
-  { key: "proximo_doc", label: "PRÓXIMO PASSO", className: "min-w-[200px] max-w-[240px]" },
-  { key: "criado_em", label: "ABERTO EM", className: "w-[104px]" },
-  { key: "cobrancas", label: "COBRANÇAS", className: "w-[96px]" },
-  { key: "dias_parado", label: "PARADO", className: "w-[84px]" },
+type ColDef = { key: SortKey; label: string; largura: number; titulo?: string };
+
+const COLS: ColDef[] = [
+  { key: "cliente_nome", label: "CLIENTE", largura: 260 },
+  { key: "online", label: "ONLINE", largura: 110, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
+  { key: "fase", label: "ETAPA ATUAL", largura: 200 },
+  { key: "progresso", label: "PROGRESSO", largura: 200 },
+  { key: "proximo_doc", label: "PRÓXIMO PASSO", largura: 220 },
+  { key: "efetiva", label: "EF. NECESSIDADE", largura: 150, titulo: "Situação da narrativa de efetiva necessidade" },
+  { key: "protocolo", label: "PROTOCOLO", largura: 150, titulo: "Número do protocolo emitido para este serviço" },
+  { key: "criado_em", label: "ABERTO EM", largura: 110 },
+  { key: "cobrancas", label: "COBRANÇAS", largura: 110, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
+  { key: "dias_parado", label: "PARADO", largura: 96 },
 ];
+
+const LS_LARGURAS = "qa_painel_progresso_larguras";
+const LS_VISIVEIS = "qa_painel_progresso_visiveis";
 
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
@@ -107,6 +124,34 @@ function fmtData(d: string | null) {
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return "—"; }
 }
 
+/** "HOJE 14:32" / "12/08 09:10" — leitura curta do último acesso. */
+function fmtAcesso(d?: string | null) {
+  if (!d) return "SEM ACESSO";
+  try {
+    const dt = new Date(d);
+    const hoje = new Date();
+    const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const mesmoDia = dt.toDateString() === hoje.toDateString();
+    return mesmoDia ? `HOJE ${hora}` : `${dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${hora}`;
+  } catch { return "—"; }
+}
+
+/** Situação da efetiva necessidade em rótulo curto + cor. */
+function efetivaVisual(status?: string | null): { label: string; cor: string; fundo: string } | null {
+  const s = String(status ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (["aprovado", "aprovada", "concluido", "concluída", "concluido_cliente", "finalizado"].includes(s)) {
+    return { label: "APROVADA", cor: VERDE, fundo: VERDE_BG };
+  }
+  if (["revisao", "em_revisao", "revisao_humana", "aguardando_revisao", "pendente_revisao", "aguardando_equipe"].includes(s)) {
+    return { label: "EM REVISÃO", cor: AMBAR, fundo: AMBAR_BG };
+  }
+  if (["reprovado", "reprovada", "recusado"].includes(s)) {
+    return { label: "REPROVADA", cor: VERMELHO, fundo: VERMELHO_BG };
+  }
+  return { label: s.replace(/_/g, " ").toUpperCase(), cor: AMBAR, fundo: AMBAR_BG };
+}
+
 /** Rota real da ficha do cliente: aba Clientes abre o cadastro via ?cliente=ID. */
 function rotaCadastroCliente(clienteId: number) {
   return `/clientes?cliente=${clienteId}&tab=dados`;
@@ -135,6 +180,40 @@ export default function DashboardProgressoClientes() {
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
   const [contador, setContador] = useState<ContadorKey>("todos");
+  const [configAberta, setConfigAberta] = useState(false);
+  const [larguras, setLarguras] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_LARGURAS) ?? "{}"); } catch { return {}; }
+  });
+  const [visiveis, setVisiveis] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_VISIVEIS) ?? "{}"); } catch { return {}; }
+  });
+  const tabelaScroll = useDragScroll<HTMLDivElement>();
+  const trilhasScroll = useDragScroll<HTMLDivElement>();
+  const resize = useRef<{ key: string; startX: number; startW: number } | null>(null);
+
+  useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
+  useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
+
+  /** CLIENTE nunca some; as demais respeitam a engrenagem. */
+  const colunas = useMemo(
+    () => COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false),
+    [visiveis],
+  );
+  const larguraDe = (c: ColDef) => larguras[c.key] ?? c.largura;
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const r = resize.current;
+      if (!r) return;
+      e.preventDefault();
+      const nova = Math.max(72, Math.min(640, r.startW + (e.clientX - r.startX)));
+      setLarguras((prev) => ({ ...prev, [r.key]: nova }));
+    };
+    const onUp = () => { resize.current = null; document.body.style.userSelect = ""; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,8 +262,9 @@ export default function DashboardProgressoClientes() {
   const trilhasDisponiveis = useMemo(() => {
     const set = new Set<string>();
     Object.values(trilhas).forEach((ls) => ls.forEach((l) => set.add(l)));
-    return [...set].sort();
-  }, [trilhas]);
+    const lista = [...set].sort();
+    return rows.some((r) => r.online) ? ["ONLINE", ...lista] : lista;
+  }, [trilhas, rows]);
 
   const contadores = useMemo(() => {
     const pronto = rows.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
@@ -197,7 +277,8 @@ export default function DashboardProgressoClientes() {
 
   const filtradas = useMemo(() => {
     let base = rows;
-    if (filtroTrilha) base = base.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha));
+    if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
+    else if (filtroTrilha) base = base.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
@@ -216,6 +297,9 @@ export default function DashboardProgressoClientes() {
         case "dias_parado": return r.dias_parado;
         case "cobrancas": return r.cobrancas;
         case "criado_em": return new Date(r.criado_em).getTime();
+        case "online": return r.online ? 2 : (r.ultimo_acesso ? 1 : 0);
+        case "efetiva": return String(r.efetiva_status ?? "").toLowerCase();
+        case "protocolo": return String(r.protocolo_numero ?? "").toLowerCase();
         default: return String((r as any)[sortKey] ?? "").toLowerCase();
       }
     };
@@ -235,13 +319,51 @@ export default function DashboardProgressoClientes() {
 
   return (
     <div className="qa-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
+      <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
         <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
         </h3>
-        <span className="ml-auto text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
+        <button
+          type="button"
+          aria-label="Escolher colunas"
+          title="Escolher colunas"
+          onClick={() => setConfigAberta((v) => !v)}
+          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+        <span className="ml-auto self-start text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
           {filtradas.length === rows.length ? `${rows.length} ATIVOS` : `${filtradas.length} DE ${rows.length}`}
         </span>
+
+        {configAberta && (
+          <div className="absolute left-4 top-[44px] z-30 w-[240px] rounded-sm border border-[#DADADA] bg-white p-3 shadow-lg">
+            <div className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: TINTA_3 }}>
+              COLUNAS VISÍVEIS
+            </div>
+            <div className="space-y-1.5">
+              {COLS.filter((c) => c.key !== "cliente_nome").map((c) => (
+                <label key={c.key} className="flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.08em]" style={{ color: TINTA_2 }}>
+                  <input
+                    type="checkbox"
+                    checked={visiveis[c.key] !== false}
+                    onChange={(e) => setVisiveis((v) => ({ ...v, [c.key]: e.target.checked }))}
+                    className="h-3 w-3 accent-[#7A1F2B]"
+                  />
+                  {c.label}
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLarguras({}); setVisiveis({}); }}
+              className="mt-3 w-full rounded-sm border border-[#DADADA] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[#0A0A0A]"
+              style={{ color: TINTA_2 }}
+            >
+              RESTAURAR PADRÃO
+            </button>
+          </div>
+        )}
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
@@ -274,7 +396,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {trilhasDisponiveis.length > 0 && (
-        <div className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+        <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
           <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] mr-1" style={{ color: TINTA_3 }}>TRILHA</span>
           {trilhasDisponiveis.map((t) => (
             <button
@@ -377,20 +499,35 @@ export default function DashboardProgressoClientes() {
         </div>
 
         {/* DESKTOP: tabela */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div ref={tabelaScroll.ref} className="hidden md:block overflow-x-auto">
+          <table className="border-collapse" style={{ width: colunas.reduce((s, c) => s + larguraDe(c), 0), minWidth: "100%", tableLayout: "fixed" }}>
+            <colgroup>
+              {colunas.map((c) => (<col key={c.key} style={{ width: larguraDe(c) }} />))}
+            </colgroup>
             <thead>
               <tr className="border-b border-[#DADADA] bg-[#FAFAFA]">
-                {COLS.map((c) => (
-                  <th key={c.key} className={`px-3 py-2 text-left ${c.className ?? ""}`}>
+                {colunas.map((c) => (
+                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom" title={c.titulo}>
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors text-left"
                     >
                       {c.label}
                       {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
                     </button>
+                    <span
+                      role="separator"
+                      aria-label={`Redimensionar coluna ${c.label}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resize.current = { key: c.key, startX: e.clientX, startW: larguraDe(c) };
+                        document.body.style.userSelect = "none";
+                      }}
+                      onDoubleClick={() => setLarguras((prev) => { const n = { ...prev }; delete n[c.key]; return n; })}
+                      className="absolute right-0 top-0 h-full w-[6px] cursor-col-resize hover:bg-[#DADADA]"
+                    />
                   </th>
                 ))}
               </tr>
@@ -399,20 +536,17 @@ export default function DashboardProgressoClientes() {
               {ordenadas.map((r, i) => {
                 const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
                 const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
-                return (
-                  <tr
-                    key={r.processo_id}
-                    className="border-b border-[#EFEFEF] hover:bg-[#F6F6F6]"
-                    style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
-                  >
-                    <td className="px-3 py-3 align-top">
+                const ef = efetivaVisual(r.efetiva_status);
+                const celulas: Record<SortKey, React.ReactNode> = {
+                  cliente_nome: (
+                    <>
                       <div className="flex items-start gap-2">
                         <span
                           className="mt-[6px] h-2 w-2 shrink-0 rounded-full"
                           style={{ background: corSensor(r.dias_parado) }}
                           title="Sinalizador de movimento"
                         />
-                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block">
+                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block min-w-0">
                         <div className="text-[12.5px] font-bold uppercase truncate" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
@@ -434,8 +568,21 @@ export default function DashboardProgressoClientes() {
                         )}
                       </Link>
                       </div>
-                    </td>
-                    <td className="px-3 py-3 align-top">
+                    </>
+                  ),
+                  online: (
+                    <div className="space-y-1">
+                      {r.online
+                        ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
+                        : <Chip cor={TINTA_3} fundo="#F4F4F4">OFFLINE</Chip>}
+                      <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+                        {fmtAcesso(r.ultimo_acesso)}
+                      </div>
+                    </div>
+                  ),
+                  servico_nome: null,
+                  fase: (
+                    <>
                       {r.bloqueado_por_prerequisito ? (
                         <Chip cor={VERMELHO} fundo={VERMELHO_BG}><Lock className="h-3 w-3" />AGUARDA ETAPA ANTERIOR</Chip>
                       ) : (
@@ -449,8 +596,10 @@ export default function DashboardProgressoClientes() {
                           )}
                         </div>
                       )}
-                    </td>
-                    <td className="px-3 py-3 align-top">
+                    </>
+                  ),
+                  progresso: (
+                    <>
                       <div className="flex items-center gap-2">
                         <span className="text-[11.5px] font-bold tabular-nums w-12" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
@@ -476,24 +625,49 @@ export default function DashboardProgressoClientes() {
                           </Chip>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] font-medium uppercase max-w-[240px] overflow-hidden" style={{ color: TINTA }}>
-                      <span className="flex min-w-0 items-start gap-1.5">
-                        {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 mt-[1px] shrink-0" style={{ color: AMBAR }} />}
-                        <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>
-                      {fmtData(r.criado_em)}
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] font-semibold tabular-nums" style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}>
+                    </>
+                  ),
+                  proximo_doc: (
+                    <span className="flex min-w-0 items-start gap-1.5 text-[11.5px] font-medium uppercase" style={{ color: TINTA }}>
+                      {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 mt-[1px] shrink-0" style={{ color: AMBAR }} />}
+                      <span className="min-w-0 flex-1 break-words leading-[1.25]">{r.proximo_doc ?? "—"}</span>
+                    </span>
+                  ),
+                  efetiva: ef
+                    ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade">{ef.label}</Chip>
+                    : <span className="text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
+                  protocolo: r.protocolo_numero
+                    ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido">{r.protocolo_numero}</Chip>
+                    : <span className="text-[11px] font-semibold uppercase" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                  criado_em: (
+                    <span className="text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
+                  ),
+                  cobrancas: (
+                    <span
+                      className="text-[11.5px] font-semibold tabular-nums"
+                      style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}
+                      title="Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)"
+                    >
                       {r.cobrancas > 0 ? r.cobrancas : "—"}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
-                        {r.dias_parado}d
-                      </Chip>
-                    </td>
+                    </span>
+                  ),
+                  dias_parado: (
+                    <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
+                      {r.dias_parado}d
+                    </Chip>
+                  ),
+                };
+                return (
+                  <tr
+                    key={r.processo_id}
+                    className="border-b border-[#EFEFEF] hover:bg-[#F6F6F6]"
+                    style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
+                  >
+                    {colunas.map((c) => (
+                      <td key={c.key} className="px-3 py-3 align-top overflow-hidden">
+                        {celulas[c.key]}
+                      </td>
+                    ))}
                   </tr>
                 );
               })}

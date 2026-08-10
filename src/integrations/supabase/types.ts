@@ -13365,6 +13365,7 @@ export type Database = {
           dias_parado: number
           dispensados: number
           documentos_pendentes: number
+          efetiva_status: string
           em_analise: number
           entregues: number
           fase: string
@@ -13375,8 +13376,10 @@ export type Database = {
           grupos_concluidos: number
           grupos_restantes: number
           grupos_total: number
+          online: boolean
           perguntas_pendentes: number
           processo_id: string
+          protocolo_numero: string
           proximo_doc: string
           proximo_tipo: string
           reaproveitados: number
@@ -13384,6 +13387,7 @@ export type Database = {
           status: string
           total_docs: number
           ultima_atividade: string
+          ultimo_acesso: string
         }[]
       }
       qa_parse_date_safe: { Args: { v: string }; Returns: string }
