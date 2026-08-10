@@ -52,6 +52,17 @@ type Evento =
 /** Eventos verdes não exigem solicitacao_id e disparam popup normal no portal. */
 const EVENTOS_VERDES = new Set<Evento>(["documento_em_dia", "exigencia_cumprida", "cadastro_atualizado", "certidao_rejeitada", "prova_recebida", "documento_excluido", "documento_reaproveitado", "documento_rejeitado"]);
 
+function motivoRejeicaoDescritivo(payload: Pick<Payload, "motivo_rejeicao" | "motivo_codigo" | "motivo">): string {
+  const codigo = payload.motivo_codigo || payload.motivo_rejeicao;
+  const descricoes: Record<string, string> = {
+    parentesco: "Nota emitida a parente no mesmo endereço.",
+    titular: "Documento em nome de outro titular.",
+    duplicidade: "Documento já entregue e aprovado no Hub Documental.",
+    tipo: "Documento diferente do exigido no envio aberto.",
+  };
+  return descricoes[String(codigo || "")] || payload.motivo_rejeicao || payload.motivo || "Documento rejeitado na conferência automática.";
+}
+
 interface Payload {
   evento: Evento;
   solicitacao_id?: string;
@@ -276,7 +287,7 @@ function mapEventoToTemplate(
           nome,
           documento: p.documento || "O documento enviado",
           arquivo: p.arquivo || "",
-          motivo: (p.motivo_rejeicao || p.motivo || "Documento rejeitado na conferência automática.") as string,
+          motivo: motivoRejeicaoDescritivo(p),
           detalhes: Array.isArray(p.detalhes) ? p.detalhes : [],
           portalUrl,
         },
@@ -406,7 +417,7 @@ Deno.serve(async (req) => {
             : body.evento === "documento_reaproveitado"
               ? `Aproveitado em "${body.exigencia_cumprida || "outra exigência"}". Ainda falta: ${body.exigencia_pedida || "-"}.`
             : body.evento === "documento_rejeitado"
-              ? `Motivo: ${body.motivo_rejeicao || (body.motivo_codigo === "parentesco" ? "nota emitida a parente no mesmo endereço" : body.motivo_codigo === "titular" ? "documento de outro titular" : body.motivo_codigo === "duplicidade" ? "documento já entregue" : "documento diferente do exigido")}. Enviamos os detalhes no seu e-mail.`
+              ? `Motivo: ${motivoRejeicaoDescritivo(body)} Enviamos os detalhes no seu e-mail.`
             : (body.exigencia ? `Exigência "${body.exigencia}" atendida.` : "Exigência atendida.");
       try {
         if (!body.somente_admin) await supabase.from("qa_notificacoes_cliente").upsert({
@@ -444,8 +455,8 @@ Deno.serve(async (req) => {
             referencia_id: String(body.referencia_id ?? ""),
             link: `/clientes/${body.cliente_id}`,
             metadata: {
-              motivo_rejeicao: body.motivo_rejeicao ?? "Documento rejeitado na conferência automática.",
-              motivo_codigo: body.motivo_codigo ?? null,
+              motivo_rejeicao: motivoRejeicaoDescritivo(body),
+              motivo_codigo: body.motivo_codigo ?? (["parentesco", "titular", "duplicidade", "tipo"].includes(String(body.motivo_rejeicao)) ? body.motivo_rejeicao : null),
               arquivo: body.arquivo ?? null,
               detalhes: body.detalhes ?? body.problemas ?? null,
             },
