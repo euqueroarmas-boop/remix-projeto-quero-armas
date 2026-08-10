@@ -27,6 +27,11 @@ interface Row {
   grupo_atual?: string | null;
   grupo_total?: number | null;
   grupo_concluidos?: number | null;
+  /** Leitura por grupos: em qual grupo está e quantos faltam. */
+  grupos_total?: number | null;
+  grupo_indice?: number | null;
+  grupos_concluidos?: number | null;
+  grupos_restantes?: number | null;
   documentos_pendentes?: number | null;
   perguntas_pendentes?: number | null;
   em_analise?: number | null;
@@ -100,6 +105,26 @@ type ContadorKey = "todos" | "pronto" | "analise" | "pendencia" | "parado" | "bl
 function fmtData(d: string | null) {
   if (!d) return "—";
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return "—"; }
+}
+
+/** Rota real da ficha do cliente: aba Clientes abre o cadastro via ?cliente=ID. */
+function rotaCadastroCliente(clienteId: number) {
+  return `/clientes?cliente=${clienteId}&tab=dados`;
+}
+
+/** "GRUPO 4 DE 7 · FALTAM 4" — leitura de quanto falta para terminar o processo. */
+function LinhaGrupos({ r }: { r: Row }) {
+  const total = r.grupos_total ?? 0;
+  if (total <= 0) return null;
+  const indice = r.grupo_indice ?? 0;
+  const restantes = r.grupos_restantes ?? 0;
+  return (
+    <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+      {indice > 0 ? `GRUPO ${indice} DE ${total}` : `${total} GRUPOS`}
+      {" · "}
+      {restantes > 0 ? `FALTAM ${restantes}` : "TODOS CONCLUÍDOS"}
+    </div>
+  );
 }
 
 export default function DashboardProgressoClientes() {
@@ -299,7 +324,7 @@ export default function DashboardProgressoClientes() {
             return (
               <Link
                 key={r.processo_id}
-                to={`/quero-armas/clientes/${r.cliente_id}`}
+                to={rotaCadastroCliente(r.cliente_id)}
                 className="block px-4 py-3 border-b border-[#EFEFEF] active:bg-[#FAFAFA]"
               >
                 <div className="flex items-baseline gap-2">
@@ -331,6 +356,7 @@ export default function DashboardProgressoClientes() {
                       {(r.grupo_total ?? 0) > 0 ? ` ${r.grupo_concluidos ?? 0}/${r.grupo_total}` : ""}
                     </Chip>
                   )}
+                  <LinhaGrupos r={r} />
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                   {pendencias > 0 && <Chip cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -386,7 +412,7 @@ export default function DashboardProgressoClientes() {
                           style={{ background: corSensor(r.dias_parado) }}
                           title="Sinalizador de movimento"
                         />
-                      <Link to={`/quero-armas/clientes/${r.cliente_id}`} className="block">
+                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block">
                         <div className="text-[12.5px] font-bold uppercase truncate" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
@@ -415,9 +441,10 @@ export default function DashboardProgressoClientes() {
                       ) : (
                         <div className="space-y-1">
                           <Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip>
+                          <LinhaGrupos r={r} />
                           {(r.grupo_total ?? 0) > 0 && (
                             <div className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>
-                              {r.grupo_concluidos ?? 0} de {r.grupo_total} nesta etapa
+                              PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
                             </div>
                           )}
                         </div>
