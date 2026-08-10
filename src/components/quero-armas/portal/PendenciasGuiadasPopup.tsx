@@ -798,14 +798,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           ) : null}
 
           {active.corpo ? null : (
-          <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-6 py-4 flex flex-col gap-3"}>
+          <div className={asPage ? "px-0 py-4 flex flex-col gap-3" : "px-5 py-2.5 flex flex-col gap-2 sm:px-6"}>
             {total > 1 && podeVoltar ? (
-              <div className="flex gap-3">
+              <div className={asPage ? "flex gap-3" : "flex gap-2"}>
                 <button
                   type="button"
                   onClick={() => setIndice((i) => Math.max(0, i - 1))}
                   disabled={!podeVoltar}
-                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className={`qa-btn-label flex-1 px-3 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-3 px-4" : "h-10"}`}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Anterior
                 </button>
@@ -813,19 +813,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
                   disabled={!podeAvancar}
-                  className="qa-btn-label flex-1 py-3 px-4 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                  className={`qa-btn-label flex-1 px-3 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-3 px-4" : "h-10"}`}
                 >
                   Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 items-stretch gap-2">
+            <div className={`grid grid-cols-1 md:grid-cols-2 items-stretch ${asPage ? "gap-2" : "gap-2 sm:grid-cols-2"}`}>
               {isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
-                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#0A0A0A] px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] text-white transition-colors hover:bg-[#1a1a1a]"
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A0A0A] px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-white transition-colors hover:bg-[#1a1a1a] ${asPage ? "h-14 text-[11px] rounded-xl px-4" : "h-11 text-[10.5px]"}`}
                 >
                   <Download className="h-3.5 w-3.5 shrink-0" />
                   {primaryLabel}
@@ -837,7 +837,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <button
                   type="button"
                   onClick={active.onEntregar}
-                  className={`inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl px-4 text-center text-[11px] font-bold uppercase leading-[1.2] tracking-[0.14em] transition-colors ${
+                  className={`inline-flex w-full items-center justify-center gap-2 px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] transition-colors ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  } ${
                     isSignature
                       ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
                       : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
