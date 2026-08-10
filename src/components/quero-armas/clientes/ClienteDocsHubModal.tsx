@@ -3653,6 +3653,12 @@ export function ClienteDocsHubModal({
                   fonte_do_nome: conferenciaLocal.doc.leitura?.nome_fonte ?? null,
                   nome_resgatado: conferenciaLocal.doc.leitura?.nome_resgatado ?? false,
                   campos_vazios: conferenciaLocal.doc.leitura?.campos_vazios ?? [],
+                  /* Campos que o LAYOUT não imprime (ex.: a certidão do TSE
+                   * não traz CPF). Sem essa lista, a auditoria mostrava
+                   * "campos sem valor: CPF" e parecia falha de leitura. */
+                  campos_nao_aplicaveis: conferenciaLocal.doc.leitura?.campos_nao_aplicaveis ?? [],
+                  filiacao_lida: conferenciaLocal.doc.filiacao ?? [],
+                  filiacao_fonte: conferenciaLocal.doc.leitura?.filiacao_fonte ?? null,
                   veredicto: conferenciaLocal.conf.veredicto,
                   mensagem_ao_cliente: conferenciaLocal.conf.mensagemCliente ?? null,
                   achados: (conferenciaLocal.conf.achados ?? []).map((a) => ({

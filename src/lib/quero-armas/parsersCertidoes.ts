@@ -158,6 +158,18 @@ export interface CamposCertidao {
     nome_resgatado?: boolean;
     /** Campos críticos que continuaram sem valor após todas as tentativas. */
     campos_vazios?: string[];
+    /**
+     * Campos que o LAYOUT do documento simplesmente não imprime.
+     *
+     * Existe para separar duas coisas que a auditoria mostrava iguais: "o
+     * parser não achou o CPF" (defeito de leitura) e "esta certidão não traz
+     * CPF" (a do TSE identifica o eleitor por título, não por CPF). Sem essa
+     * distinção o administrador via "CAMPOS SEM VALOR: CPF" e concluía que a
+     * leitura falhou, quando não havia nada a ler.
+     */
+    campos_nao_aplicaveis?: string[];
+    /** De onde saíram os nomes de filiação. */
+    filiacao_fonte?: string;
   };
 }
 
@@ -267,28 +279,86 @@ function parseStm(texto: string): CamposCertidao {
 
 /* ── TSE — crimes eleitorais ───────────────────────────────────────────── */
 
+/**
+ * TSE — certidão de crimes eleitorais.
+ *
+ * O layout real é de DUAS COLUNAS e quase nada vem rotulado:
+ *
+ *   Filiação:                    <- rótulo da coluna da direita, sozinho
+ *   PEDRO LOBATO DE LIMA         <- o NOME do eleitor (coluna da esquerda)
+ *   Inscrição: 1692 2781 0124
+ *   Município: 67130 - MOGI DAS CRUZES
+ *   Data de nascimento: 05/12/1974
+ *   - NECI LOBATO DE LIMA        <- filiação (coluna da direita)
+ *   - MANOEL ZUZA DE LIMA
+ *
+ * Por isso o parser antigo devolvia nome e filiação vazios: procurava
+ * "Eleitor(a):" (que não existe nesse exemplar) e exigia os traços da
+ * filiação colados no rótulo. Aqui a leitura é POSICIONAL, que é a única
+ * estrutura confiável deste documento:
+ *   - o nome é a última linha com cara de nome ANTES de "Inscrição:";
+ *   - a filiação são as linhas iniciadas por traço (-, – ou —) com cara de
+ *     nome; sem papel atribuído, porque o TSE não diz quem é pai e quem é mãe.
+ */
 function parseTse(texto: string): CamposCertidao {
   const t = norm(texto);
   const g = (re: RegExp) => t.match(re)?.[1]?.trim();
-  // "Filiação: - NOME A\n           - NOME B" — a ordem observada põe a mãe
-  // primeiro nos dois exemplares, mas duas amostras não fazem regra: sai como
-  // conjunto.
-  const blocoFil = t.match(/Filiacao:\s*((?:\s*-\s*[^\n]+\n?){1,2})/i)?.[1] ?? "";
-  const filiacao = blocoFil
+  const linhas = t.split(/\r?\n/).map((l) => l.trim());
+
+  /* ── Nome do eleitor ── */
+  const rotulado = g(/Eleitor\(a\):\s*(.+?)\s*$/im);
+  let nome = pareceNomePessoa(rotulado) ? upperOrUndef(rotulado) : undefined;
+  let nomeFonte = nome ? "rotulo_eleitor" : undefined;
+
+  const idxInscricao = linhas.findIndex((l) => /^Inscricao\s*[:\-]/i.test(l));
+  if (!nome && idxInscricao > 0) {
+    for (let i = idxInscricao - 1; i >= 0 && i >= idxInscricao - 4; i--) {
+      // A linha pode vir grudada no rótulo da coluna vizinha ("Filiação: NOME").
+      const candidato = linhas[i].replace(/^Filiacao\s*:?\s*/i, "").split(/\s{2,}/)[0]?.trim();
+      if (pareceNomePessoa(candidato) && !/^[-–—]/.test(linhas[i])) {
+        nome = upperOrUndef(candidato);
+        nomeFonte = "linha_acima_da_inscricao";
+        break;
+      }
+    }
+  }
+
+  /* ── Filiação ── */
+  const porTraco = linhas
+    .map((l) => l.match(/^[-–—•]\s*(.+)$/)?.[1]?.split(/\s{2,}/)[0]?.trim())
+    .filter((v): v is string => pareceNomePessoa(v))
+    .map(upper);
+
+  const blocoFil = t.match(/Filiacao:\s*((?:\s*[-–—]\s*[^\n]+\n?){1,2})/i)?.[1] ?? "";
+  const porBloco = blocoFil
     .split("\n")
-    .map((l) => l.replace(/^\s*-\s*/, "").trim())
+    .map((l) => l.replace(/^\s*[-–—]\s*/, "").trim())
     .filter((l) => l.length > 2)
     .map(upper);
+
+  const filiacao = Array.from(new Set([...porBloco, ...porTraco]))
+    .filter((f) => f !== nome)
+    .slice(0, 2);
+
   return {
     orgao: "tse",
     tipoDocumento: "antecedentes_eleitoral",
-    nome_titular: upperOrUndef(g(/Eleitor\(a\):\s*(.+?)\s*$/im)),
+    nome_titular: nome,
     titulo_eleitor: g(/Inscricao:\s*([\d ]{10,20})/i)?.replace(/\D/g, ""),
     data_nascimento: iso(g(/Data de nascimento:\s*([\d/]+)/i)),
     naturalidade: undefined, // o TSE traz domicílio eleitoral, não naturalidade
     filiacao: filiacao.length ? filiacao : undefined,
     data_emissao: iso(g(/Certidao emitida.*?em\s*([\d/]+)/i)),
     resultado: resultado(t),
+    leitura: {
+      nome_fonte: nomeFonte,
+      filiacao_fonte: filiacao.length
+        ? (porBloco.length ? "bloco_filiacao" : "linhas_com_traco")
+        : undefined,
+      // A certidão eleitoral identifica por título de eleitor. Não há CPF
+      // impresso: ausência aqui é do documento, não da leitura.
+      campos_nao_aplicaveis: ["cpf"],
+    },
   };
 }
 
@@ -680,11 +750,17 @@ function resgatarTitular(campos: CamposCertidao, texto: string): CamposCertidao 
   } else {
     out = {
       ...campos,
-      leitura: { ...campos.leitura, nome_fonte: "parser_do_orgao", nome_resgatado: false },
+      leitura: {
+        ...campos.leitura,
+        nome_fonte: campos.leitura?.nome_fonte ?? "parser_do_orgao",
+        nome_resgatado: false,
+      },
     };
   }
 
-  if (!out.cpf) vazios.push("cpf");
+  // CPF só é "campo sem valor" quando o layout do documento imprime CPF.
+  const naoAplicaveis = out.leitura?.campos_nao_aplicaveis ?? [];
+  if (!out.cpf && !naoAplicaveis.includes("cpf")) vazios.push("cpf");
   if (vazios.length) out = { ...out, leitura: { ...out.leitura, campos_vazios: vazios } };
   return out;
 }
