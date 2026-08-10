@@ -31,12 +31,35 @@ Nova aba **Dispensas por profissão** em Configurações, ao lado de "Checklist"
 
 Como funciona, na prática:
 - Uma tabela com as categorias profissionais nas linhas (Guarda Civil Municipal, Polícia Militar, Polícia Civil, Polícia Penal, Bombeiros, SSP, Militar das Forças Armadas, Magistrado/MP, Cidadão comum) e os grupos do checklist nas colunas (Identificação, Endereço, Ocupação, Idoneidade, Habitualidade, Efetiva necessidade, Laudos, Arma, Requerimento).
-- Cada cruzamento tem três estados: **Exigido** (padrão), **Dispensado** (o grupo inteiro sai do checklist daquela profissão) e **Alternativo** (o grupo continua, mas aceita a via institucional — é o caso dos laudos da GCM).
+- Cada cruzamento tem três estados: **Exigido** (padrão), **Dispensado** (o passo continua visível, mas já nasce cumprido com carimbo legal) e **Alternativo** (o grupo continua, mas aceita a via institucional — é o caso dos laudos da GCM).
 - Filtro por serviço no topo, porque uma dispensa pode valer só para posse e não para porte. Existe também a opção "vale para todos os serviços".
-- Cada linha marcada pede uma **base legal** em texto curto, que é o mesmo texto exibido ao cliente no pop-up guiado explicando por que aquele grupo não é pedido.
+- Cada linha marcada pede uma **base legal** em texto curto, que é o texto impresso no carimbo exibido ao cliente.
 - Botão "Simular" abre o Simulador de Checklist já com a profissão escolhida, mostrando o checklist final antes de salvar.
 
-Efeito no cliente: ao definir a condição profissional, o processo passa a marcar como não aplicáveis os grupos dispensados dessa profissão, com registro em auditoria de qual regra dispensou o quê. Nada é apagado — os itens ficam com status de dispensa e a justificativa legal fica anexada ao processo.
+## Parte 4 — Dispensa visível no checklist guiado (em vez de sumir o passo)
+
+O passo dispensado **continua no checklist e continua sendo aberto pelo cliente**. Ao abrir, em vez de pedir documento, ele vê:
+
+```text
+  LAUDO DE APTIDÃO PSICOLÓGICA
+  ┌───────────────────────────────────────────┐
+  │  DISPENSADO POR LEI                       │
+  │  Lei 10.826/03, art. 6º, §1º-A            │
+  │  Guarda Civil Municipal                   │
+  └───────────────────────────────────────────┘
+  Você não precisa entregar este documento por
+  causa da sua profissão. Já marcamos como
+  cumprido no seu processo.
+
+                        [  AVANÇAR  ]
+```
+
+- Carimbo no padrão dos carimbos já existentes (`DocResultadoCarimbo`), em verde de aprovado, com o texto "DISPENSADO POR LEI" + base legal + categoria que gerou a dispensa.
+- O item já entra no processo com status de dispensa (cumprido), então conta como concluído nas barras de progresso do cliente e do admin, sem pendência acionável.
+- Botão único **AVANÇAR** — sem upload, sem botão de entrega.
+- No painel do admin, o mesmo item aparece na linha do tempo com o carimbo de dispensa e a base legal, com registro em auditoria de qual regra dispensou o quê. Nada é apagado.
+
+Efeito prático: em vez de esconder exigências, o cliente enxerga o benefício que a profissão dele traz — cada dispensa é uma tela a mais mostrando "isso aqui a lei te libera".
 
 ## Detalhes técnicos
 
