@@ -886,6 +886,36 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+
+    // ── TRAVA DE ESCOPO · certidão CÍVEL (regra global, 10/08/2026) ─────────
+    // Espelha src/lib/quero-armas/escopoCertidao.ts. Certidão cível não instrui
+    // processo de arma de fogo: o servidor recusa antes de classificar, para o
+    // caminho da IA nunca aprovar o que o cliente já rejeitaria.
+    if (textoPdfNativo && textoPdfNativo.trim().length >= 80) {
+      const flat = textoPdfNativo
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ").toUpperCase();
+      const temCriminal =
+        /ANTECEDENTES CRIMINA(L|IS)|AUDITORIAS? CRIMINA(L|IS)|DISTRIBUICAO CRIMINAL|DISTRIBUICO[EO]S CRIMINA(L|IS)|ACOES CRIMINA(L|IS)|EXECUCO[EO]ES? CRIMINA(L|IS)|CRIMES ELEITORAIS|FINS CRIMINAIS|CERTIDAO (JUDICIAL )?CRIMINAL|\bCRIMINA(L|IS)\b/.test(flat);
+      const temCivel =
+        /CARTORIO CIVEL|ACOES CIVEIS|DISTRIBUICAO CIVEL|DISTRIBUICO[EO]S CIVEIS|AREA CIVEL|CERTIDAO CIVEL|REU\s*\/\s*REQUERIDO|FAMILIA E SUCESSOES|FALENCIA|CONCORDATA|RECUPERACAO JUDICIAL|EXECUCO[EO]ES? FISCA(L|IS)/.test(flat);
+      if (temCivel && !temCriminal) {
+        return json({
+          tipoDetectado: "DESCONHECIDO",
+          confianca: 0,
+          camposExtraidos: {},
+          justificativa:
+            "Certidão CÍVEL. O processo exige a certidão CRIMINAL (antecedentes / distribuição de ações criminais). Documento recusado por escopo, sem uso de IA.",
+          divergenciaComSelecaoManual: true,
+          tipoSelecionadoNormalizado: normalizeTipoSelecionado(tipoSelecionado),
+          recomendacao: "rejeitar",
+          revisao_obrigatoria: true,
+          escopo_documento: "civel",
+          origemClassificacao: "trava_escopo_civel",
+        });
+      }
+    }
+
     const modeloBiblioteca = await buscarModeloBiblioteca(supabase, textoPdfNativo);
 
     // === DOCUMENTO PARSEADO: SEM IA ===
