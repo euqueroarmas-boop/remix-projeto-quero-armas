@@ -412,7 +412,7 @@ export default function DashboardProgressoClientes() {
                           style={{ background: corSensor(r.dias_parado) }}
                           title="Sinalizador de movimento"
                         />
-                      <Link to={`/quero-armas/clientes/${r.cliente_id}`} className="block">
+                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block">
                         <div className="text-[12.5px] font-bold uppercase truncate" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
@@ -441,9 +441,10 @@ export default function DashboardProgressoClientes() {
                       ) : (
                         <div className="space-y-1">
                           <Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip>
+                          <LinhaGrupos r={r} />
                           {(r.grupo_total ?? 0) > 0 && (
                             <div className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>
-                              {r.grupo_concluidos ?? 0} de {r.grupo_total} nesta etapa
+                              PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
                             </div>
                           )}
                         </div>
