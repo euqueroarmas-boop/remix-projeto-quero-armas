@@ -318,6 +318,11 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   async function reExtractFromStorage(key: "doc_identidade" | "doc_endereco") {
     const item = state.documentos[key];
     if (!item?.storagePath) return;
+    // Segurança: o bucket de cadastro é somente-escrita para visitantes não
+    // autenticados (nenhuma leitura anônima). Só tentamos baixar do storage
+    // quando há sessão ativa; sem sessão, o fluxo segue com preenchimento manual.
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) return;
     setExtractingKey(key);
     try {
       const { data: blob, error } = await supabase.storage
