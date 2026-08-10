@@ -3486,7 +3486,7 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 overflow-hidden ${effectiveCollapsed ? "w-[68px] max-w-[68px]" : "w-[190px] max-w-[190px]"}`}
+        className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 overflow-hidden ${effectiveCollapsed ? "w-[68px] max-w-[68px]" : "w-[260px] max-w-[260px]"}`}
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
