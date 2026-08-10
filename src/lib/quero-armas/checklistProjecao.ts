@@ -8,6 +8,22 @@ import { ehTipoEfetivaNecessidade, type EfetivaPasso } from "./efetivaNecessidad
 import { grupoDaPendencia, normalizarGrupoId, PENDENCIA_GRUPOS } from "./pendenciasGrupos";
 import { isDocEmAnalise, isReaproveitamento } from "./statusDocumento";
 
+/**
+ * Exigências resolvidas por dispensa/reaproveitamento são CRÉDITO, não progresso.
+ * Ficam fora do numerador e do denominador — a barra passa a medir só a dívida real.
+ * O histórico continua disponível pelo contador `reaproveitados`.
+ */
+const STATUS_CREDITADO = new Set([
+  "dispensado",
+  "dispensado_grupo",
+  "dispensado_por_grupo",
+  "dispensado_condicao",
+  "dispensado_por_reaproveitamento",
+  "nao_aplicavel",
+  "reaproveitado",
+  "hub_reaproveitado",
+]);
+
 export interface ChecklistProjecaoGrupo {
   id: string;
   label: string;
@@ -103,15 +119,17 @@ export function projetarChecklist({
       ? passos.filter((p) => p.concluido).length
       : itemCumpridoGuia(d, respostas) ? 1 : 0;
 
+    if (isReaproveitamento(d.status) && String(d.status).toLowerCase() === "dispensado_por_reaproveitamento") {
+      reaproveitados += 1;
+    }
+
+    if (STATUS_CREDITADO.has(String(d.status ?? "").toLowerCase())) continue;
+
     totalObrigatorios += unidades;
     concluidos += unidadesConcluidas;
     atual.total += unidades;
     atual.concluidos += unidadesConcluidas;
     mapaGrupos.set(grupo.id, atual);
-
-    if (isReaproveitamento(d.status) && String(d.status).toLowerCase() === "dispensado_por_reaproveitamento") {
-      reaproveitados += 1;
-    }
 
     // Condições inativas continuam no histórico, mas não são dívida do cliente.
     if (!itemVisivelGuia(d, respostas) || unidadesConcluidas >= unidades) continue;
