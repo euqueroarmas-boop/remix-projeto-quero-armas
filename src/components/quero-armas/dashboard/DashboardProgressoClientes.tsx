@@ -499,20 +499,35 @@ export default function DashboardProgressoClientes() {
         </div>
 
         {/* DESKTOP: tabela */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div ref={tabelaScroll.ref} className="hidden md:block overflow-x-auto">
+          <table className="border-collapse" style={{ width: colunas.reduce((s, c) => s + larguraDe(c), 0), minWidth: "100%", tableLayout: "fixed" }}>
+            <colgroup>
+              {colunas.map((c) => (<col key={c.key} style={{ width: larguraDe(c) }} />))}
+            </colgroup>
             <thead>
               <tr className="border-b border-[#DADADA] bg-[#FAFAFA]">
-                {COLS.map((c) => (
-                  <th key={c.key} className={`px-3 py-2 text-left ${c.className ?? ""}`}>
+                {colunas.map((c) => (
+                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom" title={c.titulo}>
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors"
+                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors text-left"
                     >
                       {c.label}
                       {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
                     </button>
+                    <span
+                      role="separator"
+                      aria-label={`Redimensionar coluna ${c.label}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        resize.current = { key: c.key, startX: e.clientX, startW: larguraDe(c) };
+                        document.body.style.userSelect = "none";
+                      }}
+                      onDoubleClick={() => setLarguras((prev) => { const n = { ...prev }; delete n[c.key]; return n; })}
+                      className="absolute right-0 top-0 h-full w-[6px] cursor-col-resize hover:bg-[#DADADA]"
+                    />
                   </th>
                 ))}
               </tr>
@@ -521,20 +536,17 @@ export default function DashboardProgressoClientes() {
               {ordenadas.map((r, i) => {
                 const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
                 const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
-                return (
-                  <tr
-                    key={r.processo_id}
-                    className="border-b border-[#EFEFEF] hover:bg-[#F6F6F6]"
-                    style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
-                  >
-                    <td className="px-3 py-3 align-top">
+                const ef = efetivaVisual(r.efetiva_status);
+                const celulas: Record<SortKey, React.ReactNode> = {
+                  cliente_nome: (
+                    <>
                       <div className="flex items-start gap-2">
                         <span
                           className="mt-[6px] h-2 w-2 shrink-0 rounded-full"
                           style={{ background: corSensor(r.dias_parado) }}
                           title="Sinalizador de movimento"
                         />
-                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block">
+                      <Link to={rotaCadastroCliente(r.cliente_id)} className="block min-w-0">
                         <div className="text-[12.5px] font-bold uppercase truncate" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
@@ -556,8 +568,21 @@ export default function DashboardProgressoClientes() {
                         )}
                       </Link>
                       </div>
-                    </td>
-                    <td className="px-3 py-3 align-top">
+                    </>
+                  ),
+                  online: (
+                    <div className="space-y-1">
+                      {r.online
+                        ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
+                        : <Chip cor={TINTA_3} fundo="#F4F4F4">OFFLINE</Chip>}
+                      <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+                        {fmtAcesso(r.ultimo_acesso)}
+                      </div>
+                    </div>
+                  ),
+                  servico_nome: null,
+                  fase: (
+                    <>
                       {r.bloqueado_por_prerequisito ? (
                         <Chip cor={VERMELHO} fundo={VERMELHO_BG}><Lock className="h-3 w-3" />AGUARDA ETAPA ANTERIOR</Chip>
                       ) : (
@@ -571,8 +596,10 @@ export default function DashboardProgressoClientes() {
                           )}
                         </div>
                       )}
-                    </td>
-                    <td className="px-3 py-3 align-top">
+                    </>
+                  ),
+                  progresso: (
+                    <>
                       <div className="flex items-center gap-2">
                         <span className="text-[11.5px] font-bold tabular-nums w-12" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
@@ -598,24 +625,49 @@ export default function DashboardProgressoClientes() {
                           </Chip>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] font-medium uppercase max-w-[240px] overflow-hidden" style={{ color: TINTA }}>
-                      <span className="flex min-w-0 items-start gap-1.5">
-                        {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 mt-[1px] shrink-0" style={{ color: AMBAR }} />}
-                        <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>
-                      {fmtData(r.criado_em)}
-                    </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] font-semibold tabular-nums" style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}>
+                    </>
+                  ),
+                  proximo_doc: (
+                    <span className="flex min-w-0 items-start gap-1.5 text-[11.5px] font-medium uppercase" style={{ color: TINTA }}>
+                      {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 mt-[1px] shrink-0" style={{ color: AMBAR }} />}
+                      <span className="min-w-0 flex-1 break-words leading-[1.25]">{r.proximo_doc ?? "—"}</span>
+                    </span>
+                  ),
+                  efetiva: ef
+                    ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade">{ef.label}</Chip>
+                    : <span className="text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
+                  protocolo: r.protocolo_numero
+                    ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido">{r.protocolo_numero}</Chip>
+                    : <span className="text-[11px] font-semibold uppercase" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                  criado_em: (
+                    <span className="text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
+                  ),
+                  cobrancas: (
+                    <span
+                      className="text-[11.5px] font-semibold tabular-nums"
+                      style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}
+                      title="Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)"
+                    >
                       {r.cobrancas > 0 ? r.cobrancas : "—"}
-                    </td>
-                    <td className="px-3 py-3 align-top">
-                      <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
-                        {r.dias_parado}d
-                      </Chip>
-                    </td>
+                    </span>
+                  ),
+                  dias_parado: (
+                    <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
+                      {r.dias_parado}d
+                    </Chip>
+                  ),
+                };
+                return (
+                  <tr
+                    key={r.processo_id}
+                    className="border-b border-[#EFEFEF] hover:bg-[#F6F6F6]"
+                    style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
+                  >
+                    {colunas.map((c) => (
+                      <td key={c.key} className="px-3 py-3 align-top overflow-hidden">
+                        {celulas[c.key]}
+                      </td>
+                    ))}
                   </tr>
                 );
               })}
