@@ -74,11 +74,11 @@ export default function DashboardProgressoClientes() {
         if (ids.length > 0) {
           const { data: docs } = await supabase
             .from("qa_processo_documentos")
-            .select("processo_id, tipo_documento")
+            .select("processo_id, tipo_documento, status")
             .in("processo_id", ids);
-          const porProcesso: Record<string, string[]> = {};
+          const porProcesso: Record<string, { tipo_documento: string; status: string | null }[]> = {};
           for (const d of ((docs as any[]) ?? [])) {
-            (porProcesso[d.processo_id] ||= []).push(d.tipo_documento);
+            (porProcesso[d.processo_id] ||= []).push({ tipo_documento: d.tipo_documento, status: d.status });
           }
           const mapa: Record<string, string[]> = {};
           for (const [pid, tipos] of Object.entries(porProcesso)) {
