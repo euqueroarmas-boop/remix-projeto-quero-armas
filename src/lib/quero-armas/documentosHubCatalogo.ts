@@ -207,6 +207,9 @@ const TIPOS_LEGADOS_OCULTOS = new Set<string>([
  */
 const TIPOS_NAO_MONITORAVEIS_HUB = new Set<string>([
   "contrato_assinado",
+  // Comprovante de pagamento do contrato: recibo de fato passado, pertence ao
+  // contrato (não ao processo) e NÃO tem prazo de validade.
+  "comprovante_pagamento",
 ]);
 
 function normalizeTipoDocumento(value: string | null | undefined): string {

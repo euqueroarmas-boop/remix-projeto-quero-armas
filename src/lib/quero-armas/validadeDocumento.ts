@@ -431,6 +431,15 @@ export function isIdentidadeFuncionalPerpetua(tipo?: string | null): boolean {
 }
 
 /**
+ * Comprovante de pagamento do contrato: recibo de um fato passado (pagamento
+ * já realizado). Pertence ao CONTRATO e NÃO vence — nunca calcular validade.
+ */
+export function isComprovantePagamentoContrato(tipo?: string | null): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return t === "comprovante_pagamento" || t === "comprovante_pagamento_contrato";
+}
+
+/**
  * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
  * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
  * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
@@ -469,6 +478,8 @@ export function calcularValidadeEfetiva(
 ): string | null {
   const emi = parseISODate(dataEmissao);
   if (!emi) return null;
+  // Comprovante de pagamento do contrato nunca vence — precede o catálogo.
+  if (isComprovantePagamentoContrato(tipo)) return null;
   // 1º) Catálogo do banco (fonte única). Só cai nas regras locais quando o
   //     tipo não está cadastrado ou o catálogo ainda não carregou.
   const regra = getRegraValidade(tipo);
@@ -483,6 +494,7 @@ export function calcularValidadeEfetiva(
   if (isNotaFiscalSemVencimento(tipo)) return null;
   if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
   if (isIdentidadeFuncionalPerpetua(tipo)) return null;
+  if (isComprovantePagamentoContrato(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
@@ -590,6 +602,7 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   if (
     isIdentidadeFuncionalPerpetua(doc.tipo_documento) ||
     isDocumentoConstitutivoPerpetuo(doc.tipo_documento) ||
+    isComprovantePagamentoContrato(doc.tipo_documento) ||
     textoIndicaValidadeIndeterminada((doc as any)?.nome_documento)
   ) {
     return {
