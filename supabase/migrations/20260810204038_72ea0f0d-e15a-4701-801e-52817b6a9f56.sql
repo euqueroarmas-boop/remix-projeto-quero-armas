@@ -1,0 +1,1 @@
+ALTER VIEW public.qa_status_divergencias SET (security_invoker = on);
