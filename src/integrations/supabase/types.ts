@@ -13277,7 +13277,11 @@ export type Database = {
           fase: string
           grupo_atual: string
           grupo_concluidos: number
+          grupo_indice: number
           grupo_total: number
+          grupos_concluidos: number
+          grupos_restantes: number
+          grupos_total: number
           perguntas_pendentes: number
           processo_id: string
           proximo_doc: string
