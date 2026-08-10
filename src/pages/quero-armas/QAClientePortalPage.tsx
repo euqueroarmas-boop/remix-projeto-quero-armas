@@ -2765,8 +2765,30 @@ export default function QAClientePortalPage() {
     //
     // A ordem é a mesma da fila (`ordem` de pendenciasGrupos), para o número
     // do grupo bater com a sequência em que o cliente vai encontrá-los.
-    const mapaGrupos = new Map<string, { label: string; ordem: number; total: number; concluidos: number }>();
+    // Exigências mutuamente exclusivas (ex.: laudos da instituição × laudos
+    // de credenciado da PF) NÃO podem somar. O catálogo declara as duas
+    // trilhas via `exige_quando`, mas o cliente só entrega UMA delas — era
+    // por isso que "Laudos" dizia 0 de 5 sendo que só 2 laudos são aceitos.
+    const ramoDoDoc = (d: any): { chave: string; valor: string } | null => {
+      const rv = d?.regra_validacao;
+      const eq = rv && typeof rv === "object" ? (rv as any).exige_quando : null;
+      if (!eq || typeof eq !== "object") return null;
+      const par = Object.entries(eq as Record<string, unknown>)[0];
+      if (!par) return null;
+      return { chave: String(par[0]), valor: String(par[1]) };
+    };
+    type Acc = {
+      label: string;
+      ordem: number;
+      total: number;
+      concluidos: number;
+      ramos: Map<string, Map<string, { total: number; concluidos: number }>>;
+    };
+    const mapaGrupos = new Map<string, Acc>();
     for (const d of obrigatorios) {
+      // Perguntas-pivot são portões de decisão, não documentos entregáveis:
+      // não entram na contagem "X de Y" do grupo.
+      if (ehPergunta(d)) continue;
       const gBase = grupoDaPendenciaHelper(
         String(d?.tipo_documento || ""),
         toHubTipoCompartilhado(String(d?.tipo_documento || "")),
@@ -2781,9 +2803,18 @@ export default function QAClientePortalPage() {
       const g = metaGrupo
         ? { ...metaGrupo, ordem: catGrupo?.ordem_grupo_checklist ?? metaGrupo.ordem }
         : gBase;
-      const cur = mapaGrupos.get(g.id) ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0 };
+      const cur: Acc = mapaGrupos.get(g.id)
+        ?? { label: g.label, ordem: g.ordem, total: 0, concluidos: 0, ramos: new Map() };
       const ps = passosDoDoc(d);
-      if (ps) {
+      const ramo = ps ? null : ramoDoDoc(d);
+      if (ramo) {
+        const porChave = cur.ramos.get(ramo.chave) ?? new Map<string, { total: number; concluidos: number }>();
+        const alvo = porChave.get(ramo.valor) ?? { total: 0, concluidos: 0 };
+        alvo.total += 1;
+        if (concluido(d)) alvo.concluidos += 1;
+        porChave.set(ramo.valor, alvo);
+        cur.ramos.set(ramo.chave, porChave);
+      } else if (ps) {
         cur.total += ps.length;
         cur.concluidos += ps.filter((p) => p.concluido).length;
       } else {
@@ -2792,25 +2823,27 @@ export default function QAClientePortalPage() {
       }
       mapaGrupos.set(g.id, cur);
     }
+    // Consolida cada portão: vale a trilha já iniciada; sem entrega, vale a
+    // maior trilha (o cliente vai entregar uma delas, nunca as duas).
+    for (const acc of mapaGrupos.values()) {
+      for (const porChave of acc.ramos.values()) {
+        const opcoes = [...porChave.values()];
+        if (opcoes.length === 0) continue;
+        const escolhido = opcoes.find((o) => o.concluidos > 0)
+          ?? opcoes.reduce((a, b) => (b.total > a.total ? b : a));
+        acc.total += escolhido.total;
+        acc.concluidos += escolhido.concluidos;
+      }
+    }
     const grupos = [...mapaGrupos.entries()]
-      .map(([id, v]) => ({ id, ...v }))
+      .map(([id, v]) => ({ id, label: v.label, ordem: v.ordem, total: v.total, concluidos: v.concluidos }))
       .sort((a, b) => a.ordem - b.ordem);
-
-    // Totais do processo também contam passo a passo.
-    const extraTotal = obrigatorios.reduce((acc: number, d: any) => {
-      const ps = passosDoDoc(d);
-      return ps ? acc + ps.length - 1 : acc;
-    }, 0);
-    const extraConcluidos = obrigatorios.reduce((acc: number, d: any) => {
-      const ps = passosDoDoc(d);
-      if (!ps) return acc;
-      return acc + ps.filter((p) => p.concluido).length - (concluido(d) ? 1 : 0);
-    }, 0);
     return {
       documentosPendentes: abertos.filter((d: any) => !ehPergunta(d)).length,
       perguntasPendentes: abertos.filter(ehPergunta).length,
-      totalObrigatorios: obrigatorios.length + extraTotal,
-      concluidos: obrigatorios.length - abertos.length + extraConcluidos,
+      // Total do processo = soma dos grupos, já sem duplicar trilhas exclusivas.
+      totalObrigatorios: grupos.reduce((acc, g) => acc + g.total, 0),
+      concluidos: grupos.reduce((acc, g) => acc + g.concluidos, 0),
       reaproveitados: obrigatorios.filter(ehReaproveitado).length,
       grupos,
     };
