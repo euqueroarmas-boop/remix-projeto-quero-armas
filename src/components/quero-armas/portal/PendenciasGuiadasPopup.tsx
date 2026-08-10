@@ -414,6 +414,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     setRespondendo(null);
   }, [active.id]);
 
+  const [avancandoDispensa, setAvancandoDispensa] = useState(false);
+  useEffect(() => { setAvancandoDispensa(false); }, [active.id]);
+
   // ─── Escolha de profissional credenciado pela PF ───
   // Regra (10/08/2026): quem responde NÃO na pergunta dos exames da instituição
   // — e quem está na pendência dos laudos particulares — precisa conseguir
