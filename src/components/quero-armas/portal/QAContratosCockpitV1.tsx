@@ -79,12 +79,11 @@ async function baixarComprovante(doc: ComprovanteDoc) {
       if (error || !data?.signedUrl) throw new Error("Não foi possível abrir o arquivo.");
       signedUrl = data.signedUrl;
     }
-    const a = document.createElement("a");
-    a.href = signedUrl!;
-    a.download = doc.arquivo_nome || "comprovante-pagamento";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    // Nunca expor URL do storage: converte em blob antes de entregar.
+    const resp = await fetch(signedUrl!);
+    if (!resp.ok) throw new Error("Não foi possível abrir o arquivo.");
+    const blob = await resp.blob();
+    await saveOrShareBlob(blob, doc.arquivo_nome || "comprovante-pagamento.pdf");
     toast.success("Download iniciado.", { id: toastId });
   } catch (e) {
     toast.error(e instanceof Error ? e.message : "Erro ao acessar arquivo.", { id: toastId });
