@@ -89,12 +89,12 @@ Deno.serve(async (req) => {
     // ─── action: aplicar ───
     const { data: cliente } = await supabase
       .from("qa_clientes")
-      .select("id, categoria_titular, categoria_subcategoria, profissao")
+      .select("id, categoria_titular, subcategoria, profissao")
       .eq("id", processo.cliente_id)
       .maybeSingle();
 
     const categoria = String((cliente as any)?.categoria_titular ?? "").trim().toLowerCase();
-    const corporacao = String((cliente as any)?.categoria_subcategoria ?? "").trim() || null;
+    const corporacao = String((cliente as any)?.subcategoria ?? "").trim() || null;
     if (!categoria) return json({ success: true, aplicados: 0, motivo: "sem_categoria" });
 
     const { data: regrasRaw } = await supabase
