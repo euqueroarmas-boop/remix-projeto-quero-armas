@@ -62,6 +62,19 @@ const MAPA: Record<string, Regra> = {
   gru_paga: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "GRU paga" },
   peticao_efetiva_necessidade: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Peticao de efetiva necessidade" },
   efetiva_necessidade: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Peticao de efetiva necessidade" },
+  // Provas da efetiva necessidade — vão anexas à petição, logo depois dela.
+  boletim_ocorrencia: { grupo: 1, ordem: 3, numero: "1.3", rotulo: "Boletim de ocorrencia" },
+  bo: { grupo: 1, ordem: 3, numero: "1.3", rotulo: "Boletim de ocorrencia" },
+  inquerito_policial: { grupo: 1, ordem: 4, numero: "1.4", rotulo: "Inquerito policial" },
+  inquerito: { grupo: 1, ordem: 4, numero: "1.4", rotulo: "Inquerito policial" },
+  denuncia: { grupo: 1, ordem: 5, numero: "1.5", rotulo: "Denuncia do Ministerio Publico" },
+  denuncia_mp: { grupo: 1, ordem: 5, numero: "1.5", rotulo: "Denuncia do Ministerio Publico" },
+  acao_criminal: { grupo: 1, ordem: 6, numero: "1.6", rotulo: "Acao criminal" },
+  processo_criminal: { grupo: 1, ordem: 6, numero: "1.6", rotulo: "Acao criminal" },
+  sentenca: { grupo: 1, ordem: 6, numero: "1.6", rotulo: "Sentenca" },
+  medida_protetiva: { grupo: 1, ordem: 7, numero: "1.7", rotulo: "Medida protetiva" },
+  comprovante_efetiva_necessidade: { grupo: 1, ordem: 8, numero: "1.8", rotulo: "Comprovacao de efetiva necessidade" },
+  documento_complementar_caso: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Documento complementar do caso" },
 
   foto_3x4: { grupo: 2, ordem: 0, numero: "02", rotulo: "Foto 3x4" },
 
@@ -106,12 +119,23 @@ function regraIdoneidade(tipo: string): Regra | null {
   return { grupo: 6, ordem: 9, numero: "12", rotulo: tipo.replace(/_/g, " ") };
 }
 
+/**
+ * Provas do caso (efetiva necessidade) que não estão no mapa: BO complementar,
+ * print de ameaça, laudo de lesão, etc. Nunca podem cair em "Outros" — elas
+ * instruem a petição e precisam ir junto dela no dossiê.
+ */
+function regraProvaCaso(tipo: string): Regra | null {
+  if (!/(ocorrenc|inquerit|denunc|protetiv|ameac|agress|criminal|prova_|_prova|caso)/.test(tipo)) return null;
+  return { grupo: 1, ordem: 9, numero: "1.9", rotulo: tipo.replace(/_/g, " ") };
+}
+
 export function posicaoProtocolo(tipoDocumento?: string | null, nomeFallback?: string | null): PosicaoProtocolo {
   const tipo = String(tipoDocumento || "").toLowerCase().trim();
   const regra =
     MAPA[tipo] ||
     regraOcupacao(tipo) ||
-    regraIdoneidade(tipo) || {
+    regraIdoneidade(tipo) ||
+    regraProvaCaso(tipo) || {
       grupo: 9,
       ordem: 99,
       numero: "99",
