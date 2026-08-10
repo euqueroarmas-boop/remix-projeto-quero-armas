@@ -16,6 +16,44 @@
  * fim em `data_validade`.
  */
 
+// ─── FUSO CANÔNICO: America/Sao_Paulo ────────────────────────────────────────
+// Toda contagem de prazo da plataforma usa o "hoje" de Brasília. Usar UTC fazia
+// o resumo virar o dia às 21h (BRT) e mostrar 1 dia a menos que o banco.
+
+/** Data de hoje em America/Sao_Paulo no formato YYYY-MM-DD. */
+export function hojeISOBRT(ref: Date = new Date()): string {
+  const f = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return f.format(ref); // en-CA → "YYYY-MM-DD"
+}
+
+/** Timestamp (UTC ms) da meia-noite de hoje em Brasília, para diferenças em dias. */
+export function hojeBRT(ref: Date = new Date()): number {
+  const [y, m, d] = hojeISOBRT(ref).split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+/**
+ * Dias até a data informada (ISO YYYY-MM-DD ou BR DD/MM/AAAA), sempre no fuso
+ * de Brasília. Fonte única de verdade para prazos exibidos ao cliente.
+ */
+export function diasAteBRT(value?: string | null, ref: Date = new Date()): number | null {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  let alvo: number | null = null;
+  if (iso) alvo = Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  else if (br) alvo = Date.UTC(Number(br[3]), Number(br[2]) - 1, Number(br[1]));
+  if (alvo === null || Number.isNaN(alvo)) return null;
+  return Math.round((alvo - hojeBRT(ref)) / 86400000);
+}
+
 export interface DocValidadeInput {
   tipo_documento?: string | null;
   data_emissao?: string | null;
@@ -674,8 +712,8 @@ export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()):
   }
 
   const venc = parseISODate(iso)!;
-  const hojeUTC = Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth(), hoje.getUTCDate());
-  const dias = Math.round((venc.getTime() - hojeUTC) / 86400000);
+  // Fuso canônico America/Sao_Paulo — nunca UTC (virava o dia às 21h BRT).
+  const dias = Math.round((venc.getTime() - hojeBRT(hoje)) / 86400000);
   const limiar = limiarAlertaDias(doc.tipo_documento);
   const status: ValidadeStatus =
     dias < 0 ? "vencido" : dias <= limiar ? "vence_em_breve" : "vigente";

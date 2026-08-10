@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
@@ -697,7 +698,13 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                                     toast.error("Não foi possível abrir anexo.");
                                     return;
                                   }
-                                  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                                  // Nunca expor URL do storage — entrega via blob local.
+                                  const resp = await fetch(data.signedUrl);
+                                  if (!resp.ok) {
+                                    toast.error("Não foi possível abrir anexo.");
+                                    return;
+                                  }
+                                  await saveOrShareBlob(await resp.blob(), m.documento_nome || "anexo");
                                 }}
                                 className="text-slate-400 hover:text-[#7A1F2B]"
                               >

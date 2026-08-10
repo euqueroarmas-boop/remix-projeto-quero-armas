@@ -3,7 +3,8 @@ import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } fro
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { diasAteBRT, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -56,14 +57,8 @@ const formatDate = (d: string | null) => {
   return `${String(p.getUTCDate()).padStart(2, "0")}/${String(p.getUTCMonth() + 1).padStart(2, "0")}/${p.getUTCFullYear()}`;
 };
 
-const daysUntil = (d: string | null): number | null => {
-  if (!d) return null;
-  const p = parseDateUTC(d);
-  if (!p) return null;
-  const now = new Date();
-  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((p.getTime() - todayUTC) / 86400000);
-};
+// Fonte única de prazo (America/Sao_Paulo) — igual ao resumo e ao banco.
+const daysUntil = (d: string | null): number | null => diasAteBRT(d);
 
 const formatCPF = (cpf: string | null | undefined) => {
   const d = String(cpf || "").replace(/\D/g, "");
@@ -163,16 +158,16 @@ async function abrirArquivo(doc: any, modo: "visualizado" | "baixado") {
       }
       signedUrl = data.signedUrl;
     }
-    if (modo === "baixado") {
-      const a = document.createElement("a");
-      a.href = signedUrl!;
-      a.download = doc.arquivo_nome || "documento";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } else {
-      window.open(signedUrl!, "_blank", "noopener,noreferrer");
+    // Nunca expor URL do storage: baixa como blob e entrega local.
+    const resp = await fetch(signedUrl!);
+    if (!resp.ok) {
+      toast.error("Não foi possível abrir o arquivo.");
+      return;
     }
+    const blob = await resp.blob();
+    await saveOrShareBlob(blob, doc.arquivo_nome || "documento", {
+      preferShare: modo === "visualizado" ? false : undefined,
+    });
     await logEvento(doc.id, doc.customer_id, doc.qa_cliente_id, modo, { path: doc.arquivo_storage_path });
   } catch (e) {
     toast.error("Erro ao acessar arquivo.");

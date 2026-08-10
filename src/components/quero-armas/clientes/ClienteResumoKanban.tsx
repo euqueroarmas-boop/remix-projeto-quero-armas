@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
+import { diasAteBRT } from "@/lib/quero-armas/validadeDocumento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -109,20 +110,9 @@ type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabe
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
+// Fonte única de prazo (America/Sao_Paulo) — mesma usada no Hub Documental.
 function daysUntil(dateStr: string | null | undefined): number | null {
-  if (!dateStr) return null;
-  const raw = String(dateStr).trim();
-  if (!raw) return null;
-  let parsed: Date | null = null;
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (iso) parsed = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  if (br) parsed = new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]));
-  if (!parsed || Number.isNaN(parsed.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  parsed.setHours(0, 0, 0, 0);
-  return Math.floor((parsed.getTime() - today.getTime()) / 86400000);
+  return diasAteBRT(dateStr);
 }
 
 /**
