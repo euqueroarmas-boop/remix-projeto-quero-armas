@@ -362,9 +362,9 @@ export default function DashboardProgressoClientes() {
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="#F4F4F4">{r.cobrancas} COB.</Chip>}
                 </div>
-                <div className="mt-1 flex items-center gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
+                <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
                   {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
-                  <span className="truncate flex-1">{r.proximo_doc ?? "—"}</span>
+                  <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
                 </div>
                 {(trilhas[r.processo_id] ?? []).length > 0 && (
                   <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
