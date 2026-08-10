@@ -1095,6 +1095,25 @@ export default function QAClientePortalPage() {
         setProcessos(procsEnriched);
         if (procsList.length > 0) {
           const procIds = procsList.map((p) => p.id);
+          // Matriz Categoria × Exigência: carimba as exigências dispensadas por
+          // lei ANTES de montar o checklist. Idempotente e silenciosa — se a
+          // matriz estiver vazia, nada muda.
+          try {
+            const aplicacoes = await Promise.all(
+              procIds.map((pid) =>
+                supabase.functions.invoke("qa-processo-dispensas", {
+                  body: { action: "aplicar", processo_id: pid },
+                }),
+              ),
+            );
+            const aplicados = aplicacoes.reduce(
+              (acc, r: any) => acc + Number(r?.data?.aplicados ?? 0),
+              0,
+            );
+            if (aplicados > 0) console.info("[Portal] dispensas por categoria aplicadas:", aplicados);
+          } catch (e) {
+            console.warn("[Portal] falha ao aplicar dispensas por categoria:", e);
+          }
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
             .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at, regra_validacao, titular_comprovante_nome, endereco_em_nome_de_terceiro, dados_extraidos_json")
