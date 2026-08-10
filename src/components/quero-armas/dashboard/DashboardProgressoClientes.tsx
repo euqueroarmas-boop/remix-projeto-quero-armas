@@ -54,16 +54,16 @@ type SortKey =
 type ColDef = { key: SortKey; label: string; largura: number; titulo?: string };
 
 const COLS: ColDef[] = [
-  { key: "cliente_nome", label: "CLIENTE", largura: 260 },
-  { key: "online", label: "ONLINE", largura: 110, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
-  { key: "fase", label: "ETAPA ATUAL", largura: 200 },
-  { key: "progresso", label: "PROGRESSO", largura: 200 },
-  { key: "proximo_doc", label: "PRÓXIMO PASSO", largura: 220 },
-  { key: "efetiva", label: "EF. NECESSIDADE", largura: 150, titulo: "Situação da narrativa de efetiva necessidade" },
-  { key: "protocolo", label: "PROTOCOLO", largura: 150, titulo: "Número do protocolo emitido para este serviço" },
-  { key: "criado_em", label: "ABERTO EM", largura: 110 },
-  { key: "cobrancas", label: "COBRANÇAS", largura: 110, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
-  { key: "dias_parado", label: "PARADO", largura: 96 },
+  { key: "cliente_nome", label: "CLIENTE", largura: 240 },
+  { key: "online", label: "ONLINE", largura: 108, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
+  { key: "fase", label: "ETAPA ATUAL", largura: 190 },
+  { key: "progresso", label: "PROGRESSO", largura: 230 },
+  { key: "proximo_doc", label: "PRÓXIMO PASSO", largura: 210 },
+  { key: "efetiva", label: "EF. NECESSIDADE", largura: 140, titulo: "Situação da narrativa de efetiva necessidade" },
+  { key: "protocolo", label: "PROTOCOLO", largura: 140, titulo: "Número do protocolo emitido para este serviço" },
+  { key: "criado_em", label: "ABERTO EM", largura: 100 },
+  { key: "cobrancas", label: "COBRANÇAS", largura: 100, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
+  { key: "dias_parado", label: "PARADO", largura: 88 },
 ];
 
 const LS_LARGURAS = "qa_painel_progresso_larguras";
@@ -104,12 +104,14 @@ function corProgresso(pct: number, dias: number) {
 }
 
 function Chip({
-  children, cor, fundo, titulo,
-}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string }) {
+  children, cor, fundo, titulo, quebra,
+}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean }) {
   return (
     <span
       title={titulo}
-      className="inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-[9.5px] font-bold uppercase tracking-[0.1em] whitespace-nowrap"
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-[9.5px] font-bold uppercase tracking-[0.1em] ${
+        quebra ? "break-words text-left leading-[1.25]" : "whitespace-nowrap"
+      }`}
       style={{ background: fundo, color: cor }}
     >
       {children}
