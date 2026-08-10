@@ -274,7 +274,6 @@ export default function DashboardProgressoClientes() {
     for (const r of rows) {
       const ls = trilhas[r.processo_id] ?? [];
       if (ls.length === 0) continue;
-      (porCliente[r.cliente_id] ||= new Set()).forEach(() => {});
       porCliente[r.cliente_id] = new Set([...(porCliente[r.cliente_id] ?? []), ...ls]);
     }
     const mapa: Record<string, string[]> = {};
@@ -398,7 +397,10 @@ export default function DashboardProgressoClientes() {
           <button
             key={c.k}
             type="button"
-            onClick={() => setContador((v) => (v === c.k ? "todos" : c.k))}
+            onClick={() => {
+              setFiltroTrilha(null);
+              setContador((v) => (v === c.k ? "todos" : c.k));
+            }}
             className={`rounded-sm border px-3 py-2 text-left transition-colors ${
               contador === c.k ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
             }`}
@@ -566,15 +568,15 @@ export default function DashboardProgressoClientes() {
                           title="Sinalizador de movimento"
                         />
                       <Link to={rotaCadastroCliente(r.cliente_id)} className="block min-w-0">
-                        <div className="text-[12.5px] font-bold uppercase truncate" style={{ color: TINTA }}>
+                        <div className="text-[12.5px] font-bold uppercase break-words leading-[1.2]" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
-                        <div className="text-[10.5px] font-medium uppercase tracking-wider truncate" style={{ color: TINTA_2 }}>
+                        <div className="mt-[2px] text-[10.5px] font-medium uppercase tracking-wider break-words leading-[1.25]" style={{ color: TINTA_2 }}>
                           {r.servico_nome ?? "—"}
                         </div>
-                        {(trilhas[r.processo_id] ?? []).length > 0 && (
+                        {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1">
-                            {(trilhas[r.processo_id] ?? []).map((t) => (
+                            {(trilhasEfetivas[r.processo_id] ?? []).map((t) => (
                               <span
                                 key={t}
                                 className="rounded-full border border-[#DADADA] px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-[0.1em]"
@@ -593,7 +595,7 @@ export default function DashboardProgressoClientes() {
                     <div className="space-y-1">
                       {r.online
                         ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
-                        : <Chip cor={TINTA_3} fundo="#F4F4F4">OFFLINE</Chip>}
+                        : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
                       <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
                         {fmtAcesso(r.ultimo_acesso)}
                       </div>
@@ -653,10 +655,10 @@ export default function DashboardProgressoClientes() {
                     </span>
                   ),
                   efetiva: ef
-                    ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade">{ef.label}</Chip>
+                    ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
                     : <span className="text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
-                    ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido">{r.protocolo_numero}</Chip>
+                    ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
                     : <span className="text-[11px] font-semibold uppercase" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
                     <span className="text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
