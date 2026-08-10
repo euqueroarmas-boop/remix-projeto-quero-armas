@@ -175,7 +175,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
