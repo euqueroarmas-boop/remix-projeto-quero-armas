@@ -180,6 +180,40 @@ export default function DashboardProgressoClientes() {
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
   const [contador, setContador] = useState<ContadorKey>("todos");
+  const [configAberta, setConfigAberta] = useState(false);
+  const [larguras, setLarguras] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_LARGURAS) ?? "{}"); } catch { return {}; }
+  });
+  const [visiveis, setVisiveis] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_VISIVEIS) ?? "{}"); } catch { return {}; }
+  });
+  const tabelaScroll = useDragScroll<HTMLDivElement>();
+  const trilhasScroll = useDragScroll<HTMLDivElement>();
+  const resize = useRef<{ key: string; startX: number; startW: number } | null>(null);
+
+  useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
+  useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
+
+  /** CLIENTE nunca some; as demais respeitam a engrenagem. */
+  const colunas = useMemo(
+    () => COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false),
+    [visiveis],
+  );
+  const larguraDe = (c: ColDef) => larguras[c.key] ?? c.largura;
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const r = resize.current;
+      if (!r) return;
+      e.preventDefault();
+      const nova = Math.max(72, Math.min(640, r.startW + (e.clientX - r.startX)));
+      setLarguras((prev) => ({ ...prev, [r.key]: nova }));
+    };
+    const onUp = () => { resize.current = null; document.body.style.userSelect = ""; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -228,8 +262,9 @@ export default function DashboardProgressoClientes() {
   const trilhasDisponiveis = useMemo(() => {
     const set = new Set<string>();
     Object.values(trilhas).forEach((ls) => ls.forEach((l) => set.add(l)));
-    return [...set].sort();
-  }, [trilhas]);
+    const lista = [...set].sort();
+    return rows.some((r) => r.online) ? ["ONLINE", ...lista] : lista;
+  }, [trilhas, rows]);
 
   const contadores = useMemo(() => {
     const pronto = rows.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
@@ -242,7 +277,8 @@ export default function DashboardProgressoClientes() {
 
   const filtradas = useMemo(() => {
     let base = rows;
-    if (filtroTrilha) base = base.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha));
+    if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
+    else if (filtroTrilha) base = base.filter((r) => (trilhas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
@@ -261,6 +297,9 @@ export default function DashboardProgressoClientes() {
         case "dias_parado": return r.dias_parado;
         case "cobrancas": return r.cobrancas;
         case "criado_em": return new Date(r.criado_em).getTime();
+        case "online": return r.online ? 2 : (r.ultimo_acesso ? 1 : 0);
+        case "efetiva": return String(r.efetiva_status ?? "").toLowerCase();
+        case "protocolo": return String(r.protocolo_numero ?? "").toLowerCase();
         default: return String((r as any)[sortKey] ?? "").toLowerCase();
       }
     };
