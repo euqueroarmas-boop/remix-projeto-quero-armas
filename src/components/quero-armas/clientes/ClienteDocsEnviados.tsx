@@ -6,7 +6,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import {
   Loader2, FileText, CheckCircle2, AlertCircle, ExternalLink,
   Trash2, ShieldCheck, Clock, XCircle, MessageSquareWarning,
-  ChevronDown, ChevronRight, Layers, ShieldAlert, Tags,
+  ChevronDown, ChevronRight, Layers, ShieldAlert, Tags, Download, Eye, Archive,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,9 @@ import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/document
 import {
   montarLinhaEntrega, contarAnotacoes, type EntregaItem,
 } from "@/lib/quero-armas/hubEntregaAuditoria";
+import {
+  posicaoProtocolo, compararProtocolo, nomeArquivoDossie, GRUPOS_PROTOCOLO,
+} from "@/lib/quero-armas/ordemProtocolo";
 
 interface Props {
   cliente: any;
