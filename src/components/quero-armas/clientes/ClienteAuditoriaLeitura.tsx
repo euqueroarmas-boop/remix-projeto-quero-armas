@@ -35,6 +35,10 @@ interface Auditoria {
   fonte_do_nome?: string | null;
   nome_resgatado?: boolean;
   campos_vazios?: string[];
+  /** Campos que o layout do documento não imprime — ausência esperada. */
+  campos_nao_aplicaveis?: string[];
+  filiacao_lida?: string[];
+  filiacao_fonte?: string | null;
   veredicto?: string;
   mensagem_ao_cliente?: string | null;
   achados?: AchadoAudit[];
@@ -200,6 +204,18 @@ export default function ClienteAuditoriaLeitura({ cliente }: { cliente: any }) {
                     <Info
                       rotulo="CAMPOS SEM VALOR"
                       valor={a?.campos_vazios?.length ? a.campos_vazios.join(", ").toUpperCase() : "NENHUM"}
+                    />
+                    <Info
+                      rotulo="NÃO EXISTE NESTE DOCUMENTO"
+                      valor={
+                        a?.campos_nao_aplicaveis?.length
+                          ? a.campos_nao_aplicaveis.join(", ").toUpperCase()
+                          : "—"
+                      }
+                    />
+                    <Info
+                      rotulo="FILIAÇÃO LIDA"
+                      valor={a?.filiacao_lida?.length ? a.filiacao_lida.join(" · ").toUpperCase() : "—"}
                     />
                   </dl>
 
