@@ -721,6 +721,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 // ============================================================================
 interface LinhaEntregaProps {
   itens: EntregaItem[];
+  historicoReprovas?: Record<string, { motivo: string | null; quando: string }[]>;
   onViewFile: (path: string, doc?: any) => void;
   onBaixar: (doc: any) => void;
   onReprovar: (id: string) => void;
@@ -733,30 +734,60 @@ interface LinhaEntregaProps {
 }
 
 function LinhaEntrega({
-  itens, onViewFile, onBaixar, onReprovar, onDelete,
+  itens, historicoReprovas = {}, onViewFile, onBaixar, onReprovar, onDelete,
   reprovandoId, motivoTmp, setMotivoTmp, confirmarReprovar, cancelarReprovar,
 }: LinhaEntregaProps) {
   if (itens.length === 0) return null;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-        Linha do tempo de entrega · {itens.length} documento(s)
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          Linha do tempo de entrega · {itens.length} documento(s)
+        </span>
+        <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Aprovado</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Em análise</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#7A1F2B]" /> Rejeitado</span>
+        </span>
       </div>
       <ol className="space-y-2">
         {itens.map((it) => {
           const d: any = it.doc;
           const pos = posicaoProtocolo(d.tipo_documento, d.nome_documento);
+          const isReprovado = d.status === "reprovado";
+          const isAprovado = d.status === "aprovado";
+          const isAnalise = d.status === "pendente_aprovacao" || d.status === "em_analise";
+          const bolinha = isReprovado
+            ? "bg-[#7A1F2B]"
+            : isAprovado
+              ? "bg-emerald-600"
+              : isAnalise
+                ? "bg-amber-500"
+                : "bg-slate-400";
+          const bolinhaTitulo = isReprovado
+            ? "Documento rejeitado"
+            : isAprovado
+              ? "Documento aprovado"
+              : isAnalise
+                ? "Em análise"
+                : "Sem status definido";
+          const reprovas = historicoReprovas[d.id] || [];
           const critico = it.anotacoes.some((a) => a.severidade === "critico");
           const atencao = it.anotacoes.some((a) => a.severidade === "atencao");
-          const cls = critico
-            ? "border-red-200 bg-red-50/40"
-            : atencao
-              ? "border-amber-200 bg-amber-50/40"
-              : "border-slate-200 bg-white";
+          const cls = isReprovado
+            ? "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04]"
+            : critico
+              ? "border-red-200 bg-red-50/40"
+              : atencao
+                ? "border-amber-200 bg-amber-50/40"
+                : "border-slate-200 bg-white";
           return (
             <li key={d.id} className={`rounded-lg border p-2.5 ${cls}`}>
               <div className="flex items-start gap-2">
-                <span className="shrink-0 h-5 w-5 rounded-full bg-slate-800 text-white text-[9px] font-bold flex items-center justify-center">
+                <span
+                  title={bolinhaTitulo}
+                  className={`shrink-0 h-5 w-5 rounded-full ${bolinha} text-white text-[9px] font-bold flex items-center justify-center`}
+                >
                   {it.sequencia}
                 </span>
                 <div className="min-w-0 flex-1">
