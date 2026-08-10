@@ -740,16 +740,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           {/* Números do PROCESSO, não da fila. A fila mostra o que está
               liberado agora; o cliente precisa saber o tamanho do caminho. */}
           {asPage ? null : resumoProcesso && (resumoProcesso.documentosPendentes + resumoProcesso.perguntasPendentes) > 0 ? (
-            <div className="px-6 py-3 border-b border-[#F0F0F0]">
+            <div className="px-5 py-2 border-b border-[#F0F0F0] sm:px-6">
               <div className="flex justify-between items-baseline">
-                <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+                <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                   Resolva um por vez
                 </span>
-                <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+                <span className="text-[9px] font-bold text-[#8A1224] tracking-widest uppercase">
                   {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
                 </span>
               </div>
-              <p className="mt-1.5 text-[11px] text-[#6A6A6A]">
+              {/* Linha única: falta no processo + andamento do grupo + histórico
+                  reaproveitado. Antes eram três parágrafos empilhados que
+                  comiam a área de trabalho do cliente. */}
+              <p className="mt-1 text-[10.5px] leading-[1.35] text-[#6A6A6A]">
                 Ainda faltam{" "}
                 {resumoProcesso.documentosPendentes > 0 ? (
                   <strong className="text-[#0A0A0A]">
@@ -765,29 +768,30 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   </strong>
                 ) : null}{" "}
                 neste processo.
+                {grupoNoProcesso ? (
+                  <>
+                    {" · "}
+                    <strong className="text-[#0A0A0A]">{activeGrupo}</strong>:{" "}
+                    {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
+                    {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
+                  </>
+                ) : null}
+                {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
+                  <span className="font-medium text-emerald-700">
+                    {" · ✓ "}
+                    {resumoProcesso.reaproveitados === 1
+                      ? "1 documento já reconhecido do seu histórico."
+                      : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
+                  </span>
+                ) : null}
               </p>
-              {grupoNoProcesso ? (
-                <p className="mt-1 text-[11px] text-[#6A6A6A]">
-                  Neste grupo — <strong className="text-[#0A0A0A]">{activeGrupo}</strong> —{" "}
-                  {grupoNoProcesso.concluidos} de {grupoNoProcesso.total}{" "}
-                  {grupoNoProcesso.total === 1 ? "item concluído" : "itens concluídos"}.
-                </p>
-              ) : null}
-              {(resumoProcesso.reaproveitados ?? 0) > 0 ? (
-                <p className="mt-2 text-[11px] text-emerald-700 font-medium">
-                  ✓{" "}
-                  {resumoProcesso.reaproveitados === 1
-                    ? "1 documento já reconhecido do seu histórico."
-                    : `${resumoProcesso.reaproveitados} documentos já reconhecidos do seu histórico.`}
-                </p>
-              ) : null}
             </div>
           ) : total > 1 ? (
-            <div className="px-6 py-3 flex justify-between items-center">
-              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+            <div className="px-5 py-2 flex justify-between items-center sm:px-6">
+              <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                 Resolva um por vez
               </span>
-              <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
+              <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                 Faltam {faltam} após esta
               </span>
             </div>
