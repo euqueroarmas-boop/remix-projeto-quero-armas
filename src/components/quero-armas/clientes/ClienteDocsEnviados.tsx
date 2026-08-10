@@ -181,6 +181,47 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   });
 
   const [modo, setModo] = useState<"familia" | "entrega">("entrega");
+
+  /**
+   * Provas da EFETIVA NECESSIDADE (BO, inquérito, denúncia, medida protetiva,
+   * documentos complementares do caso). Vivem em tabela própria, mas fazem
+   * parte do dossiê de protocolo — entram anexas à petição (grupo 1).
+   */
+  const { data: provasCaso = [] } = useQuery({
+    queryKey: ["cliente-provas-efetiva", clienteId],
+    enabled: Boolean(clienteId),
+    queryFn: async () => {
+      const { data: regs } = await supabase
+        .from("qa_efetiva_necessidade" as any)
+        .select("id")
+        .eq("cliente_id", clienteId);
+      const ids = ((regs as any[]) || []).map((r) => r.id);
+      if (ids.length === 0) return [];
+      const { data } = await supabase
+        .from("qa_efetiva_necessidade_provas" as any)
+        .select("id, tipo, arquivo_storage_path, arquivo_nome, numero, orgao, data_fato, created_at")
+        .in("efetiva_necessidade_id", ids)
+        .order("created_at", { ascending: true });
+      return ((data as any[]) || []).filter((p) => p.arquivo_storage_path);
+    },
+  });
+
+  /** Provas normalizadas para o mesmo formato de documento (ZIP e ações). */
+  const provasComoDocs = useMemo(
+    () => (provasCaso as any[]).map((p) => ({
+      id: `prova-${p.id}`,
+      tipo_documento: p.tipo || "documento_complementar_caso",
+      nome_documento: p.arquivo_nome || p.tipo,
+      arquivo_nome: p.arquivo_nome,
+      arquivo_storage_path: p.arquivo_storage_path,
+      origem_prova: true,
+      numero: p.numero,
+      orgao: p.orgao,
+      data_fato: p.data_fato,
+      created_at: p.created_at,
+    })),
+    [provasCaso],
+  );
   const linhaEntrega = useMemo(
     () => montarLinhaEntrega(docs as any[], exigencias as any[]),
     [docs, exigencias],
