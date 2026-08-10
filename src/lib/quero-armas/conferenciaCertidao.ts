@@ -80,6 +80,29 @@ const chaveNome = (v: unknown) =>
 
 const digitos = (v: unknown) => String(v ?? "").replace(/\D/g, "");
 
+/**
+ * O RG do cadastro está impresso, em dígitos, no texto do PDF?
+ *
+ * Igualdade por dígitos (o documento pode imprimir com ou sem pontuação e com
+ * ou sem dígito verificador separado). Nunca por semelhança.
+ */
+function rgDoCadastroPresenteNoTexto(texto: string, rgCadastro: unknown): boolean {
+  const alvo = String(rgCadastro ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  if (alvo.length < 5) return false;
+  const t = String(texto ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  return t.includes(alvo);
+}
+
+/** A data de nascimento do cadastro aparece no texto, em dd/mm/aaaa? */
+function dataDoCadastroPresenteNoTexto(texto: string, dataCadastro: unknown): boolean {
+  const iso = String(dataCadastro ?? "").slice(0, 10);
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const br = `${m[3]}/${m[2]}/${m[1]}`;
+  const t = String(texto ?? "");
+  return t.includes(br) || t.replace(/\D/g, "").includes(`${m[3]}${m[2]}${m[1]}`);
+}
+
 /** "Ferraz de Vasconcelos - SP" e "FERRAZ DE VASCONCELOS/SP" viram a mesma coisa. */
 const chaveCidade = (v: unknown) =>
   semAcento(v)
