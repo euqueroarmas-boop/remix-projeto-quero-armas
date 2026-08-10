@@ -106,6 +106,22 @@ function explicaComprovanteEndereco(doc: any, dias: number): string | null {
   return frases.join(" ");
 }
 
+/**
+ * Nome da concessionária/tipo de conta no título do banner:
+ * "Comprovante de residência — EDP (energia)". Se a IA não leu a empresa,
+ * cai para o tipo da conta; se não leu nada, mantém o rótulo original.
+ */
+function tituloComprovanteEndereco(doc: any, labelBase: string): string {
+  const cx = (doc?.dados_json ?? {}) as Record<string, unknown>;
+  const empresa = String(cx.empresa_emissora ?? "").trim();
+  const tipo = String(cx.tipo_conta ?? "").trim().toLowerCase();
+  const conta = CONTA_LABEL[tipo] ?? null;
+  if (empresa && conta) return `${labelBase} — ${empresa} (${conta.replace(/^(conta|guia) (de|d[eo]) /, "")})`;
+  if (empresa) return `${labelBase} — ${empresa}`;
+  if (conta) return `${labelBase} — ${conta}`;
+  return labelBase;
+}
+
 type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro"; /** Explicação pronta, já com o tipo de conta e as datas que a IA leu do documento. */ detalhe?: string };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
@@ -609,15 +625,18 @@ export default function ClienteResumoKanban({
           : URG_SUB.documento;
       const validadeDoc = doc?.data_validade_efetiva || doc?.data_validade;
       const diasDoc = daysUntil(validadeDoc);
+      const isComprovante = tipo === "comprovante_residencia";
       pushUrgent(
-        isFiliacaoDoc ? titleCaseServico(docLabel, "Documento") : docLabel,
+        isComprovante
+          ? tituloComprovanteEndereco(doc, docLabel)
+          : isFiliacaoDoc ? titleCaseServico(docLabel, "Documento") : docLabel,
         subDoc,
         validadeDoc,
         "documentos",
         cta,
         fk,
         examTipo,
-        tipo === "comprovante_residencia" && diasDoc !== null
+        isComprovante && diasDoc !== null
           ? explicaComprovanteEndereco(doc, diasDoc) ?? undefined
           : undefined,
       );
