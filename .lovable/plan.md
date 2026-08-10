@@ -1,77 +1,112 @@
-# Laudos: botão dividido (NÃO / Entregar) + matriz de dispensas por profissão
+# Dispensas por categoria: carimbo legal no checklist + rota SINARM × SIGMA
 
-## Parte 1 — Por que a pergunta SIM/NÃO não aparece hoje
+## Correção do exemplo anterior
 
-Quando o cliente escolhe a condição profissional "Segurança Pública", o sistema copia as exigências do catálogo para o processo dele, mas descarta a configuração de pergunta. O item "exames da instituição", que no catálogo é uma pergunta SIM/NÃO, chega no processo como se fosse mais um documento para anexar.
+O exemplo com Guarda Civil Municipal estava errado e sai do plano. A GCM **não** é caso de dispensa automática de laudo psicológico e de capacidade técnica: o que ela tem é a **via institucional** (laudo emitido pela própria corporação) — é o modo "Alternativo", não "Dispensado".
 
-Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_definir` tem `tipo: pergunta`, `chave: exames_instituicao` e as duas opções; no processo do Anthony a mesma linha ficou com uma regra genérica, sem `tipo`, sem `opcoes` e sem as condicionais. Por isso aparece "ENTREGAR DOCUMENTO" e os dois caminhos de laudo ficam abertos ao mesmo tempo (5 itens em vez de 2).
+Além disso, militar das Forças Armadas da ativa não é caso de dispensa dentro do SINARM: ele simplesmente **não registra arma no SINARM**, registra no SIGMA (Exército). Ou seja, não é "exigência dispensada", é **serviço errado** — precisa de um desvio de rota, não de um carimbo.
 
-Correções:
-1. Na função que aplica a condição profissional, preservar a regra do catálogo (`tipo`, `chave`, `opcoes`, `ajuda`, `exige_quando`, `dispensa_quando`, grupo e ordem do grupo), complementando apenas com os campos operacionais. Respeitar também etapa e ordem do catálogo.
-2. Backfill dos processos já criados: reescrever a regra das exigências pendentes a partir do catálogo correspondente, sem tocar em documentos aprovados ou já enviados.
-3. Rede de segurança no portal: se a exigência vier sem configuração de pergunta, usar como fallback a regra do catálogo já carregada em memória.
+## Como o motor passa a raciocinar (três respostas possíveis, não duas)
 
-## Parte 2 — Rodapé com dois botões
+Para cada exigência, dada a categoria/corporação do cliente:
 
-No passo dos laudos, o rodapé do pop-up guiado passa a ter dois botões lado a lado:
+```text
+EXIGIDO       → passo normal, cliente entrega o documento
+ALTERNATIVO   → passo normal, mas aceita a via institucional
+                (ex.: GCM/PM/PC com laudo da própria corporação)
+DISPENSADO    → passo aparece já cumprido, com carimbo + base legal
+```
+
+E, antes de tudo isso, uma quarta saída no nível do **serviço**:
+
+```text
+FORA DE ESCOPO (SIGMA) → o cliente não deveria estar neste processo;
+                          o sistema avisa e oferece a rota correta (Exército/CR)
+```
+
+## Base legal que sustenta cada estado
+
+- **Lei 10.826/03, art. 6º** — lista taxativa de quem tem porte funcional (PF, PRF, Polícia Ferroviária Federal, Polícia Civil, Polícia Militar, Corpo de Bombeiros Militar, Polícia Penal, agentes penitenciários, ABIN, guardas municipais nas faixas populacionais previstas, entre outros).
+- **Lei 10.826/03, art. 6º, §1º-A** — os integrantes dessas instituições, para o porte, não se submetem à comprovação de capacidade técnica e de aptidão psicológica exigida do cidadão comum, porque essa aferição já é feita pela própria corporação.
+- **Lei 10.826/03, art. 4º, III, e §2º** — para o cidadão comum, capacidade técnica e aptidão psicológica são atestadas por instrutor e psicólogo credenciados pela PF.
+- **Portaria Conjunta / normativo de exames institucionais** — permite que o servidor de segurança pública use o laudo da própria instituição no lugar do credenciado PF (base do modo "Alternativo").
+- **Lei 10.826/03, art. 3º, parágrafo único, e Decreto 11.615/23** — armas de integrantes das Forças Armadas e das instituições ali indicadas são registradas no **SIGMA (Exército)**, não no SINARM. Daí a saída "fora de escopo".
+- **LC 35/79, art. 33, V (LOMAN) e Lei 8.625/93, art. 42** — porte de magistrados e membros do MP por lei orgânica, sem os exames do cidadão comum.
+
+Nada disso é chumbado no código: **cada linha da matriz guarda a base legal em texto**, e é esse texto que vai para o carimbo. Antes de ativar, você revisa a matriz inteira em Configurações — o sistema entrega um rascunho e você confirma linha a linha.
+
+## Parte 1 — Passo dispensado continua no checklist, com carimbo
+
+O passo não some. Ele abre já cumprido:
+
+```text
+  EXAME DE APTIDÃO PSICOLÓGICA
+  ┌──────────────────────────────────────────────┐
+  │  DISPENSADO POR LEI                          │
+  │  Lei 10.826/03, art. 6º, §1º-A               │
+  │  Servidor de segurança pública — Polícia Civil│
+  └──────────────────────────────────────────────┘
+  A aferição psicológica da sua corporação supre
+  esta exigência. Já marcamos como cumprido no
+  seu processo — você não precisa entregar nada.
+
+                          [  AVANÇAR  ]
+```
+
+- Carimbo no padrão visual dos carimbos já existentes, com "DISPENSADO POR LEI" + base legal + categoria que gerou a dispensa.
+- Item entra no processo já cumprido: conta como concluído nas barras de progresso do cliente e do admin, sem pendência acionável.
+- Botão único **AVANÇAR** — sem upload.
+- Mesmo carimbo aparece na linha do tempo do admin, com a base legal e o registro de qual regra dispensou.
+
+## Parte 2 — Passo alternativo (via institucional)
+
+Quando o modo é "Alternativo", o passo continua exigindo entrega, mas com dois caminhos no rodapé:
 
 ```text
 [  NÃO — FAZER COM CREDENCIADO DA PF  ]  [  ENTREGAR DOCUMENTO  ]
 ```
 
-- "NÃO" registra a resposta `exames_instituicao = nao` e, no mesmo pop-up, abre a lista de psicólogos e instrutores credenciados pela PF mais próximos (componente de agendamento que já existe), sem navegar para outra tela.
-- "ENTREGAR DOCUMENTO" mantém o fluxo atual: registra a resposta SIM e segue para o envio dos atestados da instituição.
-- Depois de respondido, o rodapé volta ao botão único do documento correspondente — o resto do fluxo permanece igual.
+- "ENTREGAR DOCUMENTO": o cliente anexa o laudo da própria corporação.
+- "NÃO": registra a resposta e abre, no mesmo pop-up, a lista de psicólogos e instrutores credenciados pela PF.
+- Isso vale para servidor de segurança pública em geral (PM, PC, Penal, Bombeiros, GCM), não só GCM.
 
-Visibilidade: esse rodapé duplo só aparece quando a exigência é da trilha de segurança pública e a corporação do cliente é Guarda Civil Municipal. Para as demais corporações (PM, PC, Penal, Bombeiros, SSP) e para o cidadão comum, o comportamento continua o de hoje. A corporação sai do cadastro do cliente; se ela não estiver preenchida, o pop-app mantém o rodapé padrão para não esconder caminho de ninguém.
+## Parte 3 — Saída "fora de escopo" (SIGMA)
 
-## Parte 3 — Configurações: matriz "Profissão × Grupos dispensados"
+Se a categoria for militar das Forças Armadas da ativa (ou outro caso marcado como SIGMA) e o serviço contratado for de SINARM (posse/porte na PF), o pop-up guiado abre uma tela de aviso antes do checklist explicando que o registro daquela arma corre no Exército, com a base legal e o encaminhamento para o serviço de CR/SIGMA. O processo não é apagado — fica sinalizado para a equipe.
 
-Nova aba **Dispensas por profissão** em Configurações, ao lado de "Checklist" e "Simulador".
+## Parte 4 — Configurações: matriz "Categoria × Exigência"
 
-Como funciona, na prática:
-- Uma tabela com as categorias profissionais nas linhas (Guarda Civil Municipal, Polícia Militar, Polícia Civil, Polícia Penal, Bombeiros, SSP, Militar das Forças Armadas, Magistrado/MP, Cidadão comum) e os grupos do checklist nas colunas (Identificação, Endereço, Ocupação, Idoneidade, Habitualidade, Efetiva necessidade, Laudos, Arma, Requerimento).
-- Cada cruzamento tem três estados: **Exigido** (padrão), **Dispensado** (o passo continua visível, mas já nasce cumprido com carimbo legal) e **Alternativo** (o grupo continua, mas aceita a via institucional — é o caso dos laudos da GCM).
-- Filtro por serviço no topo, porque uma dispensa pode valer só para posse e não para porte. Existe também a opção "vale para todos os serviços".
-- Cada linha marcada pede uma **base legal** em texto curto, que é o texto impresso no carimbo exibido ao cliente.
-- Botão "Simular" abre o Simulador de Checklist já com a profissão escolhida, mostrando o checklist final antes de salvar.
+Nova aba **Dispensas e exigências por categoria**.
 
-## Parte 4 — Dispensa visível no checklist guiado (em vez de sumir o passo)
+- Linhas: as categorias já existentes no sistema (cidadão comum, servidor de segurança pública com desdobramento por corporação, magistrado/MP, militar das FFAA, PJ) — a corporação vem do cadastro do cliente.
+- Colunas: os grupos/exigências do checklist (Identificação, Endereço, Ocupação, Idoneidade, Habitualidade, Efetiva necessidade, Laudos, Arma, Requerimento).
+- Cada cruzamento: **Exigido / Alternativo / Dispensado**, e no nível da categoria um marcador **Registro: SINARM ou SIGMA**.
+- Toda célula marcada como Dispensado ou Alternativo exige o texto de **base legal**, que é exatamente o que o cliente lê no carimbo.
+- Filtro por serviço (uma dispensa pode valer para posse e não para porte) e opção "vale para todos".
+- Botão **Simular** abre o Simulador de Checklist já com a categoria escolhida, mostrando o resultado final antes de salvar.
 
-O passo dispensado **continua no checklist e continua sendo aberto pelo cliente**. Ao abrir, em vez de pedir documento, ele vê:
+## Parte 5 — Correção da pergunta SIM/NÃO dos laudos
 
-```text
-  LAUDO DE APTIDÃO PSICOLÓGICA
-  ┌───────────────────────────────────────────┐
-  │  DISPENSADO POR LEI                       │
-  │  Lei 10.826/03, art. 6º, §1º-A            │
-  │  Guarda Civil Municipal                   │
-  └───────────────────────────────────────────┘
-  Você não precisa entregar este documento por
-  causa da sua profissão. Já marcamos como
-  cumprido no seu processo.
+Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_definir` tem `tipo: pergunta`, `chave: exames_instituicao` e as duas opções; no processo do Anthony a mesma linha ficou com regra genérica, sem `tipo` e sem as condicionais. Por isso aparece "ENTREGAR DOCUMENTO" e as duas trilhas de laudo contam juntas (5 itens em vez de 2).
 
-                        [  AVANÇAR  ]
-```
-
-- Carimbo no padrão dos carimbos já existentes (`DocResultadoCarimbo`), em verde de aprovado, com o texto "DISPENSADO POR LEI" + base legal + categoria que gerou a dispensa.
-- O item já entra no processo com status de dispensa (cumprido), então conta como concluído nas barras de progresso do cliente e do admin, sem pendência acionável.
-- Botão único **AVANÇAR** — sem upload, sem botão de entrega.
-- No painel do admin, o mesmo item aparece na linha do tempo com o carimbo de dispensa e a base legal, com registro em auditoria de qual regra dispensou o quê. Nada é apagado.
-
-Efeito prático: em vez de esconder exigências, o cliente enxerga o benefício que a profissão dele traz — cada dispensa é uma tela a mais mostrando "isso aqui a lei te libera".
+1. A função que aplica a condição profissional passa a preservar a regra do catálogo (`tipo`, `chave`, `opcoes`, `ajuda`, `exige_quando`, `dispensa_quando`, etapa e ordem).
+2. Backfill dos processos já criados, sem tocar em documentos aprovados ou já enviados.
+3. Fallback no portal: exigência sem configuração de pergunta usa a regra do catálogo carregada em memória.
 
 ## Detalhes técnicos
 
-- `supabase/functions/qa-processo-set-condicao/index.ts`: mesclar `regra_validacao` do catálogo no insert (`{ ...regraCatalogo, exige, label_botao, checklist_operador }`) e usar `etapa`/`ordem` do catálogo; aplicar as dispensas da nova matriz marcando os itens dos grupos dispensados com `status = 'nao_aplicavel'` e motivo.
-- Migração: tabela `public.qa_dispensas_profissao` (`servico_id` nullable = todos, `condicao_profissional`, `grupo_id`, `modo` em exigido/dispensado/alternativo, `base_legal`, `ativo`), com GRANTs para `authenticated`/`service_role`, RLS de leitura para autenticados e escrita só para administradores. Migração de dados separada para o backfill de `regra_validacao` nos processos pendentes.
-- `PendenciasGuiadasPopup.tsx`: rodapé condicional com dois botões quando `active.kind === "pergunta"` e `perguntaChave === "exames_instituicao"` e a corporação do cliente for GCM; "NÃO" chama `onResponder("nao")` e abre `AgendarExameModal` inline.
-- `QAClientePortalPage.tsx`: passar a corporação/condição do cliente ao pop-up; fallback de `regra_validacao` via `catalogoDocInfo`; no `resumoProcesso`, tratar `dispensa_quando` como ramo exclusivo (hoje só `exige_quando` é tratado), para o grupo Laudos contar 2 e não 5.
-- `QAConfiguracoesPage.tsx` + novo componente de matriz, reaproveitando os grupos de `pendenciasGrupos.ts` e as condições profissionais já usadas no catálogo.
+- Migração: `public.qa_regras_categoria` (`servico_id` nullable, `categoria`, `corporacao` nullable, `grupo_id`/`tipo_documento`, `modo` em exigido/alternativo/dispensado, `base_legal`, `registro` em sinarm/sigma, `ativo`), com GRANTs para `authenticated` e `service_role`, RLS de leitura para autenticados e escrita só para administradores. Seed em rascunho, inativo até revisão.
+- `supabase/functions/qa-processo-set-condicao/index.ts`: mesclar `regra_validacao` do catálogo (`{ ...regraCatalogo, exige, label_botao, checklist_operador }`), respeitar `etapa`/`ordem`, e aplicar a matriz gravando `status = 'dispensado'` + `regra_validacao.dispensa = { base_legal, categoria }` nos itens dispensados; registrar em `qa_processo_eventos`.
+- Migração de dados separada para o backfill de `regra_validacao` nos processos pendentes.
+- `PendenciasGuiadasPopup.tsx`: novo estado de passo dispensado (carimbo + AVANÇAR) reusando `DocResultadoCarimbo`; rodapé duplo no modo alternativo abrindo `AgendarExameModal` inline; tela de aviso SIGMA antes do checklist.
+- `QAClientePortalPage.tsx`: contar itens dispensados como cumpridos, tratar `dispensa_quando` como ramo exclusivo (hoje só `exige_quando`), passar categoria/corporação ao pop-up.
+- `src/components/quero-armas/clientes/categoriaTitular.ts`: a matriz fixa atual vira fallback; a fonte passa a ser a tabela. Hoje esse arquivo marca `seguranca_publica` como dispensada de laudo e exame — o que a matriz vai refinar por corporação e por serviço.
+- `QAConfiguracoesPage.tsx` + novo componente de matriz, reaproveitando `pendenciasGrupos.ts` e `CONDICOES_CHECKLIST`.
 
 ## Verificação
 
-- Processo do Anthony volta a ter `tipo: pergunta` na linha dos exames e o grupo Laudos mostra 2 itens.
-- Cliente GCM: rodapé com NÃO + ENTREGAR; ao clicar NÃO, a lista de credenciados abre no mesmo pop-up.
-- Cliente de outra corporação: rodapé inalterado.
-- Marcar um grupo como Dispensado em Configurações e simular: o grupo some do checklist daquela profissão, com a base legal exibida.
+- Cliente de Polícia Civil: laudos aparecem dispensados, com carimbo e base legal, e o progresso fecha sem pendência.
+- Cliente GCM: rodapé com NÃO + ENTREGAR; ao clicar NÃO, credenciados PF abrem no mesmo pop-up.
+- Militar da ativa em serviço SINARM: tela de aviso SIGMA antes do checklist.
+- Cidadão comum: nada muda.
+- Processo do Anthony volta a ter `tipo: pergunta` e o grupo Laudos mostra 2 itens.
