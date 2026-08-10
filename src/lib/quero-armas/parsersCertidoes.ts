@@ -144,6 +144,21 @@ export interface CamposCertidao {
   municipio_incidencia_issqn?: string;
   retencao_issqn?: string;
   valor_liquido?: string;
+
+  /**
+   * Diagnóstico da LEITURA (não do documento).
+   *
+   * Registra de onde cada campo crítico saiu e se precisou do leitor canônico
+   * de rótulos. É o que a aba "Auditoria de leitura" mostra ao administrador
+   * quando alguém pergunta "por que essa certidão foi recusada?".
+   */
+  leitura?: {
+    nome_fonte?: string;
+    /** O parser do órgão falhou e o leitor canônico resgatou o campo. */
+    nome_resgatado?: boolean;
+    /** Campos críticos que continuaram sem valor após todas as tentativas. */
+    campos_vazios?: string[];
+  };
 }
 
 const norm = (v: string) =>
@@ -608,6 +623,80 @@ function numOrUndef(v: string | undefined): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
+import {
+  lerNomeRotulado,
+  pareceNomePessoa,
+  cpfDoCadastroPresenteNoTexto,
+} from "./leituraCamposPdf";
+
+/**
+ * Rótulos sob os quais o TITULAR aparece, em todos os layouts já vistos.
+ *
+ * Existe porque cada órgão nomeia o mesmo campo de um jeito: o TSE diz
+ * "Eleitor(a)", o TRF diz "contra", o TJM diz "em nome de", o CR diz "Nome
+ * completo". Quando o regex específico do órgão não casa — quase sempre por
+ * variação de layout, não por falta do dado —, este leitor tenta os três
+ * arranjos possíveis (mesma linha, coluna ao lado, linha de baixo).
+ */
+const ROTULOS_TITULAR = [
+  "Nome completo",
+  "Nome civil",
+  "Nome do requerente",
+  "Nome do\\(a\\) requerente",
+  "Requerente",
+  "Eleitor\\(a\\)",
+  "Eleitor",
+  "Interessado\\(a\\)",
+  "Interessado",
+  "em nome de",
+  "em favor de",
+  "Nome",
+];
+
+/**
+ * Última camada antes de acusar "a certidão não traz o nome".
+ *
+ * Só age quando o parser do órgão devolveu nome ausente ou implausível — isto
+ * é, quando o que veio não tem cara de nome de pessoa (caso real: o valor
+ * saiu como "OCUPACAO DECLARADA PELO(A) ELEITOR(A)"). Não inventa nada: lê o
+ * mesmo documento com o leitor canônico de rótulos.
+ */
+function resgatarTitular(campos: CamposCertidao, texto: string): CamposCertidao {
+  const vazios: string[] = [];
+  let out = campos;
+
+  if (!pareceNomePessoa(campos.nome_titular)) {
+    const lido = lerNomeRotulado(texto, ROTULOS_TITULAR);
+    if (lido.valor) {
+      out = {
+        ...campos,
+        nome_titular: lido.valor,
+        leitura: { ...campos.leitura, nome_fonte: lido.fonte, nome_resgatado: true },
+      };
+    } else {
+      vazios.push("nome_titular");
+      out = { ...campos, nome_titular: undefined };
+    }
+  } else {
+    out = {
+      ...campos,
+      leitura: { ...campos.leitura, nome_fonte: "parser_do_orgao", nome_resgatado: false },
+    };
+  }
+
+  if (!out.cpf) vazios.push("cpf");
+  if (vazios.length) out = { ...out, leitura: { ...out.leitura, campos_vazios: vazios } };
+  return out;
+}
+
+/**
+ * O CPF do cadastro está impresso no documento?
+ *
+ * Reexportado aqui para a conferência poder distinguir "documento de outra
+ * pessoa" de "campo que o parser não localizou" sem duplicar a regra.
+ */
+export { cpfDoCadastroPresenteNoTexto };
+
 /**
  * Ponto de entrada: identifica o órgão e aplica o parser dele.
  * Devolve `null` quando o layout não é conhecido — aí sim a IA entra.
@@ -615,7 +704,8 @@ function numOrUndef(v: string | undefined): number | undefined {
 export function parseCertidao(texto: string): CamposCertidao | null {
   const orgao = identificarOrgao(texto);
   if (!orgao) return null;
-  switch (orgao) {
+  const bruto = ((): CamposCertidao => {
+    switch (orgao) {
     case "stm": return parseStm(texto);
     case "tse": return parseTse(texto);
     case "iirgd": return parseIirgd(texto);
@@ -629,7 +719,16 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "cartao_cnpj": return parseCartaoCnpj(texto);
     case "qsa": return parseQsa(texto);
     case "nota_fiscal": return parseNotaFiscal(texto);
-  }
+    }
+  })();
+
+  // Certidões de pessoa física passam pelo resgate; documentos de empresa
+  // (CNPJ, NFS-e) não têm "titular" no mesmo sentido e ficam de fora.
+  const PESSOA_FISICA: OrgaoCertidao[] = [
+    "stm", "tse", "iirgd", "tjsp_distribuicao", "tjsp_execucoes",
+    "trf_regional", "tjm_sp", "cr_exercito",
+  ];
+  return PESSOA_FISICA.includes(orgao) ? resgatarTitular(bruto, texto) : bruto;
 }
 
 /* =============================================================================

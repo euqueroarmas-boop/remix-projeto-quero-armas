@@ -1512,6 +1512,8 @@ export function ClienteDocsHubModal({
   const [conferenciaLocal, setConferenciaLocal] = useState<{
     doc: ReturnType<typeof parseCertidao>;
     conf: ReturnType<typeof conferirCertidao>;
+    /** Texto integral lido do PDF — matéria-prima da auditoria de leitura. */
+    texto?: string;
   } | null>(null);
 
   /**
@@ -3082,8 +3084,8 @@ export function ClienteDocsHubModal({
       naturalidade_municipio: clienteAutoFetch.naturalidade_municipio,
       naturalidade_uf: clienteAutoFetch.naturalidade_uf,
       rg: clienteAutoFetch.rg,
-    });
-    setConferenciaLocal({ doc, conf });
+    }, texto);
+    setConferenciaLocal({ doc, conf, texto });
 
     // Preenche o formulário com o que foi LIDO do documento, não inferido.
     setForm((prev) => ({
@@ -3634,6 +3636,38 @@ export function ClienteDocsHubModal({
             ? {
                 parser: conferenciaLocal.doc as unknown as Record<string, unknown>,
                 parser_veredicto: conferenciaLocal.conf.veredicto,
+                /* ── Auditoria de leitura ─────────────────────────────────
+                 * Guarda o que foi usado para decidir: o texto que o sistema
+                 * enxergou, de onde cada campo crítico saiu, o que divergiu e
+                 * a mensagem exata entregue ao cliente.
+                 *
+                 * Sem isso, "por que essa certidão foi recusada?" só se
+                 * responde reproduzindo o upload — e o documento do cliente
+                 * já não está mais na mão de ninguém. */
+                auditoria_leitura: {
+                  versao: 2,
+                  lido_em: new Date().toISOString(),
+                  motor: "parser_local_pdf",
+                  orgao_identificado: conferenciaLocal.doc.orgao,
+                  tipo_identificado: conferenciaLocal.doc.tipoDocumento,
+                  fonte_do_nome: conferenciaLocal.doc.leitura?.nome_fonte ?? null,
+                  nome_resgatado: conferenciaLocal.doc.leitura?.nome_resgatado ?? false,
+                  campos_vazios: conferenciaLocal.doc.leitura?.campos_vazios ?? [],
+                  veredicto: conferenciaLocal.conf.veredicto,
+                  mensagem_ao_cliente: conferenciaLocal.conf.mensagemCliente ?? null,
+                  achados: (conferenciaLocal.conf.achados ?? []).map((a) => ({
+                    campo: a.campo,
+                    label: a.label,
+                    problema: a.problema,
+                    no_documento: a.noDocumento,
+                    no_cadastro: a.noCadastro,
+                    mensagem: a.mensagem,
+                  })),
+                  // Recorte generoso, mas limitado: é prova de leitura, não
+                  // cópia do documento (o arquivo original fica no storage).
+                  texto_lido: (conferenciaLocal.texto ?? "").slice(0, 20000),
+                  texto_truncado: (conferenciaLocal.texto ?? "").length > 20000,
+                },
                 // Promovido para o topo: o SQL do motor lê sem descer no objeto.
                 ...(conferenciaLocal.doc.trf_regiao != null
                   ? { trf_regiao: conferenciaLocal.doc.trf_regiao }

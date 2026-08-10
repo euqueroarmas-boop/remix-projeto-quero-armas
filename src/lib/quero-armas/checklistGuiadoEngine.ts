@@ -845,9 +845,10 @@ export async function lerDocumentoLocalmente(
 ): Promise<LeituraLocalResultado> {
   if (file.type !== "application/pdf") return { reconhecido: false, aprovado: false };
   try {
-    const doc = parseCertidao(await extrairTextoPdf(file));
+    const texto = await extrairTextoPdf(file);
+    const doc = parseCertidao(texto);
     if (!doc) return { reconhecido: false, aprovado: false };
-    const conf = conferirCertidao(doc, cadastro);
+    const conf = conferirCertidao(doc, cadastro, texto);
     return {
       reconhecido: true,
       aprovado: conf.veredicto === "aprovado",

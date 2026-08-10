@@ -28,6 +28,10 @@
 
 import type { CamposCertidao, OrgaoCertidao } from "./parsersCertidoes";
 import { SIGLAS_UF } from "./localidadesBr";
+import {
+  valorDoCadastroPresenteNoTexto,
+  cpfDoCadastroPresenteNoTexto,
+} from "./leituraCamposPdf";
 
 export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente";
 
@@ -246,6 +250,15 @@ export const CAMPOS_NAO_VERIFICAVEIS: Partial<Record<OrgaoCertidao, string[]>> =
 export function conferirCertidao(
   doc: CamposCertidao,
   cadastro: CadastroConferencia,
+  /**
+   * Texto integral lido do PDF.
+   *
+   * Serve a UM propósito: distinguir "o documento não traz o campo" de "o
+   * parser não achou o campo". Sem isso, uma variação de layout vira acusação
+   * contra o cliente — foi o que aconteceu com certidões que traziam o nome
+   * impresso e mesmo assim foram recusadas por "não traz Nome".
+   */
+  textoDocumento?: string,
 ): ResultadoConferencia {
   const achados: AchadoConferencia[] = [];
 
@@ -253,6 +266,15 @@ export function conferirCertidao(
   for (const campo of OBRIGATORIOS[doc.orgao]) {
     const v = doc[campo];
     if (v === undefined || v === null || v === "") {
+      // Recuperação determinística: o valor do CADASTRO está impresso, inteiro
+      // e literal, no texto do próprio PDF? Então o campo existe no documento
+      // e confere — o que falhou foi a localização por rótulo, não o cliente.
+      // Isto não afrouxa nada: exige igualdade literal, nunca semelhança.
+      if (textoDocumento) {
+        if (campo === "nome_titular" && valorDoCadastroPresenteNoTexto(textoDocumento, cadastro.nome_completo)) continue;
+        if (campo === "cpf" && cpfDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { cpf?: unknown }).cpf)) continue;
+        if (campo === "nome_mae" && valorDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { nome_mae?: unknown }).nome_mae)) continue;
+      }
       achados.push({
         campo: String(campo),
         label: LABEL[String(campo)] ?? String(campo),

@@ -10,6 +10,7 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
+  ScanText,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
   ShoppingCart, RefreshCw, Landmark, LayoutDashboard, Files, FolderKanban, BellDot,
   ScrollText, CreditCard, Headphones, SlidersHorizontal, Target, PackageOpen,
@@ -51,6 +52,8 @@ import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/Con
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteCienciasAuditoria from "@/components/quero-armas/clientes/ClienteCienciasAuditoria";
+import ClienteAuditoriaLeitura from "@/components/quero-armas/clientes/ClienteAuditoriaLeitura";
+import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
@@ -1541,6 +1544,9 @@ function ClientePortalMirrorAdmin({
 
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
+  // A auditoria de leitura expõe texto bruto de documento (PII). Só administrador vê.
+  const { profile: perfilQA } = useQAAuth();
+  const ehAdministrador = perfilQA?.perfil === "administrador";
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
@@ -3226,6 +3232,9 @@ export default function QAClientesPage() {
                 { value: "exames", icon: HeartPulse, label: `Exames (${examesAtuais.length})` },
                 { value: "efetiva", icon: ShieldCheck, label: "Efetiva necessidade" },
                 { value: "ciencias", icon: ShieldCheck, label: "Ciências e aceites" },
+                ...(ehAdministrador
+                  ? [{ value: "auditoria_leitura", icon: ScanText, label: "Auditoria de leitura" }]
+                  : []),
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
@@ -3992,6 +4001,13 @@ export default function QAClientesPage() {
               <TabsContent value="ciencias" className="mt-3">
                 <ClienteCienciasAuditoria cliente={c} />
               </TabsContent>
+              {/* AUDITORIA DE LEITURA — só administrador. Dado bruto de parser,
+                  com PII, usado para investigar recusa de documento. */}
+              {ehAdministrador && (
+                <TabsContent value="auditoria_leitura" className="mt-3">
+                  <ClienteAuditoriaLeitura cliente={c} />
+                </TabsContent>
+              )}
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
               </TabsContent>
