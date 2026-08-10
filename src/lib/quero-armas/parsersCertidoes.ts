@@ -17,6 +17,8 @@
  * `nome_mae` é preenchido.
  * ============================================================================= */
 
+import { detectarEscopoCertidao } from "./escopoCertidao";
+
 export type OrgaoCertidao =
   | "stm"
   | "tse"
@@ -25,6 +27,11 @@ export type OrgaoCertidao =
   | "tjsp_execucoes"
   | "trf_regional"
   | "tjm_sp"
+  /**
+   * Certidão CÍVEL do TJM/SP (Cartório Cível, "ações cíveis"). Existe aqui só
+   * para ser IDENTIFICADA e REJEITADA — nunca ocupa slot de antecedentes.
+   */
+  | "tjm_sp_civel"
   | "cr_exercito"
   | "boletim_ocorrencia"
   /* ── Grupo OCUPAÇÃO LÍCITA E RENDA ──────────────────────────────────────
@@ -242,7 +249,13 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
-  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL/.test(t)) return "tjm_sp";
+  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL/.test(t)) {
+    // O TJM/SP emite DUAS certidões com o mesmo timbre: a criminal (três
+    // Auditorias Criminais) e a cível (Cartório Cível, "ações cíveis"). Sem
+    // esta separação as duas caíam em `tjm_sp` e a cível era aprovada no slot
+    // da criminal, porque também diz "NADA CONSTAR" e traz o nome do cliente.
+    return detectarEscopoCertidao(t) === "civel" ? "tjm_sp_civel" : "tjm_sp";
+  }
   // Eleitoral: a mesma certidão de crimes eleitorais é emitida com cabeçalho
   // do TSE ou do TRE do estado do eleitor. O layout é o mesmo — só o timbre
   // muda. Sem o TRE aqui, certidões válidas de fora de SP caíam em "órgão não
@@ -568,6 +581,30 @@ function parseTjmSp(texto: string): CamposCertidao {
 /* ── CR — Certificado de Registro ──────────────────────────────────────── */
 
 /**
+ * Certidão CÍVEL do TJM/SP.
+ *
+ * Lê apenas o suficiente para EXPLICAR a rejeição (o layout cível escreve
+ * "(réu/requerido):" em vez de "em nome de:"). Nada aqui aprova documento:
+ * a conferência reprova por escopo.
+ */
+function parseTjmSpCivel(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const nome = upperOrUndef(
+    cortarCampo(g(/\(r[eé]u\/requerido\):\s*\n*\s*([^,\n]+)/i)),
+  );
+  return {
+    orgao: "tjm_sp_civel",
+    // Slug propositalmente fora do vocabulário de antecedentes: este documento
+    // não pode ocupar slot nenhum do Hub.
+    tipoDocumento: "certidao_civel_nao_aceita",
+    nome_titular: pareceNomePessoa(nome) ? nome : undefined,
+    cpf: cpf11(g(/CPF:\s*([\d.\-]+)/i)),
+    data_emissao: dataPorExtenso(t),
+  };
+}
+
+/**
  * As três atividades que o CR pode apostilar.
  *
  * O documento as escreve por extenso e numeradas: "1- Tiro Desportivo -
@@ -843,6 +880,7 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "tjsp_execucoes": return parseTjsp(texto, "tjsp_execucoes");
     case "trf_regional": return parseTrfRegional(texto);
     case "tjm_sp": return parseTjmSp(texto);
+    case "tjm_sp_civel": return parseTjmSpCivel(texto);
     case "cr_exercito": return parseCr(texto);
     case "boletim_ocorrencia": return parseBoletimOcorrencia(texto);
     case "ccmei": return parseCcmei(texto);

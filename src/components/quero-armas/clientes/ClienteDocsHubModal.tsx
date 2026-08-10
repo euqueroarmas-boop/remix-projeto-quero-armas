@@ -33,6 +33,7 @@ import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./Resid
 import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal";
 import ConfrontoCpfComprovanteModal from "./ConfrontoCpfComprovanteModal";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { detectarEscopoCertidao, mensagemCertidaoCivel } from "@/lib/quero-armas/escopoCertidao";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
@@ -2277,6 +2278,30 @@ export function ClienteDocsHubModal({
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/\s+/g, " ")
           .trim();
+        // ── TRAVA DE ESCOPO · certidão CÍVEL (regra global) ────────────────
+        // Antes de qualquer leitura ou classificação: certidão cível não
+        // instrui processo de arma de fogo. Não é salva, não vai para a IA e
+        // não ocupa slot nenhum do Hub.
+        if (limpo.length >= 80 && detectarEscopoCertidao(textoNativo) === "civel") {
+          const msg = mensagemCertidaoCivel(textoNativo);
+          setResultadoCarimbo({ tipo: "reprovado", mensagem: msg });
+          setExtracting(false);
+          if (qaClienteId) {
+            supabase.functions.invoke("qa-notify-event", {
+              body: {
+                evento: "documento_rejeitado",
+                somente_admin: true,
+                cliente_id: qaClienteId,
+                motivo_rejeicao: msg,
+                motivo_codigo: "escopo_civel",
+                documento: expectedTipoMeta?.label || "Certidão",
+                arquivo: target.name || "",
+                referencia_id: `escopo-civel-${Date.now()}`,
+              },
+            }).catch(() => {});
+          }
+          return;
+        }
         if (limpo.length >= 80) {
           try {
             const docLocal = parseCertidao(textoNativo);
