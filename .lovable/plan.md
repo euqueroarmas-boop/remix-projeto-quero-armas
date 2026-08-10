@@ -38,6 +38,30 @@
 2. Diferenciar “campo realmente ausente no documento” de “layout ainda não reconhecido”, para não orientar o cliente a reemitir uma certidão válida.
 3. Manter as recusas já registradas como trilha histórica; não aprovar registros antigos automaticamente.
 
+## Nova aba “Auditoria de Leitura” no cadastro do cliente (somente administradores)
+
+Nova aba dentro da ficha do cliente em Clientes, ao lado das abas já existentes (Exames, Efetiva Necessidade, Ciências, Peças, Hub, Histórico). Visível **apenas para perfil administrador** — para os demais perfis a aba não é renderizada nem acessível.
+
+Conteúdo, documento por documento, em ordem cronológica:
+
+1. **Identificação do envio** — arquivo enviado, tipo classificado, órgão detectado, data/hora, origem (cliente ou equipe) e carimbo de conexão do envio.
+2. **O que o parser leu** — órgão identificado, campos extraídos (nome, CPF, nascimento, filiação, naturalidade, número, emissão, validade, resultado) com a fonte de cada campo (rótulo, layout, fallback literal) e o status de reconhecimento do layout.
+3. **Quem leu** — parser determinístico ou IA, com confiança, justificativa e indicação explícita quando a IA não foi acionada.
+4. **Conferência contra o cadastro** — cada campo comparado lado a lado (valor no documento × valor no cadastro) com o veredicto: confere, diverge, ausente no documento ou ausente no cadastro.
+5. **Decisão** — aprovado, rejeitado, revisão humana ou cadastro pendente, com todos os motivos que sustentaram a decisão e a regra aplicada (validade, resultado, duplicidade, titularidade).
+6. **O que foi comunicado ao cliente** — mensagem exibida na tela, notificação enviada, e-mail disparado (assunto e conteúdo registrados no log de conteúdo de e-mail) e data/hora de cada aviso.
+7. **Ações posteriores** — reprocessamentos, correções da equipe, aceites de divergência e mudanças de status, com autor e horário.
+
+Regras da aba:
+
+- Leitura apenas: nenhuma ação altera status ou aprova documento a partir dela.
+- Todo texto em caixa alta, no padrão visual das demais abas do admin.
+- Permite expandir o diagnóstico técnico bruto por documento e copiar o registro para suporte.
+- Fonte dos dados: os registros já existentes de documentos, eventos de processo, notificações do cliente e log de conteúdo de e-mail — sem criar decisão nova, apenas exibindo o que ficou gravado.
+- Se um envio antigo não tiver diagnóstico gravado, a aba mostra isso explicitamente como “sem registro de leitura” em vez de deixar campos vazios sem explicação.
+
+Para que essa aba seja completa nos envios futuros, a etapa de correção passa a persistir, junto de cada documento, o diagnóstico da leitura: texto reconhecido resumido, campos com sua origem, resultado da conferência e mensagem entregue ao cliente.
+
 ## Testes e validação
 
 - Criar testes unitários com variações reais de texto: linha única, quebra após rótulo, fragmentos de coluna, nome seguido de ocupação, filiação em bloco e texto totalmente achatado.
@@ -45,6 +69,7 @@
 - Adicionar regressão do caso TSE do Pedro usando dados anonimizados: o nome deve ser exatamente o titular e o resultado deve ser reconhecido quando estiver expresso no PDF.
 - Validar que divergências reais de nome, CPF, nascimento e resultado continuam sendo recusadas.
 - Executar os testes direcionados e verificar no fluxo de upload que uma certidão válida chega à conferência sem o falso “Nome ausente”.
+- Verificar que a aba de auditoria aparece para administrador e não aparece para os demais perfis.
 
 ## Tratamento dos documentos já afetados
 
