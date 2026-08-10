@@ -417,8 +417,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
   const [baixandoZip, setBaixandoZip] = useState(false);
   const handleBaixarTudo = async () => {
-    const comArquivo = [...(docs as any[]), ...provasComoDocs].filter((d) => d.arquivo_storage_path);
-    if (comArquivo.length === 0) { toast.error("Nenhum arquivo para baixar."); return; }
+    // Documentos rejeitados foram tirados do processo — nunca entram no dossiê.
+    const comArquivo = [...(docs as any[]), ...provasComoDocs]
+      .filter((d) => d.arquivo_storage_path)
+      .filter((d) => d.status !== "reprovado" && d.status !== "excluido");
+    if (comArquivo.length === 0) {
+      toast.error("Nenhum documento válido para o dossiê — os enviados estão rejeitados ou sem arquivo.");
+      return;
+    }
     setBaixandoZip(true);
     try {
       const JSZip = (await import("jszip")).default;
