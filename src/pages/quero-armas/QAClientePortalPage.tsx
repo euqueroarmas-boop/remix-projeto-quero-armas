@@ -3550,7 +3550,7 @@ export default function QAClientePortalPage() {
       onScopeChange={setSelectedScopeId}
     >
     <><SuporteModoBanner />
-    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[68px]" : "pl-0 lg:pl-[260px]"}`}>
+    <div className={`min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 ${effectiveCollapsed ? "pl-0 lg:pl-[60px]" : "pl-0 lg:pl-[60px]"}`}>
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
@@ -3603,7 +3603,7 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col text-[#E8E8E8] transition-[width] duration-200 overflow-hidden ${effectiveCollapsed ? "w-[68px] max-w-[68px]" : "w-[260px] max-w-[260px]"}`}
+        className="hidden lg:flex fixed top-0 left-0 z-50 h-[800px] max-h-dvh w-[60px] max-w-[60px] flex-col text-[#E8E8E8] overflow-hidden"
         style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
