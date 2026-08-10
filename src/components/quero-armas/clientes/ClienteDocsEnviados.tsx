@@ -830,10 +830,16 @@ function LinhaEntrega({
                     )}
                     <button
                       type="button"
-                      onClick={() => onReprovar(d.id)}
-                      className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-700"
+                      disabled={isReprovado}
+                      onClick={() => { if (!isReprovado) onReprovar(d.id); }}
+                      title={isReprovado ? "Este documento já foi rejeitado." : "Rejeitar com motivo"}
+                      className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                        isReprovado
+                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed"
+                          : "border-amber-200 bg-amber-50 text-amber-700"
+                      }`}
                     >
-                      <XCircle className="h-3 w-3" /> Rejeitar
+                      <XCircle className="h-3 w-3" /> {isReprovado ? "Rejeitado" : "Rejeitar"}
                     </button>
                     <button
                       type="button"
@@ -843,7 +849,29 @@ function LinhaEntrega({
                       <Trash2 className="h-3 w-3" /> Excluir
                     </button>
                   </div>
-                  {reprovandoId === d.id && (
+                  {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
+                    <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
+                      <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                        Motivo da rejeição
+                      </div>
+                      <ul className="mt-1 space-y-0.5">
+                        {(reprovas.length > 0
+                          ? reprovas
+                          : [{ motivo: d.motivo_reprovacao, quando: d.reprovado_em }]
+                        ).map((r, i) => (
+                          <li key={i} className="text-[10px] leading-snug text-[#7A1F2B]">
+                            {r.quando && (
+                              <span className="font-bold">
+                                {new Date(r.quando).toLocaleString("pt-BR")} ·{" "}
+                              </span>
+                            )}
+                            {r.motivo || "Motivo não informado."}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {reprovandoId === d.id && !isReprovado && (
                     <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2">
                       <textarea
                         value={motivoTmp}
