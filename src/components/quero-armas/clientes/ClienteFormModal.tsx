@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  mascaraTituloEleitor,
+  tituloEleitorDigitos,
+  TITULO_ELEITOR_PLACEHOLDER,
+} from "@/lib/quero-armas/tituloEleitor";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
