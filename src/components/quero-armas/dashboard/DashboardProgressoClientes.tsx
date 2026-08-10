@@ -465,17 +465,22 @@ export default function DashboardProgressoClientes() {
                         {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                         {pendencias > 0 && <Chip cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                         {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
-                        {((r.dispensados ?? 0) + (r.reaproveitados ?? 0)) > 0 && (
-                          <Chip cor={TINTA_3} fundo="#F4F4F4" titulo="Dispensados / reaproveitados">
-                            {(r.dispensados ?? 0) + (r.reaproveitados ?? 0)} DISP./REAP.
+                        {(r.reaproveitados ?? 0) > 0 && (
+                          <Chip cor={TINTA_3} fundo="#F4F4F4" titulo="Documentos aproveitados do histórico do cliente">
+                            {r.reaproveitados} REAPROVEITADOS
+                          </Chip>
+                        )}
+                        {(r.dispensados ?? 0) > 0 && (
+                          <Chip cor={TINTA_3} fundo="#F4F4F4" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
+                            {r.dispensados} NÃO SE APLICA
                           </Chip>
                         )}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-top text-[11.5px] font-medium uppercase max-w-[240px]" style={{ color: TINTA }}>
-                      <span className="inline-flex items-start gap-1.5">
+                    <td className="px-3 py-3 align-top text-[11.5px] font-medium uppercase max-w-[240px] overflow-hidden" style={{ color: TINTA }}>
+                      <span className="flex min-w-0 items-start gap-1.5">
                         {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 mt-[1px] shrink-0" style={{ color: AMBAR }} />}
-                        <span className="truncate">{r.proximo_doc ?? "—"}</span>
+                        <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
                       </span>
                     </td>
                     <td className="px-3 py-3 align-top text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>
