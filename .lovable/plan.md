@@ -25,8 +25,15 @@ Passos que aparecem na tela quando o cliente é de segurança pública:
 
 Observação em destaque: a Guarda Civil Municipal e demais órgãos de segurança pública cumprem o mesmo checklist do cidadão comum — a única diferença é poder apresentar esses dois laudos emitidos pela própria instituição. Base: Portaria Conjunta COLOG/C Ex e DPA/PF nº 1, de 29/11/2024, art. 3º, II.
 
+### 4. Resposta e escolha do profissional no mesmo pop-up
+- A pergunta SIM / NÃO continua sendo respondida dentro deste mesmo pop-up guiado — nada de tela nova só para decidir.
+- Respondendo **SIM**: o pop-up passa a pedir os dois atestados da instituição, com o passo a passo acima.
+- Respondendo **NÃO**: aparece, logo abaixo dos botões, um bloco de destaque com o botão "ESCOLHER PROFISSIONAL CREDENCIADO", que abre o pop-up de credenciados já existente — a mesma lista de psicólogos e instrutores de tiro credenciados pela PF, ordenada pelos mais próximos do CEP do cliente. Ao fechar, o cliente volta ao checklist guiado no ponto em que estava.
+- O botão continua disponível nas pendências de laudo psicológico e de laudo de capacidade técnica, para o cliente reabrir a lista quando quiser.
+
 ## Detalhes técnicos
 
 - `src/components/quero-armas/portal/PendenciasGuiadasPopup.tsx`: no modo pop-up, o `<h2>` do título deixa de usar `qa-h1` (22px) e passa a usar a mesma escala do `<h1>` do header (`text-[18px] sm:text-[20px]`, Oswald 700). Aumenta o `margin-top` do separador/título e o `padding-top` do bloco de passos. Modo `asPage` permanece exatamente como está (layout travado).
 - Conteúdo: migração atualizando as linhas `exames_instituicao_definir` de `qa_servicos_documentos` (todos os `servico_id` que possuem a pergunta) preenchendo `nome_documento` (novo título), `instrucoes` (os 6 passos, um por linha) e `observacoes_cliente` (observação GCM + base legal). O pop-up já consome `instrucoes`/`observacoes_cliente` do catálogo quando não há registro estático, então o texto passa a ser editável pelo admin — sem hardcode no front.
+- Escolha do profissional: reaproveita `src/components/quero-armas/clientes/AgendarExame/AgendarExameModal.tsx` (o mesmo componente usado hoje no resumo/kanban e na rota `/area-do-cliente/agendar-exame`, alimentado por `qa_psico_credenciados`). O `PendenciasGuiadasPopup` renderiza o botão quando `perguntaChave === "exames_instituicao"` com resposta `nao`, ou quando a pendência atual é `laudo_psicologico` / `laudo_capacidade_tecnica`, abrindo o modal por cima sem fechar o guiado.
 - Nenhuma mudança na lógica do motor: `exige_quando`/`dispensa_quando` de `exames_instituicao` continuam iguais; os dois caminhos (instituição e credenciado PF) já são reconhecidos.
