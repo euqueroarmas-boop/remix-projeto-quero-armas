@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { Loader2, ShieldCheck, ExternalLink } from "lucide-react";
 
 type Registro = Record<string, any>;

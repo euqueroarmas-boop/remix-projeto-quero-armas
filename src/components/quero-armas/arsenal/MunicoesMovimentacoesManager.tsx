@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
