@@ -69,6 +69,26 @@ export interface PendenciaItem {
   /** Frase que reforça o que acontece após responder (contexto pedagógico). */
   perguntaAjudaPos?: string | null;
   /**
+   * Exigência DISPENSADA POR LEI para a categoria profissional do titular.
+   *
+   * O passo continua no checklist de propósito (usuário, 10/08/2026): remover
+   * escondia do cliente o benefício que a profissão dele garante. Ele aparece
+   * já cumprido, com o carimbo e a base legal, e só precisa de "Avançar".
+   */
+  dispensa?: {
+    base_legal?: string | null;
+    categoria_label?: string | null;
+    grupo_label?: string | null;
+  } | null;
+  /** Confirma a ciência da dispensa e tira o passo da fila. */
+  onDispensaAvancar?: () => Promise<void> | void;
+  /**
+   * Via ALTERNATIVA (ex.: GCM/segurança pública com laudo da própria
+   * corporação): divide o rodapé em "Não" + "Entregar documento". O "Não"
+   * abre a escolha de credenciado da PF sem sair do pop-up.
+   */
+  recusaAlternativa?: { label: string; onClick: () => void } | null;
+  /**
    * Dado concreto que a pergunta está questionando — hoje, o endereço.
    *
    * "Você ainda reside neste imóvel?" é impossível de responder sem dizer
