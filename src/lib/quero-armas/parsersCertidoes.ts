@@ -750,11 +750,17 @@ function resgatarTitular(campos: CamposCertidao, texto: string): CamposCertidao 
   } else {
     out = {
       ...campos,
-      leitura: { ...campos.leitura, nome_fonte: "parser_do_orgao", nome_resgatado: false },
+      leitura: {
+        ...campos.leitura,
+        nome_fonte: campos.leitura?.nome_fonte ?? "parser_do_orgao",
+        nome_resgatado: false,
+      },
     };
   }
 
-  if (!out.cpf) vazios.push("cpf");
+  // CPF só é "campo sem valor" quando o layout do documento imprime CPF.
+  const naoAplicaveis = out.leitura?.campos_nao_aplicaveis ?? [];
+  if (!out.cpf && !naoAplicaveis.includes("cpf")) vazios.push("cpf");
   if (vazios.length) out = { ...out, leitura: { ...out.leitura, campos_vazios: vazios } };
   return out;
 }
