@@ -68,8 +68,8 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "laudos_exames",
-    label: "Laudos e exames",
-    description: "Laudos psicológicos, capacidade técnica e exames correlatos.",
+    label: "Laudos psicológico / tiro",
+    description: "Laudo psicológico, atestado de capacidade técnica (tiro) e laudos institucionais equivalentes.",
     escopoPadrao: "permanente",
   },
   {
@@ -154,6 +154,8 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "declaracao_homonimia", label: "Declaração de homonímia", short: "HOMONÍMIA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "laudo_psicologico", label: "Laudo psicológico", short: "LAUDO PSI", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "atestado_aptidao_psicologica_instituicao", label: "Atestado de aptidão psicológica emitido pela instituição", short: "PSI INSTITUIÇÃO", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "atestado_capacidade_tecnica_instituicao", label: "Atestado de capacidade técnica emitido pela instituição", short: "TIRO INSTITUIÇÃO", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "boletim_ocorrencia", label: "Boletim de Ocorrência", short: "BO", categoria: "efetiva_necessidade", escopo: "processo", aceitaIA: true },
   { value: "documento_complementar_caso", label: "Documento complementar do caso", short: "COMPLEMENTAR", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
@@ -226,6 +228,7 @@ const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
   [/^antecedentes_/, "antecedentes_regularidade"],
   [/^declaracao_/, "declaracoes"],
   [/^laudo_/, "laudos_exames"],
+  [/^atestado_(aptidao_psicologica|capacidade_tecnica)/, "laudos_exames"],
 ];
 
 export function getHubCategoriaMeta(categoria: HubCategoria): HubCategoriaMeta {

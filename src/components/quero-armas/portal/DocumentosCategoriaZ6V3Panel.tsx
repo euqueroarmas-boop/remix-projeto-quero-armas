@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { HUB_CATEGORIAS, getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { diasAteBRT, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
@@ -301,13 +301,17 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       if (!map.has(catKey)) map.set(catKey, { label: catMeta.label, docs: [] });
       map.get(catKey)!.docs.push(d);
     });
+    const ordemCategoria = (key: string) => {
+      const i = HUB_CATEGORIAS.findIndex((c) => c.value === (key as any));
+      return i < 0 ? 999 : i;
+    };
     return Array.from(map.entries())
       .map(([key, v]) => ({
         key,
         label: v.label.toUpperCase(),
         docs: v.docs.sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999)),
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .sort((a, b) => ordemCategoria(a.key) - ordemCategoria(b.key) || a.label.localeCompare(b.label));
   }, [docsFiltrados]);
 
   const handleRemover = async (doc: any) => {

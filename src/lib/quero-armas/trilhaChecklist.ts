@@ -72,7 +72,10 @@ const MARCADORES: MarcadorTrilha[] = [
   { label: "EMPRESÁRIO", ordem: 5, match: (t) => ["renda_contrato_social", "renda_qsa", "renda_cartao_cnpj", "renda_ficha_cadastral_jucesp", "renda_nf_empresa", "renda_ccmei"].includes(t) },
   { label: "ASSALARIADO", ordem: 5, match: (t) => ["renda_contra_cheque_mes_atual", "ctps"].includes(t) },
   { label: "APOSENTADO", ordem: 5, match: (t) => ["renda_extrato_inss", "renda_comprovante_beneficio"].includes(t) },
-  { label: "MILITAR", ordem: 6, match: (t) => t === "antecedentes_militar_estadual" },
+  // "MILITAR" saiu da inferência (10/08/2026): a certidão da Justiça Militar
+  // Estadual é materializada para praticamente todo processo, então ela nunca
+  // foi sinal de ocupação — só produzia rótulo errado no painel. Militar agora
+  // só aparece pela condição canônica declarada pelo cliente.
   { label: "MENOR NO IMÓVEL", ordem: 7, match: (t) => t === "declaracao_guarda_responsavel" },
   { label: "INQUÉRITO", ordem: 8, match: (t) => t === "declaracao_sem_inquerito_processo_criminal" },
 ];

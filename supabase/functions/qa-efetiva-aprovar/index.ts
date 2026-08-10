@@ -320,6 +320,30 @@ Deno.serve(async (req) => {
       updated_at: agora.toISOString(),
     }).eq("id", registroId);
 
+    /* ── 4.1) Fecha a exigência no checklist do processo ────────────────
+     * Sem isto o painel administrativo continuava mostrando o cliente parado
+     * na EFETIVA NECESSIDADE mesmo depois de ele aprovar o relato, enquanto a
+     * área do cliente já tinha avançado para os laudos. O dossiê assinado é a
+     * entrega da exigência: gravamos ele como arquivo do passo e aprovamos.
+     */
+    try {
+      await sb
+        .from("qa_processo_documentos")
+        .update({
+          status: "aprovado",
+          arquivo_storage_key: path,
+          data_envio: agora.toISOString(),
+          data_validacao: agora.toISOString(),
+          observacoes: "Relato de efetiva necessidade aprovado eletronicamente pelo requerente.",
+          updated_at: agora.toISOString(),
+        })
+        .eq("cliente_id", reg.cliente_id)
+        .in("tipo_documento", ["comprovante_efetiva_necessidade", "efetiva_necessidade"])
+        .neq("status", "aprovado");
+    } catch (e) {
+      console.warn("[qa-efetiva-aprovar] checklist nao atualizado:", e);
+    }
+
     /* ── 5) E-mail com o arquivo único ─────────────────────────────────── */
     if (cliente?.email && signed?.signedUrl) {
       const esc = (s: string) =>
