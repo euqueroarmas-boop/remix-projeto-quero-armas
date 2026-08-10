@@ -20,6 +20,14 @@ Outros itens do mesmo serviço também caem em lugar errado pela mesma lógica:
 
 O contador "8 de 8" não está quebrado: ele conta os grupos derivados dessa classificação. Corrigida a classificação, a contagem passa a refletir a sequência real.
 
+## Achado adicional: falta a certidão da Seção Judiciária de SP / JEF
+
+O tipo `antecedentes_federal_sjsp_jef` existe e é totalmente suportado (classificador de IA, parser de abrangência, mapa de tipos do Hub, textos de notificação) e **2 clientes já enviaram esse documento** — mas ele **não existe como exigência em nenhum serviço do checklist**: em todos os serviços, inclusive o 60, só há `antecedentes_federal_trf3_regional`. No serviço 60 há inclusive um buraco de ordem (350 = TRF3 regional, 360 vazio, 370 = TJSP), sinal de que a linha da SJSP/JEF foi removida.
+
+Consequência: o cliente é orientado a tirar só a certidão de abrangência regional do TRF3, quando a Polícia Federal exige também a de abrangência da Seção Judiciária de SP e do Juizado Especial Federal. Quem envia a SJSP/JEF hoje tem o documento classificado corretamente, mas sem exigência correspondente ele fica fora do checklist.
+
+Correção prevista: reinserir a exigência `antecedentes_federal_sjsp_jef` ("Certidão Federal — Seção Judiciária de SP e JEF") no serviço de autorização de compra/posse na ordem 360, logo após a TRF3 regional, no grupo Idoneidade, obrigatória, e vincular automaticamente os envios já existentes desse tipo.
+
 ## O que será feito
 
 1. **Regras de grupo por prefixo `antecedentes_`** em `pendenciasGrupos.ts`: qualquer `antecedentes_*` vai para **Idoneidade** (ordem 60), junto com os `certidao_*` já existentes.
@@ -28,6 +36,7 @@ O contador "8 de 8" não está quebrado: ele conta os grupos derivados dessa cla
 4. **Sequência canônica única** para todo processo de autorização de compra/posse, válida para todos os clientes (é lógica de apresentação, não dado por cliente):
    Contratos → Cadastros → Identificação civil → Identificação residencial → Ocupação lícita → Idoneidade → Efetiva necessidade → Laudos → Requerimento → Fechamento (só o que realmente sobrar).
 5. **Teste de regressão**: teste que percorre todos os `tipo_documento` ativos do serviço de autorização de compra e falha se algum cair em `outros`, impedindo que checklists futuros voltem a exibir "Fechamento" indevidamente.
+6. **Reinserir a exigência SJSP/JEF** no checklist (ordem 360) e conferir se os demais serviços que pedem certidão federal também deveriam ter as duas abrangências — se sim, aplicar o mesmo par a eles.
 
 ## Detalhes técnicos
 
