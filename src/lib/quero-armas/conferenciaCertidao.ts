@@ -33,7 +33,17 @@ import {
   cpfDoCadastroPresenteNoTexto,
 } from "./leituraCamposPdf";
 
-export type VeredictoCertidao = "aprovado" | "rejeitado" | "cadastro_pendente";
+export type VeredictoCertidao =
+  | "aprovado"
+  | "rejeitado"
+  | "cadastro_pendente"
+  /**
+   * O documento parece legítimo, mas a LEITURA não conseguiu localizar um
+   * campo exigido e o valor do cadastro também não aparece literalmente no
+   * texto. Falha de leitura nunca vira acusação contra o cliente: o documento
+   * fica em conferência humana em vez de ser recusado.
+   */
+  | "revisao_humana";
 
 export interface CadastroConferencia {
   nome_completo?: string | null;
