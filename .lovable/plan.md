@@ -1,38 +1,54 @@
-# Pergunta SIM/NÃO dos laudos não aparece para Segurança Pública
+# Laudos: botão dividido (NÃO / Entregar) + matriz de dispensas por profissão
 
-## O que está acontecendo
+## Parte 1 — Por que a pergunta SIM/NÃO não aparece hoje
 
-Quando o cliente escolhe a condição profissional "Segurança Pública", o sistema copia as exigências do catálogo para o processo dele — mas nessa cópia ele **descarta a configuração de pergunta**. O item "exames da instituição", que no catálogo é uma pergunta SIM/NÃO, chega no processo do cliente como se fosse mais um documento para anexar.
+Quando o cliente escolhe a condição profissional "Segurança Pública", o sistema copia as exigências do catálogo para o processo dele, mas descarta a configuração de pergunta. O item "exames da instituição", que no catálogo é uma pergunta SIM/NÃO, chega no processo como se fosse mais um documento para anexar.
 
-Resultado no portal do Anthony (processo do serviço 60):
-- o passo aparece com o botão "ENTREGAR DOCUMENTO" em vez dos botões SIM / NÃO;
-- os dois caminhos de laudo (instituição e credenciado PF) ficam abertos ao mesmo tempo, porque a resposta que dispensaria um deles nunca é registrada;
-- por isso o grupo Laudos exibe 5 itens, sendo que só 2 laudos são entregues.
+Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_definir` tem `tipo: pergunta`, `chave: exames_instituicao` e as duas opções; no processo do Anthony a mesma linha ficou com uma regra genérica, sem `tipo`, sem `opcoes` e sem as condicionais. Por isso aparece "ENTREGAR DOCUMENTO" e os dois caminhos de laudo ficam abertos ao mesmo tempo (5 itens em vez de 2).
 
-Confirmado nos dados: no catálogo (serviço 60) a linha `exames_instituicao_definir` tem `tipo: pergunta`, `chave: exames_instituicao` e as duas opções; no processo do cliente a mesma linha ficou com uma regra genérica (`exige`, `label_botao`), sem `tipo`, sem `opcoes` e sem as condições `exige_quando` / `dispensa_quando`.
+Correções:
+1. Na função que aplica a condição profissional, preservar a regra do catálogo (`tipo`, `chave`, `opcoes`, `ajuda`, `exige_quando`, `dispensa_quando`, grupo e ordem do grupo), complementando apenas com os campos operacionais. Respeitar também etapa e ordem do catálogo.
+2. Backfill dos processos já criados: reescrever a regra das exigências pendentes a partir do catálogo correspondente, sem tocar em documentos aprovados ou já enviados.
+3. Rede de segurança no portal: se a exigência vier sem configuração de pergunta, usar como fallback a regra do catálogo já carregada em memória.
 
-## Correção proposta
+## Parte 2 — Rodapé com dois botões
 
-1. **Preservar a regra do catálogo na criação das exigências**
-   Na função que aplica a condição profissional, em vez de sobrescrever a regra de validação com um objeto fixo, mesclar: manter tudo que veio do catálogo (`tipo`, `chave`, `opcoes`, `ajuda`, `exige_quando`, `dispensa_quando`, `grupo_checklist`, `ordem_grupo_checklist`) e apenas complementar com os campos operacionais (`exige`, `label_botao`, `checklist_operador`). Também respeitar `etapa` e `ordem` do catálogo, para o item cair no grupo Laudos e na posição certa, em vez de virar "complementar / ordem 100".
+No passo dos laudos, o rodapé do pop-up guiado passa a ter dois botões lado a lado:
 
-2. **Corrigir os processos já criados (backfill)**
-   Migração que reescreve a regra de validação das exigências já materializadas a partir do catálogo correspondente (mesmo serviço + mesmo tipo de documento), sem tocar em documentos já aprovados ou enviados. Isso conserta o Anthony e qualquer outro cliente de Segurança Pública na mesma situação.
+```text
+[  NÃO — FAZER COM CREDENCIADO DA PF  ]  [  ENTREGAR DOCUMENTO  ]
+```
 
-3. **Rede de segurança no portal**
-   Se a exigência do processo vier sem a configuração de pergunta, o portal passa a usar como fallback a regra do catálogo já carregada em memória (mesmo serviço + tipo). Assim, um dado antigo ou uma nova rota de criação não volta a esconder a pergunta.
+- "NÃO" registra a resposta `exames_instituicao = nao` e, no mesmo pop-up, abre a lista de psicólogos e instrutores credenciados pela PF mais próximos (componente de agendamento que já existe), sem navegar para outra tela.
+- "ENTREGAR DOCUMENTO" mantém o fluxo atual: registra a resposta SIM e segue para o envio dos atestados da instituição.
+- Depois de respondido, o rodapé volta ao botão único do documento correspondente — o resto do fluxo permanece igual.
 
-4. **Contagem do grupo respeitando as duas formas de condicional**
-   A contagem por grupo já deixou de somar trilhas exclusivas marcadas com `exige_quando`; incluir também `dispensa_quando` (usado pelos laudos particulares), para o grupo Laudos mostrar "0 de 2" mesmo antes da resposta.
+Visibilidade: esse rodapé duplo só aparece quando a exigência é da trilha de segurança pública e a corporação do cliente é Guarda Civil Municipal. Para as demais corporações (PM, PC, Penal, Bombeiros, SSP) e para o cidadão comum, o comportamento continua o de hoje. A corporação sai do cadastro do cliente; se ela não estiver preenchida, o pop-app mantém o rodapé padrão para não esconder caminho de ninguém.
+
+## Parte 3 — Configurações: matriz "Profissão × Grupos dispensados"
+
+Nova aba **Dispensas por profissão** em Configurações, ao lado de "Checklist" e "Simulador".
+
+Como funciona, na prática:
+- Uma tabela com as categorias profissionais nas linhas (Guarda Civil Municipal, Polícia Militar, Polícia Civil, Polícia Penal, Bombeiros, SSP, Militar das Forças Armadas, Magistrado/MP, Cidadão comum) e os grupos do checklist nas colunas (Identificação, Endereço, Ocupação, Idoneidade, Habitualidade, Efetiva necessidade, Laudos, Arma, Requerimento).
+- Cada cruzamento tem três estados: **Exigido** (padrão), **Dispensado** (o grupo inteiro sai do checklist daquela profissão) e **Alternativo** (o grupo continua, mas aceita a via institucional — é o caso dos laudos da GCM).
+- Filtro por serviço no topo, porque uma dispensa pode valer só para posse e não para porte. Existe também a opção "vale para todos os serviços".
+- Cada linha marcada pede uma **base legal** em texto curto, que é o mesmo texto exibido ao cliente no pop-up guiado explicando por que aquele grupo não é pedido.
+- Botão "Simular" abre o Simulador de Checklist já com a profissão escolhida, mostrando o checklist final antes de salvar.
+
+Efeito no cliente: ao definir a condição profissional, o processo passa a marcar como não aplicáveis os grupos dispensados dessa profissão, com registro em auditoria de qual regra dispensou o quê. Nada é apagado — os itens ficam com status de dispensa e a justificativa legal fica anexada ao processo.
 
 ## Detalhes técnicos
 
-- `supabase/functions/qa-processo-set-condicao/index.ts`: `base = catalogo.map(...)` passa a carregar `regra_validacao` original, `etapa` e `ordem`; o `insert` usa `{ ...regraCatalogo, exige, label_botao, checklist_operador }` e `etapa/ordem` do catálogo com fallback para o comportamento atual.
-- Migração SQL: `UPDATE qa_processo_documentos d SET regra_validacao = s.regra_validacao || jsonb_build_object(...campos operacionais atuais...)` a partir de `qa_servicos_documentos s` (join por `servico_id` do processo + `tipo_documento`, `s.ativo`), restrita a `d.status = 'pendente'`.
-- `src/pages/quero-armas/QAClientePortalPage.tsx`: no cálculo de `perguntasPendentes` e das pendências, ler `regra_validacao` do doc do processo com fallback em `catalogoDocInfo` (que já é carregado com `regra_validacao`); no `resumoProcesso`, tratar `dispensa_quando` como ramo exclusivo, igual a `exige_quando`.
+- `supabase/functions/qa-processo-set-condicao/index.ts`: mesclar `regra_validacao` do catálogo no insert (`{ ...regraCatalogo, exige, label_botao, checklist_operador }`) e usar `etapa`/`ordem` do catálogo; aplicar as dispensas da nova matriz marcando os itens dos grupos dispensados com `status = 'nao_aplicavel'` e motivo.
+- Migração: tabela `public.qa_dispensas_profissao` (`servico_id` nullable = todos, `condicao_profissional`, `grupo_id`, `modo` em exigido/dispensado/alternativo, `base_legal`, `ativo`), com GRANTs para `authenticated`/`service_role`, RLS de leitura para autenticados e escrita só para administradores. Migração de dados separada para o backfill de `regra_validacao` nos processos pendentes.
+- `PendenciasGuiadasPopup.tsx`: rodapé condicional com dois botões quando `active.kind === "pergunta"` e `perguntaChave === "exames_instituicao"` e a corporação do cliente for GCM; "NÃO" chama `onResponder("nao")` e abre `AgendarExameModal` inline.
+- `QAClientePortalPage.tsx`: passar a corporação/condição do cliente ao pop-up; fallback de `regra_validacao` via `catalogoDocInfo`; no `resumoProcesso`, tratar `dispensa_quando` como ramo exclusivo (hoje só `exige_quando` é tratado), para o grupo Laudos contar 2 e não 5.
+- `QAConfiguracoesPage.tsx` + novo componente de matriz, reaproveitando os grupos de `pendenciasGrupos.ts` e as condições profissionais já usadas no catálogo.
 
 ## Verificação
 
-- Reconsultar o processo do Anthony: a linha `exames_instituicao_definir` deve voltar com `tipo: pergunta` e opções.
-- No portal: o passo dos laudos deve mostrar os botões SIM / NÃO (sem "ENTREGAR DOCUMENTO"), e o grupo Laudos deve exibir 2 itens.
-- Responder NÃO deve continuar abrindo o botão "Escolher profissional credenciado"; responder SIM deve dispensar os laudos particulares.
+- Processo do Anthony volta a ter `tipo: pergunta` na linha dos exames e o grupo Laudos mostra 2 itens.
+- Cliente GCM: rodapé com NÃO + ENTREGAR; ao clicar NÃO, a lista de credenciados abre no mesmo pop-up.
+- Cliente de outra corporação: rodapé inalterado.
+- Marcar um grupo como Dispensado em Configurações e simular: o grupo some do checklist daquela profissão, com a base legal exibida.
