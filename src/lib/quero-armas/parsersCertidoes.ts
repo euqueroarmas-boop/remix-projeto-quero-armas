@@ -581,6 +581,30 @@ function parseTjmSp(texto: string): CamposCertidao {
 /* ── CR — Certificado de Registro ──────────────────────────────────────── */
 
 /**
+ * Certidão CÍVEL do TJM/SP.
+ *
+ * Lê apenas o suficiente para EXPLICAR a rejeição (o layout cível escreve
+ * "(réu/requerido):" em vez de "em nome de:"). Nada aqui aprova documento:
+ * a conferência reprova por escopo.
+ */
+function parseTjmSpCivel(texto: string): CamposCertidao {
+  const t = norm(texto);
+  const g = (re: RegExp) => t.match(re)?.[1]?.trim();
+  const nome = upperOrUndef(
+    cortarCampo(g(/\(r[eé]u\/requerido\):\s*\n*\s*([^,\n]+)/i)),
+  );
+  return {
+    orgao: "tjm_sp_civel",
+    // Slug propositalmente fora do vocabulário de antecedentes: este documento
+    // não pode ocupar slot nenhum do Hub.
+    tipoDocumento: "certidao_civel_nao_aceita",
+    nome_titular: pareceNomePessoa(nome) ? nome : undefined,
+    cpf: cpf11(g(/CPF:\s*([\d.\-]+)/i)),
+    data_emissao: dataPorExtenso(t),
+  };
+}
+
+/**
  * As três atividades que o CR pode apostilar.
  *
  * O documento as escreve por extenso e numeradas: "1- Tiro Desportivo -
@@ -856,6 +880,7 @@ export function parseCertidao(texto: string): CamposCertidao | null {
     case "tjsp_execucoes": return parseTjsp(texto, "tjsp_execucoes");
     case "trf_regional": return parseTrfRegional(texto);
     case "tjm_sp": return parseTjmSp(texto);
+    case "tjm_sp_civel": return parseTjmSpCivel(texto);
     case "cr_exercito": return parseCr(texto);
     case "boletim_ocorrencia": return parseBoletimOcorrencia(texto);
     case "ccmei": return parseCcmei(texto);
