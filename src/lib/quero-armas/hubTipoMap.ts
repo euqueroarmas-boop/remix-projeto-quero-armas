@@ -190,7 +190,7 @@ const HUB_TIPOS_VALIDOS = new Set([
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
   "certidao_alteracao_nome",
   "documento_identificacao_terceiro","foto_3x4","boletim_ocorrencia",
-  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento",
+  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento","gru",
   "habilitacao_cacador_ibama",
   "contrato_assinado","procuracao_assinada",
   "outro",

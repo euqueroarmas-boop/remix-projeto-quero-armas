@@ -169,7 +169,11 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "habilitacao_cacador_ibama", label: "Habilitação ambiental de caçador (IBAMA/IBRAM)", short: "HAB. CAÇADOR", categoria: "cac_atividade", escopo: "cac_atividade", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
-  { value: "comprovante_pagamento", label: "Comprovante de pagamento", short: "PAGAMENTO", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
+  // REGRA GLOBAL: o comprovante de pagamento pertence ao CONTRATO (documento da
+  // transação), não ao processo administrativo. O único comprovante de pagamento
+  // que pertence ao processo é a GRU (taxa da Polícia Federal / Exército).
+  { value: "comprovante_pagamento", label: "Comprovante de pagamento do contrato", short: "PAGTO. CONTRATO", categoria: "juridico", escopo: "processo", aceitaIA: true },
+  { value: "gru", label: "GRU — Guia de Recolhimento da União (taxa do processo)", short: "GRU", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
   { value: "requerimento_de_posse_de_arma_de_fogo", label: "Requerimento de Posse de Arma de Fogo (Polícia Federal)", short: "REQUERIMENTO", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
   { value: "protocolo_processo", label: "Protocolo do processo", short: "PROTOCOLO", categoria: "documentos_processo", escopo: "processo" },
   { value: "oficio", label: "Ofício", short: "OFÍCIO", categoria: "documentos_processo", escopo: "processo" },
