@@ -548,8 +548,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Header */}
-        <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-2 pb-4 shrink-0 sm:px-6 sm:pt-2"}>
-          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[44px] flex items-center gap-2 flex-wrap"}>
+        <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-1.5 pb-2 shrink-0 sm:px-6"}>
+          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[36px] flex items-center gap-1.5 flex-wrap"}>
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
@@ -579,18 +579,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <div className="mt-4 mb-1 h-px bg-[#F0F0F0]" />
-          <div className={asPage ? "" : "pl-[44px]"}>
+          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-2.5 h-px bg-[#F0F0F0]"} />
+          <div className={asPage ? "" : "pl-[36px]"}>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
                 título da etapa — o título grande repetiria o nome do grupo. */}
             {active.corpo ? null : (
-              <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+              <h2 className={asPage ? "qa-h1 mt-4" : "qa-h1 mt-2.5"} style={{ letterSpacing: ".02em" }}>
                 {explic.titulo}
               </h2>
             )}
 
             {active.detalheContexto ? (
-              <p className="qa-body qa-body--soft mt-3 rounded-sm border border-[#E5E5E5] bg-white px-3 py-2">
+              <p className={`qa-body qa-body--soft rounded-sm border border-[#E5E5E5] bg-white px-3 py-2 ${asPage ? "mt-3" : "mt-2"}`}>
                 {active.detalheContexto}
               </p>
             ) : null}
@@ -601,7 +601,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2"
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2 ${asPage ? "mt-3" : "mt-2"}`}
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
                 Acessar site pra emissão
