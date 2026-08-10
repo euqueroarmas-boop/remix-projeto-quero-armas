@@ -124,6 +124,34 @@ function fmtData(d: string | null) {
   try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return "—"; }
 }
 
+/** "HOJE 14:32" / "12/08 09:10" — leitura curta do último acesso. */
+function fmtAcesso(d?: string | null) {
+  if (!d) return "SEM ACESSO";
+  try {
+    const dt = new Date(d);
+    const hoje = new Date();
+    const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const mesmoDia = dt.toDateString() === hoje.toDateString();
+    return mesmoDia ? `HOJE ${hora}` : `${dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} ${hora}`;
+  } catch { return "—"; }
+}
+
+/** Situação da efetiva necessidade em rótulo curto + cor. */
+function efetivaVisual(status?: string | null): { label: string; cor: string; fundo: string } | null {
+  const s = String(status ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (["aprovado", "aprovada", "concluido", "concluída", "concluido_cliente", "finalizado"].includes(s)) {
+    return { label: "APROVADA", cor: VERDE, fundo: VERDE_BG };
+  }
+  if (["revisao", "em_revisao", "revisao_humana", "aguardando_revisao", "pendente_revisao", "aguardando_equipe"].includes(s)) {
+    return { label: "EM REVISÃO", cor: AMBAR, fundo: AMBAR_BG };
+  }
+  if (["reprovado", "reprovada", "recusado"].includes(s)) {
+    return { label: "REPROVADA", cor: VERMELHO, fundo: VERMELHO_BG };
+  }
+  return { label: s.replace(/_/g, " ").toUpperCase(), cor: AMBAR, fundo: AMBAR_BG };
+}
+
 /** Rota real da ficha do cliente: aba Clientes abre o cadastro via ?cliente=ID. */
 function rotaCadastroCliente(clienteId: number) {
   return `/clientes?cliente=${clienteId}&tab=dados`;
