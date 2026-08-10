@@ -13263,26 +13263,16 @@ export type Database = {
       qa_painel_progresso_clientes: {
         Args: never
         Returns: {
-          bloqueado_por_prerequisito: boolean
           cliente_email: string
           cliente_id: number
           cliente_nome: string
           cobrancas: number
           criado_em: string
           dias_parado: number
-          dispensados: number
-          documentos_pendentes: number
-          em_analise: number
           entregues: number
           fase: string
-          grupo_atual: string
-          grupo_concluidos: number
-          grupo_total: number
-          perguntas_pendentes: number
           processo_id: string
           proximo_doc: string
-          proximo_tipo: string
-          reaproveitados: number
           servico_nome: string
           status: string
           total_docs: number
