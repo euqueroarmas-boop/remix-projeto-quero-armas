@@ -116,3 +116,20 @@ describe("valorDoCadastroPresenteNoTexto", () => {
     expect(valorDoCadastroPresenteNoTexto("... JOAO DA SILVA ...", "PEDRO LOBATO DE LIMA")).toBe(false);
   });
 });
+describe("regressão TSE: rótulo dentro de palavra", () => {
+  it("não lê 'ELEITORAIS E EXPEDIDA GRATUITAMENTE' como nome", () => {
+    const texto = [
+      "TRIBUNAL SUPERIOR ELEITORAL",
+      "CERTIDAO DE CRIMES ELEITORAIS E EXPEDIDA GRATUITAMENTE",
+      "Eleitor(a): PEDRO LOBATO DE LIMA",
+      "OCUPACAO DECLARADA PELO(A) ELEITOR(A): AUTONOMO",
+    ].join("\n");
+    expect(lerNomeRotulado(texto, ["Eleitor\\(a\\)", "Eleitor", "Nome"]).valor).toBe(
+      "PEDRO LOBATO DE LIMA",
+    );
+  });
+
+  it("recusa fragmento institucional como nome de pessoa", () => {
+    expect(pareceNomePessoa("AIS E EXPEDIDA GRATUITAMENTE")).toBe(false);
+  });
+});
