@@ -10,8 +10,15 @@
 
 ## O que será feito
 
-### 1. Profissões
-Regerar `profissoesCatalogo.ts` cruzando as condições canônicas com todos os valores reais de `qa_clientes.profissao` (normalizados para MAIÚSCULO, preservando variantes semânticas conforme a regra já registrada). Nenhuma profissão nova inventada.
+### 1. Profissões x condição profissional
+Profissão e condição são coisas diferentes e ficam em dois campos:
+
+- **Profissão** (select): lista completa das profissões reais já existentes em `qa_clientes.profissao`, normalizadas em MAIÚSCULO, preservando as variantes semânticas. Nenhuma profissão inventada. É rótulo cadastral — não gera exigência.
+- **Condição profissional** (select): continua sendo a fonte única das exigências — CLT, SERVIDOR PÚBLICO (ÁREA GERAL), SERVIDOR DE SEGURANÇA PÚBLICA, AUTÔNOMO/MEI, EMPRESÁRIO/SÓCIO, APOSENTADO/PENSIONISTA.
+
+Toda profissão precisa se encaixar em uma condição. Onde o encaixe é único (GUARDA CIVIL MUNICIPAL, INVESTIGADOR DE POLÍCIA → segurança pública; APOSENTADO → aposentado; MEI → autônomo/MEI) o sistema já sugere a condição ao escolher a profissão. Onde a profissão admite mais de um caminho (VIGILANTE pode ser CLT ou empresário da vigilância; ENGENHEIRO pode ser CLT, autônomo ou empresário) o campo de condição fica obrigatório e o cliente/atendente escolhe — sem chute do sistema.
+
+O checklist e as dispensas **nunca** leem `profissao`: continuam derivando exclusivamente de `condicao_profissional`.
 
 ### 2. Grupo Laudos
 Migração renomeando o grupo `saude` → `laudos` ("Laudos") em `qa_checklist_grupos` e atualizando as 25 linhas de `qa_servicos_documentos` com `grupo_checklist = 'saude'`. RPC passa a emitir `laudos`.
