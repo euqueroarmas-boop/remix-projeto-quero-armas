@@ -917,6 +917,17 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           )}
         </div>
       </div>
+
+      {exameModal ? (
+        <AgendarExameModal
+          open
+          tipo={exameModal}
+          cep={cepCliente ?? null}
+          uf={ufCliente ?? null}
+          cidade={cidadeCliente ?? null}
+          onClose={() => setExameModal(null)}
+        />
+      ) : null}
     </div>
   );
 }
