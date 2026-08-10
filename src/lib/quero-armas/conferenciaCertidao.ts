@@ -201,6 +201,9 @@ const OBRIGATORIOS: Record<OrgaoCertidao, Array<keyof CamposCertidao>> = {
   tjsp_execucoes: ["nome_titular", "resultado"],
   trf_regional: ["nome_titular", "resultado"],
   tjm_sp: ["nome_titular", "resultado"],
+  // Certidão CÍVEL: nada é exigido porque ela é rejeitada por ESCOPO, antes de
+  // qualquer conferência de campos.
+  tjm_sp_civel: [],
 
   // CR — não é certidão de antecedentes, mas passa pelo mesmo parser. Exige o
   // mínimo que prova de quem é e até quando vale.

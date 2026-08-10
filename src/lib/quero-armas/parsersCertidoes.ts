@@ -17,6 +17,8 @@
  * `nome_mae` é preenchido.
  * ============================================================================= */
 
+import { detectarEscopoCertidao } from "./escopoCertidao";
+
 export type OrgaoCertidao =
   | "stm"
   | "tse"
