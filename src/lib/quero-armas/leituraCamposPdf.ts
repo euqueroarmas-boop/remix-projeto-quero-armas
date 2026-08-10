@@ -195,7 +195,7 @@ export function cortarValorCampo(bruto: string | undefined): string | undefined 
  * "OCUPACAO DECLARADA PELO ELEITOR" de virarem titular da certidão.
  */
 const NAO_E_NOME =
-  /\b(CERTID|TRIBUNAL|JUSTICA|JUIZ|CARTORIO|SECRETARIA|MINISTERIO|REPUBLICA|PODER|ESTADO DE|UNIAO|SUPERIOR|REGIONAL|FEDERAL|MILITAR|ELEITORAL|NADA|CONSTA|OCUPACAO|DECLARADA|ELEITOR|INSCRICAO|DOMICILIO|MUNICIPIO|ZONA|SECAO|VALIDADE|EMITID|DOCUMENTO|PROCESSO|CODIGO|AUTENTIC|SITIO|HTTPS?|WWW|PAGINA|FOLHA|PESQUISA|REGISTRO|DISTRIBUI|EXECUCAO|CRIMINAL|CRIMINAIS|FINALIDADE|OBSERVA|PRAZO|DIAS)\b/;
+  /\b(CERTID|TRIBUNAL|JUSTICA|JUIZ|CARTORIO|SECRETARIA|MINISTERIO|REPUBLICA|PODER|ESTADO DE|UNIAO|SUPERIOR|REGIONAL|FEDERAL|MILITAR|ELEITORAL|ELEITORAIS|NADA|CONSTA|OCUPACAO|DECLARADA|ELEITOR|INSCRICAO|DOMICILIO|MUNICIPIO|ZONA|SECAO|VALIDADE|EMITID|EXPEDID|GRATUIT|VALIDA|VALIDO|CONFERE|CONFERENCIA|ASSINAT|DOCUMENTO|PROCESSO|CODIGO|AUTENTIC|SITIO|HTTPS?|WWW|PAGINA|FOLHA|PESQUISA|REGISTRO|DISTRIBUI|EXECUCAO|CRIMINAL|CRIMINAIS|FINALIDADE|OBSERVA|PRAZO|DIAS)\b/;
 
 /** O valor tem cara de nome de pessoa? Sem isso, campo vizinho vira titular. */
 export function pareceNomePessoa(v: string | undefined): boolean {
@@ -228,7 +228,12 @@ export interface OpcoesLeitura {
 
 function regexRotulo(rotulo: string): RegExp {
   // O rótulo pode vir com dois-pontos, com hífen ou sem nada depois.
-  return new RegExp(`(?:^|\\s)${rotulo}\\s*[:\\-–—]?\\s*(.*)$`, "i");
+  //
+  // O `(?![A-Za-z])` é o que impede o defeito real observado: sem ele, o
+  // rótulo "Eleitor" casava DENTRO da palavra "ELEITORAIS" ("Certidão de
+  // Crimes ELEITORAIS E EXPEDIDA GRATUITAMENTE") e o "valor" do campo virava
+  // "AIS E EXPEDIDA GRATUITAMENTE", que era então tratado como nome do titular.
+  return new RegExp(`(?:^|\\s)${rotulo}(?![A-Za-z])\\s*[:\\-–—]?\\s*(.*)$`, "i");
 }
 
 /**
