@@ -55,6 +55,14 @@ Correção prevista: desativar essas exigências nos serviços de defesa pessoal
 
 ## Detalhes técnicos
 
+### Abrangência: vale para todo mundo, inclusive quem contratar depois
+
+Todas as correções são feitas no **catálogo do serviço**, não no cadastro de um cliente:
+
+- O agrupamento (Idoneidade x Fechamento) é derivado do tipo de documento em `pendenciasGrupos.ts` — muda para todos os clientes, atuais e futuros, no mesmo instante.
+- A exigência SJSP/JEF e a remoção dos itens de acervo são feitas em `qa_servicos_documentos` do serviço 60 (e demais afetados). Todo checklist é montado a partir dessa tabela, então quem contratar **Autorização de Compra / Posse de Arma de Fogo** de hoje em diante já recebe a lista corrigida automaticamente.
+- Para quem **já tem o processo aberto**, aplicamos também o ajuste retroativo: gerar a pendência da SJSP/JEF e encerrar as pendências de acervo indevidas, para ninguém ficar com checklist antigo.
+
 - Arquivo central: `src/lib/quero-armas/pendenciasGrupos.ts` (`grupoDaPendencia`). É a fonte única usada por `PendenciasGuiadasPopup`, `QAClientePortalPage`, `simuladorChecklist` e o Kanban de exigências do admin — a correção vale para cliente e admin ao mesmo tempo.
 - Sem migração de banco: `qa_servicos_documentos.grupo_id` está nulo nesse serviço, então o agrupamento é 100% derivado do tipo. Nada precisa ser reescrito por cliente.
 - Nenhuma mudança em ordem de exigências, regras de visibilidade ou status de documento — apenas rotulagem e ordenação de grupos.
