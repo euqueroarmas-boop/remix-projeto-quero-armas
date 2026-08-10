@@ -655,7 +655,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Scrollable body */}
-        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pb-2"}>
+        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
 
 
           {active.corpo ? (
