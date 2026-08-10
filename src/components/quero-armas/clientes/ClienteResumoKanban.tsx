@@ -582,7 +582,11 @@ export default function ClienteResumoKanban({
         // 2026 válido) são silenciadas aqui.
         const grupo = doc?.id != null ? docIdToGrupo.get(doc.id) : undefined;
         if (grupo) {
-          if (grupo.statusConsolidado === "vigente" || grupo.statusConsolidado === "historico") return;
+          // Só o PRINCIPAL da família pode alertar — versões antigas ficam
+          // silenciadas. Mas "vigente" NÃO silencia: um comprovante válido que
+          // vence em 10 dias é exatamente o que a página DOCUMENTOS mostra em
+          // "A VENCER 30D", e o resumo precisa dizer a mesma coisa.
+          if (grupo.statusConsolidado === "historico") return;
           if ((grupo.principal as any)?.id !== doc?.id) return;
         }
       }
