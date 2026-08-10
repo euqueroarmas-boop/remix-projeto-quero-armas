@@ -91,10 +91,10 @@ async function baixarComprovante(doc: ComprovanteDoc) {
 }
 
 /** Bloco: comprovantes de pagamento do contrato (perpétuos, pertencem ao contrato). */
-function ComprovantesPagamentoBloco({ docs }: { docs: ComprovanteDoc[] }) {
+function ComprovantesPagamentoBloco({ docs, inline = false }: { docs: ComprovanteDoc[]; inline?: boolean }) {
   if (!docs.length) return null;
   return (
-    <div className="mt-4 bg-white border border-[#E5E5E5] rounded-sm p-4">
+    <div className={inline ? "mt-4 pt-4 border-t border-[#EFEFEF]" : "mt-4 bg-white border border-[#E5E5E5] rounded-sm p-4"}>
       <div className="qa-eyebrow mb-2.5">COMPROVANTES DE PAGAMENTO DO CONTRATO</div>
       <div className="space-y-2">
         {docs.map((d) => (
@@ -637,10 +637,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       {featured && (
-        <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
+        <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} comprovantes={comprovantes} />
       )}
-
-      <ComprovantesPagamentoBloco docs={comprovantes} />
+      {!featured && <ComprovantesPagamentoBloco docs={comprovantes} />}
 
       {/* ── Outros contratos ── */}
       {others.length > 0 && (
@@ -692,12 +691,14 @@ function FeaturedContractCard({
   preparedDownload,
   preparingDownload,
   onValidatedRefresh,
+  comprovantes = [],
 }: {
   contract: Contract;
   onAssinar: () => void;
   preparedDownload: PreparedMinutaDownload | null;
   preparingDownload: boolean;
   onValidatedRefresh?: () => void;
+  comprovantes?: ComprovanteDoc[];
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -1101,6 +1102,8 @@ function FeaturedContractCard({
       )}
 
       {/* ─────────── Modal de conclusão ─────────── */}
+      <ComprovantesPagamentoBloco docs={comprovantes} inline />
+
       {showDone && (
         <ContractCompletedDialog
           contract={contract}
