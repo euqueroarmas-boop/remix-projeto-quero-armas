@@ -19,10 +19,9 @@ const MARCADORES: MarcadorTrilha[] = [
   { label: "ENDEREÇO 5 ANOS", ordem: 2, match: (t) => /^comprovante_endereco_ano_\d{4}$/.test(t) },
   { label: "IMÓVEL DE TERCEIRO", ordem: 3, match: (t) => t === "declaracao_responsavel_imovel" || t === "documento_identificacao_terceiro" },
   { label: "SERVIDOR/INSTITUIÇÃO", ordem: 4, match: (t) => /_instituicao$/.test(t) || t === "renda_carteira_funcional" },
-  { label: "EMPRESÁRIO", ordem: 5, match: (t) => ["renda_contrato_social", "renda_qsa", "renda_cartao_cnpj", "renda_ficha_cadastral_jucesp", "renda_nf_empresa"].includes(t) },
+  { label: "EMPRESÁRIO", ordem: 5, match: (t) => ["renda_contrato_social", "renda_qsa", "renda_cartao_cnpj", "renda_ficha_cadastral_jucesp", "renda_nf_empresa", "renda_ccmei"].includes(t) },
   { label: "ASSALARIADO", ordem: 5, match: (t) => ["renda_contra_cheque_mes_atual", "ctps"].includes(t) },
   { label: "APOSENTADO/BENEFICIÁRIO", ordem: 5, match: (t) => ["renda_extrato_inss", "renda_comprovante_beneficio"].includes(t) },
-  { label: "AUTÔNOMO", ordem: 5, match: (t) => ["renda_decore", "renda_extrato_bancario"].includes(t) },
   // NÃO existe marcador "MILITAR" por certidão: `antecedentes_militar` e
   // `antecedentes_militar_estadual` são exigidos de TODO requerente (Justiça
   // Militar da União/Estadual), não são ramificação. Usar isso como trilha
