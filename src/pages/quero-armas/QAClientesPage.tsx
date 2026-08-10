@@ -1543,6 +1543,9 @@ function ClientePortalMirrorAdmin({
 
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
+  // A auditoria de leitura expõe texto bruto de documento (PII). Só administrador vê.
+  const { profile: perfilQA } = useQAAuth();
+  const ehAdministrador = perfilQA?.perfil === "administrador";
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
