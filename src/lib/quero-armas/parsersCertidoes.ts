@@ -242,18 +242,43 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
-  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO/.test(t)) return "tjm_sp";
-  if (/TRIBUNAL SUPERIOR ELEITORAL/.test(t)) return "tse";
-  if (/IIRGD|RICARDO GUMBLETON DAUNT/.test(t)) return "iirgd";
+  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL/.test(t)) return "tjm_sp";
+  // Eleitoral: a mesma certidão de crimes eleitorais é emitida com cabeçalho
+  // do TSE ou do TRE do estado do eleitor. O layout é o mesmo — só o timbre
+  // muda. Sem o TRE aqui, certidões válidas de fora de SP caíam em "órgão não
+  // identificado" e iam para a IA.
+  if (
+    /TRIBUNAL SUPERIOR ELEITORAL/.test(t) ||
+    /TRIBUNAL REGIONAL ELEITORAL/.test(t) ||
+    (/JUSTICA ELEITORAL/.test(t) && /CRIMES ELEITORAIS|QUITACAO ELEITORAL|CERTIDAO DE CRIMES/.test(t))
+  )
+    return "tse";
+  // Polícia Civil: IIRGD é o instituto de SP. Os demais estados emitem a
+  // mesma "certidão de antecedentes criminais" pela SSP / Polícia Civil, com
+  // os mesmos rótulos (Nome, Filiação, Data de Nascimento, RG).
+  if (
+    /IIRGD|RICARDO GUMBLETON DAUNT/.test(t) ||
+    ((/POLICIA CIVIL|SECRETARIA (DE ESTADO )?D[AE] SEGURANCA PUBLICA|INSTITUTO DE IDENTIFICACAO/.test(t)) &&
+      /ATESTADO DE ANTECEDENTES|CERTIDAO DE ANTECEDENTES(\s+CRIMINAIS)?/.test(t))
+  )
+    return "iirgd";
   if (/TRIBUNAL REGIONAL FEDERAL/.test(t)) return "trf_regional";
-  if (/CERTIDAO ESTADUAL DE DISTRIBUICOES CRIMINAIS/.test(t)) {
+  // e-SAJ / demais tribunais estaduais: o título varia por tribunal
+  // ("CERTIDÃO ESTADUAL DE DISTRIBUIÇÕES CRIMINAIS" em SP,
+  // "CERTIDÃO DE DISTRIBUIÇÃO CRIMINAL", "CERTIDÃO JUDICIAL CRIMINAL
+  // NEGATIVA" em outros), mas o corpo mantém a mesma qualificação.
+  if (
+    /CERTIDAO (ESTADUAL )?(JUDICIAL )?(DE )?DISTRIBUICO?[EO]S? (DE )?(ACOES |EXECUCOES )?CRIMINA(L|IS)/.test(t) ||
+    /CERTIDAO (JUDICIAL )?CRIMINAL( NEGATIVA)?/.test(t) ||
+    (/TRIBUNAL DE JUSTICA/.test(t) && /DISTRIBUI/.test(t) && /CRIMINA/.test(t))
+  ) {
     // ARMADILHA REAL: as duas certidões do TJSP têm o MESMO título. O que as
     // distingue é o corpo — "distribuições de AÇÕES CRIMINAIS" contra
     // "distribuições de EXECUÇÕES CRIMINAIS". Testar EXECUÇÕES primeiro,
     // porque a de execuções também contém a palavra "distribuições".
-    if (/DISTRIBUICOES DE EXECUCOES CRIMINAIS/.test(t)) return "tjsp_execucoes";
-    if (/DISTRIBUICOES DE ACOES CRIMINAIS/.test(t)) return "tjsp_distribuicao";
-    return null;
+    if (/EXECUCO?[EO]S? CRIMINA(L|IS)/.test(t)) return "tjsp_execucoes";
+    // Sem menção a execuções, é a certidão de distribuições/ações criminais.
+    return "tjsp_distribuicao";
   }
   return null;
 }
