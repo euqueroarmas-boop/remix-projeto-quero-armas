@@ -46,6 +46,77 @@ interface Contract {
 
 const STEP_LABELS = ["Gerado", "Assinatura", "Validação", "Vigente"] as const;
 
+const DOC_BUCKET = "qa-documentos";
+
+interface ComprovanteDoc {
+  id: string;
+  arquivo_nome: string | null;
+  arquivo_storage_path: string | null;
+  metadados_documento_json?: any;
+  created_at?: string | null;
+}
+
+/** Baixa o comprovante de pagamento do contrato via URL assinada (nunca expõe storage). */
+async function baixarComprovante(doc: ComprovanteDoc) {
+  if (!doc.arquivo_storage_path) {
+    toast.error("Comprovante sem arquivo anexado.");
+    return;
+  }
+  const toastId = toast.loading("Preparando comprovante…");
+  try {
+    const bucket = doc?.metadados_documento_json?.bucket || DOC_BUCKET;
+    let signedUrl: string | null = null;
+    if (bucket !== DOC_BUCKET) {
+      const { data: fn, error: fnErr } = await supabase.functions.invoke("qa-hub-doc-signed-url", {
+        body: { documento_id: doc.id, download: true },
+      });
+      if (fnErr || !(fn as any)?.signed_url) throw new Error("Não foi possível abrir o arquivo.");
+      signedUrl = (fn as any).signed_url;
+    } else {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(doc.arquivo_storage_path, 3600, { download: doc.arquivo_nome || true });
+      if (error || !data?.signedUrl) throw new Error("Não foi possível abrir o arquivo.");
+      signedUrl = data.signedUrl;
+    }
+    const a = document.createElement("a");
+    a.href = signedUrl!;
+    a.download = doc.arquivo_nome || "comprovante-pagamento";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success("Download iniciado.", { id: toastId });
+  } catch (e) {
+    toast.error(e instanceof Error ? e.message : "Erro ao acessar arquivo.", { id: toastId });
+  }
+}
+
+/** Bloco: comprovantes de pagamento do contrato (perpétuos, pertencem ao contrato). */
+function ComprovantesPagamentoBloco({ docs }: { docs: ComprovanteDoc[] }) {
+  if (!docs.length) return null;
+  return (
+    <div className="mt-4 bg-white border border-[#E5E5E5] rounded-sm p-4">
+      <div className="qa-eyebrow mb-2.5">COMPROVANTES DE PAGAMENTO DO CONTRATO</div>
+      <div className="space-y-2">
+        {docs.map((d) => (
+          <div key={d.id} className="flex items-center justify-between gap-3 border border-[#EFEFEF] rounded-sm px-3 py-2">
+            <span className="text-[12px] text-[#0A0A0A] min-w-0 break-words [overflow-wrap:anywhere]">
+              {d.arquivo_nome || "COMPROVANTE DE PAGAMENTO"}
+            </span>
+            <button
+              type="button"
+              onClick={() => baixarComprovante(d)}
+              className="shrink-0 border border-[#E5E5E5] bg-white text-[#0A0A0A] px-3 py-1.5 rounded-sm qa-btn-label inline-flex items-center gap-1.5 hover:border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors duration-200"
+            >
+              <Download className="h-3 w-3" /> <span className="whitespace-nowrap">BAIXAR</span>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** Marca no banco que o cliente já viu o aviso de assinatura confirmada. */
 async function marcarAckContrato(contractId: string) {
   try {
@@ -245,6 +316,28 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       } catch (e) {
         console.warn("[QAContratosCockpitV1] valor pago:", e);
         if (!cancel) setValorPago(0);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [cliente?.id, reloadKey]);
+
+  // Comprovantes de pagamento do contrato (perpétuos, ficam junto do contrato)
+  const [comprovantes, setComprovantes] = useState<ComprovanteDoc[]>([]);
+  useEffect(() => {
+    if (!cliente?.id) { setComprovantes([]); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("id, arquivo_nome, arquivo_storage_path, metadados_documento_json, created_at")
+          .eq("qa_cliente_id", cliente.id)
+          .eq("tipo_documento", "comprovante_pagamento")
+          .order("created_at", { ascending: false });
+        if (error) { console.warn("[QAContratosCockpitV1] comprovantes:", error.message); return; }
+        if (!cancel) setComprovantes(((data as any) || []).filter((d: any) => d.arquivo_storage_path));
+      } catch (e) {
+        if (!cancel) setComprovantes([]);
       }
     })();
     return () => { cancel = true; };
@@ -547,6 +640,8 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
       {featured && (
         <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
       )}
+
+      <ComprovantesPagamentoBloco docs={comprovantes} />
 
       {/* ── Outros contratos ── */}
       {others.length > 0 && (
