@@ -46,7 +46,7 @@ const COLS: { key: SortKey; label: string; className?: string }[] = [
   { key: "cliente_nome", label: "CLIENTE", className: "min-w-[220px]" },
   { key: "fase", label: "ETAPA ATUAL", className: "w-[190px]" },
   { key: "progresso", label: "PROGRESSO", className: "w-[190px]" },
-  { key: "proximo_doc", label: "PRÓXIMO PASSO", className: "min-w-[200px]" },
+  { key: "proximo_doc", label: "PRÓXIMO PASSO", className: "min-w-[200px] max-w-[240px]" },
   { key: "criado_em", label: "ABERTO EM", className: "w-[104px]" },
   { key: "cobrancas", label: "COBRANÇAS", className: "w-[96px]" },
   { key: "dias_parado", label: "PARADO", className: "w-[84px]" },
