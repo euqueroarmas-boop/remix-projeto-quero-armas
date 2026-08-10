@@ -641,6 +641,8 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
         <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
       )}
 
+      <ComprovantesPagamentoBloco docs={comprovantes} />
+
       {/* ── Outros contratos ── */}
       {others.length > 0 && (
         <>
