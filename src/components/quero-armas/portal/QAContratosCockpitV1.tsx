@@ -324,6 +324,33 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
   // Realtime: refresh on any update for this cliente's contracts
   useEffect(() => {
     if (!cliente?.id) return;
+    return;
+  }, []);
+
+  // Comprovantes de pagamento do contrato (perpétuos, ficam junto do contrato)
+  const [comprovantes, setComprovantes] = useState<ComprovanteDoc[]>([]);
+  useEffect(() => {
+    if (!cliente?.id) { setComprovantes([]); return; }
+    let cancel = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("qa_documentos_cliente" as any)
+          .select("id, arquivo_nome, arquivo_storage_path, metadados_documento_json, created_at")
+          .eq("qa_cliente_id", cliente.id)
+          .eq("tipo_documento", "comprovante_pagamento")
+          .order("created_at", { ascending: false });
+        if (error) { console.warn("[QAContratosCockpitV1] comprovantes:", error.message); return; }
+        if (!cancel) setComprovantes(((data as any) || []).filter((d: any) => d.arquivo_storage_path));
+      } catch (e) {
+        if (!cancel) setComprovantes([]);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [cliente?.id, reloadKey]);
+
+  useEffect(() => {
+    if (!cliente?.id) return;
     const ch = supabase
       .channel(`qa_contratos_v1_${cliente.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "qa_contracts", filter: `cliente_id=eq.${cliente.id}` },
