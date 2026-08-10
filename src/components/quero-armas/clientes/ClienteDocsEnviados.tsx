@@ -619,6 +619,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       {modo === "entrega" && (
         <LinhaEntrega
           itens={linhaEntrega}
+          historicoReprovas={historicoReprovas as any}
           onViewFile={handleViewFile}
           onBaixar={handleBaixarDoc}
           onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
