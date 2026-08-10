@@ -321,12 +321,6 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     return () => { cancel = true; };
   }, [cliente?.id, reloadKey]);
 
-  // Realtime: refresh on any update for this cliente's contracts
-  useEffect(() => {
-    if (!cliente?.id) return;
-    return;
-  }, []);
-
   // Comprovantes de pagamento do contrato (perpétuos, ficam junto do contrato)
   const [comprovantes, setComprovantes] = useState<ComprovanteDoc[]>([]);
   useEffect(() => {
@@ -349,6 +343,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
     return () => { cancel = true; };
   }, [cliente?.id, reloadKey]);
 
+  // Realtime: refresh on any update for this cliente's contracts
   useEffect(() => {
     if (!cliente?.id) return;
     const ch = supabase
