@@ -595,6 +595,17 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </p>
             ) : null}
 
+            {/* Orientação de RG digital: vive SÓ no grupo Identificação civil.
+                O RG é emitido pelo estado — nada de CIN/CNH aqui, porque a CIN
+                não substitui o RG para a Polícia Federal. */}
+            {activeGrupoId === "identificacao" ? (
+              <p className={`qa-body qa-body--soft rounded-sm border border-[#E5E5E5] bg-[#FAFAFA] px-3 py-2 ${asPage ? "mt-3" : "mt-2"}`}>
+                {String(ufCliente || "").toUpperCase() === "SP"
+                  ? "Para ter a versão digital do seu RG em São Paulo: baixe o aplicativo RG Digital São Paulo e escaneie o QR Code do seu RG físico."
+                  : "Para ter a versão digital do seu RG, acesse o site do governo do seu estado (órgão de identificação civil) e siga as instruções de emissão ou consulta."}
+              </p>
+            ) : null}
+
             {/* Link de acesso ao site oficial — sem retângulo; somente o texto. */}
             {!isSignature && !isPergunta && linkEmissaoFinal ? (
               <a
