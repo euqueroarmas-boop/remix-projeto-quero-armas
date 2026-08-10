@@ -1959,8 +1959,10 @@ function Step3Review({
           o checklist do seu processo após a aprovação do pagamento.
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
-            onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
+          {/* Blocos 4-4-4, igual ao e-Título e à certidão do TSE. Salvo só com dígitos. */}
+          <ReviewField label="Título de eleitor" value={mascaraTituloEleitor(data.titulo_eleitor)}
+            placeholder={TITULO_ELEITOR_PLACEHOLDER}
+            onChange={(v) => set("titulo_eleitor", tituloEleitorDigitos(v))} status={statusOf("titulo_eleitor")} />
           <ReviewField label="CNH" value={data.cnh} onChange={(v) => set("cnh", v)} status={statusOf("cnh")} />
         </div>
       </ReviewBlock>
