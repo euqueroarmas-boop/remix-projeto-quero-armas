@@ -51,6 +51,8 @@ import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/Con
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteCienciasAuditoria from "@/components/quero-armas/clientes/ClienteCienciasAuditoria";
+import ClienteAuditoriaLeitura from "@/components/quero-armas/clientes/ClienteAuditoriaLeitura";
+import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import ClienteAnaliseAlvoSection from "@/components/quero-armas/portal/ClienteAnaliseAlvoSection";
@@ -3992,6 +3994,13 @@ export default function QAClientesPage() {
               <TabsContent value="ciencias" className="mt-3">
                 <ClienteCienciasAuditoria cliente={c} />
               </TabsContent>
+              {/* AUDITORIA DE LEITURA — só administrador. Dado bruto de parser,
+                  com PII, usado para investigar recusa de documento. */}
+              {ehAdministrador && (
+                <TabsContent value="auditoria_leitura" className="mt-3">
+                  <ClienteAuditoriaLeitura cliente={c} />
+                </TabsContent>
+              )}
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
               </TabsContent>
