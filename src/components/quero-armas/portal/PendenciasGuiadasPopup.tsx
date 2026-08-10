@@ -391,6 +391,23 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   useEffect(() => {
     setRespondendo(null);
   }, [active.id]);
+
+  // ─── Escolha de profissional credenciado pela PF ───
+  // Regra (10/08/2026): quem responde NÃO na pergunta dos exames da instituição
+  // — e quem está na pendência dos laudos particulares — precisa conseguir
+  // escolher o profissional sem sair do checklist guiado.
+  const [exameModal, setExameModal] = useState<null | "psicologo" | "instrutor_tiro">(null);
+  useEffect(() => { setExameModal(null); }, [active.id]);
+  const tipoBruto = String(active.rawTipo || active.tipo || "").toLowerCase();
+  const tipoCredenciado: "psicologo" | "instrutor_tiro" | null =
+    isPergunta && active.perguntaChave === "exames_instituicao" && active.respostaAtual === "nao"
+      ? "psicologo"
+      : tipoBruto.includes("laudo_psicologico") || tipoBruto.includes("aptidao_psicologica")
+        ? (tipoBruto.includes("instituicao") ? null : "psicologo")
+        : tipoBruto.includes("capacidade_tecnica") || tipoBruto.includes("laudo_tiro")
+          ? (tipoBruto.includes("instituicao") ? null : "instrutor_tiro")
+          : null;
+
   const handleResponder = async (valor: string) => {
     if (!active.onResponder) return;
     setRespondendo(valor);
