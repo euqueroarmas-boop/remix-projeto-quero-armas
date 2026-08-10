@@ -46,17 +46,47 @@ const STATUS_CONDICAO_INATIVA = new Set([
 
 export type DocTrilha = { tipo_documento: string | null; status?: string | null };
 
+/**
+ * Rótulo de ocupação a partir da RESPOSTA canônica (`condicao_profissional`).
+ *
+ * Documento materializado não é fonte confiável aqui: quando o grupo de renda
+ * é dispensado por reaproveitamento, nenhum doc de renda existe no processo
+ * mesmo o cliente já tendo respondido a condição (caso Mizael = "clt").
+ */
+const ROTULO_CONDICAO: Record<string, string> = {
+  clt: "ASSALARIADO",
+  funcionario_publico: "SERVIDOR/INSTITUIÇÃO",
+  seguranca_publica: "SERVIDOR/INSTITUIÇÃO",
+  autonomo: "AUTÔNOMO/MEI",
+  empresario: "EMPRESÁRIO",
+  aposentado: "APOSENTADO/BENEFICIÁRIO",
+};
+
+function rotulosDaCondicao(condicao?: string | null): string[] {
+  return String(condicao ?? "")
+    .split(",")
+    .map((v) => ROTULO_CONDICAO[v.trim().toLowerCase()])
+    .filter(Boolean) as string[];
+}
+
 /** Deduz os rótulos de trilha a partir dos documentos do processo. */
-export function trilhaDoProcesso(docs: Array<string | DocTrilha>): string[] {
+export function trilhaDoProcesso(
+  docs: Array<string | DocTrilha>,
+  condicaoProfissional?: string | null,
+): string[] {
   const norm = docs
     .map((d) => (typeof d === "string" ? { tipo_documento: d, status: null } : d))
     .filter((d) => !STATUS_CONDICAO_INATIVA.has(String(d.status ?? "").toLowerCase()))
     .map((d) => String(d.tipo_documento || "").toLowerCase());
   const achados = MARCADORES.filter((m) => norm.some((t) => m.match(t)));
+  for (const label of rotulosDaCondicao(condicaoProfissional)) {
+    if (!achados.some((a) => a.label === label)) achados.push({ label, ordem: 5, match: () => false });
+  }
   // Se caiu em SERVIDOR/INSTITUIÇÃO, o rótulo de renda comum vira redundante.
   const temInstituicao = achados.some((a) => a.label === "SERVIDOR/INSTITUIÇÃO");
   return achados
     .filter((a) => !(temInstituicao && a.label === "ASSALARIADO"))
+    .filter((a, i, arr) => arr.findIndex((b) => b.label === a.label) === i)
     .sort((a, b) => a.ordem - b.ordem || a.label.localeCompare(b.label))
     .map((a) => a.label);
 }
