@@ -95,15 +95,17 @@ Confirmado nos dados: no catálogo do serviço 60 a linha `exames_instituicao_de
 
 ## Detalhes técnicos
 
-## Parte 6 — Voltar a um passo anterior e reentregar (recálculo total)
+## Parte 6 — Voltar e recomeçar a qualquer momento (histórico + recálculo)
 
-O cliente pode estar no passo 8 e voltar ao passo 1 para trocar um documento. Isso é direito dele e o checklist não trava.
+Mesmo estando no último passo, o cliente pode voltar a qualquer passo anterior e refazer o caminho — inclusive mudar uma resposta que reabre todo o restante do checklist. O sistema obedece à nova orientação dele.
 
 Como funciona:
-- Todo passo já concluído continua clicável e mostra o que foi entregue, com a opção **SUBSTITUIR DOCUMENTO**.
-- Ao substituir, o novo documento passa pela mesma leitura/validação de sempre e o processo **recalcula tudo do zero**: grupos, contadores, etapas liberadas, dispensas por categoria e passos condicionais que dependiam daquela resposta.
-- Se a troca muda uma resposta-pivot (por exemplo, o comprovante deixa de estar no nome do cliente), os passos que dependiam dela voltam a aparecer como pendentes e os que deixaram de fazer sentido são marcados como não aplicáveis — sem apagar histórico.
-- O documento anterior não some: fica na linha do tempo como versão substituída, com data e autor da troca.
+- Todo passo já concluído continua clicável, mostra o que foi entregue e oferece **REFAZER ESTE PASSO** (trocar documento ou mudar a resposta).
+- Tudo que ele já entregou vira **histórico**: nada é apagado. O item antigo fica na linha do tempo como versão anterior, com data, autor e o motivo da troca, visível para o cliente e para o admin.
+- A partir da nova resposta/documento, o processo **recalcula do zero**: grupos, contadores, etapas liberadas, dispensas por categoria e todos os passos condicionais que dependiam daquela resposta.
+- O recálculo respeita as regras já estabelecidas de cada grupo de exigência — ordem canônica do dossiê, validade, escopo das certidões, exclusividade entre trilhas e a matriz de dispensas por categoria. Nenhuma regra é afrouxada por ser uma reentrega.
+- Passos que voltaram a fazer sentido reaparecem como pendentes; passos que deixaram de fazer sentido ficam como não aplicáveis, com o motivo registrado.
+- Se a mudança invalidar itens já aprovados de outros grupos (por exemplo, trocar a categoria profissional), o sistema avisa antes de confirmar, listando exatamente o que será reaberto.
 
 **Trava de coerência final:** o processo só pode ser concluído se o conjunto final de documentos bater com os dados cadastrais do cliente (nome, CPF, filiação, data de nascimento, endereço e categoria/corporação). Se a reentrega criar divergência — por exemplo, um comprovante com endereço diferente do cadastro —, o sistema não conclui: aponta a divergência exata, oferece atualizar o cadastro ou corrigir o documento, e só libera depois que os dois lados coincidem.
 
@@ -116,7 +118,7 @@ Vale tanto na área do cliente (pop-up guiado) quanto no admin, com o mesmo rec�
 - `QAClientePortalPage.tsx`: contar itens dispensados como cumpridos, tratar `dispensa_quando` como ramo exclusivo (hoje só `exige_quando`), passar categoria/corporação ao pop-up.
 - `src/components/quero-armas/clientes/categoriaTitular.ts`: a matriz fixa atual vira fallback; a fonte passa a ser a tabela. Hoje esse arquivo marca `seguranca_publica` como dispensada de laudo e exame — o que a matriz vai refinar por corporação e por serviço.
 - `QAConfiguracoesPage.tsx` + novo componente de matriz, reaproveitando `pendenciasGrupos.ts` e `CONDICOES_CHECKLIST`.
-- Recálculo: reexecutar a explosão do checklist (`qa_explodir_checklist_processo` + regras condicionais) após cada substituição, preservando `qa_processo_documentos` antigos como versões (`status = 'substituido'`) e registrando evento em `qa_processo_eventos`. Reaproveitar `respostasCadastro.ts` para a trava de coerência, comparando `extracao_ia_json` de cada documento cumprido com os campos de `qa_clientes`.
+- Recálculo: reexecutar a explosão do checklist (`qa_explodir_checklist_processo` + regras condicionais, sem bypass das validações de grupo) a cada refazimento, preservando os `qa_processo_documentos` antigos como versões (`status = 'substituido'`) e registrando cada troca em `qa_processo_eventos` com autor, data e motivo. Prévia do impacto antes de confirmar (lista de itens que serão reabertos). Reaproveitar `respostasCadastro.ts` para a trava de coerência, comparando `extracao_ia_json` de cada documento cumprido com os campos de `qa_clientes`.
 
 ## Verificação
 
