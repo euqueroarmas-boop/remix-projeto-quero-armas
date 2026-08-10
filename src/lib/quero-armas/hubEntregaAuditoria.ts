@@ -51,6 +51,15 @@ export interface EntregaItem {
 
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 const ehCertidao = (t: string) => t.includes("certidao") || t.includes("antecedente");
+const ehPergunta = (t: string) => t.startsWith("pergunta_");
+/** Documentos que pertencem ao contrato, não ao checklist do processo. */
+const DOCS_CONTRATUAIS = new Set([
+  "procuracao_assinada",
+  "procuracao",
+  "contrato_assinado",
+  "contrato",
+  "comprovante_pagamento",
+]);
 const CUMPRIDOS = new Set([
   "aprovado", "recebido", "arquivado", "concluido",
   "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento",
@@ -86,8 +95,35 @@ export function montarLinhaEntrega(
 
   // Exigências obrigatórias com ordem definida, para detectar "atropelo".
   const comOrdem = exigencias
-    .filter((e) => typeof e.ordem === "number" && e.obrigatorio !== false)
+    .filter(
+      (e) =>
+        typeof e.ordem === "number" &&
+        e.obrigatorio !== false &&
+        !ehPergunta(norm(e.tipo_documento)),
+    )
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+
+  // Data da PRIMEIRA entrega de cada tipo (nos dois namespaces), para auditar
+  // a ordem contra o momento da entrega e não contra o estado de hoje.
+  const primeiraEntregaPorTipo = new Map<string, number>();
+  ordenados.forEach((d) => {
+    const ts = d.created_at ? Date.parse(d.created_at) : NaN;
+    if (!Number.isFinite(ts)) return;
+    const tRaw = norm(d.tipo_documento);
+    if (!tRaw) return;
+    const tHub = toHubTipoCompartilhado(tRaw) || tRaw;
+    [tRaw, tHub].forEach((k) => {
+      const atual = primeiraEntregaPorTipo.get(k);
+      if (atual === undefined || ts < atual) primeiraEntregaPorTipo.set(k, ts);
+    });
+  });
+
+  const entregueAntesDe = (e: ExigenciaLike, corte: number): boolean => {
+    const tRaw = norm(e.tipo_documento);
+    const tHub = toHubTipoCompartilhado(tRaw) || tRaw;
+    const ts = primeiraEntregaPorTipo.get(tRaw) ?? primeiraEntregaPorTipo.get(tHub);
+    return ts !== undefined && ts <= corte;
+  };
 
   const certidoesPendentes = exigencias
     .filter((e) => ehCertidao(norm(e.tipo_documento)) && !CUMPRIDOS.has(norm(e.status)))
@@ -110,13 +146,23 @@ export function montarLinhaEntrega(
     }
 
     if (!exigencia && tipo) {
-      anotacoes.push({
-        codigo: "sem_exigencia",
-        severidade: "atencao",
-        titulo: "SEM EXIGÊNCIA CORRESPONDENTE",
-        detalhe: "Este documento não consta como exigência do checklist deste cliente — foi entregue por fora ou o checklist está incompleto.",
-      });
-      if (ehCertidao(tipo) && certidoesPendentes.length > 0) {
+      const contratual = DOCS_CONTRATUAIS.has(tipo) || DOCS_CONTRATUAIS.has(toHubTipoCompartilhado(tipo) || tipo);
+      anotacoes.push(
+        contratual
+          ? {
+              codigo: "sem_exigencia",
+              severidade: "info",
+              titulo: "DOCUMENTO CONTRATUAL",
+              detalhe: "Pertence ao contrato, não ao checklist do processo — por isso não há exigência correspondente.",
+            }
+          : {
+              codigo: "sem_exigencia",
+              severidade: "atencao",
+              titulo: "SEM EXIGÊNCIA CORRESPONDENTE",
+              detalhe: "Este documento não consta como exigência do checklist deste cliente — foi entregue por fora ou o checklist está incompleto.",
+            },
+      );
+      if (!contratual && ehCertidao(tipo) && certidoesPendentes.length > 0) {
         anotacoes.push({
           codigo: "possivel_troca_certidao",
           severidade: "critico",
@@ -127,8 +173,12 @@ export function montarLinhaEntrega(
     }
 
     if (exigencia && typeof exigencia.ordem === "number") {
+      const corte = doc.created_at ? Date.parse(doc.created_at) : Number.MAX_SAFE_INTEGER;
       const anteriores = comOrdem.filter(
-        (e) => (e.ordem ?? 0) < (exigencia.ordem ?? 0) && !CUMPRIDOS.has(norm(e.status)),
+        (e) =>
+          (e.ordem ?? 0) < (exigencia.ordem ?? 0) &&
+          !CUMPRIDOS.has(norm(e.status)) &&
+          !entregueAntesDe(e, corte),
       );
       if (anteriores.length > 0) {
         anotacoes.push({
