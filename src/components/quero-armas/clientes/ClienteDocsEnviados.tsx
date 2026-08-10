@@ -344,13 +344,19 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     extra?: Record<string, unknown>,
   ) => {
     if (!clienteId) return;
+    // Provas do caso usam id sintético ("prova-<uuid>") — a auditoria só
+    // aceita uuid puro, então mandamos o uuid real e marcamos a origem.
+    const rawId = String(doc?.id ?? "");
+    const uuid = rawId.startsWith("prova-") ? rawId.slice(6) : rawId;
+    const ehUuid = /^[0-9a-f-]{36}$/i.test(uuid);
     void supabase.functions.invoke("qa-doc-acesso-registrar", {
       body: {
         cliente_id: clienteId,
         acao,
-        documento_id: doc?.id ?? null,
+        documento_id: ehUuid ? uuid : null,
         documento_tipo: doc?.tipo_documento ?? null,
         documento_nome: doc?.nome_documento ?? doc?.arquivo_nome ?? null,
+        detalhes: doc?.origem_prova ? { origem: "efetiva_necessidade_prova" } : undefined,
         ...extra,
       },
     });
