@@ -296,6 +296,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
   const isSignature = active.kind === "signature";
   const isPergunta = active.kind === "pergunta";
+  const dispensa = active.dispensa ?? null;
+  const isDispensado = !!dispensa;
   const doc = active.tipo === "contract" ? "contrato" : "procuracao";
   const explicBase = isSignature
     ? {
