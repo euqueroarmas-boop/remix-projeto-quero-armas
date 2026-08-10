@@ -637,10 +637,9 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
       <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       {featured && (
-        <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} />
+        <FeaturedContractCard contract={featured} onAssinar={handleAssinar} preparedDownload={preparedFeaturedDownload} preparingDownload={preparingFeaturedDownload} onValidatedRefresh={() => setReloadKey((k) => k + 1)} comprovantes={comprovantes} />
       )}
-
-      <ComprovantesPagamentoBloco docs={comprovantes} />
+      {!featured && <ComprovantesPagamentoBloco docs={comprovantes} />}
 
       {/* ── Outros contratos ── */}
       {others.length > 0 && (
