@@ -9,7 +9,8 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, MapPin, Upload, X } from "lucide-react";
+import { AgendarExameModal } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameModal";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -131,6 +132,10 @@ interface Props {
   } | null;
   /** Nome do cliente — usado no H1 de abertura do popup. */
   nomeCliente?: string | null;
+  /** CEP do cliente — usado para listar credenciados da PF mais próximos. */
+  cepCliente?: string | null;
+  /** Cidade do cliente — fallback quando não há CEP válido. */
+  cidadeCliente?: string | null;
 }
 
 /**
