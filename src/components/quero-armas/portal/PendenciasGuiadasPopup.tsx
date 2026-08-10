@@ -9,7 +9,8 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, MapPin, Upload, X } from "lucide-react";
+import { AgendarExameModal } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameModal";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
@@ -131,6 +132,10 @@ interface Props {
   } | null;
   /** Nome do cliente — usado no H1 de abertura do popup. */
   nomeCliente?: string | null;
+  /** CEP do cliente — usado para listar credenciados da PF mais próximos. */
+  cepCliente?: string | null;
+  /** Cidade do cliente — fallback quando não há CEP válido. */
+  cidadeCliente?: string | null;
 }
 
 /**
@@ -170,7 +175,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
@@ -386,6 +391,23 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   useEffect(() => {
     setRespondendo(null);
   }, [active.id]);
+
+  // ─── Escolha de profissional credenciado pela PF ───
+  // Regra (10/08/2026): quem responde NÃO na pergunta dos exames da instituição
+  // — e quem está na pendência dos laudos particulares — precisa conseguir
+  // escolher o profissional sem sair do checklist guiado.
+  const [exameModal, setExameModal] = useState<null | "psicologo" | "instrutor_tiro">(null);
+  useEffect(() => { setExameModal(null); }, [active.id]);
+  const tipoBruto = String(active.rawTipo || active.tipo || "").toLowerCase();
+  const tipoCredenciado: "psicologo" | "instrutor_tiro" | null =
+    isPergunta && active.perguntaChave === "exames_instituicao" && active.respostaAtual === "nao"
+      ? "psicologo"
+      : tipoBruto.includes("laudo_psicologico") || tipoBruto.includes("aptidao_psicologica")
+        ? (tipoBruto.includes("instituicao") ? null : "psicologo")
+        : tipoBruto.includes("capacidade_tecnica") || tipoBruto.includes("laudo_tiro")
+          ? (tipoBruto.includes("instituicao") ? null : "instrutor_tiro")
+          : null;
+
   const handleResponder = async (valor: string) => {
     if (!active.onResponder) return;
     setRespondendo(valor);
@@ -579,14 +601,25 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </span>
             ) : null}
           </div>
-          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-2.5 h-px bg-[#F0F0F0]"} />
+          <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-4 h-px bg-[#F0F0F0]"} />
           <div className={asPage ? "" : "pl-[36px]"}>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
                 título da etapa — o título grande repetiria o nome do grupo. */}
             {active.corpo ? null : (
-              <h2 className={asPage ? "qa-h1 mt-4" : "qa-h1 mt-2.5"} style={{ letterSpacing: ".02em" }}>
-                {explic.titulo}
-              </h2>
+              asPage ? (
+                <h2 className="qa-h1 mt-4" style={{ letterSpacing: ".02em" }}>
+                  {explic.titulo}
+                </h2>
+              ) : (
+                /* Mesma escala do H1 do header (18/20px). Antes usava `qa-h1`
+                   (22px) e ficava MAIOR que o título principal do pop-up. */
+                <h2
+                  className="mt-4 font-['Oswald',sans-serif] text-[18px] font-bold uppercase leading-[1.15] tracking-[0.02em] text-[#0A0A0A] sm:text-[20px]"
+                  style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
+                >
+                  {explic.titulo}
+                </h2>
+              )
             )}
 
             {active.detalheContexto ? (
@@ -622,7 +655,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Scrollable body */}
-        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pb-2"}>
+        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
 
 
           {active.corpo ? (
@@ -687,6 +720,25 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   {active.perguntaAjudaPos}
                 </p>
               ) : null}
+            </div>
+          ) : null}
+
+          {/* Escolha do profissional credenciado pela PF — sem sair do guiado. */}
+          {tipoCredenciado ? (
+            <div className="mt-4 rounded-sm border border-[#8A1224]/20 bg-[#FFF7F8] p-4">
+              <p className="qa-caption" style={{ color: "#7A1F2B" }}>
+                {tipoCredenciado === "psicologo"
+                  ? "Você optou por fazer os exames fora da instituição. Escolha um psicólogo credenciado pela Polícia Federal perto de você."
+                  : "Escolha um instrutor de tiro credenciado pela Polícia Federal perto de você."}
+              </p>
+              <button
+                type="button"
+                onClick={() => setExameModal(tipoCredenciado)}
+                className="qa-btn-label mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#7A1F2B] bg-[#7A1F2B] px-4 py-3 text-white transition-colors hover:bg-[#8A1224]"
+              >
+                <MapPin className="h-4 w-4" />
+                Escolher profissional credenciado
+              </button>
             </div>
           ) : null}
           </>
@@ -865,6 +917,17 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           )}
         </div>
       </div>
+
+      {exameModal ? (
+        <AgendarExameModal
+          open
+          tipo={exameModal}
+          cep={cepCliente ?? null}
+          uf={ufCliente ?? null}
+          cidade={cidadeCliente ?? null}
+          onClose={() => setExameModal(null)}
+        />
+      ) : null}
     </div>
   );
 }
