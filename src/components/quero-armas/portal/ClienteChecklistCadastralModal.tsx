@@ -19,6 +19,12 @@ import { Loader2, ArrowRight, Check, X, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CAMPOS_CADASTRO, type CampoCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import { UFS_BR, fetchMunicipiosUF } from "@/lib/quero-armas/localidadesBr";
+import {
+  mascaraTituloEleitor,
+  tituloEleitorDigitos,
+  tituloEleitorValido,
+  TITULO_ELEITOR_ERRO,
+} from "@/lib/quero-armas/tituloEleitor";
 
 interface Props {
   open: boolean;
@@ -171,6 +177,11 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
     if (atual.tipo === "tel" && ![10, 11].includes(soDigitos(bruto).length)) {
       setErro("Informe o celular com DDD."); return;
     }
+    if (atual.tipo === "titulo_eleitor") {
+      if (!tituloEleitorValido(bruto)) { setErro(TITULO_ELEITOR_ERRO); return; }
+      // Banco guarda só os 12 dígitos; a exibição remonta os blocos 4-4-4.
+      paraSalvar = tituloEleitorDigitos(bruto);
+    }
     if (atual.key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bruto)) {
       setErro("E-mail inválido."); return;
     }
@@ -191,6 +202,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
     if (atual.tipo === "tel") return mascaraTel(v);
     if (atual.tipo === "date") return mascaraData(v);
     if (atual.tipo === "uf") return v.toUpperCase().slice(0, 2);
+    if (atual.tipo === "titulo_eleitor") return mascaraTituloEleitor(v);
     return v;
   };
 
@@ -312,7 +324,7 @@ export default function ClienteChecklistCadastralModal({ open, cliente, onConclu
               <input
                 autoFocus
                 type="text"
-                inputMode={["cep", "tel", "date"].includes(atual.tipo ?? "") ? "numeric" : "text"}
+                inputMode={["cep", "tel", "date", "titulo_eleitor"].includes(atual.tipo ?? "") ? "numeric" : "text"}
                 placeholder={atual.placeholder}
                 value={valor}
                 onChange={(e) => setValor(aplicarMascara(e.target.value))}

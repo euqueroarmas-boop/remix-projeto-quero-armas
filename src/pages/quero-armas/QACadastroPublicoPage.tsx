@@ -2,6 +2,11 @@ import React, { useState, useRef, useCallback, Fragment, useMemo, useEffect } fr
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  mascaraTituloEleitor,
+  tituloEleitorDigitos,
+  TITULO_ELEITOR_PLACEHOLDER,
+} from "@/lib/quero-armas/tituloEleitor";
+import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users, Crosshair, Check,
@@ -1959,8 +1964,10 @@ function Step3Review({
           o checklist do seu processo após a aprovação do pagamento.
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
-            onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
+          {/* Blocos 4-4-4, igual ao e-Título e à certidão do TSE. Salvo só com dígitos. */}
+          <ReviewField label="Título de eleitor" value={mascaraTituloEleitor(data.titulo_eleitor)}
+            placeholder={TITULO_ELEITOR_PLACEHOLDER}
+            onChange={(v) => set("titulo_eleitor", tituloEleitorDigitos(v))} status={statusOf("titulo_eleitor")} />
           <ReviewField label="CNH" value={data.cnh} onChange={(v) => set("cnh", v)} status={statusOf("cnh")} />
         </div>
       </ReviewBlock>
