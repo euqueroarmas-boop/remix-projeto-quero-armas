@@ -27,6 +27,11 @@ interface Row {
   grupo_atual?: string | null;
   grupo_total?: number | null;
   grupo_concluidos?: number | null;
+  /** Leitura por grupos: em qual grupo está e quantos faltam. */
+  grupos_total?: number | null;
+  grupo_indice?: number | null;
+  grupos_concluidos?: number | null;
+  grupos_restantes?: number | null;
   documentos_pendentes?: number | null;
   perguntas_pendentes?: number | null;
   em_analise?: number | null;
