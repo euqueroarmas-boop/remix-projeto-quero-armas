@@ -57,6 +57,7 @@ describe("pareceNomePessoa", () => {
     expect(pareceNomePessoa("OCUPACAO DECLARADA PELO ELEITOR")).toBe(false);
     expect(pareceNomePessoa("TRIBUNAL SUPERIOR ELEITORAL")).toBe(false);
     expect(pareceNomePessoa("NADA CONSTA")).toBe(false);
+    expect(pareceNomePessoa("DA PESSOA PESQUISADA E O RESPECTIVO NUMERO DE")).toBe(false);
   });
 });
 
@@ -131,5 +132,30 @@ describe("regressão TSE: rótulo dentro de palavra", () => {
 
   it("recusa fragmento institucional como nome de pessoa", () => {
     expect(pareceNomePessoa("AIS E EXPEDIDA GRATUITAMENTE")).toBe(false);
+  });
+});
+
+describe("Justiça Militar estadual — qualificação opcional", () => {
+  it("descarta texto institucional e extrai os campos existentes", () => {
+    const texto = [
+      "TRIBUNAL DE JUSTIÇA MILITAR DO ESTADO DE SÃO PAULO",
+      "CERTIDÃO DE ANTECEDENTES CRIMINAIS",
+      "certifica em nome de: DA PESSOA PESQUISADA E O RESPECTIVO NÚMERO DE",
+      "Nome: PEDRO LOBATO DE LIMA",
+      "CPF: 123.456.789-01",
+      "RG: 12.345.678-9",
+      "Data de Nascimento: 05/12/1974",
+      "Mãe: NECI LOBATO DE LIMA",
+      "Pai: MANOEL ZUZA DE LIMA",
+      "NÃO CONSTAM registros",
+    ].join("\n");
+    const c = parseCertidao(texto);
+    expect(c?.nome_titular).toBe("PEDRO LOBATO DE LIMA");
+    expect(c?.cpf).toBe("12345678901");
+    expect(c?.rg).toBe("123456789");
+    expect(c?.data_nascimento).toBe("1974-12-05");
+    expect(c?.nome_mae).toBe("NECI LOBATO DE LIMA");
+    expect(c?.nome_pai).toBe("MANOEL ZUZA DE LIMA");
+    expect(c?.resultado).toBe("NADA_CONSTA");
   });
 });
