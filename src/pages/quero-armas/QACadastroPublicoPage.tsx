@@ -2,6 +2,11 @@ import React, { useState, useRef, useCallback, Fragment, useMemo, useEffect } fr
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  mascaraTituloEleitor,
+  tituloEleitorDigitos,
+  TITULO_ELEITOR_PLACEHOLDER,
+} from "@/lib/quero-armas/tituloEleitor";
+import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users, Crosshair, Check,
