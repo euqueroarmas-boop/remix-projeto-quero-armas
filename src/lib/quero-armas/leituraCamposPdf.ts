@@ -206,6 +206,9 @@ export function pareceNomePessoa(v: string | undefined): boolean {
   if (!/^[A-Z][A-Z '´`^~.-]*$/.test(s)) return false;
   if (s.split(" ").filter(Boolean).length < 2) return false;
   if (NAO_E_NOME.test(s)) return false;
+  // Prefixos institucionais: pegam flexões ("EXPEDIDA", "GRATUITAMENTE",
+  // "EMITIDO"), que o \b da lista acima deixaria passar.
+  if (/\b(EXPEDID|GRATUIT|EMITID|AUTENTIC|VALIDAD|CERTIFIC|ASSINAT|CONFER)/.test(s)) return false;
   return true;
 }
 
