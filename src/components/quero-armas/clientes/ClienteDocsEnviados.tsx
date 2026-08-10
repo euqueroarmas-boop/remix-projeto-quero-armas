@@ -293,9 +293,100 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     }
   };
 
-  const handleViewFile = (path: string) => {
+  /**
+   * Toda leitura/baixa da equipe vira rastro em qa_documento_acessos e aviso
+   * ao cliente (janela de 6h por documento, para não virar spam).
+   */
+  const registrarAcesso = (
+    acao: "visualizado" | "baixado" | "baixado_lote",
+    doc?: any,
+    extra?: Record<string, unknown>,
+  ) => {
+    if (!clienteId) return;
+    void supabase.functions.invoke("qa-doc-acesso-registrar", {
+      body: {
+        cliente_id: clienteId,
+        acao,
+        documento_id: doc?.id ?? null,
+        documento_tipo: doc?.tipo_documento ?? null,
+        documento_nome: doc?.nome_documento ?? doc?.arquivo_nome ?? null,
+        ...extra,
+      },
+    });
+  };
+
+  const handleViewFile = (path: string, doc?: any) => {
     const fileName = path.split("/").pop() || "documento";
     viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
+    registrarAcesso("visualizado", doc);
+  };
+
+  /** Download individual — via Blob, para nunca expor a URL do storage. */
+  const handleBaixarDoc = async (doc: any) => {
+    const path = doc?.arquivo_storage_path;
+    if (!path) { toast.error("Documento sem arquivo."); return; }
+    try {
+      const { data, error } = await supabase.storage.from("qa-documentos").download(path);
+      if (error || !data) throw error || new Error("Falha ao baixar");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nomeArquivoDossie(doc);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      registrarAcesso("baixado", doc);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao baixar o documento.");
+    }
+  };
+
+  /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
+  const [baixandoZip, setBaixandoZip] = useState(false);
+  const handleBaixarTudo = async () => {
+    const comArquivo = (docs as any[]).filter((d) => d.arquivo_storage_path);
+    if (comArquivo.length === 0) { toast.error("Nenhum arquivo para baixar."); return; }
+    setBaixandoZip(true);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const usados = new Map<string, number>();
+      const ordenados = [...comArquivo].sort(compararProtocolo);
+      let ok = 0;
+      for (const doc of ordenados) {
+        const { data, error } = await supabase.storage
+          .from("qa-documentos").download(doc.arquivo_storage_path);
+        if (error || !data) continue;
+        const pos = posicaoProtocolo(doc.tipo_documento, doc.nome_documento);
+        const pasta = `${pos.grupo}. ${pos.grupoNome}`;
+        let nome = nomeArquivoDossie(doc);
+        const chave = `${pasta}/${nome}`;
+        const n = usados.get(chave) ?? 0;
+        usados.set(chave, n + 1);
+        if (n > 0) nome = nomeArquivoDossie(doc, n + 1);
+        zip.folder(pasta)!.file(nome, data);
+        ok += 1;
+      }
+      if (ok === 0) throw new Error("Não foi possível baixar os arquivos.");
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const nomeCliente = String(cliente?.nome_completo || cliente?.nome || "cliente")
+        .replace(/[\\/:*?"<>|]/g, "-").trim();
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Dossie - ${nomeCliente}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 6000);
+      registrarAcesso("baixado_lote", undefined, { quantidade: ok });
+      toast.success(`Dossiê com ${ok} documento(s) baixado na ordem do protocolo.`);
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao gerar o dossiê.");
+    } finally {
+      setBaixandoZip(false);
+    }
   };
 
   /**
