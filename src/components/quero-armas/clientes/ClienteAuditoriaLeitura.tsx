@@ -79,6 +79,17 @@ const CorVeredicto: Record<string, string> = {
   aprovado: "#166534",
   rejeitado: "#7A1F2B",
   revisao: "#92400E",
+  revisao_humana: "#92400E",
+  cadastro_pendente: "#1E3A8A",
+};
+
+/** Rótulo humano do veredicto — a badge não deve exibir o slug cru. */
+const LabelVeredicto: Record<string, string> = {
+  aprovado: "APROVADO",
+  rejeitado: "REJEITADO",
+  revisao: "REVISÃO",
+  revisao_humana: "REVISÃO HUMANA",
+  cadastro_pendente: "CADASTRO PENDENTE",
 };
 
 export default function ClienteAuditoriaLeitura({ cliente }: { cliente: any }) {
@@ -180,7 +191,7 @@ export default function ClienteAuditoriaLeitura({ cliente }: { cliente: any }) {
                     className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full text-white whitespace-nowrap"
                     style={{ background: CorVeredicto[a.veredicto] ?? "#475569" }}
                   >
-                    {a.veredicto}
+                    {LabelVeredicto[a.veredicto] ?? a.veredicto.replace(/_/g, " ").toUpperCase()}
                   </span>
                 )}
               </button>
