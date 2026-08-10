@@ -221,9 +221,9 @@ export default function DashboardProgressoClientes() {
                   <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                     {r.entregues}/{r.total_docs}
                   </span>
-                  {r.reaproveitados > 0 && (
+                  {(r.reaproveitados + r.dispensados) > 0 && (
                     <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
-                      {r.reaproveitados} REAP.
+                      +{r.reaproveitados + r.dispensados} APROV.
                     </span>
                   )}
                   <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
@@ -299,9 +299,9 @@ export default function DashboardProgressoClientes() {
                         <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                           {r.entregues}/{r.total_docs}
                         </span>
-                        {r.reaproveitados > 0 && (
+                        {(r.reaproveitados + r.dispensados) > 0 && (
                           <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
-                            {r.reaproveitados} REAP.
+                            +{r.reaproveitados + r.dispensados} APROV.
                           </span>
                         )}
                         <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
