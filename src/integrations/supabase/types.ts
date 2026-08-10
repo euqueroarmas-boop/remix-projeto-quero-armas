@@ -10442,6 +10442,51 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_regras_categoria: {
+        Row: {
+          ativo: boolean
+          base_legal: string | null
+          categoria: string
+          corporacao: string | null
+          created_at: string
+          grupo_id: string
+          id: string
+          modo: string
+          registro: string | null
+          servico_id: number | null
+          tipo_documento: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_legal?: string | null
+          categoria: string
+          corporacao?: string | null
+          created_at?: string
+          grupo_id: string
+          id?: string
+          modo?: string
+          registro?: string | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_legal?: string | null
+          categoria?: string
+          corporacao?: string | null
+          created_at?: string
+          grupo_id?: string
+          id?: string
+          modo?: string
+          registro?: string | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_remove_bg_usage: {
         Row: {
           armamento_id: string | null
