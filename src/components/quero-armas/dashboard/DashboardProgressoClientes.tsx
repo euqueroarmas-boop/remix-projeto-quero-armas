@@ -324,7 +324,7 @@ export default function DashboardProgressoClientes() {
             return (
               <Link
                 key={r.processo_id}
-                to={`/quero-armas/clientes/${r.cliente_id}`}
+                to={rotaCadastroCliente(r.cliente_id)}
                 className="block px-4 py-3 border-b border-[#EFEFEF] active:bg-[#FAFAFA]"
               >
                 <div className="flex items-baseline gap-2">
@@ -356,6 +356,7 @@ export default function DashboardProgressoClientes() {
                       {(r.grupo_total ?? 0) > 0 ? ` ${r.grupo_concluidos ?? 0}/${r.grupo_total}` : ""}
                     </Chip>
                   )}
+                  <LinhaGrupos r={r} />
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                   {pendencias > 0 && <Chip cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
