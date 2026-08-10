@@ -16,10 +16,6 @@
  * fim em `data_validade`.
  */
 
-export interface DocValidadeInput {
-  tipo_documento?: string | null;
-}
-
 // ─── FUSO CANÔNICO: America/Sao_Paulo ────────────────────────────────────────
 // Toda contagem de prazo da plataforma usa o "hoje" de Brasília. Usar UTC fazia
 // o resumo virar o dia às 21h (BRT) e mostrar 1 dia a menos que o banco.
@@ -58,7 +54,7 @@ export function diasAteBRT(value?: string | null, ref: Date = new Date()): numbe
   return Math.round((alvo - hojeBRT(ref)) / 86400000);
 }
 
-export interface DocValidadeInputBase {
+export interface DocValidadeInput {
   tipo_documento?: string | null;
   data_emissao?: string | null;
   data_validade_efetiva?: string | null;
