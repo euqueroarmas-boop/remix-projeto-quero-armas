@@ -167,6 +167,31 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 
   const pendentes = docs.filter((d: any) => d.status === "pendente_aprovacao").length;
 
+  /**
+   * Histórico de rejeições: cada evento de mudança para "reprovado" com o
+   * motivo alegado. Serve de trilha de auditoria na linha do tempo — não só o
+   * último motivo gravado no documento.
+   */
+  const docIds = useMemo(() => (docs as any[]).map((d) => d.id), [docs]);
+  const { data: historicoReprovas = {} } = useQuery({
+    queryKey: ["cliente-docs-reprovas", clienteId, docIds.length],
+    enabled: docIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("qa_status_eventos" as any)
+        .select("documento_id, motivo, created_at, status_novo")
+        .in("documento_id", docIds)
+        .eq("status_novo", "reprovado")
+        .order("created_at", { ascending: true });
+      const mapa: Record<string, { motivo: string | null; quando: string }[]> = {};
+      for (const ev of ((data as any[]) || [])) {
+        if (!ev.documento_id) continue;
+        (mapa[ev.documento_id] ||= []).push({ motivo: ev.motivo ?? null, quando: ev.created_at });
+      }
+      return mapa;
+    },
+  });
+
   // Exigências reais do cliente — base para auditar a ordem de entrega.
   const { data: exigencias = [] } = useQuery({
     queryKey: ["cliente-exigencias-entrega", clienteId],
