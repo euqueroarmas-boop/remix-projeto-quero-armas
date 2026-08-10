@@ -15,7 +15,8 @@ O classificador de grupos (`src/lib/quero-armas/pendenciasGrupos.ts`) só reconh
 Outros itens do mesmo serviço também caem em lugar errado pela mesma lógica:
 
 - `declaracao_sem_inquerito_processo_criminal` → hoje vai para "Declarações do processo"; pertence a **Idoneidade**.
-- `procuracao_assinada`, `dsa_declaracao_seguranca_acervo`, `declaracao_endereco_acervo`, `declaracao_guarda_responsavel`, `declaracao_nao_possuir_segundo_endereco`, `pergunta_segundo_endereco_acervo` → precisam de grupo explícito em vez de cair em "outros".
+- `procuracao_assinada` e as declarações contratuais → precisam de grupo explícito em vez de cair em "outros".
+- Itens de **acervo CAC** (DSA, DEGA, guarda responsável, 2º endereço) não pertencem a defesa pessoal — ver seção própria abaixo: serão **removidos**, não reagrupados.
 - `ctps`, `exames_instituicao_definir`, `atestado_aptidao_psicologica_instituicao` → conferir se batem nas regras atuais de Ocupação/Laudos.
 
 O contador "8 de 8" não está quebrado: ele conta os grupos derivados dessa classificação. Corrigida a classificação, a contagem passa a refletir a sequência real.
@@ -28,6 +29,19 @@ Consequência: o cliente é orientado a tirar só a certidão de abrangência re
 
 Correção prevista: reinserir a exigência `antecedentes_federal_sjsp_jef` ("Certidão Federal — Seção Judiciária de SP e JEF") no serviço de autorização de compra/posse na ordem 360, logo após a TRF3 regional, no grupo Idoneidade, obrigatória, e vincular automaticamente os envios já existentes desse tipo.
 
+## Achado adicional: itens de acervo CAC dentro de serviços de defesa pessoal
+
+DSA, DEGA, declaração de guarda responsável e o bloco de 2º endereço são exigências do universo **CAC (CR/acervo)** e não se aplicam a defesa pessoal. Hoje eles aparecem nos seguintes serviços de defesa pessoal (todos ativos no checklist):
+
+- **2 — Posse na Polícia Federal**: `declaracao_guarda_responsavel` (310), `pergunta_segundo_endereco_acervo` (350), `declaracao_endereco_acervo` (370), `dsa_declaracao_seguranca_acervo` (380), `declaracao_nao_possuir_segundo_endereco` (390), `comprovante_residencia_segundo_endereco` (400)
+- **35, 48 (desativados)**, **36 — Renovação de Posse**, **37 — Renovação de Porte**, **41 — Porte de Arma de Fogo**: `declaracao_guarda_responsavel`
+
+Permanecem intactos nos serviços CAC, onde são legítimos: 32 (Renovação de CR), 33 (Registro/Apostilamento CAC), 42 (Mudança Posse → CR), 45 (Apostilamento — atualização de acervo).
+
+Os serviços 59 (CRAF/GT) e 60 (Autorização de Compra) já não têm esses itens.
+
+Correção prevista: desativar essas exigências nos serviços de defesa pessoal (2, 35, 36, 37, 41, 48), com snapshot antes da alteração, e limpar as pendências abertas correspondentes nos clientes desses processos para que sumam do checklist guiado.
+
 ## O que será feito
 
 1. **Regras de grupo por prefixo `antecedentes_`** em `pendenciasGrupos.ts`: qualquer `antecedentes_*` vai para **Idoneidade** (ordem 60), junto com os `certidao_*` já existentes.
@@ -37,6 +51,7 @@ Correção prevista: reinserir a exigência `antecedentes_federal_sjsp_jef` ("Ce
    Contratos → Cadastros → Identificação civil → Identificação residencial → Ocupação lícita → Idoneidade → Efetiva necessidade → Laudos → Requerimento → Fechamento (só o que realmente sobrar).
 5. **Teste de regressão**: teste que percorre todos os `tipo_documento` ativos do serviço de autorização de compra e falha se algum cair em `outros`, impedindo que checklists futuros voltem a exibir "Fechamento" indevidamente.
 6. **Reinserir a exigência SJSP/JEF** no checklist (ordem 360) e conferir se os demais serviços que pedem certidão federal também deveriam ter as duas abrangências — se sim, aplicar o mesmo par a eles.
+7. **Remover DSA/DEGA/guarda responsável/2º endereço dos serviços de defesa pessoal** (2, 35, 36, 37, 41, 48), preservando-os nos serviços CAC, e limpar as pendências já geradas para clientes nesses processos.
 
 ## Detalhes técnicos
 
