@@ -87,7 +87,11 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
 
   const abrirArquivo = async (path: string) => {
     const { data } = await supabase.storage.from("qa-documentos").createSignedUrl(path, 600);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener");
+    if (!data?.signedUrl) return;
+    // Nunca expor URL do storage — entrega via blob local.
+    const resp = await fetch(data.signedUrl);
+    if (!resp.ok) return;
+    await saveOrShareBlob(await resp.blob(), path.split("/").pop() || "documento");
   };
 
   if (loading) {
