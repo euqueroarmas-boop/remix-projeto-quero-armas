@@ -20,6 +20,7 @@ import SimuladorClienteChecklist from "@/components/quero-armas/config/checklist
 import KanbanExigenciasAdmin from "@/components/quero-armas/config/checklist/KanbanExigenciasAdmin";
 import QANotificacoesAdmin from "@/components/quero-armas/config/QANotificacoesAdmin";
 import QAKlalPersonaAdmin from "@/components/quero-armas/config/QAKlalPersonaAdmin";
+import QARegrasCategoriaAdmin from "@/components/quero-armas/config/QARegrasCategoriaAdmin";
 import MotoresApagadosAdmin from "@/components/quero-armas/config/MotoresApagadosAdmin";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
