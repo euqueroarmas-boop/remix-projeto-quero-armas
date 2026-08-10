@@ -20,7 +20,7 @@ Sim, dá para generalizar. Em vez de resolver só o TJM, entra uma **trava únic
 
 1. **Detector canônico de escopo cível** (novo `escopoCertidao.ts`), lido do texto do PDF:
    - marcadores cíveis: "CARTORIO CIVEL", "ACOES CIVEIS", "DISTRIBUICAO CIVEL", "AREA CIVEL", "reu/requerido", "CERTIDAO CIVEL", "FAMILIA E SUCESSOES", "FALENCIA/CONCORDATA/RECUPERACAO JUDICIAL", "EXECUCOES FISCAIS";
-   - marcadores criminais: "CRIMINAL", "ANTECEDENTES CRIMINAIS", "AUDITORIAS CRIMINAIS", "EXECUCOES CRIMINAIS", "CRIMES ELEITORAIS", "FINS CRIMINAIS".
+   - marcadores criminais: "CRIMINAL", "CRIMINAIS", "ANTECEDENTES CRIMINAIS", "AUDITORIAS CRIMINAIS", "DISTRIBUICAO CRIMINAL", "DISTRIBUICOES CRIMINAIS", "DISTRIBUICAO DE ACOES CRIMINAIS", "ACOES CRIMINAIS", "EXECUCOES CRIMINAIS", "CRIMES ELEITORAIS", "FINS CRIMINAIS".
    - Regra: havendo marcador cível **e nenhum** marcador criminal → documento é CÍVEL → **rejeição imediata**. Havendo os dois (a criminal do TJSP cita "cível" em observações), vence o criminal — evita falso negativo.
 2. **Rejeição com motivo legível e slot preservado**: o documento não ocupa o slot de antecedentes; a mensagem diz qual certidão o cliente enviou, qual é a correta e onde emitir (link por órgão já existente em `linksAntecedentesPorUf.ts`). Ex.: "Você enviou a certidão CÍVEL do TJM/SP. O processo exige a Certidão de Antecedentes Criminais do TJM/SP (Auditorias Criminais)."
 3. **Discriminar criminal x cível no TJM/SP** em `identificarOrgao`, que hoje não distingue: cível → `tjm_sp_civel`; criminal → `tjm_sp`.
