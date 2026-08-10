@@ -199,6 +199,10 @@ const HUB_TIPOS_VALIDOS = new Set([
 export function toHubTipoCompartilhado(processoTipo: string | null | undefined): string {
   const raw = String(processoTipo || "").trim().toLowerCase();
   if (!raw) return "outro";
+  // Certidão CÍVEL não tem slot: ela é rejeitada, nunca arquivada como
+  // antecedente. Mantida aqui explicitamente para que nenhuma tradução futura
+  // a promova a documento válido.
+  if (raw === "certidao_civel_nao_aceita") return "outro";
   const mapped = PROCESSO_TO_HUB_TIPO[raw] ?? raw;
   return HUB_TIPOS_VALIDOS.has(mapped) ? mapped : "outro";
 }
