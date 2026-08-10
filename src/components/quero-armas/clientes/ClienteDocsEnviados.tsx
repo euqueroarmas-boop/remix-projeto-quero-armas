@@ -386,7 +386,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
   const [baixandoZip, setBaixandoZip] = useState(false);
   const handleBaixarTudo = async () => {
-    const comArquivo = (docs as any[]).filter((d) => d.arquivo_storage_path);
+    const comArquivo = [...(docs as any[]), ...provasComoDocs].filter((d) => d.arquivo_storage_path);
     if (comArquivo.length === 0) { toast.error("Nenhum arquivo para baixar."); return; }
     setBaixandoZip(true);
     try {
@@ -534,6 +534,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           <span className="text-slate-400">·</span>
           <span className="text-slate-500">
             {grupos.length} família(s) · {docs.length} documento(s)
+            {provasComoDocs.length > 0 && ` · ${provasComoDocs.length} prova(s) do caso`}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -618,6 +619,54 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           />
         ))}
       </div>
+      )}
+
+      {provasComoDocs.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+            Efetiva necessidade · provas do caso ({provasComoDocs.length}) — grupo 1, anexas à petição
+          </div>
+          <ul className="space-y-1.5">
+            {provasComoDocs.map((p: any) => {
+              const pos = posicaoProtocolo(p.tipo_documento, p.nome_documento);
+              return (
+                <li key={p.id} className="rounded-lg border border-slate-200 p-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800">
+                      {String(p.tipo_documento).replace(/_/g, " ")}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-[9px] font-bold uppercase text-slate-600">
+                      {pos.numero} · {pos.grupoNome}
+                    </span>
+                    {p.numero && (
+                      <span className="text-[10px] text-slate-500">Nº {p.numero}</span>
+                    )}
+                    {p.orgao && <span className="text-[10px] text-slate-500">{p.orgao}</span>}
+                    {p.data_fato && (
+                      <span className="text-[10px] text-slate-500">{formatDate(p.data_fato)}</span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleViewFile(p.arquivo_storage_path, p)}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                    >
+                      <Eye className="h-3 w-3" /> Visualizar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBaixarDoc(p)}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                    >
+                      <Download className="h-3 w-3" /> Baixar
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
       <DocumentoViewerModal
         open={viewer.open}
