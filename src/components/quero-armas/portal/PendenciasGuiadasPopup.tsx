@@ -929,7 +929,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
 
             <div className={`grid grid-cols-1 md:grid-cols-2 items-stretch ${asPage ? "gap-2" : "gap-2 sm:grid-cols-2"}`}>
-              {isPergunta ? null : isSignature ? (
+              {isDispensado ? (
+                <button
+                  type="button"
+                  disabled={avancandoDispensa}
+                  onClick={async () => {
+                    setAvancandoDispensa(true);
+                    try {
+                      await active.onDispensaAvancar?.();
+                    } finally {
+                      setAvancandoDispensa(false);
+                    }
+                  }}
+                  className={`inline-flex w-full items-center justify-center gap-2 bg-emerald-700 px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-white transition-colors hover:bg-emerald-800 disabled:opacity-50 md:col-span-2 ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  }`}
+                >
+                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  {avancandoDispensa ? "..." : "Avançar"}
+                </button>
+              ) : isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
@@ -938,10 +957,22 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   <Download className="h-3.5 w-3.5 shrink-0" />
                   {primaryLabel}
                 </button>
+              ) : active.recusaAlternativa ? (
+                /* Via institucional: "Não" abre a escolha de credenciado da PF
+                   sem tirar o cliente do checklist guiado. */
+                <button
+                  type="button"
+                  onClick={active.recusaAlternativa.onClick}
+                  className={`inline-flex w-full items-center justify-center gap-2 border-2 border-[#8A1224] bg-white px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  }`}
+                >
+                  {active.recusaAlternativa.label}
+                </button>
               ) : (
                 <div className="hidden md:block" />
               )}
-              {isPergunta ? null : (
+              {isPergunta || isDispensado ? null : (
                 <button
                   type="button"
                   onClick={active.onEntregar}
@@ -950,7 +981,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   } ${
                     isSignature
                       ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
-                      : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
+                      : active.recusaAlternativa
+                        ? "bg-[#8A1224] text-white hover:bg-[#6f0f1e]"
+                        : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
                   }`}
                 >
                   <Upload className="h-3.5 w-3.5 shrink-0" />
