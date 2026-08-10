@@ -423,14 +423,32 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   // escolher o profissional sem sair do checklist guiado.
   const [exameModal, setExameModal] = useState<null | "psicologo" | "instrutor_tiro">(null);
   useEffect(() => { setExameModal(null); }, [active.id]);
-  const tipoBruto = String(active.rawTipo || active.tipo || "").toLowerCase();
+  // Detecção tolerante: o item pode chegar só com o tipo normalizado do hub
+  // ou apenas com o nome do documento — sem isto o botão sumia justamente na
+  // etapa do laudo, que é onde o cliente mais precisa dele.
+  const tipoBruto = [active.rawTipo, active.tipo, active.fallbackNome, active.label]
+    .map((v) => String(v || "").toLowerCase())
+    .join(" | ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const ehInstitucional = tipoBruto.includes("instituicao") || tipoBruto.includes("institucional");
+  const ehPsico =
+    tipoBruto.includes("laudo_psicologico") ||
+    tipoBruto.includes("aptidao_psicologica") ||
+    tipoBruto.includes("laudo psicologico") ||
+    tipoBruto.includes("aptidao psicologica");
+  const ehTiro =
+    tipoBruto.includes("capacidade_tecnica") ||
+    tipoBruto.includes("capacidade tecnica") ||
+    tipoBruto.includes("laudo_tiro") ||
+    tipoBruto.includes("instrutor de tiro");
   const tipoCredenciado: "psicologo" | "instrutor_tiro" | null =
     isPergunta && active.perguntaChave === "exames_instituicao" && active.respostaAtual === "nao"
       ? "psicologo"
-      : tipoBruto.includes("laudo_psicologico") || tipoBruto.includes("aptidao_psicologica")
-        ? (tipoBruto.includes("instituicao") ? null : "psicologo")
-        : tipoBruto.includes("capacidade_tecnica") || tipoBruto.includes("laudo_tiro")
-          ? (tipoBruto.includes("instituicao") ? null : "instrutor_tiro")
+      : ehPsico
+        ? (ehInstitucional ? null : "psicologo")
+        : ehTiro
+          ? (ehInstitucional ? null : "instrutor_tiro")
           : null;
 
   const handleResponder = async (valor: string) => {
