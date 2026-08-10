@@ -28,6 +28,8 @@
  * gera indeferimento.
  * ============================================================================= */
 
+import { reconstruirLinhasPdf, type ItemTextoPdf } from "./leituraCamposPdf";
+
 export interface CamposCertidaoLocal {
   nome_titular?: string;
   cpf?: string;
@@ -115,7 +117,13 @@ export async function carregarPdfjs() {
   return mod;
 }
 
-/** Lê a camada de texto do PDF com o pdf.js que já roda no preview. */
+/**
+ * Lê a camada de texto do PDF preservando LINHAS e COLUNAS.
+ *
+ * Antes os fragmentos eram unidos com um espaço, o que apagava a estrutura da
+ * página e fazia o valor de um campo engolir o rótulo do campo seguinte — a
+ * causa direta das rejeições "a certidão não traz Nome".
+ */
 export async function extrairTextoPdf(file: File): Promise<string> {
   const { getDocument } = await carregarPdfjs();
   const buf = await file.arrayBuffer();
@@ -124,11 +132,7 @@ export async function extrairTextoPdf(file: File): Promise<string> {
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    partes.push(
-      content.items
-        .map((it: unknown) => (it as { str?: string }).str ?? "")
-        .join(" "),
-    );
+    partes.push(reconstruirLinhasPdf(content.items as ItemTextoPdf[]));
   }
   return partes.join("\n");
 }
