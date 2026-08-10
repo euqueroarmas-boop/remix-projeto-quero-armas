@@ -25,6 +25,11 @@ export type OrgaoCertidao =
   | "tjsp_execucoes"
   | "trf_regional"
   | "tjm_sp"
+  /**
+   * Certidão CÍVEL do TJM/SP (Cartório Cível, "ações cíveis"). Existe aqui só
+   * para ser IDENTIFICADA e REJEITADA — nunca ocupa slot de antecedentes.
+   */
+  | "tjm_sp_civel"
   | "cr_exercito"
   | "boletim_ocorrencia"
   /* ── Grupo OCUPAÇÃO LÍCITA E RENDA ──────────────────────────────────────
@@ -242,7 +247,13 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   if (/CERTIFICADO DE REGISTRO/.test(t) && /N. CR/.test(t)) return "cr_exercito";
   if (/BOLETIM DE OCORRENCIA|BOLETIM N/.test(t)) return "boletim_ocorrencia";
   if (/JUSTICA MILITAR DA UNIAO/.test(t)) return "stm";
-  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL/.test(t)) return "tjm_sp";
+  if (/TRIBUNAL DE JUSTICA MILITAR DO ESTADO|JUSTICA MILITAR ESTADUAL/.test(t)) {
+    // O TJM/SP emite DUAS certidões com o mesmo timbre: a criminal (três
+    // Auditorias Criminais) e a cível (Cartório Cível, "ações cíveis"). Sem
+    // esta separação as duas caíam em `tjm_sp` e a cível era aprovada no slot
+    // da criminal, porque também diz "NADA CONSTAR" e traz o nome do cliente.
+    return detectarEscopoCertidao(t) === "civel" ? "tjm_sp_civel" : "tjm_sp";
+  }
   // Eleitoral: a mesma certidão de crimes eleitorais é emitida com cabeçalho
   // do TSE ou do TRE do estado do eleitor. O layout é o mesmo — só o timbre
   // muda. Sem o TRE aqui, certidões válidas de fora de SP caíam em "órgão não
