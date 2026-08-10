@@ -19,6 +19,11 @@ interface Row {
   total_docs: number;
   entregues: number;
   dispensados: number;
+  reaproveitados: number;
+  grupo_atual: string | null;
+  grupo_total: number;
+  grupo_concluidos: number;
+  bloqueado_por_prerequisito: boolean;
   proximo_doc: string | null;
   dias_parado: number;
   cobrancas: number;
@@ -205,9 +210,9 @@ export default function DashboardProgressoClientes() {
                   <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                     {r.entregues}/{r.total_docs}
                   </span>
-                  {r.dispensados > 0 && (
+                  {r.reaproveitados > 0 && (
                     <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
-                      {r.dispensados} DISP.
+                      {r.reaproveitados} REAP.
                     </span>
                   )}
                   <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
@@ -215,6 +220,11 @@ export default function DashboardProgressoClientes() {
                   </div>
                   <span className="text-[9.5px] uppercase tracking-wider text-slate-400">{r.fase}</span>
                 </div>
+                {r.grupo_atual && r.grupo_total > 0 && !r.bloqueado_por_prerequisito && (
+                  <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-400">
+                    {r.grupo_atual} · {r.grupo_concluidos}/{r.grupo_total}
+                  </div>
+                )}
                 <div className="mt-1 flex items-center gap-2 text-[10px] uppercase text-slate-500">
                   <span className="truncate flex-1">{r.proximo_doc ?? "—"}</span>
                   {r.cobrancas > 0 && (
@@ -278,9 +288,9 @@ export default function DashboardProgressoClientes() {
                         <span className="text-[11px] font-semibold text-slate-700 tabular-nums w-10">
                           {r.entregues}/{r.total_docs}
                         </span>
-                        {r.dispensados > 0 && (
+                        {r.reaproveitados > 0 && (
                           <span className="text-[9px] uppercase tracking-wider text-slate-400 tabular-nums shrink-0">
-                            {r.dispensados} DISP.
+                            {r.reaproveitados} REAP.
                           </span>
                         )}
                         <div className="flex-1 h-[3px] bg-slate-100 rounded-full overflow-hidden">
