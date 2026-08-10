@@ -489,12 +489,12 @@ Deno.serve(async (req) => {
         cliente_id: processo.cliente_id,
         tipo_documento: d.tipo_documento,
         nome_documento: d.nome_documento,
-        etapa: "complementar",
+        etapa: (d as any).etapa_catalogo ?? "complementar",
         // Ordem explícita — garante que o popup de pendências apresente os
         // documentos na sequência natural (ex.: Cartão CNPJ → QSA → Contrato
         // Social → NF da empresa). Sem `ordem` explícito, a fila cai no rank
         // fallback (9999) e a UI reordena de forma imprevisível.
-        ordem: 100 + idx,
+        ordem: (d as any).ordem_catalogo ?? 100 + idx,
         obrigatorio: d.obrigatorio,
         status: "pendente",
         validade_dias: d.prazo_recomendado_dias ?? null,
