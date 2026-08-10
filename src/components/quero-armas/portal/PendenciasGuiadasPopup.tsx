@@ -722,6 +722,25 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               ) : null}
             </div>
           ) : null}
+
+          {/* Escolha do profissional credenciado pela PF — sem sair do guiado. */}
+          {tipoCredenciado ? (
+            <div className="mt-4 rounded-sm border border-[#8A1224]/20 bg-[#FFF7F8] p-4">
+              <p className="qa-caption" style={{ color: "#7A1F2B" }}>
+                {tipoCredenciado === "psicologo"
+                  ? "Você optou por fazer os exames fora da instituição. Escolha um psicólogo credenciado pela Polícia Federal perto de você."
+                  : "Escolha um instrutor de tiro credenciado pela Polícia Federal perto de você."}
+              </p>
+              <button
+                type="button"
+                onClick={() => setExameModal(tipoCredenciado)}
+                className="qa-btn-label mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#7A1F2B] bg-[#7A1F2B] px-4 py-3 text-white transition-colors hover:bg-[#8A1224]"
+              >
+                <MapPin className="h-4 w-4" />
+                Escolher profissional credenciado
+              </button>
+            </div>
+          ) : null}
           </>
           )}
 
