@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
+import { HUB_CATEGORIAS, getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { diasAteBRT, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
