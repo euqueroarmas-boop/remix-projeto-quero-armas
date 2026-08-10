@@ -80,9 +80,20 @@ export default function DashboardProgressoClientes() {
           for (const d of ((docs as any[]) ?? [])) {
             (porProcesso[d.processo_id] ||= []).push({ tipo_documento: d.tipo_documento, status: d.status });
           }
+          // A condição profissional respondida é a fonte de verdade da trilha
+          // de ocupação — o documento de renda pode nem existir quando o grupo
+          // foi dispensado por reaproveitamento.
+          const { data: procs } = await supabase
+            .from("qa_processos")
+            .select("id, respostas_questionario_json")
+            .in("id", ids);
+          const condPorProcesso: Record<string, string | null> = {};
+          for (const p of ((procs as any[]) ?? [])) {
+            condPorProcesso[p.id] = (p.respostas_questionario_json as any)?.condicao_profissional ?? null;
+          }
           const mapa: Record<string, string[]> = {};
-          for (const [pid, tipos] of Object.entries(porProcesso)) {
-            mapa[pid] = trilhaDoProcesso(tipos);
+          for (const pid of ids) {
+            mapa[pid] = trilhaDoProcesso(porProcesso[pid] ?? [], condPorProcesso[pid]);
           }
           if (!cancelled) setTrilhas(mapa);
         }
