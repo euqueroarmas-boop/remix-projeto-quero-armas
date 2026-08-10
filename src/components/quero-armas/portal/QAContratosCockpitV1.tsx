@@ -692,12 +692,14 @@ function FeaturedContractCard({
   preparedDownload,
   preparingDownload,
   onValidatedRefresh,
+  comprovantes = [],
 }: {
   contract: Contract;
   onAssinar: () => void;
   preparedDownload: PreparedMinutaDownload | null;
   preparingDownload: boolean;
   onValidatedRefresh?: () => void;
+  comprovantes?: ComprovanteDoc[];
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -1101,6 +1103,8 @@ function FeaturedContractCard({
       )}
 
       {/* ─────────── Modal de conclusão ─────────── */}
+      <ComprovantesPagamentoBloco docs={comprovantes} inline />
+
       {showDone && (
         <ContractCompletedDialog
           contract={contract}
