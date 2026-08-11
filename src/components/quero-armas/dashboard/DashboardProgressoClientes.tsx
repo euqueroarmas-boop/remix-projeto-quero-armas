@@ -547,7 +547,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-7 gap-2">
+      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-9 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
@@ -581,6 +581,29 @@ export default function DashboardProgressoClientes() {
                 <div>{acessosGlobais.total} DESDE O INÍCIO</div>
               </div>
             )}
+          </button>
+        ))}
+
+        {/* Credenciados não localizados na base da PF — clique troca as colunas. */}
+        {([
+          { t: "psicologo" as const, label: "PSICÓLOGO S/ PF", v: credContadores.psicologo },
+          { t: "instrutor_tiro" as const, label: "IAT S/ PF", v: credContadores.instrutor_tiro },
+        ]).map((c) => (
+          <button
+            key={c.t}
+            type="button"
+            title="Profissionais citados em laudos que não foram localizados na base de credenciados da Polícia Federal"
+            onClick={() => setModoCred((v) => (v === c.t ? null : c.t))}
+            className={`rounded-sm border px-3 py-2 text-left transition-colors ${
+              modoCred === c.t ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+            }`}
+            style={{ background: modoCred === c.t ? VERMELHO_BG : "#FFFFFF" }}
+          >
+            <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: VERMELHO }}>{c.v}</div>
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>{c.label}</div>
+            <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+              NÃO LOCALIZADO NA PF
+            </div>
           </button>
         ))}
       </div>
