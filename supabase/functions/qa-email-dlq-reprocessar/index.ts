@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
 
   const { data: dlqRows, error: dlqError } = await supabase
     .from("email_send_log")
-    .select("message_id, template_name, recipient_email, created_at")
+    .select("message_id, template_name, recipient_email, created_at, resolvido_por_message_id")
     .eq("status", "dlq")
+    .is("resolvido_por_message_id", null)
     .order("created_at", { ascending: false })
     .limit(500);
 
