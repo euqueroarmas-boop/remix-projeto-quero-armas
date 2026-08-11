@@ -134,7 +134,7 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[22px] max-w-full items-center gap-1 rounded-full px-2 py-0 text-left uppercase leading-[1.25] tracking-[0.06em] ${
+      className={`inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0 align-top text-left uppercase leading-[22px] tracking-[0.06em] ${
         miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
       } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
@@ -142,6 +142,15 @@ function Chip({
       {children}
     </span>
   );
+}
+
+/**
+ * Régua canônica da primeira linha de QUALQUER coluna da tabela:
+ * caixa fixa de 22px com line-height 22px, para que nome do cliente,
+ * chips e textos assentem exatamente na mesma linha de base.
+ */
+function LinhaTopo({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`h-[22px] leading-[22px] ${className}`}>{children}</div>;
 }
 
 type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
