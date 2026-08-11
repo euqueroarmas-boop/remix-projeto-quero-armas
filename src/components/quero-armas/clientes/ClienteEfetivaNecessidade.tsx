@@ -166,10 +166,99 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
             {registro.aprovado_cliente ? dataHoraBR(registro.aprovado_cliente_em) : "Não"}
           </div>
           <div>
-            <div className="text-[9px] uppercase tracking-[0.12em] text-slate-400">Exames liberados</div>
-            {registro.exames_liberados_em ? dataHoraBR(registro.exames_liberados_em) : "Não"}
+            <div className="text-[9px] uppercase tracking-[0.12em] text-slate-400">Aprovado pela equipe</div>
+            {registro.aprovado_em
+              ? `${dataHoraBR(registro.aprovado_em)}${registro.aprovado_por_nome ? ` · ${registro.aprovado_por_nome}` : ""}`
+              : "Não"}
           </div>
         </div>
+        {registro.devolucao_motivo ? (
+          <div className="mt-3 rounded-md border border-[#7A1F2B]/30 bg-[#FDF6F7] px-3 py-2 text-[11px] text-[#7A1F2B]">
+            <span className="font-bold uppercase tracking-[0.1em]">Devolvido pela equipe: </span>
+            {registro.devolucao_motivo}
+          </div>
+        ) : null}
+      </Bloco>
+
+      <Bloco titulo="Revisão da equipe">
+        {registro.aprovado_cliente ? (
+          <>
+            <p className="text-[11px] text-slate-500">
+              O aceite do cliente não aprova o relato. A aprovação abaixo é ato da equipe e fica registrada em auditoria.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => { setAcaoRevisao("aprovar"); setErroRevisao(null); }}
+                className={`h-9 rounded-md px-4 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                  acaoRevisao === "aprovar" ? "bg-emerald-700 text-white" : "border border-emerald-700 text-emerald-800 hover:bg-emerald-50"
+                }`}
+              >
+                Aprovar pela equipe
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAcaoRevisao("devolver"); setErroRevisao(null); }}
+                className={`h-9 rounded-md px-4 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                  acaoRevisao === "devolver" ? "bg-[#7A1F2B] text-white" : "border border-[#7A1F2B] text-[#7A1F2B] hover:bg-[#FDF6F7]"
+                }`}
+              >
+                Devolver para ajuste
+              </button>
+            </div>
+            {acaoRevisao ? (
+              <div className="mt-3 space-y-2">
+                <textarea
+                  value={observacao}
+                  onChange={(e) => setObservacao(e.target.value.toUpperCase())}
+                  rows={3}
+                  placeholder={acaoRevisao === "devolver" ? "MOTIVO DA DEVOLUÇÃO (OBRIGATÓRIO)" : "OBSERVAÇÃO DA APROVAÇÃO (OPCIONAL)"}
+                  className="w-full rounded-md border border-slate-200 p-2 text-[11px] uppercase text-slate-700 outline-none focus:border-[#7A1F2B]"
+                />
+                {erroRevisao ? (
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#7A1F2B]">{erroRevisao}</p>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={salvando}
+                  onClick={enviarRevisao}
+                  className="h-9 rounded-md bg-[#0A0A0A] px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50"
+                >
+                  {salvando ? "Gravando..." : "Confirmar e registrar em auditoria"}
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-[11px] text-slate-400">
+            Aguardando o aceite do cliente antes da revisão da equipe.
+          </p>
+        )}
+      </Bloco>
+
+      <Bloco titulo="Log de auditoria">
+        {auditoria.length ? (
+          <ul className="space-y-2">
+            {auditoria.map((a) => (
+              <li key={String(a.id)} className="border-b border-slate-100 pb-2 text-[11px] text-slate-600">
+                <div className="font-bold uppercase tracking-[0.1em] text-slate-700">
+                  {String(a.acao).replace(/_/g, " ")} · {dataHoraBR(a.created_at)}
+                </div>
+                <div className="text-[10px] text-slate-500">
+                  {String(a.autor_tipo).toUpperCase()}
+                  {a.autor_nome ? ` · ${a.autor_nome}` : ""}
+                  {a.status_anterior || a.status_novo ? ` · ${String(a.status_anterior ?? "—").toUpperCase()} → ${String(a.status_novo ?? "—").toUpperCase()}` : ""}
+                </div>
+                {a.observacao ? <div className="mt-1 text-[11px] text-slate-600">{a.observacao}</div> : null}
+                <div className="mt-1 font-mono text-[9px] text-slate-400 break-all">
+                  IP {a.ip || "—"} · {a.user_agent || "—"}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[11px] text-slate-400">Nenhum registro de auditoria ainda.</p>
+        )}
       </Bloco>
 
       <Bloco titulo="Respostas do questionário">
