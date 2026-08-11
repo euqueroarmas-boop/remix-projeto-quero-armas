@@ -13360,6 +13360,34 @@ export type Database = {
           templates: string[]
         }[]
       }
+      qa_email_por_cliente: {
+        Args: { _ate?: string; _desde?: string; _limite?: number }
+        Returns: {
+          cliente_id: number
+          cliente_nome: string
+          enviados: number
+          falhas: number
+          recipient_email: string
+          total: number
+          ultimo: string
+        }[]
+      }
+      qa_email_por_cliente_detalhe: {
+        Args: {
+          _ate?: string
+          _desde?: string
+          _email: string
+          _limite?: number
+        }
+        Returns: {
+          assunto: string
+          created_at: string
+          error_message: string
+          message_id: string
+          status: string
+          template_name: string
+        }[]
+      }
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
