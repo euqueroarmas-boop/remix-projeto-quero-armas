@@ -13311,6 +13311,14 @@ export type Database = {
         Args: { _categoria: string; _tipo: string }
         Returns: boolean
       }
+      qa_email_disparos_resumo: {
+        Args: never
+        Returns: {
+          falhas: number
+          hoje: number
+          total: number
+        }[]
+      }
       qa_email_existe_em_auth: { Args: { p_email: string }; Returns: boolean }
       qa_ensure_cliente_from_auth: {
         Args: {
