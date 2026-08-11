@@ -212,6 +212,10 @@ export default function DashboardProgressoClientes() {
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
   const [contador, setContador] = useState<ContadorKey>("todos");
+  /** Modo credenciados: troca as colunas a partir de PRÓXIMO PASSO. */
+  const [modoCred, setModoCred] = useState<"psicologo" | "instrutor_tiro" | null>(null);
+  const [credRows, setCredRows] = useState<CredRow[]>([]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [configAberta, setConfigAberta] = useState(false);
   const [larguras, setLarguras] = useState<Record<string, number>>(() => {
     try { return JSON.parse(localStorage.getItem(LS_LARGURAS) ?? "{}"); } catch { return {}; }
@@ -226,11 +230,54 @@ export default function DashboardProgressoClientes() {
   useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
   useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
 
+  /** Credenciados (psicólogos e IAT) não localizados na base da PF. */
+  useEffect(() => {
+    let cancelado = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_psico_nao_localizados" as any)
+        .select("id, tipo, nome, registro, endereco, cidade, uf, telefone, cliente_nome, qa_cliente_id, situacao")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (!cancelado) setCredRows(((data as any[]) ?? []) as CredRow[]);
+    })();
+    return () => { cancelado = true; };
+  }, []);
+
+  /** Clicar fora do painel devolve as colunas normais do cliente. */
+  useEffect(() => {
+    if (!modoCred) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setModoCred(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [modoCred]);
+
+  const credPorCliente = useMemo(() => {
+    const mapa: Record<number, CredRow[]> = {};
+    for (const c of credRows) {
+      if (modoCred && c.tipo !== modoCred) continue;
+      if (c.qa_cliente_id == null) continue;
+      (mapa[c.qa_cliente_id] ||= []).push(c);
+    }
+    return mapa;
+  }, [credRows, modoCred]);
+
+  const credContadores = useMemo(() => ({
+    psicologo: credRows.filter((c) => c.tipo !== "instrutor_tiro").length,
+    instrutor_tiro: credRows.filter((c) => c.tipo === "instrutor_tiro").length,
+  }), [credRows]);
+
   /** CLIENTE nunca some; as demais respeitam a engrenagem. */
-  const colunas = useMemo(
-    () => COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false),
-    [visiveis],
-  );
+  const colunas = useMemo(() => {
+    const base = COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false);
+    if (!modoCred) return base;
+    // No modo credenciados, tudo a partir de PRÓXIMO PASSO vira a ficha do profissional.
+    const corte = base.findIndex((c) => c.key === "proximo_doc");
+    const mantidas = corte >= 0 ? base.slice(0, corte) : base;
+    return [...mantidas, ...(COLS_CRED as unknown as ColDef[])];
+  }, [visiveis, modoCred]);
   const larguraDe = (c: ColDef) => larguras[c.key] ?? c.largura;
 
   useEffect(() => {
