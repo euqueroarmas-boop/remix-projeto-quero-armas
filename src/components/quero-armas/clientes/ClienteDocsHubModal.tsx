@@ -2443,13 +2443,20 @@ export function ClienteDocsHubModal({
             .limit(1)
             .maybeSingle();
           const ce = (outro as any)?.ia_dados_extraidos?.camposExtraidos || {};
-          outroLaudoRealizacao = ce.laudo_data_avaliacao || ce.tiro_data_realizacao || null;
+          // O extrator do Hub devolve `data_avaliacao`; o extrator antigo usava
+          // `laudo_data_avaliacao`. Aceitar os dois evita "data não identificada"
+          // em laudo cuja data foi lida corretamente.
+          outroLaudoRealizacao =
+            ce.data_avaliacao || ce.laudo_data_avaliacao || ce.tiro_data_realizacao || ce.data_realizacao || null;
         } catch { /* sem o outro laudo, a ordem simplesmente não é avaliada */ }
 
         const resultado = conferirLaudo(
           {
             tipo: tipoLaudo,
-            data_realizacao: tipoLaudo === "psicologico" ? c.laudo_data_avaliacao : c.tiro_data_realizacao,
+            data_realizacao:
+              tipoLaudo === "psicologico"
+                ? (c.data_avaliacao || c.laudo_data_avaliacao || c.data_emissao)
+                : (c.tiro_data_realizacao || c.data_realizacao || c.data_avaliacao || c.data_emissao),
             data_emissao: tipoLaudo === "psicologico" ? c.data_emissao : c.tiro_data_emissao,
             nome_avaliado: c.nome_titular,
             cpf_avaliado: c.cpf,
