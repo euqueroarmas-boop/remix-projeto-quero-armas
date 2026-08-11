@@ -134,7 +134,7 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left uppercase leading-[1.25] tracking-[0.06em] ${
+      className={`inline-flex min-h-[22px] max-w-full items-center gap-1 rounded-full px-2 py-0 text-left uppercase leading-[1.25] tracking-[0.06em] ${
         miudo ? "text-[10.5px] font-medium" : "text-[12.5px] font-bold"
       } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
@@ -801,12 +801,12 @@ export default function DashboardProgressoClientes() {
                     <>
                       <div className="flex items-start gap-2">
                         <span
-                          className="mt-[8px] h-2 w-2 shrink-0 rounded-full"
+                          className="mt-[7px] h-2 w-2 shrink-0 rounded-full"
                           style={{ background: corSensor(r.dias_parado) }}
                           title="Sinalizador de movimento"
                         />
                       <Link to={rotaCadastroCliente(r.cliente_id)} className="block min-w-0">
-                        <div className="flex min-h-[20px] items-center text-[12.5px] font-bold uppercase break-words leading-[1.2]" style={{ color: TINTA }}>
+                        <div className="flex min-h-[22px] items-center text-[12.5px] font-bold uppercase break-words leading-[1.2]" style={{ color: TINTA }}>
                           {r.cliente_nome ?? "—"}
                         </div>
                         <div className="mt-[2px] text-[10.5px] font-medium uppercase tracking-wider break-words leading-[1.25]" style={{ color: TINTA_2 }}>
@@ -865,7 +865,7 @@ export default function DashboardProgressoClientes() {
                   ),
                   progresso: (
                     <>
-                       <div className="flex min-h-[20px] w-full min-w-0 items-center gap-2">
+                       <div className="flex min-h-[22px] w-full min-w-0 items-center gap-2">
                         <span className="shrink-0 text-[11.5px] font-bold tabular-nums" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
                         </span>
@@ -893,23 +893,23 @@ export default function DashboardProgressoClientes() {
                     </>
                   ),
                   proximo_doc: (
-                    <span className="flex min-h-[20px] min-w-0 items-center gap-1.5 text-[11.5px] font-medium uppercase" style={{ color: TINTA }}>
+                    <span className="flex min-h-[22px] min-w-0 items-center gap-1.5 text-[11.5px] font-medium uppercase" style={{ color: TINTA }}>
                       {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 shrink-0" style={{ color: AMBAR }} />}
                       <span className="min-w-0 flex-1 break-words leading-[1.25]">{r.proximo_doc ?? "—"}</span>
                     </span>
                   ),
                   efetiva: ef
                     ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-[12.5px] font-bold uppercase" style={{ color: TINTA_3 }}>—</span>,
+                    : <span className="flex min-h-[22px] items-center text-[12.5px] font-bold uppercase" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-left text-[12.5px] font-bold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                    : <span className="flex min-h-[22px] items-center text-left text-[12.5px] font-bold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
-                    <span className="flex min-h-[20px] items-center text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
+                    <span className="flex min-h-[22px] items-center text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
                   ),
                   cobrancas: (
                     <span
-                      className="flex min-h-[20px] items-center text-left text-[11.5px] font-semibold tabular-nums"
+                      className="flex min-h-[22px] items-center text-left text-[11.5px] font-semibold tabular-nums"
                       style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}
                       title="Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)"
                     >
