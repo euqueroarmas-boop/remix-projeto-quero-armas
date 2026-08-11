@@ -238,26 +238,45 @@ Deno.serve(async (req) => {
     }
 
     if (busca) {
-      let q = supabase
-        .from("qa_psico_credenciados")
-        .select("*")
-        .eq("tipo", tipo)
-        .eq("ativo", true);
-      if (ufFiltro) q = q.eq("uf", String(ufFiltro).toUpperCase());
-      if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
-      if (!ufFiltro) {
-        q = q.or([
-          `nome.ilike.%${busca}%`,
-          `registro.ilike.%${busca}%`,
-          `uf.ilike.%${busca}%`,
-          `cidade.ilike.%${busca}%`,
-          `bairro.ilike.%${busca}%`,
-          `endereco.ilike.%${busca}%`,
-        ].join(","));
+      // A comparação de nome é feita em JS (sem acento), então a UF inteira
+      // precisa ser lida — paginando. Antes o corte em 1000 linhas ordenadas
+      // por cidade escondia credenciados de cidades no fim do alfabeto.
+      const rows: any[] = [];
+      if (ufFiltro) {
+        const PAGE = 1000;
+        for (let from = 0; from < 5000; from += PAGE) {
+          let q = supabase
+            .from("qa_psico_credenciados")
+            .select("*")
+            .eq("tipo", tipo)
+            .eq("ativo", true)
+            .eq("uf", String(ufFiltro).toUpperCase());
+          if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
+          const { data, error } = await q.order("cidade").order("nome").range(from, from + PAGE - 1);
+          if (error) throw error;
+          rows.push(...(data || []));
+          if ((data?.length ?? 0) < PAGE) break;
+        }
+      } else {
+        let q = supabase
+          .from("qa_psico_credenciados")
+          .select("*")
+          .eq("tipo", tipo)
+          .eq("ativo", true)
+          .or([
+            `nome.ilike.%${busca}%`,
+            `registro.ilike.%${busca}%`,
+            `uf.ilike.%${busca}%`,
+            `cidade.ilike.%${busca}%`,
+            `bairro.ilike.%${busca}%`,
+            `endereco.ilike.%${busca}%`,
+          ].join(","));
+        if (!incluirVencidos) q = q.or(`validade.is.null,validade.gte.${new Date().toISOString().slice(0, 10)}`);
+        const { data, error } = await q.order("cidade").order("nome").limit(300);
+        if (error) throw error;
+        rows.push(...(data || []));
       }
-      const { data, error } = await q.order("cidade").order("nome").limit(ufFiltro ? 1000 : 300);
-      if (error) throw error;
-      const results = (data || [])
+      const results = rows
         .filter((r: any) => buscaMatch(r, busca))
         .map((r: any) => ({ ...r, distancia_km: distanciaKm(origin, r) }))
         .sort((a: any, b: any) => {
