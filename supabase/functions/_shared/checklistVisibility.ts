@@ -120,3 +120,30 @@ export function filtrarIdentidadeUnica<T>(
     return opts.cumprido(d);
   });
 }
+
+/**
+ * CIN, CNH e RG são vias da MESMA exigência de identidade civil.
+ * Espelha src/lib/quero-armas/identidadeUnica.ts.
+ */
+export function mesmaExigenciaIdentidade(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  return ehDocumentoIdentidade(a) && ehDocumentoIdentidade(b);
+}
+
+function _filtrarIdentidadeUnicaLegado<T>(
+  docs: T[],
+  opts: {
+    tipo: (d: T) => string | null | undefined;
+    nome?: (d: T) => string | null | undefined;
+    cumprido: (d: T) => boolean;
+  },
+): T[] {
+  const identidades = docs.filter((d) => ehDocumentoIdentidade(opts.tipo(d), opts.nome?.(d)));
+  if (identidades.length < 2) return docs;
+  const temCumprida = identidades.some((d) => opts.cumprido(d));
+  if (!temCumprida) return docs;
+  return docs.filter((d) => {
+    if (!ehDocumentoIdentidade(opts.tipo(d), opts.nome?.(d))) return true;
+    return opts.cumprido(d);
+  });
+}
