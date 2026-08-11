@@ -129,14 +129,14 @@ function corProgresso(pct: number, dias: number) {
 }
 
 function Chip({
-  children, cor, fundo, titulo, quebra,
-}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean }) {
+  children, cor, fundo, titulo, quebra, miudo,
+}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean; miudo?: boolean }) {
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[12.5px] font-bold uppercase leading-[1.25] tracking-[0.06em] ${
-        quebra ? "[overflow-wrap:anywhere]" : "break-words"
-      }`}
+      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left uppercase leading-[1.25] tracking-[0.06em] ${
+        miudo ? "text-[10.5px] font-medium" : "text-[12.5px] font-bold"
+      } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
     >
       {children}
@@ -836,10 +836,10 @@ export default function DashboardProgressoClientes() {
                         {r.online
                           ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
                           : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                        <div className="text-[10.5px] font-medium uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
                           {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
                         </div>
-                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                        <div className="text-[10.5px] font-medium uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
                           · {e.total} NO TOTAL
                         </div>
                       </div>
