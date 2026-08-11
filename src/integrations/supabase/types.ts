@@ -1085,6 +1085,7 @@ export type Database = {
           message_id: string | null
           metadata: Json | null
           recipient_email: string
+          resolvido_por_message_id: string | null
           status: string
           template_name: string
         }
@@ -1095,6 +1096,7 @@ export type Database = {
           message_id?: string | null
           metadata?: Json | null
           recipient_email: string
+          resolvido_por_message_id?: string | null
           status: string
           template_name: string
         }
@@ -1105,6 +1107,7 @@ export type Database = {
           message_id?: string | null
           metadata?: Json | null
           recipient_email?: string
+          resolvido_por_message_id?: string | null
           status?: string
           template_name?: string
         }
@@ -13327,6 +13330,7 @@ export type Database = {
         Args: never
         Returns: {
           falhas: number
+          falhas_historicas: number
           hoje: number
           total: number
         }[]
@@ -13348,6 +13352,7 @@ export type Database = {
           error_message: string
           message_id: string
           recipient_email: string
+          resolvido_por_message_id: string
           status: string
           template_name: string
           total_filtrado: number
@@ -13367,6 +13372,7 @@ export type Database = {
           cliente_nome: string
           enviados: number
           falhas: number
+          falhas_resolvidas: number
           recipient_email: string
           total: number
           ultimo: string
@@ -13384,6 +13390,7 @@ export type Database = {
           created_at: string
           error_message: string
           message_id: string
+          resolvido_por_message_id: string
           status: string
           template_name: string
         }[]

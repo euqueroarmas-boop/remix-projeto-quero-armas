@@ -310,7 +310,12 @@ export default function DashboardProgressoClientes() {
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   /** Resumo de e-mails disparados (deduplicado por message_id). */
-  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number }>({ total: 0, hoje: 0, falhas: 0 });
+  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number; falhasHistoricas: number }>({
+    total: 0,
+    hoje: 0,
+    falhas: 0,
+    falhasHistoricas: 0,
+  });
   /** Painel expansível de e-mails por cliente. */
   const [emailsAberto, setEmailsAberto] = useState(false);
   const [emailsPorCliente, setEmailsPorCliente] = useState<any[]>([]);
@@ -390,6 +395,7 @@ export default function DashboardProgressoClientes() {
             total: Number(re.total ?? 0),
             hoje: Number(re.hoje ?? 0),
             falhas: Number(re.falhas ?? 0),
+            falhasHistoricas: Number(re.falhas_historicas ?? re.falhas ?? 0),
           });
         }
 
@@ -672,7 +678,10 @@ export default function DashboardProgressoClientes() {
           </div>
           <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
             <div>{emails.hoje} ENVIADOS HOJE</div>
-            <div style={{ color: emails.falhas > 0 ? VERMELHO : TINTA_3 }}>{emails.falhas} FALHARAM</div>
+            <div style={{ color: emails.falhas > 0 ? VERMELHO : TINTA_3 }}>{emails.falhas} FALHAS PENDENTES</div>
+            {emails.falhasHistoricas > emails.falhas && (
+              <div>{emails.falhasHistoricas - emails.falhas} JÁ REENVIADAS</div>
+            )}
           </div>
         </button>
       </div>
@@ -721,7 +730,12 @@ export default function DashboardProgressoClientes() {
                         </span>
                         {Number(e.falhas) > 0 && (
                           <span className="text-[10.5px] font-bold uppercase tabular-nums" style={{ color: VERMELHO }}>
-                            {e.falhas} FALHA(S)
+                            {e.falhas} FALHA(S) PENDENTE(S)
+                          </span>
+                        )}
+                        {Number(e.falhas_resolvidas) > 0 && (
+                          <span className="text-[10.5px] font-medium uppercase tabular-nums" style={{ color: TINTA_3 }}>
+                            {e.falhas_resolvidas} REENVIADA(S)
                           </span>
                         )}
                       </button>
@@ -730,7 +744,9 @@ export default function DashboardProgressoClientes() {
                           {det.length === 0 ? (
                             <div className="py-1 text-[10px] uppercase" style={{ color: TINTA_3 }}>CARREGANDO</div>
                           ) : det.map((d) => {
-                            const falhou = ["dlq", "failed", "bounced", "complained"].includes(String(d.status ?? "").toLowerCase());
+                            const falhouBruto = ["dlq", "failed", "bounced", "complained"].includes(String(d.status ?? "").toLowerCase());
+                            const reenviado = falhouBruto && Boolean(d.resolvido_por_message_id);
+                            const falhou = falhouBruto && !reenviado;
                             return (
                               <div key={d.message_id} className="py-1">
                                 <div className="flex flex-wrap items-center gap-x-2 text-[10.5px] font-medium" style={{ color: TINTA_3 }}>
@@ -739,7 +755,7 @@ export default function DashboardProgressoClientes() {
                                   </span>
                                   <span className="uppercase">{d.template_name ?? "—"}</span>
                                   <span className="font-bold uppercase" style={{ color: falhou ? VERMELHO : "#166534" }}>
-                                    {d.status ?? "—"}
+                                    {reenviado ? "REENVIADO" : (d.status ?? "—")}
                                   </span>
                                 </div>
                                 {d.assunto && (
