@@ -414,13 +414,42 @@ export default function EfetivaNecessidadeModal({
     }
   }, [registroId]);
 
+  /* ── Autosave que NUNCA apaga ────────────────────────────────────────────
+   * Furo real (11/08/2026): o pop-up guiado monta mais de uma instância deste
+   * componente e as remonta a cada recálculo da fila. Cada instância gravava
+   * cegamente o seu estado local — uma instância que carregou o campo vazio
+   * sobrescrevia com "" o texto recém-digitado em outra. Agora guardamos o
+   * valor que veio do banco e só gravamos quando o texto realmente mudou;
+   * string vazia nunca sobrescreve conteúdo existente.                      */
+  const baseTextoRef = useRef<Record<"relato_cliente" | "contexto_risco", string>>({
+    relato_cliente: "",
+    contexto_risco: "",
+  });
+
   const salvarTexto = useCallback(async (campo: "relato_cliente" | "contexto_risco", valor: string) => {
     if (!registroId) return;
-    await supabase
+    const base = baseTextoRef.current[campo] ?? "";
+    if (valor === base) return;
+    if (!valor.trim() && base.trim()) return; // vazio não apaga o que existe
+    const { error } = await supabase
       .from("qa_efetiva_necessidade" as any)
       .update({ [campo]: valor, updated_at: new Date().toISOString() })
       .eq("id", registroId);
+    if (!error) baseTextoRef.current[campo] = valor;
   }, [registroId]);
+
+  /* Flush ao desmontar: avançar de passo desmonta o componente e cancelaria o
+   * debounce de 800 ms, perdendo o texto digitado por último.               */
+  const pendenteRef = useRef<{ relato: string; contexto: string }>({ relato: "", contexto: "" });
+  pendenteRef.current = { relato, contexto };
+  const salvarTextoRef = useRef(salvarTexto);
+  salvarTextoRef.current = salvarTexto;
+  useEffect(() => {
+    return () => {
+      void salvarTextoRef.current("relato_cliente", pendenteRef.current.relato);
+      void salvarTextoRef.current("contexto_risco", pendenteRef.current.contexto);
+    };
+  }, []);
 
   /* ── Autosave enquanto digita — nada de esperar o foco sair ─────────────
    * O cliente escreve num celular, troca de app, volta. Se o texto só
