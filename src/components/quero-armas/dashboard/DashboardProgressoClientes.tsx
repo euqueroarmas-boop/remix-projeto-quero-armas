@@ -680,7 +680,7 @@ export default function DashboardProgressoClientes() {
                   <div className="flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                   </div>
-                  <span className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>{pct}%</span>
+                  <span className="text-[12.5px] font-bold uppercase tabular-nums" style={{ color: TINTA_2 }}>{pct}%</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {r.bloqueado_por_prerequisito ? (
