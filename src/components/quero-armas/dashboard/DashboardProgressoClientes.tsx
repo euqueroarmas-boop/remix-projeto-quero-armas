@@ -134,9 +134,7 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[9.5px] font-bold uppercase leading-[1.25] tracking-[0.1em] ${
-        ""
-      }${
+      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[12.5px] font-bold uppercase leading-[1.25] tracking-[0.06em] ${
         quebra ? "[overflow-wrap:anywhere]" : "break-words"
       }`}
       style={{ background: fundo, color: cor }}
@@ -198,7 +196,7 @@ function LinhaGrupos({ r }: { r: Row }) {
   const indice = r.grupo_indice ?? 0;
   const restantes = r.grupos_restantes ?? 0;
   return (
-    <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+    <div className="text-[10.5px] font-medium uppercase tracking-[0.08em]" style={{ color: TINTA_3 }}>
       {indice > 0 ? `GRUPO ${indice} DE ${total}` : `${total} GRUPOS`}
       {" · "}
       {restantes > 0 ? `FALTAM ${restantes}` : "TODOS CONCLUÍDOS"}
