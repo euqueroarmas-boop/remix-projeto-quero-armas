@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw } from "lucide-react";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
@@ -217,10 +217,17 @@ export default function DashboardProgressoClientes() {
     return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
   }, []);
 
+  const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
+  const [recarregando, setRecarregando] = useState(false);
+  const carregarRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let timer: number | undefined;
+
+    const carregar = async () => {
       try {
+        setRecarregando(true);
         const { data } = await supabase.rpc("qa_painel_progresso_clientes" as any);
         const lista = ((data as any[]) ?? []) as Row[];
         if (cancelled) return;
@@ -251,14 +258,37 @@ export default function DashboardProgressoClientes() {
           }
           if (!cancelled) setTrilhas(mapa);
         }
+        if (!cancelled) setAtualizadoEm(new Date());
       } catch (e) {
         console.warn("[DashboardProgressoClientes]", e);
         if (!cancelled) setRows([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) { setLoading(false); setRecarregando(false); }
       }
-    })();
-    return () => { cancelled = true; };
+    };
+
+    carregarRef.current = () => { void carregar(); };
+    void carregar();
+
+    // Atualização automática: a cada 60s, ao voltar o foco e em tempo real.
+    timer = window.setInterval(() => { if (!document.hidden) void carregar(); }, 60_000);
+    const onVisivel = () => { if (!document.hidden) void carregar(); };
+    document.addEventListener("visibilitychange", onVisivel);
+    window.addEventListener("focus", onVisivel);
+
+    const canal = supabase
+      .channel("painel-progresso-clientes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "qa_processo_documentos" }, () => { void carregar(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "qa_processos" }, () => { void carregar(); })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisivel);
+      window.removeEventListener("focus", onVisivel);
+      supabase.removeChannel(canal);
+    };
   }, []);
 
   const trilhasDisponiveis = useMemo(() => {
@@ -352,6 +382,20 @@ export default function DashboardProgressoClientes() {
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>
+        <button
+          type="button"
+          aria-label="Atualizar agora"
+          title="Atualizar agora"
+          onClick={() => carregarRef.current()}
+          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${recarregando ? "animate-spin" : ""}`} />
+        </button>
+        {atualizadoEm && (
+          <span className="text-[9px] uppercase tracking-[0.12em] font-bold" style={{ color: TINTA_3 }}>
+            ATUALIZADO ÀS {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        )}
         <span className="ml-auto self-start text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
           {filtradas.length === rows.length ? `${rows.length} ATIVOS` : `${filtradas.length} DE ${rows.length}`}
         </span>
