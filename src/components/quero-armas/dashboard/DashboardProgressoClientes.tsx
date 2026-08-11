@@ -502,6 +502,12 @@ export default function DashboardProgressoClientes() {
             <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>
               {c.label}
             </div>
+            {c.k === "online" && (
+              <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
+                <div>{acessosGlobais.hoje} ACESSOS HOJE</div>
+                <div>{acessosGlobais.total} DESDE O INÍCIO</div>
+              </div>
+            )}
           </button>
         ))}
       </div>
