@@ -32,7 +32,7 @@ Abaixo, a lista 1 a 1 — nome do documento e texto explicativo proposto — par
 2. CRAF — Certificado de Registro de Arma de Fogo (por arma) — "O CRAF é o documento da arma. Vencido, o porte/transporte dela é irregular. Não saia para treinar neste momento e não porte sua arma, mesmo que você tenha permissão para isso."
 3. SINARM — Registro de Arma de Fogo (PF) — "Registro da arma na Polícia Federal. Sem ele vigente, a arma fica irregular."
 4. GT — Guia de Tráfego — "Sem guia válida você não pode transportar a arma."
-5. GTE — Guia de Tráfego Especial — "Guia de trânsito especial vencida bloqueia o transporte da arma para treino, caça ou competição."
+5. GTE — Guia de Tráfego Especial — "Guia de Tráfego Especial vencida bloqueia o transporte da arma para treino, caça ou competição."
 6. Autorização de compra — "A autorização de compra tem prazo. Vencida, é preciso pedir nova à autoridade que a emitiu e passar novamente por todo o processo."
 
 ### Filiação e atividade CAC — PENDENTE DE REVISÃO (não implantar ainda)
