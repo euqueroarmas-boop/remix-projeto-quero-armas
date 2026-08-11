@@ -2471,7 +2471,14 @@ export function ClienteDocsHubModal({
             data_emissao: tipoLaudo === "psicologico" ? c.data_emissao : c.tiro_data_emissao,
             nome_avaliado: c.nome_titular,
             cpf_avaliado: c.cpf,
-            resultado: tipoLaudo === "psicologico" ? c.laudo_aptidao : c.tiro_conclusao,
+            // O classificador atual devolve `resultado_laudo`; versões antigas
+            // usavam `laudo_aptidao` / `tiro_conclusao`. Aceitar todos evita
+            // laudo salvo sem registrar APTO/INAPTO.
+            resultado:
+              normalizarAptidao(
+                (c as any).resultado_laudo || (c as any).laudo_aptidao ||
+                (c as any).tiro_conclusao || (c as any).resultado,
+              ) || undefined,
             credencial,
             credenciado_nome: credNome,
           },
