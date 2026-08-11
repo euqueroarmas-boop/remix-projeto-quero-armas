@@ -460,6 +460,29 @@ export default function QAClientePortalPage() {
     setPendenciasGuiadasDismissed(false);
   }, []);
 
+  // Ping de presença: enquanto o portal está aberto e visível, avisa o backend
+  // a cada 60s para que o painel do admin mostre o cliente como ONLINE.
+  useEffect(() => {
+    let alive = true;
+    const ping = async () => {
+      if (!alive || document.hidden) return;
+      try {
+        await supabase.functions.invoke("qa-cliente-seguranca", {
+          body: { action: "presenca", userAgent: navigator.userAgent },
+        });
+      } catch { /* presença é best-effort */ }
+    };
+    void ping();
+    const id = window.setInterval(() => { void ping(); }, 60_000);
+    const onVisivel = () => { if (!document.hidden) void ping(); };
+    document.addEventListener("visibilitychange", onVisivel);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisivel);
+    };
+  }, []);
+
   /**
    * Porta de entrada única do checklist do processo.
    *
