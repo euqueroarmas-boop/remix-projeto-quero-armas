@@ -48,6 +48,12 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
   const [registro, setRegistro] = useState<Registro | null>(null);
   const [provas, setProvas] = useState<Prova[]>([]);
   const [acrescimos, setAcrescimos] = useState<Registro[]>([]);
+  const [auditoria, setAuditoria] = useState<Registro[]>([]);
+  const [acaoRevisao, setAcaoRevisao] = useState<"aprovar" | "devolver" | null>(null);
+  const [observacao, setObservacao] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erroRevisao, setErroRevisao] = useState<string | null>(null);
+  const [recarregar, setRecarregar] = useState(0);
 
   useEffect(() => {
     let vivo = true;
@@ -75,16 +81,43 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           .eq("efetiva_necessidade_id", reg.id)
           .order("ordem", { ascending: true });
         if (vivo) setAcrescimos((ac as Registro[]) ?? []);
+        const { data: au } = await supabase
+          .from("qa_efetiva_necessidade_auditoria" as any)
+          .select("*")
+          .eq("efetiva_id", reg.id)
+          .order("created_at", { ascending: false });
+        if (vivo) setAuditoria((au as Registro[]) ?? []);
       } else {
         setProvas([]);
         setAcrescimos([]);
+        setAuditoria([]);
       }
       if (vivo) setLoading(false);
     })();
     return () => {
       vivo = false;
     };
-  }, [cliente.id]);
+  }, [cliente.id, recarregar]);
+
+  const enviarRevisao = async () => {
+    if (!registro?.id || !acaoRevisao) return;
+    setErroRevisao(null);
+    setSalvando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-revisar", {
+        body: { registro_id: registro.id, acao: acaoRevisao, observacao },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      setAcaoRevisao(null);
+      setObservacao("");
+      setRecarregar((n) => n + 1);
+    } catch (e) {
+      setErroRevisao((e as Error).message);
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   const abrirArquivo = async (path: string) => {
     const { data } = await supabase.storage.from("qa-documentos").createSignedUrl(path, 600);
