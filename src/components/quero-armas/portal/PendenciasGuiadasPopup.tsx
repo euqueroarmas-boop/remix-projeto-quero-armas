@@ -711,7 +711,26 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
 
 
-          {active.corpo ? (
+          {exameModal ? (
+            /* Busca de credenciados embutida: o cliente encontra o psicólogo
+               parceiro sem sair do checklist guiado. */
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setExameModal(null)}
+                className="qa-btn-label mb-3 inline-flex items-center gap-1.5 rounded-sm border border-[#E4E4E4] bg-white px-3 py-2 text-[#0A0A0A] transition-colors hover:bg-[#FAFAFA]"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Voltar às instruções
+              </button>
+              <AgendarExamePainel
+                ativo
+                tipo={exameModal}
+                cep={cepCliente ?? null}
+                uf={ufCliente ?? null}
+                cidade={cidadeCliente ?? null}
+              />
+            </div>
+          ) : active.corpo ? (
             <div className="pt-1">{active.corpo}</div>
           ) : isDispensado ? (
             /* ─── Carimbo de dispensa legal ───
