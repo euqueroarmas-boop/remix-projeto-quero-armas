@@ -4,6 +4,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 import { getNomeDocumentoDisplay, getTipoDocumentoMeta, isTipoDocumentoMonitoravelNoHub, toTitleCasePtBR } from "@/lib/quero-armas/documentosHubCatalogo";
+import {
+  AVISO_GENERICO_DOCUMENTO,
+  AVISO_DOC_PROCESSO_SEM_HUB,
+  AVISO_POR_TIPO,
+  AVISO_PRAZO_PROCESSUAL,
+  avisoCR,
+  avisoParaTipo,
+  janelaAlertaDias,
+  kickerCR,
+  tipoGeraAlertaVencimento,
+} from "@/lib/quero-armas/avisosVencimento";
 import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
