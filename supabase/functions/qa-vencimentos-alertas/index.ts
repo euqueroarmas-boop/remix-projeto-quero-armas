@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { escolherMarco, marcosParaTipo, MARCOS_PADRAO } from "../_shared/marcosVencimento.ts";
 
 /**
  * qa-vencimentos-alertas (BLOCO 5 — Etapas A+B+D)
@@ -29,7 +30,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-cron-token",
 };
 
-const MARCOS = [180, 90, 60, 45, 30, 15, 7, 0, -1];
+const MARCOS = MARCOS_PADRAO;
 const PORTAL_LINK = "https://www.euqueroarmas.com.br/area-do-cliente";
 const REMETENTE = "arsenalinteligente@notificacao.euqueroarmas.com.br";
 
@@ -52,10 +53,12 @@ function diasRestantes(validade: string): number {
   return Math.floor((v.getTime() - hoje.getTime()) / 86400000);
 }
 
-function pickMarco(d: number): number | null {
-  if (MARCOS.includes(d)) return d;
+function pickMarco(d: number, tipo?: string | null): number | null {
   if (d < -1) return -1; // agrupa vencidos pós dia 1
-  return null;
+  const marcos = tipo ? marcosParaTipo(tipo) : MARCOS;
+  // Certidões e laudos usam faixas próprias (15/10 + regressiva diária;
+  // 120/90/60/45/30/20/10 + regressiva diária).
+  return escolherMarco(d, marcos);
 }
 
 function brDate(iso: string): string {
@@ -176,7 +179,7 @@ serve(async (req) => {
         if (tipo.includes("gte") || tipo.includes("exame") || tipo.includes("laudo")) continue;
         const ehAutorizacao = tipo.includes("autoriza") || tipo.includes("aquisi");
         const d = diasRestantes(r.data_validade);
-        const m = pickMarco(d);
+        const m = pickMarco(d, tipo);
         if (m === null) continue;
         candidatos.push({
           fonte: ehAutorizacao ? "AUTORIZACAO" : "DOCUMENTO",

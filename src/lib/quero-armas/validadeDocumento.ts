@@ -507,6 +507,10 @@ export function limiarAlertaDias(tipo?: string | null): number {
   const regra = getRegraValidade(tipo);
   if (regra && regra.alerta_dias > 0) return regra.alerta_dias;
   if (isProcuracao(tipo)) return 90;
+  // NÃO estender aqui as janelas de CR (180d) e laudos (120d): este limiar
+  // pinta o chip "vence em breve" no Hub e deixaria quase todo laudo amarelo.
+  // Essas janelas vivem no motor de avisos (badge da home + e-mails):
+  // src/lib/quero-armas/avisosVencimento.ts.
   return 7;
 }
 
