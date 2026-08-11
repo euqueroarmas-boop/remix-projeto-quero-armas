@@ -1725,7 +1725,10 @@ export function ClienteDocsHubModal({
     expectedTipoMeta &&
     (classificacao || conferenciaLocal) &&
     form.tipo_documento &&
-    form.tipo_documento !== expectedTipoMeta.value
+    form.tipo_documento !== expectedTipoMeta.value &&
+    // CIN, CNH e RG são vias da MESMA exigência de identidade civil:
+    // enviar a CNH num slot que pedia CIN não é documento incorreto.
+    !mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value)
   );
   // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
   const pendingSet = new Set(
