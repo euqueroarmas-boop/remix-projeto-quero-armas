@@ -580,18 +580,35 @@ export default function ClienteResumoKanban({
       frontKey: Urgent["frontKey"],
       examTipo?: Urgent["examTipo"],
       detalhe?: string,
+      tipo?: string,
+      kicker?: string,
     ) => {
       const days = daysUntil(date);
-      // Sincronizado com a página DOCUMENTOS: a janela de atenção é a mesma
-      // usada nos KPIs "A VENCER 7D / 30D" (até 30 dias). Antes o banner e os
-      // chips usavam 10 dias e mostravam "Nenhum documento crítico" enquanto
-      // a página já apontava um documento vencendo em 13 dias.
-      if (days === null || days > PRAZO_ATENCAO_DIAS) return;
-      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo, detalhe });
+      // Sincronizado com a página DOCUMENTOS: a janela padrão é a mesma usada
+      // nos KPIs "A VENCER 7D / 30D" (até 30 dias). Exceções por tipo:
+      // CR abre em 180 dias (prazo fatal de protocolo em 90) e laudos em 120.
+      if (days === null) return;
+      if (!tipoGeraAlertaVencimento(tipo)) return;
+      if (days > janelaAlertaDias(tipo)) return;
+      urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo, detalhe, tipo, kicker });
     };
-    if (cadastro?.validade_cr) pushUrgent("CR — Certificado", URG_SUB.cr, cadastro.validade_cr, "arsenal", "RENOVAR AGORA →", "arsenal");
-    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
-    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal"));
+    if (cadastro?.validade_cr) {
+      const diasCr = daysUntil(cadastro.validade_cr);
+      pushUrgent(
+        "CR — Certificado",
+        URG_SUB.cr,
+        cadastro.validade_cr,
+        "arsenal",
+        "RENOVAR AGORA →",
+        "arsenal",
+        undefined,
+        diasCr !== null && diasCr >= 0 ? avisoCR(diasCr, cadastro.validade_cr) : undefined,
+        "cr",
+        diasCr !== null && diasCr >= 0 ? kickerCR(diasCr) : undefined,
+      );
+    }
+    crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal", undefined, undefined, "craf"));
+    gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal", undefined, undefined, "gte"));
     filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
