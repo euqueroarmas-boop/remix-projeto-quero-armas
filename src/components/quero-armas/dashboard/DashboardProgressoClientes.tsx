@@ -15,6 +15,7 @@ interface Row {
   processo_id: string;
   cliente_id: number;
   cliente_nome: string | null;
+  cliente_email?: string | null;
   servico_nome: string | null;
   fase: string;
   total_docs: number;
@@ -119,7 +120,12 @@ function Chip({
   );
 }
 
-type ContadorKey = "todos" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
+type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
+
+/** "3 HOJE · 12 NO TOTAL" — leitura de quantas vezes o cliente entrou no portal. */
+function fmtEntradas(a?: { hoje: number; total: number }) {
+  return { hoje: a?.hoje ?? 0, total: a?.total ?? 0 };
+}
 
 function fmtData(d: string | null) {
   if (!d) return "—";
@@ -219,6 +225,8 @@ export default function DashboardProgressoClientes() {
 
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
   const [recarregando, setRecarregando] = useState(false);
+  /** email -> { hoje, total } de entradas no portal. */
+  const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
   const carregarRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -234,6 +242,25 @@ export default function DashboardProgressoClientes() {
         setRows(lista);
 
         const ids = lista.map((r) => r.processo_id).filter(Boolean);
+
+        // Contagem de entradas no portal por cliente (hoje e histórico).
+        const { data: logins } = await supabase
+          .from("qa_cliente_login_eventos")
+          .select("email, created_at")
+          .not("email", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(5000);
+        const hojeStr = new Date().toDateString();
+        const mapaAcessos: Record<string, { hoje: number; total: number }> = {};
+        for (const l of ((logins as any[]) ?? [])) {
+          const email = String(l.email ?? "").trim().toLowerCase();
+          if (!email) continue;
+          const item = (mapaAcessos[email] ||= { hoje: 0, total: 0 });
+          item.total += 1;
+          if (new Date(l.created_at).toDateString() === hojeStr) item.hoje += 1;
+        }
+        if (!cancelled) setAcessos(mapaAcessos);
+
         if (ids.length > 0) {
           const [{ data: docs }, { data: procs }] = await Promise.all([
             supabase
@@ -321,7 +348,8 @@ export default function DashboardProgressoClientes() {
     const pendencia = ativos.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0).length;
     const parado = ativos.filter((r) => r.dias_parado >= 15).length;
     const bloqueado = rows.filter((r) => !!r.bloqueado_por_prerequisito).length;
-    return { todos: ativos.length, pronto, analise, pendencia, parado, bloqueado };
+    const online = ativos.filter((r) => !!r.online).length;
+    return { todos: ativos.length, online, pronto, analise, pendencia, parado, bloqueado };
   }, [rows]);
 
   const filtradas = useMemo(() => {
@@ -330,6 +358,7 @@ export default function DashboardProgressoClientes() {
     if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
     else if (filtroTrilha) base = base.filter((r) => (trilhasEfetivas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
+      case "online": base = base.filter((r) => !!r.online); break;
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
       case "pendencia": base = base.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0); break;
@@ -431,9 +460,10 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-7 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
+          { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
           { k: "pronto", label: "PRONTOS", v: contadores.pronto, cor: VERDE, fundo: VERDE_BG },
           { k: "analise", label: "EM ANÁLISE", v: contadores.analise, cor: AMBAR, fundo: AMBAR_BG },
           { k: "pendencia", label: "COM PENDÊNCIA", v: contadores.pendencia, cor: AMBAR, fundo: AMBAR_BG },
@@ -566,13 +596,17 @@ export default function DashboardProgressoClientes() {
         </div>
 
         {/* DESKTOP: tabela */}
-        <div ref={tabelaScroll.ref} className="hidden md:block overflow-x-auto">
+        <div
+          ref={tabelaScroll.ref}
+          className="hidden md:block overflow-auto"
+          style={{ maxHeight: "calc(100vh - 300px)", minHeight: 320 }}
+        >
           <table className="border-collapse" style={{ width: colunas.reduce((s, c) => s + larguraDe(c), 0), minWidth: "100%", tableLayout: "fixed" }}>
             <colgroup>
               {colunas.map((c) => (<col key={c.key} style={{ width: larguraDe(c) }} />))}
             </colgroup>
-            <thead>
-              <tr className="border-b border-[#DADADA] bg-[#FAFAFA]">
+            <thead className="sticky top-0 z-20">
+              <tr className="border-b border-[#DADADA] bg-[#FAFAFA] [&>th]:bg-[#FAFAFA]">
                 {colunas.map((c) => (
                   <th key={c.key} className="relative px-3 py-2 text-left align-bottom border-r border-[#EFEFEF] last:border-r-0" title={c.titulo}>
                     <button
@@ -637,16 +671,22 @@ export default function DashboardProgressoClientes() {
                       </div>
                     </>
                   ),
-                  online: (
-                    <div className="space-y-1">
-                      {r.online
-                        ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
-                        : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                      <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
-                        {fmtAcesso(r.ultimo_acesso)}
+                  online: (() => {
+                    const e = fmtEntradas(acessos[String(r.cliente_email ?? "").trim().toLowerCase()]);
+                    return (
+                      <div className="space-y-1">
+                        {r.online
+                          ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
+                          : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
+                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                          {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
+                        </div>
+                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                          · {e.total} NO TOTAL
+                        </div>
                       </div>
-                    </div>
-                  ),
+                    );
+                  })(),
                   servico_nome: null,
                   fase: (
                     <>
